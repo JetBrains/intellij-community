@@ -13,169 +13,163 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.refactoring;
+package com.jetbrains.python.refactoring
 
-import com.intellij.codeInsight.controlflow.ConditionalInstruction;
-import com.intellij.codeInsight.controlflow.ControlFlow;
-import com.intellij.codeInsight.controlflow.ControlFlowUtil;
-import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.QualifiedName;
-import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.controlflow.PyControlFlow;
-import com.jetbrains.python.codeInsight.controlflow.PyWithContextExitInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.psi.PyAugAssignmentStatement;
-import com.jetbrains.python.psi.PyCallSiteOwner;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyImplicitImportNameDefiner;
-import com.jetbrains.python.psi.PyImportedNameDefiner;
-import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.PyTypedElement;
-import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
-import com.jetbrains.python.psi.types.PyNarrowedType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.function.Function;
+import com.intellij.codeInsight.controlflow.ConditionalInstruction
+import com.intellij.codeInsight.controlflow.ControlFlow
+import com.intellij.codeInsight.controlflow.ControlFlowUtil
+import com.intellij.codeInsight.controlflow.Instruction
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.codeInsight.controlflow.CallInstruction
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache.getControlFlow
+import com.jetbrains.python.codeInsight.controlflow.PyControlFlow
+import com.jetbrains.python.codeInsight.controlflow.PyWithContextExitInstruction
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil.getScopeOwner
+import com.jetbrains.python.psi.PyCallSiteOwner
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyImplicitImportNameDefiner
+import com.jetbrains.python.psi.PyImportedNameDefiner
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PyTargetExpression
+import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator
+import com.jetbrains.python.psi.types.PyNarrowedType
+import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.TypeEvalContext.Companion.codeInsightFallback
+import it.unimi.dsi.fastutil.ints.IntArrayList
 
 /**
  * @author Dennis.Ushakov
  */
-public final class PyDefUseUtil {
-  private PyDefUseUtil() {
-  }
-
+object PyDefUseUtil {
   // For very large control flows we keep using a lighter, project-cached context for the narrowing-detection lookup
   // below to avoid blowing the stack when re-entering type inference from inside a deep CFG walk (PY-73958).
-  private static final int MAX_CONTROL_FLOW_SIZE = 200;
+  private const val MAX_CONTROL_FLOW_SIZE = 200
 
-  public record LatestDefsResult(@NotNull List<Instruction> defs, boolean foundPrefixCall) {
-    static  LatestDefsResult EMPTY = new LatestDefsResult(Collections.emptyList(), false);
+  @JvmStatic
+  fun getLatestDefs(
+    block: ScopeOwner,
+    varName: String,
+    anchor: PsiElement,
+    acceptTypeAssertions: Boolean,
+    acceptImplicitImports: Boolean,
+    context: TypeEvalContext,
+  ): LatestDefsResult {
+    return getLatestDefs(
+      getControlFlow(block), block, varName, anchor, acceptTypeAssertions, acceptImplicitImports,
+      context
+    )
   }
 
-  public static @NotNull LatestDefsResult getLatestDefs(@NotNull ScopeOwner block,
-                                                        @NotNull String varName,
-                                                        @NotNull PsiElement anchor,
-                                                        boolean acceptTypeAssertions,
-                                                        boolean acceptImplicitImports,
-                                                        @NotNull TypeEvalContext context) {
-    return getLatestDefs(ControlFlowCache.getControlFlow(block), block, varName, anchor, acceptTypeAssertions, acceptImplicitImports,
-                         context);
-  }
-
-  public static @NotNull LatestDefsResult getLatestDefs(@NotNull PyControlFlow controlFlow,
-                                                              @NotNull ScopeOwner scopeOwner,
-                                                              @NotNull String varName,
-                                                              @NotNull PsiElement anchor,
-                                                              boolean acceptTypeAssertions,
-                                                              boolean acceptImplicitImports,
-                                                              @NotNull TypeEvalContext context) {
-    final Instruction[] instructions = controlFlow.getInstructions();
-    int startNum = findStartInstructionId(anchor, controlFlow, scopeOwner);
+  @JvmStatic
+  fun getLatestDefs(
+    controlFlow: PyControlFlow,
+    scopeOwner: ScopeOwner,
+    varName: String,
+    anchor: PsiElement,
+    acceptTypeAssertions: Boolean,
+    acceptImplicitImports: Boolean,
+    context: TypeEvalContext,
+  ): LatestDefsResult {
+    val instructions = controlFlow.instructions
+    val startNum = findStartInstructionId(anchor, controlFlow, scopeOwner)
     if (startNum < 0) {
-      return LatestDefsResult.EMPTY;
+      return LatestDefsResult.EMPTY
     }
 
-    QualifiedName varQname = QualifiedName.fromDottedString(varName);
+    val varQname = QualifiedName.fromDottedString(varName)
 
-    final Collection<Instruction> result = new LinkedHashSet<>();
-    final HashMap<PyCallSiteOwner, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
-    final Ref<@NotNull Boolean> foundPrefixWrite = Ref.create(false);
-    final Ref<@NotNull Boolean> foundPrefixCall = Ref.create(false);
-    iteratePrev(startNum, controlFlow,
-                instruction -> {
-                  if (instruction instanceof PyWithContextExitInstruction withExit) {
-                    if (!withExit.isSuppressingExceptions(context)) {
-                      return ControlFlowUtil.Operation.CONTINUE;
-                    }
-                  }
-                  if (acceptTypeAssertions && instruction instanceof CallInstruction callInstruction) {
-                    var typeGuardInstruction = pendingTypeGuard.get(instruction.getElement());
-                    if (typeGuardInstruction != null) {
-                      result.add(typeGuardInstruction);
-                      return ControlFlowUtil.Operation.CONTINUE;
-                    }
-                    if (isNotBackEdge(instruction.num(), startNum) &&
-                        context.getOrigin() == callInstruction.getElement().getContainingFile()) {
-                      TypeEvalContext narrowingContext = chooseNarrowingContext(context, instructions.length);
-                      if (callInstruction.isNoReturnCall(narrowingContext)) return ControlFlowUtil.Operation.CONTINUE;
-                    }
-                  }
-                  if (isNotBackEdge(instruction.num(), startNum)
-                      && acceptTypeAssertions && instruction instanceof ConditionalInstruction conditionalInstruction) {
-                    if (conditionalInstruction.getCondition() instanceof PyTypedElement typedElement &&
-                        context.getOrigin() == typedElement.getContainingFile()) {
-                      TypeEvalContext narrowingContext = chooseNarrowingContext(context, instructions.length);
-                      if (narrowingContext.getType(typedElement) instanceof PyNarrowedType narrowedType && narrowedType.isBound()) {
-                        String narrowedQname = narrowedType.getQname();
-                        if (narrowedQname != null) {
-                          if (isQualifiedBy(varQname, narrowedQname)) {
-                            foundPrefixWrite.set(true);
-                            return ControlFlowUtil.Operation.BREAK;
-                          }
+    val result: MutableCollection<Instruction> = LinkedHashSet()
+    val pendingTypeGuard = HashMap<PyCallSiteOwner?, ConditionalInstruction?>()
+    val foundPrefixWrite = Ref(false)
+    val foundPrefixCall = Ref(false)
+    iteratePrev(startNum, controlFlow) { instruction ->
+      if (instruction is PyWithContextExitInstruction) {
+        if (!instruction.isSuppressingExceptions(context)) {
+          return@iteratePrev ControlFlowUtil.Operation.CONTINUE
+        }
+      }
+      if (acceptTypeAssertions && instruction is CallInstruction) {
+        val typeGuardInstruction = pendingTypeGuard[instruction.element]
+        if (typeGuardInstruction != null) {
+          result.add(typeGuardInstruction)
+          return@iteratePrev ControlFlowUtil.Operation.CONTINUE
+        }
+        if (isNotBackEdge(instruction.num(), startNum) &&
+            context.origin === instruction.element.containingFile
+        ) {
+          val narrowingContext = chooseNarrowingContext(context, instructions.size)
+          if (instruction.isNoReturnCall(narrowingContext)) return@iteratePrev ControlFlowUtil.Operation.CONTINUE
+        }
+      }
+      if (isNotBackEdge(instruction!!.num(), startNum)
+          && acceptTypeAssertions && instruction is ConditionalInstruction
+      ) {
+        val typedElement = instruction.condition
+        if (typedElement is PyTypedElement &&
+            context.origin === typedElement.containingFile
+        ) {
+          val narrowingContext = chooseNarrowingContext(context, instructions.size)
+          val narrowedType = narrowingContext.getType(typedElement)
+          if (narrowedType is PyNarrowedType && narrowedType.isBound()) {
+            val narrowedQname: String? = narrowedType.qname
+            if (narrowedQname != null) {
+              if (isQualifiedBy(varQname, narrowedQname)) {
+                foundPrefixWrite.set(true)
+                return@iteratePrev ControlFlowUtil.Operation.BREAK
+              }
 
-                          if (narrowedQname.equals(varName)) {
-                            pendingTypeGuard.put(narrowedType.getOriginal(), conditionalInstruction);
-                          }
-                        }
-                      }
-                    }
-                  }
-                  // A call with prefix as receiver or argument (e.g. self.reset() or foo(self)) may mutate attributes, so soft-invalidate narrowing (PY-88265)
-                  if (instruction instanceof CallInstruction callInstr) {
-                    if (isCallOnPrefix(callInstr, varQname)) {
-                      foundPrefixCall.set(true);
-                    }
-                  }
-                  if (instruction instanceof ReadWriteInstruction rwInstruction) {
-                    final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();
-                    if (access.isWriteAccess() ||
-                        acceptTypeAssertions && access.isAssertTypeAccess() && isNotBackEdge(instruction.num(), startNum)) {
+              if (narrowedQname == varName) {
+                pendingTypeGuard[narrowedType.original] = instruction
+              }
+            }
+          }
+        }
+      }
+      // A call with prefix as receiver or argument (e.g. self.reset() or foo(self)) may mutate attributes, so soft-invalidate narrowing (PY-88265)
+      if (instruction is CallInstruction) {
+        if (isCallOnPrefix(instruction, varQname)) {
+          foundPrefixCall.set(true)
+        }
+      }
+      if (instruction is ReadWriteInstruction) {
+        val access = instruction.access
+        if (access.isWriteAccess ||
+            acceptTypeAssertions && access.isAssertTypeAccess && isNotBackEdge(instruction.num(), startNum)
+        ) {
+          val name = instruction.name
 
-                      final String name = rwInstruction.getName();
+          if (name != null && isQualifiedBy(varQname, name)) {
+            foundPrefixWrite.set(true)
+            return@iteratePrev ControlFlowUtil.Operation.BREAK
+          }
 
-                      if (name != null && isQualifiedBy(varQname, name)) {
-                        foundPrefixWrite.set(true);
-                        return ControlFlowUtil.Operation.BREAK;
-                      }
-
-                      if (Comparing.strEqual(name, varName)) {
-                        result.add(rwInstruction);
-                        return ControlFlowUtil.Operation.CONTINUE;
-                      }
-                    }
-                  }
-                  else if (acceptImplicitImports && instruction.getElement() instanceof PyImplicitImportNameDefiner implicit) {
-                    if (!implicit.multiResolveName(varName).isEmpty()) {
-                      result.add(instruction);
-                      return ControlFlowUtil.Operation.CONTINUE;
-                    }
-                  }
-                  return ControlFlowUtil.Operation.NEXT;
-                });
+          if (Comparing.strEqual(name, varName)) {
+            result.add(instruction)
+            return@iteratePrev ControlFlowUtil.Operation.CONTINUE
+          }
+        }
+      }
+      else if (acceptImplicitImports && instruction.element is PyImplicitImportNameDefiner) {
+        val implicit = instruction.element as PyImplicitImportNameDefiner
+        if (!implicit.multiResolveName(varName).isEmpty()) {
+          result.add(instruction)
+          return@iteratePrev ControlFlowUtil.Operation.CONTINUE
+        }
+      }
+      ControlFlowUtil.Operation.NEXT
+    }
     if (foundPrefixWrite.get()) {
-      return LatestDefsResult.EMPTY;
+      return LatestDefsResult.EMPTY
     }
-    return new LatestDefsResult(new ArrayList<>(result), foundPrefixCall.get());
+    return LatestDefsResult(ArrayList(result), foundPrefixCall.get())
   }
 
   /**
@@ -183,8 +177,8 @@ public final class PyDefUseUtil {
    *
    * @see com.jetbrains.python.psi.impl.PyReferenceExpressionImpl
    */
-  private static boolean isNotBackEdge(int instNum, int startNum) {
-    return instNum < startNum;
+  private fun isNotBackEdge(instNum: Int, startNum: Int): Boolean {
+    return instNum < startNum
   }
 
   /**
@@ -192,142 +186,148 @@ public final class PyDefUseUtil {
    * fixpoint isn't dropped (PY-89245). Fall back to a lighter context for oversized CFGs to keep
    * the stack-overflow guard from PY-73958.
    */
-  private static @NotNull TypeEvalContext chooseNarrowingContext(@NotNull TypeEvalContext context, int controlFlowSize) {
+  private fun chooseNarrowingContext(context: TypeEvalContext, controlFlowSize: Int): TypeEvalContext {
     if (controlFlowSize >= MAX_CONTROL_FLOW_SIZE) {
-      PsiFile origin = context.getOrigin();
+      val origin = context.origin
       if (origin != null) {
-        return TypeEvalContext.codeInsightFallback(origin.getProject());
+        return codeInsightFallback(origin.project)
       }
     }
-    return context;
+    return context
   }
 
-  private static boolean isCallOnPrefix(@NotNull CallInstruction callInstr, @NotNull QualifiedName varQname) {
-    PyExpression receiver = callInstr.getElement().getReceiver(null);
-    if (isPrefixExpression(receiver, varQname)) return true;
-    for (PyExpression arg : callInstr.getElement().getArguments()) {
-      if (isPrefixExpression(arg, varQname)) return true;
+  private fun isCallOnPrefix(callInstr: CallInstruction, varQname: QualifiedName): Boolean {
+    val receiver = callInstr.element.getReceiver(null)
+    if (isPrefixExpression(receiver, varQname)) return true
+    for (arg in callInstr.element.arguments) {
+      if (isPrefixExpression(arg, varQname)) return true
     }
-    return false;
+    return false
   }
 
-  private static boolean isPrefixExpression(@Nullable PyExpression expr, @NotNull QualifiedName varQname) {
-    if (expr instanceof PyQualifiedExpression qualifiedExpr) {
-      QualifiedName exprQname = qualifiedExpr.asQualifiedName();
-      return exprQname != null && varQname.getComponentCount() > exprQname.getComponentCount()
-             && varQname.matchesPrefix(exprQname);
+  private fun isPrefixExpression(expr: PyExpression?, varQname: QualifiedName): Boolean {
+    if (expr is PyQualifiedExpression) {
+      val exprQname = expr.asQualifiedName()
+      return exprQname != null && varQname.componentCount > exprQname.componentCount && varQname.matchesPrefix(exprQname)
     }
-    return false;
+    return false
   }
 
-  private static boolean isQualifiedBy(QualifiedName varQname, @NotNull String qualifier) {
-    QualifiedName elementQname = QualifiedName.fromDottedString(qualifier);
-    return varQname.getComponentCount() > elementQname.getComponentCount() && varQname.matchesPrefix(elementQname);
+  private fun isQualifiedBy(varQname: QualifiedName, qualifier: String): Boolean {
+    val elementQname = QualifiedName.fromDottedString(qualifier)
+    return varQname.componentCount > elementQname.componentCount && varQname.matchesPrefix(elementQname)
   }
 
-  private static int findStartInstructionId(@NotNull PsiElement startAnchor, @NotNull PyControlFlow flow, @NotNull ScopeOwner scopeOwner) {
-    PsiElement realCfgAnchor = startAnchor;
-    final PyAugAssignmentStatement augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(startAnchor);
+  private fun findStartInstructionId(startAnchor: PsiElement, flow: PyControlFlow, scopeOwner: ScopeOwner): Int {
+    var realCfgAnchor: PsiElement? = startAnchor
+    val augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(startAnchor)
     if (augAssignment != null) {
-      realCfgAnchor = augAssignment;
+      realCfgAnchor = augAssignment
     }
-    int instr = -1;
-    for (PsiElement element = realCfgAnchor; element != null && element != scopeOwner; element = element.getParent()) {
-      instr = flow.getInstruction(element);
+    var instr = -1
+    var element = realCfgAnchor
+    while (element != null && element !== scopeOwner) {
+      instr = flow.getInstruction(element)
       if (instr >= 0) {
-        break;
+        break
       }
+      element = element.parent
     }
     if (instr < 0) {
-      return instr;
+      return instr
     }
-    if (startAnchor instanceof PyTargetExpression) {
-      Collection<Instruction> pred = flow.getInstructions()[instr].allPred();
+    if (startAnchor is PyTargetExpression) {
+      val pred = flow.instructions[instr].allPred()
       if (!pred.isEmpty()) {
-        instr = pred.iterator().next().num();
+        instr = pred.iterator().next()!!.num()
       }
     }
-    return instr;
+    return instr
   }
 
   /**
-   * Modified copy of {@link ControlFlowUtil#iteratePrev(int, Instruction[], com.intellij.util.Function)} that uses
-   * {@link PyControlFlow#getPrev(Instruction)} instead of {@link Instruction#allPred()}
+   * Modified copy of [ControlFlowUtil.iteratePrev] that uses
+   * [PyControlFlow.getPrev] instead of [Instruction.allPred]
    */
-  private static void iteratePrev(final int startInstruction,
-                                  final @NotNull PyControlFlow controlFlow,
-                                  final @NotNull Function<? super Instruction, ControlFlowUtil.Operation> closure) {
-    Instruction[] instructions = controlFlow.getInstructions();
-    //noinspection SSBasedInspection
-    final IntArrayList stack = new IntArrayList(instructions.length);
-    final boolean[] visited = new boolean[instructions.length];
+  private fun iteratePrev(
+    startInstruction: Int,
+    controlFlow: PyControlFlow,
+    closure: (Instruction?) -> ControlFlowUtil.Operation,
+  ) {
+    val instructions = controlFlow.instructions
+    val stack = IntArrayList(instructions.size)
+    val visited = BooleanArray(instructions.size)
 
-    visited[startInstruction] = true;
-    stack.push(startInstruction);
-    int count = 0;
-    while (!stack.isEmpty()) {
-      count++;
+    visited[startInstruction] = true
+    stack.push(startInstruction)
+    var count = 0
+    while (!stack.isEmpty) {
+      count++
       if (count % 512 == 0) {
-        ProgressManager.checkCanceled();
+        ProgressManager.checkCanceled()
       }
-      final int num = stack.popInt();
-      final Instruction instr = instructions[num];
-      final ControlFlowUtil.Operation nextOperation = closure.apply(instr);
+      val num = stack.popInt()
+      val instr = instructions[num]
+      val nextOperation = closure(instr)
       // Just ignore previous instructions for the current node and move further
       if (nextOperation == ControlFlowUtil.Operation.CONTINUE) {
-        continue;
+        continue
       }
       // STOP iteration
       if (nextOperation == ControlFlowUtil.Operation.BREAK) {
-        break;
+        break
       }
       // If we are here, we should process previous nodes in natural way
-      assert nextOperation == ControlFlowUtil.Operation.NEXT;
-      Collection<Instruction> nextToProcess = controlFlow.getPrev(instr);
-      for (Instruction pred : nextToProcess) {
-        final int predNum = pred.num();
+      assert(nextOperation == ControlFlowUtil.Operation.NEXT)
+      val nextToProcess: Collection<Instruction> = controlFlow.getPrev(instr)
+      for (pred in nextToProcess) {
+        val predNum = pred.num()
         if (!visited[predNum]) {
-          visited[predNum] = true;
-          stack.push(predNum);
+          visited[predNum] = true
+          stack.push(predNum)
         }
       }
     }
   }
 
-  public static PsiElement @NotNull [] getPostRefs(@NotNull ScopeOwner block, @NotNull PyTargetExpression var, PyExpression anchor) {
-    final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
-    final Instruction[] instructions = controlFlow.getInstructions();
-    final int instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor);
+  @JvmStatic
+  fun getPostRefs(block: ScopeOwner, `var`: PyTargetExpression, anchor: PyExpression?): Array<PsiElement?> {
+    val controlFlow: ControlFlow = getControlFlow(block)
+    val instructions = controlFlow.instructions
+    val instr = ControlFlowUtil.findInstructionNumberByElement(instructions, anchor)
     if (instr < 0) {
-      return PyElement.EMPTY_ARRAY;
+      return PyElement.EMPTY_ARRAY as Array<PsiElement?>
     }
-    final boolean[] visited = new boolean[instructions.length];
-    final Collection<PyElement> result = new HashSet<>();
-    for (Instruction instruction : instructions[instr].allSucc()) {
-      getPostRefs(var, instructions, instruction.num(), visited, result);
+    val visited = BooleanArray(instructions.size)
+    val result: MutableCollection<PyElement?> = HashSet()
+    for (instruction in instructions[instr].allSucc()) {
+      getPostRefs(`var`, instructions, instruction.num(), visited, result)
     }
-    return result.toArray(PyElement.EMPTY_ARRAY);
+    return result.toTypedArray()
   }
 
-  private static void getPostRefs(@NotNull PyTargetExpression var,
-                                  Instruction[] instructions,
-                                  int instr,
-                                  boolean @NotNull [] visited,
-                                  @NotNull Collection<PyElement> result) {
+  private fun getPostRefs(
+    `var`: PyTargetExpression,
+    instructions: Array<Instruction>,
+    instr: Int,
+    visited: BooleanArray,
+    result: MutableCollection<PyElement?>,
+  ) {
     // TODO: Use ControlFlowUtil.process() for forwards CFG traversal
-    if (visited[instr]) return;
-    visited[instr] = true;
-    if (instructions[instr] instanceof ReadWriteInstruction instruction) {
-      if (Comparing.strEqual(instruction.getName(), var.getName())) {
-        final ReadWriteInstruction.ACCESS access = instruction.getAccess();
-        if (access.isWriteAccess()) {
-          return;
+    if (visited[instr]) return
+    visited[instr] = true
+    if (instructions[instr] is ReadWriteInstruction) {
+      val instruction = instructions[instr] as ReadWriteInstruction
+      if (Comparing.strEqual(instruction.name, `var`.name)) {
+        val access: ReadWriteInstruction.ACCESS = instruction.access
+        if (access.isWriteAccess) {
+          return
         }
-        result.add((PyElement)instruction.getElement());
+        result.add(instruction.element as PyElement?)
       }
     }
-    for (Instruction instruction : instructions[instr].allSucc()) {
-      getPostRefs(var, instructions, instruction.num(), visited, result);
+    for (instruction in instructions[instr].allSucc()) {
+      getPostRefs(`var`, instructions, instruction.num(), visited, result)
     }
   }
 
@@ -336,30 +336,37 @@ public final class PyDefUseUtil {
    *
    * @return false for elements from different scopes, true if searched is defined/imported before target
    */
-  public static boolean isDefinedBefore(final @NotNull PsiElement searched, final @NotNull PsiElement target) {
-    ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(searched);
-    Ref<Boolean> definedBefore = Ref.create(false);
-    if (scopeOwner != null && scopeOwner == ScopeUtil.getScopeOwner(target)) {
-      Instruction[] instructions = ControlFlowCache.getControlFlow(scopeOwner).getInstructions();
-      int index = ControlFlowUtil.findInstructionNumberByElement(instructions, target);
+  @JvmStatic
+  fun isDefinedBefore(searched: PsiElement, target: PsiElement): Boolean {
+    val scopeOwner = getScopeOwner(searched)
+    val definedBefore = Ref(false)
+    if (scopeOwner != null && scopeOwner === getScopeOwner(target)) {
+      val instructions = getControlFlow(scopeOwner).instructions
+      val index = ControlFlowUtil.findInstructionNumberByElement(instructions, target)
       if (index >= 0) {
-        ControlFlowUtil.iteratePrev(index, instructions, instruction -> {
-          if (instruction.getElement() == searched) {
-            boolean isImport = searched instanceof PyImportedNameDefiner;
-            boolean isWriteAccess =
-              instruction instanceof ReadWriteInstruction && ((ReadWriteInstruction)instruction).getAccess().isWriteAccess();
+        ControlFlowUtil.iteratePrev(index, instructions) { instruction ->
+          if (instruction.element === searched) {
+            val isImport = searched is PyImportedNameDefiner
+            val isWriteAccess =
+              instruction is ReadWriteInstruction && instruction.access.isWriteAccess
             if (isImport || isWriteAccess) {
-              definedBefore.set(true);
-              return ControlFlowUtil.Operation.BREAK;
+              definedBefore.set(true)
+              return@iteratePrev ControlFlowUtil.Operation.BREAK
             }
           }
-          return ControlFlowUtil.Operation.NEXT;
-        });
+          ControlFlowUtil.Operation.NEXT
+        }
       }
     }
-    return definedBefore.get();
+    return definedBefore.get()
   }
 
-  public static class InstructionNotFoundException extends RuntimeException {
+  @JvmRecord
+  data class LatestDefsResult(val defs: List<Instruction>, val foundPrefixCall: Boolean) {
+    companion object {
+      val EMPTY: LatestDefsResult = LatestDefsResult(emptyList(), false)
+    }
   }
+
+  class InstructionNotFoundException : RuntimeException()
 }

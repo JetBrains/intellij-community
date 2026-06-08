@@ -133,7 +133,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
 
   @SuppressWarnings("unchecked")
   private static <T> @Nullable T extractValueFromLiteral(@NotNull PyLiteralType literalType, @NotNull Class<T> indexType) {
-    if (indexType == Integer.class && literalType.getIntValue() != null) {
+    if ((indexType == Integer.class || indexType == int.class) && literalType.getIntValue() != null) {
       try {
         return (T)Integer.valueOf(literalType.getIntValue().intValueExact());
       }
@@ -145,7 +145,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     if (indexType == String.class && literalType.getStringValue() != null) {
       return (T)literalType.getStringValue();
     }
-    if (indexType == Boolean.class && literalType.getBoolValue() != null) {
+    if ((indexType == Boolean.class || indexType == boolean.class) && literalType.getBoolValue() != null) {
       return (T)literalType.getBoolValue();
     }
     return null;

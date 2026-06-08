@@ -13,95 +13,86 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.codeInsight.dataflow.scope;
+package com.jetbrains.python.codeInsight.dataflow.scope
 
-import com.intellij.psi.PsiElement;
-import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
-import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExceptPart;
-import com.jetbrains.python.psi.PyForStatement;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyListCompExpression;
-import com.jetbrains.python.psi.PyNamedParameter;
-import com.jetbrains.python.psi.impl.PyExceptPartNavigator;
-import com.jetbrains.python.psi.impl.PyForStatementNavigator;
-import com.jetbrains.python.psi.impl.PyListCompExpressionNavigator;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache.getControlFlow
+import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache.getScope
+import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.impl.PyExceptPartNavigator
+import com.jetbrains.python.psi.impl.PyForStatementNavigator
+import com.jetbrains.python.psi.impl.PyListCompExpressionNavigator
 
-import java.util.List;
-
-import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
-
-public final class ScopeUtil {
-  private ScopeUtil() {
-  }
-
-  public static @Nullable PsiElement getParameterScope(final PsiElement element) {
-    if (element instanceof PyNamedParameter) {
-      final PyFunction function = getParentOfType(element, PyFunction.class, false);
+object ScopeUtil {
+  @JvmStatic
+  fun getParameterScope(element: PsiElement?): PsiElement? {
+    if (element is PyNamedParameter) {
+      val function = PsiTreeUtil.getParentOfType(element, PyFunction::class.java, false)
       if (function != null) {
-        return function;
+        return function
       }
     }
 
-    final PyExceptPart exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(element);
+    val exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(element)
     if (exceptPart != null) {
-      return exceptPart;
+      return exceptPart
     }
 
-    final PyForStatement forStatement = PyForStatementNavigator.getPyForStatementByIterable(element);
+    val forStatement = PyForStatementNavigator.getPyForStatementByIterable(element)
     if (forStatement != null) {
-      return forStatement;
+      return forStatement
     }
 
-    final PyListCompExpression listCompExpression = PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element);
+    val listCompExpression = PyListCompExpressionNavigator.getPyListCompExpressionByVariable(element)
     if (listCompExpression != null) {
-      return listCompExpression;
+      return listCompExpression
     }
-    return null;
+    return null
   }
 
   /**
-   * Return the scope owner for the element. This also applies for elements of instance {@code AstScopeOwner}.
-   * <br/>
+   * Return the scope owner for the element. This also applies for elements of instance `AstScopeOwner`.
+   * <br></br>
    * Scope owner is not always the first ScopeOwner parent of the element. Some elements are resolved in outer scopes.
-   * <br/>
+   * <br></br>
    * This method does not access AST if underlying PSI is stub based.
    */
-  public static @Nullable ScopeOwner getScopeOwner(final @Nullable PsiElement element) {
-    return (ScopeOwner)ScopeUtilCore.getScopeOwner(element);
+  @JvmStatic
+  fun getScopeOwner(element: PsiElement?): ScopeOwner? {
+    return ScopeUtilCore.getScopeOwner(element) as ScopeOwner?
   }
 
-  public static @Nullable ScopeOwner getDeclarationScopeOwner(@Nullable PsiElement anchor, @Nullable String name) {
+  @JvmStatic
+  fun getDeclarationScopeOwner(anchor: PsiElement?, name: String?): ScopeOwner? {
     if (name != null) {
-      final ScopeOwner originalScopeOwner = getScopeOwner(anchor);
-      ScopeOwner scopeOwner = originalScopeOwner;
+      val originalScopeOwner = getScopeOwner(anchor)
+      var scopeOwner = originalScopeOwner
       while (scopeOwner != null) {
-        if (!(scopeOwner instanceof PyClass) || scopeOwner == originalScopeOwner) {
-          Scope scope = ControlFlowCache.getScope(scopeOwner);
+        if (scopeOwner !is PyClass || scopeOwner === originalScopeOwner) {
+          val scope = getScope(scopeOwner)
           if (scope.containsDeclaration(name)) {
-            return scopeOwner;
+            return scopeOwner
           }
         }
-        scopeOwner = getScopeOwner(scopeOwner);
+        scopeOwner = getScopeOwner(scopeOwner)
       }
     }
-    return null;
+    return null
   }
 
-  public static @NotNull List<PsiElement> getElementsOfAccessType(@NotNull String name,
-                                                                  @NotNull ScopeOwner scopeOwner,
-                                                                  @NotNull ReadWriteInstruction.ACCESS type) {
-    return StreamEx
-      .of(ControlFlowCache.getControlFlow(scopeOwner).getInstructions())
-      .select(ReadWriteInstruction.class)
-      .filter(i -> name.equals(i.getName()) && type == i.getAccess())
-      .map(ReadWriteInstruction::getElement)
-      .nonNull()
-      .toImmutableList();
-  }
+  @JvmStatic
+  fun getElementsOfAccessType(
+    name: String,
+    scopeOwner: ScopeOwner,
+    type: ReadWriteInstruction.ACCESS,
+  ): List<PsiElement> =
+    getControlFlow(scopeOwner).instructions
+      .filterIsInstance<ReadWriteInstruction>()
+      .filter { name == it.name && type == it.access }
+      .mapNotNull { it.element }
 }

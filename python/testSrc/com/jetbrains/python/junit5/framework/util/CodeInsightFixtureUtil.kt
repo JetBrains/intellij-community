@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.junit5.framework.util
 
 import com.intellij.openapi.application.runReadActionBlocking
@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.IntentionalUnstubbing
 import com.jetbrains.python.psi.impl.PyFileImpl
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -76,7 +75,7 @@ private fun CodeInsightTestFixture.assertRootNotParsed(
 ) {
   runReadActionBlocking {
     for (file in VfsUtil.collectChildrenRecursively(root)) {
-      val pyFile = PyUtil.`as`(psiManager.findFile(file), PyFile::class.java) ?: continue
+      val pyFile = psiManager.findFile(file) as? PyFile ?: continue
       if (pyFile == currentFile) continue
       if (context != null && context.maySwitchToAST(pyFile)) continue
       assertNotParsed(pyFile)

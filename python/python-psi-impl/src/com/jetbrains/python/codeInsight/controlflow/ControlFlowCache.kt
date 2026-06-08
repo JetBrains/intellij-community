@@ -13,62 +13,60 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.codeInsight.controlflow;
+package com.jetbrains.python.codeInsight.controlflow
 
-import com.intellij.openapi.util.Key;
-import com.jetbrains.python.PyLanguageFacadeKt;
-import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
-import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.Key
+import com.jetbrains.python.codeInsight.dataflow.scope.Scope
+import com.jetbrains.python.codeInsight.dataflow.scope.impl.ScopeImpl
+import com.jetbrains.python.getEffectiveLanguageLevel
+import com.jetbrains.python.psi.PyUtil
+import java.lang.ref.SoftReference
 
-import java.lang.ref.SoftReference;
+object ControlFlowCache {
+  private val CONTROL_FLOW_KEY = Key.create<SoftReference<PyControlFlow?>?>("com.jetbrains.python.codeInsight.controlflow.ControlFlow")
+  private val SCOPE_KEY = Key.create<SoftReference<Scope?>?>("com.jetbrains.python.codeInsight.controlflow.Scope")
 
-import static com.intellij.reference.SoftReference.dereference;
-
-
-public final class ControlFlowCache {
-  private static final Key<SoftReference<PyControlFlow>> CONTROL_FLOW_KEY =
-    Key.create("com.jetbrains.python.codeInsight.controlflow.ControlFlow");
-  private static final Key<SoftReference<Scope>> SCOPE_KEY = Key.create("com.jetbrains.python.codeInsight.controlflow.Scope");
-
-  private ControlFlowCache() {
+  @JvmStatic
+  fun clear(scopeOwner: ScopeOwner) {
+    scopeOwner.putUserData(CONTROL_FLOW_KEY, null)
+    scopeOwner.putUserData(SCOPE_KEY, null)
   }
 
-  public static void clear(@NotNull ScopeOwner scopeOwner) {
-    scopeOwner.putUserData(CONTROL_FLOW_KEY, null);
-    scopeOwner.putUserData(SCOPE_KEY, null);
-  }
-
-  public static @NotNull PyControlFlow getControlFlow(@NotNull ScopeOwner element,
-                                                      @NotNull PyControlFlowBuilder controlFlowBuilder) {
-    SoftReference<PyControlFlow> ref = element.getUserData(CONTROL_FLOW_KEY);
-    PyControlFlow flow = dereference(ref);
+  fun getControlFlow(
+    element: ScopeOwner,
+    controlFlowBuilder: PyControlFlowBuilder,
+  ): PyControlFlow {
+    val ref = element.getUserData(CONTROL_FLOW_KEY)
+    var flow = com.intellij.reference.SoftReference.dereference<PyControlFlow?>(ref)
     if (flow == null) {
-      flow = controlFlowBuilder.buildControlFlow(element);
-      element.putUserData(CONTROL_FLOW_KEY, new SoftReference<>(flow));
+      flow = controlFlowBuilder.buildControlFlow(element)
+      element.putUserData(CONTROL_FLOW_KEY, SoftReference<PyControlFlow?>(flow))
     }
-    return flow;
+    return flow
   }
 
-  public static @NotNull PyControlFlow getControlFlow(@NotNull ScopeOwner element) {
-    LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(element.getContainingFile());
-    return getControlFlow(element, new PyControlFlowBuilder(languageLevel));
+  @JvmStatic
+  fun getControlFlow(element: ScopeOwner): PyControlFlow {
+    val languageLevel = getEffectiveLanguageLevel(element.containingFile)
+    return getControlFlow(element, PyControlFlowBuilder(languageLevel))
   }
 
-  public static @NotNull Scope getScope(@NotNull ScopeOwner element) {
-    SoftReference<Scope> ref = element.getUserData(SCOPE_KEY);
-    Scope scope = dereference(ref);
+  @JvmStatic
+  fun getScope(element: ScopeOwner): Scope {
+    val ref = element.getUserData(SCOPE_KEY)
+    var scope = com.intellij.reference.SoftReference.dereference<Scope?>(ref)
     if (scope == null) {
-      scope = new ScopeImpl(element);
-      element.putUserData(SCOPE_KEY, new SoftReference<>(scope));
+      scope = ScopeImpl(element)
+      element.putUserData(SCOPE_KEY, SoftReference<Scope?>(scope))
     }
-    return scope;
+    return scope
   }
 
-  public static @NotNull PyDataFlow getDataFlow(@NotNull ScopeOwner element, @NotNull FlowContext context) {
+  @JvmStatic
+  fun getDataFlow(element: ScopeOwner, context: FlowContext): PyDataFlow {
     // Cache will reset on psi modification, same as TypeEvalContext
-    return PyUtil.getParameterizedCachedValue(element, context, ctx -> new PyDataFlow(getControlFlow(element), ctx));
+    return PyUtil.getParameterizedCachedValue(element, context) { ctx ->
+      PyDataFlow(getControlFlow(element), ctx)
+    }
   }
 }

@@ -1,124 +1,115 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.codeInsight.imports;
+package com.jetbrains.python.codeInsight.imports
 
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiDirectoryContainer;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiLanguageInjectionHost;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiParserFacade;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PythonCodeStyleService;
-import com.jetbrains.python.ast.impl.PyUtilCore;
-import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
-import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.documentation.docstrings.DocStringUtil;
-import com.jetbrains.python.documentation.doctest.PyDocstringFile;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyElementGenerator;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyImportStatement;
-import com.jetbrains.python.psi.PyImportStatementBase;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyStatement;
-import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
-import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.pyi.PyiFile;
-import com.jetbrains.python.pyi.PyiUtil;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
-import com.jetbrains.python.sdk.skeleton.PySkeletonUtil;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-
-import static com.jetbrains.python.psi.PyUtil.as;
-import static com.jetbrains.python.psi.PyUtil.sure;
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.registry.Registry.Companion.intValue
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiDirectoryContainer
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiParserFacade
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.psi.templateLanguages.OuterLanguageElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.IncorrectOperationException
+import com.intellij.util.containers.ContainerUtil
+import com.jetbrains.python.PythonCodeStyleService
+import com.jetbrains.python.ast.impl.PyUtilCore
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.codeInsight.imports.ImportLocationHelper.Companion.getInstance
+import com.jetbrains.python.codeInsight.imports.PyNestedClassUtils.findTopLevelClass
+import com.jetbrains.python.codeInsight.imports.PyRelativeImportData.Companion.fromString
+import com.jetbrains.python.documentation.docstrings.DocStringUtil
+import com.jetbrains.python.documentation.doctest.PyDocstringFile
+import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyElementGenerator
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFromImportStatement
+import com.jetbrains.python.psi.PyImportElement
+import com.jetbrains.python.psi.PyImportStatement
+import com.jetbrains.python.psi.PyImportStatementBase
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyStatement
+import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
+import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports
+import com.jetbrains.python.psi.impl.PyPsiUtils
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder
+import com.jetbrains.python.pyi.PyiFile
+import com.jetbrains.python.pyi.PyiUtil
+import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.jetbrains.python.sdk.skeleton.PySkeletonUtil
+import one.util.streamex.StreamEx
+import org.jetbrains.annotations.Contract
+import java.util.Objects
+import kotlin.math.max
 
 /**
  * Does the actual job of adding an import statement into a file.
  */
-public final class AddImportHelper {
-  private static final Logger LOG = Logger.getInstance(AddImportHelper.class);
+object AddImportHelper {
+  private val LOG = thisLogger()
 
   // normal imports go first, then "from" imports
-  private static final Comparator<PyImportStatementBase> IMPORT_TYPE_COMPARATOR = (import1, import2) -> {
-    final int firstIsFromImport = import1 instanceof PyFromImportStatement ? 1 : 0;
-    final int secondIsFromImport = import2 instanceof PyFromImportStatement ? 1 : 0;
-    return firstIsFromImport - secondIsFromImport;
-  };
-
-  private static @NotNull Comparator<PyImportStatementBase> getImportStatementComparator(@NotNull PsiFile settingsAnchor) {
-    return (import1, import2) -> {
-      final Comparator<String> stringComparator = getImportTextComparator(settingsAnchor);
-      return ContainerUtil.compareLexicographically(getSortNames(import1), getSortNames(import2), Comparator.nullsFirst(stringComparator));
-    };
+  private val IMPORT_TYPE_COMPARATOR = Comparator { import1: PyImportStatementBase, import2: PyImportStatementBase ->
+    val firstIsFromImport = if (import1 is PyFromImportStatement) 1 else 0
+    val secondIsFromImport = if (import2 is PyFromImportStatement) 1 else 0
+    firstIsFromImport - secondIsFromImport
   }
 
-  public static @NotNull Comparator<String> getImportTextComparator(@NotNull PsiFile settingsAnchor) {
-    return PythonCodeStyleService.getInstance().isOptimizeImportsCaseSensitiveOrder(settingsAnchor)
-           ? String.CASE_INSENSITIVE_ORDER
-           : Comparator.naturalOrder();
+  private fun getImportStatementComparator(settingsAnchor: PsiFile): Comparator<PyImportStatementBase> {
+    return Comparator { import1, import2 ->
+      val stringComparator = getImportTextComparator(settingsAnchor)
+      ContainerUtil.compareLexicographically(
+        getSortNames(import1),
+        getSortNames(import2),
+        Comparator.nullsFirst(stringComparator)
+      )
+    }
   }
 
-  private static @NotNull List<String> getSortNames(@NotNull PyImportStatementBase importStatement) {
-    final List<String> result = new ArrayList<>();
-    final PyFromImportStatement fromImport = as(importStatement, PyFromImportStatement.class);
+  @JvmStatic
+  fun getImportTextComparator(settingsAnchor: PsiFile): Comparator<String> {
+    return (if (PythonCodeStyleService.getInstance().isOptimizeImportsCaseSensitiveOrder(settingsAnchor))
+      String.CASE_INSENSITIVE_ORDER
+    else
+      Comparator.naturalOrder()) as Comparator<String>
+  }
+
+  private fun getSortNames(importStatement: PyImportStatementBase): List<String> {
+    val result: MutableList<String> = ArrayList()
+    val fromImport = importStatement as? PyFromImportStatement
     if (fromImport != null) {
       // because of that relative imports go to the end of an import block
-      result.add(StringUtil.repeatSymbol('.', fromImport.getRelativeLevel()));
-      final QualifiedName source = fromImport.getImportSourceQName();
-      result.add(Objects.toString(source, ""));
-      if (fromImport.isStarImport()) {
-        result.add("*");
+      result.add(StringUtil.repeatSymbol('.', fromImport.relativeLevel))
+      val source = fromImport.importSourceQName
+      result.add(Objects.toString(source, ""))
+      if (fromImport.isStarImport) {
+        result.add("*")
       }
     }
     else {
       // fake relative level
-      result.add("");
+      result.add("")
     }
 
-    for (PyImportElement importElement : importStatement.getImportElements()) {
-      final QualifiedName qualifiedName = importElement.getImportedQName();
-      result.add(Objects.toString(qualifiedName, ""));
-      result.add(StringUtil.notNullize(importElement.getAsName()));
+    for (importElement in importStatement.importElements) {
+      val qualifiedName = importElement.importedQName
+      result.add(Objects.toString(qualifiedName, ""))
+      result.add((importElement.asName ?: ""))
     }
-    return result;
+    return result
   }
 
   /**
@@ -128,316 +119,294 @@ public final class AddImportHelper {
    * @param settingsAnchor file to use as an anchor to detect settings of Optimize Imports
    * @see ImportPriority
    */
-  public static @NotNull Comparator<PyImportStatementBase> getSameGroupImportsComparator(@NotNull PsiFile settingsAnchor) {
+  @JvmStatic
+  fun getSameGroupImportsComparator(settingsAnchor: PsiFile): Comparator<PyImportStatementBase> {
     if (PythonCodeStyleService.getInstance().isOptimizeImportsSortedByTypeFirst(settingsAnchor)) {
-      return IMPORT_TYPE_COMPARATOR.thenComparing(getImportStatementComparator(settingsAnchor));
+      return IMPORT_TYPE_COMPARATOR.thenComparing(getImportStatementComparator(settingsAnchor))
     }
     else {
-      return getImportStatementComparator(settingsAnchor).thenComparing(IMPORT_TYPE_COMPARATOR);
+      return getImportStatementComparator(settingsAnchor).thenComparing(IMPORT_TYPE_COMPARATOR)
     }
   }
 
-  public enum ImportPriority {
-    FUTURE,
-    BUILTIN,
-    THIRD_PARTY,
-    PROJECT
-  }
+  private val UNRESOLVED_SYMBOL_PRIORITY = ImportPriority.THIRD_PARTY
 
-  static class ImportPriorityChoice {
-    private final ImportPriority myPriority;
-    private final String myDescription;
+  @JvmStatic
+  fun addLocalImportStatement(element: PsiElement, name: String, asName: String?) {
+    val generator = PyElementGenerator.getInstance(element.project)
+    val languageLevel = LanguageLevel.forElement(element)
 
-    ImportPriorityChoice(@NotNull ImportPriority priority, @NotNull String description) {
-      myPriority = priority;
-      myDescription = description;
-    }
-
-    public @NotNull ImportPriority getPriority() {
-      return myPriority;
-    }
-
-    public @NotNull String getDescription() {
-      return myDescription;
-    }
-  }
-
-  private static final ImportPriority UNRESOLVED_SYMBOL_PRIORITY = ImportPriority.THIRD_PARTY;
-
-  private AddImportHelper() {
-  }
-
-  public static void addLocalImportStatement(@NotNull PsiElement element, @NotNull String name, @Nullable String asName) {
-    final PyElementGenerator generator = PyElementGenerator.getInstance(element.getProject());
-    final LanguageLevel languageLevel = LanguageLevel.forElement(element);
-
-    final PsiElement anchor = getLocalInsertPosition(element);
-    final PsiElement parentElement = sure(anchor).getParent();
+    val anchor = getLocalInsertPosition(element)
+    val parentElement = PyUtil.sure(anchor).parent
     if (parentElement != null) {
-      parentElement.addBefore(generator.createImportStatement(languageLevel, name, asName), anchor);
+      parentElement.addBefore(generator.createImportStatement(languageLevel, name, asName), anchor)
     }
   }
 
-  public static void addLocalFromImportStatement(@NotNull PsiElement element,
-                                                 @NotNull String qualifier,
-                                                 @NotNull String name,
-                                                 @Nullable String asName) {
-    final PyElementGenerator generator = PyElementGenerator.getInstance(element.getProject());
-    final LanguageLevel languageLevel = LanguageLevel.forElement(element);
+  @JvmStatic
+  fun addLocalFromImportStatement(
+    element: PsiElement,
+    qualifier: String,
+    name: String,
+    asName: String?,
+  ) {
+    val generator = PyElementGenerator.getInstance(element.project)
+    val languageLevel = LanguageLevel.forElement(element)
 
-    final PsiElement anchor = getLocalInsertPosition(element);
-    final PsiElement parentElement = sure(anchor).getParent();
+    val anchor = getLocalInsertPosition(element)
+    val parentElement = PyUtil.sure(anchor).parent
     if (parentElement != null) {
-      parentElement.addBefore(generator.createFromImportStatement(languageLevel, qualifier, name, asName), anchor);
+      parentElement.addBefore(generator.createFromImportStatement(languageLevel, qualifier, name, asName), anchor)
     }
   }
 
-  public static @Nullable PsiElement getLocalInsertPosition(@NotNull PsiElement anchor) {
-    return PsiTreeUtil.getParentOfType(anchor, PyStatement.class, false);
+  fun getLocalInsertPosition(anchor: PsiElement): PsiElement? {
+    return PsiTreeUtil.getParentOfType(anchor, PyStatement::class.java, false)
   }
 
   /**
    * Returns position in the file after all leading comments, docstring and import statements.
-   * <p>
-   * Returned PSI element is intended to be used as "anchor" parameter for {@link PsiElement#addBefore(PsiElement, PsiElement)},
-   * hence {@code null} means that element to be inserted will be the first in the file.
+   *
+   *
+   * Returned PSI element is intended to be used as "anchor" parameter for [PsiElement.addBefore],
+   * hence `null` means that element to be inserted will be the first in the file.
    *
    * @param file target file where some new top-level element is going to be inserted
    * @return anchor PSI element as described
    */
-  public static @Nullable PsiElement getFileInsertPosition(final PsiFile file) {
-    return getInsertPosition(file, null, null, null);
+  @JvmStatic
+  fun getFileInsertPosition(file: PsiFile): PsiElement? {
+    return getInsertPosition(file, null, null, null)
   }
 
-  private static @Nullable PsiElement getInsertPosition(@NotNull PsiElement insertParent,
-                                                        @Nullable PsiElement anchor,
-                                                        @Nullable PyImportStatementBase newImport,
-                                                        @Nullable ImportPriority priority) {
-    PsiElement feeler = ImportLocationHelper.getInstance().getSearchStartPosition(anchor, insertParent);
-    if (feeler == null) return null;
+  private fun getInsertPosition(
+    insertParent: PsiElement,
+    anchor: PsiElement?,
+    newImport: PyImportStatementBase?,
+    priority: ImportPriority?,
+  ): PsiElement? {
+    var feeler = getInstance().getSearchStartPosition(anchor, insertParent)
+    if (feeler == null) return null
     // skip initial comments and whitespace and try to get just below the last import stmt
-    boolean skippedOverStatements = false;
-    boolean skippedOverDoc = false;
-    PsiElement seeker = feeler;
-    final boolean isInjected = InjectedLanguageManager.getInstance(feeler.getProject()).isInjectedFragment(feeler.getContainingFile());
-    PyImportStatementBase importAbove = null, importBelow = null;
+    var skippedOverStatements = false
+    var skippedOverDoc = false
+    var seeker: PsiElement? = feeler
+    val isInjected = InjectedLanguageManager.getInstance(feeler.project).isInjectedFragment(feeler.containingFile)
+    var importAbove: PyImportStatementBase? = null
+    var importBelow: PyImportStatementBase? = null
     do {
-      if (feeler instanceof PyImportStatementBase existingImport && !isInjected) {
+      if (feeler is PyImportStatementBase && !isInjected) {
         if (priority != null && newImport != null) {
-          if (shouldInsertBefore(newImport, existingImport, priority)) {
-            importBelow = existingImport;
-            break;
+          if (shouldInsertBefore(newImport, feeler, priority)) {
+            importBelow = feeler
+            break
           }
           else {
-            importAbove = existingImport;
+            importAbove = feeler
           }
         }
-        seeker = feeler;
-        feeler = feeler.getNextSibling();
-        skippedOverStatements = true;
+        seeker = feeler
+        feeler = feeler.nextSibling
+        skippedOverStatements = true
       }
-      else if (PsiTreeUtil.instanceOf(feeler, PsiWhiteSpace.class, PsiComment.class)) {
-        seeker = feeler;
-        feeler = feeler.getNextSibling();
+      else if (PsiTreeUtil.instanceOf(feeler, PsiWhiteSpace::class.java, PsiComment::class.java)) {
+        seeker = feeler
+        feeler = feeler!!.nextSibling
       }
-      else if (PsiTreeUtil.instanceOf(feeler, OuterLanguageElement.class)) {
+      else if (PsiTreeUtil.instanceOf(feeler, OuterLanguageElement::class.java)) {
         if (skippedOverStatements) {
-          break;
+          break
         }
-        feeler = feeler.getNextSibling();
-        seeker = feeler;
+        feeler = feeler!!.nextSibling
+        seeker = feeler
       }
       else if (PyUtilCore.isAssignmentToModuleLevelDunderName(feeler)) {
         if (priority == ImportPriority.FUTURE) {
-          seeker = feeler;
-          break;
+          seeker = feeler
+          break
         }
-        feeler = feeler.getNextSibling();
-        seeker = feeler;
-        skippedOverStatements = true;
+        feeler = feeler!!.nextSibling
+        seeker = feeler
+        skippedOverStatements = true
       }
-      // maybe we arrived at the doc comment stmt; skip over it, too
-      else if (!skippedOverStatements && !skippedOverDoc && insertParent instanceof PyFile) {
+      else if (!skippedOverStatements && !skippedOverDoc && insertParent is PyFile) {
         // this gives the literal; its parent is the expr seeker may have encountered
-        final PsiElement docElem = DocStringUtil.findDocStringExpression((PyElement)insertParent);
-        if (docElem != null && docElem.getParent() == feeler) {
-          feeler = feeler.getNextSibling();
-          seeker = feeler; // skip over doc even if there's nothing below it
-          skippedOverDoc = true;
+        val docElem: PsiElement? = DocStringUtil.findDocStringExpression(insertParent as PyElement)
+        if (docElem != null && docElem.parent === feeler) {
+          feeler = feeler.nextSibling
+          seeker = feeler // skip over doc even if there's nothing below it
+          skippedOverDoc = true
         }
         else {
-          break; // not a doc comment, stop on it
+          break // not a doc comment, stop on it
         }
       }
       else {
-        break; // some other statement, stop
+        break // some other statement, stop
       }
     }
-    while (feeler != null);
-    final ImportPriority priorityAbove = importAbove != null ? getImportPriority(importAbove) : null;
-    final ImportPriority priorityBelow = importBelow != null ? getImportPriority(importBelow) : null;
-    if (newImport != null && (priorityAbove == null || priorityAbove.compareTo(priority) < 0)) {
-      newImport.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, true);
+    while (feeler != null)
+    val priorityAbove = if (importAbove != null) getImportPriority(importAbove) else null
+    val priorityBelow = if (importBelow != null) getImportPriority(importBelow) else null
+    if (newImport != null && (priorityAbove == null || priorityAbove < priority!!)) {
+      newImport.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, true)
     }
 
     if (feeler != null) {
-      var anchorComment = getTopmostBoundComment(feeler);
+      val anchorComment = getTopmostBoundComment(feeler)
       if (anchorComment != null) {
-        seeker = anchorComment;
+        seeker = anchorComment
       }
     }
 
     if (priorityBelow != null) {
       // actually not necessary because existing import with higher priority (i.e. lower import group)
       // probably should have IMPORT_GROUP_BEGIN flag already, but we add it anyway just for safety
-      if (priorityBelow.compareTo(priority) > 0) {
-        importBelow.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, true);
+      if (priorityBelow > priority!!) {
+        importBelow!!.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, true)
       }
       else if (priorityBelow == priority) {
-        importBelow.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, null);
+        importBelow!!.putCopyableUserData(PythonCodeStyleService.IMPORT_GROUP_BEGIN, null)
       }
     }
-    return seeker;
+    return seeker
   }
 
-  private static @Nullable PsiComment getTopmostBoundComment(@NotNull PsiElement element) {
-    List<List<PsiComment>> commentBlocks = PyPsiUtils.getPrecedingCommentBlocks(element);
-    if (commentBlocks.isEmpty()) return null;
+  private fun getTopmostBoundComment(element: PsiElement): PsiComment? {
+    val commentBlocks = PyPsiUtils.getPrecedingCommentBlocks(element)
+    if (commentBlocks.isEmpty()) return null
 
-    List<PsiComment> firstBlock = commentBlocks.get(0);
-    PsiComment firstComment = firstBlock.get(0);
-    if (firstComment.getPrevSibling() != null) {
-      return firstComment;
+    val firstBlock = commentBlocks[0]
+    val firstComment = firstBlock[0]
+    if (firstComment.prevSibling != null) {
+      return firstComment
     }
 
-    PsiComment lastCommentFirstBlock = firstBlock.get(firstBlock.size() - 1);
+    val lastCommentFirstBlock = firstBlock[firstBlock.size - 1]
     if (PyUtil.isNoinspectionComment(lastCommentFirstBlock)) {
-      return lastCommentFirstBlock;
+      return lastCommentFirstBlock
     }
 
-    if (commentBlocks.size() == 1) return null;
-    return ContainerUtil.getFirstItem(commentBlocks.get(1));
+    if (commentBlocks.size == 1) return null
+    return commentBlocks[1].firstOrNull()
   }
 
-  private static boolean shouldInsertBefore(@Nullable PyImportStatementBase newImport,
-                                            @NotNull PyImportStatementBase existingImport,
-                                            @NotNull ImportPriority priority) {
-    final ImportPriority existingImportPriority = getImportPriority(existingImport);
-    final int byPriority = priority.compareTo(existingImportPriority);
+  private fun shouldInsertBefore(
+    newImport: PyImportStatementBase?,
+    existingImport: PyImportStatementBase,
+    priority: ImportPriority,
+  ): Boolean {
+    val existingImportPriority = getImportPriority(existingImport)
+    val byPriority = priority.compareTo(existingImportPriority)
     if (byPriority != 0) {
-      return byPriority < 0;
+      return byPriority < 0
     }
     if (newImport == null) {
-      return false;
+      return false
     }
-    return getSameGroupImportsComparator(existingImport.getContainingFile()).compare(newImport, existingImport) < 0;
+    return getSameGroupImportsComparator(existingImport.containingFile).compare(newImport, existingImport) < 0
   }
 
-  public static @NotNull ImportPriority getImportPriority(@NotNull PsiElement importLocation, @NotNull PsiFileSystemItem toImport) {
-    final ImportPriorityChoice choice = getImportPriorityWithReason(importLocation, toImport);
-    LOG.debug(String.format("Import group for %s at %s is %s: %s", toImport, importLocation.getContainingFile(),
-                            choice.myPriority, choice.myDescription));
-    return choice.myPriority;
+  @JvmStatic
+  fun getImportPriority(importLocation: PsiElement, toImport: PsiFileSystemItem): ImportPriority {
+    val choice = getImportPriorityWithReason(importLocation, toImport)
+    LOG.debug(
+      String.format(
+        "Import group for %s at %s is %s: %s", toImport, importLocation.containingFile,
+        choice.priority, choice.description
+      )
+    )
+    return choice.priority
   }
 
-  public static @NotNull ImportPriority getImportPriority(@NotNull PyImportStatementBase importStatement) {
-    final ImportPriorityChoice choice = getImportPriorityWithReason(importStatement);
-    LOG.debug(String.format("Import group for '%s' is %s: %s", importStatement.getText(), choice.myPriority, choice.myDescription));
-    return choice.myPriority;
+  fun getImportPriority(importStatement: PyImportStatementBase): ImportPriority {
+    val choice = getImportPriorityWithReason(importStatement)
+    LOG.debug(String.format("Import group for '%s' is %s: %s", importStatement.text, choice.priority, choice.description))
+    return choice.priority
   }
 
-  static @NotNull ImportPriorityChoice getImportPriorityWithReason(@NotNull PyImportStatementBase importStatement) {
-    final PsiElement resolved;
-    final PsiElement resolveAnchor;
-    if (importStatement instanceof PyFromImportStatement fromImportStatement) {
-      if (fromImportStatement.isFromFuture()) {
-        return new ImportPriorityChoice(ImportPriority.FUTURE, "import from __future__");
+  @JvmStatic
+  fun getImportPriorityWithReason(importStatement: PyImportStatementBase): ImportPriorityChoice {
+    val resolved: PsiElement?
+    val resolveAnchor: PsiElement?
+    if (importStatement is PyFromImportStatement) {
+      if (importStatement.isFromFuture) {
+        return ImportPriorityChoice(ImportPriority.FUTURE, "import from __future__")
       }
-      if (fromImportStatement.getRelativeLevel() > 0) {
-        return new ImportPriorityChoice(ImportPriority.PROJECT, "explicit relative import");
+      if (importStatement.relativeLevel > 0) {
+        return ImportPriorityChoice(ImportPriority.PROJECT, "explicit relative import")
       }
-      resolveAnchor = fromImportStatement.getImportSource();
-      resolved = fromImportStatement.resolveImportSource();
+      resolveAnchor = importStatement.importSource
+      resolved = importStatement.resolveImportSource()
     }
     else {
-      final PyImportElement firstImportElement = ArrayUtil.getFirstElement(importStatement.getImportElements());
+      val firstImportElement = importStatement.importElements.firstOrNull()
       if (firstImportElement == null) {
-        return new ImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, "incomplete import statement");
+        return ImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, "incomplete import statement")
       }
-      resolveAnchor = firstImportElement;
-      resolved = firstImportElement.resolve();
+      resolveAnchor = firstImportElement
+      resolved = firstImportElement.resolve()
     }
     if (resolved == null) {
-      return new ImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY,
-                                      resolveAnchor == null ? "incomplete import statement" : resolveAnchor.getText() + " is unresolved");
+      return ImportPriorityChoice(
+        UNRESOLVED_SYMBOL_PRIORITY,
+        if (resolveAnchor == null) "incomplete import statement" else resolveAnchor.text + " is unresolved"
+      )
     }
 
-    PsiFileSystemItem resolvedFileOrDir;
-    if (resolved instanceof PsiDirectory) {
-      resolvedFileOrDir = (PsiFileSystemItem)resolved;
-    }
-    // resolved symbol may be PsiPackage in Jython
-    else if (resolved instanceof PsiDirectoryContainer) {
-      resolvedFileOrDir = ArrayUtil.getFirstElement(((PsiDirectoryContainer)resolved).getDirectories());
-    }
-    else {
-      resolvedFileOrDir = resolved.getContainingFile();
+    var resolvedFileOrDir: PsiFileSystemItem?
+    when (resolved) {
+      is PsiDirectory -> resolvedFileOrDir = resolved as PsiFileSystemItem
+      is PsiDirectoryContainer -> resolvedFileOrDir = resolved.directories.firstOrNull()
+      else -> resolvedFileOrDir = resolved.containingFile
     }
 
-    if (resolvedFileOrDir instanceof PyiFile) {
-      final PsiElement original = PyiUtil.getOriginalElement((PyiFile)resolvedFileOrDir);
-      resolvedFileOrDir = ObjectUtils.notNull(as(original, PsiFileSystemItem.class), resolvedFileOrDir);
+    if (resolvedFileOrDir is PyiFile) {
+      val original = PyiUtil.getOriginalElement(resolvedFileOrDir)
+      resolvedFileOrDir = (original as? PsiFileSystemItem) ?: resolvedFileOrDir
     }
 
     if (resolvedFileOrDir == null) {
-      return new ImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, resolved + " is not a file or directory");
+      return ImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, "$resolved is not a file or directory")
     }
 
-    return getImportPriorityWithReason(importStatement, resolvedFileOrDir);
+    return getImportPriorityWithReason(importStatement, resolvedFileOrDir)
   }
 
-  static @NotNull ImportPriorityChoice getImportPriorityWithReason(@NotNull PsiElement importLocation,
-                                                                   @NotNull PsiFileSystemItem toImport) {
-    final VirtualFile vFile = toImport.getVirtualFile();
+  fun getImportPriorityWithReason(
+    importLocation: PsiElement,
+    toImport: PsiFileSystemItem,
+  ): ImportPriorityChoice {
+    val vFile = toImport.virtualFile
     if (vFile == null) {
-      return new ImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, toImport + " doesn't have an associated virtual file");
+      return ImportPriorityChoice(UNRESOLVED_SYMBOL_PRIORITY, "$toImport doesn't have an associated virtual file")
     }
-    final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(toImport.getProject());
-    final ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
+    val projectRootManager = ProjectRootManager.getInstance(toImport.project)
+    val fileIndex = projectRootManager.fileIndex
     if (fileIndex.isInContent(vFile) && !fileIndex.isInLibraryClasses(vFile)) {
-      return new ImportPriorityChoice(ImportPriority.PROJECT, vFile + " belongs to the project and not under interpreter paths");
+      return ImportPriorityChoice(
+        ImportPriority.PROJECT,
+        "$vFile belongs to the project and not under interpreter paths"
+      )
     }
-    final Module module = ModuleUtilCore.findModuleForPsiElement(importLocation);
-    final Sdk pythonSdk = module != null ? PythonSdkUtil.findPythonSdk(module) : projectRootManager.getProjectSdk();
+    val module = ModuleUtilCore.findModuleForPsiElement(importLocation)
+    val pythonSdk = if (module != null) PythonSdkUtil.findPythonSdk(module) else projectRootManager.projectSdk
 
     if (PySkeletonUtil.isStdLib(vFile, pythonSdk)) {
-      return new ImportPriorityChoice(ImportPriority.BUILTIN, vFile + " is either in lib but not under site-packages," +
-                                                              " or belongs to the root of skeletons," +
-                                                              " or is a .pyi stub definition for stdlib module");
+      return ImportPriorityChoice(
+        ImportPriority.BUILTIN, vFile.toString() + " is either in lib but not under site-packages," +
+                                " or belongs to the root of skeletons," +
+                                " or is a .pyi stub definition for stdlib module"
+      )
     }
     else {
-      return new ImportPriorityChoice(ImportPriority.THIRD_PARTY, pythonSdk == null ? "SDK for " + vFile + " isn't found"
-                                                                                    : "Fall back value for " + vFile);
+      return ImportPriorityChoice(
+        ImportPriority.THIRD_PARTY, if (pythonSdk == null)
+          "SDK for $vFile isn't found"
+        else
+          "Fall back value for $vFile"
+      )
     }
-  }
-
-  /**
-   * Adds an import statement, if it doesn't exist yet, presumably below all other initial imports in the file.
-   *
-   * @param file   where to operate
-   * @param name   which to import (qualified is OK)
-   * @param asName optional name for 'as' clause
-   * @param anchor place where the imported name was used. It will be used to determine proper block where new import should be inserted,
-   *               e.g. inside conditional block or try/except statement. Also if anchor is another import statement, new import statement
-   *               will be inserted right after it.
-   * @return whether import statement was actually added
-   */
-  public static boolean addImportStatement(@NotNull PsiFile file,
-                                           @NotNull String name,
-                                           @Nullable String asName,
-                                           @Nullable ImportPriority priority,
-                                           @Nullable PsiElement anchor) {
-    return addImportStatement(file, name, asName, priority, anchor, null);
   }
 
   /**
@@ -447,326 +416,277 @@ public final class AddImportHelper {
    * @param name         which to import (qualified is OK)
    * @param asName       optional name for 'as' clause
    * @param anchor       place where the imported name was used. It will be used to determine proper block where new import should be
-   *                     inserted, e.g. inside conditional block or try/except statement. Also if anchor is another import statement,
-   *                     new import statement will be inserted right after it.
+   * inserted, e.g. inside conditional block or try/except statement. Also if anchor is another import statement,
+   * new import statement will be inserted right after it.
    * @param insertBefore import statement should be inserted right before this element. If null, the position will be chosen automatically.
    * @return whether import statement was actually added
    */
-  public static boolean addImportStatement(@NotNull PsiFile file,
-                                           @NotNull String name,
-                                           @Nullable String asName,
-                                           @Nullable ImportPriority priority,
-                                           @Nullable PsiElement anchor,
-                                           final @Nullable PsiElement insertBefore) {
-    if (!(file instanceof PyFile)) {
-      return false;
+  @JvmStatic
+  @JvmOverloads
+  fun addImportStatement(
+    file: PsiFile,
+    name: String,
+    asName: String?,
+    priority: ImportPriority?,
+    anchor: PsiElement?,
+    insertBefore: PsiElement? = null,
+  ): Boolean {
+    if (file !is PyFile) {
+      return false
     }
-    final List<PyImportElement> existingImports = ((PyFile)file).getImportTargets();
-    final List<PyImportStatementBase> importsAllowedToReuse = getImportsAllowedToReuse(insertBefore);
-    for (PyImportElement existingImport : existingImports) {
-      if (importsAllowedToReuse != null && !importsAllowedToReuse.contains(existingImport.getContainingImportStatement())) {
-        continue;
+    val existingImports = file.importTargets
+    val importsAllowedToReuse = getImportsAllowedToReuse(insertBefore)
+    for (existingImport in existingImports) {
+      if (importsAllowedToReuse != null && !importsAllowedToReuse.contains(existingImport.containingImportStatement)) {
+        continue
       }
 
-      final String existingName = Objects.toString(existingImport.getImportedQName(), "");
-      if (name.equals(existingName) && Objects.equals(asName, existingImport.getAsName())) {
-        return false;
+      val existingName = Objects.toString(existingImport.importedQName, "")
+      if (name == existingName && asName == existingImport.asName) {
+        return false
       }
     }
 
-    final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
-    final LanguageLevel languageLevel = LanguageLevel.forElement(file);
-    final PyImportStatement importNodeToInsert = generator.createImportStatement(languageLevel, name, asName);
+    val generator = PyElementGenerator.getInstance(file.project)
+    val languageLevel = LanguageLevel.forElement(file)
+    val importNodeToInsert = generator.createImportStatement(languageLevel, name, asName)
 
-    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
-      fragment.addImports(Collections.singletonList(importNodeToInsert));
-      return true;
+    if (file is PyCodeFragmentWithHiddenImports) {
+      file.addImports(mutableListOf(importNodeToInsert))
+      return true
     }
 
-    final PsiElement insertParent;
-    if (insertBefore == null || insertBefore.getParent() == null) {
-      final PyImportStatementBase importStatement = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
-      insertParent = importStatement != null && importStatement.getContainingFile() == file ?
-                     importStatement.getParent() : file;
+    val insertParent: PsiElement
+    if (insertBefore == null || insertBefore.parent == null) {
+      val importStatement = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase::class.java, false)
+      insertParent =
+        if (importStatement != null && importStatement.containingFile === file) importStatement.parent else file
     }
     else {
-      insertParent = insertBefore.getParent();
+      insertParent = insertBefore.parent
     }
     try {
-      if (anchor instanceof PyImportStatementBase) {
-        insertParent.addAfter(importNodeToInsert, anchor);
+      if (anchor is PyImportStatementBase) {
+        insertParent.addAfter(importNodeToInsert, anchor)
       }
       else {
-        final PsiElement position;
+        val position: PsiElement?
         if (insertBefore == null) {
-          position = getInsertPosition(insertParent, anchor, importNodeToInsert, priority);
+          position = getInsertPosition(insertParent, anchor, importNodeToInsert, priority)
         }
         else {
-          position = insertBefore;
+          position = insertBefore
         }
-        insertParent.addBefore(importNodeToInsert, position);
+        insertParent.addBefore(importNodeToInsert, position)
       }
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    catch (e: IncorrectOperationException) {
+      LOG.error(e)
     }
-    return true;
+    return true
   }
 
   /**
-   * Adds a new {@link PyFromImportStatement} statement within other top-level imports or as specified by anchor.
-   *
-   * @param file   where to operate
-   * @param from   import source (reference after {@code from} keyword)
-   * @param name   imported name (identifier after {@code import} keyword)
-   * @param asName optional alias (identifier after {@code as} keyword)
-   * @param anchor place where the imported name was used. It will be used to determine proper block where new import should be inserted,
-   *               e.g. inside conditional block or try/except statement. Also if anchor is another import statement, new import statement
-   *               will be inserted right after it.
-   * @see #addOrUpdateFromImportStatement
-   */
-  public static void addFromImportStatement(@NotNull PsiFile file,
-                                            @NotNull String from,
-                                            @NotNull String name,
-                                            @Nullable String asName,
-                                            @Nullable ImportPriority priority,
-                                            @Nullable PsiElement anchor) {
-    addFromImportStatement(file, from, name, asName, priority, anchor, null);
-  }
-
-  /**
-   * Adds a new {@link PyFromImportStatement} statement within other top-level imports or as specified by anchor.
+   * Adds a new [PyFromImportStatement] statement within other top-level imports or as specified by anchor.
    *
    * @param file         where to operate
-   * @param from         import source (reference after {@code from} keyword)
-   * @param name         imported name (identifier after {@code import} keyword)
-   * @param asName       optional alias (identifier after {@code as} keyword)
+   * @param from         import source (reference after `from` keyword)
+   * @param name         imported name (identifier after `import` keyword)
+   * @param asName       optional alias (identifier after `as` keyword)
    * @param anchor       place where the imported name was used. It will be used to determine proper block where new import should be
-   *                     inserted, e.g. inside conditional block or try/except statement. Also if anchor is another import statement,
-   *                     new import statement will be inserted right after it.
+   * inserted, e.g. inside conditional block or try/except statement. Also if anchor is another import statement,
+   * new import statement will be inserted right after it.
    * @param insertBefore import statement should be inserted right before this element. If null, the position will be chosen automatically.
-   * @see #addOrUpdateFromImportStatement
+   * @see .addOrUpdateFromImportStatement
    */
-  public static void addFromImportStatement(@NotNull PsiFile file,
-                                            @NotNull String from,
-                                            @NotNull String name,
-                                            @Nullable String asName,
-                                            @Nullable ImportPriority priority,
-                                            @Nullable PsiElement anchor,
-                                            @Nullable PsiElement insertBefore) {
-    final PyElementGenerator generator = PyElementGenerator.getInstance(file.getProject());
-    final LanguageLevel languageLevel = LanguageLevel.forElement(file);
-    final PyFromImportStatement newImport = generator.createFromImportStatement(languageLevel, from, name, asName);
-    addFromImportStatement(file, newImport, priority, anchor, insertBefore);
+  @JvmStatic
+  @JvmOverloads
+  fun addFromImportStatement(
+    file: PsiFile,
+    from: String,
+    name: String,
+    asName: String?,
+    priority: ImportPriority?,
+    anchor: PsiElement?,
+    insertBefore: PsiElement? = null,
+  ) {
+    val generator = PyElementGenerator.getInstance(file.project)
+    val languageLevel = LanguageLevel.forElement(file)
+    val newImport = generator.createFromImportStatement(languageLevel, from, name, asName)
+    addFromImportStatement(file, newImport, priority, anchor, insertBefore)
   }
 
   /**
-   * Adds a new {@link PyFromImportStatement} statement within other top-level imports or as specified by anchor.
-   *
-   * @param file      where to operate
-   * @param newImport new "from import" statement to insert. It may be generated, because it won't be used for resolving anyway.
-   *                  You might want to use overloaded version of this method to generate such statement automatically.
-   * @param anchor    place where the imported name was used. It will be used to determine proper block where new import should be inserted,
-   *                  e.g. inside conditional block or try/except statement. Also if anchor is another import statement, new import statement
-   *                  will be inserted right after it.
-   * @see #addFromImportStatement(PsiFile, String, String, String, ImportPriority, PsiElement)
-   * @see #addFromImportStatement
-   */
-  public static void addFromImportStatement(@NotNull PsiFile file,
-                                            @NotNull PyFromImportStatement newImport,
-                                            @Nullable ImportPriority priority,
-                                            @Nullable PsiElement anchor) {
-    addFromImportStatement(file, newImport, priority, anchor, null);
-  }
-
-  /**
-   * Adds a new {@link PyFromImportStatement} statement within other top-level imports or as specified by anchor.
+   * Adds a new [PyFromImportStatement] statement within other top-level imports or as specified by anchor.
    *
    * @param file         where to operate
    * @param newImport    new "from import" statement to insert. It may be generated, because it won't be used for resolving anyway.
-   *                     You might want to use overloaded version of this method to generate such statement automatically.
+   * You might want to use overloaded version of this method to generate such statement automatically.
    * @param anchor       place where the imported name was used. It will be used to determine proper block where new import should be
-   *                     inserted, e.g. inside conditional block or try/except statement. Also if anchor is another import statement,
-   *                     new import statement will be inserted right after it.
+   * inserted, e.g. inside conditional block or try/except statement. Also if anchor is another import statement,
+   * new import statement will be inserted right after it.
    * @param insertBefore import statement should be inserted right before this element. If null, the position will be chosen automatically.
-   * @see #addFromImportStatement(PsiFile, String, String, String, ImportPriority, PsiElement)
-   * @see #addFromImportStatement
+   * @see .addFromImportStatement
    */
-  public static void addFromImportStatement(@NotNull PsiFile file,
-                                            @NotNull PyFromImportStatement newImport,
-                                            @Nullable ImportPriority priority,
-                                            @Nullable PsiElement anchor,
-                                            @Nullable PsiElement insertBefore) {
-    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
-      fragment.addImports(Collections.singletonList(newImport));
-      return;
+  @JvmStatic
+  @JvmOverloads
+  fun addFromImportStatement(
+    file: PsiFile,
+    newImport: PyFromImportStatement,
+    priority: ImportPriority?,
+    anchor: PsiElement?,
+    insertBefore: PsiElement? = null,
+  ) {
+    if (file is PyCodeFragmentWithHiddenImports) {
+      file.addImports(mutableListOf(newImport))
+      return
     }
     try {
-      final PyImportStatementBase parentImport = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase.class, false);
-      final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
-      final PsiLanguageInjectionHost injectionHost = manager.getInjectionHost(file);
-      final boolean insideDoctest = file instanceof PyDocstringFile &&
-                                    injectionHost != null &&
-                                    DocStringUtil.getParentDefinitionDocString(injectionHost) == injectionHost;
+      val parentImport = PsiTreeUtil.getParentOfType(anchor, PyImportStatementBase::class.java, false)
+      val manager = InjectedLanguageManager.getInstance(file.project)
+      val injectionHost = manager.getInjectionHost(file)
+      val insideDoctest =
+        file is PyDocstringFile && injectionHost != null && DocStringUtil.getParentDefinitionDocString(injectionHost) === injectionHost
 
-      final PsiElement insertParent;
-      if (insertBefore != null && insertBefore.getParent() != null) {
-        insertParent = insertBefore.getParent();
+      val insertParent: PsiElement
+      if (insertBefore != null && insertBefore.parent != null) {
+        insertParent = insertBefore.parent
       }
-      else if (parentImport != null && parentImport.getContainingFile() == file) {
-        insertParent = parentImport.getParent();
+      else if (parentImport != null && parentImport.containingFile === file) {
+        insertParent = parentImport.parent
       }
       else if (injectionHost != null && !insideDoctest) {
-        insertParent = manager.getTopLevelFile(file);
+        insertParent = manager.getTopLevelFile(file)
       }
       else {
-        insertParent = file;
+        insertParent = file
       }
 
       if (insideDoctest) {
-        final PsiElement element = insertParent.addBefore(newImport, getInsertPosition(insertParent, anchor, newImport, priority));
-        PsiElement whitespace = element.getNextSibling();
-        if (!(whitespace instanceof PsiWhiteSpace)) {
-          whitespace = PsiParserFacade.getInstance(file.getProject()).createWhiteSpaceFromText("  >>> ");
+        val element = insertParent.addBefore(newImport, getInsertPosition(insertParent, anchor, newImport, priority))
+        var whitespace = element.nextSibling
+        if (whitespace !is PsiWhiteSpace) {
+          whitespace = PsiParserFacade.getInstance(file.project).createWhiteSpaceFromText("  >>> ")
         }
-        insertParent.addBefore(whitespace, element);
+        insertParent.addBefore(whitespace, element)
       }
-      else if (anchor instanceof PyImportStatementBase) {
-        insertParent.addAfter(newImport, anchor);
+      else if (anchor is PyImportStatementBase) {
+        insertParent.addAfter(newImport, anchor)
       }
       else {
-        final PsiElement position;
+        val position: PsiElement?
         if (insertBefore == null) {
-          position = getInsertPosition(insertParent, anchor, newImport, priority);
+          position = getInsertPosition(insertParent, anchor, newImport, priority)
         }
         else {
-          position = insertBefore;
+          position = insertBefore
         }
-        insertParent.addBefore(newImport, position);
+        insertParent.addBefore(newImport, position)
       }
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    catch (e: IncorrectOperationException) {
+      LOG.error(e)
     }
   }
 
   /**
-   * Adds new {@link PyFromImportStatement} in file or append {@link PyImportElement} to
-   * existing from import statement.
-   *
-   * @param file     module where import will be added
-   * @param from     import source (reference after {@code from} keyword)
-   * @param name     imported name (identifier after {@code import} keyword)
-   * @param asName   optional alias (identifier after {@code as} keyword)
-   * @param priority optional import priority used to sort imports
-   * @param anchor   place where the imported name was used. It will be used to determine proper block where new import should be inserted,
-   *                 e.g. inside conditional block or try/except statement. Also if anchor is another import statement, new import statement
-   *                 will be inserted right after it.
-   * @return whether import was actually added
-   * @see #addFromImportStatement
-   */
-  public static boolean addOrUpdateFromImportStatement(@NotNull PsiFile file,
-                                                       @NotNull String from,
-                                                       @NotNull String name,
-                                                       @Nullable String asName,
-                                                       @Nullable ImportPriority priority,
-                                                       @Nullable PsiElement anchor) {
-    return addOrUpdateFromImportStatement(file, from, name, asName, priority, anchor, null);
-  }
-
-  /**
-   * Adds new {@link PyFromImportStatement} in file or append {@link PyImportElement} to
+   * Adds new [PyFromImportStatement] in file or append [PyImportElement] to
    * existing from import statement.
    *
    * @param file         module where import will be added
-   * @param from         import source (reference after {@code from} keyword)
-   * @param name         imported name (identifier after {@code import} keyword)
-   * @param asName       optional alias (identifier after {@code as} keyword)
+   * @param from         import source (reference after `from` keyword)
+   * @param name         imported name (identifier after `import` keyword)
+   * @param asName       optional alias (identifier after `as` keyword)
    * @param priority     optional import priority used to sort imports
    * @param anchor       place where the imported name was used. It will be used to determine proper block where new import should be
-   *                     inserted, e.g. inside conditional block or try/except statement. Also if anchor is another import statement,
-   *                     new import statement will be inserted right after it.
+   * inserted, e.g. inside conditional block or try/except statement. Also if anchor is another import statement,
+   * new import statement will be inserted right after it.
    * @param insertBefore import statement should be inserted right before this element. However, if it aims at an insertion statement in
-   *                     a group of inserts, a better insertion point belonging the group may be chosen, and it can be after the specified
-   *                     node. If null, the position will be chosen automatically.
+   * a group of inserts, a better insertion point belonging the group may be chosen, and it can be after the specified
+   * node. If null, the position will be chosen automatically.
    * @return whether import was actually added
-   * @see #addFromImportStatement
+   * @see .addFromImportStatement
    */
-  public static boolean addOrUpdateFromImportStatement(@NotNull PsiFile file,
-                                                       @NotNull String from,
-                                                       @NotNull String name,
-                                                       @Nullable String asName,
-                                                       @Nullable ImportPriority priority,
-                                                       @Nullable PsiElement anchor,
-                                                       final @Nullable PsiElement insertBefore) {
-    final PyFile pyFile = (PyFile)file;
-    final List<PyFromImportStatement> existingImports = pyFile.getFromImports();
+  @JvmStatic
+  @JvmOverloads
+  fun addOrUpdateFromImportStatement(
+    file: PsiFile,
+    from: String,
+    name: String,
+    asName: String?,
+    priority: ImportPriority?,
+    anchor: PsiElement?,
+    insertBefore: PsiElement? = null,
+  ): Boolean {
+    var from = from
+    val pyFile = file as PyFile
+    val existingImports = pyFile.fromImports
 
-    int relativeLevel = 0;
-    PyRelativeImportData importData = null;
+    var relativeLevel = 0
+    var importData: PyRelativeImportData? = null
     if (priority == ImportPriority.PROJECT) {
-      importData = PyRelativeImportData.fromString(from, pyFile);
+      importData = fromString(from, pyFile)
       if (importData != null) {
-        relativeLevel = importData.getRelativeLevel();
+        relativeLevel = importData.relativeLevel
       }
     }
 
-    final List<PyImportStatementBase> importsAllowedToReuse = getImportsAllowedToReuse(insertBefore);
+    val importsAllowedToReuse = getImportsAllowedToReuse(insertBefore)
 
     if (!PythonCodeStyleService.getInstance().isOptimizeImportsAlwaysSplitFromImports(file)) {
-      for (PyFromImportStatement existingImport : existingImports) {
+      for (existingImport in existingImports) {
         if (importsAllowedToReuse != null && !importsAllowedToReuse.contains(existingImport)) {
-          continue;
+          continue
         }
-        if (existingImport.isStarImport()) {
-          continue;
+        if (existingImport.isStarImport) {
+          continue
         }
-        final String existingSource = Objects.toString(existingImport.getImportSourceQName(), "");
+        val existingSource = Objects.toString(existingImport.importSourceQName, "")
 
-        boolean updateExisting = false;
-        final int currentRelativeLevel = existingImport.getRelativeLevel();
+        var updateExisting = false
+        val currentRelativeLevel = existingImport.relativeLevel
         if (currentRelativeLevel == 0) {
-          updateExisting = from.equals(existingSource);
+          updateExisting = from == existingSource
         }
         else if (relativeLevel != 0) {
-          updateExisting = currentRelativeLevel == relativeLevel && existingSource.equals(importData.getRelativeLocation());
+          updateExisting = currentRelativeLevel == relativeLevel && existingSource == importData!!.relativeLocation
         }
 
         if (updateExisting) {
-          return addNameToFromImportStatement(existingImport, name, asName);
+          return addNameToFromImportStatement(existingImport, name, asName)
         }
       }
     }
 
     if (!PyUtil.hasIfNameEqualsMain(pyFile)) {
-      final int maxRelativeLevelInFile = StreamEx.of(pyFile.getFromImports())
-        .mapToInt(PyFromImportStatement::getRelativeLevel)
+      val maxRelativeLevelInFile = StreamEx.of(pyFile.fromImports)
+        .mapToInt { obj: PyFromImportStatement? -> obj!!.relativeLevel }
         .max()
-        .orElse(0);
+        .orElse(0)
 
       if (maxRelativeLevelInFile > 0 && relativeLevel > 0) {
-        int maxAllowedDepth = Math.max(maxRelativeLevelInFile, Registry.intValue("python.relative.import.depth"));
+        val maxAllowedDepth = max(maxRelativeLevelInFile, intValue("python.relative.import.depth"))
         if (maxAllowedDepth >= relativeLevel) {
-          from = importData.getLocationWithDots();
+          from = importData!!.locationWithDots
         }
       }
     }
 
-    addFromImportStatement(file, from, name, asName, priority, anchor, insertBefore);
-    return true;
+    addFromImportStatement(file, from, name, asName, priority, anchor, insertBefore)
+    return true
   }
 
   @Contract("null -> null; !null -> !null")
-  private static @Nullable List<PyImportStatementBase> getImportsAllowedToReuse(@Nullable PsiElement importBlockStart) {
-    if (importBlockStart == null) return null;
+  private fun getImportsAllowedToReuse(importBlockStart: PsiElement?): MutableList<PyImportStatementBase?>? {
+    if (importBlockStart == null) return null
 
-    final List<PyImportStatementBase> importsAllowedToReuse = new ArrayList<>();
-    PsiElement candidate = importBlockStart;
-    while (candidate instanceof PyImportStatementBase) {
-      importsAllowedToReuse.add((PyImportStatementBase)candidate);
-      candidate = PyPsiUtils.getNextNonWhitespaceSibling(candidate);
+    val importsAllowedToReuse: MutableList<PyImportStatementBase?> = ArrayList()
+    var candidate: PsiElement? = importBlockStart
+    while (candidate is PyImportStatementBase) {
+      importsAllowedToReuse.add(candidate)
+      candidate = PyPsiUtils.getNextNonWhitespaceSibling(candidate)
     }
-    return importsAllowedToReuse;
+    return importsAllowedToReuse
   }
 
   /**
@@ -777,216 +697,245 @@ public final class AddImportHelper {
    * @param asName     optional alias for a name in its "as" part
    * @return whether the new name was actually added
    */
-  public static boolean addNameToFromImportStatement(@NotNull PyFromImportStatement fromImport,
-                                                     @NotNull String name,
-                                                     @Nullable String asName) {
-    final PsiFile file = fromImport.getContainingFile();
-    final Comparator<String> nameComparator = getImportTextComparator(file);
-    final PythonCodeStyleService pyCodeStyle = PythonCodeStyleService.getInstance();
-    final boolean shouldSort = pyCodeStyle.isOptimizeImportsSortImports(file) && pyCodeStyle.isOptimizeImportsSortNamesInFromImports(file);
+  @JvmStatic
+  fun addNameToFromImportStatement(
+    fromImport: PyFromImportStatement,
+    name: String,
+    asName: String?,
+  ): Boolean {
+    val file = fromImport.containingFile
+    val nameComparator = getImportTextComparator(file)
+    val pyCodeStyle = PythonCodeStyleService.getInstance()
+    val shouldSort = pyCodeStyle.isOptimizeImportsSortImports(file) && pyCodeStyle.isOptimizeImportsSortNamesInFromImports(file)
 
-    PyImportElement followingNameElement = null;
-    for (PyImportElement existingNameElement : fromImport.getImportElements()) {
-      final String existingName = Objects.toString(existingNameElement.getImportedQName(), "");
-      if (name.equals(existingName) && Objects.equals(asName, existingNameElement.getAsName())) {
-        return false;
+    var followingNameElement: PyImportElement? = null
+    for (existingNameElement in fromImport.importElements) {
+      val existingName = Objects.toString(existingNameElement.importedQName, "")
+      if (name == existingName && asName == existingNameElement.asName) {
+        return false
       }
       if (shouldSort && followingNameElement == null && nameComparator.compare(existingName, name) > 0) {
-        followingNameElement = existingNameElement;
+        followingNameElement = existingNameElement
       }
     }
-    final PyElementGenerator generator = PyElementGenerator.getInstance(fromImport.getProject());
-    final PyImportElement newNameElement = generator.createImportElement(LanguageLevel.forElement(fromImport), name, asName);
+    val generator = PyElementGenerator.getInstance(fromImport.project)
+    val newNameElement = generator.createImportElement(LanguageLevel.forElement(fromImport), name, asName)
     // addBefore(newNameElement, null) is the same as inserting at the end
-    fromImport.addBefore(newNameElement, followingNameElement);
+    fromImport.addBefore(newNameElement, followingNameElement)
     // May need to add parentheses, trailing comma, etc.
-    CodeStyleManager.getInstance(fromImport.getProject()).reformat(fromImport);
-    return true;
+    CodeStyleManager.getInstance(fromImport.project).reformat(fromImport)
+    return true
   }
 
   /**
-   * Adds either {@link PyFromImportStatement} or {@link PyImportStatement}
+   * Adds either [PyFromImportStatement] or [PyImportStatement]
    * to specified target depending on user preferences and whether it's possible to import element via "from" form of import
    * (e.g. consider top level module).
    *
    * @param target  element import is pointing to
    * @param file    file where import will be inserted
    * @param element used to determine where to insert import
-   * @see PyCodeInsightSettings#PREFER_FROM_IMPORT
-   * @see #addImportStatement
-   * @see #addOrUpdateFromImportStatement
+   * @see PyCodeInsightSettings.PREFER_FROM_IMPORT
+   *
+   * @see .addImportStatement
+   *
+   * @see .addOrUpdateFromImportStatement
    */
-  public static void addImport(@NotNull PsiNamedElement target, @NotNull PsiFile file, @NotNull PyElement element) {
-    if (target.getContainingFile().equals(file)) return;
-    if (PyBuiltinCache.getInstance(element).isBuiltin(target)) return;
+  @JvmStatic
+  fun addImport(target: PsiNamedElement, file: PsiFile, element: PyElement) {
+    if (target.containingFile == file) return
+    if (getInstance(element).isBuiltin(target)) return
 
-    if (target instanceof PsiFileSystemItem) {
-      addFileSystemItemImport((PsiFileSystemItem)target, file, element);
-      return;
+    if (target is PsiFileSystemItem) {
+      addFileSystemItemImport(target, file, element)
+      return
     }
 
     // If target is a class attribute or nested class, import the top-level containing class
-    PsiNamedElement elementToImport = target;
-    var parent = ScopeUtil.getScopeOwner(target);
-    if (parent instanceof PyClass pyClass) {
-      elementToImport = pyClass;
+    var elementToImport = target
+    val parent = ScopeUtil.getScopeOwner(target)
+    if (parent is PyClass) {
+      elementToImport = parent
     }
 
     // Walk up to the top-level class if elementToImport is itself a nested class
-    String nestedQualifierPrefix = null;
-    if (elementToImport instanceof PyClass nestedClass && !PyUtil.isTopLevel(nestedClass)) {
-      PyClass topLevel = PyNestedClassUtils.findTopLevelClass(nestedClass);
+    var nestedQualifierPrefix: String? = null
+    if (elementToImport is PyClass && !PyUtil.isTopLevel(elementToImport)) {
+      val topLevel = findTopLevelClass(elementToImport)
       if (topLevel != null) {
-        elementToImport = topLevel;
-        nestedQualifierPrefix = PyNestedClassUtils.buildQualifiedName(nestedClass, topLevel);
+        nestedQualifierPrefix = PyNestedClassUtils.buildQualifiedName(elementToImport, topLevel)
+        elementToImport = topLevel
       }
     }
 
-    final String name = elementToImport.getName();
-    if (name == null) return;
+    val name = elementToImport.name
+    if (name == null) return
 
-    final PsiFileSystemItem toImport = elementToImport.getContainingFile();
-    if (toImport == null) return;
+    val toImport: PsiFileSystemItem? = elementToImport.containingFile
+    if (toImport == null) return
 
     // Check if the target is accessible via an already-imported module
     if (qualifyViaExistingImport(toImport, name, nestedQualifierPrefix, file, element)) {
-      return;
+      return
     }
 
-    final QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(elementToImport, element);
-    if (importPath == null) return;
+    val importPath = QualifiedNameFinder.findCanonicalImportPath(elementToImport, element)
+    if (importPath == null) return
 
-    final String path = importPath.toString();
-    final ImportPriority priority = getImportPriority(file, toImport);
+    val path = importPath.toString()
+    val priority = getImportPriority(file, toImport)
 
     if (!PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
-      addImportStatement(file, path, null, priority, element);
+      addImportStatement(file, path, null, priority, element)
 
-      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
-      String refText = nestedQualifierPrefix != null ? nestedQualifierPrefix : name;
-      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(elementToImport), path + "." + refText));
+      val elementGenerator = PyElementGenerator.getInstance(file.project)
+      val refText = nestedQualifierPrefix ?: name
+      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(elementToImport), "$path.$refText"))
     }
     else {
-      addOrUpdateFromImportStatement(file, path, name, null, priority, element);
+      addOrUpdateFromImportStatement(file, path, name, null, priority, element)
       if (nestedQualifierPrefix != null) {
         // Rewrite the qualifier reference to use the qualified nested class path, e.g. Inner -> Outer.Inner
         // The element might be a qualified expression like Inner.do, so we need to find the unresolved
         // qualifier that refers to the nested class and replace it with the full nesting chain.
-        PyElement toRewrite = element;
-        if (element instanceof PyReferenceExpression refExpr) {
-          PyExpression qualifier = refExpr.getQualifier();
-          if (qualifier instanceof PyReferenceExpression qualifierRef) {
-            toRewrite = qualifierRef;
+        var toRewrite = element
+        if (element is PyReferenceExpression) {
+          val qualifier = element.qualifier
+          if (qualifier is PyReferenceExpression) {
+            toRewrite = qualifier
           }
         }
-        final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
-        toRewrite.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(elementToImport), nestedQualifierPrefix));
+        val elementGenerator = PyElementGenerator.getInstance(file.project)
+        toRewrite.replace(
+          elementGenerator.createExpressionFromText(
+            LanguageLevel.forElement(elementToImport),
+            nestedQualifierPrefix
+          )
+        )
       }
     }
   }
 
-  private static void addFileSystemItemImport(@NotNull PsiFileSystemItem target, @NotNull PsiFile file, @NotNull PyElement element) {
-    final PsiFileSystemItem toImport = target.getParent();
-    if (toImport == null) return;
+  private fun addFileSystemItemImport(target: PsiFileSystemItem, file: PsiFile, element: PyElement) {
+    val toImport = target.parent
+    if (toImport == null) return
 
-    final QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(target, element);
-    if (importPath == null) return;
+    val importPath = QualifiedNameFinder.findCanonicalImportPath(target, element)
+    if (importPath == null) return
 
-    final ImportPriority priority = getImportPriority(file, toImport);
-    if (importPath.getComponentCount() == 1 || !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
-      final String path = importPath.toString();
+    val priority = getImportPriority(file, toImport)
+    if (importPath.componentCount == 1 || !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT) {
+      val path = importPath.toString()
 
-      addImportStatement(file, path, null, priority, element);
+      addImportStatement(file, path, null, priority, element)
 
-      final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());
-      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), path));
+      val elementGenerator = PyElementGenerator.getInstance(file.project)
+      element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(target), path))
     }
     else {
-      String importedName = importPath.getLastComponent();
-      assert importedName != null;
-      String importSource = importPath.removeLastComponent().toString();
-      addOrUpdateFromImportStatement(file, importSource, importedName, null, priority, element);
+      val importedName: String = checkNotNull(importPath.lastComponent)
+      val importSource = importPath.removeLastComponent().toString()
+      addOrUpdateFromImportStatement(file, importSource, importedName, null, priority, element)
     }
   }
 
-  private static boolean qualifyViaExistingImport(@NotNull PsiFileSystemItem toImport,
-                                                  @NotNull String importedName,
-                                                  @Nullable String nestedQualifierPrefix,
-                                                  @NotNull PsiFile file,
-                                                  @NotNull PyElement element) {
-    if (!(file instanceof PyFile pyFile)) return false;
+  private fun qualifyViaExistingImport(
+    toImport: PsiFileSystemItem,
+    importedName: String,
+    nestedQualifierPrefix: String?,
+    file: PsiFile,
+    element: PyElement,
+  ): Boolean {
+    if (file !is PyFile) return false
 
-    if (processFromImports(toImport, importedName, nestedQualifierPrefix, element, pyFile) ||
-        processRegularImports(toImport, importedName, nestedQualifierPrefix, element, pyFile)) {
-      return true;
+    if (processFromImports(toImport, importedName, nestedQualifierPrefix, element, file) ||
+        processRegularImports(toImport, importedName, nestedQualifierPrefix, element, file)
+    ) {
+      return true
     }
 
-    return false;
+    return false
   }
 
   // Check regular imports: "import pkg.src" where pkg.src resolves to the target's module
-  private static boolean processRegularImports(@NotNull PsiFileSystemItem toImport,
-                                   @NotNull String importedName,
-                                   @Nullable String nestedQualifierPrefix,
-                                   @NotNull PyElement element,
-                                   PyFile pyFile) {
-    for (PyImportElement importElement : pyFile.getImportTargets()) {
-      PsiElement resolved = importElement.resolve();
-      PsiFile resolvedFile = as(PyUtil.turnDirIntoInit(resolved), PsiFile.class);
-      if (resolvedFile == null || !resolvedFile.equals(toImport)) continue;
+  private fun processRegularImports(
+    toImport: PsiFileSystemItem,
+    importedName: String,
+    nestedQualifierPrefix: String?,
+    element: PyElement,
+    pyFile: PyFile,
+  ): Boolean {
+    for (importElement in pyFile.importTargets) {
+      val resolved = importElement.resolve()
+      val resolvedFile = PyUtil.turnDirIntoInit(resolved) as? PsiFile
+      if (resolvedFile == null || resolvedFile != toImport) continue
 
-      QualifiedName importedQName = importElement.getImportedQName();
-      if (importedQName == null) continue;
+      val importedQName = importElement.importedQName
+      if (importedQName == null) continue
 
-      String prefix = importElement.getAsName() != null
-          ? importElement.getVisibleName()
-          : importedQName.toString();
-      if (prefix == null) continue;
+      val prefix = if (importElement.asName != null)
+        importElement.visibleName
+      else
+        importedQName.toString()
+      if (prefix == null) continue
 
-      String qualifiedRef = nestedQualifierPrefix != null
-          ? prefix + "." + nestedQualifierPrefix
-          : prefix + "." + importedName;
-      replaceQualifier(element, qualifiedRef);
-      return true;
+      val qualifiedRef = if (nestedQualifierPrefix != null)
+        "$prefix.$nestedQualifierPrefix"
+      else
+        "$prefix.$importedName"
+      replaceQualifier(element, qualifiedRef)
+      return true
     }
-    return false;
+    return false
   }
 
   // Check from-imports: "from pkg import src" where src resolves to the target's module
-  private static boolean processFromImports(@NotNull PsiFileSystemItem toImport,
-                                            @NotNull String importedName,
-                                            @Nullable String nestedQualifierPrefix,
-                                            @NotNull PyElement element,
-                                            PyFile pyFile) {
-    for (PyFromImportStatement fromImport : pyFile.getFromImports()) {
-      if (fromImport.isStarImport()) continue;
-      for (PyImportElement importElement : fromImport.getImportElements()) {
-        PsiElement resolved = importElement.resolve();
-        PsiFile resolvedFile = as(PyUtil.turnDirIntoInit(resolved), PsiFile.class);
-        if (resolvedFile == null || !resolvedFile.equals(toImport)) continue;
+  private fun processFromImports(
+    toImport: PsiFileSystemItem,
+    importedName: String,
+    nestedQualifierPrefix: String?,
+    element: PyElement,
+    pyFile: PyFile,
+  ): Boolean {
+    for (fromImport in pyFile.fromImports) {
+      if (fromImport.isStarImport) continue
+      for (importElement in fromImport.importElements) {
+        val resolved = importElement.resolve()
+        val resolvedFile = PyUtil.turnDirIntoInit(resolved) as? PsiFile
+        if (resolvedFile == null || resolvedFile != toImport) continue
 
-        String visibleName = importElement.getVisibleName();
-        if (visibleName == null) continue;
+        val visibleName = importElement.visibleName
+        if (visibleName == null) continue
 
-        String qualifiedRef = nestedQualifierPrefix != null
-            ? visibleName + "." + nestedQualifierPrefix
-            : visibleName + "." + importedName;
-        replaceQualifier(element, qualifiedRef);
-        return true;
+        val qualifiedRef = if (nestedQualifierPrefix != null)
+          "$visibleName.$nestedQualifierPrefix"
+        else
+          "$visibleName.$importedName"
+        replaceQualifier(element, qualifiedRef)
+        return true
       }
     }
-    return false;
+    return false
   }
 
-  private static void replaceQualifier(@NotNull PyElement element, @NotNull String qualifiedRef) {
-    PyElement toRewrite = element;
-    if (element instanceof PyReferenceExpression refExpr) {
-      PyExpression qualifier = refExpr.getQualifier();
-      if (qualifier instanceof PyReferenceExpression qualifierRef) {
-        toRewrite = qualifierRef;
+  private fun replaceQualifier(element: PyElement, qualifiedRef: String) {
+    var toRewrite = element
+    if (element is PyReferenceExpression) {
+      val qualifier = element.qualifier
+      if (qualifier is PyReferenceExpression) {
+        toRewrite = qualifier
       }
     }
-    PyElementGenerator gen = PyElementGenerator.getInstance(element.getProject());
-    toRewrite.replace(gen.createExpressionFromText(LanguageLevel.forElement(element), qualifiedRef));
+    val gen = PyElementGenerator.getInstance(element.project)
+    toRewrite.replace(gen.createExpressionFromText(LanguageLevel.forElement(element), qualifiedRef))
   }
+
+  enum class ImportPriority {
+    FUTURE,
+    BUILTIN,
+    THIRD_PARTY,
+    PROJECT
+  }
+
+  class ImportPriorityChoice(val priority: ImportPriority, val description: String)
 }

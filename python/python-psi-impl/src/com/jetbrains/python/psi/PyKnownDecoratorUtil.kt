@@ -1,105 +1,89 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.jetbrains.python.psi;
+package com.jetbrains.python.psi
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.FunctionParameter;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveUtil;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import com.jetbrains.python.pyi.PyiFile;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-
-import static com.jetbrains.python.psi.PyKnownDecorator.FUNCTOOLS_LRU_CACHE;
-import static com.jetbrains.python.psi.PyKnownDecorator.FUNCTOOLS_SINGLEDISPATCH;
-import static com.jetbrains.python.psi.PyKnownDecorator.TYPING_OVERLOAD;
-import static com.jetbrains.python.psi.PyKnownDecorator.UNITTEST_MOCK_PATCH;
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.FunctionParameter
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
+import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.PyResolveUtil
+import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.pyi.PyiFile
+import one.util.streamex.StreamEx
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Contains list of well-behaved decorators from Pythons standard library, that don't change
  * signature of underlying function/class or use it implicitly somewhere (e.g. register as a callback).
- *
+ * 
  * @author Mikhail Golubev
  */
-public final class PyKnownDecoratorUtil {
-
-  private PyKnownDecoratorUtil() {
-  }
-
+object PyKnownDecoratorUtil {
   /**
-   * Map decorators of element to {@link PyKnownDecorator}.
+   * Map decorators of element to [PyKnownDecorator].
    *
    * @param element decoratable element to check
    * @param context type evaluation context. If it doesn't allow switch to AST, decorators will be compared by the text of the last component
-   *                of theirs qualified names.
+   * of theirs qualified names.
    * @return list of known decorators in declaration order with duplicates (with any)
    */
-  public static @NotNull List<PyKnownDecorator> getKnownDecorators(@NotNull PyDecoratable element, @NotNull TypeEvalContext context) {
-    final PyDecoratorList decoratorList = element.getDecoratorList();
+  @JvmStatic
+  fun getKnownDecorators(element: PyDecoratable, context: TypeEvalContext): List<PyKnownDecorator> {
+    val decoratorList = element.decoratorList
     if (decoratorList == null) {
-      return Collections.emptyList();
+      return emptyList()
     }
 
-    return StreamEx.of(decoratorList.getDecorators())
-      .flatMap(decorator -> asKnownDecorators(decorator, context).stream())
-      .toImmutableList();
+    return decoratorList.decorators
+      .flatMap { asKnownDecorators(it, context) }
   }
 
-  public static @NotNull List<PyKnownDecorator> asKnownDecorators(@NotNull PyDecorator decorator, @NotNull TypeEvalContext context) {
-    final QualifiedName qualifiedName = decorator.getQualifiedName();
+  @JvmStatic
+  fun asKnownDecorators(decorator: PyDecorator, context: TypeEvalContext): List<PyKnownDecorator> {
+    val qualifiedName = decorator.qualifiedName
     if (qualifiedName == null) {
-      return Collections.emptyList();
+      return emptyList()
     }
     // Avoid resolving property accessor decorators to prevent an infinite recursion
-    String lastComponent = qualifiedName.getLastComponent();
-    if (PyNames.GETTER.equals(lastComponent) || PyNames.SETTER.equals(lastComponent) || PyNames.DELETER.equals(lastComponent)) {
-      return Collections.emptyList();
+    val lastComponent = qualifiedName.lastComponent
+    if (PyNames.GETTER == lastComponent || PyNames.SETTER == lastComponent || PyNames.DELETER == lastComponent) {
+      return emptyList()
     }
     if (context.maySwitchToAST(decorator)) {
-      PsiFile containingFile = decorator.getContainingFile();
-      List<PsiElement> resolved;
-      if (containingFile instanceof PyiFile) {
+      val containingFile = decorator.containingFile
+      val resolved: List<PsiElement?>
+      if (containingFile is PyiFile) {
         // In .pyi files it's safe to resolve decorators such as "@overload" flow-insensitively.
-        resolved = PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, (ScopeOwner)containingFile, context);
+        resolved = PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, containingFile as ScopeOwner, context)
       }
       else {
-        resolved = PyUtil.multiResolveTopPriority(Objects.requireNonNull(decorator.getCallee()), PyResolveContext.defaultContext(context));
+        resolved = PyUtil.multiResolveTopPriority(
+          decorator.callee!!,
+          PyResolveContext.defaultContext(context)
+        )
       }
-      return StreamEx.of(resolved)
-        .select(PyQualifiedNameOwner.class)
-        .map(PyQualifiedNameOwner::getQualifiedName)
-        .nonNull()
-        .map(QualifiedName::fromDottedString)
-        .map(PyKnownDecoratorUtil::findByQualifiedName)
-        .nonNull()
-        .toImmutableList();
+      return resolved
+        .filterIsInstance<PyQualifiedNameOwner>()
+        .mapNotNull { it.qualifiedName }
+        .map { QualifiedName.fromDottedString(it) }
+        .mapNotNull { findByQualifiedName(it) }
     }
     else {
-      return asKnownDecorators(qualifiedName);
+      return asKnownDecorators(qualifiedName)
     }
   }
 
   @ApiStatus.Internal
-  public static @NotNull List<PyKnownDecorator> asKnownDecorators(@NotNull QualifiedName qualifiedName) {
+  @JvmStatic
+  fun asKnownDecorators(qualifiedName: QualifiedName): List<PyKnownDecorator> {
     // The method might have been called during building of PSI stub indexes. Thus, we can't leave this file's boundaries.
     // TODO Use proper local resolve to imported names here
-    String lastComponent = qualifiedName.getLastComponent();
+    val lastComponent = qualifiedName.lastComponent
     if (lastComponent == null) {
-      return Collections.emptyList();
+      return emptyList()
     }
-    return findByShortName(lastComponent);
+    return findByShortName(lastComponent)
   }
 
   /**
@@ -107,114 +91,117 @@ public final class PyKnownDecoratorUtil {
    *
    * @param element decoratable element to check
    * @param context type evaluation context. If it doesn't allow switch to AST, decorators will be compared by the text of the last component
-   *                of theirs qualified names.
+   * of theirs qualified names.
    * @see PyKnownDecorator
    */
-  public static boolean hasUnknownDecorator(@NotNull PyDecoratable element, @NotNull TypeEvalContext context) {
-    return !allDecoratorsAreKnown(element, getKnownDecorators(element, context));
+  @JvmStatic
+  fun hasUnknownDecorator(element: PyDecoratable, context: TypeEvalContext): Boolean {
+    return !allDecoratorsAreKnown(element, getKnownDecorators(element, context))
   }
 
   /**
-   * Checks that given function has any decorators from {@code abc} module.
+   * Checks that given function has any decorators from `abc` module.
    *
    * @param element Python function to check
    * @param context type evaluation context. If it doesn't allow switch to AST, decorators will be compared by the text of the last component
-   *                of theirs qualified names.
+   * of theirs qualified names.
    * @see PyKnownDecorator
    */
-  public static boolean hasAbstractDecorator(@NotNull PyDecoratable element, @NotNull TypeEvalContext context) {
-    return ContainerUtil.exists(getKnownDecorators(element, context), knownDecorator -> knownDecorator.isAbstract());
+  @JvmStatic
+  fun hasAbstractDecorator(element: PyDecoratable, context: TypeEvalContext): Boolean {
+    return getKnownDecorators(element, context).any { it.isAbstract }
   }
 
-  public static boolean hasGeneratorBasedCoroutineDecorator(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    return ContainerUtil.exists(getKnownDecorators(function, context), knownDecorator -> knownDecorator.isGeneratorBasedCoroutine());
+  @JvmStatic
+  fun hasGeneratorBasedCoroutineDecorator(function: PyFunction, context: TypeEvalContext): Boolean {
+    return getKnownDecorators(function,
+                              context).any { it.isGeneratorBasedCoroutine }
   }
 
-  public static boolean isResolvedToGeneratorBasedCoroutine(@NotNull PyCallExpression receiver,
-                                                            @NotNull PyResolveContext resolveContext,
-                                                            @NotNull TypeEvalContext typeEvalContext) {
+  @JvmStatic
+  fun isResolvedToGeneratorBasedCoroutine(
+    receiver: PyCallExpression,
+    resolveContext: PyResolveContext,
+    typeEvalContext: TypeEvalContext,
+  ): Boolean {
     return StreamEx
       .of((receiver).multiResolveCalleeFunction(resolveContext))
-      .select(PyFunction.class)
-      .anyMatch(function -> hasGeneratorBasedCoroutineDecorator(function, typeEvalContext));
+      .select(PyFunction::class.java)
+      .anyMatch { function -> hasGeneratorBasedCoroutineDecorator(function, typeEvalContext) }
   }
 
-  public static boolean hasRedeclarationDecorator(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
-    return getKnownDecorators(function, context).contains(TYPING_OVERLOAD);
+  @JvmStatic
+  fun hasRedeclarationDecorator(function: PyFunction, context: TypeEvalContext): Boolean {
+    return getKnownDecorators(function, context).contains(PyKnownDecorator.TYPING_OVERLOAD)
   }
 
-  public static boolean hasUnknownOrChangingSignatureDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
-    final List<PyKnownDecorator> decorators = getKnownDecorators(decoratable, context);
-    return !allDecoratorsAreKnown(decoratable, decorators) || decorators.contains(UNITTEST_MOCK_PATCH);
+  @JvmStatic
+  fun hasUnknownOrChangingSignatureDecorator(decoratable: PyDecoratable, context: TypeEvalContext): Boolean {
+    val decorators = getKnownDecorators(decoratable, context)
+    return !allDecoratorsAreKnown(decoratable, decorators) || decorators.contains(PyKnownDecorator.UNITTEST_MOCK_PATCH)
   }
 
-  public static boolean hasUnknownOrUpdatingAttributesDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
-    final List<PyKnownDecorator> decorators = getKnownDecorators(decoratable, context);
+  @JvmStatic
+  fun hasUnknownOrUpdatingAttributesDecorator(decoratable: PyDecoratable, context: TypeEvalContext): Boolean {
+    val decorators = getKnownDecorators(decoratable, context)
 
     if (!allDecoratorsAreKnown(decoratable, decorators)) {
-      return true;
+      return true
     }
 
-    return ContainerUtil.exists(
-      decorators,
-      d ->
-        d == FUNCTOOLS_LRU_CACHE || // cache_clear, cache_info
-        d == FUNCTOOLS_SINGLEDISPATCH // dispatch, register, registry
-    );
+    return decorators.any {
+      it === PyKnownDecorator.FUNCTOOLS_LRU_CACHE ||  // cache_clear, cache_info
+      it === PyKnownDecorator.FUNCTOOLS_SINGLEDISPATCH
+    }
   }
 
-  private static boolean allDecoratorsAreKnown(@NotNull PyDecoratable element, @NotNull List<PyKnownDecorator> decorators) {
-    final PyDecoratorList decoratorList = element.getDecoratorList();
-    return decoratorList == null
-           ? decorators.isEmpty()
-           : decoratorList.getDecorators().length == StreamEx.of(decorators).groupingBy(PyKnownDecorator::getShortName).size();
+  private fun allDecoratorsAreKnown(element: PyDecoratable, decorators: List<PyKnownDecorator>): Boolean {
+    val decoratorList = element.decoratorList
+    return if (decoratorList == null)
+      decorators.isEmpty()
+    else
+      decoratorList.decorators.size == decorators
+        .groupBy { it.shortName }.size
   }
 
-  private static List<PyKnownDecorator> findByShortName(@NotNull String shortName) {
-    return PyKnownDecoratorProvider.EP_NAME.getExtensionList().stream()
-      .flatMap(knownDecoratorProvider -> {
-        Collection<PyKnownDecorator> decorators = knownDecoratorProvider.getKnownDecorators();
+  @Suppress("DEPRECATION")
+  private fun findByShortName(shortName: String): List<PyKnownDecorator> {
+    return PyKnownDecoratorProvider.EP_NAME.extensionList.stream()
+      .flatMap { knownDecoratorProvider ->
+        val decorators = knownDecoratorProvider.knownDecorators
         if (!decorators.isEmpty()) {
-          return decorators.stream();
+          return@flatMap decorators.stream()
         }
         // Fallback to the old implementation that will be removed in the future release
-        String knownDecorator = knownDecoratorProvider.toKnownDecorator(shortName);
-        if (knownDecorator != null && !knownDecorator.isEmpty() && !knownDecorator.equals(shortName)) {
-          return StreamEx.of(findByShortName(knownDecorator));
+        val knownDecorator = knownDecoratorProvider.toKnownDecorator(shortName)
+        if (!knownDecorator.isNullOrEmpty() && (knownDecorator != shortName)) {
+          return@flatMap StreamEx.of(findByShortName(knownDecorator))
         }
-        return StreamEx.empty();
-      })
-      .filter(knownDecorator -> knownDecorator.getShortName().equals(shortName))
-      .toList();
+        StreamEx.empty()
+      }
+      .filter { knownDecorator -> knownDecorator.shortName == shortName }
+      .toList()
   }
 
-  private static @Nullable PyKnownDecorator findByQualifiedName(@NotNull QualifiedName qualifiedName) {
-    return PyKnownDecoratorProvider.EP_NAME.getExtensionList().stream()
-      .flatMap(knownDecoratorProvider -> knownDecoratorProvider.getKnownDecorators().stream())
-      .filter(knownDecorator -> knownDecorator.getQualifiedName().equals(qualifiedName))
+  private fun findByQualifiedName(qualifiedName: QualifiedName): PyKnownDecorator? {
+    return PyKnownDecoratorProvider.EP_NAME.extensionList.stream()
+      .flatMap { knownDecoratorProvider: PyKnownDecoratorProvider? ->
+        knownDecoratorProvider!!.knownDecorators.stream()
+      }
+      .filter { knownDecorator: PyKnownDecorator? -> knownDecorator!!.qualifiedName == qualifiedName }
       .findFirst()
-      .orElse(null);
+      .orElse(null)
   }
 
-  public enum FunctoolsWrapsParameters implements FunctionParameter {
+  enum class FunctoolsWrapsParameters(private val myPosition: Int, private val myName: String) : FunctionParameter {
     WRAPPED(0, "wrapped");
 
-    private final int myPosition;
-    private final String myName;
-
-    FunctoolsWrapsParameters(int position, @NotNull String name) {
-      myPosition = position;
-      myName = name;
+    override fun getPosition(): Int {
+      return myPosition
     }
 
-    @Override
-    public int getPosition() {
-      return myPosition;
-    }
-
-    @Override
-    public @NotNull String getName() {
-      return myName;
+    override fun getName(): String {
+      return myName
     }
   }
 }

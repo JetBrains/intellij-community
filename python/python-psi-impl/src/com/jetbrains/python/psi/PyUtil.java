@@ -549,7 +549,14 @@ public final class PyUtil {
    * @return expression casted to appropriate type (if could be casted). Null otherwise.
    */
   public static @Nullable <T> T as(final @Nullable Object expression, final @NotNull Class<T> clazz) {
-    return ObjectUtils.tryCast(expression, clazz);
+    //noinspection unchecked
+    return ObjectUtils.tryCast(
+      expression,
+      (Class<T>)switch (clazz) {
+        case Class<?> c when c == boolean.class -> Boolean.class;
+        case Class<?> c when c == int.class -> Integer.class;
+        default -> clazz;
+      });
   }
 
   // TODO: Move to PsiElement?

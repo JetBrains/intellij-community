@@ -13,133 +13,94 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.jetbrains.python.codeInsight.controlflow;
+package com.jetbrains.python.codeInsight.controlflow
 
-import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
-import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
-import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.types.PyAnyType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.codeInsight.controlflow.ControlFlowBuilder
+import com.intellij.codeInsight.controlflow.impl.InstructionImpl
+import com.intellij.openapi.util.Ref
+import com.intellij.psi.PsiElement
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.types.PyAnyType.Companion.unknown
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.NonNls
 
-public final class ReadWriteInstruction extends InstructionImpl {
-  private static InstructionTypeCallback instructionTypeCallback(@Nullable PsiElement element) {
-    return element instanceof PyExpression expression
-           ? context -> Ref.create(context.getType(expression))
-           : context -> Ref.create(PyAnyType.getUnknown());
-  }
-
-  public enum ACCESS {
+class ReadWriteInstruction private constructor(
+  builder: ControlFlowBuilder,
+  element: PsiElement?,
+  val name: String?,
+  val access: ACCESS,
+  getType: InstructionTypeCallback? = null,
+) : InstructionImpl(builder, element) {
+  enum class ACCESS(val isReadAccess: Boolean, val isWriteAccess: Boolean, val isAssertTypeAccess: Boolean, val isDeleteAccess: Boolean) {
     READ(true, false, false, false),
     WRITE(false, true, false, false),
     ASSERTTYPE(false, false, true, false),
     READWRITE(true, true, false, false),
-    DELETE(false, false, false, true);
+    DELETE(false, false, false, true)
+  }
 
-    private final boolean isWrite;
-    private final boolean isRead;
-    private final boolean isAssertType;
-    private final boolean isDelete;
+  private val myGetType: InstructionTypeCallback = getType ?: instructionTypeCallback(element)
 
-    ACCESS(boolean read, boolean write, boolean assertType, boolean delete) {
-      isRead = read;
-      isWrite = write;
-      isAssertType = assertType;
-      isDelete = delete;
+  fun getType(context: TypeEvalContext?, anchor: PsiElement?): Ref<PyType?>? {
+    return myGetType.getType(context)
+  }
+
+  @NonNls
+  override fun getElementPresentation(): @NonNls String {
+    return access.toString() + " ACCESS: " + this.name
+  }
+
+  companion object {
+    private fun instructionTypeCallback(element: PsiElement?): InstructionTypeCallback {
+      return if (element is PyExpression)
+        InstructionTypeCallback { Ref.create(it.getType(element)) }
+      else
+        InstructionTypeCallback { Ref.create(unknown) }
     }
 
-    public boolean isWriteAccess() {
-      return isWrite;
+    fun read(
+      builder: ControlFlowBuilder,
+      element: PyElement?,
+      name: String?,
+    ): ReadWriteInstruction {
+      return ReadWriteInstruction(builder, element, name, ACCESS.READ)
     }
 
-    public boolean isReadAccess() {
-      return isRead;
+    fun write(
+      builder: ControlFlowBuilder,
+      element: PyElement?,
+      name: String?,
+    ): ReadWriteInstruction {
+      return ReadWriteInstruction(builder, element, name, ACCESS.WRITE)
     }
 
-    public boolean isAssertTypeAccess() {
-      return isAssertType;
+    fun newInstruction(
+      builder: ControlFlowBuilder,
+      element: PsiElement?,
+      name: String?,
+      access: ACCESS,
+    ): ReadWriteInstruction {
+      return ReadWriteInstruction(builder, element, name, access)
     }
 
-    public boolean isDeleteAccess() {
-      return isDelete;
+    fun assertType(
+      builder: ControlFlowBuilder,
+      element: PsiElement?,
+      name: String?,
+      getType: InstructionTypeCallback?,
+    ): ReadWriteInstruction {
+      return ReadWriteInstruction(builder, element, name, ACCESS.ASSERTTYPE, getType)
     }
-  }
 
-  private final @Nullable String myName;
-  private final @NotNull ACCESS myAccess;
-  private final @NotNull InstructionTypeCallback myGetType;
-
-  private ReadWriteInstruction(final @NotNull ControlFlowBuilder builder,
-                               final @Nullable PsiElement element,
-                               final @Nullable String name,
-                               final @NotNull ACCESS access) {
-    this(builder, element, name, access, null);
-  }
-
-  private ReadWriteInstruction(final @NotNull ControlFlowBuilder builder,
-                               final @Nullable PsiElement element,
-                               final @Nullable String name,
-                               final @NotNull ACCESS access,
-                               final @Nullable InstructionTypeCallback getType) {
-    super(builder, element);
-    myName = name;
-    myAccess = access;
-    myGetType = getType != null ? getType : instructionTypeCallback(element);
-  }
-
-  public @Nullable String getName() {
-    return myName;
-  }
-
-  public @NotNull ACCESS getAccess() {
-    return myAccess;
-  }
-
-  public static @NotNull ReadWriteInstruction read(final @NotNull ControlFlowBuilder builder,
-                                                   final @Nullable PyElement element,
-                                                   final @Nullable String name) {
-    return new ReadWriteInstruction(builder, element, name, ACCESS.READ);
-  }
-
-  public static @NotNull ReadWriteInstruction write(final @NotNull ControlFlowBuilder builder,
-                                                    final @Nullable PyElement element,
-                                                    final @Nullable String name) {
-    return new ReadWriteInstruction(builder, element, name, ACCESS.WRITE);
-  }
-
-  public static @NotNull ReadWriteInstruction newInstruction(final @NotNull ControlFlowBuilder builder,
-                                                             final @Nullable PsiElement element,
-                                                             final @Nullable String name,
-                                                             final @NotNull ACCESS access) {
-    return new ReadWriteInstruction(builder, element, name, access);
-  }
-
-  public static @NotNull ReadWriteInstruction assertType(final @NotNull ControlFlowBuilder builder,
-                                                         final @Nullable PsiElement element,
-                                                         final @Nullable String name,
-                                                         final @Nullable InstructionTypeCallback getType) {
-    return new ReadWriteInstruction(builder, element, name, ACCESS.ASSERTTYPE, getType);
-  }
-
-  public static @NotNull ReadWriteInstruction readWrite(final @NotNull ControlFlowBuilder builder,
-                                                        final @Nullable PsiElement element,
-                                                        final @Nullable String name,
-                                                        final @Nullable InstructionTypeCallback getType) {
-    return new ReadWriteInstruction(builder, element, name, ACCESS.READWRITE, getType);
-  }
-
-  public @Nullable Ref<PyType> getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-    return myGetType.getType(context);
-  }
-
-  @Override
-  public @NotNull @NonNls String getElementPresentation() {
-    return myAccess + " ACCESS: " + myName;
+    fun readWrite(
+      builder: ControlFlowBuilder,
+      element: PsiElement?,
+      name: String?,
+      getType: InstructionTypeCallback?,
+    ): ReadWriteInstruction {
+      return ReadWriteInstruction(builder, element, name, ACCESS.READWRITE, getType)
+    }
   }
 }

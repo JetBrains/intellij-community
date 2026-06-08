@@ -1,34 +1,28 @@
-package com.jetbrains.python.codeInsight.dataflow.scope;
+package com.jetbrains.python.codeInsight.dataflow.scope
 
-import com.intellij.extapi.psi.StubBasedPsiElementBase;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.StubBasedPsiElement;
-import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.jetbrains.python.ast.PyAstAnnotation;
-import com.jetbrains.python.ast.PyAstClass;
-import com.jetbrains.python.ast.PyAstDecorator;
-import com.jetbrains.python.ast.PyAstDecoratorList;
-import com.jetbrains.python.ast.PyAstElement;
-import com.jetbrains.python.ast.PyAstExpression;
-import com.jetbrains.python.ast.PyAstExpressionCodeFragment;
-import com.jetbrains.python.ast.PyAstFunction;
-import com.jetbrains.python.ast.PyAstLambdaExpression;
-import com.jetbrains.python.ast.PyAstNamedParameter;
-import com.jetbrains.python.ast.PyAstTypeParameterList;
-import com.jetbrains.python.ast.controlFlow.AstScopeOwner;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
-
-import static com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized;
-import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
-import static com.intellij.psi.util.PsiTreeUtil.isAncestor;
+import com.intellij.extapi.psi.StubBasedPsiElementBase
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.StubBasedPsiElement
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.StubBuildCachedValueProvider
+import com.intellij.psi.stubs.StubBuildCachedValuesManager.getCachedValueStubBuildOptimized
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.ParameterizedCachedValueProvider
+import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.util.PsiTreeUtil
+import com.jetbrains.python.ast.PyAstClass
+import com.jetbrains.python.ast.PyAstDecorator
+import com.jetbrains.python.ast.PyAstDecoratorList
+import com.jetbrains.python.ast.PyAstElement
+import com.jetbrains.python.ast.PyAstExpressionCodeFragment
+import com.jetbrains.python.ast.PyAstFunction
+import com.jetbrains.python.ast.PyAstLambdaExpression
+import com.jetbrains.python.ast.PyAstNamedParameter
+import com.jetbrains.python.ast.controlFlow.AstScopeOwner
+import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
-public final class ScopeUtilCore {
+object ScopeUtilCore {
   /**
    * Return the scope owner for the element.
    *
@@ -36,86 +30,94 @@ public final class ScopeUtilCore {
    *
    * This method does not access AST if underlying PSI is stub based.
    */
-  public static @Nullable AstScopeOwner getScopeOwner(final @Nullable PsiElement element) {
+  @JvmStatic
+  fun getScopeOwner(element: PsiElement?): AstScopeOwner? {
     if (element == null) {
-      return null;
+      return null
     }
-    if (element instanceof PyAstExpressionCodeFragment) {
-      final PsiElement context = element.getContext();
-      return context instanceof AstScopeOwner ? (AstScopeOwner)context : getScopeOwner(context);
+    if (element is PyAstExpressionCodeFragment) {
+      val context = element.context
+      return context as? AstScopeOwner ?: getScopeOwner(context)
     }
-    return getCachedValueStubBuildOptimized(element, GET_SCOPE_OWNER_PROVIDER);
+    return getCachedValueStubBuildOptimized(element, GET_SCOPE_OWNER_PROVIDER)
   }
 
-  private static final StubBuildCachedValueProvider<AstScopeOwner, PsiElement>
-    GET_SCOPE_OWNER_PROVIDER = new StubBuildCachedValueProvider<>(
+  private val GET_SCOPE_OWNER_PROVIDER = StubBuildCachedValueProvider<AstScopeOwner?, PsiElement>(
     "python.scopeOwner",
-    element -> CachedValueProvider.Result
-      .create(calculateScopeOwner(element), PsiModificationTracker.MODIFICATION_COUNT)
-  );
+    ParameterizedCachedValueProvider { element: PsiElement? ->
+      CachedValueProvider.Result
+        .create<AstScopeOwner?>(calculateScopeOwner(element), PsiModificationTracker.MODIFICATION_COUNT)
+    }
+  )
 
-  private static @Nullable AstScopeOwner calculateScopeOwner(@Nullable PsiElement element) {
-    if (element instanceof StubBasedPsiElement<?> stubBasedElement) {
-      final StubElement<?> stub = stubBasedElement.getStub();
+  private fun calculateScopeOwner(element: PsiElement?): AstScopeOwner? {
+    if (element is StubBasedPsiElement<*>) {
+      val stub = element.getStub()
       if (stub != null) {
-        AstScopeOwner firstOwner = stub.getParentStubOfType(AstScopeOwner.class);
-        AstScopeOwner nextOwner;
-        if (firstOwner != null && !(firstOwner instanceof PsiFile)) {
-          StubElement<?> firstOwnerStub = ((StubBasedPsiElementBase<?>)firstOwner).getGreenStub();
-          assert firstOwnerStub != null;
-          nextOwner = firstOwnerStub.getParentStubOfType(AstScopeOwner.class);
+        val firstOwner = stub.getParentStubOfType(AstScopeOwner::class.java)
+        val nextOwner: AstScopeOwner?
+        if (firstOwner != null && firstOwner !is PsiFile) {
+          val firstOwnerStub = checkNotNull((firstOwner as StubBasedPsiElementBase<*>).getGreenStub())
+          nextOwner = firstOwnerStub.getParentStubOfType(AstScopeOwner::class.java)
         }
         else {
-          nextOwner = null;
+          nextOwner = null
         }
-        if (stub.getParentStubOfType(PyAstDecoratorList.class) != null) {
-          return nextOwner;
+        if (stub.getParentStubOfType(PyAstDecoratorList::class.java) != null) {
+          return nextOwner
         }
-        return firstOwner;
+        return firstOwner
       }
     }
-    final AstScopeOwner firstOwner = getParentOfType(element, AstScopeOwner.class);
+    val firstOwner = PsiTreeUtil.getParentOfType(element, AstScopeOwner::class.java)
     if (firstOwner == null) {
-      return null;
+      return null
     }
-    final AstScopeOwner nextOwner = getParentOfType(firstOwner, AstScopeOwner.class);
+    val nextOwner = PsiTreeUtil.getParentOfType(firstOwner, AstScopeOwner::class.java)
     // References in decorator expressions are resolved outside of the function (if the lambda is not inside the decorator)
-    final PyAstElement decoratorAncestor = getParentOfType(element, PyAstDecorator.class, false);
-    if (decoratorAncestor != null && !isAncestor(decoratorAncestor, firstOwner, true)) {
-      return nextOwner;
+    val decoratorAncestor: PyAstElement? = PsiTreeUtil.getParentOfType(element, PyAstDecorator::class.java, false)
+    if (decoratorAncestor != null && !PsiTreeUtil.isAncestor(decoratorAncestor, firstOwner, true)) {
+      return nextOwner
     }
     /*
-     * References in default values are resolved outside of the function (if the lambda is not inside the default value).
-     * Annotations of parameters are resolved outside of the function if the function doesn't have type parameters list
-     */
-    final PyAstNamedParameter parameterAncestor = getParentOfType(element, PyAstNamedParameter.class, false);
-    if (parameterAncestor != null && !isAncestor(parameterAncestor, firstOwner, true)) {
-      final PyAstExpression defaultValue = parameterAncestor.getDefaultValue();
-      final PyAstAnnotation annotation = parameterAncestor.getAnnotation();
-      if (firstOwner instanceof PyAstFunction function) {
-        PyAstTypeParameterList typeParameterList = function.getTypeParameterList();
-        if ((typeParameterList == null && isAncestor(annotation, element, false))
-            || (isAncestor(defaultValue, element, false))) {
-          return nextOwner;
+ * References in default values are resolved outside of the function (if the lambda is not inside the default value).
+ * Annotations of parameters are resolved outside of the function if the function doesn't have type parameters list
+ */
+    val parameterAncestor = PsiTreeUtil.getParentOfType(element, PyAstNamedParameter::class.java, false)
+    if (parameterAncestor != null && !PsiTreeUtil.isAncestor(parameterAncestor, firstOwner, true)) {
+      val defaultValue = parameterAncestor.defaultValue
+      val annotation = parameterAncestor.annotation
+      if (firstOwner is PyAstFunction) {
+        val typeParameterList = firstOwner.typeParameterList
+        if ((typeParameterList == null && PsiTreeUtil.isAncestor(annotation, element!!, false))
+            || (PsiTreeUtil.isAncestor(defaultValue, element!!, false))
+        ) {
+          return nextOwner
         }
       }
-      else if (firstOwner instanceof PyAstLambdaExpression && isAncestor(defaultValue, element, false)) {
-        return nextOwner;
+      else if (firstOwner is PyAstLambdaExpression && PsiTreeUtil.isAncestor(defaultValue, element!!, false)) {
+        return nextOwner
       }
     }
     // Superclasses are resolved outside of the class if the class doesn't have type parameters list
-    final PyAstClass containingClass = getParentOfType(element, PyAstClass.class);
-    if (containingClass != null && isAncestor(containingClass.getSuperClassExpressionList(), element, false) && containingClass.getTypeParameterList() == null) {
-      return nextOwner;
+    val containingClass = PsiTreeUtil.getParentOfType(element, PyAstClass::class.java)
+    if (containingClass != null && PsiTreeUtil.isAncestor(
+        containingClass.superClassExpressionList,
+        element!!,
+        false
+      ) && containingClass.typeParameterList == null
+    ) {
+      return nextOwner
     }
     // Function return annotations and type comments are resolved outside of the function if the function doesn't have type parameters list
-    if (firstOwner instanceof PyAstFunction function) {
-      PyAstTypeParameterList typeParameterList = function.getTypeParameterList();
-      if ((typeParameterList == null && isAncestor(function.getAnnotation(), element, false)
-           || isAncestor(function.getTypeComment(), element, false))) {
-        return nextOwner;
+    if (firstOwner is PyAstFunction) {
+      val typeParameterList = firstOwner.typeParameterList
+      if ((typeParameterList == null && PsiTreeUtil.isAncestor(firstOwner.annotation, element!!, false)
+           || PsiTreeUtil.isAncestor(firstOwner.typeComment, element!!, false))
+      ) {
+        return nextOwner
       }
     }
-    return firstOwner;
+    return firstOwner
   }
 }

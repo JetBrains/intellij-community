@@ -1,83 +1,67 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.psi.impl;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.psi.impl
 
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.ast.impl.PyPsiUtilsCore;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyElementType;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyExpressionCodeFragment;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.PyKeywordArgument;
-import com.jetbrains.python.psi.PyPassStatement;
-import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PySequenceExpression;
-import com.jetbrains.python.psi.PyStatement;
-import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.PyTargetExpression;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.lang.ASTNode
+import com.intellij.lang.injection.InjectedLanguageManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.QualifiedName
+import com.intellij.util.containers.ContainerUtil
+import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.ast.impl.PyPsiUtilsCore
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyClass
+import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyElementType
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyExpressionCodeFragment
+import com.jetbrains.python.psi.PyFile
+import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyKeywordArgument
+import com.jetbrains.python.psi.PyPassStatement
+import com.jetbrains.python.psi.PyQualifiedExpression
+import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PyStatementList
+import com.jetbrains.python.psi.PyStringLiteralExpression
+import com.jetbrains.python.psi.PyTargetExpression
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
-
-public final class PyPsiUtils {
-
-  private static final Logger LOG = Logger.getInstance(PyPsiUtils.class.getName());
-
-  private PyPsiUtils() {
-  }
+object PyPsiUtils {
+  private val LOG = Logger.getInstance(PyPsiUtils::class.java.name)
 
   /**
    * Finds the closest comma after the element skipping any whitespaces in-between.
    */
-  public static @Nullable PsiElement getPrevComma(@NotNull PsiElement element) {
-    final PsiElement prevNode = getPrevNonWhitespaceSibling(element);
-    return prevNode != null && prevNode.getNode().getElementType() == PyTokenTypes.COMMA ? prevNode : null;
+  @JvmStatic
+  fun getPrevComma(element: PsiElement): PsiElement? {
+    val prevNode = getPrevNonWhitespaceSibling(element)
+    return if (prevNode != null && prevNode.node.elementType === PyTokenTypes.COMMA) prevNode else null
   }
 
   /**
    * Finds first non-whitespace sibling before given PSI element.
    */
-  public static @Nullable PsiElement getPrevNonWhitespaceSibling(@Nullable PsiElement element) {
-    return PsiTreeUtil.skipWhitespacesBackward(element);
+  @JvmStatic
+  fun getPrevNonWhitespaceSibling(element: PsiElement?): PsiElement? {
+    return PsiTreeUtil.skipWhitespacesBackward(element)
   }
 
   /**
    * Finds first non-whitespace sibling before given AST node.
    */
-  public static @Nullable ASTNode getPrevNonWhitespaceSibling(@NotNull ASTNode node) {
-    return skipSiblingsBackward(node, TokenSet.WHITE_SPACE);
+  @JvmStatic
+  fun getPrevNonWhitespaceSibling(node: ASTNode): ASTNode? {
+    return skipSiblingsBackward(node, TokenSet.WHITE_SPACE)
   }
 
   /**
@@ -85,50 +69,55 @@ public final class PyPsiUtils {
    *
    * @param strict prohibit returning element itself
    */
-  public static @Nullable PsiElement getPrevNonCommentSibling(@Nullable PsiElement start, boolean strict) {
-    if (!strict && !(start instanceof PsiWhiteSpace || start instanceof PsiComment)) {
-      return start;
+  @JvmStatic
+  fun getPrevNonCommentSibling(start: PsiElement?, strict: Boolean): PsiElement? {
+    if (!strict && !(start is PsiWhiteSpace || start is PsiComment)) {
+      return start
     }
-    return PsiTreeUtil.skipWhitespacesAndCommentsBackward(start);
+    return PsiTreeUtil.skipWhitespacesAndCommentsBackward(start)
   }
 
   /**
    * Finds the closest comma after the element skipping any whitespaces in-between.
    */
-  public static @Nullable PsiElement getNextComma(@NotNull PsiElement element) {
-    final PsiElement nextNode = getNextNonWhitespaceSibling(element);
-    return nextNode != null && nextNode.getNode().getElementType() == PyTokenTypes.COMMA ? nextNode : null;
+  @JvmStatic
+  fun getNextComma(element: PsiElement): PsiElement? {
+    val nextNode = getNextNonWhitespaceSibling(element)
+    return if (nextNode != null && nextNode.node.elementType === PyTokenTypes.COMMA) nextNode else null
   }
 
   /**
    * Finds first non-whitespace sibling after given PSI element.
    */
-  public static @Nullable PsiElement getNextNonWhitespaceSibling(@Nullable PsiElement element) {
-    return PsiTreeUtil.skipWhitespacesForward(element);
+  @JvmStatic
+  fun getNextNonWhitespaceSibling(element: PsiElement?): PsiElement? {
+    return PsiTreeUtil.skipWhitespacesForward(element)
   }
 
   /**
    * Returns the first non-whitespace sibling preceding the given element but within its line boundaries.
    */
-  public static @Nullable PsiElement getPrevNonWhitespaceSiblingOnSameLine(@NotNull PsiElement element) {
-    PsiElement cur = element.getPrevSibling();
+  @JvmStatic
+  fun getPrevNonWhitespaceSiblingOnSameLine(element: PsiElement): PsiElement? {
+    var cur = element.prevSibling
     while (cur != null) {
-      if (!(cur instanceof PsiWhiteSpace)) {
-        return cur;
+      if (cur !is PsiWhiteSpace) {
+        return cur
       }
       else if (cur.textContains('\n')) {
-        break;
+        break
       }
-      cur = cur.getPrevSibling();
+      cur = cur.prevSibling
     }
-    return null;
+    return null
   }
 
   /**
    * Finds first non-whitespace sibling after given AST node.
    */
-  public static @Nullable ASTNode getNextNonWhitespaceSibling(@NotNull ASTNode after) {
-    return skipSiblingsForward(after, TokenSet.WHITE_SPACE);
+  @JvmStatic
+  fun getNextNonWhitespaceSibling(after: ASTNode): ASTNode? {
+    return skipSiblingsForward(after, TokenSet.WHITE_SPACE)
   }
 
   /**
@@ -136,8 +125,9 @@ public final class PyPsiUtils {
    *
    * @param strict prohibit returning element itself
    */
-  public static @Nullable PsiElement getNextNonCommentSibling(@Nullable PsiElement start, boolean strict) {
-    return PyPsiUtilsCore.getNextNonCommentSibling(start, strict);
+  @JvmStatic
+  fun getNextNonCommentSibling(start: PsiElement?, strict: Boolean): PsiElement? {
+    return PyPsiUtilsCore.getNextNonCommentSibling(start, strict)
   }
 
   /**
@@ -145,11 +135,13 @@ public final class PyPsiUtils {
    *
    * @param ignoreComments ignore commentaries as well
    */
-  public static @Nullable PsiElement getNextSignificantLeaf(@Nullable PsiElement element, boolean ignoreComments) {
-    while (element != null && StringUtil.isEmptyOrSpaces(element.getText()) || ignoreComments && element instanceof PsiComment) {
-      element = PsiTreeUtil.nextLeaf(element);
+  @JvmStatic
+  fun getNextSignificantLeaf(element: PsiElement?, ignoreComments: Boolean): PsiElement? {
+    var element = element
+    while (element != null && element.text.isNullOrBlank() || ignoreComments && element is PsiComment) {
+      element = PsiTreeUtil.nextLeaf(element)
     }
-    return element;
+    return element
   }
 
   /**
@@ -157,61 +149,71 @@ public final class PyPsiUtils {
    *
    * @param ignoreComments ignore commentaries as well
    */
-  public static @Nullable PsiElement getPrevSignificantLeaf(@Nullable PsiElement element, boolean ignoreComments) {
-    while (element != null && StringUtil.isEmptyOrSpaces(element.getText()) || ignoreComments && element instanceof PsiComment) {
-      element = PsiTreeUtil.prevLeaf(element);
+  @JvmStatic
+  fun getPrevSignificantLeaf(element: PsiElement?, ignoreComments: Boolean): PsiElement? {
+    var element = element
+    while (element != null && element.text.isNullOrBlank() || ignoreComments && element is PsiComment) {
+      element = PsiTreeUtil.prevLeaf(element)
     }
-    return element;
+    return element
   }
 
   /**
    * Finds the closest comma looking for the next comma first and then for the preceding one.
    */
-  public static @Nullable PsiElement getAdjacentComma(@NotNull PsiElement element) {
-    final PsiElement nextComma = getNextComma(element);
-    return nextComma != null ? nextComma : getPrevComma(element);
+  @JvmStatic
+  fun getAdjacentComma(element: PsiElement): PsiElement? {
+    val nextComma = getNextComma(element)
+    return nextComma ?: getPrevComma(element)
   }
 
   /**
-   * Works similarly to {@link PsiTreeUtil#skipSiblingsForward(PsiElement, Class[])}, but for AST nodes.
+   * Works similarly to [PsiTreeUtil.skipSiblingsForward], but for AST nodes.
    */
-  public static @Nullable ASTNode skipSiblingsForward(@Nullable ASTNode node, @NotNull TokenSet types) {
+  @JvmStatic
+  fun skipSiblingsForward(node: ASTNode?, types: TokenSet): ASTNode? {
     if (node == null) {
-      return null;
+      return null
     }
-    for (ASTNode next = node.getTreeNext(); next != null; next = next.getTreeNext()) {
-      if (!types.contains(next.getElementType())) {
-        return next;
+    var next = node.treeNext
+    while (next != null) {
+      if (!types.contains(next.elementType)) {
+        return next
       }
+      next = next.treeNext
     }
-    return null;
+    return null
   }
 
   /**
-   * Works similarly to {@link PsiTreeUtil#skipSiblingsBackward(PsiElement, Class[])}, but for AST nodes.
+   * Works similarly to [PsiTreeUtil.skipSiblingsBackward], but for AST nodes.
    */
-  public static @Nullable ASTNode skipSiblingsBackward(@Nullable ASTNode node, @NotNull TokenSet types) {
+  @JvmStatic
+  fun skipSiblingsBackward(node: ASTNode?, types: TokenSet): ASTNode? {
     if (node == null) {
-      return null;
+      return null
     }
-    for (ASTNode prev = node.getTreePrev(); prev != null; prev = prev.getTreePrev()) {
-      if (!types.contains(prev.getElementType())) {
-        return prev;
+    var prev = node.treePrev
+    while (prev != null) {
+      if (!types.contains(prev.elementType)) {
+        return prev
       }
+      prev = prev.treePrev
     }
-    return null;
+    return null
   }
 
   /**
-   * Returns first child psi element with specified element type or {@code null} if no such element exists.
-   * Semantically it's the same as {@code getChildByFilter(element, TokenSet.create(type), 0)}.
+   * Returns first child psi element with specified element type or `null` if no such element exists.
+   * Semantically it's the same as `getChildByFilter(element, TokenSet.create(type), 0)`.
    *
    * @param element tree parent node
    * @param type    element type expected
    * @return child element described
    */
-  public static @Nullable PsiElement getFirstChildOfType(final @NotNull PsiElement element, @NotNull PyElementType type) {
-    return PyPsiUtilsCore.getFirstChildOfType(element, type);
+  @JvmStatic
+  fun getFirstChildOfType(element: PsiElement, type: PyElementType): PsiElement? {
+    return PyPsiUtilsCore.getFirstChildOfType(element, type)
   }
 
   /**
@@ -222,30 +224,35 @@ public final class PyPsiUtils {
    * @param element tree parent node
    * @return PsiElement - child psiElement
    */
-  public static @Nullable PsiElement getChildByFilter(@NotNull PsiElement element, @NotNull TokenSet filter, int number) {
-    return PyPsiUtilsCore.getChildByFilter(element, filter, number);
+  @JvmStatic
+  fun getChildByFilter(element: PsiElement, filter: TokenSet, number: Int): PsiElement? {
+    return PyPsiUtilsCore.getChildByFilter(element, filter, number)
   }
 
-  public static void removeElements(final PsiElement @NotNull ... elements) {
-    final ASTNode parentNode = elements[0].getParent().getNode();
-    LOG.assertTrue(parentNode != null);
-    for (PsiElement element : elements) {
-      parentNode.removeChild(element.getNode());
+  @JvmStatic
+  fun removeElements(vararg elements: PsiElement) {
+    val parentNode = elements[0].parent.node
+    LOG.assertTrue(parentNode != null)
+    for (element in elements) {
+      parentNode.removeChild(element.node)
     }
   }
 
-  public static @Nullable PsiElement getStatement(final @NotNull PsiElement element) {
-    final PyElement compStatement = getStatementList(element);
+  @JvmStatic
+  fun getStatement(element: PsiElement): PsiElement? {
+    val compStatement = getStatementList(element)
     if (compStatement == null) {
-      return null;
+      return null
     }
-    return getParentRightBefore(element, compStatement);
+    return getParentRightBefore(element, compStatement)
   }
 
-  public static PyElement getStatementList(final PsiElement element) {
-    return element instanceof PyFile || element instanceof PyStatementList
-           ? (PyElement)element
-           : PsiTreeUtil.getParentOfType(element, PyFile.class, PyStatementList.class);
+  @JvmStatic
+  fun getStatementList(element: PsiElement?): PyElement? {
+    return if (element is PyFile || element is PyStatementList)
+      element
+    else
+      PsiTreeUtil.getParentOfType(element, PyFile::class.java, PyStatementList::class.java)
   }
 
   /**
@@ -253,58 +260,60 @@ public final class PyPsiUtils {
    *
    * @param element     element to start search from
    * @param superParent direct parent of the desired ancestor
-   * @return described element or {@code null} if it doesn't exist
+   * @return described element or `null` if it doesn't exist
    */
-  public static @Nullable PsiElement getParentRightBefore(@NotNull PsiElement element, final @NotNull PsiElement superParent) {
-    return PyPsiUtilsCore.getParentRightBefore(element, superParent);
+  @JvmStatic
+  fun getParentRightBefore(element: PsiElement, superParent: PsiElement): PsiElement? {
+    return PyPsiUtilsCore.getParentRightBefore(element, superParent)
   }
 
-  public static int getElementIndentation(final PsiElement element) {
-    final PsiElement compStatement = getStatementList(element);
-    final PsiElement statement = getParentRightBefore(element, compStatement);
+  @JvmStatic
+  fun getElementIndentation(element: PsiElement): Int {
+    val compStatement: PsiElement? = getStatementList(element)
+    val statement = getParentRightBefore(element, compStatement!!)
     if (statement == null) {
-      return 0;
+      return 0
     }
-    PsiElement sibling = statement.getPrevSibling();
+    var sibling = statement.prevSibling
     if (sibling == null) {
-      sibling = compStatement.getPrevSibling();
+      sibling = compStatement.prevSibling
     }
-    final String whitespace = sibling instanceof PsiWhiteSpace ? sibling.getText() : "";
-    final int i = whitespace.lastIndexOf("\n");
-    return i != -1 ? whitespace.length() - i - 1 : 0;
+    val whitespace = if (sibling is PsiWhiteSpace) sibling.text else ""
+    val i = whitespace.lastIndexOf("\n")
+    return if (i != -1) whitespace.length - i - 1 else 0
   }
 
-  public static void removeRedundantPass(final PyStatementList statementList) {
-    final PyStatement[] statements = statementList.getStatements();
-    if (statements.length > 1) {
-      for (PyStatement statement : statements) {
-        if (statement instanceof PyPassStatement) {
-          statement.delete();
+  @JvmStatic
+  fun removeRedundantPass(statementList: PyStatementList) {
+    val statements = statementList.statements
+    if (statements.size > 1) {
+      for (statement in statements) {
+        if (statement is PyPassStatement) {
+          statement.delete()
         }
       }
     }
   }
 
-  public static boolean isMethodContext(final PsiElement element) {
-    final PsiNamedElement parent = PsiTreeUtil.getParentOfType(element, PyFile.class, PyFunction.class, PyClass.class);
+  @JvmStatic
+  fun isMethodContext(element: PsiElement?): Boolean {
+    val parent: PsiNamedElement? = PsiTreeUtil.getParentOfType(element, PyFile::class.java, PyFunction::class.java, PyClass::class.java)
     // In case if element is inside method which is inside class
-    if (parent instanceof PyFunction &&
-        PsiTreeUtil.getParentOfType(parent, PyFile.class, PyFunction.class, PyClass.class) instanceof PyClass) {
-      return true;
-    }
-    return false;
+    return parent is PyFunction &&
+           PsiTreeUtil.getParentOfType(parent, PyFile::class.java, PyFunction::class.java, PyClass::class.java) is PyClass
   }
 
 
-  public static @NotNull PsiElement getRealContext(final @NotNull PsiElement element) {
-    assertValid(element);
-    final PsiFile file = element.getContainingFile();
-    if (file instanceof PyExpressionCodeFragment fragment) {
-      final PsiElement context = fragment.getRealContext();
-      return context != null ? context : element;
+  @JvmStatic
+  fun getRealContext(element: PsiElement): PsiElement {
+    assertValid(element)
+    val file = element.containingFile
+    if (file is PyExpressionCodeFragment) {
+      val context = file.realContext
+      return context ?: element
     }
     else {
-      return element;
+      return element
     }
   }
 
@@ -314,16 +323,17 @@ public final class PyPsiUtils {
    *
    * @param element parent node
    * @param child   child node comma should be adjacent to
-   * @see #getAdjacentComma(PsiElement)
+   * @see .getAdjacentComma
    */
-  public static void deleteAdjacentCommaWithWhitespaces(@NotNull PsiElement element, @NotNull PsiElement child) {
-    final PsiElement commaNode = getAdjacentComma(child);
+  @JvmStatic
+  fun deleteAdjacentCommaWithWhitespaces(element: PsiElement, child: PsiElement) {
+    val commaNode = getAdjacentComma(child)
     if (commaNode != null) {
-      final PsiElement nextNonWhitespace = getNextNonWhitespaceSibling(commaNode);
-      final PsiElement last = nextNonWhitespace == null ? element.getLastChild() : nextNonWhitespace.getPrevSibling();
-      final PsiElement prevNonWhitespace = getPrevNonWhitespaceSibling(commaNode);
-      final PsiElement first = prevNonWhitespace == null ? element.getFirstChild() : prevNonWhitespace.getNextSibling();
-      element.deleteChildRange(first, last);
+      val nextNonWhitespace = getNextNonWhitespaceSibling(commaNode)
+      val last = if (nextNonWhitespace == null) element.lastChild else nextNonWhitespace.prevSibling
+      val prevNonWhitespace = getPrevNonWhitespaceSibling(commaNode)
+      val first = if (prevNonWhitespace == null) element.firstChild else prevNonWhitespace.nextSibling
+      element.deleteChildRange(first, last)
     }
   }
 
@@ -332,211 +342,223 @@ public final class PyPsiUtils {
    * separated by any empty line.
    *
    * @param element element comments should be adjacent to
-   * @return described range or {@code null} if there are no such comments
+   * @return described range or `null` if there are no such comments
    */
-  public static @NotNull List<PsiComment> getPrecedingComments(@NotNull PsiElement element) {
-    return getPrecedingComments(element, true);
+  @JvmStatic
+  fun getPrecedingComments(element: PsiElement): List<PsiComment> {
+    return getPrecedingComments(element, true)
   }
 
-  public static @NotNull List<PsiComment> getPrecedingComments(@NotNull PsiElement element, boolean stopAtBlankLine) {
-    return getPrecedingCommentsAndAnchor(element, stopAtBlankLine, true).getFirst();
+  @JvmStatic
+  fun getPrecedingComments(element: PsiElement, stopAtBlankLine: Boolean): List<PsiComment> {
+    return getPrecedingCommentsAndAnchor(element, stopAtBlankLine, true).first
   }
 
-  private static @NotNull Pair<List<PsiComment>, PsiElement> getPrecedingCommentsAndAnchor(PsiElement element, boolean stopAtBlankLine,
-                                                                                           boolean strict) {
-    final ArrayList<PsiComment> result = new ArrayList<>();
-    PsiElement cursor = element instanceof PsiComment && !strict ? element : element.getPrevSibling();
+  private fun getPrecedingCommentsAndAnchor(
+    element: PsiElement, stopAtBlankLine: Boolean,
+    strict: Boolean,
+  ): Pair<List<PsiComment>, PsiElement?> {
+    val result = ArrayList<PsiComment>()
+    var cursor = if (element is PsiComment && !strict) element else element.prevSibling
     while (true) {
-      int newLinesCount = 0;
-      while (cursor instanceof PsiWhiteSpace) {
-        newLinesCount += StringUtil.getLineBreakCount(cursor.getText());
-        cursor = cursor.getPrevSibling();
+      var newLinesCount = 0
+      while (cursor is PsiWhiteSpace) {
+        newLinesCount += StringUtil.getLineBreakCount(cursor.text)
+        cursor = cursor.prevSibling
       }
-      if ((stopAtBlankLine && newLinesCount > 1) || !(cursor instanceof PsiComment)) {
-        break;
+      if ((stopAtBlankLine && newLinesCount > 1) || cursor !is PsiComment) {
+        break
       }
       else {
-        result.add((PsiComment)cursor);
+        result.add(cursor)
       }
-      cursor = cursor.getPrevSibling();
+      cursor = cursor.prevSibling
     }
-    Collections.reverse(result);
-    return Pair.create(result, cursor);
+    result.reverse()
+    return result to cursor
   }
 
   /**
    * Return blank-line-separated blocks of consecutive comments preceding the given element.
-   * <p>
+   *
+   *
    * For instance, for the following fragment, it will return two blocks of one and two comments.
    *
-   * <pre>{@code
-   * # comment
+   * <pre>`# comment # comment # comment def func():     pass `</pre>
    *
-   * # comment
-   * # comment
-   * def func():
-   *     pass
-   * }</pre>
-   * <p>
+   *
    * Note that in the following case it will additionally return an empty list of comments as the last element
    * to distinguish between the cases when there is a blank line above the provided element and when there is not.
    *
-   * <pre>{@code
-   * # comment
-   *
-   * def func():
-   *     pass
-   * }</pre>
+   * <pre>`# comment def func():     pass `</pre>
    *
    */
-  public static @NotNull List<List<PsiComment>> getPrecedingCommentBlocks(@NotNull PsiElement element) {
-    List<List<PsiComment>> blocks = new ArrayList<>();
-    PsiElement anchor = element;
+  @JvmStatic
+  fun getPrecedingCommentBlocks(element: PsiElement): List<List<PsiComment>> {
+    val blocks: MutableList<List<PsiComment>> = ArrayList()
+    var anchor: PsiElement? = element
     do {
-      Pair<List<PsiComment>, PsiElement> blockAndAnchor = getPrecedingCommentsAndAnchor(anchor, true, false);
-      anchor = blockAndAnchor.getSecond();
-      List<PsiComment> block = blockAndAnchor.getFirst();
-      if (!block.isEmpty() || anchor instanceof PsiComment) {
-        blocks.add(block);
+      val blockAndAnchor = getPrecedingCommentsAndAnchor(anchor!!, true, false)
+      anchor = blockAndAnchor.second
+      val block = blockAndAnchor.first
+      if (!block.isEmpty() || anchor is PsiComment) {
+        blocks.add(block)
       }
     }
-    while (anchor instanceof PsiComment);
-    Collections.reverse(blocks);
-    return blocks;
+    while (anchor is PsiComment)
+    blocks.reverse()
+    return blocks
   }
 
-  public static int findArgumentIndex(PyCallExpression call, PsiElement argument) {
-    final PyExpression[] args = call.getArguments();
-    for (int i = 0; i < args.length; i++) {
-      PyExpression expression = args[i];
-      if (expression instanceof PyKeywordArgument) {
-        expression = ((PyKeywordArgument)expression).getValueExpression();
+  @JvmStatic
+  fun findArgumentIndex(call: PyCallExpression, argument: PsiElement?): Int {
+    val args = call.arguments
+    for (i in args.indices) {
+      var expression = args[i]
+      if (expression is PyKeywordArgument) {
+        expression = expression.valueExpression
       }
-      expression = flattenParens(expression);
-      if (expression == argument) {
-        return i;
+      expression = flattenParens(expression)
+      if (expression === argument) {
+        return i
       }
     }
-    return -1;
+    return -1
   }
 
-  public static @Nullable PyTargetExpression getAttribute(final @NotNull PyFile file, final @NotNull String name) {
-    PyTargetExpression attr = file.findTopLevelAttribute(name);
+  @JvmStatic
+  fun getAttribute(file: PyFile, name: String): PyTargetExpression? {
+    val attr = file.findTopLevelAttribute(name)
     if (attr == null) {
-      for (PyFromImportStatement element : file.getFromImports()) {
-        PyReferenceExpression expression = element.getImportSource();
-        if (expression == null) continue;
-        final PsiElement resolved = expression.getReference().resolve();
-        if (resolved instanceof PyFile && resolved != file) {
-          return ((PyFile)resolved).findTopLevelAttribute(name);
+      for (element in file.fromImports) {
+        val expression = element.importSource
+        if (expression == null) continue
+        val resolved = expression.reference.resolve()
+        if (resolved is PyFile && resolved !== file) {
+          return resolved.findTopLevelAttribute(name)
         }
       }
     }
-    return attr;
+    return attr
   }
 
-  public static @NotNull List<PyExpression> getAttributeValuesFromFile(@NotNull PyFile file, @NotNull String name) {
-    List<PyExpression> result = new ArrayList<>();
-    final PyTargetExpression attr = file.findTopLevelAttribute(name);
+  @JvmStatic
+  fun getAttributeValuesFromFile(file: PyFile, name: String): MutableList<PyExpression?> {
+    val result: MutableList<PyExpression?> = ArrayList()
+    val attr = file.findTopLevelAttribute(name)
     if (attr != null) {
-      sequenceToList(result, attr.findAssignedValue());
+      sequenceToList(result, attr.findAssignedValue())
     }
-    return result;
+    return result
   }
 
-  public static void sequenceToList(List<? super PyExpression> result, PyExpression value) {
-    value = flattenParens(value);
-    if (value instanceof PySequenceExpression) {
-      ContainerUtil.addAll(result, ((PySequenceExpression)value).getElements());
+  @JvmStatic
+  fun sequenceToList(result: MutableList<in PyExpression?>, value: PyExpression?) {
+    var value = value
+    value = flattenParens(value)
+    if (value is PySequenceExpression) {
+      ContainerUtil.addAll(result, *value.elements)
     }
     else {
-      result.add(value);
+      result.add(value)
     }
   }
 
-  public static List<String> getStringValues(PyExpression[] elements) {
-    List<String> results = new ArrayList<>();
-    for (PyExpression element : elements) {
-      if (element instanceof PyStringLiteralExpression) {
-        results.add(((PyStringLiteralExpression)element).getStringValue());
+  @JvmStatic
+  fun getStringValues(elements: Array<PyExpression?>): MutableList<String?> {
+    val results: MutableList<String?> = ArrayList()
+    for (element in elements) {
+      if (element is PyStringLiteralExpression) {
+        results.add(element.stringValue)
       }
     }
-    return results;
+    return results
   }
 
-  public static @Nullable PyExpression flattenParens(@Nullable PyExpression expr) {
-    return (PyExpression)PyPsiUtilsCore.flattenParens(expr);
+  @JvmStatic
+  fun flattenParens(expr: PyExpression?): PyExpression? {
+    return PyPsiUtilsCore.flattenParens(expr) as PyExpression?
   }
 
-  public static @Nullable String strValue(@Nullable PyExpression expression) {
-    return PyPsiUtilsCore.strValue(expression);
+  @JvmStatic
+  fun strValue(expression: PyExpression?): String? {
+    return PyPsiUtilsCore.strValue(expression)
   }
 
-  public static boolean isBefore(final @NotNull PsiElement element, final @NotNull PsiElement element2) {
+  @JvmStatic
+  fun isBefore(element: PsiElement, element2: PsiElement): Boolean {
     // TODO: From RubyPsiUtil, should be moved to PsiTreeUtil
-    return element.getTextOffset() <= element2.getTextOffset();
+    return element.textOffset <= element2.textOffset
   }
 
-  public static @Nullable QualifiedName asQualifiedName(@Nullable PyExpression expr) {
-    return PyPsiUtilsCore.asQualifiedName(expr);
+  @JvmStatic
+  fun asQualifiedName(expr: PyExpression?): QualifiedName? {
+    return PyPsiUtilsCore.asQualifiedName(expr)
   }
 
-  public static @NotNull PyExpression getFirstQualifier(@NotNull PyQualifiedExpression expr) {
-    final PyExpression qualifier = expr.getQualifier();
-    if (qualifier instanceof PyQualifiedExpression) {
-      return getFirstQualifier((PyQualifiedExpression)qualifier);
+  @JvmStatic
+  fun getFirstQualifier(expr: PyQualifiedExpression): PyExpression {
+    val qualifier = expr.qualifier
+    if (qualifier is PyQualifiedExpression) {
+      return getFirstQualifier(qualifier)
     }
-    return expr;
+    return expr
   }
 
-  public static @NotNull String toPath(@Nullable PyQualifiedExpression expr) {
+  @JvmStatic
+  fun toPath(expr: PyQualifiedExpression?): String {
     if (expr != null) {
-      final QualifiedName qName = expr.asQualifiedName();
+      val qName = expr.asQualifiedName()
       if (qName != null) {
-        return qName.toString();
+        return qName.toString()
       }
-      final String name = expr.getName();
+      val name = expr.name
       if (name != null) {
-        return name;
+        return name
       }
     }
-    return "";
+    return ""
   }
 
-  public static @Nullable QualifiedName asQualifiedName(@NotNull PyQualifiedExpression expr) {
-    return PyPsiUtilsCore.asQualifiedName(expr);
+  @JvmStatic
+  fun asQualifiedName(expr: PyQualifiedExpression): QualifiedName? {
+    return PyPsiUtilsCore.asQualifiedName(expr)
   }
 
   /**
-   * Wrapper for {@link PsiUtilCore#ensureValid(PsiElement)} that skips nulls
+   * Wrapper for [PsiUtilCore.ensureValid] that skips nulls
    */
-  public static void assertValid(final @Nullable PsiElement element) {
-    PyPsiUtilsCore.assertValid(element);
+  @JvmStatic
+  fun assertValid(element: PsiElement?) {
+    PyPsiUtilsCore.assertValid(element)
   }
 
-  public static void assertValid(final @NotNull Module module) {
-    LOG.assertTrue(!module.isDisposed(), String.format("Module %s is disposed", module));
+  @JvmStatic
+  fun assertValid(module: Module) {
+    LOG.assertTrue(!module.isDisposed, String.format("Module %s is disposed", module))
   }
 
-  public static @Nullable PsiFileSystemItem getFileSystemItem(@NotNull PsiElement element) {
-    if (element instanceof PsiFileSystemItem) {
-      return (PsiFileSystemItem)element;
+  @JvmStatic
+  fun getFileSystemItem(element: PsiElement): PsiFileSystemItem? {
+    if (element is PsiFileSystemItem) {
+      return element
     }
-    return element.getContainingFile();
+    return element.containingFile
   }
 
-  public static @Nullable String getContainingFilePath(@NotNull PsiElement element) {
-    final VirtualFile file;
-    if (element instanceof PsiFileSystemItem) {
-      file = ((PsiFileSystemItem)element).getVirtualFile();
+  @JvmStatic
+  fun getContainingFilePath(element: PsiElement): String? {
+    val file: VirtualFile?
+    if (element is PsiFileSystemItem) {
+      file = element.virtualFile
     }
     else {
-      file = element.getContainingFile().getVirtualFile();
+      file = element.containingFile.virtualFile
     }
     if (file != null) {
-      return FileUtil.toSystemDependentName(file.getPath());
+      return FileUtil.toSystemDependentName(file.path)
     }
-    return null;
+    return null
   }
 
   /**
@@ -547,69 +569,73 @@ public final class PyPsiUtils {
    * @param source qualified name separated by dots that is looking for in imports
    * @return true if specified file contains passed source in top-level import.
    */
-  public static boolean containsImport(@NotNull PyFile file, @NotNull String source) {
-    final QualifiedName sourceQName = QualifiedName.fromDottedString(source);
+  @JvmStatic
+  fun containsImport(file: PyFile, source: String): Boolean {
+    val sourceQName = QualifiedName.fromDottedString(source)
 
-    return Stream.concat(
-        file.getFromImports().stream().map(PyFromImportStatement::getImportSourceQName),
-        file.getImportTargets().stream().map(PyImportElement::getImportedQName)
-      )
-      .filter(Objects::nonNull)
-      .anyMatch(name -> name.matchesPrefix(sourceQName));
+    return (
+      file.fromImports.map { it.importSourceQName } +
+      file.importTargets.map { it.importedQName }
+           )
+      .filterNotNull()
+      .any { it.matchesPrefix(sourceQName) }
   }
 
   /**
-   * Returns text of the given PSI element. Unlike obvious {@link PsiElement#getText()} this method unescapes text of the element if latter
-   * belongs to injected code fragment using {@link InjectedLanguageManager#getUnescapedText(PsiElement)}.
+   * Returns text of the given PSI element. Unlike obvious [PsiElement.getText] this method unescapes text of the element if latter
+   * belongs to injected code fragment using [InjectedLanguageManager.getUnescapedText].
    *
    * @param element PSI element which text is needed
    * @return text of the element with any host escaping removed
    */
-  public static @NotNull String getElementTextWithoutHostEscaping(@NotNull PsiElement element) {
-    final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(element.getProject());
-    if (manager.isInjectedFragment(element.getContainingFile())) {
-      return manager.getUnescapedText(element);
+  @JvmStatic
+  fun getElementTextWithoutHostEscaping(element: PsiElement): String {
+    val manager = InjectedLanguageManager.getInstance(element.project)
+    if (manager.isInjectedFragment(element.containingFile)) {
+      return manager.getUnescapedText(element)
     }
     else {
-      return element.getText();
+      return element.text
     }
   }
 
-  public static @Nullable String getStringValue(@Nullable PsiElement o) {
+  @JvmStatic
+  fun getStringValue(o: PsiElement?): String? {
     if (o == null) {
-      return null;
+      return null
     }
-    if (o instanceof PyStringLiteralExpression literalExpression) {
-      return literalExpression.getStringValue();
+    if (o is PyStringLiteralExpression) {
+      return o.stringValue
     }
     else {
-      return o.getText();
+      return o.text
     }
   }
 
-  public static TextRange getStringValueTextRange(PsiElement element) {
-    if (element instanceof PyStringLiteralExpression) {
-      final List<TextRange> ranges = ((PyStringLiteralExpression)element).getStringValueTextRanges();
-      return ranges.get(0);
+  @JvmStatic
+  fun getStringValueTextRange(element: PsiElement): TextRange {
+    if (element is PyStringLiteralExpression) {
+      return element.stringValueTextRanges[0]
     }
     else {
-      return new TextRange(0, element.getTextLength());
+      return TextRange(0, element.textLength)
     }
   }
 
-  public static @Nullable PsiComment findSameLineComment(@NotNull PsiElement elem) {
+  @JvmStatic
+  fun findSameLineComment(elem: PsiElement): PsiComment? {
     // If `elem` is a compound multi-line element, stick to its first line nonetheless
-    PsiElement next = PsiTreeUtil.getDeepestFirst(elem);
+    var next: PsiElement? = PsiTreeUtil.getDeepestFirst(elem)
     do {
-      if (next instanceof PsiComment) {
-        return (PsiComment)next;
+      if (next is PsiComment) {
+        return next
       }
-      if (next != elem && next.textContains('\n')) {
-        break;
+      if (next !== elem && next!!.textContains('\n')) {
+        break
       }
-      next = PsiTreeUtil.nextLeaf(next);
+      next = PsiTreeUtil.nextLeaf(next)
     }
-    while (next != null);
-    return null;
+    while (next != null)
+    return null
   }
 }
