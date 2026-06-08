@@ -10,7 +10,7 @@ import com.intellij.xdebugger.XDebugSession
 import kotlinx.coroutines.CoroutineScope
 
 class JavaDebuggerCommandLauncher(val session: XDebugSession) : DebuggerCommandLauncher {
-  override fun launchDebuggerCommand(command: suspend CoroutineScope.() -> Unit) {
+  override fun executeDebuggerCommand(command: suspend CoroutineScope.() -> Unit) {
     // runs in debugger manager thread only while SuspendContext is not resumed
     val debuggerContext = getDebuggerContext()
     executeOnDMT(debuggerContext, block = command)
