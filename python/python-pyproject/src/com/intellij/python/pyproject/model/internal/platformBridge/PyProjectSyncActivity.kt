@@ -18,7 +18,7 @@ internal class PyProjectSyncActivity : ProjectActivity {
     // This is done in sync. manner, so we can't rebuild project until they finish, and we let them call startAutoImportIfNeeded.
     if (!PlatformProjectOpenProcessor.isNewlyCreatedProject(project)) {
       log.info("Import started by sync activity")
-      startAutoImportIfNeeded(project)
+      startAutoImportIfNeeded(project, "Sync activity")
     }
   }
 }

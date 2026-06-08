@@ -1,7 +1,9 @@
 package com.intellij.python.pyproject.model.internal
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.pyproject.model.PyProjectModelSettings
 import com.intellij.python.pyproject.model.internal.autoImportBridge.PyProjectAutoImportService
 import com.intellij.python.pyproject.model.internal.platformBridge.startVenvExclusion
@@ -16,12 +18,19 @@ import org.jetbrains.annotations.ApiStatus
  * This method can only be called **once** (call [PyProjectAutoImportService.start] to enable/disable import logic)
  */
 @ApiStatus.Internal
-suspend fun startAutoImportIfNeeded(project: Project) {
+suspend fun startAutoImportIfNeeded(project: Project, importReasonForDebug: @NlsSafe String) {
+  log.info("Import started $importReasonForDebug")
   startVenvExclusion(project)
   askUserIfPyProjectMustBeEnabled(project)
   // Only start autoImport if both: registry and user flags are enabled
   if (PyProjectModelSettings.isEnabledByUserAndRegistry(project)) {
-    project.service<PyProjectAutoImportService>().start()
+    try {
+      project.service<PyProjectAutoImportService>().start()
+    }
+    catch (e: Throwable) {
+      log.error("import failed ($importReasonForDebug)", e)
+      throw e
+    }
   }
   else {
     // User disabled "pyproject.toml -> module" conversion (aka project model rebuilding), but we still need to notify listener,
@@ -29,3 +38,5 @@ suspend fun startAutoImportIfNeeded(project: Project) {
     notifyModelRebuilt(project)
   }
 }
+
+private val log = fileLogger()

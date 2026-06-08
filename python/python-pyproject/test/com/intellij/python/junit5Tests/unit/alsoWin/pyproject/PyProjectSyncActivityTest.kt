@@ -61,7 +61,7 @@ internal class PyProjectSyncActivityTest {
     val sut = project.service<PyProjectAutoImportService>()
     PyProjectSyncActivity().execute(project)
     assertFalse(sut.initialized, "Newly opened project shouldn't lead to autoimport ")
-    startAutoImportIfNeeded(project)
+    startAutoImportIfNeeded(project, "sync activity test testNoAutoRebuildForWizardBasedProject")
     if (enableAutoImport) {
       assertTrue(sut.initialized, "Auto import must be started when called manually")
     }
@@ -78,7 +78,7 @@ internal class PyProjectSyncActivityTest {
     // Setting this var starts import automatically, so we stop it check that code starts it in tests
     project.service<PyProjectAutoImportService>().stop()
     val sut = project.service<PyProjectAutoImportService>()
-    startAutoImportIfNeeded(project)
+    startAutoImportIfNeeded(project, "sync activity test callStartAutoImport")
     return sut
   }
 }
