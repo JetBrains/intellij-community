@@ -53,9 +53,7 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
                         }
                     }
 
-                    if (e.isWhiteSpace()) {
-                        elements.add(e)
-                    } else if (elements.isNotEmpty()) {
+                    if (!e.isWhiteSpace() && elements.isNotEmpty()) {
                         injectElements(registrar, context, elements, languageId)
 
                         languageId = null
@@ -63,10 +61,14 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
                 }
 
                 KDocTokens.CODE_BLOCK_TEXT -> {
+                    if (elements.isEmpty()) {
+                        val prevElement = e.prevSibling
+                        elements.add(prevElement)
+                    }
                     elements.add(e)
                 }
 
-                TokenType.WHITE_SPACE -> {
+                KDocTokens.LEADING_ASTERISK, TokenType.WHITE_SPACE -> {
                     if (elements.isNotEmpty()) {
                         elements.add(e)
                     }
@@ -84,13 +86,14 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
         elements: MutableList<PsiElement>,
         languageId: String?
     ) {
-        if (elements.isEmpty() || elements.all { it.isWhiteSpace() }) return
+        if (elements.isEmpty()) return
+        if (!elements.all { it.isWhiteSpace() }) {
+            val language =
+                languageId.takeIf { it?.isEmpty() != true }?.lowercase().let(languages::get)
+                    ?: KotlinLanguage.INSTANCE
 
-        val language =
-            languageId.takeIf { it?.isEmpty() != true }?.lowercase().let(languages::get)
-                ?: KotlinLanguage.INSTANCE
-
-        injectTextRanges(registrar, language, elements.toTextRanges(), context)
+            injectTextRanges(registrar, language, elements.toTextRanges(), context)
+        }
         elements.clear()
     }
 
@@ -99,62 +102,65 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
     private fun List<PsiElement>.indent(): Int? {
         var indent: Int? = null
 
-        for ((index, element) in this.withIndex()) {
-            val text = element.text
-
-            if (element is PsiWhiteSpace && text.startsWith("\n")) continue
-
-            if (element.isWhiteSpace()) {
-                val elementType = element.elementType
-                if (elementType == KDocTokens.CODE_BLOCK_TEXT || elementType == KDocTokens.TEXT) {
-                    val length = text.length
-                    indent = indent?.let { min(it, length) } ?: length
-                    continue
-                }
-
-                if (index > 0 && this[index - 1].isWhiteSpace()) {
-                    val length = text.substringAfter("\n").length - 1
-                    indent = indent?.let { min(it, length) } ?: length
-                }
-
-                if (indent == 0) return indent
-
-                continue
-            }
-
-            for ((index, ch) in text.withIndex()) {
-                if (!ch.isWhitespace()) {
-                    indent = if (indent == null) index else min(indent, index)
-                    break
-                }
+        val iterator = this.iterator()
+        while (iterator.hasNext()) {
+            val next = iterator.next()
+            val elementType = next.elementType
+            if (elementType == KDocTokens.LEADING_ASTERISK) {
+                val spaces = calculateSpaces(iterator)
+                indent = indent?.let { min(it, spaces) } ?: spaces
             }
             if (indent == 0) return indent
         }
         return indent
     }
 
+    private fun calculateSpaces(iterator: Iterator<PsiElement>): Int {
+        while (iterator.hasNext()) {
+            val next = iterator.next()
+
+            if (next.elementType == KDocTokens.LEADING_ASTERISK) break
+
+            val text = next.text
+
+            if (next is PsiWhiteSpace && text.contains("\n")) return 0
+
+            for ((index, ch) in text.withIndex()) {
+                if (!ch.isWhitespace()) return index
+            }
+
+            return text.length
+        }
+        return 0
+    }
+
     private fun MutableList<PsiElement>.toTextRanges(): List<TextRange> =
         buildList {
-
             trim()
 
             val indent = indent() ?: return@buildList
 
             for (element in this@toTextRanges) {
-                if (element is PsiWhiteSpace) {
-                    val text = element.text
-                    val indexOfNewLine = text.indexOf('\n')
-                    // grab only new line `\n` text range, skip spaces
-                    if (indexOfNewLine >= 0) {
-                        val textRangeInParent = element.textRangeInParent
-                        val startOffset = textRangeInParent.startOffset + indexOfNewLine
-                        add(TextRange(startOffset, startOffset + 1))
+                when {
+                    element is PsiWhiteSpace -> {
+                        val text = element.text
+                        val indexOfNewLine = text.indexOf('\n')
+                        // grab only new line `\n` text range, skip spaces
+                        if (indexOfNewLine >= 0) {
+                            val textRangeInParent = element.textRangeInParent
+                            val startOffset = textRangeInParent.startOffset + indexOfNewLine
+                            add(TextRange(startOffset, startOffset + 1))
+                        }
                     }
-                } else {
-                    val range = element.textRangeInParent
-                    val startOffset = range.startOffset + indent
-                    val endOffset = range.endOffset
-                    add(TextRange(min(startOffset, endOffset), endOffset))
+                    element.elementType == KDocTokens.LEADING_ASTERISK -> {
+                        continue
+                    }
+                    else -> {
+                        val range = element.textRangeInParent
+                        val startOffset = range.startOffset + indent
+                        val endOffset = range.endOffset
+                        add(TextRange(min(startOffset, endOffset), endOffset))
+                    }
                 }
             }
         }
@@ -168,9 +174,13 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
             iterator.remove()
         }
 
-        if (lastOrNull() is PsiWhiteSpace) {
-            // drop tail whitespace
-            removeLast()
+        while (this.isNotEmpty()) {
+            val lastOrNull = lastOrNull()
+            if (lastOrNull is PsiWhiteSpace || lastOrNull?.elementType == KDocTokens.LEADING_ASTERISK) {
+                removeLast()
+            } else {
+                break
+            }
         }
     }
 
