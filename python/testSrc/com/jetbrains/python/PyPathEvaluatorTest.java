@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
-import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementGenerator;
@@ -9,6 +8,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyPathEvaluator;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -35,17 +35,15 @@ public class PyPathEvaluatorTest extends PyTestCase {
     PyFile file = (PyFile) myFixture.getFile();
     final PyTargetExpression expression = file.findTopLevelAttribute("TEMPLATES_DIR");
     final PyExpression value = expression.findAssignedValue();
-    final String result = FileUtil.toSystemIndependentName((String) new PyPathEvaluator("").evaluate(value));
-    assertEquals(result, "/foo/templates");
+    final String result = ((String) new PyPathEvaluator("").evaluate(value)).replace('\\', '/');
+    assertEquals("/foo/templates", result);
   }
 
   public void testList() {
     final PyElementGenerator generator = PyElementGenerator.getInstance(myFixture.getProject());
     final PyExpression expression = generator.createExpressionFromText(LanguageLevel.getLatest(), "['a' + 'b'] + ['c']");
-    List<Object> result = (List<Object>) new PyPathEvaluator("").evaluate(expression);
-    assertEquals(2, result.size());
-    assertEquals("ab", result.get(0));
-    assertEquals("c", result.get(1));
+    List<?> result = (List<?>) new PyPathEvaluator("").evaluate(expression);
+    assertEquals(List.of("ab", "c"), result);
   }
 
   public void testParDir() {
@@ -72,9 +70,19 @@ public class PyPathEvaluatorTest extends PyTestCase {
     assertEquals("/foo/bar/baz.py", doEvaluate("Path(__file__).resolve() / 'bar' / 'baz.py'",  "/foo"));
   }
 
-  private String doEvaluate(final String text, final String file) {
+  // PY-89877
+  public void testOsPathJoinAtRoot() {
+    assertEquals("/foo", doEvaluate("os.path.join('/', 'foo')", "/irrelevant"));
+  }
+
+  // PY-89877
+  public void testPathlibSlashAtRoot() {
+    assertEquals("/foo", doEvaluate("Path('/') / 'foo'", "/irrelevant"));
+  }
+
+  private String doEvaluate(final @NotNull String text, final @NotNull String file) {
     final PyElementGenerator generator = PyElementGenerator.getInstance(myFixture.getProject());
     final PyExpression expression = generator.createExpressionFromText(LanguageLevel.getLatest(), text);
-    return FileUtil.toSystemIndependentName((String) new PyPathEvaluator(file).evaluate(expression));
+    return ((String) new PyPathEvaluator(file).evaluate(expression)).replace('\\', '/');
   }
 }

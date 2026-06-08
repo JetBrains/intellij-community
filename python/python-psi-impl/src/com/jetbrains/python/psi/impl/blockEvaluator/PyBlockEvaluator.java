@@ -56,7 +56,7 @@ public class PyBlockEvaluator {
   private final @NotNull PyEvaluationContext myContext;
   private final Set<PyFile> myVisitedFiles;
   private final Set<String> myDeclarationsToTrack = new HashSet<>();
-  private String myCurrentFilePath;
+  private @Nullable String myCurrentFilePath;
   private Object myReturnValue;
   private boolean myEvaluateCollectionItems = true;
 
