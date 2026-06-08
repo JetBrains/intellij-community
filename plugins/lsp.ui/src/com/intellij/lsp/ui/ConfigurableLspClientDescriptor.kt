@@ -9,12 +9,12 @@ import com.intellij.lsp.ui.settings.LspServerConfiguration
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspCommunicationChannel
-import com.intellij.platform.lsp.api.ProjectWideLspServerDescriptor
+import com.intellij.platform.lsp.api.ProjectWideLspClientDescriptor
 
-internal class ConfigurableLspServerDescriptor(
+internal class ConfigurableLspClientDescriptor(
   project: Project,
   configuration: LspServerConfiguration,
-) : ProjectWideLspServerDescriptor(project, configuration.name) {
+) : ProjectWideLspClientDescriptor(project, configuration.name) {
 
   private val configuration: LspServerConfiguration = configuration.copy()
 
@@ -22,14 +22,14 @@ internal class ConfigurableLspServerDescriptor(
     if (!configuration.enabled) {
       return false
     }
-    
+
     val matchers = configuration.getFileMatchers()
     for (matcher in matchers) {
       if (matcher.acceptsCharSequence(file.name)) {
         return true
       }
     }
-    
+
     return false
   }
 
@@ -37,9 +37,9 @@ internal class ConfigurableLspServerDescriptor(
     if (configuration.executablePath.isEmpty()) {
       throw ExecutionException(LspUiBundle.message("lsp.settings.empty.executable.dialog", configuration.name))
     }
-    
+
     val commandLine = GeneralCommandLine(configuration.executablePath)
-    
+
     configuration.getArgumentsList().forEach { arg ->
       commandLine.addParameter(arg)
     }
@@ -47,7 +47,7 @@ internal class ConfigurableLspServerDescriptor(
     roots.getOrNull(0)?.let { commandLine.withWorkingDirectory(it.toNioPath()) }
 
     configuration.envVars.get().configureCommandLine(commandLine, true)
-    
+
     return commandLine
   }
 
@@ -64,7 +64,7 @@ internal class ConfigurableLspServerDescriptor(
     if (configuration.initializationOptions.isBlank()) {
       return null
     }
-    
+
     return try {
       Gson().fromJson(configuration.initializationOptions, Map::class.java)
     } catch (e: JsonSyntaxException) {

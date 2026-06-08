@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lsp.ui.settings
 
-import com.intellij.lsp.ui.ConfigurableLspServerSupportProvider
+import com.intellij.lsp.ui.ConfigurableLspClientProvider
 import com.intellij.lsp.ui.LspUiBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -15,7 +15,7 @@ import com.intellij.openapi.ui.MasterDetailsComponent
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.NamedConfigurable
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.lsp.api.LspServerManager
+import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.IconUtil
 import javax.swing.tree.TreeNode
@@ -129,7 +129,7 @@ internal class LspServersConfigurable(private val project: Project) : MasterDeta
     settings.servers.clear()
     settings.servers.addAll(newServers)
     if (!project.isDefault) {
-      LspServerManager.getInstance(project).stopAndRestartIfNeeded(ConfigurableLspServerSupportProvider::class.java)
+      LspClientManager.getInstance(project).stopAndRestartClientsIfNeeded(ConfigurableLspClientProvider::class.java)
     }
   }
 

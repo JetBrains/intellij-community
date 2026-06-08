@@ -15,7 +15,7 @@
                          key="lsp.settings.display.name"
                          instance="com.intellij.lsp.ui.settings.LspServersConfigurable"
                          parentId="tools"/>
-    <platform.lsp.serverSupportProvider implementation="com.intellij.lsp.ui.ConfigurableLspServerSupportProvider"/>
+    <platform.lsp.clientProvider implementation="com.intellij.lsp.ui.ConfigurableLspClientProvider"/>
 
     <!-- Statistics -->
     <statistics.projectUsagesCollector implementation="com.intellij.lsp.ui.statistics.LspServerUsagesCollector"/>
