@@ -6,6 +6,7 @@ import com.intellij.diagnostic.hprof.parser.InstanceFieldEntry
 import com.intellij.diagnostic.hprof.parser.StaticFieldEntry
 import com.intellij.diagnostic.hprof.parser.Type
 import com.intellij.diagnostic.hprof.util.HprofWriter
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
@@ -49,7 +50,7 @@ class PersistentSyntaxTreeHprofProcessorTest {
     val hprofPath = tempDir.resolve("persistent-syntax-tree-overhead.hprof")
     writeOverheadHprof(hprofPath)
 
-    val analysis = PersistentSyntaxTreeHprofProcessor.analyzePersistentSyntaxTreeOverhead(hprofPath)
+    val analysis = runBlocking { PersistentSyntaxTreeHprofProcessor.analyzePersistentSyntaxTreeOverhead(hprofPath) }
 
     assertEquals(3, analysis.extraction.allInstances.size)
     assertEquals(setOf(STALE_ONLY_ARRAY_MAP_OBJECT_ID), analysis.staleOnlyMapObjectIds)
@@ -69,14 +70,39 @@ class PersistentSyntaxTreeHprofProcessorTest {
       analysis.retainedObjectIds,
     )
     assertEquals(8, analysis.retainedObjectCount)
-    assertEquals(216, analysis.retainedOverheadBytes)
+    assertEquals(224, analysis.retainedOverheadBytes)
 
     assertEquals(
       listOf(
         PersistentSyntaxTreeOverheadClassStats(PAYLOAD_WITH_REFERENCES_CLASS_NAME, 4, 128),
-        PersistentSyntaxTreeOverheadClassStats("[J", 1, 28),
-        PersistentSyntaxTreeOverheadClassStats("[Ljava.lang.Object;", 1, 28),
+        PersistentSyntaxTreeOverheadClassStats("[J", 1, 32),
+        PersistentSyntaxTreeOverheadClassStats("[Ljava.lang.Object;", 1, 32),
         PersistentSyntaxTreeOverheadClassStats(PersistentSyntaxTreeHprofProcessor.ARRAY_VERSIONED_PAYLOAD_MAP_CLASS_NAME, 1, 24),
+        PersistentSyntaxTreeOverheadClassStats(LEAF_CLASS_NAME, 1, 8),
+      ),
+      analysis.retainedObjectsByClass,
+    )
+  }
+
+  @Test
+  fun `calculates retained overhead with custom object layout`(@TempDir tempDir: Path) {
+    val hprofPath = tempDir.resolve("persistent-syntax-tree-overhead.hprof")
+    writeOverheadHprof(hprofPath)
+
+    val analysis = runBlocking {
+      PersistentSyntaxTreeHprofProcessor.analyzePersistentSyntaxTreeOverhead(
+        hprofPath,
+        objectSizeLayout = HprofObjectSizeLayout(referenceSize = 4),
+      )
+    }
+
+    assertEquals(176, analysis.retainedOverheadBytes)
+    assertEquals(
+      listOf(
+        PersistentSyntaxTreeOverheadClassStats(PAYLOAD_WITH_REFERENCES_CLASS_NAME, 4, 96),
+        PersistentSyntaxTreeOverheadClassStats("[J", 1, 32),
+        PersistentSyntaxTreeOverheadClassStats("[Ljava.lang.Object;", 1, 24),
+        PersistentSyntaxTreeOverheadClassStats(PersistentSyntaxTreeHprofProcessor.ARRAY_VERSIONED_PAYLOAD_MAP_CLASS_NAME, 1, 16),
         PersistentSyntaxTreeOverheadClassStats(LEAF_CLASS_NAME, 1, 8),
       ),
       analysis.retainedObjectsByClass,
