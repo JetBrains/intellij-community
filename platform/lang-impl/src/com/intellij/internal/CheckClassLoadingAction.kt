@@ -1,15 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal
 
-import com.intellij.ide.plugins.PluginInitContextFactory
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginModuleDescriptor
-import com.intellij.ide.plugins.PluginSetBuilder
-import com.intellij.ide.plugins.UnambiguousPluginSet
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.ide.plugins.contentModuleName
-import com.intellij.ide.plugins.tryBuild
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
@@ -108,23 +103,14 @@ internal class CheckClassLoadingAction : DumbAwareAction(), ActionRemoteBehavior
   }
 
   private fun buildClassLoadingMap(className: String): Map<PluginModuleDescriptor, Class<*>?> {
-    val pluginSet = PluginManagerCore.getPluginSet()
     val loadingResults = mutableMapOf<PluginModuleDescriptor, Class<*>?>()
-    val unambiguousPluginSet = UnambiguousPluginSet.tryBuild(pluginSet.enabledPlugins) ?: error("existing plugin set is not unambiguous")
-    val topologicalComparator = PluginSetBuilder(PluginInitContextFactory.getInstance().createActualContext(), unambiguousPluginSet, pluginSet.input.discoveryResult).topologicalComparator
-    for (plugin in pluginSet.enabledPlugins) {
-      loadingResults[plugin] = plugin.tryLoadClass(className)
-      for (module in plugin.contentModules) {
+    val pluginSet = PluginManagerCore.getPluginSet().resolvedPluginSet ?: error("resolved plugin set is not set")
+    for (moduleGroup in pluginSet.runtimeModuleGroupGraph.sortedGroups) {
+      for (module in moduleGroup.sortedDescriptors) {
+        if (module !is PluginModuleDescriptor) continue
         loadingResults[module] = module.tryLoadClass(className)
       }
     }
-    return loadingResults.entries
-      .sortedWith { (module1, _), (module2, _) ->
-        val cl1 = module1.pluginClassLoader as? PluginAwareClassLoader
-        val cl2 = module2.pluginClassLoader as? PluginAwareClassLoader
-        topologicalComparator.compare(cl1?.pluginDescriptor as? PluginModuleDescriptor ?: module1,
-                                      cl2?.pluginDescriptor as? PluginModuleDescriptor ?: module2)
-      }
-      .associateTo(LinkedHashMap()) { it.key to it.value }
+    return loadingResults
   }
 }
