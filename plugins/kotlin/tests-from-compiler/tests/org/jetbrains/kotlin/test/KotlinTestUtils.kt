@@ -38,7 +38,7 @@ object KotlinTestUtils {
 
     @JvmStatic
     fun runTest(test: DoTest, testCase: TestCase, @TestDataFile testDataFile: String) {
-        KotlinPluginLayout.kotlinc // to initialize dist
+        KotlinPluginLayout.kotlincPath
         if (isRunningFromSources) {  // for IDEA Trunk / Kotlin IDE Trunk / Kotlin JPS Tests Trunk, and IDEA Trunk / Kotlin IDE Trunk / Kotlin JPS Tests Bundled
             // some tests take Kotlin compiler from jps.kotlin.home but don't restore it explicitly (e.g. org.jetbrains.kotlin.jps.build.KotlinJpsBuildTest), copy it  -- TODO: https://youtrack.jetbrains.com/issue/KTIJ-38387
             val kotlincDistForIdeFromSources = KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve("kotlinc-dist-for-ide-from-sources")
