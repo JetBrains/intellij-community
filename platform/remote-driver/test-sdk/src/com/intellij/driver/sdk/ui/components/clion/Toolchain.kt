@@ -107,7 +107,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.WSL_DEBUGGER,
     buildTool: BuildTool = BuildTool.GMAKE,
     name: ToolchainNames = ToolchainNames.WSL,
-    toolset: Toolset = Toolset(kind = "WSL", path = "Ubuntu")
+    toolset: Toolset = Toolset(kind = "WSL", path = "ubuntu2204wsl2")
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class Docker(
