@@ -4,8 +4,10 @@ package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
 import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
+import com.intellij.platform.pluginSystem.testFramework.buildPluginSet
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.depends
 import com.intellij.platform.testFramework.plugins.installAt
@@ -88,39 +90,30 @@ internal class ClassLoaderConfiguratorTest {
 
   @Test
   fun regularPluginClassLoaderIsUsedIfPackageSpecified() {
-    plugin("p_dependency") {
-      packagePrefix = "com.bar"
-      extensionPoints =
-        """<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""
-    }.installAt(rootDir)
-    plugin("p_dependent") {
-      packagePrefix = "com.example"
-      content(namespace = "jetbrains") {
-        module("com.example.sub") {
-          packagePrefix = "com.example.extraSupportedFeature"
-          extensionPoints =
-            """<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""
+    val pluginSet = buildPluginSet(rootDir, configureClassLoaders = false) {
+      plugin("p_dependency") {
+        packagePrefix = "com.bar"
+        extensionPoints =
+          """<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""
+      }
+      plugin("p_dependent") {
+        packagePrefix = "com.example"
+        content(namespace = "jetbrains") {
+          module("com.example.sub") {
+            packagePrefix = "com.example.extraSupportedFeature"
+            extensionPoints =
+              """<extensionPoint qualifiedName="bar.barExtension" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true"/>"""
+          }
         }
       }
-    }.installAt(rootDir)
-    val pluginSetTestBuilder = PluginSetTestBuilder.fromPath(rootDir)
-    val initContext = pluginSetTestBuilder.buildInitContext()
-    val discoveryResult = pluginSetTestBuilder.discoverPlugins().second
-    val plugins = discoveryResult.pluginLists.flatMap { it.plugins }
-    Assertions.assertThat(plugins).hasSize(2)
-    val classLoaderConfigurator = ClassLoaderConfigurator(
-      PluginSetBuilder(initContext, UnambiguousPluginSet.tryBuild(plugins)!!, discoveryResult)
-        .createPluginSetWithEnabledModulesMap()
-    )
+    }
+    Assertions.assertThat(pluginSet.enabledPlugins).hasSize(2)
+    val classLoaderConfigurator = ClassLoaderConfigurator(pluginSet)
     classLoaderConfigurator.configure()
-    val plugin = plugins[1]
+    val plugin = pluginSet.findEnabledPlugin(PluginId("p_dependent"))!! as PluginMainDescriptor
     assertThat(plugin.contentModules[0].pluginClassLoader).isInstanceOf(PluginAwareClassLoader::class.java)
 
-    val scope = createPluginDependencyAndContentBasedScope(
-      plugin,
-      PluginSetBuilder(initContext, UnambiguousPluginSet.tryBuild(plugins)!!, discoveryResult)
-        .createPluginSetWithEnabledModulesMap()
-    )!!
+    val scope = createPluginDependencyAndContentBasedScope(plugin, pluginSet)!!
     assertThat(scope.isDefinitelyAlienClass(name = "dd", packagePrefix = "dd", force = false)).isNull()
     assertThat(scope.isDefinitelyAlienClass(name = "com.example.extraSupportedFeature.Foo", packagePrefix = "com.example.extraSupportedFeature.", force = false))
       .isEqualToIgnoringWhitespace("Class com.example.extraSupportedFeature.Foo must not be requested from main classloader of p_dependent plugin. " +
