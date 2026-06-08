@@ -55,7 +55,7 @@ object PyTestAssertionParserSymbols {
 
 
 object PyTestAssertionParserUtils {
-  val defaultSeverityNames: List<String> = HighlightSeverity.DEFAULT_SEVERITIES.map { it.name }
+  val defaultSeverityNames: List<String> = HighlightSeverity.DEFAULT_SEVERITIES.map { it.name.replace(" ", "-") }
 
   fun skipWhitespace(text: String, startIndex: Int): Int {
     var i = startIndex

@@ -466,7 +466,7 @@ abstract class PyCodeInsightTestCase {
                                             codeLineStart = codeLineStart,
                                             codeColumnStart = codeColumnStart,
                                             codeColumnEnd = codeColumnEnd,
-                                            type = typeName.name,
+                                            type = typeName.name.replace(" ", "-"),
                                             content = highlight.description ?: "")
       actualAssertions.add(actualAssertion)
     }
