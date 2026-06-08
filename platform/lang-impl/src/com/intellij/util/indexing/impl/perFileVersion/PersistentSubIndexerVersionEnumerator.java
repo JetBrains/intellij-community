@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.IntObjectLRUMap;
+import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProviderKt;
 import com.intellij.util.io.CachingEnumerator;
 import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
@@ -108,7 +109,8 @@ public final class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> impl
   private void init() throws IOException {
     myMap = PersistentMapBuilder.newBuilder(myFile.toPath(), mySubIndexerTypeDescriptor, EnumeratorIntegerDescriptor.INSTANCE)
       //.wantNonNegativeIntegralValues()
-    .build();
+      .withStorageLockContext(DefaultIndexStorageLayoutProviderKt.newStorageLockContext())
+      .build();
       // getSize/remove are required here
     File nextVersionFile = getNextVersionFile(myFile);
     String intValue = nextVersionFile.exists() ? FileUtil.loadFile(nextVersionFile, StandardCharsets.UTF_8) : String.valueOf(1);
