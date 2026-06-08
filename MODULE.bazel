@@ -92,6 +92,8 @@ kotlin_test_deps(name = "kotlin_test_deps")
 
 include("//:debugger_test_deps.MODULE.bazel")
 
+include("//platform/jewel:jewel_deps.MODULE.bazel")
+
 jbr_toolchains = use_extension("@community//build:jbr-toolchains.bzl", "jbr_toolchains")
 
 REMOTE_JBR25_REPOS = ["remotejbr25_" + platform for platform in [

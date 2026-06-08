@@ -1,0 +1,22 @@
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_file(
+    name = "jewel_deps_kotlinpoet",
+    downloaded_file_path = "kotlinpoet.jar",
+    sha256 = "585b5673a86301e5e06d307a3327d5a73e213cb7600d1c856604ede016f1d656",
+    url = "https://https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/squareup/kotlinpoet-jvm/2.1.0/kotlinpoet-jvm-2.1.0.jar",
+)
+
+http_file(
+    name = "jewel_deps_ktfmt",
+    downloaded_file_path = "ktfmt.jar",
+    sha256 = "d13324023754112797d828e2f92117196190f7617d16ad1d1765e5be768cc5c2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/facebook/ktfmt/0.55/ktfmt-0.55-with-dependencies.jar",
+)
+
+http_file(
+    name = "jewel_deps_detekt",
+    downloaded_file_path = "detekt.jar",
+    sha256 = "3afe89a11120303c73c9bdda3d8fe558dd9070a6937d27819ddc04b275381245",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/gitlab/arturbosch/detekt/detekt-cli/1.23.8/detekt-cli-1.23.8-all.jar"
+)

@@ -1,5 +1,12 @@
+load("@rules_java//java:defs.bzl", "java_binary")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+java_binary(
+    name = "standalone_sample",
+    runtime_deps = [":standalone"],
+    main_class = "org.jetbrains.jewel.samples.standalone.MainKt"
+)
 
 ### auto-generated section `build intellij.platform.jewel.samples.standalone` start
 
