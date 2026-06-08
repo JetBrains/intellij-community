@@ -9,6 +9,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeQodanaInspectionScopeLimiter
 import java.nio.file.Files
+import java.nio.file.Path
 
 private const val QODANA_ANALYSIS_SCOPE_PROJECT_RELATIVE_PATH =
   "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/SplitModeQodanaAnalysisScope.json"
@@ -46,8 +47,8 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
 
     withQodanaAnalysisScopeLimiter(
       enabled = true,
-      projectScopeJson = """{ "moduleNames": ["other.module"] }""",
-      additionalScopeJson = """{ "moduleNames": ["$moduleName"] }""",
+      projectScopeJson = """{ "moduleNames": ["$moduleName"] }""",
+      additionalScopeJson = """{ "moduleNames": ["other.module"] }""",
     ) {
       assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
     }
@@ -67,8 +68,11 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
     @Language("JSON") additionalScopeJson: String? = null,
     action: () -> Unit,
   ) {
-    if (projectScopeJson != null) {
-      myFixture.addFileToProject(QODANA_ANALYSIS_SCOPE_PROJECT_RELATIVE_PATH, projectScopeJson)
+    val projectScopeFile = projectScopeJson?.let {
+      Path.of(project.basePath!!).resolve(QODANA_ANALYSIS_SCOPE_PROJECT_RELATIVE_PATH).also { file ->
+        Files.createDirectories(file.parent)
+        Files.writeString(file, it)
+      }
     }
     val additionalFile = additionalScopeJson?.let {
       Files.createTempFile("split-mode-qodana-analysis-scope", ".json").also { file ->
@@ -86,6 +90,9 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
     finally {
       enabledRegistryValue.setValue(false)
       additionalFileRegistryValue.setValue("")
+      if (projectScopeFile != null) {
+        Files.deleteIfExists(projectScopeFile)
+      }
       SplitModeQodanaInspectionScopeLimiter.getInstance().reloadScopeForTest(project)
       if (additionalFile != null) {
         Files.deleteIfExists(additionalFile)
