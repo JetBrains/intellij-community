@@ -2,7 +2,6 @@
 package git4idea.actions.workingTree
 
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
-import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.StructuredIdeActivity
@@ -115,8 +114,9 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     }
 
     rootsUnderCreation.add(workingTreeData.workingTreePath)
+    val gitWTService = GitWorkingTreesService.getInstance(project)
     val result = try {
-      GitWorkingTreesService.getInstance(project).createWorkingTree(repository, workingTreeData)
+      gitWTService.createWorkingTree(repository, workingTreeData)
     }
     finally {
       rootsUnderCreation.remove(workingTreeData.workingTreePath)
@@ -131,7 +131,9 @@ internal class GitCreateWorkingTreeService(private val coroutineScope: Coroutine
     }
 
     TrustedProjects.setProjectTrusted(Path(workingTreeData.workingTreePath.path), true)
-    val worktreeProject = ProjectUtil.openOrImport(workingTreeData.workingTreePath.path, null, false)
+
+    val worktreeProject = gitWTService.openProjectInNewWindow(Path(workingTreeData.workingTreePath.path))
+
     if (worktreeProject != null) {
       GitOperationsCollector.logWorktreeProjectOpenedAfterCreation(ideActivity)
     } else {

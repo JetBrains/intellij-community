@@ -3,6 +3,7 @@ package git4idea.workingTrees
 
 import com.intellij.CommonBundle
 import com.intellij.dvcs.repo.repositoryId
+import com.intellij.ide.GeneralSettings
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import java.awt.Window
 import kotlinx.coroutines.withContext
+import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.minutes
@@ -222,7 +224,7 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
 
         return@launch
       }
-      ProjectUtil.openOrImportAsync(Path(tree.path.path))
+      openProjectInNewWindow(Path(tree.path.path))
     }
   }
 
@@ -346,6 +348,18 @@ internal class GitWorkingTreesService(private val project: Project, val coroutin
         "",
         GitBundle.message("Git.WorkingTrees.prune.worktree.success.message")
       )
+    }
+  }
+
+  suspend fun openProjectInNewWindow(path: Path): Project? {
+    val generalSettings = GeneralSettings.getInstance()
+    val savedConfirmOpen = generalSettings.confirmOpenNewProject
+    try {
+      generalSettings.confirmOpenNewProject = GeneralSettings.OPEN_PROJECT_ASK
+      return ProjectUtil.openOrImportAsync(path)
+    }
+    finally {
+      generalSettings.confirmOpenNewProject = savedConfirmOpen
     }
   }
 }
