@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lsp.api
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 @Deprecated("Use LspClientManager", ReplaceWith("LspClientManager", "com.intellij.platform.lsp.api.LspClientManager"))
 @Suppress("DEPRECATION")
@@ -20,6 +22,14 @@ interface LspServerManager : LspClientManager {
 
   @Deprecated("Use stopAndRestartClientsIfNeeded", ReplaceWith("stopAndRestartClientsIfNeeded(providerClass)"))
   fun stopAndRestartIfNeeded(providerClass: Class<out LspServerSupportProvider>)
+
+  @ApiStatus.Internal
+  @Deprecated("Use addListener", ReplaceWith("addListener(listener, parentDisposable, sendEventsForExistingServers)"))
+  fun addLspServerManagerListener(
+    listener: LspServerManagerListener,
+    parentDisposable: Disposable,
+    sendEventsForExistingServers: Boolean = false,
+  ): Unit = addListener(listener, parentDisposable, sendEventsForExistingServers)
 
   companion object {
     /**

@@ -13,10 +13,10 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.LspClientDescriptor
+import com.intellij.platform.lsp.api.LspClientManagerListener
 import com.intellij.platform.lsp.api.LspClientProvider
 import com.intellij.platform.lsp.api.LspCommunicationChannel
 import com.intellij.platform.lsp.api.LspCommunicationChannel.StdIO
-import com.intellij.platform.lsp.api.LspServerManagerListener
 import com.intellij.platform.lsp.api.LspServerNotificationsHandler
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.connector.Lsp4jServerConnector
@@ -60,7 +60,7 @@ private val logger = logger<LspClientImpl>()
 class LspClientImpl internal constructor(
   override val providerClass: Class<out LspClientProvider>,
   override val descriptor: LspClientDescriptor,
-  private val eventBroadcaster: LspServerManagerListener,
+  private val eventBroadcaster: LspClientManagerListener,
 ) : @Suppress("TYPEALIAS_EXPANSION_DEPRECATION") LspClientRenameCompat {
   override val project: Project = descriptor.project
 

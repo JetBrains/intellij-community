@@ -6,30 +6,30 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
-import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.api.LspServerManagerListener
+import com.intellij.platform.lsp.api.LspClient
+import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.api.LspClientManagerListener
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.util.application
 
 internal class LspStructureViewProjectActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
-    LspServerManager.getInstance(project).addLspServerManagerListener(
-      listener = object : LspServerManagerListener {
-        override fun serverStateChanged(lspServer: LspServer) {
-          if (lspServer.state == LspServerState.Running ||
-              lspServer.state == LspServerState.ShutdownNormally ||
-              lspServer.state == LspServerState.ShutdownUnexpectedly) {
+    LspClientManager.getInstance(project).addListener(
+      listener = object : LspClientManagerListener {
+        override fun serverStateChanged(lspClient: LspClient) {
+          if (lspClient.state == LspServerState.Running ||
+              lspClient.state == LspServerState.ShutdownNormally ||
+              lspClient.state == LspServerState.ShutdownUnexpectedly) {
             refreshStructureView()
           }
         }
 
-        override fun fileOpened(lspServer: LspServer, file: VirtualFile) {
+        override fun fileOpened(lspClient: LspClient, file: VirtualFile) {
           refreshStructureView()
         }
       },
       parentDisposable = project,
-      sendEventsForExistingServers = true,
+      sendEventsForExistingClients = true,
     )
   }
 

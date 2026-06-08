@@ -23,11 +23,11 @@ import com.intellij.platform.lsp.api.Lsp4jServer
 import com.intellij.platform.lsp.api.Lsp4jServerWrapper
 import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.api.LspClientManagerListener
 import com.intellij.platform.lsp.api.LspClientProvider
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.platform.lsp.api.LspServerDescriptor
 import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.api.LspServerManagerListener
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.impl.documentSync.LspOpenedFilesService
@@ -60,7 +60,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
   @TestOnly
   private val lsp4jServerWrappers = ContainerUtil.createLockFreeCopyOnWriteList<Lsp4jServerWrapper>()
 
-  private val eventDispatcher = EventDispatcher.create(LspServerManagerListener::class.java)
+  private val eventDispatcher = EventDispatcher.create(LspClientManagerListener::class.java)
 
   override fun getClientsForProvider(providerClass: Class<out LspClientProvider>): Collection<LspClientImpl> =
     lspClients.filter { it.providerClass == providerClass }
@@ -257,15 +257,10 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
       wrapper.wrapLsp4jServer(lspServer, wrappedLsp4jServer)
     }
 
-  @ApiStatus.Internal
-  override fun addLspServerManagerListener(
-    listener: LspServerManagerListener,
-    parentDisposable: Disposable,
-    sendEventsForExistingServers: Boolean,
-  ) {
+  override fun addListener(listener: LspClientManagerListener, parentDisposable: Disposable, sendEventsForExistingClients: Boolean) {
     eventDispatcher.addListener(listener, parentDisposable)
 
-    if (sendEventsForExistingServers) {
+    if (sendEventsForExistingClients) {
       // Listeners in LspTestUtilKt need to know about events that happened before a test managed to register a listener
       for (lspClient in lspClients) {
         if (lspClient.state == LspServerState.ShutdownUnexpectedly) eventDispatcher.multicaster.serverStateChanged(lspClient)
