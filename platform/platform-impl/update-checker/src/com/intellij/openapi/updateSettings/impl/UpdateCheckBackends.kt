@@ -37,7 +37,7 @@ internal abstract class RemotePluginRepository(val id: String) {
   ): PreparedPluginUpdates
 }
 
-internal open class MarketplacePluginRepository : RemotePluginRepository("default-host") {
+internal open class MarketplaceLikePluginRepository : RemotePluginRepository("default-host") {
   override fun findUpdates(
     buildNumber: BuildNumber?,
     state: InstalledPluginsState,
@@ -89,7 +89,7 @@ internal open class MarketplacePluginRepository : RemotePluginRepository("defaul
 /**
  * Special backend for checking updates of plugins that passes additional analytics ID.
  */
-internal class MarketplaceUpdateCheckPluginRepository : MarketplacePluginRepository() {
+internal class MarketplaceUpdateCheckPluginRepository : MarketplaceLikePluginRepository() {
   override fun findUpdates(idsToUpdate: Set<PluginId>, buildNumber: BuildNumber?): List<IdeCompatibleUpdate> {
     return MarketplaceRequests.checkInstalledPluginUpdate(idsToUpdate, buildNumber, true)
   }

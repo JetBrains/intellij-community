@@ -12,6 +12,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.PluginStringSetFile
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManager
 import com.intellij.ide.plugins.updateBrokenPlugins
@@ -317,7 +318,7 @@ object UpdateChecker {
     indicator: ProgressIndicator? = null,
     buildNumber: BuildNumber? = null,
   ): InternalPluginResults {
-    val backends = collectPluginRepositories(MarketplacePluginRepository())
+    val backends = collectPluginRepositories(MarketplaceLikePluginRepository())
 
     return getInternalPluginUpdates(backends, plugins, indicator, buildNumber)
   }
@@ -337,17 +338,16 @@ object UpdateChecker {
   private fun collectPluginRepositories(marketplaceBackend: RemotePluginRepository): List<RemotePluginRepository> {
     val pluginHosts = UpdateCheckerPluginsFacade.getInstance().getPluginHosts()
     return pluginHosts.mapNotNull { host ->
-      if (isMarketplaceBackend(host))
-        marketplaceBackend
-      else if (host != null)
-        CustomPluginRepository(host)
-      else
-        null
+      when {
+        isMarketplaceBackend(host) -> marketplaceBackend
+        host == null -> MarketplaceLikePluginRepository() // non-official marketplace-like backend
+        else -> CustomPluginRepository(host)
+      }
     }
   }
 
   private fun isMarketplaceBackend(host: String?): Boolean {
-    return host == null && ApplicationInfoEx.getInstanceEx().usesJetBrainsPluginRepository()
+    return host == null && MarketplaceCustomizationService.getInstance().usesJetBrainsPluginRepository()
   }
 
   private fun getInternalPluginUpdates(

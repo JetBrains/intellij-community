@@ -653,6 +653,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       }
     }
     ApplicationManager.getApplication().replaceService(MarketplaceCustomizationService::class.java, object : MarketplaceCustomizationService {
+      override fun usesJetBrainsPluginRepository(): Boolean = true
       override fun getPluginManagerUrl(): String = server.url
       override fun getPluginDownloadUrl(): String = server.url + "/404"
       override fun getPluginsListUrl(): String  = throw AssertionError("unexpected")
@@ -725,6 +726,7 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     ApplicationManager.getApplication().replaceService(
       MarketplaceCustomizationService::class.java,
       object : MarketplaceCustomizationService {
+        override fun usesJetBrainsPluginRepository(): Boolean = true
         override fun getPluginManagerUrl(): String = server.url
         override fun getPluginDownloadUrl(): String = server.url.trimEnd('/') + "/download"
         override fun getPluginsListUrl(): String = throw AssertionError("unexpected")

@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable
  * Provides an ability to customize various aspects of interaction with the marketplace,
  * usually defined in *ApplicationInfo.xml file
  */
-@ApiStatus.Experimental
 @ApiStatus.Internal
 interface MarketplaceCustomizationService {
 
@@ -23,6 +22,11 @@ interface MarketplaceCustomizationService {
       return serviceOrNull<MarketplaceCustomizationService>() ?: ApplicationInfoMarketplaceCustomizationService()
     }
   }
+
+  /**
+   * @see com.intellij.openapi.application.ex.ApplicationInfoEx.usesJetBrainsPluginRepository
+   */
+  fun usesJetBrainsPluginRepository(): Boolean = true
 
   /**
    * @see com.intellij.openapi.application.ex.ApplicationInfoEx.getPluginManagerUrl
