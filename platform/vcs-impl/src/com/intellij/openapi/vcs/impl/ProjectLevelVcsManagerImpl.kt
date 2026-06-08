@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
@@ -78,7 +78,6 @@ import org.jetbrains.annotations.SystemIndependent
 import org.jetbrains.annotations.TestOnly
 import java.io.File
 import java.util.Collections
-import java.util.concurrent.Callable
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
 
@@ -535,13 +534,19 @@ class ProjectLevelVcsManagerImpl(
 
   @ApiStatus.Internal
   fun isIgnoredFileRoot(file: VirtualFile): Boolean {
-    return ReadAction.nonBlocking(Callable {
+    val compute = {
       when {
         project.isDisposed() || project.isDefault -> false
         !file.isValid() -> false
         else -> FileIndexFacade.getInstance(project).isUnderIgnored(file)
       }
-    }).executeSynchronously()
+    }
+    return if (ApplicationManager.getApplication().isDispatchThread) {
+      ReadAction.computeBlocking<Boolean, Throwable>(compute)
+    }
+    else {
+      ReadAction.nonBlocking(compute).executeSynchronously()
+    }
   }
 
   override fun isIgnoredUnderRoot(vcsRoot: VirtualFile, filePath: FilePath): Boolean {
