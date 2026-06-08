@@ -23,6 +23,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.ui.buildSessionTreeThrea
 import com.intellij.agent.workbench.sessions.toolwindow.ui.clipSessionTreeMiddleText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.computeSessionTreeThreadTrailingPaint
 import com.intellij.agent.workbench.sessions.toolwindow.ui.configureSessionTreeRenderingProperties
+import com.intellij.agent.workbench.sessions.toolwindow.ui.createSessionTreeScrollPane
 import com.intellij.agent.workbench.sessions.toolwindow.ui.extractSessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.ui.isSessionTreeRowClipped
 import com.intellij.agent.workbench.sessions.toolwindow.ui.projectBranchText
@@ -57,6 +58,7 @@ import java.awt.Rectangle
 import java.math.BigDecimal
 import javax.swing.Icon
 import javax.swing.JTree
+import javax.swing.ScrollPaneConstants
 import javax.swing.tree.TreePath
 
 @TestApplication
@@ -88,6 +90,16 @@ class AgentSessionsSwingTreeCellRendererTest {
     assertThat(tree.getClientProperty(AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED)).isEqualTo(true)
     assertThat(tree.getClientProperty(RenderingHelper.SHRINK_LONG_RENDERER)).isEqualTo(true)
     assertThat(tree.getClientProperty(RenderingHelper.SHRINK_LONG_SELECTION)).isEqualTo(true)
+  }
+
+  @Test
+  fun sessionTreeScrollPaneDisablesHorizontalScrolling() {
+    val tree = Tree()
+
+    val scrollPane = createSessionTreeScrollPane(tree)
+
+    assertThat(scrollPane.horizontalScrollBarPolicy).isEqualTo(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
+    assertThat(scrollPane.viewport.view).isSameAs(tree)
   }
 
   @Test

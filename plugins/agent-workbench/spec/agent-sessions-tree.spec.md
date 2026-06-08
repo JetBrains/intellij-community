@@ -24,6 +24,9 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsCodexActivityRenderingIntegrationTest.kt
 
+- Long thread titles must clip within the visible tool window and must not create horizontal tree scrolling. Full clipped content remains available through the row tooltip.
+  [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
+
 - The tool window surfaces thread activity through chrome rather than a body strip:
   the title bar carries one counter action per active bucket (`Needs attention` covers `NEEDS_INPUT`/`REVIEWING`,
   `Running` covers `PROCESSING`, `Done` covers `UNREAD`). `READY` threads are not surfaced in title chrome.

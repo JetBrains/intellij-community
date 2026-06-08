@@ -52,6 +52,8 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.BoxLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.JScrollPane
+import javax.swing.ScrollPaneConstants
 import javax.swing.ToolTipManager
 import javax.swing.tree.TreePath
 import org.jetbrains.annotations.TestOnly
@@ -219,7 +221,7 @@ internal class AgentSessionsToolWindowPanel(
     installProviderAvailabilityRefresh()
     configureTree()
     add(northPanel, BorderLayout.NORTH)
-    add(ScrollPaneFactory.createScrollPane(tree, true), BorderLayout.CENTER)
+    add(createSessionTreeScrollPane(tree), BorderLayout.CENTER)
 
     interactionController.install()
     installToolWindowVisibilityTracker()
@@ -473,6 +475,12 @@ internal class AgentSessionsToolWindowPanel(
 internal fun sessionTreeModelShouldMarkCostHintEligible(model: SessionTreeModel): Boolean {
   return model.entriesById.values.any { entry ->
     entry.node is SessionTreeNode.Thread
+  }
+}
+
+internal fun createSessionTreeScrollPane(tree: Tree): JScrollPane {
+  return ScrollPaneFactory.createScrollPane(tree, true).apply {
+    horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
   }
 }
 
