@@ -3,6 +3,7 @@
 
 package com.intellij.debugger.impl
 
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.eel.fs.EelFiles
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -19,6 +20,9 @@ interface HotSwapClassFile {
   companion object {
     @JvmStatic
     fun fromFile(file: File): HotSwapClassFile = HotSwapFile(file)
+
+    @JvmStatic
+    fun fromVirtualFile(virtualFile: VirtualFile): HotSwapClassFile = VirtualHotSwapFile(virtualFile)
   }
 }
 
@@ -28,4 +32,10 @@ open class HotSwapFile(private val file: File) : HotSwapClassFile {
   override fun loadBytes(): ByteArray = EelFiles.readAllBytes(file.toPath())
 
   override fun lastModified(): Long = file.lastModified()
+}
+
+private class VirtualHotSwapFile(private val virtualFile: VirtualFile) : HotSwapClassFile {
+  override fun loadBytes(): ByteArray = virtualFile.contentsToByteArray()
+
+  override fun lastModified(): Long = virtualFile.timeStamp
 }

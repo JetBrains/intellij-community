@@ -14,6 +14,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,6 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -66,35 +69,65 @@ public final class HotSwapManager {
     ));
   }
 
-  /** Finds already compiled class files in output roots without applying the session HotSwap timestamp filter. */
+  /** Finds already compiled class files in class roots without applying the session HotSwap timestamp filter. */
   @ApiStatus.Internal
   @SuppressWarnings("IO_FILE_USAGE")
-  public static @NotNull Map<String, HotSwapFile> findExistingClassesForHotSwap(@NotNull DebuggerSession session,
-                                                                                @NotNull Collection<String> qualifiedNames,
-                                                                                @NotNull HotSwapProgress progress) {
+  public static @NotNull Map<String, HotSwapClassFile> findExistingClassesForHotSwap(@NotNull DebuggerSession session,
+                                                                                     @NotNull Collection<String> qualifiedNames,
+                                                                                     @NotNull HotSwapProgress progress) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (qualifiedNames.isEmpty() || progress.isCancelled()) {
       return Collections.emptyMap();
     }
 
-    Map<String, HotSwapFile> result = new HashMap<>();
-    for (String outputPath : getWritableOutputPaths(session)) {
-      File outputRoot = new File(outputPath);
+    Map<String, HotSwapClassFile> result = new HashMap<>();
+    for (VirtualFile root : getClassRoots(session)) {
+      if (progress.isCancelled()) {
+        break;
+      }
       for (String qualifiedName : qualifiedNames) {
         if (result.containsKey(qualifiedName)) {
           continue;
         }
 
-        File classFile = new File(outputRoot, getClassFileRelativePath(qualifiedName));
-        if (!classFile.isFile()) {
+        String relativePath = getClassFileRelativePath(qualifiedName);
+        if (root.isDirectory() && !root.getFileSystem().isReadOnly()) {
+          File classFile = new File(root.getPath(), relativePath);
+          if (!classFile.isFile()) {
+            continue;
+          }
+          progress.setText(JavaDebuggerBundle.message("progress.hotswap.scanning.path", classFile.getPath()));
+          result.put(qualifiedName, new HotSwapFile(classFile));
           continue;
         }
 
-        progress.setText(JavaDebuggerBundle.message("progress.hotswap.scanning.path", classFile.getPath()));
-        result.put(qualifiedName, new HotSwapFile(classFile));
+        VirtualFile classFile = root.findFileByRelativePath(relativePath);
+        if (classFile == null || classFile.isDirectory()) {
+          continue;
+        }
+
+        HotSwapClassFile hotSwapFile = createHotSwapFile(classFile);
+        if (hotSwapFile == null) {
+          continue;
+        }
+
+        progress.setText(JavaDebuggerBundle.message("progress.hotswap.scanning.path", classFile.getPresentableUrl()));
+        result.put(qualifiedName, hotSwapFile);
       }
     }
     return result;
+  }
+
+  private static @NotNull List<VirtualFile> getClassRoots(@NotNull DebuggerSession session) {
+    return ReadAction.computeBlocking(() -> List.of(OrderEnumerator.orderEntries(session.getProject()).classes().getRoots()));
+  }
+
+  private static @Nullable HotSwapClassFile createHotSwapFile(@NotNull VirtualFile classFile) {
+    Path file = classFile.getFileSystem().getNioPath(classFile);
+    if (file != null && !Files.isRegularFile(file)) {
+      return null;
+    }
+    return HotSwapClassFile.fromVirtualFile(classFile);
   }
 
   private static @NotNull String getClassFileRelativePath(@NotNull String qualifiedName) {
@@ -129,7 +162,7 @@ public final class HotSwapManager {
     return project.getService(HotSwapManager.class);
   }
 
-  private void reloadClasses(DebuggerSession session, Map<String, HotSwapFile> classesToReload, HotSwapProgress progress) {
+  private void reloadClasses(DebuggerSession session, Map<String, ? extends HotSwapClassFile> classesToReload, HotSwapProgress progress) {
     final long newSwapTime = System.currentTimeMillis();
     new ReloadClassesWorker(session, progress).reloadClasses(classesToReload);
     if (progress.isCancelled()) {
@@ -146,7 +179,7 @@ public final class HotSwapManager {
    */
   @ApiStatus.Internal
   public static void reloadExistingClasses(@NotNull DebuggerSession session,
-                                           @NotNull Map<String, HotSwapFile> classesToReload,
+                                           @NotNull Map<String, HotSwapClassFile> classesToReload,
                                            @NotNull HotSwapProgress progress) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (classesToReload.isEmpty()) {
