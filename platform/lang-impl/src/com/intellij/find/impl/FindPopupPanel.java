@@ -1317,16 +1317,21 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
   private void installLoadMoreScrollListener(@NotNull JBScrollPane scrollPane) {
     myResultsScrollPane = scrollPane;
-    JScrollBar bar = scrollPane.getVerticalScrollBar();
-    bar.addAdjustmentListener(e -> {
-      int extent = bar.getModel().getExtent();
-      if (extent <= 0) return;
-      int yetToScroll = bar.getMaximum() - extent - e.getValue();
-      int viewportHeight = Math.max(scrollPane.getHeight(), 1);
-      if (yetToScroll < Math.max(viewportHeight / 2, 50)) {
+    scrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
+      if (isUserAtBottomWithValue(e.getValue())) {
         myResultsAutoloadHandler.tryLoadMore();
       }
     });
+  }
+
+  private boolean isUserAtBottomWithValue(int scrollBarValue) {
+    if (myResultsScrollPane == null) return false;
+    JScrollBar bar = myResultsScrollPane.getVerticalScrollBar();
+    int extent = bar.getModel().getExtent();
+    if (extent <= 0) return false;
+    int yetToScroll = bar.getMaximum() - extent - scrollBarValue;
+    int viewportHeight = Math.max(myResultsScrollPane.getHeight(), 1);
+    return yetToScroll < Math.max(viewportHeight / 2, 50);
   }
 
   private void updateInfoLabel(int occurrences, int filesWithOccurrences, boolean loadingMore) {
@@ -1782,12 +1787,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     @Override
     public boolean isUserAtBottom() {
       if (myResultsScrollPane == null) return false;
-      JScrollBar bar = myResultsScrollPane.getVerticalScrollBar();
-      int extent = bar.getModel().getExtent();
-      if (extent <= 0) return false;
-      int yetToScroll = bar.getMaximum() - extent - bar.getValue();
-      int viewportHeight = Math.max(myResultsScrollPane.getHeight(), 1);
-      return yetToScroll < Math.max(viewportHeight / 2, 50);
+      return isUserAtBottomWithValue(myResultsScrollPane.getVerticalScrollBar().getValue());
     }
 
     @Override public @Nullable FindModel getPreviousModel() { return myHelper.myPreviousModel; }
