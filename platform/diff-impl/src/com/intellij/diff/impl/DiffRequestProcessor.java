@@ -692,7 +692,7 @@ public abstract class DiffRequestProcessor
     DiffUtil.addActionBlock(myToolbarGroup, contextActions, false);
     DiffUtil.addActionBlock(myToolbarGroup, new ShowInExternalToolActionGroup());
 
-    DiffUtil.addActionBlock(myRightToolbarGroup, rightViewerActions, true);
+    DiffUtil.addActionBlock(myRightToolbarGroup, rightViewerActions, false);
 
     if (SystemInfo.isMac) { // collect touchbar actions
       myTouchbarActionGroup.removeAll();

@@ -308,7 +308,7 @@ public abstract class MergeRequestProcessor implements Disposable {
 
     DefaultActionGroup rightGroup = new DefaultActionGroup();
     rightGroup.add(new StatusPanelAction(myToolbarStatusPanel));
-    DiffUtil.addActionBlock(rightGroup, rightViewerActions, true);
+    DiffUtil.addActionBlock(rightGroup, rightViewerActions, false);
     ActionToolbar rightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, rightGroup, true);
     rightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
     myRightToolbarPanel.setContent(rightToolbar.getComponent());
