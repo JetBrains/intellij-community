@@ -10,10 +10,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
-@ApiStatus.Internal
 @JvmOverloads
 internal fun registerBundlesInParallel(scope: CoroutineScope,
                                        bundlesToLoad: List<TextMateBundleToLoad>,

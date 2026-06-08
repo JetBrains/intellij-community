@@ -7,12 +7,10 @@ import com.intellij.ide.plugins.PluginDependencyImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.util.Date
 
-@ApiStatus.Internal
 internal class PluginDtoDescriptorWrapper(private val pluginDto: PluginDto) : IdeaPluginDescriptor {
 
   private val dependenciesList: List<PluginDependency> by lazy {

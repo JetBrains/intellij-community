@@ -15,7 +15,6 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.util.Locale.ROOT
 
-@ApiStatus.Internal
 internal object PluginAdvertiserUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 

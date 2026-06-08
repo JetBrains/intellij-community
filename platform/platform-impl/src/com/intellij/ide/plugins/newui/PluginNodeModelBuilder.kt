@@ -191,7 +191,6 @@ class PluginNodeModelBuilder(private val pluginId: PluginId) : PluginUiModelBuil
   }
 }
 
-@ApiStatus.Internal
 internal object PluginNodeModelBuilderFactory : PluginUiModelBuilderFactory {
   override fun createBuilder(id: PluginId): PluginUiModelBuilder = PluginNodeModelBuilder(id)
 }
