@@ -27,4 +27,12 @@ interface LspServer : LspClient {
     descriptor as? LspServerDescriptor
     ?: error("LspServer.getDescriptor() requires an LspServerDescriptor, but this client was started with " +
              "${descriptor.javaClass.name}. Use LspClient.descriptor instead.")
+
+  companion object {
+    @Deprecated(
+      "Uee LspClient.DEFAULT_REQUEST_TIMEOUT_MS",
+      ReplaceWith("LspClient.DEFAULT_REQUEST_TIMEOUT_MS", "com.intellij.platform.lsp.api.LspClient"),
+    )
+    const val DEFAULT_REQUEST_TIMEOUT_MS: Int = LspClient.DEFAULT_REQUEST_TIMEOUT_MS
+  }
 }
