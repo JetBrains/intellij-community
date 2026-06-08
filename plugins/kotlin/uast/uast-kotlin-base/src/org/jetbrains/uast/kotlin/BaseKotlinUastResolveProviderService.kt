@@ -10,7 +10,6 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.PsiImplUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtBinaryExpression
@@ -33,6 +32,7 @@ import org.jetbrains.uast.UastBinaryOperator
 import org.jetbrains.uast.UastCallKind
 import org.jetbrains.uast.UastEmptyExpression
 import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.toUElement
 
 interface BaseKotlinUastResolveProviderService {
@@ -182,7 +182,7 @@ interface BaseKotlinUastResolveProviderService {
 
     fun hasInheritedGenericType(psiElement: PsiElement): Boolean
 
-    fun nullability(psiElement: PsiElement): KaTypeNullability?
+    fun nullability(psiElement: PsiElement): UNullability?
 
     fun modality(ktDeclaration: KtDeclaration): Modality?
 

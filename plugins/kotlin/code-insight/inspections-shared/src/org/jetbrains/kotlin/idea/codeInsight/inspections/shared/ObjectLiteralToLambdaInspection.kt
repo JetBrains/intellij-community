@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.allowAnalysisFromWriteActionInEdt
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.equalsOrEqualsByPsi
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.findSamSymbolOrNull
@@ -83,7 +82,7 @@ internal class ObjectLiteralToLambdaInspection : IntentionBasedInspection<KtObje
                 val functionCallOrNull = call.resolveToCall()?.successfulFunctionCallOrNull()
                 val argumentExpression = valueArgument.getArgumentExpression()
                 val variableSignature = functionCallOrNull?.argumentMapping?.get(argumentExpression)
-                val returnType = variableSignature?.returnType?.withNullability(KaTypeNullability.NON_NULLABLE) as? KaClassType
+                val returnType = variableSignature?.returnType?.withNullability(isMarkedNullable = false) as? KaClassType
                 returnType?.classId
             }
             if (classId != data.baseTypeClassId) return ProblemHighlightType.INFORMATION

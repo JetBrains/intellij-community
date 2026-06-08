@@ -28,7 +28,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameValidatorProvider
@@ -64,7 +63,7 @@ abstract class KtAppServiceAsStaticFinalFieldOrPropertyVisitorProvider : AppServ
             if (isConstructorCall) return
 
             // can be KtClass or PsiClass
-            property.returnType.withNullability(KaTypeNullability.UNKNOWN).expandedSymbol?.psi ?: return
+            property.returnType.withNullability(isMarkedNullable = false).expandedSymbol?.psi ?: return
           }
         }
 

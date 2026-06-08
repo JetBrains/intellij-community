@@ -21,7 +21,6 @@ import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.psi.util.TypeConversionUtil
 import com.siyeh.ig.psiutils.ExpectedTypeUtils
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.psi.KtTypeParameter
 
@@ -43,7 +42,7 @@ internal fun getTypeParameterNullability(psiTypeParameter: PsiTypeParameter): Nu
 
     analyze(ktTypeParameter) {
         for (upperBound in ktTypeParameter.symbol.upperBounds) {
-            if (upperBound.nullability == KaTypeNullability.NON_NULLABLE) {
+            if (!upperBound.isMarkedNullable) {
                 return Nullability.NOT_NULL
             }
         }

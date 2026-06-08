@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -62,7 +61,7 @@ internal class SelfReferenceConstructorParameterInspection :
 
         return Context(
             parameter.parameterIndex(),
-            type.withNullability(KaTypeNullability.NULLABLE).render(position = Variance.INVARIANT)
+            type.withNullability(isMarkedNullable = true).render(position = Variance.INVARIANT)
         )
     }
 

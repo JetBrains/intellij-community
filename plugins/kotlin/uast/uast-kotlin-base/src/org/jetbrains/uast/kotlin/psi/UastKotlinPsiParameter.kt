@@ -8,13 +8,13 @@ import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiParameterList
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
@@ -46,7 +46,7 @@ class UastKotlinPsiParameter internal constructor(
             val hasInheritedGenericType = baseResolveService.hasInheritedGenericType(ktParameter)
             if (!hasInheritedGenericType) {
                 val nullability = baseResolveService.nullability(ktParameter)
-                if (nullability != null && nullability != KaTypeNullability.UNKNOWN) {
+                if (nullability != null && nullability != UNullability.UNKNOWN) {
                     annotations.add(UastFakeLightNullabilityAnnotation(nullability, this))
                 }
             }

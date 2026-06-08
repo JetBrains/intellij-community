@@ -6,10 +6,10 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiTypes
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 
@@ -33,7 +33,7 @@ class UastKotlinPsiSuspendContinuationParameter internal constructor(
 
     override fun getAnnotations(): Array<PsiAnnotation> {
         return annotationsPart.getOrBuild {
-            arrayOf(UastFakeLightNullabilityAnnotation(KaTypeNullability.NON_NULLABLE, this))
+            arrayOf(UastFakeLightNullabilityAnnotation(UNullability.NOT_NULL, this))
         }
     }
 }

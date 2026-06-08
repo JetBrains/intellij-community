@@ -6,6 +6,7 @@ import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.components.expressionType
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
@@ -19,7 +20,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.sourcePsi
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinAutoImportCallableWeigher
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFqNameIfPackageOrNonLocal
@@ -78,7 +78,7 @@ interface ExpressionImportWeigher {
                 val explicitType = receiverExpression.expressionType
                 // use non-nullable type if safe call is used i.e `val value: T? = ...; value?.smth()
                 val correctedExplicitType = explicitType?.applyIf(receiverExpression.parent is KtSafeQualifiedExpression) {
-                    withNullability(KaTypeNullability.NON_NULLABLE)
+                    withNullability(isMarkedNullable = false)
                 }
                 listOfNotNull(correctedExplicitType)
             } else {
@@ -116,11 +116,11 @@ internal abstract class AbstractExpressionImportWeigher : ExpressionImportWeighe
     context(_: KaSession)
     protected fun weighType(presentType: KaType, typeFromImport: KaType, baseWeight: Int): Int? {
         val adjustedType: KaType
-        val nullablesWeight = if (presentType.nullability.isNullable == typeFromImport.nullability.isNullable) {
+        val nullablesWeight = if (presentType.isMarkedNullable == typeFromImport.isMarkedNullable) {
             adjustedType = presentType
             2
         } else {
-            adjustedType = presentType.applyIf(presentType.nullability.isNullable) { withNullability(false) }
+            adjustedType = presentType.applyIf(presentType.isMarkedNullable) { withNullability(false) }
             // no reason to make `typeFromImport` not nullable as `T` is a subtype of `T?`
             0
         }

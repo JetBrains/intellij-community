@@ -25,7 +25,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
@@ -63,7 +62,7 @@ object ChangeParameterTypeFixFactory {
     val nullForNotNullTypeFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.NullForNonnullType ->
         val psi = diagnostic.psi
         if (psi !is KtExpression) return@IntentionBased emptyList()
-        createTypeMismatchFixes(psi, diagnostic.expectedType.withNullability(KaTypeNullability.NULLABLE))
+        createTypeMismatchFixes(psi, diagnostic.expectedType.withNullability(isMarkedNullable = true))
     }
 
     context(_: KaSession)

@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
-import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toNullability
+import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.getNullability
 
 @OptIn(KaExperimentalApi::class)
 internal class ExpectedKotlinType private constructor(
@@ -24,7 +24,7 @@ internal class ExpectedKotlinType private constructor(
     companion object {
         context(_: KaSession)
         fun create(kaType: KaType, jvmType: JvmType): ExpectedKotlinType = 
-            ExpectedKotlinType(kaType.createPointer(), jvmType, kaType.nullability.toNullability())
+            ExpectedKotlinType(kaType.createPointer(), jvmType, kaType.getNullability())
     }
     
 }

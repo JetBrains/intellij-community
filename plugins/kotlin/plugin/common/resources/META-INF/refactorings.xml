@@ -12,6 +12,9 @@
             qualifiedName="org.jetbrains.kotlin.postInsertDeclarationCallback"
             interface="org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.PostInsertDeclarationCallback"
             dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.simpleNameReferenceExtension"
+                    interface="org.jetbrains.kotlin.plugin.references.SimpleNameReferenceExtension"
+                    area="IDEA_PROJECT" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

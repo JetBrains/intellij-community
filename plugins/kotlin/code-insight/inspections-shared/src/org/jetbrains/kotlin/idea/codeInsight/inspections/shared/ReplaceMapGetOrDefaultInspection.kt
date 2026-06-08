@@ -68,7 +68,7 @@ internal class ReplaceMapGetOrDefaultInspection :
         if (call.symbol.getFqNameIfPackageOrNonLocal() != getOrDefaultFqName) return false
         val receiverType = receiverExpression.expressionType as? KaClassType ?: return false
         val lastTypeArgument = receiverType.typeArguments.lastOrNull() ?: return false
-        return lastTypeArgument.type?.nullability?.isNullable != true
+        return lastTypeArgument.type?.isMarkedNullable != true
     }
 
     override fun KaSession.prepareContext(element: KtDotQualifiedExpression): Context? {

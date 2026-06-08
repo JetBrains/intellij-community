@@ -61,7 +61,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypePointer
 import org.jetbrains.kotlin.asJava.classes.lazyPub
@@ -93,6 +92,7 @@ import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLanguagePlugin
+import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
 import org.jetbrains.uast.kotlin.PsiTypeConversionConfiguration
@@ -524,18 +524,18 @@ internal fun isInheritedGenericType(ktType: KaType?): Boolean {
         // explicitly nullable, e.g., T?
         !ktType.isMarkedNullable &&
         // non-null upper bound, e.g., T : Any
-        nullability(ktType) != KaTypeNullability.NON_NULLABLE
+        nullability(ktType) != UNullability.NOT_NULL
 }
 
 context(_: KaSession)
-internal fun nullability(ktType: KaType?): KaTypeNullability? {
+internal fun nullability(ktType: KaType?): UNullability? {
     if (ktType == null) return null
     if (ktType is KaErrorType) return null
     val expanded = ktType.fullyExpandedType
     return when {
-        expanded.hasFlexibleNullability -> KaTypeNullability.UNKNOWN
-        expanded.isNullable -> KaTypeNullability.NULLABLE
-        else -> KaTypeNullability.NON_NULLABLE
+        expanded.hasFlexibleNullability -> UNullability.UNKNOWN
+        expanded.isNullable -> UNullability.NULLABLE
+        else -> UNullability.NOT_NULL
     }
 }
 

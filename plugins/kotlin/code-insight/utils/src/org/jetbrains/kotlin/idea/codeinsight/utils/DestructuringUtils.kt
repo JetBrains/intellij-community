@@ -4,12 +4,10 @@
 package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.config.LanguageFeature.DeprecateNameMismatchInShortDestructuringWithParentheses
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.name.ClassId
@@ -33,7 +31,7 @@ fun KaSession.extractPrimaryParameters(
 }
 
 fun KaSession.extractDataClassParameters(type: KaClassType): List<KaValueParameterSymbol>? {
-    if (type.nullability != KaTypeNullability.NON_NULLABLE) return null
+    if (type.isMarkedNullable) return null
     val classSymbol = type.expandedSymbol
 
     return if (classSymbol is KaNamedClassSymbol && classSymbol.isData) {

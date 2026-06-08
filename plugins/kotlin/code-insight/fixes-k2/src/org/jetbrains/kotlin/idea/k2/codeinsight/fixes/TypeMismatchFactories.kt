@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.AddEqEqTrueFix
 import org.jetbrains.kotlin.psi.KtExpression
@@ -58,7 +57,7 @@ object TypeMismatchFactories {
             if (psi.safeAs<KtExpression>()?.isDefinitelyNull == true) {
                 return emptyList()
             }
-            val nullableExpectedType = expectedType.withNullability(KaTypeNullability.NULLABLE)
+            val nullableExpectedType = expectedType.withNullability(isMarkedNullable = true)
             if (actualType.isSubtypeOf(nullableExpectedType)) {
                 return buildList {
                     psi.asAddExclExclCallFix()?.let(::add)

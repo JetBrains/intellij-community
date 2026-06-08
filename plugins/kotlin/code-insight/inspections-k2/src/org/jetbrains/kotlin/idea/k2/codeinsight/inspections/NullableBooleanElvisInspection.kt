@@ -87,7 +87,7 @@ internal class NullableBooleanElvisInspection : KotlinApplicableInspectionBase.S
     override fun KaSession.prepareContext(element: KtBinaryExpression): Unit? {
         return element.left
             ?.expressionType
-            ?.let { it.isBooleanType && it.nullability.isNullable }
+            ?.let { it.isBooleanType && it.isMarkedNullable }
             ?.asUnit
     }
 

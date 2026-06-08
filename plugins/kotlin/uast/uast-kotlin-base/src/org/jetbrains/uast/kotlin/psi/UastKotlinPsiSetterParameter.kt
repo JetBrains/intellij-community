@@ -6,11 +6,11 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiModifierListOwner
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLazyPart
+import org.jetbrains.uast.analysis.UNullability
 import org.jetbrains.uast.getOrBuild
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 
@@ -18,7 +18,7 @@ import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 class UastKotlinPsiSetterParameter<T : KtCallableDeclaration> internal constructor(
     parent: PsiElement,
     ktOrigin: T,
-    private val nullability: KaTypeNullability?,
+    private val nullability: UNullability?,
 ) : UastKotlinPsiParameterBase<T>(
     name = SpecialNames.IMPLICIT_SET_PARAMETER.asString(),
     parent = parent,

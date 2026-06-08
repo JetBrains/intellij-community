@@ -4,7 +4,6 @@ package org.jetbrains.uast.kotlin
 import com.intellij.lang.Language
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -37,10 +36,10 @@ class FirKotlinUastAnalysisPlugin : UastAnalysisPlugin {
     }
 
     private fun KaSession.checkNullabilityForType(kaType: KaType): UNullability? {
-        return when (kaType.nullability) {
-            KaTypeNullability.NULLABLE -> UNullability.NULLABLE
-            KaTypeNullability.NON_NULLABLE -> UNullability.NOT_NULL
-            KaTypeNullability.UNKNOWN -> UNullability.UNKNOWN
+        return when {
+            kaType.hasFlexibleNullability -> UNullability.UNKNOWN
+            kaType.isMarkedNullable -> UNullability.NULLABLE
+            else -> UNullability.NOT_NULL
         }
     }
 

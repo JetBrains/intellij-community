@@ -320,7 +320,7 @@ internal object ChangeTypeQuickFixFactories {
             val declaration = returnExpr.resolveSymbol()?.psi as? KtCallableDeclaration
                 ?: return@ModCommandBased emptyList()
 
-            val withNullability = diagnostic.expectedType.withNullability(true)
+            val withNullability = diagnostic.expectedType.withNullability(isMarkedNullable = true)
             listOf(
                 UpdateTypeQuickFix(
                     declaration,
@@ -390,7 +390,7 @@ internal object ChangeTypeQuickFixFactories {
             }
 
             val actualType = getActualType(diagnostic.actualType, expression)
-            val type = if (declaration.initializer?.isNull() == true) actualType.withNullability(true) else actualType
+            val type = if (declaration.initializer?.isNull() == true) actualType.withNullability(isMarkedNullable = true) else actualType
             buildList {
                 if (declaration.typeReference == null) {
                     add(UpdateTypeQuickFix(declaration, TargetType.VARIABLE, createTypeInfo(declaration.returnType(type))))

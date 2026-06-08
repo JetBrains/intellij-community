@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.components.isDoubleType
 import org.jetbrains.kotlin.analysis.api.components.isFloatType
 import org.jetbrains.kotlin.analysis.api.components.isIntType
 import org.jetbrains.kotlin.analysis.api.components.isLongType
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.isShortType
 import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
@@ -31,7 +32,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -505,7 +505,7 @@ class CodeInliner(
         return TypeDescription(
             type.render(position = Variance.INVARIANT),
             type is KaErrorType,
-            type.nullability == KaTypeNullability.NULLABLE || type is KaFlexibleType && type.upperBound.nullability == KaTypeNullability.NULLABLE
+            type.isMarkedNullable || type is KaFlexibleType && type.upperBound.isMarkedNullable
         )
     }
 

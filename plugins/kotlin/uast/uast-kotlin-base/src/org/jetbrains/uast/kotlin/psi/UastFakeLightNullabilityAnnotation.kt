@@ -8,14 +8,14 @@ import com.intellij.psi.PsiJavaCodeReferenceElement
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.classes.cannotModify
 import org.jetbrains.kotlin.asJava.elements.KtLightAbstractAnnotation
 import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.uast.analysis.UNullability
 
 @ApiStatus.Internal
 class UastFakeLightNullabilityAnnotation(
-    private val nullability: KaTypeNullability,
+    private val nullability: UNullability,
     parent: PsiElement
 ) : KtLightAbstractAnnotation(parent) {
 
@@ -32,9 +32,9 @@ class UastFakeLightNullabilityAnnotation(
 
     override fun getQualifiedName(): String? =
         when (nullability) {
-            KaTypeNullability.NON_NULLABLE -> NotNull::class.qualifiedName
-            KaTypeNullability.NULLABLE -> Nullable::class.qualifiedName
-            KaTypeNullability.UNKNOWN -> null
+            UNullability.NOT_NULL -> NotNull::class.qualifiedName
+            UNullability.NULLABLE -> Nullable::class.qualifiedName
+            else -> null
         }
 
     override fun toString(): String = "@$qualifiedName"

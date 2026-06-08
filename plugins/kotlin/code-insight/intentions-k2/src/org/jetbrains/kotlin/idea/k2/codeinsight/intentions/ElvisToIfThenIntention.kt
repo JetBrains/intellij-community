@@ -8,10 +8,10 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -54,7 +54,7 @@ class ElvisToIfThenIntention : SelfTargetingRangeIntention<KtBinaryExpression>(
         while (current is KtQualifiedExpression) {
             val resolvedCall = current.selectorExpression?.resolveToCall() ?: return null
             val type = resolvedCall.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol?.signature?.returnType
-            if (type != null && type.nullability == KaTypeNullability.NULLABLE) {
+            if (type != null && type.isMarkedNullable) {
                 return null
             }
             current = current.receiverExpression

@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.allOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.components.declaredMemberScope
+import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.memberScope
 import org.jetbrains.kotlin.analysis.api.components.resolveCall
 import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
@@ -169,7 +170,7 @@ fun samConstructorCallsToBeConverted(functionCall: KtCallExpression): Collection
     fun samConversionIsPossible(arg: KtValueArgument, call: KtCallExpression): Boolean {
         val functionCall = call.resolveCall()
         // we suppose that SAM constructors return type is always not nullable
-        (functionCall?.symbol as? KaSamConstructorSymbol)?.takeUnless { it.returnType.nullability.isNullable }
+        (functionCall?.symbol as? KaSamConstructorSymbol)?.takeUnless { it.returnType.isMarkedNullable }
             ?: return false
         val samConstructorReturnType = functionCall.signature.returnType
 
@@ -178,7 +179,7 @@ fun samConstructorCallsToBeConverted(functionCall: KtCallExpression): Collection
         val signature = resolvedFunctionCall.argumentMapping[argumentExpression]
             ?: return false
 
-        val signatureReturnType = signature.symbol.returnType.withNullability(false)
+        val signatureReturnType = signature.symbol.returnType.withNullability(isMarkedNullable = false)
         // for `testData/inspectionsLocal/redundantSamConstructor/genericParameter.kt`
         // signatureReturnType is `T`, while originalParameterType is `java/lang/Runnable`
         // target function parameter could not be generic parameter
