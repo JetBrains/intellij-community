@@ -110,6 +110,7 @@ import static com.intellij.openapi.util.NlsContexts.Tooltip;
 @ApiStatus.NonExtendable
 public class HighlightInfo implements Segment {
   private static final Logger LOG = Logger.getInstance(HighlightInfo.class);
+  public static final HighlightInfo[] EMPTY_ARRAY = new HighlightInfo[0];
   /**
    * Short name of the {@link com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection} tool, which needs to be treated differently from other inspections:
    * it doesn't have "disable" or "suppress" quickfixes

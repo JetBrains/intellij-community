@@ -40,6 +40,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
@@ -96,6 +97,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -244,7 +246,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       if (LOG.isTraceEnabled()) {
         LOG.trace("addEvictedInfos: " + debugRender(infos) + currentProgressInfo() + Thread.currentThread());
       }
-      Map<Document, Collection<HighlightInfo>> evictedMap = HashMap.newHashMap(infos.size());
+      Map<Document, Set<HighlightInfo>> evictedMap = HashMap.newHashMap(infos.size());
       for (HighlightInfo info : infos) {
         RangeHighlighterEx highlighter = info.getHighlighter();
         if (highlighter != null) {
@@ -252,23 +254,16 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
           evictedMap.computeIfAbsent(hostDocument, _->HashSet.newHashSet(infos.size())).add(info);
         }
       }
-      for (Map.Entry<Document, Collection<HighlightInfo>> entry : evictedMap.entrySet()) {
+      for (Map.Entry<Document, Set<HighlightInfo>> entry : evictedMap.entrySet()) {
         Document document = entry.getKey();
-        Collection<HighlightInfo> evictedInfos = entry.getValue();
-        HighlightInfo[] storedInfos;
-        HighlightInfo[] newInfos;
-        do {
-          storedInfos = document.getUserData(EVICTED_PSI_ELEMENTS);
+        Set<HighlightInfo> evictedInfos = entry.getValue();
+        boolean changed = updateEvictedInfoList(document, storedInfos -> {
           if (storedInfos != null) {
             ContainerUtil.addAll(evictedInfos, storedInfos);
           }
-          newInfos = evictedInfos.toArray(new HighlightInfo[0]);
-        }
-        while (!((UserDataHolderEx)document).replace(EVICTED_PSI_ELEMENTS, storedInfos, newInfos));
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("addEvictedInfos(" + document + "): stored " + debugRender(Arrays.asList(newInfos)));
-        }
-        if (newInfos.length != (storedInfos == null ? 0 : storedInfos.length)) {
+          return evictedInfos;
+        });
+        if (changed) {
           ReadAction.runBlocking(() -> {
             if (!project.isDisposed()) {
               PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
@@ -516,31 +511,50 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
   private static void disposeEvictedInfos(@NotNull HighlightingSession session, @NotNull WhatTool predicate) {
     Document document = session.getDocument();
 
-    HighlightInfo[] evictedInfos;
-    List<HighlightInfo> newEvictedInfos;
-    List<HighlightInfo> toRemove = List.of();
-    do {
-      evictedInfos = document.getUserData(EVICTED_PSI_ELEMENTS);
+    Ref<List<HighlightInfo>> toRemoveRef = new Ref<>(List.of());
+    updateEvictedInfoList(document, evictedInfos->{
       if (evictedInfos == null) {
-        break;
+        return List.of();
       }
       int size = evictedInfos.length;
-      toRemove = new ArrayList<>(size);
-      newEvictedInfos = new ArrayList<>(size);
+      List<HighlightInfo> toRemove = new ArrayList<>(size);
+      toRemoveRef.set(toRemove);
+      List<HighlightInfo> newEvictedInfos = new ArrayList<>(size);
       for (HighlightInfo info : evictedInfos) {
         (predicate.matches(info.toolId) ? toRemove : newEvictedInfos).add(info);
       }
       if (LOG.isTraceEnabled()) {
         LOG.trace("disposeEvictedInfos(" + predicate+ "): disposing " + toRemove.size() + " entries");
       }
-    }
-    while (!((UserDataHolderEx)document).replace(EVICTED_PSI_ELEMENTS, evictedInfos, newEvictedInfos.isEmpty() ? null : newEvictedInfos.toArray(new HighlightInfo[0])));
-    for (HighlightInfo info : toRemove) {
-      if (LOG.isTraceEnabled() && toRemove.size() < 200) {
+      return newEvictedInfos;
+    });
+    for (HighlightInfo info : toRemoveRef.get()) {
+      if (LOG.isTraceEnabled() && toRemoveRef.get().size() < 100) {
         LOG.trace("disposeEvictedInfos(" + predicate+ "): "+ info);
       }
       UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(info, session);
     }
+  }
+
+  /// feed `listProcessor` the old stored infos, get the new infos and store them there atomically.
+  /// return true if returned collection is different from the input
+  private static boolean updateEvictedInfoList(@NotNull Document document,
+                                               @NotNull Function<? super @NotNull HighlightInfo @Nullable [], ? extends @NotNull Collection<HighlightInfo>> listProcessor) {
+    HighlightInfo[] evictedInfos;
+    HighlightInfo[] newInfos;
+    Collection<HighlightInfo> newEvictedInfos;
+    boolean changed;
+    do {
+      evictedInfos = document.getUserData(EVICTED_PSI_ELEMENTS);
+      newEvictedInfos = listProcessor.apply(evictedInfos);
+      changed = newEvictedInfos.size() != (evictedInfos == null ? 0 : evictedInfos.length);
+    }
+    while (!((UserDataHolderEx)document).replace(EVICTED_PSI_ELEMENTS, evictedInfos,
+           (newInfos = (newEvictedInfos.isEmpty() ? null : newEvictedInfos.toArray(HighlightInfo.EMPTY_ARRAY)))));
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("updateEvictedInfos(" + document + "): stored " + debugRender(newInfos==null?List.of():Arrays.asList(newInfos)));
+    }
+    return changed;
   }
 
   private static void processQueues(@NotNull Document document) {

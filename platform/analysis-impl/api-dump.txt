@@ -163,6 +163,7 @@ a:com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 f:com.intellij.codeInsight.daemon.impl.DefaultHighlightUtil
 - s:checkBadCharacter(com.intellij.psi.PsiElement):com.intellij.codeInsight.daemon.impl.HighlightInfo
 Fc:com.intellij.codeInsight.daemon.impl.HighlightInfo
+- sf:EMPTY_ARRAY:com.intellij.codeInsight.daemon.impl.HighlightInfo[]
 - s:convertSeverity(com.intellij.lang.annotation.HighlightSeverity):com.intellij.codeInsight.daemon.impl.HighlightInfoType
 - s:convertSeverityToProblemHighlight(com.intellij.lang.annotation.HighlightSeverity):com.intellij.codeInspection.ProblemHighlightType
 - f:findRegisteredQuickFix(java.util.function.BiFunction):java.lang.Object
