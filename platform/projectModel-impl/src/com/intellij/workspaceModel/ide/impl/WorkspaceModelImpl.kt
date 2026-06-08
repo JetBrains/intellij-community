@@ -3,8 +3,11 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.concurrency.ThreadContextAwareReentrantLock
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.ThreadDumper
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.ControlFlowException
@@ -64,7 +67,9 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.io.path.writeText
 import kotlin.system.measureTimeMillis
 import kotlin.time.Duration.Companion.seconds
 
@@ -479,6 +484,8 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
   override suspend fun <T> flowOfNewElements(query: CollectionQuery<T>): Flow<T> = reactive.flowOfNewElements(query)
   override suspend fun <T> flowOfDiff(query: CollectionQuery<T>): Flow<Diff<T>> = reactive.flowOfDiff(query)
 
+  private val waitingTimedOut = AtomicBoolean(false)
+
   override suspend fun awaitSynchronizationWithJpsModel() {
     if (EDT.isCurrentThreadEdt() && ModalityState.current() != ModalityState.nonModal()) {
       throw IllegalStateException("awaitSynchronizationWithJpsModel() can only be called in non-modal context. Current context: ${ModalityState.current()}")
@@ -488,16 +495,37 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
     CompletableDeferred<Unit>().also { deferred ->
       JpsProjectLoadingManager.getInstance(project).jpsProjectLoaded { deferred.complete(Unit) }
 
+      if (deferred.isCompleted) {
+        return@also
+      }
+
       if (!deferred.isCompleted && ApplicationManager.getApplication().isUnitTestMode) {
         ProjectSynchronizerUtil.getInstance(project).applyJpsModelToProjectModel()
       }
 
-      // Safety net: if the callback is never invoked (e.g. due to a platform bug), unblock waiters after a timeout.
-      coroutineScope.launch {
-        // JpsGlobalModelSynchronizerImpl has a 5-second delay and ModuleManagerComponentBridgeInitializer has a 1-second delay;
-        delay(10.seconds)
-        if (deferred.complete(Unit)) {
-          thisLogger().error("JPS project loaded callback was not called within 10 seconds, proceeding anyway. Project: ${project.name} (locationHash=${project.locationHash}).")
+      if (waitingTimedOut.get()) {
+        deferred.complete(Unit) // don't wait again
+      }
+      else {
+        // Safety net: if the callback is never invoked (e.g. due to a platform bug), unblock waiters after a timeout.
+        coroutineScope.launch {
+          // JpsGlobalModelSynchronizerImpl has a 5-second delay and ModuleManagerComponentBridgeInitializer has a 1-second delay;
+          delay(10.seconds)
+          if (deferred.complete(Unit) && !waitingTimedOut.getAndSet(true)) {
+            val threadDump = buildString {
+              appendLine(ThreadDumper.dumpThreadsToString())
+              appendLine()
+              appendLine("Coroutines dump:")
+              appendLine(dumpCoroutines())
+            }
+            val logFile = PathManager.getLogDir().resolve("jps-project-loaded-timeout-${System.currentTimeMillis()}.txt")
+            logFile.writeText(threadDump)
+            thisLogger().error(
+              "JPS project loaded callback was not called within 10 seconds, proceeding anyway. " +
+              "Thread dump saved to ${logFile}. " +
+              "Project: ${project.name} (locationHash=${project.locationHash})."
+            )
+          }
         }
       }
     }.await()
