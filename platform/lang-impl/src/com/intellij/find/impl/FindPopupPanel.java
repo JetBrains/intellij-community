@@ -146,8 +146,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -1868,12 +1866,12 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     }
 
     @Override
-    public void forEachVisibleRowItem(@NotNull Function1<? super FindPopupItem, Unit> action) {
+    public @NotNull List<@NotNull FindPopupItem> getItems() {
       DefaultTableModel model = (DefaultTableModel)myResultsPreviewTable.getModel();
-      for (int i = 0, len = model.getRowCount(); i < len; ++i) {
-        Object value = model.getValueAt(i, 0);
-        if (value instanceof FindPopupItem) action.invoke((FindPopupItem)value);
-      }
+      return ContainerUtil.mapNotNull(model.getDataVector(), row -> {
+        if (row.getFirst() instanceof FindPopupItem item) return item;
+        else return null;
+      });
     }
 
     @Override

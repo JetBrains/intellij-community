@@ -508,7 +508,8 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
                             (prev != null &&
                              prev.stringToFind.length < host.helper.model.stringToFind.length)
     if (usePreviousAsHint) {
-      host.forEachVisibleRowItem { item -> previousUsages.add(item.usage) }
+      val results = host.getItems()
+      results.forEach { item -> previousUsages.add(item.usage) }
     }
     return previousUsages
   }
@@ -565,7 +566,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
     fun appendIncomingRow(item: FindPopupItem)
     fun selectFirstRow()
     fun schedulePreviewUpdateIfSelected(adapter: UsageInfoAdapter)
-    fun forEachVisibleRowItem(action: (FindPopupItem) -> Unit)
+    fun getItems(): List<FindPopupItem>
 
     // -- Label / empty text --
     fun updateInfoLabel(occurrences: Int, files: Int, loadingMore: Boolean)
