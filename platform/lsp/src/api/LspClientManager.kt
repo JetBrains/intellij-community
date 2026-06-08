@@ -70,11 +70,7 @@ interface LspClientManager {
   fun addLsp4jServerWrapper(wrapper: Lsp4jServerWrapper, parentDisposable: Disposable)
 
   @ApiStatus.Internal
-  fun addLspServerManagerListener(
-    listener: LspServerManagerListener,
-    parentDisposable: Disposable,
-    sendEventsForExistingServers: Boolean = false,
-  )
+  fun addListener(listener: LspClientManagerListener, parentDisposable: Disposable, sendEventsForExistingClients: Boolean = false)
 }
 
 inline fun <reified Provider : LspClientProvider> LspClientManager.getClientsForProvider(): Collection<LspClient> =
