@@ -9,6 +9,8 @@ com/jediterm/terminal/TerminalDataStream
 com/jediterm/terminal/TerminalExecutorServiceManager
 com/jediterm/terminal/TextStyle
 com/jediterm/terminal/TtyConnector
+com/jediterm/terminal/TtyConnectorResizeStrategy
+com/jediterm/terminal/TtyConnectorResizeStrategyProvider
 com/jediterm/terminal/emulator/ColorPalette
 com/jediterm/terminal/model/StyleState
 com/jediterm/terminal/model/TerminalTextBuffer

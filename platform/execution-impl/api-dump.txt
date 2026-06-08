@@ -310,7 +310,9 @@ com.intellij.terminal.JBTerminalWidgetListener
 - a:showTabs():V
 - split(Z):V
 c:com.intellij.terminal.ProcessHandlerTtyConnector
+- com.jediterm.terminal.TtyConnectorResizeStrategyProvider
 - f:getProcess():java.lang.Process
+- getResizeStrategy():com.jediterm.terminal.TtyConnectorResizeStrategy
 - resize(com.jediterm.core.util.TermSize):V
 c:com.intellij.terminal.TerminalExecutionConsole
 - com.intellij.execution.ui.ConsoleView
@@ -368,6 +370,9 @@ f:com.intellij.terminal.TerminalTitle$State
 f:com.intellij.terminal.TerminalUtils
 - s:getTextInTerminal(java.awt.Component):java.lang.String
 - s:isTerminalComponent(java.awt.Component):Z
+c:com.intellij.terminal.pty.PtyProcessTtyConnector
+- com.jediterm.terminal.TtyConnectorResizeStrategyProvider
+- getResizeStrategy():com.jediterm.terminal.TtyConnectorResizeStrategy
 com.intellij.terminal.ui.TerminalWidget
 - com.intellij.openapi.ui.ComponentContainer
 - a:addNotification(javax.swing.JComponent,com.intellij.openapi.Disposable):V

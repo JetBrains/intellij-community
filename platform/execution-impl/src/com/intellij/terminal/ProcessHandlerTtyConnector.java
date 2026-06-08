@@ -5,9 +5,12 @@ import com.intellij.execution.process.BaseProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.PtyBasedProcess;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.terminal.pty.PtyProcessTtyConnectorKt;
 import com.intellij.util.ObjectUtils;
 import com.jediterm.core.util.TermSize;
 import com.jediterm.terminal.TtyConnector;
+import com.jediterm.terminal.TtyConnectorResizeStrategy;
+import com.jediterm.terminal.TtyConnectorResizeStrategyProvider;
 import com.pty4j.PtyProcess;
 import com.pty4j.WinSize;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +20,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 
-public class ProcessHandlerTtyConnector implements TtyConnector {
+public class ProcessHandlerTtyConnector implements TtyConnector, TtyConnectorResizeStrategyProvider {
 
   private static final Logger LOG = Logger.getInstance(ProcessHandlerTtyConnector.class);
 
@@ -53,6 +56,15 @@ public class ProcessHandlerTtyConnector implements TtyConnector {
     // Normally, an attempt to close a console attached to a running process should be handled by
     // BaseContentCloseListener which may ask user what do to. Alternatively, a client may handle it on its own.
     // Generally, ConsoleView doesn't own an attached ProcessHandler instance.
+  }
+
+  @Override
+  public @NotNull TtyConnectorResizeStrategy getResizeStrategy() {
+    if (myPtyProcess == null) {
+      // Doesn't really matter if process is not Pty-based
+      return TtyConnectorResizeStrategy.IMMEDIATE;
+    }
+    return PtyProcessTtyConnectorKt.getTtyConnectorResizeStrategy(myPtyProcess);
   }
 
   @Override
