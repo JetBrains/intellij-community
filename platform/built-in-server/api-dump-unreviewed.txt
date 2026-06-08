@@ -37,7 +37,6 @@ f:org.jetbrains.builtInWebServer.BuiltInWebServerKt
 - sf:TOKEN_PARAM_NAME:java.lang.String
 - sf:acquireToken():java.lang.String
 - sf:compareNameAndProjectBasePath(java.lang.String,com.intellij.openapi.project.Project):Z
-- sf:findIndexFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - sf:findIndexFile(java.nio.file.Path):java.nio.file.Path
 f:org.jetbrains.builtInWebServer.ConsoleManager
 - <init>():V
@@ -117,7 +116,6 @@ a:org.jetbrains.ide.RestService
 - sf:PREFIX:java.lang.String
 - <init>():V
 - sf:activateLastFocusedFrame():V
-- sf:createJsonReader(io.netty.handler.codec.http.FullHttpRequest):com.google.gson.stream.JsonReader
 - sf:createJsonWriter(java.io.OutputStream):com.google.gson.stream.JsonWriter
 - a:execute(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):java.lang.String
 - sf:getBooleanParameter(java.lang.String,io.netty.handler.codec.http.QueryStringDecoder):Z
@@ -134,7 +132,6 @@ a:org.jetbrains.ide.RestService
 - p:isHostTrusted(io.netty.handler.codec.http.FullHttpRequest,io.netty.handler.codec.http.QueryStringDecoder):Z
 - p:isMethodSupported(io.netty.handler.codec.http.HttpMethod):Z
 - p:isPrefixlessAllowed():Z
-- isSupported(io.netty.handler.codec.http.FullHttpRequest):Z
 - process(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):Z
 - sf:send(com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream,io.netty.handler.codec.http.HttpRequest,io.netty.channel.ChannelHandlerContext):V
 - sf:sendOk(io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):V
@@ -143,7 +140,6 @@ a:org.jetbrains.ide.RestService
 f:org.jetbrains.ide.RestService$Companion
 - f:activateLastFocusedFrame():V
 - f:createJsonReader(io.netty.handler.codec.http.FullHttpRequest):com.google.gson.stream.JsonReader
-- f:createJsonWriter(java.io.OutputStream):com.google.gson.stream.JsonWriter
 - f:getBooleanParameter(java.lang.String,io.netty.handler.codec.http.QueryStringDecoder):Z
 - f:getBooleanParameter(java.lang.String,io.netty.handler.codec.http.QueryStringDecoder,Z):Z
 - bs:getBooleanParameter$default(org.jetbrains.ide.RestService$Companion,java.lang.String,io.netty.handler.codec.http.QueryStringDecoder,Z,I,java.lang.Object):Z
@@ -327,7 +323,6 @@ a:org.jetbrains.io.webSocket.WebSocketProtocolHandler
 - pa:textFrameReceived(io.netty.channel.Channel,io.netty.handler.codec.http.websocketx.TextWebSocketFrame):V
 c:org.jetbrains.io.webSocket.WebSocketProtocolHandshakeHandler
 - io.netty.channel.ChannelInboundHandlerAdapter
-- <init>(io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker):V
 - f:channelRead(io.netty.channel.ChannelHandlerContext,java.lang.Object):V
 - p:completed():V
 f:org.jetbrains.io.webSocket.WebSocketServerOptions

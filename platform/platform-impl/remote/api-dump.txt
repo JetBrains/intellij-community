@@ -1,6 +1,10 @@
 f:com.intellij.remote.DeferredRemoteProcess
 - com.intellij.execution.process.PtyBasedProcess
 - hasPty():Z
+com.intellij.remote.ExceptionFix
+- a:getNotificationMessage(java.lang.String):java.lang.String
+a:com.intellij.remote.PathMappingProvider
+- s:getSuitableMappingProviders(com.intellij.remote.RemoteSdkAdditionalData):java.util.List
 com.intellij.remote.RemoteConnector
 - getAdditionalData():java.lang.String
 - a:getConnectorKey():java.lang.Object
@@ -8,6 +12,11 @@ com.intellij.remote.RemoteConnector
 - a:getName():java.lang.String
 - a:getType():com.intellij.remote.RemoteConnectionType
 - a:produceRemoteCredentials(com.intellij.util.Consumer):V
+f:com.intellij.remote.RemoteMappingsManager
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.remote.RemoteMappingsManager
+- setForServer(com.intellij.remote.RemoteMappingsManager$Mappings):V
+c:com.intellij.remote.RemoteMappingsManager$Mappings
+- setSettings(java.util.List):V
 a:com.intellij.remote.RemoteSdkFactoryImpl
 - pa:createSdk(com.intellij.openapi.project.Project,java.util.Collection,com.intellij.openapi.projectRoots.SdkType,com.intellij.remote.RemoteSdkAdditionalData,java.lang.String):com.intellij.openapi.projectRoots.Sdk
 - createUnfinished(com.intellij.openapi.project.Project,com.intellij.remote.RemoteSdkAdditionalData,java.util.Collection):com.intellij.openapi.projectRoots.Sdk

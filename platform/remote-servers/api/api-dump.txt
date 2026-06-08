@@ -1,3 +1,5 @@
+a:com.intellij.remoteServer.ServerType
+- p:<init>(java.lang.String):V
 com.intellij.remoteServer.configuration.RemoteServer
 - a:getConfiguration():com.intellij.remoteServer.configuration.ServerConfiguration
 - a:getName():java.lang.String
@@ -9,6 +11,13 @@ com.intellij.remoteServer.configuration.RemoteServerListener
 - a:serverAdded(com.intellij.remoteServer.configuration.RemoteServer):V
 - serverChanged(com.intellij.remoteServer.configuration.RemoteServer):V
 - a:serverRemoved(com.intellij.remoteServer.configuration.RemoteServer):V
+a:com.intellij.remoteServer.configuration.RemoteServersManager
+- a:addServer(com.intellij.remoteServer.configuration.RemoteServer):V
+- a:createServer(com.intellij.remoteServer.ServerType):com.intellij.remoteServer.configuration.RemoteServer
+- a:getServers(com.intellij.remoteServer.ServerType):java.util.List
+- a:removeServer(com.intellij.remoteServer.configuration.RemoteServer):V
+a:com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager
 com.intellij.remoteServer.configuration.deployment.DeploymentSource
 - a:getFile():java.io.File
 - a:getFilePath():java.lang.String
@@ -17,11 +26,15 @@ com.intellij.remoteServer.configuration.deployment.DeploymentSource
 - a:getType():com.intellij.remoteServer.configuration.deployment.DeploymentSourceType
 - a:isArchive():Z
 - a:isValid():Z
+a:com.intellij.remoteServer.configuration.deployment.DeploymentSourceType
+- p:<init>(java.lang.String):V
 com.intellij.remoteServer.configuration.deployment.ModuleDeploymentSource
 - com.intellij.remoteServer.configuration.deployment.DeploymentSource
 - a:getContentRoot():com.intellij.openapi.vfs.VirtualFile
 - a:getModule():com.intellij.openapi.module.Module
 - a:getModulePointer():com.intellij.openapi.module.ModulePointer
+c:com.intellij.remoteServer.configuration.deployment.SingletonDeploymentSourceType
+- ps:findExtension(java.lang.Class):com.intellij.remoteServer.configuration.deployment.SingletonDeploymentSourceType
 com.intellij.remoteServer.runtime.Deployment
 - a:getConnection():com.intellij.remoteServer.runtime.ServerConnection
 - a:getDeploymentTask():com.intellij.remoteServer.runtime.deployment.DeploymentTask

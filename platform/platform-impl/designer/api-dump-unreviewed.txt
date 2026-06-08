@@ -23,8 +23,6 @@ a:com.intellij.designer.LightToolWindowManager
 - f:myEditorModeKey:java.lang.String
 - pf:myProject:com.intellij.openapi.project.Project
 - p:myToolWindow:com.intellij.openapi.wm.ToolWindow
-- p:<init>(com.intellij.openapi.project.Project):V
-- f:bind(com.intellij.designer.DesignerEditorPanelFacade):V
 - pa:createContent(com.intellij.designer.DesignerEditorPanelFacade):com.intellij.designer.LightToolWindow
 - pf:createContent(com.intellij.designer.DesignerEditorPanelFacade,com.intellij.designer.LightToolWindowContent,java.lang.String,javax.swing.Icon,javax.swing.JComponent,javax.swing.JComponent,I,java.util.List):com.intellij.designer.LightToolWindow
 - createGearActions():com.intellij.openapi.actionSystem.AnAction
@@ -91,8 +89,6 @@ a:com.intellij.designer.model.Property
 - needRefreshPropertyList(com.intellij.designer.model.PropertiesContainer,java.lang.Object,java.lang.Object):Z
 - setDefaultValue(com.intellij.designer.model.PropertiesContainer):V
 - setDeprecated(Z):V
-- setExpert(Z):V
-- setImportant(Z):V
 - setValue(com.intellij.designer.model.PropertiesContainer,java.lang.Object):V
 - showAsDefault(com.intellij.designer.model.PropertiesContainer):Z
 a:com.intellij.designer.model.QuickFix
@@ -159,7 +155,6 @@ a:com.intellij.designer.propertyTable.PropertyTable
 - setSorted(Z):V
 - setUI(javax.swing.plaf.TableUI):V
 - setValueAt(java.lang.Object,I,I):V
-- showExpert(Z):V
 - update():V
 - update(java.util.List,com.intellij.designer.model.Property):V
 - p:updateEditActions():V
@@ -195,6 +190,5 @@ f:com.intellij.designer.propertyTable.renderers.BooleanRenderer
 c:com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer
 - javax.swing.JLabel
 - com.intellij.designer.propertyTable.PropertyRenderer
-- <init>(java.lang.String):V
 - p:customize(java.lang.Object):V
 - getComponent(com.intellij.designer.model.PropertiesContainer,com.intellij.designer.model.PropertyContext,java.lang.Object,Z,Z):javax.swing.JComponent

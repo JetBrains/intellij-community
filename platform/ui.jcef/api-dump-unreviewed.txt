@@ -16,7 +16,6 @@ c:com.intellij.ui.jcef.HwFacadeNonOpaquePanel
 - show():V
 f:com.intellij.ui.jcef.JBCefApp
 - createClient():com.intellij.ui.jcef.JBCefClient
-- createMessageRouter(org.cef.browser.CefMessageRouter$CefMessageRouterConfig):org.cef.browser.CefMessageRouter
 - getCefSettings():org.cef.CefSettings
 - s:getForceDeviceScaleFactor():D
 - s:getInstance():com.intellij.ui.jcef.JBCefApp
@@ -25,7 +24,6 @@ f:com.intellij.ui.jcef.JBCefApp
 - s:isOffScreenRenderingModeEnabled():Z
 - s:isStarted():Z
 - s:isSupported():Z
-- s:normalizeScaledSize(I):I
 com.intellij.ui.jcef.JBCefApp$JBCefCustomSchemeHandlerFactory
 - org.cef.callback.CefSchemeHandlerFactory
 - a:getDomainName():java.lang.String
@@ -44,12 +42,9 @@ f:com.intellij.ui.jcef.JBCefAppUtilsKt
 c:com.intellij.ui.jcef.JBCefBrowser
 - com.intellij.ui.jcef.JBCefBrowserBase
 - <init>():V
-- p:<init>(com.intellij.ui.jcef.JBCefBrowserBuilder):V
 - <init>(com.intellij.ui.jcef.JBCefClient,java.lang.String):V
-- <init>(java.lang.String):V
 - <init>(org.cef.browser.CefBrowser,com.intellij.ui.jcef.JBCefClient):V
 - s:addOnBrowserMoveResizeCallback(java.util.function.Consumer):V
-- s:create(com.intellij.ui.jcef.JBCefBrowserBuilder):com.intellij.ui.jcef.JBCefBrowser
 - s:createBuilder():com.intellij.ui.jcef.JBCefBrowserBuilder
 - dispose():V
 - p:getBackgroundColor():java.awt.Color
@@ -57,7 +52,6 @@ c:com.intellij.ui.jcef.JBCefBrowser
 - s:removeOnBrowserMoveResizeCallback(java.util.function.Consumer):V
 pc:com.intellij.ui.jcef.JBCefBrowser$DefaultCefContextMenuHandler
 - com.intellij.ui.jcef.JBCefBrowserBase$DefaultCefContextMenuHandler
-- <init>(com.intellij.ui.jcef.JBCefBrowser):V
 - <init>(com.intellij.ui.jcef.JBCefBrowser,Z):V
 c:com.intellij.ui.jcef.JBCefBrowser$MyPanel
 - javax.swing.JPanel
@@ -96,16 +90,12 @@ a:com.intellij.ui.jcef.JBCefBrowserBase
 - f:isDisposed():Z
 - isOffScreenRendering():Z
 - isProperty(java.lang.String):Z
-- f:loadHTML(java.lang.String):V
 - f:loadHTML(java.lang.String,java.lang.String):V
-- f:loadURL(java.lang.String):V
 - openDevtools():V
-- setErrorPage(com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage):V
 - f:setJBCefCookieManager(com.intellij.ui.jcef.JBCefCookieManager):V
 - setOpenLinksInExternalBrowser(Z):V
 - setPageBackgroundColor(java.lang.String):V
 - setProperty(java.lang.String,java.lang.Object):V
-- f:setZoomLevel(D):V
 pc:com.intellij.ui.jcef.JBCefBrowserBase$DefaultCefContextMenuHandler
 - org.cef.handler.CefContextMenuHandlerAdapter
 - psf:DEBUG_COMMAND_ID:I
@@ -121,14 +111,6 @@ c:com.intellij.ui.jcef.JBCefBrowserBuilder
 - <init>():V
 - build():com.intellij.ui.jcef.JBCefBrowser
 - createBrowser():com.intellij.ui.jcef.JBCefBrowser
-- setCefBrowser(org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setClient(com.intellij.ui.jcef.JBCefClient):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setCreateImmediately(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setEnableOpenDevToolsMenuItem(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setMouseWheelEventEnable(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setOSRHandlerFactory(com.intellij.ui.jcef.JBCefOSRHandlerFactory):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setOffScreenRendering(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
-- setUrl(java.lang.String):com.intellij.ui.jcef.JBCefBrowserBuilder
 - setWindowlessFramerate(I):com.intellij.ui.jcef.JBCefBrowserBuilder
 c:com.intellij.ui.jcef.JBCefBrowserJsCall
 - sf:Companion:com.intellij.ui.jcef.JBCefBrowserJsCall$Companion
@@ -161,7 +143,6 @@ f:com.intellij.ui.jcef.JBCefClient
 - getCefClient():org.cef.CefClient
 - getProperty(java.lang.String):java.lang.Object
 - isDisposed():Z
-- removeAllHandlers(org.cef.browser.CefBrowser):V
 - removeContextMenuHandler(org.cef.handler.CefContextMenuHandler,org.cef.browser.CefBrowser):V
 - removeDialogHandler(org.cef.handler.CefDialogHandler,org.cef.browser.CefBrowser):V
 - removeDisplayHandler(org.cef.handler.CefDisplayHandler,org.cef.browser.CefBrowser):V
@@ -198,7 +179,6 @@ f:com.intellij.ui.jcef.JBCefCookieManager
 - <init>():V
 - deleteCookies(java.lang.String,java.lang.String):java.util.concurrent.Future
 - deleteCookies(java.lang.String,Z):Z
-- deleteCookies(Z):Z
 - getCefCookieManager():org.cef.network.CefCookieManager
 - getCookies():java.util.List
 - getCookies(java.lang.String,java.lang.Boolean):java.util.concurrent.Future
@@ -209,19 +189,13 @@ com.intellij.ui.jcef.JBCefDisposable
 - a:isDisposed():Z
 f:com.intellij.ui.jcef.JBCefJSQuery
 - com.intellij.ui.jcef.JBCefDisposable
-- addHandler(java.util.function.Function):V
 - clearHandlers():V
-- s:create(com.intellij.ui.jcef.JBCefBrowser):com.intellij.ui.jcef.JBCefJSQuery
-- s:create(com.intellij.ui.jcef.JBCefBrowserBase):com.intellij.ui.jcef.JBCefJSQuery
 - dispose():V
 - getFuncName():java.lang.String
-- inject(java.lang.String):java.lang.String
 - inject(java.lang.String,java.lang.String,java.lang.String):java.lang.String
 - isDisposed():Z
-- removeHandler(java.util.function.Function):V
 c:com.intellij.ui.jcef.JBCefJSQuery$Response
 - sf:ERR_CODE_SUCCESS:I
-- <init>(java.lang.String):V
 - <init>(java.lang.String,I,java.lang.String):V
 - errCode():I
 - errMsg():java.lang.String
@@ -240,7 +214,6 @@ a:com.intellij.ui.jcef.JBCefOsrHandlerBrowser
 - s:create(java.lang.String,org.cef.handler.CefRenderHandler,Z):com.intellij.ui.jcef.JBCefOsrHandlerBrowser
 f:com.intellij.ui.jcef.JBCefPsiNavigationUtils
 - sf:INSTANCE:com.intellij.ui.jcef.JBCefPsiNavigationUtils
-- f:navigateTo(java.lang.String):Z
 - f:navigateTo(java.lang.String,com.intellij.openapi.util.text.LineColumn):Z
 f:com.intellij.ui.jcef.JBCefScrollbarsHelper
 - <init>():V
@@ -251,12 +224,10 @@ f:com.intellij.ui.jcef.JBCefScrollbarsHelper
 c:com.intellij.ui.jcef.JCEFHtmlPanel
 - com.intellij.ui.jcef.JBCefBrowser
 - <init>(com.intellij.ui.jcef.JBCefClient,java.lang.String):V
-- <init>(java.lang.String):V
 - <init>(Z,com.intellij.ui.jcef.JBCefClient,java.lang.String):V
 - <init>(Z,java.lang.String):V
 - p:createDefaultContextMenuHandler():com.intellij.ui.jcef.JBCefBrowser$DefaultCefContextMenuHandler
 - p:prepareHtml(java.lang.String):java.lang.String
-- setHtml(java.lang.String):V
 f:com.intellij.ui.jcef.JcefShortcutProvider
 - <init>():V
 - s:getActions():java.util.List

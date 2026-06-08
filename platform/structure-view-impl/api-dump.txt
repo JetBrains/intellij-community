@@ -1,5 +1,12 @@
 f:com.intellij.ide.actions.ViewStructureAction
 - s:createPopup(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.FileEditor):com.intellij.ide.util.FileStructurePopup
+f:com.intellij.ide.impl.StructureViewWrapperImpl
+- f:rebuildNow(java.lang.String):V
+a:com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension
+- p:childrenFromNodeAndProviders(com.intellij.ide.structureView.StructureViewTreeElement):java.util.List
+- getLeafElement(com.intellij.openapi.actionSystem.DataMap):com.intellij.psi.PsiElement
+- getParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- p:isAcceptableLanguage(com.intellij.psi.PsiElement):Z
 f:com.intellij.ide.structureView.StructureViewBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
@@ -11,6 +18,8 @@ c:com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
 - getPresentation():com.intellij.navigation.ItemPresentation
 - getValue():java.lang.Object
 - navigate(Z):V
+a:com.intellij.ide.structureView.impl.TemplateLanguageStructureViewBuilder
+- p:<init>(com.intellij.psi.PsiElement):V
 a:com.intellij.ide.structureView.impl.common.PsiTreeElementBase
 - com.intellij.ide.structureView.StructureViewTreeElement
 - com.intellij.ide.util.treeView.NodeDescriptorProvidingKey
@@ -57,13 +66,18 @@ f:com.intellij.ide.structureView.logical.impl.LogicalStructureViewService$Compan
 com.intellij.ide.structureView.logical.impl.LogicalStructureViewTreeElement
 - com.intellij.ide.structureView.StructureViewTreeElement
 - a:getLogicalAssembledModel():com.intellij.ide.structureView.logical.model.LogicalStructureAssembledModel
+c:com.intellij.ide.structureView.newStructureView.StructureViewComponent
+- isActionActive(java.lang.String):Z
+- s:unwrapWrapper(java.lang.Object):java.lang.Object
 com.intellij.ide.structureView.newStructureView.TreeActionsOwner
 - a:isActionActive(java.lang.String):Z
 - a:setActionActive(java.lang.String,Z):V
 f:com.intellij.ide.util.FileStructurePopup
 - com.intellij.platform.structureView.impl.StructurePopup
+- s:getSpeedSearchText(java.lang.Object):java.lang.String
 - rebuildAndUpdateAsync():org.jetbrains.concurrency.Promise
 - selectCurrentAsync():org.jetbrains.concurrency.Promise
+- setTitle(java.lang.String):V
 - waitUpdateFinishedAsync():org.jetbrains.concurrency.Promise
 a:com.intellij.ide.util.InheritedMembersNodeProvider
 - com.intellij.ide.util.ActionShortcutProvider

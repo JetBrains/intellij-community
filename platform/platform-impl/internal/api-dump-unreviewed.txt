@@ -19,17 +19,14 @@ f:com.intellij.internal.ml.catboost.NaiveCatBoostModel
 - makePredict(D[]):D
 f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$ByAbsoluteThreshold
 - com.intellij.internal.ml.completion.DecoratingItemsPolicy
-- <init>(D):V
 - itemsToDecorate(java.lang.Iterable):java.util.Set
 f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$ByRelativeThreshold
 - com.intellij.internal.ml.completion.DecoratingItemsPolicy
-- <init>(D):V
 - itemsToDecorate(java.lang.Iterable):java.util.Set
 f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$Companion
 - f:getDISABLED():com.intellij.internal.ml.completion.DecoratingItemsPolicy
 f:com.intellij.internal.ml.completion.DecoratingItemsPolicy$Composite
 - com.intellij.internal.ml.completion.DecoratingItemsPolicy
-- <init>(com.intellij.internal.ml.completion.DecoratingItemsPolicy[]):V
 - itemsToDecorate(java.lang.Iterable):java.util.Set
 f:com.intellij.internal.performance.LatencyRecord
 - <init>():V

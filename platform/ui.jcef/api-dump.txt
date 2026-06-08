@@ -1,17 +1,56 @@
+f:com.intellij.ui.jcef.JBCefApp
+- createMessageRouter(org.cef.browser.CefMessageRouter$CefMessageRouterConfig):org.cef.browser.CefMessageRouter
+- s:normalizeScaledSize(I):I
+c:com.intellij.ui.jcef.JBCefBrowser
+- p:<init>(com.intellij.ui.jcef.JBCefBrowserBuilder):V
+- <init>(java.lang.String):V
+- s:create(com.intellij.ui.jcef.JBCefBrowserBuilder):com.intellij.ui.jcef.JBCefBrowser
+pc:com.intellij.ui.jcef.JBCefBrowser$DefaultCefContextMenuHandler
+- <init>(com.intellij.ui.jcef.JBCefBrowser):V
 a:com.intellij.ui.jcef.JBCefBrowserBase
+- f:loadHTML(java.lang.String):V
+- f:loadURL(java.lang.String):V
 - runJavaScript(java.lang.String):V
 - runJavaScript(java.lang.String,java.lang.String,I):V
+- setErrorPage(com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage):V
+- f:setZoomLevel(D):V
 com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage
 - sf:DEFAULT:com.intellij.ui.jcef.JBCefBrowserBase$ErrorPage
 - a:create(org.cef.handler.CefLoadHandler$ErrorCode,java.lang.String,java.lang.String):java.lang.String
+c:com.intellij.ui.jcef.JBCefBrowserBuilder
+- setCefBrowser(org.cef.browser.CefBrowser):com.intellij.ui.jcef.JBCefBrowserBuilder
+- setClient(com.intellij.ui.jcef.JBCefClient):com.intellij.ui.jcef.JBCefBrowserBuilder
+- setCreateImmediately(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
+- setEnableOpenDevToolsMenuItem(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
+- setMouseWheelEventEnable(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
+- setOSRHandlerFactory(com.intellij.ui.jcef.JBCefOSRHandlerFactory):com.intellij.ui.jcef.JBCefBrowserBuilder
+- setOffScreenRendering(Z):com.intellij.ui.jcef.JBCefBrowserBuilder
+- setUrl(java.lang.String):com.intellij.ui.jcef.JBCefBrowserBuilder
+f:com.intellij.ui.jcef.JBCefClient
+- removeAllHandlers(org.cef.browser.CefBrowser):V
+f:com.intellij.ui.jcef.JBCefCookieManager
+- deleteCookies(Z):Z
 c:com.intellij.ui.jcef.JBCefDefaultNativeBundleProvider
 - getNativeBundlePath():java.lang.String
 - isAvailable():Z
+f:com.intellij.ui.jcef.JBCefJSQuery
+- addHandler(java.util.function.Function):V
+- s:create(com.intellij.ui.jcef.JBCefBrowser):com.intellij.ui.jcef.JBCefJSQuery
+- s:create(com.intellij.ui.jcef.JBCefBrowserBase):com.intellij.ui.jcef.JBCefJSQuery
+- inject(java.lang.String):java.lang.String
+- removeHandler(java.util.function.Function):V
+c:com.intellij.ui.jcef.JBCefJSQuery$Response
+- <init>(java.lang.String):V
 com.intellij.ui.jcef.JBCefOSRHandlerFactory
 - sf:DEFAULT:com.intellij.ui.jcef.JBCefOSRHandlerFactory
 - createCefRenderHandler(javax.swing.JComponent):org.cef.handler.CefRenderHandler
 - createComponent(Z):javax.swing.JComponent
 - createScreenBoundsProvider():com.intellij.util.Function
 - s:getInstance():com.intellij.ui.jcef.JBCefOSRHandlerFactory
+f:com.intellij.ui.jcef.JBCefPsiNavigationUtils
+- f:navigateTo(java.lang.String):Z
+c:com.intellij.ui.jcef.JCEFHtmlPanel
+- <init>(java.lang.String):V
+- setHtml(java.lang.String):V
 c:com.intellij.ui.jcef.utils.JBCefStreamResourceHandler
 - org.cef.handler.CefResourceHandlerAdapter

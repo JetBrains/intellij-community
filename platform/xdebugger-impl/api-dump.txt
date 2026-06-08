@@ -40,23 +40,32 @@ a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 - pa:isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
 - pa:perform(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):V
 f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+- sf:findType(java.lang.String):com.intellij.xdebugger.breakpoints.XBreakpointType
+- sf:getShortText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 - sf:hasCustomCondition(com.intellij.xdebugger.breakpoints.XBreakpoint):Z
 f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtilKt
 - sf:getHasCustomCondition(com.intellij.xdebugger.breakpoints.XBreakpoint):Z
+c:com.intellij.xdebugger.impl.settings.XDebuggerGeneralSettings
+- setEvaluationDialogMode(com.intellij.xdebugger.evaluation.EvaluationMode):V
 f:com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizerKt
 - sf:allowFramesViewCustomization(com.intellij.xdebugger.XDebugProcess):Z
 - sf:forceShowNewDebuggerUi(com.intellij.xdebugger.XDebugProcess):Z
 - sf:getBottomLocalsComponentProvider(com.intellij.xdebugger.XDebugProcess):com.intellij.xdebugger.impl.ui.SessionTabComponentProvider
+a:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
+- <init>(java.lang.String):V
 com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
 - a:getHost():com.intellij.xdebugger.attach.XAttachHost
 - a:getIcon():javax.swing.Icon
 - a:getId():java.lang.String
 - a:getPresentation():java.lang.String
+pf:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$AddConnectionButtonAction
+- <init>(com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts):V
 a:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 - sf:Companion:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase$Companion
 - sf:getSelectedNode(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 - sf:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List
 - sf:getSelectedValue(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.frame.XValue
+- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase$Companion
 - f:getSelectedNode(com.intellij.openapi.actionSystem.DataContext):com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl
 - f:getSelectedNodes(com.intellij.openapi.actionSystem.DataContext):java.util.List
@@ -68,5 +77,7 @@ c:com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase$ValueCollect
 - com.intellij.xdebugger.impl.ui.tree.actions.AbstractXFetchValueAction$ValueCollector
 - <init>(com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase,com.intellij.openapi.project.Project):V
 - <init>(com.intellij.xdebugger.impl.ui.tree.actions.XFetchValueActionBase,com.intellij.xdebugger.impl.ui.tree.XDebuggerTree):V
+c:com.intellij.xdebugger.memory.component.InstancesTracker
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.memory.component.InstancesTracker
 com.intellij.xdebugger.memory.utils.InstancesProvider
 - a:getInstances(I):java.util.List

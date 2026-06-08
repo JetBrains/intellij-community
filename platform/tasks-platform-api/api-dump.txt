@@ -4,7 +4,10 @@ c:com.intellij.tasks.CustomTaskProperty
 - getDisplayName():java.lang.String
 - getIconUrl():java.lang.String
 - getValue():java.lang.String
+a:com.intellij.tasks.LocalTask
+- getBranches(Z):java.util.List
 a:com.intellij.tasks.Task
+- ps:extractNumberFromId(java.lang.String):java.lang.String
 - getCustomProperties():java.util.Map
 - getPropertiesToShowInPreview():java.util.List
 com.intellij.tasks.TaskListener
@@ -13,6 +16,13 @@ com.intellij.tasks.TaskListener
 - a:taskAdded(com.intellij.tasks.LocalTask):V
 - a:taskDeactivated(com.intellij.tasks.LocalTask):V
 - a:taskRemoved(com.intellij.tasks.LocalTask):V
+a:com.intellij.tasks.TaskManager
+- a:getLocalTasks(Z):java.util.List
+- s:getManager(com.intellij.openapi.project.Project):com.intellij.tasks.TaskManager
+e:com.intellij.tasks.TaskState
+- s:valueOf(java.lang.String):com.intellij.tasks.TaskState
+e:com.intellij.tasks.TaskType
+- s:valueOf(java.lang.String):com.intellij.tasks.TaskType
 a:com.intellij.tasks.context.WorkingContextProvider
 - <init>():V
 - clearContext(com.intellij.openapi.project.Project):V

@@ -14,8 +14,6 @@ f:com.intellij.util.io.NettyKt
 - sf:connectRetrying(io.netty.bootstrap.Bootstrap,java.net.InetSocketAddress,I,com.intellij.openapi.util.Condition):com.intellij.util.io.ConnectToChannelResult
 - bs:connectRetrying$default(io.netty.bootstrap.Bootstrap,java.net.InetSocketAddress,I,com.intellij.openapi.util.Condition,I,java.lang.Object):com.intellij.util.io.ConnectToChannelResult
 - sf:getHost(io.netty.handler.codec.http.HttpRequest):java.lang.String
-- sf:getHostName(io.netty.handler.codec.http.HttpRequest):java.lang.String
-- sf:getOrigin(io.netty.handler.codec.http.HttpRequest):java.lang.String
 - sf:getReferrer(io.netty.handler.codec.http.HttpRequest):java.lang.String
 - sf:getUriScheme(io.netty.channel.Channel):java.lang.String
 - sf:getUserAgent(io.netty.handler.codec.http.HttpRequest):java.lang.String
@@ -34,7 +32,6 @@ f:com.intellij.util.io.NettyKt
 - bs:parseAndCheckIsLocalHost$default(java.lang.String,Z,Z,I,java.lang.Object):Z
 - sf:readUtf8(io.netty.buffer.ByteBuf):java.lang.String
 - sf:releaseIfError(io.netty.buffer.ByteBuf,kotlin.jvm.functions.Function0):java.lang.Object
-- sf:serverBootstrap(io.netty.channel.EventLoopGroup):io.netty.bootstrap.ServerBootstrap
 - sf:shutdownIfOio(io.netty.channel.EventLoop):V
 f:io.netty.bootstrap.BootstrapUtil
 - sf:INSTANCE:io.netty.bootstrap.BootstrapUtil
@@ -48,9 +45,6 @@ a:org.jetbrains.ide.HttpRequestHandler
 - sf:Companion:org.jetbrains.ide.HttpRequestHandler$Companion
 - <init>():V
 - sf:checkPrefix(java.lang.String,java.lang.String):Z
-- isAccessible(io.netty.handler.codec.http.HttpRequest):Z
-- p:isOriginAllowed(io.netty.handler.codec.http.HttpRequest):org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
-- isSupported(io.netty.handler.codec.http.FullHttpRequest):Z
 - a:process(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):Z
 - pf:sendData(B[],java.lang.String,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.Channel,io.netty.handler.codec.http.HttpHeaders):Z
 f:org.jetbrains.ide.HttpRequestHandler$Companion
@@ -96,7 +90,6 @@ f:org.jetbrains.io.FileResponses
 - f:checkCache(io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J):Z
 - f:checkCache(io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J,io.netty.handler.codec.http.HttpHeaders):Z
 - bs:checkCache$default(org.jetbrains.io.FileResponses,io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J,io.netty.handler.codec.http.HttpHeaders,I,java.lang.Object):Z
-- f:getContentType(java.lang.String):java.lang.String
 - f:prepareSend(io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J,java.lang.String):io.netty.handler.codec.http.HttpResponse
 - f:prepareSend(io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J,java.lang.String,io.netty.handler.codec.http.HttpHeaders):io.netty.handler.codec.http.HttpResponse
 - bs:prepareSend$default(org.jetbrains.io.FileResponses,io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J,java.lang.String,io.netty.handler.codec.http.HttpHeaders,I,java.lang.Object):io.netty.handler.codec.http.HttpResponse
@@ -122,15 +115,12 @@ f:org.jetbrains.io.NettyUtil
 - sf:MAX_CONTENT_LENGTH:I
 - sf:MIN_START_TIME:I
 - <init>():V
-- s:addHttpServerCodec(io.netty.channel.ChannelPipeline):V
 - s:awaitQuiescenceOfGlobalEventExecutor(J,java.util.concurrent.TimeUnit):V
 - s:log(java.lang.Throwable,com.intellij.openapi.diagnostic.Logger):V
 - s:logAndClose(java.lang.Throwable,com.intellij.openapi.diagnostic.Logger,io.netty.channel.Channel):V
 - s:nioClientBootstrap(io.netty.channel.EventLoopGroup):io.netty.bootstrap.Bootstrap
 f:org.jetbrains.io.Responses
-- sf:addCommonHeaders(io.netty.handler.codec.http.HttpResponse):V
 - sf:addKeepAliveIfNeeded(io.netty.handler.codec.http.HttpResponse,io.netty.handler.codec.http.HttpRequest):Z
-- sf:addNoCache(io.netty.handler.codec.http.HttpResponse):io.netty.handler.codec.http.HttpResponse
 - sf:addServer(io.netty.handler.codec.http.HttpResponse):V
 - sf:getServerHeaderValue():java.lang.String
 - sf:response(io.netty.handler.codec.http.HttpResponseStatus,io.netty.handler.codec.http.HttpRequest,java.lang.String):io.netty.handler.codec.http.HttpResponse

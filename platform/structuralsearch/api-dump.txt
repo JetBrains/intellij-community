@@ -1,10 +1,58 @@
+c:com.intellij.structuralsearch.MalformedPatternException
+- <init>(java.lang.String):V
+c:com.intellij.structuralsearch.MatchOptions
+- addVariableConstraint(com.intellij.structuralsearch.MatchVariableConstraint):V
+- fillSearchCriteria(java.lang.String):V
+- setCaseSensitiveMatch(Z):V
+- setDialect(com.intellij.lang.Language):V
+- setFileType(com.intellij.openapi.fileTypes.LanguageFileType):V
+- setPatternContext(com.intellij.structuralsearch.PatternContext):V
+- setRecursiveSearch(Z):V
+- setScope(com.intellij.psi.search.SearchScope):V
+- setSearchPattern(java.lang.String):V
 com.intellij.structuralsearch.MatchResultSink
 - a:getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
 - a:matchingFinished():V
 - a:newMatch(com.intellij.structuralsearch.MatchResult):V
 - a:processFile(com.intellij.psi.PsiFile):V
 - a:setMatchingProcess(com.intellij.structuralsearch.MatchingProcess):V
+c:com.intellij.structuralsearch.Matcher
+- findMatches(com.intellij.structuralsearch.MatchResultSink):V
+c:com.intellij.structuralsearch.StructuralSearchException
+- <init>(java.lang.String):V
 a:com.intellij.structuralsearch.StructuralSearchProfile
 - getTemplateContextTypeClass(com.intellij.lang.Language):java.lang.Class
+- isReplacementTypedVariable(java.lang.String):Z
+- stripReplacementTypedVariableDecorations(java.lang.String):java.lang.String
+a:com.intellij.structuralsearch.StructuralSearchProfileBase
+- isMatchNode(com.intellij.psi.PsiElement):Z
+a:com.intellij.structuralsearch.impl.matcher.CompiledPattern
+- getHandler(com.intellij.psi.PsiElement):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- getHandler(java.lang.String):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- getTypedVarString(com.intellij.psi.PsiElement):java.lang.String
+- isTypedVar(com.intellij.psi.PsiElement):Z
+- a:isTypedVar(java.lang.String):Z
+- setStrategy(com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy):V
+f:com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
+- setResult(Z):Z
+f:com.intellij.structuralsearch.impl.matcher.MatchResultImpl
+- addChild(com.intellij.structuralsearch.MatchResult):V
+- findChild(java.lang.String):com.intellij.structuralsearch.MatchResult
+c:com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor
+- f:handle(com.intellij.psi.PsiElement):V
+a:com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- setFilter(com.intellij.dupLocator.util.NodeFilter):V
+c:com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
+- setMatchHandler(com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
+f:com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler
+- <init>(com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
+c:com.intellij.structuralsearch.inspection.SSBasedInspection
+- s:getStructuralSearchInspection(com.intellij.codeInspection.InspectionProfile):com.intellij.structuralsearch.inspection.SSBasedInspection
+c:com.intellij.structuralsearch.plugin.replace.ReplaceOptions
+- setReplacement(java.lang.String):V
+f:com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder
+- findParameterization(com.intellij.psi.PsiElement):com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo
+c:com.intellij.structuralsearch.plugin.ui.TextFieldWithAutoCompletionWithBrowseButton
+- <init>(com.intellij.openapi.project.Project):V
 f:com.intellij.structuralsearch.plugin.ui.UIUtil
 - s:getTemplateContextType(com.intellij.structuralsearch.StructuralSearchProfile,com.intellij.lang.Language):com.intellij.codeInsight.template.TemplateContextType

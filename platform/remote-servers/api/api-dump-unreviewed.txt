@@ -7,7 +7,6 @@ a:com.intellij.remoteServer.RemoteServerConfigurable
 - canCheckConnection():Z
 a:com.intellij.remoteServer.ServerType
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- p:<init>(java.lang.String):V
 - canAutoDetectConfiguration():Z
 - createConnector(com.intellij.remoteServer.configuration.RemoteServer,com.intellij.remoteServer.runtime.ServerTaskExecutor):com.intellij.remoteServer.runtime.ServerConnector
 - a:createConnector(com.intellij.remoteServer.configuration.ServerConfiguration,com.intellij.remoteServer.runtime.ServerTaskExecutor):com.intellij.remoteServer.runtime.ServerConnector
@@ -27,14 +26,10 @@ a:com.intellij.remoteServer.ServerType
 - mayHaveProjectSpecificDeploymentSources():Z
 a:com.intellij.remoteServer.configuration.RemoteServersManager
 - <init>():V
-- a:addServer(com.intellij.remoteServer.configuration.RemoteServer):V
-- a:createServer(com.intellij.remoteServer.ServerType):com.intellij.remoteServer.configuration.RemoteServer
 - a:createServer(com.intellij.remoteServer.ServerType,java.lang.String):com.intellij.remoteServer.configuration.RemoteServer
 - a:findByName(java.lang.String,com.intellij.remoteServer.ServerType):com.intellij.remoteServer.configuration.RemoteServer
 - s:getInstance():com.intellij.remoteServer.configuration.RemoteServersManager
 - a:getServers():java.util.List
-- a:getServers(com.intellij.remoteServer.ServerType):java.util.List
-- a:removeServer(com.intellij.remoteServer.configuration.RemoteServer):V
 a:com.intellij.remoteServer.configuration.ServerConfiguration
 - <init>():V
 - getCustomToolWindowId():java.lang.String
@@ -66,7 +61,6 @@ a:com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationMana
 - <init>():V
 - a:createAndRunConfiguration(com.intellij.remoteServer.ServerType,com.intellij.remoteServer.configuration.RemoteServer,com.intellij.remoteServer.configuration.deployment.DeploymentSourceType):V
 - a:getDeploymentConfigurations(com.intellij.remoteServer.ServerType):java.util.List
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.remoteServer.configuration.deployment.DeploymentConfigurationManager
 a:com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator
 - <init>():V
 - a:createDefaultConfiguration(com.intellij.remoteServer.configuration.deployment.DeploymentSource):com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration
@@ -76,7 +70,6 @@ a:com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator
 - suggestConfigurationName(com.intellij.remoteServer.configuration.deployment.DeploymentSource,com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration):java.lang.String
 a:com.intellij.remoteServer.configuration.deployment.DeploymentSourceType
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- p:<init>(java.lang.String):V
 - f:getId():java.lang.String
 - isEditableInDumbMode():Z
 - a:load(org.jdom.Element,com.intellij.openapi.project.Project):com.intellij.remoteServer.configuration.deployment.DeploymentSource
@@ -96,7 +89,6 @@ c:com.intellij.remoteServer.configuration.deployment.DummyDeploymentConfiguratio
 c:com.intellij.remoteServer.configuration.deployment.SingletonDeploymentSourceType
 - com.intellij.remoteServer.configuration.deployment.DeploymentSourceType
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon):V
-- ps:findExtension(java.lang.Class):com.intellij.remoteServer.configuration.deployment.SingletonDeploymentSourceType
 - f:getPresentableName():java.lang.String
 - getSingletonSource():com.intellij.remoteServer.configuration.deployment.DeploymentSource
 - load(org.jdom.Element,com.intellij.openapi.project.Project):com.intellij.remoteServer.configuration.deployment.DeploymentSource

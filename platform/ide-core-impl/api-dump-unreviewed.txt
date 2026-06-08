@@ -36,31 +36,19 @@ a:com.intellij.ide.fileTemplates.FileTemplateManager
 - sf:PROJECT_NAME_VARIABLE:java.lang.String
 - sf:RECENT_TEMPLATES_SIZE:I
 - <init>():V
-- a:addRecentName(java.lang.String):V
 - a:addTemplate(java.lang.String,java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
 - p:checkInitialized():com.intellij.ide.fileTemplates.FileTemplateManager
-- a:findInternalTemplate(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
 - a:getAllCodeTemplates():com.intellij.ide.fileTemplates.FileTemplate[]
 - a:getAllJ2eeTemplates():com.intellij.ide.fileTemplates.FileTemplate[]
 - a:getAllPatterns():com.intellij.ide.fileTemplates.FileTemplate[]
 - a:getAllTemplates():com.intellij.ide.fileTemplates.FileTemplate[]
-- a:getCodeTemplate(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
 - a:getCurrentScheme():com.intellij.ide.fileTemplates.FileTemplatesScheme
 - s:getDefaultInstance():com.intellij.ide.fileTemplates.FileTemplateManager
 - a:getDefaultProperties():java.util.Properties
-- a:getDefaultTemplate(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
 - s:getInstance():com.intellij.ide.fileTemplates.FileTemplateManager
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.fileTemplates.FileTemplateManager
-- a:getInternalTemplate(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
 - a:getInternalTemplates():com.intellij.ide.fileTemplates.FileTemplate[]
-- a:getJ2eeTemplate(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
-- a:getPattern(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
 - a:getProjectScheme():com.intellij.ide.fileTemplates.FileTemplatesScheme
 - a:getRecentNames():java.util.Collection
-- a:getTemplate(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate
-- a:getTemplates(java.lang.String):com.intellij.ide.fileTemplates.FileTemplate[]
-- a:internalTemplateToSubject(java.lang.String):java.lang.String
-- a:removeTemplate(com.intellij.ide.fileTemplates.FileTemplate):V
 - a:saveAllTemplates():V
 - a:setCurrentScheme(com.intellij.ide.fileTemplates.FileTemplatesScheme):V
 - a:setTemplates(java.lang.String,java.util.Collection):V
@@ -71,7 +59,6 @@ a:com.intellij.ide.fileTemplates.FileTemplatesScheme
 - com.intellij.openapi.options.Scheme
 - sf:DEFAULT:com.intellij.ide.fileTemplates.FileTemplatesScheme
 - sf:TEMPLATES_DIR:java.lang.String
-- <init>(java.lang.String):V
 - getName():java.lang.String
 - a:getProject():com.intellij.openapi.project.Project
 - a:getTemplatesDir():java.lang.String
@@ -136,15 +123,10 @@ f:com.intellij.ide.impl.OpenProjectTask
 - f:isNewProject():Z
 - f:isProjectCreatedWithWizard():Z
 - f:isRefreshVfsNeeded():Z
-- f:withForceOpenInNewFrame(Z):com.intellij.ide.impl.OpenProjectTask
-- f:withProject(com.intellij.openapi.project.Project):com.intellij.ide.impl.OpenProjectTask
-- f:withProjectName(java.lang.String):com.intellij.ide.impl.OpenProjectTask
-- f:withProjectToClose(com.intellij.openapi.project.Project):com.intellij.ide.impl.OpenProjectTask
 f:com.intellij.ide.impl.OpenProjectTask$Companion
 - f:build():com.intellij.ide.impl.OpenProjectTask
 f:com.intellij.ide.impl.OpenProjectTaskBuilder
 - <init>():V
-- f:build(kotlin.jvm.functions.Function1):com.intellij.ide.impl.OpenProjectTask
 - f:getCallback():com.intellij.projectImport.ProjectOpenedCallback
 - f:getColumn():I
 - f:getForceOpenInNewFrame():Z
@@ -167,40 +149,24 @@ f:com.intellij.ide.impl.OpenProjectTaskBuilder
 - f:isRefreshVfsNeeded():Z
 - f:setCallback(com.intellij.projectImport.ProjectOpenedCallback):V
 - f:setColumn(I):V
-- f:setForceOpenInNewFrame(Z):V
 - f:setForceReuseFrame(Z):V
 - f:setImplOptions(java.lang.Object):V
 - f:setLine(I):V
-- f:setNewProject(Z):V
 - f:setPreloadServices(Z):V
-- f:setPreparedToOpen(kotlin.jvm.functions.Function2):V
 - f:setPreventIprLookup(Z):V
 - f:setProject(com.intellij.openapi.project.Project):V
-- f:setProjectCreatedWithWizard(Z):V
-- f:setProjectName(java.lang.String):V
-- f:setProjectToClose(com.intellij.openapi.project.Project):V
 - f:setProjectWorkspaceId(java.lang.String):V
 - f:setRefreshVfsNeeded(Z):V
-- f:setRunConfigurators(Z):V
 - f:setRunConversionBeforeOpen(Z):V
 - f:setShowWelcomeScreen(Z):V
-- f:setUseDefaultProjectAsTemplate(java.lang.Boolean):V
-- f:withBeforeOpenCallback(java.util.function.Predicate):V
 f:com.intellij.ide.impl.ProjectUtilCore
 - <init>():V
 - s:getOpenProjects():com.intellij.openapi.project.Project[]
-- s:isValidProjectPath(java.nio.file.Path):Z
 f:com.intellij.ide.nls.NlsMessages
 - <init>():V
 - s:formatAndList(java.util.Collection):java.lang.String
-- s:formatDateLong(java.util.Date):java.lang.String
-- s:formatDuration(J):java.lang.String
 - s:formatDuration(J,I,Z):java.lang.String
-- s:formatDurationApproximate(J):java.lang.String
-- s:formatDurationApproximateNarrow(J):java.lang.String
 - s:formatDurationPadded(J):java.lang.String
-- s:formatNarrowAndList(java.util.Collection):java.lang.String
-- s:formatOrList(java.util.Collection):java.lang.String
 - s:joiningAnd():java.util.stream.Collector
 - s:joiningNarrowAnd():java.util.stream.Collector
 - s:joiningOr():java.util.stream.Collector
@@ -264,7 +230,6 @@ f:com.intellij.notification.impl.NotificationParentGroupBean
 f:com.intellij.openapi.actionSystem.impl.SimpleDataContext
 - com.intellij.openapi.actionSystem.CustomizedDataContext
 - s:builder():com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
-- s:getProjectContext(com.intellij.openapi.project.Project):com.intellij.openapi.actionSystem.DataContext
 - s:getSimpleContext(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):com.intellij.openapi.actionSystem.DataContext
 - s:getSimpleContext(com.intellij.openapi.actionSystem.DataKey,java.lang.Object,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
 - s:getSimpleContext(java.lang.String,java.lang.Object,com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
@@ -272,9 +237,7 @@ f:com.intellij.openapi.actionSystem.impl.SimpleDataContext
 f:com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
 - add(com.intellij.openapi.actionSystem.DataKey,java.lang.Object):com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
 - addAll(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataKey[]):com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
-- addNull(com.intellij.openapi.actionSystem.DataKey):com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
 - build():com.intellij.openapi.actionSystem.DataContext
-- setParent(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.impl.SimpleDataContext$Builder
 f:com.intellij.openapi.application.impl.AWTExceptionHandler
 - <init>():V
 - handle(java.lang.Throwable):V
@@ -316,7 +279,6 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - isBlockCursor():Z
 - isBreadcrumbsAbove():Z
 - isBreadcrumbsShown():Z
-- isBreadcrumbsShownFor(java.lang.String):Z
 - isCamelWords():Z
 - isCaretInsideTabs():Z
 - isCaretRowShown():Z
@@ -354,7 +316,6 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - isUseCustomSoftWrapIndent():Z
 - isUseEditorFontInInlays():Z
 - isUseSoftWraps():Z
-- isUseSoftWraps(com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces):Z
 - isVariableInplaceRenameEnabled():Z
 - isVirtualSpace():Z
 - isWheelFontChangeEnabled():Z
@@ -364,14 +325,12 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - noStateLoaded():V
 - resetDefaultBreadcrumbVisibility():V
 - setAddCaretsOnDoubleCtrl(Z):V
-- setAdditionalPageAtBottom(Z):V
 - setAllSoftwrapsShown(Z):V
 - setBlinkCaret(Z):V
 - setBlinkPeriod(I):V
 - setBlockCursor(Z):V
 - setBlockIndent(I):V
 - setBreadcrumbsAbove(Z):Z
-- setBreadcrumbsShown(Z):Z
 - setBreadcrumbsShownFor(java.lang.String,Z):Z
 - setCamelWords(Z):V
 - setCaretInsideTabs(Z):V
@@ -379,7 +338,6 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - setDndEnabled(Z):V
 - setDocCommentRenderingEnabled(Z):V
 - setEnsureNewLineAtEOF(Z):V
-- setFocusMode(Z):V
 - setFoldingEndingsShown(Z):V
 - setFoldingOutlineShown(Z):V
 - setFoldingOutlineShownOnlyOnHover(Z):V
@@ -388,7 +346,6 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - setHighlightSelectionOccurrences(Z):V
 - setHorizontalScrollJump(I):V
 - setHorizontalScrollOffset(I):V
-- setIndentGuidesShown(Z):V
 - setInnerWhitespacesShown(Z):V
 - setInsertParenthesesAutomatically(Z):V
 - setKeepTrailingSpacesOnCaretLine(Z):V
@@ -397,20 +354,15 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - setLineNumeration(com.intellij.openapi.editor.EditorSettings$LineNumerationType):V
 - setMouseClickSelectionHonorsCamelWords(Z):V
 - setPreselectRename(Z):V
-- setRefrainFromScrolling(Z):V
 - setRemoveTrailingBlankLines(Z):V
 - setRightMarginShown(Z):V
 - setSelectionWhitespacesShown(Z):V
-- setShowInlineLocalDialog(Z):V
 - setShowInspectionWidget(Z):V
-- setShowIntentionBulb(Z):V
-- setShowIntentionPreview(Z):V
 - setShowQuickDocOnMouseOverElement(Z):V
 - setSmartHome(Z):V
 - setSmoothScrolling(Z):V
 - setSoftWrapFileMasks(java.lang.String):V
 - setStickyLineLimit(I):V
-- setStickyLinesShown(Z):Z
 - setStickyLinesShownFor(java.lang.String,Z):Z
 - setStripTrailingSpaces(java.lang.String):V
 - setTooltipsDelay(I):V
@@ -425,7 +377,6 @@ c:com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 - setVirtualSpace(Z):V
 - setWheelFontChangeEnabled(Z):V
 - setWheelFontChangePersistent(Z):V
-- setWhitespacesShown(Z):V
 f:com.intellij.openapi.editor.ex.EditorSettingsExternalizable$OptionSet
 - ADDITIONAL_PAGE_AT_BOTTOM:Z
 - ADD_CARETS_ON_DOUBLE_CTRL:Z
@@ -578,8 +529,6 @@ f:com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider$Companion
 f:com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 - com.intellij.openapi.vfs.WritingAccessProvider
 - <init>(com.intellij.openapi.project.Project):V
-- s:allowWriting(java.lang.Iterable):V
-- s:disableChecksDuring(java.lang.Runnable):V
 - s:enableChecksInTests(com.intellij.openapi.Disposable):V
 - s:enableChecksInTests(java.lang.Boolean,com.intellij.openapi.Disposable):V
 - s:isWriteAccessAllowed(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):Z
@@ -595,7 +544,6 @@ a:com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 - a:fireBeforeFileTypesChanged():V
 - a:fireFileTypesChanged():V
 - a:freezeFileTypeTemporarilyIn(com.intellij.openapi.vfs.VirtualFile,java.lang.Runnable):V
-- a:getExtension(java.lang.String):java.lang.String
 - s:getInstanceEx():com.intellij.openapi.fileTypes.ex.FileTypeManagerEx
 - a:isIgnoredFilesListEqualToCurrent(java.lang.String):Z
 - a:makeFileTypesChange(java.lang.String,java.lang.Runnable):V
@@ -614,7 +562,6 @@ f:com.intellij.openapi.progress.util.BackgroundTaskUtil
 - s:submitTask(java.util.concurrent.Executor,com.intellij.openapi.Disposable,com.intellij.openapi.util.Computable):com.intellij.openapi.progress.util.BackgroundTaskUtil$BackgroundTask
 - s:submitTask(java.util.concurrent.Executor,com.intellij.openapi.Disposable,java.lang.Runnable):com.intellij.openapi.progress.util.BackgroundTaskUtil$BackgroundTask
 - s:syncPublisher(com.intellij.openapi.project.Project,com.intellij.util.messages.Topic):java.lang.Object
-- s:syncPublisher(com.intellij.util.messages.Topic):java.lang.Object
 - s:tryComputeFast(com.intellij.util.Function,J):java.lang.Object
 f:com.intellij.openapi.progress.util.BackgroundTaskUtil$BackgroundTask
 - <init>(com.intellij.openapi.Disposable,com.intellij.openapi.progress.ProgressIndicator,java.util.concurrent.CompletableFuture):V
@@ -625,22 +572,15 @@ f:com.intellij.openapi.progress.util.BackgroundTaskUtil$BackgroundTask
 - getParent():com.intellij.openapi.Disposable
 f:com.intellij.openapi.progress.util.ProgressIndicatorUtils
 - <init>():V
-- s:awaitWithCheckCanceled(J):V
-- s:awaitWithCheckCanceled(com.intellij.openapi.util.ThrowableComputable):V
 - s:awaitWithCheckCanceled(com.intellij.util.concurrency.Semaphore,com.intellij.openapi.progress.ProgressIndicator):V
 - s:awaitWithCheckCanceled(java.util.concurrent.CountDownLatch):V
-- s:awaitWithCheckCanceled(java.util.concurrent.Future):java.lang.Object
 - s:awaitWithCheckCanceled(java.util.concurrent.Future,com.intellij.openapi.progress.ProgressIndicator):java.lang.Object
-- s:awaitWithCheckCanceled(java.util.concurrent.locks.Condition):V
 - s:awaitWithCheckCanceled(java.util.concurrent.locks.Lock):V
-- s:checkCancelledEvenWithPCEDisabled(com.intellij.openapi.progress.ProgressIndicator):V
 - s:computeWithLockAndCheckingCanceled(java.util.concurrent.locks.Lock,I,java.util.concurrent.TimeUnit,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:forceWriteActionPriority(com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.Disposable):com.intellij.openapi.progress.ProgressIndicator
-- s:runInReadActionWithWriteActionPriority(java.lang.Runnable):Z
 - s:runInReadActionWithWriteActionPriority(java.lang.Runnable,com.intellij.openapi.progress.ProgressIndicator):Z
 - s:runWithWriteActionPriority(java.lang.Runnable,com.intellij.openapi.progress.ProgressIndicator):Z
 - s:scheduleWithWriteActionPriority(com.intellij.openapi.progress.ProgressIndicator,com.intellij.openapi.progress.util.ReadTask):java.util.concurrent.CompletableFuture
-- s:scheduleWithWriteActionPriority(com.intellij.openapi.progress.util.ReadTask):V
 - s:withTimeout(J,com.intellij.openapi.util.Computable):java.lang.Object
 - s:yieldToPendingWriteActions():V
 - s:yieldToPendingWriteActions(com.intellij.openapi.progress.ProgressIndicator):V
@@ -648,10 +588,8 @@ a:com.intellij.openapi.progress.util.ReadTask
 - <init>():V
 - computeInReadAction(com.intellij.openapi.progress.ProgressIndicator):V
 - a:onCanceled(com.intellij.openapi.progress.ProgressIndicator):V
-- performInReadAction(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.progress.util.ReadTask$Continuation
 - runBackgroundProcess(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.progress.util.ReadTask$Continuation
 f:com.intellij.openapi.progress.util.ReadTask$Continuation
-- <init>(java.lang.Runnable):V
 - <init>(java.lang.Runnable,com.intellij.openapi.application.ModalityState):V
 - getAction():java.lang.Runnable
 - getModalityState():com.intellij.openapi.application.ModalityState
@@ -674,12 +612,10 @@ a:com.intellij.openapi.project.ex.ProjectManagerEx
 - sf:PER_PROJECT_OPTION_NAME:java.lang.String
 - <init>():V
 - a:canClose(com.intellij.openapi.project.Project):Z
-- a:closeAndDisposeAllProjects(Z):Z
 - a:forceCloseProject(com.intellij.openapi.project.Project,Z):Z
 - sf:getInstanceEx():com.intellij.openapi.project.ex.ProjectManagerEx
 - sf:getInstanceExIfCreated():com.intellij.openapi.project.ex.ProjectManagerEx
 - a:isDefaultProjectInitialized():Z
-- a:isProjectOpened(com.intellij.openapi.project.Project):Z
 - f:newProject(java.lang.String,java.lang.String,Z,Z):com.intellij.openapi.project.Project
 - a:newProject(java.nio.file.Path,com.intellij.ide.impl.OpenProjectTask):com.intellij.openapi.project.Project
 - a:openProject(java.nio.file.Path,com.intellij.ide.impl.OpenProjectTask):com.intellij.openapi.project.Project
@@ -724,6 +660,4 @@ f:com.intellij.util.FlushingDaemon
 - sf:runPeriodically(java.lang.Runnable):java.util.concurrent.ScheduledFuture
 f:com.intellij.util.UriUtil
 - s:splitScheme(java.lang.String):com.intellij.openapi.util.Couple
-- s:trimLeadingSlashes(java.lang.String):java.lang.String
 - s:trimParameters(java.lang.String):java.lang.String
-- s:trimTrailingSlashes(java.lang.String):java.lang.String

@@ -16,7 +16,6 @@ c:com.intellij.structuralsearch.MalformedPatternException
 - f:isErrorElement:Z
 - <init>():V
 - <init>(com.intellij.psi.PsiErrorElement):V
-- <init>(java.lang.String):V
 c:com.intellij.structuralsearch.MatchOptions
 - com.intellij.openapi.util.JDOMExternalizable
 - sf:CASE_SENSITIVE_ATTRIBUTE_NAME:java.lang.String
@@ -25,10 +24,8 @@ c:com.intellij.structuralsearch.MatchOptions
 - sf:OLD_CASE_SENSITIVE_ATTRIBUTE_NAME:java.lang.String
 - <init>():V
 - addNewVariableConstraint(java.lang.String):com.intellij.structuralsearch.MatchVariableConstraint
-- addVariableConstraint(com.intellij.structuralsearch.MatchVariableConstraint):V
 - copy():com.intellij.structuralsearch.MatchOptions
 - equals(java.lang.Object):Z
-- fillSearchCriteria(java.lang.String):V
 - getDialect():com.intellij.lang.Language
 - getFileType():com.intellij.openapi.fileTypes.LanguageFileType
 - getPatternContext():com.intellij.structuralsearch.PatternContext
@@ -45,15 +42,8 @@ c:com.intellij.structuralsearch.MatchOptions
 - isSearchInjectedCode():Z
 - readExternal(org.jdom.Element):V
 - removeUnusedVariables():V
-- setCaseSensitiveMatch(Z):V
-- setDialect(com.intellij.lang.Language):V
-- setFileType(com.intellij.openapi.fileTypes.LanguageFileType):V
 - setLooseMatching(Z):V
-- setPatternContext(com.intellij.structuralsearch.PatternContext):V
-- setRecursiveSearch(Z):V
-- setScope(com.intellij.psi.search.SearchScope):V
 - setSearchInjectedCode(Z):V
-- setSearchPattern(java.lang.String):V
 - writeExternal(org.jdom.Element):V
 a:com.intellij.structuralsearch.MatchResult
 - sf:LINE_MATCH:java.lang.String
@@ -155,7 +145,6 @@ c:com.intellij.structuralsearch.Matcher
 - <init>(com.intellij.openapi.project.Project,com.intellij.structuralsearch.MatchOptions,com.intellij.structuralsearch.impl.matcher.CompiledPattern):V
 - s:buildMatcher(com.intellij.openapi.project.Project,com.intellij.openapi.fileTypes.LanguageFileType,java.lang.String):com.intellij.structuralsearch.Matcher
 - checkIfShouldAttemptToMatch(com.intellij.dupLocator.iterators.NodeIterator):Z
-- findMatches(com.intellij.structuralsearch.MatchResultSink):V
 - getMatchContext():com.intellij.structuralsearch.impl.matcher.MatchContext
 - getProject():com.intellij.openapi.project.Project
 - matchByDownUp(com.intellij.psi.PsiElement):java.util.List
@@ -239,7 +228,6 @@ a:com.intellij.structuralsearch.StructuralReplaceHandler
 c:com.intellij.structuralsearch.StructuralSearchException
 - java.lang.RuntimeException
 - <init>():V
-- <init>(java.lang.String):V
 - <init>(java.lang.Throwable):V
 a:com.intellij.structuralsearch.StructuralSearchProfile
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -281,10 +269,8 @@ a:com.intellij.structuralsearch.StructuralSearchProfile
 - isIdentifier(com.intellij.psi.PsiElement):Z
 - isMatchNode(com.intellij.psi.PsiElement):Z
 - a:isMyLanguage(com.intellij.lang.Language):Z
-- isReplacementTypedVariable(java.lang.String):Z
 - provideAdditionalReplaceOptions(com.intellij.psi.PsiElement,com.intellij.structuralsearch.plugin.replace.ReplaceOptions,com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder):V
 - shouldShowProblem(com.intellij.psi.PsiErrorElement):Z
-- stripReplacementTypedVariableDecorations(java.lang.String):java.lang.String
 - supportsShortenFQNames():Z
 - supportsUseStaticImports():Z
 - updateCurrentNode(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
@@ -299,7 +285,6 @@ a:com.intellij.structuralsearch.StructuralSearchProfileBase
 - getReplaceHandler(com.intellij.openapi.project.Project,com.intellij.structuralsearch.plugin.replace.ReplaceOptions):com.intellij.structuralsearch.StructuralReplaceHandler
 - pa:getVarPrefixes():java.lang.String[]
 - p:getVariableDelimiters():com.intellij.psi.tree.TokenSet
-- isMatchNode(com.intellij.psi.PsiElement):Z
 - p:isStringLiteral(com.intellij.psi.PsiElement):Z
 c:com.intellij.structuralsearch.StructuralSearchScriptException
 - com.intellij.structuralsearch.StructuralSearchException
@@ -349,8 +334,6 @@ a:com.intellij.structuralsearch.impl.matcher.CompiledPattern
 - clearHandlers():V
 - createSubstitutionHandler(java.lang.String,java.lang.String,Z,I,I,Z):com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 - p:doCreateSubstitutionHandler(java.lang.String,Z,I,I,Z):com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
-- getHandler(com.intellij.psi.PsiElement):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
-- getHandler(java.lang.String):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 - getHandlerSimple(com.intellij.psi.PsiElement):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 - getNodeCount():I
 - getNodes():com.intellij.dupLocator.iterators.NodeIterator
@@ -358,17 +341,13 @@ a:com.intellij.structuralsearch.impl.matcher.CompiledPattern
 - getStrategy():com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy
 - getTargetNode():com.intellij.psi.PsiElement
 - a:getTypedVarPrefixes():java.lang.String[]
-- getTypedVarString(com.intellij.psi.PsiElement):java.lang.String
 - getVariableNodes(java.lang.String):java.util.List
 - isRealTypedVar(com.intellij.psi.PsiElement):Z
 - isToResetHandler(com.intellij.psi.PsiElement):Z
-- isTypedVar(com.intellij.psi.PsiElement):Z
-- a:isTypedVar(java.lang.String):Z
 - putVariableNode(java.lang.String,com.intellij.psi.PsiElement):V
 - setHandler(com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
 - setNodes(java.util.List):V
 - setScope(com.intellij.psi.search.SearchScope):V
-- setStrategy(com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy):V
 - setTargetNode(com.intellij.psi.PsiElement):V
 f:com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 - com.intellij.dupLocator.AbstractMatchingVisitor
@@ -389,7 +368,6 @@ f:com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 - matchText(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
 - matchText(java.lang.String,java.lang.String):Z
 - scopeMatch(com.intellij.psi.PsiElement,Z,com.intellij.psi.PsiElement):V
-- setResult(Z):Z
 c:com.intellij.structuralsearch.impl.matcher.MatchContext
 - <init>(com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor):V
 - addMatchedNode(com.intellij.psi.PsiElement):V
@@ -423,8 +401,6 @@ f:com.intellij.structuralsearch.impl.matcher.MatchResultImpl
 - com.intellij.structuralsearch.MatchResult
 - <init>(java.lang.String,java.lang.String,com.intellij.psi.PsiElement,I,I,Z):V
 - <init>(java.lang.String,java.lang.String,com.intellij.psi.SmartPsiElementPointer,I,I,Z):V
-- addChild(com.intellij.structuralsearch.MatchResult):V
-- findChild(java.lang.String):com.intellij.structuralsearch.MatchResult
 - getChild(java.lang.String):com.intellij.structuralsearch.impl.matcher.MatchResultImpl
 - getChildren():java.util.List
 - getEnd():I
@@ -488,7 +464,6 @@ c:com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor
 - getContext():com.intellij.structuralsearch.impl.matcher.compiler.CompileContext
 - s:getFilter():com.intellij.dupLocator.util.NodeFilter
 - getLexicalNodes():java.util.List
-- f:handle(com.intellij.psi.PsiElement):V
 - hasFragments(java.lang.String):Z
 - s:isSuitablePredicate(com.intellij.structuralsearch.impl.matcher.predicates.RegExpPredicate,com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler):Z
 - processPatternStringWithFragments(java.lang.String,com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
@@ -570,7 +545,6 @@ a:com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 - s:matchInAnyOrder(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
 - matchSequentially(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
 - reset():V
-- setFilter(com.intellij.dupLocator.util.NodeFilter):V
 - setPinnedElement(com.intellij.psi.PsiElement):V
 - shouldAdvanceTheMatchFor(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
 - shouldAdvanceThePatternFor(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):Z
@@ -613,7 +587,6 @@ c:com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 - match(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
 - matchSequentially(com.intellij.dupLocator.iterators.NodeIterator,com.intellij.dupLocator.iterators.NodeIterator,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
 - reset():V
-- setMatchHandler(com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
 - setNestedResult(com.intellij.structuralsearch.impl.matcher.MatchResultImpl):V
 - setPredicate(com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate):V
 - setRepeatedVar(Z):V
@@ -631,7 +604,6 @@ c:com.intellij.structuralsearch.impl.matcher.handlers.SymbolHandler
 f:com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler
 - com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 - com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler
-- <init>(com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
 - canMatch(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.structuralsearch.impl.matcher.MatchContext):Z
 - getDelegate():com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 - isMatchSequentiallySucceeded(com.intellij.dupLocator.iterators.NodeIterator):Z
@@ -727,7 +699,6 @@ c:com.intellij.structuralsearch.inspection.SSBasedInspection
 - getConfigurationsWithUuid(java.lang.String):java.util.List
 - getGroupDisplayName():java.lang.String
 - getShortName():java.lang.String
-- s:getStructuralSearchInspection(com.intellij.codeInspection.InspectionProfile):com.intellij.structuralsearch.inspection.SSBasedInspection
 - initialize(com.intellij.codeInspection.GlobalInspectionContext):V
 - inspectionFinished(com.intellij.codeInspection.LocalInspectionToolSession,com.intellij.codeInspection.ProblemsHolder):V
 - readSettings(org.jdom.Element):V
@@ -808,7 +779,6 @@ c:com.intellij.structuralsearch.plugin.replace.ReplaceOptions
 - isToUseStaticImport():Z
 - readExternal(org.jdom.Element):V
 - removeUnusedVariables():V
-- setReplacement(java.lang.String):V
 - setToReformatAccordingToStyle(Z):V
 - setToShortenFQN(Z):V
 - setToUseStaticImport(Z):V
@@ -842,7 +812,6 @@ f:com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo
 - setHasCommaBefore(Z):V
 - setStatementContext(Z):V
 f:com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder
-- findParameterization(com.intellij.psi.PsiElement):com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo
 - findParameterization(java.lang.String):java.util.Collection
 - prepareReplacementPattern():java.lang.String
 c:com.intellij.structuralsearch.plugin.replace.impl.Replacer
@@ -1063,7 +1032,6 @@ f:com.intellij.structuralsearch.plugin.ui.SubstitutionShortInfoHandler
 c:com.intellij.structuralsearch.plugin.ui.TextFieldWithAutoCompletionWithBrowseButton
 - com.intellij.openapi.ui.ComponentWithBrowseButton
 - com.intellij.ui.TextAccessor
-- <init>(com.intellij.openapi.project.Project):V
 - getText():java.lang.String
 - setAutoCompletionItems(java.util.Collection):V
 - setText(java.lang.String):V

@@ -365,6 +365,9 @@ f:com.intellij.util.SystemProperties
 - s:getUserHome():java.lang.String
 - s:getUserName():java.lang.String
 - s:setProperty(java.lang.String,java.lang.String):java.lang.String
+f:com.intellij.util.concurrency.Semaphore
+- <init>(I):V
+- waitFor(J):Z
 f:com.intellij.util.containers.CollectionFactory
 - <init>():V
 - s:createCaseInsensitiveStringMap():java.util.Map
@@ -518,6 +521,8 @@ f:com.intellij.util.containers.SoftArrayHashMap
 - get(java.lang.Object[]):java.lang.Object
 - processLeafEntries(java.util.function.BiPredicate):Z
 - put(java.lang.Object[],java.lang.Object):V
+f:com.intellij.util.io.IoKt
+- sf:decodeBase64(java.lang.String):B[]
 f:com.intellij.util.text.CharArrayUtil
 - s:containLineBreaks(java.lang.CharSequence):Z
 - s:containLineBreaks(java.lang.CharSequence,I,I):Z

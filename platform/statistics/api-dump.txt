@@ -34,10 +34,14 @@ c:com.intellij.internal.statistic.eventLog.EventLogGroup
 - f:registerVarargEvent(java.lang.String,com.intellij.internal.statistic.eventLog.events.EventField[]):com.intellij.internal.statistic.eventLog.events.VarargEventId
 f:com.intellij.internal.statistic.eventLog.EventLogGroupKt
 - sf:FUS_RECORDER:java.lang.String
+f:com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration
+- f:anonymize(java.lang.String):java.lang.String
 f:com.intellij.internal.statistic.eventLog.StatisticsEventLogFileWriter
 - <init>(com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider,I,Z,java.lang.String):V
 com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 - a:onLogEvent(com.jetbrains.fus.reporting.model.lion3.LogEvent,java.lang.String,java.util.Map):V
+f:com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
+- sf:getEventLogProvider(java.lang.String):com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 - a:cleanup():V
 - a:computeAsync(kotlin.jvm.functions.Function1):V

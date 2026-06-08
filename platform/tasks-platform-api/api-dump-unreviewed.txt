@@ -46,7 +46,6 @@ a:com.intellij.tasks.LocalTask
 - a:addChangelist(com.intellij.tasks.ChangeListInfo):V
 - a:addWorkItem(com.intellij.tasks.timeTracking.model.WorkItem):V
 - a:getBranches():java.util.List
-- getBranches(Z):java.util.List
 - a:getChangeLists():java.util.List
 - a:getLastPost():java.util.Date
 - a:getShelfName():java.lang.String
@@ -69,7 +68,6 @@ a:com.intellij.tasks.Task
 - sf:EMPTY_ARRAY:com.intellij.tasks.Task[]
 - <init>():V
 - f:equals(java.lang.Object):Z
-- ps:extractNumberFromId(java.lang.String):java.lang.String
 - ps:extractProjectFromId(java.lang.String):java.lang.String
 - a:getComments():com.intellij.tasks.Comment[]
 - a:getCreated():java.util.Date
@@ -117,8 +115,6 @@ a:com.intellij.tasks.TaskManager
 - a:getIssues(java.lang.String,I,I,Z,com.intellij.openapi.progress.ProgressIndicator,Z):java.util.List
 - a:getIssues(java.lang.String,Z):java.util.List
 - a:getLocalTasks():java.util.List
-- a:getLocalTasks(Z):java.util.List
-- s:getManager(com.intellij.openapi.project.Project):com.intellij.tasks.TaskManager
 - a:isLocallyClosed(com.intellij.tasks.LocalTask):Z
 - a:isVcsEnabled():Z
 - a:removeTask(com.intellij.tasks.LocalTask):V
@@ -217,7 +213,6 @@ e:com.intellij.tasks.TaskState
 - sf:RESOLVED:com.intellij.tasks.TaskState
 - sf:SUBMITTED:com.intellij.tasks.TaskState
 - getPresentableName():java.lang.String
-- s:valueOf(java.lang.String):com.intellij.tasks.TaskState
 - s:values():com.intellij.tasks.TaskState[]
 e:com.intellij.tasks.TaskType
 - java.lang.Enum
@@ -225,7 +220,6 @@ e:com.intellij.tasks.TaskType
 - sf:EXCEPTION:com.intellij.tasks.TaskType
 - sf:FEATURE:com.intellij.tasks.TaskType
 - sf:OTHER:com.intellij.tasks.TaskType
-- s:valueOf(java.lang.String):com.intellij.tasks.TaskType
 - s:values():com.intellij.tasks.TaskType[]
 a:com.intellij.tasks.config.TaskRepositoryEditor
 - com.intellij.openapi.Disposable

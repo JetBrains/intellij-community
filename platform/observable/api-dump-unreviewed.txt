@@ -111,9 +111,7 @@ com.intellij.openapi.observable.operation.core.ObservableTaskOperationTrace
 - a:getStartTaskObservable():com.intellij.openapi.observable.dispatcher.SingleEventDispatcher
 - a:getState():com.intellij.openapi.observable.operation.core.ObservableOperationState
 f:com.intellij.openapi.observable.operation.core.OperationUtilKt
-- sf:getOperationInProgressProperty(com.intellij.openapi.observable.operation.core.ObservableOperationTrace):com.intellij.openapi.observable.properties.ObservableBooleanProperty
 - sf:isOperationCompleted(com.intellij.openapi.observable.operation.core.ObservableOperationTrace):Z
-- sf:isOperationInProgress(com.intellij.openapi.observable.operation.core.ObservableOperationTrace):Z
 - sf:isOperationScheduled(com.intellij.openapi.observable.operation.core.ObservableOperationTrace):Z
 - sf:traceRun(com.intellij.openapi.observable.operation.core.MutableOperationTrace,com.intellij.openapi.observable.operation.OperationExecutionId,kotlin.jvm.functions.Function0):java.lang.Object
 - bs:traceRun$default(com.intellij.openapi.observable.operation.core.MutableOperationTrace,com.intellij.openapi.observable.operation.OperationExecutionId,kotlin.jvm.functions.Function0,I,java.lang.Object):java.lang.Object
@@ -141,21 +139,16 @@ Fa:com.intellij.openapi.observable.properties.AbstractObservableProperty
 f:com.intellij.openapi.observable.properties.AtomicBooleanProperty
 - com.intellij.openapi.observable.properties.AbstractObservableBooleanProperty
 - com.intellij.openapi.observable.properties.AtomicMutableBooleanProperty
-- <init>(Z):V
 - f:compareAndSet(Z,Z):Z
 - get():java.lang.Boolean
 - getAndSet(Z):Z
 - reset():V
 - set():V
-- set(Z):V
 - updateAndGet(kotlin.jvm.functions.Function1):java.lang.Boolean
 Fc:com.intellij.openapi.observable.properties.AtomicLazyProperty
 - com.intellij.openapi.observable.properties.ObservableMutableProperty
 - sf:Companion:com.intellij.openapi.observable.properties.AtomicLazyProperty$Companion
-- <init>(kotlin.jvm.functions.Function0):V
 - get():java.lang.Object
-- set(java.lang.Object):V
-- updateAndGet(kotlin.jvm.functions.Function1):java.lang.Object
 f:com.intellij.openapi.observable.properties.AtomicLazyProperty$Companion
 com.intellij.openapi.observable.properties.AtomicMutableBooleanProperty
 - com.intellij.openapi.observable.properties.MutableBooleanProperty
@@ -163,10 +156,7 @@ com.intellij.openapi.observable.properties.AtomicMutableBooleanProperty
 - a:getAndSet(Z):Z
 f:com.intellij.openapi.observable.properties.AtomicProperty
 - com.intellij.openapi.observable.properties.ObservableMutableProperty
-- <init>(java.lang.Object):V
 - get():java.lang.Object
-- set(java.lang.Object):V
-- updateAndGet(kotlin.jvm.functions.Function1):java.lang.Object
 f:com.intellij.openapi.observable.properties.ListenerUtilKt
 - sf:whenPropertyChanged(com.intellij.openapi.observable.properties.ObservableProperty,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - sf:whenPropertyChanged(com.intellij.openapi.observable.properties.ObservableProperty,kotlin.jvm.functions.Function1):V
@@ -179,9 +169,6 @@ f:com.intellij.openapi.observable.properties.PropertyGraph
 - <init>(java.lang.String,Z):V
 - b:<init>(java.lang.String,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - f:afterPropagation(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):V
-- f:afterPropagation(kotlin.jvm.functions.Function0):V
 - f:dependsOn(com.intellij.openapi.observable.properties.ObservableMutableProperty,com.intellij.openapi.observable.properties.ObservableProperty,Z,kotlin.jvm.functions.Function0):V
 - bs:dependsOn$default(com.intellij.openapi.observable.properties.PropertyGraph,com.intellij.openapi.observable.properties.ObservableMutableProperty,com.intellij.openapi.observable.properties.ObservableProperty,Z,kotlin.jvm.functions.Function0,I,java.lang.Object):V
 - f:lateinitProperty():com.intellij.openapi.observable.properties.GraphProperty
-- f:lazyProperty(kotlin.jvm.functions.Function0):com.intellij.openapi.observable.properties.GraphProperty
-- f:property(java.lang.Object):com.intellij.openapi.observable.properties.GraphProperty

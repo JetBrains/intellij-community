@@ -1,2 +1,7 @@
+a:com.intellij.ide.macro.Macro
+- ps:getPath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+f:com.intellij.ide.macro.MacroManager
+- cacheMacrosPreview(com.intellij.openapi.actionSystem.DataContext):V
 com.intellij.ide.macro.MacroWithParams
+com.intellij.ide.macro.PathMacro
 com.intellij.ide.macro.SecondQueueExpandMacro

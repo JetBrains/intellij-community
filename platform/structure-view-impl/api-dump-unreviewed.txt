@@ -22,7 +22,6 @@ f:com.intellij.ide.impl.StructureViewWrapperImpl
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.wm.ToolWindow,kotlinx.coroutines.CoroutineScope):V
 - dispose():V
 - f:rebuild():V
-- f:rebuildNow(java.lang.String):V
 - selectCurrentElement(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.vfs.VirtualFile,Z):Z
 f:com.intellij.ide.impl.StructureViewWrapperImpl$Companion
 a:com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension
@@ -30,21 +29,16 @@ a:com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension
 - sf:Companion:com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension$Companion
 - <init>():V
 - p:acceptParentFromModel(com.intellij.psi.PsiElement):Z
-- p:childrenFromNodeAndProviders(com.intellij.ide.structureView.StructureViewTreeElement):java.util.List
 - p:createModel(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.ide.structureView.StructureViewModel
 - p:findParentInModel(com.intellij.ide.structureView.StructureViewTreeElement,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - p:getApplicableNodeProviders():java.util.List
 - pa:getLanguage():com.intellij.lang.Language
-- getLeafElement(com.intellij.openapi.actionSystem.DataMap):com.intellij.psi.PsiElement
-- getParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
-- p:isAcceptableLanguage(com.intellij.psi.PsiElement):Z
 - normalizeChildren():Z
 - processChildren(java.lang.Object,java.lang.Object,com.intellij.util.Processor):Z
 f:com.intellij.ide.navigationToolbar.StructureAwareNavBarModelExtension$Companion
 - f:getMODEL():com.intellij.openapi.util.Key
 a:com.intellij.ide.structureView.impl.TemplateLanguageStructureViewBuilder
 - com.intellij.ide.structureView.TreeBasedStructureViewBuilder
-- p:<init>(com.intellij.psi.PsiElement):V
 - s:create(com.intellij.psi.PsiFile,com.intellij.util.PairFunction):com.intellij.ide.structureView.impl.TemplateLanguageStructureViewBuilder
 - pa:createMainBuilder(com.intellij.psi.PsiFile):com.intellij.ide.structureView.TreeBasedStructureViewBuilder
 - createStructureView(com.intellij.openapi.fileEditor.FileEditor,com.intellij.openapi.project.Project):com.intellij.ide.structureView.StructureView
@@ -70,7 +64,6 @@ c:com.intellij.ide.structureView.newStructureView.StructureViewComponent
 - getTree():javax.swing.JTree
 - getTreeModel():com.intellij.ide.structureView.StructureViewModel
 - p:installTreePopupHandlers():V
-- isActionActive(java.lang.String):Z
 - isDisposed():Z
 - navigateToSelectedElement(Z):Z
 - queueUpdate():V
@@ -87,7 +80,6 @@ c:com.intellij.ide.structureView.newStructureView.StructureViewComponent
 - uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - s:unwrapNavigatable(java.lang.Object):java.lang.Object
 - s:unwrapValue(java.lang.Object):java.lang.Object
-- s:unwrapWrapper(java.lang.Object):java.lang.Object
 c:com.intellij.ide.structureView.newStructureView.TreeActionWrapper
 - com.intellij.openapi.actionSystem.ToggleAction
 - com.intellij.openapi.actionSystem.ActionWithDelegate
@@ -157,12 +149,10 @@ f:com.intellij.ide.util.FileStructurePopup
 - <init>(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.FileEditor,com.intellij.ide.structureView.StructureViewModel):V
 - createCenterPanel():javax.swing.JComponent
 - dispose():V
-- s:getSpeedSearchText(java.lang.Object):java.lang.String
 - isActionActive(java.lang.String):Z
 - isDisposed():Z
 - rebuildAndUpdate():org.jetbrains.concurrency.AsyncPromise
 - select(java.lang.Object):org.jetbrains.concurrency.Promise
 - setActionActive(java.lang.String,Z):V
-- setTitle(java.lang.String):V
 - show():V
 - showWithResult():org.jetbrains.concurrency.Promise

@@ -3,3 +3,13 @@ c:com.intellij.tasks.impl.LocalTaskImpl
 - getPropertiesToShowInPreview():java.util.List
 - setAdditionalProperties(java.util.Map):V
 - setPropertiesToShowInPreview(java.util.List):V
+c:com.intellij.tasks.impl.RequestFailedException
+- <init>(java.lang.String):V
+- <init>(java.lang.Throwable):V
+f:com.intellij.tasks.impl.TaskManagerImpl
+- constructDefaultBranchName(com.intellij.tasks.Task):java.lang.String
+- setRepositories(java.util.List):V
+- suggestBranchName(com.intellij.tasks.Task):java.lang.String
+- updateIssues(java.lang.Runnable):V
+f:com.intellij.tasks.impl.TaskUtil
+- s:parseDate(java.lang.String):java.util.Date

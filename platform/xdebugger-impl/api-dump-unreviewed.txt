@@ -95,11 +95,9 @@ a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
 f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 - sf:INSTANCE:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 - sf:findSelectedBreakpoint(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor):com.intellij.openapi.util.Pair
-- sf:findType(java.lang.String):com.intellij.xdebugger.breakpoints.XBreakpointType
 - sf:getDisplayText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 - sf:getGeneralDescription(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 - sf:getPropertyXMLDescriptions(com.intellij.xdebugger.breakpoints.XBreakpoint):java.util.List
-- sf:getShortText(com.intellij.xdebugger.breakpoints.XBreakpoint):java.lang.String
 - sf:toggleLineBreakpoint(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,com.intellij.openapi.editor.Editor,Z,Z,Z):org.jetbrains.concurrency.Promise
 - sf:toggleLineBreakpoint(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition,Z,com.intellij.openapi.editor.Editor,Z,Z,Z):org.jetbrains.concurrency.Promise
 f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtilKt
@@ -163,7 +161,6 @@ c:com.intellij.xdebugger.impl.settings.XDebuggerGeneralSettings
 - isShowDebuggerOnBreakpoint():Z
 - isUnmuteOnStop():Z
 - setConfirmBreakpointRemoval(Z):V
-- setEvaluationDialogMode(com.intellij.xdebugger.evaluation.EvaluationMode):V
 - setHideDebuggerOnProcessTermination(Z):V
 - setRunToCursorGestureEnabled(Z):V
 - setScrollToCenter(Z):V
@@ -195,7 +192,6 @@ c:com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl$SettingsState
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogCollectItemsUtilKt
 - sf:collectAttachProcessItemsGroupByProcessInfo(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,java.util.List,kotlin.coroutines.Continuation):java.lang.Object
 a:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
-- <init>(java.lang.String):V
 - f:getDisplayText():java.lang.String
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType$DOCKER
 - com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogHostType
@@ -289,7 +285,6 @@ pf:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$Add
 - com.intellij.openapi.actionSystem.ex.CustomComponentAction
 - com.intellij.openapi.project.DumbAware
 - java.awt.event.ActionListener
-- <init>(com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - actionPerformed(java.awt.event.ActionEvent):V
 - createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
@@ -351,14 +346,12 @@ a:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:isEnabled(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.openapi.actionSystem.AnActionEvent):Z
 - pa:perform(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):V
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.xdebugger.memory.component.InstancesTracker
 - com.intellij.openapi.components.PersistentStateComponent
 - <init>():V
 - add(java.lang.String,com.intellij.xdebugger.memory.tracking.TrackingType):V
 - addTrackerListener(com.intellij.xdebugger.memory.event.InstancesTrackerListener):V
 - addTrackerListener(com.intellij.xdebugger.memory.event.InstancesTrackerListener,com.intellij.openapi.Disposable):V
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.xdebugger.memory.component.InstancesTracker
 - getState():com.intellij.xdebugger.memory.component.InstancesTracker$MyState
 - getTrackedClasses():java.util.Map
 - getTrackingType(java.lang.String):com.intellij.xdebugger.memory.tracking.TrackingType

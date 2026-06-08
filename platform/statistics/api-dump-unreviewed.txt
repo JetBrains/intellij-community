@@ -55,7 +55,6 @@ a:com.intellij.internal.statistic.eventLog.EventLogRecorderConfigOptionsListener
 f:com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration
 - sf:Companion:com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration$Companion
 - sf:TOTAL_NUMBER_OF_BUCKETS:I
-- f:anonymize(java.lang.String):java.lang.String
 - f:anonymize(java.lang.String,Z):java.lang.String
 - bs:anonymize$default(com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration,java.lang.String,Z,I,java.lang.Object):java.lang.String
 - f:anonymizeSkipCache(java.lang.String,Z):java.lang.String
@@ -94,7 +93,6 @@ f:com.intellij.internal.statistic.eventLog.StatisticsEventLogFileWriter
 f:com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 - sf:INSTANCE:com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 - sf:forceLoggingAlwaysEnabled():Z
-- sf:getEventLogProvider(java.lang.String):com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 - sf:getEventLogProviders():java.util.List
 - sf:getExternalEventLogSettings():com.intellij.internal.statistic.eventLog.ExternalEventLogSettings
 com.intellij.internal.statistic.eventLog.StatisticsEventLogWriter

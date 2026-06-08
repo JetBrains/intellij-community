@@ -1,6 +1,14 @@
+c:com.intellij.DynamicBundle
+- p:<init>(java.lang.String):V
+- s:getPluginBundle(com.intellij.openapi.extensions.PluginDescriptor):java.util.ResourceBundle
 com.intellij.codeInsight.ContainerProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getContainer(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+a:com.intellij.codeInsight.FileModificationService
+- a:prepareFileForWrite(com.intellij.psi.PsiFile):Z
+- preparePsiElementForWrite(com.intellij.psi.PsiElement):Z
+- a:preparePsiElementsForWrite(java.util.Collection):Z
+- preparePsiElementsForWrite(com.intellij.psi.PsiElement[]):Z
 com.intellij.codeInsight.controlflow.ConditionalInstruction
 - com.intellij.codeInsight.controlflow.Instruction
 - a:getCondition():com.intellij.psi.PsiElement
@@ -48,9 +56,22 @@ com.intellij.codeInsight.generation.SelfManagingCommenter
 - a:isLineCommented(I,I,com.intellij.openapi.editor.Document,com.intellij.codeInsight.generation.CommenterDataHolder):Z
 - a:uncommentBlockComment(I,I,com.intellij.openapi.editor.Document,com.intellij.codeInsight.generation.CommenterDataHolder):V
 - a:uncommentLine(I,I,com.intellij.openapi.editor.Document,com.intellij.codeInsight.generation.CommenterDataHolder):V
+a:com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
+- s:findDetector(com.intellij.psi.PsiElement):com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
+- a:getExpressionAccess(com.intellij.psi.PsiElement):com.intellij.codeInsight.highlighting.ReadWriteAccessDetector$Access
+- a:isDeclarationWriteAccess(com.intellij.psi.PsiElement):Z
+f:com.intellij.codeWithMe.ClientId
+- equals(java.lang.Object):Z
+- sf:isLocal(com.intellij.codeWithMe.ClientId):Z
+f:com.intellij.codeWithMe.ClientId$Companion
+- f:isLocal(com.intellij.codeWithMe.ClientId):Z
+f:com.intellij.codeWithMe.ClientIdKt
+- sf:asContextElement(com.intellij.codeWithMe.ClientId):kotlin.coroutines.CoroutineContext$Element
 com.intellij.concurrency.AsyncFuture
 - java.util.concurrent.Future
 - a:addConsumer(java.util.concurrent.Executor,com.intellij.concurrency.ResultConsumer):V
+f:com.intellij.concurrency.AsyncUtil
+- s:get(java.util.concurrent.Future):java.lang.Object
 com.intellij.execution.filters.HyperlinkInfo
 - includeInOccurenceNavigation():Z
 - a:navigate(com.intellij.openapi.project.Project):V
@@ -67,8 +88,18 @@ com.intellij.ide.IconLayerProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getLayerDescription():java.lang.String
 - a:getLayerIcon(com.intellij.openapi.util.Iconable,Z):javax.swing.Icon
+f:com.intellij.ide.PowerSaveMode
+- s:setEnabled(Z):V
 com.intellij.ide.PowerSaveMode$Listener
 - a:powerSaveStateChanged():V
+a:com.intellij.ide.TypePresentationService
+- s:getDefaultTypeName(java.lang.Class):java.lang.String
+- a:getIcon(java.lang.Object):javax.swing.Icon
+- a:getTypePresentableName(java.lang.Class):java.lang.String
+c:com.intellij.ide.fileTemplates.FileTemplateDescriptor
+- <init>(java.lang.String):V
+f:com.intellij.ide.plugins.CannotUnloadPluginException
+- <init>(java.lang.String):V
 com.intellij.ide.plugins.DynamicPluginListener
 - sf:Companion:com.intellij.ide.plugins.DynamicPluginListener$Companion
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -90,7 +121,20 @@ com.intellij.ide.plugins.PluginUtil
 - a:findPluginId(java.lang.Throwable):com.intellij.openapi.extensions.PluginId
 - a:findPluginName(com.intellij.openapi.extensions.PluginId):java.lang.String
 - s:getInstance():com.intellij.ide.plugins.PluginUtil
+a:com.intellij.ide.util.PropertiesComponent
+- f:getBoolean(java.lang.String):Z
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.util.PropertiesComponent
+- a:getList(java.lang.String):java.util.List
+- a:getValue(java.lang.String):java.lang.String
+- a:getValues(java.lang.String):java.lang.String[]
+- f:isTrueValue(java.lang.String):Z
+- a:isValueSet(java.lang.String):Z
+- f:loadFields(java.lang.Object):Z
+- f:saveFields(java.lang.Object):Z
+- a:unsetValue(java.lang.String):V
 a:com.intellij.ide.util.PsiNavigationSupport
+- a:canNavigate(com.intellij.psi.PsiElement):Z
+- a:getDescriptor(com.intellij.psi.PsiElement):com.intellij.pom.Navigatable
 - openDirectoryInSystemFileManager(java.io.File):V
 - a:openDirectoryInSystemFileManager(java.nio.file.Path):V
 com.intellij.injected.editor.DocumentWindow
@@ -111,6 +155,8 @@ com.intellij.injected.editor.VirtualFileWindow
 - a:getDelegate():com.intellij.openapi.vfs.VirtualFile
 - a:getDocumentWindow():com.intellij.injected.editor.DocumentWindow
 - a:isValid():Z
+f:com.intellij.l10n.LocalizationUtil
+- f:getLocale(Z):java.util.Locale
 com.intellij.lang.ASTNode
 - com.intellij.openapi.util.UserDataHolder
 - sf:EMPTY_ARRAY:com.intellij.lang.ASTNode[]
@@ -185,10 +231,33 @@ com.intellij.lang.FileASTNode
 com.intellij.lang.ITokenTypeRemapper
 - a:filter(com.intellij.psi.tree.IElementType,I,I,java.lang.CharSequence):com.intellij.psi.tree.IElementType
 com.intellij.lang.InjectableLanguage
+a:com.intellij.lang.Language
+- p:<init>(java.lang.String):V
+- s:findInstance(java.lang.Class):com.intellij.lang.Language
+- s:findInstancesByMimeType(java.lang.String):java.util.Collection
+- s:findLanguageByID(java.lang.String):com.intellij.lang.Language
+- f:is(com.intellij.lang.Language):Z
+- f:isKindOf(com.intellij.lang.Language):Z
+- f:isKindOf(java.lang.String):Z
 c:com.intellij.lang.LanguageExtension
+- <init>(java.lang.String):V
+- allForLanguage(com.intellij.lang.Language):java.util.List
+- allForLanguageOrAny(com.intellij.lang.Language):java.util.List
 - f:allForLanguageWithDefault(com.intellij.lang.Language):java.util.List
+- forLanguage(com.intellij.lang.Language):java.lang.Object
+f:com.intellij.lang.LanguageUtil
+- s:findRegisteredLanguage(java.lang.String):com.intellij.lang.Language
+- s:getFileLanguage(com.intellij.openapi.vfs.VirtualFile):com.intellij.lang.Language
+- s:getFileTypeLanguage(com.intellij.openapi.fileTypes.FileType):com.intellij.lang.Language
+- s:getLanguageFileType(com.intellij.lang.Language):com.intellij.openapi.fileTypes.FileType
+- s:getLanguages(java.util.function.Predicate):java.util.List
+- s:getRootLanguage(com.intellij.psi.PsiElement):com.intellij.lang.Language
+- s:isInjectableLanguage(com.intellij.lang.Language):Z
 com.intellij.lang.LightPsiParser
 - a:parseLight(com.intellij.psi.tree.IElementType,com.intellij.lang.PsiBuilder):V
+a:com.intellij.lang.LighterAST
+- a:getChildren(com.intellij.lang.LighterASTNode):java.util.List
+- a:getParent(com.intellij.lang.LighterASTNode):com.intellij.lang.LighterASTNode
 com.intellij.lang.LighterASTNode
 - sf:EMPTY_ARRAY:com.intellij.lang.LighterASTNode[]
 - a:getEndOffset():I
@@ -205,6 +274,7 @@ com.intellij.lang.LighterLazyParseableNode
 - a:getContainingFile():com.intellij.psi.PsiFile
 - a:getText():java.lang.CharSequence
 a:com.intellij.lang.MetaLanguage
+- p:<init>(java.lang.String):V
 com.intellij.lang.MetaLanguageProvider
 - a:getLanguage():com.intellij.lang.MetaLanguage
 com.intellij.lang.ParserDefinition
@@ -285,6 +355,9 @@ com.intellij.lang.SyntaxTreeBuilder$Production
 - isCollapsed():Z
 com.intellij.lang.TokenSeparatorGenerator
 - a:generateWhitespaceBetweenTokens(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
+c:com.intellij.lang.TreeBackedLighterAST
+- getChildren(com.intellij.lang.LighterASTNode):java.util.List
+- getParent(com.intellij.lang.LighterASTNode):com.intellij.lang.LighterASTNode
 com.intellij.lang.WhitespaceSkippedCallback
 - a:onSkip(com.intellij.psi.tree.IElementType,I,I):V
 com.intellij.lang.WhitespacesAndCommentsBinder
@@ -297,6 +370,7 @@ com.intellij.lang.WhitespacesAndCommentsBinder$TokenTextGetter
 c:com.intellij.lang.folding.CompositeFoldingBuilder
 - keepExpandedOnFirstCollapseAll(com.intellij.lang.folding.FoldingDescriptor):Z
 a:com.intellij.lang.folding.CustomFoldingBuilder
+- f:getPlaceholderText(com.intellij.lang.ASTNode):java.lang.String
 - s:isCustomRegionElement(com.intellij.psi.PsiElement):Z
 com.intellij.lang.folding.FoldingBuilder
 - com.intellij.openapi.project.PossiblyDumbAware
@@ -306,6 +380,20 @@ com.intellij.lang.folding.FoldingBuilder
 - isCollapsedByDefault(com.intellij.lang.folding.FoldingDescriptor):Z
 - keepExpandedOnFirstCollapseAll(com.intellij.lang.ASTNode):Z
 - keepExpandedOnFirstCollapseAll(com.intellij.lang.folding.FoldingDescriptor):Z
+c:com.intellij.lang.folding.FoldingDescriptor
+- setCanBeRemovedWhenCollapsed(Z):V
+- setPlaceholderText(java.lang.String):V
+f:com.intellij.lang.folding.LanguageFolding
+- forLanguage(com.intellij.lang.Language):com.intellij.lang.folding.FoldingBuilder
+a:com.intellij.lang.injection.InjectedLanguageManager
+- a:dropFileCaches(com.intellij.psi.PsiFile):V
+- a:getInjectedPsiFiles(com.intellij.psi.PsiElement):java.util.List
+- a:getInjectionHost(com.intellij.psi.FileViewProvider):com.intellij.psi.PsiLanguageInjectionHost
+- a:getInjectionHost(com.intellij.psi.PsiElement):com.intellij.psi.PsiLanguageInjectionHost
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.lang.injection.InjectedLanguageManager
+- a:getTopLevelFile(com.intellij.psi.PsiElement):com.intellij.psi.PsiFile
+- a:getUnescapedText(com.intellij.psi.PsiElement):java.lang.String
+- isInjectedFragment(com.intellij.psi.PsiFile):Z
 com.intellij.lang.injection.MultiHostInjector
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:MULTIHOST_INJECTOR_EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -335,6 +423,8 @@ com.intellij.lang.injection.general.LanguageInjectionPerformer
 - sf:INJECTOR_EXTENSION:com.intellij.lang.LanguageExtension
 - a:isPrimary():Z
 - a:performInjection(com.intellij.lang.injection.MultiHostRegistrar,com.intellij.lang.injection.general.Injection,com.intellij.psi.PsiElement):Z
+f:com.intellij.lang.tree.util.AstUtilKt
+- sf:children(com.intellij.lang.ASTNode):kotlin.sequences.Sequence
 com.intellij.lexer.DocCommentTokenTypes
 - a:badCharacter():com.intellij.psi.tree.IElementType
 - a:commentData():com.intellij.psi.tree.IElementType
@@ -356,6 +446,11 @@ com.intellij.lexer.DocCommentTokenTypes
 - a:tagValueSharp():com.intellij.psi.tree.IElementType
 - tagValueSlash():com.intellij.psi.tree.IElementType
 - a:tagValueToken():com.intellij.psi.tree.IElementType
+a:com.intellij.lexer.Lexer
+- a:restore(com.intellij.lexer.LexerPosition):V
+- f:start(java.lang.CharSequence):V
+a:com.intellij.lexer.LexerBase
+- restore(com.intellij.lexer.LexerPosition):V
 com.intellij.lexer.LexerPosition
 - a:getOffset():I
 - a:getState():I
@@ -387,6 +482,8 @@ com.intellij.navigation.ItemPresentation
 - a:getPresentableText():java.lang.String
 com.intellij.navigation.ItemPresentationProvider
 - a:getPresentation(com.intellij.navigation.NavigationItem):com.intellij.navigation.ItemPresentation
+f:com.intellij.navigation.ItemPresentationProviders
+- s:getItemPresentation(com.intellij.navigation.NavigationItem):com.intellij.navigation.ItemPresentation
 com.intellij.navigation.ItemPresentationWithSeparator
 - com.intellij.navigation.ItemPresentation
 com.intellij.navigation.LocationPresentation
@@ -403,7 +500,10 @@ com.intellij.navigation.PsiElementNavigationItem
 - com.intellij.navigation.NavigationItem
 - a:getTargetElement():com.intellij.psi.PsiElement
 f:com.intellij.openapi.application.ActionsKt
+- sf:runReadAction(kotlin.jvm.functions.Function0):java.lang.Object
 - sf:runReadActionBlocking(kotlin.jvm.functions.Function0):java.lang.Object
+- sf:runUndoTransparentWriteAction(kotlin.jvm.functions.Function0):java.lang.Object
+- sf:runWriteAction(kotlin.jvm.functions.Function0):java.lang.Object
 com.intellij.openapi.application.AppUIExecutor
 - com.intellij.openapi.application.BaseExpirableExecutor
 - a:inSmartMode(com.intellij.openapi.project.Project):com.intellij.openapi.application.AppUIExecutor
@@ -492,6 +592,14 @@ f:com.intellij.openapi.application.CoroutinesKt
 - sf:smartReadAction(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:smartReadActionBlocking(com.intellij.openapi.project.Project,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
 - sf:writeAction(kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
+c:com.intellij.openapi.application.IdeUrlTrackingParametersProvider
+- augmentUrl(java.lang.String):java.lang.String
+f:com.intellij.openapi.application.ModalityKt
+- sf:asContextElement(com.intellij.openapi.application.ModalityState):kotlin.coroutines.CoroutineContext
+a:com.intellij.openapi.application.ModalityState
+- a:accepts(com.intellij.openapi.application.ModalityState):Z
+- f:dominates(com.intellij.openapi.application.ModalityState):Z
+- s:stateForComponent(java.awt.Component):com.intellij.openapi.application.ModalityState
 com.intellij.openapi.application.ModalityStateListener
 - java.util.EventListener
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -509,6 +617,10 @@ com.intellij.openapi.application.NonBlockingReadAction
 com.intellij.openapi.application.PathMacroContributor
 - forceRegisterPathMacros(java.util.Map):V
 - a:registerPathMacros(java.util.Map,java.util.Map):V
+a:com.intellij.openapi.application.PathMacros
+- a:getValue(java.lang.String):java.lang.String
+a:com.intellij.openapi.application.QueryExecutorBase
+- p:<init>(Z):V
 f:com.intellij.openapi.application.ReadAction
 - s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:computeBlocking(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
@@ -523,6 +635,8 @@ com.intellij.openapi.application.ReadActionListener
 - beforeReadActionStart(java.lang.Class):V
 - readActionFinished(java.lang.Class):V
 - readActionStarted(java.lang.Class):V
+a:com.intellij.openapi.application.ReadActionProcessor
+- s:wrapInReadAction(com.intellij.util.Processor):com.intellij.util.Processor
 com.intellij.openapi.application.ReadAndWriteScope
 - a:value(java.lang.Object):com.intellij.openapi.application.ReadResult
 - a:writeAction(kotlin.jvm.functions.Function0):com.intellij.openapi.application.ReadResult
@@ -530,7 +644,15 @@ com.intellij.openapi.application.ReadConstraint
 - sf:Companion:com.intellij.openapi.application.ReadConstraint$Companion
 - a:awaitConstraint(kotlin.coroutines.Continuation):java.lang.Object
 - a:isSatisfied():Z
+f:com.intellij.openapi.application.ReadConstraint$Companion
+- f:inSmartMode(com.intellij.openapi.project.Project):com.intellij.openapi.application.ReadConstraint
+- f:withDocumentsCommitted(com.intellij.openapi.project.Project):com.intellij.openapi.application.ReadConstraint
 com.intellij.openapi.application.ReadResult
+c:com.intellij.openapi.application.Result
+- f:setResult(java.lang.Object):V
+a:com.intellij.openapi.application.TransactionGuard
+- a:assertWriteSafeContext(com.intellij.openapi.application.ModalityState):V
+- a:submitTransactionAndWait(java.lang.Runnable):V
 f:com.intellij.openapi.application.WriteAction
 - s:compute(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
 - s:computeAndWait(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
@@ -558,6 +680,12 @@ com.intellij.openapi.command.CommandListener
 - commandStarted(com.intellij.openapi.command.CommandEvent):V
 - undoTransparentActionFinished():V
 - undoTransparentActionStarted():V
+a:com.intellij.openapi.command.CommandProcessor
+- a:markCurrentCommandAsGlobal(com.intellij.openapi.project.Project):V
+- a:runUndoTransparentAction(java.lang.Runnable):V
+- a:setCurrentCommandGroupId(java.lang.Object):V
+- a:setCurrentCommandName(java.lang.String):V
+f:com.intellij.openapi.command.CoroutinesKt
 f:com.intellij.openapi.command.WriteCommandAction
 - s:runWriteCommandAction(com.intellij.openapi.project.Project,com.intellij.openapi.util.Computable):java.lang.Object
 - s:runWriteCommandAction(com.intellij.openapi.project.Project,com.intellij.openapi.util.ThrowableComputable):java.lang.Object
@@ -575,6 +703,9 @@ com.intellij.openapi.command.WriteCommandAction$Builder
 - a:withGroupId(java.lang.String):com.intellij.openapi.command.WriteCommandAction$Builder
 - a:withName(java.lang.String):com.intellij.openapi.command.WriteCommandAction$Builder
 - a:withUndoConfirmationPolicy(com.intellij.openapi.command.UndoConfirmationPolicy):com.intellij.openapi.command.WriteCommandAction$Builder
+f:com.intellij.openapi.command.undo.UndoUtil
+- s:disableUndoFor(com.intellij.openapi.editor.Document):V
+- s:markPsiFileForUndo(com.intellij.psi.PsiFile):V
 com.intellij.openapi.components.ApplicationComponent
 - com.intellij.openapi.components.BaseComponent
 com.intellij.openapi.components.ComponentManagerEx
@@ -589,6 +720,9 @@ com.intellij.openapi.components.ProjectComponent
 - com.intellij.openapi.components.BaseComponent
 - projectClosed():V
 - projectOpened():V
+f:com.intellij.openapi.components.ServiceManager
+- s:createLazyKey(java.lang.Class):com.intellij.openapi.util.NotNullLazyKey
+- s:getService(java.lang.Class):java.lang.Object
 com.intellij.openapi.editor.Document
 - com.intellij.openapi.util.UserDataHolder
 - sf:EMPTY_ARRAY:com.intellij.openapi.editor.Document[]
@@ -630,6 +764,8 @@ com.intellij.openapi.editor.Document
 - a:setText(java.lang.CharSequence):V
 - startGuardedBlockChecking():V
 - stopGuardedBlockChecking():V
+f:com.intellij.openapi.editor.FoldingGroup
+- s:newGroup(java.lang.String):com.intellij.openapi.editor.FoldingGroup
 com.intellij.openapi.editor.HighlighterColors
 - sf:BAD_CHARACTER:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:NO_HIGHLIGHTING:com.intellij.openapi.editor.colors.TextAttributesKey
@@ -648,12 +784,16 @@ com.intellij.openapi.editor.RangeMarker
 - a:isValid():Z
 - a:setGreedyToLeft(Z):V
 - a:setGreedyToRight(Z):V
+f:com.intellij.openapi.editor.RangeMarkersKt
+- sf:getAsTextRange(com.intellij.openapi.editor.RangeMarker):com.intellij.openapi.util.TextRange
 com.intellij.openapi.editor.StripTrailingSpacesFilter
 - sf:ALL_LINES:com.intellij.openapi.editor.StripTrailingSpacesFilter
 - sf:ENFORCED_REMOVAL:com.intellij.openapi.editor.StripTrailingSpacesFilter
 - sf:NOT_ALLOWED:com.intellij.openapi.editor.StripTrailingSpacesFilter
 - sf:POSTPONED:com.intellij.openapi.editor.StripTrailingSpacesFilter
 - a:isStripSpacesAllowedForLine(I):Z
+f:com.intellij.openapi.editor.actionSystem.DocCommandGroupId
+- s:noneGroupId(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.actionSystem.DocCommandGroupId
 com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler
 - a:handle(com.intellij.openapi.editor.ReadOnlyFragmentModificationException):V
 com.intellij.openapi.editor.colors.CodeInsightColors
@@ -684,6 +824,16 @@ com.intellij.openapi.editor.colors.CodeInsightColors
 - sf:WARNINGS_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:WEAK_WARNING_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:WRONG_REFERENCES_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
+f:com.intellij.openapi.editor.colors.ColorKey
+- s:createColorKey(java.lang.String):com.intellij.openapi.editor.colors.ColorKey
+- s:find(java.lang.String):com.intellij.openapi.editor.colors.ColorKey
+f:com.intellij.openapi.editor.colors.TextAttributesKey
+- <init>(org.jdom.Element):V
+- s:createTextAttributesKey(java.lang.String):com.intellij.openapi.editor.colors.TextAttributesKey
+- equals(java.lang.Object):Z
+- s:find(java.lang.String):com.intellij.openapi.editor.colors.TextAttributesKey
+- setFallbackAttributeKey(com.intellij.openapi.editor.colors.TextAttributesKey):V
+- writeExternal(org.jdom.Element):V
 com.intellij.openapi.editor.colors.TextAttributesKey$TextAttributeKeyDefaultsProvider
 - a:getDefaultAttributes(com.intellij.openapi.editor.colors.TextAttributesKey):com.intellij.openapi.editor.markup.TextAttributes
 com.intellij.openapi.editor.colors.TextAttributesScheme
@@ -702,6 +852,8 @@ com.intellij.openapi.editor.event.BulkAwareDocumentListener$Simple
 - bulkUpdateFinished(com.intellij.openapi.editor.Document):V
 - bulkUpdateStarting(com.intellij.openapi.editor.Document):V
 - documentChangedNonBulk(com.intellij.openapi.editor.event.DocumentEvent):V
+a:com.intellij.openapi.editor.event.DocumentEvent
+- p:<init>(com.intellij.openapi.editor.Document):V
 com.intellij.openapi.editor.event.DocumentListener
 - java.util.EventListener
 - sf:ARRAY_FACTORY:com.intellij.util.ArrayFactory
@@ -714,8 +866,41 @@ com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 - com.intellij.openapi.editor.event.DocumentListener
 - sf:COMPARATOR:java.util.Comparator
 - a:getPriority():I
+f:com.intellij.openapi.editor.markup.AttributesFlyweight
+- withBackground(java.awt.Color):com.intellij.openapi.editor.markup.AttributesFlyweight
+- withEffectColor(java.awt.Color):com.intellij.openapi.editor.markup.AttributesFlyweight
+- withEffectType(com.intellij.openapi.editor.markup.EffectType):com.intellij.openapi.editor.markup.AttributesFlyweight
+- withForeground(java.awt.Color):com.intellij.openapi.editor.markup.AttributesFlyweight
+c:com.intellij.openapi.editor.markup.TextAttributes
+- <init>(org.jdom.Element):V
+- copyFrom(com.intellij.openapi.editor.markup.TextAttributes):V
+- equals(java.lang.Object):Z
+- s:fromFlyweight(com.intellij.openapi.editor.markup.AttributesFlyweight):com.intellij.openapi.editor.markup.TextAttributes
+- readExternal(org.jdom.Element):V
+- setBackgroundColor(java.awt.Color):V
+- setEffectColor(java.awt.Color):V
+- setEffectType(com.intellij.openapi.editor.markup.EffectType):V
+- setErrorStripeColor(java.awt.Color):V
+- setFontType(I):V
+- setForegroundColor(java.awt.Color):V
+- writeExternal(org.jdom.Element):V
+f:com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder
+- applyTo(com.intellij.openapi.editor.markup.TextAttributes):com.intellij.openapi.editor.markup.TextAttributes
+a:com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
+- f:createInstance(com.intellij.openapi.components.ComponentManager):java.lang.Object
 com.intellij.openapi.extensions.ExtensionFactory
 - a:createInstance(java.lang.String,java.lang.String):java.lang.Object
+a:com.intellij.openapi.fileEditor.FileDocumentManager
+- a:getCachedDocument(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.Document
+- a:getDocument(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.Document
+- a:getFile(com.intellij.openapi.editor.Document):com.intellij.openapi.vfs.VirtualFile
+- a:isDocumentUnsaved(com.intellij.openapi.editor.Document):Z
+- a:isFileModified(com.intellij.openapi.vfs.VirtualFile):Z
+- a:reloadFiles(com.intellij.openapi.vfs.VirtualFile[]):V
+- reloadFromDisk(com.intellij.openapi.editor.Document):V
+- a:saveDocument(com.intellij.openapi.editor.Document):V
+- a:saveDocumentAsIs(com.intellij.openapi.editor.Document):V
+- a:saveDocuments(java.util.function.Predicate):V
 f:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
 - sf:NON_WRITABLE:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
 - sf:WRITABLE:com.intellij.openapi.fileEditor.FileDocumentManager$WriteAccessStatus
@@ -755,6 +940,17 @@ com.intellij.openapi.fileTypes.FileType
 - isCharsetHardcoded():Z
 - isReadOnly():Z
 c:com.intellij.openapi.fileTypes.FileTypeExtension
+- <init>(java.lang.String):V
+- allForFileType(com.intellij.openapi.fileTypes.FileType):java.util.List
+- forFileType(com.intellij.openapi.fileTypes.FileType):java.lang.Object
+a:com.intellij.openapi.fileTypes.FileTypeRegistry
+- findFileTypeByLanguage(com.intellij.lang.Language):com.intellij.openapi.fileTypes.LanguageFileType
+- a:findFileTypeByName(java.lang.String):com.intellij.openapi.fileTypes.FileType
+- a:getFileTypeByExtension(java.lang.String):com.intellij.openapi.fileTypes.FileType
+- a:getFileTypeByFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.FileType
+- getFileTypeByFileName(java.lang.CharSequence):com.intellij.openapi.fileTypes.FileType
+- a:getFileTypeByFileName(java.lang.String):com.intellij.openapi.fileTypes.FileType
+- a:isFileIgnored(com.intellij.openapi.vfs.VirtualFile):Z
 com.intellij.openapi.fileTypes.FileTypeRegistry$FileTypeDetector
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:detect(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.io.ByteSequence,java.lang.CharSequence):com.intellij.openapi.fileTypes.FileType
@@ -768,6 +964,8 @@ com.intellij.openapi.fileTypes.InternalFileType
 - com.intellij.openapi.fileTypes.FileType
 - isCharsetHardcoded():Z
 - isReadOnly():Z
+a:com.intellij.openapi.fileTypes.LanguageFileType
+- p:<init>(com.intellij.lang.Language):V
 com.intellij.openapi.fileTypes.OSFileIdeAssociation
 - getExtensionMode():com.intellij.openapi.fileTypes.OSFileIdeAssociation$ExtensionMode
 - isFileAssociationAllowed():Z
@@ -824,6 +1022,9 @@ f:com.intellij.openapi.progress.CoroutinesKt
 - sf:currentThreadCoroutineScope():kotlinx.coroutines.CoroutineScope
 - sf:runBlockingCancellable(kotlin.jvm.functions.Function2):java.lang.Object
 - sf:runBlockingMaybeCancellable(kotlin.jvm.functions.Function2):java.lang.Object
+c:com.intellij.openapi.progress.EmptyProgressIndicator
+- <init>(com.intellij.openapi.application.ModalityState):V
+- s:notNullize(com.intellij.openapi.progress.ProgressIndicator):com.intellij.openapi.progress.ProgressIndicator
 com.intellij.openapi.progress.PerformInBackgroundOption
 - sf:ALWAYS_BACKGROUND:com.intellij.openapi.progress.PerformInBackgroundOption
 - sf:DEAF:com.intellij.openapi.progress.PerformInBackgroundOption
@@ -853,10 +1054,22 @@ com.intellij.openapi.progress.ProgressIndicator
 - a:start():V
 - startNonCancelableSection():V
 - a:stop():V
+a:com.intellij.openapi.progress.ProgressManager
+- s:canceled(com.intellij.openapi.progress.ProgressIndicator):V
+- a:computeInNonCancelableSection(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- a:executeNonCancelableSection(java.lang.Runnable):V
+- s:progress(java.lang.String):V
+- s:progress2(java.lang.String):V
+- run(com.intellij.openapi.progress.Task$WithResult):java.lang.Object
+- a:run(com.intellij.openapi.progress.Task):V
 com.intellij.openapi.progress.Progressive
 - a:run(com.intellij.openapi.progress.ProgressIndicator):V
 com.intellij.openapi.progress.StandardProgressIndicator
 - com.intellij.openapi.progress.ProgressIndicator
+a:com.intellij.openapi.progress.Task
+- f:setCancelTooltipText(java.lang.String):com.intellij.openapi.progress.Task
+a:com.intellij.openapi.progress.Task$WithResult
+- f:run(com.intellij.openapi.progress.ProgressIndicator):V
 com.intellij.openapi.progress.TaskInfo
 - a:getCancelText():java.lang.String
 - a:getCancelTooltipText():java.lang.String
@@ -872,6 +1085,31 @@ com.intellij.openapi.project.DumbAware
 com.intellij.openapi.project.DumbAwareRunnable
 - com.intellij.openapi.project.DumbAware
 - java.lang.Runnable
+a:com.intellij.openapi.project.DumbModeTask
+- <init>(java.lang.Object):V
+- f:queue(com.intellij.openapi.project.Project):V
+a:com.intellij.openapi.project.DumbService
+- a:cancelTask(com.intellij.openapi.project.DumbModeTask):V
+- f:computeWithAlternativeResolveEnabled(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- f:filterByDumbAwareness(java.util.Collection):java.util.List
+- sf:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.project.DumbService
+- sf:isDumb(com.intellij.openapi.project.Project):Z
+- sf:isDumbAware(java.lang.Object):Z
+- f:isUsableInCurrentContext(java.lang.Object):Z
+- a:queueTask(com.intellij.openapi.project.DumbModeTask):V
+- f:runReadActionInSmartMode(com.intellij.openapi.util.Computable):java.lang.Object
+- f:runReadActionInSmartMode(java.lang.Runnable):V
+- a:runWhenSmart(java.lang.Runnable):V
+- f:runWithAlternativeResolveEnabled(com.intellij.util.ThrowableRunnable):V
+- a:setAlternativeResolveEnabled(Z):V
+- a:showDumbModeNotification(java.lang.String):V
+- a:smartInvokeLater(java.lang.Runnable):V
+- f:withAlternativeResolveEnabled(java.lang.Runnable):V
+- f:withAlternativeResolveEnabled(kotlin.jvm.functions.Function0):java.lang.Object
+f:com.intellij.openapi.project.DumbService$Companion
+- f:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.project.DumbService
+- f:isDumb(com.intellij.openapi.project.Project):Z
+- f:isDumbAware(java.lang.Object):Z
 com.intellij.openapi.project.DumbService$DumbModeListener
 - enteredDumbMode():V
 - exitDumbMode():V
@@ -899,12 +1137,30 @@ com.intellij.openapi.project.Project
 - a:isOpen():Z
 - a:save():V
 - scheduleSave():V
+f:com.intellij.openapi.project.ProjectCoreUtil
+- sf:isProjectOrWorkspaceFile(com.intellij.openapi.vfs.VirtualFile):Z
+Fa:com.intellij.openapi.project.ProjectLocator
+- a:getProjectsForFile(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
+- a:guessProjectForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.project.Project
 com.intellij.openapi.project.RootsChangeRescanningInfo
 - sf:NO_RESCAN_NEEDED:com.intellij.openapi.project.RootsChangeRescanningInfo
 - sf:RESCAN_DEPENDENCIES_IF_NEEDED:com.intellij.openapi.project.RootsChangeRescanningInfo
 - sf:TOTAL_RESCAN:com.intellij.openapi.project.RootsChangeRescanningInfo
 com.intellij.openapi.roots.ContentIterator
 - a:processFile(com.intellij.openapi.vfs.VirtualFile):Z
+a:com.intellij.openapi.roots.FileIndexFacade
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.roots.FileIndexFacade
+- a:getModuleForFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.module.Module
+- a:isExcludedFile(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInContent(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInLibrary(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInLibraryClasses(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInLibrarySource(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInSource(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isInSourceContent(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isUnderIgnored(com.intellij.openapi.vfs.VirtualFile):Z
+a:com.intellij.openapi.roots.ProjectRootModificationTracker
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.roots.ProjectRootModificationTracker
 com.intellij.openapi.startup.ProjectActivity
 - a:execute(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.openapi.startup.StartupActivity
@@ -918,6 +1174,10 @@ com.intellij.openapi.startup.StartupActivity$DumbAware
 - com.intellij.openapi.startup.StartupActivity
 com.intellij.openapi.startup.StartupActivity$RequiredForSmartMode
 - a:runActivity(com.intellij.openapi.project.Project):V
+a:com.intellij.openapi.startup.StartupManager
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.startup.StartupManager
+- a:registerPostStartupActivity(java.lang.Runnable):V
+- a:runWhenProjectIsInitialized(java.lang.Runnable):V
 com.intellij.openapi.ui.ComponentContainer
 - com.intellij.openapi.Disposable
 - a:getComponent():javax.swing.JComponent
@@ -926,6 +1186,27 @@ com.intellij.openapi.ui.Queryable
 - a:putInfo(java.util.Map):V
 com.intellij.openapi.ui.Queryable$Contributor
 - a:apply(java.util.Map):V
+c:com.intellij.openapi.util.ActionCallback
+- <init>(I):V
+- f:doWhenDone(java.lang.Runnable):com.intellij.openapi.util.ActionCallback
+- f:doWhenProcessed(java.lang.Runnable):com.intellij.openapi.util.ActionCallback
+- f:doWhenRejected(java.lang.Runnable):com.intellij.openapi.util.ActionCallback
+- notify(com.intellij.openapi.util.ActionCallback):com.intellij.openapi.util.ActionCallback
+- f:notifyWhenDone(com.intellij.openapi.util.ActionCallback):com.intellij.openapi.util.ActionCallback
+- reject(java.lang.String):com.intellij.openapi.util.ActionCallback
+- waitFor(J):Z
+c:com.intellij.openapi.util.ActionCallback$Chunk
+- add(com.intellij.openapi.util.ActionCallback):V
+f:com.intellij.openapi.util.BuildNumber
+- compareTo(com.intellij.openapi.util.BuildNumber):I
+- equals(java.lang.Object):Z
+- s:fromString(java.lang.String):com.intellij.openapi.util.BuildNumber
+- s:fromStringOrNull(java.lang.String):com.intellij.openapi.util.BuildNumber
+c:com.intellij.openapi.util.ClassExtension
+- <init>(java.lang.String):V
+- f:forClass(java.lang.Class):java.lang.Object
+c:com.intellij.openapi.util.CompositeModificationTracker
+- <init>(com.intellij.openapi.util.ModificationTracker):V
 a:com.intellij.openapi.util.FilesModificationTrackerBase
 - com.intellij.openapi.util.SimpleModificationTracker
 - com.intellij.openapi.Disposable
@@ -933,6 +1214,13 @@ a:com.intellij.openapi.util.FilesModificationTrackerBase
 - dispose():V
 - f:getProject():com.intellij.openapi.project.Project
 - a:isFileSupported(com.intellij.openapi.vfs.VirtualFile):Z
+c:com.intellij.openapi.util.KeyedExtensionCollector
+- <init>(com.intellij.openapi.extensions.ExtensionPointName):V
+- <init>(java.lang.String):V
+- f:findSingle(java.lang.Object):java.lang.Object
+- f:forKey(java.lang.Object):java.util.List
+a:com.intellij.openapi.util.KeyedExtensionFactory
+- getByKey(java.lang.Object):java.lang.Object
 com.intellij.openapi.util.registry.RegistryManager
 - sf:Companion:com.intellij.openapi.util.registry.RegistryManager$Companion
 - a:get(java.lang.String):com.intellij.openapi.util.registry.RegistryValue
@@ -942,21 +1230,61 @@ com.intellij.openapi.util.registry.RegistryManager
 - a:is(java.lang.String):Z
 - a:resetValueChangeListener():V
 - a:stringValue(java.lang.String):java.lang.String
+f:com.intellij.openapi.util.registry.RegistryManager$Companion
+- f:getInstanceAsync(kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.openapi.vfs.AsyncFileListener
 - a:prepareChange(java.util.List):com.intellij.openapi.vfs.AsyncFileListener$ChangeApplier
 com.intellij.openapi.vfs.AsyncFileListener$ChangeApplier
 - afterVfsChange():V
 - beforeVfsChange():V
+a:com.intellij.openapi.vfs.DeprecatedVirtualFileSystem
+- addVirtualFileListener(com.intellij.openapi.vfs.VirtualFileListener):V
+- removeVirtualFileListener(com.intellij.openapi.vfs.VirtualFileListener):V
 f:com.intellij.openapi.vfs.DiskQueryRelay
 - <init>(java.util.function.Function):V
 - <init>(java.util.function.Function,java.util.concurrent.ExecutorService):V
 - f:accessDiskWithCheckCanceled(java.lang.Object):java.lang.Object
+c:com.intellij.openapi.vfs.InvalidVirtualFileAccessException
+- <init>(com.intellij.openapi.vfs.VirtualFile):V
 com.intellij.openapi.vfs.NonPhysicalFileSystem
+a:com.intellij.openapi.vfs.ReadonlyStatusHandler
+- a:ensureFilesWritable(java.util.Collection):com.intellij.openapi.vfs.ReadonlyStatusHandler$OperationStatus
+- ensureFilesWritable(com.intellij.openapi.vfs.VirtualFile[]):com.intellij.openapi.vfs.ReadonlyStatusHandler$OperationStatus
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vfs.ReadonlyStatusHandler
 com.intellij.openapi.vfs.SavingRequestor
 com.intellij.openapi.vfs.VersionManagingFileSystem
 - a:getVersioningType(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VersionManagingFileSystem$VersioningType
 - s:isDisabled(com.intellij.openapi.vfs.VirtualFile):Z
 - s:isEnforcedNonLocal(com.intellij.openapi.vfs.VirtualFile):Z
+c:com.intellij.openapi.vfs.VfsUtilCore
+- s:convertFromUrl(java.net.URL):java.lang.String
+- s:convertToURL(java.lang.String):java.net.URL
+- s:fileToUrl(java.io.File):java.lang.String
+- s:fixIDEAUrl(java.lang.String):java.lang.String
+- s:fixURLforIDEA(java.lang.String):java.lang.String
+- s:getRootFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- s:getVirtualFileForJar(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- s:loadBytes(com.intellij.openapi.vfs.VirtualFile):B[]
+- s:loadText(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- s:pathToUrl(java.lang.String):java.lang.String
+- s:toIdeaUrl(java.lang.String):java.lang.String
+- s:toVirtualFileArray(java.util.Collection):com.intellij.openapi.vfs.VirtualFile[]
+- s:urlToPath(java.lang.String):java.lang.String
+- s:virtualToIoFile(com.intellij.openapi.vfs.VirtualFile):java.io.File
+- s:virtualToIoFiles(java.util.Collection):java.util.List
+a:com.intellij.openapi.vfs.VirtualFile
+- contentsToByteArray(Z):B[]
+- delete(java.lang.Object):V
+- findChild(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- findFileByRelativePath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- f:getOutputStream(java.lang.Object):java.io.OutputStream
+- is(com.intellij.openapi.vfs.VFileProperty):Z
+- p:nameEquals(java.lang.String):Z
+- setBOM(B[]):V
+- f:setBinaryContent(B[]):V
+- setCharset(java.nio.charset.Charset):V
+- setDetectedLineSeparator(java.lang.String):V
+- setWritable(Z):V
 com.intellij.openapi.vfs.VirtualFileFilter
 - sf:ALL:com.intellij.openapi.vfs.VirtualFileFilter
 - sf:NONE:com.intellij.openapi.vfs.VirtualFileFilter
@@ -976,6 +1304,18 @@ com.intellij.openapi.vfs.VirtualFileListener
 - propertyChanged(com.intellij.openapi.vfs.VirtualFilePropertyEvent):V
 a:com.intellij.openapi.vfs.VirtualFileManager
 - a:addAsyncFileListener(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.vfs.AsyncFileListener):V
+- a:addVirtualFileListener(com.intellij.openapi.vfs.VirtualFileListener):V
+- a:asyncRefresh(java.lang.Runnable):J
+- s:extractPath(java.lang.String):java.lang.String
+- s:extractProtocol(java.lang.String):java.lang.String
+- findFileByNioPath(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
+- findFileByUrl(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- a:getFileSystem(java.lang.String):com.intellij.openapi.vfs.VirtualFileSystem
+- refreshAndFindFileByNioPath(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
+- refreshAndFindFileByUrl(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- a:refreshWithoutFileWatcher(Z):V
+- a:removeVirtualFileListener(com.intellij.openapi.vfs.VirtualFileListener):V
+- a:removeVirtualFileManagerListener(com.intellij.openapi.vfs.VirtualFileManagerListener):V
 com.intellij.openapi.vfs.VirtualFileManagerListener
 - java.util.EventListener
 - sf:TOPIC:com.intellij.util.messages.Topic
@@ -989,15 +1329,62 @@ com.intellij.openapi.vfs.VirtualFileSet
 - a:freeze():V
 - a:freezed():java.util.Set
 - a:process(com.intellij.util.Processor):Z
+a:com.intellij.openapi.vfs.VirtualFileSystem
+- a:addVirtualFileListener(com.intellij.openapi.vfs.VirtualFileListener):V
+- extractPresentableUrl(java.lang.String):java.lang.String
+- a:findFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- getNioPath(com.intellij.openapi.vfs.VirtualFile):java.nio.file.Path
+- isValidName(java.lang.String):Z
+- a:refresh(Z):V
+- a:refreshAndFindFileByPath(java.lang.String):com.intellij.openapi.vfs.VirtualFile
+- a:removeVirtualFileListener(com.intellij.openapi.vfs.VirtualFileListener):V
 f:com.intellij.openapi.vfs.VirtualFileUtil
+- sf:findDocument(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.Document
 - sf:findPsiDirectory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.psi.PsiDirectory
+- sf:isFile(com.intellij.openapi.vfs.VirtualFile):Z
+- sf:isTooLargeForIntellijSense(com.intellij.openapi.vfs.VirtualFile):Z
+- sf:originalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- sf:originalFileOrSelf(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- sf:readBytes(com.intellij.openapi.vfs.VirtualFile):B[]
+- sf:readText(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- sf:refreshAndFindVirtualDirectory(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
+- sf:refreshAndFindVirtualFile(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
+- sf:refreshAndFindVirtualFileOrDirectory(java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
 - sf:rootOriginalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- sf:toNioPathOrNull(com.intellij.openapi.vfs.VirtualFile):java.nio.file.Path
+a:com.intellij.openapi.vfs.VirtualFileVisitor
+- p:<init>(com.intellij.openapi.vfs.VirtualFileVisitor$Option[]):V
+- afterChildrenVisited(com.intellij.openapi.vfs.VirtualFile):V
+- s:limit(I):com.intellij.openapi.vfs.VirtualFileVisitor$Option
+- f:setValueForChildren(java.lang.Object):V
+- s:skipTo(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFileVisitor$Result
+- visitFile(com.intellij.openapi.vfs.VirtualFile):Z
+- visitFileEx(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFileVisitor$Result
+c:com.intellij.openapi.vfs.VirtualFileVisitor$Option
+c:com.intellij.openapi.vfs.VirtualFileVisitor$VisitorException
+- <init>(java.lang.Throwable):V
 com.intellij.openapi.vfs.VirtualFileWithId
 - a:getId():I
 com.intellij.openapi.vfs.VirtualFileWithoutContent
+a:com.intellij.openapi.vfs.WritingAccessProvider
+- isPotentiallyWritable(com.intellij.openapi.vfs.VirtualFile):Z
+a:com.intellij.openapi.vfs.encoding.EncodingManager
+- setDefaultCharsetName(java.lang.String):V
+a:com.intellij.openapi.vfs.encoding.EncodingProjectManager
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.openapi.vfs.encoding.EncodingProjectManager
+- a:setDefaultCharsetName(java.lang.String):V
+f:com.intellij.openapi.vfs.encoding.EncodingReference
+- <init>(java.lang.String):V
+- <init>(java.nio.charset.Charset):V
 com.intellij.openapi.vfs.encoding.Utf8BomOptionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:shouldAddBOMForNewUtf8File(com.intellij.openapi.vfs.VirtualFile):Z
+a:com.intellij.openapi.vfs.impl.ArchiveHandler
+- p:<init>(java.lang.String):V
+- a:contentsToByteArray(java.lang.String):B[]
+- list(java.lang.String):java.lang.String[]
+c:com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
+- <init>(com.intellij.openapi.vfs.VirtualFileListener):V
 f:com.intellij.openapi.vfs.limits.ExtensionSizeLimitInfo
 - <init>():V
 - <init>(java.lang.Integer,java.lang.Integer,java.lang.Integer):V
@@ -1064,6 +1451,8 @@ com.intellij.openapi.vfs.newvfs.FileSystemInterface
 - a:resolveSymLink(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - a:setTimeStamp(com.intellij.openapi.vfs.VirtualFile,J):V
 - a:setWritable(com.intellij.openapi.vfs.VirtualFile,Z):V
+a:com.intellij.openapi.vfs.newvfs.events.VFileEvent
+- <init>(java.lang.Object):V
 f:com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 - isRename():Z
 com.intellij.openapi.vfs.pointers.VirtualFilePointer
@@ -1073,20 +1462,100 @@ com.intellij.openapi.vfs.pointers.VirtualFilePointer
 - a:getPresentableUrl():java.lang.String
 - a:getUrl():java.lang.String
 - a:isValid():Z
+com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer
+- a:add(com.intellij.openapi.vfs.VirtualFile):V
+- a:add(java.lang.String):V
+- a:clone(com.intellij.openapi.Disposable):com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer
 com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 - sf:TOPIC:com.intellij.util.messages.Topic
 - beforeValidityChanged(com.intellij.openapi.vfs.pointers.VirtualFilePointer[]):V
 - validityChanged(com.intellij.openapi.vfs.pointers.VirtualFilePointer[]):V
+a:com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+- a:createContainer(com.intellij.openapi.Disposable):com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer
+c:com.intellij.patterns.CollectionPattern
+- first(com.intellij.patterns.ElementPattern):com.intellij.patterns.CollectionPattern
+- last(com.intellij.patterns.ElementPattern):com.intellij.patterns.CollectionPattern
+- size(I):com.intellij.patterns.CollectionPattern
 com.intellij.patterns.ElementPattern
 - a:accepts(java.lang.Object):Z
 - a:accepts(java.lang.Object,com.intellij.util.ProcessingContext):Z
 - a:getCondition():com.intellij.patterns.ElementPatternCondition
+f:com.intellij.patterns.ElementPatternCondition
+- <init>(com.intellij.patterns.InitialPatternCondition):V
+c:com.intellij.patterns.IElementTypePattern
+- or(com.intellij.psi.tree.IElementType[]):com.intellij.patterns.IElementTypePattern
+a:com.intellij.patterns.InitialPatternCondition
+- p:<init>(java.lang.Class):V
+a:com.intellij.patterns.InitialPatternConditionPlus
+- p:<init>(java.lang.Class):V
+a:com.intellij.patterns.ObjectPattern
+- p:<init>(com.intellij.patterns.InitialPatternCondition):V
+- p:<init>(java.lang.Class):V
+- f:accepts(java.lang.Object):Z
+- with(com.intellij.patterns.PatternCondition):com.intellij.patterns.ObjectPattern
+- without(com.intellij.patterns.PatternCondition):com.intellij.patterns.ObjectPattern
+f:com.intellij.patterns.ObjectPattern$Capture
+- <init>(com.intellij.patterns.InitialPatternCondition):V
+a:com.intellij.patterns.PatternCondition
+- <init>(java.lang.String):V
+c:com.intellij.patterns.PlatformPatterns
+- s:psiElement(com.intellij.psi.tree.IElementType):com.intellij.patterns.PsiElementPattern$Capture
+- s:psiElement(java.lang.Class):com.intellij.patterns.PsiElementPattern$Capture
+- s:psiFile(java.lang.Class):com.intellij.patterns.PsiFilePattern$Capture
+a:com.intellij.patterns.PsiElementPattern
+- p:<init>(com.intellij.patterns.InitialPatternCondition):V
+- p:<init>(java.lang.Class):V
+- afterLeaf(com.intellij.patterns.ElementPattern):com.intellij.patterns.PsiElementPattern
+- afterLeaf(java.lang.String[]):com.intellij.patterns.PsiElementPattern
+- beforeLeaf(java.lang.String[]):com.intellij.patterns.PsiElementPattern
+- inFile(com.intellij.patterns.ElementPattern):com.intellij.patterns.PsiElementPattern
+- inVirtualFile(com.intellij.patterns.ElementPattern):com.intellij.patterns.PsiElementPattern
+- insideStarting(com.intellij.patterns.ElementPattern):com.intellij.patterns.PsiElementPattern
+- withElementType(com.intellij.psi.tree.IElementType):com.intellij.patterns.PsiElementPattern
+- withFirstNonWhitespaceChild(com.intellij.patterns.ElementPattern):com.intellij.patterns.PsiElementPattern
+- withLanguage(com.intellij.lang.Language):com.intellij.patterns.PsiElementPattern
+- withName(java.lang.String):com.intellij.patterns.PsiElementPattern
+- withText(com.intellij.patterns.ElementPattern):com.intellij.patterns.PsiElementPattern
+- withText(java.lang.String):com.intellij.patterns.PsiElementPattern
+c:com.intellij.patterns.PsiElementPattern$Capture
+- p:<init>(com.intellij.patterns.InitialPatternCondition):V
+- p:<init>(java.lang.Class):V
 c:com.intellij.patterns.PsiFilePattern
 - withLanguage(java.util.function.Predicate):com.intellij.patterns.PsiFilePattern
+c:com.intellij.patterns.PsiFilePattern$Capture
+- <init>(com.intellij.patterns.InitialPatternCondition):V
+c:com.intellij.patterns.StandardPatterns
+- s:and(com.intellij.patterns.ElementPattern[]):com.intellij.patterns.ElementPattern
+- s:collection(java.lang.Class):com.intellij.patterns.CollectionPattern
+- s:instanceOf(java.lang.Class):com.intellij.patterns.ObjectPattern$Capture
+- s:not(com.intellij.patterns.ElementPattern):com.intellij.patterns.ObjectPattern$Capture
+- s:object(java.lang.Object):com.intellij.patterns.ObjectPattern$Capture
+- s:or(com.intellij.patterns.ElementPattern[]):com.intellij.patterns.ElementPattern
 f:com.intellij.patterns.StringPattern
 - afterNonJavaIdentifierPart():com.intellij.patterns.StringPattern
+- contains(java.lang.String):com.intellij.patterns.StringPattern
+- containsChars(java.lang.String):com.intellij.patterns.StringPattern
+- endsWith(java.lang.String):com.intellij.patterns.StringPattern
 - endsWithOneOf(java.lang.Iterable):com.intellij.patterns.StringPattern
 - endsWithUppercaseLetter():com.intellij.patterns.StringPattern
+- longerThan(I):com.intellij.patterns.StringPattern
+- matches(java.lang.String):com.intellij.patterns.StringPattern
+- s:newBombedCharSequence(java.lang.CharSequence):java.lang.CharSequence
+- oneOf(java.util.Collection):com.intellij.patterns.StringPattern
+- oneOf(java.lang.String[]):com.intellij.patterns.StringPattern
+- oneOfIgnoreCase(java.lang.String[]):com.intellij.patterns.StringPattern
+- shorterThan(I):com.intellij.patterns.StringPattern
+- startsWith(java.lang.String):com.intellij.patterns.StringPattern
+- withLength(I):com.intellij.patterns.StringPattern
+a:com.intellij.patterns.ValuePatternCondition
+- p:<init>(java.lang.String):V
+c:com.intellij.patterns.VirtualFilePattern
+- ofType(com.intellij.openapi.fileTypes.FileType):com.intellij.patterns.VirtualFilePattern
+- withExtension(java.lang.String):com.intellij.patterns.VirtualFilePattern
+- withExtension(java.lang.String[]):com.intellij.patterns.VirtualFilePattern
+- withName(com.intellij.patterns.ElementPattern):com.intellij.patterns.VirtualFilePattern
+- withName(java.lang.String):com.intellij.patterns.VirtualFilePattern
+- withPath(com.intellij.patterns.ElementPattern):com.intellij.patterns.VirtualFilePattern
 com.intellij.platform.backend.navigation.NavigationRequest
 - sf:Companion:com.intellij.platform.backend.navigation.NavigationRequest$Companion
 - s:directoryNavigationRequest(com.intellij.psi.PsiDirectory):com.intellij.platform.backend.navigation.NavigationRequest
@@ -1133,6 +1602,8 @@ com.intellij.pom.Navigatable
 - canNavigate():Z
 - canNavigateToSource():Z
 - navigate(Z):V
+f:com.intellij.pom.PomManager
+- s:getModel(com.intellij.openapi.project.Project):com.intellij.pom.PomModel
 com.intellij.pom.PomModel
 - com.intellij.openapi.util.UserDataHolder
 - a:addModelListener(com.intellij.pom.event.PomModelListener):V
@@ -1158,6 +1629,12 @@ com.intellij.pom.PomTargetPsiElement
 com.intellij.pom.PsiDeclaredTarget
 - com.intellij.psi.PsiTarget
 - a:getNameIdentifierRange():com.intellij.openapi.util.TextRange
+f:com.intellij.pom.event.PomModelEvent
+- getChangeSet(com.intellij.pom.PomModelAspect):com.intellij.pom.event.PomChangeSet
+a:com.intellij.pom.references.PomService
+- s:convertToPsi(com.intellij.psi.PsiTarget):com.intellij.psi.PsiElement
+a:com.intellij.psi.AbstractElementManipulator
+- getRangeInElement(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
 com.intellij.psi.CommonClassNames
 - sf:CLASS_FILE_EXTENSION:java.lang.String
 - sf:DEFAULT_PACKAGE:java.lang.String
@@ -1281,6 +1758,8 @@ com.intellij.psi.CommonClassNames
 com.intellij.psi.ContributedReferenceHost
 - com.intellij.psi.PsiElement
 - a:getReferences():com.intellij.psi.PsiReference[]
+c:com.intellij.psi.DelegatePsiTarget
+- <init>(com.intellij.psi.PsiElement):V
 com.intellij.psi.ElementDescriptionProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getElementDescription(com.intellij.psi.PsiElement,com.intellij.psi.ElementDescriptionLocation):java.lang.String
@@ -1288,6 +1767,12 @@ com.intellij.psi.ElementManipulator
 - a:getRangeInElement(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
 - a:handleContentChange(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,java.lang.String):com.intellij.psi.PsiElement
 - a:handleContentChange(com.intellij.psi.PsiElement,java.lang.String):com.intellij.psi.PsiElement
+f:com.intellij.psi.ElementManipulators
+- s:getManipulator(com.intellij.psi.PsiElement):com.intellij.psi.ElementManipulator
+- s:getNotNullManipulator(com.intellij.psi.PsiElement):com.intellij.psi.ElementManipulator
+- s:getOffsetInElement(com.intellij.psi.PsiElement):I
+- s:getValueText(com.intellij.psi.PsiElement):java.lang.String
+- s:getValueTextRange(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
 com.intellij.psi.ExternallyAnnotated
 - a:getAnnotationRegion():com.intellij.openapi.util.TextRange
 com.intellij.psi.ExternallyDefinedPsiElement
@@ -1330,6 +1815,9 @@ com.intellij.psi.HintedReferenceHost
 - com.intellij.psi.PsiElement
 - a:getReferences(com.intellij.psi.PsiReferenceService$Hints):com.intellij.psi.PsiReference[]
 - a:shouldAskParentForReferences(com.intellij.psi.PsiReferenceService$Hints):Z
+a:com.intellij.psi.LiteralTextEscaper
+- p:<init>(com.intellij.psi.PsiLanguageInjectionHost):V
+- s:createSimple(com.intellij.psi.PsiLanguageInjectionHost):com.intellij.psi.LiteralTextEscaper
 com.intellij.psi.MultiRangeReference
 - com.intellij.psi.PsiReference
 - a:getRanges():java.util.List
@@ -1388,7 +1876,21 @@ com.intellij.psi.PsiDocCommentBase
 - com.intellij.psi.PsiComment
 - a:getOwner():com.intellij.psi.PsiElement
 a:com.intellij.psi.PsiDocumentManager
+- a:commitAndRunReadAction(com.intellij.openapi.util.Computable):java.lang.Object
+- a:commitAndRunReadAction(java.lang.Runnable):V
+- a:commitDocument(com.intellij.openapi.editor.Document):V
+- a:doPostponedOperationsAndUnblockDocument(com.intellij.openapi.editor.Document):V
+- a:getCachedDocument(com.intellij.psi.PsiFile):com.intellij.openapi.editor.Document
+- a:getCachedPsiFile(com.intellij.openapi.editor.Document):com.intellij.psi.PsiFile
+- a:getDocument(com.intellij.psi.PsiFile):com.intellij.openapi.editor.Document
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.PsiDocumentManager
+- a:getLastCommittedDocument(com.intellij.psi.PsiFile):com.intellij.openapi.editor.Document
+- a:getPsiFile(com.intellij.openapi.editor.Document):com.intellij.psi.PsiFile
+- a:isCommitted(com.intellij.openapi.editor.Document):Z
+- a:isDocumentBlockedByPsi(com.intellij.openapi.editor.Document):Z
 - f:isUncommited(com.intellij.openapi.editor.Document):Z
+- a:performLaterWhenAllCommitted(java.lang.Runnable):V
+- a:performWhenAllCommitted(java.lang.Runnable):Z
 com.intellij.psi.PsiElement
 - com.intellij.openapi.util.Iconable
 - com.intellij.openapi.util.UserDataHolder
@@ -1448,6 +1950,17 @@ com.intellij.psi.PsiElement
 - a:textMatches(java.lang.CharSequence):Z
 - a:textToCharArray():C[]
 - a:toString():java.lang.String
+c:com.intellij.psi.PsiElementResolveResult
+- <init>(com.intellij.psi.PsiElement):V
+- s:createResults(java.util.Collection):com.intellij.psi.ResolveResult[]
+- s:createResults(com.intellij.psi.PsiElement[]):com.intellij.psi.ResolveResult[]
+a:com.intellij.psi.PsiElementVisitor
+- visitComment(com.intellij.psi.PsiComment):V
+- visitDirectory(com.intellij.psi.PsiDirectory):V
+- visitElement(com.intellij.psi.PsiElement):V
+- visitFile(com.intellij.psi.PsiFile):V
+- visitPlainTextFile(com.intellij.psi.PsiPlainTextFile):V
+- visitWhiteSpace(com.intellij.psi.PsiWhiteSpace):V
 com.intellij.psi.PsiErrorElement
 - com.intellij.psi.PsiElement
 - a:getErrorDescription():java.lang.String
@@ -1467,6 +1980,8 @@ com.intellij.psi.PsiFile
 - a:getViewProvider():com.intellij.psi.FileViewProvider
 - a:getVirtualFile():com.intellij.openapi.vfs.VirtualFile
 - a:subtreeChanged():V
+a:com.intellij.psi.PsiFileFactory
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.PsiFileFactory
 com.intellij.psi.PsiFileSystemItem
 - com.intellij.psi.NavigatablePsiElement
 - com.intellij.psi.PsiCheckedRenameElement
@@ -1478,7 +1993,11 @@ com.intellij.psi.PsiFileSystemItem
 com.intellij.psi.PsiFileWithOneLanguage
 - com.intellij.psi.PsiFile
 f:com.intellij.psi.PsiInvalidElementAccessException
+- <init>(com.intellij.psi.PsiElement):V
+- s:findInvalidationTrace(com.intellij.lang.ASTNode):java.lang.Object
+- s:findOutInvalidationReason(com.intellij.psi.PsiElement):java.lang.String
 - s:getCreationTrace(com.intellij.openapi.util.UserDataHolder):java.lang.Object
+- s:getInvalidationTrace(com.intellij.openapi.util.UserDataHolder):java.lang.Object
 - s:setCreationTrace(com.intellij.openapi.util.UserDataHolderBase,java.lang.Object):V
 com.intellij.psi.PsiLanguageInjectionHost
 - com.intellij.model.psi.PsiExternalReferenceHost
@@ -1511,6 +2030,16 @@ com.intellij.psi.PsiLiteralValue
 - com.intellij.model.psi.PsiExternalReferenceHost
 - com.intellij.psi.PsiElement
 - a:getValue():java.lang.Object
+a:com.intellij.psi.PsiManager
+- a:addPsiTreeChangeListener(com.intellij.psi.PsiTreeChangeListener):V
+- a:findDirectory(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.PsiDirectory
+- a:findFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.PsiFile
+- a:findViewProvider(com.intellij.openapi.vfs.VirtualFile):com.intellij.psi.FileViewProvider
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.PsiManager
+- a:isInProject(com.intellij.psi.PsiElement):Z
+- a:reloadFromDisk(com.intellij.psi.PsiFile):V
+- a:removePsiTreeChangeListener(com.intellij.psi.PsiTreeChangeListener):V
+- a:runInBatchFilesMode(com.intellij.openapi.util.Computable):java.lang.Object
 com.intellij.psi.PsiMirrorElement
 - com.intellij.psi.PsiElement
 - com.intellij.psi.SyntheticElement
@@ -1531,6 +2060,8 @@ com.intellij.psi.PsiParserFacade
 - a:createLineOrBlockCommentFromText(com.intellij.lang.Language,java.lang.String):com.intellij.psi.PsiComment
 - a:createWhiteSpaceFromText(java.lang.String):com.intellij.psi.PsiElement
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.PsiParserFacade
+f:com.intellij.psi.PsiParserFacade$SERVICE
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.PsiParserFacade
 com.intellij.psi.PsiPlainText
 - com.intellij.psi.PsiElement
 com.intellij.psi.PsiPlainTextFile
@@ -1539,6 +2070,9 @@ com.intellij.psi.PsiPlainTextFile
 com.intellij.psi.PsiPolyVariantReference
 - com.intellij.psi.PsiReference
 - a:multiResolve(Z):com.intellij.psi.ResolveResult[]
+a:com.intellij.psi.PsiPolyVariantReferenceBase
+- <init>(com.intellij.psi.PsiElement):V
+- isReferenceTo(com.intellij.psi.PsiElement):Z
 com.intellij.psi.PsiQualifiedNamedElement
 - com.intellij.psi.PsiNamedElement
 - a:getName():java.lang.String
@@ -1550,6 +2084,14 @@ com.intellij.psi.PsiQualifiedReference
 com.intellij.psi.PsiQualifiedReferenceElement
 - com.intellij.psi.PsiElement
 - com.intellij.psi.PsiQualifiedReference
+a:com.intellij.psi.PsiRecursiveElementVisitor
+- p:<init>(Z):V
+- visitElement(com.intellij.psi.PsiElement):V
+- visitFile(com.intellij.psi.PsiFile):V
+a:com.intellij.psi.PsiRecursiveElementWalkingVisitor
+- p:elementFinished(com.intellij.psi.PsiElement):V
+- visitElement(com.intellij.psi.PsiElement):V
+- visitFile(com.intellij.psi.PsiFile):V
 com.intellij.psi.PsiRecursiveVisitor
 com.intellij.psi.PsiReference
 - sf:ARRAY_FACTORY:com.intellij.util.ArrayFactory
@@ -1564,9 +2106,24 @@ com.intellij.psi.PsiReference
 - a:isReferenceTo(com.intellij.psi.PsiElement):Z
 - a:isSoft():Z
 - a:resolve():com.intellij.psi.PsiElement
+a:com.intellij.psi.PsiReferenceBase
+- <init>(com.intellij.psi.PsiElement):V
+- bindToElement(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- handleElementRename(java.lang.String):com.intellij.psi.PsiElement
+- isReferenceTo(com.intellij.psi.PsiElement):Z
+- setRangeInElement(com.intellij.openapi.util.TextRange):V
+a:com.intellij.psi.PsiReferenceBase$Poly
+- <init>(com.intellij.psi.PsiElement):V
+- isReferenceTo(com.intellij.psi.PsiElement):Z
+a:com.intellij.psi.PsiReferenceProvider
+- acceptsTarget(com.intellij.psi.PsiElement):Z
+a:com.intellij.psi.PsiReferenceService
+- getContributedReferences(com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
 com.intellij.psi.PsiTarget
 - com.intellij.pom.PomTarget
 - a:getNavigationElement():com.intellij.psi.PsiElement
+a:com.intellij.psi.PsiTreeChangeAdapter
+- propertyChanged(com.intellij.psi.PsiTreeChangeEvent):V
 com.intellij.psi.PsiTreeChangeListener
 - java.util.EventListener
 - sf:EP:com.intellij.openapi.extensions.ProjectExtensionPointName
@@ -1582,14 +2139,32 @@ com.intellij.psi.PsiTreeChangeListener
 - a:childReplaced(com.intellij.psi.PsiTreeChangeEvent):V
 - a:childrenChanged(com.intellij.psi.PsiTreeChangeEvent):V
 - a:propertyChanged(com.intellij.psi.PsiTreeChangeEvent):V
+a:com.intellij.psi.PsiWalkingState
+- p:<init>(com.intellij.psi.PsiElementVisitor):V
+- elementStarted(com.intellij.psi.PsiElement):V
 com.intellij.psi.PsiWhiteSpace
 - com.intellij.psi.PsiElement
+f:com.intellij.psi.ReferenceRange
+- s:getAbsoluteRanges(com.intellij.psi.PsiReference):java.util.List
+- s:getRange(com.intellij.psi.PsiReference):com.intellij.openapi.util.TextRange
+- s:getRanges(com.intellij.psi.PsiReference):java.util.List
 com.intellij.psi.ResolveResult
 - sf:EMPTY_ARRAY:com.intellij.psi.ResolveResult[]
 - a:getElement():com.intellij.psi.PsiElement
 - a:isValidResult():Z
+c:com.intellij.psi.ResolveState
+- get(com.intellij.openapi.util.Key):java.lang.Object
+- putAll(com.intellij.psi.ResolveState):com.intellij.psi.ResolveState
 com.intellij.psi.ResolvingHint
 - a:canResolveTo(java.lang.Class):Z
+Fa:com.intellij.psi.SmartPointerManager
+- createLazyPointer(com.intellij.psi.PsiElement):com.intellij.psi.SmartPsiElementPointer
+- s:createPointer(com.intellij.psi.PsiElement):com.intellij.psi.SmartPsiElementPointer
+- a:createSmartPsiElementPointer(com.intellij.psi.PsiElement):com.intellij.psi.SmartPsiElementPointer
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.SmartPointerManager
+- a:removePointer(com.intellij.psi.SmartPsiElementPointer):V
+f:com.intellij.psi.SmartPointersKt
+- sf:createSmartPointer(com.intellij.psi.PsiElement):com.intellij.psi.SmartPsiElementPointer
 com.intellij.psi.SmartPsiElementPointer
 - com.intellij.model.Pointer
 - dereference():com.intellij.psi.PsiElement
@@ -1615,6 +2190,23 @@ com.intellij.psi.StubBasedPsiElement
 com.intellij.psi.StubBuilder
 - a:buildStubTree(com.intellij.psi.PsiFile):com.intellij.psi.stubs.StubElement
 - a:skipChildProcessingWhenBuildingStubs(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):Z
+c:com.intellij.psi.SyntaxTraverser
+- s:astTraverser(com.intellij.lang.ASTNode):com.intellij.psi.SyntaxTraverser
+- expandTypes(com.intellij.openapi.util.Condition):com.intellij.psi.SyntaxTraverser
+- filterTypes(com.intellij.openapi.util.Condition):com.intellij.psi.SyntaxTraverser
+- forceDisregardTypes(com.intellij.openapi.util.Condition):com.intellij.psi.SyntaxTraverser
+- s:lightTraverser(com.intellij.lang.PsiBuilder):com.intellij.psi.SyntaxTraverser
+- f:onRange(com.intellij.openapi.util.TextRange):com.intellij.psi.SyntaxTraverser
+- s:psiTraverser(com.intellij.psi.PsiElement):com.intellij.psi.SyntaxTraverser
+a:com.intellij.psi.SyntaxTraverser$Api
+- a:children(java.lang.Object):com.intellij.util.containers.JBIterable
+- parents(java.lang.Object):com.intellij.util.containers.JBIterable
+- a:rangeOf(java.lang.Object):com.intellij.openapi.util.TextRange
+- a:textOf(java.lang.Object):java.lang.CharSequence
+- a:typeOf(java.lang.Object):com.intellij.psi.tree.IElementType
+a:com.intellij.psi.SyntaxTraverser$ApiEx
+- children(java.lang.Object):com.intellij.util.containers.JBIterable
+- a:last(java.lang.Object):java.lang.Object
 com.intellij.psi.SyntheticElement
 com.intellij.psi.TokenType
 - sf:BAD_CHARACTER:com.intellij.psi.tree.IElementType
@@ -1623,6 +2215,14 @@ com.intellij.psi.TokenType
 - sf:ERROR_ELEMENT:com.intellij.psi.tree.IElementType
 - sf:NEW_LINE_INDENT:com.intellij.psi.tree.IElementType
 - sf:WHITE_SPACE:com.intellij.psi.tree.IElementType
+a:com.intellij.psi.codeStyle.CodeStyleManager
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.codeStyle.CodeStyleManager
+- s:getInstance(com.intellij.psi.PsiManager):com.intellij.psi.codeStyle.CodeStyleManager
+- a:performActionWithFormatterDisabled(com.intellij.openapi.util.Computable):java.lang.Object
+- a:performActionWithFormatterDisabled(com.intellij.util.ThrowableRunnable):V
+- a:performActionWithFormatterDisabled(java.lang.Runnable):V
+- a:reformat(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- scheduleReformatWhenSettingsComputed(com.intellij.psi.PsiFile):V
 com.intellij.psi.codeStyle.CodeStyleSettingsFacade
 - a:getIndentSize():I
 - a:getTabSize():I
@@ -1648,11 +2248,23 @@ com.intellij.psi.codeStyle.Indent
 - a:max(com.intellij.psi.codeStyle.Indent):com.intellij.psi.codeStyle.Indent
 - a:min(com.intellij.psi.codeStyle.Indent):com.intellij.psi.codeStyle.Indent
 - a:subtract(com.intellij.psi.codeStyle.Indent):com.intellij.psi.codeStyle.Indent
+a:com.intellij.psi.codeStyle.SuggestedNameInfo
+- <init>(java.lang.String[]):V
+- nameChosen(java.lang.String):V
 com.intellij.psi.filters.ElementFilter
 - sf:EMPTY_ARRAY:com.intellij.psi.filters.ElementFilter[]
 - a:isAcceptable(java.lang.Object,com.intellij.psi.PsiElement):Z
 - a:isClassAcceptable(java.lang.Class):Z
 - a:toString():java.lang.String
+a:com.intellij.psi.filters.ElementFilterBase
+- <init>(java.lang.Class):V
+c:com.intellij.psi.filters.position.FilterPattern
+- <init>(com.intellij.psi.filters.ElementFilter):V
+c:com.intellij.psi.filters.position.PatternFilter
+- <init>(com.intellij.patterns.ElementPattern):V
+a:com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
+- s:getReferencesFromProviders(com.intellij.psi.PsiElement):com.intellij.psi.PsiReference[]
+- a:getRegistrar(com.intellij.lang.Language):com.intellij.psi.PsiReferenceRegistrar
 com.intellij.psi.jsp.IJspClassLevelDeclarationStatement
 com.intellij.psi.meta.MetaDataContributor
 - a:contributeMetaData(com.intellij.psi.meta.MetaDataRegistrar):V
@@ -1681,10 +2293,75 @@ com.intellij.psi.scope.PsiScopeProcessor$Event
 - sf:SET_DECLARATION_HOLDER:com.intellij.psi.scope.PsiScopeProcessor$Event
 c:com.intellij.psi.search.DelegatingGlobalSearchScope
 - com.intellij.psi.search.CodeInsightContextAwareSearchScope
+- <init>(com.intellij.psi.search.GlobalSearchScope):V
+- contains(com.intellij.openapi.vfs.VirtualFile):Z
+- equals(java.lang.Object):Z
+c:com.intellij.psi.search.EverythingGlobalScope
+- <init>(com.intellij.openapi.project.Project):V
+a:com.intellij.psi.search.GlobalSearchScope
+- p:<init>(com.intellij.openapi.project.Project):V
+- f:accept(com.intellij.openapi.vfs.VirtualFile):Z
+- s:allScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
+- s:everythingScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
+- s:fileScope(com.intellij.psi.PsiFile):com.intellij.psi.search.GlobalSearchScope
+- intersectWith(com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.search.GlobalSearchScope
+- intersectWith(com.intellij.psi.search.LocalSearchScope):com.intellij.psi.search.LocalSearchScope
+- intersectWith(com.intellij.psi.search.SearchScope):com.intellij.psi.search.SearchScope
+- a:isSearchInModuleContent(com.intellij.openapi.module.Module):Z
+- s:moduleScope(com.intellij.openapi.module.Module):com.intellij.psi.search.GlobalSearchScope
+- s:moduleTestsWithDependentsScope(com.intellij.openapi.module.Module):com.intellij.psi.search.GlobalSearchScope
+- s:moduleWithDependenciesAndLibrariesScope(com.intellij.openapi.module.Module):com.intellij.psi.search.GlobalSearchScope
+- s:moduleWithDependenciesScope(com.intellij.openapi.module.Module):com.intellij.psi.search.GlobalSearchScope
+- s:moduleWithDependentsScope(com.intellij.openapi.module.Module):com.intellij.psi.search.GlobalSearchScope
+- s:moduleWithLibrariesScope(com.intellij.openapi.module.Module):com.intellij.psi.search.GlobalSearchScope
+- s:notScope(com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.search.GlobalSearchScope
+- s:projectScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
+- union(com.intellij.psi.search.LocalSearchScope):com.intellij.psi.search.GlobalSearchScope
+- union(com.intellij.psi.search.SearchScope):com.intellij.psi.search.GlobalSearchScope
+- s:union(java.util.Collection):com.intellij.psi.search.GlobalSearchScope
+- s:union(com.intellij.psi.search.GlobalSearchScope[]):com.intellij.psi.search.GlobalSearchScope
+- uniteWith(com.intellij.psi.search.GlobalSearchScope):com.intellij.psi.search.GlobalSearchScope
+c:com.intellij.psi.search.LocalSearchScope
+- <init>(com.intellij.psi.PsiElement):V
+- <init>(com.intellij.psi.PsiElement[]):V
+- intersectWith(com.intellij.psi.search.LocalSearchScope):com.intellij.psi.search.LocalSearchScope
+- intersectWith(com.intellij.psi.search.SearchScope):com.intellij.psi.search.SearchScope
+- isInScope(com.intellij.openapi.vfs.VirtualFile):Z
+- union(com.intellij.psi.search.LocalSearchScope):com.intellij.psi.search.SearchScope
+- union(com.intellij.psi.search.SearchScope):com.intellij.psi.search.SearchScope
+c:com.intellij.psi.search.NonClasspathDirectoriesScope
+- <init>(java.util.Collection):V
+- s:compose(java.util.List):com.intellij.psi.search.GlobalSearchScope
+f:com.intellij.psi.search.ProjectScope
+- s:getAllScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
+- s:getContentScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
+- s:getEverythingScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
+- s:getLibrariesScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
+- s:getProjectScope(com.intellij.openapi.project.Project):com.intellij.psi.search.GlobalSearchScope
 com.intellij.psi.search.PsiElementProcessor
 - a:execute(com.intellij.psi.PsiElement):Z
+c:com.intellij.psi.search.PsiElementProcessor$CollectElements
+- <init>(java.util.Collection):V
+- execute(com.intellij.psi.PsiElement):Z
+c:com.intellij.psi.search.PsiElementProcessor$CollectElementsWithLimit
+- <init>(I):V
+- execute(com.intellij.psi.PsiElement):Z
+c:com.intellij.psi.search.PsiElementProcessor$CollectFilteredElements
+- <init>(com.intellij.psi.util.PsiElementFilter):V
+c:com.intellij.psi.search.PsiElementProcessor$FindElement
+- setFound(com.intellij.psi.PsiElement):Z
+c:com.intellij.psi.search.PsiElementProcessorAdapter
+- <init>(com.intellij.psi.search.PsiElementProcessor):V
 com.intellij.psi.search.PsiNonJavaFileReferenceProcessor
 - a:process(com.intellij.psi.PsiFile,I,I):Z
+a:com.intellij.psi.search.SearchScope
+- a:contains(com.intellij.openapi.vfs.VirtualFile):Z
+- a:intersectWith(com.intellij.psi.search.SearchScope):com.intellij.psi.search.SearchScope
+- s:isEmptyScope(com.intellij.psi.search.SearchScope):Z
+- a:union(com.intellij.psi.search.SearchScope):com.intellij.psi.search.SearchScope
+c:com.intellij.psi.search.searches.ExtensibleQueryFactory
+- p:<init>(com.intellij.openapi.extensions.ExtensionPointName):V
+- p:<init>(java.lang.String):V
 com.intellij.psi.stubs.BinaryFileStubBuilder
 - a:acceptsFile(com.intellij.openapi.vfs.VirtualFile):Z
 - a:buildStubTree(com.intellij.util.indexing.FileContent):com.intellij.psi.stubs.Stub
@@ -1696,6 +2373,8 @@ com.intellij.psi.stubs.BinaryFileStubBuilder$CompositeBinaryFileStubBuilder
 - a:getAllSubBuilders():java.util.stream.Stream
 - a:getSubBuilder(com.intellij.util.indexing.FileContent):java.lang.Object
 - a:getSubBuilderVersion(java.lang.Object):java.lang.String
+a:com.intellij.psi.stubs.IStubElementType
+- shouldCreateStub(com.intellij.lang.ASTNode):Z
 com.intellij.psi.stubs.IndexSink
 - a:occurrence(com.intellij.psi.stubs.StubIndexKey,java.lang.Object):V
 com.intellij.psi.stubs.LanguageStubDefinition
@@ -1717,6 +2396,8 @@ com.intellij.psi.stubs.LightStubElementFactory
 com.intellij.psi.stubs.NamedStub
 - com.intellij.psi.stubs.StubElement
 - a:getName():java.lang.String
+a:com.intellij.psi.stubs.ObjectStubBase
+- <init>(com.intellij.psi.stubs.Stub):V
 com.intellij.psi.stubs.ObjectStubSerializer
 - a:deserialize(com.intellij.psi.stubs.StubInputStream,com.intellij.psi.stubs.Stub):com.intellij.psi.stubs.Stub
 - a:getExternalId():java.lang.String
@@ -1739,7 +2420,9 @@ a:com.intellij.psi.stubs.StubBase
 - com.intellij.psi.stubs.ObjectStubBase
 - com.intellij.psi.stubs.StubElement
 - p:<init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
+- compareByOrderWith(com.intellij.psi.stubs.ObjectStubBase):I
 - f:findChildStubByElementType(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.StubElement
+- findChildStubByType(com.intellij.psi.stubs.IStubElementType):com.intellij.psi.stubs.StubElement
 - getElementType():com.intellij.psi.tree.IElementType
 - getStubSerializer():com.intellij.psi.stubs.ObjectStubSerializer
 f:com.intellij.psi.stubs.StubBuildCachedValuesManager
@@ -1783,6 +2466,12 @@ com.intellij.psi.stubs.StubElementRegistryService
 - a:getStubSerializer(com.intellij.psi.tree.IElementType):com.intellij.psi.stubs.ObjectStubSerializer
 f:com.intellij.psi.stubs.StubElementRegistryService$Companion
 - f:getInstance():com.intellij.psi.stubs.StubElementRegistryService
+f:com.intellij.psi.stubs.StubIndexKey
+- s:createIndexKey(java.lang.String):com.intellij.psi.stubs.StubIndexKey
+c:com.intellij.psi.stubs.StubOutputStream
+- writeName(java.lang.String):V
+- writeUTFFast(java.lang.String):V
+- writeVarInt(I):V
 com.intellij.psi.stubs.StubRegistry
 - a:registerLightStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.LightStubElementFactory):V
 - a:registerStubFactory(com.intellij.psi.tree.IElementType,com.intellij.psi.stubs.StubElementFactory):V
@@ -1803,14 +2492,26 @@ com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider
 - com.intellij.psi.FileViewProvider
 - a:getBaseLanguage():com.intellij.lang.Language
 - a:getTemplateDataLanguage():com.intellij.lang.Language
+f:com.intellij.psi.templateLanguages.TemplateLanguageUtil
+- s:getSameLanguageTreeNext(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
 com.intellij.psi.tree.CustomLanguageASTComparator
 - compareAST(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):com.intellij.util.ThreeState
 com.intellij.psi.tree.ICompositeElementType
 - a:createCompositeNode():com.intellij.lang.ASTNode
 com.intellij.psi.tree.ICustomParsingType
 - a:parse(java.lang.CharSequence,com.intellij.util.CharTable):com.intellij.lang.ASTNode
+c:com.intellij.psi.tree.IElementType
+- s:enumerate(com.intellij.psi.tree.IElementType$Predicate):com.intellij.psi.tree.IElementType[]
+- s:find(S):com.intellij.psi.tree.IElementType
 com.intellij.psi.tree.IElementType$Predicate
 - a:matches(com.intellij.psi.tree.IElementType):Z
+c:com.intellij.psi.tree.IFileElementType
+- <init>(com.intellij.lang.Language):V
+- parseContents(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
+c:com.intellij.psi.tree.ILazyParseableElementType
+- <init>(java.lang.String):V
+- p:getLanguageForParser(com.intellij.psi.PsiElement):com.intellij.lang.Language
+- parseContents(com.intellij.lang.ASTNode):com.intellij.lang.ASTNode
 com.intellij.psi.tree.ILeafElementType
 - a:createLeafNode(java.lang.CharSequence):com.intellij.lang.ASTNode
 com.intellij.psi.tree.ILightLazyParseableElementType
@@ -1824,6 +2525,11 @@ com.intellij.psi.tree.IReparseableElementTypeBase
 - isValidReparse(com.intellij.lang.ASTNode,com.intellij.lang.ASTNode):Z
 com.intellij.psi.tree.IReparseableLeafElementType
 - a:reparseLeaf(com.intellij.lang.ASTNode,java.lang.CharSequence):com.intellij.lang.ASTNode
+f:com.intellij.psi.tree.TokenSet
+- contains(com.intellij.psi.tree.IElementType):Z
+- s:create(com.intellij.psi.tree.IElementType[]):com.intellij.psi.tree.TokenSet
+- s:forAllMatching(com.intellij.psi.tree.IElementType$Predicate):com.intellij.psi.tree.TokenSet
+- s:orSet(com.intellij.psi.tree.TokenSet[]):com.intellij.psi.tree.TokenSet
 com.intellij.psi.util.CachedValue
 - a:getUpToDateOrNull():com.intellij.openapi.util.Getter
 - a:getValue():java.lang.Object
@@ -1831,14 +2537,22 @@ com.intellij.psi.util.CachedValue
 - a:hasUpToDateValue():Z
 com.intellij.psi.util.CachedValueProvider
 - a:compute():com.intellij.psi.util.CachedValueProvider$Result
+a:com.intellij.psi.util.CachedValuesManager
+- createCachedValue(com.intellij.psi.util.CachedValueProvider):com.intellij.psi.util.CachedValue
+- getKeyForClass(java.lang.Class):com.intellij.openapi.util.Key
+- s:getManager(com.intellij.openapi.project.Project):com.intellij.psi.util.CachedValuesManager
 com.intellij.psi.util.ParameterizedCachedValue
 - a:getValue(java.lang.Object):java.lang.Object
 - a:getValueProvider():com.intellij.psi.util.ParameterizedCachedValueProvider
 - a:hasUpToDateValue():Z
 com.intellij.psi.util.ParameterizedCachedValueProvider
 - a:compute(java.lang.Object):com.intellij.psi.util.CachedValueProvider$Result
+f:com.intellij.psi.util.PsiCacheKey
+- getValue(com.intellij.psi.PsiElement):java.lang.Object
 com.intellij.psi.util.PsiElementFilter
 - a:isAccepted(com.intellij.psi.PsiElement):Z
+a:com.intellij.psi.util.PsiFormatUtilBase
+- ps:appendSpaceIfNeeded(java.lang.StringBuilder):V
 com.intellij.psi.util.PsiModificationTracker
 - com.intellij.openapi.util.ModificationTracker
 - sf:JAVA_STRUCTURE_MODIFICATION_COUNT:com.intellij.openapi.util.Key
@@ -1850,11 +2564,82 @@ com.intellij.psi.util.PsiModificationTracker
 - a:getModificationCount():J
 com.intellij.psi.util.PsiModificationTracker$Listener
 - a:modificationCountChanged():V
+f:com.intellij.psi.util.PsiModificationTracker$SERVICE
+- s:getInstance(com.intellij.openapi.project.Project):com.intellij.psi.util.PsiModificationTracker
 Fc:com.intellij.psi.util.PsiTreeUtil
+- s:filterAncestors(com.intellij.psi.PsiElement[]):com.intellij.psi.PsiElement[]
+- s:findCommonContext(java.util.Collection):com.intellij.psi.PsiElement
+- s:findCommonParent(java.util.List):com.intellij.psi.PsiElement
+- s:findCommonParent(com.intellij.psi.PsiElement[]):com.intellij.psi.PsiElement
+- s:firstChild(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:getDeepestFirst(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:getDeepestLast(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:getDeepestVisibleFirst(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:getDeepestVisibleLast(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:getStubOrPsiParent(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:hasErrorElements(com.intellij.psi.PsiElement):Z
+- s:lastChild(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:nextCodeLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:nextLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:nextVisibleLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:prevCodeLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:prevLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:prevVisibleLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:skipWhitespacesAndCommentsBackward(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:skipWhitespacesAndCommentsForward(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:skipWhitespacesBackward(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:skipWhitespacesForward(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 f:com.intellij.psi.util.PsiTreeUtilKt
+- sf:firstLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - sf:getChildrenSequence(com.intellij.psi.PsiElement):kotlin.sequences.Sequence
+- sf:getElementType(com.intellij.psi.PsiElement):com.intellij.psi.tree.IElementType
+- sf:getEndOffset(com.intellij.psi.PsiElement):I
+- sf:getFirstLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:getNextLeafs(com.intellij.psi.PsiElement):kotlin.sequences.Sequence
+- sf:getParents(com.intellij.psi.PsiElement):kotlin.sequences.Sequence
+- sf:getParentsWithSelf(com.intellij.psi.PsiElement):kotlin.sequences.Sequence
+- sf:getPrevLeafs(com.intellij.psi.PsiElement):kotlin.sequences.Sequence
+- sf:getStartOffset(com.intellij.psi.PsiElement):I
+- sf:lastLeaf(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- sf:parents(com.intellij.psi.PsiElement):kotlin.sequences.Sequence
+- sf:validOrNull(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+c:com.intellij.psi.util.PsiUtilCore
+- s:ensureValid(com.intellij.psi.PsiElement):V
+- s:findLanguageFromElement(com.intellij.psi.PsiElement):com.intellij.lang.Language
+- s:getElementType(com.intellij.lang.ASTNode):com.intellij.psi.tree.IElementType
+- s:getElementType(com.intellij.psi.PsiElement):com.intellij.psi.tree.IElementType
+- s:getName(com.intellij.psi.PsiElement):java.lang.String
+- s:getNotAnyLanguage(com.intellij.lang.ASTNode):com.intellij.lang.Language
+- s:getProjectInReadAction(com.intellij.psi.PsiElement):com.intellij.openapi.project.Project
+- s:getTemplateLanguageFile(com.intellij.psi.PsiElement):com.intellij.psi.PsiFile
+- s:getVirtualFile(com.intellij.psi.PsiElement):com.intellij.openapi.vfs.VirtualFile
+- s:hasErrorElementChild(com.intellij.psi.PsiElement):Z
+- s:toPsiElementArray(java.util.Collection):com.intellij.psi.PsiElement[]
+- s:toPsiFileArray(java.util.Collection):com.intellij.psi.PsiFile[]
+f:com.intellij.psi.util.QualifiedName
+- append(com.intellij.psi.util.QualifiedName):com.intellij.psi.util.QualifiedName
+- append(java.lang.String):com.intellij.psi.util.QualifiedName
+- s:deserialize(com.intellij.psi.stubs.StubInputStream):com.intellij.psi.util.QualifiedName
+- endsWith(java.lang.String):Z
+- equals(java.lang.Object):Z
+- s:fromComponents(java.util.Collection):com.intellij.psi.util.QualifiedName
+- s:fromComponents(java.lang.String[]):com.intellij.psi.util.QualifiedName
+- s:fromDottedString(java.lang.String):com.intellij.psi.util.QualifiedName
+- join(java.lang.String):java.lang.String
+- matches(java.lang.String[]):Z
+- matchesPrefix(com.intellij.psi.util.QualifiedName):Z
+- removeHead(I):com.intellij.psi.util.QualifiedName
+- removeTail(I):com.intellij.psi.util.QualifiedName
+c:com.intellij.psi.util.UnsupportedNodeElementTypeException
+- <init>(com.intellij.lang.ASTNode):V
+f:com.intellij.serviceContainer.AlreadyDisposedException
+- <init>(java.lang.String):V
+c:com.intellij.testFramework.BinaryLightVirtualFile
+- <init>(java.lang.String):V
 c:com.intellij.testFramework.LightVirtualFile
+- <init>(java.lang.String):V
 - s:builder():com.intellij.testFramework.LightVirtualFile$Builder
+- setLanguage(com.intellij.lang.Language):V
 f:com.intellij.testFramework.LightVirtualFile$Builder
 - build():com.intellij.testFramework.LightVirtualFile
 - charset(java.nio.charset.Charset):com.intellij.testFramework.LightVirtualFile$Builder
@@ -1866,6 +2651,12 @@ f:com.intellij.testFramework.LightVirtualFile$Builder
 - name(java.lang.String):com.intellij.testFramework.LightVirtualFile$Builder
 a:com.intellij.testFramework.LightVirtualFileBase
 - <init>(java.lang.String,com.intellij.openapi.fileTypes.FileType,J,java.lang.Object):V
+- setFileType(com.intellij.openapi.fileTypes.FileType):V
+- p:setModificationStamp(J):V
+f:com.intellij.testFramework.TestModeFlags
+- s:get(com.intellij.openapi.util.Key):java.lang.Object
+- s:is(com.intellij.openapi.util.Key):Z
+- s:reset(com.intellij.openapi.util.Key):V
 com.intellij.testIntegration.TestFramework
 - com.intellij.openapi.project.PossiblyDumbAware
 - sf:EXTENSION_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -1892,15 +2683,62 @@ com.intellij.testIntegration.TestFramework
 - a:isTestClass(com.intellij.psi.PsiElement):Z
 - a:isTestMethod(com.intellij.psi.PsiElement):Z
 - isTestMethod(com.intellij.psi.PsiElement,Z):Z
+c:com.intellij.usageView.UsageInfo
+- <init>(com.intellij.psi.PsiElement):V
+- <init>(com.intellij.psi.PsiFile):V
+- <init>(com.intellij.psi.PsiReference):V
+- compareToByStartOffset(com.intellij.usageView.UsageInfo):I
+- equals(java.lang.Object):Z
+a:com.intellij.util.AbstractQuery
+- forEach(com.intellij.util.Processor):Z
+- s:wrapInReadAction(com.intellij.util.Query):com.intellij.util.Query
+c:com.intellij.util.ArrayQuery
+- <init>(java.lang.Object[]):V
+f:com.intellij.util.AstLoadingFilter
+- s:disallowTreeLoading(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:disallowTreeLoading(com.intellij.util.ThrowableRunnable):V
 com.intellij.util.CharTable
 - sf:CHAR_TABLE_KEY:com.intellij.openapi.util.Key
 - a:intern(java.lang.CharSequence):java.lang.CharSequence
 - a:intern(java.lang.CharSequence,I,I):java.lang.CharSequence
+c:com.intellij.util.CollectionQuery
+- <init>(java.util.Collection):V
+f:com.intellij.util.FileContentUtilCore
+- s:reparseFiles(java.util.Collection):V
+- s:reparseFiles(com.intellij.openapi.vfs.VirtualFile[]):V
+f:com.intellij.util.InjectionUtils
+- s:isInjectLanguageActionEnabled(com.intellij.psi.PsiElement):Z
+f:com.intellij.util.PathUtil
+- s:getCanonicalPath(java.lang.String):java.lang.String
+- s:getFileExtension(java.lang.String):java.lang.String
+- s:getFileName(java.lang.String):java.lang.String
+- s:getJarPathForClass(java.lang.Class):java.lang.String
+- s:getLocalPath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+- s:getLocalPath(java.lang.String):java.lang.String
+- s:getParentPath(java.lang.String):java.lang.String
+- s:isValidFileName(java.lang.String):Z
+- s:suggestFileName(java.lang.String):java.lang.String
+- s:toPresentableUrl(java.lang.String):java.lang.String
+- s:toSystemDependentName(java.lang.String):java.lang.String
+- s:toSystemIndependentName(java.lang.String):java.lang.String
 f:com.intellij.util.PathsList
+- add(com.intellij.openapi.vfs.VirtualFile):V
+- add(java.io.File):V
+- add(java.lang.String):V
 - add(java.nio.file.Path):V
+- addAll(java.util.List):V
+- addAllFiles(java.util.List):V
+- addAllFiles(java.io.File[]):V
 - addAllPaths(java.util.List):V
 - addAllPaths(java.nio.file.Path[]):V
+- addFirst(java.io.File):V
+- addFirst(java.lang.String):V
 - addFirst(java.nio.file.Path):V
+- addVirtualFiles(java.util.Collection):V
+- addVirtualFiles(com.intellij.openapi.vfs.VirtualFile[]):V
+- remove(java.lang.String):V
+f:com.intellij.util.Processors
+- s:cancelableCollectProcessor(java.util.Collection):com.intellij.util.Processor
 f:com.intellij.util.QueriesKt$sam$i$java_util_function_Predicate$0
 - java.util.function.Predicate
 - <init>(kotlin.jvm.functions.Function1):V
@@ -1922,9 +2760,21 @@ com.intellij.util.Query
 - toArray(java.lang.Object[]):java.lang.Object[]
 com.intellij.util.QueryExecutor
 - a:execute(java.lang.Object,com.intellij.util.Processor):Z
+c:com.intellij.util.QueryFactory
+- f:createQuery(java.lang.Object):com.intellij.util.Query
+- f:createUniqueResultsQuery(java.lang.Object):com.intellij.util.Query
+- registerExecutor(com.intellij.util.QueryExecutor):V
 com.intellij.util.QueryParameters
 - getProject():com.intellij.openapi.project.Project
 - isQueryValid():Z
+f:com.intellij.util.RunnableCallable
+- <init>(java.lang.Runnable):V
+f:com.intellij.util.SlowOperations
+- s:allowSlowOperations(com.intellij.openapi.util.ThrowableComputable):java.lang.Object
+- s:allowSlowOperations(com.intellij.util.ThrowableRunnable):V
+- s:allowSlowOperations(java.lang.String):com.intellij.openapi.application.AccessToken
+f:com.intellij.util.UniqueResultsQuery
+- <init>(com.intellij.util.Query):V
 f:com.intellij.util.concurrency.ThreadingAssertions
 - s:softAssertNoReadAccess():V
 com.intellij.util.download.DownloadableFileDescription
@@ -1937,11 +2787,16 @@ com.intellij.util.download.DownloadableFileSetDescription
 - a:getFiles():java.util.List
 - a:getName():java.lang.String
 - a:getVersionString():java.lang.String
+a:com.intellij.util.graph.GraphAlgorithms
+- a:computeSCCGraph(com.intellij.util.graph.Graph):com.intellij.util.graph.Graph
 com.intellij.util.indexing.FileContent
 - com.intellij.util.indexing.IndexedFile
 - a:getContent():B[]
 - a:getContentAsText():java.lang.CharSequence
 - a:getPsiFile():com.intellij.psi.PsiFile
+c:com.intellij.util.indexing.ID
+- s:create(java.lang.String):com.intellij.util.indexing.ID
+- s:findByName(java.lang.String):com.intellij.util.indexing.ID
 com.intellij.util.indexing.IndexedFile
 - com.intellij.openapi.util.UserDataHolder
 - a:getFile():com.intellij.openapi.vfs.VirtualFile
@@ -1957,6 +2812,9 @@ f:com.intellij.util.progress.CancellationUtil
 - sf:acquireMaybeCancellable(java.util.concurrent.Semaphore):V
 - sf:acquireMaybeCancellable(java.util.concurrent.Semaphore,I):V
 - bs:acquireMaybeCancellable$default(java.util.concurrent.Semaphore,I,I,java.lang.Object):V
+- sf:getCancellable(java.util.concurrent.CompletableFuture):java.lang.Object
+- sf:getMaybeCancellable(java.util.concurrent.CompletableFuture):java.lang.Object
+- sf:sleepCancellable(J):V
 com.intellij.util.ui.PresentableEnum
 - a:getPresentableText():java.lang.String
 org.jetbrains.concurrency.CancellablePromise

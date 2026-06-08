@@ -94,9 +94,7 @@ c:com.intellij.tasks.impl.LocalTaskImpl
 c:com.intellij.tasks.impl.RequestFailedException
 - java.lang.RuntimeException
 - <init>(com.intellij.tasks.TaskRepository,java.lang.String):V
-- <init>(java.lang.String):V
 - <init>(java.lang.String,java.lang.Throwable):V
-- <init>(java.lang.Throwable):V
 - s:forServerMessage(java.lang.String):com.intellij.tasks.impl.RequestFailedException
 - s:forStatusCode(I,java.lang.String):com.intellij.tasks.impl.RequestFailedException
 - getRepository():com.intellij.tasks.TaskRepository
@@ -111,7 +109,6 @@ f:com.intellij.tasks.impl.TaskManagerImpl
 - addTask(com.intellij.tasks.Task):com.intellij.tasks.LocalTask
 - addTaskListener(com.intellij.tasks.TaskListener,com.intellij.openapi.Disposable):V
 - callProjectOpened():V
-- constructDefaultBranchName(com.intellij.tasks.Task):java.lang.String
 - createBranch(com.intellij.tasks.LocalTask,com.intellij.tasks.LocalTask,java.lang.String,com.intellij.openapi.vcs.VcsTaskHandler$TaskInfo):V
 - createChangeList(com.intellij.tasks.LocalTask,java.lang.String):V
 - createLocalTask(java.lang.String):com.intellij.tasks.impl.LocalTaskImpl
@@ -139,13 +136,10 @@ f:com.intellij.tasks.impl.TaskManagerImpl
 - mergeBranch(com.intellij.tasks.LocalTask):V
 - prepareForNextTest():V
 - removeTask(com.intellij.tasks.LocalTask):V
-- setRepositories(java.util.List):V
 - shelveChanges(com.intellij.tasks.LocalTask,java.lang.String):V
-- suggestBranchName(com.intellij.tasks.Task):java.lang.String
 - suggestBranchName(com.intellij.tasks.Task,java.lang.String):java.lang.String
 - testConnection(com.intellij.tasks.TaskRepository):Z
 - trackContext(com.intellij.openapi.vcs.changes.LocalChangeList):V
-- updateIssues(java.lang.Runnable):V
 c:com.intellij.tasks.impl.TaskManagerImpl$Config
 - branchNameFormat:java.lang.String
 - changelistNameFormat:java.lang.String
@@ -175,7 +169,6 @@ f:com.intellij.tasks.impl.TaskUtil
 - s:getChangeListComment(com.intellij.tasks.Task):java.lang.String
 - s:getChangeListComment(com.intellij.tasks.Task,Z):java.lang.String
 - s:getTrimmedSummary(com.intellij.tasks.Task):java.lang.String
-- s:parseDate(java.lang.String):java.util.Date
 - s:prettyFormatJsonToLog(com.intellij.openapi.diagnostic.Logger,java.lang.String):V
 - s:prettyFormatXmlToLog(com.intellij.openapi.diagnostic.Logger,java.lang.String):V
 - s:tasksEqual(com.intellij.tasks.Task,com.intellij.tasks.Task):Z

@@ -27,14 +27,12 @@ f:com.intellij.remote.DeferredRemoteProcess
 - waitFor(J,java.util.concurrent.TimeUnit):Z
 com.intellij.remote.ExceptionFix
 - a:apply():V
-- a:getNotificationMessage(java.lang.String):java.lang.String
 a:com.intellij.remote.PathMappingProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - a:accepts(com.intellij.remote.RemoteSdkAdditionalData):Z
 - a:getPathMappingSettings(com.intellij.openapi.project.Project,com.intellij.remote.RemoteSdkAdditionalData):com.intellij.util.PathMappingSettings
 - a:getProviderPresentableName(com.intellij.remote.RemoteSdkAdditionalData):java.lang.String
-- s:getSuitableMappingProviders(com.intellij.remote.RemoteSdkAdditionalData):java.util.List
 com.intellij.remote.ProcessControlWithMappings
 - a:getFileMappings():java.util.List
 - getMappingSettings():com.intellij.util.PathMapper
@@ -58,10 +56,8 @@ f:com.intellij.remote.RemoteMappingsManager
 - <init>():V
 - create(java.lang.String,java.lang.String,java.util.List):com.intellij.remote.RemoteMappingsManager$Mappings
 - getForServer(java.lang.String,java.lang.String):com.intellij.remote.RemoteMappingsManager$Mappings
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.remote.RemoteMappingsManager
 - getState():com.intellij.remote.RemoteMappingsManager$State
 - loadState(com.intellij.remote.RemoteMappingsManager$State):V
-- setForServer(com.intellij.remote.RemoteMappingsManager$Mappings):V
 c:com.intellij.remote.RemoteMappingsManager$Mappings
 - <init>():V
 - getDisabled():java.util.Map
@@ -70,7 +66,6 @@ c:com.intellij.remote.RemoteMappingsManager$Mappings
 - setDisabled(java.util.Map):V
 - setServerId(java.lang.String):V
 - setServerId(java.lang.String,java.lang.String):V
-- setSettings(java.util.List):V
 c:com.intellij.remote.RemoteMappingsManager$State
 - <init>():V
 - getList():java.util.List

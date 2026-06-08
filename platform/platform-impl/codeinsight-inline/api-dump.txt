@@ -1,3 +1,5 @@
+f:com.intellij.codeInsight.inline.completion.InlineCompletion
+- f:getHandlerOrNull(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.inline.completion.InlineCompletionHandler
 com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 - a:toRequest():com.intellij.codeInsight.inline.completion.InlineCompletionRequest
 com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent
@@ -23,6 +25,15 @@ com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 com.intellij.codeInsight.inline.completion.InlineCompletionEventListener
 - java.util.EventListener
 - a:on(com.intellij.codeInsight.inline.completion.InlineCompletionEventType):V
+a:com.intellij.codeInsight.inline.completion.InlineCompletionEventType
+f:com.intellij.codeInsight.inline.completion.InlineCompletionFontUtils
+- f:color(com.intellij.openapi.editor.Editor):java.awt.Color
+- f:font(com.intellij.openapi.editor.Editor):java.awt.Font
+Fa:com.intellij.codeInsight.inline.completion.InlineCompletionHandler
+- f:addEventListener(com.intellij.codeInsight.inline.completion.InlineCompletionEventListener):V
+- f:invoke(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$DirectCall):V
+- f:invokeEvent(com.intellij.codeInsight.inline.completion.InlineCompletionEvent):V
+- f:removeEventListener(com.intellij.codeInsight.inline.completion.InlineCompletionEventListener):V
 com.intellij.codeInsight.inline.completion.InlineCompletionInsertHandler
 - a:afterInsertion(com.intellij.codeInsight.inline.completion.InlineCompletionInsertEnvironment,java.util.List):V
 com.intellij.codeInsight.inline.completion.InlineCompletionProvider
@@ -34,9 +45,15 @@ com.intellij.codeInsight.inline.completion.InlineCompletionProvider
 - getSuggestionUpdateManager():com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 - a:isEnabled(com.intellij.codeInsight.inline.completion.InlineCompletionEvent):Z
 - restartOn(com.intellij.codeInsight.inline.completion.InlineCompletionEvent):Z
+f:com.intellij.codeInsight.inline.completion.InlineCompletionProviderID
+- s:constructor-impl(java.lang.String):java.lang.String
 com.intellij.codeInsight.inline.completion.InlineCompletionProviderPresentation
 - sf:Companion:com.intellij.codeInsight.inline.completion.InlineCompletionProviderPresentation$Companion
 - a:getTooltip(com.intellij.openapi.project.Project):javax.swing.JComponent
+f:com.intellij.codeInsight.inline.completion.InlineCompletionSuggestion$Companion
+- f:withFlow(kotlin.jvm.functions.Function2):com.intellij.codeInsight.inline.completion.InlineCompletionSuggestion
+f:com.intellij.codeInsight.inline.completion.InlineCompletionSuggestion$Default
+- <init>(kotlinx.coroutines.flow.Flow):V
 com.intellij.codeInsight.inline.completion.TypingEvent
 - a:getRange():com.intellij.openapi.util.TextRange
 - a:getTyped():java.lang.String
@@ -51,8 +68,18 @@ com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement$Pres
 - a:isVisible():Z
 - a:render(com.intellij.openapi.editor.Editor,I):V
 - a:startOffset():java.lang.Integer
+f:com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
+- <init>(java.lang.String):V
+c:com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement$Presentable
+- <init>(com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement):V
+f:com.intellij.codeInsight.inline.completion.elements.InlineCompletionSkipTextElement
+- <init>(java.lang.String):V
 f:com.intellij.codeInsight.inline.completion.options.InlineCompletionConfigurable
 - com.intellij.openapi.options.SearchableConfigurable
+f:com.intellij.codeInsight.inline.completion.session.InlineCompletionContext$Companion
+- f:getOrNull(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.inline.completion.session.InlineCompletionContext
+f:com.intellij.codeInsight.inline.completion.session.InlineCompletionSession$Companion
+- f:getOrNull(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
 com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion
 - com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 - sf:Companion:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSingleSuggestion$Companion
@@ -72,7 +99,11 @@ com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestion
 - onLookupEvent(com.intellij.codeInsight.inline.completion.InlineCompletionEvent$InlineLookupEvent,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 - update(com.intellij.codeInsight.inline.completion.InlineCompletionEvent,com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
 com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult
+f:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager$UpdateResult$Changed
+- <init>(com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot):V
 com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant
 - sf:Companion:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Companion
 - a:getData():com.intellij.openapi.util.UserDataHolderBase
 - a:getElements():kotlinx.coroutines.flow.Flow
+f:com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot
+- f:copy(java.util.List):com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariant$Snapshot

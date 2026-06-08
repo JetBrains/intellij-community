@@ -4,7 +4,17 @@ com.intellij.designer.DesignerEditorPanelFacade
 - a:putClientProperty(java.lang.Object,java.lang.Object):V
 com.intellij.designer.LightToolWindowContent
 - a:dispose():V
+a:com.intellij.designer.LightToolWindowManager
+- p:<init>(com.intellij.openapi.project.Project):V
+- f:bind(com.intellij.designer.DesignerEditorPanelFacade):V
+a:com.intellij.designer.model.Property
+- setExpert(Z):V
+- setImportant(Z):V
 com.intellij.designer.model.PropertyContext
 com.intellij.designer.propertyTable.PropertyRenderer
 - a:getComponent(com.intellij.designer.model.PropertiesContainer,com.intellij.designer.model.PropertyContext,java.lang.Object,Z,Z):javax.swing.JComponent
 - a:updateUI():V
+a:com.intellij.designer.propertyTable.PropertyTable
+- showExpert(Z):V
+c:com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer
+- <init>(java.lang.String):V
