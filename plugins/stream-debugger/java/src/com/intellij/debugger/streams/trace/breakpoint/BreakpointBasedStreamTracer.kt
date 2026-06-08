@@ -6,10 +6,10 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.memory.utils.InstanceJavaValue
 import com.intellij.debugger.streams.core.StreamDebuggerBundle
-import com.intellij.debugger.streams.core.trace.AbstractStreamTracer
 import com.intellij.debugger.streams.core.trace.StreamTracer
 import com.intellij.debugger.streams.core.trace.TraceResultInterpreter
 import com.intellij.debugger.streams.core.trace.XValueInterpreter
+import com.intellij.debugger.streams.core.trace.interpretStreamResult
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.lib.impl.BreakpointBasedLibrarySupport
 import com.intellij.debugger.streams.ui.impl.PrimitiveValueDescriptor
@@ -25,9 +25,9 @@ import com.sun.jdi.Value
 internal class BreakpointBasedStreamTracer(
   private val xDebugProcess: JavaDebugProcess,
   private val librarySupport: BreakpointBasedLibrarySupport,
-  xValueInterpreter: XValueInterpreter,
-  resultInterpreter: TraceResultInterpreter,
-) : AbstractStreamTracer(xDebugProcess.session, xValueInterpreter, resultInterpreter) {
+  private val xValueInterpreter: XValueInterpreter,
+  private val resultInterpreter: TraceResultInterpreter,
+) : StreamTracer {
   override suspend fun trace(chain: StreamChain): StreamTracer.Result {
     val breakpointPositionResolver = JavaBreakpointPositionResolver()
     val positions = breakpointPositionResolver
@@ -53,11 +53,11 @@ internal class BreakpointBasedStreamTracer(
       when (result) {
         is TracingResult.Success -> {
           val xValue = createXValue(result.evaluationContext, result.rawTrace)
-          interpretStreamResult(xValue, chain, streamTraceExpression = "")
+          interpretStreamResult(xDebugProcess.session, xValueInterpreter, resultInterpreter, xValue, chain)
         }
         is TracingResult.TargetVmException -> {
           val xValue = createXValue(result.evaluationContext, result.exception)
-          interpretStreamResult(xValue, chain, streamTraceExpression = "")
+          interpretStreamResult(xDebugProcess.session, xValueInterpreter, resultInterpreter, xValue, chain)
         }
         is TracingResult.Error -> StreamTracer.Result.EvaluationFailed("", result.errorMessage)
       }

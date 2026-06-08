@@ -17,12 +17,12 @@ import org.jetbrains.annotations.NonNls
  * @author Vitaliy.Bibaev
  */
 class EvaluateExpressionTracer(
-  debugSession: XDebugSession,
+  private val debugSession: XDebugSession,
   private val expressionBuilder: TraceExpressionBuilder,
-  xValueInterpreter: XValueInterpreter,
-  resultInterpreter: TraceResultInterpreter,
+  private val xValueInterpreter: XValueInterpreter,
+  private val resultInterpreter: TraceResultInterpreter,
   private val debuggerCommandLauncher: DebuggerCommandLauncher,
-) : AbstractStreamTracer(debugSession, xValueInterpreter, resultInterpreter) {
+) : StreamTracer {
 
   override suspend fun trace(chain: StreamChain) : StreamTracer.Result = debuggerCommandLauncher.computeInDebuggerContext {
     val streamTraceExpression = withContext(Dispatchers.Default) { expressionBuilder.createTraceExpression(chain) }
@@ -36,7 +36,7 @@ class EvaluateExpressionTracer(
       if (deferredResult.error == null) {
         val xValue = deferredResult.xValue ?: return@computeInDebuggerContext StreamTracer.Result.Unknown
 
-        interpretStreamResult(xValue, chain, streamTraceExpression)
+        interpretStreamResult(debugSession, xValueInterpreter, resultInterpreter, xValue, chain, streamTraceExpression)
       }
       else {
         StreamTracer.Result.CompilationFailed(streamTraceExpression, deferredResult.error)
