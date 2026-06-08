@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// IGNORE_K1
+
 // FILE: JTestRootUsage.java
 @TestRoot()
 public class JTestRootUsage {

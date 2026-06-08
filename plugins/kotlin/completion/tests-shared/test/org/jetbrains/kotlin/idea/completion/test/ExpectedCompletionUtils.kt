@@ -173,7 +173,6 @@ object ExpectedCompletionUtils {
         IgnoreTests.DIRECTIVES.IGNORE_K2,
         IgnoreTests.DIRECTIVES.FIR_IDENTICAL,
         IgnoreTests.DIRECTIVES.FIR_COMPARISON_MULTILINE_COMMENT,
-        IgnoreTests.DIRECTIVES.IGNORE_K1,
     ) + KMPTestPlatform.entries.map { "// IGNORE_PLATFORM_${it.directiveName}:" }
 
     fun itemsShouldExist(fileText: String, platform: TargetPlatform?): Array<CompletionProposal> = when {

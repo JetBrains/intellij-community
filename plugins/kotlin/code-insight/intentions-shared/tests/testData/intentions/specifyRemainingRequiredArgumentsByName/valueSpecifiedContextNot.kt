@@ -5,7 +5,7 @@
 // LANGUAGE_VERSION: 2.3
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // COMPILER_ARGUMENTS: -Xexplicit-context-arguments
-// IGNORE_K1
+
 // IGNORE_K2
 // Unmute after KTIJ-39044 is fixed
 context(s: String, n: Int)

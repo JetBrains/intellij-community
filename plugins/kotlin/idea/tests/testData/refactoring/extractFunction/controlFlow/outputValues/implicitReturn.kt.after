@@ -13,4 +13,3 @@ private fun i(b: Boolean): Int {
     }
     return if (b) 3 else 5
 }
-// IGNORE_K1

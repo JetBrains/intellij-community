@@ -27,4 +27,3 @@ internal fun putColumnsOrder(schema: DataFrameSchema, o<caret>rder: MutableMap<C
         }
     }
 }
-// IGNORE_K1

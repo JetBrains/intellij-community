@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 interface I {
     infix fun foo(p: Int)
     val someVal: Int

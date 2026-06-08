@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // IGNORE_K2
 // See KTIJ-32231
 package test

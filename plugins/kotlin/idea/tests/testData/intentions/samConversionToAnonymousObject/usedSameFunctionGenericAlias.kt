@@ -11,4 +11,3 @@ fun main() {
     val i = <caret>IAlias<String> { x -> test(x) }
 }
 
-// IGNORE_K1

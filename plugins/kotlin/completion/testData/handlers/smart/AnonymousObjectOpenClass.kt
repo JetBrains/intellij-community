@@ -7,4 +7,3 @@ fun test(): OpenClass {
 }
 
 // ELEMENT: object
-// IGNORE_K1

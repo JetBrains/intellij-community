@@ -18,4 +18,3 @@ fun test() {
     pack.name.<caret>Fixtures.Register.Domain.UserRepository.authSuccess
 }
 
-// IGNORE_K1

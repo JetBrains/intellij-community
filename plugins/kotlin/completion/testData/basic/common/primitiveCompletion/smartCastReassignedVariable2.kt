@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 open class A {
     val a: Int = 1
 }

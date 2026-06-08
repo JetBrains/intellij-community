@@ -6,4 +6,3 @@ fun call() {
     val i = 0
 }
 
-// IGNORE_K1

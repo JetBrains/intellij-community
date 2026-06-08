@@ -6,4 +6,3 @@ class Foo<caret>(param: String){
     }
 }
 
-// IGNORE_K1

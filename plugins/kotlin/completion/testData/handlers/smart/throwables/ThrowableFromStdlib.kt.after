@@ -1,4 +1,4 @@
 val a = throw IllegalStateException(<caret>)
 
 // ELEMENT: IllegalStateException
-// IGNORE_K1
+

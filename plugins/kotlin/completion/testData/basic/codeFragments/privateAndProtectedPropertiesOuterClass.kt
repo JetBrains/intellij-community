@@ -16,4 +16,3 @@ private class Outer {
 // EXIST: pint
 // EXIST: priv
 
-// IGNORE_K1

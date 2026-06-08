@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // "Replace '&&' with 'if'" "false"
 // WITH_STDLIB
 

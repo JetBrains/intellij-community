@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // FIX: Add explicit parameter name to outer lambda
 
 fun foo(f: (String) -> Unit) {}

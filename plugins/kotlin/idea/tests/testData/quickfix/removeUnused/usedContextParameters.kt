@@ -7,4 +7,3 @@ private fun m(): Int {
     return myContext
 }
 
-// IGNORE_K1

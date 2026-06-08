@@ -19,4 +19,3 @@ fun test() {
     val y = <selection>x</selection>
 }
 
-// IGNORE_K1

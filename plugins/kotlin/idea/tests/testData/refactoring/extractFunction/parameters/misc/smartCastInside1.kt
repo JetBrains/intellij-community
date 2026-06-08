@@ -6,4 +6,3 @@ fun test(x: Int, c: C): Int {
     return a * a
 }
 
-// IGNORE_K1

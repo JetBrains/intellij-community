@@ -1,5 +1,5 @@
 // PROBLEM: none
-// IGNORE_K1
+
 // WITH_STDLIB
 
 import java.io.PrintWriter

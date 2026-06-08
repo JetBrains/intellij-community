@@ -4,7 +4,7 @@
 // AFTER-WARNING: Parameter 'x' is never used
 // AFTER-WARNING: Parameter 'a' is never used
 // AFTER-WARNING: Parameter 'b' is never used
-// IGNORE_K1
+
 // K2_ERROR: No context argument for 'x: String' found.
 // K2_ERROR: Too many arguments for 'context(x: String) fun foo3(a: String, b: String): String'.
 

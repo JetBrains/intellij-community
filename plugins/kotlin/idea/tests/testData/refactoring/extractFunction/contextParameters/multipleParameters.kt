@@ -17,4 +17,3 @@ fun m() {
     </selection>
 }
 
-// IGNORE_K1

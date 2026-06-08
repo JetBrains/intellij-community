@@ -286,10 +286,6 @@ object IgnoreTests {
 
         const val FIR_IDENTICAL: String = "// FIR_IDENTICAL"
 
-        const val IGNORE_FE10_BINDING_BY_FIR: String = "// IGNORE_FE10_BINDING_BY_FIR"
-
-        const val IGNORE_K1: String = "// IGNORE_K1"
-
         const val SKIP_WRONG_DIRECTIVE_CHECK: String = "// SKIP_WRONG_DIRECTIVE_CHECK"
 
     }

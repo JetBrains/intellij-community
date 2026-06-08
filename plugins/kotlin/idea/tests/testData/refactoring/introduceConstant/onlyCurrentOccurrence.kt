@@ -8,4 +8,3 @@ fun foo(): Int {
     val z = "2"
     return <selection>2</selection>
 }
-// IGNORE_K1

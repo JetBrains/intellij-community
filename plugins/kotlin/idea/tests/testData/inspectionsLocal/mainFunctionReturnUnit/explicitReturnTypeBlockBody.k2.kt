@@ -4,4 +4,3 @@ fun main(args: Array<String>): <caret>Int {
 }
 
 // For K1, the function name is highlighted instead of the return type
-// IGNORE_K1

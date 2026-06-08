@@ -8,4 +8,3 @@ class K {
     }
 }
 
-// IGNORE_K1

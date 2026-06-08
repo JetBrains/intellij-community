@@ -4,4 +4,3 @@ interface <lineMarker>I</lineMarker> {
         //default function
     }
 }
-// IGNORE_K1

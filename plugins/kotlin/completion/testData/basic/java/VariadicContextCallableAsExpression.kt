@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 
 fun main() {

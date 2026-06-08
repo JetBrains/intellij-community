@@ -1,6 +1,6 @@
 // WITH_STDLIB
 // FIX: Convert to 'with'
-// IGNORE_K1
+
 class Outer {
     val outerProp = "outer"
     

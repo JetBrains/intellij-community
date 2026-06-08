@@ -10,5 +10,5 @@ fun foo(bar: Base):Int {
         else -> 1
     }
 }
-// IGNORE_K1
+
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUselessIsCheckFixForWhen

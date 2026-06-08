@@ -7,4 +7,4 @@ var a: MyInterface = MyInterface { <caret> }
 // ELEMENT_TEXT: MyInterface
 // TAIL_TEXT: " {...} (function: () -> Unit) (<root>)"
 
-// IGNORE_K1
+

@@ -10,4 +10,3 @@ fun call() {
     val i = declaration.funV<caret>al0()
 }
 
-// IGNORE_K1

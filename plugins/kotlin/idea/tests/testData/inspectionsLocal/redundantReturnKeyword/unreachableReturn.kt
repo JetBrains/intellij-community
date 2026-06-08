@@ -8,4 +8,4 @@ fun foo(num: Int): String {
     } else "non-zero"
 }
 
-// IGNORE_K1
+

@@ -10,4 +10,3 @@ vat test: Int
 
 // EXIST: { itemText: "foo: Foo" }
 // EXIST: { itemText: "foo: BarFoo" }
-// IGNORE_K1

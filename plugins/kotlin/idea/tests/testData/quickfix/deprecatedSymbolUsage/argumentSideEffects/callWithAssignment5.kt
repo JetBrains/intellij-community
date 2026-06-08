@@ -11,5 +11,5 @@ class C(){
 fun use(){
     C().somet<caret>hing(false)
 }
-// IGNORE_K1
+
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

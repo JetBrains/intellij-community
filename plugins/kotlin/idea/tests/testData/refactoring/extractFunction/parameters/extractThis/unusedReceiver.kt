@@ -4,4 +4,3 @@ class Foo(val s: String) {
     }
 }
 
-// IGNORE_K1

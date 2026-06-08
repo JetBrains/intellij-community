@@ -12,4 +12,3 @@ private fun n(): Int {
     return myContext
 }
 
-// IGNORE_K1

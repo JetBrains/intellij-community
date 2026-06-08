@@ -11,4 +11,3 @@ fun f() {
 }
 
 
-// IGNORE_K1

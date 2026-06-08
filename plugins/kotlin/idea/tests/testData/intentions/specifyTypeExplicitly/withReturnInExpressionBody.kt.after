@@ -3,4 +3,3 @@
 // K2_ERROR: Returns are prohibited in functions with expression body and without explicit return type. Use block body '{...}' or add an explicit return type.
 fun m(): String<caret> = return "42"
 
-// IGNORE_K1

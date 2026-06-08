@@ -9,4 +9,4 @@ fun p(i1: Int) {
 
 fun get42(): Int = 42
 
-// IGNORE_K1
+

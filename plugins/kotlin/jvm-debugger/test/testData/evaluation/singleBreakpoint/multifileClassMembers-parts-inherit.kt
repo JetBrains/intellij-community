@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // ATTACH_LIBRARY: multifile-parts-inherit
 
 fun main() {

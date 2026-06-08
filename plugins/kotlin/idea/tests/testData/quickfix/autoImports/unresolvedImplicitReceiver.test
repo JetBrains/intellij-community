@@ -2,7 +2,7 @@
 // "Import function 'some'" "true"
 // ERROR: Unresolved reference: Unresolved
 // ERROR: Unresolved reference: some
-// IGNORE_K1
+
 
 package test
 
@@ -25,7 +25,7 @@ fun some() {}
 // "Import function 'some'" "true"
 // ERROR: Unresolved reference: Unresolved
 // ERROR: Unresolved reference: some
-// IGNORE_K1
+
 
 package test
 

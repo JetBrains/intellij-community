@@ -7,4 +7,4 @@ fun interface Sam : Base {
 var x: Base = <caret>
 
 // EXIST: {"lookupString":"Sam","itemText":"Sam","tailText":" {...} (function: () -> Unit) (<root>)","typeText":"Sam", "icon":"Function"}
-// IGNORE_K1
+

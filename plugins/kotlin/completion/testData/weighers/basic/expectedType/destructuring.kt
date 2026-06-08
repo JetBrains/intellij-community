@@ -7,5 +7,5 @@ fun testDestructuring() {
 }
 
 // ORDER: somePrefixB, somePrefixA, somePrefixC
-// IGNORE_K1
+
 // IGNORE_K2

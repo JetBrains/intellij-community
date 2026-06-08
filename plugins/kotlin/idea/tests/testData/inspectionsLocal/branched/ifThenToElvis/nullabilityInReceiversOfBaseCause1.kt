@@ -14,4 +14,3 @@ fun main() {
     println(str)
 }
 
-// IGNORE_K1

@@ -5,4 +5,3 @@ fun foo(): List<String> {
 }
 
 // ELEMENT: reversed
-// IGNORE_K1

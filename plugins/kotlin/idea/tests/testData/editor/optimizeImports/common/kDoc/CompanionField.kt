@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 package testPack
 
 import testPack.MyClass.Companion.GENERIC_ARGUMENT

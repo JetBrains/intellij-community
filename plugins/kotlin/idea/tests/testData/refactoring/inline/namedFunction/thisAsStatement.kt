@@ -10,4 +10,3 @@ interface Foo {
 }
 fun bar(a: Foo.() -> Unit) {}
 
-// IGNORE_K1

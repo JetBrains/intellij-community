@@ -40,4 +40,3 @@ fun test() {
 // EXIST: { "lookupString":"mark", "itemText":"Value.MyCompanion.mark" }
 // EXIST: { "lookupString":"own", "itemText":"Value.MyCompanion.own" }
 // EXIST: { "lookupString":"other", "itemText":"Value.MyCompanion.other" }
-// IGNORE_K1

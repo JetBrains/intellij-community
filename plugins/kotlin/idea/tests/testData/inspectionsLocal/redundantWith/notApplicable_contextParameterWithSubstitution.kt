@@ -16,4 +16,3 @@ fun foo() {
 
 context(s: Context<T>) fun <T> bar() {}
 
-// IGNORE_K1

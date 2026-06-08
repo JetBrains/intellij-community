@@ -11,4 +11,3 @@ fun called() {
     println(typed)
 }
 
-// IGNORE_K1

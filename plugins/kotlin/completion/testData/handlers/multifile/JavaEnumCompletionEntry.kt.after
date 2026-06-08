@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 fun foo() {
 
     JavaEnum.FOO_BAR_ENUM_ENTRY<caret>

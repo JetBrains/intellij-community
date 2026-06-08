@@ -5,4 +5,3 @@ fun test(): String? {
     return null</selection>
 }
 
-// IGNORE_K1

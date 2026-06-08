@@ -6,4 +6,3 @@ fun foo(): Boolean {
     }</selection>
 }
 
-// IGNORE_K1

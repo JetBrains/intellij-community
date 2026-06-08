@@ -7,7 +7,7 @@
 // K2_ERROR: Argument already passed for this parameter.
 // K2_ERROR: No context argument for 'y: Int' found.
 // K2_ERROR: Too many arguments for 'context(x: String, y: Int) fun foo(a: String): String'.
-// IGNORE_K1
+
 // K2_AFTER_ERROR: Argument already passed for this parameter.
 
 context(x: String, y: Int)

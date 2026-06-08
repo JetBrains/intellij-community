@@ -16,4 +16,3 @@ fun test() {
     }
 }
 
-// IGNORE_K1

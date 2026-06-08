@@ -11,4 +11,4 @@ private fun FooBar.fooBar(s: () -> String) {
 fun m {
     FooBar.Instance.FOO_BAR.fooBar { "" }
 }
-// IGNORE_K1
+

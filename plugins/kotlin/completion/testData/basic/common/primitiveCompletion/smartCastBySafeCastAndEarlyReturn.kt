@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 open class Base(val a: Int)
 class Class(val b: Int) : Base(0)
 

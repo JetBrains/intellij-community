@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // Ignore reason: K1 suggest just removing the `as` casing but it's not always correct and depends on context, see KT-85162
 // "Replace cast with call to 'toInt()'" "true"
 

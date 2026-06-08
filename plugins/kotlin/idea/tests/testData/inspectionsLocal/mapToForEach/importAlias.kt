@@ -6,4 +6,4 @@ fun foo(nums: List<Int>) {
     nums.fo<caret>o { it }
 }
 
-// IGNORE_K1
+

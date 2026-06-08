@@ -4,4 +4,3 @@ fun foo(): Zoo = Zoo()<caret>
 
 // ELEMENT: Zoo
 // TAIL_TEXT: "() (test.Foo)"
-// IGNORE_K1

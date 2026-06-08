@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 abstract class A<T> {
     abstract fun func(t: T): T
 

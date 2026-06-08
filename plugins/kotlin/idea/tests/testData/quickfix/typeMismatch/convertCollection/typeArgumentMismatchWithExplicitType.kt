@@ -7,4 +7,3 @@ fun test() {
     strs =<caret> setOf<Int>()
 }
 
-// IGNORE_K1

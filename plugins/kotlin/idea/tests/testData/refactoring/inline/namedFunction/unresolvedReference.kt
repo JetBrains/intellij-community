@@ -3,4 +3,3 @@ open class Base {
 }
 val result = Base().protectedFunction()
 
-// IGNORE_K1

@@ -17,4 +17,4 @@ fun test(
 // ORDER: somePrefixMatchingNameWithCorrectType
 // ORDER: somePrefixOtherVariableWithCorrectType
 // ORDER: somePrefixMatchingName
-// IGNORE_K1
+

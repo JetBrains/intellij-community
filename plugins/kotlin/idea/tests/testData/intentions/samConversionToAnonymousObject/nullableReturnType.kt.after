@@ -5,4 +5,3 @@ val a = object : A<Int, String> {
     }
 }
 
-// IGNORE_K1

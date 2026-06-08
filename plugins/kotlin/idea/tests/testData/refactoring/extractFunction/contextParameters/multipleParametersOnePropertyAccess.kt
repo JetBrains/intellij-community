@@ -8,4 +8,3 @@ context(x: String, y: Int)
 val p: String
     get() = ""
 
-// IGNORE_K1

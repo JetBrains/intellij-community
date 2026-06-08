@@ -49,7 +49,7 @@ abstract class AbstractKotlinPsiUnifierTest : KotlinLightCodeInsightFixtureTestC
     override fun getProjectDescriptor(): LightProjectDescriptor = getProjectDescriptorFromTestName()
 
     private fun File.getTextWithoutDirectives(): String {
-        val directives = setOf(IgnoreTests.DIRECTIVES.IGNORE_K1, IgnoreTests.DIRECTIVES.IGNORE_K2)
+        val directives = setOf(IgnoreTests.DIRECTIVES.IGNORE_K2)
 
         return readLines().filterNot { it.trim() in directives }.joinToString("\n")
     }

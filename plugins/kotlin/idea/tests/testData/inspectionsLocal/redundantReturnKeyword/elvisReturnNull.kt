@@ -6,4 +6,3 @@ fun test() : Int? {
     return bar() ?: re<caret>turn null
 }
 
-// IGNORE_K1

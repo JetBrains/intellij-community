@@ -2,7 +2,7 @@
 // "Import operator 'Some.component1'" "true"
 // WITH_STDLIB
 // ERROR: Destructuring declaration initializer of type Some must have a 'component1()' function
-// IGNORE_K1
+
 
 package testing
 
@@ -30,7 +30,7 @@ operator fun Some.component2() = 3
 // "Import operator 'Some.component1'" "true"
 // WITH_STDLIB
 // ERROR: Destructuring declaration initializer of type Some must have a 'component1()' function
-// IGNORE_K1
+
 
 package testing
 

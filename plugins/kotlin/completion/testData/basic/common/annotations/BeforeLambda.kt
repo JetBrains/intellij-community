@@ -9,5 +9,5 @@ fun main() {
 }
 
 // EXIST: AnnotationForLambda
-// IGNORE_K1
+
 // IGNORE_K2

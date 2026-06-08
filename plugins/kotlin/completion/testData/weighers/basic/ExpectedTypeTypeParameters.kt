@@ -23,4 +23,3 @@ fun test() {
 // ORDER: Foo
 // ORDER: genericFoo
 // ORDER: unrelatedFoo
-// IGNORE_K1

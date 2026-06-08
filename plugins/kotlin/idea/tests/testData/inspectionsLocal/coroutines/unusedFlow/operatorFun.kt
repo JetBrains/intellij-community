@@ -2,7 +2,7 @@
 // PROBLEM: Flow is constructed but not used
 // FIX: none
 // WITH_COROUTINES
-// IGNORE_K1
+
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf

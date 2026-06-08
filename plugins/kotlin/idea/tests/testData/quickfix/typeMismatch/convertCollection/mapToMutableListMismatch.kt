@@ -5,4 +5,3 @@ fun foo(): MutableList<Int> {
     return map<caret>Of(1 to 2)
 }
 
-// IGNORE_K1

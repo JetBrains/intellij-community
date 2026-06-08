@@ -15,4 +15,3 @@ private fun string(): String {
     return implicit<MyFormatter>().format("Value: $param")
 }
 
-// IGNORE_K1

@@ -13,4 +13,3 @@ class Usage(
     fun getSomeField2() = b.nested?.someField
 }
 
-// IGNORE_K1

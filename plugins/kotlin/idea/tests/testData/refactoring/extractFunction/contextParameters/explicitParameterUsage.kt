@@ -7,4 +7,3 @@ fun m() {
     <selection>bar(b)</selection>
 }
 
-// IGNORE_K1

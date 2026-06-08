@@ -1,6 +1,6 @@
 // "Create class 'BookKeeper'" "true"
 // K2_AFTER_ERROR: Return type mismatch: expected 'Man', actual 'BookKeeper'.
-// IGNORE_K1
+
 // K2_ERROR: Unresolved reference 'BookKeeper'.
 package pack
 

@@ -1,6 +1,6 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
 // IS_APPLICABLE: false
-// IGNORE_K1
+
 // K2_ERROR: Argument already passed for this parameter.
 // K2_ERROR: Argument type mismatch: actual type is 'List<Int>', but 'String' was expected.
 // K2_ERROR: No context argument for 'x: List<String>' found.

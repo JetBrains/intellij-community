@@ -1,6 +1,6 @@
 // WITH_STDLIB
 // FIX: Convert to 'run'
-// IGNORE_K1
+
 
 fun main() {
     val text: String = "Kotlin"

@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 import java.util.Date
 
 class BeforeArrayAfterDate

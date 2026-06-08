@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 package test
 
 @Deprecated("hidden", level = DeprecationLevel.HIDDEN)

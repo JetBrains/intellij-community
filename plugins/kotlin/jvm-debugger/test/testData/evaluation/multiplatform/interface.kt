@@ -41,5 +41,5 @@ fun main() {
 
 }
 
-// IGNORE_K1
+
 // SKIP_WRONG_DIRECTIVE_CHECK

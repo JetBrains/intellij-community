@@ -16,6 +16,6 @@ fun baz() {
     }</selection>
 }
 
-// IGNORE_K1
+
 
 

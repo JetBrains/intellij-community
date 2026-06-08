@@ -2,7 +2,7 @@
 // "Import operator 'MyIterator.hasNext'" "true"
 // ERROR: None of the hasNext() functions is applicable for iterator() of type 'MyIterator'
 // WITH_STDLIB
-// IGNORE_K1
+
 
 package bar
 
@@ -34,7 +34,7 @@ operator fun MyIterator.next(): String = "item"
 // "Import operator 'MyIterator.hasNext'" "true"
 // ERROR: None of the hasNext() functions is applicable for iterator() of type 'MyIterator'
 // WITH_STDLIB
-// IGNORE_K1
+
 
 package bar
 

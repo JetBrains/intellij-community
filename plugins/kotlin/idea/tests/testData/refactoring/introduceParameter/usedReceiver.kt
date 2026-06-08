@@ -4,4 +4,3 @@ fun String.foo(i: I ) {
     i.consume(this)
 }
 
-// IGNORE_K1

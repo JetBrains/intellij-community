@@ -9,4 +9,3 @@ fun test() {
     MyEnum.HELLO
 }
 
-// IGNORE_K1

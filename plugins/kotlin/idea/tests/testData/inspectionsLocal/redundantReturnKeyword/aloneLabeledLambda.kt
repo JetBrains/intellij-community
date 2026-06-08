@@ -12,5 +12,5 @@ fun foo(flag: Boolean): (Int) -> Boolean {
     }
 }
 
-// IGNORE_K1
+
 // IGNORE_K2

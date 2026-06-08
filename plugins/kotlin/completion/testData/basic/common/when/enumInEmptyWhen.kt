@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// IGNORE_K1
+
 enum class ENUM {
     AAAA, BBBB, CCCC
 }

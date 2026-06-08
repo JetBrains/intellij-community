@@ -12,4 +12,4 @@ fun useCompanionInJs() {
     println(Clazz006.AA_A)
 }
 
-// IGNORE_K1
+

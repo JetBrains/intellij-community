@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // NO_TEMPLATE_TESTING
 
 class Class {

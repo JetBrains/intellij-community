@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 // IDEA-376094
 // IGNORE_K2

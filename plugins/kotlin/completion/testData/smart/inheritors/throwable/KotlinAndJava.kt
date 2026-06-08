@@ -10,4 +10,4 @@ fun test() {
 // ABSENT: { itemText: "RuntimeException", tailText: "(...) (java.lang)" }
 // ABSENT: { itemText: "IllegalArgumentException", tailText: "(...) (java.lang)" }
 
-// IGNORE_K1
+

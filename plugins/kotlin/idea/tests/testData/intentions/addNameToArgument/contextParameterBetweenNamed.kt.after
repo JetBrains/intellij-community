@@ -6,7 +6,7 @@
 // AFTER-WARNING: Parameter 'b' is never used
 // K2_ERROR: Argument already passed for this parameter.
 // K2_ERROR: No context argument for 'x: String' found.
-// IGNORE_K1
+
 
 context(x: String)
 fun foo(a: String, b: String): String = x + a

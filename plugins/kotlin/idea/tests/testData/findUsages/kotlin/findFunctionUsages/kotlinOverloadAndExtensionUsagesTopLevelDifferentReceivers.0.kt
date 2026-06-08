@@ -16,4 +16,3 @@ fun usages(e: E, d: D) {
     d.myFoo()
 }
 
-// IGNORE_K1

@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 fun <T, U> foo(
     foo: T,

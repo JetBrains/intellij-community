@@ -6,4 +6,3 @@ fun test () {
     }</selection>
     val int: Int = result
 }
-// IGNORE_K1

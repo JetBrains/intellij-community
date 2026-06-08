@@ -13,4 +13,3 @@ class A {
             return 42
         }
 }
-// IGNORE_K1

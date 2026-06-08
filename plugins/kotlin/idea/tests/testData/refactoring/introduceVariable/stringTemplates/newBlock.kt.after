@@ -5,4 +5,3 @@ fun foo(param: Boolean) {
     } else null
 }
 
-// IGNORE_K1

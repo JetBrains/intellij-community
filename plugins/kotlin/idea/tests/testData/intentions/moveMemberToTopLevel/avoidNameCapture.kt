@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 val test1 = Test()
 fun foo(a: Test) {}

@@ -22,4 +22,3 @@ private fun __dummyTestFun__() {
     bar1(i)
 }
 
-// IGNORE_K1

@@ -9,4 +9,3 @@ fun bar(b: Boolean) {
         </selection>
     }
 }
-// IGNORE_K1

@@ -8,4 +8,3 @@ fun foo() {
     <selection>s.length</selection>
 }
 
-// IGNORE_K1

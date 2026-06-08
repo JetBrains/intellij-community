@@ -14,4 +14,3 @@ fun juice(apple: <caret>)
 // ORDER: GreenApple
 // ORDER: RedApple
 // ORDER: YellowApple
-// IGNORE_K1

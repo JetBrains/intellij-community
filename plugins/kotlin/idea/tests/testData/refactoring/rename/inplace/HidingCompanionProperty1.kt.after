@@ -13,4 +13,3 @@ private class A {
         private val <caret>a = ""
     }
 }
-// IGNORE_K1

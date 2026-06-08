@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// IGNORE_K1
+
 fun <T, K>foo() where <caret>
 
 

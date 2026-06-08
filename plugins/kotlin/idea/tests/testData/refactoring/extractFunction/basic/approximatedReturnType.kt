@@ -5,4 +5,3 @@ fun findClasses() {
     val obj = <selection>classloader?.loadClass("")?.kotlin</selection>
 }
 
-// IGNORE_K1

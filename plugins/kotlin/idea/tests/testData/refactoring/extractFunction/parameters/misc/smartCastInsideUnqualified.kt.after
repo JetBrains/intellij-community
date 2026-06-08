@@ -7,4 +7,3 @@ class A(val foo: Set<String>?) {
         if (foo != null && foo.contains(maybeFoo)) println("not null")
     }
 }
-// IGNORE_K1

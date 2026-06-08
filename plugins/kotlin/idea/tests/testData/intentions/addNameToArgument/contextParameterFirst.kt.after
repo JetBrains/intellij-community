@@ -7,7 +7,7 @@
 // K2_ERROR: Argument already passed for this parameter.
 // K2_ERROR: No context argument for 'y: Int' found.
 // K2_ERROR: Too many arguments for 'context(x: String, y: Int) fun foo(a: String): String'.
-// IGNORE_K1
+
 // K2_AFTER_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.
 // K2_AFTER_ERROR: No context argument for 'y: Int' found.
 

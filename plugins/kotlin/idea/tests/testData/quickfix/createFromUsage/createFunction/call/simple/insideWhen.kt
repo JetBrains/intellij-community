@@ -7,4 +7,3 @@ fun foo() {
         b<caret>ar() -> {}
     }
 }
-// IGNORE_K1

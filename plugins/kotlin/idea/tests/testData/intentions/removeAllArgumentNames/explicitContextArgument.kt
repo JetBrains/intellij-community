@@ -1,6 +1,6 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters -Xexplicit-context-arguments -XXLanguage:+ExplicitContextArguments
 // LANGUAGE_VERSION: 2.3
-// IGNORE_K1
+
 // INTENTION_TEXT: Remove all possible argument names
 context(x: String)
 fun foo3(a: String, b: String): String {

@@ -3,4 +3,3 @@ fun m(f: Foo) {
     val p = f.param
 }
 
-// IGNORE_K1

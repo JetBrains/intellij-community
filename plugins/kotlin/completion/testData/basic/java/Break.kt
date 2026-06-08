@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // FIR_COMPARISON
 // FIR_IDENTICAL
 fun doHere() {

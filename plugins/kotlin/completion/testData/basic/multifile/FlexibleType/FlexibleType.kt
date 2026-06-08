@@ -12,4 +12,4 @@ fun test(nonNullable: JavaClass, nullable: JavaClass?) {
 // EXIST: { "itemText":"JavaClass", "tailText":" (<root>)" }
 // EXIST: A
 // EXIST: Z
-// IGNORE_K1
+

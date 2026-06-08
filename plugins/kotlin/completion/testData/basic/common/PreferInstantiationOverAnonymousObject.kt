@@ -11,4 +11,3 @@ val a: Test = <caret>
 // EXIST: Test
 // EXIST: object
 // EXIST: unrelated
-// IGNORE_K1

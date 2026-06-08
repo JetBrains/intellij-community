@@ -22,4 +22,3 @@ fun bar() {
         val mmBar =  "".m()
     }
 }
-// IGNORE_K1

@@ -33,4 +33,3 @@ abstract class BaseTest {
     fun bar() {}
 }
 
-// IGNORE_K1

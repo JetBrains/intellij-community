@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 enum class `KTIJ-25208` {
 

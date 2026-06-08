@@ -2,7 +2,7 @@
 // "Import operator 'MyIterator.next'" "true"
 // ERROR: 'next()' cannot be called on 'iterator()' of type 'MyIterator'
 // WITH_STDLIB
-// IGNORE_K1
+
 
 package bar
 
@@ -30,7 +30,7 @@ operator fun MyIterator.next(): String = "item"
 // "Import operator 'MyIterator.next'" "true"
 // ERROR: 'next()' cannot be called on 'iterator()' of type 'MyIterator'
 // WITH_STDLIB
-// IGNORE_K1
+
 
 package bar
 

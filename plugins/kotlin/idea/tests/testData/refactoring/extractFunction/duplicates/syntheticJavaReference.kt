@@ -6,4 +6,3 @@ fun J.m(p: Any?) {
     val l = foo
 }
 
-// IGNORE_K1

@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 inline fun <reified T11, reified T12, reified T13, reified T14> foo1() {
     //Breakpoint!

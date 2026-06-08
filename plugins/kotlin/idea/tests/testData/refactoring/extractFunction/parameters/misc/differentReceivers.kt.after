@@ -11,4 +11,4 @@ private fun __dummyTestFun__(field: Any, field2: Any) {
     println(field.hashCode())
     println(field2.hashCode())
 }
-// IGNORE_K1
+

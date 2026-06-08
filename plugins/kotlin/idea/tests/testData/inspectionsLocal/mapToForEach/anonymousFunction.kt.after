@@ -7,4 +7,4 @@ fun foo(nums: Iterable<Int>) {
     })
 }
 
-// IGNORE_K1
+

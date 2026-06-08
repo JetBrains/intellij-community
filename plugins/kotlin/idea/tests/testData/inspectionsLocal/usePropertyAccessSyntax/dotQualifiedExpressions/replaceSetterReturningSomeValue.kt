@@ -1,5 +1,5 @@
 // FIX: Use property access syntax
-// IGNORE_K1
+
 // PROBLEM: "Use of setter method instead of property access syntax"
 
 fun main() {

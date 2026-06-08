@@ -6,4 +6,3 @@ fun main() {
     AbsClass().op()
 }
 
-// IGNORE_K1

@@ -1,5 +1,5 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
-// IGNORE_K1
+
 
 context(ctx2: String, ctx1: Int)
 fun foo(i: Long) {}

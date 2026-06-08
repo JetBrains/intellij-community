@@ -6,4 +6,3 @@ fun main(variables: Array<String>) {
 }
 
 // ORDER: values, variables, val, var
-// IGNORE_K1

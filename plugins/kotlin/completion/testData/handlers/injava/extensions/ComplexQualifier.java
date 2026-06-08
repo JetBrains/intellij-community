@@ -9,4 +9,3 @@ public class Testing {
 // AUTOCOMPLETE_SETTING: true
 // FIR_IDENTICAL
 // FIR_COMPARISON
-// IGNORE_K1

@@ -8,5 +8,5 @@ class Holder {
 
 fun foo(): OriginalCl<caret>
 
-// IGNORE_K1
+
 // ELEMENT: "OriginalClass"

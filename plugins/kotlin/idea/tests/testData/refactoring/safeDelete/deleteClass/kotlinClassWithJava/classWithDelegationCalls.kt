@@ -10,4 +10,3 @@ open class A: B {
     }
 }
 
-// IGNORE_K1

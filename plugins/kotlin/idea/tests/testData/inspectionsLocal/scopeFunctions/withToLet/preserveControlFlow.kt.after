@@ -1,6 +1,6 @@
 // WITH_STDLIB
 // FIX: Convert to 'let'
-// IGNORE_K1
+
 class User(val name: String) {
     fun riskyOperation(): String {
         if (name.isEmpty()) throw IllegalStateException("Invalid user")

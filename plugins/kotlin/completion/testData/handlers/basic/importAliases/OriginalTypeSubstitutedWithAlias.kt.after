@@ -8,5 +8,5 @@ class Holder {
 
 fun foo(): AliasedClass<caret>
 
-// IGNORE_K1
+
 // ELEMENT: "OriginalClass"

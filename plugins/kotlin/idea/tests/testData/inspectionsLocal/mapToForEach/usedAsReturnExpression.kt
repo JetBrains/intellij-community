@@ -6,4 +6,4 @@ fun main() {
     val x: List<Unit> = foo(listOf(1, 2, 3))
 }
 
-// IGNORE_K1
+

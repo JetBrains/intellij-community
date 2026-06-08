@@ -4,7 +4,7 @@
 // LANGUAGE_VERSION: 2.3
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // COMPILER_ARGUMENTS: -Xexplicit-context-arguments
-// IGNORE_K1
+
 context(x: String)
 fun foo2(a: String): String {
     return x + a

@@ -1,12 +1,12 @@
 // FILE: before.kt
-// IGNORE_K1
+
 fun some() {
     do {
         <caret>break
     } while (true)
 }
 // FILE: after.kt
-// IGNORE_K1
+
 fun some() {
     do {
         break

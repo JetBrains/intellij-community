@@ -2,7 +2,7 @@
 // "Import operator 'Some.component1'" "true"
 // WITH_STDLIB
 // ERROR: Function 'component1()' is ambiguous for this expression: <br>public operator fun Base1.component1(): Int defined in base in file third.kt<br>public operator fun Base2.component1(): Int defined in base in file third.kt
-// IGNORE_K1
+
 
 package testing
 
@@ -47,7 +47,7 @@ operator fun Base2.component1(): Int = 10
 // "Import operator 'Some.component1'" "true"
 // WITH_STDLIB
 // ERROR: Function 'component1()' is ambiguous for this expression: <br>public operator fun Base1.component1(): Int defined in base in file third.kt<br>public operator fun Base2.component1(): Int defined in base in file third.kt
-// IGNORE_K1
+
 
 package testing
 

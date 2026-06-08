@@ -8,7 +8,7 @@
 // ERROR: 'public' function exposes its 'private-in-file' parameter type PrivateType
 // K2_ERROR: 'public' function exposes its 'private-in-file' parameter type 'PrivateType'.
 // K2_AFTER_ERROR: 'public' function exposes its 'private-in-file' parameter type 'PrivateType'.
-// IGNORE_K1
+
 
 private class PrivateType
 

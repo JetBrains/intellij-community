@@ -1,6 +1,6 @@
 import kotlin.reflect.KProperty
 // PROBLEM: none
-// IGNORE_K1
+
 
 fun main() {
     println("test's property: " + Test("initial foo").property)

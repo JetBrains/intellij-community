@@ -8,4 +8,3 @@ class B<caret>() {
     }
 }
 
-// IGNORE_K1

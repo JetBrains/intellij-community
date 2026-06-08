@@ -1,6 +1,6 @@
 // "Add remaining branches" "true"
 // COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
-// IGNORE_K1
+
 package usage
 
 import other.Color

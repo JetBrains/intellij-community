@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 fun Int.bar() = this * 2
 

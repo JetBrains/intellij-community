@@ -3,4 +3,3 @@ fun test(account: JavaAccount, email: String, password: String, flags: Int?, bac
 }
 
 // EXIST:  { "itemText": "password, flags" }
-// IGNORE_K1

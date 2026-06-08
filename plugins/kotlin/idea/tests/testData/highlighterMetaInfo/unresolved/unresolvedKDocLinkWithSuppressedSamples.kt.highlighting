@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// IGNORE_K1
+
 // HIGHLIGHT_WARNINGS
 // TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.kdoc.KDocUnresolvedReferenceInspection
 // REGISTRY: kotlin.kdoc.should.report.samples false

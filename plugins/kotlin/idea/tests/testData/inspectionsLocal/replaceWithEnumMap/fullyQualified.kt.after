@@ -7,4 +7,3 @@ enum class E {
 
 fun getMap(): Map<E, String> = EnumMap(E::class.java)
 
-// IGNORE_K1

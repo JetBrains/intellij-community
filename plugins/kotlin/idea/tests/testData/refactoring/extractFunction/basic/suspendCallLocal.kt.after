@@ -8,4 +8,3 @@ suspend fun test() {
     val m = i()
 }
 
-// IGNORE_K1

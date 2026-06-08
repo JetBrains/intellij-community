@@ -26,4 +26,3 @@ fun Box<String, Number, String>.extensionTyped2() {}
 
 // RUNTIME_TYPE: Box
 
-// IGNORE_K1

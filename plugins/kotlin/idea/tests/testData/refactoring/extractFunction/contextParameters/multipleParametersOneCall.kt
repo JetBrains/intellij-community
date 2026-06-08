@@ -6,4 +6,3 @@ fun foo() {
 
 context(x: String, y: Int)
 fun bar(z: Boolean) {}
-// IGNORE_K1

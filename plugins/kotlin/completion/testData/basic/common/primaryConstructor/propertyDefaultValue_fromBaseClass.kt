@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 class X(
     val property: Int = base<caret>,

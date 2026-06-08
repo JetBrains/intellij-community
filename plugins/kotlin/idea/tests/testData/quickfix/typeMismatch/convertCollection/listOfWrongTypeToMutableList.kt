@@ -5,4 +5,3 @@ fun foo() {
     val list: MutableList<String> = list<caret>Of(1)
 }
 
-// IGNORE_K1

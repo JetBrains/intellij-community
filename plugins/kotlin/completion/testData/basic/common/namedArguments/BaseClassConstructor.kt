@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 abstract class Base(
     fooFirst: Int,
     fooSecond: Int,

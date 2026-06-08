@@ -37,4 +37,3 @@ class Derived : Intermediate() {
 
 
 // RUNTIME_TYPE: Derived
-// IGNORE_K1

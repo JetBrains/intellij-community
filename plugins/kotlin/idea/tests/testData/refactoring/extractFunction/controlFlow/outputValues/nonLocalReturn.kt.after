@@ -8,4 +8,4 @@ private fun bool(): Boolean = loop {
     return true
 }
 
-// IGNORE_K1
+

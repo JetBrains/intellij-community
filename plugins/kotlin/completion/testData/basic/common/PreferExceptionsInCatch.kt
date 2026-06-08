@@ -15,4 +15,3 @@ fun test() {
 // EXIST: ANotException
 // EXIST: CNotException
 
-// IGNORE_K1

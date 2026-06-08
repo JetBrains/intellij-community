@@ -8,4 +8,3 @@ enum class E(val value: String) {
     }
 }
 
-// IGNORE_K1

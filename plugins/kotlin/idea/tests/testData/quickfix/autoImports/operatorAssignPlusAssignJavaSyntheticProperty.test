@@ -1,6 +1,6 @@
 // FILE: first.before.kt
 // "Import operator 'Box.plusAssign'" "true"
-// IGNORE_K1
+
 
 package testing
 
@@ -29,7 +29,7 @@ operator fun <T> Box<T>.plusAssign(value: T) {}
 
 // FILE: first.after.kt
 // "Import operator 'Box.plusAssign'" "true"
-// IGNORE_K1
+
 
 package testing
 

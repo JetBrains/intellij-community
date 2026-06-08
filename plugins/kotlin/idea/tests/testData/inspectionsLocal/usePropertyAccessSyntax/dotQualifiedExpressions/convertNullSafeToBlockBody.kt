@@ -1,5 +1,5 @@
 // FIX: Use property access syntax
-// IGNORE_K1
+
 /* For K1, the conversion returns
 fun a(foo: Foo?): Unit? {
     return foo?.setFoo(1)

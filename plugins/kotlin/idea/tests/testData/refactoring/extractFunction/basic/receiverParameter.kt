@@ -25,4 +25,3 @@ fun Simple.test(text: String): String {
         append(".")</selection>
     }
 }
-// IGNORE_K1

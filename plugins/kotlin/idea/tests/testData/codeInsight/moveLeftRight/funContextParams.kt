@@ -6,4 +6,3 @@ class A {
     fun foo() {
     }
 }
-// IGNORE_K1

@@ -7,4 +7,3 @@ class CtorChain(val pi: Int) {
     constructor() : this(0)
     constructor(ps: String) : this(f<caret>oo())
 }
-// IGNORE_K1

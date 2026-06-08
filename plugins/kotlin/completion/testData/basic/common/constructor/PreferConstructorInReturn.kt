@@ -17,4 +17,3 @@ fun create(): FramePrefixViewModel {
 // EXIST: FramePrefixViewModelB
 // EXIST: FramePrefixViewPodel
 // NOTHING_ELSE
-// IGNORE_K1

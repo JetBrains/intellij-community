@@ -9,5 +9,5 @@ class Derived : Base {
     override fun implicitFunReturnType() = ret<caret>urn 1
 }
 
-// IGNORE_K1
+
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

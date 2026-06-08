@@ -9,4 +9,3 @@ fun nextId(): Int {
 
 fun test() {
 }
-// IGNORE_K1

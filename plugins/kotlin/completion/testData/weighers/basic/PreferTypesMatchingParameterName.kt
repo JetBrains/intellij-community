@@ -9,7 +9,7 @@ fun test() {
 
 }
 
-// IGNORE_K1
+
 // ORDER: SomeMatchingClass
 // ORDER: SomeAUnrelatedClass
 // ORDER: SomeZUnrelatedClass

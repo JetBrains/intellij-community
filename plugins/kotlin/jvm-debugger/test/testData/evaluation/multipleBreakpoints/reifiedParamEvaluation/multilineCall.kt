@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 inline fun <reified T> bar(x: Int, y: Int): Int {
     //Breakpoint!

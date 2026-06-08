@@ -6,4 +6,4 @@
 fun test(j: J) {
     j.set<selection><caret></selection>Foo(a)
 }
-// IGNORE_K1
+

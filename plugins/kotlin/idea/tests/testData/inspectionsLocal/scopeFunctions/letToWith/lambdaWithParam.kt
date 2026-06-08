@@ -1,6 +1,6 @@
 // WITH_STDLIB
 // FIX: Convert to 'with'
-// IGNORE_K1
+
 
 fun main() {
     val text: String = "Kotlin"

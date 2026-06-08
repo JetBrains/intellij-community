@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 // COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
-// IGNORE_K1
+
 
 context(ctxB: String, ctxA: Int)
 fun foo(valueB: Long, valueA: Double) {}

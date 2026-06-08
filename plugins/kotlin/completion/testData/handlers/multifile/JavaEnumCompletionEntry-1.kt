@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 fun foo() {
 
     FOO_BAR_ENUM<caret>

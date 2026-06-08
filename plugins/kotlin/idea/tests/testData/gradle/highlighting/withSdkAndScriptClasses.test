@@ -37,7 +37,7 @@ tasks.register("generateModuleInfo") {
 include("module1")
 
 // FILE: build.gradle.kts.highlighting
-// IGNORE_K1
+
 <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>plugins<!> {
     <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'")!>`kotlin-dsl`<!>
 }

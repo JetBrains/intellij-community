@@ -1,5 +1,5 @@
 // PROBLEM: none
-// IGNORE_K1
+
 
 class Foo {
     var foo: Int = 1

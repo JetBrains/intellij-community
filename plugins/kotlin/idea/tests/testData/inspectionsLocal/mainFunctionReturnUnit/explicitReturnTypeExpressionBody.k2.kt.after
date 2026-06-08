@@ -3,4 +3,3 @@
 fun main(args: Array<String>): Unit = 1
 
 // For K1, the function name is highlighted instead of the return type
-// IGNORE_K1

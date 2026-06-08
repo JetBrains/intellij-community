@@ -1,7 +1,7 @@
 // "Surround call with 'with'" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
 // API_VERSION: 2.1
-// IGNORE_K1
+
 // DISABLE_K2_ERRORS
 // QuickFix produces red code with caret position to fill missing argument
 context(i: Int, s: String) fun bar() {}

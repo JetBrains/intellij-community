@@ -7,4 +7,3 @@
 fun m {
     FooBar.Instance.FOO_BAR.fooBar { "<caret>" }
 }
-// IGNORE_K1

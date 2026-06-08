@@ -24,4 +24,4 @@ val element: Base = <caret>
 // EXIST: RightDerived
 // EXIST: { "lookupString": "object", "itemText": "object : LeftDerived(){...}" }
 // EXIST: { "lookupString": "object", "itemText": "object : RightDerived(){...}" }
-// IGNORE_K1
+

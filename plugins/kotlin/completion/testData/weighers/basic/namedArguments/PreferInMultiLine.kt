@@ -16,4 +16,3 @@ fun foo(somePrefixValue: Int, somePrefixUnrelated: String) {
 // ORDER: somePrefixB =
 // ORDER: somePrefixValue
 // ORDER: somePrefixUnrelated
-// IGNORE_K1

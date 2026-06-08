@@ -13,4 +13,3 @@ class MemberExtract2 {
         println(mainVar + mainFun() + compVar + compFun())
     }
 }
-// IGNORE_K1

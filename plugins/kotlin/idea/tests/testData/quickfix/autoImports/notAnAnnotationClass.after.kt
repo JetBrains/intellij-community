@@ -1,5 +1,5 @@
 // "Import class 'Test'" "true"
-// IGNORE_K1
+
 package b
 
 import testing.Test

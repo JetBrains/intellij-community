@@ -12,4 +12,4 @@ private fun __dummyTestFun__() {
     bar(b)
 }
 
-// IGNORE_K1
+

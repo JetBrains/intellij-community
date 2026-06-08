@@ -1,6 +1,6 @@
 // FIR_COMPARISON
 // FIR_IDENTICAL
-// IGNORE_K1
+
 
 class A(val xxx: Int) {
     class Nested

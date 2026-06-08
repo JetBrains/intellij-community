@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 private operator fun <E> Array<E>.component6():E = this[5]
 private operator fun <E> Array<E>.<caret>component7():E = this[5]
 

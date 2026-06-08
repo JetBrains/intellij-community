@@ -7,4 +7,3 @@ fun foo() {
     dep.MyClass<caret>.fromCompanion()
 }
 
-// IGNORE_K1

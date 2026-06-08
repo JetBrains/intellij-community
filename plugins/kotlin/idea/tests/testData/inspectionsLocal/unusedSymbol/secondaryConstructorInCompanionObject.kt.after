@@ -1,7 +1,7 @@
 // FIX: Safe delete secondary constructor 'Companion'
 // K2_ERROR: Objects cannot have constructors.
 // K2_ERROR: Unresolved reference 'Companion'.
-// IGNORE_K1
+
 
 class X(val x: Int) {
     companion object {

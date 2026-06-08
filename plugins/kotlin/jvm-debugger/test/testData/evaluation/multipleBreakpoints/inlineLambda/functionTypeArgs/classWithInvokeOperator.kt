@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 class X: Function1<Int, Int> {
     override operator fun invoke(x: Int) = x * 2

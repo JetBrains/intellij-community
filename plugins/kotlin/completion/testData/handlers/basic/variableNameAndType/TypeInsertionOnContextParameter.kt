@@ -13,4 +13,4 @@ fun foo() {
 }
 
 // ELEMENT_TEXT: foo: Foo
-// IGNORE_K1
+

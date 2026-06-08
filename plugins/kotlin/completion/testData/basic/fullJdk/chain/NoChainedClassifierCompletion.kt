@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // REGISTRY: kotlin.k2.chain.completion.enabled false
 
 fun main() {

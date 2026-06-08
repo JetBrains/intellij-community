@@ -2,5 +2,5 @@
 // K2_ERROR: Return type mismatch: expected 'String', actual 'Any'.
 val bar: Any = ""
 fun foo(): String = bar<caret>
-// IGNORE_K1
+
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeTypeQuickFixFactories$UpdateTypeQuickFix

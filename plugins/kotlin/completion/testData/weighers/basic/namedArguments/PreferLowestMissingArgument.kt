@@ -16,4 +16,3 @@ fun foo() {
 
 // ORDER: somePrefixC =
 // ORDER: somePrefixA =
-// IGNORE_K1

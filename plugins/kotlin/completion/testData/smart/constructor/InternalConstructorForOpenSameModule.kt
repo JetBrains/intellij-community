@@ -4,4 +4,4 @@ var a : Foo = <caret>
 
 // EXIST: Foo
 // EXIST: object
-// IGNORE_K1
+

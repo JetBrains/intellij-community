@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 fun main() {
     X().bar()

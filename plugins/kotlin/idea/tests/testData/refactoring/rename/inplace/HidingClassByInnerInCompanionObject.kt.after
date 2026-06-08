@@ -9,4 +9,3 @@ open class A {
         val c : C = C()
     }
 }
-// IGNORE_K1

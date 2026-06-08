@@ -2,4 +2,3 @@ fun String.foo(i: I, string: String = lowercase()) {
     i.consume(this)
 }
 
-// IGNORE_K1

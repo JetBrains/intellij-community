@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 fun foo(n: Int) {
     when (n) {
         1 -> {

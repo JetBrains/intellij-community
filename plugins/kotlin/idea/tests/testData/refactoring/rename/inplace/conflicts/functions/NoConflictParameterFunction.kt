@@ -7,4 +7,4 @@ sealed interface Suggestion {
 
 fun value(va<caret>lue1: Boolean?) = if (value1 == null) Suggestion.NO else value(value1)
 fun value(value: Boolean) = if (value) Suggestion.YES else Suggestion.NO
-// IGNORE_K1
+

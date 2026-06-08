@@ -7,4 +7,3 @@ fun foo(arg: Any) {
     }
 }
 
-// IGNORE_K1

@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 fun main() {
     fun localFun(x: Int) = x * 2

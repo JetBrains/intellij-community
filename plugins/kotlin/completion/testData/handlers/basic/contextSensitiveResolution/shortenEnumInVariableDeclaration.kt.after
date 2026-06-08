@@ -9,5 +9,5 @@ fun test() {
 }
 
 // ELEMENT: RED
-// IGNORE_K1
+
 // COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution

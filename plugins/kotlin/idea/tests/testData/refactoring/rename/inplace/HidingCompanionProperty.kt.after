@@ -13,4 +13,3 @@ private class A {
         private val m = ""
     }
 }
-// IGNORE_K1

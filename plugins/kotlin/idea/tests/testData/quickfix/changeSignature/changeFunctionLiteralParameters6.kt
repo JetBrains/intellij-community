@@ -1,6 +1,6 @@
 // "Change the signature of lambda expression" "true"
 // DISABLE_ERRORS
-// IGNORE_K1
+
 fun <T> test(f: (T, T) -> T) {}
 fun m() { test { x: String<caret> -> s.substring(42) } }
 

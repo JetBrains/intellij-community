@@ -4,4 +4,3 @@ val a: <caret>
 
 // ELEMENT: Foo
 // TYPE_AFTER_COMPLETED: Fo
-// IGNORE_K1

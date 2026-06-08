@@ -11,4 +11,3 @@ fun main() {
     ClassName().printLabelProperty()
 }
 
-// IGNORE_K1

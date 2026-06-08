@@ -12,4 +12,3 @@ context(<caret>a: String)
 fun bar() {
     println(p)
 }
-// IGNORE_K1

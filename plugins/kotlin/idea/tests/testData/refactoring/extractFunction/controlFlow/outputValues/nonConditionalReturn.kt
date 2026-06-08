@@ -13,4 +13,3 @@ class Foobar {
     }
 }
 
-// IGNORE_K1

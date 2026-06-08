@@ -8,4 +8,3 @@ fun bar() {
     foo <selection>{ it.isBlank() }</selection>
 }
 
-// IGNORE_K1

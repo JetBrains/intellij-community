@@ -1,5 +1,5 @@
 // WITH_COROUTINES
-// IGNORE_K1
+
 // PROBLEM: none
 package test
 

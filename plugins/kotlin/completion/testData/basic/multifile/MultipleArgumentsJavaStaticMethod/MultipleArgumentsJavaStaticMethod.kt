@@ -3,4 +3,3 @@ fun test(email: String, password: String, flags: Int, backupEmail: String) {
 }
 
 // EXIST:  { "itemText": "email, password, flags" }
-// IGNORE_K1

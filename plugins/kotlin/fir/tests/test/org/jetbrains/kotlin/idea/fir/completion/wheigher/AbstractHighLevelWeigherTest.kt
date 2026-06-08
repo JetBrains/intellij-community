@@ -20,12 +20,6 @@ abstract class AbstractHighLevelWeigherTest : AbstractBasicCompletionWeigherTest
 
     override fun fileName(): String = k2FileName(super.fileName(), testDataDirectory, IgnoreTests.FileExtension.FIR)
 
-    override fun executeTest(test: () -> Unit) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2, ".after") {
-            test()
-        }
-    }
-
     override fun tearDown() {
         runAll(
             { project.invalidateCaches() },

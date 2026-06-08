@@ -1,5 +1,5 @@
 // COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
-// IGNORE_K1
+
 package test
 
 class MyColor(val name: String) {

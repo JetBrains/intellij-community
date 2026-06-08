@@ -10,4 +10,3 @@ fun function(parent: Parent?) = if (parent =<caret>= null) {
     parent.child?.toString().orEmpty()
 }
 
-// IGNORE_K1

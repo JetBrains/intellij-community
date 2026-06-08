@@ -15,4 +15,4 @@ fun foo(x: Int): String {
     return ""
 }
 
-// IGNORE_K1
+

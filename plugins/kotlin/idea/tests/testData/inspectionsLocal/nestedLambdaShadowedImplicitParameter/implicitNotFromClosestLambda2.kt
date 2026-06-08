@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // FIX: Replace 'it' with explicit parameter
 
 fun foo(f: (String) -> Unit) {}

@@ -4,4 +4,3 @@ fun rec(<caret>x: Int, n: Int): Int =
 fun test() {
     rec(0, 5)
 }
-// IGNORE_K1

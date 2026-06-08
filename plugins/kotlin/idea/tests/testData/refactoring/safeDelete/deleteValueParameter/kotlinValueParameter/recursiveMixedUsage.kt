@@ -6,4 +6,3 @@ fun mixed(<caret>x: Int, n: Int): Int {
 fun test() {
     mixed(42, 5)
 }
-// IGNORE_K1

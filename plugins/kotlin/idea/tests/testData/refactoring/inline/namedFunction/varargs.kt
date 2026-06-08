@@ -5,4 +5,3 @@ fun main(args: Array<String>) {
     val foundElement = list.firstOrNull { it: Int -> it > 3 }
 }
 
-// IGNORE_K1

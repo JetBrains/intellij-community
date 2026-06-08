@@ -9,4 +9,3 @@ fun findClasses() {
 
 private fun klass(classloader: ClassLoader?): KClass<out Any>? = classloader?.loadClass("")?.kotlin
 
-// IGNORE_K1

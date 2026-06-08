@@ -16,4 +16,3 @@ fun reproduceIssue() {
     val (x, y) = <caret>OptInData("1", "2")
 }
 
-// IGNORE_K1

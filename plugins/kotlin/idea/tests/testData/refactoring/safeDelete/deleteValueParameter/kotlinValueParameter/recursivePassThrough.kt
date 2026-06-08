@@ -4,4 +4,3 @@ fun fibu(<caret>unused: Int, n: Int): Int =
 fun test() {
     fibu(0, 5)
 }
-// IGNORE_K1

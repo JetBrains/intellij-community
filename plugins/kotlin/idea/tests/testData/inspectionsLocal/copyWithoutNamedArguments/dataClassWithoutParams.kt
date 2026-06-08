@@ -10,4 +10,3 @@ fun bar(f: Foo) {
     f.co<caret>py("")
 }
 
-// IGNORE_K1

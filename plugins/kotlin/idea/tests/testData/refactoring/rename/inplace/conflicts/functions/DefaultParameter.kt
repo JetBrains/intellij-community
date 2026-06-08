@@ -8,4 +8,4 @@ fun test() {
     f()
     b()
 }
-// IGNORE_K1
+

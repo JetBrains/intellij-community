@@ -30,4 +30,4 @@ fun foo(input: String): String {
     }))
 }
 
-// IGNORE_K1
+

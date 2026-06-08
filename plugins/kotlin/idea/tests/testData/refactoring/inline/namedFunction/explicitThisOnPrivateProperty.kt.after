@@ -7,4 +7,3 @@ fun main() {
     println(ClassName().labelProperty)
 }
 
-// IGNORE_K1

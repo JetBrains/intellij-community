@@ -11,4 +11,3 @@ fun test() {
 
 // EXIST: { itemText: "foo: Foo" }
 // EXIST: { itemText: "foo: BarFoo" }
-// IGNORE_K1

@@ -7,4 +7,3 @@ fun <T> mapOnce(v: T, t: <selection>(T) -> T</selection>): T {
 
 
 
-// IGNORE_K1

@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 enum class E {
     A, B, C, D
 }

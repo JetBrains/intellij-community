@@ -9,4 +9,3 @@ fun main() {
     val i = <caret>I<String> { xs -> test(xs) }
 }
 
-// IGNORE_K1

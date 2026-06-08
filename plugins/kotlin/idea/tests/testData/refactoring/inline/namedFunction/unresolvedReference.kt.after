@@ -5,4 +5,4 @@ val result = run {
     "bar"
 }
 
-// IGNORE_K1
+

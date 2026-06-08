@@ -4,4 +4,3 @@
 val p: String<caret>
     get() = return "42"
 
-// IGNORE_K1

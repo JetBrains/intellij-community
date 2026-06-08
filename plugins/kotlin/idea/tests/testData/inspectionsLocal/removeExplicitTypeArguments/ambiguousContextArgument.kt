@@ -11,4 +11,3 @@ fun baz() {
     foo<Str<caret>ing> { "1" }
 }
 
-// IGNORE_K1

@@ -9,4 +9,3 @@ fun bar(b: String) {
     foo(b)
 }
 
-// IGNORE_K1

@@ -5,7 +5,7 @@
 // ACTION: Enable a trailing comma by default in the formatter
 // ACTION: Make 'PrivateType' public
 // ACTION: Move to class body
-// IGNORE_K1
+
 // ERROR: 'public' function exposes its 'private-in-file' parameter type PrivateType
 // K2_ERROR: 'public' function exposes its 'private-in-file' parameter type 'PrivateType'.
 

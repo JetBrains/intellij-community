@@ -12,4 +12,3 @@ fun test(nonNullable: JavaClass, nullable: JavaClass?) {
 // EXIST: A
 // EXIST: Z
 // EXIST: null
-// IGNORE_K1

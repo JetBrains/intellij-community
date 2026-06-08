@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 class X {
     fun bar(x: Int) = x * 2

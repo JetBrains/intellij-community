@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// IGNORE_K1
+
 sealed interface SEALED
 class AAAA: SEALED()
 object BBBB: SEALED()

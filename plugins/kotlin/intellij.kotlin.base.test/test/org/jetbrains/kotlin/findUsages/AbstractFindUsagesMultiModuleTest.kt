@@ -30,7 +30,7 @@ abstract class AbstractFindUsagesMultiModuleTest : AbstractMultiModuleTest() {
     open fun doTest(path: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(
           getTestdataFile().toPath().resolve("directives.txt"),
-          IgnoreTests.DIRECTIVES.IGNORE_K1,
+          IgnoreTests.DIRECTIVES.IGNORE_K2,
           directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
         ) {
             doTestInternal(path)

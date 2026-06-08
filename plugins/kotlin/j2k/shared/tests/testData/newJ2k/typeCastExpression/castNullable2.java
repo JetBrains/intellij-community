@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 public class TestCastAndCheckForNull {
     public String foo() {
         String s = (String) bar();

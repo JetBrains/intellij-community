@@ -1,5 +1,5 @@
 // FILE: before.kt
-// IGNORE_K1
+
 inline fun outer(f: () -> Unit) {
     f()
 }
@@ -16,7 +16,7 @@ fun main() {
     }
 }
 // FILE: after.kt
-// IGNORE_K1
+
 inline fun outer(f: () -> Unit) {
     f()
 }

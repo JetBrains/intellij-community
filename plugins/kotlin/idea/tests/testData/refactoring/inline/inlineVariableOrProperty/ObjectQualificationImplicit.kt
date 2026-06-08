@@ -12,4 +12,3 @@ object StandAloneContext {
 fun koin() {
     val i = stop<caret>Koin
 }
-// IGNORE_K1

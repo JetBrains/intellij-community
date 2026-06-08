@@ -1,6 +1,6 @@
 // "Add context parameter to function" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
-// IGNORE_K1
+
 // K2_ERROR: No context argument for 'i: Int' found.
 context(i: Int) fun String.bar() {}
 

@@ -9,4 +9,3 @@ val a: Test = <caret>
 // EXIST: other
 // EXIST: Test
 // EXIST: object
-// IGNORE_K1

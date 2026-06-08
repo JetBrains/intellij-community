@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 data class TestClass1(@java.lang.Deprecated val pctorfield: Int) {
     constructor(@java.lang.Deprecated param: Int, param2: String) : this(param)
 }

@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // COMPILER_ARGUMENTS: -XXLanguage:+DataClassCopyRespectsConstructorVisibility
 // "Remove annotation" "true"
 @ConsistentCopyVisibility<caret>

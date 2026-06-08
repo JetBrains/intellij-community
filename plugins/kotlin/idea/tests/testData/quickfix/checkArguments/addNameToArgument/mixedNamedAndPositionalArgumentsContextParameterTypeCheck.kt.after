@@ -1,5 +1,5 @@
 // "Add name to argument: 'x = "Hello"'" "true"
-// IGNORE_K1
+
 // LANGUAGE_VERSION: 2.2
 // COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
 // K2_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.

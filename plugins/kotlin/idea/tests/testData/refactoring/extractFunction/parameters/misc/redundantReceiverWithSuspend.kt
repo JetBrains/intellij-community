@@ -8,4 +8,3 @@ private class C {
     }
 }
 
-// IGNORE_K1

@@ -34,7 +34,7 @@ abstract class AbstractCompletionWeigherTest(val completionType: CompletionType,
     }
 
     open fun executeTest(test: () -> Unit) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K1, ".after") {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.IGNORE_K2, ".after") {
             test()
         }
     }

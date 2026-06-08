@@ -12,4 +12,3 @@ private class A {
         println(this@A.m)
     }
 }
-// IGNORE_K1

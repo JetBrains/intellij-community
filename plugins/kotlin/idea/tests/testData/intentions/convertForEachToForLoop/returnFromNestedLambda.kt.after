@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// IGNORE_K1
+
 fun main() {
     val items = listOf("a", "b", "c")
 

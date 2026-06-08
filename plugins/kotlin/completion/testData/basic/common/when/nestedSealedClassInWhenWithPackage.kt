@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// IGNORE_K1
+
 package a.b.c
 
 sealed class SEALED {

@@ -12,4 +12,3 @@ fun m() {
     <selection>bar(i)</selection>
 }
 
-// IGNORE_K1

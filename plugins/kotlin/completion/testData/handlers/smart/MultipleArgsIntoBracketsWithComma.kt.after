@@ -8,4 +8,3 @@ fun bar(b: String, a: Int, c: String) {
 }
 
 // ELEMENT: "a, b, c"
-// IGNORE_K1

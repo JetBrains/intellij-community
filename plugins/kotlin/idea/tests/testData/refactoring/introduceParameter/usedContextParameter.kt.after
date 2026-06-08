@@ -12,4 +12,4 @@ fun foo(i: Int) {
 context(s: String)
 fun bar() {}
 
-// IGNORE_K1
+

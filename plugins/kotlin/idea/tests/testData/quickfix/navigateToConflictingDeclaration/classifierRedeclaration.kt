@@ -4,7 +4,7 @@
 // K2_ERROR: Redeclaration:<br>class MyClass : Any
 // K2_AFTER_ERROR: Redeclaration:<br>class MyClass : Any
 // K2_AFTER_ERROR: Redeclaration:<br>class MyClass : Any
-// IGNORE_K1
+
 package test
 
 class MyClass<caret> {}

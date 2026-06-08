@@ -6,4 +6,3 @@ fun foo() {
     }
 }
 
-// IGNORE_K1

@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 fun main() {
     X(10, 100).foo1 { 1 }

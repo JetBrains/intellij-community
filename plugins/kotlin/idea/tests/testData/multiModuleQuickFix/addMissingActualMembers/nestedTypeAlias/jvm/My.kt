@@ -3,4 +3,3 @@
 
 actual class <caret>My
 
-// IGNORE_K1

@@ -1,6 +1,6 @@
 // PROBLEM: Nullable value 'hashCode()' can be simplified
 // FIX: Use 'hashCode()' extension on a nullable receiver
-// IGNORE_K1
+
 // WITH_STDLIB
 
 class WithHashCode(private val value: Int) {

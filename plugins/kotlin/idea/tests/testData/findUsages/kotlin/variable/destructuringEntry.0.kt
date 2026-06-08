@@ -1,6 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 // OPTIONS: usages
-// IGNORE_K1
+
 // CRI_IGNORE
 // COMPILER_ARGUMENTS: -Xname-based-destructuring=only-syntax
 

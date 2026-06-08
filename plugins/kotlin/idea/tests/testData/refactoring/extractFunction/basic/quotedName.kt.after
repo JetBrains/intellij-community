@@ -19,4 +19,3 @@ private fun people(): List<Person> {
     )
     return `⍼`
 }
-// IGNORE_K1

@@ -13,4 +13,4 @@ fun someFun(list: List<Holder>) {
 
 private fun i(holder: Holder): Int = holder.foo.wrapper().length
 
-// IGNORE_K1
+

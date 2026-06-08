@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// IGNORE_K1
+
 // COMPILER_ARGUMENTS: -Xwhen-guards
 
 private fun test(s: Any) {

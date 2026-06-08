@@ -8,5 +8,5 @@ class Foo {
     fun c() = println(bar!!)
 }
 
-// IGNORE_K1
+
 // FUS_K2_QUICKFIX_NAME: com.intellij.codeInsight.daemon.impl.actions.FixAllHighlightingProblems

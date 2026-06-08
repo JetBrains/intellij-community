@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 sealed interface Foo {
 

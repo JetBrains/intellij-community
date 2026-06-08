@@ -2,4 +2,3 @@
 
 val x = Int::toString
 
-// IGNORE_K1

@@ -17,4 +17,3 @@ context(param: String)
 private fun MyFormatter.string(): String = with(this) {
     return p.format("Value: $param")
 }
-// IGNORE_K1

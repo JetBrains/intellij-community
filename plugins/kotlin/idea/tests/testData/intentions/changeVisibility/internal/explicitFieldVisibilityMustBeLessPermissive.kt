@@ -7,4 +7,3 @@ class A {
         field = mutableListOf()
 }
 
-// IGNORE_K1

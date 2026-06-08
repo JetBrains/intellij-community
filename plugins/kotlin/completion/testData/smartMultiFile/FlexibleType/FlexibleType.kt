@@ -4,4 +4,3 @@ fun test() {
 
 // EXIST: JavaClass
 // EXIST: null
-// IGNORE_K1

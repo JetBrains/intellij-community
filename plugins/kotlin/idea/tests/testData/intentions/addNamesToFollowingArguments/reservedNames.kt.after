@@ -1,5 +1,5 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters -XXLanguage:+ExplicitContextArguments
-// IGNORE_K1
+
 // PRIORITY: LOW
 // K2_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.
 // K2_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.

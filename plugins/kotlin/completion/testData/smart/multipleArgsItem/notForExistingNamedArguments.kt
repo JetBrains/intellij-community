@@ -8,4 +8,3 @@ fun foo() {
 
 // ABSENT: "b, c"
 // ABSENT: "a, b, c"
-// IGNORE_K1

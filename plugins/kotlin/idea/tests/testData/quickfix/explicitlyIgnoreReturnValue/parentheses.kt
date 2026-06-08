@@ -6,5 +6,5 @@ fun returnsInt(): Int = 42
 fun mixedTest() {
     ((<caret>returnsInt()))
 }
-// IGNORE_K1
+
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.NoReturnValueFactory$UnderscoreValueFix

@@ -10,4 +10,3 @@ fun foo(o: Any) {
 
 
 // RUNTIME_TYPE: java.util.concurrent.locks.ReentrantReadWriteLock
-// IGNORE_K1

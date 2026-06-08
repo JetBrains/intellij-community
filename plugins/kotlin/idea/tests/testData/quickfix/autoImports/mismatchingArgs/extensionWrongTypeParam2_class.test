@@ -1,7 +1,7 @@
 // FILE: first.before.kt
 // "Import class 'Foo'" "true"
 // ERROR: Not enough information to infer type variable T
-// IGNORE_K1
+
 package pack_one
 
 class Foo<T>
@@ -18,7 +18,7 @@ class Foo
 // FILE: first.after.kt
 // "Import class 'Foo'" "true"
 // ERROR: Not enough information to infer type variable T
-// IGNORE_K1
+
 package pack_one
 
 import pack_one.sub.Foo

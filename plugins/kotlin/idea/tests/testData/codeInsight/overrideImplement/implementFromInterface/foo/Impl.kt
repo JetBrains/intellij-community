@@ -6,4 +6,3 @@ abstract class A {
 
 
 // MEMBER_K2: "foo(): Unit"
-// IGNORE_K1

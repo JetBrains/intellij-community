@@ -12,4 +12,3 @@ class B {
 
 }
 
-// IGNORE_K1

@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 interface I
 
 class A : I {

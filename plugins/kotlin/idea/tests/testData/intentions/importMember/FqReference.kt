@@ -6,4 +6,3 @@ fun test() {
     val otherList = java.util.ArrayList<String>()
 }
 
-// IGNORE_K1

@@ -1,6 +1,6 @@
 // PROBLEM: none
 // WITH_STDLIB
-// IGNORE_K1
+
 
 import kotlin.reflect.typeOf
 

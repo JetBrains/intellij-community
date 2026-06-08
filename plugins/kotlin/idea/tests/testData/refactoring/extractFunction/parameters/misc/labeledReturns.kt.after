@@ -8,4 +8,3 @@ private fun i(): Int = run {
     return 1
 }
 
-// IGNORE_K1

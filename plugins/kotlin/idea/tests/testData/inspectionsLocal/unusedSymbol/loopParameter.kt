@@ -1,5 +1,5 @@
 // FIX: none
-// IGNORE_K1
+
 class Foo {
     fun foo(upper: Int) {
         var target:String = ""

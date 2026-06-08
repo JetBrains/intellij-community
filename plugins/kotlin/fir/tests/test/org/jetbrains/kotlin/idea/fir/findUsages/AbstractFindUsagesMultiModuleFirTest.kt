@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.idea.fir.findUsages
 
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesMultiModuleTest
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.util.invalidateCaches
 
@@ -18,14 +17,4 @@ abstract class AbstractFindUsagesMultiModuleFirTest : AbstractFindUsagesMultiMod
     }
 
     override val ignoreLog: Boolean = true
-
-    override fun doTest(path: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(
-            getTestdataFile().toPath().resolve("directives.txt"),
-            IgnoreTests.DIRECTIVES.IGNORE_K2,
-            directivePosition = IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE
-        ) {
-            super.doTestInternal(path)
-        }
-    }
 }

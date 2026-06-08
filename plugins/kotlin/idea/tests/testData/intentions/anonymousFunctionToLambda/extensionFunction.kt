@@ -15,4 +15,3 @@ fun Bar.function2() {
     }
 }
 
-// IGNORE_K1

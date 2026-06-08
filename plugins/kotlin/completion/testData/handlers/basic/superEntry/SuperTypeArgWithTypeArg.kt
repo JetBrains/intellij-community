@@ -5,4 +5,3 @@ class Test : List<java.io.BufferedReader> {
 }
 
 // ELEMENT: BufferedReader
-// IGNORE_K1

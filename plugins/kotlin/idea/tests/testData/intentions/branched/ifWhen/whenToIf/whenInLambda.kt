@@ -9,4 +9,3 @@ fun foo(xs: List<Int>) {
     }
 }
 
-// IGNORE_K1

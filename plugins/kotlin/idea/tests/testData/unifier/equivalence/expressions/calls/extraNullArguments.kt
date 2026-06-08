@@ -1,4 +1,3 @@
-// IGNORE_K1
 // DISABLE_ERRORS
 fun bar(n: Int): Int = n + 1
 

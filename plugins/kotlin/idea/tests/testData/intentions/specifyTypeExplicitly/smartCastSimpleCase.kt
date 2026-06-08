@@ -3,4 +3,3 @@ fun foo(o: Any) {
     val s<caret> = o
 }
 // AFTER-WARNING: Variable 's' is never used
-// IGNORE_K1

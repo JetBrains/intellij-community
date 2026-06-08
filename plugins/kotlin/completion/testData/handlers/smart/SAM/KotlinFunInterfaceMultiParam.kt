@@ -7,4 +7,4 @@ var x: BiProcessor = <caret>
 // ELEMENT_TEXT: BiProcessor
 // TAIL_TEXT: " { a, b -> ... } (function: (String, Int) -> Boolean) (<root>)"
 
-// IGNORE_K1
+

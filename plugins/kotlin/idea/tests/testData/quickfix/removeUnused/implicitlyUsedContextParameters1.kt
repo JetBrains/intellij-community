@@ -11,4 +11,3 @@ context(myContext: Int)
 private val n: Int
     get() = 42
 
-// IGNORE_K1

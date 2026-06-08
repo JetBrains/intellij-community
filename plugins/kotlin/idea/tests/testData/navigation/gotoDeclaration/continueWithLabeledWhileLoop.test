@@ -1,5 +1,5 @@
 // FILE: before.kt
-// IGNORE_K1
+
 fun some() {
     outer@ while (true) {
         while (condition()) {
@@ -10,7 +10,7 @@ fun some() {
 
 fun condition() = true
 // FILE: after.kt
-// IGNORE_K1
+
 fun some() {
     outer@ <caret>while (true) {
         while (condition()) {

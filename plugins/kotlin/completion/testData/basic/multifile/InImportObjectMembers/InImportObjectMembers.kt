@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 package first
 
 import second.One.<caret>

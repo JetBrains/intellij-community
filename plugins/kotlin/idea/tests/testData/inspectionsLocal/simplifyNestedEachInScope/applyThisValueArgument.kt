@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // PROBLEM: none
 // WITH_STDLIB
 fun consumeList(list: List<Int>) = println(list)

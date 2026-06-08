@@ -1,7 +1,7 @@
 // FILE: first.before.kt
 // "Import" "false"
 // ERROR: Unresolved reference: Some
-// IGNORE_K1
+
 
 package test
 

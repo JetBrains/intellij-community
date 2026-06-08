@@ -5,5 +5,5 @@ fun foo(): MutableList<List<String>> {
     return list<caret>Of(listOf(""))
 }
 
-// IGNORE_K1
+
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceWithMutableCollectionFactoryFix

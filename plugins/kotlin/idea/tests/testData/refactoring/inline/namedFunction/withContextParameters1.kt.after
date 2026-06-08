@@ -6,4 +6,4 @@ fun foo() {
     a.length
 }
 
-// IGNORE_K1
+

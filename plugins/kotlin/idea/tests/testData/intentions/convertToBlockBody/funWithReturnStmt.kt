@@ -5,4 +5,4 @@
 
 fun <caret>foo() = return "42"
 
-// IGNORE_K1
+

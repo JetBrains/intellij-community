@@ -9,4 +9,3 @@ private fun string(): String? {
     return null
 }
 
-// IGNORE_K1

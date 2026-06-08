@@ -13,4 +13,3 @@ fun bar() {
         foo()
     }
 }
-// IGNORE_K1

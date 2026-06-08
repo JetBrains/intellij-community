@@ -1,4 +1,3 @@
-// IGNORE_K1
 package p.q.r
 
 val b = <selection>unresolved</selection> + 1

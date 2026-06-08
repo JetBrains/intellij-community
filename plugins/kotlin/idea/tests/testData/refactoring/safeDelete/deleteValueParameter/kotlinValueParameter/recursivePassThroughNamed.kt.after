@@ -4,4 +4,3 @@ fun rec(n: Int): Int =
 fun test() {
     rec(5)
 }
-// IGNORE_K1

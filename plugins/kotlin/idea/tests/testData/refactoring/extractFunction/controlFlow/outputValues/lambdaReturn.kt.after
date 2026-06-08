@@ -6,4 +6,3 @@ private fun i(i: Int): Int = i.let {
     it
 }
 
-// IGNORE_K1

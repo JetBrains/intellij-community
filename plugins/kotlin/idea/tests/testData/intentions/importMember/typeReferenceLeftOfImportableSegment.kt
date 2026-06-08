@@ -18,4 +18,3 @@ fun test() {
     val ur: pack.name.Fix<caret>tures.Register.Domain.UserRepository? = null
 }
 
-// IGNORE_K1

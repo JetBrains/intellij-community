@@ -18,4 +18,3 @@ fun foo() {
 // ORDER: object
 // ORDER: OtherModifier
 // ORDER: LocalModifier
-// IGNORE_K1

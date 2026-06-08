@@ -14,4 +14,3 @@ fun bar() {
         }
     }.m()
 }
-// IGNORE_K1

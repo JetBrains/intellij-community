@@ -7,5 +7,5 @@ class C {
     fun foo(f: (Int, Int) -> Int) {}
 }
 
-// IGNORE_K1
+
 // the intention is inapplicable for K1, see the paired testNotApplicable_overloadResolutionAmbiguity2

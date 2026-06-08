@@ -5,4 +5,3 @@ context(s<caret>tr: String)
 fun foo(block: context(String) () -> Unit) {
     block()
 }
-// IGNORE_K1

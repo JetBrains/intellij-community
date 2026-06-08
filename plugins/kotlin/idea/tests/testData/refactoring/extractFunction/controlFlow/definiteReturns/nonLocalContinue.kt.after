@@ -15,4 +15,3 @@ private fun bool(i: Int): Boolean {
     return false
 }
 
-// IGNORE_K1

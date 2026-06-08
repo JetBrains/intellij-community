@@ -15,4 +15,4 @@ private fun A.__dummyTestFun__(b: B) {
     b.m()
 }
 
-// IGNORE_K1
+

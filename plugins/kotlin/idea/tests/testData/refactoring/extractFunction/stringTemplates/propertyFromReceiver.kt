@@ -6,4 +6,3 @@ internal fun KClass<*>.serializerNotRegistered(): Nothing {
     )
 }
 
-// IGNORE_K1

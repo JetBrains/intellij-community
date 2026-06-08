@@ -1,6 +1,6 @@
 // WITH_STDLIB
 // FIX: Convert to 'run'
-// IGNORE_K1
+
 class User(val name: String, val age: Int)
 
 fun test(user: User) {

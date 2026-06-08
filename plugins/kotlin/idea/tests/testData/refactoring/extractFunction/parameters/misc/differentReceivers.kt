@@ -7,4 +7,3 @@ fun foo(x: X, y: X) {
         println(y.field.hashCode())</selection>
     }
 }
-// IGNORE_K1

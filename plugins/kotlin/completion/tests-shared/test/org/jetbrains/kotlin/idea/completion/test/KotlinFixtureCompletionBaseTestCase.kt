@@ -72,7 +72,6 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
                         additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES
                                 + listOf(
                             IgnoreTests.DIRECTIVES.FIR_IDENTICAL, IgnoreTests.DIRECTIVES.IGNORE_K2,
-                            IgnoreTests.DIRECTIVES.IGNORE_K1
                         )
                                 + listOf(CONFIGURE_LIBRARY_PREFIX, "WITH_STDLIB")
                                 + listOf("PLATFORM:", "FILE:", "MAIN") // Supporting Multiplatform directives

@@ -19,4 +19,3 @@ fun test(
 // EXIST: SomePrefixANotExceptionValue
 // EXIST: SomePrefixCNotExceptionValue
 
-// IGNORE_K1

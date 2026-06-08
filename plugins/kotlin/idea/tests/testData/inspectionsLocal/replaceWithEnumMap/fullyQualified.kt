@@ -5,4 +5,3 @@ enum class E {
 
 fun getMap(): Map<E, String> = java.util.Hash<caret>Map()
 
-// IGNORE_K1

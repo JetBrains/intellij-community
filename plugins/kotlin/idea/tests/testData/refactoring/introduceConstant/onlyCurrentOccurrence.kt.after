@@ -10,4 +10,3 @@ fun foo(): Int {
     val z = "2"
     return i
 }
-// IGNORE_K1

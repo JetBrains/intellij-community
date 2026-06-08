@@ -4,7 +4,7 @@
 // AFTER-WARNING: Parameter 'x' is never used
 // AFTER-WARNING: Parameter 'y' is never used
 // AFTER-WARNING: Parameter 'a' is never used
-// IGNORE_K1
+
 // K2_ERROR: Argument already passed for this parameter.
 // K2_ERROR: No context argument for 'x: String' found.
 // K2_ERROR: No context argument for 'y: Int' found.

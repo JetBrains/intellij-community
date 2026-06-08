@@ -10,4 +10,3 @@ fun nextId(): Int {
 fun test() {
     val a<caret> = nextId()
 }
-// IGNORE_K1

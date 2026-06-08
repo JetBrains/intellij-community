@@ -6,4 +6,3 @@ fun testInvokeJs(d: DummyClass002) {
     d.invoke()
 }
 
-// IGNORE_K1

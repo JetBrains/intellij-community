@@ -1,6 +1,6 @@
 // WITH_STDLIB
 // FIX: none
-// IGNORE_K1
+
 
 open class A
 

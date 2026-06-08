@@ -28,4 +28,3 @@ fun String.extensionNonApplicable() {}
 
 // RUNTIME_TYPE: java.util.concurrent.CompletableFuture
 
-// IGNORE_K1

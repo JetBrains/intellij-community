@@ -82,4 +82,3 @@ fun main() {
 // RESULT: 9: I
 
 // See KTIJ-32493
-// IGNORE_K1

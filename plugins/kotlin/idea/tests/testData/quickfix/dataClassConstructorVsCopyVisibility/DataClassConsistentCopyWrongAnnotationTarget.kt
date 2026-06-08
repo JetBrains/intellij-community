@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // "Remove annotation" "true"
 // K2_ERROR: '@ConsistentCopyVisibility' and '@ExposedCopyVisibility' can only be applied to data classes.
 @ConsistentCopyVisibility<caret>

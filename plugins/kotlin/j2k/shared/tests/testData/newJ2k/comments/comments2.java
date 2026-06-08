@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 package foo;
 
 class A {

@@ -7,4 +7,3 @@ class Bar {
 }
 
 // ELEMENT: object
-// IGNORE_K1

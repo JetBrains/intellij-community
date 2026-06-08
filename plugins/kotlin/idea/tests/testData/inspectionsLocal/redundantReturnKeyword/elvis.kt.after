@@ -4,4 +4,4 @@ fun test(value: String?): String {
     return value ?: "default"
 }
 
-// IGNORE_K1
+

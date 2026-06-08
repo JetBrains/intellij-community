@@ -4,4 +4,3 @@ fun foo(): Any {
 
     return any<caret>()
 }
-// IGNORE_K1

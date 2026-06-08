@@ -1,6 +1,5 @@
 import java.util.function.Function
 
-// IGNORE_K1
 
 abstract class KotlinClass<T>(
     val propertyWithFlexibleDnnImplicitType: Function<String, T & Any> = JavaClass.wrap(

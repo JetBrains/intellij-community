@@ -32,4 +32,4 @@ fun foo(input: String): String {
     return "u"
 }
 
-// IGNORE_K1
+

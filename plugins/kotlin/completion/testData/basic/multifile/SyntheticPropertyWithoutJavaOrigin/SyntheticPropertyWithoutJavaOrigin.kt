@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // IGNORE_K2
 // LANGUAGE_VERSION: 2.1
 

@@ -6,4 +6,3 @@ enum class Foo {
     }
 }
 
-// IGNORE_K1

@@ -4,4 +4,3 @@ inline fun String.foo(b: () -> Unit): Unit {}
 
 fun String.fo<caret>o2() = foo {  }
 
-// IGNORE_K1

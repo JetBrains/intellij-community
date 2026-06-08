@@ -6,4 +6,3 @@ fun Int.f() = mutableMapOf<Int, Int>().apply {
     this[this@f] = this@f
 }
 
-// IGNORE_K1

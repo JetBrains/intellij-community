@@ -1,5 +1,5 @@
 // INPLACE_VARIABLE_NAME: s
-// IGNORE_K1
+
 fun foo(a: Int): String {
     val s = $$"abc$$a"
     val x = s

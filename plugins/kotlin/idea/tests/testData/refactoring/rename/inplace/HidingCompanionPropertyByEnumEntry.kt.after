@@ -6,4 +6,3 @@ enum class MyEnum {
     fun context() = println(m.hashCode() + Companion.m)
 }
 fun external() = println(MyEnum.m.hashCode() + MyEnum.Companion.m)
-// IGNORE_K1

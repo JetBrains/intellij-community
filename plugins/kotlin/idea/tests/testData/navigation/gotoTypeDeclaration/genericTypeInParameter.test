@@ -1,5 +1,5 @@
 // FILE: before.kt
-// IGNORE_K1
+
 class Foo<T>(val foo: T)
 
 fun foo() {

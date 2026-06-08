@@ -5,4 +5,3 @@ fun foo(): T {
     return o
 }
 
-// IGNORE_K1

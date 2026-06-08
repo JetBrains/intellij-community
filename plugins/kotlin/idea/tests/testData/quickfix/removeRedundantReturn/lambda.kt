@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // LANGUAGE_VERSION: 2.3
 // "Remove redundant return" "true"
 fun foo(): () -> String = <caret>return { "Dni pozdney oseni branyat obyknovenno, no mne ona mila, chitatel dorogoy" }

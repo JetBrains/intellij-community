@@ -11,4 +11,3 @@ fun foo() {
 
     print(10)
 }
-// IGNORE_K1

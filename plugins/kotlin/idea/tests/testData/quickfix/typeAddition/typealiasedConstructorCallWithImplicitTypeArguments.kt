@@ -1,5 +1,5 @@
 // "Specify type explicitly" "true"
-// IGNORE_K1
+
 package test
 
 class MyClass

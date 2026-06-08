@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 context(_: String)
 fun doSom<caret>ething() {}
 

@@ -8,4 +8,3 @@ fun test(){
 class A
 class E<T>
 
-// IGNORE_K1

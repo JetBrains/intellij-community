@@ -9,4 +9,3 @@ interface I {
 
 <caret>class A : I
 
-// IGNORE_K1

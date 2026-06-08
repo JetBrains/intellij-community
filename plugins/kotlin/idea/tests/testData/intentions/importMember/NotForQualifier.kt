@@ -7,4 +7,3 @@ fun foo() {
     <caret>Pattern.CASE_INSENSITIVE
 }
 
-// IGNORE_K1

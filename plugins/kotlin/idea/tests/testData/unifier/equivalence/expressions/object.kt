@@ -1,4 +1,3 @@
-// IGNORE_K1
 object O
 
 object Other

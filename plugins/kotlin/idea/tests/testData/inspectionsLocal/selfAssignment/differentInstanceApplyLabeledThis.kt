@@ -1,6 +1,6 @@
 // PROBLEM: none
 // Issue: KTIJ-31817
-// IGNORE_K1
+
 
 class A {
     var num: Int = 10

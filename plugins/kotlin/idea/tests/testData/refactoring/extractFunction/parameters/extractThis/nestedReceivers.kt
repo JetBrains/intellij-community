@@ -6,4 +6,3 @@ class A22 {
     fun b(a: String) {}
 }
 
-// IGNORE_K1

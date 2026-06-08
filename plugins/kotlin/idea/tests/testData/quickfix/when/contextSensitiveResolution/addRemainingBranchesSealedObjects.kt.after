@@ -1,7 +1,7 @@
 // "Add remaining branches" "true"
 // COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
 // K2_ERROR: 'when' expression must be exhaustive. Add the 'Another', 'null' branches or an 'else' branch.
-// IGNORE_K1
+
 package test
 
 sealed class Variant {

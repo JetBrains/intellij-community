@@ -16,4 +16,3 @@ fun getDate() {
 @MyOptInAnnotation
 private fun i(dateProvider: DataClass): Int = dateProvider.value2
 
-// IGNORE_K1

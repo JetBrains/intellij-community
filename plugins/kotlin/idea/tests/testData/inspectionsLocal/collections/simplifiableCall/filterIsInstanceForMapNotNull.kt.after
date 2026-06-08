@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // WITH_STDLIB
 
 fun bla() {

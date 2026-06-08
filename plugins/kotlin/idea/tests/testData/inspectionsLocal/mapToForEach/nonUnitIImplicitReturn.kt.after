@@ -10,4 +10,4 @@ fun foo(nums: List<Int>) {
     }
 }
 
-// IGNORE_K1
+

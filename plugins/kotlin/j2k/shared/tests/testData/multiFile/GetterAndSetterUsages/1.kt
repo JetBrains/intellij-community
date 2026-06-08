@@ -1,5 +1,5 @@
 // ERROR: Unresolved reference 'getYY' on receiver of type 'B'.
-// IGNORE_K1
+
 package test
 
 class AAA {

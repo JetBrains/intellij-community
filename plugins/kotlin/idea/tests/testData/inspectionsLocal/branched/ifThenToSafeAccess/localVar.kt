@@ -1,6 +1,6 @@
 // FIX: Replace 'if' expression with safe access expression
 // HIGHLIGHT: WARNING
-// IGNORE_K1
+
 fun maybeFoo(): String? {
     return "foo"
 }

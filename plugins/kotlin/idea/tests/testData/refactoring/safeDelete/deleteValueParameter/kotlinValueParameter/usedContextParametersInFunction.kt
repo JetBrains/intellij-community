@@ -8,4 +8,3 @@ context(<caret>a: String)
 fun bar() {
     foo()
 }
-// IGNORE_K1

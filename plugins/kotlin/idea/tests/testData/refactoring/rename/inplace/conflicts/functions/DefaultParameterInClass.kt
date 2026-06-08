@@ -10,4 +10,4 @@ class A {
         b()
     }
 }
-// IGNORE_K1
+

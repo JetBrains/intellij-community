@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 inline fun <reified T> foo(a: List<*>): List<T?> = a.map {
     //Breakpoint!

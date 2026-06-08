@@ -9,4 +9,3 @@ fun foo() {
     MyClass<caret>.fromCompanion()
 }
 
-// IGNORE_K1

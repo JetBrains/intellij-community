@@ -1,6 +1,6 @@
 // PROBLEM: Suspicious cascading 'if' expression
 // FIX: Replace 'if' with 'when' (changes semantics)
-// IGNORE_K1
+
 fun translateNumber(n: Int, a: Int): String {
     return if<caret> (a == 1) {
         "one"

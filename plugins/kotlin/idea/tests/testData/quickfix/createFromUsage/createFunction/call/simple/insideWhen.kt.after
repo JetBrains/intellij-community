@@ -11,4 +11,3 @@ fun foo() {
 fun bar(): Boolean {
     <selection>TODO("Not yet implemented")<caret></selection>
 }
-// IGNORE_K1

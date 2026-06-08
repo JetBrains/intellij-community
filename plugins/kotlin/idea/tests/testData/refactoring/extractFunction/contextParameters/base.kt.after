@@ -17,4 +17,4 @@ private fun __dummyTestFun__(i: Int) {
     bar(i)
 }
 
-// IGNORE_K1
+

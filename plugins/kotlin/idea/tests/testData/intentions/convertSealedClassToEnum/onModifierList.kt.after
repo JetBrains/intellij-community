@@ -1,2 +1,2 @@
-// IGNORE_K1
+
 private enum c<caret>lass MyClass

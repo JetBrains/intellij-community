@@ -6,4 +6,4 @@ fun foo(nums: List<Int>) {
     nums.forEach { it }
 }
 
-// IGNORE_K1
+

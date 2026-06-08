@@ -9,4 +9,3 @@ fun some(t: Test) {
 }
 
 // ELEMENT: "[]"
-// IGNORE_K1

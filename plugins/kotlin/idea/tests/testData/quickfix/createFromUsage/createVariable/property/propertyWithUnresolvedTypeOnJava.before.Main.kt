@@ -6,4 +6,4 @@
 fun test(j: J) {
     j.set<caret>Foo(a)
 }
-// IGNORE_K1
+

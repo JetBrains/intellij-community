@@ -15,4 +15,3 @@ class U {
         val v2 = Local()
     }
 }
-// IGNORE_K1

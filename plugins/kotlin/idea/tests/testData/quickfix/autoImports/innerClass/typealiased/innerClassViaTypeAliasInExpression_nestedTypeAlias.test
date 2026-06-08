@@ -1,6 +1,6 @@
 // FILE: first.before.kt
 // "Import type alias 'NestedTypeAlias'" "true"
-// IGNORE_K1
+
 
 package test
 
@@ -20,7 +20,7 @@ package some
 
 // FILE: first.after.kt
 // "Import type alias 'NestedTypeAlias'" "true"
-// IGNORE_K1
+
 
 package test
 

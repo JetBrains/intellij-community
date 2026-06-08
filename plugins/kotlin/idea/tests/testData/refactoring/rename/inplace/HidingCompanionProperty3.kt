@@ -12,4 +12,3 @@ private class A {
         println(a)
     }
 }
-// IGNORE_K1

@@ -15,5 +15,5 @@ fun test(a: A) {
     }
 }
 
-// IGNORE_K1
+
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveUselessIsCheckFixForWhen

@@ -1,7 +1,7 @@
 // PROBLEM: Replace 'associate' with 'associateWith'
 // FIX: Replace with 'associateWith'
 // WITH_STDLIB
-// IGNORE_K1
+
 package somepackage.subpackage2
 
 sealed class A {

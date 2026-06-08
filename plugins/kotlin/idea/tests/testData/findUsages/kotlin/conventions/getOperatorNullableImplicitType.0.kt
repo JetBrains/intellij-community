@@ -12,4 +12,3 @@ fun foo() {
     y!![1]        // Should find 'get' usage but doesn't in K1
 }
 
-// IGNORE_K1

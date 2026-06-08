@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 // Smart-stepping API reports errors when filtering inline getters/setters when
 // debugger.kotlin.report.smart.step.into.targets.detection.failure == true

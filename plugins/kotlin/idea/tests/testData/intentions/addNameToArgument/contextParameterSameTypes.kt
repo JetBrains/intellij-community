@@ -4,7 +4,7 @@
 // AFTER-WARNING: Parameter 'x' is never used
 // AFTER-WARNING: Parameter 'y' is never used
 // AFTER-WARNING: Parameter 'a' is never used
-// IGNORE_K1
+
 // K2_AFTER_ERROR: Mixing named and positional arguments is not allowed unless the order of the arguments matches the order of the parameters.
 // K2_AFTER_ERROR: No context argument for 'y: String' found.
 // K2_ERROR: Argument already passed for this parameter.

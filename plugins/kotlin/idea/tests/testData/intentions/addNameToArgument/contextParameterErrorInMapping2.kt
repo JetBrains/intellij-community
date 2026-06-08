@@ -4,7 +4,7 @@
 // AFTER-WARNING: Parameter 'x' is never used
 // AFTER-WARNING: Parameter 'y' is never used
 // AFTER-WARNING: Parameter 'a' is never used
-// IGNORE_K1
+
 // K2_ERROR: Argument type mismatch: actual type is 'String', but 'Boolean' was expected.
 // K2_ERROR: No context argument for 'x: String' found.
 // K2_ERROR: Too many arguments for 'context(x: String) fun foo(a: Boolean, b: String): String'.

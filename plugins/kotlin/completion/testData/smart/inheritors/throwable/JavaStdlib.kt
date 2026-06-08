@@ -14,4 +14,4 @@ fun test() {
 // ABSENT: { itemText: "NullPointerException", tailText: "(...) (java.lang)" }
 // ABSENT: { itemText: "UnsupportedOperationException", tailText: "(...) (java.lang)" }
 
-// IGNORE_K1
+

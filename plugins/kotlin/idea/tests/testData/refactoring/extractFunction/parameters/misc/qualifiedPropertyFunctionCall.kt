@@ -11,4 +11,3 @@ fun someFun(list: List<Holder>) {
     list.map { <selection>it.foo.wrapper().length</selection> }
 }
 
-// IGNORE_K1

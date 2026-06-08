@@ -8,7 +8,7 @@ class Bar : AbstractBaseClass() {
     <caret>override val name: String
            get() = "x"
 }
-// IGNORE_K1
+
 // FILE: p/BaseClass.java
 package p;
 

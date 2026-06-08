@@ -8,4 +8,3 @@ fun main() {
     println(Fo<caret>o)
 }
 
-// IGNORE_K1

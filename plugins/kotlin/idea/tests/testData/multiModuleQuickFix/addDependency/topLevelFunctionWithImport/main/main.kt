@@ -6,4 +6,3 @@ fun main() {
   <caret>fooMethod()
 }
 
-// IGNORE_K1

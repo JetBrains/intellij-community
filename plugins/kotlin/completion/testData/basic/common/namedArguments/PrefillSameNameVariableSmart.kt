@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// IGNORE_K1
+
 // COMPLETION_TYPE: SMART
 
 fun foo(a: Int) {}

@@ -2,7 +2,7 @@
 // COMPILER_ARGUMENTS: -Xcontext-sensitive-resolution
 // WITH_STDLIB
 // K2_ERROR: 'when' expression must be exhaustive. Add the 'A', 'B', 'C' branches or an 'else' branch.
-// IGNORE_K1
+
 package test
 
 enum class Foo { A, B, C }

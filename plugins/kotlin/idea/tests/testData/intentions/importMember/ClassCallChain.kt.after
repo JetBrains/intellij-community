@@ -20,4 +20,3 @@ fun test() {
     Register.Domain.UserRepository.authSuccess
 }
 
-// IGNORE_K1

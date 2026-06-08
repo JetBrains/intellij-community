@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ON
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaSeverity
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K1
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests.DIRECTIVES.IGNORE_K2
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.util.trimTrailingWhitespacesAndAddNewlineAtEOF
@@ -37,7 +36,7 @@ val J2K_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjectDescriptor =
         }
     }
 
-private val ignoreDirectives: Set<String> = setOf(IGNORE_K1, IGNORE_K2)
+private val ignoreDirectives: Set<String> = setOf(IGNORE_K2)
 
 internal val J2K_FULL_JDK_PROJECT_DESCRIPTOR: KotlinWithJdkAndRuntimeLightProjectDescriptor =
     KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()

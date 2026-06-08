@@ -7,4 +7,3 @@ fun foo(o: Any) {
 }
 // CHOOSE_ELEMENT:1
 // AFTER-WARNING: Variable 's' is never used
-// IGNORE_K1

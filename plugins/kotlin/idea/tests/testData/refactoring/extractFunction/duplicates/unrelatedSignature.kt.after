@@ -21,4 +21,4 @@ fun test() {
 
 private fun i(x: Int): Int = x
 
-// IGNORE_K1
+

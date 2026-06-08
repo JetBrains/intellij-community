@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 fun foo(arg: Any?): Int {
     // 1
     when (arg) {

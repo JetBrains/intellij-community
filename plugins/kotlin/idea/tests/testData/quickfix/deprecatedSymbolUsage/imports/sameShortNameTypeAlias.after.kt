@@ -10,4 +10,3 @@ fun main() {
     println(<selection><caret></selection>Foo)
 }
 
-// IGNORE_K1

@@ -6,5 +6,5 @@ suspend fun test() {
     val m = <selection>foo(1)</selection>
 }
 
-// IGNORE_K1
+
 

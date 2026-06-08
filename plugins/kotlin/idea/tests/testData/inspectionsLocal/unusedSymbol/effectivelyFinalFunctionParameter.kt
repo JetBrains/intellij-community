@@ -1,5 +1,5 @@
 // PROBLEM: Parameter "abc" is never used
-// IGNORE_K1
+
 abstract class X {
    fun test(<caret>abc: Int) {
        hashCode();

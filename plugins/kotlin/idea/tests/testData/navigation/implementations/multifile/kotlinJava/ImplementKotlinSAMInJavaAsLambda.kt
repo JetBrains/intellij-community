@@ -6,4 +6,3 @@ interface <caret>A {
 
 // REF: () -> {}
 
-// IGNORE_K1

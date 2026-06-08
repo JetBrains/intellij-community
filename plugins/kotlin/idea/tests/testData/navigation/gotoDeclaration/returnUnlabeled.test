@@ -1,5 +1,5 @@
 // FILE: before.kt
-// IGNORE_K1
+
 inline fun test(f: () -> Unit) {
     f()
 }
@@ -14,7 +14,7 @@ fun main(args: Array<String>) {
     println("Some code")
 }
 // FILE: after.kt
-// IGNORE_K1
+
 inline fun test(f: () -> Unit) {
     f()
 }

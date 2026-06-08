@@ -6,4 +6,3 @@ inline fun <reified T: I1> take(o: Any?) {
 }
 // CHOOSE_ELEMENT: 1
 // AFTER-WARNING: Variable 't' is never used
-// IGNORE_K1

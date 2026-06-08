@@ -9,4 +9,3 @@ object <caret>A {
 class B {
 
 }
-// IGNORE_K1

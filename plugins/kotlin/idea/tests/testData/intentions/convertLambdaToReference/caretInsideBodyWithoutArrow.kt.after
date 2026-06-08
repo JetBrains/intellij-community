@@ -3,4 +3,3 @@
 fun foo(strings: List<String>) =
     strings.map(String::hashCode)
 
-// IGNORE_K1

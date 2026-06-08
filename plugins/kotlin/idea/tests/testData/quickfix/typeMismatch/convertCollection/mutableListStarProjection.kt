@@ -8,4 +8,3 @@ fun bar() {
     foo(emptyList<Int><caret>())
 }
 
-// IGNORE_K1

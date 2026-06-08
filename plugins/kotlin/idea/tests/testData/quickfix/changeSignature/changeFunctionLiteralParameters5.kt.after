@@ -1,6 +1,6 @@
 // "Change the signature of lambda expression" "true"
 // DISABLE_ERRORS
-// IGNORE_K1
+
 fun test(f: (String, Int) -> Unit){}
 fun bar() {
     test{ string, i -> }

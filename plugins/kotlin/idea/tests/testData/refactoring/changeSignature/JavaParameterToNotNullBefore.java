@@ -3,4 +3,3 @@ public interface JavaInterface {
     }
 }
 
-// IGNORE_K1

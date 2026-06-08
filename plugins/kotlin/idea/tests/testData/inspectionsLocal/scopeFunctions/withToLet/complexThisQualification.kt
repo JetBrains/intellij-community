@@ -1,6 +1,6 @@
 // WITH_STDLIB
 // FIX: Convert to 'let'
-// IGNORE_K1
+
 class Repository {
     val data = "repo-data"
 

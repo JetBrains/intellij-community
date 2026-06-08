@@ -11,4 +11,4 @@ fun test() {
 
 // EXIST: Foo
 // EXIST: Boo
-// IGNORE_K1
+

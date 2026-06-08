@@ -9,4 +9,4 @@ fun foo(flag: Boolean) {
     }
 }
 
-// IGNORE_K1
+

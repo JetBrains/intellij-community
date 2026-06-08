@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 package test
 
 data class D(val x: Int)

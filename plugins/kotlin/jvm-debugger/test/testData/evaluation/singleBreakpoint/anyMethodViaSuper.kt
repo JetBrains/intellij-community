@@ -18,5 +18,5 @@ class A {
 // EXPRESSION: super.equals(this)
 // RESULT: 1: Z
 
-// IGNORE_K1
+
 // SKIP_WRONG_DIRECTIVE_CHECK

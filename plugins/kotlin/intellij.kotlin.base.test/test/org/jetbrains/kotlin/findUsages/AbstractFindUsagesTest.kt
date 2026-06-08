@@ -177,9 +177,6 @@ abstract class AbstractFindUsagesTest : KotlinLightCodeInsightFixtureTestCase(),
                     println("test $mainFileName is ignored (${testType.name})")
                     return
                 }
-            } else if (InTextDirectivesUtils.isDirectiveDefined(mainFileText, "// IGNORE_K1")) {
-                println("test $mainFileName is ignored (${testType.name})")
-                return
             }
 
             val isFindFileUsages = InTextDirectivesUtils.isDirectiveDefined(mainFileText, "## FIND_FILE_USAGES")

@@ -4,4 +4,3 @@ enum class En() {
     C();
 }
 
-// IGNORE_K1

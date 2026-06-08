@@ -6,4 +6,4 @@ fun foo() {
     contextOf<String>().length
 }
 
-// IGNORE_K1
+

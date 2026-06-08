@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 class A1
 class Z1
 sealed class Foo

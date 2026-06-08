@@ -5,4 +5,4 @@ private const val string = "Deprecated. Please use method X instead"
 @Deprecated(string)
 fun foo() { }
 
-// IGNORE_K1
+

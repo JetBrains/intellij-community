@@ -11,4 +11,4 @@ fun called(inners: Set<Inner> = setOf(Inner.V1, Inner.V2)) {
     println(typed)
 }
 
-// IGNORE_K1
+

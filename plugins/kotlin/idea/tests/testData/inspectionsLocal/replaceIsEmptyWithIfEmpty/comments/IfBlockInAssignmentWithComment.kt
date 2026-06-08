@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 fun test(string: String) {
     val a =
         // comment before if

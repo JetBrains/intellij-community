@@ -1,6 +1,6 @@
 // "Add argument to existing 'context'" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
-// IGNORE_K1
+
 // DISABLE_K2_ERRORS
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
 context(i: Int, s: String) fun bar() {}

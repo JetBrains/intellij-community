@@ -9,4 +9,4 @@ fun interface UpperCaseTransformer : Transformer {
 var t: Transformer = UpperCaseTransforme<caret>
 
 // EXIST: {"lookupString":"UpperCaseTransformer","itemText":"UpperCaseTransformer","tailText":" {...} (function: (String) -> String) (<root>)","typeText":"UpperCaseTransformer"}
-// IGNORE_K1
+

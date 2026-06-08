@@ -4,4 +4,3 @@
 fun main(args: Array<String>): Unit = 1
 
 // K1 has different wording
-// IGNORE_K1

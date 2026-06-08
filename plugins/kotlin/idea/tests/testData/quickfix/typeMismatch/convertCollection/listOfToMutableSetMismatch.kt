@@ -6,4 +6,3 @@ fun foo(): MutableSet<Int> {
     return list<caret>Of(1)
 }
 
-// IGNORE_K1

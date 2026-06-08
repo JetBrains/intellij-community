@@ -8,4 +8,4 @@ internal fun KClass<*>.serializerNotRegistered(): Nothing {
 private fun KClass<*>.string(): String = "Serializer for class '${simpleName}' is not found.\n" +
         "Mark the class as @Serializable or provide the serializer explicitly."
 
-// IGNORE_K1
+

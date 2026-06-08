@@ -1,5 +1,5 @@
 // FILE: before.kt
-// IGNORE_K1
+
 fun some() {
     while (true) {
         if (condition()) <caret>break
@@ -11,7 +11,7 @@ fun some() {
 
 fun condition() = true
 // FILE: after.kt
-// IGNORE_K1
+
 fun some() {
     while (true) {
         if (condition()) break

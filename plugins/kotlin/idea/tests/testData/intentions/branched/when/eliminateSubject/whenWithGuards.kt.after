@@ -23,4 +23,3 @@ fun test(foo: Any, expr: Boolean, expr2: Boolean) {
 class Foo
 class Bar
 
-// IGNORE_K1

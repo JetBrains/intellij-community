@@ -1,5 +1,5 @@
 // FILE: before.kt
-// IGNORE_K1
+
 fun some() {
     for (j in 0..5) {
         if (j == 1) <caret>continue
@@ -9,7 +9,7 @@ fun some() {
     }
 }
 // FILE: after.kt
-// IGNORE_K1
+
 fun some() {
     <caret>for (j in 0..5) {
         if (j == 1) continue

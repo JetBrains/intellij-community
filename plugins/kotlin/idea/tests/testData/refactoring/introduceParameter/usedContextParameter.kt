@@ -12,4 +12,3 @@ fun foo() {
 context(s: String)
 fun bar() {}
 
-// IGNORE_K1

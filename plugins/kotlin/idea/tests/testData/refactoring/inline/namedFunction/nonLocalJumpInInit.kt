@@ -1,5 +1,5 @@
 // COMPILER_ARGUMENTS: -Xnon-local-break-continue
-// IGNORE_K1
+
 
 class C {
     init {

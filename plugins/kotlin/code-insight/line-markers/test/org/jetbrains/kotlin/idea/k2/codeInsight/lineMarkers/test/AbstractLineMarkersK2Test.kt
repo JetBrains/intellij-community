@@ -19,11 +19,6 @@ import org.junit.Assert
 import kotlin.io.path.Path
 
 abstract class AbstractLineMarkersK2Test : AbstractLineMarkersTest() {
-    override fun doTest(path: String) {
-        IgnoreTests.runTestIfNotDisabledByFileDirective(Path(path), IgnoreTests.DIRECTIVES.IGNORE_K2) {
-            doTestInternal(path)
-        }
-    }
 
     override fun getActualNavigationDataAndCompare(lineMarker: LineMarkerInfo<*>, navigationComment: String) {
         when (val handler = lineMarker.navigationHandler) {

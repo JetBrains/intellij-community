@@ -1,5 +1,5 @@
 // ENABLED_LANGUAGE_FEATURE: ContextParameters
-// IGNORE_K1
+
 
 inline class A(val p: Int)
 

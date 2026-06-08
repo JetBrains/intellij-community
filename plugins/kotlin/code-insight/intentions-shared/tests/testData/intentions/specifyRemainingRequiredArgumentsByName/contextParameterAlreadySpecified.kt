@@ -5,7 +5,7 @@
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // COMPILER_ARGUMENTS: -Xexplicit-context-arguments
 // IS_APPLICABLE: false
-// IGNORE_K1
+
 context(s: String)
 fun foo(a: Int) {}
 

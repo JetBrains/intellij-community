@@ -1,5 +1,5 @@
 // PROBLEM: Variable 'foo' is assigned to itself
-// IGNORE_K1
+
 
 interface Foo {
     var foo: Int

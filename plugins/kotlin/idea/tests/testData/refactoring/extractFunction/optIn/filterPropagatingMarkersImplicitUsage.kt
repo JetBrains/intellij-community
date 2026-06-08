@@ -13,4 +13,3 @@ fun getDate() {
     val value2 = <selection>dateProvider.value2</selection>
 }
 
-// IGNORE_K1

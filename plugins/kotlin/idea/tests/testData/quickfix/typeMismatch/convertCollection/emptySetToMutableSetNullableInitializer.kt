@@ -7,5 +7,5 @@ fun foo() {
     val set: MutableSet<Int>? =<caret> emptySet()
 }
 
-// IGNORE_K1
+
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ReplaceWithMutableCollectionFactoryFix

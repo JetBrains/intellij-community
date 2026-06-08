@@ -10,4 +10,3 @@ fun MyFormatter.problematicFunction(): String {
     <selection>return implicit<MyFormatter>().format("Value: $param")</selection>
 }
 
-// IGNORE_K1

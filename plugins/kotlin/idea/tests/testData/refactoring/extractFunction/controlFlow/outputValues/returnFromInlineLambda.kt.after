@@ -4,4 +4,3 @@ fun foo(): Any {
 }
 
 private fun any(): Any = inFun { a -> return a }
-// IGNORE_K1

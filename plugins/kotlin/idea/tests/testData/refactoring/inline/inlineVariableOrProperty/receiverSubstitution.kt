@@ -10,4 +10,3 @@ class Foo {
     operator fun invoke(): Unit = TODO()
 }
 
-// IGNORE_K1

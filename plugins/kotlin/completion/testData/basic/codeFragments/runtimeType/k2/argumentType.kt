@@ -44,4 +44,3 @@ fun G.gExtension(a: Int): String { return "g $a" }
 
 
 // RUNTIME_TYPE: G
-// IGNORE_K1

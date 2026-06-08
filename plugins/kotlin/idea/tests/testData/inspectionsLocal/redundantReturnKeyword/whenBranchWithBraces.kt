@@ -13,4 +13,4 @@ fun foo(x: Int): String {
     }
 }
 
-// IGNORE_K1
+

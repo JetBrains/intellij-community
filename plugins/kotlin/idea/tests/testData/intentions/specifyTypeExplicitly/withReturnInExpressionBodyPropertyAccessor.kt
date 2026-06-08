@@ -4,4 +4,3 @@
 val p
     g<caret>et() = return "42"
 
-// IGNORE_K1

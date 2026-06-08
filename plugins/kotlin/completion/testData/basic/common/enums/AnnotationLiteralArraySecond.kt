@@ -8,4 +8,4 @@ fun method() { }
 
 // EXIST: FIRST
 // EXIST: SECOND
-// IGNORE_K1
+

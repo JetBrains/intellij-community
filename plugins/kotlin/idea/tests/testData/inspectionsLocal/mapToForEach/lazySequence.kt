@@ -8,4 +8,4 @@ fun main() {
     foo(sequenceOf(1, 2, 3))
 }
 
-// IGNORE_K1
+

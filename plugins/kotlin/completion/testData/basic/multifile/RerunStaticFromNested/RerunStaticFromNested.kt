@@ -12,4 +12,3 @@ fun testNestedJavaStatic() {
 // ABSENT: somePrefixKotlinInstanceMethod
 
 // INVOCATION_COUNT: 1
-// IGNORE_K1

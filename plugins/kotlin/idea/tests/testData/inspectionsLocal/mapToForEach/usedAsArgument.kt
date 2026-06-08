@@ -6,4 +6,4 @@ fun foo(nums: List<Int>) {
 
 fun consume(map: List<Int>) {}
 
-// IGNORE_K1
+

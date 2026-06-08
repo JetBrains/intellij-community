@@ -9,4 +9,4 @@ var x: Sam = <caret>
 // ELEMENT_TEXT: Sam
 // TAIL_TEXT: " {...} (function: () -> Unit) (<root>)"
 
-// IGNORE_K1
+

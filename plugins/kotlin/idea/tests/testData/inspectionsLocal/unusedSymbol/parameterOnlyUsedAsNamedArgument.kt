@@ -8,4 +8,3 @@ fun main() {
 }
 
 // FE10 generates compiler diagnostic to drop unused parameter
-// IGNORE_K1

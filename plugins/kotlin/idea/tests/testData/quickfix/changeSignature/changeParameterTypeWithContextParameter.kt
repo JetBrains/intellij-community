@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // COMPILER_ARGUMENTS: -Xcontext-parameters
 // "Change parameter 'b' type of function 'foo' to 'Unit'" "true"
 // K2_ERROR: Argument type mismatch: actual type is 'Unit', but 'Int' was expected.

@@ -1,5 +1,5 @@
 // PROBLEM: none
-// IGNORE_K1
+
 fun test() {
     if (true) {
         1

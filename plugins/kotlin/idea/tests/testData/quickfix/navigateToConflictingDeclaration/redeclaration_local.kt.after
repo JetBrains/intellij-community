@@ -4,7 +4,7 @@
 // K2_ERROR: Conflicting declarations:<br>local val myLocalProperty: Int<br>local val myLocalProperty: String
 // K2_AFTER_ERROR: Conflicting declarations:<br>local val myLocalProperty: Int<br>local val myLocalProperty: String
 // K2_AFTER_ERROR: Conflicting declarations:<br>local val myLocalProperty: Int<br>local val myLocalProperty: String
-// IGNORE_K1
+
 package test
 
 fun testMe() {

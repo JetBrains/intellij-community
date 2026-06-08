@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 // "Add '@ConsistentCopyVisibility' annotation" "true"
 @ConsistentCopyVisibility
 data class Foo private constructor(val x: Int)

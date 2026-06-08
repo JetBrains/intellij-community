@@ -1,5 +1,5 @@
 // WITH_COROUTINES
-// IGNORE_K1
+
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flattenConcat

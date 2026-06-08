@@ -8,4 +8,3 @@ fun test(x: Int, c: C): Int {
 
 private fun i(c: C, x: Int): Int = if (c.int != null) x + c.int else x
 
-// IGNORE_K1

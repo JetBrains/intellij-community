@@ -1,6 +1,6 @@
 // AFTER-WARNING: The expression is unused
 // AFTER-WARNING: The expression is unused
-// IGNORE_K1
+
 class Test {
     val a = "test"
 

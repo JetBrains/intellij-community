@@ -1,5 +1,5 @@
 // PROBLEM: none
-// IGNORE_K1
+
 class Test(<caret>val foo: String) {
     init {
         val property = foo.myDsl {

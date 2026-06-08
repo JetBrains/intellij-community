@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 fun main() {
     10.foo1 { 1 }

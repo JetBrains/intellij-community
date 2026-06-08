@@ -1,6 +1,6 @@
 // WITH_STDLIB
 // FIX: Convert to 'with'
-// IGNORE_K1
+
 class User(val name: String, val age: Int) {
     fun getName(): String = name.uppercase()
     fun getAge(): Int = age

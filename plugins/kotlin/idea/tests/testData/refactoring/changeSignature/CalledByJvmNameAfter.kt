@@ -3,4 +3,3 @@ class A {
     fun withJvmName() {}
 }
 
-// IGNORE_K1

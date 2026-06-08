@@ -14,4 +14,3 @@ fun MyFormatter.problematicFunction(): String {
         return p.format("Value: $param")
     }</selection>
 }
-// IGNORE_K1

@@ -15,4 +15,3 @@ class BBB: AAA() {
 }
 
 
-// IGNORE_K1

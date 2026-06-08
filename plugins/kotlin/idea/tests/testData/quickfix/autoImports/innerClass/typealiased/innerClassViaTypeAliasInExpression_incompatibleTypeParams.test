@@ -1,6 +1,6 @@
 // FILE: first.before.kt
 // "Import type alias 'InnerTypeAliasWithString'" "true"
-// IGNORE_K1
+
 
 package test
 
@@ -20,7 +20,7 @@ typealias InnerTypeAliasWithString = test.Outer<String>.Inner
 
 // FILE: first.after.kt
 // "Import type alias 'InnerTypeAliasWithString'" "true"
-// IGNORE_K1
+
 
 package test
 

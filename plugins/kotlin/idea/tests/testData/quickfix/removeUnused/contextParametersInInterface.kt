@@ -7,4 +7,3 @@ interface A {
     fun m(): Int
 }
 
-// IGNORE_K1

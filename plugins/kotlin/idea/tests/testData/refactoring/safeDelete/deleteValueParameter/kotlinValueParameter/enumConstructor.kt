@@ -4,4 +4,3 @@ enum class En(<caret>p: Int) {
     C(p = 3);
 }
 
-// IGNORE_K1

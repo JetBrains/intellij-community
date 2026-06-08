@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 inline fun foo3(block: (Int) -> Int) {
     // EXPRESSION: block(42)

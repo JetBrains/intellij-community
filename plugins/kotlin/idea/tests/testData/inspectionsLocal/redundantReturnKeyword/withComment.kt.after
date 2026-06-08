@@ -5,4 +5,4 @@ fun f(b: Boolean): Int {
     } else -1
 }
 
-// IGNORE_K1
+

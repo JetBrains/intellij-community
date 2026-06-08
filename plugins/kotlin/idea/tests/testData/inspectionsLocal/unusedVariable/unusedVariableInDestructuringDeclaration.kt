@@ -9,4 +9,3 @@ fun test(condition: Boolean, foo: Foo) {
 }
 
 data class Foo(val one: String, val two: String)
-// IGNORE_K1

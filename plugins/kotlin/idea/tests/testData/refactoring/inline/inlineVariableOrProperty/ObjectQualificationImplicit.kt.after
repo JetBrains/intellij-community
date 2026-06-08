@@ -9,4 +9,3 @@ object StandAloneContext {
 fun koin() {
     val i = StandAloneContext.closeKoin
 }
-// IGNORE_K1

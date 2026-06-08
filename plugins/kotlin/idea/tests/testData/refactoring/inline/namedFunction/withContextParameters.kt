@@ -11,4 +11,3 @@ fun bar(i: Int) {
     s.length
 }
 
-// IGNORE_K1

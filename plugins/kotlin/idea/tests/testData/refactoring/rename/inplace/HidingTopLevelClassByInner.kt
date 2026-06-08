@@ -10,4 +10,3 @@ class C: A() {
     val a : A = A()
     val d: D = D()
 }
-// IGNORE_K1

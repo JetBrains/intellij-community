@@ -13,5 +13,5 @@ private fun n(): Int {
     return myContext
 }
 
-// IGNORE_K1
+
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.highlighting.SafeDeleteFix

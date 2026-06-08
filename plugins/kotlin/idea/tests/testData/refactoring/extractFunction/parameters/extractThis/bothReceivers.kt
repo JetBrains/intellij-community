@@ -11,4 +11,3 @@ fun n(a: A, b: B) {
     }
 }
 
-// IGNORE_K1

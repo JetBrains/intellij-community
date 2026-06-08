@@ -1,7 +1,7 @@
 // FILE: main.before.kt
 // "Import" "false"
 // ERROR: Unresolved reference: fromObject
-// IGNORE_K1
+
 package foo
 
 fun usage() {

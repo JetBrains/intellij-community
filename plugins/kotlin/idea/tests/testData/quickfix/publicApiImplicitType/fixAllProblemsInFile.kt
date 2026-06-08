@@ -5,5 +5,5 @@ interface A {
     fun bar() = java.util.Optional.of(42)
 }
 
-// IGNORE_K1
+
 // FUS_K2_QUICKFIX_NAME: com.intellij.codeInspection.actions.CleanupInspectionIntention

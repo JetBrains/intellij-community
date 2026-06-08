@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 
 // FILE: foo1.kt
 

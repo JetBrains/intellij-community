@@ -1,7 +1,7 @@
 // PROBLEM: Suspicious cascading 'if' expression
 // FIX: Add clarifying braces to nested 'else' statement
 // PRIORITY: LOW
-// IGNORE_K1
+
 fun translateNumber(n: Int, a: Int): String {
     return <caret>if (a == 1) {
         "one"

@@ -6,4 +6,3 @@ fun foo(a: String, b: String, c: String, array: Array<String>? ) {
     listOf(a, b, c) - (((array?.toSet() ?: emptySet()) ?: emptySet()) ?: emptySet())<caret>
 }
 
-// IGNORE_K1

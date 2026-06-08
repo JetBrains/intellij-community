@@ -19,4 +19,3 @@ context(c2: C2)
 operator fun Receiver.invoke() {
 }
 
-// IGNORE_K1

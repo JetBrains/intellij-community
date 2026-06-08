@@ -1,4 +1,4 @@
-// IGNORE_K1
+
 abstract class A<U, V, W> {
     abstract fun func(u: U, v: V): W
 

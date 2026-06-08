@@ -8,4 +8,3 @@ fun foo(list: List<X>) {
     }</selection>
 }
 
-// IGNORE_K1

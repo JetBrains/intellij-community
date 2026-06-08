@@ -11,5 +11,5 @@ class DerivedClass : OpenClass() {
 }
 
 // ORDER: SomePrefixB, SomePrefixA, SomePrefixC
-// IGNORE_K1
+
 // IGNORE_K2

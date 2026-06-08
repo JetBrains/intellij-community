@@ -27,4 +27,3 @@ internal fun MutableMap<ColumnPath, Int>.putColumnsOrder(schema: DataFrameSchema
         }
     }
 }
-// IGNORE_K1

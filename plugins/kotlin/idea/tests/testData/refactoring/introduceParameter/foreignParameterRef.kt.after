@@ -8,4 +8,4 @@ fun Int.foo(f: Int.(Int) -> Int) = this
 
 fun b(i: Int) = i + 1
 
-// IGNORE_K1
+
