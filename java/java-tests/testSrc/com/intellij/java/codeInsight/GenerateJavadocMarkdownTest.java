@@ -32,6 +32,7 @@ public class GenerateJavadocMarkdownTest extends LightFixtureCompletionTestCase 
   public void testGenerationDisabled02() { doTestWithTemplates(); }
   public void testGenerationDisabled03() { doTestWithTemplates(); }
   public void testDanglingDoc() { doTestWithTemplates(); }
+  public void testNoClassCastException() { doTestWithTemplates(); }
 
   /// Sanity check: verify template-less code path doesn't explode
   public void testMethodFullNoTemplate() { doTestNoTemplates(); }

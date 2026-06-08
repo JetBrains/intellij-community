@@ -151,7 +151,7 @@ public final class JavaDocCompletionContributor extends CompletionContributor im
                                     @NotNull CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
 
-        if (isStartOfMarkdownComment(position) && position.getParent() instanceof PsiDocComment comment) {
+        if (position.getParent() instanceof PsiDocComment comment && comment.isMarkdownComment()) {
           PsiJavaDocumentedElement owner = comment.getOwner();
           if (owner != null) {
             JavadocMarkdownTemplateLookupElement documentationElement = new JavadocMarkdownTemplateLookupElement(owner);
