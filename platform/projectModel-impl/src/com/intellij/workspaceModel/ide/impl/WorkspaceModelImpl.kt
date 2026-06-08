@@ -510,7 +510,8 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
         // Safety net: if the callback is never invoked (e.g. due to a platform bug), unblock waiters after a timeout.
         coroutineScope.launch {
           // JpsGlobalModelSynchronizerImpl has a 5-second delay and ModuleManagerComponentBridgeInitializer has a 1-second delay;
-          delay(10.seconds)
+          val timeout = 20.seconds
+          delay(timeout)
           if (deferred.complete(Unit) && !waitingTimedOut.getAndSet(true)) {
             val threadDump = buildString {
               appendLine(ThreadDumper.dumpThreadsToString())
@@ -521,7 +522,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
             val logFile = PathManager.getLogDir().resolve("jps-project-loaded-timeout-${System.currentTimeMillis()}.txt")
             logFile.writeText(threadDump)
             thisLogger().error(
-              "JPS project loaded callback was not called within 10 seconds, proceeding anyway. " +
+              "JPS project loaded callback was not called within $timeout, proceeding anyway. " +
               "Thread dump saved to ${logFile}. " +
               "Project: ${project.name} (locationHash=${project.locationHash})."
             )
