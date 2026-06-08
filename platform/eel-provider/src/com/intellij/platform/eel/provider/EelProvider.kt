@@ -18,6 +18,13 @@ private val logger = logger<EelInitialization>()
 private val EEL_MACHINE_KEY: Key<EelMachine> = Key.create("com.intellij.platform.eel.machine")
 private val EEL_DESCRIPTOR_KEY: Key<EelDescriptor> = Key.create("com.intellij.platform.eel.descriptor")
 
+/**
+ * Returns the [EelMachine] of the environment this project lives in.
+ *
+ * Non-suspending accessor: it returns [LocalEelMachine] for local projects, otherwise the machine the platform associated with the
+ * project when it was opened. Unlike [resolveEelMachine] it does not perform resolution; it expects the project's environment to be
+ * already initialized and throws if no machine can be determined.
+ */
 fun Project.getEelMachine(): EelMachine {
   val descriptor = getEelDescriptor()
 
@@ -42,6 +49,9 @@ fun Project.getEelMachine(): EelMachine {
   }
 }
 
+/**
+ * Associates [machine] with this project. Called by the platform during project initialization; not for general use.
+ */
 @ApiStatus.Internal
 fun Project.setEelMachine(machine: EelMachine) {
   putUserData(EEL_MACHINE_KEY, machine)
@@ -80,9 +90,23 @@ fun Project.setEelDescriptor(descriptor: EelDescriptor) {
   putUserData(EEL_DESCRIPTOR_KEY, descriptor)
 }
 
+/**
+ * Blocking equivalent of [EelMachine.toEelApi]: connects to the environment on the current thread.
+ *
+ * It blocks the calling thread until the environment is reached, and starting or connecting may be slow, so do not call it on the EDT;
+ * prefer the suspending [EelMachine.toEelApi] whenever you are in a coroutine. Like its suspending counterpart, it can fail with
+ * [com.intellij.platform.eel.EelUnavailableException].
+ */
 @ApiStatus.Experimental
 fun EelMachine.toEelApiBlocking(descriptor: EelDescriptor): EelApi = runBlockingMaybeCancellable { toEelApi(descriptor) }
 
+/**
+ * Blocking equivalent of [toEelApi]: resolves the machine and connects to the environment on the current thread.
+ *
+ * It blocks the calling thread until the environment is reached, and starting or connecting may be slow, so do not call it on the EDT;
+ * prefer the suspending [toEelApi] whenever you are in a coroutine. Like its suspending counterpart, it can fail with
+ * [com.intellij.platform.eel.EelUnavailableException].
+ */
 @ApiStatus.Experimental
 fun EelDescriptor.toEelApiBlocking(): EelApi {
   if (this === LocalEelDescriptor) return localEel
