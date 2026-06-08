@@ -6,13 +6,10 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.pluginSystem.parser.impl.PluginDescriptorBuilder
-import com.intellij.platform.pluginSystem.testFramework.PluginSetTestBuilder
 import com.intellij.platform.pluginSystem.testFramework.buildPluginSet
 import com.intellij.platform.testFramework.plugins.content
 import com.intellij.platform.testFramework.plugins.depends
-import com.intellij.platform.testFramework.plugins.installAt
 import com.intellij.platform.testFramework.plugins.module
-import com.intellij.platform.testFramework.plugins.plugin
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import org.assertj.core.api.Assertions
@@ -123,28 +120,22 @@ internal class ClassLoaderConfiguratorTest {
   @Test
   fun `inject content module if another plugin specifies dependency in old format`() {
     val rootDir = inMemoryFs.fs.getPath("/")
-    plugin("1-foo") {
-      packagePrefix = "com.foo"
-      content {
-        module("com.example.sub") { packagePrefix="com.foo.sub" }
+    val pluginSet = buildPluginSet(rootDir, configureClassLoaders = false) {
+      plugin("1-foo") {
+        packagePrefix = "com.foo"
+        content {
+          module("com.example.sub") { packagePrefix="com.foo.sub" }
+        }
       }
-    }.installAt(rootDir)
-    plugin("2-bar") {
-      depends("1-foo")
-    }.installAt(rootDir)
+      plugin("2-bar") {
+        depends("1-foo")
+      }
+    }
 
-    val pluginSetTestBuilder = PluginSetTestBuilder.fromPath(rootDir)
-    val initContext = pluginSetTestBuilder.buildInitContext()
-    val discoveryResult = pluginSetTestBuilder.discoverPlugins().second
-    val plugins = discoveryResult.pluginLists.flatMap { it.plugins }
-    assertThat(plugins).hasSize(2)
-    val barPlugin = plugins.get(1)
-    assertThat(barPlugin.pluginId.idString).isEqualTo("2-bar")
+    assertThat(pluginSet.enabledPlugins).hasSize(2)
+    val barPlugin = pluginSet.getEnabledPlugin("2-bar")
 
-    val classLoaderConfigurator = ClassLoaderConfigurator(
-      PluginSetBuilder(initContext, UnambiguousPluginSet.tryBuild(plugins)!!, discoveryResult)
-        .createPluginSetWithEnabledModulesMap()
-    )
+    val classLoaderConfigurator = ClassLoaderConfigurator(pluginSet)
     classLoaderConfigurator.configure()
 
     assertThat((barPlugin.pluginClassLoader as PluginClassLoader)._getParents().map { it.descriptorPath })
