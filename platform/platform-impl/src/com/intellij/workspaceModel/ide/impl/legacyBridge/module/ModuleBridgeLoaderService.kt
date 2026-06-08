@@ -89,7 +89,6 @@ class ModuleBridgeLoaderService {
                       project = project,
                       targetBuilder = null,
                       targetUnloadedEntitiesBuilder = null,
-                      loadedFromCache = workspaceModel.loadedFromCache,
                       workspaceModel = workspaceModel,
                       globalWsmAppliedToProjectWsm = globalWsmAppliedToProjectWsm,
                   )
@@ -110,7 +109,6 @@ class ModuleBridgeLoaderService {
                           project = project,
                           targetBuilder = projectEntities?.builder,
                           targetUnloadedEntitiesBuilder = projectEntities?.unloadedEntitiesBuilder,
-                          loadedFromCache = workspaceModel.loadedFromCache,
                           workspaceModel = workspaceModel,
                       )
                       projectEntities
@@ -152,7 +150,6 @@ private suspend fun loadModules(
     workspaceModel: WorkspaceModelImpl,
     targetBuilder: MutableEntityStorage?,
     targetUnloadedEntitiesBuilder: MutableEntityStorage?,
-    loadedFromCache: Boolean,
     globalWsmAppliedToProjectWsm: CompletableDeferred<Project>? = null,
 ) {
     span("modules instantiation") {
@@ -171,7 +168,7 @@ private suspend fun loadModules(
             loadedEntities = entities,
             unloadedEntities = unloadedEntities,
             targetBuilder = targetBuilder,
-            initializeFacets = loadedFromCache,
+            initializeFacets = workspaceModel.loadedFromCache,
             globalWsmAppliedToProjectWsm
         )
     }

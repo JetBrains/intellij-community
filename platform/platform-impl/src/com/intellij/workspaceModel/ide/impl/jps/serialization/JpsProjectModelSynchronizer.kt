@@ -64,6 +64,7 @@ import com.intellij.platform.workspace.storage.DummyParentEntitySource
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.entities
 import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.platform.workspace.storage.instrumentation.EntityStorageInstrumentationApi
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
@@ -504,7 +505,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
            !isAndroidStudio() &&
            !isRider() &&
            !isFleetBackend() && // https://youtrack.jetbrains.com/issue/IDEA-323592#focus=Comments-27-7967807.0-0
-           (prepareSerializers() as JpsProjectSerializersImpl).moduleSerializers.isEmpty()
+           (prepareSerializers() as JpsProjectSerializersImpl).moduleSerializers.isEmpty() &&
+           project.serviceAsync<WorkspaceModel>().currentSnapshot.entities<ModuleEntity>().none()
   }
 
   private suspend fun prepareSerializers(): JpsProjectSerializers {
