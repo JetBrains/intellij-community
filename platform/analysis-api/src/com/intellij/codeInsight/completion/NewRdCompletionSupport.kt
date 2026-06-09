@@ -2,7 +2,7 @@
 package com.intellij.codeInsight.completion
 
 import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -43,7 +43,7 @@ interface NewRdCompletionSupport {
      * @return true if `remdev.completion.on.frontend` registry flag is enabled AND this is a host or a client of a remoteDev session.
      */
     @JvmStatic
-    fun isFrontendRdCompletionOn(): Boolean = service<NewRdCompletionSupport>().isFrontendRdCompletionOnImpl()
+    fun isFrontendRdCompletionOn(): Boolean = getInstance().isFrontendRdCompletionOnImpl()
 
     /**
      * @return logs an error with a given [message] if `remdev.completion.on.frontend.report.suboptimal.usage` registry flag is enabled.
@@ -56,11 +56,13 @@ interface NewRdCompletionSupport {
     }
 
     @JvmStatic
-    fun getInstance(): NewRdCompletionSupport = service<NewRdCompletionSupport>()
+    fun getInstance(): NewRdCompletionSupport {
+      return serviceOrNull<NewRdCompletionSupport>() ?: NoOpNewCompletionSupport
+    }
   }
 }
 
-internal class NoOpNewCompletionSupport : NewRdCompletionSupport {
+private object NoOpNewCompletionSupport : NewRdCompletionSupport {
   override fun isFrontendRdCompletionOnImpl(): Boolean = false
 
   override fun scheduleAutopopupOnFrontend(project: Project, editor: Editor, completionType: CompletionType) = false
