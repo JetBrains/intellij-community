@@ -76,6 +76,7 @@ internal class CreateStringResourceQuickFixTest : ComposeResourcesTestCase() {
         resourceType = resourceType,
         sourceKtFileUrl = sourceKtFile.url,
         stringsXmlUrl = stringsXmlFile.url,
+        composeResourcesDirUrl = stringsXmlFile.parent.parent.url,
       )
 
       if (!expectAvailable) {
@@ -85,7 +86,7 @@ internal class CreateStringResourceQuickFixTest : ComposeResourcesTestCase() {
 
       invokeAndAssertQuickFixResult(
         quickFix = quickFix,
-        stringsXmlFileVirtualFile = stringsXmlFile,
+        composeResourcesDirVirtualFile = stringsXmlFile.parent.parent,
         project = myProject,
         codeLine = codeLine,
         expectAdded = expectAdded,
@@ -108,25 +109,35 @@ internal fun List<VirtualFile>.findTestFiles(project: Project, sourceSetName: St
 
   return sourceKtFile to stringsXmlFile
 }
-
 internal fun invokeAndAssertQuickFixResult(
   quickFix: IntentionAction,
-  stringsXmlFileVirtualFile: VirtualFile,
+  composeResourcesDirVirtualFile: VirtualFile,
   project: Project,
   codeLine: String,
   expectAdded: Boolean = true,
 ) {
   val psiManager = PsiManager.getInstance(project)
-  val stringsXmlFile = psiManager.findFile(stringsXmlFileVirtualFile) as? XmlFile
-  assertNotNull(stringsXmlFile, "Strings.xml file should not be null")
-
   val (resourceType, resourceName) = parseResReference(codeLine)
-  val rootTagBefore = stringsXmlFile.rootTag
-  assertNotNull(rootTagBefore, "Root tag should not be null")
-  val resourceExistedBefore = rootTagBefore.hasSubTagWithName(resourceType.typeName, resourceName)
+
+  val stringsXmlFileBefore = composeResourcesDirVirtualFile
+    .findChild(ResourceType.STRING.dirName)
+    ?.let { psiManager.findFile(it) as? XmlFile }
+
+  val resourceExistedBefore = stringsXmlFileBefore
+                                ?.rootTag
+                                ?.hasSubTagWithName(resourceType.typeName, resourceName)
+                              ?: false
 
   assertTrue("QuickFix should be available") { quickFix.isAvailable(project, null, null) }
   quickFix.invoke(project, null, null)
+
+  val stringsXmlFileVirtualFile = composeResourcesDirVirtualFile
+    .findChild(ResourceType.STRING.dirName)
+    ?.findChild(STRINGS_XML_FILENAME)
+  assertNotNull(stringsXmlFileVirtualFile, "Strings.xml file should not be null")
+
+  val stringsXmlFile = psiManager.findFile(stringsXmlFileVirtualFile) as? XmlFile
+  assertNotNull(stringsXmlFile, "Strings.xml file should not be null")
 
   val rootTagAfter = stringsXmlFile.rootTag
   assertNotNull(rootTagAfter, "Root tag should not be null")
