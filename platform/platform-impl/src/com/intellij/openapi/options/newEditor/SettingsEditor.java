@@ -105,7 +105,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   private final SettingsTreeView treeView;
   public final ConfigurableEditor editor;
   private final OnePixelSplitter mySplitter;
-  private final JPanel myTreeNorthPanel;
   private final SpotlightPainter spotlightPainter;
   private final LoadingDecorator loadingDecorator;
   private final @NotNull ConfigurableEditorBanner myBanner;
@@ -386,16 +385,7 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
 
     mySplitter.setSecondComponent(right);
     right.add(BorderLayout.NORTH, withHistoryToolbar(myBanner));
-    myTreeNorthPanel = new JPanel(new BorderLayout()) {
-      @Override
-      public Dimension getMinimumSize() {
-        Dimension d = super.getMinimumSize();
-        return new Dimension(0, d.height);
-      }
-    };
-    myTreeNorthPanel.setOpaque(false);
-    myTreeNorthPanel.add(BorderLayout.CENTER, searchPanel);
-    left.add(BorderLayout.NORTH, myTreeNorthPanel);
+    left.add(BorderLayout.NORTH, searchPanel);
     editor.setPreferredSize(JBUI.size(800, 600));
     add(BorderLayout.CENTER, mySplitter);
 
