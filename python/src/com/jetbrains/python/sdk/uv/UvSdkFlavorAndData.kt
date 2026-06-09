@@ -19,7 +19,7 @@ import java.nio.file.Path
 import javax.swing.Icon
 import kotlin.io.path.pathString
 
-class UvSdkAdditionalData : PythonSdkAdditionalData {
+internal class UvSdkAdditionalData : PythonSdkAdditionalData {
   internal val flavorData: UvSdkFlavorData
 
   constructor(uvWorkingDirectory: Path?, usePip: Boolean?, venvPath: FullPathOnTarget?, uvPath: FullPathOnTarget?) : this(UvSdkFlavorData(

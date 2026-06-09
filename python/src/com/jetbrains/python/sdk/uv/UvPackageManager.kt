@@ -311,7 +311,7 @@ internal class UvPackageManager internal constructor(project: Project, sdk: Sdk,
   }
 }
 
-class UvPackageManagerProvider : PythonPackageManagerProvider {
+internal class UvPackageManagerProvider : PythonPackageManagerProvider {
   override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? {
     if (!sdk.isUv) {
       return null

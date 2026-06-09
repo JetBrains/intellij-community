@@ -9,6 +9,6 @@ import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
  *  This source code is created by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
 
-class PoetryPackageManagerProvider : PythonPackageManagerProvider {
+internal class PoetryPackageManagerProvider : PythonPackageManagerProvider {
   override fun createPackageManagerForSdk(project: Project, sdk: Sdk): PythonPackageManager? = if (sdk.isPoetry) PoetryPackageManager(project, sdk) else null
 }

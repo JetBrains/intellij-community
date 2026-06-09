@@ -9,7 +9,7 @@ import java.nio.file.Path
  *  This source code is edited by @koxudaxi Koudai Aono <koxudaxi@gmail.com>
  */
 
-class PyPoetrySdkAdditionalData : PythonSdkAdditionalData {
+internal class PyPoetrySdkAdditionalData : PythonSdkAdditionalData {
   constructor(associatedModulePath: Path?) : super(PyPoetrySdkFlavor) {
     this.associatedModulePath = associatedModulePath?.toString()
   }

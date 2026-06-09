@@ -25,7 +25,7 @@ internal class HatchSdkFlavorProvider : PythonFlavorProvider {
   override fun getFlavor(): PythonSdkFlavor<*> = HatchSdkFlavor
 }
 
-class HatchSdkAdditionalData(
+internal class HatchSdkAdditionalData(
   val hatchWorkingDirectory: Path?,
   val hatchEnvironmentName: String?,
 ) : PythonSdkAdditionalData(PyFlavorAndData(data = HatchSdkFlavorData, flavor = HatchSdkFlavor)) {

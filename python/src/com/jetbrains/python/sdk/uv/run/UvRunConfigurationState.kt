@@ -104,7 +104,7 @@ private suspend fun checkRequiresSync(
 }
 
 @ApiStatus.Internal
-suspend fun requiresSync(
+internal suspend fun requiresSync(
   uv: UvLowLevel<PathHolder.Eel>,
   options: UvRunConfigurationOptions,
   logger: Logger,

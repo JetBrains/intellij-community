@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 @ApiStatus.Internal
-suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path): PyResult<Sdk> {
+internal suspend fun HatchVirtualEnvironment.createSdk(workingDirectoryPath: Path): PyResult<Sdk> {
   if (pythonVirtualEnvironment !is PythonVirtualEnvironment.Existing) {
     return Result.failure(BasePythonExecutableNotFoundHatchError(null as String?))
   }

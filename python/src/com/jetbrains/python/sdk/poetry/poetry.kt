@@ -23,11 +23,11 @@ import kotlin.io.path.pathString
 
 
 @Internal
-fun suggestedSdkName(basePath: Path): @NlsSafe String = "Poetry (${PathUtil.getFileName(basePath.pathString)})"
+internal fun suggestedSdkName(basePath: Path): @NlsSafe String = "Poetry (${PathUtil.getFileName(basePath.pathString)})"
 
 
 @Internal
-suspend fun createNewPoetrySdk(
+internal suspend fun createNewPoetrySdk(
   moduleBasePath: Path,
   basePythonBinaryPath: PythonBinary,
   installPackages: Boolean,
@@ -43,7 +43,7 @@ suspend fun createNewPoetrySdk(
 }
 
 @Internal
-suspend fun createPoetrySdk(
+internal suspend fun createPoetrySdk(
   basePath: Path,
   pythonBinaryPath: PathHolder.Eel,
 ): PyResult<Sdk> = withProgressText(PyBundle.message("python.sdk.progress.poetry.configuring")) {
@@ -69,7 +69,7 @@ private suspend fun setUpPoetry(moduleBasePath: Path, basePythonBinaryPath: Pyth
   return PyResult.success(pythonBinaryPath)
 }
 
-fun parsePoetryShowOutdated(input: String): Map<String, PythonOutdatedPackage> {
+internal fun parsePoetryShowOutdated(input: String): Map<String, PythonOutdatedPackage> {
   return input
     .lines()
     .map { it.trim() }

@@ -14,17 +14,17 @@ import org.apache.tuweni.toml.TomlTable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-sealed class UvPyProjectIssue {
+internal sealed class UvPyProjectIssue {
   data object SafeGetError : UvPyProjectIssue()
 }
 
 @ApiStatus.Internal
-data class UvPyProjectTable(
+internal data class UvPyProjectTable(
   val uvDevDependencies: List<String>?,
 )
 
 @ApiStatus.Internal
-data class UvPyProject(val project: UvPyProjectTable?, val issues: List<UvPyProjectIssue>) {
+internal data class UvPyProject(val project: UvPyProjectTable?, val issues: List<UvPyProjectIssue>) {
   fun matchOutdatedPackages(
     module: Module,
     pyProject: PyProjectToml,

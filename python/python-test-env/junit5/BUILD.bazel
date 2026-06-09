@@ -40,7 +40,10 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.python.test.env.junit5",
+    associates = [
+        "//python:python-community-impl",
+        "//python:python-community-impl_test_lib",
+    ],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -82,8 +85,6 @@ jvm_library(
         "//python/python-sdk:sdk_test_lib",
         "//python/junit5Tests-framework:community-junit5Tests-framework",
         "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
-        "//python:python-community-impl",
-        "//python:python-community-impl_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
         "//python/python-test-env/conda",

@@ -61,7 +61,7 @@ private val POETRY_TOOL: ToolCommandExecutor = ToolCommandExecutor(
 private val POETRY_EXCLUDE_NON_DIGITS_REGEX = Regex("""\D+$""")
 
 @Internal
-suspend fun runPoetry(
+internal suspend fun runPoetry(
   projectPath: Path?,
   vararg args: String,
   inProjectEnv: Boolean? = null,
@@ -84,14 +84,14 @@ suspend fun runPoetry(
  * Returns the configured poetry executable or detects it automatically on the given [fileSystem].
  */
 @Internal
-suspend fun <P : PathHolder> getPoetryExecutable(fileSystem: FileSystem<P>): P? =
+internal suspend fun <P : PathHolder> getPoetryExecutable(fileSystem: FileSystem<P>): P? =
   POETRY_TOOL.getToolExecutable(fileSystem, pathFromSdk = null)
 
 /**
  * Returns the configured poetry executable or detects it automatically.
  */
 @Internal
-suspend fun getPoetryExecutable(eel: EelApi = localEel): Path? =
+internal suspend fun getPoetryExecutable(eel: EelApi = localEel): Path? =
   getPoetryExecutable(EelFileSystem(eel))?.path
 
 /**
@@ -101,7 +101,7 @@ suspend fun getPoetryExecutable(eel: EelApi = localEel): Path? =
  * 2. `poetry [args]`
  */
 @Internal
-suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
+internal suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
   val projectPath = sdk.associatedModulePath?.let { Path.of(it) }
                     ?: return PyResult.localizedError(poetryNotFoundException) // Choose a correct sdk
   val pythonHomePath = sdk.pyRichSdkAsync().pythonHomePath
@@ -121,7 +121,7 @@ suspend fun runPoetryWithSdk(sdk: Sdk, vararg args: String): PyResult<String> {
  * @return the path to the poetry environment.
  */
 @Internal
-suspend fun setupPoetry(
+internal suspend fun setupPoetry(
   projectPath: Path,
   basePythonBinaryPath: PythonBinary,
   installPackages: Boolean,
@@ -181,13 +181,13 @@ private suspend fun getPythonExecutable(homePathString: String): PythonBinary? =
  * @param [extraArgs] Additional arguments to pass to the Poetry add command.
  */
 @Internal
-suspend fun poetryInstallPackage(sdk: Sdk, packages: List<String>, extraArgs: List<String>): PyResult<String> {
+internal suspend fun poetryInstallPackage(sdk: Sdk, packages: List<String>, extraArgs: List<String>): PyResult<String> {
   val args = listOf("add") + packages + extraArgs
   return runPoetryWithSdk(sdk, *args.toTypedArray())
 }
 
 @Internal
-suspend fun poetryInstallPackageDetached(sdk: Sdk, packages: List<String>, extraArgs: List<String>): PyResult<String> {
+internal suspend fun poetryInstallPackageDetached(sdk: Sdk, packages: List<String>, extraArgs: List<String>): PyResult<String> {
   val args = listOf("run", "pip", "install") + packages + extraArgs
   return runPoetryWithSdk(sdk, *args.toTypedArray())
 }
@@ -199,7 +199,7 @@ suspend fun poetryInstallPackageDetached(sdk: Sdk, packages: List<String>, extra
  * @param [packages] The name of the package to be uninstalled.
  */
 @Internal
-suspend fun poetryRemovePackage(sdk: Sdk, vararg packages: String): PyResult<String> = runPoetryWithSdk(sdk, "remove", *packages)
+internal suspend fun poetryRemovePackage(sdk: Sdk, vararg packages: String): PyResult<String> = runPoetryWithSdk(sdk, "remove", *packages)
 
 @Internal
 suspend fun poetryUninstallPackage(sdk: Sdk, vararg packages: String): PyResult<String> {
@@ -208,7 +208,7 @@ suspend fun poetryUninstallPackage(sdk: Sdk, vararg packages: String): PyResult<
 }
 
 @Internal
-fun parsePoetryShow(input: String): List<PythonPackage> {
+internal fun parsePoetryShow(input: String): List<PythonPackage> {
   val result = mutableListOf<PythonPackage>()
   input.split("\n").forEach { line ->
     if (line.isNotBlank()) {
@@ -221,14 +221,14 @@ fun parsePoetryShow(input: String): List<PythonPackage> {
 }
 
 @Internal
-suspend fun poetryShowOutdated(sdk: Sdk): PyResult<Map<String, PythonOutdatedPackage>> {
+internal suspend fun poetryShowOutdated(sdk: Sdk): PyResult<Map<String, PythonOutdatedPackage>> {
   val output = runPoetryWithSdk(sdk, "show", "--all", "--outdated").getOr { return it }
 
   return parsePoetryShowOutdated(output).let { PyResult.success(it) }
 }
 
 @Internal
-suspend fun poetryListPackages(sdk: Sdk): PyResult<Pair<List<PyPackage>, List<PyRequirement>>> {
+internal suspend fun poetryListPackages(sdk: Sdk): PyResult<Pair<List<PyPackage>, List<PyRequirement>>> {
   val version = getPoetryVersion()?.toVersion()
 
   // Ensure that the lock file is up to date.
@@ -244,7 +244,7 @@ suspend fun poetryListPackages(sdk: Sdk): PyResult<Pair<List<PyPackage>, List<Py
 }
 
 @Internal
-suspend fun checkLock(sdk: Sdk, version: Version?): Boolean {
+internal suspend fun checkLock(sdk: Sdk, version: Version?): Boolean {
   // From Poetry 1.6.0 and forward, `poetry check --lock` should be used to figure out the validity of the lock file.
   // However, this command fails whenever a README file (as described in pyproject.toml) is absent, without even checking the lock file.
   // The old command, albeit deprecated, doesn't check for the README; instead, it only checks for the validity of the lock file.
@@ -257,7 +257,7 @@ suspend fun checkLock(sdk: Sdk, version: Version?): Boolean {
 }
 
 @Internal
-suspend fun fixLock(sdk: Sdk, version: Version?): PyResult<String> {
+internal suspend fun fixLock(sdk: Sdk, version: Version?): PyResult<String> {
   if (version == null || version >= VERSION_2) {
     return runPoetryWithSdk(sdk, "lock")
   }
@@ -266,7 +266,7 @@ suspend fun fixLock(sdk: Sdk, version: Version?): PyResult<String> {
 }
 
 @Internal
-fun parsePoetryInstallDryRun(input: String): Pair<List<PyPackage>, List<PyRequirement>> {
+internal fun parsePoetryInstallDryRun(input: String): Pair<List<PyPackage>, List<PyRequirement>> {
   val installedLines = listOf("Already installed", "Skipping", "Updating", "Downgrading")
 
   fun getNameAndVersion(line: String): Triple<String, String, String> {
@@ -313,7 +313,7 @@ fun parsePoetryInstallDryRun(input: String): Pair<List<PyPackage>, List<PyRequir
  * @param [args] A vararg array of String arguments to pass to the Poetry configuration command.
  */
 @Internal
-suspend fun configurePoetryEnvironment(modulePath: Path?, vararg args: String) {
+internal suspend fun configurePoetryEnvironment(modulePath: Path?, vararg args: String) {
   runPoetry(modulePath, "config", *args)
 }
 

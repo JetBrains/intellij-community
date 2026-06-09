@@ -3,5 +3,5 @@ package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.diagnostic.Logger
 
-val LOGGER: Logger = Logger.getInstance("#com.jetbrains.python.sdk.uv")
+internal val LOGGER: Logger = Logger.getInstance("#com.jetbrains.python.sdk.uv")
 

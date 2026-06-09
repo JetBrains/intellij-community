@@ -87,7 +87,7 @@ private class UvCliImpl<P : PathHolder>(val dispatcher: CoroutineDispatcher, val
 
 suspend fun getUvExecutableLocal(eel: EelApi = localEel): Path? = getUvExecutable(EelFileSystem(eel), null)?.path
 
-suspend fun <P : PathHolder> getUvExecutable(fileSystem: FileSystem<P>, pathFromSdk: FullPathOnTarget?): P? =
+internal suspend fun <P : PathHolder> getUvExecutable(fileSystem: FileSystem<P>, pathFromSdk: FullPathOnTarget?): P? =
   UV_TOOL.getToolExecutable(fileSystem, pathFromSdk)
 
 fun setUvExecutableLocal(path: Path) {
@@ -98,11 +98,11 @@ suspend fun hasUvExecutableLocal(): Boolean {
   return getUvExecutableLocal() != null
 }
 
-suspend fun createUvCliLocal(uv: Path? = null, dispatcher: CoroutineDispatcher = Dispatchers.IO): PyResult<UvCli<PathHolder.Eel>> {
+internal suspend fun createUvCliLocal(uv: Path? = null, dispatcher: CoroutineDispatcher = Dispatchers.IO): PyResult<UvCli<PathHolder.Eel>> {
   return createUvCli(uv?.let { PathHolder.Eel(it) }, EelFileSystem(localEel), dispatcher)
 }
 
-suspend fun <P : PathHolder> createUvCli(
+internal suspend fun <P : PathHolder> createUvCli(
   uv: P?,
   fileSystem: FileSystem<P>,
   dispatcher: CoroutineDispatcher = Dispatchers.IO,
