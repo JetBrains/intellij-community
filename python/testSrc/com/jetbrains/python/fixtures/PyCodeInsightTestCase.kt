@@ -5,9 +5,11 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.RecursionManager
@@ -21,7 +23,6 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findParentOfType
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
@@ -87,11 +88,16 @@ import com.jetbrains.python.psi.types.TypeEvalContext.Companion.userInitiated
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Unmodifiable
+import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.MethodOrderer
+import org.junit.jupiter.api.Order
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
+import org.junit.jupiter.api.TestMethodOrder
 import kotlin.time.Duration
 import kotlin.time.measureTimedValue
 
@@ -145,14 +151,19 @@ import kotlin.time.measureTimedValue
  *
  * - **FIXME** records the value that is expected after a known bug or limitation is fixed while keeping the
  * current/wrong expected value before it.
+ *
+ *
+ * ## Implementation Note
+ *
+ * For every subclass of [PyCodeInsightTestCase], a new fixture [myFixture] is created. However, for
+ * performance reasons, all test cases of the same subclass share the same [myFixture] instance, ensuring
+ * consistent setup and teardown across tests within the same test class. Note that instances of [myFixture]
+ * cannot be used in parallel, e.g., for parallel test execution.
  */
 abstract class PyCodeInsightTestCase {
   protected val logger = thisLogger()
 
   protected var testCallCount = 0
-  protected val ourPy2Descriptor = PyLightProjectDescriptor(LanguageLevel.PYTHON27)
-  protected val ourPyLatestDescriptor = PyLightProjectDescriptor(LanguageLevel.getLatest())
-  protected lateinit var myFixture: CodeInsightTestFixture
 
 
   data class TestOptions(
@@ -166,6 +177,13 @@ abstract class PyCodeInsightTestCase {
     val enableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
     val disableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
   )
+
+
+  /** Default test options in tests. Override if required. */
+  open val defaultTestOptions: TestOptions = TestOptions()
+
+  /** Default test file name in tests. Override if required. */
+  open val defaultTestFileName: String = "aaa.py"
 
   /** Default inspections to be enabled in tests. Override if required. */
   open val defaultInspections: Set<Class<out LocalInspectionTool>> = setOf(
@@ -193,38 +211,61 @@ abstract class PyCodeInsightTestCase {
     PyTypeAliasRedeclarationInspection::class.java,
   )
 
-  /** Default test options in tests. Override if required. */
-  open val defaultTestOptions: TestOptions = TestOptions()
+  companion object {
+    @JvmStatic
+    protected val ourPyLatestDescriptor = PyLightProjectDescriptor(LanguageLevel.getLatest())
+    @JvmStatic
+    protected lateinit var myFixture: CodeInsightTestFixture // only one active fixture per JVM is possible
 
-  /** Default test file name in tests. Override if required. */
-  open val defaultTestFileName: String = "aaa.py"
+    @BeforeAll
+    @JvmStatic
+    fun setUpFixture(testInfo: TestInfo) {
+      val factory = IdeaTestFixtureFactory.getFixtureFactory()
+      val testClass = testInfo.testClass.orElse(PyCodeInsightTestCase::class.java)!!
+      val builder = factory.createLightFixtureBuilder(ourPyLatestDescriptor, testClass.simpleName)
+      myFixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
+      myFixture.testDataPath = PythonTestUtil.getTestDataPath()
+      myFixture.setUp()
+      InspectionProfileImpl.INIT_INSPECTIONS = true
+    }
+
+    @AfterAll
+    @JvmStatic
+    fun tearDownFixture() {
+      InspectionProfileImpl.INIT_INSPECTIONS = false
+      myFixture.tearDown()
+      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher::class.java).flushLanguageLevelCache()
+      IntentionalUnstubbing.resetForciblyUnstubbedFileSet()
+    }
+  }
+
 
   @BeforeEach
-  fun setUp(testInfo: TestInfo) {
-    val factory = IdeaTestFixtureFactory.getFixtureFactory()
-    val fixtureBuilder = factory.createLightFixtureBuilder(ourPyLatestDescriptor, PlatformTestUtil.getTestName(testInfo.displayName, false))
-    val fixture = fixtureBuilder.getFixture()
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, LightTempDirTestFixtureImpl(true))
-    myFixture.testDataPath = PythonTestUtil.getTestDataPath()
-    myFixture.setUp()
-    InspectionProfileImpl.INIT_INSPECTIONS = true
+  fun setUpPerTest() {
     testCallCount = 0
   }
 
   @AfterEach
-  fun tearDown() {
-    InspectionProfileImpl.INIT_INSPECTIONS = false
+  fun tearDownPerTest() {
+    runInEdtAndWait {
+      // close any open editors
+      val fem = FileEditorManager.getInstance(myFixture.project)
+      fem.openFiles.forEach { fem.closeFile(it) }
 
+      // wipe temp dir
+      WriteAction.runAndWait<RuntimeException> {
+        myFixture.tempDirFixture.getFile(".")?.children?.forEach { it.delete(this) }
+      }
+    }
+
+    // reset project-scoped state
+    setLanguageLevel(null)
     if (myFixture.module != null) {
       PyNamespacePackagesService.getInstance(myFixture.module).resetAllNamespacePackages()
     }
-    setLanguageLevel(null)
 
-    myFixture.tearDown()
-    FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher::class.java).flushLanguageLevelCache()
-    IntentionalUnstubbing.resetForciblyUnstubbedFileSet()
-
-    // This style issue can be revised if it proves impractical.
+    // wait for indexes
+    waitUntilIndexesAreReady(myFixture.project)
     Assertions.assertTrue(testCallCount < 2, "Test method `test` should not be called more than once per JUnit test")
   }
 
@@ -257,6 +298,9 @@ abstract class PyCodeInsightTestCase {
     if (options.assertRecursionPrevention) {
       RecursionManager.assertOnRecursionPrevention(myFixture.projectDisposable)
     }
+    else {
+      RecursionManager.disableAssertOnRecursionPrevention(myFixture.projectDisposable)
+    }
     setLanguageLevel(options.languageLevel)
 
     val anyTypeKey = Registry.get("python.type.any")
@@ -280,8 +324,15 @@ abstract class PyCodeInsightTestCase {
     val currentFile = myFixture.configureByText(fileName, fileContent.trimIndent())
 
     val testInspections = defaultInspections - options.disableInspections + options.enableInspections
-    myFixture.enableInspections(testInspections)
-    collectAndCheckHighlighting(options)
+    val inspectionInstances = testInspections.map { it.getDeclaredConstructor().newInstance() }.toTypedArray()
+    myFixture.enableInspections(*inspectionInstances)
+
+    try {
+      collectAndCheckHighlighting(options)
+    }
+    finally {
+        myFixture.disableInspections(*inspectionInstances)
+    }
 
     if (options.assertSdkRootsNotParsed) {
       runReadActionBlocking {
@@ -1166,7 +1217,7 @@ object PyTestAssertionParser {
 }
 
 
-internal class PyTestAssertionParserAndInlinerTest {
+class PyCodeInsightTestCaseAssertionParserAndInlinerTest {
 
   @Test
   fun `parser parses marker span with multiline payload fixme and trailing comment`() {
@@ -1296,5 +1347,76 @@ internal class PyTestAssertionParserAndInlinerTest {
       """.trimIndent(),
       actualText
     )
+  }
+}
+
+
+/**
+ * Verifies that within a single subclass of [PyCodeInsightTestCase], two consecutive test
+ * methods observe:
+ *  1. The very same [myFixture] instance (it is re-used across the methods of the subclass),
+ *  2. A re-initialized per-test state (open editors closed, temp dir wiped, [testCallCount] reset).
+ */
+@TestMethodOrder(MethodOrderer.OrderAnnotation::class)
+class PyCodeInsightTestCaseFixtureReuseTest : PyCodeInsightTestCase() {
+
+  companion object {
+    private var fixtureFromFirstTest: CodeInsightTestFixture? = null
+    private var projectFromFirstTest: com.intellij.openapi.project.Project? = null
+    private var tempDirFromFirstTest: com.intellij.testFramework.fixtures.TempDirTestFixture? = null
+  }
+
+  @Test
+  @Order(1)
+  fun `first test populates the fixture and leaves state behind`() {
+    // Configure a file and open it in the editor; this is project-scoped state that the
+    // per-test tear-down is expected to clean up before the next test starts.
+    myFixture.configureByText("reuse_first.py", "x = 1\n")
+    val fem = FileEditorManager.getInstance(myFixture.project)
+    Assertions.assertTrue(fem.openFiles.isNotEmpty(), "An editor should be open after configureByText")
+
+    // Create an extra file in the temp dir to verify the temp dir gets wiped between tests.
+    myFixture.createFile("reuse_extra.py", "y = 2\n")
+    val tempRoot = myFixture.tempDirFixture.getFile(".")
+    Assertions.assertNotNull(tempRoot, "Temp dir should exist")
+    Assertions.assertTrue(tempRoot!!.children.isNotEmpty(), "Some files should exist in the temp dir at this point")
+
+    // Remember identities so the second test can compare against them.
+    fixtureFromFirstTest = myFixture
+    projectFromFirstTest = myFixture.project
+    tempDirFromFirstTest = myFixture.tempDirFixture
+  }
+
+  @Test
+  @Order(2)
+  fun `second test reuses the same fixture but observes re-initialized state`() {
+    Assertions.assertNotNull(fixtureFromFirstTest, "First test must have run before the second one")
+
+    // (1) Fixture re-use: the same instance is observed across test methods of this subclass.
+    Assertions.assertSame(fixtureFromFirstTest, myFixture,
+                          "myFixture must be the same instance across tests of the same PyCodeInsightTestCase subclass")
+    Assertions.assertSame(projectFromFirstTest, myFixture.project,
+                          "The project owned by myFixture must be the same instance across tests")
+    Assertions.assertSame(tempDirFromFirstTest, myFixture.tempDirFixture,
+                          "The temp dir fixture must be the same instance across tests")
+
+    // (2) Re-initialization: open editors from the previous test were closed by tearDownPerTest.
+    val fem = FileEditorManager.getInstance(myFixture.project)
+    Assertions.assertTrue(fem.openFiles.isEmpty(),
+                          "All editors opened in the previous test should be closed before the next test starts")
+
+    // (3) Re-initialization: the temp dir was wiped by tearDownPerTest.
+    val tempRoot = myFixture.tempDirFixture.getFile(".")
+    Assertions.assertNotNull(tempRoot, "Temp dir should still exist (it belongs to the shared fixture)")
+    Assertions.assertEquals(0, tempRoot!!.children.size,
+                            "Temp dir contents from the previous test should be wiped before the next test starts")
+
+    // (4) Re-initialization: the per-test counter is reset by setUpPerTest.
+    Assertions.assertEquals(0, testCallCount,
+                            "testCallCount must be reset to 0 at the start of every test")
+
+    // The shared fixture remains fully functional after re-initialization.
+    myFixture.configureByText("reuse_second.py", "z = 3\n")
+    Assertions.assertNotNull(myFixture.file, "Fixture should still be usable in a subsequent test")
   }
 }

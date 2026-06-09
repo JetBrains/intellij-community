@@ -4,7 +4,7 @@ package com.jetbrains.python
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import org.junit.jupiter.api.Test
 
-internal class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
+class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
 
   @Test
   fun `Generic super class expects bivariant type parameters`() = test("""

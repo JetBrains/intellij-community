@@ -340,6 +340,7 @@ class PyCodeInsightTestCaseOnlyCompletionContributor : CompletionContributor() {
     }
 
     private fun findParentByPsiClassName(element: PsiElement, className: String): PsiElement? {
+      // We deliberately compare only based on names to avoid dependencies to Java/Kotlin modules
       var current: PsiElement? = element
       while (current != null) {
         if (current.javaClass.simpleName == className) {

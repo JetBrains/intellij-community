@@ -17,7 +17,7 @@ import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
-internal class PyVarianceTest : PyCodeInsightTestCase() {
+class PyVarianceTest : PyCodeInsightTestCase() {
 
   private fun doTestTypeVarVariance(variance: PyTypeParameterType.Variance?, @Language("Python") text: String) {
     myFixture.configureByText(PythonFileType.INSTANCE, text.trimIndent())
