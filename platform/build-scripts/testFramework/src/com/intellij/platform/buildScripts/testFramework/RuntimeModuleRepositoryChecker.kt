@@ -5,7 +5,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.runtime.product.ProductModules
 import com.intellij.platform.runtime.product.serialization.ProductModulesSerialization.loadProductModules
 import com.intellij.platform.runtime.repository.MalformedRepositoryException
-import com.intellij.platform.runtime.repository.RuntimeModuleDescriptor
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.repository.RuntimeModuleRepository
@@ -341,19 +340,4 @@ private fun loadProductModules(productModulesModule: String, outputProvider: Mod
   catch (e: IOException) {
     throw MalformedRepositoryException("Failed to load module group from $debugName", e)
   }
-}
-
-private fun collectDependencies(
-  repository: RuntimeModuleRepository,
-  moduleDescriptor: RuntimeModuleDescriptor,
-  path: FList<String>,
-  result: MutableMap<RuntimeModuleId, FList<String>> = LinkedHashMap(),
-): MutableMap<RuntimeModuleId, FList<String>> {
-  if (result.putIfAbsent(moduleDescriptor.moduleId, path) == null) {
-    val newPath = path.prepend(moduleDescriptor.moduleId.displayName)
-    for (dependency in moduleDescriptor.dependencies) {
-      collectDependencies(repository, dependency, newPath, result)
-    }
-  }
-  return result
 }
