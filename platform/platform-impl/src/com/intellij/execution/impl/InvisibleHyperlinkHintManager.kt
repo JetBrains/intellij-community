@@ -33,13 +33,16 @@ import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.Point
@@ -78,6 +81,16 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor, parentD
         }
       }
     }, parentDisposable)
+    coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
+      editor.contentComponent.launchOnShow(InvisibleHyperlinkHintManager::class.simpleName + ": cancel popup on hiding") {
+        try {
+          awaitCancellation()
+        }
+        finally {
+          cancelPopup()
+        }
+      }
+    }
   }
 
   fun isInsideHint(e: EditorMouseEvent): Boolean {
