@@ -182,7 +182,7 @@ internal suspend fun generateIjLightLaunchData(
 private suspend fun findFrontendCustomizationPluginId(clientContext: BuildContext): String {
   val rootModule = clientContext.productProperties.rootModuleForModularLoader
   val candidates = clientContext.getBundledPluginModules().filter {
-    it != rootModule && (it.endsWith(".frontend.split.customization") || it.endsWith(".frontend.customization"))
+    it != rootModule && (it.endsWith(".frontend.split.customization") || it.endsWith(".frontend.customization") || it.endsWith(".customization.plugin"))
   }
   if (candidates.size != 1) {
     clientContext.messages.logErrorAndThrow("Expected exactly one frontend customization plugin module for ${clientContext.productProperties.rootModuleForModularLoader}, got $candidates")
