@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
+import java.awt.Desktop;
 import java.util.ArrayList;
 
 public final class NativeFileType implements INativeFileType {
@@ -66,6 +67,17 @@ public final class NativeFileType implements INativeFileType {
 
     var commands = new ArrayList<String>();
     if (OS.CURRENT == OS.Windows) {
+      if (Desktop.isDesktopSupported()) {
+        var desktop = Desktop.getDesktop();
+        if (desktop.isSupported(Desktop.Action.OPEN)) {
+          try {
+            desktop.open(file.toNioPath().toFile());
+            return true;
+          }
+          catch (Exception ignored) {
+          }
+        }
+      }
       //noinspection SpellCheckingInspection
       commands.add("rundll32.exe");
       commands.add("url.dll,FileProtocolHandler");
