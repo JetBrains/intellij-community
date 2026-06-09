@@ -12,6 +12,7 @@ import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionGroupWrapper
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -2784,14 +2785,9 @@ open class JBTabsImpl internal constructor(
 
     val group = if (tabActionGroup != null && entryPointActionGroup != null) {
       // check that more toolbar and entry point toolbar are in the same row
-      if (!moreToolbar!!.component.bounds.isEmpty &&
-          tabActionGroup.getChildren(null).isNotEmpty() &&
-          (!TabLayout.showPinnedTabsSeparately() || tabs.all { !it.isPinned })) {
-        DefaultActionGroup(FakeEmptyAction(), Separator.create(), tabActionGroup, Separator.create(), entryPointActionGroup)
-      }
-      else {
-        DefaultActionGroup(tabActionGroup, Separator.create(), entryPointActionGroup)
-      }
+      val showMoreToolbarSeparator = !moreToolbar!!.component.bounds.isEmpty &&
+                                     (!TabLayout.showPinnedTabsSeparately() || tabs.all { !it.isPinned })
+      DefaultActionGroup(TabActionGroupWrapper(tabActionGroup, showMoreToolbarSeparator), entryPointActionGroup)
     }
     else {
       tabActionGroup ?: entryPointActionGroup!!
@@ -3501,6 +3497,34 @@ private fun updateToolbarIfVisibilityChanged(toolbar: ActionToolbar?, previousBo
   val bounds = toolbar.component.bounds
   if (bounds.isEmpty != previousBounds.isEmpty) {
     toolbar.updateActionsAsync()
+  }
+}
+
+private class TabActionGroupWrapper(
+  tabActionGroup: ActionGroup,
+  private val showMoreToolbarSeparator: Boolean,
+) : ActionGroupWrapper(tabActionGroup) {
+  private val fakeEmptyAction = JBTabsImpl.FakeEmptyAction()
+
+  override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
+    val children = super.postProcessVisibleChildren(e, visibleChildren)
+    if (children.isEmpty()) {
+      return children
+    }
+
+    val result = ArrayList<AnAction>(children.size + if (showMoreToolbarSeparator) 3 else 1)
+    if (showMoreToolbarSeparator) {
+      addSyntheticAction(e, result, fakeEmptyAction)
+      addSyntheticAction(e, result, Separator.create())
+    }
+    result.addAll(children)
+    addSyntheticAction(e, result, Separator.create())
+    return result
+  }
+
+  private fun addSyntheticAction(e: AnActionEvent, result: MutableList<AnAction>, action: AnAction) {
+    e.updateSession.presentation(action).isEnabledAndVisible = true
+    result.add(action)
   }
 }
 
