@@ -32,6 +32,7 @@ import com.intellij.platform.lsp.impl.features.highlighting.LspSemanticToken
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspCachedHighlighting
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCacheRegistry
 import com.intellij.platform.lsp.impl.fileEvents.LspWatchedFiles
+import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.text.nullize
@@ -244,6 +245,11 @@ class LspClientImpl internal constructor(
       catch (e: Exception) {
         // stack trace of the LspInitializationException is always the same, so not interesting; let's log its cause
         val exToLog = (e as? LspInitializationException)?.cause ?: e
+        if (e is AlreadyDisposedException) {
+          // The project is disposed
+          ensureServerStopped(false) {}
+          return@executeOnPooledThread
+        }
         logWarn("Failed to start LSP server", exToLog)
 
         val lspServerManager = ReadAction.computeBlocking<LspClientManagerImpl?, Throwable> {
@@ -277,8 +283,10 @@ class LspClientImpl internal constructor(
 
       highlightingCacheRegistry.clearCache()
 
-      LspFeaturesRefreshing.refreshInlayHints(project)
-      LspFeaturesRefreshing.refreshCodeLenses(project)
+      if (!project.isDisposed) {
+        LspFeaturesRefreshing.refreshInlayHints(project)
+        LspFeaturesRefreshing.refreshCodeLenses(project)
+      }
     }
 
     shutdownAndExit()

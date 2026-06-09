@@ -59,9 +59,10 @@ internal abstract class Lsp4jServerConnector protected constructor(private val l
     val remoteEndpoint = RemoteEndpoint(
       StreamMessageConsumer(ideToServerStream, messageJsonHandler), ServiceEndpoints.toEndpoint(lsp4jClient))
     messageJsonHandler.methodProvider = remoteEndpoint
+    val clientManager = LspClientManagerImpl.getInstanceImpl(lspClient.project)
     lsp4jServer = ServiceEndpoints.toServiceObject(remoteEndpoint, descriptor.lsp4jServerClass)
     lsp4jServer = if (descriptor is Lsp4jServerWrapperCreator) descriptor.wrapLsp4jServer(lsp4jServer) else lsp4jServer
-    lsp4jServer = LspClientManagerImpl.getInstanceImpl(lspClient.project).wrapLsp4jServer(lspClient, lsp4jServer)
+    lsp4jServer = clientManager.wrapLsp4jServer(lspClient, lsp4jServer)
 
     ApplicationManager.getApplication().executeOnPooledThread {
       ConcurrencyUtil.runUnderThreadName("LSP Listener: $descriptor") {
