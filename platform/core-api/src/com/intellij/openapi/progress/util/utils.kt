@@ -103,7 +103,7 @@ fun checkCancelledEvenWithPCEDisabled(indicator: ProgressIndicator?) {
   @Suppress("UsagesOfObsoleteApi")
   val isNonCancelable = Cancellation.isInNonCancelableSection()
   if (isNonCancelable || indicator == null) {
-    ProgressManager.getInstance().runCheckCanceledHooks(indicator)
+    ProgressManager.getInstanceOrNull()?.runCheckCanceledHooks(indicator)
   }
   if (isNonCancelable) return
   Cancellation.ensureActive()

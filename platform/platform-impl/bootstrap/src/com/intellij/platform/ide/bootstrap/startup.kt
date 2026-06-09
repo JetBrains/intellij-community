@@ -29,7 +29,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.util.awaitWithCheckCanceled
+import com.intellij.openapi.progress.util.checkCancelledEvenWithPCEDisabled
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.platform.diagnostic.telemetry.impl.span
@@ -40,6 +40,7 @@ import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.svg.SvgCacheManager
+import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.ShellEnvironmentReader
@@ -57,12 +58,14 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Toolkit
 import java.lang.invoke.MethodHandles
@@ -83,6 +86,7 @@ import java.util.function.Supplier
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.milliseconds
 
 internal const val IDE_STARTED: String = "------------------------------------------------------ IDE STARTED ------------------------------------------------------"
 private const val IDE_SHUTDOWN = "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------"
@@ -691,14 +695,16 @@ private fun loadEnvironment(parentJob: Job, log: Logger): Boolean {
 
     override fun get(): Map<String, String> {
       if (env == null) {
-        env = awaitWithCheckCanceled(envFuture)
+        env = @Suppress("RAW_RUN_BLOCKING") runBlocking {
+          awaitWithCheckCanceled(envFuture)
+        }
       }
       return env!!
     }
   })
 
   try {
-    val timeoutMillis = System.getProperty(LOAD_SHELL_ENV_TIMEOUT_PROPERTY)?.toLongOrNull() ?: 0
+    val timeoutMillis = System.getProperty(LOAD_SHELL_ENV_TIMEOUT_PROPERTY)?.toLongOrNull() ?: 0  // `0` means `ShellEnvironmentReader.DEFAULT_TIMEOUT_MILLIS`
     val env = ShellEnvironmentReader.readEnvironment(ShellEnvironmentReader.shellCommand(null, null, null), timeoutMillis).first
     if ("LANG" !in env && "LC_ALL" !in env && "LC_CTYPE" !in env) {
       val value = EnvironmentUtil.setLocaleEnv(env, Charset.defaultCharset())
@@ -711,6 +717,20 @@ private fun loadEnvironment(parentJob: Job, log: Logger): Boolean {
     log.warn("can't get shell environment", e)
     envFuture.complete(EnvironmentUtil.getSystemEnv())
     return false
+  }
+}
+
+private suspend fun <T> awaitWithCheckCanceled(deferred: CompletableDeferred<T>): T {
+  while (true) {
+    if (!deferred.isCompleted) {
+      checkCancelledEvenWithPCEDisabled(indicator = null)
+    }
+    try {
+      return withTimeout(ConcurrencyUtil.DEFAULT_TIMEOUT_MS.milliseconds) {
+        deferred.await()
+      }
+    }
+    catch (_: TimeoutCancellationException) { }
   }
 }
 
