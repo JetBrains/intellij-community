@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
 import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture.Highlight
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
@@ -21,7 +22,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenDuplicatedDependencyInspectionTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(withIndices = true, initialPom = MavenDomTestFixture.DEFAULT_POM, mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testDuplicatedInSameFile() = runBlocking {

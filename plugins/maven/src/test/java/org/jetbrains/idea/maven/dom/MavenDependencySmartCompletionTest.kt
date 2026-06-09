@@ -8,6 +8,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
@@ -26,7 +27,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenDependencySmartCompletionTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(withIndices = true, initialPom = MavenDomTestFixture.DEFAULT_POM, mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testCompletion() = runBlocking {

@@ -1,12 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.inspections.dom
 
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.testFramework.junit5.TestApplication
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.inspections.Maven4RedundantParentCoordinatesInspection
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assumeMaven3
@@ -26,7 +22,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class Maven4RedundantParentCoordinatesInspectionTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(initialPom = null, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testDoNotFireHighlightInMaven3() = runBlocking {
@@ -109,12 +105,8 @@ class Maven4RedundantParentCoordinatesInspectionTest(mavenVersion: String, model
      <parent/>
       <artifactId>m1</artifactId>
 """)
-    withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        maven.fixture.launchAction(intention!!)
-        maven.fixture.checkResult(expected, true)
-      }
-    }
+    maven.fixture.launchAction(intention!!)
+    maven.fixture.checkResult(expected, true)
   }
 
   @Test
@@ -158,11 +150,7 @@ class Maven4RedundantParentCoordinatesInspectionTest(mavenVersion: String, model
       </parent>
       <artifactId>m2</artifactId>
 """)
-    withContext(Dispatchers.EDT) {
-      writeIntentReadAction {
-        maven.fixture.launchAction(intention!!)
-        maven.fixture.checkResult(expected, true)
-      }
-    }
+    maven.fixture.launchAction(intention!!)
+    maven.fixture.checkResult(expected, true)
   }
 }

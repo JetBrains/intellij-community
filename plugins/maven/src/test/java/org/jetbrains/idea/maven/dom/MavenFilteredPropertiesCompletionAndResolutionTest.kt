@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReference
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenFilteredPropertiesCompletionAndResolutionTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, initialPom = null, skipPluginResolution = false,
+  private val maven by mavenDomFixture(withIndices = true, skipPluginResolution = false,
                                        mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.importProjectAsync
 import org.jetbrains.idea.maven.fixtures.mavenDomFixture
@@ -23,7 +24,7 @@ import java.util.stream.Collectors
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenPluginIndexTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, initialPom = null, skipPluginResolution = false,
+  private val maven by mavenDomFixture(withIndices = true, skipPluginResolution = false,
                                        mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test

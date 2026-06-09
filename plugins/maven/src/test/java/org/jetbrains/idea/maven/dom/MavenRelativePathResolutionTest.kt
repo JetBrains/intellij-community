@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.impl.source.xml.XmlFileImpl
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertResolved
 import org.jetbrains.idea.maven.fixtures.createProjectPom
@@ -23,7 +24,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenRelativePathResolutionTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(withIndices = true, initialPom = MavenDomTestFixture.DEFAULT_POM, mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testParentRelativePathOutsideProjectRoot() = runBlocking {

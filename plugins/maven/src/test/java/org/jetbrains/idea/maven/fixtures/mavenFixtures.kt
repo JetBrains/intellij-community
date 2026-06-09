@@ -36,7 +36,7 @@ fun mavenDomFixture(
   mavenVersion: String = "bundled",
   modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0,
   skipPluginResolution: Boolean = true,
-  @Language(value = "XML", prefix = "<project>", suffix = "</project>") initialPom: String? = MavenDomTestFixture.DEFAULT_POM,
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>") initialPom: String? = null,
   withIndices: Boolean = false,
   localRepoDir: String = "local1",
   extraRepoDirs: List<String> = listOf("local2"),

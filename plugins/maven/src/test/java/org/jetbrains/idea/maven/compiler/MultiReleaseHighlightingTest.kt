@@ -23,7 +23,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class MultiReleaseHighlightingTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, initialPom = null, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(withIndices = true, mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testDoNotHighlightVersionRanges() = runBlocking {

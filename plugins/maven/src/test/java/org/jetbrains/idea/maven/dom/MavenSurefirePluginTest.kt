@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
@@ -20,7 +21,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenSurefirePluginTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, skipPluginResolution = false, localRepoDir = "plugins",
+  private val maven by mavenDomFixture(withIndices = true, initialPom = MavenDomTestFixture.DEFAULT_POM, skipPluginResolution = false, localRepoDir = "plugins",
                                        extraRepoDirs = listOf("local1"), mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test

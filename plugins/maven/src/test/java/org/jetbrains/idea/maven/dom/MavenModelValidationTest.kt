@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.inspections.MavenModelVersionMissedInspection
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
 import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture.Highlight
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
@@ -36,7 +37,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenModelValidationTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, skipPluginResolution = false, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(withIndices = true, initialPom = MavenDomTestFixture.DEFAULT_POM, skipPluginResolution = false, mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testCompletionRelativePath() = runBlocking {

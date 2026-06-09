@@ -19,6 +19,7 @@ import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
@@ -53,7 +54,7 @@ import java.io.IOException
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenDependencyCompletionAndResolutionTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(withIndices = true, initialPom = MavenDomTestFixture.DEFAULT_POM, mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testGroupIdCompletion() = runBlocking {
