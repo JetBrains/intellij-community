@@ -36,6 +36,7 @@ import com.jetbrains.python.run.PythonScriptTargetedCommandLineBuilder;
 import com.jetbrains.python.run.PythonScripts;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -67,10 +68,11 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
     throws ExecutionException {
 
     final PythonTRunnerConsoleProperties consoleProperties = createConsoleProperties(executor);
+    final String frameworkName = consoleProperties.getTestFrameworkName();
 
     if (isDebug()) {
-      final ConsoleView testsOutputConsoleView = SMTestRunnerConnectionUtil.createConsole(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
-                                                                                          consoleProperties);
+      final ConsoleView testsOutputConsoleView = SMTestRunnerConnectionUtil.createConsole(frameworkName, consoleProperties);
+      customizeConsoleView(testsOutputConsoleView);
       final ConsoleView consoleView =
         new PythonDebugLanguageConsoleView(project, PythonSdkUtil.findSdkByPath(myConfiguration.getInterpreterPath()),
                                            testsOutputConsoleView, true);
@@ -78,12 +80,14 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
       addTracebackFilter(project, consoleView, processHandler);
       return consoleView;
     }
-    final ConsoleView consoleView = SMTestRunnerConnectionUtil.createAndAttachConsole(PythonTRunnerConsoleProperties.FRAMEWORK_NAME,
-                                                                                      processHandler,
-                                                                                      consoleProperties);
+    final ConsoleView consoleView = SMTestRunnerConnectionUtil.createAndAttachConsole(frameworkName, processHandler, consoleProperties);
+    customizeConsoleView(consoleView);
     addTracebackFilter(project, consoleView, processHandler);
     return consoleView;
   }
+
+  @ApiStatus.Internal
+  protected void customizeConsoleView(@NotNull ConsoleView consoleView) {}
 
   protected PythonTRunnerConsoleProperties createConsoleProperties(Executor executor) {
     final PythonTRunnerConsoleProperties properties = new PythonTRunnerConsoleProperties(myConfiguration, executor, true, getTestLocator());
@@ -257,7 +261,8 @@ public abstract class PythonTestCommandLineStateBase<T extends AbstractPythonRun
       Function<TargetEnvironment, String> targetPycharmHelpersPath =
         TargetEnvironmentFunctions.getRelativeTargetPath(communityHelpersPath.get().getTargetPathFun(), "pycharm");
       envs.put("PYCHARM_HELPERS_DIR", targetPycharmHelpersPath);
-    } else {
+    }
+    else {
       Logger.getInstance(this.getClass()).error("Python Community helpers dir path not found");
     }
   }

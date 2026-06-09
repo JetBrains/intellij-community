@@ -10,6 +10,12 @@ import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.value.TargetEnvironmentFunction
 import com.intellij.execution.target.value.constant
 import com.intellij.execution.testframework.AbstractTestProxy
+import com.intellij.execution.testframework.CompositePrintable
+import com.intellij.execution.testframework.TestFrameworkRunningModel
+import com.intellij.execution.testframework.sm.runner.SMTestProxy
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
+import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
+import com.intellij.execution.ui.ConsoleView
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
@@ -50,9 +56,11 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
     envs[PYTEST_RUN_CONFIG] = "True"
   }
 
-  override fun customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
-                                                        envs: MutableMap<String, TargetEnvironmentFunction<String>>,
-                                                        passParentEnvs: Boolean) {
+  override fun customizePythonExecutionEnvironmentVars(
+    helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest,
+    envs: MutableMap<String, TargetEnvironmentFunction<String>>,
+    passParentEnvs: Boolean,
+  ) {
     super.customizePythonExecutionEnvironmentVars(helpersAwareTargetRequest, envs, passParentEnvs)
     envs[PYTEST_RUN_CONFIG] = constant("True")
   }
@@ -62,13 +70,42 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
     cmd.parametersList.getParamsGroup(GROUP_SCRIPT)?.addParameter(PYTEST_REPORT_LOGS_AS_TEST_LOG_ARG)
   }
 
-  override fun addAfterParameters(targetEnvironmentRequest: TargetEnvironmentRequest,
-                                  testScriptExecution: PythonScriptExecution) {
+  override fun addAfterParameters(
+    targetEnvironmentRequest: TargetEnvironmentRequest,
+    testScriptExecution: PythonScriptExecution,
+  ) {
     testScriptExecution.addParameter(constant(PYTEST_SKIP_PASSED_OUTPUT_DEFAULT_ARG))
     testScriptExecution.addParameter(constant(PYTEST_REPORT_LOGS_AS_TEST_LOG_ARG))
   }
-}
 
+  override fun customizeConsoleView(consoleView: ConsoleView) {
+    installScrollToBottomOnFailedPytestSelection(consoleView)
+  }
+
+  private fun installScrollToBottomOnFailedPytestSelection(consoleView: ConsoleView) {
+    if (consoleView !is SMTRunnerConsoleView) {
+      return
+    }
+
+    consoleView.resultsViewer.addEventsListener(object : TestResultsViewer.EventsListener {
+      override fun onSelected(
+        selectedTestProxy: SMTestProxy?,
+        viewer: TestResultsViewer,
+        model: TestFrameworkRunningModel,
+      ) {
+        if (selectedTestProxy != null &&
+            selectedTestProxy.children.isEmpty() &&
+            selectedTestProxy.isDefect && !selectedTestProxy.isInProgress) {
+          CompositePrintable.invokeInAlarm(Runnable {
+            consoleView.performWhenNoDeferredOutput(Runnable {
+              consoleView.scrollTo(consoleView.contentSize)
+            })
+          })
+        }
+      }
+    })
+  }
+}
 
 class PyTestConfiguration(project: Project, factory: PyTestFactory)
   : PyAbstractTestConfiguration(project, factory),
@@ -111,9 +148,11 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
     ParametersListUtil.parse(additionalArguments)
       .filter(String::isNotEmpty)
 
-  override fun getTestSpecsForRerun(request: TargetEnvironmentRequest,
-                                    scope: GlobalSearchScope,
-                                    locations: List<Pair<Location<*>, AbstractTestProxy>>): List<TargetEnvironmentFunction<String>> =
+  override fun getTestSpecsForRerun(
+    request: TargetEnvironmentRequest,
+    scope: GlobalSearchScope,
+    locations: List<Pair<Location<*>, AbstractTestProxy>>,
+  ): List<TargetEnvironmentFunction<String>> =
     // py.test reruns tests by itself, so we only need to run same configuration and provide --last-failed
     target.generateArgumentsLine(request, this) +
     listOf(rawArgumentsSeparator, "--last-failed").map(::constant) +
