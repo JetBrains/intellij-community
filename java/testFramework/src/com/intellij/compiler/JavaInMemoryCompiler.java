@@ -12,7 +12,6 @@ import javax.tools.JavaFileObject;
 import javax.tools.SimpleJavaFileObject;
 import javax.tools.StandardJavaFileManager;
 import javax.tools.StandardLocation;
-import javax.tools.ToolProvider;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -34,23 +33,9 @@ import java.util.Map;
  */
 public final class JavaInMemoryCompiler {
 
-  private final JavaCompiler myCompiler = createJavaCompiler();
+  private final JavaCompiler myCompiler = JavacUtil.getJavac();
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private final JavaMemFileManager myFileManager = new JavaMemFileManager(myCompiler);
-
-  private static JavaCompiler createJavaCompiler() {
-    JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-    if (compiler == null) {
-      //workaround for IJPL-229691
-      try {
-        compiler = (JavaCompiler)Class.forName("com.sun.tools.javac.api.JavacTool").getMethod("create").invoke(null);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    }
-    return compiler;
-  }
 
   public JavaInMemoryCompiler(File... classpath) {
     try {
