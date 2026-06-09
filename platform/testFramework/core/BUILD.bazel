@@ -48,6 +48,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/testFramework/teamCity",
         "//.ownership/runtime-resolver:codeowners-runtime-resolver",
+        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
         ":libraries_junit4_provided",
         ":libraries_junit5_provided",
     ],
@@ -85,6 +86,7 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/testFramework/teamCity:teamCity_test_lib",
         "//.ownership/runtime-resolver:codeowners-runtime-resolver_test_lib",
+        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.core` end
