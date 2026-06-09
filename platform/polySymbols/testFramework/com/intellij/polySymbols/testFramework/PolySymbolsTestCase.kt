@@ -17,6 +17,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.ui.TestDialog
@@ -155,7 +156,9 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
         ProjectRootManagerEx.getInstanceEx(project)
           .makeRootsChange(EmptyRunnable.getInstance(), RootsChangeRescanningInfo.TOTAL_RESCAN)
       }
-      ensureIndexesReady()
+      if (!isDumb(myFixture.getProject())) {
+        ensureIndexesReady()
+      }
       if (configureFile) {
         if (fileContents != null) {
           configureByText(configureFileName, fileContents)
