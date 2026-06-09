@@ -32,7 +32,7 @@ import javax.swing.SwingUtilities
 import kotlin.coroutines.CoroutineContext
 
 suspend fun <T> withKernel(middleware: TransactorMiddleware, body: suspend CoroutineScope.() -> T) {
-  withTransactor(middleware = middleware) { _ ->
+  withTransactor(middleware = middleware, registerEntityTypeOnEntityCreation = false) { _ ->
     withRete {
       body()
     }
