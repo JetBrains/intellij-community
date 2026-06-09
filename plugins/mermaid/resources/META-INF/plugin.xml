@@ -176,7 +176,6 @@
                        key="notification.group.mermaid"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.mermaid.fus.MermaidCollector"/>
-    <editorFactoryListener implementation="com.intellij.mermaid.fus.DiagramReportingFactoryListener"/>
 
     <lang.ast.factory language="Mermaid" implementationClass="com.intellij.mermaid.lang.psi.MermaidAstFactory"/>
 
