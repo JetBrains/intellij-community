@@ -18,6 +18,8 @@ import com.intellij.debugger.streams.lib.impl.BreakpointBasedLibrarySupport
 import com.intellij.debugger.streams.ui.impl.PrimitiveValueDescriptor
 import com.intellij.xdebugger.frame.XValue
 import com.sun.jdi.Value
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 
 /**
  * StreamTracer implementation that uses breakpoints for value interception.
@@ -65,8 +67,10 @@ internal class BreakpointBasedStreamTracer(
       }
     } finally {
       val debuggerContext = xDebugProcess.debuggerSession.contextManager.context
-      withDebugContext(debuggerContext.managerThread!!) {
-        scheduleReleaseOnResume(objectStorage, debuggerContext.debugProcess!!)
+      withContext(NonCancellable) {
+        withDebugContext(debuggerContext.managerThread!!) {
+          scheduleReleaseOnResume(objectStorage, debuggerContext.debugProcess!!)
+        }
       }
     }
   }

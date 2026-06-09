@@ -25,6 +25,8 @@ import com.sun.jdi.event.BreakpointEvent
 import com.sun.jdi.event.MethodExitEvent
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 
 private val LOG = logger<StreamTracingManager>()
@@ -80,8 +82,10 @@ internal class StreamTracingManager(
     return try {
       evaluationFinished.await()
     } finally {
-      withDebugContext(debuggerContext.managerThread!!) {
-        started.cleanUp(debuggerContext.debugProcess!!)
+      withContext(NonCancellable) {
+        withDebugContext(debuggerContext.managerThread!!) {
+          started.cleanUp(debuggerContext.debugProcess!!)
+        }
       }
     }
   }
@@ -98,17 +102,22 @@ internal class StreamTracingManager(
 
     var requestors: RequestorsSet? = null
     try {
-      requestors = withDebugContext(evaluationContext.suspendContext) {
+      withDebugContext(evaluationContext.suspendContext) {
         val mgr = StreamInstrumentationManager.create(handlerFactory, objectStorage, chain, evaluationContext)
-        createRequestors(evaluationContext, chain, breakpointPositions, mgr).also { it.firstToEnable().enable() }
+        val created = createRequestors(evaluationContext, chain, breakpointPositions, mgr)
+        // Capture the handle on the debugger manager thread before enabling, so a cancellation while returning from
+        // this withDebugContext call cannot orphan the already-created requestors (cleaned up in catch below).
+        requestors = created
+        created.firstToEnable().enable()
       }
 
       val resumer = SpuriousBreakpointResumer(evaluationContext.suspendContext.thread)
       debugProcess.addDebugProcessListener(resumer)
       debugProcess.suspendManager.resume(evaluationContext.suspendContext)
-      EvaluationStatus.EvaluationStarted(requestors, resumer)
+      EvaluationStatus.EvaluationStarted(checkNotNull(requestors), resumer)
     }
     catch (e: CancellationException) {
+      requestors?.cleanUp()
       throw e
     }
     catch (e: Throwable) {
