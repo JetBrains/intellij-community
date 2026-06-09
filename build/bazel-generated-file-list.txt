@@ -1639,7 +1639,6 @@ python/python-sdk-configurator/frontend
 python/python-sdk-ui
 python/python-syntax
 python/python-syntax-core
-python/python-terminal
 python/python-test-env/common
 python/python-test-env/conda
 python/python-test-env/core
@@ -1654,6 +1653,7 @@ python/python-venv
 python/services/internal-impl
 python/services/shared
 python/services/system-python
+python/terminal/backend
 python/testFramework
 python/tools
 spellchecker

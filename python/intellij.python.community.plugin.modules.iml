@@ -6,7 +6,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.python.langInjection" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.copyright" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.python.terminal" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.terminal.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.restructuredtext" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.grazie" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.markdown" scope="RUNTIME" />

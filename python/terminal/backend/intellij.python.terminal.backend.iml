@@ -2,35 +2,34 @@
 <module type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/testResources">
-      <sourceFolder url="file://$MODULE_DIR$/testResources" type="java-test-resource" />
-    </content>
-    <content url="file://$MODULE_DIR$/tests">
-      <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.python.community.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.terminal" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.impl" />
+    <orderEntry type="module" module-name="intellij.terminal" />
     <orderEntry type="module" module-name="intellij.libraries.mockito" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.python.sdk" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.execution" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.python.sdk" />
+    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.libraries.hamcrest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.venv" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit5.pioneer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.python.test.env.junit5" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.terminal" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.python.terminal" />
 </module>

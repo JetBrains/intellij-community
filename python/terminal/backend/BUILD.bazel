@@ -1,10 +1,10 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.python.terminal` start
+### auto-generated section `build intellij.python.terminal.backend` start
 
 jvm_library(
-    name = "terminal",
+    name = "backend",
     srcs = glob(
         [
             "src/**/*.kt",
@@ -13,7 +13,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.python.terminal",
+    module_name = "intellij.python.terminal.backend",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -37,17 +37,17 @@ jvm_library(
 )
 
 jvm_library(
-    name = "terminal_test_lib",
+    name = "backend_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.python.terminal",
+    module_name = "intellij.python.terminal.backend",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":terminal",
+        ":backend",
         "//python:python-community-impl_test_lib",
         "//plugins/terminal:terminal_test_lib",
         "//libraries/mockito",
@@ -83,21 +83,21 @@ jvm_library(
         "//python/python-test-env/junit5:junit5_test_lib",
     ],
 )
-### auto-generated section `build intellij.python.terminal` end
+### auto-generated section `build intellij.python.terminal.backend` end
 
-### auto-generated section `iml intellij.python.terminal` start
+### auto-generated section `iml intellij.python.terminal.backend` start
 exports_files(
     [
-        "intellij.python.terminal.iml",
+        "intellij.python.terminal.backend.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.python.terminal` end
+### auto-generated section `iml intellij.python.terminal.backend` end
 
 ### auto-generated section `build intellij.python.terminal.tests` start
 
 jvm_library(
-    name = "terminal-tests",
+    name = "python-terminal-tests",
     srcs = glob(
         [],
         allow_empty = True,
@@ -107,7 +107,7 @@ jvm_library(
 )
 
 jvm_library(
-    name = "terminal-tests_test_lib",
+    name = "python-terminal-tests_test_lib",
     testonly = True,
     srcs = glob(
         [
@@ -118,15 +118,15 @@ jvm_library(
         allow_empty = True,
     ),
     associates = [
-        "//python/python-terminal:terminal",
-        "//python/python-terminal:terminal_test_lib",
+        "//python/terminal/backend",
+        "//python/terminal/backend:backend_test_lib",
     ],
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":terminal-tests"],
+    runtime_deps = [":python-terminal-tests"],
     deps = [
         # do not sort,
         "//python:python-community-impl",
@@ -184,7 +184,7 @@ exports_files(
 ### auto-generated section `test intellij.python.terminal.tests` start
 
 jps_test(
-    name = "terminal-tests_test",
-    runtime_deps = [":terminal-tests_test_lib"],
+    name = "python-terminal-tests_test",
+    runtime_deps = [":python-terminal-tests_test_lib"],
 )
 ### auto-generated section `test intellij.python.terminal.tests` end
