@@ -135,19 +135,18 @@ public record JavaIncompatibleTypeErrorContext(@NotNull PsiType lType, @Nullable
                         rSubstitutedType != null &&
                         TypeConversionUtil.typesAgree(lSubstitutedType, rSubstitutedType, true);
       String openBrace = i == 0 ? "&lt;" : "";
-      String closeBrace = i == typeParamColumns - 1 ? "&gt;" : ",";
       boolean showShortType = showShortType(lSubstitutedType, rSubstitutedType);
 
       requiredRow.append(skipColumns ? "" : "<td style='padding: 0px 0px 8px 0px;'>")
         .append(lTypeParams.length == 0 ? "" : openBrace)
         .append(redIfNotMatch(lSubstitutedType, true, showShortType))
-        .append(i < lTypeParams.length ? closeBrace : "")
+        .append(i < lTypeParams.length ? (i == lTypeParams.length - 1 ? "&gt;" : ",") : "")
         .append(skipColumns ? "" : "</td>");
 
       foundRow.append(skipColumns ? "" : "<td style='padding: 0px 0px 0px 0px;'>")
         .append(rTypeParams.length == 0 ? "" : openBrace)
         .append(redIfNotMatch(rSubstitutedType, matches, showShortType))
-        .append(i < rTypeParams.length ? closeBrace : "")
+        .append(i < rTypeParams.length ? (i == rTypeParams.length - 1 ? "&gt;" : ",") : "")
         .append(skipColumns ? "" : "</td>");
     }
     PsiType lRawType = lType instanceof PsiClassType classType ? classType.rawType() : lType;

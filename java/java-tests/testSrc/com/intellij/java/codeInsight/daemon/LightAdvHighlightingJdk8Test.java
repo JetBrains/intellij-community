@@ -2,13 +2,17 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.compiler.JavacQuirksInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.deprecation.DeprecationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
+
+import java.util.List;
 
 public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting8";
@@ -51,4 +55,24 @@ public class LightAdvHighlightingJdk8Test extends LightDaemonAnalyzerTestCase {
   public void testCyclicInheritanceOfTypeAnnotation() { doTest(true, true); }
   public void testReferenceToPrivateClass() { doTest(true, true); }
   public void testReferenceToPrivateClassOuterThis() { doTest(true, true); }
+
+  @TestFor(issues = "IDEA-389954")
+  public void testIncompatibleTypeTooltipWithFewerProvidedTypeArguments() {
+    configureFromFileText("a.java", """
+      import java.util.List;
+      import java.util.Map;
+      class Test {
+        void smth(List<String> list) { othr(list); }
+        void othr(Map<String, Object> map) {}
+      }
+      """);
+    List<HighlightInfo> errors = highlightErrors();
+    HighlightInfo info = assertOneElement(errors);
+    String tooltip = info.getToolTip();
+    assertNotNull(tooltip);
+    // The provided type "List<String>" must close its single type argument with ">", not a dangling ",".
+    // In the buggy output no "&lt;String&gt;" exists anywhere (Map renders "&lt;String," + "Object&gt;",
+    // List renders "&lt;String,"); the fix makes List render "&lt;String&gt;".
+    assertTrue(tooltip, tooltip.contains("&lt;<span style=\"color: #333333\">String</span>&gt;"));
+  }
 }
