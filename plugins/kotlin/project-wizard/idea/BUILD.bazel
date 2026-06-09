@@ -66,6 +66,10 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/statistics",
         "//platform/util:util-ui",
+        "//platform/workspace/jps",
+        "//platform/backend/observation",
+        "//platform/backend/workspace",
+        "//platform/workspace/storage",
     ],
 )
 
@@ -124,6 +128,10 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/workspace/jps:jps_test_lib",
+        "//platform/backend/observation:observation_test_lib",
+        "//platform/backend/workspace:workspace_test_lib",
+        "//platform/workspace/storage:storage_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.projectWizard.idea` end
