@@ -151,6 +151,10 @@ class TraceStreamRunner(val cs: CoroutineScope) {
         }
       }
 
+      awaitCancellationAndInvoke(Dispatchers.EDT) {
+        window.close(DialogWrapper.CANCEL_EXIT_CODE)
+      }
+
       withContext(Dispatchers.EDT) {
         yield()
         window.show()
