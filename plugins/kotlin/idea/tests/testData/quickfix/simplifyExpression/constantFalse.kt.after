@@ -1,5 +1,5 @@
 // "Simplify expression" "true"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KotlinConstantConditionsInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KotlinConstantConditionsInspection
 // K2_ERROR: 'if' must have both main and 'else' branches when used as an expression.
 // K2_AFTER_ERROR: 'if' must have both main and 'else' branches when used as an expression.
 

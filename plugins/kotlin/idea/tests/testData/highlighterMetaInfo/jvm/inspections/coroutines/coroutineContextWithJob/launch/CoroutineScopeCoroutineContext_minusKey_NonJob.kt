@@ -15,4 +15,4 @@ interface NonJob : CoroutineContext.Element {
 fun CoroutineScope.test() {
     launch(coroutineContext.minusKey(NonJob)) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

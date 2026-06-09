@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.ReplaceWithOperatorAssignmentInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceWithOperatorAssignmentInspection

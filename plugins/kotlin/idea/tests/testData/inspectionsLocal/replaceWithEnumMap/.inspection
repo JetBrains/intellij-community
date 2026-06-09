@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.ReplaceWithEnumMapInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceWithEnumMapInspection

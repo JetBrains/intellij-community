@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.UnusedLambdaExpressionBodyInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedLambdaExpressionBodyInspection

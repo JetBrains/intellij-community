@@ -1250,8 +1250,6 @@ plugins/kotlin/code-insight/fixes-k2/tests
 plugins/kotlin/code-insight/impl-base
 plugins/kotlin/code-insight/inspections-k2
 plugins/kotlin/code-insight/inspections-k2/tests
-plugins/kotlin/code-insight/inspections-shared
-plugins/kotlin/code-insight/inspections-shared/tests/k2
 plugins/kotlin/code-insight/intentions-k2
 plugins/kotlin/code-insight/intentions-k2/tests
 plugins/kotlin/code-insight/kotlin.code-insight.k2

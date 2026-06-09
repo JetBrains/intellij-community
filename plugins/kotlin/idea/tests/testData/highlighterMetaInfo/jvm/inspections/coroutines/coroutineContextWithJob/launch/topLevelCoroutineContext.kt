@@ -11,4 +11,4 @@ import kotlinx.coroutines.launch
 suspend fun test(scope: CoroutineScope) {
     scope.launch(coroutineContext) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

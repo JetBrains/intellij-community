@@ -1,5 +1,5 @@
 // "Remove parameter 'i'" "true"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedSymbolInspection
 fun test() {
     val f: (Int) -> Unit = { <caret>i: Int -> foo() }
     bar(f)

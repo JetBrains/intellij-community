@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.migration.RestrictReturnStatementTargetMigrationInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections..migration.RestrictReturnStatementTargetMigrationInspection

@@ -1,0 +1,79 @@
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+package org.jetbrains.kotlin.idea.codeInsight.inspections
+
+import com.intellij.codeInspection.CleanupLocalInspectionTool
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
+import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
+import org.jetbrains.kotlin.idea.base.psi.textRangeIn
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.ReturnTypeNullabilityUtil
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtNullableType
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtVisitor
+import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
+
+internal class RedundantNullableReturnTypeInspection :
+    KotlinApplicableInspectionBase.Simple<KtCallableDeclaration, Unit>(),
+    CleanupLocalInspectionTool {
+
+    override fun buildVisitor(
+        holder: ProblemsHolder,
+        isOnTheFly: Boolean,
+    ): KtVisitor<*, *> = object : KtVisitorVoid() {
+        override fun visitNamedFunction(function: KtNamedFunction) {
+            visitTargetElement(function, holder, isOnTheFly)
+        }
+
+        override fun visitProperty(property: KtProperty) {
+            if (property.isVar) return
+            visitTargetElement(property, holder, isOnTheFly)
+        }
+    }
+
+    override fun isApplicableByPsi(element: KtCallableDeclaration): Boolean =
+        !element.isExpectDeclaration() && !element.isEffectivelyActual()
+
+    override fun getApplicableRanges(element: KtCallableDeclaration): List<TextRange> {
+        val typeElement = element.typeReference?.typeElement as? KtNullableType ?: return emptyList()
+        if (typeElement.innerType == null) return emptyList()
+        val questionMark = typeElement.questionMarkNode as? LeafPsiElement ?: return emptyList()
+
+        return listOf(questionMark.textRangeIn(element))
+    }
+
+    override fun KaSession.prepareContext(element: KtCallableDeclaration): Unit? =
+        ReturnTypeNullabilityUtil.hasOnlyNonNullableReturns(element).asUnit
+
+    override fun getProblemDescription(element: KtCallableDeclaration, context: Unit): String =
+        if (element is KtProperty)
+            KotlinBundle.message("0.is.always.non.null.type", element.nameAsSafeName)
+        else
+            KotlinBundle.message("0.always.returns.non.null.type", element.nameAsSafeName)
+
+    override fun createQuickFix(
+        element: KtCallableDeclaration,
+        context: Unit,
+    ): KotlinModCommandQuickFix<KtCallableDeclaration> = object : KotlinModCommandQuickFix<KtCallableDeclaration>() {
+        override fun getFamilyName(): @IntentionFamilyName String =
+            KotlinBundle.message("make.not.nullable")
+
+        override fun applyFix(project: Project, element: KtCallableDeclaration, updater: ModPsiUpdater) {
+            val typeElement = element.typeReference?.typeElement as? KtNullableType ?: return
+            val innerType = typeElement.innerType ?: return
+            typeElement.replace(innerType)
+        }
+    }
+}

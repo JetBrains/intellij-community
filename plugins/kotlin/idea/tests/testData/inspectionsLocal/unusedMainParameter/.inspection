@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.UnusedMainParameterInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections..UnusedMainParameterInspection

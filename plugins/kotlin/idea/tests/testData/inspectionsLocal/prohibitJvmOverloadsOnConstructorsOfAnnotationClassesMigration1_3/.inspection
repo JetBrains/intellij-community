@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.migration.ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigrationInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections..migration.ProhibitJvmOverloadsOnConstructorsOfAnnotationClassesMigrationInspection

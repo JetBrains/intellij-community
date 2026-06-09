@@ -11,4 +11,4 @@ import kotlinx.coroutines.Dispatchers
 suspend fun test(ctx: CoroutineContext) {
     withContext(NonCancellable + ctx) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

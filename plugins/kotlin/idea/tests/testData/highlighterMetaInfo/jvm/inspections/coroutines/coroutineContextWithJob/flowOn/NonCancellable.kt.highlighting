@@ -9,4 +9,4 @@ import kotlinx.coroutines.*
 fun test(flow: Flow<Int>) {
     flow.flowOn(NonCancellable)
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

@@ -3,7 +3,7 @@ package com.intellij.execution.junit.kotlin.codeInspection.deadCode
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.jvm.analysis.testFramework.JvmLanguage
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection
+import org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedSymbolInspection
 
 class K2JUnit5ImplicitUsageProviderTest : KotlinJUnit5ImplicitUsageProviderTest() {
   override val inspection: InspectionProfileEntry by lazy { UnusedSymbolInspection() }

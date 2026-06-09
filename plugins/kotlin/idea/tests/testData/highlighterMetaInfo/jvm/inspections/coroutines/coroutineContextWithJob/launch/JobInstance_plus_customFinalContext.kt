@@ -16,4 +16,4 @@ class MyCustomContextElement : AbstractCoroutineContextElement(key = Companion) 
 fun CoroutineScope.test(job: Job) {
     launch(job + MyCustomContextElement()) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

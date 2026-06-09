@@ -8,7 +8,6 @@
     <module name="intellij.kotlin.gradle.gradle"/>
     <module name="intellij.platform.smRunner"/>
     <module name="intellij.platform.testRunner"/>
-    <module name="kotlin.code-insight.inspections.shared"/>
   </dependencies>
   <!-- endregion -->
 

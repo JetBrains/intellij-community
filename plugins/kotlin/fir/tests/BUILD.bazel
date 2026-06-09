@@ -298,8 +298,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency",
         "//platform/util/concurrency:concurrency_test_lib",
-        "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
-        "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.fir.tests` end

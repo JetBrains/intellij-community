@@ -41,7 +41,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.descriptions" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.fixes" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.intentions" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" exported="" />

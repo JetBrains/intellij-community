@@ -11,4 +11,4 @@ import kotlinx.coroutines.launch
 fun CoroutineScope.test(ctx: CoroutineContext) {
     launch(NonCancellable + ctx) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

@@ -6,4 +6,4 @@ fun test() {
     val triple = Triple(1, "hello", true)
     val [x, y, z] = triple
 }
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.ConvertNameBasedDestructuringShortFormToPositionalFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.declarations.ConvertNameBasedDestructuringShortFormToPositionalFix

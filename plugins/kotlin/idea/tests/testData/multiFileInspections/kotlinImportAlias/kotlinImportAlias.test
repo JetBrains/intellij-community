@@ -1,4 +1,4 @@
 {
-    "k2InspectionClass": "org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ReplaceWithImportAliasInspection",
+    "k2InspectionClass": "org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceWithImportAliasInspection",
     "withRuntime": "true"
 }

@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.SimplifyNestedEachInScopeFunctionInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.SimplifyNestedEachInScopeFunctionInspection

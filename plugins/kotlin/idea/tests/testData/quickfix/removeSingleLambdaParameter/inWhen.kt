@@ -1,5 +1,5 @@
 // "Remove parameter 's'" "false"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedSymbolInspection
 // ACTION: Add braces to 'when' entry
 // ACTION: Add braces to all 'when' entries
 // ACTION: Convert to anonymous function

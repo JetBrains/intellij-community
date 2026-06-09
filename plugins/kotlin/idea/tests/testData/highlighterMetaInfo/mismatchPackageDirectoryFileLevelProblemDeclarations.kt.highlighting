@@ -4,8 +4,7 @@ fun foo() {
     // TODO
     // TODO
 }
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.PackageDirectoryMismatchInspection
-
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.PackageDirectoryMismatchInspection
 // IMPLICIT_PACKAGE_PREFIX: "foo"
 // HIGHLIGHT_WARNINGS
 // ALLOW_ERRORS

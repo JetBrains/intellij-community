@@ -1,4 +1,4 @@
-// K2_TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantLabelInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantLabelInspection
 // "Remove redundant label" "true"
 fun foo() {
     val x = bar()
@@ -6,4 +6,4 @@ fun foo() {
 
 fun bar() {}
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveRedundantLabelFix
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.RedundantLabelInspection$createQuickFix$1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantLabelInspection$createQuickFix$1

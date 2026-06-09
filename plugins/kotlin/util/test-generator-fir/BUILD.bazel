@@ -76,8 +76,6 @@ jvm_library(
         "//plugins/kotlin/code-insight/inspections-k2/tests:tests_test_lib",
         "//plugins/kotlin/code-insight/intentions-k2/tests",
         "//plugins/kotlin/code-insight/intentions-k2/tests:tests_test_lib",
-        "//plugins/kotlin/code-insight/inspections-shared/tests/k2",
-        "//plugins/kotlin/code-insight/inspections-shared/tests/k2:k2_test_lib",
         "//plugins/kotlin/code-insight/postfix-templates",
         "//plugins/kotlin/code-insight/postfix-templates:postfix-templates_test_lib",
         "//plugins/kotlin/code-insight/line-markers",

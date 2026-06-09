@@ -4,7 +4,7 @@ class ClassSuppressedOnClass {
     <caret>init {}
 }
 
-// K1_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantEmptyInitializerBlockInspection
-// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.RedundantEmptyInitializerBlockInspection
+// K1_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantEmptyInitializerBlockInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.RedundantEmptyInitializerBlockInspection
 // FUS_K2_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix
 // FUS_QUICKFIX_NAME: com.intellij.codeInspection.SuppressIntentionActionFromFix

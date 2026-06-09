@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.DeprecatedCallableAddReplaceWithInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.DeprecatedCallableAddReplaceWithInspection

@@ -1,5 +1,5 @@
 {
-    "inspectionClass": "org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSealedClassToSealedInterfaceInspection",
-    "k2InspectionClass": "org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertSealedClassToSealedInterfaceInspection",
+    "inspectionClass": "org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertSealedClassToSealedInterfaceInspection",
+    "k2InspectionClass": "org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertSealedClassToSealedInterfaceInspection",
     "mainFile": "Result.kt"
 }

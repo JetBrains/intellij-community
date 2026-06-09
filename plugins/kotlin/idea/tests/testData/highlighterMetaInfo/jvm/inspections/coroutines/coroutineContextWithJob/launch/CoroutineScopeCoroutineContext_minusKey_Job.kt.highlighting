@@ -10,4 +10,4 @@ import kotlinx.coroutines.Job
 fun CoroutineScope.test() {
     launch(coroutineContext.minusKey(Job)) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

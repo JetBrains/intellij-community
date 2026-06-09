@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.EnumValuesSoftDeprecateInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.EnumValuesSoftDeprecateInspection

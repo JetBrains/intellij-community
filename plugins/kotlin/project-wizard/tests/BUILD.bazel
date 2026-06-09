@@ -156,8 +156,6 @@ jvm_library(
         "//plugins/kotlin/base/scripting/scripting.k2:kotlin-base-scripting_test_lib",
         "//platform/backend/observation",
         "//platform/backend/observation:observation_test_lib",
-        "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared",
-        "//plugins/kotlin/code-insight/inspections-shared:kotlin-code-insight-inspections-shared_test_lib",
         "//plugins/kotlin/base/scripting/scripting.shared",
         "//plugins/kotlin/base/scripting/scripting.shared:scripting.shared_test_lib",
         "@lib//:kotlinc-analysis-api",
@@ -181,6 +179,8 @@ jvm_library(
         "//java/java-syntax:syntax_test_lib",
         "//java/java-psi-api:psi",
         "//java/java-psi-api:psi_test_lib",
+        "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections",
+        "//plugins/kotlin/code-insight/inspections-k2:kotlin-codeInsight-inspections_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.project-wizard.tests` end

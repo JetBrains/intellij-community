@@ -29,7 +29,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.intentions.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.structuralSearch.tests" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.postfixTemplates" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers" scope="RUNTIME" />

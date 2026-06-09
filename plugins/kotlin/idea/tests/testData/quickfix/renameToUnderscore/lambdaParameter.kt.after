@@ -1,5 +1,5 @@
 // "Rename 'x' to '_'" "true"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedSymbolInspection
 fun foo(block: (String, Int) -> Unit) {
     block("", 1)
 }

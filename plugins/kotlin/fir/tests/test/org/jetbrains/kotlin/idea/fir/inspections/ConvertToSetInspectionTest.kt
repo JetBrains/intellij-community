@@ -7,7 +7,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.testFramework.IdeaTestUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertArgumentToSetInspection
+import org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertArgumentToSetInspection
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions

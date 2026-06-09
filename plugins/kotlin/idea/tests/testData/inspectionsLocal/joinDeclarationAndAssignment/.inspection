@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.intentions.JoinDeclarationAndAssignmentInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.JoinDeclarationAndAssignmentInspection

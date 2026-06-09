@@ -11,4 +11,4 @@ import kotlinx.coroutines.launch
 fun CoroutineScope.test(ctx: CoroutineContext) {
     launch(<!HIGHLIGHTING("severity='WARNING'; descr=''NonCancellable' object should not be used with 'launch' builder, it violates structured concurrency'")!>NonCancellable<!> + ctx) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

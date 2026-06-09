@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.FloatingPointLiteralPrecisionInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.FloatingPointLiteralPrecisionInspection

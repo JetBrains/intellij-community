@@ -15,4 +15,4 @@ class MyCustomContextElement : AbstractCoroutineContextElement(key = Companion) 
 suspend fun test() {
     withContext(NonCancellable + MyCustomContextElement()) {}
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

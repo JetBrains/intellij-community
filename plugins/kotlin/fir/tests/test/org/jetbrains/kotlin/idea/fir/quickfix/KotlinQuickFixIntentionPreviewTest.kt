@@ -6,7 +6,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.ConvertToStringTemplateInspection
+import org.jetbrains.kotlin.idea.codeInsight.inspections.ConvertToStringTemplateInspection
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
 class KotlinQuickFixIntentionPreviewTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -43,7 +43,7 @@ class KotlinQuickFixIntentionPreviewTest : KotlinLightCodeInsightFixtureTestCase
 
     fun testDestructuringDeclaration() {
         @Suppress("UNCHECKED_CAST")
-        val inspectionClass = Class.forName("org.jetbrains.kotlin.idea.k2.codeinsight.inspections.DestructuringDeclarationInspection")
+        val inspectionClass = Class.forName("org.jetbrains.kotlin.idea.codeInsight.inspections.DestructuringDeclarationInspection")
                 as Class<out LocalInspectionTool>
         myFixture.enableInspections(inspectionClass)
         doTest(

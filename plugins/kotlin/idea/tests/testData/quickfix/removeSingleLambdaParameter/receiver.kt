@@ -1,5 +1,5 @@
 // "Remove parameter 'b'" "false"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.UnusedSymbolInspection
 // ACTION: Convert to anonymous function
 // ACTION: Convert to multi-line lambda
 // ACTION: Enable a trailing comma by default in the formatter

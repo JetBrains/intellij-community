@@ -11,4 +11,4 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 fun CoroutineScope.test() {
     produce(Job()) { send("Hello") }
 }
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.coroutines.CoroutineContextWithJobInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.coroutines.CoroutineContextWithJobInspection

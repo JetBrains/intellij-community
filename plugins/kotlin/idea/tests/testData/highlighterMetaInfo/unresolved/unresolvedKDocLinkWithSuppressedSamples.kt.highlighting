@@ -1,7 +1,7 @@
 // FIR_IDENTICAL
 
 // HIGHLIGHT_WARNINGS
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.kdoc.KDocUnresolvedReferenceInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.kdoc.KDocUnresolvedReferenceInspection
 // REGISTRY: kotlin.kdoc.should.report.samples false
 
 class A {}

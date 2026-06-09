@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.RemoveToStringInStringTemplateInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.RemoveToStringInStringTemplateInspection

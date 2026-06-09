@@ -7,4 +7,4 @@ fun test() {
     <caret>$$"sample $$unresolved text"
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.diagnosticBased.RemoveRedundantInterpolationQuickFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.inspections.diagnosticBased.RemoveRedundantInterpolationQuickFix

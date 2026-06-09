@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.NullableBooleanElvisInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.NullableBooleanElvisInspection

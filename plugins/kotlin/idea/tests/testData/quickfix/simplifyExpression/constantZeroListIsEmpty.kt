@@ -1,5 +1,5 @@
 // "Simplify expression" "true"
-// TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.dfa.KotlinConstantConditionsInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.dfa.KotlinConstantConditionsInspection
 
 fun test(lst: List<String>) {
     if (!lst.isEmpty()) return

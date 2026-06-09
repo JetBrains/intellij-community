@@ -210,8 +210,6 @@
   - name: intellij.kotlin.base.scripting.main.kts
   - name: intellij.kotlin.base.scripting.shared
   - name: intellij.kotlin.base.scripting.scratch.definition
-  - name: kotlin.code-insight.intentions.shared
-  - name: kotlin.code-insight.inspections.shared
   - name: kotlin.code-insight.live-templates.shared
   - name: intellij.kotlin.codeInsight.fixes
   - name: intellij.kotlin.codeInsight.intentions
@@ -329,16 +327,16 @@
   reason: withProjectLibrary
 - name: lib/modules/intellij.kotlin.analysis.platform.jar
   contentModules:
-      - name: intellij.kotlin.analysis.platform
-        libraries:
-            ehcache.sizeof:
-                - name: $MAVEN_REPOSITORY$/org/ehcache/sizeof/0/sizeof-0.jar
+  - name: intellij.kotlin.analysis.platform
+    libraries:
+      ehcache.sizeof:
+      - name: $MAVEN_REPOSITORY$/org/ehcache/sizeof/0/sizeof-0.jar
 - name: lib/modules/intellij.kotlin.completion.ml.jar
   contentModules:
-      - name: intellij.kotlin.completion.ml
-        libraries:
-            completion-ranking-kotlin:
-                - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
+  - name: intellij.kotlin.completion.ml
+    libraries:
+      completion-ranking-kotlin:
+      - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/completion/completion-ranking-kotlin/0/completion-ranking-kotlin-0.jar
 - name: lib/vavr.jar
   library: vavr
   files:

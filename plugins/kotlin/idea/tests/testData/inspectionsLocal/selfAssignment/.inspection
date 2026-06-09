@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.SelfAssignmentInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.SelfAssignmentInspection

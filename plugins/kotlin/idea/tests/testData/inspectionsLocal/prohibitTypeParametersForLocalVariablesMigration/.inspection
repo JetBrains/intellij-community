@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.migration.ProhibitTypeParametersForLocalVariablesMigrationInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections..migration.ProhibitTypeParametersForLocalVariablesMigrationInspection

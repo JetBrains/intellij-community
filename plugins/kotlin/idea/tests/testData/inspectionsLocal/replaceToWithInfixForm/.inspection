@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.inspections.ReplaceToWithInfixFormInspection
+org.jetbrains.kotlin.idea.codeInsight.inspections.ReplaceToWithInfixFormInspection

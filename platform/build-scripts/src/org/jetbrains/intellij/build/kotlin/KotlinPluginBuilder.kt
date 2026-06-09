@@ -136,7 +136,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.scripting",
       "intellij.kotlin.codeInsight.api",
       "intellij.kotlin.codeInsight.utils",
-      "kotlin.code-insight.inspections.shared",
       "intellij.kotlin.codeInsight.descriptions",
       "intellij.kotlin.codeInsight.fixes",
       "intellij.kotlin.codeInsight.intentions",

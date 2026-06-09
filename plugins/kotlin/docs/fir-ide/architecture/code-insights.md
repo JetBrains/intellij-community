@@ -54,7 +54,6 @@ They inspect code and report some kind of warnings and can recommend how to chan
 
 ### Location
 - `kotlin.code-insight.inspections.k2`
-- `kotlin.code-insight.inspections.shared`
 
 There are several classes for inspections: `KotlinApplicableInspectionBase.Simple`, `KotlinDiagnosticBasedInspectionBase`,
 and `AbstractKotlinInspection`.
