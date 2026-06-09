@@ -1,0 +1,19 @@
+MODULES
+project.main
+    build/generated/source/kapt/main (Generated)
+    build/generated/source/kaptKotlin/main (Generated)
+    src/main/java (Java)
+    src/main/kotlin (Java)
+    src/main/resources (Java, Resources)
+
+project.test
+    build/generated/source/kapt/test (Generated)
+    build/generated/source/kaptKotlin/test (Generated)
+    src/test/java (Java, Test)
+    src/test/kotlin (Java, Test)
+    src/test/resources (Java, Test, Resources)
+
+
+Test configuration:
+- showing only modules matching project\.(main|test)
+- hiding following roots: android-specific roots

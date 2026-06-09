@@ -1,0 +1,14 @@
+MODULES
+project.main
+    kaptGeneratedClasses (COMPILE)
+
+project.test
+    kaptGeneratedClasses (COMPILE)
+    main (friend, COMPILE)
+
+
+Test configuration:
+- showing only modules matching project\.(main|test)
+- hiding following standard dependencies: stdlib, kotlin-test, Kotlin/Native distribution, sdk, self
+- showing only dependencies matching .*(kaptGeneratedClasses|project\.main).*
+- dependencies order is not checked
