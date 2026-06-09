@@ -39,6 +39,17 @@ fun mavenDomFixture(
   @Language(value = "XML", prefix = "<project>", suffix = "</project>") initialPom: String? = null,
   indices: MavenDomTestFixtureIndices? = null,
 ): TestFixture<MavenDomTestFixture> {
+  return mavenFixtureImpl(mavenVersion, modelVersion, skipPluginResolution, initialPom, true, indices)
+}
+
+private fun mavenFixtureImpl(
+  mavenVersion: String = "bundled",
+  modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0,
+  skipPluginResolution: Boolean = true,
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>") initialPom: String? = null,
+  useCodeInsight: Boolean = false,
+  indices: MavenDomTestFixtureIndices? = null,
+): TestFixture<MavenDomTestFixture> {
   val dirFixture = tempPathFixture()
   // The project must be opened so that the hosted CodeInsightTestFixture can commit documents and run
   // completion / highlighting against it.
@@ -47,7 +58,6 @@ fun mavenDomFixture(
   // `createPomFile(projectRoot.parent, ...)` to test parent resolution by relativePath); without this, that write
   // lands in the shared temp root and leaks across runs (poisoning Maven 4's default `../pom.xml` parent inheritance).
   val projectFixture = projectFixture(pathFixture = tempPathFixture(subdirName = "project"), openAfterCreation = true)
-  val codeInsightFixture = mavenCodeInsightFixture(projectFixture, tempPathFixture())
   return testFixture {
     val dir = dirFixture.init()
     val project = projectFixture.init()
@@ -60,7 +70,10 @@ fun mavenDomFixture(
       indices
     )
     try {
-      fixture.attachCodeInsight(codeInsightFixture.init())
+      if (useCodeInsight) {
+        val codeInsightFixture = mavenCodeInsightFixture(projectFixture, tempPathFixture())
+        fixture.attachCodeInsight(codeInsightFixture.init())
+      }
       fixture.setUp(initialPom)
     }
     catch (e: Throwable) {
