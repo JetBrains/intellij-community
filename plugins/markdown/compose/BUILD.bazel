@@ -3,12 +3,6 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.markdown.compose.preview` start
 
-create_kotlinc_options(
-    name = "custom_compose-preview",
-    api_version = "2.3",
-    language_version = "2.3",
-)
-
 jvm_library(
     name = "compose-preview",
     srcs = glob(
@@ -19,7 +13,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_compose-preview",
     module_name = "intellij.markdown.compose.preview",
     resource_strip_prefix = "src/main/resources",
     resources = glob(
@@ -48,7 +41,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_compose-preview",
     module_name = "intellij.markdown.compose.preview",
     visibility = ["//visibility:public"],
     runtime_deps = [
