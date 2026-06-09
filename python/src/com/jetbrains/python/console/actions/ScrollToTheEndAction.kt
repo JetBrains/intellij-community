@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 
-class ScrollToTheEndAction(private val editor: Editor) : AnAction(ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
+internal class ScrollToTheEndAction(private val editor: Editor) : AnAction(ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
                                                                   ActionsBundle.message("action.EditorConsoleScrollToTheEnd.text"),
                                                                   AllIcons.RunConfigurations.Scroll_down) {
   override fun actionPerformed(e: AnActionEvent) {

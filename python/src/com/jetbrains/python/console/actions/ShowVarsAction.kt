@@ -13,7 +13,7 @@ import com.jetbrains.python.console.PythonConsoleView
 /**
  * Created by Yuli Fiterman on 9/18/2016.
  */
-class ShowVarsAction(private val consoleView: PythonConsoleView, private val consoleComm: PydevConsoleCommunication) : ToggleAction(PyBundle.message("console.show.variables.title"), PyBundle.message("console.show.variables.description"), AllIcons.Debugger.Watch), DumbAware {
+internal class ShowVarsAction(private val consoleView: PythonConsoleView, private val consoleComm: PydevConsoleCommunication) : ToggleAction(PyBundle.message("console.show.variables.title"), PyBundle.message("console.show.variables.description"), AllIcons.Debugger.Watch), DumbAware {
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return consoleView.isShowVars

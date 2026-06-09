@@ -10,7 +10,7 @@ import com.jetbrains.python.console.PyExecuteConsoleCustomizer
 import com.jetbrains.python.console.PythonConsoleToolWindow.CONTENT_DESCRIPTOR
 import com.jetbrains.python.console.PythonConsoleToolWindowFactory
 
-class PyConsoleRenameAction : ToolWindowTabRenameActionBase(PythonConsoleToolWindowFactory.ID,
+internal class PyConsoleRenameAction : ToolWindowTabRenameActionBase(PythonConsoleToolWindowFactory.ID,
                                                             PyBundle.message("python.console.rename.message")), DumbAware {
   override fun applyContentDisplayName(content: Content, project: Project, newContentName: String) {
     super.applyContentDisplayName(content, project, newContentName)

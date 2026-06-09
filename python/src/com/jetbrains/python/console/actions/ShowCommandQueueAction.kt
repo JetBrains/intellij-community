@@ -16,7 +16,7 @@ import javax.swing.Icon
 /***
  * Action for showing the CommandQueue window
  */
-class ShowCommandQueueAction(private val consoleView: PythonConsoleView)
+internal class ShowCommandQueueAction(private val consoleView: PythonConsoleView)
   : ToggleAction(PyBundle.message("python.console.command.queue.show.action.text"),
                  PyBundle.message("python.console.command.queue.show.action.description"),
                  emptyQueueIcon), DumbAware {

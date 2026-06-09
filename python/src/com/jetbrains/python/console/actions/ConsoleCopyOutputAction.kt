@@ -9,7 +9,7 @@ import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.PythonConsoleView
 import java.awt.datatransfer.StringSelection
 
-class ConsoleCopyOutputAction(private val consoleView: PythonConsoleView): AnAction(PyBundle.message("pydev.console.runner.copy.console.output.text"),
+internal class ConsoleCopyOutputAction(private val consoleView: PythonConsoleView): AnAction(PyBundle.message("pydev.console.runner.copy.console.output.text"),
                                                                                     PyBundle.message("pydev.console.runner.copy.console.output.description"),
                                                                                     AllIcons.Actions.Copy) {
   override fun actionPerformed(e: AnActionEvent) {
