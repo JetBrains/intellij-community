@@ -15,14 +15,34 @@
  */
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertContain
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture.Highlight
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.getCompletionVariants
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenJGitBuildNumberTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenJGitBuildNumberTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testCompletion() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -40,7 +60,7 @@ class MavenJGitBuildNumberTest : MavenDomTestCase() {
                     """.trimIndent()
     )
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -57,14 +77,14 @@ class MavenJGitBuildNumberTest : MavenDomTestCase() {
                        """.trimIndent()
     )
 
-    val variants = getCompletionVariants(projectPom)
+    val variants = maven.getCompletionVariants(maven.projectPom)
 
     assertContain(variants, "git.commitsCount")
   }
 
   @Test
   fun testHighlighting() = runBlocking {
-    createModulePom("m", """
+    maven.createModulePom("m", """
       <artifactId>m</artifactId>
       <version>1</version>
       <parent>
@@ -78,7 +98,7 @@ class MavenJGitBuildNumberTest : MavenDomTestCase() {
       </properties>
       """.trimIndent())
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -98,7 +118,7 @@ class MavenJGitBuildNumberTest : MavenDomTestCase() {
                     """.trimIndent()
     )
 
-    val pom = createModulePom("m", """
+    val pom = maven.createModulePom("m", """
       <artifactId>m</artifactId>
       <version>1</version>
       <parent>
@@ -112,12 +132,12 @@ class MavenJGitBuildNumberTest : MavenDomTestCase() {
       </properties>
       """.trimIndent())
 
-    checkHighlighting(pom)
+    maven.checkHighlighting(pom)
   }
 
   @Test
   fun testNoPluginHighlighting() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -126,6 +146,6 @@ class MavenJGitBuildNumberTest : MavenDomTestCase() {
                     """.trimIndent()
     )
 
-    checkHighlighting(projectPom, Highlight(text = "git.commitsCount"))
+    maven.checkHighlighting(maven.projectPom, Highlight(text = "git.commitsCount"))
   }
 }
