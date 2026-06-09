@@ -368,20 +368,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
         return Indent.getNoneIndent();
       }
 
-      if (JavaFormatterConditionalExpressionUtil.isInsideConditionalExpression(parent)) {
+      if (JavaFormatterConditionalExpressionUtil.isInsideConditionalExpression(parent) && settings.ALIGN_MULTILINE_BINARY_OPERATION
+          && !(childNodeType == JavaTokenType.QUEST || childNodeType == JavaTokenType.COLON)) {
         return Indent.getSpaceIndent(0, true);
       }
     }
 
     return null;
-  }
-
-  private static @Nullable ASTNode skipParenthesesUp(@NotNull ASTNode node) {
-    ASTNode currNode = node.getTreeParent();
-    while (currNode != null && currNode.getElementType() == JavaElementType.PARENTH_EXPRESSION) {
-      currNode = currNode.getTreeParent();
-    }
-    return currNode;
   }
 
   private static @Nullable ASTNode skipCommentsAndWhitespacesBackwards(@NotNull ASTNode node) {

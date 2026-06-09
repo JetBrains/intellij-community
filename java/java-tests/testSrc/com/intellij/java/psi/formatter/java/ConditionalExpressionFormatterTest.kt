@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.formatter.java
 
 import com.intellij.lang.java.JavaLanguage
@@ -11,32 +11,32 @@ class ConditionalExpressionFormatterTest : JavaFormatterTestCase() {
   override fun getBasePath(): String = "psi/formatter/conditionalExpression"
 
   fun testLiteralOperatorOnPreviousLine() {
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
     doTest()
   }
 
   fun testLiteralOperatorOnNewLine() {
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
     doTest()
   }
 
   fun testLiteralInParensOperatorOnPreviousLine() {
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
     doTest()
   }
 
   fun testLiteralInParensOperatorOnNewLine() {
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
     doTest()
   }
 
   fun testLiteralPartialInParensOperatorOnPreviousLine() {
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
     doTest()
   }
 
   fun testLiteralPartialInParensOperatorOnNewLine() {
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
     doTest()
   }
 
@@ -71,26 +71,35 @@ class ConditionalExpressionFormatterTest : JavaFormatterTestCase() {
   }
 
   fun testMixedOperatorOnPreviousLine() {
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
     commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 
   fun testMixedOperatorOnNewLine() {
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
     commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 
   fun testMixedInParensOperatorOnPreviousLine() {
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
     commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
     doTest()
   }
 
   fun testMixedInParensOperatorOnNewLine() {
-    settings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    commonSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
     commonSettings.ALIGN_MULTILINE_CHAINED_METHODS = true
+    doTest()
+  }
+
+  fun testTernaryOperatorInsideTernaryOperator() {
+    commonSettings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    doTest()
+  }
+
+  fun testMixedChainCallAndBinaryExpressionNoAlignment() {
     doTest()
   }
 
