@@ -6,7 +6,6 @@ package com.intellij.openapi.vfs.impl.local.windows
 
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
-import com.jetbrains.rd.util.getOrCreate
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.lang.foreign.Arena
@@ -17,6 +16,8 @@ import java.lang.foreign.MemorySegment
 import java.lang.foreign.SymbolLookup
 import java.lang.invoke.MethodHandle
 import java.nio.CharBuffer
+import java.nio.charset.CharsetDecoder
+import java.nio.charset.CharsetEncoder
 import java.nio.charset.CoderResult
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
@@ -24,7 +25,7 @@ import kotlin.io.path.Path
 import kotlin.io.path.div
 
 // Will be empty if won't get it
-private val systemRoot: Path = Path(System.getenv("SystemRoot"))
+private val systemRoot: Path = Path(System.getenv("SystemRoot") ?: "/")
 
 private enum class WindowsLibrary(val path: Path) {
   Kernel32(systemRoot / "System32" / "kernel32.dll"),
@@ -33,7 +34,6 @@ private enum class WindowsLibrary(val path: Path) {
 
 private enum class WindowsSymbol {
   CreateFileW,
-  NtCreateFile,
   NtQueryDirectoryFile,
   CloseHandle,
   RtlNtStatusToDosError,
@@ -52,11 +52,13 @@ private object WindowsDllLookup {
   )
 
   fun handleFor(library: WindowsLibrary, label: WindowsSymbol): MethodHandle {
-    return handleCache.getOrCreate(library to label) {
-      val libraryLookup = libsLookups[library] ?: throw IllegalArgumentException("Library '$library' not defined as a lookupable library")
-      val callStub = WindowsStubs[label] ?: throw IllegalArgumentException("Call stub '$label' not defined for library '$library'")
-      val getLastErrorOption = Linker.Option.captureCallState("GetLastError")
-      return@getOrCreate Linker.nativeLinker().downcallHandle(libraryLookup.findOrThrow(label.name), callStub, getLastErrorOption)
+    return synchronized(handleCache) {
+      handleCache.getOrPut(library to label) {
+        val libraryLookup = libsLookups[library] ?: throw IllegalArgumentException("Library '$library' not defined as a lookupable library")
+        val callStub = WindowsStubs[label] ?: throw IllegalArgumentException("Call stub '$label' not defined for library '$library'")
+        val getLastErrorOption = Linker.Option.captureCallState("GetLastError")
+        return@getOrPut Linker.nativeLinker().downcallHandle(libraryLookup.findOrThrow(label.name), callStub, getLastErrorOption)
+      }
     }
   }
 }
@@ -116,26 +118,6 @@ private object WindowsStubs {
     BOOLEAN.withName("RestartScan") //	_In_
   )
 
-  val PHANDLE = canonicalLayouts["void*"]!!
-  val ACCESS_MASK = canonicalLayouts["long"]!!
-  val POBJECT_ATTRIBUTES = canonicalLayouts["void*"]!!
-  val PLARGE_INTEGER = canonicalLayouts["void*"]!!
-
-  val NtCreateFile: FunctionDescriptor = FunctionDescriptor.of(
-    NTSTATUS,
-    PHANDLE, // _Out_ FileHandle
-    ACCESS_MASK, // _In_ DesiredAccess
-    POBJECT_ATTRIBUTES, // _In_ ObjectAttributes
-    PIO_STATUS_BLOCK, // _Out_ IoStatusBlock
-    PLARGE_INTEGER, // _In_opt_ AllocationSize
-    ULONG, // _Out_ FileAttributes
-    ULONG, // _In_ ShareAccess
-    ULONG, // _In_ CreateDisposition
-    ULONG, // _In_ CreateOptions
-    PVOID, // _In_ EaBuffer
-    ULONG // _In_ EaLength
-  )
-
   val LONGLONG = canonicalLayouts["long long"]!!
 
   // This is a variable length stucture
@@ -162,12 +144,14 @@ private object WindowsStubs {
     CHAR.withName("Data"), // Data
   )
 
+  val ULONG_PTR = canonicalLayouts["void*"]!!
+
   val IO_STATUS_BLOCK: MemoryLayout = MemoryLayout.structLayout(
     MemoryLayout.unionLayout(
       NTSTATUS.withName("Status"),
       PVOID.withName("Pointer")
     ),
-    ULONG.withName("Information")
+    ULONG_PTR.withName("Information")
   )
 
   //NTSYSAPI ULONG RtlNtStatusToDosError(
@@ -199,21 +183,24 @@ private object WindowsStubs {
     WindowsSymbol.CloseHandle to CloseHandle,
     WindowsSymbol.RtlNtStatusToDosError to RtlNtStatusToDosError,
     WindowsSymbol.DeviceIoControl to DeviceIoControl,
-    WindowsSymbol.NtCreateFile to NtCreateFile,
   )
 
   operator fun get(label: WindowsSymbol): FunctionDescriptor? = labelMap[label]
 }
 
-private val UTF16_ENCODER = StandardCharsets.UTF_16LE.newEncoder()
-private val UTF16_DECODER = StandardCharsets.UTF_16LE.newDecoder()
+private val UTF16_ENCODER: ThreadLocal<CharsetEncoder> =
+  ThreadLocal.withInitial { StandardCharsets.UTF_16LE.newEncoder() }
+private val UTF16_DECODER: ThreadLocal<CharsetDecoder> =
+  ThreadLocal.withInitial { StandardCharsets.UTF_16LE.newDecoder() }
 
 @ApiStatus.Internal
 fun toWinReadonlyCWSTR(arena: Arena, str: String): MemorySegment {
+  UTF16_ENCODER.get().reset()
+
   val stringMemorySegment = arena.allocate(((str.length + 1) * 2).toLong(), 2L)!!
   val buffer = stringMemorySegment.asByteBuffer()!!
 
-  val coderResult = UTF16_ENCODER.encode(CharBuffer.wrap(str), buffer, true)
+  val coderResult = UTF16_ENCODER.get().encode(CharBuffer.wrap(str), buffer, true)
   if (coderResult != CoderResult.UNDERFLOW)
     throw IllegalArgumentException("Wrong byte array lenght ${(str.length + 1) * 2} for coding java string length ${str.length}!")
 
@@ -225,10 +212,12 @@ fun toWinReadonlyCWSTR(arena: Arena, str: String): MemorySegment {
 
 @ApiStatus.Internal
 fun toJavaStringFromWinCWSTR(segment: MemorySegment, length: Int): String {
+  UTF16_DECODER.get().reset()
+
   val charArray = CharArray(length)
   val charBuffer = CharBuffer.wrap(charArray)
 
-  val coderResult = UTF16_DECODER.decode(segment.asByteBuffer(), charBuffer, true)
+  val coderResult = UTF16_DECODER.get().decode(segment.asByteBuffer(), charBuffer, true)
   if (coderResult != CoderResult.UNDERFLOW)
     throw IllegalArgumentException("Wrong $length for decoding a null-terminated string into a java string!")
 
@@ -243,10 +232,10 @@ internal class Windows(val arena: Arena) : Closeable {
   }
 
   object FileOperations {
-    const val FILE_LIST_DIRECTORY: UInt = 0x1U
-    const val FILE_GENERIC_READ: UInt = 0x80000000U
-    const val FILE_FLAG_BACKUP_SEMANTICS: UInt = 0x02000000U
-    const val FILE_OPEN_REPARSE_POINT: UInt = 0x00200000U
+    const val FILE_LIST_DIRECTORY: Int = 0x1
+    const val FILE_GENERIC_READ: Int = 0x80000000.toInt()
+    const val FILE_FLAG_BACKUP_SEMANTICS: Int = 0x02000000
+    const val FILE_OPEN_REPARSE_POINT: Int = 0x00200000
   }
 
   object FileMode {
@@ -279,7 +268,7 @@ internal class Windows(val arena: Arena) : Closeable {
 
     object IO_STATUS_BLOCK {
       fun Information(memorySegment: MemorySegment): Long {
-        return WindowsStubs.IO_STATUS_BLOCK.varHandle(MemoryLayout.PathElement.groupElement("Information")).get(memorySegment, 0L) as Long
+        return (WindowsStubs.IO_STATUS_BLOCK.varHandle(MemoryLayout.PathElement.groupElement("Information")).get(memorySegment, 0L) as MemorySegment).address()
       }
     }
 
@@ -299,14 +288,14 @@ internal class Windows(val arena: Arena) : Closeable {
         return WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("NextEntryOffset")).get(buffer, 0L) as Int
       }
 
-      fun FileNameLength(buffer: MemorySegment): Long {
-        return WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("FileNameLength")).get(buffer, 0L) as Long
+      fun FileNameLength(buffer: MemorySegment): Int {
+        return WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("FileNameLength")).get(buffer, 0L) as Int
       }
 
       // buffer should start with current
-      fun fetchFileNameSegment(strLen: Long, current: MemorySegment, buffer: MemorySegment): MemorySegment {
+      fun fetchFileNameSegment(strLen: Int, current: MemorySegment, buffer: MemorySegment): MemorySegment {
         val startOffset = WindowsStubs.FILE_FULL_DIR_INFORMATION.byteOffset(MemoryLayout.PathElement.groupElement("FileName"))
-        return buffer.asSlice(current.address() - buffer.address() + startOffset, strLen)
+        return buffer.asSlice(current.address() - buffer.address() + startOffset, strLen.toLong())
       }
 
       fun CreationTime(buffer: MemorySegment): Long {
@@ -331,12 +320,12 @@ internal class Windows(val arena: Arena) : Closeable {
     }
 
     object REPARSE_DATA_BUFFER {
-      fun ReparseTag(buffer: MemorySegment): Long {
-        return WindowsStubs.REPARSE_DATA_BUFFER.varHandle(MemoryLayout.PathElement.groupElement("ReparseTag")).get(buffer, 0L) as Long
+      fun ReparseTag(buffer: MemorySegment): Int {
+        return WindowsStubs.REPARSE_DATA_BUFFER.varHandle(MemoryLayout.PathElement.groupElement("ReparseTag")).get(buffer, 0L) as Int
       }
 
       object Tag {
-        const val IO_REPARSE_TAG_SYMLINK: Long = 0xA000000C
+        const val IO_REPARSE_TAG_SYMLINK: Int = 0xA000000C.toInt()
       }
     }
   }
@@ -382,22 +371,22 @@ internal class Windows(val arena: Arena) : Closeable {
 
   fun CreateFileW(
     fileName: String,
-    dwDesiredAccess: UInt,
+    dwDesiredAccess: Int,
     dwShareMode: Int,
     lpSecurityAttributes: MemorySegment,
     dwCreationDisposition: Int,
-    dwFlagsAndAttributes: UInt,
+    dwFlagsAndAttributes: Int,
     hTemplateFile: MemorySegment,
   ): MemorySegment {
     Arena.ofConfined().use {
       return WindowsDllLookup.handleFor(WindowsLibrary.Kernel32, WindowsSymbol.CreateFileW).invokeExact(
         errorMemorySegment.get(),
         toWinReadonlyCWSTR(it, fileName),
-        dwDesiredAccess.toInt(),
+        dwDesiredAccess,
         dwShareMode,
         lpSecurityAttributes,
         dwCreationDisposition,
-        dwFlagsAndAttributes.toInt(),
+        dwFlagsAndAttributes,
         hTemplateFile
       ) as MemorySegment
     }

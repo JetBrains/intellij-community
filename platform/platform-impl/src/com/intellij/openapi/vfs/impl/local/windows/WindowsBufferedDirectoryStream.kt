@@ -3,14 +3,17 @@ package com.intellij.openapi.vfs.impl.local.windows
 
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
+import java.io.IOException
 import java.lang.foreign.Arena
 import java.lang.foreign.MemorySegment
+import java.nio.file.DirectoryIteratorException
 import java.nio.file.DirectoryStream
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.io.path.div
@@ -23,9 +26,14 @@ private const val MAX_REPARSE_POINT_DATA_SIZE = 16384L
 class WindowsBufferedDirectoryStream(val directory: Path) : DirectoryStream<com.intellij.openapi.util.Pair<Path, BasicFileAttributes>> {
 
   val iteraror = WindowsBufferedDirectoryIterator(directory)
+  var isCalled = false
 
   override fun iterator(): MutableIterator<com.intellij.openapi.util.Pair<Path, BasicFileAttributes>> {
-    return iteraror
+    if (!isCalled) {
+      isCalled = true
+      return iteraror
+    }
+    throw IllegalStateException()
   }
 
   override fun close() {
@@ -43,15 +51,15 @@ internal class NTWindowsFileAttributes(
   private val parentPath: Path,
 ) : DosFileAttributes {
 
-  override fun lastModifiedTime(): FileTime? {
+  override fun lastModifiedTime(): FileTime {
     return lastWriteTime
   }
 
-  override fun lastAccessTime(): FileTime? {
+  override fun lastAccessTime(): FileTime {
     return lastAccessTime
   }
 
-  override fun creationTime(): FileTime? {
+  override fun creationTime(): FileTime {
     return creationTime
   }
 
@@ -60,43 +68,64 @@ internal class NTWindowsFileAttributes(
   }
 
   override fun isDirectory(): Boolean {
-    if (isSymbolicLink) return false
-
-    return (fileAttributes and Windows.FileAttributes.Directory) != 0
+    return !isSymbolicLink && (fileAttributes and Windows.FileAttributes.Directory) != 0
   }
 
+  @OptIn(ExperimentalAtomicApi::class)
+  private val isSymbolicLinkCached: AtomicReference<Boolean?> = AtomicReference(null)
   // The responsibility to cache and invalidate should lie with the caller (?)
+  @OptIn(ExperimentalAtomicApi::class)
   override fun isSymbolicLink(): Boolean {
     if ((fileAttributes and Windows.FileAttributes.ReparsePoint) == 0) return false
+    val cached = isSymbolicLinkCached.load()
+    if (cached != null) return cached
+
     Arena.ofConfined().use { arena ->
       val api = Windows(arena)
 
       val handle = api.CreateFileW(
-        parentPath.toAbsolutePath().pathString, // not allowed
+        adaptForLongPathHandling(parentPath.toAbsolutePath().pathString), // not allowed
         dwDesiredAccess = Windows.FileOperations.FILE_GENERIC_READ,
         dwShareMode = Windows.FileShare.FILE_SHARE_READWRITE,
         lpSecurityAttributes = Windows.NULL,
         dwCreationDisposition = Windows.FileMode.OPEN_EXISTING,
-        dwFlagsAndAttributes = Windows.FileOperations.FILE_OPEN_REPARSE_POINT,
+        dwFlagsAndAttributes = Windows.FileOperations.FILE_OPEN_REPARSE_POINT or Windows.FileOperations.FILE_FLAG_BACKUP_SEMANTICS,
         hTemplateFile = Windows.NULL
       )
 
-      val reparsePointDataBuffer: MemorySegment = arena.allocate(MAX_REPARSE_POINT_DATA_SIZE)
+      val handleValue = Windows.Read.HANDLE(handle)
+      if (handleValue == 0L || handleValue == -1L) {
+        val error = api.GetLastFFIError()
+        // TODO handle via Winapi's FormatMessage
+        throw IOException("Windows error code: $error, path: ${this.parentPath}")
+      }
 
-      api.DeviceIoControl(
-        handle,
-        Windows.DeviceIoControlCodes.FSCTL_GET_REPARSE_POINT.toInt(),
-        Windows.NULL,
-        0,
-        reparsePointDataBuffer,
-        MAX_REPARSE_POINT_DATA_SIZE.toInt(),
-        Windows.NULL,
-        Windows.NULL
-      )
+      try {
+        val reparsePointDataBuffer: MemorySegment = arena.allocate(MAX_REPARSE_POINT_DATA_SIZE)
 
-      api.CloseHandle(handle)
+        val returnCode = api.DeviceIoControl(
+          handle,
+          Windows.DeviceIoControlCodes.FSCTL_GET_REPARSE_POINT.toInt(),
+          Windows.NULL,
+          0,
+          reparsePointDataBuffer,
+          MAX_REPARSE_POINT_DATA_SIZE.toInt(),
+          Windows.NULL,
+          Windows.NULL
+        )
 
-      return Windows.Read.REPARSE_DATA_BUFFER.Tag.IO_REPARSE_TAG_SYMLINK == Windows.Read.REPARSE_DATA_BUFFER.ReparseTag(reparsePointDataBuffer)
+        if (returnCode == 0) {
+          val error = api.GetLastFFIError()
+          throw IOException("Windows error during symlink lookup, code: $error, path: ${this.parentPath}")
+        }
+
+        val isSymbolicLink = Windows.Read.REPARSE_DATA_BUFFER.Tag.IO_REPARSE_TAG_SYMLINK == Windows.Read.REPARSE_DATA_BUFFER.ReparseTag(reparsePointDataBuffer)
+        isSymbolicLinkCached.store(isSymbolicLink)
+        return isSymbolicLink
+      }
+      finally {
+        api.CloseHandle(handle)
+      }
     }
   }
 
@@ -137,12 +166,18 @@ private fun adaptForLongPathHandling(path: String): String {
     return "\\\\?\\$path"
 }
 
+// That's insane but that's WinAPI
+// All dates and times are in absolute system-time format. Absolute system time is the number of 100-nanosecond intervals since the start of the year 1601.
+private fun convertFileTimeToMs(time: Long): Long {
+  return time / 10_000 - 11_644_473_600_000L
+}
+
 @OptIn(ExperimentalAtomicApi::class)
 @ApiStatus.Internal
 class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<com.intellij.openapi.util.Pair<Path, BasicFileAttributes>>, Closeable {
   internal val api: Windows = Windows(Arena.ofShared())
 
-  val directoryHandle: AtomicReference<MemorySegment> = AtomicReference(Windows.NULL)
+  var directoryHandle: MemorySegment = Windows.NULL
 
   private var lastEntryFound = false
   var currentEntry: MemorySegment = Windows.NULL
@@ -152,7 +187,13 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
 
   init {
     val fullCanonicalPath = directory.toAbsolutePath().pathString
-    directoryHandle.store(createDirectoryHandle(adaptForLongPathHandling(fullCanonicalPath)))
+    try {
+      directoryHandle = createDirectoryHandle(adaptForLongPathHandling(fullCanonicalPath))
+    }
+    catch (e: Exception) {
+      api.close()
+      throw IOException("Failed to open directory handle for $directory", e)
+    }
     currentPath = directory
   }
 
@@ -171,7 +212,7 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
     if (handleValue == 0L || handleValue == -1L) {
       val winError = api.GetLastFFIError()
       // TODO handle via Winapi's FormatMessage
-      throw Exception("Windows error code: $winError, path: $path")
+      throw DirectoryIteratorException(IOException("Windows error code: $winError, path: $path"))
     }
 
     buffer = Windows.Alloc.ByteBuffer(api.arena, STANDARD_BUFFER_SIZE)
@@ -179,8 +220,9 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
     return handle
   }
 
-  fun closeCurrentDirectoryHandle() {
-    val handle = directoryHandle.exchange(Windows.NULL)
+  fun closeCurrentDirectoryHandleIfOpen() {
+    val handle = directoryHandle
+    directoryHandle = Windows.NULL
     if (handle != Windows.NULL) {
       api.CloseHandle(handle)
     }
@@ -196,7 +238,7 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
   }
 
   private fun getData(): Boolean {
-    val handle = directoryHandle.load()
+    val handle = directoryHandle
     assert(handle != Windows.NULL && Windows.Read.HANDLE(handle) != -1L && !lastEntryFound)
     Arena.ofConfined().use { arena ->
       val ioStatusBlock = Windows.Alloc.IO_STATUS_BLOCK(arena)
@@ -229,7 +271,8 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
         }
         else -> {
           val error = api.RtlNtStatusToDosError(status)
-          throw Exception("Windows error code: $error")
+          directoryFinished()
+          throw DirectoryIteratorException(IOException("Windows error code: $error"))
         }
       }
     }
@@ -238,7 +281,7 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
   private fun directoryFinished() {
     currentEntry = Windows.NULL
     lastEntryFound = true
-    closeCurrentDirectoryHandle()
+    closeCurrentDirectoryHandleIfOpen()
   }
 
   override fun remove() {
@@ -246,55 +289,60 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
   }
 
   override fun next(): com.intellij.openapi.util.Pair<Path, BasicFileAttributes> {
-    return nextPairChecked ?: throw NoSuchElementException()
+    val it = nextPairChecked
+    nextPairChecked = null
+    if (it != null) return it
+
+    if (hasNext()) {
+      val it = nextPairChecked
+      nextPairChecked = null
+      if (it != null) return it
+    }
+    throw NoSuchElementException()
   }
 
   private var nextPairChecked: com.intellij.openapi.util.Pair<Path, BasicFileAttributes>? = null
 
   override fun hasNext(): Boolean {
+    if (nextPairChecked != null) {
+      return true
+    }
+
     if (lastEntryFound)
       return false
 
-    synchronized(this) {
+    while (true) {
+      findNextEntry()
+
       if (lastEntryFound)
         return false
 
-      while (true) {
-        findNextEntry()
+      val len = Windows.Read.FILE_FULL_DIR_INFORMATION.FileNameLength(currentEntry)
+      val fileName = Windows.Read.FILE_FULL_DIR_INFORMATION.fetchFileNameSegment(len, currentEntry, buffer)
+      val javaFileName = toJavaStringFromWinCWSTR(fileName, len / 2)
 
-        if (lastEntryFound)
-          return false
-
-        val len = Windows.Read.FILE_FULL_DIR_INFORMATION.FileNameLength(currentEntry)
-        val fileName = Windows.Read.FILE_FULL_DIR_INFORMATION.fetchFileNameSegment(len, currentEntry, buffer)
-        val javaFileName = toJavaStringFromWinCWSTR(fileName, len.toInt() / 2)
-
-        if (javaFileName.length == 1 && javaFileName[0] == '.' || javaFileName.length == 2 && javaFileName[0] == '.' && javaFileName[1] == '.') {
-          continue
-        }
-
-        val path = directory / javaFileName
-        val attrs = NTWindowsFileAttributes(
-          FileTime.from(Windows.Read.FILE_FULL_DIR_INFORMATION.CreationTime(currentEntry), TimeUnit.MILLISECONDS),
-          FileTime.from(Windows.Read.FILE_FULL_DIR_INFORMATION.LastAccessTime(currentEntry), TimeUnit.MILLISECONDS),
-          FileTime.from(Windows.Read.FILE_FULL_DIR_INFORMATION.LastWriteTime(currentEntry), TimeUnit.MILLISECONDS),
-          Windows.Read.FILE_FULL_DIR_INFORMATION.FileAttributes(currentEntry),
-          Windows.Read.FILE_FULL_DIR_INFORMATION.EndOfFile(currentEntry),
-          path,
-        )
-
-        nextPairChecked = com.intellij.openapi.util.Pair(path, attrs)
-
-        return true
+      if (javaFileName.length == 1 && javaFileName[0] == '.' || javaFileName.length == 2 && javaFileName[0] == '.' && javaFileName[1] == '.') {
+        continue
       }
+
+      val path = directory / javaFileName
+      val attrs = NTWindowsFileAttributes(
+        FileTime.from(convertFileTimeToMs(Windows.Read.FILE_FULL_DIR_INFORMATION.CreationTime(currentEntry)), TimeUnit.MILLISECONDS),
+        FileTime.from(convertFileTimeToMs(Windows.Read.FILE_FULL_DIR_INFORMATION.LastAccessTime(currentEntry)), TimeUnit.MILLISECONDS),
+        FileTime.from(convertFileTimeToMs(Windows.Read.FILE_FULL_DIR_INFORMATION.LastWriteTime(currentEntry)), TimeUnit.MILLISECONDS),
+        Windows.Read.FILE_FULL_DIR_INFORMATION.FileAttributes(currentEntry),
+        Windows.Read.FILE_FULL_DIR_INFORMATION.EndOfFile(currentEntry),
+        path
+      )
+
+      nextPairChecked = com.intellij.openapi.util.Pair(path, attrs)
+
+      return true
     }
   }
 
   override fun close() {
-    val currentSegment = directoryHandle.load()
-    if (currentSegment != Windows.NULL) {
-      api.CloseHandle(currentSegment)
-    }
+    closeCurrentDirectoryHandleIfOpen()
     api.close()
   }
 }
