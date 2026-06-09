@@ -22,9 +22,6 @@ import com.intellij.debugger.streams.core.wrapper.TerminatorStreamCall
  */
 abstract class LibrarySupportBase(private val compatibleLibrary: EvaluateExpressionBasedLibrarySupport = LibrarySupportBase.EMPTY) :
   EvaluateExpressionBasedLibrarySupport {
-  companion object {
-    val EMPTY: EvaluateExpressionBasedLibrarySupport = DefaultLibrarySupport()
-  }
 
   private val mySupportedIntermediateOperations: MutableMap<String, IntermediateOperation> = mutableMapOf()
   private val mySupportedTerminalOperations: MutableMap<String, TerminalOperation> = mutableMapOf()
@@ -76,5 +73,9 @@ abstract class LibrarySupportBase(private val compatibleLibrary: EvaluateExpress
       StreamCallType.TERMINATOR -> mySupportedTerminalOperations[name]
       else -> error("Unsupported call type: $callType for call: $name")
     }
+  }
+
+  companion object {
+    val EMPTY: EvaluateExpressionBasedLibrarySupport = DefaultLibrarySupport()
   }
 }

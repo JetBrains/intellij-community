@@ -17,11 +17,6 @@ import com.intellij.debugger.streams.core.trace.impl.handler.unified.DistinctTra
  * @author Vitaliy.Bibaev
  */
 class JBIterableSupport : JvmLibrarySupportBase() {
-  companion object {
-    fun filterOperations(vararg names: String): Array<FilterOperation> = names.map { FilterOperation(it) }.toTypedArray()
-    fun mapOperations(vararg names: String): Array<MappingOperation> = names.map { MappingOperation(it) }.toTypedArray()
-  }
-
   init {
     addIntermediateOperationsSupport(*filterOperations("filter", "skip", "skipWhile", "take", "takeWhile"))
     addIntermediateOperationsSupport(*mapOperations("map", "transform"))
@@ -41,5 +36,10 @@ class JBIterableSupport : JvmLibrarySupportBase() {
     addIntermediateOperationsSupport(SortedOperation("sorted"), SortedOperation("collect"))
 
     addIntermediateOperationsSupport(OrderBasedOperation("filterMap", FilteredMapResolver()))
+  }
+
+  companion object {
+    fun filterOperations(vararg names: String): Array<FilterOperation> = names.map { FilterOperation(it) }.toTypedArray()
+    fun mapOperations(vararg names: String): Array<MappingOperation> = names.map { MappingOperation(it) }.toTypedArray()
   }
 }

@@ -20,10 +20,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebugSession
 
 abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
-  companion object {
-    private val interpreter : XValueInterpreter by lazy { JavaValueInterpreter() }
-  }
-
   override fun getXValueInterpreter(project: Project): XValueInterpreter = interpreter
 
   override fun getCollectionTreeBuilder(project: Project): CollectionTreeBuilder = JavaCollectionTreeBuilder(project)
@@ -65,4 +61,8 @@ abstract class JvmLibrarySupportProvider : LibrarySupportProvider {
   }
 
   private fun isSupportedVm(vm: VirtualMachineProxyImpl): Boolean = vm.canForceEarlyReturn() && vm.canGetMethodReturnValues()
+
+  companion object {
+    private val interpreter : XValueInterpreter by lazy { JavaValueInterpreter() }
+  }
 }

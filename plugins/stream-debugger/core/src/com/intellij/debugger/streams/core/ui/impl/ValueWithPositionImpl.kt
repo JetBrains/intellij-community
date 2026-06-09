@@ -4,16 +4,14 @@ package com.intellij.debugger.streams.core.ui.impl
 import com.intellij.debugger.streams.core.trace.TraceElement
 import com.intellij.debugger.streams.core.ui.ValueWithPosition
 
+private const val INVALID_POSITION: Int = Int.MIN_VALUE
+private const val DEFAULT_VISIBLE_VALUE: Boolean = false
+private const val DEFAULT_HIGHLIGHTING_VALUE: Boolean = false
+
 /**
  * @author Vitaliy.Bibaev
  */
 data class ValueWithPositionImpl(override val traceElement: TraceElement) : ValueWithPosition {
-  companion object {
-    const val INVALID_POSITION: Int = Int.MIN_VALUE
-    const val DEFAULT_VISIBLE_VALUE: Boolean = false
-    const val DEFAULT_HIGHLIGHTING_VALUE: Boolean = false
-  }
-
   private var myPosition: Int = INVALID_POSITION
   private var myIsVisible: Boolean = DEFAULT_VISIBLE_VALUE
   private var myIsHighlighted: Boolean = DEFAULT_HIGHLIGHTING_VALUE

@@ -8,10 +8,6 @@ import com.intellij.psi.PsiMethodCallExpression
  * @author Vitaliy.Bibaev
  */
 class PackageChainDetector(private val delegate: ChainDetector, private val packageName: String) : ChainDetector {
-  companion object {
-    fun forJavaStreams(packageName: String) = PackageChainDetector(JavaStreamChainDetector(), packageName)
-  }
-
   override fun isTerminationCall(callExpression: PsiMethodCallExpression): Boolean =
     delegate.isTerminationCall(callExpression) && isPackageSupported(callExpression)
 
@@ -40,5 +36,9 @@ class PackageChainDetector(private val delegate: ChainDetector, private val pack
     }
 
     return ""
+  }
+
+  companion object {
+    fun forJavaStreams(packageName: String): PackageChainDetector = PackageChainDetector(JavaStreamChainDetector(), packageName)
   }
 }

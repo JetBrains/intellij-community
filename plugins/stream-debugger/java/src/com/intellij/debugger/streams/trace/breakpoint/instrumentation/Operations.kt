@@ -129,14 +129,6 @@ class BreakpointBasedDistinctMapEntryOperation private constructor(
   dslHandlerFactory: (Int, IntermediateStreamCall, Dsl) -> DslIntermediateCallHandler,
   private val byKey: Boolean,
 ) : DistinctOperation(name, dslHandlerFactory), BreakpointBasedIntermediateOperation {
-
-  companion object {
-    fun keys(name: String): BreakpointBasedDistinctMapEntryOperation =
-      BreakpointBasedDistinctMapEntryOperation(name, ::DistinctKeysHandler, true)
-    fun values(name: String): BreakpointBasedDistinctMapEntryOperation =
-      BreakpointBasedDistinctMapEntryOperation(name, ::DistinctValuesHandler, false)
-  }
-
   override fun getRuntimeTraceHandler(
     objectStorage: ObjectStorage,
     callOrder: Int,
@@ -144,6 +136,13 @@ class BreakpointBasedDistinctMapEntryOperation private constructor(
     time: ObjectReference,
   ): IntermediateCallHandler =
     DistinctByMapEntryCallHandler(objectStorage, call.getTypeBefore(), call.getTypeAfter(), time, byKey)
+
+  companion object {
+    fun keys(name: String): BreakpointBasedDistinctMapEntryOperation =
+      BreakpointBasedDistinctMapEntryOperation(name, ::DistinctKeysHandler, true)
+    fun values(name: String): BreakpointBasedDistinctMapEntryOperation =
+      BreakpointBasedDistinctMapEntryOperation(name, ::DistinctValuesHandler, false)
+  }
 }
 
 class BreakpointBasedToCollectionOperation(name: String) : ToCollectionOperation(name), BreakpointBasedTerminalOperation {

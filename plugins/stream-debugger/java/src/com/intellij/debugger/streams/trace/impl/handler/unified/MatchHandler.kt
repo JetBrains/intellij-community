@@ -18,14 +18,12 @@ import com.intellij.debugger.streams.core.wrapper.impl.TerminatorStreamCallImpl
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes
 import com.intellij.openapi.util.TextRange
 
+private const val PREDICATE_NAME = "predicate42"
+
 /**
  * @author Vitaliy.Bibaev
  */
 class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBase.Terminal(dsl) {
-  private companion object {
-    const val PREDICATE_NAME = "predicate42"
-  }
-
   private val myPeekHandler = PeekTraceHandler(0, "filterMatch", call.typeBefore, call.typeBefore, dsl)
   private val myPredicateVariable = dsl.variable(ClassTypeImpl(call.arguments.first().type), PREDICATE_NAME)
   override fun additionalVariablesDeclaration(): List<VariableDeclaration> {

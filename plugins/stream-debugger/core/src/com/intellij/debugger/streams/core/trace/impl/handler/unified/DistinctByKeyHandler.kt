@@ -18,6 +18,9 @@ import com.intellij.debugger.streams.core.wrapper.impl.CallArgumentImpl
 import com.intellij.debugger.streams.core.wrapper.impl.IntermediateStreamCallImpl
 import com.intellij.openapi.util.TextRange
 
+private const val KEY_EXTRACTOR_VARIABLE_PREFIX: String = "keyExtractor"
+private const val TRANSITIONS_ARRAY_NAME: String = "transitionsArray"
+
 open class DistinctByKeyHandler(callNumber: Int,
                                 private val myCall: IntermediateStreamCall,
                                 dsl: Dsl,
@@ -25,12 +28,7 @@ open class DistinctByKeyHandler(callNumber: Int,
                                 protected val keyExtractorPosition: Int = 0,
                                 protected val myKeyType: GenericType = dsl.types.ANY,
                                 protected val afterValueType: GenericType = dsl.types.ANY,
-                                ) : HandlerBase.Intermediate(dsl)
-{
-  protected companion object {
-    const val KEY_EXTRACTOR_VARIABLE_PREFIX: String = "keyExtractor"
-    const val TRANSITIONS_ARRAY_NAME: String = "transitionsArray"
-  }
+                                ) : HandlerBase.Intermediate(dsl) {
 
   protected val myPeekHandler: PeekTraceHandler = PeekTraceHandler(callNumber, "distinct", myCall.typeBefore, myCall.typeAfter, dsl)
   protected val myKeyExtractor: CallArgument

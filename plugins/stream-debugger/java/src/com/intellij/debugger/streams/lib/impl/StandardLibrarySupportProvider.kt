@@ -14,17 +14,15 @@ import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
 import com.intellij.debugger.streams.trace.impl.JavaTraceExpressionBuilder
 import com.intellij.openapi.project.Project
 
+private val builder: StreamChainBuilder = JavaStreamChainBuilder(JavaChainTransformerImpl(),
+                                                                 PackageChainDetector.forJavaStreams("java.util.stream"))
+private val support: EvaluateExpressionBasedLibrarySupport = StandardLibrarySupport()
+private val dsl: Dsl = DslImpl(JavaStatementFactory())
+
 /**
  * @author Vitaliy.Bibaev
  */
 internal class StandardLibrarySupportProvider : JvmLibrarySupportProvider() {
-  private companion object {
-    val builder: StreamChainBuilder = JavaStreamChainBuilder(JavaChainTransformerImpl(),
-                                                             PackageChainDetector.forJavaStreams("java.util.stream"))
-    val support: EvaluateExpressionBasedLibrarySupport = StandardLibrarySupport()
-    val dsl: Dsl = DslImpl(JavaStatementFactory())
-  }
-
   override fun getLanguageId(): String = "JAVA"
 
   override fun getExpressionBuilder(project: Project): TraceExpressionBuilder =

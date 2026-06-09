@@ -35,31 +35,6 @@ internal class StreamInstrumentationManager private constructor(
   private val intermediateHandlers: List<IntermediateCallHandler>,
   private val terminalHandler: TerminalCallHandler,
 ) {
-  companion object {
-    fun create(
-      handlerFactory: BreakpointBasedHandlerFactory,
-      objectStorage: ObjectStorage,
-      chain: StreamChain,
-      evaluationContext: EvaluationContextImpl,
-    ): StreamInstrumentationManager {
-      DebuggerManagerThreadImpl.assertIsManagerThread()
-      if (!evaluationContext.suspendContext.myInProgress) {
-        LOG.error("${StreamInstrumentationManager::class.simpleName} must be initialized inside commands invoked for SuspendContext. " +
-                  "evaluationContext = $evaluationContext")
-      }
-
-      handlerFactory.beforeStreamTracing(evaluationContext)
-      return StreamInstrumentationManager(
-        objectStorage = objectStorage,
-        sourceHandler = handlerFactory.getForSource(),
-        intermediateHandlers = chain.intermediateCalls.mapIndexed { i, call ->
-          handlerFactory.getForIntermediate(i, call)
-        },
-        terminalHandler = handlerFactory.getForTermination(chain.terminationCall),
-      )
-    }
-  }
-
   // State for qualifier variable replacement and restoration
   private var originalQualifierValue: ObjectReference? = null
   // Stores Throwable[]{ex} in objectStorage when a user-space exception interrupts the execution
@@ -291,6 +266,31 @@ internal class StreamInstrumentationManager private constructor(
     }
     else {
       value
+    }
+  }
+
+  companion object {
+    fun create(
+      handlerFactory: BreakpointBasedHandlerFactory,
+      objectStorage: ObjectStorage,
+      chain: StreamChain,
+      evaluationContext: EvaluationContextImpl,
+    ): StreamInstrumentationManager {
+      DebuggerManagerThreadImpl.assertIsManagerThread()
+      if (!evaluationContext.suspendContext.myInProgress) {
+        LOG.error("${StreamInstrumentationManager::class.simpleName} must be initialized inside commands invoked for SuspendContext. " +
+                  "evaluationContext = $evaluationContext")
+      }
+
+      handlerFactory.beforeStreamTracing(evaluationContext)
+      return StreamInstrumentationManager(
+        objectStorage = objectStorage,
+        sourceHandler = handlerFactory.getForSource(),
+        intermediateHandlers = chain.intermediateCalls.mapIndexed { i, call ->
+          handlerFactory.getForIntermediate(i, call)
+        },
+        terminalHandler = handlerFactory.getForTermination(chain.terminationCall),
+      )
     }
   }
 }
