@@ -6,6 +6,9 @@
 - name: lib/modules/intellij.terminal.backend.jar
   contentModules:
   - name: intellij.terminal.backend
+- name: lib/modules/intellij.terminal.backend.split.jar
+  contentModules:
+  - name: intellij.terminal.backend.split
 - name: lib/modules/intellij.terminal.cloud.jar
   contentModules:
   - name: intellij.terminal.cloud

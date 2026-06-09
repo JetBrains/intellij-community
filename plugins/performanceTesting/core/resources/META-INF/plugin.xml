@@ -26,11 +26,13 @@
     <module name="intellij.performanceTesting.frontend"/>
     <module name="intellij.performanceTesting.backend"/>
     <module name="intellij.performanceTesting.frontend.split"/>
+    <module name="intellij.performanceTesting.backend.split"/>
     <module name="intellij.tools.ide.starter.bus" loading="embedded"/>
     <module name="intellij.driver.model" loading="embedded"/>
     <module name="intellij.driver.impl" loading="embedded"/>
     <module name="intellij.driver.client" loading="embedded"/>
     <module name="intellij.driver.frontend.split"/>
+    <module name="intellij.driver.backend.split"/>
     <module name="intellij.performanceTesting.async.core"/>
     <module name="intellij.performanceTesting.freezes"/>
   </content>

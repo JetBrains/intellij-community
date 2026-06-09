@@ -4,6 +4,9 @@
 - name: lib/modules/intellij.markdown.backend.jar
   contentModules:
   - name: intellij.markdown.backend
+- name: lib/modules/intellij.markdown.backend.split.jar
+  contentModules:
+  - name: intellij.markdown.backend.split
 - name: lib/modules/intellij.markdown.compose.preview.jar
   contentModules:
   - name: intellij.markdown.compose.preview

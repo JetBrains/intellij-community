@@ -27,6 +27,7 @@
     <module name="intellij.markdown.compose.preview"/>
     <module name="intellij.markdown.frontend"/>
     <module name="intellij.markdown.frontend.split"/>
+    <module name="intellij.markdown.backend.split"/>
     <module name="intellij.markdown.backend"/>
     <module name="intellij.markdown.java"/>
     <module name="intellij.markdown.fenceInjector.textMate"/>

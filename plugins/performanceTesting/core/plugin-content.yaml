@@ -21,6 +21,9 @@
 - name: lib/intellij.tools.ide.starter.bus.jar
   contentModules:
   - name: intellij.tools.ide.starter.bus
+- name: lib/modules/intellij.driver.backend.split.jar
+  contentModules:
+  - name: intellij.driver.backend.split
 - name: lib/modules/intellij.driver.frontend.split.jar
   contentModules:
   - name: intellij.driver.frontend.split
@@ -30,6 +33,9 @@
 - name: lib/modules/intellij.performanceTesting.backend.jar
   contentModules:
   - name: intellij.performanceTesting.backend
+- name: lib/modules/intellij.performanceTesting.backend.split.jar
+  contentModules:
+  - name: intellij.performanceTesting.backend.split
 - name: lib/modules/intellij.performanceTesting.freezes.jar
   contentModules:
   - name: intellij.performanceTesting.freezes
