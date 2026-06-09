@@ -196,8 +196,11 @@ internal class IdeaFreezeReporter : PerformanceListener {
   }
 
   private suspend fun processDumps(dumps: ArrayList<ThreadDump>, reportDir: Path?, loggingEvent: LogMessage?, durationMs: Long) {
-    if (loggingEvent != null && (application.isEAP || application.isInternal)) {
-      if (ExceptionAutoReportUtil.isAutoReportEnabled() && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
+    val autoReportEnabled = ExceptionAutoReportUtil.isAutoReportEnabled()
+                            || (ExceptionAutoReportUtil.isAutoReportForced && AppMode.isRemoteDevHost())
+
+    if (loggingEvent != null && (autoReportEnabled || application.isEAP || application.isInternal)) {
+      if (autoReportEnabled && ExceptionAutoReportUtil.isAutoReportableException(loggingEvent)) {
         MessagePool.getInstance().addErrorMessage(loggingEvent)
         return
       }
