@@ -6260,6 +6260,7 @@ f:com.intellij.ui.GuiUtils
 - s:getSizeByChars(I,javax.swing.JComponent):java.awt.Dimension
 - s:getTextWithoutMnemonicEscaping(java.lang.String):java.lang.String
 - s:installVisibilityReferent(javax.swing.JComponent,javax.swing.JComponent):V
+- s:installVisibilityReferents(javax.swing.JComponent,javax.swing.JComponent[]):V
 - s:invokeLaterIfNeeded(java.lang.Runnable,com.intellij.openapi.application.ModalityState):V
 - s:iterateChildren(java.awt.Component,java.util.function.Consumer,javax.swing.JComponent[]):V
 - s:removePotentiallyLeakingReferences(java.awt.Container):V

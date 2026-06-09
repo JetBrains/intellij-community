@@ -95,7 +95,9 @@ import com.intellij.ui.JBSplitter;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RemoteTransferUIManager;
 import com.intellij.ui.components.JBPanelWithEmptyText;
+import com.intellij.ui.components.panels.ListLayout;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.EventDispatcher;
@@ -106,7 +108,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NonNls;
@@ -114,6 +115,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import javax.swing.Box;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -123,6 +125,7 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
@@ -131,8 +134,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import static com.intellij.util.ObjectUtils.chooseNotNull;
 
 /**
  * Panel implementing a Diff-as-a-JComponent, showing one {@link DiffRequest} at a time.
@@ -168,6 +169,7 @@ public abstract class DiffRequestProcessor
   private final @NotNull MyPanel myMainPanel;
   private final @NotNull Wrapper myContentPanel;
   private final @NotNull JPanel myTopPanel;
+  private final @NotNull SegmentedButtonComponent<DiffTool> myDiffToolChooser;
   private final @NotNull ActionToolbar myToolbar;
   private final @NotNull ActionToolbar myRightToolbar;
   private final @NotNull Wrapper myToolbarWrapper;
@@ -231,15 +233,15 @@ public abstract class DiffRequestProcessor
 
     myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     myToolbar.setTargetComponent(myContentPanel);
-    JPanel toolbarPanel = new JPanel(new GridBagLayout());
-    toolbarPanel.add(myToolbar.getComponent());
-    myToolbarWrapper = new Wrapper(toolbarPanel);
+    myToolbarWrapper = new Wrapper(myToolbar.getComponent());
 
     myRightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, myRightToolbarGroup, true);
     myRightToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     myRightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
 
-    myRightToolbarWrapper = new Wrapper(JBUI.Panels.simplePanel(myRightToolbar.getComponent()));
+    myRightToolbarWrapper = new Wrapper(myRightToolbar.getComponent());
+
+    myDiffToolChooser = createDiffToolChooser();
 
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
     myTopPanel = buildTopPanel();
@@ -262,16 +264,39 @@ public abstract class DiffRequestProcessor
     navigator = new DiffNavigator();
   }
 
-  private @NotNull BorderLayoutPanel buildTopPanel() {
-    BorderLayoutPanel topPanel;
-    BorderLayoutPanel rightPanel = JBUI.Panels.simplePanel(myRightToolbarWrapper)
-      .addToLeft(JBUI.Panels.simplePanel(myToolbarStatusPanel).addToRight(myProgressBar));
+  private @NotNull JPanel buildTopPanel() {
+    JPanel rightPanel = new JPanel(ListLayout.horizontal(0, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.NO_GROW));
+    rightPanel.add(myToolbarStatusPanel);
+    rightPanel.add(myProgressBar);
+    rightPanel.add(myDiffToolChooser);
+    rightPanel.add(myRightToolbarWrapper);
 
-    topPanel = JBUI.Panels.simplePanel()
-      .addToLeft(myToolbarWrapper)
-      .addToRight(rightPanel);
-    GuiUtils.installVisibilityReferent(topPanel, myToolbar.getComponent());
-    GuiUtils.installVisibilityReferent(topPanel, myRightToolbar.getComponent());
+    var topPanel = new JPanel(new GridBagLayout());
+    var gbc = new GridBagConstraints();
+
+    // Add toolbar on the left
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+    gbc.weightx = 0.0;
+    gbc.weighty = 1.0;
+    gbc.anchor = GridBagConstraints.WEST;
+    gbc.fill = GridBagConstraints.NONE;
+    topPanel.add(myToolbarWrapper, gbc);
+
+    // Add spacer in the middle to push components to edges
+    gbc.gridx = 1;
+    gbc.weightx = 1.0;
+    gbc.fill = GridBagConstraints.BOTH;
+    topPanel.add(Box.createHorizontalGlue(), gbc);
+
+    // Add rightPanel on the right
+    gbc.gridx = 2;
+    gbc.weightx = 0.0;
+    gbc.anchor = GridBagConstraints.EAST;
+    gbc.fill = GridBagConstraints.NONE;
+    topPanel.add(rightPanel, gbc);
+
+    GuiUtils.installVisibilityReferents(topPanel, myToolbar.getComponent(), myRightToolbar.getComponent(), myDiffToolChooser);
 
     RemoteTransferUIManager.forceDirectTransfer(topPanel);
 
@@ -486,6 +511,9 @@ public abstract class DiffRequestProcessor
       myPopupActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
 
+      // NB: we should clean up the tool chooser here, but this causes the chooser to flicker
+      // Instead update the chooser after state init
+
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
         onAssigned(myActiveRequest, false);
         myActiveRequest = request;
@@ -497,6 +525,7 @@ public abstract class DiffRequestProcessor
           myState = createState(frameTool);
           try {
             myState.init();
+            updateDiffToolChooser();
 
             boolean isLoading = request instanceof LoadingDiffRequest || request instanceof NoDiffRequest;
             if (!isLoading) {
@@ -512,6 +541,7 @@ public abstract class DiffRequestProcessor
           LOG.error(e);
           myState = new ErrorState(new ErrorDiffRequest(DiffBundle.message("error.cant.show.diff.message"), e), frameTool);
           myState.init();
+          updateDiffToolChooser();
         }
       });
     });
@@ -653,7 +683,6 @@ public abstract class DiffRequestProcessor
     DiffUtil.addActionBlock(myToolbarGroup, contextActions, false);
     DiffUtil.addActionBlock(myToolbarGroup, new ShowInExternalToolActionGroup());
 
-    myRightToolbarGroup.add(new MyDiffToolChooser());
     DiffUtil.addActionBlock(myRightToolbarGroup, rightViewerActions, true);
 
     if (SystemInfo.isMac) { // collect touchbar actions
@@ -896,36 +925,43 @@ public abstract class DiffRequestProcessor
     }
   }
 
-  private class MyDiffToolChooser extends DiffToolChooser {
-    private MyDiffToolChooser() {
-      super(chooseNotNull(myProject, myContext.getProject()));
-    }
-
-    @Override
-    public void onSelected(@NotNull Project project, @NotNull DiffTool diffTool) {
-      switchToDiffTool(diffTool);
-    }
-
-    @Override
-    public @NotNull List<DiffTool> getTools() {
-      return new ArrayList<>(filterFittedTools(getAllKnownTools(), myContext, myActiveRequest));
-    }
-
-    @Override
-    public @NotNull DiffTool getActiveTool() {
-      DiffTool activeTool = myState.getActiveTool();
-      for (DiffTool tool : getTools()) {
-        if (isSameToolOrSubstitutor(tool, activeTool, myContext, myActiveRequest)) {
-          return tool;
+  private @NotNull SegmentedButtonComponent<DiffTool> createDiffToolChooser() {
+    var chooser = DiffToolChooser.createComponent();
+    chooser.addModelListener(new SegmentedButtonComponent.ModelListener() {
+      @Override
+      public void onItemSelected() {
+        var tool = chooser.getSelectedItem();
+        if (tool != null) {
+          switchToDiffTool(tool);
         }
       }
-      return activeTool;
+    });
+    return chooser;
+  }
+
+  private void updateDiffToolChooser() {
+    if (myForcedDiffTool != null) {
+      myDiffToolChooser.setItems(Collections.emptyList());
+      myDiffToolChooser.setSelectedItem(null);
+      myDiffToolChooser.setVisible(false);
+      return;
     }
 
-    @Override
-    public @Nullable DiffTool getForcedDiffTool() {
-      return myForcedDiffTool;
+    var tools = filterFittedTools(getAllKnownTools(), myContext, myActiveRequest);
+    myDiffToolChooser.setItems(tools);
+
+    var activeTool = myState.getActiveTool();
+    for (DiffTool tool : tools) {
+      if (isSameToolOrSubstitutor(tool, activeTool, myContext, myActiveRequest)) {
+        activeTool = tool;
+        break;
+      }
     }
+    myDiffToolChooser.setSelectedItem(activeTool);
+
+    final var fActiveTool = activeTool;
+    var hasChoice = ContainerUtil.find(tools, tool -> fActiveTool != tool) != null;
+    myDiffToolChooser.setVisible(hasChoice);
   }
 
   private class MyChangeDiffToolActionGroup extends ActionGroup implements DumbAware {
