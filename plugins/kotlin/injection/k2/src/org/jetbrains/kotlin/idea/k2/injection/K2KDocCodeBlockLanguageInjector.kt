@@ -32,6 +32,7 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
         val host = context as? KDocSection ?: return
 
         var languageId: String? = null
+        var fencedBlock = false
         val elements = mutableListOf<PsiElement>()
 
         var e: PsiElement? = host.firstChild
@@ -46,17 +47,20 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
                     val trim = e.text.trim()
                     val quotes = trim.startsWith(tripleQuotes)
                     val tildes = !quotes && trim.startsWith(tripleTildes)
-                    if (quotes || tildes) {
+                    val fenced = quotes || tildes
+                    if (fenced) {
                         if (languageId == null) {
                             val charToDrop = if (quotes) "`" else "~"
                             languageId = trim.replace(charToDrop, "")
+                            fencedBlock = true
                         }
                     }
 
                     if (!e.isWhiteSpace() && elements.isNotEmpty()) {
-                        injectElements(registrar, context, elements, languageId)
+                        injectElements(registrar, context, elements, languageId, fenced)
 
                         languageId = null
+                        fencedBlock = false
                     }
                 }
 
@@ -77,14 +81,15 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
             e = e.nextSibling
         }
 
-        injectElements(registrar, context, elements, languageId)
+        injectElements(registrar, context, elements, languageId, fencedBlock)
     }
 
     private fun injectElements(
         registrar: MultiHostRegistrar,
         context: KDocSection,
         elements: MutableList<PsiElement>,
-        languageId: String?
+        languageId: String?,
+        fencedBlock: Boolean
     ) {
         if (elements.isEmpty()) return
         if (!elements.all { it.isWhiteSpace() }) {
@@ -92,7 +97,7 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
                 languageId.takeIf { it?.isEmpty() != true }?.lowercase().let(languages::get)
                     ?: KotlinLanguage.INSTANCE
 
-            injectTextRanges(registrar, language, elements.toTextRanges(), context)
+            injectTextRanges(registrar, language, elements.toTextRanges(fencedBlock), context)
         }
         elements.clear()
     }
@@ -134,9 +139,9 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
         return 0
     }
 
-    private fun MutableList<PsiElement>.toTextRanges(): List<TextRange> =
+    private fun MutableList<PsiElement>.toTextRanges(fencedBlock: Boolean): List<TextRange> =
         buildList {
-            trim()
+            trim(fencedBlock)
 
             val indent = indent() ?: return@buildList
 
@@ -165,7 +170,7 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
             }
         }
 
-    private fun MutableList<PsiElement>.trim() {
+    private fun MutableList<PsiElement>.trim(fencedBlock: Boolean) {
         // head whitespaces
         val iterator = this.iterator()
         while (iterator.hasNext()) {
@@ -176,7 +181,7 @@ internal class K2KDocCodeBlockLanguageInjector : MultiHostInjector {
 
         while (this.isNotEmpty()) {
             val lastOrNull = lastOrNull()
-            if (lastOrNull is PsiWhiteSpace || lastOrNull?.elementType == KDocTokens.LEADING_ASTERISK) {
+            if ((lastOrNull is PsiWhiteSpace && !fencedBlock) || lastOrNull?.elementType == KDocTokens.LEADING_ASTERISK) {
                 removeLast()
             } else {
                 break
