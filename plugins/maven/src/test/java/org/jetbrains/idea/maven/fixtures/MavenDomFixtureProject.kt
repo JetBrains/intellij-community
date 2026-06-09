@@ -23,6 +23,20 @@ fun MavenTestFixture.createProjectPom(@Language(value = "XML", prefix = "<projec
   return createPomFile(projectRoot, xml).also { projectPom = it }
 }
 
+/**
+ * Writes [content] verbatim to the project-root `pom.xml` and makes it the project pom. Unlike [createProjectPom], it
+ * does NOT wrap the content via [MavenTestCase.createPomXml], so the test keeps full control over the file (e.g. a
+ * custom `<?xml ...?>` declaration, explicit `xmlns`, or model version).
+ */
+fun MavenTestFixture.setRawPomFile(content: String) {
+  val filePath = Path.of(projectRoot.path, "pom.xml")
+  Files.writeString(filePath, content)
+  projectRoot.refresh(false, false)
+  val f = projectRoot.findChild("pom.xml") ?: throw AssertionError("can't find pom.xml in VFS")
+  projectPom = f
+  refreshFiles(listOf(f))
+}
+
 fun MavenTestFixture.updateProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   val pom = createProjectPom(xml)
   refreshFiles(listOf(pom))

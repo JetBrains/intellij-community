@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.text.VersionComparatorUtil
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.junit.Assert.assertNotNull
 import org.junit.jupiter.api.Assumptions
 
@@ -27,6 +28,14 @@ fun MavenDomTestFixture.assumeMaven3() {
 
 fun MavenDomTestFixture.assumeMaven4() {
   Assumptions.assumeTrue(MavenTestVersions.getActualVersion(mavenVersion).startsWith("4."))
+}
+
+fun MavenDomTestFixture.assumeModel_4_0_0(message: String) {
+  Assumptions.assumeTrue(modelVersion == MavenConstants.MODEL_VERSION_4_0_0, message)
+}
+
+fun MavenDomTestFixture.assumeModel_4_1_0(message: String) {
+  Assumptions.assumeTrue(modelVersion == MavenConstants.MODEL_VERSION_4_1_0, message)
 }
 
 fun MavenDomTestFixture.assumeVersionAtLeast(version: String) {
