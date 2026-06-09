@@ -268,6 +268,12 @@ interface AgentSessionProviderDescriptor {
 
   fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan
 
+  /**
+   * True when [buildInitialMessagePlan] depends on data refreshed by [isCliAvailable].
+   */
+  val requiresCliAvailabilityForInitialMessagePlan: Boolean
+    get() = false
+
   suspend fun listReusablePromptSourceEntries(projectPath: String): List<AgentPromptReusableSourceEntry> {
     return emptyList()
   }

@@ -1183,6 +1183,10 @@ class AgentSessionPromptLauncherBridgeTest {
       startupPolicyOverride = AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND,
       timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
       composedMessageBuilder = { request -> request.prompt.trim() },
+      supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+      generationSettingsApplier = { launchSpec, settings ->
+        launchSpec.copy(command = launchSpec.command + listOf("--effort", settings.reasoningEffort.name.lowercase()))
+      },
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
     AgentSessionProviders.withRegistryForTest(
@@ -1238,9 +1242,10 @@ class AgentSessionPromptLauncherBridgeTest {
 
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
           assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
-          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
+          assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command)
+            .containsExactly("test", "resume", "thread-existing", "--effort", "high")
           assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("Refactor selected code")
-          assertThat(providerBridge.generationSettingsApplyCalls.get()).isZero()
+          assertThat(providerBridge.generationSettingsApplyCalls.get()).isEqualTo(1)
           assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
 
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
@@ -1248,7 +1253,7 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(openRequest.thread.id).isEqualTo("thread-existing")
           assertThat(openRequest.subAgent).isNull()
           assertThat(openRequest.startupLaunchSpecOverride?.command)
-            .containsExactly("test", "resume", "thread-existing", "--", "Refactor selected code")
+            .containsExactly("test", "resume", "thread-existing", "--effort", "high", "--", "Refactor selected code")
           assertThat(openRequest.startupLaunchSpecOverride?.envVariables).isEmpty()
           assertThat(openRequest.initialComposedMessage).isNull()
           assertThat(openRequest.postStartDispatchSteps).containsExactly(

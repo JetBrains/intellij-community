@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
@@ -411,7 +412,13 @@ class AgentChatFileEditorProviderTest {
     assertThat(changeSet.changedKeys).containsExactly(refreshedKey)
     assertThat(changeSet.removedKeys).containsExactly(removedKey)
     assertThat(model.resolve(refreshedKey))
-      .isEqualTo(AgentSessionThreadPresentation(title = "Renamed title", activity = AgentThreadActivity.PROCESSING))
+      .isEqualTo(
+        AgentSessionThreadPresentation(
+          title = "Renamed title",
+          activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING),
+          updatedAt = 1L,
+        )
+      )
     assertThat(model.resolve(removedKey)).isNull()
     assertThat(model.resolve(otherProviderKey))
       .isEqualTo(AgentSessionThreadPresentation(title = "Claude title", activity = AgentThreadActivity.PROCESSING))

@@ -275,6 +275,7 @@ class AgentSessionLaunchService internal constructor(
     currentProject: Project? = null,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
     initialMessageRequest: AgentPromptInitialMessageRequest? = null,
+    generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
     precomputedInitialMessagePlan: AgentInitialMessagePlan? = null,
     resumeLaunchMode: AgentSessionLaunchMode? = null,
     singleFlightPolicy: SingleFlightPolicy = SingleFlightPolicy.DROP,
@@ -312,6 +313,9 @@ class AgentSessionLaunchService internal constructor(
         }
         val effectiveInitialMessagePlan = when {
           initialMessageRequest == null -> null
+          precomputedInitialMessagePlan != null && descriptor?.requiresCliAvailabilityForInitialMessagePlan == true -> {
+            descriptor.buildInitialMessagePlan(initialMessageRequest)
+          }
           precomputedInitialMessagePlan != null -> precomputedInitialMessagePlan
           else -> descriptor?.buildInitialMessagePlan(initialMessageRequest)
         }
@@ -358,6 +362,7 @@ class AgentSessionLaunchService internal constructor(
             normalizedPath = normalizedPath,
             thread = effectiveThread,
             initialMessageRequest = initialMessageRequest,
+            generationSettings = generationSettings,
             precomputedInitialMessagePlan = effectiveInitialMessagePlan,
           )
         }
@@ -917,6 +922,7 @@ class AgentSessionLaunchService internal constructor(
             entryPoint = AgentWorkbenchEntryPoint.PROMPT,
             initialMessageRequest = effectiveInitialMessageRequest,
             precomputedInitialMessagePlan = initialMessagePlan,
+            generationSettings = request.generationSettings,
             resumeLaunchMode = request.launchMode,
             singleFlightPolicy = SingleFlightPolicy.RESTART_LATEST,
             launchOrigin = OpenThreadLaunchOrigin.PROMPT_LAUNCH,
@@ -1162,6 +1168,7 @@ private suspend fun resolvePromptInitialMessageDispatchPlan(
   normalizedPath: String,
   thread: AgentSessionThread,
   initialMessageRequest: AgentPromptInitialMessageRequest?,
+  generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
   precomputedInitialMessagePlan: AgentInitialMessagePlan? = null,
 ): AgentInitialMessageDispatchPlan {
   if (initialMessageRequest == null) {
@@ -1172,17 +1179,25 @@ private suspend fun resolvePromptInitialMessageDispatchPlan(
                    ?: return AgentInitialMessageDispatchPlan.EMPTY
   val initialMessagePlan = precomputedInitialMessagePlan ?: descriptor.buildInitialMessagePlan(initialMessageRequest)
   val identity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id)
-  val resumeLaunchSpec = AgentSessionLaunchSpecs.resolveResume(
+  val baseResumeLaunchSpec = AgentSessionLaunchSpecs.resolveResume(
     projectPath = normalizedPath,
     provider = thread.provider,
     sessionId = thread.id,
   )
+  val allowStartupPromptOverride = initialMessagePlan.mode == AgentInitialMessageMode.PLAN
+  val resumeLaunchSpec =
+    if (allowStartupPromptOverride && initialMessagePlan.startupPolicy == AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND) {
+      descriptor.applyGenerationSettings(baseResumeLaunchSpec, generationSettings)
+    }
+    else {
+      baseResumeLaunchSpec
+    }
   return buildInitialMessageDispatchPlan(
     descriptor = descriptor,
     baseLaunchSpec = resumeLaunchSpec,
     identity = identity,
     initialMessagePlan = initialMessagePlan,
-    allowStartupPromptOverride = initialMessagePlan.mode == AgentInitialMessageMode.PLAN,
+    allowStartupPromptOverride = allowStartupPromptOverride,
   )
 }
 

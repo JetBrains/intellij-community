@@ -219,6 +219,7 @@ private fun String?.normalizeJunieToken(): String {
     ?.lowercase()
     ?.replace("_", "")
     ?.replace("-", "")
+    ?.replace(".", "")
     ?.replace(" ", "")
     .orEmpty()
 }

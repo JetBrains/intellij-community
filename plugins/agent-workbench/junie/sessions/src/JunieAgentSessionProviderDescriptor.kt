@@ -73,6 +73,9 @@ internal class JunieAgentSessionProviderDescriptor(
   override val supportsGenerationModelSelection: Boolean
     get() = true
 
+  override val requiresCliAvailabilityForInitialMessagePlan: Boolean
+    get() = true
+
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.junie.cli"
 
