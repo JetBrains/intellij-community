@@ -16,7 +16,7 @@ internal class K2IntentionPolicy : KotlinIntentionPolicy() {
 
     private val skipPreviewIntentionClassNames =
         setOf(
-            "org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangePackageIntention", // Just starts the template; no reasonable preview could be displayed
+            "org.jetbrains.kotlin.idea.codeInsight.intentions.ChangePackageIntention", // Just starts the template; no reasonable preview could be displayed
             "org.jetbrains.kotlin.idea.k2.codeinsight.fixes.imprt.ImportQuickFix",
             "org.jetbrains.kotlin.idea.quickfix.K2EnableUnsupportedFeatureFix"
         )

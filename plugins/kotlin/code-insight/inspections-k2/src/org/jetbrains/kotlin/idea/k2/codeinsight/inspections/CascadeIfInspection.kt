@@ -16,9 +16,9 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.branches
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.convertIfToWhen
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.getWhenConditionSubjectCandidate
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.matches
+import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.convertIfToWhen
+import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.getWhenConditionSubjectCandidate
+import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.matches
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.kotlin.psi.KtContinueExpression
 import org.jetbrains.kotlin.psi.KtExpression

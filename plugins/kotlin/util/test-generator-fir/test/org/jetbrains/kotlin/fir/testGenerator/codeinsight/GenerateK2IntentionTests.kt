@@ -1,7 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
-import org.jetbrains.kotlin.idea.k2.codeInsight.intentions.shared.AbstractSharedK2IntentionTest
+import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractSharedK2IntentionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2GotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionInInjectionTest
 import org.jetbrains.kotlin.idea.k2.intentions.tests.AbstractK2IntentionTest
@@ -66,11 +66,6 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/movePropertyToConstructor", pattern = pattern)
             model("${idea}intentions/branched/ifWhen/whenToIf", pattern = pattern)
             model("${idea}intentions/branched/folding/ifToReturnAsymmetrically", pattern = pattern)
-            model(
-                "code-insight/intentions-k2/tests/testData/intentions",
-                pattern = pattern,
-                excludedDirectories = listOf("injected")
-            )
             model("${idea}intentions/convertBinaryExpressionWithDemorgansLaw", pattern = pattern)
             model("${idea}intentions/invertIfCondition", pattern = pattern)
             model("${idea}intentions/lambdaToAnonymousFunction", pattern = pattern)
@@ -207,9 +202,9 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
         }
     }
 
-    testGroup("code-insight/intentions-shared/tests/k2", category = INTENTIONS, testDataPath = "../testData") {
+    testGroup("code-insight/intentions-k2/tests", category = INTENTIONS) {
         testClass<AbstractSharedK2IntentionTest> {
-            model("intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"))
+            model("intentions", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$"), excludedDirectories = listOf("injected"))
         }
     }
 }

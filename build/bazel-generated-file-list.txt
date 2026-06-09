@@ -1254,8 +1254,6 @@ plugins/kotlin/code-insight/inspections-shared
 plugins/kotlin/code-insight/inspections-shared/tests/k2
 plugins/kotlin/code-insight/intentions-k2
 plugins/kotlin/code-insight/intentions-k2/tests
-plugins/kotlin/code-insight/intentions-shared
-plugins/kotlin/code-insight/intentions-shared/tests/k2
 plugins/kotlin/code-insight/kotlin.code-insight.k2
 plugins/kotlin/code-insight/line-markers
 plugins/kotlin/code-insight/line-markers-shared

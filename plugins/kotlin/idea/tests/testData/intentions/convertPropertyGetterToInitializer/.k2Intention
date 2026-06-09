@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertPropertyGetterToInitializerIntention
+org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertPropertyGetterToInitializerIntention

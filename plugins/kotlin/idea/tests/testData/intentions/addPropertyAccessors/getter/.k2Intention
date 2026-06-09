@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddPropertyGetterIntention
+org.jetbrains.kotlin.idea.codeinsight.intentions.AddPropertyGetterIntention

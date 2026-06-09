@@ -7,7 +7,6 @@ Intentions can be considered as small refactoring actions.
 
 ### Location
 - `kotlin.code-insight.intentions.k2`
-- `kotlin.code-insight.intentions.shared`
 
 Preferably, an intention should extend `KotlinApplicableModCommandAction`.
 It works over the ModCommand API that allows to perform analysis on a background thread.\

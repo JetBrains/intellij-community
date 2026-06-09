@@ -39,7 +39,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.descriptions" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions.shared" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.fixes" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.intentions" exported="" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections.shared" exported="" />

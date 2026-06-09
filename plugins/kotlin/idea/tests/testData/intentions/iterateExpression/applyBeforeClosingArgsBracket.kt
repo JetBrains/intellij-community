@@ -5,4 +5,4 @@ fun main(){
 
 // K1 shows this diagnostic only in the beginning and the end of expressions
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.intentions.IterateExpressionIntention
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.intentions.IterateExpressionIntention

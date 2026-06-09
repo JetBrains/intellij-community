@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.codeInsight.intentions.shared.MergeIfsIntention
+org.jetbrains.kotlin.idea.codeinsight.intentions.MergeIfsIntention

@@ -51,7 +51,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 /**
  * Allows to convert implicit operators' calls to explicit and vice versa.
  *
- * @see org.jetbrains.kotlin.idea.codeInsight.intentions.shared.OperatorToFunctionIntention
+ * @see org.jetbrains.kotlin.idea.codeInsight.intentions.OperatorToFunctionIntention
  */
 object OperatorToFunctionConverter {
     fun replaceExplicitInvokeCallWithImplicit(qualifiedExpression: KtDotQualifiedExpression): KtExpression? {

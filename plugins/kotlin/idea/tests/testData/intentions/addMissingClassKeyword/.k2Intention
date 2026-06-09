@@ -1,1 +1,1 @@
-org.jetbrains.kotlin.idea.codeInsight.intentions.shared.AddMissingClassKeywordIntention
+org.jetbrains.kotlin.idea.codeinsight.intentions.AddMissingClassKeywordIntention

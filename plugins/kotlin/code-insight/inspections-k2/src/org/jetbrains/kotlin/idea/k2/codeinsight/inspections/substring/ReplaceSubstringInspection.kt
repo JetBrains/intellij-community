@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.utils.callExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isSimplifiableTo
-import org.jetbrains.kotlin.idea.k2.codeinsight.intentions.branchedTransformations.isPure
+import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.isPure
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtCallExpression

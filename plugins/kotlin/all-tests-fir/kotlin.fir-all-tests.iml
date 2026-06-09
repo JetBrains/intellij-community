@@ -27,7 +27,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.i18n.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.util.test-generator-api" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.intentions-shared.tests.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.intentions.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.inspections-shared.tests.k2" scope="RUNTIME" />

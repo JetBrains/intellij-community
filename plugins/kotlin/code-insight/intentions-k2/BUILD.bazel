@@ -45,6 +45,7 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//plugins/kotlin/base/util",
         "//plugins/kotlin/base/psi",
+        "//platform/projectModel-api:projectModel",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/progress/shared:ide-progress",
@@ -76,6 +77,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
         "//plugins/kotlin/kotlin.searching",
         "//libraries/guava",
+        "//platform/code-style-api:codeStyle",
+        "//plugins/kotlin/formatter",
     ],
 )
 
@@ -101,6 +104,7 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/base/psi:psi_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
@@ -131,6 +135,8 @@ jvm_library(
         "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight_test_lib",
         "//plugins/kotlin/kotlin.searching:kotlin.searching_test_lib",
         "//libraries/guava:guava_test_lib",
+        "//platform/code-style-api:codeStyle_test_lib",
+        "//plugins/kotlin/formatter:formatter_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.intentions` end

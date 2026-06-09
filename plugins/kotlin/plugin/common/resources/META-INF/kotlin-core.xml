@@ -557,7 +557,7 @@
     <intentionAction>
       <!--TODO move to intentions-shared after NestedLambdaShadowedImplicitParameterInspection is migrated -->
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.codeInsight.intentions.fake.ReplaceItWithExplicitFunctionLiteralParamIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.fake.ReplaceItWithExplicitFunctionLiteralParamIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>

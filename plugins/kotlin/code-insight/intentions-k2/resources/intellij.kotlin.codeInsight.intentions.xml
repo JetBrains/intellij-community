@@ -1,4 +1,4 @@
-<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.k2.codeinsight.intentions">
+<idea-plugin visibility="internal" package="org.jetbrains.kotlin.idea.codeinsight.intentions">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.java.execution.impl"/>
@@ -9,357 +9,356 @@
     <module name="intellij.kotlin.searching"/>
   </dependencies>
   <!-- endregion -->
-
   <extensions defaultExtensionNs="com.intellij">
 
-    <testCreator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.intentions.testIntegration.K2TestCreator"/>
+    <testCreator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.codeinsight.intentions.testIntegration.K2TestCreator"/>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.testIntegration.KotlinCreateTestIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.testIntegration.KotlinCreateTestIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceUnderscoreWithTypeArgumentIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceUnderscoreWithTypeArgumentIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceUnderscoreWithParameterNameIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceUnderscoreWithParameterNameIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.SpecifyTypeExplicitlyIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyTypeExplicitlyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.SpecifyExplicitLambdaSignatureIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyExplicitLambdaSignatureIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.SamConversionToAnonymousObjectIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.SamConversionToAnonymousObjectIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.SafeAccessToIfThenIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.SafeAccessToIfThenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddPropertyAccessorsIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddPropertyAccessorsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddPropertyGetterIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddPropertyGetterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddPropertySetterIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddPropertySetterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ImportAllMembersIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ImportAllMembersIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ImportMemberIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ImportMemberIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertConcatenationToBuildStringIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertConcatenationToBuildStringIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertMemberToExtensionIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertMemberToExtensionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertStringTemplateToBuildStringIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertStringTemplateToBuildStringIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertToBlockBodyIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertToBlockBodyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddWhenRemainingBranchesIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddWhenRemainingBranchesIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddNameToArgumentIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddNameToArgumentIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddNamesToCallArgumentsIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddNamesToCallArgumentsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.EliminateWhenSubjectIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.EliminateWhenSubjectIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddNamesToFollowingArgumentsIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddNamesToFollowingArgumentsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertToConcatenatedStringIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertToConcatenatedStringIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddOpenModifierIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddOpenModifierIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.RemoveExplicitTypeIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.RemoveExplicitTypeIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertToStringTemplateIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertToStringTemplateIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ElvisToIfThenIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ElvisToIfThenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ExtractDeclarationFromCurrentFileIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ExtractDeclarationFromCurrentFileIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertForEachToForLoopIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertForEachToForLoopIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertCallToOppositeIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertCallToOppositeIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertAnyToAllAndViceVersaIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertAnyToAllAndViceVersaIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertAnyToNoneAndViceVersaIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertAnyToNoneAndViceVersaIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertFunctionTypeParameterToReceiverIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionTypeParameterToReceiverIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertFunctionTypeReceiverToParameterIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionTypeReceiverToParameterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddLabeledReturnInLambdaIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddLabeledReturnInLambdaIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddNamesInCommentToJavaCallArgumentsIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddNamesInCommentToJavaCallArgumentsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddFullQualifierIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddFullQualifierIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.InsertExplicitTypeArgumentsIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.InsertExplicitTypeArgumentsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.RemoveAllArgumentNamesIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.RemoveAllArgumentNamesIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.RemoveSingleArgumentNameIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.RemoveSingleArgumentNameIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.RemoveForLoopIndicesIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.RemoveForLoopIndicesIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddForLoopIndicesIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddForLoopIndicesIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertPropertyGetterToInitializerIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertPropertyGetterToInitializerIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertToRawStringTemplateIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertToRawStringTemplateIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ToRawStringLiteralIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ToRawStringLiteralIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ToInfixCallIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ToInfixCallIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.MovePropertyToConstructorIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.MovePropertyToConstructorIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.WhenToIfIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.WhenToIfIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertBinaryExpressionWithDemorgansLawIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertBinaryExpressionWithDemorgansLawIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.SplitPropertyDeclarationIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.SplitPropertyDeclarationIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.IntroduceImportAliasIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.IntroduceImportAliasIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
@@ -367,119 +366,119 @@
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.InvertIfConditionIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.InvertIfConditionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.LambdaToAnonymousFunctionIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.LambdaToAnonymousFunctionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertLambdaToReferenceIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertLambdaToReferenceIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertParameterToReceiverIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertParameterToReceiverIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertPrimaryConstructorToSecondaryIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertPrimaryConstructorToSecondaryIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertObjectLiteralToClassIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertObjectLiteralToClassIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertReceiverToParameterIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertReceiverToParameterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.IfToWhenIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.IfToWhenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.FoldIfToReturnAsymmetricallyIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.FoldIfToReturnAsymmetricallyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AnonymousFunctionToLambdaIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AnonymousFunctionToLambdaIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.FlattenWhenIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.FlattenWhenIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangeVisibilityModifierIntentionChooser</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ChangeVisibilityModifierIntentionChooser</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddThrowsAnnotationIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddThrowsAnnotationIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceExplicitFunctionLiteralParamWithItIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceExplicitFunctionLiteralParamWithItIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceInvokeIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceInvokeIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceTypeArgumentWithUnderscoreIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceTypeArgumentWithUnderscoreIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceCallWithUnaryOperatorIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceCallWithUnaryOperatorIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
@@ -487,273 +486,714 @@
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.CreateKotlinSubClassIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.CreateKotlinSubClassIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertPropertyInitializerToGetterIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertPropertyInitializerToGetterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertToMultiDollarStringIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertToMultiDollarStringIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertToIndexedFunctionCallIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertToIndexedFunctionCallIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddAnnotationUseSiteTargetIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddAnnotationUseSiteTargetIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.AddValVarToConstructorParameterActionIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddValVarToConstructorParameterActionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ImplementAbstractMemberIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ImplementAbstractMemberIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ImplementAbstractMemberAsConstructorParameterIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ImplementAbstractMemberAsConstructorParameterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.IterateExpressionIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.IterateExpressionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.MoveMemberToTopLevelIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.MoveMemberToTopLevelIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.MoveMemberToCompanionObjectIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.MoveMemberToCompanionObjectIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.MoveMemberOutOfCompanionObjectIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.MoveMemberOutOfCompanionObjectIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.MovePropertyToClassBodyIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.MovePropertyToClassBodyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.NullableBooleanEqualityCheckToElvisIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.NullableBooleanEqualityCheckToElvisIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.EvaluateCompileTimeExpressionIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.EvaluateCompileTimeExpressionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ExpandBooleanExpressionIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ExpandBooleanExpressionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertUnsafeCastCallToUnsafeCastIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertUnsafeCastCallToUnsafeCastIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.CollectionConcatenationToBuildCollectionIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.CollectionConcatenationToBuildCollectionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ChangePackageIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ChangePackageIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertPropertyToFunctionIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertPropertyToFunctionIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertTrimIndentToTrimMarginIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertTrimIndentToTrimMarginIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertTrimMarginToTrimIndentIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertTrimMarginToTrimIndentIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertLateinitPropertyToNullableIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertLateinitPropertyToNullableIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceAddWithPlusAssignIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceAddWithPlusAssignIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.copyConcatenatedStringToClipboard.CopyConcatenatedStringToClipboardIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.copyConcatenatedStringToClipboard.CopyConcatenatedStringToClipboardIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertArrayParameterToVarargIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertArrayParameterToVarargIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertContextParameterToRegularParameterIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertContextParameterToRegularParameterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertContextParameterToReceiverIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertContextParameterToReceiverIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertRegularParameterToContextParameterIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertRegularParameterToContextParameterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertOptInMarkerToRequirementIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertOptInMarkerToRequirementIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertRequirementToOptInIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertRequirementToOptInIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertReceiverParameterToContextParameterIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertReceiverParameterToContextParameterIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertFunctionToPropertyIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertFunctionToPropertyIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ConvertCollectionConstructorToFunction</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertCollectionConstructorToFunction</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReconstructTypeInCastOrIsIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ReconstructTypeInCastOrIsIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceRepeatWithForLoopIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceRepeatWithForLoopIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceForLoopWithRepeatIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceForLoopWithRepeatIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.SwapStringEqualsIgnoreCaseIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.SwapStringEqualsIgnoreCaseIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <language>kotlin</language>
-      <className>org.jetbrains.kotlin.idea.k2.codeinsight.intentions.ReplaceForEachWithRepeatIntention</className>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddBracesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.MergeElseIfIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddBracesToAllBranchesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertToForEachFunctionCallIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertVarargParameterToArrayIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.RemoveBracesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.RemoveBracesFromAllBranchesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddUnderscoresToNumericLiteralIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.RemoveUnderscoresFromNumericLiteralIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.SwapBinaryExpressionIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddMissingClassKeywordIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ChopParameterListIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ChopArgumentListIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.JoinParameterListIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.PutExpressionsOnSeparateLinesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.PutCallsOnSeparateLinesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.JoinArgumentListIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.TrailingCommaIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.RenameClassToContainingFileNameIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.RenameFileToMatchClassIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceWithOrdinaryAssignmentIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.OperatorToFunctionIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.FoldIfToFunctionCallIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.UnfoldFunctionCallToIfIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.FoldWhenToFunctionCallIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.UnfoldFunctionCallToWhenIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.UnfoldPropertyToIfIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.MergeIfsIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.MoveLambdaInsideParenthesesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.SplitIfIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertLineCommentToBlockCommentIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.IndentRawStringIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertLambdaToMultiLineIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertLambdaToSingleLineIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyAllRemainingArgumentsByNameIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyRemainingRequiredArgumentsByNameIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertToApplyIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertToAlsoIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertToWithIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertToRunIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.IntroduceVariableIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertBlockCommentToLineCommentIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.InsertCurlyBracesToTemplateIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertVariableAssignmentToExpressionIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertEnumToSealedClassIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertSealedClassToEnumIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.UnfoldAssignmentToIfIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.UnfoldAssignmentToWhenIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.UnfoldPropertyToWhenIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertCamelCaseTestFunctionToSpacedIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertSnakeCaseTestFunctionToSpacedIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.UnfoldReturnToIfIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.UnfoldReturnToWhenIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.RemoveExplicitLambdaParameterTypesIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ValToObjectIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.IntroduceBackingPropertyIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddJvmOverloadsIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.AddJvmStaticIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertOrdinaryPropertyToLazyIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.SpecifyTypeExplicitlyInDestructuringAssignmentIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertLazyPropertyToOrdinaryIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ToOrdinaryStringLiteralIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ConvertNullablePropertyToLateinitIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.codeinsight.intentions.ReplaceForEachWithRepeatIntention</className>
       <bundleName>messages.KotlinBundle</bundleName>
       <categoryKey>group.names.kotlin</categoryKey>
     </intentionAction>
