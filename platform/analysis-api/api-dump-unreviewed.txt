@@ -1833,7 +1833,6 @@ f:com.intellij.modcommand.ModStartRename$RenameSymbolRange
 f:com.intellij.modcommand.ModStartTemplate
 - java.lang.Record
 - com.intellij.modcommand.ModCommand
-- <init>(com.intellij.openapi.vfs.VirtualFile,java.util.List,java.util.function.Function):V
 - f:equals(java.lang.Object):Z
 - fields():java.util.List
 - file():com.intellij.openapi.vfs.VirtualFile

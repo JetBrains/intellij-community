@@ -13,6 +13,7 @@ import com.intellij.modcommand.ModTemplateBuilder;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.LambdaUtil;
 import com.intellij.psi.PsiAssignmentExpression;
@@ -50,7 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 public final class CreateLocalFromUsageFix extends PsiUpdateModCommandAction<PsiReferenceExpression> {
-  CreateLocalFromUsageFix(@NotNull PsiReferenceExpression ref) {
+  public CreateLocalFromUsageFix(@NotNull PsiReferenceExpression ref) {
     super(ref);
   }
 
@@ -72,7 +73,7 @@ public final class CreateLocalFromUsageFix extends PsiUpdateModCommandAction<Psi
         }
       }
     }
-    VariableKind kind = DefaultQuickFixProvider.getKind(ref);
+    VariableKind kind = getKind(ref);
     return Presentation.of(getMessage(ref.getReferenceName()))
       .withPriority(kind == VariableKind.LOCAL_VARIABLE ? PriorityAction.Priority.HIGH : PriorityAction.Priority.NORMAL);
   }
@@ -174,5 +175,33 @@ public final class CreateLocalFromUsageFix extends PsiUpdateModCommandAction<Psi
   @Override
   public @NotNull String getFamilyName() {
     return QuickFixBundle.message("create.local.from.usage.family");
+  }
+
+  public static @Nullable VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
+    JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
+    String reference = refExpr.getText();
+
+    if (StringUtil.isUpperCase(reference)) {
+      return VariableKind.STATIC_FINAL_FIELD;
+    }
+
+    for (VariableKind kind : VariableKind.values()) {
+      String prefix = styleManager.getPrefixByVariableKind(kind);
+      String suffix = styleManager.getSuffixByVariableKind(kind);
+
+      if (prefix.isEmpty() && suffix.isEmpty()) {
+        continue;
+      }
+
+      if (reference.startsWith(prefix) && reference.endsWith(suffix)) {
+        return kind;
+      }
+    }
+
+    if (StringUtil.isCapitalized(reference)) {
+      return null;
+    }
+
+    return VariableKind.LOCAL_VARIABLE;
   }
 }

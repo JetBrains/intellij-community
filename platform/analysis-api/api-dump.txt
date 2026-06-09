@@ -1106,6 +1106,9 @@ f:com.intellij.modcommand.ModRegisterTabOut
 - rangeEnd():I
 - rangeStart():I
 - target():I
+f:com.intellij.modcommand.ModStartTemplate
+- <init>(com.intellij.openapi.vfs.VirtualFile,java.util.List,Z,java.util.function.Function):V
+- optional():Z
 f:com.intellij.modcommand.ModStartTemplate$DependantVariableField
 - <init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,Z,java.lang.String):V
 - defaultValue():java.lang.String
@@ -1117,6 +1120,7 @@ com.intellij.modcommand.ModTemplateBuilder
 - a:field(com.intellij.psi.PsiElement,java.lang.String,java.lang.String,Z):com.intellij.modcommand.ModTemplateBuilder
 - a:finishAt(I):com.intellij.modcommand.ModTemplateBuilder
 - a:onTemplateFinished(java.util.function.Function):com.intellij.modcommand.ModTemplateBuilder
+- a:required():com.intellij.modcommand.ModTemplateBuilder
 f:com.intellij.modcommand.ModUpdateFileText
 - shrinkFragments():com.intellij.modcommand.ModUpdateFileText
 - translateOffset(I,Z):I

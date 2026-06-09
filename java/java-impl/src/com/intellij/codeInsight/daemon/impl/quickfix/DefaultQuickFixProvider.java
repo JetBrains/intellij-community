@@ -3,11 +3,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
-import com.intellij.lang.java.request.CreateFieldFromUsage;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiDeconstructionPattern;
@@ -19,17 +16,12 @@ import com.intellij.psi.PsiJavaCodeReferenceCodeFragment;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,10 +63,6 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       BringVariableIntoScopeFix bringToScope = BringVariableIntoScopeFix.fromReference(refExpr);
       if (bringToScope != null) {
         registrar.register(fixRange, bringToScope.asIntention(), null);
-      }
-
-      for (IntentionAction action : createVariableActions(refExpr)) {
-        registrar.register(fixRange, action, null);
       }
     }
 
@@ -139,59 +127,6 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       }
     }
     return result;
-  }
-
-  private static @NotNull Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
-    Collection<IntentionAction> result = new ArrayList<>();
-    boolean isQualified = refExpr.isQualified();
-    VariableKind kind = getKind(refExpr);
-
-    if (!isQualified) {
-      result.add(new CreateLocalFromUsageFix(refExpr).asIntention());
-    }
-
-    if (!(refExpr instanceof PsiMethodReferenceExpression)) {
-      List<IntentionAction> createFieldFixes = CreateFieldFromUsage.generateActions(refExpr);
-      if (kind == VariableKind.FIELD) {
-        createFieldFixes = ContainerUtil.map(createFieldFixes, fix -> PriorityIntentionActionWrapper.highPriority(fix));
-      }
-      result.addAll(createFieldFixes);
-    }
-
-    if (!isQualified) {
-      IntentionAction createParameterFix = new CreateParameterFromUsageFix(refExpr);
-      result.add(kind == VariableKind.PARAMETER ? PriorityIntentionActionWrapper.highPriority(createParameterFix) : createParameterFix);
-    }
-
-    return result;
-  }
-
-  static @Nullable VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
-    JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
-    String reference = refExpr.getText();
-
-    if (StringUtil.isUpperCase(reference)) {
-      return VariableKind.STATIC_FINAL_FIELD;
-    }
-
-    for (VariableKind kind : VariableKind.values()) {
-      String prefix = styleManager.getPrefixByVariableKind(kind);
-      String suffix = styleManager.getSuffixByVariableKind(kind);
-
-      if (prefix.isEmpty() && suffix.isEmpty()) {
-        continue;
-      }
-
-      if (reference.startsWith(prefix) && reference.endsWith(suffix)) {
-        return kind;
-      }
-    }
-
-    if (StringUtil.isCapitalized(reference)) {
-      return null;
-    }
-
-    return VariableKind.LOCAL_VARIABLE;
   }
 
   @Override

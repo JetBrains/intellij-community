@@ -5,14 +5,19 @@ import com.intellij.codeInsight.daemon.impl.analysis.AbstractJavaErrorFixProvide
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightFixUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddExceptionToCatchFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddFinallyFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalFromUsageFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.CreateParameterFromUsageFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.InsertMissingTokenFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameUnderscoreFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.PriorityIntentionActionWrapper;
 import com.intellij.codeInspection.streamMigration.SimplifyForEachInspection;
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds;
+import com.intellij.lang.java.request.CreateFieldFromUsage;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaResolveResult;
 import com.intellij.psi.PsiElement;
@@ -20,16 +25,22 @@ import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.PsiSwitchLabelStatement;
 import com.intellij.psi.PsiSwitchLabelStatementBase;
 import com.intellij.psi.PsiSwitchLabeledRuleStatement;
 import com.intellij.psi.PsiTryStatement;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static com.intellij.java.codeserver.highlighting.errors.JavaErrorKinds.ACCESS_PACKAGE_LOCAL;
@@ -83,9 +94,37 @@ public final class AdditionalJavaErrorFixProvider extends AbstractJavaErrorFixPr
     fixes(ACCESS_PROTECTED, accessFix);
     fixes(ACCESS_PACKAGE_LOCAL, accessFix);
   }
+
+  private static @NotNull Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
+    Collection<IntentionAction> result = new ArrayList<>();
+    boolean isQualified = refExpr.isQualified();
+    if (!isQualified) {
+      result.add(new CreateLocalFromUsageFix(refExpr).asIntention());
+    }
+
+    VariableKind kind = CreateLocalFromUsageFix.getKind(refExpr);
+
+    if (!(refExpr instanceof PsiMethodReferenceExpression)) {
+      List<IntentionAction> createFieldFixes = CreateFieldFromUsage.generateActions(refExpr);
+      if (kind == VariableKind.FIELD) {
+        createFieldFixes = ContainerUtil.map(createFieldFixes, fix -> PriorityIntentionActionWrapper.highPriority(fix));
+      }
+      result.addAll(createFieldFixes);
+    }
+
+    if (!isQualified) {
+      IntentionAction createParameterFix = new CreateParameterFromUsageFix(refExpr);
+      result.add(kind == VariableKind.PARAMETER ? PriorityIntentionActionWrapper.highPriority(createParameterFix) : createParameterFix);
+    }
+
+    return result;
+  }
   
   private static void registerReferenceFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull Consumer<? super CommonIntentionAction> sink) {
     sink.accept(new ImportClassFix(ref));
+    if (ref instanceof PsiReferenceExpression refExpr) {
+      createVariableActions(refExpr).forEach(sink);
+    }
   }
 
   private static void registerErrorElementFixes(@NotNull Consumer<? super CommonIntentionAction> info,

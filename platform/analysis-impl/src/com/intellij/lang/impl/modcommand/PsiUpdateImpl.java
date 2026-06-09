@@ -320,6 +320,7 @@ final class PsiUpdateImpl {
     private @NlsContexts.Tooltip String myErrorMessage;
     private @NlsContexts.Tooltip String myInfoMessage;
     private final @NotNull Map<@NotNull PsiElement, ModShowConflicts.@NotNull Conflict> myConflictMap = new LinkedHashMap<>();
+    private boolean myTemplateOptional = true;
 
     private record ChangedDirectoryInfo(@NotNull ChangedVirtualDirectory directory, @NotNull PsiDirectory psiDirectory) {
       static @NotNull ModPsiUpdaterImpl.ChangedDirectoryInfo create(@NotNull PsiDirectory directory) {
@@ -622,6 +623,12 @@ final class PsiUpdateImpl {
         }
 
         @Override
+        public @NotNull ModTemplateBuilder required() {
+          myTemplateOptional = false;
+          return this;
+        }
+
+        @Override
         public @NotNull ModTemplateBuilder onTemplateFinished(@NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> templateFinishFunction) {
           if (myTemplateFields.isEmpty()) {
             throw new IllegalStateException("Template was not created");
@@ -898,7 +905,7 @@ final class PsiUpdateImpl {
 
     private @NotNull ModCommand getTemplateCommand() {
       if (myTemplateFields.isEmpty()) return nop();
-      return new ModStartTemplate(navigationFile(), myTemplateFields, myTemplateFinishFunction);
+      return new ModStartTemplate(navigationFile(), myTemplateFields, myTemplateOptional, myTemplateFinishFunction);
     }
   }
 }
