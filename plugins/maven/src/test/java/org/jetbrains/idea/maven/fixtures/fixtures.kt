@@ -6,8 +6,6 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
-import com.intellij.testFramework.TestApplicationManager
-import com.intellij.testFramework.TestDataProvider
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
@@ -35,11 +33,11 @@ import java.nio.file.Path
  * @param initialPom the pom imported during fixture set-up; pass `null` to skip the initial import.
  */
 fun mavenDomFixture(
-  withIndices: Boolean = true,
-  @Language(value = "XML", prefix = "<project>", suffix = "</project>") initialPom: String? = MavenDomTestFixture.DEFAULT_POM,
   mavenVersion: String = "bundled",
   modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0,
   skipPluginResolution: Boolean = true,
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>") initialPom: String? = MavenDomTestFixture.DEFAULT_POM,
+  withIndices: Boolean = false,
   localRepoDir: String = "local1",
   extraRepoDirs: List<String> = listOf("local2"),
 ): TestFixture<MavenDomTestFixture> {
@@ -55,7 +53,14 @@ fun mavenDomFixture(
   return testFixture {
     val dir = dirFixture.init()
     val project = projectFixture.init()
-    val fixture = MavenDomTestFixture(project, dir, withIndices, mavenVersion, modelVersion, skipPluginResolution, localRepoDir, extraRepoDirs)
+    val fixture = MavenDomTestFixture(project,
+                                      dir,
+                                      mavenVersion,
+                                      modelVersion,
+                                      skipPluginResolution,
+                                      withIndices,
+                                      localRepoDir,
+                                      extraRepoDirs)
     try {
       fixture.attachCodeInsight(codeInsightFixture.init())
       fixture.setUp(initialPom)

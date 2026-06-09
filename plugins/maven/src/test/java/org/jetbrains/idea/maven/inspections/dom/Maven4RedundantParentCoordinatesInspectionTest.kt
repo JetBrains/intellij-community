@@ -26,7 +26,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class Maven4RedundantParentCoordinatesInspectionTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = false, initialPom = null, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(initialPom = null, mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testDoNotFireHighlightInMaven3() = runBlocking {

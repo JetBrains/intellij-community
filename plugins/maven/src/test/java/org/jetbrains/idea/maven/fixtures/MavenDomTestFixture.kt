@@ -80,10 +80,10 @@ import java.util.function.Function
 class MavenDomTestFixture internal constructor(
   val project: Project,
   val dir: Path,
-  internal val withIndices: Boolean,
   internal val mavenVersion: String = "bundled",
   internal val modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0,
   private val skipPluginResolution: Boolean = true,
+  internal val withIndices: Boolean = false,
   private val localRepoDir: String = "local1",
   private val extraRepoDirs: List<String> = listOf("local2"),
 ) {
