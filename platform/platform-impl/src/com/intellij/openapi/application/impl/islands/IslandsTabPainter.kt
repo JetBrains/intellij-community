@@ -115,6 +115,8 @@ private class IslandsTabTheme : TabTheme {
     get() = JBColor.namedColor("EditorTabs.underlinedTabInactiveForeground", JBColor(0x000000, 0xFFFFFF))
 }
 
+private const val COLOR_TAB_ALPHA = 0.4
+
 internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean) : JBTabPainter {
   private val myTheme = when {
     isToolWindow -> object : DefaultTabTheme() {
@@ -197,7 +199,7 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
   }
 
   private fun getColoredTabBackground(tabColor: Color, active: Boolean): Color {
-    return if (active) tabColor else ColorUtil.withAlpha(tabColor, 0.9)
+    return if (active) tabColor else ColorUtil.withAlpha(tabColor, COLOR_TAB_ALPHA)
   }
 
   /**
@@ -242,7 +244,7 @@ internal open class IslandsTabPainter(isDefault: Boolean, isToolWindow: Boolean)
     val info = getColors(active, hovered, selected)
 
     if (tabColor != null) {
-      val fill = if (selected) getBackgroundColor() else ColorUtil.alphaBlending(info.first, ColorUtil.withAlpha(tabColor, 0.9))
+      val fill = if (selected) getBackgroundColor() else ColorUtil.alphaBlending(info.first, ColorUtil.withAlpha(tabColor, COLOR_TAB_ALPHA))
       return fill to info.second
     }
 
