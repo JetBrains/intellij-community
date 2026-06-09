@@ -51,7 +51,7 @@ internal class AgentPromptContextChipsComponent(
 
   private fun createContextChip(entry: ContextEntry): JComponent {
     val chipIcon = AgentPromptScreenshotChipIcon.resolve(entry.item)
-    return ContextChipTagButton(entry.displayText, chipIcon, java.util.function.Consumer { _: Any? ->
+    return ContextChipTagButton(entry.displayText, chipIcon, Consumer { _: Any? ->
       onRemove(entry)
     }).apply {
       isOpaque = false
@@ -64,7 +64,7 @@ internal class AgentPromptContextChipsComponent(
           button.isOpaque = false
           button.background = UIUtil.TRANSPARENT_COLOR
           button.putClientProperty("JButton.backgroundColor", UIUtil.TRANSPARENT_COLOR)
-          installPlainTextIdeTooltip(component = button) { entry.tooltipText }
+          installContextChipIdeTooltip(component = button) { entry }
         }
     }
   }

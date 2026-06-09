@@ -33,6 +33,7 @@ import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -71,6 +72,7 @@ internal class AgentPromptPaletteSessionController(
   private val isPopupActive: () -> Boolean,
   private val movePopupToFitScreen: () -> Unit,
   private val popupScope: CoroutineScope,
+  private val parentDisposable: Disposable,
 ) {
   private val contextState = AgentPromptPaletteContextState()
   private val draftState = AgentPromptPaletteDraftState()
@@ -92,6 +94,7 @@ internal class AgentPromptPaletteSessionController(
       invocationData = invocationData,
       promptArea = promptArea,
       view = view,
+      parentDisposable = parentDisposable,
       contextResolverService = contextResolverService,
       contextChips = contextChips,
       launcherProvider = launcherProvider,
@@ -193,6 +196,7 @@ internal class AgentPromptPaletteSessionController(
 
   fun installHandlers() {
     contextController.installImagePasteHandler()
+    contextController.installImageDropHandler()
 
     installConfirmActionOnEnter(view.existingTaskList) {
       submitController.submit()

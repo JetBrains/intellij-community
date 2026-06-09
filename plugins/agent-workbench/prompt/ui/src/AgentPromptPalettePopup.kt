@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
@@ -59,6 +60,7 @@ internal class AgentPromptPalettePopup(
 
   @Suppress("RAW_SCOPE_CREATION")
   private val popupScope = CoroutineScope(SupervisorJob() + Dispatchers.UI)
+  private val popupDisposable = Disposer.newDisposable("AgentPromptPalettePopup")
 
   private var popup: JBPopup? = null
   private var popupActive: Boolean = false
@@ -106,6 +108,7 @@ internal class AgentPromptPalettePopup(
         popupActive = false
         popup = null
         sessionController.onPopupClosed()
+        Disposer.dispose(popupDisposable)
         popupScope.cancel("Agent prompt popup closed")
         onClosed?.invoke()
       }
@@ -212,6 +215,7 @@ internal class AgentPromptPalettePopup(
       isPopupActive = { popupActive },
       movePopupToFitScreen = { popup?.moveToFitScreen() },
       popupScope = popupScope,
+      parentDisposable = popupDisposable,
     )
     controllerRef = sessionController
     return view.rootPanel

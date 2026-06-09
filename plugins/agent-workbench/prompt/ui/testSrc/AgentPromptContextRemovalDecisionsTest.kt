@@ -163,7 +163,7 @@ class AgentPromptContextRemovalDecisionsTest {
 
   @Test
   fun explicitlyRemovingManualScreenshotSourceDeletesOnlyRemovedBackingImageFile() {
-    listOf("manual.ui.context", "manual.screen.capture").forEach { sourceId ->
+    listOf("manual.ui.context", "manual.screen.capture", "manual.drop.image").forEach { sourceId ->
       val keepScreenshotFile = Files.createTempFile("agent-workbench-context-", ".png")
       val screenshotFile = Files.createTempFile("agent-workbench-context-", ".png")
       try {

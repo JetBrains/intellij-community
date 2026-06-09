@@ -51,16 +51,16 @@ internal data class ContextEntry(
       )
     )
 
-  val displayText: String = chipRender?.text ?: buildDefaultDisplayText()
+  val displayText: @NlsSafe String = chipRender?.text ?: buildDefaultDisplayText()
 
-  private val fallbackTooltipText: String by lazy(LazyThreadSafetyMode.NONE) {
+  private val fallbackTooltipText: @NlsSafe String by lazy(LazyThreadSafetyMode.NONE) {
     AgentPromptContextEnvelopeFormatter.renderContextItem(item = item, projectPath = projectBasePath)
   }
 
-  val tooltipText: String
+  val tooltipText: @NlsSafe String
     get() = chipRender?.tooltipText ?: fallbackTooltipText
 
-  private fun buildDefaultDisplayText(): String {
+  private fun buildDefaultDisplayText(): @NlsSafe String {
     val title = item.title?.takeIf { it.isNotBlank() } ?: "Context"
     val firstLine = item.body.lineSequence().firstOrNull()?.trim().orEmpty()
     if (firstLine.isEmpty()) {

@@ -5,10 +5,14 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.objOrNull
 import com.intellij.agent.workbench.prompt.core.string
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Graphics2D
 import java.awt.Image
@@ -19,6 +23,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.imageio.ImageIO
 import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.SwingConstants
+import kotlin.math.min
+import kotlin.math.roundToInt
 
 internal object AgentPromptScreenshotChipIcon {
   private val LOG = logger<AgentPromptScreenshotChipIcon>()
@@ -27,6 +37,8 @@ internal object AgentPromptScreenshotChipIcon {
   private const val ICON_SRC_RESOLUTION = 64
   private const val ICON_TARGET_RESOLUTION = 16
   private const val ICON_INNER_RESOLUTION = 56
+  private const val PREVIEW_MAX_WIDTH = 240
+  private const val PREVIEW_MAX_HEIGHT = 180
 
   private val BORDER_COLOR = JBColor(Color(168, 173, 189), Color(255, 255, 255, 82))
 
@@ -35,22 +47,53 @@ internal object AgentPromptScreenshotChipIcon {
    * or returns null if the item is not a screenshot or the image cannot be loaded.
    */
   fun resolve(item: AgentPromptContextItem): Icon? {
+    val sourceImage = loadScreenshotImage(item) ?: return null
+    return buildCircularThumbnail(sourceImage)
+  }
+
+  fun buildPreviewTooltipComponent(item: AgentPromptContextItem, labelText: @NlsSafe String): JComponent? {
+    val sourceImage = loadScreenshotImage(item) ?: return null
+    val previewImage = buildPreviewImage(sourceImage)
+    val imageLabel = JLabel(JBImageIcon(previewImage)).apply {
+      horizontalAlignment = SwingConstants.CENTER
+      verticalAlignment = SwingConstants.CENTER
+      accessibleContext.accessibleName = labelText
+    }
+    return JPanel(BorderLayout(0, JBUI.scale(6))).apply {
+      isOpaque = true
+      background = UIUtil.getToolTipBackground()
+      border = JBUI.Borders.empty(6)
+      accessibleContext.accessibleName = labelText
+      add(imageLabel, BorderLayout.CENTER)
+      labelText.takeIf { it.isNotBlank() }?.let { text ->
+        add(JLabel(text).apply {
+          foreground = UIUtil.getToolTipForeground()
+          font = UIUtil.getToolTipFont()
+          horizontalAlignment = SwingConstants.CENTER
+        }, BorderLayout.SOUTH)
+      }
+    }
+  }
+
+  private fun loadScreenshotImage(item: AgentPromptContextItem): BufferedImage? {
     val payload = item.payload.objOrNull() ?: return null
     if (payload.string("type") != SCREENSHOT_TYPE) return null
     val filePath = payload.string("filePath") ?: return null
-    return buildCircularThumbnail(Path.of(filePath))
+    return loadImage(Path.of(filePath))
   }
 
-  private fun buildCircularThumbnail(path: Path): Icon? {
-    val sourceImage = try {
+  private fun loadImage(path: Path): BufferedImage? {
+    return try {
       if (!Files.exists(path)) return null
       Files.newInputStream(path).use { ImageIO.read(it) }
     }
     catch (e: Exception) {
       LOG.debug("Failed to load screenshot thumbnail: $path", e)
-      return null
-    } ?: return null
+      null
+    }
+  }
 
+  private fun buildCircularThumbnail(sourceImage: BufferedImage): Icon {
     val canvas = ImageUtil.createImage(ICON_SRC_RESOLUTION, ICON_SRC_RESOLUTION, BufferedImage.TYPE_INT_ARGB)
     val g = canvas.createGraphics() as Graphics2D
     try {
@@ -97,6 +140,15 @@ internal object AgentPromptScreenshotChipIcon {
     }
 
     return HiDpiCircleIcon(canvas, ICON_TARGET_RESOLUTION)
+  }
+
+  private fun buildPreviewImage(sourceImage: BufferedImage): Image {
+    val maxWidth = JBUI.scale(PREVIEW_MAX_WIDTH)
+    val maxHeight = JBUI.scale(PREVIEW_MAX_HEIGHT)
+    val scale = min(maxWidth.toDouble() / sourceImage.width, maxHeight.toDouble() / sourceImage.height).coerceAtMost(1.0)
+    val previewWidth = (sourceImage.width * scale).roundToInt().coerceAtLeast(1)
+    val previewHeight = (sourceImage.height * scale).roundToInt().coerceAtLeast(1)
+    return ImageUtil.scaleImage(sourceImage, previewWidth, previewHeight)
   }
 
   /** JBImageIcon for proper HiDPI painting. */
