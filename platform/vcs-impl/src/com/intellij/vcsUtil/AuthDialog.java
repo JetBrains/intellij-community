@@ -23,6 +23,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
 
+/// @deprecated obsolete; use [com.intellij.util.net.AuthenticationDialog] instead.
+@Deprecated(forRemoval = true)
 public class AuthDialog extends DialogWrapper {
   private final AuthenticationPanel authPanel;
 
@@ -77,5 +79,5 @@ public class AuthDialog extends DialogWrapper {
   public boolean isRememberPassword() {
     return authPanel.isRememberPassword();
   }
-  
+
 }
