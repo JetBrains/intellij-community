@@ -91,6 +91,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.ml.features"/>
     <module name="intellij.python.terminal.shared"/>
     <module name="intellij.python.terminal.backend"/>
+    <module name="intellij.python.terminal.frontend"/>
     <module name="intellij.python.pytools.ui"/>
     <module name="intellij.python.black"/>
   </content>
