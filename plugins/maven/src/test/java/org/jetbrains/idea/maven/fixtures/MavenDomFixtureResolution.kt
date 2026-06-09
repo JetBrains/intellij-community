@@ -12,6 +12,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.psi.xml.XmlTag
+import com.intellij.psi.xml.XmlTagValue
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import junit.framework.TestCase.assertFalse
 import org.jetbrains.idea.maven.dom.MavenDomElement
@@ -120,6 +121,11 @@ suspend fun MavenDomTestFixture.findTag(file: VirtualFile, path: String, clazz: 
 }
 
 suspend fun MavenDomTestFixture.findTag(path: String): XmlTag = findTag(projectPom, path)
+
+suspend fun MavenDomTestFixture.findTagValue(file: VirtualFile, path: String, clazz: Class<out MavenDomElement> = MavenDomProjectModel::class.java): XmlTagValue {
+  val tag = findTag(file, path, clazz)
+  return readAction { tag.value }
+}
 
 private suspend fun MavenDomTestFixture.getEditorOffset(f: VirtualFile): Int {
   configTest(f)

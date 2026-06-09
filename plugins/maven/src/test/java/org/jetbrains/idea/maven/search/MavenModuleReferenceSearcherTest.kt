@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.search
 
-import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -9,21 +8,41 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.impl.file.PsiDirectoryFactory
 import com.intellij.refactoring.rename.RenameDialog
 import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.awaitConfiguration
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.findTagValue
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenModuleReferenceSearcherTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   private suspend fun renameDirectory(directory: PsiDirectory, newName: String) {
     // The rename refactoring resolves the <module> references via ReferencesSearch, which MavenModuleReferenceSearcher
     // answers by walking ModuleManager.getModules() and the MavenProjectsManager model. Make sure the import has fully
     // settled (workspace model committed, smart mode) before renaming, otherwise the reference is intermittently not
     // found and the <module> path is left unchanged (flaky).
-    IndexingTestUtil.suspendUntilIndexesAreReady(project)
+    IndexingTestUtil.suspendUntilIndexesAreReady(maven.project)
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
-        val renameDialog = RenameDialog(project, directory, directory, null)
+        val renameDialog = RenameDialog(maven.project, directory, directory, null)
         try {
           renameDialog.performRename(newName)
         }
@@ -36,12 +55,12 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
       // makes MemoryDiskConflictResolver throw in tests.
       FileDocumentManager.getInstance().saveAllDocuments()
     }
-    awaitConfiguration()
+    maven.awaitConfiguration()
   }
 
   @Test
   fun testDirectoryRenameModuleReferenceChanged() = runBlocking {
-    val parentFile = createProjectPom("""
+    val parentFile = maven.createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                   <version>1</version>
@@ -50,7 +69,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <module>m1</module>
                   </modules>
                   """.trimIndent())
-    val m1File = createModulePom("m1", """
+    val m1File = maven.createModulePom("m1", """
                   <artifactId>m1</artifactId>
                   <version>1</version>
                   <parent>
@@ -59,22 +78,22 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
 
     val newModulePath = "m1new"
 
     val m1Parent = m1File.getParent()
-    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(maven.project).createDirectory(m1Parent)
 
     renameDirectory(directory, newModulePath)
 
-    val tag = findTagValue(parentFile, "project.modules.module")
+    val tag = maven.findTagValue(parentFile, "project.modules.module")
     assertEquals(newModulePath, tag.getText())
   }
 
   @Test
   fun testParentDirectoryRenameModuleReferenceChanged() = runBlocking {
-    val parentFile = createProjectPom("""
+    val parentFile = maven.createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                   <version>1</version>
@@ -83,7 +102,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <module>m/m1</module>
                   </modules>
                   """.trimIndent())
-    val m1File = createModulePom("m/m1", """
+    val m1File = maven.createModulePom("m/m1", """
                   <artifactId>m2</artifactId>
                   <version>1</version>
                   <parent>
@@ -92,25 +111,25 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
 
     val newDirectoryName = "mNew"
     val newModulePath = "mNew/m1"
 
     val m1Parent = m1File.getParent().getParent()
-    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(maven.project).createDirectory(m1Parent)
 
     renameDirectory(directory, newDirectoryName)
 
-    //awaitConfiguration()
+    //maven.awaitConfiguration()
 
-    val tag = findTagValue(parentFile, "project.modules.module")
+    val tag = maven.findTagValue(parentFile, "project.modules.module")
     assertEquals(newModulePath, tag.getText())
   }
 
   @Test
   fun testDirectoryRenameModuleRelativeReferenceChanged() = runBlocking {
-    val parentFile = createProjectPom("""
+    val parentFile = maven.createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                   <version>1</version>
@@ -119,7 +138,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <module>./m1</module>
                   </modules>
                   """.trimIndent())
-    val m1File = createModulePom("m1", """
+    val m1File = maven.createModulePom("m1", """
                   <artifactId>m1</artifactId>
                   <version>1</version>
                   <parent>
@@ -128,23 +147,23 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
 
     val newDirectoryName = "m1new"
     val newModulePath = "./m1new"
 
     val m1Parent = m1File.getParent()
-    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(maven.project).createDirectory(m1Parent)
 
     renameDirectory(directory, newDirectoryName)
 
-    val tag = findTagValue(parentFile, "project.modules.module")
+    val tag = maven.findTagValue(parentFile, "project.modules.module")
     assertEquals(newModulePath, tag.getText())
   }
 
   @Test
   fun testDirectoryRenameModuleParentPathReferenceChanged() = runBlocking {
-    val parentFile = createProjectPom("""
+    val parentFile = maven.createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                   <version>1</version>
@@ -153,7 +172,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <module>parent2</module>
                   </modules>
                   """.trimIndent())
-    val parent2File = createModulePom("parent2", """
+    val parent2File = maven.createModulePom("parent2", """
                   <groupId>group</groupId>
                   <artifactId>parent2</artifactId>
                   <version>1</version>
@@ -162,7 +181,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <module>../m1</module>
                   </modules>
                   """.trimIndent())
-    val m1File = createModulePom("m1", """
+    val m1File = maven.createModulePom("m1", """
                   <artifactId>m1</artifactId>
                   <version>1</version>
                   <parent>
@@ -172,23 +191,23 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <relativePath>../parent2/pom.xml</relativePath>
                   </parent>
                   """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
 
     val newDirectoryName = "m1new"
     val newModulePath = "../m1new"
 
     val m1Parent = m1File.getParent()
-    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(maven.project).createDirectory(m1Parent)
 
     renameDirectory(directory, newDirectoryName)
 
-    val tag = findTagValue(parent2File, "project.modules.module")
+    val tag = maven.findTagValue(parent2File, "project.modules.module")
     assertEquals(newModulePath, tag.getText())
   }
 
   @Test
   fun testDirectoryRenameModuleWeirdNameReferenceChanged() = runBlocking {
-    val parentFile = createProjectPom("""
+    val parentFile = maven.createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                   <version>1</version>
@@ -197,7 +216,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <module>module/module</module>
                   </modules>
                   """.trimIndent())
-    val m1File = createModulePom("module/module", """
+    val m1File = maven.createModulePom("module/module", """
                   <artifactId>m1</artifactId>
                   <version>1</version>
                   <parent>
@@ -206,23 +225,23 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
 
     val newDirectoryName = "module-new"
     val newModulePath = "module/module-new"
 
     val m1Parent = m1File.getParent()
-    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(maven.project).createDirectory(m1Parent)
 
     renameDirectory(directory, newDirectoryName)
 
-    val tag = findTagValue(parentFile, "project.modules.module")
+    val tag = maven.findTagValue(parentFile, "project.modules.module")
     assertEquals(newModulePath, tag.getText())
   }
 
   @Test
   fun testParentDirectoryRenameModuleWeirdNameReferenceChanged() = runBlocking {
-    val parentFile = createProjectPom("""
+    val parentFile = maven.createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                   <version>1</version>
@@ -231,7 +250,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <module>module/module</module>
                   </modules>
                   """.trimIndent())
-    val m1File = createModulePom("module/module", """
+    val m1File = maven.createModulePom("module/module", """
                   <artifactId>m1</artifactId>
                   <version>1</version>
                   <parent>
@@ -240,24 +259,24 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <version>1</version>
                   </parent>
                   """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
 
     val newDirectoryName = "module-new"
     val newModulePath = "module-new/module"
 
     val m1Parent = m1File.getParent().getParent()
-    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(maven.project).createDirectory(m1Parent)
 
     renameDirectory(directory, newDirectoryName)
 
-    val tag = findTagValue(parentFile, "project.modules.module")
+    val tag = maven.findTagValue(parentFile, "project.modules.module")
     assertEquals(newModulePath, tag.getText())
   }
 
 
   @Test
   fun testIncorrectModuleNameWithNewLineRenameModuleReferenceChanged() = runBlocking {
-    val parentFile = createProjectPom("""
+    val parentFile = maven.createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                   <version>1</version>
@@ -267,7 +286,7 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     </module>
                   </modules>
                   """.trimIndent())
-    val m1File = createModulePom("m1", """
+    val m1File = maven.createModulePom("m1", """
                   <artifactId>m1</artifactId>
                   <version>1</version>
                   <parent>
@@ -275,16 +294,16 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
                     <artifactId>parent</artifactId>
                   </parent>
                   """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
 
     val newModulePath = "m1new"
 
     val m1Parent = m1File.getParent()
-    val directory = PsiDirectoryFactory.getInstance(project).createDirectory(m1Parent)
+    val directory = PsiDirectoryFactory.getInstance(maven.project).createDirectory(m1Parent)
 
     renameDirectory(directory, newModulePath.trim { it <= ' ' })
 
-    val tag = findTagValue(parentFile, "project.modules.module")
+    val tag = maven.findTagValue(parentFile, "project.modules.module")
     assertEquals(newModulePath, tag.getTrimmedText())
   }
 }
