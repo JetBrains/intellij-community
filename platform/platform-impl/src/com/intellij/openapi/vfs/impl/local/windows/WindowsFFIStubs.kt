@@ -15,11 +15,7 @@ import java.lang.foreign.MemoryLayout
 import java.lang.foreign.MemorySegment
 import java.lang.foreign.SymbolLookup
 import java.lang.invoke.MethodHandle
-import java.nio.CharBuffer
-import java.nio.charset.CharsetDecoder
-import java.nio.charset.CharsetEncoder
-import java.nio.charset.CoderResult
-import java.nio.charset.StandardCharsets
+import java.nio.ByteOrder
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.div
@@ -188,39 +184,23 @@ private object WindowsStubs {
   operator fun get(label: WindowsSymbol): FunctionDescriptor? = labelMap[label]
 }
 
-private val UTF16_ENCODER: ThreadLocal<CharsetEncoder> =
-  ThreadLocal.withInitial { StandardCharsets.UTF_16LE.newEncoder() }
-private val UTF16_DECODER: ThreadLocal<CharsetDecoder> =
-  ThreadLocal.withInitial { StandardCharsets.UTF_16LE.newDecoder() }
+// A Java `char` and a Windows `WCHAR` are both UTF-16 code units, so we copy them 1:1 as little-endian
+// pairs instead of using a charset. This preserves unpaired surrogates (Windows names are WTF-16), which
+// a UTF_16LE encoder/decoder would reject as malformed.
+// NB: order(LITTLE_ENDIAN) must precede asCharBuffer() (the view captures the order); asByteBuffer() is BE.
 
 @ApiStatus.Internal
 fun toWinReadonlyCWSTR(arena: Arena, str: String): MemorySegment {
-  UTF16_ENCODER.get().reset()
-
-  val stringMemorySegment = arena.allocate(((str.length + 1) * 2).toLong(), 2L)!!
-  val buffer = stringMemorySegment.asByteBuffer()!!
-
-  val coderResult = UTF16_ENCODER.get().encode(CharBuffer.wrap(str), buffer, true)
-  if (coderResult != CoderResult.UNDERFLOW)
-    throw IllegalArgumentException("Wrong byte array lenght ${(str.length + 1) * 2} for coding java string length ${str.length}!")
-
-  buffer.put(str.length * 2, 0)
-  buffer.put(str.length * 2 + 1, 0)
-
+  // +1 code unit for the null terminator (arena memory is zero-initialized).
+  val stringMemorySegment = arena.allocate(((str.length + 1) * 2).toLong(), 2L)
+  stringMemorySegment.asByteBuffer().order(ByteOrder.LITTLE_ENDIAN).asCharBuffer().put(str)
   return stringMemorySegment
 }
 
 @ApiStatus.Internal
 fun toJavaStringFromWinCWSTR(segment: MemorySegment, length: Int): String {
-  UTF16_DECODER.get().reset()
-
   val charArray = CharArray(length)
-  val charBuffer = CharBuffer.wrap(charArray)
-
-  val coderResult = UTF16_DECODER.get().decode(segment.asByteBuffer(), charBuffer, true)
-  if (coderResult != CoderResult.UNDERFLOW)
-    throw IllegalArgumentException("Wrong $length for decoding a null-terminated string into a java string!")
-
+  segment.asByteBuffer().order(ByteOrder.LITTLE_ENDIAN).asCharBuffer().get(charArray)
   return String(charArray)
 }
 
