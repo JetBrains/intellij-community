@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
@@ -71,12 +72,24 @@ object NegatedBinaryExpressionSimplificationUtils {
         return (expression.operationReference.getReferencedNameElementType() as? KtSingleValueToken)?.negate() != null
     }
 
+    /**
+     * @return inverted boolean literal or <code>null</code> if the expression is not a boolean literal
+     */
+    @ApiStatus.Internal
+    fun KtExpression.invertedBooleanLiteral(): String? =
+        if (isBooleanLiteral()) {
+            if (text == KtTokens.TRUE_KEYWORD.value) KtTokens.FALSE_KEYWORD.value else KtTokens.TRUE_KEYWORD.value
+        } else {
+            null
+        }
+
     fun KtPrefixExpression.simplify() {
         val expression = KtPsiUtil.deparenthesize(baseExpression) ?: return
         val psiFactory = KtPsiFactory(project)
-        if (expression.isBooleanLiteral()) {
-            val inverted = if (expression.text == KtTokens.TRUE_KEYWORD.value) KtTokens.FALSE_KEYWORD.value else KtTokens.TRUE_KEYWORD.value
-            replace(psiFactory.createExpression(inverted))
+
+        val invertedBooleanLiteral = expression.invertedBooleanLiteral()
+        if (invertedBooleanLiteral != null) {
+            replace(psiFactory.createExpression(invertedBooleanLiteral))
             return
         }
         val operation =

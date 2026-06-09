@@ -13,11 +13,10 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinAp
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplified
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.canBeSimplifiedWithoutChangingSemantics
-import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.isBooleanLiteral
+import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.invertedBooleanLiteral
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.negate
 import org.jetbrains.kotlin.idea.codeinsight.utils.NegatedBinaryExpressionSimplificationUtils.simplify
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtOperationExpression
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -56,9 +55,9 @@ internal class SimplifyNegatedBinaryExpressionInspection :
         override fun getName(): String {
             val baseExpression = KtPsiUtil.deparenthesize(element.baseExpression) ?: return familyName
 
-            return if (baseExpression.isBooleanLiteral()) {
-                val inverted = if (baseExpression.text == KtTokens.TRUE_KEYWORD.value) KtTokens.FALSE_KEYWORD.value else KtTokens.TRUE_KEYWORD.value
-                KotlinBundle.message("replace.negated.0.with.1", baseExpression.text, inverted)
+            val invertedBooleanLiteral = baseExpression.invertedBooleanLiteral()
+            return if (invertedBooleanLiteral != null) {
+                KotlinBundle.message("replace.negated.0.with.1", baseExpression.text, invertedBooleanLiteral)
             } else {
                 val expression = baseExpression as? KtOperationExpression ?: return familyName
                 val operation = expression.operationReference.getReferencedNameElementType() as? KtSingleValueToken ?: return familyName
