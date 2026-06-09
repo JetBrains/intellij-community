@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.compiler
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixtureIndices
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertModules
 import org.jetbrains.idea.maven.fixtures.assumeVersionAtLeast
@@ -25,7 +26,7 @@ class MultiReleaseHighlightingTest(mavenVersion: String, modelVersion: String) {
 
   private val maven by mavenDomFixture(
     mavenVersion = mavenVersion, modelVersion = modelVersion,
-    withIndices = true,
+    indices = MavenDomTestFixtureIndices("local1", listOf("local2")),
   )
 
   @Test

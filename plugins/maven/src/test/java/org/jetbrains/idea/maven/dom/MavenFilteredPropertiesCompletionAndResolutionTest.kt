@@ -12,6 +12,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixtureIndices
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsDoNotInclude
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
@@ -51,7 +52,7 @@ class MavenFilteredPropertiesCompletionAndResolutionTest(mavenVersion: String, m
   private val maven by mavenDomFixture(
     mavenVersion = mavenVersion, modelVersion = modelVersion,
     skipPluginResolution = false,
-    withIndices = true,
+    indices = MavenDomTestFixtureIndices("local1", listOf("local2")),
   )
 
   @Test

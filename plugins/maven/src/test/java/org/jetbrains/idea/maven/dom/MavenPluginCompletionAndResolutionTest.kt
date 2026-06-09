@@ -8,6 +8,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixtureIndices
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
@@ -42,7 +43,7 @@ class MavenPluginCompletionAndResolutionTest(mavenVersion: String, modelVersion:
     mavenVersion = mavenVersion, modelVersion = modelVersion,
     initialPom = MavenDomTestFixture.DEFAULT_POM,
     skipPluginResolution = false,
-    withIndices = true, localRepoDir = "plugins", extraRepoDirs = emptyList(),
+    indices = MavenDomTestFixtureIndices("plugins", listOf()),
   )
 
   @Test

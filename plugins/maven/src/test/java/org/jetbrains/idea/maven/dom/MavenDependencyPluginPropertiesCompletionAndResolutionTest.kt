@@ -25,7 +25,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenDependencyPluginPropertiesCompletionAndResolutionTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = false, initialPom = INITIAL_POM, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(initialPom = INITIAL_POM, mavenVersion = mavenVersion, modelVersion = modelVersion)
 
   @Test
   fun testPropertiesResolvedToCorrespondingSimpleDependency() = runBlocking {

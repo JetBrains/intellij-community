@@ -21,14 +21,14 @@ import java.nio.file.Path
 
 /**
  * Creates a [MavenDomTestFixture] that hosts a `CodeInsightTestFixture` over a real Maven project and,
- * when [withIndices] is `true`, sets up the `local1`/`local2` test repository plus GAV indices.
+ * when [indices] is non-null, sets up the local and external test repositories plus GAV indices.
  *
  * Use it with the property-delegate pattern in a `@TestApplication`-annotated test class:
  * ```
  * private val maven by mavenDomFixture(withIndices = true)
  * ```
  *
- * @param withIndices when `true`, a [MavenIndicesTestFixture] copies the test
+ * @param indices when non-null, a [MavenIndicesTestFixture] copies the test
  *   repository and points Maven's local repo at it; when `false`, Maven is pointed at the JetBrains cache redirector.
  * @param initialPom the pom imported during fixture set-up; pass `null` to skip the initial import.
  */
@@ -37,9 +37,7 @@ fun mavenDomFixture(
   modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0,
   skipPluginResolution: Boolean = true,
   @Language(value = "XML", prefix = "<project>", suffix = "</project>") initialPom: String? = null,
-  withIndices: Boolean = false,
-  localRepoDir: String = "local1",
-  extraRepoDirs: List<String> = listOf("local2"),
+  indices: MavenDomTestFixtureIndices? = null,
 ): TestFixture<MavenDomTestFixture> {
   val dirFixture = tempPathFixture()
   // The project must be opened so that the hosted CodeInsightTestFixture can commit documents and run
@@ -53,14 +51,14 @@ fun mavenDomFixture(
   return testFixture {
     val dir = dirFixture.init()
     val project = projectFixture.init()
-    val fixture = MavenDomTestFixture(project,
-                                      dir,
-                                      mavenVersion,
-                                      modelVersion,
-                                      skipPluginResolution,
-                                      withIndices,
-                                      localRepoDir,
-                                      extraRepoDirs)
+    val fixture = MavenDomTestFixture(
+      project,
+      dir,
+      mavenVersion,
+      modelVersion,
+      skipPluginResolution,
+      indices
+    )
     try {
       fixture.attachCodeInsight(codeInsightFixture.init())
       fixture.setUp(initialPom)

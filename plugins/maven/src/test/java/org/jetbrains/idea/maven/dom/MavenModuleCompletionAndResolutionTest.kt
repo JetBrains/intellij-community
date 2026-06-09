@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixtureIndices
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
 import org.jetbrains.idea.maven.fixtures.assertModules
@@ -36,7 +37,7 @@ class MavenModuleCompletionAndResolutionTest(mavenVersion: String, modelVersion:
 
   private val maven by mavenDomFixture(
     mavenVersion = mavenVersion, modelVersion = modelVersion,
-    withIndices = true,
+    indices = MavenDomTestFixtureIndices("local1", listOf("local2")),
   )
 
   @Test

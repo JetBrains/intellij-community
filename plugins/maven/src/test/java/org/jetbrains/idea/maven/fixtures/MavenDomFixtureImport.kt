@@ -58,7 +58,7 @@ suspend fun MavenDomTestFixture.importProjectsAsync(files: List<VirtualFile>) {
   IndexingTestUtil.suspendUntilIndexesAreReady(project)
   awaitConfiguration()
   // Mirror MavenDomWithIndicesTestCase: wait for the project's GAV index so reference resolution/highlighting is stable.
-  if (withIndices) {
+  if (null != indices) {
     MavenIndicesManager.getInstance(project).waitForGavUpdateCompleted()
   }
 }

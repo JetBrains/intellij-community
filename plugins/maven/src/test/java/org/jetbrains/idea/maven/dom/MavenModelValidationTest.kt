@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.inspections.MavenModelVersionMissedInspection
 import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
 import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture.Highlight
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixtureIndices
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
@@ -41,7 +42,7 @@ class MavenModelValidationTest(mavenVersion: String, modelVersion: String) {
     mavenVersion = mavenVersion, modelVersion = modelVersion,
     initialPom = MavenDomTestFixture.DEFAULT_POM,
     skipPluginResolution = false,
-    withIndices = true,
+    indices = MavenDomTestFixtureIndices("local1", listOf("local2")),
   )
 
   @Test

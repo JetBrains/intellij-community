@@ -13,6 +13,7 @@ import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedGroupIdArtifact
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection
 import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixtureIndices
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
@@ -51,7 +52,7 @@ class MavenParentCompletionAndResolutionTest(mavenVersion: String, modelVersion:
 
   private val maven by mavenDomFixture(
     mavenVersion = mavenVersion, modelVersion = modelVersion,
-    withIndices = true,
+    indices = MavenDomTestFixtureIndices("local1", listOf("local2")),
   )
 
   @Test

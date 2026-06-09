@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection
 import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
 import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture.Highlight
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixtureIndices
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
 import org.jetbrains.idea.maven.fixtures.createModulePom
@@ -25,7 +26,7 @@ class MavenDuplicatedDependencyInspectionTest(mavenVersion: String, modelVersion
   private val maven by mavenDomFixture(
     mavenVersion = mavenVersion, modelVersion = modelVersion,
     initialPom = MavenDomTestFixture.DEFAULT_POM,
-    withIndices = true,
+    indices = MavenDomTestFixtureIndices("local1", listOf("local2")),
   )
 
   @Test

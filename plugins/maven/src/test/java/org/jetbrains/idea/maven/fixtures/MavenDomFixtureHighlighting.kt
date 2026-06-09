@@ -19,7 +19,7 @@ suspend fun MavenDomTestFixture.checkHighlighting() {
 }
 
 suspend fun MavenDomTestFixture.checkHighlighting(f: VirtualFile) {
-  if (withIndices) {
+  if (null != indices) {
     MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()
   }
   configTest(f)

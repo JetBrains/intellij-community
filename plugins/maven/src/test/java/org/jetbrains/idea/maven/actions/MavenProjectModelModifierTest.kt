@@ -16,6 +16,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixtureIndices
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertModuleLibDep
 import org.jetbrains.idea.maven.fixtures.awaitConfiguration
@@ -42,7 +43,7 @@ class MavenProjectModelModifierTest(mavenVersion: String, modelVersion: String) 
 
   private val maven by mavenDomFixture(
     mavenVersion = mavenVersion, modelVersion = modelVersion,
-    withIndices = true,
+    indices = MavenDomTestFixtureIndices("local1", listOf("local2")),
   )
 
   @Test

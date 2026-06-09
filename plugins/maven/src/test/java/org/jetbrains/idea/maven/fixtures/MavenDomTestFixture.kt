@@ -73,7 +73,7 @@ import java.util.function.Function
  * `VirtualFilePointerTracker` baseline is established before the import creates project-scoped pointers. A fresh project
  * is created and disposed for every test method.
  *
- * When [withIndices] is enabled, a [MavenIndicesTestFixture] copies the `local1`/`local2` test repository
+ * When [indices] is non-null, a [MavenIndicesTestFixture] copies the local and extra test repositories
  * into a temp dir, points Maven's local repository at it, and builds GAV indices so that completion and
  * resolution of repository artifacts work offline.
  */
@@ -83,9 +83,7 @@ class MavenDomTestFixture internal constructor(
   internal val mavenVersion: String = "bundled",
   internal val modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0,
   private val skipPluginResolution: Boolean = true,
-  internal val withIndices: Boolean = false,
-  private val localRepoDir: String = "local1",
-  private val extraRepoDirs: List<String> = listOf("local2"),
+  internal val indices: MavenDomTestFixtureIndices? = null,
 ) {
   internal lateinit var disposable: Disposable
   private lateinit var jdkFixture: MavenProjectJDKTestFixture
@@ -183,8 +181,8 @@ class MavenDomTestFixture internal constructor(
     projectsManager.generalSettings.setUserSettingsFile(settingsXml.toString())
     MavenSettingsCache.getInstance(project).reload()
 
-    if (withIndices) {
-      indicesFixture = MavenIndicesTestFixture(dir, project, disposable, localRepoDir, *extraRepoDirs.toTypedArray())
+    if (null != indices) {
+      indicesFixture = MavenIndicesTestFixture(dir, project, disposable, indices.localRepoDir, *indices.extraRepoDirs.toTypedArray())
       indicesFixture!!.setUpBeforeImport()
     }
 
@@ -197,7 +195,7 @@ class MavenDomTestFixture internal constructor(
       MavenSettingsCache.getInstance(project).reloadAsync()
     }
 
-    if (withIndices) {
+    if (null != indices) {
       withContext(Dispatchers.EDT) { indicesFixture!!.setUpAfterImport() }
     }
   }
@@ -266,3 +264,5 @@ class MavenDomTestFixture internal constructor(
     """.trimIndent()
   }
 }
+
+data class MavenDomTestFixtureIndices(val localRepoDir: String, val extraRepoDirs: List<String>)

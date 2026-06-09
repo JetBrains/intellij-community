@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixtureIndices
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
 import org.jetbrains.idea.maven.fixtures.createProjectPom
@@ -20,7 +21,7 @@ class MavenDependencySpecialVersionsCompletionAndResolutionTest(mavenVersion: St
   private val maven by mavenDomFixture(
     mavenVersion = mavenVersion, modelVersion = modelVersion,
     initialPom = MavenDomTestFixture.DEFAULT_POM,
-    withIndices = true,
+    indices = MavenDomTestFixtureIndices("local1", listOf("local2")),
   )
 
   @Test
