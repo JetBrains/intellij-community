@@ -68,6 +68,7 @@
     <completion.contributor language="any"
                             implementationClass="org.jetbrains.plugins.gitlab.ui.GitlabMarkdownCompletionContributor"/>
     <typedHandler implementation="org.jetbrains.plugins.gitlab.ui.GitlabMarkdownTypedHandler"/>
+    <backspaceHandlerDelegate implementation="org.jetbrains.plugins.gitlab.ui.GitlabMarkdownBackspaceHandler"/>
 
     <registryKey key="vcs.gitlab.connect.silently"
                  description="Connect to GitLab repository without an explicit user action"
