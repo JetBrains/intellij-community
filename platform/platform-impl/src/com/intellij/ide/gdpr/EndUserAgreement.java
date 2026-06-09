@@ -205,7 +205,7 @@ public final class EndUserAgreement {
   private static @NotNull String getDocumentName() {
     if (!PlatformUtils.isCommercialEdition()) {
       if (PlatformUtils.isCommunityEdition()) {
-        return shouldUseEAPAgreement() ? DEFAULT_DOC_EAP_NAME : EULA_COMMUNITY_DOCUMENT_NAME;
+        return EULA_COMMUNITY_DOCUMENT_NAME;
       }
       if (PlatformUtils.isMPS()) {
         if (isValidFileName(System.getProperty(EULA_MPS_CUSTOM_DOCUMENT_KEY))) {
