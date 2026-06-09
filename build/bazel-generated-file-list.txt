@@ -1653,6 +1653,7 @@ python/python-venv
 python/services/internal-impl
 python/services/shared
 python/services/system-python
+python/terminal
 python/terminal/backend
 python/testFramework
 python/tools
