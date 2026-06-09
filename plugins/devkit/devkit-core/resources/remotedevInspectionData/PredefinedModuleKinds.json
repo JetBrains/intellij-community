@@ -27,6 +27,8 @@
   {"moduleName": "intellij.codeWithMe.appcode.main", "moduleKind": "backend"},
   {"moduleName": "intellij.cwm.connection", "moduleKind": "shared"},
   {"moduleName": "intellij.cwm.plugin.common", "moduleKind": "shared"},
+  {"moduleName": "intellij.rd.client.base", "moduleKind": "shared"},
+  {"moduleName": "intellij.rd.client", "moduleKind": "shared"},
 
   {"pluginId": "com.intellij.modules.lang", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/META-INF/PlatformLangPlugin.xml", "moduleKind": "shared"},
@@ -74,5 +76,7 @@
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/META-INF/RemoteDevUtil.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/intellij.platform.project.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/intellij.platform.ide.progress.xml", "moduleKind": "shared"},
-  {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/intellij.platform.experiment.xml", "moduleKind": "shared"}
+  {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/intellij.platform.experiment.xml", "moduleKind": "shared"},
+  {"moduleName": "intellij.rd.client.base", "descriptorRelativePath": "resources/intellij.rd.client.base.xml", "moduleKind": "shared"},
+  {"moduleName": "intellij.rd.client", "descriptorRelativePath": "resources/intellij.rd.client.xml", "moduleKind": "shared"}
 ]

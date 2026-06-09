@@ -37,6 +37,14 @@ internal class SplitModePredefinedModuleKindsAdditionalFileTest : LightJavaCodeI
         SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
         service.getPredefinedDependencyKind("intellij.platform.frontend"),
       )
+      Assert.assertEquals(
+        SplitModeApiRestrictionsService.ModuleKind.SHARED,
+        service.getPredefinedDependencyKind("intellij.rd.client.base"),
+      )
+      Assert.assertEquals(
+        SplitModeApiRestrictionsService.ModuleKind.SHARED,
+        service.getPredefinedDependencyKind("intellij.rd.client"),
+      )
     }
   }
 
