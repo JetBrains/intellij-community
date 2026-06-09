@@ -10,7 +10,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 public abstract class CreateTargetAction<T : PsiElement>(
   target: T,
   @SafeFieldForPreview protected open val request: ActionRequest

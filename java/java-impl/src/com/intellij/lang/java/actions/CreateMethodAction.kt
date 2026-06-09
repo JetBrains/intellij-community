@@ -40,10 +40,12 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.JavaElementKind
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil.setModifierProperty
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @param abstract whether this action creates a method with explicit abstract modifier
  */
+@ApiStatus.Internal
 public class CreateMethodAction(
   targetClass: PsiClass,
   override val request: CreateMethodRequest,
