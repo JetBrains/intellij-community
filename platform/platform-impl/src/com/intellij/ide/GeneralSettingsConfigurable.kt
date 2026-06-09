@@ -6,7 +6,6 @@ import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.extensions.ExtensionPointName
-import org.jetbrains.annotations.ApiStatus
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.PathChooserDialog
 import com.intellij.openapi.help.HelpManager
@@ -14,7 +13,11 @@ import com.intellij.openapi.options.BackedByPersistentState
 import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.EelDescriptorWithIsolatedWorkspace
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
 import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization
 import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization.ReopenProjectsOnStartupMode
@@ -32,6 +35,7 @@ import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.io.TrashBin
+import org.jetbrains.annotations.ApiStatus
 
 private val model: GeneralSettings
   get() = GeneralSettings.getInstance()
@@ -77,7 +81,7 @@ internal val allOptionDescriptors: List<BooleanOptionDescription>
  * A new instance of the specified class will be created each time then the Settings dialog is opened.
  */
 @Suppress("unused")
-internal class GeneralSettingsConfigurable :
+internal class GeneralSettingsConfigurable(private val project: Project) :
   BoundCompositeSearchableConfigurable<SearchableConfigurable>(IdeBundle.message("title.general"), "preferences.general"),
   SearchableConfigurable,
   BackedByPersistentState
@@ -123,12 +127,14 @@ internal class GeneralSettingsConfigurable :
           }.bind(getter = {  model.confirmOpenNewProject2 ?: GeneralSettings.defaultConfirmNewProject()  }, setter = { model.confirmOpenNewProject2 = it })
         }
 
-        row(IdeUICustomization.getInstance().projectMessage("settings.general.default.directory")) {
-          textFieldWithBrowseButton(fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-                                      .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) })
-            .bindText(GeneralLocalSettings.getInstance()::defaultProjectDirectory)
-            .columns(COLUMNS_MEDIUM)
-            .comment(IdeBundle.message("settings.general.directory.preselected"), 80)
+        if (isDefaultProjectDirectoryRowVisible()) {
+          row(IdeUICustomization.getInstance().projectMessage("settings.general.default.directory")) {
+            textFieldWithBrowseButton(project = project, fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+                                        .also { it.putUserData(PathChooserDialog.PREFER_LAST_OVER_EXPLICIT, false) })
+              .bindText(GeneralLocalSettings.getInstance()::defaultProjectDirectory)
+              .columns(COLUMNS_MEDIUM)
+              .comment(IdeBundle.message("settings.general.directory.preselected"), 80)
+          }
         }
       }
 
@@ -177,6 +183,22 @@ internal class GeneralSettingsConfigurable :
   override fun getId(): String = helpTopic!!
 
   override fun createConfigurables(): List<SearchableConfigurable> = ConfigurableWrapper.createConfigurables(EP_NAME)
+
+  /**
+   * The "Default project directory" value ([GeneralLocalSettings.defaultProjectDirectory]) is a single,
+   * application-level, roaming-disabled path that is meant to stay valid across IDE sessions. That only makes sense for
+   * environments whose file system is persistent - the local machine and WSL distributions. Projects that live in an
+   * isolated, ephemeral environment (Docker container/devcontainer, SSH or remote-dev session) get recreated or
+   * disconnected, so a default directory stored against them quickly becomes stale; such environments are marked with
+   * [EelDescriptorWithIsolatedWorkspace]. The universal/EEL file chooser can still browse and select files there - this
+   * is about durability of the stored value, not reachability. The
+   * [HIDE_DEFAULT_PROJECT_DIRECTORY_FOR_ISOLATED_WORKSPACE_KEY] registry key turns this hiding off.
+   */
+  private fun isDefaultProjectDirectoryRowVisible(): Boolean =
+    !Registry.`is`(HIDE_DEFAULT_PROJECT_DIRECTORY_FOR_ISOLATED_WORKSPACE_KEY) ||
+    project.getEelDescriptor() !is EelDescriptorWithIsolatedWorkspace
 }
+
+private const val HIDE_DEFAULT_PROJECT_DIRECTORY_FOR_ISOLATED_WORKSPACE_KEY = "ide.hide.default.project.directory.for.isolated.workspace"
 
 private val EP_NAME = ExtensionPointName<GeneralSettingsConfigurableEP>("com.intellij.generalOptionsProvider")

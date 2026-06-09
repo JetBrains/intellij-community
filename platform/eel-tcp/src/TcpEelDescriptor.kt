@@ -1,12 +1,14 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.tcp
 
+import com.intellij.platform.eel.EelDescriptorWithIsolatedWorkspace
 import com.intellij.platform.eel.EelDescriptorWithoutNativeFileChooserSupport
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import java.nio.file.Path
 
-abstract class TcpEelDescriptor(override val osFamily: EelOsFamily) : EelDescriptorWithoutNativeFileChooserSupport, EelPathBoundDescriptor {
+abstract class TcpEelDescriptor(override val osFamily: EelOsFamily) : EelDescriptorWithoutNativeFileChooserSupport, EelPathBoundDescriptor,
+                                                                      EelDescriptorWithIsolatedWorkspace {
   abstract val rootPathString: String
   override val rootPath: Path
     get() = Path.of(rootPathString)

@@ -107,6 +107,11 @@
       description="Enable the universal file chooser dialog"
     />
     <registryKey
+      key="ide.hide.default.project.directory.for.isolated.workspace"
+      defaultValue="true"
+      description="Hide the 'Default project directory' setting for projects in an isolated environment (Docker containers/devcontainers, SSH, remote dev)"
+    />
+    <registryKey
       key="ide.project.frame.auto.fix.size.windows.interval"
       defaultValue="60"
       description="The interval between too-small window size checks on Windows and attempts to restore the size. Set to zero to disable"
