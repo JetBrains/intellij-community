@@ -446,14 +446,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     mySplitter.getFirstComponent().setVisible(visible);
   }
 
-  float getSplitterProportion() {
-    return mySplitter.getProportion();
-  }
-
-  void setSplitterProportion(float proportion) {
-    mySplitter.setProportion(proportion);
-  }
-
   @ApiStatus.Internal
   public @NotNull SettingsTreeView getTreeView() {
     return treeView;
@@ -632,19 +624,6 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
     if (UISettings.isIdeHelpTooltipEnabled()) {
       new HelpTooltip().setDescription(HtmlChunk.text(ActionsBundle.actionDescription("HelpTopics"))).installOn(helpButton);
     }
-  }
-
-
-  @Nullable
-  Configurable getCurrentConfigurable() {
-    return filter.context.getCurrentConfigurable();
-  }
-
-  void setTreeTopComponent(@Nullable JComponent component) {
-    Component existing = ((BorderLayout)myTreeNorthPanel.getLayout()).getLayoutComponent(BorderLayout.NORTH);
-    if (existing != null) myTreeNorthPanel.remove(existing);
-    if (component != null) myTreeNorthPanel.add(BorderLayout.NORTH, component);
-    myTreeNorthPanel.revalidate();
   }
 
   @Nullable
