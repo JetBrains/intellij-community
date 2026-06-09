@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.mermaid.markdown">
+<idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.mermaid"/>
@@ -36,6 +36,7 @@
                      groupKey="mermaid.advanced.settings.group"
                      id="mermaid.additional.code.fence.pattern.regex"/>
   </extensions>
+
   <actions resource-bundle="messages.MermaidBundle">
     <action id="Mermaid.ExportDiagram"
             icon="AllIcons.ToolbarDecorator.Export"

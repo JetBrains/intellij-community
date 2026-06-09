@@ -1,9 +1,11 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mermaid.markdown.jcef
 
 import com.intellij.mermaid.lang.lexer.MermaidLexer
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
 import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.mermaid.settings.MermaidSettings
+import com.intellij.mermaid.settings.MermaidSettingsState
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
@@ -21,7 +23,7 @@ internal class MermaidCodeGeneratingProviderExtension : CodeFenceGeneratingProvi
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
     val content = removeIcons(raw)
-    val hash = MarkdownUtil.md5(content, "") + determineTheme()
+    val hash = MarkdownUtil.md5(content, "") + determineMermaidTheme()
     return """
       <div class="mermaid" data-cache-id="$hash" id="$hash" data-actual-fence-content="${escapeContent(content)}"></div>
     """.trimIndent()
@@ -75,19 +77,17 @@ internal class MermaidCodeGeneratingProviderExtension : CodeFenceGeneratingProvi
   private fun escapeContent(content: String): String {
     return String(Base64.getEncoder().encode(content.toByteArray()))
   }
+}
 
-  companion object {
-    fun determineTheme(): String {
-      val mermaidSettings = MermaidSettings.getInstance()
-      val theme = mermaidSettings.theme.value
-      if (theme == "follow-ide") {
-        val scheme = EditorColorsManager.getInstance().globalScheme
-        return when {
-          ColorUtil.isDark(scheme.defaultBackground) -> "dark"
-          else -> "default"
-        }
-      }
-      return theme
+internal fun determineMermaidTheme(): String {
+  val mermaidSettings = MermaidSettings.getInstance()
+  val theme = mermaidSettings.theme
+  if (theme == MermaidSettingsState.Theme.FOLLOW_IDE) {
+    val scheme = EditorColorsManager.getInstance().globalScheme
+    return when {
+      ColorUtil.isDark(scheme.defaultBackground) -> "dark"
+      else -> "default"
     }
   }
+  return theme.value
 }

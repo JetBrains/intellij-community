@@ -1,10 +1,13 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mermaid.markdown.jcef
 
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 
-class MermaidBrowserExtension: MarkdownBrowserPreviewExtension, ResourceProvider {
+private const val THEME_DEFINITION_FILENAME = "mermaid/themeDefinition.js"
+
+internal class MermaidBrowserExtension : MarkdownBrowserPreviewExtension, ResourceProvider {
 
   override val scripts: List<String> = listOf(
     THEME_DEFINITION_FILENAME,
@@ -20,7 +23,7 @@ class MermaidBrowserExtension: MarkdownBrowserPreviewExtension, ResourceProvider
   override fun loadResource(resourceName: String): ResourceProvider.Resource? {
     return when (resourceName) {
       THEME_DEFINITION_FILENAME -> ResourceProvider.Resource(
-        "window.mermaidTheme = '${MermaidCodeGeneratingProviderExtension.determineTheme()}';".toByteArray()
+        "window.mermaidTheme = '${determineMermaidTheme()}';".toByteArray()
       )
 
       else -> ResourceProvider.loadInternalResource(this::class.java, resourceName)
@@ -29,15 +32,11 @@ class MermaidBrowserExtension: MarkdownBrowserPreviewExtension, ResourceProvider
 
   override val resourceProvider: ResourceProvider = this
 
-  override fun dispose() = Unit
+  override fun dispose() {}
 
   class Provider : MarkdownBrowserPreviewExtension.Provider {
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension {
       return MermaidBrowserExtension()
     }
-  }
-
-  companion object {
-    private const val THEME_DEFINITION_FILENAME = "mermaid/themeDefinition.js"
   }
 }

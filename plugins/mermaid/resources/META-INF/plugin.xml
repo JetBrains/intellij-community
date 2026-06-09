@@ -149,8 +149,7 @@
                              key="mermaid.settings.name"
                              instance="com.intellij.mermaid.settings.MermaidSettingsConfigurable"
                              id="Settings.Mermaid"/>
-    <applicationService
-      serviceImplementation="com.intellij.mermaid.settings.MermaidSettings"/>
+    <applicationSettings service="com.intellij.mermaid.settings.MermaidSettings"/>
 
     <colorSettingsPage implementation="com.intellij.mermaid.lang.highlighting.MermaidColorSettingsPage"/>
     <additionalTextAttributes scheme="Default" file="colorSchemes/MermaidDefault.xml"/>
@@ -178,12 +177,10 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.mermaid.fus.MermaidCollector"/>
 
     <lang.ast.factory language="Mermaid" implementationClass="com.intellij.mermaid.lang.psi.MermaidAstFactory"/>
-
   </extensions>
+
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="com.intellij.mermaid.lang.injection.DirectiveJsonSchemaProviderFactory"/>
     <ProviderFactory implementation="com.intellij.mermaid.lang.injection.FrontmatterYamlSchemaProviderFactory"/>
   </extensions>
-  <actions resource-bundle="messages.MermaidBundle">
-  </actions>
 </idea-plugin>

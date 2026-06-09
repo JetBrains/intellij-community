@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mermaid.markdown.editor
 
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
@@ -10,7 +11,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 
-class MarkdownCodeFenceTypedHandlerDelegate : TypedHandlerDelegate() {
+internal class MarkdownCodeFenceTypedHandlerDelegate : TypedHandlerDelegate() {
   override fun charTyped(c: Char, project: Project, editor: Editor, file: PsiFile): Result {
     if (file !is MarkdownFile) return Result.CONTINUE
 

@@ -1,7 +1,8 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.mermaid.markdown.preview
 
 import com.intellij.mermaid.markdown.jcef.MermaidBrowserExtension
-import com.intellij.mermaid.markdown.jcef.MermaidCodeGeneratingProviderExtension.Companion.determineTheme
+import com.intellij.mermaid.markdown.jcef.determineMermaidTheme
 import com.intellij.mermaid.markdown.preview.MermaidPreviewStaticServer.Companion.guessContentType
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.thisLogger
@@ -63,7 +64,7 @@ internal class MermaidPreviewStaticServer : HttpRequestHandler() {
     return when (name) {
       "index.html" -> buildIndexContent().toByteArray()
       "index.css" -> PreviewThemeStyles.createStylesheet().toByteArray()
-      "mermaid-theme.js" -> """window["mermaidTheme"] = "${determineTheme()}";""".toByteArray()
+      "mermaid-theme.js" -> """window["mermaidTheme"] = "${determineMermaidTheme()}";""".toByteArray()
       else -> obtainWebApplicationResource(name)
     }
   }

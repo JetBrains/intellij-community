@@ -14,5 +14,5 @@ public final class MermaidIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, MermaidIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon MermaidFileType = load("icons/MermaidFileType.svg", -1687472610, 0);
+  /** 16x16 */ public static final @NotNull Icon MermaidFileType = load("icons/MermaidFileType.svg", 1678703625, 0);
 }
