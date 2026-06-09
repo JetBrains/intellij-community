@@ -18,7 +18,6 @@ import java.util.function.Function;
  * factory.  This lets the debugger reconstruct the equivalence-class mapping without re-invoking
  * {@code getKey()}/{@code getValue()} post-execution (safe for side-effecting entry implementations).
  */
-@SuppressWarnings("unused")
 public final class EntryKeyCapturingWrapper implements Map.Entry<Object, Object>, Function<Object, Object> {
   private final Map.Entry<?, ?> original;
   // Accumulates projections in stream order

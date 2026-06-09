@@ -12,7 +12,6 @@ import java.util.function.LongConsumer;
  * @author Shumaf Lovpache
  * This helper class is loaded by the IntelliJ IDEA stream debugger
  */
-@SuppressWarnings("unused")
 public class UniversalCollector implements IntConsumer, LongConsumer, DoubleConsumer, Consumer<Object> {
   private final Map<Integer, Object> storage;
   private final AtomicInteger time;

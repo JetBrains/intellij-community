@@ -13,7 +13,6 @@ import java.util.Set;
  * @author Shumaf Lovpache
  * This helper class is loaded by the IntelliJ IDEA stream debugger
  */
-@SuppressWarnings("unused")
 public final class StreamDebuggerUtils {
   private StreamDebuggerUtils() { }
 

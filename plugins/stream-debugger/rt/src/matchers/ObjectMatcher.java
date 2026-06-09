@@ -9,7 +9,6 @@ import java.util.function.Predicate;
  * @author Shumaf Lovpache
  * This helper class is loaded by the IntelliJ IDEA stream debugger
  */
-@SuppressWarnings("unused")
 public class ObjectMatcher<T> implements Predicate<T> {
   private final Map<Integer, Object> beforeMapping;
   private final Map<Integer, Object> afterMapping;

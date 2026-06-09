@@ -11,7 +11,6 @@ import java.util.function.Function;
  * during stream execution, so that the mapping can be computed correctly post-hoc
  * without re-applying the extractor.
  */
-@SuppressWarnings("unused")
 public final class KeyRecorder implements Function<Object, Object> {
   public final List<Object> capturedKeys = new ArrayList<>();
   private final Function<Object, Object> delegate;
