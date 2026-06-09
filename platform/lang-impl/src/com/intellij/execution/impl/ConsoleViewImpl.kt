@@ -133,6 +133,7 @@ import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -205,8 +206,9 @@ open class ConsoleViewImpl protected constructor(
   private val mySearchScope: GlobalSearchScope
 
   private val myCustomFilters: MutableList<Filter> = SmartList()
+  private val myCustomInputFilters = ContainerUtil.createLockFreeCopyOnWriteList<InputFilter>()
 
-  private val myInputMessageFilter: InputFilter
+  private val myInputMessageFilter = AtomicReference<InputFilter>(InputFilter { _, _ -> null })
 
   @Volatile
   @JvmField
@@ -564,7 +566,7 @@ open class ConsoleViewImpl protected constructor(
   }
 
   override fun print(text: String, contentType: ConsoleViewContentType) {
-    val result = myInputMessageFilter.applyFilter(text, contentType)
+    val result = myInputMessageFilter.get().applyFilter(text, contentType)
     if (result == null) {
       print(text, contentType, null)
     }
@@ -1395,7 +1397,7 @@ open class ConsoleViewImpl protected constructor(
     @Suppress("NAME_SHADOWING")
     var offset = offset
     ThreadingAssertions.assertEventDispatchThread()
-    val result = myInputMessageFilter.applyFilter(text, ConsoleViewContentType.USER_INPUT)
+    val result = myInputMessageFilter.get().applyFilter(text, ConsoleViewContentType.USER_INPUT)
     if (result == null) {
       doInsertUserInput(editor, offset, text)
     }
@@ -1558,7 +1560,7 @@ open class ConsoleViewImpl protected constructor(
     this.project = project
     mySearchScope = searchScope
 
-    myInputMessageFilter = ConsoleViewUtil.computeInputFilter(this, project, searchScope)
+    updateInputMessageFilter()
     project.messageBus.connect(
       this).subscribe<DumbService.DumbModeListener>(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       private var myLastStamp: Long = 0
@@ -1637,6 +1639,29 @@ open class ConsoleViewImpl protected constructor(
   @ApiStatus.Internal
   fun initPredefinedFiltersForTests() {
     updatePredefinedFiltersLater()
+  }
+
+  @ApiStatus.Internal
+  fun addInputFilter(filter: InputFilter) {
+    myCustomInputFilters.add(filter)
+    updateInputMessageFilter()
+  }
+
+  @ApiStatus.Internal
+  fun removeInputFilter(filter: InputFilter) {
+    if (myCustomInputFilters.remove(filter)) {
+      updateInputMessageFilter()
+    }
+  }
+
+  private fun updateInputMessageFilter() {
+    while (true) {
+      val oldFilter = myInputMessageFilter.get()
+      val newFilter = ConsoleViewUtil.computeInputFilter(this, project, mySearchScope, myCustomInputFilters)
+      if (myInputMessageFilter.compareAndSet(oldFilter, newFilter)) {
+        return
+      }
+    }
   }
 
   companion object {
