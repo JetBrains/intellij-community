@@ -22,6 +22,9 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <plugin id="com.intellij.modules.lang"/>
     <plugin id="com.intellij.modules.python-core-capable"/>
     <module name="intellij.platform.debugger.impl.shared"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="org.toml.lang"/>
+    <!-- endregion -->
   </dependencies>
 
   <content namespace="jetbrains">
@@ -56,7 +59,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.helpersLocator"/>
     <module name="intellij.python.community"/>
-    <module name="intellij.python.community.impl" loading="optional"/>
+    <module name="intellij.python.community.impl" required-if-available="intellij.platform.backend"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>
     <module name="intellij.python.community.impl.installer"/>
