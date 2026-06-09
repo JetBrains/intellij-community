@@ -5,13 +5,14 @@ import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.junie.common.BRAVE_FLAG
+import com.intellij.agent.workbench.junie.common.JunieCliInfo
 import com.intellij.agent.workbench.junie.common.JunieCliSupport
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -26,8 +27,11 @@ internal class JunieAgentSessionProviderDescriptor(
   private val threadMutationBackend: JunieSessionThreadMutationBackend =
     (sessionSource as? JunieSessionSource)?.sessionIndexStore ?: JunieSessionIndexStore(),
   private val executableResolver: suspend () -> String = JunieCliSupport::resolveExecutableOrDefaultViaTerminalResolver,
-  private val cliAvailableProbe: suspend () -> Boolean = { JunieCliSupport.findExecutableViaTerminalResolver() != null },
+  private val cliInfoResolver: suspend () -> JunieCliInfo? = JunieCliSupport::resolveCliInfoViaTerminalResolver,
 ) : AgentSessionProviderDescriptor {
+  @Volatile
+  private var latestCliInfo: JunieCliInfo? = null
+
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.JUNIE
 
@@ -77,7 +81,11 @@ internal class JunieAgentSessionProviderDescriptor(
     threadMutationBackend.renameThread(path, threadId, normalizedName)
   }
 
-  override suspend fun isCliAvailable(): Boolean = cliAvailableProbe()
+  override suspend fun isCliAvailable(): Boolean {
+    val cliInfo = cliInfoResolver()
+    latestCliInfo = cliInfo
+    return cliInfo != null
+  }
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
     return buildResumeLaunchSpec(sessionId, AgentSessionLaunchMode.STANDARD)
@@ -105,7 +113,29 @@ internal class JunieAgentSessionProviderDescriptor(
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
     return buildPlanModeInitialMessagePlan(
       request = request,
-      startupPolicyWhenPlanModeEnabled = AgentInitialMessageStartupPolicy.POST_START_ONLY,
+      startupPolicyWhenPlanModeEnabled = if (supportsInteractivePromptLaunch()) {
+        AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND
+      }
+      else {
+        AgentInitialMessageStartupPolicy.POST_START_ONLY
+      },
+    )
+  }
+
+  override fun buildLaunchSpecWithInitialMessage(
+    baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+    initialMessagePlan: AgentInitialMessagePlan,
+  ): AgentSessionTerminalLaunchSpec? {
+    val message = initialMessagePlan.message ?: return baseLaunchSpec
+    if (!supportsInteractivePromptLaunch()) {
+      return null
+    }
+    return baseLaunchSpec.copy(
+      command = JunieCliSupport.buildLaunchCommandWithInitialMessage(
+        baseCommand = baseLaunchSpec.command,
+        message = message,
+        plan = initialMessagePlan.mode == AgentInitialMessageMode.PLAN,
+      )
     )
   }
 
@@ -124,6 +154,11 @@ internal class JunieAgentSessionProviderDescriptor(
   override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
     return threadMutationBackend.unarchiveThread(path, threadId)
   }
+
+  private fun supportsInteractivePromptLaunch(): Boolean {
+    return latestCliInfo?.supportsInteractivePromptLaunch == true
+  }
 }
 
-private val JUNIE_PROMPT_PROVIDER_PLAN_MODE_OPTION: AgentPromptProviderOption = AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION.copy(defaultSelected = false)
+private val JUNIE_PROMPT_PROVIDER_PLAN_MODE_OPTION: AgentPromptProviderOption =
+  AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION.copy(defaultSelected = false)

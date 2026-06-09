@@ -305,6 +305,11 @@ class AgentSessionLaunchService internal constructor(
           descriptor = descriptor,
         )
         val openedThread = archiveResolution.thread
+        if (initialMessageRequest != null && descriptor != null &&
+            !isProviderCliAvailableForLaunch(provider = openedThread.provider, descriptor = descriptor, currentProject = currentProject)) {
+          promptLaunchResolved?.invoke(AgentPromptLaunchResult.failure(AgentPromptLaunchError.PROVIDER_UNAVAILABLE))
+          return@launchDropAction
+        }
         val effectiveInitialMessagePlan = when {
           initialMessageRequest == null -> null
           precomputedInitialMessagePlan != null -> precomputedInitialMessagePlan
@@ -912,7 +917,6 @@ class AgentSessionLaunchService internal constructor(
             thread = targetThread,
             entryPoint = AgentWorkbenchEntryPoint.PROMPT,
             initialMessageRequest = effectiveInitialMessageRequest,
-            precomputedInitialMessagePlan = initialMessagePlan,
             resumeLaunchMode = request.launchMode,
             singleFlightPolicy = SingleFlightPolicy.RESTART_LATEST,
             launchOrigin = OpenThreadLaunchOrigin.PROMPT_LAUNCH,

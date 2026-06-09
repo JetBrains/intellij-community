@@ -3,13 +3,16 @@ package com.intellij.agent.workbench.junie.sessions
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.junie.common.JunieCliInfo
+import com.intellij.agent.workbench.junie.common.JunieCliSupport
+import com.intellij.agent.workbench.junie.common.JunieCliVersion
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -111,8 +114,31 @@ class JunieAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun `initial message launch uses interactive post start dispatch`() {
-    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+  fun `supported initial message launch passes prompt to Junie command`(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = descriptorWithCliVersion(JunieCliVersion(1963, 1))
+    assertThat(descriptor.isCliAvailable()).isTrue()
+    val initialMessagePlan = AgentInitialMessagePlan(message = "Implement the feature")
+
+    val launchSpec = descriptor.buildLaunchSpecWithInitialMessage(
+      baseLaunchSpec = AgentSessionTerminalLaunchSpec(listOf("junie-test", "--skip-update-check")),
+      initialMessagePlan = initialMessagePlan,
+    )
+    val dispatchSteps = descriptor.buildPostStartDispatchSteps(initialMessagePlan)
+
+    assertThat(launchSpec?.command).containsExactly(
+      "junie-test",
+      "--skip-update-check",
+      "--prompt",
+      "Implement the feature",
+    )
+    assertThat(dispatchSteps.map { it.action }).containsExactly(AgentInitialMessageDispatchAction.SEND_TEXT)
+    assertThat(dispatchSteps.map { it.text }).containsExactly("Implement the feature")
+  }
+
+  @Test
+  fun `old Junie initial message launch uses interactive post start dispatch`(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = descriptorWithCliVersion(JunieCliVersion(1962, 1))
+    assertThat(descriptor.isCliAvailable()).isTrue()
     val initialMessagePlan = AgentInitialMessagePlan(message = "Implement the feature")
 
     val launchSpec = descriptor.buildLaunchSpecWithInitialMessage(
@@ -127,8 +153,9 @@ class JunieAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun `plan mode initial message uses terminal plan mode dispatch`() {
-    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+  fun `supported plan mode initial message uses Junie plan prompt command`(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = descriptorWithCliVersion(JunieCliVersion(1963, 1))
+    assertThat(descriptor.isCliAvailable()).isTrue()
 
     val plan = descriptor.buildInitialMessagePlan(
       AgentPromptInitialMessageRequest(
@@ -136,12 +163,52 @@ class JunieAgentSessionProviderDescriptorTest {
         providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
       )
     )
+    val launchSpec = descriptor.buildLaunchSpecWithInitialMessage(
+      baseLaunchSpec = AgentSessionTerminalLaunchSpec(listOf("junie-test", "--skip-update-check")),
+      initialMessagePlan = plan,
+    )
+    val dispatchSteps = descriptor.buildPostStartDispatchSteps(plan)
+
+    assertThat(plan.message).isEqualTo("Implement the feature")
+    assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.PLAN)
+    assertThat(plan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND)
+    assertThat(plan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
+    assertThat(launchSpec?.command).containsExactly(
+      "junie-test",
+      "--skip-update-check",
+      "--plan",
+      "--prompt",
+      "Implement the feature",
+    )
+    assertThat(dispatchSteps.map { it.action }).containsExactly(
+      AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
+      AgentInitialMessageDispatchAction.SEND_TEXT,
+    )
+    assertThat(dispatchSteps.map { it.text }).containsExactly("", "Implement the feature")
+  }
+
+  @Test
+  fun `old Junie plan mode initial message uses terminal plan mode dispatch`(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = descriptorWithCliVersion(JunieCliVersion(1962, 1))
+    assertThat(descriptor.isCliAvailable()).isTrue()
+
+    val plan = descriptor.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(
+        prompt = "Implement the feature",
+        providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
+      )
+    )
+    val launchSpec = descriptor.buildLaunchSpecWithInitialMessage(
+      baseLaunchSpec = AgentSessionTerminalLaunchSpec(listOf("junie-test", "--skip-update-check")),
+      initialMessagePlan = plan,
+    )
     val dispatchSteps = descriptor.buildPostStartDispatchSteps(plan)
 
     assertThat(plan.message).isEqualTo("Implement the feature")
     assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.PLAN)
     assertThat(plan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.POST_START_ONLY)
     assertThat(plan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
+    assertThat(launchSpec).isNull()
     assertThat(dispatchSteps.map { it.action }).containsExactly(
       AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
       AgentInitialMessageDispatchAction.SEND_TEXT,
@@ -186,6 +253,16 @@ class JunieAgentSessionProviderDescriptorTest {
   }
 
   @Test
+  fun `Junie CLI version parser reads build versions`() {
+    assertThat(JunieCliSupport.parseCliVersion("Junie version: build 1963.1 nightly"))
+      .isEqualTo(JunieCliVersion(1963, 1))
+    assertThat(JunieCliSupport.parseCliVersion("26.6.8 (1892.12)"))
+      .isEqualTo(JunieCliVersion(1892, 12))
+    assertThat(JunieCliSupport.parseCliVersion("Junie version unknown"))
+      .isNull()
+  }
+
+  @Test
   fun `pending metadata is resolved only for Junie pending identities`() {
     val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
     val launchSpec = AgentSessionTerminalLaunchSpec(
@@ -203,6 +280,13 @@ class JunieAgentSessionProviderDescriptorTest {
     assertThat(descriptor.resolvePendingSessionMetadata("codex:new-123", launchSpec)).isNull()
     assertThat(descriptor.resolvePendingSessionMetadata("Junie:new-123", launchSpec)).isNull()
   }
+}
+
+private fun descriptorWithCliVersion(version: JunieCliVersion?): JunieAgentSessionProviderDescriptor {
+  return JunieAgentSessionProviderDescriptor(
+    executableResolver = { "junie-test" },
+    cliInfoResolver = { JunieCliInfo("junie-test", version) },
+  )
 }
 
 private class RecordingJunieThreadMutationBackend : JunieSessionThreadMutationBackend {
