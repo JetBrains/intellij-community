@@ -160,6 +160,7 @@ class CoroutineDumpItem internal constructor(
             if (stateDesc != otherItem.stateDesc) return false
             if (coroutineContextInfo?.dispatcher != otherItem.coroutineContextInfo?.dispatcher) return false
             if (this.comparableStackTrace != other.comparableStackTrace) return false
+            if (parentTreeId != otherItem.parentTreeId) return false
             return true
         }
 
@@ -167,7 +168,8 @@ class CoroutineDumpItem internal constructor(
             return Objects.hash(
                 stateDesc,
                 coroutineContextInfo?.dispatcher,
-                comparableStackTrace
+                comparableStackTrace,
+                parentTreeId
             )
         }
     }

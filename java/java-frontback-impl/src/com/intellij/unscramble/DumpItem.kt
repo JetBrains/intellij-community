@@ -181,7 +181,17 @@ fun toDumpItems(threadStates: List<ThreadState>, threadContainerDescriptors: Lis
 @ApiStatus.Internal
 data class JavaThreadContainerDesc(val name: String, val containerId: Long, val parentId: Long?)
 
-internal class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
+internal fun createJavaThreadDumpItem(threadState: ThreadState): DumpItem {
+  val item = JavaThreadDumpItem(threadState)
+  val count = threadState.similarThreadsCount
+  return if (count > 1) {
+    CompoundDumpItem(item, count)
+  } else {
+    item
+  }
+}
+
+private class JavaThreadDumpItem(private val threadState: ThreadState) : MergeableDumpItem {
   override val name: String = threadState.name
 
   override val isContainer: Boolean
@@ -315,6 +325,7 @@ internal class JavaThreadDumpItem(private val threadState: ThreadState) : Mergea
       if (threadState.awaitingThreads != otherThreadState.awaitingThreads) return false
       if (threadState.deadlockedThreads != otherThreadState.deadlockedThreads) return false
       if (this.comparableStackTrace != other.comparableStackTrace) return false
+      if (parentTreeId != other.item.parentTreeId) return false
       return true
     }
 
@@ -328,7 +339,8 @@ internal class JavaThreadDumpItem(private val threadState: ThreadState) : Mergea
         threadState.extraState,
         threadState.awaitingThreads,
         threadState.deadlockedThreads,
-        comparableStackTrace
+        comparableStackTrace,
+        parentTreeId
       )
     }
   }

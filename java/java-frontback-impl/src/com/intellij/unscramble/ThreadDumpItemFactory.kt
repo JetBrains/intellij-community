@@ -19,7 +19,7 @@ interface ThreadDumpItemFactory {
 
     fun createDumpItem(threadState: ThreadState): DumpItem {
       // TODO: extract JavaThreadDumpItem to factory as well
-      return EP_NAME.computeSafeIfAny { it.createDumpItem(threadState) } ?: JavaThreadDumpItem(threadState)
+      return EP_NAME.computeSafeIfAny { it.createDumpItem(threadState) } ?: createJavaThreadDumpItem(threadState)
     }
   }
 }
