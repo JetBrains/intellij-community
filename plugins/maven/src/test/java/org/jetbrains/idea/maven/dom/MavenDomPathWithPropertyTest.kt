@@ -1,21 +1,38 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.junit.Ignore
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.createProjectSubDir
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenDomPathWithPropertyTest(mavenVersion: String, modelVersion: String) {
 
-class MavenDomPathWithPropertyTest : MavenDomTestCase() {
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
-  @Ignore("IDEA-357023")
+  @Disabled("IDEA-357023")
   fun testRename() = runBlocking {
-    importProjectAsync(
+    maven.importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -48,13 +65,13 @@ class MavenDomPathWithPropertyTest : MavenDomTestCase() {
         """.trimIndent())
 
     withContext(Dispatchers.EDT) {
-      val dir = createProjectSubDir("aaa/bbb/res")
+      val dir = maven.createProjectSubDir("aaa/bbb/res")
 
       val bbb = dir.getParent()
 
-      fixture.renameElement(PsiManager.getInstance(fixture.getProject()).findDirectory(bbb)!!, "Z")
+      maven.fixture.renameElement(PsiManager.getInstance(maven.fixture.getProject()).findDirectory(bbb)!!, "Z")
 
-      val text = PsiManager.getInstance(fixture.getProject()).findFile(projectPom)!!.getText()
+      val text = PsiManager.getInstance(maven.fixture.getProject()).findFile(maven.projectPom)!!.getText()
       assert(text.contains("<directory>aaa/Z/res</directory>"))
       assert(text.contains("<directory>aaa/Z/res</directory>"))
       assert(text.contains("<directory>aaa/Z/res</directory>"))
@@ -65,7 +82,7 @@ class MavenDomPathWithPropertyTest : MavenDomTestCase() {
 
   @Test
   fun testCompletionDirectoriesOnly() = runBlocking {
-    createProjectPom(
+    maven.createProjectPom(
       """
             <groupId>test</groupId>
             <artifactId>project</artifactId>
@@ -84,11 +101,11 @@ class MavenDomPathWithPropertyTest : MavenDomTestCase() {
             </build>
             """.trimIndent())
 
-    createProjectSubFile("aaa/a.txt")
-    createProjectSubFile("aaa/b.txt")
-    createProjectSubDir("aaa/res1")
-    createProjectSubDir("aaa/res2")
+    maven.createProjectSubFile("aaa/a.txt")
+    maven.createProjectSubFile("aaa/b.txt")
+    maven.createProjectSubDir("aaa/res1")
+    maven.createProjectSubDir("aaa/res2")
 
-    assertCompletionVariants(projectPom, "res1", "res2")
+    maven.assertCompletionVariants(maven.projectPom, "res1", "res2")
   }
 }
