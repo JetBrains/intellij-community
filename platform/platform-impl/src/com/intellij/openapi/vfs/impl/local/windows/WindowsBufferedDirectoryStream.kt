@@ -172,7 +172,6 @@ private fun convertFileTimeToMs(time: Long): Long {
   return time / 10_000 - 11_644_473_600_000L
 }
 
-@OptIn(ExperimentalAtomicApi::class)
 @ApiStatus.Internal
 class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<com.intellij.openapi.util.Pair<Path, BasicFileAttributes>>, Closeable {
   internal val api: Windows = Windows(Arena.ofShared())
