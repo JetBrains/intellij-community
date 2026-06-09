@@ -92,11 +92,11 @@ internal class AgentSessionRefreshScheduler(
                 return@collect
               }
               LOG.debug {
-                "Received scoped refresh signal for ${provider.value} (${normalizedUpdateEvent.describeScope()}); scheduling scoped provider refresh"
+                "Received scoped refresh signal for ${provider.value} (${normalizedUpdateEvent.describeScope()}); " +
+                "scheduling debounced scoped provider refresh"
               }
               val refreshUpdateEvent = normalizedUpdateEvent.copy(type = AgentSessionSourceUpdate.THREADS_CHANGED)
-              scheduleVfsRefreshFromSourceUpdate(provider, refreshUpdateEvent)
-              enqueueSourceRefresh(
+              scheduleSourceRefresh(
                 provider = provider,
                 updateEvent = refreshUpdateEvent,
               )
