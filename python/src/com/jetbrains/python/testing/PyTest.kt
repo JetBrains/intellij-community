@@ -127,6 +127,8 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
     }
   }
 
+  override val isTargetRequired: Boolean = false
+
   override fun isNewUiSupported(): Boolean = true
 
   override fun getCustomRawArgumentsString(forRerun: Boolean): String = mutableListOf<String>().apply {

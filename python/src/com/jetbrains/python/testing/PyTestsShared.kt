@@ -90,6 +90,7 @@ import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.io.File
@@ -351,8 +352,10 @@ data class ConfigurationTarget(
   /**
    * Validates configuration and throws exception if target is invalid
    */
-  fun checkValid() {
-    if (targetType != PyRunTargetVariant.CUSTOM && target.isEmpty()) {
+  @Internal
+  @JvmOverloads
+  fun checkValid(targetRequired: Boolean = true) {
+    if (targetRequired && targetType != PyRunTargetVariant.CUSTOM && target.isEmpty()) {
       throw RuntimeConfigurationWarning(PyBundle.message("python.testing.target.not.provided"))
     }
     if (targetType == PyRunTargetVariant.PYTHON && !isWellFormed()) {
@@ -539,6 +542,9 @@ abstract class PyAbstractTestConfiguration(
 
   val testFrameworkName: String = testFactory.name
 
+  @get:Internal
+  protected open val isTargetRequired: Boolean = true
+
 
   fun isTestClassRequired(): ThreeState {
     val sdk = sdk ?: return ThreeState.UNSURE
@@ -582,7 +588,7 @@ abstract class PyAbstractTestConfiguration(
 
   override fun checkConfiguration() {
     super.checkConfiguration()
-    target.checkValid()
+    target.checkValid(isTargetRequired)
   }
 
 
