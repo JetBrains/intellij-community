@@ -1655,6 +1655,7 @@ python/services/shared
 python/services/system-python
 python/terminal
 python/terminal/backend
+python/terminal/shared
 python/testFramework
 python/tools
 spellchecker
