@@ -16,7 +16,6 @@ import org.assertj.core.util.diff.DiffUtils
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.util.JpsPathUtil
-import org.opentest4j.MultipleFailuresError
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -136,15 +135,6 @@ fun collectPluginContentFailures(
   }
 }
 
-@Internal
-fun assertNoPackagingCheckFailures(problemMessage: String, failures: List<PackagingCheckFailure>) {
-  when (failures.size) {
-    0 -> return
-    1 -> throw failures.single().error
-    else -> throw MultipleFailuresError(problemMessage, failures.map { wrapFailureWithName(it) })
-  }
-}
-
 private fun collectPluginContentCategoryFailures(
   fileEntries: Sequence<PluginContentReport>,
   project: JpsProject,
@@ -201,10 +191,6 @@ private fun collectPluginContentCategoryFailures(
     }
   }
   return failures
-}
-
-private fun wrapFailureWithName(failure: PackagingCheckFailure): Throwable {
-  return AssertionError(failure.name, failure.error)
 }
 
 private fun toPluginContentMap(contentList: List<PluginContentReport>): Map<String, PluginContentReport> {
