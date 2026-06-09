@@ -1,13 +1,18 @@
-// "Add argument to existing 'context'" "false"
+// "Add 'localLogger' as 'MyLogger' to existing context" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
 // IGNORE_K1
 // DISABLE_K2_ERRORS
-interface Logger { fun log(msg: String) }
+// SHOULD_BE_AVAILABLE_AFTER_EXECUTION
+interface MyLogger { fun log(msg: String) }
+class ConsoleLogger : MyLogger { override fun log(msg: String) {} }
 
-context(l: Logger) fun emit() { l.log("x") }
+context(l: MyLogger) fun emit() { l.log("x") }
 
-fun repro(primary: Logger, secondary: Logger) {
+fun repro(paramLogger: MyLogger) {
+    val localLogger: MyLogger = ConsoleLogger()
     context("hello") {
         <caret>emit()
     }
 }
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterToExistingContextFix

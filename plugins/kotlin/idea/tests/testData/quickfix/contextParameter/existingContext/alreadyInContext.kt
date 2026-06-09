@@ -1,16 +1,14 @@
-// "Add 'extraLogger' as 'MyLogger' to existing context" "true"
+// "Add 'extraLogger' as 'MyLogger' to existing context" "false"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
 // IGNORE_K1
 // DISABLE_K2_ERRORS
-// SHOULD_BE_AVAILABLE_AFTER_EXECUTION
 interface MyLogger { fun log(msg: String) }
+class ConsoleLogger : MyLogger { override fun log(msg: String) {} }
 
 context(l: MyLogger) fun emit() { l.log("x") }
 
 fun repro(extraLogger: MyLogger) {
-    context("hello") {
+    context(ConsoleLogger()) {
         <caret>emit()
     }
 }
-
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterToExistingContextFix

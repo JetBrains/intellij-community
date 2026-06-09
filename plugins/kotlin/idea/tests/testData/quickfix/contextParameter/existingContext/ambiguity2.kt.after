@@ -1,4 +1,4 @@
-// "Add 'paramLogger' as 'MyLogger' to existing context" "true"
+// "Add 'localLogger' as 'MyLogger' to existing context" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
 // IGNORE_K1
 // DISABLE_K2_ERRORS
@@ -10,8 +10,8 @@ context(l: MyLogger) fun emit() { l.log("x") }
 
 fun repro(paramLogger: MyLogger) {
     val localLogger: MyLogger = ConsoleLogger()
-    context("hello") {
-        <caret>emit()
+    context("hello", localLogger) {
+        emit()
     }
 }
 
