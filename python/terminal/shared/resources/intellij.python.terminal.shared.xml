@@ -1,2 +1,5 @@
 <idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectSettings service="com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings"/>
+  </extensions>
 </idea-plugin>

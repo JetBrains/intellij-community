@@ -2,15 +2,10 @@
   <dependencies>
     <module name="intellij.python.community.impl"/>
     <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.python.terminal.shared"/>
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <shellExecOptionsCustomizer implementation="com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer"/>
     <terminalSettingsProvider implementation="com.intellij.python.terminal.PyVirtualEnvTerminalSettingsProvider"/>
   </extensions>
-
-  <extensions defaultExtensionNs="com.intellij">
-    <projectSettings service="com.intellij.python.terminal.PyVirtualEnvTerminalSettings"/>
-  </extensions>
-
-
 </idea-plugin>

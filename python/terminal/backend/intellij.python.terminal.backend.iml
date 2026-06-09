@@ -31,5 +31,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.python.test.env.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.terminal.shared" />
   </component>
 </module>

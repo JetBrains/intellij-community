@@ -33,6 +33,7 @@ jvm_library(
         "//platform/eel-provider",
         "//platform/ide-core",
         "//platform/platform-impl:ide-impl",
+        "//python/terminal/shared",
     ],
 )
 
@@ -81,6 +82,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
         "//python/python-test-env/junit5",
         "//python/python-test-env/junit5:junit5_test_lib",
+        "//python/terminal/shared:shared_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.terminal.backend` end

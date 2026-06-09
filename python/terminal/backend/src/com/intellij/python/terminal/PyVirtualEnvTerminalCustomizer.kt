@@ -2,10 +2,6 @@
 package com.intellij.python.terminal
 
 import com.intellij.openapi.application.runReadActionBlocking
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleUtilCore
@@ -22,6 +18,7 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.orLogException
@@ -267,34 +264,6 @@ internal class PyVirtualEnvTerminalSettingsProvider : TerminalSettingsProvider {
       row {
         checkBox(PyTerminalBundle.message("activate.virtualenv.checkbox.text")).bindSelected(settings::virtualEnvActivate)
       }
-    }
-  }
-}
-
-internal class SettingsState {
-  var virtualEnvActivate: Boolean = true
-}
-
-@Service(Service.Level.PROJECT)
-@State(name = "PyVirtualEnvTerminalCustomizer", storages = [(Storage("python-terminal.xml"))])
-internal class PyVirtualEnvTerminalSettings : PersistentStateComponent<SettingsState> {
-  private var myState: SettingsState = SettingsState()
-
-  var virtualEnvActivate: Boolean
-    get() = myState.virtualEnvActivate
-    set(value) {
-      myState.virtualEnvActivate = value
-    }
-
-  override fun getState(): SettingsState = myState
-
-  override fun loadState(state: SettingsState) {
-    myState.virtualEnvActivate = state.virtualEnvActivate
-  }
-
-  companion object {
-    fun getInstance(project: Project): PyVirtualEnvTerminalSettings {
-      return project.getService(PyVirtualEnvTerminalSettings::class.java)
     }
   }
 }
