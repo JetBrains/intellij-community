@@ -1,5 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <projectSettings service="com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings"/>
+    <rdct.remoteSettingProvider implementation="com.intellij.python.terminal.shared.PyVirtualEnvTerminalRemoteSettingInfoProvider"/>
   </extensions>
 </idea-plugin>
