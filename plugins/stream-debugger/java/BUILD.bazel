@@ -46,10 +46,6 @@ jvm_library(
         "//platform/code-style-api:codeStyle",
         "//java/debugger/shared",
         "//plugins/stream-debugger/rt",
-        "//platform/lang-impl",
-        "//platform/lang-api:lang",
-        "//platform/ide-core",
-        "//plugins/stream-debugger/shared",
     ],
 )
 
@@ -106,10 +102,6 @@ jvm_library(
         "//platform/code-style-api:codeStyle_test_lib",
         "//java/debugger/shared:shared_test_lib",
         "//plugins/stream-debugger/rt:rt_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//plugins/stream-debugger/shared:shared_test_lib",
     ],
 )
 ### auto-generated section `build intellij.debugger.streams.java` end
