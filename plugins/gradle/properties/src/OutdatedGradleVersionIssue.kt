@@ -51,23 +51,23 @@ class OutdatedGradleVersionIssue(
   override fun getNavigatable(project: Project): Navigatable? {
     val basePath = project.basePath ?: return null
 
-    return ReadAction.compute<Navigatable?, RuntimeException> {
-      val wrapperPropertiesPath = GradleUtil.findDefaultWrapperPropertiesFile(Path.of(basePath)) ?: return@compute null
-      val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(wrapperPropertiesPath) ?: return@compute null
-      val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@compute null
+    return ReadAction.nonBlocking<Navigatable?> {
+      val wrapperPropertiesPath = GradleUtil.findDefaultWrapperPropertiesFile(Path.of(basePath)) ?: return@nonBlocking null
+      val virtualFile = LocalFileSystem.getInstance().findFileByNioFile(wrapperPropertiesPath) ?: return@nonBlocking null
+      val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@nonBlocking null
 
-      if (psiFile !is PropertiesFile) return@compute null
+      if (psiFile !is PropertiesFile) return@nonBlocking null
 
-      val distributionUrlProp = psiFile.findPropertyByKey("distributionUrl") ?: return@compute null
+      val distributionUrlProp = psiFile.findPropertyByKey("distributionUrl") ?: return@nonBlocking null
       val versionText = currentVersion.version
       val psiElement = distributionUrlProp.psiElement
       val indexInProperty = psiElement.text.indexOf(versionText)
 
-      if (indexInProperty < 0) return@compute null
+      if (indexInProperty < 0) return@nonBlocking null
 
       val indexInFile = psiElement.startOffsetInParent + indexInProperty + versionText.length
-        OpenFileDescriptor(project, virtualFile, indexInFile)
-    }
+      OpenFileDescriptor(project, virtualFile, indexInFile)
+    }.executeSynchronously()
   }
 
   fun addOpenInspectionSettingsQuickFix(inspectionShortName: String) {
