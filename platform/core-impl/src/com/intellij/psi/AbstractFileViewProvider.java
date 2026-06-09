@@ -344,7 +344,14 @@ public abstract class AbstractFileViewProvider extends UserDataHolderBase implem
 
   @Override
   public long getModificationStamp() {
-    return getContent().getModificationStamp();
+    // do not call plain `getContent` here -- it will lead to heavy loading of text because of existence of `FrozenFileContent`
+    // until one purposefully requests the actual content, we would not load the file into memory.
+    Content content = myContent.get();
+    if (content == null) {
+      content = new VirtualFileContent();
+      myContent.set(content);
+    }
+    return content.getModificationStamp();
   }
 
   @Override
