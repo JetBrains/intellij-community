@@ -1,10 +1,10 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.java.terminal.shared"/>
-    <!-- endregion -->
+    <module name="intellij.terminal.frontend"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <terminalSettingsProvider implementation="com.intellij.java.terminal.frontend.JavaTerminalSettingsProvider"/>

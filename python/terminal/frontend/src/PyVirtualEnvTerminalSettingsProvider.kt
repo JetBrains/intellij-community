@@ -5,9 +5,9 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.python.terminal.shared.PyTerminalBundle
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
+import com.intellij.terminal.frontend.settings.TerminalSettingsProvider
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
-import org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider
 
 /** Adds the "Activate virtualenv" checkbox to the Terminal settings page. */
 internal class PyVirtualEnvTerminalSettingsProvider : TerminalSettingsProvider {

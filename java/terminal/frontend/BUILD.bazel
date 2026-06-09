@@ -21,12 +21,12 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib-provided",
-        "//plugins/terminal",
         "//platform/ide-core",
         "//platform/core-api:core",
         "//platform/platform-impl:ide-impl",
         "//java/terminal/shared",
         "//platform/projectModel-api:projectModel",
+        "//plugins/terminal/frontend",
     ],
 )
 
@@ -43,12 +43,12 @@ jvm_library(
         # do not sort,
         ":frontend",
         "@lib//:kotlin-stdlib-provided",
-        "//plugins/terminal:terminal_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/core-api:core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//java/terminal/shared:shared_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
+        "//plugins/terminal/frontend:frontend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.terminal.frontend` end

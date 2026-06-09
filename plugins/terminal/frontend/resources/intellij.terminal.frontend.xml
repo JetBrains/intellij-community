@@ -9,6 +9,8 @@
                     interface="com.intellij.terminal.frontend.view.TerminalAllowedActionsProvider" dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.escapeHandler"
                     interface="com.intellij.terminal.frontend.action.TerminalEscapeHandler" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.plugins.terminal.terminalSettingsProvider" dynamic="true"
+                    interface="com.intellij.terminal.frontend.settings.TerminalSettingsProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -116,7 +116,6 @@ import org.jetbrains.plugins.terminal.block.ui.TerminalContrastRatio
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
 import org.jetbrains.plugins.terminal.runner.LocalTerminalStartCommandBuilder
 import org.jetbrains.plugins.terminal.settings.TerminalApplicationTitleShowingMode
-import org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider
 import org.jetbrains.plugins.terminal.shellDetection.TerminalShellsDetectionService
 import org.jetbrains.plugins.terminal.util.updateActionShortcut
 import java.awt.Color

@@ -6,9 +6,9 @@ import com.intellij.java.terminal.shared.JavaTerminalSettings
 import com.intellij.openapi.options.UiDslUnnamedConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
+import com.intellij.terminal.frontend.settings.TerminalSettingsProvider
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
-import org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider
 
 internal class JavaTerminalSettingsProvider : TerminalSettingsProvider {
   override fun createConfigurable(project: Project): UnnamedConfigurable = JavaTerminalConfigurable()

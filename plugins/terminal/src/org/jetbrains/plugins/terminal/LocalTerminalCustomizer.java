@@ -95,7 +95,7 @@ public abstract class LocalTerminalCustomizer {
   }
 
   /**
-   * @deprecated use {@link org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider} instead
+   * @deprecated use {@link com.intellij.terminal.frontend.settings.TerminalSettingsProvider} instead
    * @return configurable for customizer-specific options
    */
   @Deprecated
