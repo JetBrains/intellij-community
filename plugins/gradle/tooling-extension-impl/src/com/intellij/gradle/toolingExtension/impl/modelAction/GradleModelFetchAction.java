@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.modelAction;
 
+import com.intellij.gradle.toolingExtension.impl.model.dslBaseScriptModel.GradleDslBaseScriptModelHolder;
 import com.intellij.gradle.toolingExtension.impl.model.utilTurnOffDefaultTasksModel.TurnOffDefaultTasks;
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializerConverter;
 import com.intellij.gradle.toolingExtension.impl.telemetry.GradleOpenTelemetry;
@@ -170,16 +171,11 @@ public class GradleModelFetchAction implements BuildAction<GradleModelHolderStat
   }
 
   private static void sendBaseScriptModelState(@NotNull BuildController controller) {
-    GradleModelId modelId = GradleModelId.createRootModelId(GradleDslBaseScriptModel.class);
     GradleDslBaseScriptModel model = GradleOpenTelemetry.callWithSpan("GetBaseScriptModelState", ___ ->
       controller.findModel(GradleDslBaseScriptModel.class)
     );
-    controller.send(new GradleModelHolderState(
-      /* rootBuild = */ null,
-      /* nestedBuilds = */ Collections.emptyList(),
-      /* models = */ model == null ? Collections.emptyMap() : Collections.singletonMap(modelId, model),
-      /* phase = */ GradleModelFetchPhase.BASE_SCRIPT_MODEL_PHASE
-    ));
+    GradleDslBaseScriptModelHolder holder = GradleDslBaseScriptModelHolder.wrap(model);
+    controller.send(holder);
   }
 
   private static @NotNull GradleDaemonModelHolder initAction(
