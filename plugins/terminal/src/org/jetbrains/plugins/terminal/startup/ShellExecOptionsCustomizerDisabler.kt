@@ -8,6 +8,9 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Allows disabling all [ShellExecOptionsCustomizer]s and [org.jetbrains.plugins.terminal.LocalTerminalCustomizer]s.
  * This can be useful, e.g., to make sure the terminal launched in IDE has the same PATH as OS's native terminal.
+ * 
+ * **Note that in the case of Remote Dev, customization disablers are executed on the backend,
+ * so it is expected that implementations are registered either in the shared or the backend part of the plugin.**
  */
 @ApiStatus.Internal
 interface ShellExecOptionsCustomizerDisabler {
