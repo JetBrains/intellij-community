@@ -55,7 +55,7 @@ class KotlinUFile(
 
     override val uAnnotations: List<UAnnotation>
         get() = uAnnotationsPart.getOrBuild {
-            sourcePsi.annotationEntries.mapNotNull { languagePlugin.convertOpt(it, this) }
+            sourcePsi.annotationEntries.mapNotNull { languagePlugin.convertOpt<UAnnotation>(it, this) }
         }
 
     override val packageName: String
@@ -79,7 +79,7 @@ class KotlinUFile(
 
     override val imports: List<UImportStatement>
         get() = importsPart.getOrBuild {
-            sourcePsi.importDirectives.mapNotNull { languagePlugin.convertOpt(it, this@KotlinUFile) }
+            sourcePsi.importDirectives.mapNotNull { languagePlugin.convertOpt<UImportStatement>(it, this@KotlinUFile) }
         }
 
     override val implicitImports: List<String>

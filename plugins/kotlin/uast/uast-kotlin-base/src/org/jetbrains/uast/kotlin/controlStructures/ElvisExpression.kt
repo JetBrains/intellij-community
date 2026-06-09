@@ -147,7 +147,7 @@ class KotlinUElvisExpression(
     override val uAnnotations: List<UAnnotation>
         get() {
             val annotatedExpression = sourcePsi.parent as? KtAnnotatedExpression ?: return emptyList()
-            return annotatedExpression.annotationEntries.mapNotNull { languagePlugin?.convertOpt(it, this) }
+            return annotatedExpression.annotationEntries.mapNotNull { languagePlugin?.convertOpt<UAnnotation>(it, this) }
         }
 
     override val expressions: List<UExpression>

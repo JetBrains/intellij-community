@@ -80,7 +80,7 @@ abstract class AbstractKotlinUClass(
                 else
                     KotlinConstructorUMethod(ktClass, psiMethod, this)
             } else {
-                languagePlugin?.convertOpt(psiMethod, this)
+                languagePlugin?.convertOpt<UMethod>(psiMethod, this)
             }
         }
 

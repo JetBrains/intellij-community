@@ -38,7 +38,7 @@ class KotlinUObjectLiteralExpression(
     override val declaration: UClass
         get() = declarationPart.getOrBuild {
             sourcePsi.objectDeclaration.toLightClass()
-                ?.let { languagePlugin?.convertOpt(it, this) }
+                ?.let { languagePlugin?.convertOpt<UClass>(it, this) }
                 ?: KotlinInvalidUClass("<invalid object code>", sourcePsi, this)
         }
 
