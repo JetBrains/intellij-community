@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.java.codeserver.core.JavaPsiModuleUtil;
@@ -80,8 +80,8 @@ public class JavaPlatformModuleSystemScope extends DelegatingGlobalSearchScope {
   }
 
   @Override
-  public int calcHashCode() {
-    return 31 * super.calcHashCode() + myModule.hashCode();
+  public int hashCode() {
+    return 31 * super.hashCode() + myModule.hashCode();
   }
 
   @Override

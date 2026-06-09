@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -95,8 +95,8 @@ public final class JavaVersionBasedScope extends DelegatingGlobalSearchScope {
   }
 
   @Override
-  public int calcHashCode() {
-    int result = super.calcHashCode();
+  public int hashCode() {
+    int result = super.hashCode();
     result = 31 * result + Objects.hashCode(myLevel);
     return result;
   }
