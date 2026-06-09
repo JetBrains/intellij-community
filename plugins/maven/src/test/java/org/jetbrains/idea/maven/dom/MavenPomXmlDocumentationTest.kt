@@ -1,15 +1,34 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInsight.documentation.DocumentationManager
-import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.readAction
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.configTest
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.forModel40
+import org.jetbrains.idea.maven.fixtures.forModel41
+import org.jetbrains.idea.maven.fixtures.getElementAtCaret
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenPomXmlDocumentationTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenPomXmlDocumentationTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testDocumentation() = runBlocking {
-    createProjectPom(
+    maven.createProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -44,21 +63,21 @@ class MavenPomXmlDocumentationTest : MavenDomTestCase() {
  @see &lt;a href=&quot;https://maven.apache.org/scm/scms-overview.html&quot;&gt;list of supported SCMs&lt;/a&gt;<br>Version :&nbsp;4.0.0+
                     """.trimIndent()
 
-    configTest(projectPom)
-    val originalElement = getElementAtCaret(projectPom)
-    val documentationManager = DocumentationManager.getInstance(project)
+    maven.configTest(maven.projectPom)
+    val originalElement = maven.getElementAtCaret(maven.projectPom)
+    val documentationManager = DocumentationManager.getInstance(maven.project)
 
     val generatedText = readAction {
-      val targetElement = documentationManager.findTargetElement(fixture.editor, fixture.file, originalElement)
+      val targetElement = documentationManager.findTargetElement(maven.fixture.editor, maven.fixture.file, originalElement)
       val provider = DocumentationManager.getProviderFromElement(targetElement)
       provider.generateDoc(targetElement, originalElement)
     }
 
 
-    forModel40{
+    maven.forModel40{
       assertEquals(expectedText_4_0.replace(" +".toRegex(), " "), generatedText!!.replace(" +".toRegex(), " "))
     }
-    forModel41 {
+    maven.forModel41 {
       assertEquals(expectedText_4_1.replace(" +".toRegex(), " "), generatedText!!.replace(" +".toRegex(), " "))
 
     }

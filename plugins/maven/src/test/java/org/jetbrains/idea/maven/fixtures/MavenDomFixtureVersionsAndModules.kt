@@ -38,6 +38,14 @@ fun MavenDomTestFixture.assumeModel_4_1_0(message: String) {
   Assumptions.assumeTrue(modelVersion == MavenConstants.MODEL_VERSION_4_1_0, message)
 }
 
+suspend fun MavenDomTestFixture.forModel40(block: suspend () -> Unit) {
+  if (modelVersion == MavenConstants.MODEL_VERSION_4_0_0) block()
+}
+
+suspend fun MavenDomTestFixture.forModel41(block: suspend () -> Unit) {
+  if (modelVersion == MavenConstants.MODEL_VERSION_4_1_0) block()
+}
+
 fun MavenDomTestFixture.assumeVersionAtLeast(version: String) {
   Assumptions.assumeTrue(
     VersionComparatorUtil.compare(MavenTestVersions.getActualVersion(mavenVersion), MavenTestVersions.getActualVersion(version)) >= 0)
