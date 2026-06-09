@@ -42,6 +42,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.ScrollBarPainter;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,6 +91,7 @@ public final class ConsoleViewUtil {
 
       EditorColorsScheme scheme = updateConsoleColorScheme(editor.getColorsScheme(), editor);
       scheme.setEditorFontSize(UISettingsUtils.getInstance().getScaledConsoleFontSize());
+      scheme.setColor(ScrollBarPainter.BACKGROUND, JBColor.lazy(() -> editor.getBackgroundColor()));
       editor.setColorsScheme(scheme);
       editor.setHighlighter(new NullEditorHighlighter());
       return null;
