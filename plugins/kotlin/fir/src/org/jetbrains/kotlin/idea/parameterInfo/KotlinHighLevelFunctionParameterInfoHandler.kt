@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.name
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
@@ -321,11 +320,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         return buildString {
             val annotationFqNames =
                 parameter.symbol.annotations
-                    .filter {
-                        // For primary constructor parameters, the annotation use site must be "param" or unspecified.
-                        (it.useSiteTarget == null || it.useSiteTarget == AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER) &&
-                                !it.isAnnotatedWithTypeUseOnly()
-                    }
                     .mapNotNull { it.classId?.asSingleFqName() }
                     .filter { it !in NULLABILITY_ANNOTATIONS }
             annotationFqNames.forEach { append("@${it.shortName().asString()} ") }
