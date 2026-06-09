@@ -3,16 +3,13 @@ package com.intellij.platform.eel.provider
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
+import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.ThrowsChecked
-import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
 import com.intellij.platform.util.coroutines.mapNotNullConcurrent
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.InvalidPathException
-import kotlin.io.path.Path
 
 /**
  * Initializes the execution environment for a given path during project opening.
@@ -35,7 +32,7 @@ interface EelEnvironmentInitializer {
   }
 
   @ThrowsChecked(EelUnavailableException::class)
-  suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String): EelMachine?
+  suspend fun tryInitialize(eelDescriptor: EelDescriptor): EelMachine?
 }
 
 @ApiStatus.Internal
@@ -59,53 +56,31 @@ object EelInitialization {
   }
 
   @ThrowsChecked(EelUnavailableException::class)
-  suspend fun runEelInitialization(path: String): EelMachine {
+  suspend fun runEelInitialization(eelDescriptor: EelDescriptor): EelMachine {
     val initializers = EelEnvironmentInitializer.EP_NAME.extensionList
-
-    val nioPath = try {
-      Path(path)
-    }
-    catch (e: InvalidPathException) {
-      logger.warn("Invalid path: $path", e)
-      return LocalEelMachine
-    }
 
     val machines = if (initializers.isEmpty()) {
       listOfNotNull(initializeCatching {
-        nioPath.getEelDescriptor().resolveEelMachine()
+        eelDescriptor.resolveEelMachine()
       })
     }
     else {
       initializers.mapNotNullConcurrent { initializer ->
         initializeCatching {
-          initializer.tryInitialize(path)
+          initializer.tryInitialize(eelDescriptor)
         }
       }
     }
 
     if (machines.isEmpty()) {
-      logger.debug("No EEL machines found for path: $path")
+      logger.debug("No EEL machines found for descriptor: $eelDescriptor")
       return LocalEelMachine
     }
 
     if (machines.size > 1) {
-      logger.error("Several EEL machines $machines found for path: $path")
+      logger.error("Several EEL machines $machines found for descriptor: $eelDescriptor")
     }
 
     return machines.first()
-  }
-
-  @ThrowsChecked(EelUnavailableException::class)
-  suspend fun runEelInitialization(project: Project) {
-    if (project.isDefault) {
-      return
-    }
-
-    val projectFile = project.projectFilePath
-    check(projectFile != null) { "Impossible: project is not default, but it does not have project file" }
-
-    val machine = runEelInitialization(projectFile)
-
-    project.setEelMachine(machine)
   }
 }

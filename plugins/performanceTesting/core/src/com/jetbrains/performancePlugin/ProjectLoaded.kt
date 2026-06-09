@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter.Companion.logStats
 import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -226,7 +227,7 @@ class ProjectLoaded : ApplicationInitializedListener {
     if (SystemProperties.getBooleanProperty("STARTER_TESTS_SUPPORT_TARGETS", false)
         || System.getenv("STARTER_TESTS_SUPPORT_TARGETS").toBoolean()) {
       IntegrationTestApplicationLoadListener.data?.let {
-        EelInitialization.runEelInitialization(it.projectPath)
+        EelInitialization.runEelInitialization(Path.of(it.projectPath).getEelDescriptor())
         // Re-evaluate AppMode flags: the first setFlags call in Main.kt runs before EPs are loaded,
         // so MultiRoutingFileSystemBackend (Docker/WSL) isn't registered yet and mayHappenToBeAFile
         // can't resolve remote paths, incorrectly setting isLightEdit=true.

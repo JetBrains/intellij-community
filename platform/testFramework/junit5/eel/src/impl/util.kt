@@ -22,7 +22,6 @@ import com.intellij.platform.eel.nioFs.impl.MultiRoutingFileSystemBackend
 import com.intellij.platform.eel.provider.EelEnvironmentInitializer
 import com.intellij.platform.eel.provider.EelMachineResolver
 import com.intellij.platform.eel.provider.asNioPath
-import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.testFramework.junit5.eel.fixture.IsolatedFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystem
 import com.intellij.platform.testFramework.junit5.eel.impl.nio.EelUnitTestFileSystemProvider
@@ -126,8 +125,8 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
   }, disposable)
 
   EelEnvironmentInitializer.EP_NAME.point.registerExtension(object : EelEnvironmentInitializer {
-    override suspend fun tryInitialize(path: @MultiRoutingFileSystemPath String): EelMachine? {
-      return if (Path(path).getEelDescriptor() == descriptor) machine else null
+    override suspend fun tryInitialize(eelDescriptor: EelDescriptor): EelMachine? {
+      return if (eelDescriptor == descriptor) machine else null
     }
   }, disposable)
 

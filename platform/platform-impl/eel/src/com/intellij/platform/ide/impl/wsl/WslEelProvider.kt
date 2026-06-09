@@ -35,7 +35,6 @@ import java.nio.file.FileSystem
 import java.nio.file.FileSystemAlreadyExistsException
 import java.nio.file.FileSystemNotFoundException
 import java.nio.file.FileSystems.getDefault
-import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.Path
@@ -172,7 +171,7 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
 @ApiStatus.Internal
 @VisibleForTesting
 class WslEelEnvironmentInitializer : EelEnvironmentInitializer {
-  override suspend fun tryInitialize(@MultiRoutingFileSystemPath path: String): EelMachine? {
+  override suspend fun tryInitialize(eelDescriptor: EelDescriptor): EelMachine? {
     if (!WslIjentAvailabilityService.getInstance().useIjentForWslNioFileSystem()) {
       return null
     }
@@ -181,23 +180,10 @@ class WslEelEnvironmentInitializer : EelEnvironmentInitializer {
       return null
     }
 
-    val nioPath = try {
-      Path.of(path)
-    }
-    catch (_: IllegalArgumentException) {  // TODO What throws it?
-      return null
-    }
-
-    val descriptor = nioPath.getEelDescriptor() as? WslEelDescriptor ?: return null
+    val descriptor = eelDescriptor as? WslEelDescriptor ?: return null
 
     val project = ProjectManager.getInstance().openProjects.find { project ->
-      try {
-        val basePath = project.basePath?.let(Path::of)
-        basePath != null && nioPath.startsWith(basePath)
-      }
-      catch (_: InvalidPathException) {
-        false
-      }
+      project.getEelDescriptor() == descriptor
     }
 
     WslIjentManager.instanceAsync().getIjentApi(descriptor, descriptor.distribution, project, false)

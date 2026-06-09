@@ -2,22 +2,50 @@
 package com.intellij.execution.eel
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.startup.InitProjectActivity
-import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.resolveEelMachine
+import com.intellij.platform.eel.provider.setEelMachine
+import kotlinx.coroutines.CancellationException
 
 /**
- * During the process of project initialization, the IDE interacts with the file system where the project is located on.
- * It happens, for example, during the loading of Workspace Model cache.
- * Before the first such interaction, we must ensure that the file system is accessible to the IDE.
- * Since Eel is responsible for it, it must run *very* early.
+ * Associates the project with its [com.intellij.platform.eel.EelMachine] very early during project initialization,
+ * before the IDE first touches the project's file system (e.g. during Workspace Model cache load).
  *
- * On the other hand, we should not access non-local environments excessively. The process of initialization may require IO requests
- * which could severely hinder the performance of IDE startup.
- * It means that the suitable way to initialize Eel is right before the initialization of a project (when we can decide if we should access the environment),
- * and not earlier.
+ * This intentionally does only a lightweight [resolveEelMachine] and does NOT deploy the agent
+ * (IJent / Docker container / SSH connection): MultiRoutingFileSystem only needs the machine to be *resolved*
+ * to route the project's paths. The actual deployment happens where it is allowed to do IO and pump the EDT:
+ *  - [com.intellij.openapi.project.impl.ProjectManagerImpl] runs the side-effecting initializers for
+ *    MultiRoutingFileSystem paths at the start of open;
+ *  - environments that must deploy before opening (e.g. the RD thin client, whose agent port is forwarded over the
+ *    EDT-bound RD protocol while project open suppresses EDT pumping) deploy it themselves before the project opens;
+ *  - otherwise the agent is deployed lazily on the first real file-system request.
+ *
+ * Keeping this activity deploy-free is what lets it run uniformly for every project without deadlocking inside the
+ * RD project-open window that suppresses EDT message pumping.
  */
 internal class EelProjectPreInit : InitProjectActivity {
   override suspend fun run(project: Project) {
-    EelInitialization.runEelInitialization(project)
+    if (project.isDefault) {
+      return
+    }
+
+    val descriptor = project.getEelDescriptor()
+    val machine = try {
+      descriptor.resolveEelMachine()
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      LOG.warn("Failed to resolve EelMachine for $descriptor", e)
+      return
+    }
+    project.setEelMachine(machine)
+  }
+
+  companion object {
+    private val LOG = logger<EelProjectPreInit>()
   }
 }

@@ -114,6 +114,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.fs.EelFileUtils
 import com.intellij.platform.eel.provider.EelInitialization
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.isLoadedFromCacheButHasNoModules
 import com.intellij.platform.project.ProjectEntitiesStorage
@@ -623,7 +624,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (projectIdentityFile.fileSystem.javaClass.name == MultiRoutingFileSystem::class.java.name) {
       span("EelInitialization.runEelInitialization") {
         try {
-          EelInitialization.runEelInitialization(projectIdentityFile.toString())
+          EelInitialization.runEelInitialization(projectIdentityFile.getEelDescriptor())
         }
         catch (e: EelUnavailableException) {
           LOG.error(e)

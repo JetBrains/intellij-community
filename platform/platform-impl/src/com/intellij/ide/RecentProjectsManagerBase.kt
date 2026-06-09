@@ -721,12 +721,13 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     LOG.trace { "openOneByOne: openPaths=$openPaths index=$index someProjectWasOpened=$someProjectWasOpened" }
 
     val (key, value) = openPaths.get(index)
+    val projectFile = Path.of(key)
     try {
-      EelInitialization.runEelInitialization(key)
+      EelInitialization.runEelInitialization(projectFile.getEelDescriptor())
     } catch (e : EelUnavailableException) {
       LOG.error(e)
     }
-    val project = openProject(projectFile = Path.of(key), options = OpenProjectTask {
+    val project = openProject(projectFile = projectFile, options = OpenProjectTask {
       forceOpenInNewFrame = true
       showWelcomeScreen = false
       projectWorkspaceId = value.projectWorkspaceId
