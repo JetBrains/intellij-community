@@ -1,36 +1,25 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.issue.quickfix
 
-import com.intellij.build.SyncViewManager
 import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.ide.actions.ShowLogAction
+import com.intellij.lang.properties.psi.PropertiesFile
+import com.intellij.lang.properties.psi.PropertyKeyValueFormat
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemAutoImportAwareListener
-import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration.PROGRESS_LISTENER_KEY
-import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.NO_PROGRESS_ASYNC
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager
 import com.intellij.openapi.externalSystem.service.notification.NotificationCategory.WARNING
 import com.intellij.openapi.externalSystem.service.notification.NotificationData
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource.PROJECT_SYNC
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
-import com.intellij.openapi.externalSystem.util.task.TaskExecutionUtil
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.util.text.StringUtil.convertLineSeparators
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.findDocument
 import com.intellij.openapi.vfs.refreshAndFindVirtualFile
-import com.intellij.util.DocumentUtil
-import com.intellij.util.io.createParentDirectories
+import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.asCompletableFuture
@@ -38,23 +27,18 @@ import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.gradle.util.GradleVersion
-import org.gradle.wrapper.WrapperConfiguration
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.GradleCoroutineScope.gradleCoroutineScope
+import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix.Companion.VERSION_SPECIFIC_WRAPPER_KEYS
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix.Companion.showWrapperPropertiesFile
-import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
-import org.jetbrains.plugins.gradle.settings.DistributionType
-import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.jetbrains.plugins.gradle.util.GradleUtil.getWrapperDistributionUri
 import java.io.IOException
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
-import kotlin.io.path.createFile
-import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * @author Vladislav.Soroka
@@ -71,12 +55,10 @@ class GradleVersionQuickFix(
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     return project.gradleCoroutineScope.launch {
       runBatchChange(project) {
-        updateOrCreateWrapper(project)
+        if (!updateWrapper(project)) return@runBatchChange
         showWrapperPropertiesFile(project)
-        resetProjectDistributionType(project)
-        runWrapperTask(project)
         if (requestImport) {
-          delay(500) // todo remove when multiple-build view will be integrated into the BuildTreeConsoleView
+          delay(500.milliseconds) // todo remove when multiple-build view will be integrated into the BuildTreeConsoleView
           val importFuture = ExternalSystemUtil.requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
           importFuture.await()
         }
@@ -84,24 +66,19 @@ class GradleVersionQuickFix(
     }.asCompletableFuture()
   }
 
-  private fun resetProjectDistributionType(project: Project) {
-    val gradleSettings = GradleSettings.getInstance(project)
-    val linkedProjectSettings = gradleSettings.getLinkedProjectSettings(projectPath)!!
-    linkedProjectSettings.distributionType = DistributionType.DEFAULT_WRAPPED
-  }
-
-  private suspend fun updateOrCreateWrapper(project: Project) {
+  private suspend fun updateWrapper(project: Project): Boolean {
     try {
-      updateOrCreateWrapper()
+      val path = GradleUtil.findDefaultWrapperPropertiesFile(Path.of(projectPath)) ?: return false
+      return updateWrapper(project, path)
     }
     catch (e: IOException) {
       LOG.warn(e)
-      showUnableToCreateWrapperNotification(project)
+      showUnableToUpdateWrapperNotification(project)
       throw e
     }
   }
 
-  private fun showUnableToCreateWrapperNotification(project: Project) {
+  private fun showUnableToUpdateWrapperNotification(project: Project) {
     val title = GradleBundle.message("gradle.version.quick.fix.error")
     val message = GradleBundle.message("gradle.version.quick.fix.error.description", ShowLogAction.getActionName())
     val notification = NotificationData(title, message, WARNING, PROJECT_SYNC)
@@ -115,93 +92,23 @@ class GradleVersionQuickFix(
 
   private suspend fun showWrapperPropertiesFile(project: Project) {
     withContext(Dispatchers.IO) {
-      showWrapperPropertiesFile(project, projectPath, gradleVersion.version)
+      showWrapperPropertiesFile(project, Path.of(projectPath), gradleVersion.version)
     }
   }
 
   /**
-   * This is only a fallback, because immediately after updating `gradle-wrapper.properties` the `wrapper` task will be executed explicitly.
-   * The fallback is necessary because if the `wrapper` task fails for some unknown reason, the next interaction with Gradle will download
-   * the correct Gradle version.
-   *
-   * This fallback content is tried being written in an undo transparent action.
+   * Update the gradle-wrapper.properties, changing the distributionUrl to the new version
+   * and dropping version-specific keys ([VERSION_SPECIFIC_WRAPPER_KEYS]).
    */
-  private suspend fun updateOrCreateWrapper() {
-    withContext(Dispatchers.IO) {
-      val projectRoot = Path.of(projectPath)
-      val defaultWrapperPropertiesPath = projectRoot.resolve(Paths.get("gradle", "wrapper", "gradle-wrapper.properties"))
-
-      val existingWrapperPropertiesPath = GradleUtil.findDefaultWrapperPropertiesFile(projectRoot)
-        ?.also { flushWrapperFile(it) }
-
-      val wrapperConfiguration = getWrapperConfiguration(existingWrapperPropertiesPath, gradleVersion)
-
-      val wrapperPropertiesPath = existingWrapperPropertiesPath ?: defaultWrapperPropertiesPath.also { path ->
-        path.createParentDirectories()
-        if (!path.exists()) path.createFile()
-      }
-
-      val wrapperPropertiesVirtualFile = wrapperPropertiesPath.refreshAndFindVirtualFile()
-      val wrapperPropertiesDocument = readAction { wrapperPropertiesVirtualFile?.findDocument() }
-      if (wrapperPropertiesDocument != null) {
-        val wrapperPropertiesText = convertLineSeparators(GradleUtil.writeWrapperConfigurationToString(wrapperConfiguration))
-        withContext(Dispatchers.EDT) {
-          DocumentUtil.writeInRunUndoTransparentAction {
-            wrapperPropertiesDocument.setText(wrapperPropertiesText)
-          }
-        }
-      }
-      else {
-        // Fallback: write directly to disk if no document exists
-        GradleUtil.writeWrapperConfiguration(wrapperConfiguration, wrapperPropertiesPath)
-        LocalFileSystem.getInstance().refreshNioFiles(listOf(wrapperPropertiesPath))
-      }
+  private suspend fun updateWrapper(project: Project, wrapperPropertiesPath: Path): Boolean {
+    val virtualFile = wrapperPropertiesPath.refreshAndFindVirtualFile() ?: return false
+    val propertiesFile = readAction {
+      PsiManager.getInstance(project).findFile(virtualFile) as? PropertiesFile
+    } ?: return false
+    writeCommandAction(project, GradleBundle.message("gradle.version.quick.fix.editor.command.name")) {
+      updateGradleWrapperVersion(propertiesFile, gradleVersion)
     }
-  }
-
-  /**
-   * The recommended way to update the Gradle version. There are several reasons to use the `wrapper` task:
-   * 1) The wrapper task results in recreation for all Gradle wrapper related files such as `gradlew.bat`, `gradlew` and `gradle-wrapper.jar`,
-   *  so, CLI can use the updated wrappers around the Gradle wrapper.
-   * 2) If the user has explicitly configured the wrapper task in the `build.gradle` file, a quick fix will install the version that was
-   *  required by user.
-   */
-  private suspend fun runWrapperTask(project: Project) {
-    val userData = UserDataHolderBase()
-    val initScript = "gradle.projectsEvaluated { g ->\n" +
-                     "  def wrapper = g.rootProject.tasks.wrapper\n" +
-                     "  if (wrapper == null) return \n" +
-                     "  wrapper.gradleVersion = '" + gradleVersion.version + "'\n" +
-                     "}\n"
-    userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript)
-    userData.putUserData(PROGRESS_LISTENER_KEY, SyncViewManager::class.java)
-
-    val gradleVmOptions = GradleSettings.getInstance(project).gradleVmOptions
-    val settings = ExternalSystemTaskExecutionSettings()
-    settings.executionName = GradleBundle.message("grable.execution.name.upgrade.wrapper")
-    settings.externalProjectPath = projectPath
-    settings.taskNames = listOf("wrapper")
-    settings.vmOptions = gradleVmOptions
-    settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
-
-    TaskExecutionUtil.runTask(
-      TaskExecutionSpec.create()
-        .withProject(project)
-        .withSystemId(GradleConstants.SYSTEM_ID)
-        .withSettings(settings)
-        .withActivateToolWindowBeforeRun(false)
-        .withProgressExecutionMode(NO_PROGRESS_ASYNC)
-        .withUserData(userData)
-    )
-  }
-
-  private fun getWrapperConfiguration(wrapperPropertiesPath: Path?, gradleVersion: GradleVersion): WrapperConfiguration {
-    val configuration = wrapperPropertiesPath?.let { GradleUtil.readWrapperConfiguration(it) }
-    if (configuration == null) {
-      return GradleUtil.generateGradleWrapperConfiguration(gradleVersion)
-    }
-    configuration.distribution = getWrapperDistributionUri(gradleVersion)
-    return configuration
+    return true
   }
 
   // Auto-import and indexing should be disabled while Gradle wrapper is in an incorrect state and cannot be used
@@ -219,20 +126,44 @@ class GradleVersionQuickFix(
     }
   }
 
-  private suspend fun flushWrapperFile(wrapperPropertiesPath: Path) {
-    val virtualFile = wrapperPropertiesPath.refreshAndFindVirtualFile() ?: return
-    val documentManager = FileDocumentManager.getInstance()
-    val document = readAction {
-      documentManager.getDocument(virtualFile)
-    }
-    if (document != null && documentManager.isDocumentUnsaved(document)) {
-      edtWriteAction {
-        documentManager.saveDocument(document)
-      }
-    }
-  }
-
   companion object {
     private val LOG = logger<GradleVersionQuickFix>()
+    private const val DISTRIBUTION_URL_KEY = "distributionUrl"
+    private val VERSION_SPECIFIC_WRAPPER_KEYS = setOf("distributionSha256Sum")
+    val DISTRIBUTION_URL_VERSION_REGEX: Regex = Regex("""(.*gradle-)(.+?)(-(?:bin|all)\.zip)""")
+
+    /**
+     * Updates the Gradle wrapper [propertiesFile] to [newVersion]: replaces the version segment of the
+     * `distributionUrl` value (adding the property if it is missing), and drops version-specific keys
+     * ([VERSION_SPECIFIC_WRAPPER_KEYS]) that no longer match the new distribution.
+     */
+    fun updateGradleWrapperVersion(propertiesFile: PropertiesFile, newVersion: GradleVersion) {
+      val distributionUrlProperty = propertiesFile.findPropertyByKey(DISTRIBUTION_URL_KEY)
+      if (distributionUrlProperty == null) {
+        propertiesFile.addProperty(DISTRIBUTION_URL_KEY, getWrapperDistributionUri(newVersion).toString(), PropertyKeyValueFormat.FILE)
+      }
+      else {
+        val bumpedUrl = distributionUrlProperty.value?.let { replaceDistributionUrlVersion(it, newVersion) }
+        if (bumpedUrl != null) {
+          distributionUrlProperty.setValue(bumpedUrl, PropertyKeyValueFormat.FILE)
+        }
+      }
+      for (key in VERSION_SPECIFIC_WRAPPER_KEYS) {
+        propertiesFile.findPropertyByKey(key)?.psiElement?.delete()
+      }
+    }
+
+    /**
+     * Replaces only the Gradle version segment of a wrapper `distributionUrl`, preserving the host and the `bin`/`all`
+     * distribution variant. For example `https://mirror/dists/gradle-8.5-all.zip` with the new version `8.9` becomes
+     * `https://mirror/dists/gradle-8.9-all.zip`.
+     *
+     * @return the URL with the version replaced, or `null` if it has no parseable `gradle-<version>-(bin|all).zip` segment
+     * (in which case the caller should keep the original URL untouched).
+     */
+    fun replaceDistributionUrlVersion(distributionUrl: String, newVersion: GradleVersion): String? {
+      val match = DISTRIBUTION_URL_VERSION_REGEX.matchEntire(distributionUrl) ?: return null
+      return match.groupValues[1] + newVersion.version + match.groupValues[3]
+    }
   }
 }
