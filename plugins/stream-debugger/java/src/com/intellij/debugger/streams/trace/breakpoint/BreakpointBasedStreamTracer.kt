@@ -1,7 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.breakpoint
 
+import com.intellij.debugger.engine.DebugProcessAdapterImpl
+import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.JavaDebugProcess
+import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.memory.utils.InstanceJavaValue
@@ -35,7 +38,6 @@ internal class BreakpointBasedStreamTracer(
                     ?: return StreamTracer.Result.EvaluationFailed("", StreamDebuggerBundle.message("could.not.find.breakpoint.positions"))
 
     // Create ObjectStorage for protecting traced objects from GC
-    // TODO: perhaps the objects need to be held until the window is closed
     val objectStorage = ObjectStorage()
     val breakpointFactory = JdiBreakpointFactory()
     val manager = StreamTracingManager(
@@ -62,10 +64,29 @@ internal class BreakpointBasedStreamTracer(
         is TracingResult.Error -> StreamTracer.Result.EvaluationFailed("", result.errorMessage)
       }
     } finally {
-      withDebugContext(xDebugProcess.debuggerSession.contextManager.context.managerThread!!) {
-        objectStorage.releaseAll()
+      val debuggerContext = xDebugProcess.debuggerSession.contextManager.context
+      withDebugContext(debuggerContext.managerThread!!) {
+        scheduleReleaseOnResume(objectStorage, debuggerContext.debugProcess!!)
       }
     }
+  }
+
+  /**
+   * Traced objects should be protected from GC until the debuggee is resumed.
+   * We can't do this earlier because during rendering of the result `XValue`-s
+   * perform additional method invocations.
+   *
+   * To schedule release on resume, we add a single-shot listener to the debug process.
+   *
+   * `resumed` runs on the debugger manager thread, so it is a safe place to release objects
+   */
+  private fun scheduleReleaseOnResume(objectStorage: ObjectStorage, debugProcess: DebugProcessImpl) {
+    debugProcess.addDebugProcessListener(object : DebugProcessAdapterImpl() {
+      override fun resumed(suspendContext: SuspendContextImpl) {
+        debugProcess.removeDebugProcessListener(this)
+        objectStorage.releaseAll()
+      }
+    })
   }
 
   private suspend fun createXValue(
