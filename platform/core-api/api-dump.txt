@@ -1303,7 +1303,9 @@ com.intellij.openapi.vfs.VirtualFileListener
 - fileMoved(com.intellij.openapi.vfs.VirtualFileMoveEvent):V
 - propertyChanged(com.intellij.openapi.vfs.VirtualFilePropertyEvent):V
 a:com.intellij.openapi.vfs.VirtualFileManager
+- sf:VFS_CHANGES_BG:com.intellij.util.messages.Topic
 - a:addAsyncFileListener(kotlinx.coroutines.CoroutineScope,com.intellij.openapi.vfs.AsyncFileListener):V
+- a:addAsyncFileListenerBackgroundable(com.intellij.openapi.vfs.AsyncFileListener,com.intellij.openapi.Disposable):V
 - a:addVirtualFileListener(com.intellij.openapi.vfs.VirtualFileListener):V
 - a:asyncRefresh(java.lang.Runnable):J
 - s:extractPath(java.lang.String):java.lang.String
@@ -1428,6 +1430,8 @@ f:com.intellij.openapi.vfs.limits.FileSizeLimit$Companion
 com.intellij.openapi.vfs.newvfs.BulkFileListener
 - after(java.util.List):V
 - before(java.util.List):V
+com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
+- com.intellij.openapi.vfs.newvfs.BulkFileListener
 com.intellij.openapi.vfs.newvfs.FileSystemInterface
 - sf:DEFAULT_LENGTH:J
 - sf:DEFAULT_TIMESTAMP:J

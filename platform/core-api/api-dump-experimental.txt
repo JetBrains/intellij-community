@@ -345,10 +345,6 @@ a:com.intellij.openapi.vfs.VirtualFile
 *:com.intellij.openapi.vfs.VirtualFileCustomDataSynchronizer
 - a:getDataType():kotlin.reflect.KType
 - a:getId():java.lang.String
-a:com.intellij.openapi.vfs.VirtualFileManager
-- com.intellij.openapi.util.ModificationTracker
-- *sf:VFS_CHANGES_BG:com.intellij.util.messages.Topic
-- *a:addAsyncFileListenerBackgroundable(com.intellij.openapi.vfs.AsyncFileListener,com.intellij.openapi.Disposable):V
 *:com.intellij.openapi.vfs.VirtualFilePreCloseCheck
 - *sf:Companion:com.intellij.openapi.vfs.VirtualFilePreCloseCheck$Companion
 - a:canCloseFile(com.intellij.openapi.vfs.VirtualFile):Z
@@ -361,8 +357,6 @@ f:com.intellij.openapi.vfs.VirtualFileUtil
 - com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
 - com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 - <init>(com.intellij.openapi.vfs.VirtualFileListener):V
-*:com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
-- com.intellij.openapi.vfs.newvfs.BulkFileListener
 com.intellij.pom.Navigatable
 - *:navigationRequest():com.intellij.platform.backend.navigation.NavigationRequest
 *f:com.intellij.psi.BasicInspectionVisitorBean
