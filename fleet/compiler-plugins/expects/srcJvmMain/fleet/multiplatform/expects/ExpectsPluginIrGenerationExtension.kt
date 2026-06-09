@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.hasAnnotation
 import org.jetbrains.kotlin.ir.util.kotlinFqName
 import org.jetbrains.kotlin.ir.util.remapTypeParameters
+import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.visitors.IrVisitorVoid
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
@@ -107,8 +108,9 @@ class ExpectsPluginIrGenerationExtension(val logger: MessageCollector) : IrGener
           val actual = actualOverloads.findMatching(expect)
 
           if (actual == null) {
+            val reasons = actualOverloads.joinToString("; ") { "${it.kotlinFqName}: ${it.mismatchReason(expect)}" }
             reportError(
-              "none of existing `@Actual fun $actualFqName()` have compatible signature, cannot link `linkToActual()`",
+              "none of existing `@Actual fun $actualFqName()` have compatible signature [$reasons], cannot link `linkToActual()`",
               expect
             )
             hasFailed = true
@@ -172,8 +174,9 @@ class ExpectsPluginIrGenerationExtension(val logger: MessageCollector) : IrGener
             }
 
             if (matching == null) {
+              val reasons = sameFqName.joinToString("; ") { "${it.owner.kotlinFqName}: ${it.owner.mismatchReason(actual)}" }
               reportError(
-                "none of existing `fun ${expectFqn.shortName()}()` has compatible signature, invalid `@Actual` usage",
+                "none of existing `fun ${expectFqn.shortName()}()` has compatible signature [$reasons], invalid `@Actual` usage",
                 actual
               )
               hasFailed = true
@@ -206,16 +209,24 @@ private fun IrExpression?.isLinkToActualFunction(): Boolean {
 }
 
 // Compares signatures
-private fun IrFunction.matchesWith(to: IrFunction): Boolean {
-  // Description kept for debugging purposes
-  val problem = when {
-    to.parameters.size != parameters.size -> "non matching number of parameters"
+private fun IrFunction.matchesWith(to: IrFunction): Boolean = mismatchReason(to) == null
+
+// Returns a human-readable reason why `this` and `to` do not match, or null if they match.
+@OptIn(UnsafeDuringIrConstructionAPI::class)
+private fun IrFunction.mismatchReason(to: IrFunction): String? {
+  fun IrFunction.paramsDesc(): String =
+    parameters.joinToString(", ", "(", ")") { "${it.name}: ${it.type.render()} [${it.kind}]" }
+
+  return when {
+    to.parameters.size != parameters.size ->
+      "non matching number of parameters: this${paramsDesc()} vs to${to.paramsDesc()}"
     to.typeParameters.size != typeParameters.size -> "non matching number of type parameters"
-    to.returnType != returnType.remapTypeParameters(this, to) -> "non matching return type"
+    to.returnType != returnType.remapTypeParameters(this, to) ->
+      "non matching return type: ${returnType.render()} vs ${to.returnType.render()}"
 
     !to.parameters.zipWithNulls(parameters).all { (expect, actual) ->
       expect.matchesWith(actual, this, to)
-    } -> "non matching parameters"
+    } -> "non matching parameters: this${paramsDesc()} vs to${to.paramsDesc()}"
 
     !to.typeParameters.zipWithNulls(typeParameters).all { (expect, actual) ->
       expect?.variance == actual?.variance && expect?.superTypes == actual?.superTypes?.map { it.remapTypeParameters(this, to) }
@@ -223,8 +234,6 @@ private fun IrFunction.matchesWith(to: IrFunction): Boolean {
 
     else -> null
   }
-
-  return problem == null
 }
 
 private fun IrValueParameter?.matchesWith(
