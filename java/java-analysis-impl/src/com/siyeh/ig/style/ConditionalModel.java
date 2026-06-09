@@ -1,10 +1,11 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.psi.GenericsUtil;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * A model which represents conditional
+ * A model which represents a conditional
  */
 public class ConditionalModel {
   private final @NotNull PsiExpression myCondition;
@@ -71,8 +72,9 @@ public class ConditionalModel {
   }
 
   /**
-   * Convert conditional expression to model.
-   * Conversion is possible only when expression is complete and branches types are assignable from one to other or have a common ancestor.
+   * Converts a conditional expression to a model.
+   * Conversion is only possible when the expression is complete and 
+   * the branch types are assignable from one to the other or have a common ancestor.
    *
    * @param conditional conditional expression
    * @return null if conditional can't be converted, model otherwise
@@ -95,6 +97,7 @@ public class ConditionalModel {
     final PsiType thenType = thenExpression.getType();
     final PsiType elseType = elseExpression.getType();
     if (thenType == null || elseType == null) return null;
+    if (elseType instanceof PsiPrimitiveType && elseType.equals(PsiPrimitiveType.getUnboxedType(thenType))) return elseType; // jls 15.25
     if (thenType.isAssignableFrom(elseType)) return thenType;
     if (elseType.isAssignableFrom(thenType)) return elseType;
     if (!(thenType instanceof PsiClassType) || !(elseType instanceof PsiClassType)) return null;
