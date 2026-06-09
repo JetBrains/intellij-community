@@ -223,7 +223,7 @@ interface AgentSessionProviderDescriptor {
     launchMode: AgentSessionLaunchMode,
   ): AgentSessionTerminalLaunchSpec = buildResumeLaunchSpec(sessionId)
 
-  suspend fun listAvailableGenerationModels(): List<AgentPromptGenerationModel> {
+  suspend fun listAvailableGenerationModels(project: Project? = null): List<AgentPromptGenerationModel> {
     return emptyList()
   }
 

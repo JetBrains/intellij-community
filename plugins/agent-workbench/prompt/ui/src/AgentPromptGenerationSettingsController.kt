@@ -111,7 +111,7 @@ internal class AgentPromptGenerationSettingsController(
 
     modelCatalogsByProviderId[providerId] = ModelCatalogState.Loading
     modelCatalogScope.launch {
-      val result = runCatching { selectedProvider.bridge.listAvailableGenerationModels() }
+      val result = runCatching { selectedProvider.bridge.listAvailableGenerationModels(invocationData.project) }
       withContext(Dispatchers.EDT) {
         modelCatalogsByProviderId[providerId] = result.fold(
           onSuccess = { models ->
@@ -140,9 +140,10 @@ internal class AgentPromptGenerationSettingsController(
     val supportedEfforts = selectedModel
       ?.supportedReasoningEfforts
       ?.takeIf { efforts -> efforts.isNotEmpty() }
+      ?: models.catalogReasoningEfforts()
     val reasoningEffort = if (supportedEfforts != null &&
-                              settings.reasoningEffort != AgentPromptReasoningEffort.AUTO &&
-                              settings.reasoningEffort !in supportedEfforts) {
+                               settings.reasoningEffort != AgentPromptReasoningEffort.AUTO &&
+                               settings.reasoningEffort !in supportedEfforts) {
       AgentPromptReasoningEffort.AUTO
     }
     else {
@@ -159,7 +160,9 @@ internal class AgentPromptGenerationSettingsController(
       ?.let { modelId -> models?.firstOrNull { model -> model.id == modelId } }
       ?.supportedReasoningEfforts
       ?.takeIf { efforts -> efforts.isNotEmpty() }
-    return modelEfforts ?: providerSelector.selectedProvider?.bridge?.supportedReasoningEfforts.orEmpty()
+    return modelEfforts
+           ?: models?.catalogReasoningEfforts()
+           ?: providerSelector.selectedProvider?.bridge?.supportedReasoningEfforts.orEmpty()
   }
 
   private fun showModelPopup() {
@@ -430,6 +433,11 @@ private fun List<AgentPromptGenerationModel>.normalizedModelCatalog(): List<Agen
       )
     }
     .toList()
+}
+
+private fun List<AgentPromptGenerationModel>.catalogReasoningEfforts(): Set<AgentPromptReasoningEffort>? {
+  val efforts = flatMapTo(LinkedHashSet()) { model -> model.supportedReasoningEfforts }
+  return efforts.takeIf { it.isNotEmpty() }
 }
 
 private fun modelText(modelId: String?, models: List<AgentPromptGenerationModel>): @Nls String {

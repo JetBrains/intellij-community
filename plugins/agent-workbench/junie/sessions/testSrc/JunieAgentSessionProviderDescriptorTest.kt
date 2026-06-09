@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.junie.common.JunieCliVersion
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
@@ -49,35 +50,232 @@ class JunieAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun `descriptor exposes Junie generation model aliases and efforts`(): Unit = runBlocking(Dispatchers.Default) {
-    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
-
-    val models = descriptor.listAvailableGenerationModels()
-
-    assertThat(models.map { it.id }).containsExactly(
-      "gpt",
-      "gpt-codex",
-      "opus",
-      "sonnet",
-      "gemini-pro",
-      "gemini-flash",
-      "grok",
+  fun `descriptor exposes dynamic Junie generation models and efforts`(): Unit = runBlocking(Dispatchers.Default) {
+    var requestedExecutable: String? = null
+    val descriptor = JunieAgentSessionProviderDescriptor(
+      executableResolver = { "junie-test" },
+      generationModelCatalogResolver = { executable, _ ->
+        requestedExecutable = executable
+        listOf(
+          AgentPromptGenerationModel(
+            id = "chatgpt-5.5",
+            displayName = "ChatGPT 5.5",
+            supportedReasoningEfforts = setOf(
+              AgentPromptReasoningEffort.LOW,
+              AgentPromptReasoningEffort.HIGH,
+              AgentPromptReasoningEffort.XHIGH,
+            ),
+            isDefault = true,
+          )
+        )
+      },
     )
-    assertThat(models.map { it.displayName }).containsExactly(
-      "GPT",
-      "GPT Codex",
-      "Claude Opus",
-      "Claude Sonnet",
-      "Gemini Pro",
-      "Gemini Flash",
-      "Grok",
+
+    val models = descriptor.listAvailableGenerationModels(null)
+
+    assertThat(requestedExecutable).isEqualTo("junie-test")
+    assertThat(models.map { it.id }).containsExactly("chatgpt-5.5")
+    assertThat(models.single().displayName).isEqualTo("ChatGPT 5.5")
+    assertThat(models.single().isDefault).isTrue()
+    assertThat(models.single().supportedReasoningEfforts).containsExactly(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.HIGH,
+      AgentPromptReasoningEffort.XHIGH,
     )
     assertThat(descriptor.supportedReasoningEfforts).containsExactly(
       AgentPromptReasoningEffort.LOW,
       AgentPromptReasoningEffort.MEDIUM,
       AgentPromptReasoningEffort.HIGH,
       AgentPromptReasoningEffort.XHIGH,
-      AgentPromptReasoningEffort.MAX,
+    )
+  }
+
+  @Test
+  fun `ACP session new parser exposes Junie models and thought levels`() {
+    val models = parseJunieAcpGenerationModels(
+      """
+      {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "sessionId": "session-1",
+          "models": {
+            "currentModelId": "chatgpt-5.5-xhigh",
+            "availableModels": [
+              {"modelId": "chatgpt-5.5", "name": "ChatGPT 5.5"},
+              {"modelId": "chatgpt-5.5-xhigh", "name": "ChatGPT 5.5 (xhigh)"}
+            ]
+          },
+          "configOptions": [
+            {
+              "type": "select",
+              "id": "thought-level",
+              "name": "Thought Level",
+              "category": "thought_level",
+              "currentValue": "xhigh",
+              "options": [
+                {"value": "low", "name": "Low"},
+                {"value": "high", "name": "High"},
+                {"value": "xhigh", "name": "Extra High"}
+              ]
+            }
+          ]
+        }
+      }
+      """.trimIndent()
+    )
+
+    assertThat(models.map { it.id }).containsExactly("chatgpt-5.5", "chatgpt-5.5-xhigh")
+    assertThat(models.map { it.displayName }).containsExactly("ChatGPT 5.5", "ChatGPT 5.5 (xhigh)")
+    assertThat(models.map { it.isDefault }).containsExactly(false, true)
+    assertThat(models).allSatisfy { model ->
+      assertThat(model.supportedReasoningEfforts).containsExactly(
+        AgentPromptReasoningEffort.LOW,
+        AgentPromptReasoningEffort.HIGH,
+        AgentPromptReasoningEffort.XHIGH,
+      )
+    }
+  }
+
+  @Test
+  fun `ACP session new parser exposes Junie config option models`() {
+    val models = parseJunieAcpGenerationModels(
+      """
+      {
+        "type": "com.agentclientprotocol.rpc.JsonRpcResponse",
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "sessionId": "session-1",
+          "configOptions": [
+            {
+              "type": "select",
+              "id": "model",
+              "name": "Model",
+              "currentValue": "gpt-5.5",
+              "options": [
+                {
+                  "value": "gemini-3-flash-preview",
+                  "name": "Gemini 3 Flash Preview"
+                },
+                {
+                  "value": "claude-sonnet-4-6",
+                  "name": "Claude Sonnet 4.6"
+                },
+                {
+                  "value": "claude-opus-4-6",
+                  "name": "Claude Opus 4.6"
+                },
+                {
+                  "value": "claude-opus-4-8",
+                  "name": "Claude Opus 4.8"
+                },
+                {
+                  "value": "gpt-5.5",
+                  "name": "GPT-5.5"
+                },
+                {
+                  "value": "gpt-5.2-2025-12-11",
+                  "name": "GPT-5.2"
+                },
+                {
+                  "value": "grok-4.3",
+                  "name": "Grok 4.3"
+                },
+                {
+                  "value": "grok-4.20-multi-agent",
+                  "name": "Grok 4.20 Multi Agent"
+                },
+                {
+                  "value": "custom-model",
+                  "name": "Custom Model"
+                }
+              ]
+            },
+            {
+              "type": "boolean",
+              "id": "think_more",
+              "name": "Think More",
+              "currentValue": false
+            }
+          ]
+        }
+      }
+      """.trimIndent()
+    )
+
+    assertThat(models.map { it.id }).containsExactly(
+      "gemini-3-flash-preview",
+      "claude-sonnet-4-6",
+      "claude-opus-4-6",
+      "claude-opus-4-8",
+      "gpt-5.5",
+      "gpt-5.2-2025-12-11",
+      "grok-4.3",
+      "grok-4.20-multi-agent",
+      "custom-model",
+    )
+    assertThat(models.map { it.displayName }).containsExactly(
+      "Gemini 3 Flash Preview",
+      "Claude Sonnet 4.6",
+      "Claude Opus 4.6",
+      "Claude Opus 4.8",
+      "GPT-5.5",
+      "GPT-5.2",
+      "Grok 4.3",
+      "Grok 4.20 Multi Agent",
+      "Custom Model",
+    )
+    assertThat(models.map { it.isDefault }).containsExactly(false, false, false, false, true, false, false, false, false)
+    val reasoningEffortsByModelId = models.associate { model -> model.id to model.supportedReasoningEfforts }
+    assertThat(reasoningEffortsByModelId.getValue("gemini-3-flash-preview")).containsExactly(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
+    )
+    assertThat(reasoningEffortsByModelId.getValue("claude-sonnet-4-6")).containsExactly(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
+    )
+    assertThat(reasoningEffortsByModelId.getValue("claude-opus-4-6")).containsExactly(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
+    )
+    assertThat(reasoningEffortsByModelId.getValue("claude-opus-4-8")).containsExactly(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
+      AgentPromptReasoningEffort.XHIGH,
+    )
+    assertThat(reasoningEffortsByModelId.getValue("gpt-5.5")).containsExactly(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
+      AgentPromptReasoningEffort.XHIGH,
+    )
+    assertThat(reasoningEffortsByModelId.getValue("gpt-5.2-2025-12-11")).containsExactly(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
+      AgentPromptReasoningEffort.XHIGH,
+    )
+    assertThat(reasoningEffortsByModelId.getValue("grok-4.3")).containsExactly(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
+    )
+    assertThat(reasoningEffortsByModelId.getValue("grok-4.20-multi-agent")).containsExactly(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
+      AgentPromptReasoningEffort.XHIGH,
+    )
+    assertThat(reasoningEffortsByModelId.getValue("custom-model")).containsExactly(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
     )
   }
 
@@ -98,10 +296,10 @@ class JunieAgentSessionProviderDescriptorTest {
 
     val updatedLaunchSpec = descriptor.applyGenerationSettings(
       baseLaunchSpec,
-      AgentPromptGenerationSettings(modelId = "gpt-codex"),
+      AgentPromptGenerationSettings(modelId = "chatgpt-5.5"),
     )
 
-    assertThat(updatedLaunchSpec.command).containsExactly("junie-test", "--skip-update-check", "--model", "gpt-codex")
+    assertThat(updatedLaunchSpec.command).containsExactly("junie-test", "--skip-update-check", "--model", "chatgpt-5.5")
   }
 
   @Test
@@ -125,7 +323,7 @@ class JunieAgentSessionProviderDescriptorTest {
     val updatedLaunchSpec = descriptor.applyGenerationSettings(
       baseLaunchSpec,
       AgentPromptGenerationSettings(
-        modelId = "sonnet",
+        modelId = "chatgpt-5.5",
         reasoningEffort = AgentPromptReasoningEffort.HIGH,
       ),
     )
@@ -134,7 +332,7 @@ class JunieAgentSessionProviderDescriptorTest {
       "junie-test",
       "--skip-update-check",
       "--model",
-      "sonnet",
+      "chatgpt-5.5",
       "--effort",
       "high",
     )
@@ -150,8 +348,8 @@ class JunieAgentSessionProviderDescriptorTest {
     val updatedLaunchSpec = descriptor.applyGenerationSettings(
       baseLaunchSpec,
       AgentPromptGenerationSettings(
-        modelId = "gpt-codex",
-        reasoningEffort = AgentPromptReasoningEffort.MAX,
+        modelId = "chatgpt-5.5",
+        reasoningEffort = AgentPromptReasoningEffort.XHIGH,
       ),
     )
 
@@ -159,10 +357,23 @@ class JunieAgentSessionProviderDescriptorTest {
       "junie-test",
       "--skip-update-check",
       "--model",
-      "gpt-codex",
+      "chatgpt-5.5",
       "--effort",
-      "max",
+      "xhigh",
     )
+  }
+
+  @Test
+  fun `apply generation settings ignores unsupported max effort`(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    val updatedLaunchSpec = descriptor.applyGenerationSettings(
+      baseLaunchSpec,
+      AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.MAX),
+    )
+
+    assertThat(updatedLaunchSpec.command).containsExactly("junie-test", "--skip-update-check")
   }
 
   @Test
@@ -175,7 +386,7 @@ class JunieAgentSessionProviderDescriptorTest {
     val updatedLaunchSpec = descriptor.applyGenerationSettings(
       baseLaunchSpec,
       AgentPromptGenerationSettings(
-        modelId = "grok",
+        modelId = "chatgpt-5.5",
         reasoningEffort = AgentPromptReasoningEffort.LOW,
       ),
     )
@@ -184,7 +395,7 @@ class JunieAgentSessionProviderDescriptorTest {
       "junie-test",
       "--skip-update-check",
       "--model",
-      "grok",
+      "chatgpt-5.5",
       "--effort",
       "low",
       "--prompt",

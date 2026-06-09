@@ -23,6 +23,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminal
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAction
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.buildTerminalPlanModePostStartDispatchSteps
+import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
 internal class JunieAgentSessionProviderDescriptor(
@@ -31,6 +32,8 @@ internal class JunieAgentSessionProviderDescriptor(
     (sessionSource as? JunieSessionSource)?.sessionIndexStore ?: JunieSessionIndexStore(),
   private val executableResolver: suspend () -> String = JunieCliSupport::resolveExecutableOrDefaultViaTerminalResolver,
   private val cliInfoResolver: suspend () -> JunieCliInfo? = JunieCliSupport::resolveCliInfoViaTerminalResolver,
+  private val generationModelCatalogResolver: suspend (String, String) -> List<AgentPromptGenerationModel> =
+    JunieAcpGenerationModelCatalog::listAvailableGenerationModels,
 ) : AgentSessionProviderDescriptor {
   @Volatile
   private var latestCliInfo: JunieCliInfo? = null
@@ -65,7 +68,6 @@ internal class JunieAgentSessionProviderDescriptor(
       AgentPromptReasoningEffort.MEDIUM,
       AgentPromptReasoningEffort.HIGH,
       AgentPromptReasoningEffort.XHIGH,
-      AgentPromptReasoningEffort.MAX,
     )
 
   override val cliMissingMessageKey: String
@@ -122,8 +124,11 @@ internal class JunieAgentSessionProviderDescriptor(
     )
   }
 
-  override suspend fun listAvailableGenerationModels(): List<AgentPromptGenerationModel> {
-    return JUNIE_GENERATION_MODELS
+  override suspend fun listAvailableGenerationModels(project: Project?): List<AgentPromptGenerationModel> {
+    val projectPath = project?.basePath?.takeIf { it.isNotBlank() }
+                      ?: System.getProperty("user.home")?.takeIf { it.isNotBlank() }
+                      ?: return emptyList()
+    return generationModelCatalogResolver(executableResolver(), projectPath)
   }
 
   override fun applyGenerationSettings(
@@ -192,16 +197,6 @@ internal class JunieAgentSessionProviderDescriptor(
 
 private val JUNIE_PROMPT_PROVIDER_PLAN_MODE_OPTION: AgentPromptProviderOption =
   AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION.copy(defaultSelected = false)
-
-private val JUNIE_GENERATION_MODELS: List<AgentPromptGenerationModel> = listOf(
-  AgentPromptGenerationModel(id = "gpt", displayName = "GPT"),
-  AgentPromptGenerationModel(id = "gpt-codex", displayName = "GPT Codex"),
-  AgentPromptGenerationModel(id = "opus", displayName = "Claude Opus"),
-  AgentPromptGenerationModel(id = "sonnet", displayName = "Claude Sonnet"),
-  AgentPromptGenerationModel(id = "gemini-pro", displayName = "Gemini Pro"),
-  AgentPromptGenerationModel(id = "gemini-flash", displayName = "Gemini Flash"),
-  AgentPromptGenerationModel(id = "grok", displayName = "Grok"),
-)
 
 private fun buildJunieGenerationArgs(settings: AgentPromptGenerationSettings): List<String> {
   val args = mutableListOf<String>()

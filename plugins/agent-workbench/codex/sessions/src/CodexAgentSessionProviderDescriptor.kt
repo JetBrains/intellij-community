@@ -28,6 +28,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAct
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.buildTerminalPlanModePostStartDispatchSteps
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.project.Project
 import java.nio.file.Path
 import javax.swing.Icon
 
@@ -157,7 +158,7 @@ internal class CodexAgentSessionProviderDescriptor(
     return AgentSessionTerminalLaunchSpec(command = command)
   }
 
-  override suspend fun listAvailableGenerationModels(): List<AgentPromptGenerationModel> {
+  override suspend fun listAvailableGenerationModels(project: Project?): List<AgentPromptGenerationModel> {
     val service = serviceAsync<SharedCodexAppServerService>()
     return runCatching { service.listModels() }
       .getOrDefault(emptyList())

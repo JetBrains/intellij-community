@@ -1045,6 +1045,7 @@ class AgentSessionPromptLauncherBridgeTest {
       startupPolicyOverride = AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND,
       timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
       composedMessageBuilder = { request -> request.prompt.trim() },
+      supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
     AgentSessionProviders.withRegistryForTest(
@@ -1215,7 +1216,10 @@ class AgentSessionPromptLauncherBridgeTest {
           }
 
           val bridge = promptLauncherBridge(service, launchService)
-          val baseRequest = promptLaunchRequest(targetThreadId = "thread-existing")
+          val baseRequest = promptLaunchRequest(
+            targetThreadId = "thread-existing",
+            generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
+          )
           val request = baseRequest.copy(
             initialMessageRequest = baseRequest.initialMessageRequest.copy(
               providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
@@ -1236,6 +1240,7 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(providerBridge.startupCommandCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastStartupBaseLaunchSpec.get()?.command).containsExactly("test", "resume", "thread-existing")
           assertThat(providerBridge.lastStartupPrompt.get()).isEqualTo("Refactor selected code")
+          assertThat(providerBridge.generationSettingsApplyCalls.get()).isZero()
           assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
 
           val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
@@ -2357,6 +2362,7 @@ private class RecordingPromptLaunchProviderBridge(
   val lastStartupBaseLaunchSpec: AtomicReference<AgentSessionTerminalLaunchSpec?> = AtomicReference(null)
   val lastStartupPrompt: AtomicReference<String?> = AtomicReference(null)
   val lastShouldUseStartupPromptCommandRequest: AtomicReference<AgentPromptInitialMessageRequest?> = AtomicReference(null)
+  val generationSettingsApplyCalls: AtomicInteger = AtomicInteger(0)
 
   override val displayNameKey: String
     get() = "toolwindow.provider.codex"
@@ -2401,6 +2407,7 @@ private class RecordingPromptLaunchProviderBridge(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     generationSettings: AgentPromptGenerationSettings,
   ): AgentSessionTerminalLaunchSpec {
+    generationSettingsApplyCalls.incrementAndGet()
     return generationSettingsApplier(baseLaunchSpec, sanitizeGenerationSettings(generationSettings))
   }
 

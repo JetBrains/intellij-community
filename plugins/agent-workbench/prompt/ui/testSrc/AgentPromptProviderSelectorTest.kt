@@ -243,6 +243,62 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun generationSettingsReasoningEffortPopupUsesLoadedCatalogForDefaultModel(): Unit = timeoutRunBlocking {
+    val modelCatalogScope = testScope()
+    try {
+      val fixtureAndController = withContext(Dispatchers.EDT) {
+        val provider = testProviderBridge(
+          provider = AgentSessionProvider.JUNIE,
+          promptOptions = emptyList(),
+          availableGenerationModels = listOf(
+            AgentPromptGenerationModel(
+              id = "chatgpt-5.5",
+              displayName = "ChatGPT 5.5",
+              supportedReasoningEfforts = setOf(
+                AgentPromptReasoningEffort.HIGH,
+                AgentPromptReasoningEffort.XHIGH,
+              ),
+            )
+          ),
+        )
+        val fixture = createSelectorFixture(listOf(provider))
+        fixture.selector.refresh()
+        val controller = AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = modelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        )
+        controller.refreshPresentation()
+        fixture to controller
+      }
+
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          fixtureAndController.first.view.modelSelectorLink.isVisible &&
+          fixtureAndController.first.view.reasoningEffortLink.isEnabled
+        }
+      }
+      withContext(Dispatchers.EDT) {
+        val (_, controller) = fixtureAndController
+        val actionGroup = checkNotNull(controller.createReasoningEffortActionGroupForTest())
+        val actions = actionGroup.getChildren(TestActionEvent.createTestEvent())
+
+        assertThat(controller.currentSettings()).isEqualTo(AgentPromptGenerationSettings.AUTO)
+        assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
+          .containsExactly("Default", "High", "Extra High")
+      }
+    }
+    finally {
+      modelCatalogScope.cancel()
+    }
+  }
+
+  @Test
   fun generationSettingsClearDefaultActionRemovesSavedAskAgentOverride() {
     runInEdtAndWait {
       val providerId = AgentSessionProvider.CODEX.value
@@ -642,7 +698,7 @@ class AgentPromptProviderSelectorTest {
 
       override suspend fun isCliAvailable(): Boolean = cliAvailable
 
-      override suspend fun listAvailableGenerationModels(): List<AgentPromptGenerationModel> {
+      override suspend fun listAvailableGenerationModels(project: com.intellij.openapi.project.Project?): List<AgentPromptGenerationModel> {
         return availableGenerationModels
       }
 

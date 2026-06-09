@@ -280,7 +280,6 @@ class AgentSessionLaunchService internal constructor(
     singleFlightPolicy: SingleFlightPolicy = SingleFlightPolicy.DROP,
     launchOrigin: OpenThreadLaunchOrigin = OpenThreadLaunchOrigin.USER_OPEN,
     promptLaunchResolved: ((AgentPromptLaunchResult) -> Unit)? = null,
-    generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
     extraEnvVariables: Map<String, String> = emptyMap(),
     extraCommandArgs: List<String> = emptyList(),
   ) {
@@ -316,7 +315,6 @@ class AgentSessionLaunchService internal constructor(
           precomputedInitialMessagePlan != null -> precomputedInitialMessagePlan
           else -> descriptor?.buildInitialMessagePlan(initialMessageRequest)
         }
-        val effectiveGenerationSettings = descriptor?.sanitizeGenerationSettings(generationSettings) ?: AgentPromptGenerationSettings.AUTO
         val effectiveThread = if (initialMessageRequest != null) {
           val refreshedThread = findPromptTargetThread(
             normalizedPath = normalizedPath,
@@ -361,7 +359,6 @@ class AgentSessionLaunchService internal constructor(
             thread = effectiveThread,
             initialMessageRequest = initialMessageRequest,
             precomputedInitialMessagePlan = effectiveInitialMessagePlan,
-            generationSettings = effectiveGenerationSettings,
           )
         }
         val effectiveResumeLaunchMode = resolveResumeLaunchMode(
@@ -373,21 +370,19 @@ class AgentSessionLaunchService internal constructor(
           effectiveLaunchMode = effectiveResumeLaunchMode,
         )
         AgentWorkbenchTelemetry.logThreadOpenRequested(entryPoint, effectiveThread.provider, AgentWorkbenchTargetKind.THREAD)
-        // When the caller passes prompt-time overrides (e.g. generation settings or AWB container env vars), augment the
+        // When the caller passes prompt-time overrides (e.g. AWB container env vars), augment the
         // resume launch spec so the respawned CLI receives them. Without this the resume path would reuse whatever env was
         // baked in at first spawn, which breaks `${VAR}` placeholders in `.mcp.json` after IDE restart.
-        val launchSpecOverride = if (extraEnvVariables.isNotEmpty() || extraCommandArgs.isNotEmpty() ||
-                                     effectiveGenerationSettings != AgentPromptGenerationSettings.AUTO) {
+        val launchSpecOverride = if (extraEnvVariables.isNotEmpty() || extraCommandArgs.isNotEmpty()) {
           val baseResumeSpec = AgentSessionLaunchSpecs.resolveResume(
             projectPath = normalizedPath,
             provider = effectiveThread.provider,
             sessionId = effectiveThread.id,
             launchMode = effectiveResumeLaunchMode,
           )
-          val generationResumeSpec = descriptor?.applyGenerationSettings(baseResumeSpec, effectiveGenerationSettings) ?: baseResumeSpec
-          generationResumeSpec.copy(
-            command = if (extraCommandArgs.isNotEmpty()) generationResumeSpec.command + extraCommandArgs else generationResumeSpec.command,
-            envVariables = if (extraEnvVariables.isNotEmpty()) generationResumeSpec.envVariables + extraEnvVariables else generationResumeSpec.envVariables,
+          baseResumeSpec.copy(
+            command = if (extraCommandArgs.isNotEmpty()) baseResumeSpec.command + extraCommandArgs else baseResumeSpec.command,
+            envVariables = if (extraEnvVariables.isNotEmpty()) baseResumeSpec.envVariables + extraEnvVariables else baseResumeSpec.envVariables,
           )
         }
         else {
@@ -921,11 +916,11 @@ class AgentSessionLaunchService internal constructor(
             thread = targetThread,
             entryPoint = AgentWorkbenchEntryPoint.PROMPT,
             initialMessageRequest = effectiveInitialMessageRequest,
+            precomputedInitialMessagePlan = initialMessagePlan,
             resumeLaunchMode = request.launchMode,
             singleFlightPolicy = SingleFlightPolicy.RESTART_LATEST,
             launchOrigin = OpenThreadLaunchOrigin.PROMPT_LAUNCH,
             promptLaunchResolved = ::reportPromptLaunchResolved,
-            generationSettings = request.generationSettings,
             extraEnvVariables = request.containerSessionEnvVariables,
             extraCommandArgs = request.containerSessionExtraArgs,
           )
@@ -1168,7 +1163,6 @@ private suspend fun resolvePromptInitialMessageDispatchPlan(
   thread: AgentSessionThread,
   initialMessageRequest: AgentPromptInitialMessageRequest?,
   precomputedInitialMessagePlan: AgentInitialMessagePlan? = null,
-  generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
 ): AgentInitialMessageDispatchPlan {
   if (initialMessageRequest == null) {
     return AgentInitialMessageDispatchPlan.EMPTY
@@ -1183,10 +1177,9 @@ private suspend fun resolvePromptInitialMessageDispatchPlan(
     provider = thread.provider,
     sessionId = thread.id,
   )
-  val generationResumeLaunchSpec = descriptor.applyGenerationSettings(resumeLaunchSpec, generationSettings)
   return buildInitialMessageDispatchPlan(
     descriptor = descriptor,
-    baseLaunchSpec = generationResumeLaunchSpec,
+    baseLaunchSpec = resumeLaunchSpec,
     identity = identity,
     initialMessagePlan = initialMessagePlan,
     allowStartupPromptOverride = initialMessagePlan.mode == AgentInitialMessageMode.PLAN,
