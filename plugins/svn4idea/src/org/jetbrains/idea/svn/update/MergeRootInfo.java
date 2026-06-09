@@ -1,12 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.jetbrains.idea.svn.info.Info;
-
 import java.io.File;
 
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
@@ -21,8 +19,8 @@ public class MergeRootInfo {
     myRevision1 = Revision.HEAD;
     myRevision2 = Revision.HEAD;
 
-    Info info = vcs.getInfo(file);
-    myUrl1 = info != null && info.getUrl() != null ? info.getUrl().toDecodedString() : "";
+    Url url = vcs.getSvnFileUrlMapping().getUrlForFile(file);
+    myUrl1 = url != null ? url.toDecodedString() : "";
     myUrl2 = myUrl1;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.update;
 
 import org.jetbrains.annotations.NotNull;
@@ -6,8 +6,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.info.Info;
-
 import java.io.File;
 
 public class UpdateRootInfo {
@@ -17,9 +15,7 @@ public class UpdateRootInfo {
 
   public UpdateRootInfo(File file, SvnVcs vcs) {
     myRevision = Revision.HEAD;
-
-    Info info = vcs.getInfo(file);
-    myUrl = info != null ? info.getUrl() : null;
+    myUrl = vcs.getSvnFileUrlMapping().getUrlForFile(file);
   }
 
   public @Nullable Url getUrl() {
