@@ -43,7 +43,7 @@ class JpsProductModeMatcher(productMode: ProductMode) {
     }
     var matches = true
     try {
-      JpsJavaExtensionService.dependencies(module).productionOnly().runtimeOnly().processModules {
+      JpsJavaExtensionService.dependencies(module).productionOnly().runtimeOnly().forEachModule {
         if (matches) {
           matches = matches(module = it, visiting = visiting, evaluation = evaluation)
         }

@@ -50,7 +50,7 @@ private fun generateDependenciesForModule(
     return emptyList()
   }
   val dependencies = ArrayList<RuntimeModuleId>()
-  JpsJavaExtensionService.dependencies(jpsElement).withoutSdk().withoutModuleSourceEntries().runtimeOnly().productionOnly().processModuleAndLibraries(
+  JpsJavaExtensionService.dependencies(jpsElement).withoutSdk().withoutModuleSourceEntries().runtimeOnly().productionOnly().forEachModuleAndLibrary(
     { module ->
       dependencies.add(findTargetModuleId(module, pluginHeaderData, elementToIds, contentModuleDetector))
     },

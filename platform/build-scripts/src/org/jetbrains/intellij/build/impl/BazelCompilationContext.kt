@@ -78,7 +78,7 @@ class BazelCompilationContext(
       .includedIn(JpsJavaClasspathKind.runtime(forTests))
 
     val result = LinkedHashSet<Path>()
-    enumerator.processModuleAndLibraries(
+    enumerator.forEachModuleAndLibrary(
       { depModule ->
         result.addAll(outputProvider.getModuleOutputRoots(depModule, forTests = forTests))
         if (forTests) {  // incl. production

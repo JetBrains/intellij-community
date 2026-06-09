@@ -206,13 +206,13 @@ class PluginDependenciesValidator private constructor(
         scope == JpsJavaDependencyScope.COMPILE
         || scope == JpsJavaDependencyScope.PROVIDED && dependency is JpsModuleDependency && dependency.moduleReference.moduleName !in compileOnlyDependencies
       }
-      enumerator.processModules { targetModule ->
+      enumerator.forEachModule { targetModule ->
         val targetModuleName = targetModule.name
         if (targetModuleName !in moduleDependenciesAtRuntime) {
           val ignoredDependencyPattern = findIgnoredDependencyPattern(sourceModule.name, targetModuleName)
           if (ignoredDependencyPattern != null) {
             unusedIgnoredDependenciesPatterns.remove(ignoredDependencyPattern)
-            return@processModules
+            return@forEachModule
           }
 
           val allExpectedTargets = jpsModuleToRuntimeDescriptors[targetModuleName]
@@ -227,7 +227,7 @@ class PluginDependenciesValidator private constructor(
                 |$messageDescribingHowToUpdateLayoutData 
                 |""".trimMargin()
             errors.add(PluginModuleConfigurationError(pluginModelModuleName = sourceModule.name, errorMessage = errorMessage))
-            return@processModules
+            return@forEachModule
           }
 
           val expectedTargets = allExpectedTargets.filter { it.contentModuleName?.contains("/") != true }.takeIf { it.isNotEmpty() } ?: allExpectedTargets
