@@ -61,7 +61,7 @@ override fun getProductContentModules(): ProductModulesContentSpec {
     // Include module sets
     moduleSet(CommunityModuleSets.essential())
     moduleSet(CommunityModuleSets.vcs())
-    moduleSet(UltimateModuleSets.ssh())
+    moduleSet(UltimateModuleSets.webIde())
 
     // Add individual modules
     module("intellij.platform.collaborationTools")
@@ -206,7 +206,7 @@ override fun getProductContentModules(): ProductModulesContentSpec {
   return productModules {
     moduleSet(CommunityModuleSets.essential())
     moduleSet(CommunityModuleSets.vcs())
-    moduleSet(UltimateModuleSets.ssh())
+    moduleSet(UltimateModuleSets.webIde())
     embeddedModule("intellij.gateway.ssh")
 
     module("intellij.platform.collaborationTools")

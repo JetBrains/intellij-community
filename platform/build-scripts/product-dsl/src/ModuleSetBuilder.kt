@@ -173,10 +173,10 @@ class ModuleSetBuilder(private val defaultIncludeDependencies: Boolean = false) 
  *
  * Example:
  * ```
- * fun ssh() = moduleSet("ssh") {
- *   embeddedModule("intellij.platform.ssh.core")
- *   embeddedModule("intellij.platform.ssh")
- *   module("intellij.platform.ssh.ui")
+ * fun lsp() = moduleSet("lsp") {
+ *   embeddedModule("intellij.platform.lsp")
+ *   embeddedModule("intellij.platform.lsp.impl")
+ *   module("intellij.platform.lsp.impl.structureView")
  * }
  *
  * // With module alias:

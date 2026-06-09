@@ -214,9 +214,9 @@ fun validateNoRedundantModuleSets(
 
    Example fix:
    override fun getProductContentDescriptor() = productModules {
-     // moduleSet(ssh())           // ← REMOVE (already in ide.ultimate)
-     // moduleSet(rd.common())      // ← REMOVE (already in ide.ultimate)
-     moduleSet(ideUltimate())       // ← KEEP (includes ssh and rd.common)
+     // moduleSet(duplicatesUltimate())  // ← REMOVE (already in ide.ultimate)
+     // moduleSet(identifiersUltimate()) // ← REMOVE (already in ide.ultimate)
+     moduleSet(ideUltimate())            // ← KEEP (includes duplicates.ultimate and identifiers.ultimate)
    }"""
     error(formatValidationError(
       "Product specification errors: Redundant module set references detected",

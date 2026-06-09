@@ -312,7 +312,7 @@ To find available module sets and understand their contents:
 
 Create a new module set when:
 - **Multiple products** need the same group of modules
-- The modules form a **cohesive functional unit** (e.g., VCS support, XML support, SSH support)
+- The modules form a **cohesive functional unit** (e.g., VCS support, XML support, coverage support)
 - You want to **enforce consistency** across products using these modules
 - The group is likely to be **reused or evolved** over time
 

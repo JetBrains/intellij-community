@@ -278,14 +278,14 @@ Note: You cannot override nested set modules.
 ```
 ❌ Product specification errors: Redundant module set references detected
 
-  ✗ Product 'GoLand': module set 'ssh' is redundant (already nested in 'ide.ultimate')
+  ✗ Product 'GoLand': module set 'duplicates.ultimate' is redundant (already nested in 'ide.ultimate')
 
 💡 Hint: Remove redundant module sets from product's getProductContentDescriptor() method.
 
    Example fix:
    override fun getProductContentDescriptor() = productModules {
-     // moduleSet(ssh())           // ← REMOVE (already in ide.ultimate)
-     moduleSet(ideUltimate())       // ← KEEP (includes ssh)
+     // moduleSet(duplicatesUltimate())  // ← REMOVE (already in ide.ultimate)
+     moduleSet(ideUltimate())            // ← KEEP (includes duplicates.ultimate)
    }
 ```
 

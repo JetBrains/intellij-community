@@ -517,7 +517,7 @@ class ProductModulesContentSpecBuilder @PublishedApi internal constructor() {
  *     include("intellij.gateway", "META-INF/Gateway.xml")
  *
  *     // Module sets
- *     moduleSet(UltimateModuleSets.ssh())
+   *     moduleSet(UltimateModuleSets.webIde())
  *     moduleSet(CommunityModuleSets.vcs())
  *
  *     // Individual modules
