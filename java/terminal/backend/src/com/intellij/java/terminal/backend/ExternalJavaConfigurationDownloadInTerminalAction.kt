@@ -10,13 +10,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationMissingAction
 import com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationProvider
 import com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationService
+import com.intellij.openapi.projectRoots.impl.JdkReleaseData
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 
 /**
  * Provides an action to open a new terminal session and execute the download command.
  */
 class ExternalJavaConfigurationDownloadInTerminalAction : ExternalJavaConfigurationMissingAction {
-  override fun <T> createAction(project: Project, provider: ExternalJavaConfigurationProvider<T>, releaseData: T): AnAction? {
+  override fun <T: JdkReleaseData> createAction(project: Project, provider: ExternalJavaConfigurationProvider<T>, releaseData: T): AnAction? {
     val command = provider.getDownloadCommandFor(releaseData) ?: return null
     return object : AnAction(JavaTerminalBundle.message("external.java.configuration.run.command", command), null, AllIcons.Actions.Download) {
       override fun actionPerformed(e: AnActionEvent) {

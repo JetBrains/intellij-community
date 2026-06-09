@@ -1,9 +1,8 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.project.stateStore
@@ -12,7 +11,7 @@ import java.nio.file.Path
 
 private val LOG = logger<ToolVersionsConfigurationProvider>()
 
-public data class AsdfReleaseData(val name: String, val vendor: String, val version: String) {
+public data class AsdfReleaseData(val name: String, val vendor: String, val version: String) : JdkReleaseData {
   public companion object {
     private val regex: Regex = Regex("([\\w\\-]+)-([0-9][^-_+b\\s]*)\\S*")
 
@@ -28,33 +27,33 @@ public data class AsdfReleaseData(val name: String, val vendor: String, val vers
 
   val normalizedVersion: String = version.split(".").take(3).joinToString(".")
 
-  public fun matchVersionString(versionString: @NlsSafe String): Boolean {
+  override fun getVariant(): JdkVersionDetector.Variant = when (vendor) {
+    "adoptopenjdk", "adoptopenjdk-jre" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
+    "adoptopenjdk-jre-openj9", "adoptopenjdk-jre-openj9-large_heap",
+    "adoptopenjdk-openj9", "adoptopenjdk-openj9-large_heap" -> JdkVersionDetector.Variant.AdoptOpenJdk_J9
+    "corretto" -> JdkVersionDetector.Variant.Corretto
+    "dragonwell" -> JdkVersionDetector.Variant.Dragonwell
+    "graalvm-community" -> JdkVersionDetector.Variant.GraalVMCE
+    "jetbrains" -> JdkVersionDetector.Variant.JBR
+    "kona" -> JdkVersionDetector.Variant.Kona
+    "liberica", "liberica-javafx",
+    "liberica-jre", "liberica-jre-javafx", "liberica-lite" -> JdkVersionDetector.Variant.Liberica
+    "microsoft" -> JdkVersionDetector.Variant.Microsoft
+    "openjdk", "oracle" -> JdkVersionDetector.Variant.Oracle
+    "oracle-graalvm" -> JdkVersionDetector.Variant.GraalVM
+    "sapmachine", "sapmachine-jre" -> JdkVersionDetector.Variant.SapMachine
+    "semeru-jre-openj9", "semeru-openj9" -> JdkVersionDetector.Variant.Semeru
+    "temurin", "temurin-jre" -> JdkVersionDetector.Variant.Temurin
+    "zulu", "zulu-javafx", "zulu-jre", "zulu-jre-javafx" -> JdkVersionDetector.Variant.Zulu
+    else -> JdkVersionDetector.Variant.Unknown
+  }
+
+  override fun matchVersionString(versionString: @NlsSafe String): Boolean {
     LOG.info("Matching '$versionString'")
     if (normalizedVersion !in versionString) return false
 
-    val variant = when (vendor) {
-      "adoptopenjdk", "adoptopenjdk-jre" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
-      "adoptopenjdk-jre-openj9", "adoptopenjdk-jre-openj9-large_heap",
-      "adoptopenjdk-openj9", "adoptopenjdk-openj9-large_heap" -> JdkVersionDetector.Variant.AdoptOpenJdk_J9
-      "corretto" -> JdkVersionDetector.Variant.Corretto
-      "dragonwell" -> JdkVersionDetector.Variant.Dragonwell
-      "graalvm-community" -> JdkVersionDetector.Variant.GraalVMCE
-      "jetbrains" -> JdkVersionDetector.Variant.JBR
-      "kona" -> JdkVersionDetector.Variant.Kona
-      "liberica", "liberica-javafx",
-      "liberica-jre", "liberica-jre-javafx", "liberica-lite" -> JdkVersionDetector.Variant.Liberica
-      "microsoft" -> JdkVersionDetector.Variant.Microsoft
-      "openjdk", "oracle" -> JdkVersionDetector.Variant.Oracle
-      "oracle-graalvm" -> JdkVersionDetector.Variant.GraalVM
-      "sapmachine", "sapmachine-jre" -> JdkVersionDetector.Variant.SapMachine
-      "semeru-jre-openj9", "semeru-openj9" -> JdkVersionDetector.Variant.Semeru
-      "temurin", "temurin-jre" -> JdkVersionDetector.Variant.Temurin
-      "zulu", "zulu-javafx", "zulu-jre", "zulu-jre-javafx" -> JdkVersionDetector.Variant.Zulu
-      else -> JdkVersionDetector.Variant.Unknown
-    }
-
     // Check vendor
-    val variantName = variant.displayName
+    val variantName = getVariant().displayName
     return versionString.contains(variantName)
   }
 }
@@ -83,16 +82,6 @@ public class ToolVersionsConfigurationProvider : ExternalJavaConfigurationProvid
                   .firstOrNull { it.groupValues.getOrNull(1)?.contains(releaseData.name) == true }
                   ?.range ?: return null
     return TextRange(range.first, range.last)
-  }
-
-  override fun matchAgainstSdk(releaseData: AsdfReleaseData, sdk: Sdk): Boolean {
-    val sdkVersion = sdk.versionString ?: return false
-    return releaseData.matchVersionString(sdkVersion)
-  }
-
-  override fun matchAgainstPath(releaseData: AsdfReleaseData, path: String): Boolean {
-    val info = SdkVersionUtil.getJdkVersionInfo(path) ?: return false
-    return releaseData.matchVersionString(info.displayVersionString())
   }
 
   override fun getDownloadCommandFor(releaseData: AsdfReleaseData): String {
