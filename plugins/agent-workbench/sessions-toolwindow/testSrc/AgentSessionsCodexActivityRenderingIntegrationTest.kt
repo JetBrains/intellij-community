@@ -87,7 +87,7 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
         refreshThreadSeedsByPath = mapOf(
           PROJECT_PATH to setOf(AgentSessionRefreshThreadSeed(threadId = "thread-1", updatedAt = 1_000L))
         ),
-      ).getValue(PROJECT_PATH).activityUpdatesByThreadId.mapValues { (_, update) -> update.rowActivity }
+      ).getValue(PROJECT_PATH).activityUpdatesByThreadId.mapValues { (_, update) -> update.activityReport.rowActivity }
     ).containsExactlyEntriesOf(mapOf("thread-1" to AgentThreadActivity.PROCESSING))
 
     withTestService(

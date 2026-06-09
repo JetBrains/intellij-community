@@ -2,9 +2,11 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -49,7 +51,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
       projectPath = "/work/project",
       sessionState = MutableStateFlow(TerminalViewSessionState.NotStarted),
       parentScope = this,
-      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
+      notifyRefresh = { provider, path, threadId, activityReport -> signals.add(RefreshSignal(provider, path, threadId, activityReport)) },
     ).use {
       val signal = withTimeout(5.seconds) { signals.take() }
 
@@ -68,7 +70,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
       sessionState = sessionState,
       parentScope = this,
       emitInitialRefresh = false,
-      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
+      notifyRefresh = { provider, path, threadId, activityReport -> signals.add(RefreshSignal(provider, path, threadId, activityReport)) },
     ).use {
       sessionState.value = TerminalViewSessionState.Terminated
 
@@ -167,7 +169,7 @@ class AgentChatScopedTerminalRefreshControllerTest {
         watchRequests.add(threadId)
         fileChanges
       },
-      notifyRefresh = { provider, path, threadId, activityHint -> signals.add(RefreshSignal(provider, path, threadId, activityHint)) },
+      notifyRefresh = { provider, path, threadId, activityReport -> signals.add(RefreshSignal(provider, path, threadId, activityReport)) },
       notifyUpdate = { _, updateEvent -> updates.add(updateEvent) },
     ).use {
       assertThat(watchRequests.poll(200, TimeUnit.MILLISECONDS)).isNull()
@@ -272,14 +274,14 @@ private data class RefreshSignal(
   val provider: AgentSessionProvider,
   val projectPath: String,
   val threadId: String?,
-  val activityHint: AgentThreadActivity?,
+  val activityReport: AgentThreadActivityReport?,
 )
 
 private fun activeUpdate(threadId: String): AgentSessionSourceUpdateEvent {
   return AgentSessionSourceUpdateEvent(
     type = AgentSessionSourceUpdate.HINTS_CHANGED,
     scopedPaths = setOf("/work/project"),
-    activityHintsByThreadId = mapOf(threadId to AgentThreadActivity.PROCESSING),
+    activityUpdatesByThreadId = mapOf(threadId to AgentSessionThreadActivityUpdate(AgentThreadActivityReport(AgentThreadActivity.PROCESSING))),
   )
 }
 

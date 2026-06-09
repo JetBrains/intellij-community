@@ -4,9 +4,9 @@ package com.intellij.agent.workbench.codex.sessions
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
@@ -1057,9 +1057,8 @@ class CodexRolloutSessionBackendTest {
         assertThat(update).isNotNull
         assertThat(update!!.scopedPaths).containsExactly(projectDir.toString())
         assertThat(update.threadIds).containsExactly("session-update-activity-hint")
-        assertThat(update.activityHintsByThreadId)
-          .containsEntry("session-update-activity-hint", AgentThreadActivity.PROCESSING)
-        assertThat(update.activityHintPolicy).isEqualTo(AgentSessionActivityHintPolicy.AUTHORITATIVE)
+        assertThat(update.activityUpdatesByThreadId.getValue("session-update-activity-hint").activityReport)
+          .isEqualTo(AgentThreadActivityReport(AgentThreadActivity.PROCESSING))
         assertThat(update.mayHaveChangedProjectFiles).isFalse()
       }
       finally {
@@ -1353,10 +1352,8 @@ class CodexRolloutSessionBackendTest {
         assertThat(update).isNotNull
         assertThat(update!!.scopedPaths).containsExactly(projectDir.toString())
         assertThat(update.threadIds).containsExactly("session-sub-agent-summary-hint")
-        assertThat(update.activityHintsByThreadId)
-          .containsEntry("session-sub-agent-summary-hint", AgentThreadActivity.UNREAD)
-        assertThat(update.summaryActivityHintsByThreadId).containsEntry("session-sub-agent-summary-hint", null)
-        assertThat(update.activityHintPolicy).isEqualTo(AgentSessionActivityHintPolicy.AUTHORITATIVE)
+        assertThat(update.activityUpdatesByThreadId.getValue("session-sub-agent-summary-hint").activityReport)
+          .isEqualTo(AgentThreadActivityReport(rowActivity = AgentThreadActivity.UNREAD, chromeActivity = null))
       }
       finally {
         updatesJob.cancelAndJoin()
@@ -1738,7 +1735,8 @@ class CodexRolloutSessionBackendTest {
       assertThat(updates).hasSize(1)
       val update = updates.single()
       assertThat(update.threadIds).isNull()
-      assertThat(update.activityHintsByThreadId).containsEntry("session-active-unchanged", AgentThreadActivity.PROCESSING)
+      assertThat(update.activityUpdatesByThreadId.getValue("session-active-unchanged").activityReport)
+        .isEqualTo(AgentThreadActivityReport(AgentThreadActivity.PROCESSING))
       assertThat(update.mayHaveChangedProjectFiles).isFalse()
     }
   }

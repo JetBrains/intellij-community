@@ -12,14 +12,15 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThreadRef
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
 import com.intellij.agent.workbench.filewatch.agentWorkbenchImmediateFileChangeFlow
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
 import com.intellij.agent.workbench.json.filebacked.toFileBackedSessionPathKey
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -125,8 +126,7 @@ internal class CodexRolloutSessionBackend(
 
     val scopedPaths = LinkedHashSet<String>()
     val threadIds = LinkedHashSet<String>()
-    val activityHintsByThreadId = LinkedHashMap<String, AgentThreadActivity>()
-    val summaryActivityHintsByThreadId = LinkedHashMap<String, AgentThreadActivity?>()
+    val activityUpdatesByThreadId = LinkedHashMap<String, AgentSessionThreadActivityUpdate>()
     var mayHaveChangedProjectFiles = false
     var changedProjectFilePaths: LinkedHashSet<String>? = LinkedHashSet()
     var failedParses = 0
@@ -152,8 +152,12 @@ internal class CodexRolloutSessionBackend(
       parsedThread.parentThreadId?.let(threadIds::add)
       if (parsedThread.parentThreadId == null) {
         val threadId = parsedThread.thread.thread.id
-        activityHintsByThreadId[threadId] = parsedThread.thread.activity.toAgentThreadActivity()
-        summaryActivityHintsByThreadId[threadId] = parsedThread.thread.summaryActivity?.toAgentThreadActivity()
+        activityUpdatesByThreadId[threadId] = AgentSessionThreadActivityUpdate(
+          activityReport = AgentThreadActivityReport(
+            rowActivity = parsedThread.thread.activity.toAgentThreadActivity(),
+            chromeActivity = parsedThread.thread.summaryActivity?.toAgentThreadActivity(),
+          ),
+        )
       }
     }
 
@@ -175,9 +179,7 @@ internal class CodexRolloutSessionBackend(
       type = AgentSessionSourceUpdate.HINTS_CHANGED,
       scopedPaths = scopedPaths,
       threadIds = threadIds.takeIf { it.isNotEmpty() },
-      activityHintsByThreadId = activityHintsByThreadId,
-      summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
-      activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+      activityUpdatesByThreadId = activityUpdatesByThreadId,
       mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
       changedProjectFilePaths = changedProjectFilePathsForUpdate(mayHaveChangedProjectFiles, changedProjectFilePaths),
     )
@@ -202,9 +204,13 @@ internal class CodexRolloutSessionBackend(
     return AgentSessionSourceUpdateEvent(
       type = AgentSessionSourceUpdate.HINTS_CHANGED,
       scopedPaths = setOf(parsedThread.normalizedCwd),
-      activityHintsByThreadId = activeThreadActivityHint?.let { hint -> mapOf(hint.threadId to hint.activity) }.orEmpty(),
-      summaryActivityHintsByThreadId = activeThreadActivityHint?.let { hint -> mapOf(hint.threadId to hint.summaryActivity) }.orEmpty(),
-      activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+      activityUpdatesByThreadId = activeThreadActivityHint?.let { hint ->
+        mapOf(
+          hint.threadId to AgentSessionThreadActivityUpdate(
+            activityReport = AgentThreadActivityReport(rowActivity = hint.activity, chromeActivity = hint.summaryActivity),
+          )
+        )
+      }.orEmpty(),
       mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
       changedProjectFilePaths = consumedProjectFileChangeEvidence?.changedProjectFilePaths,
     )

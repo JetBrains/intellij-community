@@ -1560,7 +1560,7 @@ class AgentChatEditorServiceTest {
 
     val signal = signalWaiter.await()
     assertThat(signal.scopedPaths).containsExactly("/work/project-scoped-refresh-delayed")
-    assertThat(signal.activityHintsByThreadId).isEmpty()
+    assertThat(signal.activityUpdatesByThreadId).isEmpty()
   }
 
   @Test
@@ -1580,7 +1580,7 @@ class AgentChatEditorServiceTest {
     val signal = signalWaiter.await()
     assertThat(signal.scopedPaths).containsExactly("/work/project-scoped-refresh-thread")
     assertThat(signal.threadIds).containsExactly("codex-thread-1")
-    assertThat(signal.activityHintsByThreadId).isEmpty()
+    assertThat(signal.activityUpdatesByThreadId).isEmpty()
   }
 
   @Test

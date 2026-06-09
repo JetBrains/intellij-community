@@ -19,34 +19,14 @@ data class AgentSessionRebindCandidate(
 )
 
 data class AgentSessionThreadActivityUpdate(
-  @JvmField val rowActivity: AgentThreadActivity? = null,
-  @JvmField val chromeActivity: AgentThreadActivity? = rowActivity,
-  @JvmField val hasChromeActivity: Boolean = rowActivity != null,
+  @JvmField val activityReport: AgentThreadActivityReport,
+  @JvmField val updatesChromeActivity: Boolean = true,
   @JvmField val updatedAt: Long? = null,
-) {
-  companion object {
-    fun report(report: AgentThreadActivityReport, updatedAt: Long? = null): AgentSessionThreadActivityUpdate {
-      return AgentSessionThreadActivityUpdate(
-        rowActivity = report.rowActivity,
-        chromeActivity = report.chromeActivity,
-        hasChromeActivity = true,
-        updatedAt = updatedAt,
-      )
-    }
-  }
-}
+)
 
 data class AgentSessionRefreshHints(
   @JvmField val rebindCandidates: List<AgentSessionRebindCandidate> = emptyList(),
-  @JvmField val activityByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
-  @JvmField val summaryActivityByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
-  @JvmField val activityUpdatedAtByThreadId: Map<String, Long> = emptyMap(),
-  @JvmField val activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = buildAgentSessionActivityUpdates(
-    activityByThreadId = activityByThreadId,
-    summaryActivityByThreadId = summaryActivityByThreadId,
-    activityUpdatedAtByThreadId = activityUpdatedAtByThreadId,
-    rowActivityImpliesChromeActivity = false,
-  ),
+  @JvmField val activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
 )
 
 const val UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT: Long = -1L
@@ -68,56 +48,14 @@ enum class AgentSessionSourceUpdate {
   HINTS_CHANGED,
 }
 
-enum class AgentSessionActivityHintPolicy {
-  OPTIMISTIC,
-  AUTHORITATIVE,
-}
-
 data class AgentSessionSourceUpdateEvent(
   @JvmField val type: AgentSessionSourceUpdate,
   @JvmField val scopedPaths: Set<String>? = null,
   @JvmField val threadIds: Set<String>? = null,
-  @JvmField val activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
-  @JvmField val summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
-  @JvmField val activityUpdatedAtHintsByThreadId: Map<String, Long> = emptyMap(),
-  @JvmField val activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = buildAgentSessionActivityUpdates(
-    activityByThreadId = activityHintsByThreadId,
-    summaryActivityByThreadId = summaryActivityHintsByThreadId,
-    activityUpdatedAtByThreadId = activityUpdatedAtHintsByThreadId,
-    rowActivityImpliesChromeActivity = true,
-  ),
-  @JvmField val activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+  @JvmField val activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
   @JvmField val mayHaveChangedProjectFiles: Boolean = false,
   @JvmField val changedProjectFilePaths: Set<String>? = null,
 )
-
-private fun buildAgentSessionActivityUpdates(
-  activityByThreadId: Map<String, AgentThreadActivity>,
-  summaryActivityByThreadId: Map<String, AgentThreadActivity?>,
-  activityUpdatedAtByThreadId: Map<String, Long>,
-  rowActivityImpliesChromeActivity: Boolean,
-): Map<String, AgentSessionThreadActivityUpdate> {
-  val threadIds = LinkedHashSet<String>(activityByThreadId.size + summaryActivityByThreadId.size + activityUpdatedAtByThreadId.size)
-  threadIds.addAll(activityByThreadId.keys)
-  threadIds.addAll(summaryActivityByThreadId.keys)
-  threadIds.addAll(activityUpdatedAtByThreadId.keys)
-  if (threadIds.isEmpty()) {
-    return emptyMap()
-  }
-  val updates = LinkedHashMap<String, AgentSessionThreadActivityUpdate>(threadIds.size)
-  for (threadId in threadIds) {
-    val rowActivity = activityByThreadId[threadId]
-    val hasSummaryActivity = summaryActivityByThreadId.containsKey(threadId)
-    val hasChromeActivity = hasSummaryActivity || (rowActivityImpliesChromeActivity && rowActivity != null)
-    updates[threadId] = AgentSessionThreadActivityUpdate(
-      rowActivity = rowActivity,
-      chromeActivity = if (hasSummaryActivity) summaryActivityByThreadId[threadId] else rowActivity?.takeIf { rowActivityImpliesChromeActivity },
-      hasChromeActivity = hasChromeActivity,
-      updatedAt = activityUpdatedAtByThreadId[threadId],
-    )
-  }
-  return updates
-}
 
 data class AgentSessionSourceRefreshRequest(
   @JvmField val paths: List<String>,

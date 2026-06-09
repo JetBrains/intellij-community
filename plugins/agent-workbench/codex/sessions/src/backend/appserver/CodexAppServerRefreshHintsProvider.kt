@@ -15,12 +15,12 @@ import com.intellij.agent.workbench.codex.sessions.backend.isResponseRequired
 import com.intellij.agent.workbench.codex.sessions.backend.resolveCodexSessionActivity
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.agent.workbench.codex.sessions.backend.toCodexSessionActivity
-import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.agent.workbench.sessions.core.providers.UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT
 import com.intellij.agent.workbench.sessions.core.isAgentSessionPendingThreadId
 import com.intellij.openapi.diagnostic.debug
@@ -239,11 +239,20 @@ internal class CodexAppServerRefreshHintsProvider(
     val threadId = notification.threadId?.takeIf { it.isNotBlank() }
     val startedThreadPath = notification.startedThread?.cwd?.takeIf { it.isNotBlank() }?.let(::normalizeRootPath)
     val activityHint = notification.toRefreshActivityHintOrNull(receivedAtMs = System.currentTimeMillis())
-    fun activityHintsByThreadId(): Map<String, AgentThreadActivity> {
+    fun activityUpdatesByThreadId(): Map<String, AgentSessionThreadActivityUpdate> {
       if (threadId == null || activityHint == null) {
         return emptyMap()
       }
-      return mapOf(threadId to activityHint.activity)
+      return mapOf(
+        threadId to AgentSessionThreadActivityUpdate(
+          activityReport = AgentThreadActivityReport(
+            rowActivity = activityHint.activity,
+            chromeActivity = if (activityHint.hasSummaryActivityHint) activityHint.summaryActivity else null,
+          ),
+          updatesChromeActivity = activityHint.hasSummaryActivityHint,
+          updatedAt = activityHint.updatedAt,
+        )
+      )
     }
     return when {
       notification.kind == CodexAppServerNotificationKind.THREAD_STARTED && startedThreadPath != null -> AgentSessionSourceUpdateEvent(
@@ -253,8 +262,7 @@ internal class CodexAppServerRefreshHintsProvider(
       startedThreadPath != null -> AgentSessionSourceUpdateEvent(
         type = AgentSessionSourceUpdate.HINTS_CHANGED,
         scopedPaths = setOf(startedThreadPath),
-        activityHintsByThreadId = activityHintsByThreadId(),
-        activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+        activityUpdatesByThreadId = activityUpdatesByThreadId(),
       )
       notification.kind == CodexAppServerNotificationKind.THREAD_NAME_UPDATED && threadId != null -> {
         val startedThreadPathForId = findStartedThreadPath(threadId)
@@ -262,8 +270,7 @@ internal class CodexAppServerRefreshHintsProvider(
           AgentSessionSourceUpdateEvent(
             type = AgentSessionSourceUpdate.HINTS_CHANGED,
             threadIds = setOf(threadId),
-            activityHintsByThreadId = activityHintsByThreadId(),
-            activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+            activityUpdatesByThreadId = activityUpdatesByThreadId(),
           )
         }
         else {
@@ -271,16 +278,14 @@ internal class CodexAppServerRefreshHintsProvider(
             type = AgentSessionSourceUpdate.HINTS_CHANGED,
             scopedPaths = setOf(startedThreadPathForId),
             threadIds = setOf(threadId),
-            activityHintsByThreadId = activityHintsByThreadId(),
-            activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+            activityUpdatesByThreadId = activityUpdatesByThreadId(),
           )
         }
       }
       threadId != null -> AgentSessionSourceUpdateEvent(
         type = AgentSessionSourceUpdate.HINTS_CHANGED,
         threadIds = setOf(threadId),
-        activityHintsByThreadId = activityHintsByThreadId(),
-        activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+        activityUpdatesByThreadId = activityUpdatesByThreadId(),
       )
       else -> AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.HINTS_CHANGED)
     }

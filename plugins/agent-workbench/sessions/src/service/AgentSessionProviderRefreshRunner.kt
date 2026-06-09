@@ -799,7 +799,7 @@ private fun applyRefreshHintsToOutcomes(
         return@map thread
       }
       val activityUpdate = activityUpdatesByThreadId[thread.id] ?: return@map thread
-      val resolvedUpdate = resolveAgentSessionThreadActivityUpdate(thread = thread, activityUpdate = activityUpdate)
+      val resolvedUpdate = resolveAgentThreadActivityReportUpdate(thread = thread, activityUpdate = activityUpdate)
       if (resolvedUpdate.activityReport == thread.activityReport && resolvedUpdate.updatedAt == thread.updatedAt) {
         return@map thread
       }

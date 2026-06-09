@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.chat
 // @spec community/plugins/agent-workbench/spec/agent-terminal-sessions.spec.md
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
@@ -207,7 +208,7 @@ private class ToolWindowAgentChatTerminalTab(
             provider = provider,
             projectPath = projectPath,
             threadId = threadId,
-            activityHint = AgentThreadActivity.PROCESSING,
+            activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING),
           )
         }
       },
@@ -243,7 +244,7 @@ private class ToolWindowAgentChatTerminalTab(
             provider = provider,
             projectPath = projectPath,
             threadId = threadId,
-            activityHint = AgentThreadActivity.PROCESSING,
+            activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING),
           )
         }
       },

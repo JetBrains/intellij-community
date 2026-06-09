@@ -1,10 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -354,14 +352,7 @@ internal class AgentSessionRefreshScheduler(
       type = updateEvent.type,
       scopedPaths = normalizePaths(updateEvent.scopedPaths),
       threadIds = normalizeThreadIds(updateEvent.threadIds),
-      activityHintsByThreadId = normalizeActivityHints(
-        activityHintsByThreadId = updateEvent.activityHintsByThreadId,
-        activityHintPolicy = updateEvent.activityHintPolicy,
-      ),
-      summaryActivityHintsByThreadId = normalizeSummaryActivityHints(updateEvent.summaryActivityHintsByThreadId),
-      activityUpdatedAtHintsByThreadId = normalizeActivityUpdatedAtHints(updateEvent.activityUpdatedAtHintsByThreadId),
       activityUpdatesByThreadId = normalizeActivityUpdates(updateEvent.activityUpdatesByThreadId),
-      activityHintPolicy = updateEvent.activityHintPolicy,
       mayHaveChangedProjectFiles = updateEvent.mayHaveChangedProjectFiles,
       changedProjectFilePaths = normalizePaths(updateEvent.changedProjectFilePaths),
     )
@@ -383,55 +374,6 @@ internal class AgentSessionRefreshScheduler(
       ?.filter { it.isNotBlank() }
       ?.toCollection(LinkedHashSet())
       ?.takeIf { it.isNotEmpty() }
-  }
-
-  private fun normalizeActivityHints(
-    activityHintsByThreadId: Map<String, AgentThreadActivity>,
-    @Suppress("UNUSED_PARAMETER") activityHintPolicy: AgentSessionActivityHintPolicy,
-  ): Map<String, AgentThreadActivity> {
-    if (activityHintsByThreadId.isEmpty()) {
-      return emptyMap()
-    }
-    val normalized = LinkedHashMap<String, AgentThreadActivity>(activityHintsByThreadId.size)
-    for ((threadId, activity) in activityHintsByThreadId) {
-      val normalizedThreadId = threadId.trim()
-      if (normalizedThreadId.isNotEmpty()) {
-        normalized[normalizedThreadId] = activity
-      }
-    }
-    return normalized
-  }
-
-  private fun normalizeSummaryActivityHints(
-    summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?>,
-  ): Map<String, AgentThreadActivity?> {
-    if (summaryActivityHintsByThreadId.isEmpty()) {
-      return emptyMap()
-    }
-    val normalized = LinkedHashMap<String, AgentThreadActivity?>(summaryActivityHintsByThreadId.size)
-    for ((threadId, summaryActivity) in summaryActivityHintsByThreadId) {
-      val normalizedThreadId = threadId.trim()
-      if (normalizedThreadId.isNotEmpty()) {
-        normalized[normalizedThreadId] = summaryActivity
-      }
-    }
-    return normalized
-  }
-
-  private fun normalizeActivityUpdatedAtHints(
-    activityUpdatedAtByThreadId: Map<String, Long>,
-  ): Map<String, Long> {
-    if (activityUpdatedAtByThreadId.isEmpty()) {
-      return emptyMap()
-    }
-    val normalized = LinkedHashMap<String, Long>(activityUpdatedAtByThreadId.size)
-    for ((threadId, updatedAt) in activityUpdatedAtByThreadId) {
-      val normalizedThreadId = threadId.trim()
-      if (normalizedThreadId.isNotEmpty()) {
-        normalized[normalizedThreadId] = updatedAt
-      }
-    }
-    return normalized
   }
 
   private fun normalizeActivityUpdates(
@@ -463,26 +405,12 @@ internal class AgentSessionRefreshScheduler(
       incoming.type == AgentSessionSourceUpdate.THREADS_CHANGED -> AgentSessionSourceUpdate.THREADS_CHANGED
       else -> AgentSessionSourceUpdate.HINTS_CHANGED
     }
-    val mergedActivityHintsByThreadId = mergeActivityHints(existing.activityHintsByThreadId, incoming.activityHintsByThreadId)
-    val mergedSummaryActivityHintsByThreadId = mergeSummaryActivityHints(
-      existing = existing.summaryActivityHintsByThreadId,
-      incoming = incoming.summaryActivityHintsByThreadId,
-    )
-    val mergedActivityUpdatedAtHintsByThreadId = mergeActivityUpdatedAtHints(
-      existing = existing.activityUpdatedAtHintsByThreadId,
-      incoming = incoming.activityUpdatedAtHintsByThreadId,
-    )
     val mergedActivityUpdatesByThreadId = mergeActivityUpdates(existing.activityUpdatesByThreadId, incoming.activityUpdatesByThreadId)
-    val mergedActivityHintPolicy = mergeActivityHintPolicy(existing.activityHintPolicy, incoming.activityHintPolicy)
     val mergedChangedProjectFilePaths = mergeChangedProjectFilePaths(existing, incoming)
     if (existing.isUnscoped() || incoming.isUnscoped()) {
       return AgentSessionSourceUpdateEvent(
         type = mergedType,
-        activityHintsByThreadId = mergedActivityHintsByThreadId,
-        summaryActivityHintsByThreadId = mergedSummaryActivityHintsByThreadId,
-        activityUpdatedAtHintsByThreadId = mergedActivityUpdatedAtHintsByThreadId,
         activityUpdatesByThreadId = mergedActivityUpdatesByThreadId,
-        activityHintPolicy = mergedActivityHintPolicy,
         mayHaveChangedProjectFiles = existing.mayHaveChangedProjectFiles || incoming.mayHaveChangedProjectFiles,
         changedProjectFilePaths = mergedChangedProjectFilePaths,
       )
@@ -492,11 +420,7 @@ internal class AgentSessionRefreshScheduler(
       type = mergedType,
       scopedPaths = mergeScopeSets(existing.scopedPaths, incoming.scopedPaths),
       threadIds = mergeScopeSets(existing.threadIds, incoming.threadIds),
-      activityHintsByThreadId = mergedActivityHintsByThreadId,
-      summaryActivityHintsByThreadId = mergedSummaryActivityHintsByThreadId,
-      activityUpdatedAtHintsByThreadId = mergedActivityUpdatedAtHintsByThreadId,
       activityUpdatesByThreadId = mergedActivityUpdatesByThreadId,
-      activityHintPolicy = mergedActivityHintPolicy,
       mayHaveChangedProjectFiles = existing.mayHaveChangedProjectFiles || incoming.mayHaveChangedProjectFiles,
       changedProjectFilePaths = mergedChangedProjectFilePaths,
     )
@@ -516,62 +440,6 @@ internal class AgentSessionRefreshScheduler(
       return null
     }
     return mergeScopeSets(existing.changedProjectFilePaths, incoming.changedProjectFilePaths)
-  }
-
-  private fun mergeActivityHintPolicy(
-    existing: AgentSessionActivityHintPolicy,
-    incoming: AgentSessionActivityHintPolicy,
-  ): AgentSessionActivityHintPolicy {
-    return if (existing == AgentSessionActivityHintPolicy.AUTHORITATIVE || incoming == AgentSessionActivityHintPolicy.AUTHORITATIVE) {
-      AgentSessionActivityHintPolicy.AUTHORITATIVE
-    }
-    else {
-      AgentSessionActivityHintPolicy.OPTIMISTIC
-    }
-  }
-
-  private fun mergeActivityHints(
-    existing: Map<String, AgentThreadActivity>,
-    incoming: Map<String, AgentThreadActivity>,
-  ): Map<String, AgentThreadActivity> {
-    if (existing.isEmpty()) {
-      return incoming
-    }
-    if (incoming.isEmpty()) {
-      return existing
-    }
-    val merged = LinkedHashMap<String, AgentThreadActivity>(existing.size + incoming.size)
-    merged.putAll(existing)
-    merged.putAll(incoming)
-    return merged
-  }
-
-  private fun mergeSummaryActivityHints(
-    existing: Map<String, AgentThreadActivity?>,
-    incoming: Map<String, AgentThreadActivity?>,
-  ): Map<String, AgentThreadActivity?> {
-    if (existing.isEmpty()) {
-      return incoming
-    }
-    if (incoming.isEmpty()) {
-      return existing
-    }
-    val merged = LinkedHashMap<String, AgentThreadActivity?>(existing.size + incoming.size)
-    merged.putAll(existing)
-    merged.putAll(incoming)
-    return merged
-  }
-
-  private fun mergeActivityUpdatedAtHints(
-    existing: Map<String, Long>,
-    incoming: Map<String, Long>,
-  ): Map<String, Long> {
-    if (existing.isEmpty()) return incoming
-    if (incoming.isEmpty()) return existing
-    val merged = LinkedHashMap<String, Long>(existing.size + incoming.size)
-    merged.putAll(existing)
-    merged.putAll(incoming)
-    return merged
   }
 
   private fun mergeActivityUpdates(
@@ -595,15 +463,20 @@ internal class AgentSessionRefreshScheduler(
   ): AgentSessionThreadActivityUpdate {
     val existingUpdatedAt = existing.updatedAt
     val incomingUpdatedAt = incoming.updatedAt
+    if (existingUpdatedAt != null && incomingUpdatedAt != null && incomingUpdatedAt < existingUpdatedAt) {
+      return existing
+    }
     val updatedAt = when {
       existingUpdatedAt == null -> incomingUpdatedAt
       incomingUpdatedAt == null -> existingUpdatedAt
       else -> maxOf(existingUpdatedAt, incomingUpdatedAt)
     }
+    val updatesChromeActivity = incoming.updatesChromeActivity || existing.updatesChromeActivity
     return AgentSessionThreadActivityUpdate(
-      rowActivity = incoming.rowActivity ?: existing.rowActivity,
-      chromeActivity = if (incoming.hasChromeActivity) incoming.chromeActivity else existing.chromeActivity,
-      hasChromeActivity = incoming.hasChromeActivity || existing.hasChromeActivity,
+      activityReport = incoming.activityReport.copy(
+        chromeActivity = if (incoming.updatesChromeActivity) incoming.activityReport.chromeActivity else existing.activityReport.chromeActivity,
+      ),
+      updatesChromeActivity = updatesChromeActivity,
       updatedAt = updatedAt,
     )
   }

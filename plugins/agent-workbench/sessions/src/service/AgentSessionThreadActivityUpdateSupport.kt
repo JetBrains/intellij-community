@@ -5,24 +5,32 @@ import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
 
-internal data class ResolvedAgentSessionThreadActivityUpdate(
+internal data class ResolvedAgentThreadActivityReportUpdate(
   @JvmField val activityReport: AgentThreadActivityReport,
   @JvmField val updatedAt: Long,
 )
 
-internal fun resolveAgentSessionThreadActivityUpdate(
+internal fun resolveAgentThreadActivityReportUpdate(
   thread: AgentSessionThread,
   activityUpdate: AgentSessionThreadActivityUpdate,
-): ResolvedAgentSessionThreadActivityUpdate {
-  val hintedActivity = activityUpdate.rowActivity ?: thread.activity
-  val hintedSummaryActivity = when {
-    activityUpdate.hasChromeActivity -> activityUpdate.chromeActivity
-    thread.summaryActivity == null -> null
-    activityUpdate.rowActivity != null -> hintedActivity
-    else -> thread.summaryActivity
+): ResolvedAgentThreadActivityReportUpdate {
+  val updateTimestamp = activityUpdate.updatedAt
+  if (updateTimestamp != null && updateTimestamp < thread.updatedAt) {
+    return ResolvedAgentThreadActivityReportUpdate(
+      activityReport = thread.activityReport,
+      updatedAt = thread.updatedAt,
+    )
   }
-  return ResolvedAgentSessionThreadActivityUpdate(
-    activityReport = AgentThreadActivityReport(rowActivity = hintedActivity, chromeActivity = hintedSummaryActivity),
-    updatedAt = activityUpdate.updatedAt?.let { updatedAt -> maxOf(thread.updatedAt, updatedAt) } ?: thread.updatedAt,
+  return ResolvedAgentThreadActivityReportUpdate(
+    activityReport = if (activityUpdate.updatesChromeActivity) {
+      activityUpdate.activityReport
+    }
+    else {
+      AgentThreadActivityReport(
+        rowActivity = activityUpdate.activityReport.rowActivity,
+        chromeActivity = thread.activityReport.chromeActivity,
+      )
+    },
+    updatedAt = updateTimestamp?.let { updatedAt -> maxOf(thread.updatedAt, updatedAt) } ?: thread.updatedAt,
   )
 }

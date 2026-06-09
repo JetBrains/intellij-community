@@ -4,9 +4,9 @@ package com.intellij.agent.workbench.claude.sessions
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.claude.sessions.backend.store.ClaudeStoreSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.Dispatchers
@@ -626,8 +626,8 @@ class ClaudeStoreSessionBackendTest {
         assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
         assertThat(update.scopedPaths).containsExactly(projectPath)
         assertThat(update.threadIds).containsExactly("session-scoped-updates")
-        assertThat(update.activityHintsByThreadId).containsEntry("session-scoped-updates", AgentThreadActivity.READY)
-        assertThat(update.activityHintPolicy).isEqualTo(AgentSessionActivityHintPolicy.AUTHORITATIVE)
+        assertThat(update.activityUpdatesByThreadId.getValue("session-scoped-updates").activityReport)
+          .isEqualTo(AgentThreadActivityReport(AgentThreadActivity.READY))
         assertThat(update.mayHaveChangedProjectFiles).isFalse()
       }
       finally {
@@ -772,8 +772,8 @@ class ClaudeStoreSessionBackendTest {
       assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
       assertThat(update.scopedPaths).containsExactly(projectPath)
       assertThat(update.threadIds).isNull()
-      assertThat(update.activityHintsByThreadId).containsEntry(sessionId, AgentThreadActivity.PROCESSING)
-      assertThat(update.activityHintPolicy).isEqualTo(AgentSessionActivityHintPolicy.AUTHORITATIVE)
+      assertThat(update.activityUpdatesByThreadId.getValue(sessionId).activityReport)
+        .isEqualTo(AgentThreadActivityReport(AgentThreadActivity.PROCESSING))
       assertThat(update.mayHaveChangedProjectFiles).isFalse()
       assertThat(update.changedProjectFilePaths).isNull()
     }
@@ -1019,9 +1019,8 @@ class ClaudeStoreSessionBackendTest {
         assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
         assertThat(update.scopedPaths).containsExactly(projectPath)
         assertThat(update.threadIds).containsExactly("session-completed-update-hints")
-        assertThat(update.activityHintsByThreadId)
-          .containsEntry("session-completed-update-hints", AgentThreadActivity.UNREAD)
-        assertThat(update.activityHintPolicy).isEqualTo(AgentSessionActivityHintPolicy.AUTHORITATIVE)
+        assertThat(update.activityUpdatesByThreadId.getValue("session-completed-update-hints").activityReport)
+          .isEqualTo(AgentThreadActivityReport(AgentThreadActivity.UNREAD))
       }
       finally {
         updatesJob.cancelAndJoin()

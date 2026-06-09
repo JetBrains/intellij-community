@@ -11,12 +11,12 @@ import com.intellij.agent.workbench.chat.collectOpenPendingAgentChatTabsByPath
 import com.intellij.agent.workbench.chat.collectOpenPendingCodexTabsByPath
 import com.intellij.agent.workbench.chat.rebindOpenPendingCodexTabs
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -24,6 +24,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRe
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
@@ -262,10 +263,7 @@ class ScriptedSessionSource(
 fun threadsChangedEvent(
   scopedPaths: Set<String>? = null,
   threadIds: Set<String>? = null,
-  activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
-  summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
-  activityUpdatedAtHintsByThreadId: Map<String, Long> = emptyMap(),
-  activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.OPTIMISTIC,
+  activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
   mayHaveChangedProjectFiles: Boolean = false,
   changedProjectFilePaths: Set<String>? = null,
 ): AgentSessionSourceUpdateEvent {
@@ -273,10 +271,7 @@ fun threadsChangedEvent(
     type = AgentSessionSourceUpdate.THREADS_CHANGED,
     scopedPaths = scopedPaths,
     threadIds = threadIds,
-    activityHintsByThreadId = activityHintsByThreadId,
-    summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
-    activityUpdatedAtHintsByThreadId = activityUpdatedAtHintsByThreadId,
-    activityHintPolicy = activityHintPolicy,
+    activityUpdatesByThreadId = activityUpdatesByThreadId,
     mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
     changedProjectFilePaths = changedProjectFilePaths,
   )
@@ -285,10 +280,7 @@ fun threadsChangedEvent(
 fun hintsChangedEvent(
   scopedPaths: Set<String>? = null,
   threadIds: Set<String>? = null,
-  activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
-  summaryActivityHintsByThreadId: Map<String, AgentThreadActivity?> = emptyMap(),
-  activityUpdatedAtHintsByThreadId: Map<String, Long> = emptyMap(),
-  activityHintPolicy: AgentSessionActivityHintPolicy = AgentSessionActivityHintPolicy.OPTIMISTIC,
+  activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
   mayHaveChangedProjectFiles: Boolean = false,
   changedProjectFilePaths: Set<String>? = null,
 ): AgentSessionSourceUpdateEvent {
@@ -296,12 +288,22 @@ fun hintsChangedEvent(
     type = AgentSessionSourceUpdate.HINTS_CHANGED,
     scopedPaths = scopedPaths,
     threadIds = threadIds,
-    activityHintsByThreadId = activityHintsByThreadId,
-    summaryActivityHintsByThreadId = summaryActivityHintsByThreadId,
-    activityUpdatedAtHintsByThreadId = activityUpdatedAtHintsByThreadId,
-    activityHintPolicy = activityHintPolicy,
+    activityUpdatesByThreadId = activityUpdatesByThreadId,
     mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
     changedProjectFilePaths = changedProjectFilePaths,
+  )
+}
+
+fun activityUpdate(
+  activity: AgentThreadActivity,
+  chromeActivity: AgentThreadActivity? = activity,
+  updatesChromeActivity: Boolean = true,
+  updatedAt: Long? = null,
+): AgentSessionThreadActivityUpdate {
+  return AgentSessionThreadActivityUpdate(
+    activityReport = AgentThreadActivityReport(rowActivity = activity, chromeActivity = chromeActivity),
+    updatesChromeActivity = updatesChromeActivity,
+    updatedAt = updatedAt,
   )
 }
 

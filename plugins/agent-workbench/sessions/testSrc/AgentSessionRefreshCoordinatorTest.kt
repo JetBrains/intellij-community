@@ -15,7 +15,6 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
@@ -124,7 +123,7 @@ class AgentSessionRefreshCoordinatorTest {
       supportsUpdates = true,
       updateEvents = flow {
         emit(threadsChangedEvent(mayHaveChangedProjectFiles = true))
-        emit(hintsChangedEvent(activityHintsByThreadId = mapOf("codex-1" to AgentThreadActivity.NEEDS_INPUT)))
+        emit(hintsChangedEvent(activityUpdatesByThreadId = mapOf("codex-1" to activityUpdate(AgentThreadActivity.NEEDS_INPUT))))
       },
     )
 
@@ -163,7 +162,7 @@ class AgentSessionRefreshCoordinatorTest {
         emit(
           hintsChangedEvent(
             scopedPaths = setOf(PROJECT_PATH),
-            activityHintsByThreadId = mapOf("codex-1" to AgentThreadActivity.READY),
+            activityUpdatesByThreadId = mapOf("codex-1" to activityUpdate(AgentThreadActivity.READY)),
             mayHaveChangedProjectFiles = true,
           )
         )
@@ -2316,8 +2315,7 @@ class AgentSessionRefreshCoordinatorTest {
         hintsChangedEvent(
           scopedPaths = setOf(PROJECT_PATH),
           threadIds = setOf("codex-hint"),
-          activityHintsByThreadId = mapOf("codex-hint" to AgentThreadActivity.UNREAD),
-          activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+          activityUpdatesByThreadId = mapOf("codex-hint" to activityUpdate(AgentThreadActivity.UNREAD)),
         )
       )
 
@@ -2373,8 +2371,8 @@ class AgentSessionRefreshCoordinatorTest {
         else {
           mapOf(
             PROJECT_PATH to AgentSessionRefreshHints(
-              activityByThreadId = mapOf(
-                "codex-with-hint" to AgentThreadActivity.REVIEWING,
+              activityUpdatesByThreadId = mapOf(
+                "codex-with-hint" to activityUpdate(AgentThreadActivity.REVIEWING),
               )
             )
           )
@@ -2460,8 +2458,7 @@ class AgentSessionRefreshCoordinatorTest {
         threadsChangedEvent(
           scopedPaths = setOf(PROJECT_PATH),
           threadIds = setOf("claude-1"),
-          activityHintsByThreadId = mapOf("claude-1" to AgentThreadActivity.UNREAD),
-          activityHintPolicy = AgentSessionActivityHintPolicy.AUTHORITATIVE,
+          activityUpdatesByThreadId = mapOf("claude-1" to activityUpdate(AgentThreadActivity.UNREAD)),
         )
       )
 
@@ -2521,9 +2518,7 @@ class AgentSessionRefreshCoordinatorTest {
         threadsChangedEvent(
           scopedPaths = setOf(PROJECT_PATH),
           threadIds = setOf("codex-1"),
-          activityHintsByThreadId = mapOf("codex-1" to AgentThreadActivity.PROCESSING),
-          summaryActivityHintsByThreadId = mapOf("codex-1" to null),
-          activityUpdatedAtHintsByThreadId = mapOf("codex-1" to 200L),
+          activityUpdatesByThreadId = mapOf("codex-1" to activityUpdate(AgentThreadActivity.PROCESSING, chromeActivity = null, updatedAt = 200L)),
         )
       )
 
@@ -2581,8 +2576,11 @@ class AgentSessionRefreshCoordinatorTest {
         threadsChangedEvent(
           scopedPaths = setOf(PROJECT_PATH),
           threadIds = setOf("codex-1"),
-          summaryActivityHintsByThreadId = mapOf("codex-1" to AgentThreadActivity.UNREAD),
-          activityUpdatedAtHintsByThreadId = mapOf("codex-1" to 300L),
+          activityUpdatesByThreadId = mapOf("codex-1" to activityUpdate(
+            activity = AgentThreadActivity.READY,
+            chromeActivity = AgentThreadActivity.UNREAD,
+            updatedAt = 300L,
+          )),
         )
       )
 
@@ -2629,7 +2627,7 @@ class AgentSessionRefreshCoordinatorTest {
         else {
           mapOf(
             PROJECT_PATH to AgentSessionRefreshHints(
-              activityByThreadId = mapOf("codex-1" to AgentThreadActivity.UNREAD)
+              activityUpdatesByThreadId = mapOf("codex-1" to activityUpdate(AgentThreadActivity.UNREAD))
             )
           )
         }
@@ -2661,7 +2659,7 @@ class AgentSessionRefreshCoordinatorTest {
         threadsChangedEvent(
           scopedPaths = setOf(PROJECT_PATH),
           threadIds = setOf("codex-1"),
-          activityHintsByThreadId = mapOf("codex-1" to AgentThreadActivity.PROCESSING),
+          activityUpdatesByThreadId = mapOf("codex-1" to activityUpdate(AgentThreadActivity.PROCESSING)),
         )
       )
 
@@ -2713,7 +2711,10 @@ class AgentSessionRefreshCoordinatorTest {
         else {
           mapOf(
             PROJECT_PATH to AgentSessionRefreshHints(
-              activityByThreadId = mapOf("codex-sub-agent" to AgentThreadActivity.UNREAD)
+              activityUpdatesByThreadId = mapOf("codex-sub-agent" to activityUpdate(
+                activity = AgentThreadActivity.UNREAD,
+                chromeActivity = null,
+              ))
             )
           )
         }
@@ -2859,8 +2860,8 @@ class AgentSessionRefreshCoordinatorTest {
           capturedRefreshThreadSeedsByPath += refreshThreadSeedsByPath.mapValues { (_, refreshThreadSeeds) -> refreshThreadSeeds.toSet() }
           mapOf(
             PROJECT_PATH to AgentSessionRefreshHints(
-              activityByThreadId = mapOf(
-                "codex-listed" to AgentThreadActivity.UNREAD,
+              activityUpdatesByThreadId = mapOf(
+                "codex-listed" to activityUpdate(AgentThreadActivity.UNREAD),
               )
             )
           )

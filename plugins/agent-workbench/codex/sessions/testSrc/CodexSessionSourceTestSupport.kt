@@ -88,7 +88,7 @@ internal suspend fun testRefreshActivities(
 ): Map<String, AgentThreadActivity> {
   return testRefreshHints(source = source, projectDir = projectDir, threadIds = threadIds)
     .activityUpdatesByThreadId
-    .mapValues { (_, update) -> checkNotNull(update.rowActivity) }
+    .mapValues { (_, update) -> checkNotNull(update.activityReport.rowActivity) }
 }
 
 internal suspend fun testRefreshCodexHints(

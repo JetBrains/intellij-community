@@ -3,6 +3,7 @@
 package com.intellij.agent.workbench.codex.sessions.backend
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
@@ -30,9 +31,11 @@ internal fun CodexRefreshHints.toAgentSessionRefreshHints(): AgentSessionRefresh
     rebindCandidates = rebindCandidates,
     activityUpdatesByThreadId = activityHintsByThreadId.mapValues { (_, hint) ->
       AgentSessionThreadActivityUpdate(
-        rowActivity = hint.activity,
-        chromeActivity = hint.summaryActivity,
-        hasChromeActivity = hint.hasSummaryActivityHint,
+        activityReport = AgentThreadActivityReport(
+          rowActivity = hint.activity,
+          chromeActivity = if (hint.hasSummaryActivityHint) hint.summaryActivity else null,
+        ),
+        updatesChromeActivity = hint.hasSummaryActivityHint,
         updatedAt = hint.updatedAt,
       )
     },

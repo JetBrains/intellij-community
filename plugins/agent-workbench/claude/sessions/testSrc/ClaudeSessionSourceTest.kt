@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
@@ -456,7 +457,7 @@ class ClaudeSessionSourceTest {
     }
 
     val pathHints = hints.getValue("/any")
-    assertThat(pathHints.activityUpdatesByThreadId.mapValues { (_, update) -> update.rowActivity }).containsExactlyInAnyOrderEntriesOf(
+    assertThat(pathHints.activityUpdatesByThreadId.mapValues { (_, update) -> update.activityReport.rowActivity }).containsExactlyInAnyOrderEntriesOf(
       mapOf(
         "known-processing" to AgentThreadActivity.PROCESSING,
         "known-needs-input" to AgentThreadActivity.NEEDS_INPUT,
@@ -464,7 +465,10 @@ class ClaudeSessionSourceTest {
       )
     )
     assertThat(pathHints.activityUpdatesByThreadId["known-processing"]).isEqualTo(
-      AgentSessionThreadActivityUpdate(rowActivity = AgentThreadActivity.PROCESSING)
+      AgentSessionThreadActivityUpdate(
+        activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING),
+        updatesChromeActivity = false,
+      )
     )
     assertThat(pathHints.rebindCandidates.map { it.threadId }).containsExactly("new-visible")
   }

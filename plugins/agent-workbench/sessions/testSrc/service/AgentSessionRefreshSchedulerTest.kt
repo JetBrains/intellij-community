@@ -2,7 +2,9 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
@@ -26,6 +28,64 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentSessionRefreshSchedulerTest {
+  @Test
+  fun staleActivityUpdateKeepsCurrentThreadActivity() {
+    val thread = AgentSessionThread(
+      id = "thread-a",
+      title = "Thread A",
+      updatedAt = 200L,
+      archived = false,
+      activityReport = AgentThreadActivityReport(
+        rowActivity = AgentThreadActivity.PROCESSING,
+        chromeActivity = AgentThreadActivity.REVIEWING,
+      ),
+      provider = AgentSessionProvider.CODEX,
+    )
+
+    val resolved = resolveAgentThreadActivityReportUpdate(
+      thread = thread,
+      activityUpdate = AgentSessionThreadActivityUpdate(
+        activityReport = AgentThreadActivityReport(rowActivity = AgentThreadActivity.READY, chromeActivity = null),
+        updatedAt = 100L,
+      ),
+    )
+
+    assertThat(resolved.activityReport).isEqualTo(thread.activityReport)
+    assertThat(resolved.updatedAt).isEqualTo(200L)
+  }
+
+  @Test
+  fun rowOnlyActivityUpdatePreservesCurrentChromeActivity() {
+    val thread = AgentSessionThread(
+      id = "thread-a",
+      title = "Thread A",
+      updatedAt = 200L,
+      archived = false,
+      activityReport = AgentThreadActivityReport(
+        rowActivity = AgentThreadActivity.READY,
+        chromeActivity = AgentThreadActivity.REVIEWING,
+      ),
+      provider = AgentSessionProvider.CODEX,
+    )
+
+    val resolved = resolveAgentThreadActivityReportUpdate(
+      thread = thread,
+      activityUpdate = AgentSessionThreadActivityUpdate(
+        activityReport = AgentThreadActivityReport(rowActivity = AgentThreadActivity.PROCESSING, chromeActivity = null),
+        updatesChromeActivity = false,
+        updatedAt = 300L,
+      ),
+    )
+
+    assertThat(resolved.activityReport).isEqualTo(
+      AgentThreadActivityReport(
+        rowActivity = AgentThreadActivity.PROCESSING,
+        chromeActivity = AgentThreadActivity.REVIEWING,
+      )
+    )
+    assertThat(resolved.updatedAt).isEqualTo(300L)
+  }
+
   @Test
   fun scopedRefreshSignalsAreDebouncedIntoSingleProviderRefresh() = runBlocking(Dispatchers.Default) {
     val projectPath = "/work/project"
@@ -61,7 +121,7 @@ class AgentSessionRefreshSchedulerTest {
         scopedEvent(
           path = firstPath,
           threadId = "thread-a",
-          activityHintsByThreadId = mapOf("thread-a" to AgentThreadActivity.PROCESSING),
+          activityUpdatesByThreadId = mapOf("thread-a" to activityUpdate(AgentThreadActivity.PROCESSING)),
           mayHaveChangedProjectFiles = true,
           changedProjectFilePaths = setOf(firstChangedFile),
         )
@@ -71,7 +131,7 @@ class AgentSessionRefreshSchedulerTest {
         scopedEvent(
           path = secondPath,
           threadId = "thread-b",
-          activityHintsByThreadId = mapOf("thread-b" to AgentThreadActivity.NEEDS_INPUT),
+          activityUpdatesByThreadId = mapOf("thread-b" to activityUpdate(AgentThreadActivity.NEEDS_INPUT)),
           mayHaveChangedProjectFiles = true,
           changedProjectFilePaths = setOf(secondChangedFile),
         )
@@ -91,11 +151,60 @@ class AgentSessionRefreshSchedulerTest {
   }
 
   @Test
+  fun scopedRefreshSignalsMergeRowOnlyActivityWithoutClearingChromeActivity() = runBlocking(Dispatchers.Default) {
+    val projectPath = "/work/project"
+    val firstChangedFile = "$projectPath/src/A.kt"
+    val secondChangedFile = "$projectPath/src/B.kt"
+    val scopedEvents = flow {
+      emit(
+        scopedEvent(
+          path = projectPath,
+          threadId = "thread-a",
+          activityUpdatesByThreadId = mapOf("thread-a" to activityUpdate(
+            activity = AgentThreadActivity.PROCESSING,
+            chromeActivity = AgentThreadActivity.REVIEWING,
+          )),
+          mayHaveChangedProjectFiles = true,
+          changedProjectFilePaths = setOf(firstChangedFile),
+        )
+      )
+      delay(100.milliseconds)
+      emit(
+        scopedEvent(
+          path = projectPath,
+          threadId = "thread-a",
+          activityUpdatesByThreadId = mapOf("thread-a" to activityUpdate(
+            activity = AgentThreadActivity.NEEDS_INPUT,
+            chromeActivity = null,
+            updatesChromeActivity = false,
+          )),
+          mayHaveChangedProjectFiles = true,
+          changedProjectFilePaths = setOf(secondChangedFile),
+        )
+      )
+    }
+
+    withScheduler(scopedEvents) {
+      waitForCondition { providerHintRefreshes.size == 1 && vfsRefreshes.size == 1 }
+      delay(500.milliseconds)
+
+      val update = providerHintRefreshes.single().activityUpdatesByThreadId.getValue("thread-a")
+      assertThat(update.activityReport).isEqualTo(
+        AgentThreadActivityReport(
+          rowActivity = AgentThreadActivity.NEEDS_INPUT,
+          chromeActivity = AgentThreadActivity.REVIEWING,
+        )
+      )
+      assertThat(update.updatesChromeActivity).isTrue()
+      assertThat(providerHintRefreshes.single().changedProjectFilePaths).containsExactly(firstChangedFile, secondChangedFile)
+      assertThat(vfsRefreshes.single().changedProjectFilePaths).containsExactly(firstChangedFile, secondChangedFile)
+    }
+  }
+
+  @Test
   fun activityOnlyScopedRefreshSignalsDoNotRefreshProvider() = runBlocking(Dispatchers.Default) {
     val activityUpdate = AgentSessionThreadActivityUpdate(
-      rowActivity = AgentThreadActivity.PROCESSING,
-      chromeActivity = null,
-      hasChromeActivity = true,
+      activityReport = AgentThreadActivityReport(rowActivity = AgentThreadActivity.PROCESSING, chromeActivity = null),
     )
     val scopedEvents = flow {
       emit(
@@ -113,6 +222,42 @@ class AgentSessionRefreshSchedulerTest {
       assertThat(providerHintRefreshes).isEmpty()
       assertThat(vfsRefreshes).isEmpty()
       assertThat(appliedActivityUpdates.single().activityUpdatesByThreadId["thread-a"]).isEqualTo(activityUpdate)
+    }
+  }
+
+  @Test
+  fun scopedRefreshSignalsKeepNewestActivityUpdateBeforeRefresh() = runBlocking(Dispatchers.Default) {
+    val projectPath = "/work/project"
+    val scopedEvents = flow {
+      emit(
+        scopedEvent(
+          path = projectPath,
+          threadId = "thread-a",
+          activityUpdatesByThreadId = mapOf(
+            "thread-a" to activityUpdate(activity = AgentThreadActivity.PROCESSING, updatedAt = 500L)
+          ),
+        )
+      )
+      delay(100.milliseconds)
+      emit(
+        scopedEvent(
+          path = projectPath,
+          threadId = "thread-a",
+          activityUpdatesByThreadId = mapOf(
+            "thread-a" to activityUpdate(activity = AgentThreadActivity.NEEDS_INPUT, updatedAt = 100L)
+          ),
+        )
+      )
+    }
+
+    withScheduler(scopedEvents) {
+      waitForCondition { providerHintRefreshes.size == 1 }
+      delay(500.milliseconds)
+
+      assertThat(providerRefreshes).isEmpty()
+      assertThat(providerHintRefreshes.single().activityUpdatesByThreadId["thread-a"]).isEqualTo(
+        activityUpdate(activity = AgentThreadActivity.PROCESSING, updatedAt = 500L)
+      )
     }
   }
 
@@ -158,25 +303,18 @@ private fun scopedEvent(
   type: AgentSessionSourceUpdate = AgentSessionSourceUpdate.HINTS_CHANGED,
   path: String,
   threadId: String,
-  activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
   activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
   mayHaveChangedProjectFiles: Boolean = false,
   changedProjectFilePaths: Set<String>? = null,
 ): AgentSessionSourceUpdateEvent {
-  val event = AgentSessionSourceUpdateEvent(
+  return AgentSessionSourceUpdateEvent(
     type = type,
     scopedPaths = setOf(path),
     threadIds = setOf(threadId),
-    activityHintsByThreadId = activityHintsByThreadId,
+    activityUpdatesByThreadId = activityUpdatesByThreadId,
     mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
     changedProjectFilePaths = changedProjectFilePaths,
   )
-  return if (activityUpdatesByThreadId.isEmpty()) {
-    event
-  }
-  else {
-    event.copy(activityUpdatesByThreadId = activityUpdatesByThreadId)
-  }
 }
 
 private fun activityOnlyEvent(
@@ -197,12 +335,25 @@ private fun assertMergedScopedRefresh(
   assertThat(event.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
   assertThat(event.scopedPaths).containsExactly("/work/first", "/work/second")
   assertThat(event.threadIds).containsExactly("thread-a", "thread-b")
-  assertThat(event.activityHintsByThreadId).containsOnly(
-    entry("thread-a", AgentThreadActivity.PROCESSING),
-    entry("thread-b", AgentThreadActivity.NEEDS_INPUT),
+  assertThat(event.activityUpdatesByThreadId.mapValues { (_, update) -> update.activityReport }).containsOnly(
+    entry("thread-a", AgentThreadActivityReport(AgentThreadActivity.PROCESSING)),
+    entry("thread-b", AgentThreadActivityReport(AgentThreadActivity.NEEDS_INPUT)),
   )
   assertThat(event.mayHaveChangedProjectFiles).isTrue()
   assertThat(event.changedProjectFilePaths).containsExactly(firstChangedFile, secondChangedFile)
+}
+
+private fun activityUpdate(
+  activity: AgentThreadActivity,
+  chromeActivity: AgentThreadActivity? = activity,
+  updatesChromeActivity: Boolean = true,
+  updatedAt: Long? = null,
+): AgentSessionThreadActivityUpdate {
+  return AgentSessionThreadActivityUpdate(
+    activityReport = AgentThreadActivityReport(rowActivity = activity, chromeActivity = chromeActivity),
+    updatesChromeActivity = updatesChromeActivity,
+    updatedAt = updatedAt,
+  )
 }
 
 private data class SchedulerProbe(

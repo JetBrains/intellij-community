@@ -656,7 +656,7 @@ private fun applyThreadActivityHintsForPath(
       return@map thread
     }
     val activityUpdate = activityUpdatesByThreadId[thread.id] ?: return@map thread
-    val resolvedUpdate = resolveAgentSessionThreadActivityUpdate(
+    val resolvedUpdate = resolveAgentThreadActivityReportUpdate(
       thread = thread,
       activityUpdate = activityUpdate,
     )

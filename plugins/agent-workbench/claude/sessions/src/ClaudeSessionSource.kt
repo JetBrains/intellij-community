@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
@@ -179,7 +180,10 @@ class ClaudeSessionSource internal constructor(
         result[path] = AgentSessionRefreshHints(
           rebindCandidates = rebindCandidates,
           activityUpdatesByThreadId = activityHintsByThreadId.mapValues { (_, activity) ->
-            AgentSessionThreadActivityUpdate(rowActivity = activity)
+            AgentSessionThreadActivityUpdate(
+              activityReport = AgentThreadActivityReport(activity),
+              updatesChromeActivity = false,
+            )
           },
         )
       }

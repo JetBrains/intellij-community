@@ -6,6 +6,7 @@ package com.intellij.agent.workbench.chat
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
@@ -16,6 +17,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageD
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -54,12 +56,12 @@ private object AgentChatScopedRefreshSignalBus {
     provider: AgentSessionProvider,
     projectPath: String,
     threadId: String? = null,
-    activityHint: AgentThreadActivity? = null,
+    activityReport: AgentThreadActivityReport? = null,
   ): Boolean {
     val normalizedPath = normalizeAgentWorkbenchPath(projectPath)
     val normalizedThreadId = threadId?.trim()?.takeIf { it.isNotEmpty() }
-    val activityHintsByThreadId = if (normalizedThreadId != null && activityHint != null) {
-      mapOf(normalizedThreadId to activityHint)
+    val activityUpdatesByThreadId = if (normalizedThreadId != null && activityReport != null) {
+      mapOf(normalizedThreadId to AgentSessionThreadActivityUpdate(activityReport))
     }
     else {
       emptyMap()
@@ -67,14 +69,14 @@ private object AgentChatScopedRefreshSignalBus {
     if (normalizedPath.isBlank()) {
       return false
     }
-    val updateType = if (activityHintsByThreadId.isEmpty()) AgentSessionSourceUpdate.THREADS_CHANGED else AgentSessionSourceUpdate.HINTS_CHANGED
+    val updateType = if (activityUpdatesByThreadId.isEmpty()) AgentSessionSourceUpdate.THREADS_CHANGED else AgentSessionSourceUpdate.HINTS_CHANGED
     return signal(
       provider = provider,
       updateEvent = AgentSessionSourceUpdateEvent(
         type = updateType,
         scopedPaths = setOf(normalizedPath),
-        threadIds = if (activityHintsByThreadId.isEmpty()) normalizedThreadId?.let { setOf(it) } else null,
-        activityHintsByThreadId = activityHintsByThreadId,
+        threadIds = if (activityUpdatesByThreadId.isEmpty()) normalizedThreadId?.let { setOf(it) } else null,
+        activityUpdatesByThreadId = activityUpdatesByThreadId,
       ),
     )
   }
@@ -441,9 +443,9 @@ fun notifyAgentChatScopedRefresh(
   provider: AgentSessionProvider,
   projectPath: String,
   threadId: String? = null,
-  activityHint: AgentThreadActivity? = null,
+  activityReport: AgentThreadActivityReport? = null,
 ) {
-  AgentChatScopedRefreshSignalBus.signal(provider, projectPath, threadId, activityHint)
+  AgentChatScopedRefreshSignalBus.signal(provider, projectPath, threadId, activityReport)
 }
 
 fun notifyAgentChatScopedRefresh(

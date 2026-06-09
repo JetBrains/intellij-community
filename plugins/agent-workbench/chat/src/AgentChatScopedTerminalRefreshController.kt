@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
-import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -60,7 +60,7 @@ internal class AgentChatScopedTerminalRefreshController(
   activeThreadIdProvider: () -> String? = { threadId },
   activeThreadUpdateEvents: ((String) -> Flow<AgentSessionSourceUpdateEvent>)? = null,
   emitInitialRefresh: Boolean = true,
-  private val notifyRefresh: (AgentSessionProvider, String, String?, AgentThreadActivity?) -> Unit = ::notifyAgentChatScopedRefresh,
+  private val notifyRefresh: (AgentSessionProvider, String, String?, AgentThreadActivityReport?) -> Unit = ::notifyAgentChatScopedRefresh,
   private val notifyUpdate: (AgentSessionProvider, AgentSessionSourceUpdateEvent) -> Unit = ::notifyAgentChatScopedRefresh,
 ) : AgentChatDisposableController {
   private val initialRefreshJob: Job?
@@ -164,13 +164,13 @@ internal class AgentChatScopedTerminalRefreshController(
     }
   }
 
-  private fun emitScopedRefresh(reason: String, threadId: String? = this.threadId, activityHint: AgentThreadActivity? = null) {
+  private fun emitScopedRefresh(reason: String, threadId: String? = this.threadId, activityReport: AgentThreadActivityReport? = null) {
     if (projectPath.isBlank()) {
       return
     }
     LOG.debug {
       "Emitting ${provider.value} scoped refresh from agent chat terminal ($reason, path=$projectPath, threadId=${threadId != null})"
     }
-    notifyRefresh(provider, projectPath, threadId, activityHint)
+    notifyRefresh(provider, projectPath, threadId, activityReport)
   }
 }

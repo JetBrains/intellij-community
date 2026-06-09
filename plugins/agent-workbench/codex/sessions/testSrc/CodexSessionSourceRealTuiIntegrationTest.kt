@@ -87,7 +87,7 @@ class CodexSessionSourceRealTuiIntegrationTest {
           )
 
           val hint = eventually(timeout = 30.seconds) {
-            testRefreshHints(source, harness.projectDir, listOf(threadId)).activityUpdatesByThreadId[threadId]?.rowActivity
+            testRefreshHints(source, harness.projectDir, listOf(threadId)).activityUpdatesByThreadId[threadId]?.activityReport?.rowActivity
               ?.takeIf { it == AgentThreadActivity.PROCESSING }
           }
 
@@ -123,7 +123,7 @@ class CodexSessionSourceRealTuiIntegrationTest {
           )
 
           val activity = eventually(timeout = 30.seconds) {
-            testRefreshHints(source, harness.projectDir, listOf(threadId)).activityUpdatesByThreadId[threadId]?.rowActivity
+            testRefreshHints(source, harness.projectDir, listOf(threadId)).activityUpdatesByThreadId[threadId]?.activityReport?.rowActivity
               ?.takeIf { it == AgentThreadActivity.NEEDS_INPUT }
           }
           val mergedHint = eventually(timeout = 30.seconds) {
