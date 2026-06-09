@@ -10,7 +10,6 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -26,8 +25,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.merge.MergeConflictIterativeDataHolder
 import com.intellij.openapi.vcs.merge.MergeConflictsTreeTable
-import com.intellij.openapi.vcs.merge.MergeDialogContext
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
+import com.intellij.openapi.vcs.merge.MergeResolveActionContext
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.openapi.vcs.merge.MergeUIUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -95,6 +94,7 @@ internal class IterativeMergeFlowDelegate(
   private val rootPane: JRootPane,
   private val files: List<VirtualFile>,
   private val onClose: () -> Unit,
+  private val closeResolveActionUi: () -> Unit,
   private val onAcceptAndFinish: () -> Unit,
   acceptForResolution: (MergeSession.Resolution) -> Unit,
   private val showMergeDialog: () -> Unit,
@@ -102,7 +102,6 @@ internal class IterativeMergeFlowDelegate(
   private val resolveAutomatically: () -> Unit,
   private val getGroupByDirectory: () -> Boolean,
   private val updateTable: () -> Unit,
-  private val getMergeDialogContext: () -> MergeDialogContext?,
 ) : MergeFlowDelegate {
 
   private lateinit var descriptionLabel: JLabel
@@ -110,6 +109,7 @@ internal class IterativeMergeFlowDelegate(
   private lateinit var resolveStatusLabel: JLabel
   private lateinit var reviewOrResolveButton: JButton
   private lateinit var acceptAndFinishButton: JButton
+  private var resolveActionControllers: List<MergeResolveActionComponentController> = emptyList()
   private var wasResolveAutomaticallyPressedOnce = false
   private var isResolveAutomaticallyPressed = false
   private var isResolvingConflicts = false
@@ -154,6 +154,8 @@ internal class IterativeMergeFlowDelegate(
                       foreground = if (isModified) BADGE_MODIFIED_FOREGROUND else BADGE_FOREGROUND)
       }
     }
+    val defaultSpacingConfiguration = IntelliJSpacingConfiguration()
+    val resolveActionComponents = createResolveActionComponents()
     return panel {
       row {
         descriptionLabel = label(currentDescription).component.apply {
@@ -175,9 +177,14 @@ internal class IterativeMergeFlowDelegate(
             icon = AllIcons.Diff.MagicResolve
           }.align(AlignX.LEFT).component
 
+        for (component in resolveActionComponents) {
+          cell(component)
+            .customize(UnscaledGaps(left = defaultSpacingConfiguration.segmentedButtonHorizontalGap))
+        }
+
         resolveStatusLabel = label("").component
 
-        cell(createResolveActionsToolbar())
+        cell(JPanel()).resizableColumn()
         cell(createViewOptionsToolbar().component)
           .align(AlignX.RIGHT)
       }
@@ -237,22 +244,20 @@ internal class IterativeMergeFlowDelegate(
     }.customize(UnscaledGapsY(top = 32))
   }
 
-  private fun createResolveActionsToolbar(): JComponent {
-    val group = ActionManager.getInstance().getAction("Merge.Dialog.Iterative.ResolveActions") as? DefaultActionGroup
-                ?: return ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, DefaultActionGroup(), true).apply {
-                  setTargetComponent(table)
-                }.component
-    val mergeDialogContext = getMergeDialogContext()
-                             ?: return ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, DefaultActionGroup(), true)
-                               .apply {
-                                 setTargetComponent(table)
-                               }.component
-    val toolbar = ActionManager.getInstance()
-      .createActionToolbar("Merge.Dialog.Iterative", group, true)
-      .apply { setTargetComponent(table) }
-    return UiDataProvider.wrapComponent(toolbar.component) { sink ->
-      sink[MergeDialogContext.KEY] = mergeDialogContext
-    }
+  private fun createResolveActionComponents(): List<JComponent> {
+    val mergeContext = MergeResolveActionContext(
+      project = project,
+      selectionHintFilesProvider = { if (::state.isInitialized) state.selectedFiles else emptyList() },
+      closeSourceUiHandler = closeResolveActionUi,
+    )
+    resolveActionControllers = createMergeResolveActionComponentControllers(mergeContext, ITERATIVE_MERGE_DIALOG_ACTION_PLACE)
+    return resolveActionControllers.map { it.component }
+  }
+
+  private fun refreshResolveActions() {
+    // Contributed actions can depend on merge selection. Refresh after state changes so actions
+    // that were invisible during construction are not permanently dropped.
+    resolveActionControllers.forEach { it.update() }
   }
 
   private fun createViewOptionsToolbar(): ActionToolbar {
@@ -306,6 +311,7 @@ internal class IterativeMergeFlowDelegate(
         model?.wasReviewed == true && model.getUnresolvedChanges().isEmpty()
       })
     updateButtonsState()
+    refreshResolveActions()
   }
 
   private fun updateButtonsState() {

@@ -72,7 +72,6 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.event.ComponentAdapter
@@ -117,7 +116,6 @@ open class MultipleFileMergeDialog(
     }.installOn(this)
     TableSpeedSearch.installOn(this, Convertor { (it as? VirtualFile)?.name })
   }
-
   private var groupByDirectory: Boolean = false
     get() = when {
       project != null -> VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY
@@ -142,6 +140,7 @@ open class MultipleFileMergeDialog(
     rootPane = rootPane,
     files = files,
     onClose = ::doCancelAction,
+    closeResolveActionUi = ::handoffToAgent,
     onAcceptAndFinish = ::acceptAndFinish,
     acceptForResolution = ::acceptForResolution,
     showMergeDialog = ::showMergeDialog,
@@ -149,7 +148,6 @@ open class MultipleFileMergeDialog(
     getGroupByDirectory = { groupByDirectory },
     resolveAutomatically = { resolveAutomatically(project, iterativeDataHolder) },
     updateTable = ::updateModelFromFiles,
-    getMergeDialogContext = { createMergeDialogContext(closeDialog = ::handoffToAgent) }
   )
   else OneShotMergeFlowDelegate(
     project = project,
@@ -564,20 +562,6 @@ open class MultipleFileMergeDialog(
 
   private fun getUnresolvedFiles(): List<VirtualFile> = unresolvedFiles - getResolvedFiles()
   private fun getResolvedFiles(): Set<VirtualFile> = (iterativeDataHolder?.getResolvedFilesAndModels()?.keys ?: emptySet())
-
-  @RequiresEdt
-  @Internal
-  fun createMergeDialogContext(closeDialog: (() -> Unit)? = null): MergeDialogContext? {
-    val project = project ?: return null
-    return MergeDialogContext(
-      project = project,
-      mergeProvider = mergeProvider,
-      mergeDialogCustomizer = mergeDialogCustomizer,
-      getSelectionHintFiles = { table.selectedFiles },
-      isModalDialogProvider = ::isModal,
-      closeDialogHandler = closeDialog,
-    )
-  }
 
   @RequiresEdt
   private fun runWithErrorHandling(block: () -> Unit) {

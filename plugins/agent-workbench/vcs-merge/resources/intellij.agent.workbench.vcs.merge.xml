@@ -23,8 +23,6 @@
   <actions>
     <action id="Merge.AgentResolveConflicts"
             class="com.intellij.agent.workbench.vcs.merge.AgentResolveConflictsAction"
-            icon="AllIcons.Actions.InlayGear">
-      <add-to-group group-id="Merge.Dialog.Iterative.ResolveActions"/>
-    </action>
+            icon="AllIcons.Actions.InlayGear"/>
   </actions>
 </idea-plugin>
