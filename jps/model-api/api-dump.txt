@@ -655,6 +655,9 @@ a:org.jetbrains.jps.model.library.sdk.JpsSdkType
 - getPresentableName():java.lang.String
 - f:getSdkPropertiesRole():org.jetbrains.jps.model.JpsElementChildRole
 org.jetbrains.jps.model.module.JpsDependenciesEnumerator
+- a:forEachLibrary(java.util.function.Consumer):V
+- a:forEachModule(java.util.function.Consumer):V
+- a:forEachModuleAndLibrary(java.util.function.Consumer,java.util.function.Consumer):V
 - a:getLibraries():java.util.Set
 - a:getModules():java.util.Set
 - a:processLibraries(com.intellij.util.Consumer):V

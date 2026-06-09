@@ -3,12 +3,10 @@ package org.jetbrains.jps.model.module.impl;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.CollectConsumer;
-import com.intellij.util.Consumer;
 import com.intellij.util.EmptyConsumer;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.module.JpsDependenciesEnumerator;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
@@ -22,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependenciesEnumerator> implements JpsDependenciesEnumerator {
   private boolean myWithoutSdk;
@@ -79,13 +78,13 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   @Override
   public @NotNull Set<JpsModule> getModules() {
     Set<JpsModule> result = new LinkedHashSet<>();
-    processModules(new CollectConsumer<>(result));
+    forEachModule(new CollectConsumer<>(result));
     return result;
   }
 
   @Override
-  public void processModules(final @NotNull Consumer<? super JpsModule> consumer) {
-    processModuleAndLibraries(consumer, EmptyConsumer.getInstance());
+  public void forEachModule(@NotNull Consumer<? super JpsModule> consumer) {
+    forEachModuleAndLibrary(consumer, EmptyConsumer.getInstance());
   }
 
   protected boolean shouldProcessDependenciesRecursively() {
@@ -153,36 +152,51 @@ public abstract class JpsDependenciesEnumeratorBase<Self extends JpsDependencies
   @Override
   public @NotNull Set<JpsLibrary> getLibraries() {
     Set<JpsLibrary> libraries = new LinkedHashSet<>();
-    processLibraries(new CollectConsumer<>(libraries));
+    forEachLibrary(new CollectConsumer<>(libraries));
     return libraries;
   }
 
   @Override
-  public void processLibraries(final @NotNull Consumer<? super JpsLibrary> consumer) {
-    processModuleAndLibraries(EmptyConsumer.getInstance(), consumer);
+  public void forEachLibrary(@NotNull Consumer<? super JpsLibrary> consumer) {
+    forEachModuleAndLibrary(EmptyConsumer.getInstance(), consumer);
   }
 
   @Override
-  public void processModuleAndLibraries(final @Nullable Consumer<? super JpsModule> moduleConsumer, final @Nullable Consumer<? super JpsLibrary> libraryConsumer) {
+  public void forEachModuleAndLibrary(@NotNull Consumer<? super JpsModule> moduleConsumer,
+                                      @NotNull Consumer<? super JpsLibrary> libraryConsumer) {
     processDependencies(dependencyElement -> {
-      if (moduleConsumer != null) {
-        if (myRecursively && dependencyElement instanceof JpsModuleSourceDependency) {
-          moduleConsumer.consume(dependencyElement.getContainingModule());
-        }
-        else if ((!myRecursively || !shouldProcessDependenciesRecursively()) && dependencyElement instanceof JpsModuleDependency) {
-          JpsModule module = ((JpsModuleDependency)dependencyElement).getModule();
-          if (module != null) {
-            moduleConsumer.consume(module);
-          }
+      if (myRecursively && dependencyElement instanceof JpsModuleSourceDependency) {
+        moduleConsumer.accept(dependencyElement.getContainingModule());
+      }
+      else if ((!myRecursively || !shouldProcessDependenciesRecursively()) && dependencyElement instanceof JpsModuleDependency) {
+        JpsModule module = ((JpsModuleDependency)dependencyElement).getModule();
+        if (module != null) {
+          moduleConsumer.accept(module);
         }
       }
-      if (libraryConsumer != null && dependencyElement instanceof JpsLibraryDependency) {
+      if (dependencyElement instanceof JpsLibraryDependency) {
         JpsLibrary library = ((JpsLibraryDependency)dependencyElement).getLibrary();
         if (library != null) {
-          libraryConsumer.consume(library);
+          libraryConsumer.accept(library);
         }
       }
       return true;
     });
+  }
+
+  @Override
+  public void processModules(final @NotNull com.intellij.util.Consumer<? super JpsModule> consumer) {
+    forEachModule(consumer);
+  }
+
+  @Override
+  public void processModuleAndLibraries(@NotNull com.intellij.util.Consumer<? super JpsModule> moduleConsumer,
+                                        @NotNull com.intellij.util.Consumer<? super JpsLibrary> libraryConsumer) {
+    forEachModuleAndLibrary(moduleConsumer, libraryConsumer);
+  }
+
+  @Override
+  public void processLibraries(final @NotNull com.intellij.util.Consumer<? super JpsLibrary> consumer) {
+    forEachLibrary(consumer);
   }
 }
