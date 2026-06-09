@@ -74,9 +74,12 @@ data class DevBuildServerSettings(
       key to value.replacePlaceholders(mainModule)
     })
 
+    val additionalModules = System.getProperty("intellij.build.test.customize.settings.from.intellij.yaml.append.additional.modules").nullize(nullizeSpaces = true)  // e.g. clion tests build types use additional modules beyond intellij.yaml
     args.addAll(jvmArgs.map {
-      it.replacePlaceholders(mainModule)
+      val effectiveArg = if (additionalModules != null && it.startsWith("-Dadditional.modules=")) "$it,$additionalModules" else it
+      effectiveArg.replacePlaceholders(mainModule)
     })
+
     val entryPointClass = System.getProperty("idea.dev.build.test.entry.point.class").nullize(nullizeSpaces = true) ?: mainClass
     args.add("-Didea.dev.build.test.entry.point.class=$entryPointClass")
     args.add(this.mainClass)
