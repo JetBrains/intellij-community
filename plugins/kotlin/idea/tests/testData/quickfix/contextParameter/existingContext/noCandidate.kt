@@ -2,9 +2,9 @@
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
 // IGNORE_K1
 // DISABLE_K2_ERRORS
-interface Logger { fun log(msg: String) }
+interface MyLogger { fun log(msg: String) }
 
-context(l: Logger) fun emit() { l.log("x") }
+context(l: MyLogger) fun emit() { l.log("x") }
 
 fun repro() {
     context("hello") {

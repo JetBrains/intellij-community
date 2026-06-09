@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.util.containers.addIfNotNull
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeImplicitArgumentValue
@@ -21,6 +22,7 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -35,8 +37,8 @@ import kotlin.collections.any
 
 @OptIn(KaExperimentalApi::class)
 internal object NoContextParameterFixFactory {
-    private const val CONTEXT_FQ_NAME: String = "kotlin.context"
-    private const val ANONYMOUS_NAME: String = "_"
+    private val CONTEXT_FQ_NAME: FqName = FqName("kotlin.context")
+    private val ANONYMOUS_NAME: Name = Name.identifier("_")
 
     val noContextArgument = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoContextArgument ->
         val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
@@ -45,15 +47,18 @@ internal object NoContextParameterFixFactory {
         val contextType = symbol.returnType.render(renderer = KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
 
         buildList {
-            findSurroundingContextCall(expression)
-                ?.let { call -> findUniqueValueCandidate(expression, call, requiredType)?.let { call to it } }
-                ?.let { (call, name) -> add(AddContextParameterToExistingContextFix(call, name)) }
-
+            val surroundingCall = findSurroundingContextCall(expression)
+            if (surroundingCall != null) {
+                findValueCandidates(expression, surroundingCall, requiredType).forEach { candidate ->
+                    add(AddContextParameterToExistingContextFix(surroundingCall, candidate, requiredTypeText))
+                }
+            }
             add(SurroundCallWithContextFix(expression, contextWrapperFor(expression)))
             addIfNotNull(buildExplicitContextArgumentFix(expression, symbol))
 
             val containingFunction = expression.getStrictParentOfType<KtNamedFunction>()
             if (containingFunction != null && !containingFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
+                add(AddContextParameterFix(expression, listOf(requiredTypeText)))
                 add(AddContextParameterFix(expression, contextType))
             }
         }
@@ -69,40 +74,40 @@ internal object NoContextParameterFixFactory {
     private fun KaSession.findSurroundingContextCall(element: KtElement): KtCallExpression? {
         val parentCall = element.getStrictParentOfType<KtLambdaArgument>()?.parent as? KtCallExpression ?: return null
         val callee = parentCall.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
-        if (callee.callableId?.asSingleFqName()?.asString() != CONTEXT_FQ_NAME) return null
+        if (callee.callableId?.asSingleFqName() != CONTEXT_FQ_NAME) return null
         return parentCall
     }
 
-    private fun KaSession.findUniqueValueCandidate(
+    private fun KaSession.findValueCandidates(
         useSite: KtElement,
         surroundingContextCall: KtCallExpression,
         requiredType: KaType,
-    ): String? {
-        if (innerContextScopeAlreadyContainsType(useSite, surroundingContextCall, requiredType)) return null
+    ): List<String> {
+        if (innerContextScopeAlreadyContainsType(useSite, surroundingContextCall, requiredType)) return emptyList()
 
         val scopeContext = useSite.containingKtFile.scopeContext(useSite)
         val candidates = LinkedHashSet<String>()
 
         // Named callables visible at the use site: local vals/vars, parameters,
-        // properties of enclosing classes, top-level declarations, imports.
+        // properties of enclosing classes, top-level declarations. Checking inside file, imports pollute candidates.
         scopeContext.compositeScope().callables.forEach { sym ->
             if (sym !is KaVariableSymbol) return@forEach
             if (sym.receiverParameter != null) return@forEach
-            val name = sym.name.asString()
+            val name = sym.name
             if (sym.psi?.containingFile != useSite.containingFile) return@forEach
             if (name == ANONYMOUS_NAME) return@forEach
-            if (sym.returnType.isSubtypeOf(requiredType)) candidates += name
+            if (sym.returnType.isSubtypeOf(requiredType)) candidates += name.asString()
         }
 
         // Context parameters of enclosing declarations are exposed as implicit argument values.
         scopeContext.implicitValues.forEach { value ->
             if (value !is KaScopeImplicitArgumentValue) return@forEach
-            val name = value.symbol.name.asString()
+            val name = value.symbol.name
             if (name == ANONYMOUS_NAME) return@forEach
-            if (value.type.isSubtypeOf(requiredType)) candidates += name
+            if (value.type.isSubtypeOf(requiredType)) candidates += name.asString()
         }
 
-        return candidates.singleOrNull()
+        return candidates.toList()
     }
 
 

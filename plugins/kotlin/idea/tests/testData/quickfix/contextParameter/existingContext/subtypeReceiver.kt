@@ -1,19 +1,17 @@
-// "Add argument to existing 'context'" "false"
+// "Add 'service' as 'MyLogger' to existing context" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
 // IGNORE_K1
 // DISABLE_K2_ERRORS
-interface Logger { fun log(msg: String) }
-class Service : Logger { override fun log(msg: String) {} }
+// SHOULD_BE_AVAILABLE_AFTER_EXECUTION
+interface MyLogger { fun log(msg: String) }
+class Service : MyLogger { override fun log(msg: String) {} }
 
-context(l: Logger) fun emit() { l.log("x") }
+context(l: MyLogger) fun emit() { l.log("x") }
 
-class App {
-    val s = Service()
-    fun caller() {
-        with(s) {
-            context("hello") {
-                <caret>emit()
-            }
-        }
+fun repro(service: Service) {
+    context("hello") {
+        <caret>emit()
     }
 }
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterToExistingContextFix

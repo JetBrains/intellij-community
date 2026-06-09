@@ -1,17 +1,16 @@
-// "Add 'paramLogger' as 'MyLogger' to existing context" "true"
+// "Add 'extraLogger' as 'MyLogger' to existing context" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
 // IGNORE_K1
 // DISABLE_K2_ERRORS
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
 interface MyLogger { fun log(msg: String) }
-class ConsoleLogger : MyLogger { override fun log(msg: String) {} }
 
-context(l: MyLogger) fun emit() { l.log("x") }
+context(c: MyLogger)
+infix fun String.make(v: String): String = this + v
 
-fun repro(paramLogger: MyLogger) {
-    val localLogger: MyLogger = ConsoleLogger()
+fun repro(extraLogger: MyLogger, count: Int) {
     context("hello") {
-        <caret>emit()
+        "a" <caret>make "b"
     }
 }
 

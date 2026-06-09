@@ -10,8 +10,8 @@ context(l: MyLogger) fun emit() { l.log("x") }
 
 fun repro(paramLogger: MyLogger) {
     val localLogger: MyLogger = ConsoleLogger()
-    context("hello") {
-        <caret>emit()
+    context("hello", paramLogger) {
+        emit()
     }
 }
 

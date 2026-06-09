@@ -1,4 +1,4 @@
-// "Add argument to existing 'context'" "true"
+// "Add 'greeting' as 'String' to existing context" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
 
 // DISABLE_K2_ERRORS
