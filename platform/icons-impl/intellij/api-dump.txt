@@ -7,8 +7,8 @@ f:com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 - icon(kotlin.jvm.functions.Function1):com.intellij.platform.icons.Icon
 - markDeferredIconUnused(com.intellij.platform.icons.IconIdentifier):V
 - sendDeferredNotifications(com.intellij.platform.icons.IconIdentifier,com.intellij.platform.icons.Icon,kotlin.coroutines.Continuation):java.lang.Object
-- toNewIcon(javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier):com.intellij.platform.icons.Icon
-- toSwingIcon(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale):javax.swing.Icon
+- toNewIcon(javax.swing.Icon):com.intellij.platform.icons.Icon
+- toSwingIcon(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon
 f:com.intellij.platform.icons.impl.intellij.IntelliJIconManager$Companion
 - f:activate():V
 f:com.intellij.platform.icons.impl.intellij.ModuleIconIdentifier
@@ -70,8 +70,15 @@ f:com.intellij.platform.icons.impl.intellij.rendering.IntelliJIconRendererManage
 - <init>():V
 - createRenderer(com.intellij.platform.icons.layers.IconLayer,com.intellij.platform.icons.rendering.RenderingContext):com.intellij.platform.icons.impl.rendering.layers.IconLayerRenderer
 - createRenderingContext(com.intellij.platform.icons.rendering.MutableIconUpdateFlow,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.RenderingContext
-- createUpdateFlow(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function1):com.intellij.platform.icons.rendering.MutableIconUpdateFlow
+- createUpdateFlow(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function2):com.intellij.platform.icons.rendering.MutableIconUpdateFlow
+f:com.intellij.platform.icons.impl.intellij.rendering.IntelliJImageModifiers
+- com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
+- <init>():V
+- <init>(com.intellij.platform.icons.filters.ColorFilter,com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher,Z,com.intellij.platform.icons.design.Color,com.intellij.util.SVGLoader$SvgElementColorPatcherProvider):V
+- b:<init>(com.intellij.platform.icons.filters.ColorFilter,com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher,Z,com.intellij.platform.icons.design.Color,com.intellij.util.SVGLoader$SvgElementColorPatcherProvider,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getLegacyPatcherProvider():com.intellij.util.SVGLoader$SvgElementColorPatcherProvider
 f:com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
+- com.intellij.platform.icons.swing.ScalableSwingIcon
 - javax.swing.Icon
 - <init>(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale):V
 - b:<init>(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -80,6 +87,7 @@ f:com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
 - getIconWidth():I
 - f:getScale():com.intellij.platform.icons.scale.IconScale
 - paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- scaled(com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon
 f:com.intellij.platform.icons.impl.intellij.rendering.SwingIconLayerRenderer
 - com.intellij.platform.icons.impl.rendering.layers.BaseImageIconLayerRenderer
 - <init>(com.intellij.platform.icons.impl.layers.SwingIconLayer,com.intellij.platform.icons.impl.rendering.DefaultRenderingContext):V

@@ -10,6 +10,7 @@ import com.intellij.internal.showSources
 import com.intellij.internal.ui.sandbox.components.BadgePanel
 import com.intellij.internal.ui.sandbox.components.ComboBoxPanel
 import com.intellij.internal.ui.sandbox.components.ComboBoxWithWidePopupPanel
+import com.intellij.internal.ui.sandbox.components.IconsPanel
 import com.intellij.internal.ui.sandbox.components.JBIntSpinnerPanel
 import com.intellij.internal.ui.sandbox.components.JBOptionButtonPanel
 import com.intellij.internal.ui.sandbox.components.JBPasswordFieldPanel
@@ -153,6 +154,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     OnOffButtonPanel(),
     SearchTextFieldPanel(),
     ThreeStateCheckBoxPanel(),
+    IconsPanel()
   ))
 
   private fun createKotlinUIDSLNode() = Group("Kotlin UI DSL", children = listOf(

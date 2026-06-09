@@ -13,12 +13,14 @@ import kotlin.time.Duration.Companion.milliseconds
 @Service(Service.Level.APP)
 @ApiStatus.Internal
 class IconUpdateService(val scope: CoroutineScope) {
-  fun scheduleDelayedUpdate(delay: Long, updateId: Int, flow: MutableSharedFlow<Int>, updateCallback: (Int) -> Unit, rateLimiter: () -> Boolean = { false }) {
+  fun scheduleDelayedUpdate(delay: Long, updateId: Int, flow: MutableSharedFlow<Int>, onUpdate: (suspend (Int) -> Unit)? = null, rateLimiter: () -> Boolean = { false }) {
     scope.launch {
-      delay(delay.milliseconds)
-      if (rateLimiter()) return@launch
+      if (delay != 0L) {
+        delay(delay.milliseconds)
+        if (rateLimiter()) return@launch
+      }
       flow.emit(updateId)
-      updateCallback(updateId)
+      onUpdate?.invoke(updateId)
     }
   }
 

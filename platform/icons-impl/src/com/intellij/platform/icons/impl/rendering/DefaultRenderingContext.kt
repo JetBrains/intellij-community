@@ -9,14 +9,16 @@ import com.intellij.platform.icons.rendering.ImageResource
 import com.intellij.platform.icons.rendering.ImageResourceProvider
 import com.intellij.platform.icons.rendering.MutableIconUpdateFlow
 import com.intellij.platform.icons.rendering.RenderingContext
+import com.intellij.platform.icons.rendering.ThemeContext
 
 class DefaultRenderingContext(
     override val updateFlow: MutableIconUpdateFlow,
     override val defaultImageModifiers: DefaultImageModifiers?,
+    override val theme: ThemeContext,
     val imageResourceProvider: ImageResourceProvider,
 ) : RenderingContext {
     fun adjustTo(iconLayer: IconLayer): DefaultRenderingContext =
-        DefaultRenderingContext(updateFlow, iconLayer.generateImageModifiers(this), imageResourceProvider)
+        DefaultRenderingContext(updateFlow, iconLayer.generateImageModifiers(this), theme, imageResourceProvider)
 
     override fun imageResource(loader: ImageResourceLocation, imageModifiers: ImageModifiers?): ImageResource =
         imageResourceProvider.loadImage(loader, imageModifiers)

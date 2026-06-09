@@ -12,7 +12,7 @@ import com.intellij.platform.icons.rendering.ScalingContext
 import kotlin.math.ceil
 
 fun IconLayer.generateImageModifiers(renderingContext: DefaultRenderingContext? = null): DefaultImageModifiers {
-    val defaults = renderingContext?.defaultImageModifiers
+    val defaults = renderingContext?.defaultImageModifiers ?: renderingContext?.theme?.imageModifiers() as? DefaultImageModifiers
     return DefaultImageModifiers(
         colorFilter = findModifier<ColorFilterModifier>()?.colorFilter ?: defaults?.colorFilter,
         svgPatcher = findModifier<SvgPatcherModifier>()?.svgPatcher ?: defaults?.svgPatcher,

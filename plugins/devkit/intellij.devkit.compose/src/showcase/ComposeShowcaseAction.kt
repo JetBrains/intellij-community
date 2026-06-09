@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.PaintingParent.Wrapper
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jewel.bridge.compose
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -31,7 +30,7 @@ internal class ComposeShowcaseAction : DumbAwareAction() {
   }
 }
 
-private class ComposeShowcaseDialog(val project: Project?, @NlsSafe dialogTitle: String) :
+private class ComposeShowcaseDialog(project: Project?, @NlsSafe dialogTitle: String) :
   DialogWrapper(project, null, true, IdeModalityType.MODELESS, false) {
 
   init {

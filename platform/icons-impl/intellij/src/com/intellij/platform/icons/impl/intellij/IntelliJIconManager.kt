@@ -13,7 +13,6 @@ import com.intellij.platform.icons.ImageResourceLocation
 import com.intellij.platform.icons.design.IconDesigner
 import com.intellij.platform.icons.impl.DefaultDeferredIcon
 import com.intellij.platform.icons.impl.DefaultIconManager
-import com.intellij.platform.icons.impl.DefaultLayeredIcon
 import com.intellij.platform.icons.impl.DeferredIconResolver
 import com.intellij.platform.icons.impl.iconLayer
 import com.intellij.platform.icons.impl.intellij.custom.CustomLegacyIconSerializer
@@ -22,8 +21,10 @@ import com.intellij.platform.icons.impl.intellij.rendering.IntelliJIconRendererM
 import com.intellij.platform.icons.impl.intellij.rendering.SwingIcon
 import com.intellij.platform.icons.impl.layers.SwingIconLayer
 import com.intellij.platform.icons.modifiers.IconModifier
+import com.intellij.platform.icons.modifiers.scale
 import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.scale.IconScale
+import com.intellij.platform.icons.swing.ScalableSwingIcon
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.Topic.BroadcastDirection
 import kotlinx.coroutines.Dispatchers
@@ -35,14 +36,6 @@ import java.lang.ref.WeakReference
 class IntelliJIconManager : DefaultIconManager() {
   override val resolverService: IntelliJDeferredIconResolverService by lazy {
     service<IntelliJDeferredIconResolverService>()
-  }
-
-  override fun generateDeferredIconIdentifier(id: String?, classLoader: ClassLoader?): IconIdentifier {
-    if (classLoader != null) {
-      val (pluginId, moduleId) = getPluginAndModuleId(classLoader)
-      return ModuleIconIdentifier(pluginId, moduleId, super.generateDeferredIconIdentifier(id, classLoader))
-    }
-    return super.generateDeferredIconIdentifier(id, classLoader)
   }
 
   override fun createDeferredIconResolver(
@@ -64,15 +57,7 @@ class IntelliJIconManager : DefaultIconManager() {
     return ijIconDesigner.build()
   }
 
-  override fun toSwingIcon(icon: Icon, scale: IconScale): javax.swing.Icon {
-    // If the icon is converted using toNewIcon(), we just return the legacy icon to avoid
-    // any further resource allocation
-    if (icon is DefaultLayeredIcon && icon.layers.size == 1) {
-      val firstLayer = icon.layers.firstOrNull()
-      if (firstLayer is SwingIconLayer && firstLayer.modifier == IconModifier) {
-        return firstLayer.legacyIcon
-      }
-    }
+  override fun toSwingIcon(icon: Icon, scale: IconScale): ScalableSwingIcon {
     return SwingIcon(icon, scale)
   }
 
@@ -86,10 +71,27 @@ class IntelliJIconManager : DefaultIconManager() {
     designer.addSwingLayer(swingIcon, modifier)
   }
 
-  override fun toNewIcon(swingIcon: javax.swing.Icon, modifier: IconModifier): Icon {
-    if (swingIcon is SwingIcon && modifier == IconModifier) return swingIcon.icon
-    return icon {
-      addSwingLayer(this, swingIcon, modifier)
+  override fun toNewIcon(swingIcon: javax.swing.Icon): Icon {
+    if (swingIcon is SwingIcon && swingIcon.scale == null) return swingIcon.icon
+    return if (swingIcon is SwingIcon) {
+      @Suppress("KotlinConstantConditions")
+      if (swingIcon.scale != null) {
+        icon {
+          addSwingLayer(
+            this,
+            swingIcon,
+            IconModifier.scale(swingIcon.scale)
+          )
+        }
+      } else swingIcon.icon
+    } else {
+      icon {
+        addSwingLayer(
+          this,
+          swingIcon,
+          IconModifier
+        )
+      }
     }
   }
 

@@ -6,7 +6,7 @@ import com.intellij.platform.icons.filters.ColorFilter
 import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
 import com.intellij.platform.icons.rendering.ImageModifiers
 
-class DefaultImageModifiers(
+open class DefaultImageModifiers(
     override val colorFilter: ColorFilter? = null,
     override val svgPatcher: DefaultSvgPatcher? = null,
     val isDark: Boolean = false,

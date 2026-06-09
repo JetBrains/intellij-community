@@ -15,17 +15,18 @@ import com.intellij.platform.icons.rendering.ScalingContext
 
 class DefaultIconRenderer(val iconInstance: DefaultLayeredIcon, private val context: RenderingContext) : IconRenderer {
     override val icon: Icon = iconInstance
-    private var isLoaded = false
-    private val layerRenderers = createRenderers()
+    private var layerRenderers = createRenderers()
+    private var lastThemeDigest: String = context.theme.digest()
 
     private fun createRenderers(): List<IconLayerRenderer> {
         val manager = IconLayerManager.getInstance()
-        val renderers = iconInstance.layers.map { manager.createRenderer(it, context) }
-        isLoaded = true
-        return renderers
+        return iconInstance.layers.map { manager.createRenderer(it, context) }
     }
 
     override fun render(paintingContext: LayerPaintingContext) {
+        if (lastThemeDigest != context.theme.digest()) {
+          layerRenderers = createRenderers()
+        }
         val usedDimensions = calculateUsedDimensions(paintingContext.scaling)
         for (layer in layerRenderers) {
             val nested =

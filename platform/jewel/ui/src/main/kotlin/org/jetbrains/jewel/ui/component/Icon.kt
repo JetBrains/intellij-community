@@ -112,12 +112,7 @@ public fun Icon(icon: Icon, contentDescription: String?, modifier: Modifier = Mo
     val scope = rememberCoroutineScope()
     val isDark = JewelTheme.isDark
 
-    val updateFlow =
-        remember(scope) {
-            IconRendererManager.createUpdateFlow(scope) {
-                // No Compose state write here
-            }
-        }
+    val updateFlow = remember(scope) { IconRendererManager.createUpdateFlow(scope) }
 
     val context =
         remember(updateFlow, isDark) {

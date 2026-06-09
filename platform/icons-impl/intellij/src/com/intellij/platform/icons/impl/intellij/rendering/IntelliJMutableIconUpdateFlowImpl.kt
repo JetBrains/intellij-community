@@ -8,12 +8,18 @@ import com.intellij.platform.icons.Icon
 import com.intellij.platform.icons.impl.rendering.MutableIconUpdateFlowBase
 
 internal class IntelliJMutableIconUpdateFlowImpl(
-  updateCallback: (Int) -> Unit
-) : MutableIconUpdateFlowBase(updateCallback) {
+  val onUpdate: (suspend (Int) -> Unit)? = null
+) : MutableIconUpdateFlowBase() {
   override fun MutableSharedFlow<Int>.emitDelayed(delay: Long, value: Int) {
-    IconUpdateService.getInstance().scheduleDelayedUpdate(delay, value, this@emitDelayed, updateCallback) {
+    IconUpdateService.getInstance().scheduleDelayedUpdate(delay, value, this@emitDelayed, onUpdate) {
       handleRateLimiting()
     }
+  }
+
+  override fun triggerUpdate() {
+    if (onUpdate != null) {
+      triggerDelayedUpdate(0L)
+    } else super.triggerUpdate()
   }
 
   override fun collectDynamic(flow: Flow<Icon>, handler: (Icon) -> Unit) {

@@ -50,7 +50,8 @@ val EMPTY_ICON: ImageIcon by lazy {
 }
 
 @JvmField
-internal val pathTransformGlobalModCount: AtomicInteger = AtomicInteger()
+@Internal
+val pathTransformGlobalModCount: AtomicInteger = AtomicInteger()
 
 // opened for https://github.com/search?q=repo%3AJetBrains%2Fjewel%20patchIconPath&type=code
 @Internal
@@ -59,7 +60,8 @@ fun patchIconPath(originalPath: String, classLoader: ClassLoader): Pair<String, 
 }
 
 @JvmField
-internal val pathTransform: AtomicReference<IconTransform> = AtomicReference(
+@Internal
+val pathTransform: AtomicReference<IconTransform> = AtomicReference(
   IconTransform(dark = false, patchers = arrayOf(DeprecatedDuplicatesIconPathPatcher()), filter = null)
 )
 

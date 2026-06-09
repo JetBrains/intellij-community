@@ -30,6 +30,7 @@ import com.intellij.platform.icons.rendering.LayerPaintingContext
 import com.intellij.platform.icons.rendering.MutableIconUpdateFlow
 import com.intellij.platform.icons.rendering.RenderingContext
 import com.intellij.platform.icons.rendering.ScalingContext
+import com.intellij.platform.icons.rendering.ThemeContext
 import com.intellij.platform.icons.scale.IconScale
 import com.intellij.platform.icons.scale.factor
 import org.junit.Assert
@@ -93,7 +94,7 @@ class TestIconManager: DefaultIconManager() {
 class TestIconRendererManager: DefaultIconRendererManager() {
   override fun createUpdateFlow(
     scope: CoroutineScope?,
-    updateCallback: (Int) -> Unit,
+    onUpdate: (suspend (Int) -> Unit)?,
   ): MutableIconUpdateFlow {
     return EmptyMutableIconUpdateFlow
   }
@@ -102,7 +103,7 @@ class TestIconRendererManager: DefaultIconRendererManager() {
     updateFlow: MutableIconUpdateFlow,
     defaultImageModifiers: ImageModifiers?,
   ): RenderingContext {
-    return DefaultRenderingContext(updateFlow, defaultImageModifiers as? DefaultImageModifiers, TestImageResourceProvider)
+    return DefaultRenderingContext(updateFlow, defaultImageModifiers as? DefaultImageModifiers, ThemeContext.None, TestImageResourceProvider)
   }
 }
 

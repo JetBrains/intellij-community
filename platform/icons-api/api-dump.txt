@@ -5,8 +5,7 @@ com.intellij.platform.icons.DeferredIcon
 com.intellij.platform.icons.Icon
 com.intellij.platform.icons.IconIdentifier
 f:com.intellij.platform.icons.IconManagerKt
-- sf:deferredIcon(com.intellij.platform.icons.Icon,java.lang.String,java.lang.ClassLoader,kotlin.jvm.functions.Function1):com.intellij.platform.icons.Icon
-- bs:deferredIcon$default(com.intellij.platform.icons.Icon,java.lang.String,java.lang.ClassLoader,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.platform.icons.Icon
+- sf:deferredIcon(com.intellij.platform.icons.Icon,kotlin.jvm.functions.Function1):com.intellij.platform.icons.Icon
 - sf:icon(kotlin.jvm.functions.Function1):com.intellij.platform.icons.Icon
 - sf:imageIcon(java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier):com.intellij.platform.icons.Icon
 - bs:imageIcon$default(java.lang.String,java.lang.ClassLoader,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):com.intellij.platform.icons.Icon
@@ -97,6 +96,7 @@ f:com.intellij.platform.icons.design.IconMarginKt
 - sf:iconMargin(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit):com.intellij.platform.icons.design.IconMargin
 com.intellij.platform.icons.design.IconUnit
 - sf:Companion:com.intellij.platform.icons.design.IconUnit$Companion
+- a:times(D):com.intellij.platform.icons.design.IconUnit
 - a:times(I):com.intellij.platform.icons.design.IconUnit
 f:com.intellij.platform.icons.design.IconUnit$Companion
 - f:getZero():com.intellij.platform.icons.design.IconUnit
@@ -204,10 +204,12 @@ f:com.intellij.platform.icons.scale.IconScaleKt
 - bs:fitArea$default(com.intellij.platform.icons.design.IconUnit,com.intellij.platform.icons.design.IconUnit,Z,I,java.lang.Object):com.intellij.platform.icons.scale.FitAreaScale
 f:com.intellij.platform.icons.swing.AwtColorKt
 - sf:toAwtColor(com.intellij.platform.icons.design.Color):java.awt.Color
+com.intellij.platform.icons.swing.ScalableSwingIcon
+- javax.swing.Icon
+- a:scaled(com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon
 f:com.intellij.platform.icons.swing.SwingIconKt
 - sf:swingIcon(com.intellij.platform.icons.design.IconDesigner,javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier):V
 - bs:swingIcon$default(com.intellij.platform.icons.design.IconDesigner,javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):V
-- sf:toNewIcon(javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier):com.intellij.platform.icons.Icon
-- bs:toNewIcon$default(javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier,I,java.lang.Object):com.intellij.platform.icons.Icon
-- sf:toSwingIcon(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale):javax.swing.Icon
-- bs:toSwingIcon$default(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale,I,java.lang.Object):javax.swing.Icon
+- sf:toNewIcon(javax.swing.Icon):com.intellij.platform.icons.Icon
+- sf:toSwingIcon(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon
+- bs:toSwingIcon$default(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale,I,java.lang.Object):com.intellij.platform.icons.swing.ScalableSwingIcon

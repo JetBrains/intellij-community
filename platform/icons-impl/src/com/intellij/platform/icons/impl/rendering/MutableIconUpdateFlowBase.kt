@@ -6,7 +6,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.flow.MutableSharedFlow
 
-abstract class MutableIconUpdateFlowBase(protected val updateCallback: (Int) -> Unit) : MutableIconUpdateFlow {
+abstract class MutableIconUpdateFlowBase : MutableIconUpdateFlow {
     private val updateCounter = AtomicInteger()
     private val underlayingFlow = MutableSharedFlow<Int>()
     protected var stopwatch: Long = System.currentTimeMillis()
@@ -22,7 +22,6 @@ abstract class MutableIconUpdateFlowBase(protected val updateCallback: (Int) -> 
         if (handleRateLimiting()) return
         val updateId = updateCounter.incrementAndGet()
         underlayingFlow.tryEmit(updateId)
-        updateCallback(updateId)
     }
 
     override fun triggerDelayedUpdate(delay: Long) {

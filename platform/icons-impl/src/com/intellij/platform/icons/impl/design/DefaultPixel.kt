@@ -4,12 +4,15 @@ package com.intellij.platform.icons.impl.design
 import com.intellij.platform.icons.design.IconUnit
 import com.intellij.platform.icons.design.Pixel
 import kotlinx.serialization.Serializable
+import kotlin.math.roundToInt
 
 @Serializable
 class DefaultPixel(override val value: Int) : Pixel {
     override fun plus(other: Pixel): Pixel = DefaultPixel(value + other.value)
 
     override fun times(other: Int): IconUnit = DefaultPixel(value * other)
+
+    override fun times(other: Double): IconUnit = DefaultPixel((value * other).roundToInt())
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

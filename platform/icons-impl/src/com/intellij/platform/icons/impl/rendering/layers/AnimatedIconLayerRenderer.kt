@@ -43,7 +43,8 @@ class AnimatedIconLayerRenderer(
     private fun calculateAndSetNewFrameData(): FrameData {
         val currentLastFrame = lastFrame
         if (currentLastFrame.timestamp == -1L) {
-            val newData = FrameData(System.currentTimeMillis(), 0, 0)
+            val remaining = if (frameRenderers.size > 0) frameRenderers[0].frame.duration else 0L
+            val newData = FrameData(System.currentTimeMillis(), 0, remaining)
             lastFrame = newData
             return newData
         }

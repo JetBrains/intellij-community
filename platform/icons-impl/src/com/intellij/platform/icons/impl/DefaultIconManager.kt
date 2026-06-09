@@ -21,6 +21,7 @@ import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.ModifiersFactory
 import com.intellij.platform.icons.patchers.SvgPatcher
 import com.intellij.platform.icons.scale.IconScale
+import com.intellij.platform.icons.swing.ScalableSwingIcon
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.serialization.KSerializer
@@ -42,11 +43,9 @@ abstract class DefaultIconManager : IconManager {
 
     override fun deferredIcon(
         placeholder: Icon?,
-        identifier: String?,
-        classLoader: ClassLoader?,
         evaluator: suspend () -> Icon,
     ): Icon =
-        resolverService.getOrCreateDeferredIcon(generateDeferredIconIdentifier(identifier, classLoader), placeholder) {
+        resolverService.getOrCreateDeferredIcon(generateDeferredIconIdentifier(), placeholder) {
             id,
             ref ->
             createDeferredIconResolver(id, ref, evaluator)
@@ -55,8 +54,7 @@ abstract class DefaultIconManager : IconManager {
     internal fun registerDeserializedDeferredIcon(icon: DefaultDeferredIcon): DefaultDeferredIcon =
         resolverService.register(icon) { id, ref -> createDeferredIconResolver(id, ref, null) }
 
-    protected open fun generateDeferredIconIdentifier(id: String?, classLoader: ClassLoader? = null): IconIdentifier {
-        if (id != null) return StringIconIdentifier(id)
+    protected open fun generateDeferredIconIdentifier(): IconIdentifier {
         return StringIconIdentifier("dynamicIcon_" + dynamicIconNextId.getAndIncrement().toString())
     }
 
@@ -99,11 +97,11 @@ abstract class DefaultIconManager : IconManager {
         buildCustomSerializers()
     }
 
-    override fun toSwingIcon(icon: Icon, scale: IconScale): javax.swing.Icon {
+    override fun toSwingIcon(icon: Icon, scale: IconScale): ScalableSwingIcon {
         error("Swing Icons are not supported.")
     }
 
-    override fun toNewIcon(swingIcon: javax.swing.Icon, modifier: IconModifier): Icon {
+    override fun toNewIcon(swingIcon: javax.swing.Icon): Icon {
         error("Swing Icons are not supported.")
     }
 

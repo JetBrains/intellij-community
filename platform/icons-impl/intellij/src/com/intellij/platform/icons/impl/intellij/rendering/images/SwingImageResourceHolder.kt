@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.intellij.rendering.images
 
+import com.intellij.platform.icons.impl.intellij.rendering.IntelliJImageModifiers
 import com.intellij.ui.icons.LoadIconParameters
 import com.intellij.ui.scale.ScaleContext
 import com.intellij.platform.icons.impl.intellij.rendering.toAwtFilter
@@ -31,7 +32,8 @@ internal fun ImageModifiers?.toLoadParameters(): LoadIconParameters {
       add("stroke", stroke.toHex())
     }
   }
-  val colorPatcher = ((this?.svgPatcher?.combineWith(strokePatcher)) as? DefaultSvgPatcher)?.toIJPatcher()
+  val ijModifiers = this as? IntelliJImageModifiers
+  val colorPatcher = ((this?.svgPatcher?.combineWith(strokePatcher)) as? DefaultSvgPatcher)?.toIJPatcher(ijModifiers?.legacyPatcherProvider)
   return LoadIconParameters(
     filters = filters,
     isDark = knownModifiers?.isDark ?: false,

@@ -29,10 +29,9 @@ a:com.intellij.platform.icons.impl.DefaultIconManager
 - buildCustomSerializers(kotlinx.serialization.modules.SerializersModuleBuilder):V
 - colorFilterFactory():com.intellij.platform.icons.filters.ColorFilterFactory
 - p:createDeferredIconResolver(com.intellij.platform.icons.IconIdentifier,java.lang.ref.WeakReference,kotlin.jvm.functions.Function1):com.intellij.platform.icons.impl.DeferredIconResolver
-- deferredIcon(com.intellij.platform.icons.Icon,java.lang.String,java.lang.ClassLoader,kotlin.jvm.functions.Function1):com.intellij.platform.icons.Icon
+- deferredIcon(com.intellij.platform.icons.Icon,kotlin.jvm.functions.Function1):com.intellij.platform.icons.Icon
 - forceEvaluation(com.intellij.platform.icons.DeferredIcon,kotlin.coroutines.Continuation):java.lang.Object
-- p:generateDeferredIconIdentifier(java.lang.String,java.lang.ClassLoader):com.intellij.platform.icons.IconIdentifier
-- bs:generateDeferredIconIdentifier$default(com.intellij.platform.icons.impl.DefaultIconManager,java.lang.String,java.lang.ClassLoader,I,java.lang.Object):com.intellij.platform.icons.IconIdentifier
+- p:generateDeferredIconIdentifier():com.intellij.platform.icons.IconIdentifier
 - pa:getResolverService():com.intellij.platform.icons.impl.DeferredIconResolverService
 - getSerializersModule():kotlinx.serialization.modules.SerializersModule
 - a:markDeferredIconUnused(com.intellij.platform.icons.IconIdentifier):V
@@ -40,8 +39,8 @@ a:com.intellij.platform.icons.impl.DefaultIconManager
 - f:scheduleEvaluation(com.intellij.platform.icons.DeferredIcon):V
 - a:sendDeferredNotifications(com.intellij.platform.icons.IconIdentifier,com.intellij.platform.icons.Icon,kotlin.coroutines.Continuation):java.lang.Object
 - svgPatcher(kotlin.jvm.functions.Function1):com.intellij.platform.icons.patchers.SvgPatcher
-- toNewIcon(javax.swing.Icon,com.intellij.platform.icons.modifiers.IconModifier):com.intellij.platform.icons.Icon
-- toSwingIcon(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale):javax.swing.Icon
+- toNewIcon(javax.swing.Icon):com.intellij.platform.icons.Icon
+- toSwingIcon(com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.swing.ScalableSwingIcon
 - unitsFactory():com.intellij.platform.icons.design.UnitsFactory
 f:com.intellij.platform.icons.impl.DefaultIconManager$Companion
 - f:getDefaultManagerInstance():com.intellij.platform.icons.impl.DefaultIconManager
@@ -140,6 +139,7 @@ f:com.intellij.platform.icons.impl.design.DefaultDisplayPoint
 - getValue():D
 - hashCode():I
 - plus(com.intellij.platform.icons.design.DisplayPoint):com.intellij.platform.icons.design.DisplayPoint
+- times(D):com.intellij.platform.icons.design.IconUnit
 - times(I):com.intellij.platform.icons.design.IconUnit
 bf:com.intellij.platform.icons.impl.design.DefaultDisplayPoint$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
@@ -270,6 +270,7 @@ f:com.intellij.platform.icons.impl.design.DefaultPixel
 - getValue():I
 - hashCode():I
 - plus(com.intellij.platform.icons.design.Pixel):com.intellij.platform.icons.design.Pixel
+- times(D):com.intellij.platform.icons.design.IconUnit
 - times(I):com.intellij.platform.icons.design.IconUnit
 bf:com.intellij.platform.icons.impl.design.DefaultPixel$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
@@ -747,8 +748,11 @@ c:com.intellij.platform.icons.impl.rendering.CachedGPUImageResourceHolder
 - getOrGenerateBitmap(kotlin.reflect.KClass,kotlin.jvm.functions.Function0):java.lang.Object
 f:com.intellij.platform.icons.impl.rendering.CoroutineBasedMutableIconUpdateFlow
 - com.intellij.platform.icons.impl.rendering.MutableIconUpdateFlowBase
-- <init>(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function1):V
+- <init>(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function2):V
+- b:<init>(kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function2,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - collectDynamic(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function1):V
+- f:getOnUpdate():kotlin.jvm.functions.Function2
+- triggerUpdate():V
 f:com.intellij.platform.icons.impl.rendering.DefaultIconRenderer
 - com.intellij.platform.icons.rendering.IconRenderer
 - <init>(com.intellij.platform.icons.impl.DefaultLayeredIcon,com.intellij.platform.icons.rendering.RenderingContext):V
@@ -763,7 +767,7 @@ a:com.intellij.platform.icons.impl.rendering.DefaultIconRendererManager
 - createRenderer(com.intellij.platform.icons.Icon,com.intellij.platform.icons.rendering.RenderingContext):com.intellij.platform.icons.rendering.IconRenderer
 - createRenderer(com.intellij.platform.icons.layers.IconLayer,com.intellij.platform.icons.rendering.RenderingContext):com.intellij.platform.icons.impl.rendering.layers.IconLayerRenderer
 - pf:createRendererOrNull(com.intellij.platform.icons.Icon,com.intellij.platform.icons.rendering.RenderingContext):com.intellij.platform.icons.rendering.IconRenderer
-f:com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
+c:com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 - com.intellij.platform.icons.rendering.ImageModifiers
 - <init>():V
 - <init>(com.intellij.platform.icons.filters.ColorFilter,com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher,Z,com.intellij.platform.icons.design.Color):V
@@ -780,10 +784,11 @@ a:com.intellij.platform.icons.impl.rendering.DefaultImageResourceProvider
 - bs:fromSwingIcon$default(com.intellij.platform.icons.impl.rendering.DefaultImageResourceProvider,javax.swing.Icon,com.intellij.platform.icons.rendering.ImageModifiers,I,java.lang.Object):com.intellij.platform.icons.rendering.ImageResource
 f:com.intellij.platform.icons.impl.rendering.DefaultRenderingContext
 - com.intellij.platform.icons.rendering.RenderingContext
-- <init>(com.intellij.platform.icons.rendering.MutableIconUpdateFlow,com.intellij.platform.icons.impl.rendering.DefaultImageModifiers,com.intellij.platform.icons.rendering.ImageResourceProvider):V
+- <init>(com.intellij.platform.icons.rendering.MutableIconUpdateFlow,com.intellij.platform.icons.impl.rendering.DefaultImageModifiers,com.intellij.platform.icons.rendering.ThemeContext,com.intellij.platform.icons.rendering.ImageResourceProvider):V
 - f:adjustTo(com.intellij.platform.icons.layers.IconLayer):com.intellij.platform.icons.impl.rendering.DefaultRenderingContext
 - getDefaultImageModifiers():com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 - f:getImageResourceProvider():com.intellij.platform.icons.rendering.ImageResourceProvider
+- getTheme():com.intellij.platform.icons.rendering.ThemeContext
 - getUpdateFlow():com.intellij.platform.icons.rendering.MutableIconUpdateFlow
 - imageResource(com.intellij.platform.icons.ImageResourceLocation,com.intellij.platform.icons.rendering.ImageModifiers):com.intellij.platform.icons.rendering.ImageResource
 f:com.intellij.platform.icons.impl.rendering.DefaultScalingContext
@@ -794,12 +799,11 @@ f:com.intellij.platform.icons.impl.rendering.DefaultScalingContext
 - hashCode():I
 a:com.intellij.platform.icons.impl.rendering.MutableIconUpdateFlowBase
 - kotlinx.coroutines.flow.Flow
-- <init>(kotlin.jvm.functions.Function1):V
+- <init>():V
 - collect(kotlinx.coroutines.flow.FlowCollector,kotlin.coroutines.Continuation):java.lang.Object
 - pa:emitDelayed(kotlinx.coroutines.flow.MutableSharedFlow,J,I):V
 - pf:getMinimalUpdateMillis():J
 - pf:getStopwatch():J
-- pf:getUpdateCallback():kotlin.jvm.functions.Function1
 - pf:handleRateLimiting():Z
 - pf:setStopwatch(J):V
 - triggerDelayedUpdate(J):V
