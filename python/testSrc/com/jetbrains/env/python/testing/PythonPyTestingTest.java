@@ -5,14 +5,21 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
+import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
+import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.EditorTestUtil;
+import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -50,6 +57,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 
+import java.awt.Rectangle;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.ByteBuffer;
@@ -941,6 +949,91 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
           }
         };
       }
+    });
+  }
+
+  @Test
+  public void testOnlyPytestConsoleScrollsToBottomByDefault() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/scroll_to_bottom", SdkCreationType.EMPTY_SDK) {
+      private SMTRunnerConsoleView myConsoleView;
+
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() {
+        return new PyTestTestProcessRunner("test_scroll_to_bottom.py", 0) {
+          @Override
+          protected void fetchConsoleAndSetToField(@NotNull RunContentDescriptor descriptor) {
+            super.fetchConsoleAndSetToField(descriptor);
+            myConsoleView = (SMTRunnerConsoleView)descriptor.getExecutionConsole();
+            TestConsoleProperties.HIDE_PASSED_TESTS.set(myConsoleView.getProperties(), false);
+            TestConsoleProperties.SCROLL_TO_BOTTOM.set(myConsoleView.getProperties(), false);
+            EditorTestUtil.setEditorVisibleSize(myConsole.getEditor(), 80, 4);
+          }
+        };
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull PyTestTestProcessRunner runner,
+                                      @NotNull String stdout,
+                                      @NotNull String stderr,
+                                      @NotNull String all,
+                                      int exitCode) {
+        selectTestAndWait(runner, myConsoleView, "test_passing_after_failure_10");
+        assertConsoleDoesNotScrollToBottomForSelectedPassingTest(runner);
+        selectTestAndWait(runner, myConsoleView, "test_failing_scroll_to_bottom");
+        assertConsoleScrolledToBottom(runner);
+      }
+    });
+  }
+
+  private static void selectTestAndWait(@NotNull PyTestTestProcessRunner runner,
+                                        @NotNull SMTRunnerConsoleView consoleView,
+                                        @NotNull String testName) {
+    AbstractTestProxy testProxy = runner.findTestByName(testName);
+    if (testProxy == null) {
+      throw new AssertionError("Test node should exist: " + testName);
+    }
+    EdtTestUtil.runInEdtAndWait(() -> {
+      consoleView.getResultsViewer().getTreeBuilder().select(testProxy, null);
+      PlatformTestUtil.waitWithEventsDispatching("Timed out selecting test node: " + testName,
+                                                 () -> consoleView.getResultsViewer().getTreeView().getSelectedTest() == testProxy,
+                                                 5);
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
+      AbstractTestProxy selectedTest = consoleView.getResultsViewer().getTreeView().getSelectedTest();
+      assertEquals("Selected test", testName, selectedTest != null ? selectedTest.getName() : null);
+    });
+  }
+
+  private static void assertConsoleDoesNotScrollToBottomForSelectedPassingTest(@NotNull PyTestTestProcessRunner runner) {
+    var console = runner.getConsole();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      var editor = console.getEditor();
+      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+      String consoleText = editor.getDocument().getText();
+      assertTrue("Console should contain the selected passing test", consoleText.contains("test_passing_after_failure_10"));
+      assertFalse("Passing test selection should not show the failure message",
+                  consoleText.contains("terminal should show this failure at bottom"));
+      assertEquals("Passing test selection should not scroll the pytest console away from the top", 0, visibleArea.y);
+    });
+  }
+
+  private static void assertConsoleScrolledToBottom(@NotNull PyTestTestProcessRunner runner) {
+    var console = runner.getConsole();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      var editor = console.getEditor();
+      Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
+      String consoleText = editor.getDocument().getText();
+      int failureMessageOffset = consoleText.lastIndexOf("terminal should show this failure at bottom");
+      assertTrue("Console should contain the failure message", failureMessageOffset >= 0);
+      int lineCount = editor.getDocument().getLineCount();
+      assertTrue("Console should contain output", lineCount > 0);
+      int lastLineBottom = editor.logicalPositionToXY(new LogicalPosition(lineCount - 1, 0)).y + editor.getLineHeight();
+      int failureMessageY = editor.logicalPositionToXY(editor.offsetToLogicalPosition(failureMessageOffset)).y;
+      assertTrue("Console output should be taller than the visible area", lastLineBottom > visibleArea.height);
+      assertTrue("Pytest console should scroll away from the top", visibleArea.y > 0);
+      assertTrue("Pytest console should show the failure message",
+                 visibleArea.y <= failureMessageY && failureMessageY < visibleArea.y + visibleArea.height);
+      assertTrue("Pytest console should show the final output line", visibleArea.y + visibleArea.height >= lastLineBottom);
     });
   }
 

@@ -17,6 +17,7 @@ import com.intellij.execution.testframework.sm.runner.events.TestOutputEvent;
 import com.jetbrains.python.PyBundle;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageVisitor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,7 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties i
   private static final String NAME_ATTRIBUTE = "name";
   private static final String NODE_ID_ATTRIBUTE = "nodeId";
   private static final String OUT_ATTRIBUTE = "out";
+  private static final String PYTEST_FRAMEWORK_NAME = "PythonPyTestRunner";
 
   private final boolean myIsEditable;
   private final SMTestLocator myLocator;
@@ -42,7 +44,7 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties i
                                         @NotNull Executor executor,
                                         boolean editable,
                                         @Nullable SMTestLocator locator) {
-    super(config, FRAMEWORK_NAME, executor);
+    super(config, config instanceof PyTestConfiguration ? PYTEST_FRAMEWORK_NAME : FRAMEWORK_NAME, executor);
     myIsEditable = editable;
     myLocator = locator;
   }
@@ -58,7 +60,8 @@ public class PythonTRunnerConsoleProperties extends SMTRunnerConsoleProperties i
   }
 
   @Override
-  public OutputToGeneralTestEventsConverter createTestEventsConverter(@NotNull String testFrameworkName,
+  @ApiStatus.Internal
+  public final OutputToGeneralTestEventsConverter createTestEventsConverter(@NotNull String testFrameworkName,
                                                                       @NotNull TestConsoleProperties consoleProperties) {
     return new PythonOutputToGeneralTestEventsConverter(testFrameworkName, consoleProperties);
   }
