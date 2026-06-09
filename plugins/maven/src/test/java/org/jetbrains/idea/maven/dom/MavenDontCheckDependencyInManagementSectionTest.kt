@@ -1,13 +1,29 @@
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenDontCheckDependencyInManagementSectionTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenDontCheckDependencyInManagementSectionTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testHighlighting() = runBlocking {
-    importProjectAsync(
+    maven.importProjectAsync(
       """
         <groupId>test</groupId>
         <artifactId>m1</artifactId>
@@ -52,7 +68,7 @@ class MavenDontCheckDependencyInManagementSectionTest : MavenDomTestCase() {
           </build>
         """.trimIndent())
 
-    createProjectPom(
+    maven.createProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>m1</artifactId>
@@ -97,6 +113,6 @@ class MavenDontCheckDependencyInManagementSectionTest : MavenDomTestCase() {
           </build>
         """.trimIndent())
 
-    checkHighlighting()
+    maven.checkHighlighting()
   }
 }
