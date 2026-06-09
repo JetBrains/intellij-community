@@ -19,27 +19,27 @@ import kotlin.io.path.absolutePathString
 
 // Project-model authoring: creating/updating poms, profiles, sub-files and settings.
 
-fun MavenDomTestFixture.createProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+fun MavenTestFixture.createProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   return createPomFile(projectRoot, xml).also { projectPom = it }
 }
 
-fun MavenDomTestFixture.updateProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+fun MavenTestFixture.updateProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   val pom = createProjectPom(xml)
   refreshFiles(listOf(pom))
   return pom
 }
 
-fun MavenDomTestFixture.createModulePom(relativePath: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+fun MavenTestFixture.createModulePom(relativePath: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   return createPomFile(createProjectSubDir(relativePath), xml)
 }
 
-fun MavenDomTestFixture.updateModulePom(relativePath: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+fun MavenTestFixture.updateModulePom(relativePath: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   val pom = createModulePom(relativePath, xml)
   refreshFiles(listOf(pom))
   return pom
 }
 
-fun MavenDomTestFixture.createPomFile(dir: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+fun MavenTestFixture.createPomFile(dir: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   val filePath = Path.of(dir.path, "pom.xml")
   Files.writeString(filePath, MavenTestCase.createPomXml(modelVersion, xml, false))
   dir.refresh(false, false)
@@ -48,20 +48,20 @@ fun MavenDomTestFixture.createPomFile(dir: VirtualFile, @Language(value = "XML",
   return f
 }
 
-fun MavenDomTestFixture.createProjectSubDir(relativePath: String): VirtualFile {
+fun MavenTestFixture.createProjectSubDir(relativePath: String): VirtualFile {
   val f = Path.of(project.basePath!!).resolve(relativePath)
   Files.createDirectories(f)
   return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
 }
 
-fun MavenDomTestFixture.createProjectSubFile(relativePath: String, content: String = ""): VirtualFile {
+fun MavenTestFixture.createProjectSubFile(relativePath: String, content: String = ""): VirtualFile {
   val f = Path.of(project.basePath!!).resolve(relativePath)
   Files.createDirectories(f.parent)
   Files.writeString(f, content)
   return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
 }
 
-fun MavenDomTestFixture.createProfilesXml(@Language(value = "XML", prefix = "<profiles>", suffix = "</profiles>") xml: String): VirtualFile {
+fun MavenTestFixture.createProfilesXml(@Language(value = "XML", prefix = "<profiles>", suffix = "</profiles>") xml: String): VirtualFile {
   val content = "<?xml version=\"1.0\"?><profilesXml><profiles>$xml</profiles></profilesXml>"
   val filePath = Path.of(projectRoot.path, "profiles.xml")
   Files.writeString(filePath, content)
@@ -71,7 +71,7 @@ fun MavenDomTestFixture.createProfilesXml(@Language(value = "XML", prefix = "<pr
   return f
 }
 
-fun MavenDomTestFixture.updateProjectSubFile(relativePath: String, content: String): VirtualFile {
+fun MavenTestFixture.updateProjectSubFile(relativePath: String, content: String): VirtualFile {
   val nioPath = Path.of(project.basePath!!).resolve(relativePath)
   val file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nioPath)!!
   Files.writeString(nioPath, content)
@@ -79,12 +79,12 @@ fun MavenDomTestFixture.updateProjectSubFile(relativePath: String, content: Stri
   return file
 }
 
-fun MavenDomTestFixture.setPomContent(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
+fun MavenTestFixture.setPomContent(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
   Files.writeString(file.toNioPath(), MavenTestCase.createPomXml(modelVersion, xml, false))
   refreshFiles(listOf(file))
 }
 
-suspend fun MavenDomTestFixture.updateSettingsXml(@Language(value = "XML", prefix = "<settings>", suffix = "</settings>") content: String): VirtualFile {
+suspend fun MavenImportingTestFixture.updateSettingsXml(@Language(value = "XML", prefix = "<settings>", suffix = "</settings>") content: String): VirtualFile {
   val ioFile = dir.resolve("settings.xml")
   ioFile.findOrCreateFile()
   VfsRootAccess.allowRootAccess(disposable, ioFile.toString())
@@ -96,17 +96,17 @@ suspend fun MavenDomTestFixture.updateSettingsXml(@Language(value = "XML", prefi
   return f
 }
 
-fun MavenDomTestFixture.refreshFiles(files: List<VirtualFile>) {
+fun MavenTestFixture.refreshFiles(files: List<VirtualFile>) {
   LocalFileSystem.getInstance().refreshFiles(files)
 }
 
-fun MavenDomTestFixture.assertModules(vararg expectedNames: String) {
+fun MavenTestFixture.assertModules(vararg expectedNames: String) {
   val actualNames = project.modules.map { it.name }
   assertSameElements(actualNames, *expectedNames)
 }
 
-fun MavenDomTestFixture.mn(parent: String, moduleName: String): String = moduleName
+fun MavenTestFixture.mn(parent: String, moduleName: String): String = moduleName
 
-fun MavenDomTestFixture.configConfirmationForYesAnswer() {
+fun MavenTestFixture.configConfirmationForYesAnswer() {
   TestDialogManager.setTestDialog { Messages.YES }
 }

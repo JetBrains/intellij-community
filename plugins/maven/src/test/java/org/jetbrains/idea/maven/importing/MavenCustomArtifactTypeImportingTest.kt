@@ -4,15 +4,30 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.OutputBuildEvent
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.MavenExecutionOptions
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.assertNotNull
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase() {
-  override fun skipPluginResolution() = false
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenCustomArtifactTypeImportingTest(mavenVersion: String, modelVersion: String) {
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion, modelVersion = modelVersion,
+    skipPluginResolution = false,
+  )
 
 /*  private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String
@@ -45,23 +60,23 @@ class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase(
     }
   }*/
 
-  public override fun setUp() {
-    super.setUp()
-    val myTestSyncViewManager = object : SyncViewManager(project) {
+  @BeforeEach
+  fun setUp() {
+    val myTestSyncViewManager = object : SyncViewManager(maven.project) {
       override fun onEvent(buildId: Any, event: BuildEvent) {
         if (event is OutputBuildEvent) MavenLog.LOG.warn(event.message)
       }
     }
-    project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
+    maven.project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, maven.disposable)
   }
 
   @Test
   fun `should import dependency with custom plugin type`() = runBlocking {
-    projectsManager.generalSettings.outputLevel = MavenExecutionOptions.LoggingLevel.DEBUG
+    maven.projectsManager.generalSettings.outputLevel = MavenExecutionOptions.LoggingLevel.DEBUG
 
     //httpServerFixture.startProxyRepositoryForUrl("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
     <artifactId>project</artifactId>
     <version>1.0</version>
@@ -108,9 +123,9 @@ class MavenCustomArtifactTypeImportingTest : MavenMultiVersionImportingTestCase(
       </pluginRepository>
     </pluginRepositories>
      */
-    assertModules("project")
-    val project = projectsManager.findProject(projectPom)
+    maven.assertModules("project")
+    val project = maven.projectsManager.findProject(maven.projectPom)
     assertNotNull(project)
-    assertEmpty(project!!.problems)
+    assertEmpty(project.problems)
   }
 }

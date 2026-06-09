@@ -20,12 +20,31 @@ import org.jetbrains.idea.maven.model.MavenConstants
 import java.nio.file.Path
 
 /**
+ * Creates a [MavenImportingTestFixture].
+ *
+ * Use it with the property-delegate pattern in a `@TestApplication`-annotated test class:
+ * ```
+ * private val maven by mavenImportingFixture()
+ * ```
+ *
+ * @param initialPom the pom imported during fixture set-up; pass `null` to skip the initial import.
+ */
+fun mavenImportingFixture(
+  mavenVersion: String = "bundled",
+  modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0,
+  skipPluginResolution: Boolean = true,
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>") initialPom: String? = null,
+): TestFixture<MavenImportingTestFixture> {
+  return mavenFixtureImpl(mavenVersion, modelVersion, skipPluginResolution, initialPom, false, null)
+}
+
+/**
  * Creates a [MavenDomTestFixture] that hosts a `CodeInsightTestFixture` over a real Maven project and,
  * when [indices] is non-null, sets up the local and external test repositories plus GAV indices.
  *
  * Use it with the property-delegate pattern in a `@TestApplication`-annotated test class:
  * ```
- * private val maven by mavenDomFixture(withIndices = true)
+ * private val maven by mavenDomFixture()
  * ```
  *
  * @param indices when non-null, a [MavenIndicesTestFixture] copies the test

@@ -22,7 +22,7 @@ import org.jetbrains.idea.maven.utils.MavenLog
 // Project import / sync orchestration.
 
 @RequiresBackgroundThread
-suspend fun MavenDomTestFixture.awaitConfiguration() {
+suspend fun MavenTestFixture.awaitConfiguration() {
   val isEdt = ApplicationManager.getApplication().isDispatchThread
   if (isEdt) {
     MavenLog.LOG.warn("Calling awaitConfiguration() from EDT sometimes causes deadlocks, even though it shouldn't")
@@ -38,44 +38,44 @@ private fun logConfigurationMessage(message: String) {
   MavenLog.LOG.warn(message)
 }
 
-suspend fun MavenDomTestFixture.importProjectAsync(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+suspend fun MavenImportingTestFixture.importProjectAsync(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   val pom = createProjectPom(xml)
   importProjectAsync()
   return pom
 }
 
-suspend fun MavenDomTestFixture.importProjectAsync() {
+suspend fun MavenImportingTestFixture.importProjectAsync() {
   importProjectsAsync(listOf(projectPom))
 }
 
-suspend fun MavenDomTestFixture.importProjectsAsync(vararg files: VirtualFile) {
+suspend fun MavenImportingTestFixture.importProjectsAsync(vararg files: VirtualFile) {
   importProjectsAsync(files.toList())
 }
 
-suspend fun MavenDomTestFixture.importProjectsAsync(files: List<VirtualFile>) {
+suspend fun MavenImportingTestFixture.importProjectsAsync(files: List<VirtualFile>) {
   files.forEach { checkNoFixtureTags(it) }
   projectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
   IndexingTestUtil.suspendUntilIndexesAreReady(project)
   awaitConfiguration()
   // Mirror MavenDomWithIndicesTestCase: wait for the project's GAV index so reference resolution/highlighting is stable.
-  if (null != indices) {
+  if (this is MavenDomTestFixture && null != indices) {
     MavenIndicesManager.getInstance(project).waitForGavUpdateCompleted()
   }
 }
 
 /** Imports [files] tolerating reading errors and `<caret>`/`<error>` markers left in the poms. */
-suspend fun MavenDomTestFixture.importProjectsWithErrors(vararg files: VirtualFile) {
+suspend fun MavenImportingTestFixture.importProjectsWithErrors(vararg files: VirtualFile) {
   projectsManager.addManagedFilesWithProfiles(files.toList(), MavenExplicitProfiles.NONE, null, null, true)
   awaitConfiguration()
 }
 
-suspend fun MavenDomTestFixture.importProjectWithProfiles(vararg profiles: String) {
+suspend fun MavenImportingTestFixture.importProjectWithProfiles(vararg profiles: String) {
   projectsManager.addManagedFilesWithProfiles(listOf(projectPom), MavenExplicitProfiles(profiles.toList(), emptyList()), null, null, true)
   IndexingTestUtil.suspendUntilIndexesAreReady(project)
   awaitConfiguration()
 }
 
-suspend fun MavenDomTestFixture.updateAllProjects() {
+suspend fun MavenImportingTestFixture.updateAllProjects() {
   projectsManager.updateAllMavenProjects(MavenSyncSpec.incremental("MavenDomTestFixture incremental sync"))
 }
 
@@ -84,7 +84,7 @@ suspend fun MavenDomTestFixture.configureProjectPom(@Language(value = "XML", pre
   configTest(file)
 }
 
-fun MavenDomTestFixture.removeFromLocalRepository(relativePath: String) {
+fun MavenImportingTestFixture.removeFromLocalRepository(relativePath: String) {
   if (SystemInfo.isWindows) {
     MavenServerManager.getInstance().closeAllConnectorsAndWait()
   }
@@ -98,7 +98,7 @@ private fun checkNoFixtureTags(file: VirtualFile) {
 }
 
 /** Runs [test] with real Maven sync disabled, so in-test pom edits don't trigger background re-imports. */
-suspend fun MavenDomTestFixture.withoutSync(test: suspend () -> Unit) {
+suspend fun MavenImportingTestFixture.withoutSync(test: suspend () -> Unit) {
   val preventionFixture = RealMavenPreventionFixture(project)
   preventionFixture.setUp()
   try {
@@ -109,7 +109,7 @@ suspend fun MavenDomTestFixture.withoutSync(test: suspend () -> Unit) {
   }
 }
 
-fun MavenDomTestFixture.runBlockingNoSync(test: suspend () -> Unit) {
+fun MavenTestFixture.runBlockingNoSync(test: suspend () -> Unit) {
   val preventionFixture = RealMavenPreventionFixture(project)
   preventionFixture.setUp()
   try {

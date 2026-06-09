@@ -5,15 +5,12 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
-import java.nio.file.Path
 import java.util.function.Function
 
 /**
@@ -49,19 +46,9 @@ import java.util.function.Function
  * into a temp dir, points Maven's local repository at it, and builds GAV indices so that completion and
  * resolution of repository artifacts work offline.
  */
-interface MavenDomTestFixture {
-  val project: Project
-  val dir: Path
-  val mavenVersion: String
-  val modelVersion: String
-  val projectsManager: MavenProjectsManager
-  val projectRoot: VirtualFile
-  var projectPom: VirtualFile
-  val repositoryHelper: MavenCustomRepositoryHelper
-  var repositoryPath: Path
-  val disposable: Disposable
-
+interface MavenDomTestFixture : MavenImportingTestFixture {
   val fixture: CodeInsightTestFixture
+  val repositoryHelper: MavenCustomRepositoryHelper
   val configTimestamps: MutableMap<VirtualFile, Long>
 
   val indices: MavenDomTestFixtureIndices?
