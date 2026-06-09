@@ -49,13 +49,13 @@ class SplitModeQodanaInspectionScopeLimiter {
       return true
     }
 
-    val moduleNames = getModuleNames(file.project)
-    if (moduleNames.isEmpty()) {
+    val scope = getScope(file.project)
+    if (scope.isEmpty()) {
       return true
     }
 
     val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return false
-    return module.name in moduleNames
+    return scope.shouldInspect(module.name)
   }
 
   private fun isQodanaOrUnitTestMode(): Boolean {
@@ -67,17 +67,17 @@ class SplitModeQodanaInspectionScopeLimiter {
     cachedScope = loadScope(project.basePath, SplitModeAnalysisFlags.getAdditionalQodanaAnalysisScopeFilePath())
   }
 
-  private fun getModuleNames(project: Project): Set<String> {
+  private fun getScope(project: Project): ScopeConfiguration {
     val projectBasePath = project.basePath
     val additionalFilePath = SplitModeAnalysisFlags.getAdditionalQodanaAnalysisScopeFilePath()
     val cached = cachedScope
     if (cached != null && cached.projectBasePath == projectBasePath && cached.additionalFilePath == additionalFilePath) {
-      return cached.moduleNames
+      return cached.scopeConfiguration
     }
 
     val loadedScope = loadScopeWithTimeout(projectBasePath, additionalFilePath)
     cachedScope = loadedScope
-    return loadedScope.moduleNames
+    return loadedScope.scopeConfiguration
   }
 
   private fun loadScopeWithTimeout(projectBasePath: String?, additionalFilePath: String?): CachedScope {
@@ -87,28 +87,46 @@ class SplitModeQodanaInspectionScopeLimiter {
           loadScope(projectBasePath, additionalFilePath)
         }
       }
-    } ?: CachedScope(projectBasePath, additionalFilePath, emptySet()).also {
+    } ?: CachedScope(projectBasePath, additionalFilePath, ScopeConfiguration()).also {
       LOG.warn("Timed out loading split-mode Qodana analysis scope")
     }
   }
 
   private fun loadScope(projectBasePath: String?, additionalFilePath: String?): CachedScope {
-    val moduleNames = try {
-      loadModuleNames(projectBasePath, additionalFilePath)
+    val scopeConfiguration = try {
+      loadScopeConfiguration(projectBasePath, additionalFilePath)
+    }
+    catch (e: IllegalArgumentException) {
+      LOG.warn("Ignoring invalid split-mode Qodana analysis scope configuration", e)
+      ScopeConfiguration()
     }
     catch (e: Exception) {
       LOG.error("Failed to load split-mode Qodana analysis scope", e)
-      emptySet()
+      ScopeConfiguration()
     }
-    LOG.info("Loaded ${moduleNames.size} split-mode Qodana analysis scope module names")
-    return CachedScope(projectBasePath, additionalFilePath, moduleNames)
+
+    if (scopeConfiguration.moduleNames.isNotEmpty() && scopeConfiguration.ignoredModules.isNotEmpty()) {
+      LOG.warn("Both moduleNames and ignoredModules are configured for split-mode Qodana analysis scope; using moduleNames")
+    }
+
+    LOG.info(
+      "Loaded ${scopeConfiguration.moduleNames.size} split-mode Qodana analysis scope module names and " +
+      "${scopeConfiguration.ignoredModules.size} ignored modules",
+    )
+    return CachedScope(projectBasePath, additionalFilePath, scopeConfiguration)
   }
 
-  private fun loadModuleNames(projectBasePath: String?, additionalFilePath: String?): Set<String> {
+  private fun loadScopeConfiguration(projectBasePath: String?, additionalFilePath: String?): ScopeConfiguration {
     return listOfNotNull(
       readProjectQodanaAnalysisScopeJson(projectBasePath),
       readAdditionalQodanaAnalysisScopeJson(additionalFilePath),
-    ).flatMap(::parseModuleNames).toSet()
+    ).map(::parseScopeConfiguration)
+      .fold(ScopeConfiguration()) { result, scope ->
+        ScopeConfiguration(
+          moduleNames = result.moduleNames + scope.moduleNames,
+          ignoredModules = result.ignoredModules + scope.ignoredModules,
+        )
+      }
   }
 
   private fun readProjectQodanaAnalysisScopeJson(projectBasePath: String?): String? {
@@ -142,21 +160,52 @@ class SplitModeQodanaInspectionScopeLimiter {
     return Files.readString(path)
   }
 
-  private fun parseModuleNames(jsonText: String): List<String> {
-    return json.decodeFromString<SplitModeQodanaAnalysisScope>(jsonText).moduleNames
-      .map { it.trim() }
-      .filter { it.isNotEmpty() }
+  private fun parseScopeConfiguration(jsonText: String): ScopeConfiguration {
+    val scope = json.decodeFromString<SplitModeQodanaAnalysisScope>(jsonText)
+    val moduleNames = parseConfiguredModuleNames(scope.moduleNames)
+    val ignoredModules = parseConfiguredModuleNames(scope.ignoredModules)
+    require(moduleNames.isEmpty() || ignoredModules.isEmpty()) {
+      "Split-mode Qodana analysis scope must define either moduleNames or ignoredModules, but not both"
+    }
+    return ScopeConfiguration(moduleNames, ignoredModules)
   }
 
   private data class CachedScope(
     val projectBasePath: String?,
     val additionalFilePath: String?,
-    val moduleNames: Set<String>,
+    val scopeConfiguration: ScopeConfiguration,
   )
+
+  private data class ScopeConfiguration(
+    val moduleNames: Set<String> = emptySet(),
+    val ignoredModules: Set<String> = emptySet(),
+  ) {
+    fun isEmpty(): Boolean {
+      return moduleNames.isEmpty() && ignoredModules.isEmpty()
+    }
+
+    fun shouldInspect(moduleName: String): Boolean {
+      return when {
+        moduleNames.isNotEmpty() -> moduleName in moduleNames
+        ignoredModules.isNotEmpty() -> moduleName !in ignoredModules
+        else -> true
+      }
+    }
+  }
+
+  private fun parseConfiguredModuleNames(moduleNames: List<String>): Set<String> {
+    return moduleNames.asSequence()
+      .map { it.trim() }
+      .filter { it.isNotEmpty() }
+      .toSet()
+  }
 
   @Serializable
   private data class SplitModeQodanaAnalysisScope(
     @SerialName("moduleNames")
     val moduleNames: List<String> = emptyList(),
+
+    @SerialName("ignoredModules")
+    val ignoredModules: List<String> = emptyList(),
   )
 }

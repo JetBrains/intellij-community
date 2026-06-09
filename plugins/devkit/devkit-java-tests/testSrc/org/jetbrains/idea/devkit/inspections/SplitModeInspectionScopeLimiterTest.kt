@@ -41,6 +41,35 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
     }
   }
 
+  fun testEnabledLimiterRejectsIgnoredModule() {
+    val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
+    val moduleName = getModuleName(file)
+
+    withQodanaAnalysisScopeLimiter(true, projectScopeJson = """{ "ignoredModules": ["$moduleName"] }""") {
+      assertFalse(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
+    }
+  }
+
+  fun testEnabledLimiterAllowsModuleOutsideIgnoredModules() {
+    val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
+
+    withQodanaAnalysisScopeLimiter(true, additionalScopeJson = """{ "ignoredModules": ["other.module"] }""") {
+      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
+    }
+  }
+
+  fun testEnabledLimiterAllowsAllModulesWhenScopeFileContainsBothAllowedAndIgnoredModules() {
+    val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
+    val moduleName = getModuleName(file)
+
+    withQodanaAnalysisScopeLimiter(
+      true,
+      projectScopeJson = """{ "moduleNames": ["other.module"], "ignoredModules": ["$moduleName"] }""",
+    ) {
+      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
+    }
+  }
+
   fun testEnabledLimiterCombinesProjectAndAdditionalScopeFiles() {
     val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
     val moduleName = getModuleName(file)
