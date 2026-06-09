@@ -5,9 +5,11 @@ package com.intellij.terminal.backend.rpc
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.project.findProject
@@ -31,9 +33,22 @@ import kotlin.io.path.pathString
 internal class TerminalExecOptionsCustomizationRemoteApiImpl : TerminalExecOptionsCustomizationRemoteApi {
   override suspend fun customizeExecOptions(request: TerminalExecOptionsCustomizationRequest): TerminalExecOptionsCustomizationResponse {
     val project = request.projectId.findProject()
-    // `request.eelDescriptor` is present only in the monolith; in the RemDev scenario it is null because
-    // EelDescriptor is not serializable. The working directory is assumed to be local to the project environment.
-    val eelDescriptor = request.eelDescriptor ?: project.getEelDescriptor()
+    val eelDescriptor = if (request.eelDescriptor != null) {
+      request.eelDescriptor!!
+    }
+    else {
+      // `request.eelDescriptor` is present only in the monolith.
+      // In the RemDev scenario it is null because EelDescriptor is not serializable.
+      // The working directory is assumed to be local to the environment where the IDE backend is running.
+      val projectDescriptor = project.getEelDescriptor()
+      if (projectDescriptor != LocalEelDescriptor) {
+        thisLogger().warn("Expected that ${project} is located in the environment of LocalEelDescriptor but was: $projectDescriptor.\n" +
+                          "Skipping exec options customization.")
+        return TerminalExecOptionsCustomizationResponse(request.shellCommand, request.envVariables)
+      }
+      LocalEelDescriptor
+    }
+
     val workingDirectoryEelPath = EelPath.parse(request.workingDirectory, eelDescriptor)
     return withContext(Dispatchers.IO) {
       customizeShellExecOptions(
