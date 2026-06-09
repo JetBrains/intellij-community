@@ -147,8 +147,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     VariableKind kind = getKind(refExpr);
 
     if (!isQualified) {
-      IntentionAction createLocalFix = new CreateLocalFromUsageFix(refExpr);
-      result.add(kind == VariableKind.LOCAL_VARIABLE ? PriorityIntentionActionWrapper.highPriority(createLocalFix) : createLocalFix);
+      result.add(new CreateLocalFromUsageFix(refExpr).asIntention());
     }
 
     if (!(refExpr instanceof PsiMethodReferenceExpression)) {
@@ -167,7 +166,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     return result;
   }
 
-  private static @Nullable VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
+  static @Nullable VariableKind getKind(@NotNull PsiReferenceExpression refExpr) {
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
     String reference = refExpr.getText();
 
