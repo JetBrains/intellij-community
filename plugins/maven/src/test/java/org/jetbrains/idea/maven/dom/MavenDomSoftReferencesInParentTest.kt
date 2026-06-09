@@ -15,25 +15,42 @@
  */
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture.Highlight
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.junit.Test
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
-  override fun setUp() = runBlocking {
-    super.setUp()
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenDomSoftReferencesInParentTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+
+  @BeforeEach
+  fun setUp() = runBlocking {
     VfsTestUtil.syncRefresh()
   }
 
   @Test
   fun testDoNotHighlightSourceDirectoryInParentPom() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -45,12 +62,12 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                     </build>
                     """.trimIndent())
 
-    checkHighlighting()
+    maven.checkHighlighting()
   }
 
   @Test
   fun testHighlightSourceDirectory() = runBlocking {
-    ApplicationManager.getApplication().messageBus.connect(testRootDisposable)
+    ApplicationManager.getApplication().messageBus.connect(maven.disposable)
       .subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
         override fun before(events: MutableList<out VFileEvent>) {
           MavenLog.LOG.warn("before $events")
@@ -61,7 +78,7 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
         }
       })
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -74,10 +91,10 @@ class MavenDomSoftReferencesInParentTest : MavenDomTestCase() {
                     """.trimIndent())
 
 
-    checkHighlighting(projectPom,
-                      Highlight(text = "foo1"),
-                      Highlight(text = "foo2"),
-                      Highlight(text = "foo3"))
+    maven.checkHighlighting(maven.projectPom,
+                            Highlight(text = "foo1"),
+                            Highlight(text = "foo2"),
+                            Highlight(text = "foo3"))
 
   }
 }
