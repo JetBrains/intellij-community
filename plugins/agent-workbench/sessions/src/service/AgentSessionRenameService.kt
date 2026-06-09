@@ -2,15 +2,18 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.agent.workbench.sessions.core.normalizeAgentSessionTitle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrideStateService
-import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
-import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
+import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
+import com.intellij.agent.workbench.sessions.model.AgentWorktree
+import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.util.SingleFlightActionGate
 import com.intellij.agent.workbench.sessions.util.SingleFlightPolicy
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
@@ -38,16 +41,17 @@ class AgentSessionRenameService internal constructor(
   private val refreshProviderForPath: (String, AgentSessionProvider) -> Unit,
   private val findProviderDescriptor: (AgentSessionProvider) -> AgentSessionProviderDescriptor?,
   private val notifyRenameFailure: () -> Unit,
-  private val titleOverrides: AgentSessionThreadTitleOverrides = InMemoryAgentSessionThreadTitleOverrides(),
-  private val threadPresentationUpdater: AgentSessionThreadPresentationUpdater = DefaultAgentSessionThreadPresentationUpdater(),
+  private val stateStore: AgentSessionsStateStore = service<AgentSessionsStateStore>(),
+  private val presentationModel: AgentSessionThreadPresentationModel = service<AgentSessionThreadPresentationModel>(),
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
     serviceScope = serviceScope,
     refreshProviderForPath = { path, provider -> service<AgentSessionRefreshService>().refreshProviderForPath(path, provider) },
     findProviderDescriptor = AgentSessionProviders::find,
-    titleOverrides = service<AgentSessionThreadTitleOverrideStateService>(),
     notifyRenameFailure = ::showRenameFailureNotification,
+    stateStore = service<AgentSessionsStateStore>(),
+    presentationModel = service<AgentSessionThreadPresentationModel>(),
   )
 
   private val actionGate = SingleFlightActionGate()
@@ -128,8 +132,8 @@ class AgentSessionRenameService internal constructor(
         return@launch
       }
 
-      recordTitleOverride(target = target, normalizedRequestedName = normalizedRequestedName)
-      updateOpenTabPresentationAfterRename(
+      updateStateAfterRename(target = target, normalizedRequestedName = normalizedRequestedName)
+      updatePresentationAfterRename(
         target = target,
         normalizedRequestedName = normalizedRequestedName,
         context = context,
@@ -138,29 +142,97 @@ class AgentSessionRenameService internal constructor(
     }
   }
 
-  private fun recordTitleOverride(target: SessionActionTarget.Thread, normalizedRequestedName: String) {
-    titleOverrides.setTitle(
-      path = target.path,
-      provider = target.provider,
-      threadId = target.threadId,
-      title = normalizedRequestedName,
-    )
+  private fun updateStateAfterRename(target: SessionActionTarget.Thread, normalizedRequestedName: String) {
+    val normalizedPath = normalizeAgentWorkbenchPath(target.path)
+    stateStore.update { state ->
+      var changed = false
+      val nextProjects = state.projects.map { project ->
+        val updatedProject = project.withRenamedThread(
+          normalizedPath = normalizedPath,
+          provider = target.provider,
+          threadId = target.threadId,
+          title = normalizedRequestedName,
+        )
+        if (updatedProject != project) {
+          changed = true
+        }
+        updatedProject
+      }
+      if (!changed) {
+        state
+      }
+      else {
+        state.copy(projects = nextProjects, lastUpdatedAt = System.currentTimeMillis())
+      }
+    }
   }
 
-  private suspend fun updateOpenTabPresentationAfterRename(
+  private fun updatePresentationAfterRename(
     target: SessionActionTarget.Thread,
     normalizedRequestedName: String,
     context: AgentChatEditorTabActionContext?,
   ) {
     val activity = context?.threadActivity ?: target.thread?.activity
-    threadPresentationUpdater.updateThread(
-      provider = target.provider,
+    presentationModel.updateThread(
       path = target.path,
+      provider = target.provider,
       threadId = target.threadId,
       title = normalizedRequestedName,
       activity = activity,
     )
   }
+}
+
+private fun AgentProjectSessions.withRenamedThread(
+  normalizedPath: String,
+  provider: AgentSessionProvider,
+  threadId: String,
+  title: String,
+): AgentProjectSessions {
+  var updatedProject = this
+  if (normalizeAgentWorkbenchPath(path) == normalizedPath) {
+    val updatedThreads = threads.withRenamedThread(provider = provider, threadId = threadId, title = title)
+    if (updatedThreads != threads) {
+      updatedProject = updatedProject.copy(threads = updatedThreads)
+    }
+  }
+
+  val updatedWorktrees = worktrees.map { worktree ->
+    if (normalizeAgentWorkbenchPath(worktree.path) == normalizedPath) {
+      worktree.withRenamedThread(provider = provider, threadId = threadId, title = title)
+    }
+    else {
+      worktree
+    }
+  }
+  return if (updatedWorktrees == worktrees) updatedProject else updatedProject.copy(worktrees = updatedWorktrees)
+}
+
+private fun AgentWorktree.withRenamedThread(
+  provider: AgentSessionProvider,
+  threadId: String,
+  title: String,
+): AgentWorktree {
+  val updatedThreads = threads.withRenamedThread(provider = provider, threadId = threadId, title = title)
+  return if (updatedThreads == threads) this else copy(threads = updatedThreads)
+}
+
+private fun List<AgentSessionThread>.withRenamedThread(
+  provider: AgentSessionProvider,
+  threadId: String,
+  title: String,
+): List<AgentSessionThread> {
+  var changed = false
+  val updatedThreads = map { thread ->
+    if (thread.provider == provider && thread.id == threadId && thread.title != title) {
+      changed = true
+      thread.copy(title = title)
+    }
+    else {
+      thread
+    }
+  }
+  return if (changed) updatedThreads else this
 }
 
 private fun matchesConcreteEditorThread(

@@ -35,9 +35,6 @@ internal class AgentChatTabsService {
 
   fun forget(tabKey: AgentChatTabKey): Boolean {
     val deletedSnapshot = stateService.deleteAndGetSnapshot(tabKey)
-    if (deletedSnapshot != null) {
-      removeAgentChatSharedThreadPresentation(deletedSnapshot)
-    }
     return deletedSnapshot != null
   }
 
@@ -62,7 +59,6 @@ internal class AgentChatTabsService {
     val deleteResult = withContext(Dispatchers.IO) {
       stateService.deleteByThreadWithKeys(normalizedProjectPath, threadIdentity, subAgentId)
     }
-    removeAgentChatSharedThreadPresentation(deleteResult.deletedTabs)
     return AgentChatThreadCleanupResult(
       closedTabs = closedTabs,
       deletedStates = deleteResult.deletedKeys.size,

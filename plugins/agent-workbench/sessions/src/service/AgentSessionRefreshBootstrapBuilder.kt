@@ -9,14 +9,11 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
-import com.intellij.agent.workbench.sessions.state.applyTitleOverrides
 
 internal class AgentSessionRefreshBootstrapBuilder(
   private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
   private val stateStore: AgentSessionsStateStore,
   private val contentRepository: AgentSessionContentRepository,
-  private val titleOverrides: AgentSessionThreadTitleOverrides,
 ) {
   suspend fun build(
     currentState: AgentSessionsState,
@@ -46,10 +43,7 @@ internal class AgentSessionRefreshBootstrapBuilder(
       else {
         null
       }
-      val cachedThreads = titleOverrides.applyTitleOverrides(
-        path = normalizedEntryPath,
-        threads = warmSnapshot?.threads.orEmpty(),
-      )
+      val cachedThreads = warmSnapshot?.threads.orEmpty()
       val providerLoadStates = mergeWarmAndRuntimeProviderLoadStates(
         warmProviderLoadStates = warmSnapshot?.providerLoadStates.orEmpty(),
         runtimeProviderLoadStates = existing?.providerLoadStates.orEmpty(),
@@ -90,10 +84,7 @@ internal class AgentSessionRefreshBootstrapBuilder(
           else {
             null
           }
-          val cachedWorktreeThreads = titleOverrides.applyTitleOverrides(
-            path = normalizedWorktreePath,
-            threads = warmWorktreeSnapshot?.threads.orEmpty(),
-          )
+          val cachedWorktreeThreads = warmWorktreeSnapshot?.threads.orEmpty()
           val worktreeProviderLoadStates = mergeWarmAndRuntimeProviderLoadStates(
             warmProviderLoadStates = warmWorktreeSnapshot?.providerLoadStates.orEmpty(),
             runtimeProviderLoadStates = existingWt?.providerLoadStates.orEmpty(),

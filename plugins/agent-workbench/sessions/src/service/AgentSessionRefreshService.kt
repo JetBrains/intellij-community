@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.agent.workbench.sessions.core.config.AgentWorkbenchProjectRuntimeConfigs
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
@@ -26,9 +27,6 @@ import com.intellij.agent.workbench.sessions.model.hasAnyProviderSnapshot
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsListener
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService
-import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrideStateService
-import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
-import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.SessionWarmState
 import com.intellij.ide.SaveAndSyncHandler
@@ -61,7 +59,7 @@ class AgentSessionRefreshService internal constructor(
   private val stateStore: AgentSessionsStateStore,
   private val warmState: SessionWarmState,
   subscribeToProjectLifecycle: Boolean,
-  private val titleOverrides: AgentSessionThreadTitleOverrides = InMemoryAgentSessionThreadTitleOverrides(),
+  private val presentationModel: AgentSessionThreadPresentationModel = service<AgentSessionThreadPresentationModel>(),
   private val scheduleVfsRefresh: (Set<String>) -> Unit = ::scheduleAgentWorkbenchVfsRefresh,
   private val isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean =
     AgentWorkbenchProjectRuntimeConfigs::isRefreshVfsOnStatusUpdatesEnabled,
@@ -91,7 +89,6 @@ class AgentSessionRefreshService internal constructor(
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
     stateStore = service<AgentSessionsStateStore>(),
     warmState = service<AgentSessionWarmStateService>(),
-    titleOverrides = service<AgentSessionThreadTitleOverrideStateService>(),
     toolWindowVisibleFlow = service<AgentSessionsToolWindowVisibilityService>().visibleFlow,
     subscribeToProjectLifecycle = true,
   )
@@ -107,7 +104,7 @@ class AgentSessionRefreshService internal constructor(
     projectEntriesProvider = projectEntriesProvider,
     stateStore = stateStore,
     contentRepository = contentRepository,
-    titleOverrides = titleOverrides,
+    presentationModel = presentationModel,
     isRefreshGateActive = ::isSourceRefreshGateActive,
     scheduleVfsRefresh = scheduleVfsRefresh,
     isVfsRefreshOnStatusUpdatesEnabled = isVfsRefreshOnStatusUpdatesEnabled,

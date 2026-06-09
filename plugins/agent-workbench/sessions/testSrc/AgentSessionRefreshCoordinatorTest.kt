@@ -13,6 +13,8 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionActivityHintPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
@@ -25,11 +27,8 @@ import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.service.AgentSessionContentRepository
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshCoordinator
-import com.intellij.agent.workbench.sessions.service.DefaultAgentSessionThreadPresentationUpdater
-import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
 import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.testFramework.junit5.TestApplication
@@ -140,7 +139,8 @@ class AgentSessionRefreshCoordinatorTest {
             path = PROJECT_PATH,
             name = "Project A",
             isOpen = true,
-            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),)
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          )
         ),
         visibleThreadCounts = emptyMap(),
       )
@@ -1101,8 +1101,7 @@ class AgentSessionRefreshCoordinatorTest {
     val projectB = "/work/project-b"
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val closedRefreshInvocations = LinkedHashMap<String, AtomicInteger>()
-    val receivedTitleMaps = mutableListOf<Map<Pair<String, String>, String>>()
-    val receivedActivityMaps = mutableListOf<Map<Pair<String, String>, AgentThreadActivity>>()
+    val presentationModel = AgentSessionThreadPresentationModel()
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
@@ -1132,11 +1131,7 @@ class AgentSessionRefreshCoordinatorTest {
       openConcreteChatThreadIdentitiesByPathProvider = {
         mapOf(projectB to setOf(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-open")))
       },
-      openChatTabPresentationUpdater = { _, _, titleMap, activityMap ->
-        receivedTitleMaps.add(titleMap)
-        receivedActivityMaps.add(activityMap)
-        titleMap.size
-      },
+      presentationModel = presentationModel,
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
         projects = listOf(
@@ -1154,12 +1149,10 @@ class AgentSessionRefreshCoordinatorTest {
       coordinator.observeSessionSourceUpdates()
       updates.tryEmit(hintsChangedEvent(threadIds = setOf("codex-open")))
 
-      val expectedKey = projectB to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-open")
+      val expectedKey = presentationKey(projectB, AgentSessionProvider.CODEX, "codex-open")
       waitForCondition {
-        receivedTitleMaps.any { it[expectedKey] == "Open concrete tab thread" }
-      }
-      waitForCondition {
-        receivedActivityMaps.any { it[expectedKey] == AgentThreadActivity.UNREAD }
+        presentationModel.snapshot()[expectedKey]?.title == "Open concrete tab thread" &&
+        presentationModel.snapshot()[expectedKey]?.activity == AgentThreadActivity.UNREAD
       }
 
       assertThat(closedRefreshInvocations[PROJECT_PATH]?.get() ?: 0).isEqualTo(0)
@@ -1631,8 +1624,7 @@ class AgentSessionRefreshCoordinatorTest {
   fun providerUpdateSynchronizesOpenChatTabPresentationWithoutExplicitRefresh() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     var updatedTitle = "Initial title"
-    val receivedTitleMaps = mutableListOf<Map<Pair<String, String>, String>>()
-    val receivedActivityMaps = mutableListOf<Map<Pair<String, String>, AgentThreadActivity>>()
+    val presentationModel = AgentSessionThreadPresentationModel()
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
@@ -1652,11 +1644,7 @@ class AgentSessionRefreshCoordinatorTest {
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
       openChatPathsProvider = { setOf(PROJECT_PATH) },
-      openChatTabPresentationUpdater = { _, _, titleMap, activityMap ->
-        receivedTitleMaps.add(titleMap)
-        receivedActivityMaps.add(activityMap)
-        titleMap.size
-      },
+      presentationModel = presentationModel,
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
         projects = listOf(
@@ -1684,22 +1672,18 @@ class AgentSessionRefreshCoordinatorTest {
           ?.title == "Renamed from source update"
       }
 
-      val expectedKey = PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1")
+      val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")
       waitForCondition {
-        receivedTitleMaps.any { it[expectedKey] == "Renamed from source update" }
-      }
-      waitForCondition {
-        receivedActivityMaps.any { it[expectedKey] == AgentThreadActivity.READY }
+        presentationModel.snapshot()[expectedKey]?.title == "Renamed from source update" &&
+        presentationModel.snapshot()[expectedKey]?.activity == AgentThreadActivity.READY
       }
     }
   }
 
   @Test
-  fun providerUpdateKeepsUserTitleOverrideInStateAndOpenChatPresentation() = runBlocking(Dispatchers.Default) {
+  fun providerUpdatePublishesProviderTitleInStateAndSharedPresentation() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
-    val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
-    titleOverrides.setTitle(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1", "User title")
-    val receivedTitleMaps = mutableListOf<Map<Pair<String, String>, String>>()
+    val presentationModel = AgentSessionThreadPresentationModel()
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
@@ -1720,12 +1704,8 @@ class AgentSessionRefreshCoordinatorTest {
     withLoadingCoordinator(
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
-      titleOverrides = titleOverrides,
       openChatPathsProvider = { setOf(PROJECT_PATH) },
-      openChatTabPresentationUpdater = { _, _, titleMap, _ ->
-        receivedTitleMaps.add(titleMap)
-        titleMap.size
-      },
+      presentationModel = presentationModel,
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
         projects = listOf(
@@ -1749,21 +1729,26 @@ class AgentSessionRefreshCoordinatorTest {
         val thread = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
           ?.firstOrNull { it.provider == AgentSessionProvider.CODEX }
-        thread?.updatedAt == 300L && thread.title == "User title"
+        thread?.updatedAt == 300L && thread.title == "Automatic title"
       }
 
-      val expectedKey = PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1")
+      val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")
       waitForCondition {
-        receivedTitleMaps.any { it[expectedKey] == "User title" }
+        presentationModel.snapshot()[expectedKey]?.title == "Automatic title"
       }
     }
   }
 
   @Test
   fun warningOnlyProviderRefreshDoesNotEvictExistingSharedPresentationScope() = runBlocking(Dispatchers.Default) {
-    val receivedRefreshScopes = mutableListOf<Set<String>>()
-    val receivedTitleMaps = mutableListOf<Map<Pair<String, String>, String>>()
-    val receivedActivityMaps = mutableListOf<Map<Pair<String, String>, AgentThreadActivity>>()
+    val presentationModel = AgentSessionThreadPresentationModel()
+    presentationModel.updateThread(
+      path = PROJECT_PATH,
+      provider = AgentSessionProvider.CODEX,
+      threadId = "codex-1",
+      title = "Existing title",
+      activity = AgentThreadActivity.UNREAD,
+    )
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
@@ -1781,12 +1766,7 @@ class AgentSessionRefreshCoordinatorTest {
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
       openChatPathsProvider = { setOf(PROJECT_PATH) },
-      openChatTabPresentationUpdater = { _, refreshedPaths, titleMap, activityMap ->
-        receivedRefreshScopes.add(refreshedPaths)
-        receivedTitleMaps.add(titleMap)
-        receivedActivityMaps.add(activityMap)
-        refreshedPaths.size
-      },
+      presentationModel = presentationModel,
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
         projects = listOf(
@@ -1817,10 +1797,6 @@ class AgentSessionRefreshCoordinatorTest {
           ?.singleOrNull()
           ?.provider == AgentSessionProvider.CODEX
       }
-      waitForCondition {
-        receivedRefreshScopes.isNotEmpty()
-      }
-
       val project = stateStore.snapshot().projects.single { it.path == PROJECT_PATH }
       assertThat(project.threads).hasSize(1)
       assertThat(project.threads.single().id).isEqualTo("codex-1")
@@ -1828,9 +1804,9 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(project.threads.single().activity).isEqualTo(AgentThreadActivity.UNREAD)
       assertThat(project.providerWarnings).hasSize(1)
       assertThat(project.providerWarnings.single().provider).isEqualTo(AgentSessionProvider.CODEX)
-      assertThat(receivedRefreshScopes.last()).isEmpty()
-      assertThat(receivedTitleMaps.last()).isEmpty()
-      assertThat(receivedActivityMaps.last()).isEmpty()
+      val presentation = presentationModel.snapshot()[presentationKey(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")]
+      assertThat(presentation?.title).isEqualTo("Existing title")
+      assertThat(presentation?.activity).isEqualTo(AgentThreadActivity.UNREAD)
     }
   }
 
@@ -2156,8 +2132,6 @@ class AgentSessionRefreshCoordinatorTest {
   fun providerUpdateUsesRefreshHintsForCodexRebindWithoutNewProviderIds() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val rebindInvocations = mutableListOf<PendingCodexRebindInvocation>()
-    val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
-    titleOverrides.setTitle(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-hint", "User hint title")
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
@@ -2197,7 +2171,6 @@ class AgentSessionRefreshCoordinatorTest {
     withLoadingCoordinator(
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
-      titleOverrides = titleOverrides,
       openChatPathsProvider = { setOf(PROJECT_PATH) },
       openPendingCodexTabsProvider = {
         mapOf(
@@ -2251,7 +2224,7 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(invocation.pendingThreadIdentity).isEqualTo("codex:new-hint")
       assertThat(invocation.target.threadIdentity).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-hint"))
       assertThat(invocation.target.threadId).isEqualTo("codex-hint")
-      assertThat(invocation.target.threadTitle).isEqualTo("User hint title")
+      assertThat(invocation.target.threadTitle).isEqualTo("Hint-discovered thread")
 
       val codexThreadIds = stateStore.snapshot().projects
         .first { it.path == PROJECT_PATH }
@@ -2509,7 +2482,7 @@ class AgentSessionRefreshCoordinatorTest {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val gateActive = AtomicBoolean(false)
     val closedRefreshInvocations = AtomicInteger(0)
-    val receivedActivityMaps = mutableListOf<Map<Pair<String, String>, AgentThreadActivity>>()
+    val presentationModel = AgentSessionThreadPresentationModel()
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
@@ -2526,10 +2499,7 @@ class AgentSessionRefreshCoordinatorTest {
     withLoadingCoordinator(
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { gateActive.get() },
-      openChatTabPresentationUpdater = { _, _, _, activityMap ->
-        receivedActivityMaps.add(activityMap)
-        activityMap.size
-      },
+      presentationModel = presentationModel,
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
         projects = listOf(
@@ -2564,9 +2534,9 @@ class AgentSessionRefreshCoordinatorTest {
         thread.activity == AgentThreadActivity.PROCESSING && thread.summaryActivity == null
       }
 
-      val expectedKey = PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1")
+      val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")
       waitForCondition {
-        receivedActivityMaps.any { activityMap -> activityMap[expectedKey] == AgentThreadActivity.PROCESSING }
+        presentationModel.snapshot()[expectedKey]?.activity == AgentThreadActivity.PROCESSING
       }
 
       assertThat(closedRefreshInvocations.get()).isEqualTo(0)
@@ -2577,7 +2547,7 @@ class AgentSessionRefreshCoordinatorTest {
   fun providerRefreshActivityClearsOptimisticActivityHint() = runBlocking(Dispatchers.Default) {
     val updates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(replay = 1, extraBufferCapacity = 1)
     val closedRefreshInvocations = AtomicInteger(0)
-    val receivedActivityMaps = mutableListOf<Map<Pair<String, String>, AgentThreadActivity>>()
+    val presentationModel = AgentSessionThreadPresentationModel()
 
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
@@ -2616,10 +2586,7 @@ class AgentSessionRefreshCoordinatorTest {
     withLoadingCoordinator(
       sessionSourcesProvider = { listOf(source) },
       isRefreshGateActive = { true },
-      openChatTabPresentationUpdater = { _, _, _, activityMap ->
-        receivedActivityMaps.add(activityMap)
-        activityMap.size
-      },
+      presentationModel = presentationModel,
     ) { coordinator, stateStore ->
       stateStore.replaceProjects(
         projects = listOf(
@@ -2655,9 +2622,9 @@ class AgentSessionRefreshCoordinatorTest {
         thread.activity == AgentThreadActivity.UNREAD
       }
 
-      val expectedKey = PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1")
+      val expectedKey = presentationKey(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")
       waitForCondition {
-        receivedActivityMaps.any { activityMap -> activityMap[expectedKey] == AgentThreadActivity.UNREAD }
+        presentationModel.snapshot()[expectedKey]?.activity == AgentThreadActivity.UNREAD
       }
     }
   }
@@ -3088,10 +3055,7 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
-  fun refreshAppliesUserTitleOverrideToLoadedOpenProjectThreads() = runBlocking(Dispatchers.Default) {
-    val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
-    titleOverrides.setTitle(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1", "User title")
-
+  fun refreshUsesProviderTitleForLoadedOpenProjectThreads() = runBlocking(Dispatchers.Default) {
     val source = ScriptedSessionSource(
       provider = AgentSessionProvider.CODEX,
       listFromOpenProject = { path, _ ->
@@ -3110,7 +3074,6 @@ class AgentSessionRefreshCoordinatorTest {
       sessionSourcesProvider = { listOf(source) },
       projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
       isRefreshGateActive = { true },
-      titleOverrides = titleOverrides,
     ) { coordinator, stateStore ->
       coordinator.refresh()
 
@@ -3118,15 +3081,13 @@ class AgentSessionRefreshCoordinatorTest {
         val thread = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH }
           ?.threads
           ?.singleOrNull()
-        thread?.id == "codex-1" && thread.title == "User title"
+        thread?.id == "codex-1" && thread.title == "Automatic title"
       }
     }
   }
 
   @Test
-  fun refreshBootstrapAppliesUserTitleOverrideToWarmSnapshotThreads() = runBlocking(Dispatchers.Default) {
-    val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
-    titleOverrides.setTitle(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-warm", "User warm title")
+  fun refreshBootstrapUsesWarmSnapshotThreadTitles() = runBlocking(Dispatchers.Default) {
     val warmState = InMemorySessionWarmState()
     warmState.setPathSnapshot(
       PROJECT_PATH,
@@ -3149,7 +3110,6 @@ class AgentSessionRefreshCoordinatorTest {
         sessionSourcesProvider = { listOf(source) },
         projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
         isRefreshGateActive = { true },
-        titleOverrides = titleOverrides,
         warmState = warmState,
       ) { coordinator, stateStore ->
         coordinator.refresh()
@@ -3157,37 +3117,12 @@ class AgentSessionRefreshCoordinatorTest {
         waitForCondition {
           val project = stateStore.snapshot().projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
           project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADING &&
-          project.threads.singleOrNull()?.title == "User warm title"
+          project.threads.singleOrNull()?.title == "Automatic warm title"
         }
       }
     }
     finally {
       providerResult.complete(emptyList())
-    }
-  }
-
-  @Test
-  fun refreshKeepsTitleOverridesWhenCatalogIsEmptyAndPrunesWhenPathDisappearsFromNonEmptyCatalog() = runBlocking(Dispatchers.Default) {
-    val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
-    titleOverrides.setTitle(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1", "User title")
-    var entries = emptyList<ProjectEntry>()
-
-    withLoadingCoordinator(
-      sessionSourcesProvider = { emptyList() },
-      projectEntriesProvider = { entries },
-      isRefreshGateActive = { true },
-      titleOverrides = titleOverrides,
-    ) { coordinator, stateStore ->
-      coordinator.refresh()
-
-      waitForCondition { (stateStore.snapshot().lastUpdatedAt ?: 0L) > 0L }
-      assertThat(titleOverrides.getTitle(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")).isEqualTo("User title")
-
-      entries = listOf(closedProjectEntry("/work/other", "Other"))
-      coordinator.refresh()
-
-      waitForCondition { stateStore.snapshot().projects.singleOrNull()?.path == "/work/other" }
-      assertThat(titleOverrides.getTitle(PROJECT_PATH, AgentSessionProvider.CODEX, "codex-1")).isNull()
     }
   }
 
@@ -4851,12 +4786,7 @@ private suspend fun withLoadingCoordinator(
   openConcreteCodexTabsAwaitingNewThreadRebindProvider: suspend () -> Map<String, List<AgentChatConcreteTabSnapshot>> = { emptyMap() },
   openConcreteChatThreadIdentitiesByPathProvider: suspend () -> Map<String, Set<String>> = { emptyMap() },
   openAgentChatSnapshotProvider: (suspend () -> AgentChatOpenTabsRefreshSnapshot)? = null,
-  openChatTabPresentationUpdater: suspend (
-    AgentSessionProvider,
-    Set<String>,
-    Map<Pair<String, String>, String>,
-    Map<Pair<String, String>, AgentThreadActivity>,
-  ) -> Int = { _, _, _, _ -> 0 },
+  presentationModel: AgentSessionThreadPresentationModel = AgentSessionThreadPresentationModel(),
   openChatPendingTabsBinder: suspend (Map<String, List<AgentChatPendingTabRebindRequest>>) -> AgentChatPendingTabRebindReport = {
     failingPendingCodexRebindReport(
       requestsByPath = it,
@@ -4867,7 +4797,6 @@ private suspend fun withLoadingCoordinator(
   },
   scheduleVfsRefresh: (Set<String>) -> Unit = { _ -> },
   isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean = { true },
-  titleOverrides: AgentSessionThreadTitleOverrides = InMemoryAgentSessionThreadTitleOverrides(),
   warmState: InMemorySessionWarmState = InMemorySessionWarmState(),
   action: suspend (AgentSessionRefreshCoordinator, AgentSessionsStateStore) -> Unit,
 ) {
@@ -4886,7 +4815,6 @@ private suspend fun withLoadingCoordinator(
       stateStore = stateStore,
       contentRepository = contentRepository,
       isRefreshGateActive = isRefreshGateActive,
-      titleOverrides = titleOverrides,
       scheduleVfsRefresh = scheduleVfsRefresh,
       isVfsRefreshOnStatusUpdatesEnabled = isVfsRefreshOnStatusUpdatesEnabled,
       providerDescriptorsByIdProvider = { providerDescriptors },
@@ -4906,7 +4834,7 @@ private suspend fun withLoadingCoordinator(
         )
       },
       scopedRefreshSignalsProvider = { _ -> codexScopedRefreshSignalsProvider().map { paths -> threadsChangedEvent(scopedPaths = paths) } },
-      threadPresentationUpdater = DefaultAgentSessionThreadPresentationUpdater(openChatTabPresentationUpdater),
+      presentationModel = presentationModel,
       openAgentChatPendingTabsBinder = { _, requestsByPath -> openChatPendingTabsBinder(requestsByPath) },
       clearOpenConcreteNewThreadRebindAnchors = { _, tabsByPath -> clearOpenConcreteCodexTabAnchors(tabsByPath) },
     )
@@ -4915,6 +4843,14 @@ private suspend fun withLoadingCoordinator(
   finally {
     scope.cancel()
   }
+}
+
+private fun presentationKey(
+  path: String,
+  provider: AgentSessionProvider,
+  threadId: String,
+): AgentSessionThreadPresentationKey {
+  return checkNotNull(AgentSessionThreadPresentationKey.create(path, provider, threadId))
 }
 
 private fun testRefreshCoordinatorProviderDescriptors(): List<AgentSessionProviderDescriptor> {

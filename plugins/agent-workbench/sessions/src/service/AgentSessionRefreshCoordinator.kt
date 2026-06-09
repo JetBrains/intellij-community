@@ -17,6 +17,8 @@ import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadActivityPresentationUpdate
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.agent.workbench.sessions.core.config.AgentWorkbenchProjectRuntimeConfigs
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
@@ -32,8 +34,6 @@ import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
-import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
@@ -60,7 +60,6 @@ internal class AgentSessionRefreshCoordinator(
   private val stateStore: AgentSessionsStateStore,
   private val contentRepository: AgentSessionContentRepository,
   private val isRefreshGateActive: suspend () -> Boolean,
-  private val titleOverrides: AgentSessionThreadTitleOverrides = InMemoryAgentSessionThreadTitleOverrides(),
   private val scheduleVfsRefresh: (Set<String>) -> Unit = ::scheduleAgentWorkbenchVfsRefresh,
   private val isVfsRefreshOnStatusUpdatesEnabled: (String) -> Boolean =
     AgentWorkbenchProjectRuntimeConfigs::isRefreshVfsOnStatusUpdatesEnabled,
@@ -70,7 +69,7 @@ internal class AgentSessionRefreshCoordinator(
   scopedRefreshSignalsProvider: (AgentSessionProvider) -> Flow<AgentSessionSourceUpdateEvent> = { provider ->
     agentChatScopedRefreshSignals(provider)
   },
-  private val threadPresentationUpdater: AgentSessionThreadPresentationUpdater = DefaultAgentSessionThreadPresentationUpdater(),
+  private val presentationModel: AgentSessionThreadPresentationModel = service<AgentSessionThreadPresentationModel>(),
   private val openAgentChatPendingTabsBinder: suspend (
     AgentSessionProvider,
     Map<String, List<AgentChatPendingTabRebindRequest>>,
@@ -87,7 +86,6 @@ internal class AgentSessionRefreshCoordinator(
   private val threadLoadSupport = AgentSessionThreadLoadSupport(
     sessionSourcesProvider = sessionSourcesProvider,
     applyArchiveSuppressions = archiveSuppressionSupport::apply,
-    titleOverrides = titleOverrides,
     resolveErrorMessage = ::resolveErrorMessage,
     resolveProviderWarningMessage = ::resolveProviderWarningMessage,
     providerDescriptorProvider = providerDescriptorProvider,
@@ -102,7 +100,6 @@ internal class AgentSessionRefreshCoordinator(
     projectEntriesProvider = projectEntriesProvider,
     stateStore = stateStore,
     contentRepository = contentRepository,
-    titleOverrides = titleOverrides,
   )
   private val providerRefreshRunner = AgentSessionProviderRefreshRunner(
     refreshMutex = refreshMutex,
@@ -110,11 +107,10 @@ internal class AgentSessionRefreshCoordinator(
     stateStore = stateStore,
     contentRepository = contentRepository,
     archiveSuppressionSupport = archiveSuppressionSupport,
-    titleOverrides = titleOverrides,
     refreshSupportProvider = ::refreshSupportFor,
     resolveProviderWarningMessage = ::resolveProviderWarningMessage,
     openAgentChatSnapshotProvider = openAgentChatSnapshotProvider,
-    threadPresentationUpdater = threadPresentationUpdater,
+    presentationModel = presentationModel,
   )
   private val refreshScheduler = AgentSessionRefreshScheduler(
     serviceScope = serviceScope,
@@ -188,7 +184,7 @@ internal class AgentSessionRefreshCoordinator(
       return
     }
     serviceScope.launch {
-      threadPresentationUpdater.updateActivityHints(provider = provider, updates = activityUpdates)
+      presentationModel.updateActivityHints(provider = provider, updates = activityUpdates)
     }
   }
 
@@ -260,9 +256,6 @@ internal class AgentSessionRefreshCoordinator(
       val currentState = stateStore.snapshot()
       val bootstrap = refreshBootstrapBuilder.build(currentState = currentState, loadScope = loadScope)
       contentRepository.retainWarmSnapshots(bootstrap.openPaths)
-      if (bootstrap.knownPaths.isNotEmpty()) {
-        titleOverrides.retainPaths(bootstrap.knownPaths)
-      }
       stateStore.replaceProjects(
         projects = bootstrap.initialProjects,
         visibleThreadCounts = bootstrap.initialVisibleThreadCounts,

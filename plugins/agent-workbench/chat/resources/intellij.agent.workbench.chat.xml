@@ -36,6 +36,9 @@
               topic="com.intellij.ide.ProjectColorChangeListener"/>
     <listener class="com.intellij.agent.workbench.chat.AgentChatSettingsChangeListener"
               topic="com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsListener"/>
+    <listener class="com.intellij.agent.workbench.chat.AgentChatThreadPresentationStartupListener" activeInTestMode="true"
+              activeInHeadlessMode="true"
+              topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
 
   <extensions defaultExtensionNs="com.intellij.agent.workbench">

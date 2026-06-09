@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentOpenTopLevelThreadDispatchService
@@ -86,7 +87,7 @@ class AgentChatOpenTopLevelDispatchTest {
   @AfterEach
   fun tearDown(): Unit = timeoutRunBlocking {
     customFileEditorFactory = null
-    service<AgentThreadPresentationStore>().clearForTests()
+    service<AgentSessionThreadPresentationModel>().clearForTests()
     withTimeout(30.seconds) {
       project.waitForSmartMode()
     }

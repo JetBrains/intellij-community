@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
@@ -93,7 +94,7 @@ class AgentChatEditorServiceTest {
   @AfterEach
   fun tearDown(): Unit = timeoutRunBlocking {
     customFileEditorFactory = null
-    service<AgentThreadPresentationStore>().clearForTests()
+    service<AgentSessionThreadPresentationModel>().clearForTests()
     withTimeout(30.seconds) {
       project.waitForSmartMode()
       dedicatedProject.waitForSmartMode()
@@ -620,37 +621,22 @@ class AgentChatEditorServiceTest {
     )
 
     val file = openedChatFiles().single()
-    val threadKey = file.projectPath to file.threadIdentity
-    val updatedTabs = runInUi {
-      updateOpenAgentChatTabPresentation(
-        provider = AgentSessionProvider.CODEX,
-        refreshedPaths = emptySet(),
-        titleByPathAndThreadIdentity = mapOf(
-          threadKey to "Renamed by source update",
-        ),
-        activityByPathAndThreadIdentity = mapOf(
-          threadKey to AgentThreadActivity.UNREAD,
-        ),
-      )
-    }
+    val updatedTabs = publishThreadPresentation(
+      file = file,
+      title = "Renamed by source update",
+      activity = AgentThreadActivity.UNREAD,
+    )
     assertThat(updatedTabs).isEqualTo(1)
 
     assertThat(file.threadTitle).isEqualTo("Renamed by source update")
     assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
     assertThat(editorTabTitle(file)).isEqualTo("Renamed by source update")
 
-    val unchangedTabs = runInUi {
-      updateOpenAgentChatTabPresentation(
-        provider = AgentSessionProvider.CODEX,
-        refreshedPaths = emptySet(),
-        titleByPathAndThreadIdentity = mapOf(
-          threadKey to "Renamed by source update",
-        ),
-        activityByPathAndThreadIdentity = mapOf(
-          threadKey to AgentThreadActivity.UNREAD,
-        ),
-      )
-    }
+    val unchangedTabs = publishThreadPresentation(
+      file = file,
+      title = "Renamed by source update",
+      activity = AgentThreadActivity.UNREAD,
+    )
     assertThat(unchangedTabs).isEqualTo(0)
   }
 
@@ -665,37 +651,24 @@ class AgentChatEditorServiceTest {
     )
 
     val file = openedChatFiles().single()
-    val nonCanonicalThreadKey = "${file.projectPath}/" to file.threadIdentity
-    val updatedTabs = runInUi {
-      updateOpenAgentChatTabPresentation(
-        provider = AgentSessionProvider.CODEX,
-        refreshedPaths = emptySet(),
-        titleByPathAndThreadIdentity = mapOf(
-          nonCanonicalThreadKey to "Renamed by normalized source update",
-        ),
-        activityByPathAndThreadIdentity = mapOf(
-          nonCanonicalThreadKey to AgentThreadActivity.UNREAD,
-        ),
-      )
-    }
+    val updatedTabs = publishThreadPresentation(
+      file = file,
+      path = "${file.projectPath}/",
+      title = "Renamed by normalized source update",
+      activity = AgentThreadActivity.UNREAD,
+    )
     assertThat(updatedTabs).isEqualTo(1)
 
     assertThat(file.threadTitle).isEqualTo("Renamed by normalized source update")
     assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
     assertThat(editorTabTitle(file)).isEqualTo("Renamed by normalized source update")
 
-    val unchangedTabs = runInUi {
-      updateOpenAgentChatTabPresentation(
-        provider = AgentSessionProvider.CODEX,
-        refreshedPaths = emptySet(),
-        titleByPathAndThreadIdentity = mapOf(
-          nonCanonicalThreadKey to "Renamed by normalized source update",
-        ),
-        activityByPathAndThreadIdentity = mapOf(
-          nonCanonicalThreadKey to AgentThreadActivity.UNREAD,
-        ),
-      )
-    }
+    val unchangedTabs = publishThreadPresentation(
+      file = file,
+      path = "${file.projectPath}/",
+      title = "Renamed by normalized source update",
+      activity = AgentThreadActivity.UNREAD,
+    )
     assertThat(unchangedTabs).isEqualTo(0)
   }
 
@@ -769,16 +742,11 @@ class AgentChatEditorServiceTest {
       subAgentId = "sub-1",
     )
 
-    val updatedTabs = runInUi {
-      updateOpenAgentChatTabPresentation(
-        provider = AgentSessionProvider.CODEX,
-        refreshedPaths = emptySet(),
-        titleByPathAndThreadIdentity = mapOf(
-          (projectPath to "CODEX:thread-1") to "Renamed parent",
-        ),
-        activityByPathAndThreadIdentity = emptyMap(),
-      )
-    }
+    val updatedTabs = publishThreadPresentation(
+      file = openedChatFiles().first { it.subAgentId == null },
+      title = "Renamed parent",
+      activity = null,
+    )
     assertThat(updatedTabs).isEqualTo(1)
 
     val files = openedChatFiles()
@@ -803,18 +771,11 @@ class AgentChatEditorServiceTest {
       subAgentId = "sub-1",
     )
 
-    val updatedTabs = runInUi {
-      updateOpenAgentChatTabPresentation(
-        provider = AgentSessionProvider.CODEX,
-        refreshedPaths = emptySet(),
-        titleByPathAndThreadIdentity = mapOf(
-          (projectPath to "CODEX:thread-1") to "Renamed parent",
-        ),
-        activityByPathAndThreadIdentity = mapOf(
-          (projectPath to "CODEX:thread-1") to AgentThreadActivity.UNREAD,
-        ),
-      )
-    }
+    val updatedTabs = publishThreadPresentation(
+      file = openedChatFiles().first { it.subAgentId == null },
+      title = "Renamed parent",
+      activity = AgentThreadActivity.UNREAD,
+    )
     assertThat(updatedTabs).isEqualTo(2)
 
     val files = openedChatFiles()
@@ -1668,13 +1629,20 @@ class AgentChatEditorServiceTest {
     )
 
     val tabsService = service<AgentChatTabsService>()
-    val presentationStore = service<AgentThreadPresentationStore>()
+    val presentationModel = service<AgentSessionThreadPresentationModel>()
     val beforeCleanup = openedChatFiles()
     assertThat(beforeCleanup).hasSize(3)
     beforeCleanup.forEach { tabsService.upsert(it.toSnapshot()) }
     val rootPresentationKey =
       checkNotNull(beforeCleanup.first { it.subAgentId == null && it.threadIdentity == "CODEX:thread-1" }.presentationKeyOrNull())
-    assertThat(presentationStore.resolve(rootPresentationKey)).isNotNull
+    presentationModel.updateThread(
+      path = projectPath,
+      provider = AgentSessionProvider.CODEX,
+      threadId = "thread-1",
+      title = "Main thread",
+      activity = AgentThreadActivity.READY,
+    )
+    assertThat(presentationModel.resolve(rootPresentationKey)).isNotNull
     val matchingTabKeys = beforeCleanup
       .filter { it.threadIdentity == "CODEX:thread-1" }
       .map { it.tabKey }
@@ -1691,7 +1659,7 @@ class AgentChatEditorServiceTest {
     for (tabKey in matchingTabKeys) {
       assertThat(tabsService.load(tabKey)).isNull()
     }
-    assertThat(presentationStore.resolve(rootPresentationKey)).isNull()
+    assertThat(presentationModel.resolve(rootPresentationKey)).isNotNull
     assertThat(tabsService.load(unrelatedTabKey)).isNotNull
   }
 
@@ -1720,13 +1688,20 @@ class AgentChatEditorServiceTest {
     )
 
     val tabsService = service<AgentChatTabsService>()
-    val presentationStore = service<AgentThreadPresentationStore>()
+    val presentationModel = service<AgentSessionThreadPresentationModel>()
     val beforeCleanup = openedChatFiles()
     beforeCleanup.forEach { tabsService.upsert(it.toSnapshot()) }
     val alphaTabKey = beforeCleanup.first { it.subAgentId == "sub-alpha" }.tabKey
     val betaTabKey = beforeCleanup.first { it.subAgentId == "sub-beta" }.tabKey
     val baseTabKey = beforeCleanup.first { it.subAgentId == null }.tabKey
     val basePresentationKey = checkNotNull(beforeCleanup.first { it.subAgentId == null }.presentationKeyOrNull())
+    presentationModel.updateThread(
+      path = projectPath,
+      provider = AgentSessionProvider.CODEX,
+      threadId = "thread-1",
+      title = "Main thread",
+      activity = AgentThreadActivity.READY,
+    )
 
     closeAndForgetAgentChatsForThread(
       projectPath = projectPath,
@@ -1740,7 +1715,7 @@ class AgentChatEditorServiceTest {
     assertThat(tabsService.load(alphaTabKey)).isNull()
     assertThat(tabsService.load(baseTabKey)).isNotNull
     assertThat(tabsService.load(betaTabKey)).isNotNull
-    assertThat(presentationStore.resolve(basePresentationKey)).isNotNull
+    assertThat(presentationModel.resolve(basePresentationKey)).isNotNull
   }
 
   @Test
@@ -2204,6 +2179,23 @@ private data class EditorServiceSentTerminalText(
   @JvmField val shouldExecute: Boolean,
   @JvmField val useBracketedPasteMode: Boolean = true,
 )
+
+private suspend fun publishThreadPresentation(
+  file: AgentChatVirtualFile,
+  path: String = file.projectPath,
+  title: String,
+  activity: AgentThreadActivity?,
+): Int {
+  val provider = checkNotNull(file.provider)
+  val changeSet = service<AgentSessionThreadPresentationModel>().updateThread(
+    path = path,
+    provider = provider,
+    threadId = file.sessionId,
+    title = title,
+    activity = activity,
+  )
+  return AgentChatOpenTabPresentationInvalidator.invalidate(changeSet)
+}
 
 private suspend fun <T> runInUi(action: suspend () -> T): T {
   return withContext(Dispatchers.UiWithModelAccess) {

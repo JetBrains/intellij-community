@@ -196,7 +196,8 @@ interface AgentSessionProviderDescriptor {
 
   /**
    * Provider-side rename implementation. Implementations should only persist or perform the provider rename and report
-   * success. Agent Workbench owns local title overrides, open editor-tab presentation updates, and follow-up refreshes.
+   * success. Agent Workbench owns session-state updates, shared thread presentation, open editor-tab presentation updates,
+   * and follow-up refreshes.
    */
   val threadRenameAction: AgentThreadRenameAction?
     get() = null
@@ -233,8 +234,8 @@ interface AgentSessionProviderDescriptor {
       ?.trim()
       ?.takeIf { it.isNotEmpty() }
     val reasoningEffort = generationSettings.reasoningEffort
-      .takeIf { effort -> effort == AgentPromptReasoningEffort.AUTO || effort in supportedReasoningEfforts }
-      ?: AgentPromptReasoningEffort.AUTO
+                            .takeIf { effort -> effort == AgentPromptReasoningEffort.AUTO || effort in supportedReasoningEfforts }
+                          ?: AgentPromptReasoningEffort.AUTO
     return generationSettings.copy(modelId = modelId, reasoningEffort = reasoningEffort)
   }
 
@@ -319,7 +320,7 @@ data class AgentSessionTerminalLaunchSpec(
    */
   @JvmField val useTerminalDefaultShell: Boolean = false,
   /**
-   * When set, this session targets a Docker container managed by [ContainerSessionManager].
+   * When set, this session targets a Docker container managed by `ContainerSessionManager`.
    * The ij-proxy MCP server routes file I/O and bash tool calls through the container
    * instead of the local filesystem. Semantic tools (search_symbol, get_file_problems)
    * fall back to the host IDE index.

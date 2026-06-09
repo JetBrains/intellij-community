@@ -2,6 +2,7 @@
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationChangeSet
 import com.intellij.openapi.application.EDT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,7 +18,7 @@ internal object AgentChatOpenTabPresentationInvalidator {
    * [resolveAgentChatThreadPresentation]); only the activity is inherited from the
    * shared thread presentation. Tabs whose resolved state is unchanged are skipped.
    */
-  suspend fun invalidate(changeSet: AgentThreadPresentationChangeSet): Int {
+  suspend fun invalidate(changeSet: AgentSessionThreadPresentationChangeSet): Int {
     if (changeSet.isEmpty) return 0
 
     var updatedFiles = 0

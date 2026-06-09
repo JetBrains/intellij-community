@@ -8,6 +8,9 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.withAgentThreadActivityBadge
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentation
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
@@ -47,7 +50,7 @@ class AgentChatFileEditorProviderTest {
   @AfterEach
   fun tearDown() {
     clearAgentChatIconCacheForTests()
-    service<AgentThreadPresentationStore>().clearForTests()
+    service<AgentSessionThreadPresentationModel>().clearForTests()
     IconManager.deactivate()
     IconLoader.deactivate()
   }
@@ -381,61 +384,67 @@ class AgentChatFileEditorProviderTest {
 
   @Test
   fun sharedThreadPresentationFullRefreshReplacesScopedEntries() {
-    val store = service<AgentThreadPresentationStore>()
-    val refreshedKey = checkNotNull(AgentThreadPresentationKey.create("/work/project-a", "CODEX:thread-1"))
-    val removedKey = checkNotNull(AgentThreadPresentationKey.create("/work/project-a", "CODEX:thread-2"))
-    val otherProviderKey = checkNotNull(AgentThreadPresentationKey.create("/work/project-a", "CLAUDE:session-1"))
-    val otherPathKey = checkNotNull(AgentThreadPresentationKey.create("/work/project-b", "CODEX:thread-3"))
-    store.replaceForTests(
+    val model = service<AgentSessionThreadPresentationModel>()
+    val refreshedKey = presentationKey("/work/project-a", AgentSessionProvider.CODEX, "thread-1")
+    val removedKey = presentationKey("/work/project-a", AgentSessionProvider.CODEX, "thread-2")
+    val otherProviderKey = presentationKey("/work/project-a", AgentSessionProvider.CLAUDE, "session-1")
+    val otherPathKey = presentationKey("/work/project-b", AgentSessionProvider.CODEX, "thread-3")
+    model.replaceForTests(
       mapOf(
-        refreshedKey to AgentThreadPresentation(title = "Old title", activity = AgentThreadActivity.READY),
-        removedKey to AgentThreadPresentation(title = "Removed title", activity = AgentThreadActivity.UNREAD),
-        otherProviderKey to AgentThreadPresentation(title = "Claude title", activity = AgentThreadActivity.PROCESSING),
-        otherPathKey to AgentThreadPresentation(title = "Other path", activity = AgentThreadActivity.READY),
+        refreshedKey to AgentSessionThreadPresentation(title = "Old title", activity = AgentThreadActivity.READY),
+        removedKey to AgentSessionThreadPresentation(title = "Removed title", activity = AgentThreadActivity.UNREAD),
+        otherProviderKey to AgentSessionThreadPresentation(title = "Claude title", activity = AgentThreadActivity.PROCESSING),
+        otherPathKey to AgentSessionThreadPresentation(title = "Other path", activity = AgentThreadActivity.READY),
       )
     )
 
-    val changeSet = store.applyRefresh(
+    val changeSet = model.updateProviderSnapshot(
       provider = AgentSessionProvider.CODEX,
-      refreshedPaths = setOf("/work/project-a/"),
-      titleByPathAndThreadIdentity = mapOf(
-        ("/work/project-a" to "CODEX:thread-1") to "Renamed title",
-      ),
-      activityByPathAndThreadIdentity = mapOf(
-        ("/work/project-a" to "CODEX:thread-1") to AgentThreadActivity.PROCESSING,
+      authoritativePaths = setOf("/work/project-a/"),
+      threadsByPath = mapOf(
+        "/work/project-a" to listOf(
+          threadModel(AgentSessionProvider.CODEX, "thread-1", "Renamed title", AgentThreadActivity.PROCESSING)
+        ),
       ),
     )
 
     assertThat(changeSet.changedKeys).containsExactly(refreshedKey)
     assertThat(changeSet.removedKeys).containsExactly(removedKey)
-    assertThat(store.resolve(refreshedKey))
-      .isEqualTo(AgentThreadPresentation(title = "Renamed title", activity = AgentThreadActivity.PROCESSING))
-    assertThat(store.resolve(removedKey)).isNull()
-    assertThat(store.resolve(otherProviderKey))
-      .isEqualTo(AgentThreadPresentation(title = "Claude title", activity = AgentThreadActivity.PROCESSING))
-    assertThat(store.resolve(otherPathKey))
-      .isEqualTo(AgentThreadPresentation(title = "Other path", activity = AgentThreadActivity.READY))
+    assertThat(model.resolve(refreshedKey))
+      .isEqualTo(AgentSessionThreadPresentation(title = "Renamed title", activity = AgentThreadActivity.PROCESSING))
+    assertThat(model.resolve(removedKey)).isNull()
+    assertThat(model.resolve(otherProviderKey))
+      .isEqualTo(AgentSessionThreadPresentation(title = "Claude title", activity = AgentThreadActivity.PROCESSING))
+    assertThat(model.resolve(otherPathKey))
+      .isEqualTo(AgentSessionThreadPresentation(title = "Other path", activity = AgentThreadActivity.READY))
   }
 
   @Test
   fun sharedThreadPresentationActivityOnlyUpdateKeepsExistingTitle(): Unit = timeoutRunBlocking {
-    val store = service<AgentThreadPresentationStore>()
-    val key = checkNotNull(AgentThreadPresentationKey.create("/work/project-a", "CODEX:thread-1"))
-    store.putExact(
-      key = key,
-      presentation = AgentThreadPresentation(title = "Existing title", activity = AgentThreadActivity.READY),
-    )
-
-    val updatedTabs = updateOpenAgentChatTabPresentation(
+    val model = service<AgentSessionThreadPresentationModel>()
+    val key = presentationKey("/work/project-a", AgentSessionProvider.CODEX, "thread-1")
+    model.updateThread(
+      path = "/work/project-a",
       provider = AgentSessionProvider.CODEX,
-      refreshedPaths = emptySet(),
-      titleByPathAndThreadIdentity = emptyMap(),
-      activityByPathAndThreadIdentity = mapOf(("/work/project-a" to "CODEX:thread-1") to AgentThreadActivity.UNREAD),
+      threadId = "thread-1",
+      title = "Existing title",
+      activity = AgentThreadActivity.READY,
     )
 
-    assertThat(updatedTabs).isZero()
-    assertThat(store.resolve(key))
-      .isEqualTo(AgentThreadPresentation(title = "Existing title", activity = AgentThreadActivity.UNREAD))
+    val changeSet = model.updateActivityHints(
+      provider = AgentSessionProvider.CODEX,
+      updates = listOf(
+        com.intellij.agent.workbench.sessions.core.AgentSessionThreadActivityPresentationUpdate(
+          path = "/work/project-a",
+          threadId = "thread-1",
+          activity = AgentThreadActivity.UNREAD,
+        )
+      ),
+    )
+
+    assertThat(changeSet.changedKeys).containsExactly(key)
+    assertThat(model.resolve(key))
+      .isEqualTo(AgentSessionThreadPresentation(title = "Existing title", activity = AgentThreadActivity.UNREAD))
   }
 
   @Test
@@ -450,18 +459,18 @@ class AgentChatFileEditorProviderTest {
       threadActivity = AgentThreadActivity.UNREAD,
     )
     val tabsService = service<AgentChatTabsService>()
-    val store = service<AgentThreadPresentationStore>()
-    val key = checkNotNull(snapshot.sharedThreadPresentationKeyOrNull())
+    val model = service<AgentSessionThreadPresentationModel>()
+    val key = presentationKey(snapshot.identity.projectPath, AgentSessionProvider.CODEX, snapshot.runtime.threadId)
     tabsService.upsert(snapshot)
     try {
-      store.clearForTests()
+      model.clearForTests()
 
       val file = agentChatVirtualFileSystem().findFileByPath(snapshot.tabKey.toPath()) as AgentChatVirtualFile?
 
       assertThat(file).isNotNull
-      assertThat(store.resolve(key)).isNull()
+      assertThat(model.resolve(key)).isNull()
       assertThat(resolveAgentChatThreadPresentation(checkNotNull(file)))
-        .isEqualTo(AgentThreadPresentation(title = "Restored thread", activity = AgentThreadActivity.UNREAD))
+        .isEqualTo(AgentSessionThreadPresentation(title = "Restored thread", activity = AgentThreadActivity.UNREAD))
     }
     finally {
       tabsService.forget(snapshot.tabKey)
@@ -469,7 +478,7 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
-  fun forgettingTabEvictsSharedThreadPresentation(): Unit = timeoutRunBlocking {
+  fun forgettingTabDoesNotEvictSharedThreadPresentation(): Unit = timeoutRunBlocking {
     val snapshot = AgentChatTabSnapshot.create(
       projectHash = "hash-1",
       projectPath = "/work/project-a",
@@ -479,18 +488,21 @@ class AgentChatFileEditorProviderTest {
       subAgentId = null,
     )
     val tabsService = service<AgentChatTabsService>()
-    val store = service<AgentThreadPresentationStore>()
-    val key = checkNotNull(snapshot.sharedThreadPresentationKeyOrNull())
+    val model = service<AgentSessionThreadPresentationModel>()
+    val key = presentationKey(snapshot.identity.projectPath, AgentSessionProvider.CODEX, snapshot.runtime.threadId)
     tabsService.upsert(snapshot)
     try {
-      store.putExact(
-        key = key,
-        presentation = AgentThreadPresentation(title = "Forget me", activity = AgentThreadActivity.UNREAD),
+      model.updateThread(
+        path = snapshot.identity.projectPath,
+        provider = AgentSessionProvider.CODEX,
+        threadId = snapshot.runtime.threadId,
+        title = "Forget me",
+        activity = AgentThreadActivity.UNREAD,
       )
-      assertThat(store.resolve(key)).isNotNull
+      assertThat(model.resolve(key)).isNotNull
 
       assertThat(tabsService.forget(snapshot.tabKey)).isTrue()
-      assertThat(store.resolve(key)).isNull()
+      assertThat(model.resolve(key)).isNotNull
     }
     finally {
       tabsService.forget(snapshot.tabKey)
@@ -762,6 +774,30 @@ class AgentChatFileEditorProviderTest {
       assertThat(icon.iconWidth).isNotEqualTo(AgentWorkbenchCommonIcons.Codex_14x14.iconWidth)
     }
   }
+}
+
+private fun threadModel(
+  provider: AgentSessionProvider,
+  id: String,
+  title: String,
+  activity: AgentThreadActivity,
+): AgentSessionThread {
+  return AgentSessionThread(
+    id = id,
+    title = title,
+    updatedAt = 1L,
+    archived = false,
+    activity = activity,
+    provider = provider,
+  )
+}
+
+private fun presentationKey(
+  path: String,
+  provider: AgentSessionProvider,
+  threadId: String,
+): AgentSessionThreadPresentationKey {
+  return checkNotNull(AgentSessionThreadPresentationKey.create(path, provider, threadId))
 }
 
 private class ChatTestProviderBridge(

@@ -18,10 +18,6 @@ import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettin
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
-import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrideStateService
-import com.intellij.agent.workbench.sessions.state.AgentSessionThreadTitleOverrides
-import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
-import com.intellij.agent.workbench.sessions.state.applyTitleOverrides
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.Service
@@ -55,7 +51,6 @@ class AgentArchivedSessionsService internal constructor(
   private val serviceScope: CoroutineScope,
   private val sessionSourcesProvider: () -> List<AgentSessionSource>,
   private val projectEntriesProvider: suspend () -> List<ProjectEntry>,
-  private val titleOverrides: AgentSessionThreadTitleOverrides = InMemoryAgentSessionThreadTitleOverrides(),
 ) {
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
@@ -64,7 +59,6 @@ class AgentArchivedSessionsService internal constructor(
       service<AgentSessionProviderSettingsService>().enabledSessionSources(AgentSessionProviders.sessionSources())
     },
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
-    titleOverrides = service<AgentSessionThreadTitleOverrideStateService>(),
   )
 
   private val mutableState = MutableStateFlow(AgentArchivedSessionsState())
@@ -235,13 +229,11 @@ class AgentArchivedSessionsService internal constructor(
         }
       }.awaitAll().filterNotNull()
     }
-    val result = mergeAgentSessionSourceLoadResults(
+    return mergeAgentSessionSourceLoadResults(
       sourceResults = sourceResults,
       resolveErrorMessage = ::resolveArchivedErrorMessage,
       resolveWarningMessage = ::resolveArchivedProviderWarningMessage,
     )
-    val threads = titleOverrides.applyTitleOverrides(path = path, threads = result.threads)
-    return if (threads == result.threads) result else result.copy(threads = threads)
   }
 
   private suspend fun resolveArchivedCliAvailabilityByProvider(

@@ -7,11 +7,12 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
+import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.service.AgentSessionRenameService
-import com.intellij.agent.workbench.sessions.service.AgentSessionThreadActivityPresentationUpdate
-import com.intellij.agent.workbench.sessions.service.AgentSessionThreadPresentationUpdater
-import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
+import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -31,8 +32,8 @@ class AgentSessionRenameServiceTest {
   fun renameThreadRefreshesScopedProviderOnSuccess(): Unit = runBlocking(Dispatchers.Default) {
     val refreshedPaths = mutableListOf<Pair<String, AgentSessionProvider>>()
     val operationOrder = mutableListOf<String>()
-    val presentationUpdater = RecordingThreadPresentationUpdater { operationOrder += "presentation" }
-    val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
+    val stateStore = AgentSessionsStateStore()
+    val presentationModel = AgentSessionThreadPresentationModel()
     var renamedPath: String? = null
     var renamedThreadId: String? = null
     var renamedName: String? = null
@@ -57,9 +58,9 @@ class AgentSessionRenameServiceTest {
         refreshedPaths += path to provider
       },
       findProviderDescriptor = { provider -> descriptor.takeIf { it.provider == provider } },
-      titleOverrides = titleOverrides,
       notifyRenameFailure = { error("rename failure notification should not be shown") },
-      threadPresentationUpdater = presentationUpdater,
+      stateStore = stateStore,
+      presentationModel = presentationModel,
     )
 
     try {
@@ -71,6 +72,17 @@ class AgentSessionRenameServiceTest {
         thread = threadModel(AgentSessionProvider.CODEX, "thread-1", "Original title")
           .copy(activity = AgentThreadActivity.PROCESSING),
       )
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project",
+            name = "Project",
+            isOpen = true,
+            threads = listOf(checkNotNull(target.thread)),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
 
       val job = service.renameThreadFromTree(target, "  Renamed\n\n  thread  ")
       joinAll(checkNotNull(job))
@@ -78,17 +90,11 @@ class AgentSessionRenameServiceTest {
       assertThat(renamedPath).isEqualTo("/work/project")
       assertThat(renamedThreadId).isEqualTo("thread-1")
       assertThat(renamedName).isEqualTo("Renamed thread")
-      assertThat(titleOverrides.getTitle("/work/project", AgentSessionProvider.CODEX, "thread-1")).isEqualTo("Renamed thread")
-      assertThat(presentationUpdater.threadUpdates).containsExactly(
-        ThreadPresentationUpdate(
-          provider = AgentSessionProvider.CODEX,
-          path = "/work/project",
-          threadId = "thread-1",
-          title = "Renamed thread",
-          activity = AgentThreadActivity.PROCESSING,
-        )
-      )
-      assertThat(operationOrder).containsExactly("presentation", "refresh")
+      assertThat(stateStore.snapshot().projects.single().threads.single().title).isEqualTo("Renamed thread")
+      val presentation = presentationModel.snapshot()[presentationKey("/work/project", AgentSessionProvider.CODEX, "thread-1")]
+      assertThat(presentation?.title).isEqualTo("Renamed thread")
+      assertThat(presentation?.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(operationOrder).containsExactly("refresh")
       assertThat(refreshedPaths).containsExactly("/work/project" to AgentSessionProvider.CODEX)
     }
     finally {
@@ -99,7 +105,7 @@ class AgentSessionRenameServiceTest {
   @Test
   fun renameThreadSkipsBlankAndUnchangedRequests(): Unit = runBlocking(Dispatchers.Default) {
     var renameCalls = 0
-    val presentationUpdater = RecordingThreadPresentationUpdater()
+    val presentationModel = AgentSessionThreadPresentationModel()
     val descriptor = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -117,7 +123,7 @@ class AgentSessionRenameServiceTest {
       refreshProviderForPath = { _, _ -> error("refresh should not be called for skipped rename") },
       findProviderDescriptor = { provider -> descriptor.takeIf { it.provider == provider } },
       notifyRenameFailure = { error("rename failure notification should not be shown") },
-      threadPresentationUpdater = presentationUpdater,
+      presentationModel = presentationModel,
     )
 
     try {
@@ -131,7 +137,7 @@ class AgentSessionRenameServiceTest {
       assertThat(service.renameThreadFromTree(target, "   ")).isNull()
       assertThat(service.renameThreadFromTree(target, " Original\n  title ")).isNull()
       assertThat(renameCalls).isZero()
-      assertThat(presentationUpdater.threadUpdates).isEmpty()
+      assertThat(presentationModel.snapshot()).isEmpty()
     }
     finally {
       scope.cancel()
@@ -142,8 +148,7 @@ class AgentSessionRenameServiceTest {
   fun renameThreadNotifiesOnFailureAndSkipsRefresh(): Unit = runBlocking(Dispatchers.Default) {
     var failureNotifications = 0
     var refreshCalls = 0
-    val titleOverrides = InMemoryAgentSessionThreadTitleOverrides()
-    val presentationUpdater = RecordingThreadPresentationUpdater()
+    val presentationModel = AgentSessionThreadPresentationModel()
     val descriptor = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -157,9 +162,8 @@ class AgentSessionRenameServiceTest {
       serviceScope = scope,
       refreshProviderForPath = { _, _ -> refreshCalls += 1 },
       findProviderDescriptor = { provider -> descriptor.takeIf { it.provider == provider } },
-      titleOverrides = titleOverrides,
       notifyRenameFailure = { failureNotifications += 1 },
-      threadPresentationUpdater = presentationUpdater,
+      presentationModel = presentationModel,
     )
 
     try {
@@ -175,8 +179,7 @@ class AgentSessionRenameServiceTest {
 
       assertThat(failureNotifications).isEqualTo(1)
       assertThat(refreshCalls).isZero()
-      assertThat(presentationUpdater.threadUpdates).isEmpty()
-      assertThat(titleOverrides.getTitle("/work/project", AgentSessionProvider.CODEX, "thread-1")).isNull()
+      assertThat(presentationModel.snapshot()).isEmpty()
     }
     finally {
       scope.cancel()
@@ -291,49 +294,10 @@ private fun threadModel(provider: AgentSessionProvider, id: String, title: Strin
   )
 }
 
-private class RecordingThreadPresentationUpdater(
-  private val beforeThreadUpdate: () -> Unit = {},
-) : AgentSessionThreadPresentationUpdater {
-  val threadUpdates = mutableListOf<ThreadPresentationUpdate>()
-
-  override suspend fun updateThread(
-    provider: AgentSessionProvider,
-    path: String,
-    threadId: String,
-    title: String,
-    activity: AgentThreadActivity?,
-  ): Int {
-    beforeThreadUpdate()
-    threadUpdates += ThreadPresentationUpdate(
-      provider = provider,
-      path = path,
-      threadId = threadId,
-      title = title,
-      activity = activity,
-    )
-    return 1
-  }
-
-  override suspend fun updateProviderSnapshot(
-    provider: AgentSessionProvider,
-    authoritativePaths: Set<String>,
-    threadsByPath: Map<String, List<AgentSessionThread>>,
-  ): Int {
-    error("provider snapshot presentation update should not be used")
-  }
-
-  override suspend fun updateActivityHints(
-    provider: AgentSessionProvider,
-    updates: Collection<AgentSessionThreadActivityPresentationUpdate>,
-  ): Int {
-    error("activity hint presentation update should not be used")
-  }
+private fun presentationKey(
+  path: String,
+  provider: AgentSessionProvider,
+  threadId: String,
+): AgentSessionThreadPresentationKey {
+  return checkNotNull(AgentSessionThreadPresentationKey.create(path, provider, threadId))
 }
-
-private data class ThreadPresentationUpdate(
-  val provider: AgentSessionProvider,
-  @JvmField val path: String,
-  @JvmField val threadId: String,
-  @JvmField val title: String,
-  @JvmField val activity: AgentThreadActivity?,
-)

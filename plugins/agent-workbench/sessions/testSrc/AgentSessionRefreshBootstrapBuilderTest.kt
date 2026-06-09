@@ -9,7 +9,6 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshBootstra
 import com.intellij.agent.workbench.sessions.service.RefreshLoadScope
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmPathSnapshot
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
-import com.intellij.agent.workbench.sessions.state.InMemoryAgentSessionThreadTitleOverrides
 import com.intellij.agent.workbench.sessions.state.InMemorySessionWarmState
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +39,6 @@ class AgentSessionRefreshBootstrapBuilderTest {
         projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
         stateStore = stateStore,
         contentRepository = AgentSessionContentRepository(stateStore = stateStore, warmState = warmState),
-        titleOverrides = InMemoryAgentSessionThreadTitleOverrides(),
       )
       val currentState = AgentSessionsState(
         projects = listOf(

@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorProvider
@@ -266,7 +265,6 @@ suspend fun openChat(
     existing.updateThreadId(threadId)
     val titleUpdated = existing.updateBootstrapThreadTitle(threadTitle)
     val activityUpdated = existing.updateBootstrapThreadActivity(threadActivity)
-    val sharedPresentationUpdated = !syncAgentChatSharedThreadPresentation(existing).isEmpty
     val deferredStartStateUpdated = existing.updateDeferredStartState(deferredStartState)
     val pendingUpdated = (pendingCreatedAtMs != null || pendingFirstInputAtMs != null || pendingLaunchMode != null) &&
                          existing.updatePendingMetadata(
@@ -285,11 +283,11 @@ suspend fun openChat(
     }
     LOG.debug {
       "openChat existing tab update(identity=$threadIdentity, subAgentId=$subAgentId): " +
-      "titleUpdated=$titleUpdated, activityUpdated=$activityUpdated, sharedPresentationUpdated=$sharedPresentationUpdated, " +
+      "titleUpdated=$titleUpdated, activityUpdated=$activityUpdated, " +
       "currentName=${existing.name}," +
       " currentTitle=${existing.threadTitle}, currentActivity=${existing.threadActivity}"
     }
-    if (titleUpdated || activityUpdated || sharedPresentationUpdated || pendingUpdated || launchModeUpdated || hasExplicitInitialMessageDispatch ||
+    if (titleUpdated || activityUpdated || pendingUpdated || launchModeUpdated || hasExplicitInitialMessageDispatch ||
         deferredStartStateUpdated) {
       withContext(Dispatchers.EDT) {
         manager.updateFilePresentation(existing)
@@ -303,7 +301,6 @@ suspend fun openChat(
     file.updateRestoreOnRestart(persistSnapshot)
     file.updateStartupIntent(startupIntentForTab)
     file.updateDeferredStartState(deferredStartState)
-    syncAgentChatSharedThreadPresentation(file)
     if (startupOverrideForTab != null) {
       file.setStartupLaunchSpecOverride(
         launchSpec = startupOverrideForTab,
@@ -393,7 +390,6 @@ suspend fun updateAgentChatDeferredStartState(
   chatFile.updateDeferredStartState(deferredStartState)
   threadActivity?.let {
     chatFile.updateBootstrapThreadActivity(it)
-    syncAgentChatSharedThreadPresentation(chatFile)
   }
   initialMessageDispatchPlan?.let { dispatchPlan ->
     chatFile.updateInitialMessageMetadata(
@@ -668,8 +664,6 @@ suspend fun rebindOpenPendingAgentChatTabs(
           }
         }
 
-        val previousPresentationKey = pendingFile.presentationKeyOrNull()
-          ?.takeIf { pendingFile.isEligibleForSharedPresentationSync() }
         val changed = pendingFile.rebindPendingThread(
           threadIdentity = request.target.threadIdentity,
           threadId = request.target.threadId,
@@ -688,10 +682,6 @@ suspend fun rebindOpenPendingAgentChatTabs(
           continue
         }
 
-        syncAgentChatSharedThreadPresentationAfterRebind(
-          file = pendingFile,
-          previousPresentationKey = previousPresentationKey,
-        )
         reboundBindings++
         changedFiles.add(pendingFile)
         openTabsSnapshot.recordConcreteThreadIdentityOpen(normalizedPath, managers, request.target.threadIdentity)
@@ -840,8 +830,6 @@ suspend fun rebindOpenConcreteAgentChatTabs(
         }
 
         val previousIdentity = concreteFile.threadIdentity
-        val previousPresentationKey = concreteFile.presentationKeyOrNull()
-          ?.takeIf { concreteFile.isEligibleForSharedPresentationSync() }
         val changed = concreteFile.rebindConcreteThread(
           threadIdentity = request.target.threadIdentity,
           threadId = request.target.threadId,
@@ -860,10 +848,6 @@ suspend fun rebindOpenConcreteAgentChatTabs(
           continue
         }
 
-        syncAgentChatSharedThreadPresentationAfterRebind(
-          file = concreteFile,
-          previousPresentationKey = previousPresentationKey,
-        )
         reboundBindings++
         changedFiles.add(concreteFile)
         openTabsSnapshot.replaceConcreteThreadIdentity(
@@ -931,11 +915,11 @@ fun clearOpenConcreteAgentChatNewThreadRebindAnchors(
 
   var cleared = 0
   for ((normalizedPath, tabs) in normalizedTabsByPath) {
-    for (tab in tabs) {
-      val concreteFile = openTabsSnapshot.findConcreteFile(provider, normalizedPath, tab.tabKey) ?: continue
+    for ((_, tabKey, currentThreadIdentity, newThreadRebindRequestedAtMs) in tabs) {
+      val concreteFile = openTabsSnapshot.findConcreteFile(provider, normalizedPath, tabKey) ?: continue
       if (
-        concreteFile.threadIdentity != tab.currentThreadIdentity ||
-        concreteFile.newThreadRebindRequestedAtMs != tab.newThreadRebindRequestedAtMs
+        concreteFile.threadIdentity != currentThreadIdentity ||
+        concreteFile.newThreadRebindRequestedAtMs != newThreadRebindRequestedAtMs
       ) {
         continue
       }
@@ -946,36 +930,6 @@ fun clearOpenConcreteAgentChatNewThreadRebindAnchors(
     }
   }
   return cleared
-}
-
-suspend fun updateOpenAgentChatTabPresentation(
-  provider: AgentSessionProvider,
-  refreshedPaths: Set<String>,
-  titleByPathAndThreadIdentity: Map<Pair<String, String>, String>,
-  activityByPathAndThreadIdentity: Map<Pair<String, String>, AgentThreadActivity>,
-): Int {
-  if (
-    titleByPathAndThreadIdentity.isEmpty() &&
-    activityByPathAndThreadIdentity.isEmpty() &&
-    refreshedPaths.isEmpty()
-  ) {
-    return 0
-  }
-
-  val changeSet = serviceAsync<AgentThreadPresentationStore>().applyRefresh(
-    provider = provider,
-    refreshedPaths = refreshedPaths,
-    titleByPathAndThreadIdentity = titleByPathAndThreadIdentity,
-    activityByPathAndThreadIdentity = activityByPathAndThreadIdentity,
-  )
-  val updatedFiles = AgentChatOpenTabPresentationInvalidator.invalidate(changeSet)
-
-  LOG.debug {
-    "updateOpenAgentChatTabPresentation provider=${provider.value}, updatedTabs=$updatedFiles, " +
-    "refreshedPaths=${refreshedPaths.size}, requestedTitles=${titleByPathAndThreadIdentity.size}, " +
-    "requestedActivities=${activityByPathAndThreadIdentity.size}"
-  }
-  return updatedFiles
 }
 
 suspend fun collectSelectedChatThreadIdentity(): Pair<AgentSessionProvider, String>? = withContext(Dispatchers.UI) {
