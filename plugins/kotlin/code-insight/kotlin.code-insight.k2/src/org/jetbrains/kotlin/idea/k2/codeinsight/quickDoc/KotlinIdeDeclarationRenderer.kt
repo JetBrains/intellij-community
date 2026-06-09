@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.quickDoc
 
 import com.google.common.html.HtmlEscapers
@@ -91,6 +91,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtParameter
@@ -278,7 +279,7 @@ internal class KotlinIdeDeclarationRenderer(
                     }
                 ) { annotation ->
                     append(highlight("@") { asAnnotationName })
-                    (annotation.useSiteTarget?.renderName
+                    ((annotation.psi as? KtAnnotationEntry)?.useSiteTarget?.getAnnotationUseSiteTarget()?.renderName
                         ?: "field".takeIf { backingFieldAnnotations != null && annotation in backingFieldAnnotations })?.let { useSiteName ->
                             printer.append(highlight(useSiteName) { asKeyword })
                             printer.append(highlight(":") { asColon })
