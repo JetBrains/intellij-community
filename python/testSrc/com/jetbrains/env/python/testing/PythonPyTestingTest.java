@@ -3,7 +3,6 @@ package com.jetbrains.env.python.testing;
 import com.google.common.collect.ImmutableList;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
@@ -12,9 +11,12 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.EditorTestUtil;
@@ -43,8 +45,10 @@ import com.jetbrains.python.testing.PyAbstractTestFactory;
 import com.jetbrains.python.testing.PyTestConfiguration;
 import com.jetbrains.python.testing.PyTestFactory;
 import com.jetbrains.python.testing.PyTestFixtureAndParametrizedTest;
+import com.jetbrains.python.testing.PyTestTargetChooserFragment;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.testing.TestRunnerService;
+import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectTestConfiguration;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.assertj.core.api.Assertions;
 import org.hamcrest.Matcher;
@@ -953,6 +957,65 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   @Test
+  public void testEmptyTargetTextFieldCanBeApplied() {
+    runPythonTest(new CreateConfigurationTestTask.PyConfigurationCreationTask<PyTestConfiguration>() {
+      @NotNull
+      @Override
+      protected PyTestFactory createFactory() {
+        return new PyTestFactory(PythonTestConfigurationType.getInstance());
+      }
+
+      @Override
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
+        super.runTestOn(sdkHome, existingSdk);
+        PyTestConfiguration configuration = getConfiguration();
+        configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
+        configuration.getTarget().setTarget("test_sample.py");
+
+        PyTestTargetChooserFragment targetFragment = new PyTestTargetChooserFragment();
+        try {
+          targetFragment.resetFrom(configuration);
+          TextFieldWithBrowseButton targetField = (TextFieldWithBrowseButton)targetFragment.getFields().get(targetFragment.getSCRIPT_MODE());
+          assertEquals("test_sample.py", targetField.getText());
+
+          targetField.setText("");
+          targetFragment.applyTo(configuration);
+        }
+        catch (ConfigurationException e) {
+          throw new AssertionError(e);
+        }
+        finally {
+          Disposer.dispose(targetFragment);
+        }
+
+        assertEquals(PyRunTargetVariant.PATH, configuration.getTarget().getTargetType());
+        assertEquals("", configuration.getTarget().getTarget());
+      }
+    });
+  }
+
+  @Test
+  public void testEmptyPathTargetDoesNotGeneratePathArgument() {
+    runPythonTest(new CreateConfigurationTestTask.PyConfigurationCreationTask<PyTestConfiguration>() {
+      @NotNull
+      @Override
+      protected PyTestFactory createFactory() {
+        return new PyTestFactory(PythonTestConfigurationType.getInstance());
+      }
+
+      @Override
+      public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
+        super.runTestOn(sdkHome, existingSdk);
+        PyTestConfiguration configuration = getConfiguration();
+        configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
+        configuration.getTarget().setTarget("");
+
+        assertEquals(Collections.emptyList(), configuration.getTarget().generateArgumentsLine(configuration));
+      }
+    });
+  }
+
+  @Test
   public void testOnlyPytestConsoleScrollsToBottomByDefault() {
     runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/scroll_to_bottom", SdkCreationType.EMPTY_SDK) {
       private SMTRunnerConsoleView myConsoleView;
@@ -1037,13 +1100,54 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
     });
   }
 
-  @Test(expected = RuntimeConfigurationWarning.class)
-  public void testValidation() throws Throwable {
-    runPythonTestWithException(new PyConfigurationValidationTask<PyTestConfiguration>() {
+  @Test
+  @SuppressWarnings("removal")
+  public void testEmptyTargetIsValid() {
+    runPythonTest(new PyConfigurationValidationTask<PyTestConfiguration>() {
       @NotNull
       @Override
       protected PyTestFactory createFactory() {
         return new PyTestFactory(PythonTestConfigurationType.getInstance());
+      }
+
+      @Override
+      protected void validateConfiguration() {
+        PyTestConfiguration configuration = getConfiguration();
+        configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
+        configuration.getTarget().setTarget("");
+        try {
+          PyPackageManager.getInstance(configuration.getSdk()).refreshAndGetPackages(true);
+        }
+        catch (ExecutionException e) {
+          throw new AssertionError(e);
+        }
+        configuration.checkConfiguration();
+      }
+    });
+  }
+
+  @Test
+  @SuppressWarnings("removal")
+  public void testAutoDetectPyTestEmptyTargetIsValid() {
+    runPythonTest(new PyConfigurationValidationTask<PyAutoDetectTestConfiguration>() {
+      @NotNull
+      @Override
+      protected PyAbstractTestFactory<PyAutoDetectTestConfiguration> createFactory() {
+        return PythonTestConfigurationType.getInstance().getAutoDetectFactory();
+      }
+
+      @Override
+      protected void validateConfiguration() {
+        PyAutoDetectTestConfiguration configuration = getConfiguration();
+        configuration.getTarget().setTargetType(PyRunTargetVariant.PATH);
+        configuration.getTarget().setTarget("");
+        try {
+          PyPackageManager.getInstance(configuration.getSdk()).refreshAndGetPackages(true);
+        }
+        catch (ExecutionException e) {
+          throw new AssertionError(e);
+        }
+        configuration.checkConfiguration();
       }
     });
   }
@@ -1502,6 +1606,58 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
             "test_stderr.py::test_fail_with_stderr FAILED                             [100%]",
             "stderr_from_failing_test"
           );
+      }
+    });
+  }
+
+  @Test
+  public void testStderrHiddenForPassingTest() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/capture_stderr", SdkCreationType.EMPTY_SDK) {
+
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() {
+        return new PyTestTestProcessRunner("test_stderr.py", 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      int exitCode) {
+        var passTest = runner.findTestByName("test_pass_with_stderr");
+        var passOutput = fillPrinter(passTest).getAllOut();
+
+        assertThat("Passing test should not show captured stderr",
+                   passOutput, not(containsString("stderr_from_passing_test")));
+        MatcherAssert.assertThat("Captured stderr from passing tests should not leak into the process output",
+                                 all, not(containsString("stderr_from_passing_test")));
+      }
+    });
+  }
+
+  @Test
+  public void testStderrShownForFailingTest() {
+    runPythonTest(new PyProcessWithConsoleTestTask<PyTestTestProcessRunner>("/testRunner/env/pytest/capture_stderr", SdkCreationType.EMPTY_SDK) {
+
+      @NotNull
+      @Override
+      protected PyTestTestProcessRunner createProcessRunner() {
+        return new PyTestTestProcessRunner("test_stderr.py", 0);
+      }
+
+      @Override
+      protected void checkTestResults(@NotNull final PyTestTestProcessRunner runner,
+                                      @NotNull final String stdout,
+                                      @NotNull final String stderr,
+                                      @NotNull final String all,
+                                      int exitCode) {
+        var failTest = runner.findTestByName("test_fail_with_stderr");
+        var failOutput = fillPrinter(failTest).getAllOut();
+
+        assertThat("Failing test should show captured stderr",
+                   failOutput, containsString("stderr_from_failing_test"));
       }
     });
   }
