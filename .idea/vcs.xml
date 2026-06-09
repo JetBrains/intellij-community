@@ -31,18 +31,6 @@
           <option name="linkRegexp" value="https://youtrack.jetbrains.com/issue/$0" />
         </IssueNavigationLink>
         <IssueNavigationLink>
-          <option name="issueRegexp" value="EA\-(\d+)" />
-          <option name="linkRegexp" value="https://ea.jetbrains.com/browser/ea_problems/$1" />
-        </IssueNavigationLink>
-        <IssueNavigationLink>
-          <option name="issueRegexp" value="ZD\-(\d+)" />
-          <option name="linkRegexp" value="https://jetbrains.zendesk.com/agent/#/tickets/$1" />
-        </IssueNavigationLink>
-        <IssueNavigationLink>
-          <option name="issueRegexp" value="IDEA-COMMUNITY-CR-\d+" />
-          <option name="linkRegexp" value="https://upsource.jetbrains.com/idea-community/review/$0" />
-        </IssueNavigationLink>
-        <IssueNavigationLink>
           <option name="issueRegexp" value="JDK\-\d+" />
           <option name="linkRegexp" value="https://bugs.openjdk.org/browse/$0" />
         </IssueNavigationLink>
