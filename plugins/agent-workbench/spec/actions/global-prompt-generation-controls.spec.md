@@ -31,6 +31,9 @@ Ask Agent generation controls let users choose the model and reasoning effort fo
   [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
 
+- Provider model catalogs load on demand when the model selector is opened. After a catalog has loaded once, reopening the selector within 30 seconds must show the cached catalog immediately without provider I/O. Older cached catalogs must still render immediately and refresh in the background. The background refresh status appears after 3 seconds to avoid flicker for fast refreshes; if refresh fails after cached data exists, keep the cached choices visible and show the refresh failure inline.
+  [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
+
 - Quick changes in the composer stripe are transient for the current launch. They must not be saved as last-used preferences on submit or popup close.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt

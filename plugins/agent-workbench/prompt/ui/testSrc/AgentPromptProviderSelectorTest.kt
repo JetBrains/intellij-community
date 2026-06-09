@@ -31,6 +31,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.util.ui.EmptyIcon
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,6 +44,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import java.awt.event.KeyEvent
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
@@ -52,8 +54,10 @@ import kotlin.time.Duration.Companion.seconds
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptProviderSelectorTest {
   @BeforeEach
-  fun clearProviderAvailabilityCache() {
-    ProjectManager.getInstance().defaultProject.service<AgentSessionProviderAvailabilityService>().clearAvailabilityForTest()
+  fun clearProviderCaches() {
+    val project = ProjectManager.getInstance().defaultProject
+    project.service<AgentSessionProviderAvailabilityService>().clearAvailabilityForTest()
+    project.service<AgentPromptGenerationModelCatalogService>().clearForTest()
   }
 
   @Test
@@ -111,6 +115,7 @@ class AgentPromptProviderSelectorTest {
   fun generationSettingsControlsUseProviderDefaultsAndVisibility(): Unit = timeoutRunBlocking {
     val modelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
     try {
+      val modelCatalogRequests = AtomicInteger()
       val provider = testProviderBridge(
         provider = AgentSessionProvider.CODEX,
         promptOptions = emptyList(),
@@ -118,6 +123,7 @@ class AgentPromptProviderSelectorTest {
         availableGenerationModels = listOf(
           AgentPromptGenerationModel(id = "gpt-5.1-codex", displayName = "GPT-5.1 Codex"),
         ),
+        onListAvailableGenerationModels = modelCatalogRequests::incrementAndGet,
       )
       val fixture = withContext(Dispatchers.EDT) {
         createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
@@ -148,6 +154,7 @@ class AgentPromptProviderSelectorTest {
         assertThat(fixture.view.modelSelectorLink.isVisible).isTrue()
         assertThat(fixture.view.modelSelectorLink.isEnabled).isTrue()
         assertThat(fixture.view.modelSelectorLink.text).isEqualTo("Model Default")
+        assertThat(modelCatalogRequests.get()).isZero()
         assertThat(fixture.view.reasoningEffortLink.isVisible).isTrue()
         assertThat(fixture.view.reasoningEffortLink.isEnabled).isTrue()
         assertThat(fixture.view.reasoningEffortLink.text).isEqualTo("Effort High")
@@ -274,6 +281,7 @@ class AgentPromptProviderSelectorTest {
           onDefaultSaved = {},
         )
         controller.refreshPresentation()
+        controller.createModelActionGroupForTest(loadIfNeeded = true)
         fixture to controller
       }
 
@@ -451,8 +459,16 @@ class AgentPromptProviderSelectorTest {
         ).also { controller -> controller.refreshPresentation() }
       }
 
+      withContext(Dispatchers.EDT) {
+        controller.createModelActionGroupForTest(loadIfNeeded = true)
+      }
       waitForCondition {
-        withContext(Dispatchers.EDT) { controller.createModelActionGroupForTest() != null }
+        withContext(Dispatchers.EDT) {
+          controller.createModelActionGroupForTest()
+            ?.getChildren(TestActionEvent.createTestEvent())
+            ?.mapNotNull { action -> action.templatePresentation.text }
+            ?.contains("GPT-5.1 Codex") == true
+        }
       }
       withContext(Dispatchers.EDT) {
         val actionGroup = checkNotNull(controller.createModelActionGroupForTest())
@@ -462,6 +478,394 @@ class AgentPromptProviderSelectorTest {
           .containsExactly("Default", "GPT-5.1 Codex")
         assertThat(actions.map { action -> action.templatePresentation.keepPopupOnPerform })
           .containsOnly(KeepPopupOnPerform.Never)
+      }
+    }
+    finally {
+      modelCatalogScope.cancel()
+    }
+  }
+
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun generationSettingsModelPopupStartsCatalogLoadingOnDemand(): Unit = timeoutRunBlocking {
+    val modelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+    try {
+      val modelCatalogRequests = AtomicInteger()
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.JUNIE,
+        promptOptions = emptyList(),
+        availableGenerationModels = listOf(
+          AgentPromptGenerationModel(id = "chatgpt-5.5", displayName = "ChatGPT 5.5"),
+        ),
+        onListAvailableGenerationModels = modelCatalogRequests::incrementAndGet,
+      )
+      val fixtureAndController = withContext(Dispatchers.EDT) {
+        val fixture = createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
+        val controller = AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = modelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        ).also { controller -> controller.refreshPresentation() }
+        fixture to controller
+      }
+
+      withContext(Dispatchers.EDT) {
+        val (fixture, controller) = fixtureAndController
+        assertThat(fixture.view.modelSelectorLink.isVisible).isTrue()
+        assertThat(modelCatalogRequests.get()).isZero()
+        val loadingActions = checkNotNull(controller.createModelActionGroupForTest(loadIfNeeded = true))
+          .getChildren(TestActionEvent.createTestEvent())
+        assertThat(loadingActions.mapNotNull { action -> action.templatePresentation.text })
+          .containsExactly("Default", "Loading models...")
+      }
+
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          fixtureAndController.second.createModelActionGroupForTest()
+            ?.getChildren(TestActionEvent.createTestEvent())
+            ?.mapNotNull { action -> action.templatePresentation.text }
+            ?.contains("ChatGPT 5.5") == true
+        }
+      }
+      withContext(Dispatchers.EDT) {
+        val actions = checkNotNull(fixtureAndController.second.createModelActionGroupForTest())
+          .getChildren(TestActionEvent.createTestEvent())
+        assertThat(modelCatalogRequests.get()).isEqualTo(1)
+        assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
+          .containsExactly("Default", "ChatGPT 5.5")
+      }
+    }
+    finally {
+      modelCatalogScope.cancel()
+    }
+  }
+
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun generationSettingsModelPopupUsesFreshCachedCatalogOnReopen(): Unit = timeoutRunBlocking {
+    val firstModelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+    val secondModelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+    try {
+      val modelCatalogRequests = AtomicInteger()
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.JUNIE,
+        promptOptions = emptyList(),
+        supportsGenerationModelSelection = true,
+        availableGenerationModelsResolver = {
+          when (modelCatalogRequests.incrementAndGet()) {
+            1 -> listOf(AgentPromptGenerationModel(id = "chatgpt-5.5", displayName = "ChatGPT 5.5"))
+            else -> error("Unexpected fresh cached model catalog refresh")
+          }
+        },
+      )
+      val firstController = withContext(Dispatchers.EDT) {
+        val fixture = createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
+        AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = firstModelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        )
+      }
+
+      withContext(Dispatchers.EDT) {
+        firstController.createModelActionGroupForTest(loadIfNeeded = true)
+      }
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          modelActionTexts(firstController) == listOf("Default", "ChatGPT 5.5")
+        }
+      }
+      firstModelCatalogScope.cancel()
+
+      val secondController = withContext(Dispatchers.EDT) {
+        val fixture = createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
+        AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = secondModelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        )
+      }
+
+      withContext(Dispatchers.EDT) {
+        assertThat(modelActionTexts(secondController, loadIfNeeded = true))
+          .containsExactly("Default", "ChatGPT 5.5")
+      }
+      assertThat(modelCatalogRequests.get()).isEqualTo(1)
+    }
+    finally {
+      firstModelCatalogScope.cancel()
+      secondModelCatalogScope.cancel()
+    }
+  }
+
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun generationSettingsModelPopupRefreshesStaleCachedCatalogOnReopen(): Unit = timeoutRunBlocking {
+    val firstModelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+    val secondModelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+    val secondRefreshStarted = CompletableDeferred<Unit>()
+    val finishSecondRefresh = CompletableDeferred<Unit>()
+    try {
+      val modelCatalogRequests = AtomicInteger()
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.JUNIE,
+        promptOptions = emptyList(),
+        supportsGenerationModelSelection = true,
+        availableGenerationModelsResolver = {
+          when (modelCatalogRequests.incrementAndGet()) {
+            1 -> listOf(AgentPromptGenerationModel(id = "chatgpt-5.5", displayName = "ChatGPT 5.5"))
+            else -> {
+              secondRefreshStarted.complete(Unit)
+              finishSecondRefresh.await()
+              listOf(AgentPromptGenerationModel(id = "chatgpt-5.6", displayName = "ChatGPT 5.6"))
+            }
+          }
+        },
+      )
+      val firstController = withContext(Dispatchers.EDT) {
+        val fixture = createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
+        AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = firstModelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        )
+      }
+
+      withContext(Dispatchers.EDT) {
+        firstController.createModelActionGroupForTest(loadIfNeeded = true)
+      }
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          modelActionTexts(firstController) == listOf("Default", "ChatGPT 5.5")
+        }
+      }
+      firstModelCatalogScope.cancel()
+      ProjectManager.getInstance().defaultProject.service<AgentPromptGenerationModelCatalogService>()
+        .ageCachedCatalogForTest(AgentSessionProvider.JUNIE.value, 31.seconds)
+
+      val secondController = withContext(Dispatchers.EDT) {
+        val fixture = createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
+        AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = secondModelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        )
+      }
+
+      withContext(Dispatchers.EDT) {
+        assertThat(modelActionTexts(secondController, loadIfNeeded = true))
+          .containsExactly("Default", "ChatGPT 5.5")
+      }
+      waitForCondition { secondRefreshStarted.isCompleted }
+      assertThat(modelCatalogRequests.get()).isEqualTo(2)
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          modelActionTexts(secondController) == listOf("Default", "ChatGPT 5.5", "Refreshing models...")
+        }
+      }
+      finishSecondRefresh.complete(Unit)
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          modelActionTexts(secondController) == listOf("Default", "ChatGPT 5.6")
+        }
+      }
+    }
+    finally {
+      if (!finishSecondRefresh.isCompleted) {
+        finishSecondRefresh.complete(Unit)
+      }
+      firstModelCatalogScope.cancel()
+      secondModelCatalogScope.cancel()
+    }
+  }
+
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun generationSettingsModelPopupKeepsCachedCatalogWhenBackgroundRefreshFails(): Unit = timeoutRunBlocking {
+    val firstModelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+    val secondModelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+    val secondRefreshStarted = CompletableDeferred<Unit>()
+    val failSecondRefresh = CompletableDeferred<Unit>()
+    try {
+      val modelCatalogRequests = AtomicInteger()
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.JUNIE,
+        promptOptions = emptyList(),
+        supportsGenerationModelSelection = true,
+        availableGenerationModelsResolver = {
+          when (modelCatalogRequests.incrementAndGet()) {
+            1 -> listOf(AgentPromptGenerationModel(id = "chatgpt-5.5", displayName = "ChatGPT 5.5"))
+            else -> {
+              secondRefreshStarted.complete(Unit)
+              failSecondRefresh.await()
+              error("failed")
+            }
+          }
+        },
+      )
+      val firstController = withContext(Dispatchers.EDT) {
+        val fixture = createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
+        AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = firstModelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        )
+      }
+
+      withContext(Dispatchers.EDT) {
+        firstController.createModelActionGroupForTest(loadIfNeeded = true)
+      }
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          modelActionTexts(firstController) == listOf("Default", "ChatGPT 5.5")
+        }
+      }
+      firstModelCatalogScope.cancel()
+      ProjectManager.getInstance().defaultProject.service<AgentPromptGenerationModelCatalogService>()
+        .ageCachedCatalogForTest(AgentSessionProvider.JUNIE.value, 31.seconds)
+
+      val secondController = withContext(Dispatchers.EDT) {
+        val fixture = createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
+        AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = secondModelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        )
+      }
+
+      withContext(Dispatchers.EDT) {
+        assertThat(modelActionTexts(secondController, loadIfNeeded = true))
+          .containsExactly("Default", "ChatGPT 5.5")
+      }
+      waitForCondition { secondRefreshStarted.isCompleted }
+      failSecondRefresh.complete(Unit)
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          modelActionTexts(secondController) == listOf("Default", "ChatGPT 5.5", "Unable to refresh models")
+        }
+      }
+      assertThat(modelCatalogRequests.get()).isEqualTo(2)
+    }
+    finally {
+      if (!failSecondRefresh.isCompleted) {
+        failSecondRefresh.complete(Unit)
+      }
+      firstModelCatalogScope.cancel()
+      secondModelCatalogScope.cancel()
+    }
+  }
+
+  @Test
+  fun generationSettingsModelPopupKeepsDefaultForEmptyCatalog(): Unit = timeoutRunBlocking {
+    val modelCatalogScope = testScope()
+    try {
+      val controller = withContext(Dispatchers.EDT) {
+        val provider = testProviderBridge(
+          provider = AgentSessionProvider.JUNIE,
+          promptOptions = emptyList(),
+          supportsGenerationModelSelection = true,
+        )
+        val fixture = createSelectorFixture(listOf(provider))
+        fixture.selector.refresh()
+        AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = modelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        )
+      }
+
+      withContext(Dispatchers.EDT) {
+        controller.createModelActionGroupForTest(loadIfNeeded = true)
+      }
+
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          controller.createModelActionGroupForTest()
+            ?.getChildren(TestActionEvent.createTestEvent())
+            ?.mapNotNull { action -> action.templatePresentation.text } == listOf("Default", "No models available")
+        }
+      }
+    }
+    finally {
+      modelCatalogScope.cancel()
+    }
+  }
+
+  @Test
+  fun generationSettingsModelPopupKeepsDefaultWhenCatalogFails(): Unit = timeoutRunBlocking {
+    val modelCatalogScope = testScope()
+    try {
+      val controller = withContext(Dispatchers.EDT) {
+        val provider = testProviderBridge(
+          provider = AgentSessionProvider.JUNIE,
+          promptOptions = emptyList(),
+          supportsGenerationModelSelection = true,
+          availableGenerationModelsError = IllegalStateException("failed"),
+        )
+        val fixture = createSelectorFixture(listOf(provider))
+        fixture.selector.refresh()
+        AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = modelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        )
+      }
+
+      withContext(Dispatchers.EDT) {
+        controller.createModelActionGroupForTest(loadIfNeeded = true)
+      }
+
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          controller.createModelActionGroupForTest()
+            ?.getChildren(TestActionEvent.createTestEvent())
+            ?.mapNotNull { action -> action.templatePresentation.text } == listOf("Default", "Unable to load models")
+        }
       }
     }
     finally {
@@ -674,6 +1078,12 @@ class AgentPromptProviderSelectorTest {
     }
   }
 
+  private fun modelActionTexts(controller: AgentPromptGenerationSettingsController, loadIfNeeded: Boolean = false): List<String>? {
+    return controller.createModelActionGroupForTest(loadIfNeeded = loadIfNeeded)
+      ?.getChildren(TestActionEvent.createTestEvent())
+      ?.mapNotNull { action -> action.templatePresentation.text }
+  }
+
   private fun testProviderBridge(
     provider: AgentSessionProvider,
     promptOptions: List<AgentPromptProviderOption>,
@@ -682,6 +1092,10 @@ class AgentPromptProviderSelectorTest {
     cliVisibilityPolicy: AgentSessionProviderCliVisibilityPolicy = AgentSessionProviderCliVisibilityPolicy.PROMINENT,
     supportedReasoningEffortsOverride: Set<AgentPromptReasoningEffort> = emptySet(),
     availableGenerationModels: List<AgentPromptGenerationModel> = emptyList(),
+    supportsGenerationModelSelection: Boolean = availableGenerationModels.isNotEmpty(),
+    availableGenerationModelsError: Throwable? = null,
+    availableGenerationModelsResolver: suspend () -> List<AgentPromptGenerationModel> = { availableGenerationModels },
+    onListAvailableGenerationModels: () -> Unit = {},
   ): AgentSessionProviderDescriptor {
     return object : AgentSessionProviderDescriptor {
       override val provider: AgentSessionProvider = provider
@@ -690,6 +1104,7 @@ class AgentPromptProviderSelectorTest {
       override val newSessionLabelKey: String = displayNameKey
       override val promptOptions: List<AgentPromptProviderOption> = promptOptions
       override val supportedReasoningEfforts: Set<AgentPromptReasoningEffort> = supportedReasoningEffortsOverride
+      override val supportsGenerationModelSelection: Boolean = supportsGenerationModelSelection
       override val supportsPromptLaunch: Boolean = supportsPromptLaunch
       override val sessionSource: AgentSessionSource
         get() = error("Not required for this test")
@@ -699,7 +1114,9 @@ class AgentPromptProviderSelectorTest {
       override suspend fun isCliAvailable(): Boolean = cliAvailable
 
       override suspend fun listAvailableGenerationModels(project: com.intellij.openapi.project.Project?): List<AgentPromptGenerationModel> {
-        return availableGenerationModels
+        onListAvailableGenerationModels()
+        availableGenerationModelsError?.let { throw it }
+        return availableGenerationModelsResolver()
       }
 
       override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {

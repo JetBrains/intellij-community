@@ -54,6 +54,7 @@ class CodexAgentSessionProviderDescriptorTest {
   @Test
   fun promptOptionsUseSharedPlanModeOption() {
     assertThat(bridge.promptOptions).containsExactly(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION)
+    assertThat(bridge.supportsGenerationModelSelection).isTrue()
   }
 
   @Test

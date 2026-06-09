@@ -137,6 +137,9 @@ interface AgentSessionProviderDescriptor {
   val supportedReasoningEfforts: Set<AgentPromptReasoningEffort>
     get() = emptySet()
 
+  val supportsGenerationModelSelection: Boolean
+    get() = false
+
   val supportsPromptLaunch: Boolean
     get() = true
 

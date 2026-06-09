@@ -84,6 +84,9 @@ internal class CodexAgentSessionProviderDescriptor(
       AgentPromptReasoningEffort.XHIGH,
     )
 
+  override val supportsGenerationModelSelection: Boolean
+    get() = true
+
   override val editorTabActionIds: List<String>
     get() = listOf(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
 

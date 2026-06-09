@@ -42,6 +42,7 @@ class JunieAgentSessionProviderDescriptorTest {
     assertThat(descriptor.supportedLaunchModes).containsExactly(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
     assertThat(descriptor.promptOptions.map { it.id }).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
     assertThat(descriptor.promptOptions.single().defaultSelected).isFalse()
+    assertThat(descriptor.supportsGenerationModelSelection).isTrue()
     assertThat(descriptor.supportsArchiveThread).isTrue()
     assertThat(descriptor.supportsUnarchiveThread).isTrue()
     assertThat(descriptor.archiveRefreshDelayMs).isEqualTo(1_000L)

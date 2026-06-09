@@ -70,6 +70,9 @@ internal class JunieAgentSessionProviderDescriptor(
       AgentPromptReasoningEffort.XHIGH,
     )
 
+  override val supportsGenerationModelSelection: Boolean
+    get() = true
+
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.junie.cli"
 
