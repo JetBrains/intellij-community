@@ -63,8 +63,6 @@ import org.jetbrains.annotations.ApiStatus
  * This enables IDE inspections to provide quick-fixes that replace the blocking call
  * with the suspend alternative, and generates documentation hints via `@see`.
  *
- * Note: the inspection is currently disabled due to generating too many false positives.
- *
  * @param replaceWith specifies the code fragment that should be used as a replacement
  *                    for the blocking call, along with any necessary imports.
  *                    See [ReplaceWith] for the format.
