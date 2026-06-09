@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.codeInspection.fix.GradleWrapperVersionFix
+import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix.Companion.DISTRIBUTION_URL_VERSION_REGEX
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_WRAPPER_PROPERTIES_FILE_NAME
 
@@ -26,8 +27,7 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
         if (element.key != "distributionUrl") return
 
         // extract the current Gradle version from the wrapper properties file
-        val regex = "gradle-(.+)-bin\\.zip$".toRegex()
-        val group = regex.find(element.text)?.groups[1] ?: return
+        val group = DISTRIBUTION_URL_VERSION_REGEX.find(element.text)?.groups[2] ?: return
         val currentVersion = group.value
         val versionTextRange = TextRange(group.range.first, group.range.last + 1)
         val currentGradleVersion = try {
@@ -43,7 +43,7 @@ class GradleLatestMinorVersionInspection : LocalInspectionTool() {
 
         holder.problem(element, GradleInspectionBundle.message("inspection.message.newer.gradle.minor.version.available.descriptor"))
           .range(versionTextRange)
-          .fix(GradleWrapperVersionFix(latestMinorGradleVersion, versionTextRange))
+          .fix(GradleWrapperVersionFix(latestMinorGradleVersion))
           .register()
       }
     }
