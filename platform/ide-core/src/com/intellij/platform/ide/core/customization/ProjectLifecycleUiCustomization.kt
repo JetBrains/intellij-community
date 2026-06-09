@@ -6,11 +6,19 @@ import org.jetbrains.annotations.ApiStatus
 
 /**
  * Override this service to customize UI elements related to project's lifecycle.
- * It is supposed to be overriden by parts of the platform used when the IDE is running in different modes, and isn't supposed to be
+ * It is supposed to be overridden by parts of the platform used when the IDE is running in different modes and isn't supposed to be
  * overridden in plugins.
  */
 @ApiStatus.Internal
 open class ProjectLifecycleUiCustomization {
+
+  @ApiStatus.Internal
+  enum class ReopenProjectsOnStartupMode {
+    USER_CONTROLLABLE, // Allows the user to control the behavior via settings
+    ALWAYS, // Always open the last project. Hides the setting from the user in settings
+    NEVER, // Never open the last project. Hides the setting from the user in settings
+  }
+
   /**
    * Returns `false` if the IDE should ask user whether to open a project in new windows or in the same window, and allow a user to choose 
    * the default choice in Settings. 
@@ -21,11 +29,10 @@ open class ProjectLifecycleUiCustomization {
     get() = false
 
   /**
-   * Returns `true` if an IDE can reopen the project which was opened in the previous IDE session, and it can be switched off by a user.
-   * Returns `false` if this functionality should be disabled, and the user shouldn't be able to switch it on.  
+   * Returns whether reopening the previously opened project on startup is user-configurable, always enabled, or disabled.
    */
-  open val canReopenProjectOnStartup: Boolean
-    get() = true
+  open val reopenProjectsOnStartupMode: ReopenProjectsOnStartupMode
+    get() = ReopenProjectsOnStartupMode.USER_CONTROLLABLE
   
   companion object {
     @JvmStatic

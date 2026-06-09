@@ -17,6 +17,7 @@ import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
 import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization
+import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization.ReopenProjectsOnStartupMode
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
@@ -55,7 +56,7 @@ private val myChkUseSafeWrite
 internal val allOptionDescriptors: List<BooleanOptionDescription>
   get() =
     listOfNotNull(
-      myChkReopenLastProject.takeIf { ProjectLifecycleUiCustomization.getInstance().canReopenProjectOnStartup },
+      myChkReopenLastProject.takeIf { ProjectLifecycleUiCustomization.getInstance().reopenProjectsOnStartupMode == ReopenProjectsOnStartupMode.USER_CONTROLLABLE },
       myConfirmExit.takeIf { IdeLifecycleUiCustomization.getInstance().canShowExitConfirmation },
       myDeleteToBin,
       myChkSyncOnFrameActivation,
@@ -104,7 +105,7 @@ internal class GeneralSettingsConfigurable :
       }.bind(model::processCloseConfirmation) { model.processCloseConfirmation = it }
 
       group(IdeUICustomization.getInstance().projectMessage("tab.title.project")) {
-        if (ProjectLifecycleUiCustomization.getInstance().canReopenProjectOnStartup) {
+        if (ProjectLifecycleUiCustomization.getInstance().reopenProjectsOnStartupMode == ReopenProjectsOnStartupMode.USER_CONTROLLABLE) {
           row {
             checkBox(myChkReopenLastProject)
           }

@@ -12,6 +12,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.platform.ide.core.customization.IdeLifecycleUiCustomization
 import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization
+import com.intellij.platform.ide.core.customization.ProjectLifecycleUiCustomization.ReopenProjectsOnStartupMode
 import com.intellij.util.PlatformUtils
 import com.intellij.util.xmlb.annotations.OptionTag
 import kotlinx.coroutines.channels.BufferOverflow
@@ -38,7 +39,11 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
     }
 
   var isReopenLastProject: Boolean
-    get() = ProjectLifecycleUiCustomization.getInstance().canReopenProjectOnStartup && state.reopenLastProject
+    get() = when (ProjectLifecycleUiCustomization.getInstance().reopenProjectsOnStartupMode) {
+      ReopenProjectsOnStartupMode.USER_CONTROLLABLE -> state.reopenLastProject
+      ReopenProjectsOnStartupMode.ALWAYS -> true
+      ReopenProjectsOnStartupMode.NEVER -> false
+    }
     set(value) {
       state.reopenLastProject = value
     }
