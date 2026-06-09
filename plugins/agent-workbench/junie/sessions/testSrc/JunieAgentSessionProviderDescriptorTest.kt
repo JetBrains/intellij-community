@@ -8,7 +8,9 @@ import com.intellij.agent.workbench.junie.common.JunieCliSupport
 import com.intellij.agent.workbench.junie.common.JunieCliVersion
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
@@ -44,6 +46,150 @@ class JunieAgentSessionProviderDescriptorTest {
     assertThat(descriptor.archiveRefreshDelayMs).isEqualTo(1_000L)
     assertThat(descriptor.suppressArchivedThreadsDuringRefresh).isTrue()
     assertThat(descriptor.icon).isNotNull()
+  }
+
+  @Test
+  fun `descriptor exposes Junie generation model aliases and efforts`(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+
+    val models = descriptor.listAvailableGenerationModels()
+
+    assertThat(models.map { it.id }).containsExactly(
+      "gpt",
+      "gpt-codex",
+      "opus",
+      "sonnet",
+      "gemini-pro",
+      "gemini-flash",
+      "grok",
+    )
+    assertThat(models.map { it.displayName }).containsExactly(
+      "GPT",
+      "GPT Codex",
+      "Claude Opus",
+      "Claude Sonnet",
+      "Gemini Pro",
+      "Gemini Flash",
+      "Grok",
+    )
+    assertThat(descriptor.supportedReasoningEfforts).containsExactly(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
+      AgentPromptReasoningEffort.XHIGH,
+      AgentPromptReasoningEffort.MAX,
+    )
+  }
+
+  @Test
+  fun `apply generation settings leaves auto launch spec unchanged`(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    val updatedLaunchSpec = descriptor.applyGenerationSettings(baseLaunchSpec, AgentPromptGenerationSettings.AUTO)
+
+    assertThat(updatedLaunchSpec.command).containsExactly("junie-test", "--skip-update-check")
+  }
+
+  @Test
+  fun `apply generation settings adds model flag`(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    val updatedLaunchSpec = descriptor.applyGenerationSettings(
+      baseLaunchSpec,
+      AgentPromptGenerationSettings(modelId = "gpt-codex"),
+    )
+
+    assertThat(updatedLaunchSpec.command).containsExactly("junie-test", "--skip-update-check", "--model", "gpt-codex")
+  }
+
+  @Test
+  fun `apply generation settings adds effort flag`(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    val updatedLaunchSpec = descriptor.applyGenerationSettings(
+      baseLaunchSpec,
+      AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH),
+    )
+
+    assertThat(updatedLaunchSpec.command).containsExactly("junie-test", "--skip-update-check", "--effort", "xhigh")
+  }
+
+  @Test
+  fun `apply generation settings adds model and effort flags`(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    val updatedLaunchSpec = descriptor.applyGenerationSettings(
+      baseLaunchSpec,
+      AgentPromptGenerationSettings(
+        modelId = "sonnet",
+        reasoningEffort = AgentPromptReasoningEffort.HIGH,
+      ),
+    )
+
+    assertThat(updatedLaunchSpec.command).containsExactly(
+      "junie-test",
+      "--skip-update-check",
+      "--model",
+      "sonnet",
+      "--effort",
+      "high",
+    )
+  }
+
+  @Test
+  fun `apply generation settings replaces existing generation flags`() {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+    val baseLaunchSpec = AgentSessionTerminalLaunchSpec(
+      command = listOf("junie-test", "--skip-update-check", "--model", "old", "--effort", "low"),
+    )
+
+    val updatedLaunchSpec = descriptor.applyGenerationSettings(
+      baseLaunchSpec,
+      AgentPromptGenerationSettings(
+        modelId = "gpt-codex",
+        reasoningEffort = AgentPromptReasoningEffort.MAX,
+      ),
+    )
+
+    assertThat(updatedLaunchSpec.command).containsExactly(
+      "junie-test",
+      "--skip-update-check",
+      "--model",
+      "gpt-codex",
+      "--effort",
+      "max",
+    )
+  }
+
+  @Test
+  fun `apply generation settings inserts flags before prompt`() {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+    val baseLaunchSpec = AgentSessionTerminalLaunchSpec(
+      command = listOf("junie-test", "--skip-update-check", "--prompt", "keep --model as prompt text"),
+    )
+
+    val updatedLaunchSpec = descriptor.applyGenerationSettings(
+      baseLaunchSpec,
+      AgentPromptGenerationSettings(
+        modelId = "grok",
+        reasoningEffort = AgentPromptReasoningEffort.LOW,
+      ),
+    )
+
+    assertThat(updatedLaunchSpec.command).containsExactly(
+      "junie-test",
+      "--skip-update-check",
+      "--model",
+      "grok",
+      "--effort",
+      "low",
+      "--prompt",
+      "keep --model as prompt text",
+    )
   }
 
   @Test

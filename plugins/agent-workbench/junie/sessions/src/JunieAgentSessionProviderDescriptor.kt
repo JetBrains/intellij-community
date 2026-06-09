@@ -7,7 +7,10 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.junie.common.BRAVE_FLAG
 import com.intellij.agent.workbench.junie.common.JunieCliInfo
 import com.intellij.agent.workbench.junie.common.JunieCliSupport
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
@@ -55,6 +58,15 @@ internal class JunieAgentSessionProviderDescriptor(
 
   override val promptOptions: List<AgentPromptProviderOption>
     get() = listOf(JUNIE_PROMPT_PROVIDER_PLAN_MODE_OPTION)
+
+  override val supportedReasoningEfforts: Set<AgentPromptReasoningEffort>
+    get() = setOf(
+      AgentPromptReasoningEffort.LOW,
+      AgentPromptReasoningEffort.MEDIUM,
+      AgentPromptReasoningEffort.HIGH,
+      AgentPromptReasoningEffort.XHIGH,
+      AgentPromptReasoningEffort.MAX,
+    )
 
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.junie.cli"
@@ -110,6 +122,24 @@ internal class JunieAgentSessionProviderDescriptor(
     )
   }
 
+  override suspend fun listAvailableGenerationModels(): List<AgentPromptGenerationModel> {
+    return JUNIE_GENERATION_MODELS
+  }
+
+  override fun applyGenerationSettings(
+    baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+    generationSettings: AgentPromptGenerationSettings,
+  ): AgentSessionTerminalLaunchSpec {
+    val settings = sanitizeGenerationSettings(generationSettings)
+    val generationArgs = buildJunieGenerationArgs(settings)
+    if (generationArgs.isEmpty()) {
+      return baseLaunchSpec
+    }
+    return baseLaunchSpec.copy(
+      command = replaceJunieGenerationArgs(baseLaunchSpec.command, generationArgs),
+    )
+  }
+
   override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
     return buildPlanModeInitialMessagePlan(
       request = request,
@@ -162,3 +192,55 @@ internal class JunieAgentSessionProviderDescriptor(
 
 private val JUNIE_PROMPT_PROVIDER_PLAN_MODE_OPTION: AgentPromptProviderOption =
   AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION.copy(defaultSelected = false)
+
+private val JUNIE_GENERATION_MODELS: List<AgentPromptGenerationModel> = listOf(
+  AgentPromptGenerationModel(id = "gpt", displayName = "GPT"),
+  AgentPromptGenerationModel(id = "gpt-codex", displayName = "GPT Codex"),
+  AgentPromptGenerationModel(id = "opus", displayName = "Claude Opus"),
+  AgentPromptGenerationModel(id = "sonnet", displayName = "Claude Sonnet"),
+  AgentPromptGenerationModel(id = "gemini-pro", displayName = "Gemini Pro"),
+  AgentPromptGenerationModel(id = "gemini-flash", displayName = "Gemini Flash"),
+  AgentPromptGenerationModel(id = "grok", displayName = "Grok"),
+)
+
+private fun buildJunieGenerationArgs(settings: AgentPromptGenerationSettings): List<String> {
+  val args = mutableListOf<String>()
+  settings.modelId?.let { modelId -> args.addAll(listOf(MODEL_FLAG, modelId)) }
+  val effort = settings.reasoningEffort
+  if (effort != AgentPromptReasoningEffort.AUTO) {
+    args.addAll(listOf(EFFORT_FLAG, effort.junieCliValue()))
+  }
+  return args
+}
+
+private fun replaceJunieGenerationArgs(command: List<String>, args: List<String>): List<String> {
+  val promptIndex = command.indexOf(PROMPT_FLAG).takeIf { it >= 0 } ?: command.size
+  val result = command.subList(0, promptIndex).withoutJunieGenerationArgs().toMutableList()
+  result.addAll(args)
+  result.addAll(command.subList(promptIndex, command.size))
+  return result
+}
+
+private fun List<String>.withoutJunieGenerationArgs(): List<String> {
+  val result = mutableListOf<String>()
+  var index = 0
+  while (index < size) {
+    val token = this[index]
+    if (token == MODEL_FLAG || token == EFFORT_FLAG) {
+      index += if (index + 1 < size) 2 else 1
+    }
+    else {
+      result.add(token)
+      index++
+    }
+  }
+  return result
+}
+
+private fun AgentPromptReasoningEffort.junieCliValue(): String {
+  return name.lowercase()
+}
+
+private const val MODEL_FLAG: String = "--model"
+private const val EFFORT_FLAG: String = "--effort"
+private const val PROMPT_FLAG: String = "--prompt"

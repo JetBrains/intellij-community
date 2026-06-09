@@ -5,6 +5,8 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.junie.common.JunieCliInfo
 import com.intellij.agent.workbench.junie.common.JunieCliSupport
 import com.intellij.agent.workbench.junie.common.JunieCliVersion
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesPostStartDispatch
 import com.intellij.agent.workbench.sessions.assertExistingThreadLaunchUsesStartupOverride
@@ -38,6 +40,40 @@ class JunieExistingThreadPromptLaunchIntegrationTest {
       "--skip-update-check",
       "--session-id",
       EXISTING_THREAD_ID,
+      "--plan",
+      "--prompt",
+      observation.postStartDispatchSteps.last().text,
+    )
+  }
+
+  @Test
+  fun existingThreadPlanModePromptGenerationSettingsUseStartupPlanPromptCommand() {
+    val observation = assertExistingThreadLaunchUsesStartupOverride(
+      descriptor = descriptor(),
+      request = existingThreadPromptLaunchRequest(
+        provider = AgentSessionProvider.JUNIE,
+        projectPath = PROJECT_PATH,
+        threadId = EXISTING_THREAD_ID,
+        planMode = true,
+      ).copy(
+        generationSettings = AgentPromptGenerationSettings(
+          modelId = "sonnet",
+          reasoningEffort = AgentPromptReasoningEffort.HIGH,
+        ),
+      ),
+      projectPath = PROJECT_PATH,
+      threadId = EXISTING_THREAD_ID,
+    )
+
+    assertThat(observation.startupLaunchSpecOverride?.command).containsExactly(
+      "junie",
+      "--skip-update-check",
+      "--session-id",
+      EXISTING_THREAD_ID,
+      "--model",
+      "sonnet",
+      "--effort",
+      "high",
       "--plan",
       "--prompt",
       observation.postStartDispatchSteps.last().text,

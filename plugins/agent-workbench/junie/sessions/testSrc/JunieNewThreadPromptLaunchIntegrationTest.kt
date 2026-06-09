@@ -6,8 +6,10 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.junie.common.JunieCliInfo
 import com.intellij.agent.workbench.junie.common.JunieCliSupport
 import com.intellij.agent.workbench.junie.common.JunieCliVersion
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.prompt.ui.captureNewTaskPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.assertNewThreadPromptLaunchOpensNewChat
@@ -79,6 +81,41 @@ class JunieNewThreadPromptLaunchIntegrationTest {
   }
 
   @Test
+  fun newThreadPromptGenerationSettingsUseStartupPromptCommand() {
+    val descriptor = descriptor()
+
+    val observation = assertNewThreadPromptLaunchOpensNewChat(
+      descriptor = descriptor,
+      request = newThreadLaunchRequest(
+        prompt = "Implement the Junie flow",
+        generationSettings = AgentPromptGenerationSettings(
+          modelId = "gpt-codex",
+          reasoningEffort = AgentPromptReasoningEffort.XHIGH,
+        ),
+      ),
+    )
+
+    assertThat(observation.launchSpec.command).containsExactly(
+      "junie",
+      "--skip-update-check",
+      "--model",
+      "gpt-codex",
+      "--effort",
+      "xhigh",
+    )
+    assertThat(observation.startupLaunchSpecOverride?.command).containsExactly(
+      "junie",
+      "--skip-update-check",
+      "--model",
+      "gpt-codex",
+      "--effort",
+      "xhigh",
+      "--prompt",
+      "Implement the Junie flow",
+    )
+  }
+
+  @Test
   fun newThreadPlanModePromptUsesStartupPlanPromptCommand() {
     val descriptor = descriptor()
 
@@ -136,6 +173,7 @@ class JunieNewThreadPromptLaunchIntegrationTest {
 private fun newThreadLaunchRequest(
   prompt: String,
   providerOptionIds: Set<String> = emptySet(),
+  generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
 ): AgentPromptLaunchRequest {
   return AgentPromptLaunchRequest(
     provider = AgentSessionProvider.JUNIE,
@@ -147,6 +185,7 @@ private fun newThreadLaunchRequest(
     ),
     targetThreadId = null,
     preferredDedicatedFrame = null,
+    generationSettings = generationSettings,
   )
 }
 
