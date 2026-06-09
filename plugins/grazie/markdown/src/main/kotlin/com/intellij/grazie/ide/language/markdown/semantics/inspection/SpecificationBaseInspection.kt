@@ -76,7 +76,7 @@ internal abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
   private fun validateAndGetClient(isOnTheFly: Boolean): SuspendableAPIGatewayClient? {
     if (!isOnTheFly) return null
     if (!Registry.`is`("grazie.specification.semantics.enabled")) {
-      thisLogger().warn("Specification semantics inspection is disabled")
+      thisLogger().debug("Specification semantics inspection is disabled")
       return null
     }
     if (!hasAdditionalConnectors() || !seemsCloudConnected() || !hasQuota()) {
