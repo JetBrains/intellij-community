@@ -288,8 +288,8 @@ object InternalPsiVersioning {
 
     override fun beforeWriteLockTemporarilyReleased(): Unit {
       writeActionFinished(Any::class.java) // we publish the incremented version here so that the published version is incremented
-      // clear thread local reentrancy tracker, run writeActionStarted again
-      writeActionStarted(Any::class.java)
+      val token = initReadActionSection()
+      cleanupTokenList.get().add(token)
       return
     }
 
@@ -297,7 +297,7 @@ object InternalPsiVersioning {
     }
 
     override fun afterWriteLockReacquired(data: Unit) {
-      writeActionFinished(Any::class.java)
+      cleanupVersioningSection()
       writeActionStarted(Any::class.java)
     }
 
