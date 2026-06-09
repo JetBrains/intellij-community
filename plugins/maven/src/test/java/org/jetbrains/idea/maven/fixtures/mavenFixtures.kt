@@ -51,7 +51,7 @@ fun mavenDomFixture(
   return testFixture {
     val dir = dirFixture.init()
     val project = projectFixture.init()
-    val fixture = MavenDomTestFixture(
+    val fixture = MavenDomTestFixtureImpl(
       project,
       dir,
       mavenVersion,

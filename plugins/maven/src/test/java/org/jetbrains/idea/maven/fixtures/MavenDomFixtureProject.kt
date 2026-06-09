@@ -20,7 +20,7 @@ import kotlin.io.path.absolutePathString
 // Project-model authoring: creating/updating poms, profiles, sub-files and settings.
 
 fun MavenDomTestFixture.createProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
-  return createPomFile(projectRoot, xml).also { myProjectPom = it }
+  return createPomFile(projectRoot, xml).also { projectPom = it }
 }
 
 fun MavenDomTestFixture.updateProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
