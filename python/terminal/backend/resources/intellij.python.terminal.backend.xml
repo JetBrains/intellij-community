@@ -1,8 +1,11 @@
 <idea-plugin visibility="internal">
   <dependencies>
-    <module name="intellij.python.community.impl"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.sdk"/>
     <module name="intellij.python.terminal.shared"/>
+    <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <shellExecOptionsCustomizer implementation="com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer"/>

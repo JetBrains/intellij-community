@@ -184,9 +184,15 @@
 - name: lib/modules/intellij.python.syntax.jar
   contentModules:
   - name: intellij.python.syntax
-- name: lib/modules/intellij.python.terminal.jar
+- name: lib/modules/intellij.python.terminal.backend.jar
   contentModules:
-  - name: intellij.python.terminal
+  - name: intellij.python.terminal.backend
+- name: lib/modules/intellij.python.terminal.frontend.jar
+  contentModules:
+  - name: intellij.python.terminal.frontend
+- name: lib/modules/intellij.python.terminal.shared.jar
+  contentModules:
+  - name: intellij.python.terminal.shared
 - name: lib/modules/intellij.python.uv.backend.jar
   contentModules:
   - name: intellij.python.uv.backend
