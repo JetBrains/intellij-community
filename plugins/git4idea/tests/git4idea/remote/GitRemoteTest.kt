@@ -15,6 +15,7 @@ import git4idea.test.GitHttpAuthTestService
 import git4idea.test.GitPlatformTest
 import git4idea.test.registerRepo
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.annotations.Nls
 import org.junit.Ignore
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -214,6 +215,10 @@ class GitRemoteTest : GitPlatformTest() {
 
     override fun wasRequested(): Boolean {
       return wasPasswordAsked() || wasUsernameAsked()
+    }
+
+    override fun getPresentableErrorMessage(errorOutput: List<String>): @Nls String? {
+      return null
     }
 
     internal fun wasPasswordAsked(): Boolean {

@@ -103,11 +103,14 @@ f:git4idea.commands.GitCommand
 c:git4idea.commands.GitCommandResult
 - s:error(java.lang.String):git4idea.commands.GitCommandResult
 - getOutputOrThrow(I[]):java.lang.String
+- getPresentableErrorOutput():java.util.List
 - success(I[]):Z
 - throwOnError(I[]):V
 a:git4idea.commands.GitHandler
 - addParameters(java.lang.String[]):V
 - setInputProcessor(com.intellij.util.ThrowableConsumer):V
+git4idea.commands.GitHttpAuthenticator
+- a:getPresentableErrorMessage(java.util.List):java.lang.String
 c:git4idea.commands.GitImpl
 - runHook(git4idea.repo.GitRepository,java.lang.String,java.util.List,java.util.List):git4idea.commands.GitCommandResult
 c:git4idea.commands.GitLineHandler
@@ -200,6 +203,8 @@ f:git4idea.rebase.GitSquashedCommitsMessage
 - f:canAutosquash(java.lang.String,java.util.Set):Z
 - f:formatAmendSpecificCommitMessage(java.lang.String,java.lang.String):java.lang.String
 - f:getSubject(java.lang.String):java.lang.String
+git4idea.remote.GitHttpAuthDataProvider
+- getPresentableErrorMessage(java.util.List):java.lang.String
 f:git4idea.remote.hosting.GitAsyncExtensionsKt
 - sf:changesSignalFlow(git4idea.repo.GitRepository):kotlinx.coroutines.flow.Flow
 - sf:findFirstRemoteBranchTrackedByCurrent(git4idea.repo.GitRepoInfo):git4idea.GitRemoteBranch

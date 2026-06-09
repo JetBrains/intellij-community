@@ -196,7 +196,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
   }
 
   private static void notifyError(@NotNull Project project, @NotNull GitCommandResult commandResult, @NotNull String sourceRepositoryURL) {
-    List<@NlsSafe String> errorLines = ContainerUtil.filter(commandResult.getErrorOutput(), line ->
+    List<@NlsSafe String> errorLines = ContainerUtil.filter(commandResult.getPresentableErrorOutput(), line ->
       !ContainerUtil.exists(NON_ERROR_LINE_PREFIXES, prefix -> StringUtil.startsWithIgnoreCase(line, prefix)));
 
     String description;

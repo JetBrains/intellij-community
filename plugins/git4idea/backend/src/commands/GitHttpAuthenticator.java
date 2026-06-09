@@ -15,8 +15,11 @@
  */
 package git4idea.commands;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * Performs HTTP authentication, i. e. handles "ask username" and "ask password" requests from Git:
@@ -62,4 +65,7 @@ public interface GitHttpAuthenticator {
    */
   boolean wasRequested();
 
+  @Nls
+  @Nullable
+  String getPresentableErrorMessage(@NotNull List<String> errorOutput);
 }
