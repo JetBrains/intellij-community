@@ -18,8 +18,8 @@ internal class CodexRolloutRefreshHintsProvider(
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
     get() = rolloutBackend.sessionUpdates
 
-  override fun activeThreadFileChangeEvents(path: String, threadId: String): Flow<Unit> {
-    return rolloutBackend.activeThreadFileChangeEvents(path = path, threadId = threadId)
+  override fun activeThreadUpdateEvents(path: String, threadId: String): Flow<AgentSessionSourceUpdateEvent> {
+    return rolloutBackend.activeThreadUpdateEvents(path = path, threadId = threadId)
   }
 
   override suspend fun prefetchRefreshHints(

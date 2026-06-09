@@ -2,9 +2,12 @@
 package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.statusColor
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentation
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AGENT_SESSIONS_CHROME_ACTIVITY_FRESHNESS_MILLIS
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityBucket
@@ -18,6 +21,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsSystemNo
 import com.intellij.agent.workbench.sessions.toolwindow.ui.agentSessionsActivityPopupRowText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildAgentSessionsActivitySummary
 import com.intellij.agent.workbench.sessions.toolwindow.ui.freshAgentSessionsActivitySummary
+import com.intellij.agent.workbench.sessions.toolwindow.ui.hasLoadedActivityBaseline
 import com.intellij.agent.workbench.sessions.toolwindow.ui.resolveAgentSessionsSystemNotificationThread
 import com.intellij.agent.workbench.sessions.toolwindow.ui.showAgentSessionsSystemNotification
 import com.intellij.openapi.actionSystem.AnAction
@@ -95,6 +99,65 @@ class AgentSessionsActivitySummaryTest {
     assertThat(summary.rowsFor(AgentSessionsActivityBucket.ATTENTION)).isEmpty()
     assertThat(summary.rowsFor(AgentSessionsActivityBucket.RUNNING)).isEmpty()
     assertThat(summary.rowsFor(AgentSessionsActivityBucket.DONE).map { it.thread.id }).containsExactly("done")
+  }
+
+  @Test
+  fun activityBaselineWaitsForWorktreeProviderLoadStates() {
+    val loadingState = AgentSessionsState(
+      lastUpdatedAt = 1_000L,
+      projects = listOf(
+        AgentProjectSessions(
+          path = "/work/project-a",
+          name = "Project A",
+          isOpen = true,
+          providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+          worktrees = listOf(
+            AgentWorktree(
+              path = "/work/project-a-feature",
+              name = "feature",
+              branch = "feature",
+              isOpen = false,
+              providerLoadStates = loadingProviderStates(AgentSessionProvider.CODEX),
+            )
+          ),
+        )
+      ),
+    )
+
+    assertThat(loadingState.hasLoadedActivityBaseline()).isFalse()
+    assertThat(
+      loadingState.copy(
+        projects = listOf(
+          loadingState.projects.single().copy(
+            worktrees = listOf(
+              loadingState.projects.single().worktrees.single().copy(
+                providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+              )
+            )
+          )
+        )
+      ).hasLoadedActivityBaseline()
+    ).isTrue()
+  }
+
+  @Test
+  fun buildSummaryOverlaysSharedThreadPresentationActivity() {
+    val key = checkNotNull(AgentSessionThreadPresentationKey.create("/work/project-a", AgentSessionProvider.CODEX, "done"))
+
+    val summary = buildAgentSessionsActivitySummary(
+      state(thread("done", AgentThreadActivity.READY, 100, title = "Old title")),
+      presentationsByKey = mapOf(
+        key to AgentSessionThreadPresentation(
+          title = "Live title",
+          activityReport = AgentThreadActivityReport(rowActivity = AgentThreadActivity.UNREAD, chromeActivity = AgentThreadActivity.UNREAD),
+          updatedAt = 500,
+        )
+      ),
+    )
+
+    assertThat(summary.doneRows.map { row -> row.thread.id }).containsExactly("done")
+    assertThat(summary.doneRows.single().thread.title).isEqualTo("Live title")
+    assertThat(summary.doneRows.single().thread.updatedAt).isEqualTo(500)
   }
 
   @Test

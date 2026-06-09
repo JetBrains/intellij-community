@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.agent.workbench.sessions.core.providers.toAgentSessionRefreshThreadSeeds
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CoroutineStart
@@ -455,12 +456,15 @@ class ClaudeSessionSourceTest {
     }
 
     val pathHints = hints.getValue("/any")
-    assertThat(pathHints.activityByThreadId).containsExactlyInAnyOrderEntriesOf(
+    assertThat(pathHints.activityUpdatesByThreadId.mapValues { (_, update) -> update.rowActivity }).containsExactlyInAnyOrderEntriesOf(
       mapOf(
         "known-processing" to AgentThreadActivity.PROCESSING,
         "known-needs-input" to AgentThreadActivity.NEEDS_INPUT,
         "known-ready" to AgentThreadActivity.READY,
       )
+    )
+    assertThat(pathHints.activityUpdatesByThreadId["known-processing"]).isEqualTo(
+      AgentSessionThreadActivityUpdate(rowActivity = AgentThreadActivity.PROCESSING)
     )
     assertThat(pathHints.rebindCandidates.map { it.threadId }).containsExactly("new-visible")
   }

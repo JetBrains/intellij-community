@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActivitySnapshot
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
@@ -86,7 +87,7 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
         refreshThreadSeedsByPath = mapOf(
           PROJECT_PATH to setOf(AgentSessionRefreshThreadSeed(threadId = "thread-1", updatedAt = 1_000L))
         ),
-      ).getValue(PROJECT_PATH).activityByThreadId
+      ).getValue(PROJECT_PATH).activityUpdatesByThreadId.mapValues { (_, update) -> update.rowActivity }
     ).containsExactlyEntriesOf(mapOf("thread-1" to AgentThreadActivity.PROCESSING))
 
     withTestService(
@@ -136,7 +137,7 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
 
       val readyRenderer = createRenderer { id ->
         when (id) {
-          threadId -> processingNode.copy(thread = processingNode.thread.copy(activity = AgentThreadActivity.READY))
+          threadId -> processingNode.copy(thread = processingNode.thread.copy(activityReport = AgentThreadActivityReport(AgentThreadActivity.READY)))
           else -> model.entriesById[id]?.node
         }
       }
@@ -184,7 +185,7 @@ class AgentSessionsCodexActivityRenderingIntegrationTest {
 
     val readyRenderer = createRenderer { id ->
       when (id) {
-        threadId -> unreadNode.copy(thread = unreadNode.thread.copy(activity = AgentThreadActivity.READY))
+        threadId -> unreadNode.copy(thread = unreadNode.thread.copy(activityReport = AgentThreadActivityReport(AgentThreadActivity.READY)))
         else -> model.entriesById[id]?.node
       }
     }

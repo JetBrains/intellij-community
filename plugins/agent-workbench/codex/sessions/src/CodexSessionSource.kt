@@ -20,6 +20,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutS
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentSessionRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.isWorking
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
@@ -89,8 +90,8 @@ internal class CodexSessionSource internal constructor(
       readStateUpdateEvents,
     )
 
-  override fun activeThreadFileChangeEvents(path: String, threadId: String): Flow<Unit> {
-    return rolloutRefreshHintsProvider.activeThreadFileChangeEvents(path = path, threadId = threadId)
+  override fun activeThreadUpdateEvents(path: String, threadId: String): Flow<AgentSessionSourceUpdateEvent> {
+    return rolloutRefreshHintsProvider.activeThreadUpdateEvents(path = path, threadId = threadId)
   }
 
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
@@ -330,7 +331,9 @@ internal class CodexSessionSource internal constructor(
         }
         val hintedSummaryActivity = resolveHintedSummaryActivity(thread = thread, hint = activityHint)
         if (activityHint.verifiedFresh) {
-          if (thread.activity == activityHint.activity && thread.summaryActivity == hintedSummaryActivity) {
+          if (thread.activity == activityHint.activity &&
+              thread.summaryActivity == hintedSummaryActivity &&
+              thread.updatedAt >= activityHint.updatedAt) {
             return@map thread
           }
 
@@ -340,7 +343,10 @@ internal class CodexSessionSource internal constructor(
             "path=$path threadId=${thread.id} appServerActivity=${thread.activity} verifiedActivity=${activityHint.activity} " +
             "verifiedUpdatedAt=${activityHint.updatedAt} verifiedResponseRequired=${activityHint.responseRequired}"
           }
-          return@map thread.copy(activity = activityHint.activity, summaryActivity = hintedSummaryActivity)
+          return@map thread.copy(
+            activityReport = AgentThreadActivityReport(rowActivity = activityHint.activity, chromeActivity = hintedSummaryActivity),
+            updatedAt = maxOf(thread.updatedAt, activityHint.updatedAt),
+          )
         }
 
         val currentHint = CodexRefreshActivityHint(
@@ -360,7 +366,10 @@ internal class CodexSessionSource internal constructor(
           "appServerUpdatedAt=${currentHint.updatedAt} rolloutUpdatedAt=${activityHint.updatedAt} " +
           "appServerResponseRequired=${currentHint.responseRequired} rolloutResponseRequired=${activityHint.responseRequired}"
         }
-        thread.copy(activity = activityHint.activity, summaryActivity = hintedSummaryActivity)
+        thread.copy(
+          activityReport = AgentThreadActivityReport(rowActivity = activityHint.activity, chromeActivity = hintedSummaryActivity),
+          updatedAt = maxOf(thread.updatedAt, activityHint.updatedAt),
+        )
       }
       if (appliedActivityUpdates > 0) {
         LOG.debug {

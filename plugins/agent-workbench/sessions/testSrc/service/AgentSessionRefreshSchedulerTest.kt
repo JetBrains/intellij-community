@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.agent.workbench.sessions.waitForCondition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,11 +30,11 @@ class AgentSessionRefreshSchedulerTest {
   fun scopedRefreshSignalsAreDebouncedIntoSingleProviderRefresh() = runBlocking(Dispatchers.Default) {
     val projectPath = "/work/project"
     val scopedEvents = flow {
-      emit(scopedEvent(path = projectPath, threadId = "thread-a"))
+      emit(scopedEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED, path = projectPath, threadId = "thread-a"))
       delay(100.milliseconds)
-      emit(scopedEvent(path = projectPath, threadId = "thread-a"))
+      emit(scopedEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED, path = projectPath, threadId = "thread-a"))
       delay(100.milliseconds)
-      emit(scopedEvent(path = projectPath, threadId = "thread-a"))
+      emit(scopedEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED, path = projectPath, threadId = "thread-a"))
     }
 
     withScheduler(scopedEvents) {
@@ -78,13 +79,40 @@ class AgentSessionRefreshSchedulerTest {
     }
 
     withScheduler(scopedEvents) {
-      waitForCondition { providerRefreshes.size == 1 && vfsRefreshes.size == 1 }
+      waitForCondition { providerHintRefreshes.size == 1 && vfsRefreshes.size == 1 }
       delay(500.milliseconds)
 
-      assertThat(providerRefreshes).hasSize(1)
+      assertThat(providerRefreshes).isEmpty()
+      assertThat(providerHintRefreshes).hasSize(1)
       assertThat(vfsRefreshes).hasSize(1)
-      assertMergedScopedRefresh(providerRefreshes.single(), firstChangedFile, secondChangedFile)
+      assertMergedScopedRefresh(providerHintRefreshes.single(), firstChangedFile, secondChangedFile)
       assertMergedScopedRefresh(vfsRefreshes.single(), firstChangedFile, secondChangedFile)
+    }
+  }
+
+  @Test
+  fun activityOnlyScopedRefreshSignalsDoNotRefreshProvider() = runBlocking(Dispatchers.Default) {
+    val activityUpdate = AgentSessionThreadActivityUpdate(
+      rowActivity = AgentThreadActivity.PROCESSING,
+      chromeActivity = null,
+      hasChromeActivity = true,
+    )
+    val scopedEvents = flow {
+      emit(
+        activityOnlyEvent(
+          activityUpdate = activityUpdate,
+        )
+      )
+    }
+
+    withScheduler(scopedEvents) {
+      waitForCondition { appliedActivityUpdates.size == 1 }
+      delay(500.milliseconds)
+
+      assertThat(providerRefreshes).isEmpty()
+      assertThat(providerHintRefreshes).isEmpty()
+      assertThat(vfsRefreshes).isEmpty()
+      assertThat(appliedActivityUpdates.single().activityUpdatesByThreadId["thread-a"]).isEqualTo(activityUpdate)
     }
   }
 
@@ -95,7 +123,9 @@ class AgentSessionRefreshSchedulerTest {
     @Suppress("RAW_SCOPE_CREATION")
     val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val providerRefreshes = CopyOnWriteArrayList<AgentSessionSourceUpdateEvent>()
+    val providerHintRefreshes = CopyOnWriteArrayList<AgentSessionSourceUpdateEvent>()
     val vfsRefreshes = CopyOnWriteArrayList<AgentSessionSourceUpdateEvent>()
+    val appliedActivityUpdates = CopyOnWriteArrayList<AgentSessionSourceUpdateEvent>()
     val scheduler = AgentSessionRefreshScheduler(
       serviceScope = serviceScope,
       sessionSourcesProvider = { emptyList() },
@@ -104,7 +134,8 @@ class AgentSessionRefreshSchedulerTest {
       isRefreshGateActive = { true },
       executeFullRefresh = {},
       executeProviderRefresh = { _, _, updateEvent -> providerRefreshes.add(updateEvent) },
-      executeProviderHintRefresh = { _, _, updateEvent -> throw AssertionError("Unexpected hint refresh: $updateEvent") },
+      executeProviderHintRefresh = { _, _, updateEvent -> providerHintRefreshes.add(updateEvent) },
+      applySourceUpdateActivityHints = { _, updateEvent -> appliedActivityUpdates.add(updateEvent) },
       scheduleVfsRefreshForSourceUpdate = { _, updateEvent -> vfsRefreshes.add(updateEvent) },
       onFullRefreshFailure = { error -> throw AssertionError("Unexpected full refresh failure", error) },
     )
@@ -112,7 +143,9 @@ class AgentSessionRefreshSchedulerTest {
       scheduler.observeSessionSourceUpdates()
       SchedulerProbe(
         providerRefreshes = providerRefreshes,
+        providerHintRefreshes = providerHintRefreshes,
         vfsRefreshes = vfsRefreshes,
+        appliedActivityUpdates = appliedActivityUpdates,
       ).action()
     }
     finally {
@@ -122,19 +155,37 @@ class AgentSessionRefreshSchedulerTest {
 }
 
 private fun scopedEvent(
+  type: AgentSessionSourceUpdate = AgentSessionSourceUpdate.HINTS_CHANGED,
   path: String,
   threadId: String,
   activityHintsByThreadId: Map<String, AgentThreadActivity> = emptyMap(),
+  activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
   mayHaveChangedProjectFiles: Boolean = false,
   changedProjectFilePaths: Set<String>? = null,
 ): AgentSessionSourceUpdateEvent {
-  return AgentSessionSourceUpdateEvent(
-    type = AgentSessionSourceUpdate.HINTS_CHANGED,
+  val event = AgentSessionSourceUpdateEvent(
+    type = type,
     scopedPaths = setOf(path),
     threadIds = setOf(threadId),
     activityHintsByThreadId = activityHintsByThreadId,
     mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
     changedProjectFilePaths = changedProjectFilePaths,
+  )
+  return if (activityUpdatesByThreadId.isEmpty()) {
+    event
+  }
+  else {
+    event.copy(activityUpdatesByThreadId = activityUpdatesByThreadId)
+  }
+}
+
+private fun activityOnlyEvent(
+  activityUpdate: AgentSessionThreadActivityUpdate,
+): AgentSessionSourceUpdateEvent {
+  return AgentSessionSourceUpdateEvent(
+    type = AgentSessionSourceUpdate.HINTS_CHANGED,
+    scopedPaths = setOf("/work/project"),
+    activityUpdatesByThreadId = mapOf("thread-a" to activityUpdate),
   )
 }
 
@@ -143,7 +194,7 @@ private fun assertMergedScopedRefresh(
   firstChangedFile: String,
   secondChangedFile: String,
 ) {
-  assertThat(event.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+  assertThat(event.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
   assertThat(event.scopedPaths).containsExactly("/work/first", "/work/second")
   assertThat(event.threadIds).containsExactly("thread-a", "thread-b")
   assertThat(event.activityHintsByThreadId).containsOnly(
@@ -156,5 +207,7 @@ private fun assertMergedScopedRefresh(
 
 private data class SchedulerProbe(
   @JvmField val providerRefreshes: CopyOnWriteArrayList<AgentSessionSourceUpdateEvent>,
+  @JvmField val providerHintRefreshes: CopyOnWriteArrayList<AgentSessionSourceUpdateEvent>,
   @JvmField val vfsRefreshes: CopyOnWriteArrayList<AgentSessionSourceUpdateEvent>,
+  @JvmField val appliedActivityUpdates: CopyOnWriteArrayList<AgentSessionSourceUpdateEvent>,
 )

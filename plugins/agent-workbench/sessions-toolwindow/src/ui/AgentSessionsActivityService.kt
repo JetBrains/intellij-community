@@ -4,7 +4,13 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 // @spec community/plugins/agent-workbench/spec/agent-sessions-tree.spec.md
 
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentation
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
+import com.intellij.agent.workbench.sessions.model.AgentSessionsState
+import com.intellij.agent.workbench.sessions.model.isTerminal
 import com.intellij.ide.ActivityTracker
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -17,42 +23,48 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 private val LOG = logger<AgentSessionsActivityService>()
 private const val MAX_ACTIVITY_DEBUG_ROWS: Int = 20
 
-@Service(Service.Level.PROJECT)
-internal class AgentSessionsActivityService(
-  private val project: Project,
+internal data class AgentSessionsActivitySnapshot(
+  @JvmField val rawSummary: AgentSessionsActivitySummary = AgentSessionsActivitySummary.EMPTY,
+  @JvmField val chromeSummary: AgentSessionsActivitySummary = AgentSessionsActivitySummary.EMPTY,
+  @JvmField val mainToolbarSummary: AgentSessionsActivitySummary = AgentSessionsActivitySummary.EMPTY,
+  @JvmField val isLoadedState: Boolean = false,
+)
+
+@Service(Service.Level.APP)
+internal class AgentSessionsActivityModel(
   scope: CoroutineScope,
 ) {
-  private val _summary = MutableStateFlow(AgentSessionsActivitySummary.EMPTY)
-  private val _chromeSummary = MutableStateFlow(AgentSessionsActivitySummary.EMPTY)
-  private val _mainToolbarSummary = MutableStateFlow(AgentSessionsActivitySummary.EMPTY)
+  private val mutableSnapshot = MutableStateFlow(AgentSessionsActivitySnapshot())
   private val mainToolbarActivityState = AgentSessionsMainToolbarActivityState()
-  private var lastStateLoaded: Boolean = false
   private val chromeRefreshAlarm = SingleAlarm.singleAlarm(0, scope) {
-    updateChromeSummaries(_summary.value, lastStateLoaded)
+    updateChromeSummaries(mutableSnapshot.value.rawSummary, mutableSnapshot.value.isLoadedState)
   }
 
-  val summary: StateFlow<AgentSessionsActivitySummary> = _summary.asStateFlow()
+  val snapshot: StateFlow<AgentSessionsActivitySnapshot> = mutableSnapshot.asStateFlow()
 
   init {
     scope.launch(Dispatchers.Default) {
-      serviceAsync<AgentSessionReadService>().stateFlow().collect { state ->
-        val nextSummary = buildAgentSessionsActivitySummary(state)
-        val isLoadedState = state.lastUpdatedAt != null
-        _summary.value = nextSummary
-        lastStateLoaded = isLoadedState
+      val readService = serviceAsync<AgentSessionReadService>()
+      val presentationModel = serviceAsync<AgentSessionThreadPresentationModel>()
+      combine(readService.stateFlow(), presentationModel.state) { state, presentationsByKey ->
+        ActivityModelInput(state = state, presentationsByKey = presentationsByKey)
+      }.collect { input ->
+        val nextSummary = buildAgentSessionsActivitySummary(input.state, input.presentationsByKey)
+        val isLoadedState = input.state.hasLoadedActivityBaseline()
         updateChromeSummaries(nextSummary, isLoadedState)
       }
     }
   }
 
-  fun latestChromeSummary(): AgentSessionsActivitySummary = _chromeSummary.value
+  fun latestChromeSummary(): AgentSessionsActivitySummary = mutableSnapshot.value.chromeSummary
 
-  fun latestMainToolbarSummary(): AgentSessionsActivitySummary = _mainToolbarSummary.value
+  fun latestMainToolbarSummary(): AgentSessionsActivitySummary = mutableSnapshot.value.mainToolbarSummary
 
   private fun updateChromeSummaries(summary: AgentSessionsActivitySummary, isLoadedState: Boolean) {
     val nowMillis = System.currentTimeMillis()
@@ -60,8 +72,9 @@ internal class AgentSessionsActivityService(
     val nextMainToolbarSummary = mainToolbarActivityState.update(nextSummary, isLoadedState)
     val rawCounts = summary.countsDebugText()
     val freshCounts = nextSummary.countsDebugText()
-    val previousChromeSummary = _chromeSummary.value
-    val previousMainToolbarSummary = _mainToolbarSummary.value
+    val previousSnapshot = mutableSnapshot.value
+    val previousChromeSummary = previousSnapshot.chromeSummary
+    val previousMainToolbarSummary = previousSnapshot.mainToolbarSummary
     val chromeChanged = previousChromeSummary != nextSummary
     val mainToolbarChanged = previousMainToolbarSummary != nextMainToolbarSummary
     if (summary.hasActivityRows() || nextSummary.hasActivityRows() || nextMainToolbarSummary.hasActivityRows() || chromeChanged || mainToolbarChanged) {
@@ -78,11 +91,17 @@ internal class AgentSessionsActivityService(
         )
       }
     }
+    val nextSnapshot = AgentSessionsActivitySnapshot(
+      rawSummary = summary,
+      chromeSummary = nextSummary,
+      mainToolbarSummary = nextMainToolbarSummary,
+      isLoadedState = isLoadedState,
+    )
+    if (previousSnapshot != nextSnapshot) {
+      mutableSnapshot.value = nextSnapshot
+    }
     if (chromeChanged || mainToolbarChanged) {
-      _chromeSummary.value = nextSummary
-      _mainToolbarSummary.value = nextMainToolbarSummary
       ActivityTracker.getInstance().inc()
-      project.service<AgentSessionsStripeIconUpdater>().scheduleUpdate()
     }
     scheduleChromeSummaryRefresh(summary, nowMillis)
   }
@@ -92,6 +111,47 @@ internal class AgentSessionsActivityService(
     val delayMillis = summary.nextChromeActivityExpirationDelay(nowMillis) ?: return
     chromeRefreshAlarm.requestWithCustomDelay(delayMillis.coerceAtMost(Int.MAX_VALUE.toLong()).toInt())
   }
+}
+
+@Service(Service.Level.PROJECT)
+internal class AgentSessionsActivityService(
+  private val project: Project,
+  scope: CoroutineScope,
+) {
+  init {
+    scope.launch(Dispatchers.Default) {
+      serviceAsync<AgentSessionsActivityModel>().snapshot.collect {
+        if (!project.isDisposed) {
+          project.service<AgentSessionsStripeIconUpdater>().scheduleUpdate()
+        }
+      }
+    }
+  }
+
+  fun latestChromeSummary(): AgentSessionsActivitySummary {
+    return ApplicationManager.getApplication().service<AgentSessionsActivityModel>().latestChromeSummary()
+  }
+
+  fun latestMainToolbarSummary(): AgentSessionsActivitySummary {
+    return ApplicationManager.getApplication().service<AgentSessionsActivityModel>().latestMainToolbarSummary()
+  }
+}
+
+private data class ActivityModelInput(
+  @JvmField val state: AgentSessionsState,
+  @JvmField val presentationsByKey: Map<AgentSessionThreadPresentationKey, AgentSessionThreadPresentation>,
+)
+
+internal fun AgentSessionsState.hasLoadedActivityBaseline(): Boolean {
+  if (lastUpdatedAt == null) return false
+  val loadStates = projects.asSequence()
+    .flatMap { project ->
+      sequenceOf(project.providerLoadStates.values.asSequence()) +
+      project.worktrees.asSequence().map { worktree -> worktree.providerLoadStates.values.asSequence() }
+    }
+    .flatten()
+    .toList()
+  return loadStates.isEmpty() || loadStates.all { state -> state.isTerminal }
 }
 
 private fun AgentSessionsActivitySummary.countsDebugText(): String {

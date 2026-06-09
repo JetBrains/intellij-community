@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 // @spec community/plugins/agent-workbench/spec/agent-sessions-tree.spec.md
 
-import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
@@ -20,8 +19,11 @@ internal class AgentSessionsSystemNotificationService(
 
   init {
     scope.launch(Dispatchers.Default) {
-      serviceAsync<AgentSessionReadService>().stateFlow().collect { state ->
-        val notifications = tracker.collectNotifications(state)
+      serviceAsync<AgentSessionsActivityModel>().snapshot.collect { snapshot ->
+        val notifications = tracker.collectNotifications(
+          summary = snapshot.rawSummary,
+          isLoadedState = snapshot.isLoadedState,
+        )
         if (shouldShowAgentSessionsSystemNotifications()) {
           notifications.forEach { notification -> showAgentSessionsSystemNotification(notification) }
         }

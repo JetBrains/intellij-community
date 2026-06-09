@@ -4,8 +4,12 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 // @spec community/plugins/agent-workbench/spec/agent-sessions-tree.spec.md
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityBucket
+import com.intellij.agent.workbench.common.chromeBucket
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.statusColor
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentation
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
@@ -89,12 +93,15 @@ internal fun agentSessionsActivityIcon(badge: AgentSessionsStripeBadge?): Icon {
   }
 }
 
-internal fun buildAgentSessionsActivitySummary(state: AgentSessionsState): AgentSessionsActivitySummary {
-  val rows = collectAgentSessionsActivityThreadRows(state)
+internal fun buildAgentSessionsActivitySummary(
+  state: AgentSessionsState,
+  presentationsByKey: Map<AgentSessionThreadPresentationKey, AgentSessionThreadPresentation> = emptyMap(),
+): AgentSessionsActivitySummary {
+  val rows = collectAgentSessionsActivityThreadRows(state, presentationsByKey)
   return AgentSessionsActivitySummary(
-    attentionRows = rows.filter { it.thread.summaryActivity.isAttentionActivity() }.sortedByRecentActivity(),
-    runningRows = rows.filter { it.thread.summaryActivity == AgentThreadActivity.PROCESSING }.sortedByRecentActivity(),
-    doneRows = rows.filter { it.thread.summaryActivity == AgentThreadActivity.UNREAD }.sortedByRecentActivity(),
+    attentionRows = rows.filter { it.thread.activityReport.chromeBucket() == AgentThreadActivityBucket.ATTENTION }.sortedByRecentActivity(),
+    runningRows = rows.filter { it.thread.activityReport.chromeBucket() == AgentThreadActivityBucket.RUNNING }.sortedByRecentActivity(),
+    doneRows = rows.filter { it.thread.activityReport.chromeBucket() == AgentThreadActivityBucket.DONE }.sortedByRecentActivity(),
   )
 }
 
@@ -110,18 +117,24 @@ internal fun freshAgentSessionsActivitySummary(
   )
 }
 
-private fun collectAgentSessionsActivityThreadRows(state: AgentSessionsState): List<AgentSessionsActivityThreadRow> {
+private fun collectAgentSessionsActivityThreadRows(
+  state: AgentSessionsState,
+  presentationsByKey: Map<AgentSessionThreadPresentationKey, AgentSessionThreadPresentation>,
+): List<AgentSessionsActivityThreadRow> {
   return buildList {
     state.projects.forEach { project ->
-      addProjectThreadRows(project)
+      addProjectThreadRows(project, presentationsByKey)
       project.worktrees.forEach { worktree ->
-        addWorktreeThreadRows(project, worktree)
+        addWorktreeThreadRows(project, worktree, presentationsByKey)
       }
     }
   }
 }
 
-private fun MutableList<AgentSessionsActivityThreadRow>.addProjectThreadRows(project: AgentProjectSessions) {
+private fun MutableList<AgentSessionsActivityThreadRow>.addProjectThreadRows(
+  project: AgentProjectSessions,
+  presentationsByKey: Map<AgentSessionThreadPresentationKey, AgentSessionThreadPresentation>,
+) {
   project.threads.forEach { thread ->
     if (!isAgentSessionNewSessionId(thread.id)) {
       add(
@@ -129,14 +142,18 @@ private fun MutableList<AgentSessionsActivityThreadRow>.addProjectThreadRows(pro
           path = project.path,
           projectName = project.name,
           worktreeName = null,
-          thread = thread,
+          thread = thread.overlayPresentation(path = project.path, presentationsByKey = presentationsByKey),
         )
       )
     }
   }
 }
 
-private fun MutableList<AgentSessionsActivityThreadRow>.addWorktreeThreadRows(project: AgentProjectSessions, worktree: AgentWorktree) {
+private fun MutableList<AgentSessionsActivityThreadRow>.addWorktreeThreadRows(
+  project: AgentProjectSessions,
+  worktree: AgentWorktree,
+  presentationsByKey: Map<AgentSessionThreadPresentationKey, AgentSessionThreadPresentation>,
+) {
   worktree.threads.forEach { thread ->
     if (!isAgentSessionNewSessionId(thread.id)) {
       add(
@@ -144,11 +161,24 @@ private fun MutableList<AgentSessionsActivityThreadRow>.addWorktreeThreadRows(pr
           path = worktree.path,
           projectName = project.name,
           worktreeName = worktree.name,
-          thread = thread,
+          thread = thread.overlayPresentation(path = worktree.path, presentationsByKey = presentationsByKey),
         )
       )
     }
   }
+}
+
+private fun AgentSessionThread.overlayPresentation(
+  path: String,
+  presentationsByKey: Map<AgentSessionThreadPresentationKey, AgentSessionThreadPresentation>,
+): AgentSessionThread {
+  val key = AgentSessionThreadPresentationKey.create(projectPath = path, provider = provider, threadId = id) ?: return this
+  val presentation = presentationsByKey[key] ?: return this
+  return copy(
+    title = presentation.title.takeIf { it.isNotBlank() } ?: title,
+    updatedAt = presentation.updatedAt ?: updatedAt,
+    activityReport = presentation.activityReport,
+  )
 }
 
 private fun List<AgentSessionsActivityThreadRow>.sortedByRecentActivity(): List<AgentSessionsActivityThreadRow> {
@@ -165,8 +195,4 @@ private fun List<AgentSessionsActivityThreadRow>.filterFreshActivityRows(
   freshnessMillis: Long,
 ): List<AgentSessionsActivityThreadRow> {
   return filter { row -> row.thread.updatedAt >= nowMillis - freshnessMillis }
-}
-
-private fun AgentThreadActivity?.isAttentionActivity(): Boolean {
-  return this == AgentThreadActivity.NEEDS_INPUT || this == AgentThreadActivity.REVIEWING
 }

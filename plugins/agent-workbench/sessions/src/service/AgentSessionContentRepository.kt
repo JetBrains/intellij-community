@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
@@ -444,8 +445,10 @@ private fun markThreadAsRead(
     if (thread.provider == provider && thread.id == threadId && thread.activity == AgentThreadActivity.UNREAD && thread.updatedAt <= updatedAt) {
       changed = true
       thread.copy(
-        activity = AgentThreadActivity.READY,
-        summaryActivity = thread.summaryActivity?.takeUnless { it == AgentThreadActivity.UNREAD } ?: AgentThreadActivity.READY,
+        activityReport = AgentThreadActivityReport(
+          rowActivity = AgentThreadActivity.READY,
+          chromeActivity = thread.summaryActivity?.takeUnless { it == AgentThreadActivity.UNREAD } ?: AgentThreadActivity.READY,
+        ),
       )
     }
     else {

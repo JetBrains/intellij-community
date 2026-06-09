@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
@@ -40,7 +41,7 @@ internal fun createAgentChatScopedTerminalRefreshController(
     sessionState = tab.sessionState,
     parentScope = tab.coroutineScope,
     activeThreadIdProvider = { file.threadId.takeIf(String::isNotBlank) },
-    activeThreadFileChangeEvents = { threadId -> descriptor.sessionSource.activeThreadFileChangeEvents(file.projectPath, threadId) },
+    activeThreadUpdateEvents = { threadId -> descriptor.sessionSource.activeThreadUpdateEvents(file.projectPath, threadId) },
     emitInitialRefresh = !file.isPendingThread,
   )
 }
@@ -57,16 +58,17 @@ internal class AgentChatScopedTerminalRefreshController(
   sessionState: StateFlow<TerminalViewSessionState>,
   parentScope: CoroutineScope,
   activeThreadIdProvider: () -> String? = { threadId },
-  activeThreadFileChangeEvents: ((String) -> Flow<Unit>)? = null,
+  activeThreadUpdateEvents: ((String) -> Flow<AgentSessionSourceUpdateEvent>)? = null,
   emitInitialRefresh: Boolean = true,
   private val notifyRefresh: (AgentSessionProvider, String, String?, AgentThreadActivity?) -> Unit = ::notifyAgentChatScopedRefresh,
+  private val notifyUpdate: (AgentSessionProvider, AgentSessionSourceUpdateEvent) -> Unit = ::notifyAgentChatScopedRefresh,
 ) : AgentChatDisposableController {
   private val initialRefreshJob: Job?
   private val terminationRefreshJob: Job
   private val activeThreadFileWatchJob: Job?
 
   init {
-    activeThreadFileWatchJob = activeThreadFileChangeEvents?.let { fileChangeEvents ->
+    activeThreadFileWatchJob = activeThreadUpdateEvents?.let { updateEvents ->
       parentScope.launch {
         sessionState
           .map { it == TerminalViewSessionState.Running }
@@ -76,7 +78,7 @@ internal class AgentChatScopedTerminalRefreshController(
             collectActiveThreadFileChanges(
               restartChanges = inputChanges,
               activeThreadIdProvider = activeThreadIdProvider,
-              activeThreadFileChangeEvents = fileChangeEvents,
+              activeThreadUpdateEvents = updateEvents,
             )
           }
       }
@@ -108,7 +110,7 @@ internal class AgentChatScopedTerminalRefreshController(
   private suspend fun collectActiveThreadFileChanges(
     restartChanges: Flow<Unit>?,
     activeThreadIdProvider: () -> String?,
-    activeThreadFileChangeEvents: (String) -> Flow<Unit>,
+    activeThreadUpdateEvents: (String) -> Flow<AgentSessionSourceUpdateEvent>,
   ) {
     val watchRequests = if (restartChanges == null) flowOf(Unit) else merge(flowOf(Unit), restartChanges)
     coroutineScope watchScope@{
@@ -150,11 +152,11 @@ internal class AgentChatScopedTerminalRefreshController(
           "Starting ${provider.value} active session file watch from agent chat terminal (path=$projectPath, threadId=$activeThreadId)"
         }
         watchJob = this@watchScope.launch {
-          activeThreadFileChangeEvents(activeThreadId).collect {
+          activeThreadUpdateEvents(activeThreadId).collect { updateEvent ->
             LOG.debug {
-              "Received ${provider.value} active session file change from agent chat terminal (path=$projectPath, threadId=$activeThreadId)"
+              "Received ${provider.value} active session update from agent chat terminal (path=$projectPath, threadId=$activeThreadId)"
             }
-            emitScopedRefresh("active session file", threadId = activeThreadId)
+            notifyUpdate(provider, updateEvent)
           }
         }
       }

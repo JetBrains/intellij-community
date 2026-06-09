@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.toolwindow
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
@@ -638,19 +639,19 @@ class AgentSessionsSwingTreeCellRendererTest {
           readyThreadId -> SessionTreeNode.Thread(project, readyThread)
           SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-processing") -> SessionTreeNode.Thread(
             project,
-            readyThread.copy(id = "thread-processing", activity = AgentThreadActivity.PROCESSING),
+            readyThread.copy(id = "thread-processing", activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING)),
           )
           SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-reviewing") -> SessionTreeNode.Thread(
             project,
-            readyThread.copy(id = "thread-reviewing", activity = AgentThreadActivity.REVIEWING),
+            readyThread.copy(id = "thread-reviewing", activityReport = AgentThreadActivityReport(AgentThreadActivity.REVIEWING)),
           )
           SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-needs-input") -> SessionTreeNode.Thread(
             project,
-            readyThread.copy(id = "thread-needs-input", activity = AgentThreadActivity.NEEDS_INPUT),
+            readyThread.copy(id = "thread-needs-input", activityReport = AgentThreadActivityReport(AgentThreadActivity.NEEDS_INPUT)),
           )
           SessionTreeId.Thread(project.path, AgentSessionProvider.CODEX, "thread-unread") -> SessionTreeNode.Thread(
             project,
-            readyThread.copy(id = "thread-unread", activity = AgentThreadActivity.UNREAD),
+            readyThread.copy(id = "thread-unread", activityReport = AgentThreadActivityReport(AgentThreadActivity.UNREAD)),
           )
           else -> null
         }

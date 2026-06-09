@@ -32,7 +32,7 @@ interface ClaudeSessionBackend {
   val updates: Flow<Unit>
     get() = emptyFlow()
 
-  fun activeThreadFileChangeEvents(path: String, threadId: String): Flow<Unit> = emptyFlow()
+  fun activeThreadUpdateEvents(path: String, threadId: String): Flow<AgentSessionSourceUpdateEvent> = emptyFlow()
 }
 
 data class ClaudeBackendThreadRefreshResult(

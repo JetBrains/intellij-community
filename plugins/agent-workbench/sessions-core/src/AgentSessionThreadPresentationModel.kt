@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.core
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
@@ -35,8 +36,20 @@ data class AgentSessionThreadPresentationKey(
 
 data class AgentSessionThreadPresentation(
   @JvmField val title: @NlsSafe String,
-  @JvmField val activity: AgentThreadActivity,
-)
+  @JvmField val activityReport: AgentThreadActivityReport,
+  @JvmField val updatedAt: Long? = null,
+) {
+  constructor(
+    title: @NlsSafe String,
+    activity: AgentThreadActivity,
+  ) : this(
+    title = title,
+    activityReport = AgentThreadActivityReport(activity),
+  )
+
+  val activity: AgentThreadActivity
+    get() = activityReport.rowActivity
+}
 
 data class AgentSessionThreadPresentationChangeSet(
   @JvmField val changedKeys: Set<AgentSessionThreadPresentationKey>,
@@ -56,8 +69,19 @@ data class AgentSessionThreadPresentationChangeSet(
 data class AgentSessionThreadActivityPresentationUpdate(
   @JvmField val path: String,
   @JvmField val threadId: String,
-  @JvmField val activity: AgentThreadActivity,
-)
+  @JvmField val activityReport: AgentThreadActivityReport,
+  @JvmField val updatedAt: Long? = null,
+) {
+  constructor(
+    path: String,
+    threadId: String,
+    activity: AgentThreadActivity,
+  ) : this(
+    path = path,
+    threadId = threadId,
+    activityReport = AgentThreadActivityReport(activity),
+  )
+}
 
 @Service(Service.Level.APP)
 class AgentSessionThreadPresentationModel {
@@ -78,11 +102,13 @@ class AgentSessionThreadPresentationModel {
     threadId: String,
     title: String,
     activity: AgentThreadActivity?,
+    activityReport: AgentThreadActivityReport? = activity?.let(::AgentThreadActivityReport),
+    updatedAt: Long? = null,
   ): AgentSessionThreadPresentationChangeSet {
     val key = AgentSessionThreadPresentationKey.create(projectPath = path, provider = provider, threadId = threadId)
               ?: return AgentSessionThreadPresentationChangeSet.EMPTY
     val normalizedTitle = normalizeAgentSessionTitle(title) ?: title
-    return putMerged(mapOf(key to (normalizedTitle to activity)))
+    return putMerged(mapOf(key to AgentSessionThreadPresentationPatch(title = normalizedTitle, activityReport = activityReport, updatedAt = updatedAt)))
   }
 
   fun updateActivityHints(
@@ -92,10 +118,10 @@ class AgentSessionThreadPresentationModel {
     if (updates.isEmpty()) {
       return AgentSessionThreadPresentationChangeSet.EMPTY
     }
-    val inputs = LinkedHashMap<AgentSessionThreadPresentationKey, Pair<String?, AgentThreadActivity?>>(updates.size)
-    for ((path, threadId, activity) in updates) {
+    val inputs = LinkedHashMap<AgentSessionThreadPresentationKey, AgentSessionThreadPresentationPatch>(updates.size)
+    for ((path, threadId, activityReport, updatedAt) in updates) {
       val key = AgentSessionThreadPresentationKey.create(projectPath = path, provider = provider, threadId = threadId) ?: continue
-      inputs[key] = null to activity
+      inputs[key] = AgentSessionThreadPresentationPatch(activityReport = activityReport, updatedAt = updatedAt)
     }
     return putMerged(inputs)
   }
@@ -122,7 +148,8 @@ class AgentSessionThreadPresentationModel {
           AgentSessionThreadPresentationKey.create(projectPath = path, provider = thread.provider, threadId = thread.id) ?: return@forEach
         presentationsByKey[key] = AgentSessionThreadPresentation(
           title = normalizeAgentSessionTitle(thread.title) ?: thread.title,
-          activity = thread.activity,
+          activityReport = thread.activityReport,
+          updatedAt = thread.updatedAt,
         )
       }
     }
@@ -141,8 +168,9 @@ class AgentSessionThreadPresentationModel {
       }
 
       for ((key, presentation) in presentationsByKey) {
-        if (next[key] == presentation) continue
-        next[key] = presentation
+        val mergedPresentation = mergePresentation(existing = next[key], incoming = presentation)
+        if (next[key] == mergedPresentation) continue
+        next[key] = mergedPresentation
         changedKeys.add(key)
       }
 
@@ -181,7 +209,7 @@ class AgentSessionThreadPresentationModel {
   }
 
   private fun putMerged(
-    updates: Map<AgentSessionThreadPresentationKey, Pair<String?, AgentThreadActivity?>>,
+    updates: Map<AgentSessionThreadPresentationKey, AgentSessionThreadPresentationPatch>,
   ): AgentSessionThreadPresentationChangeSet {
     if (updates.isEmpty()) return AgentSessionThreadPresentationChangeSet.EMPTY
     return updateState { current ->
@@ -189,10 +217,7 @@ class AgentSessionThreadPresentationModel {
       val changedKeys = LinkedHashSet<AgentSessionThreadPresentationKey>()
       for ((key, update) in updates) {
         val existing = next[key]
-        val presentation = AgentSessionThreadPresentation(
-          title = update.first ?: existing?.title.orEmpty(),
-          activity = update.second ?: existing?.activity ?: AgentThreadActivity.READY,
-        )
+        val presentation = mergePresentation(existing = existing, patch = update)
         if (existing == presentation) continue
         next[key] = presentation
         changedKeys.add(key)
@@ -220,8 +245,57 @@ class AgentSessionThreadPresentationModel {
   }
 }
 
+private fun mergePresentation(
+  existing: AgentSessionThreadPresentation?,
+  incoming: AgentSessionThreadPresentation,
+): AgentSessionThreadPresentation {
+  return mergePresentation(
+    existing = existing,
+    patch = AgentSessionThreadPresentationPatch(
+      title = incoming.title,
+      activityReport = incoming.activityReport,
+      updatedAt = incoming.updatedAt,
+    ),
+  )
+}
+
+private fun mergePresentation(
+  existing: AgentSessionThreadPresentation?,
+  patch: AgentSessionThreadPresentationPatch,
+): AgentSessionThreadPresentation {
+  val shouldApplyActivity = shouldApplyActivityUpdate(existingUpdatedAt = existing?.updatedAt, incomingUpdatedAt = patch.updatedAt)
+  return AgentSessionThreadPresentation(
+    title = patch.title ?: existing?.title.orEmpty(),
+    activityReport = if (shouldApplyActivity) {
+      patch.activityReport ?: existing?.activityReport ?: AgentThreadActivityReport.READY
+    }
+    else {
+      existing?.activityReport ?: AgentThreadActivityReport.READY
+    },
+    updatedAt = mergeUpdatedAt(existingUpdatedAt = existing?.updatedAt, incomingUpdatedAt = patch.updatedAt),
+  )
+}
+
+private fun shouldApplyActivityUpdate(existingUpdatedAt: Long?, incomingUpdatedAt: Long?): Boolean {
+  return existingUpdatedAt == null || incomingUpdatedAt == null || incomingUpdatedAt >= existingUpdatedAt
+}
+
+private fun mergeUpdatedAt(existingUpdatedAt: Long?, incomingUpdatedAt: Long?): Long? {
+  return when {
+    existingUpdatedAt == null -> incomingUpdatedAt
+    incomingUpdatedAt == null -> existingUpdatedAt
+    else -> maxOf(existingUpdatedAt, incomingUpdatedAt)
+  }
+}
+
 private data class PresentationStateUpdate(
   @JvmField val next: Map<AgentSessionThreadPresentationKey, AgentSessionThreadPresentation>,
   @JvmField val changedKeys: Set<AgentSessionThreadPresentationKey>,
   @JvmField val removedKeys: Set<AgentSessionThreadPresentationKey>,
+)
+
+private data class AgentSessionThreadPresentationPatch(
+  @JvmField val title: String? = null,
+  @JvmField val activityReport: AgentThreadActivityReport? = null,
+  @JvmField val updatedAt: Long? = null,
 )

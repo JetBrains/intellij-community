@@ -125,9 +125,8 @@ internal class AgentSessionThreadRebindSupport(
     for ((path, outcome) in outcomes) {
       val threads = outcome.threads ?: continue
       val refreshHints = refreshHintsByPath[path] ?: continue
-      val activityByThreadId = refreshHints.activityByThreadId
-      val summaryActivityByThreadId = refreshHints.summaryActivityByThreadId
-      if (activityByThreadId.isEmpty()) {
+      val activityUpdatesByThreadId = refreshHints.activityUpdatesByThreadId
+      if (activityUpdatesByThreadId.isEmpty()) {
         continue
       }
 
@@ -136,17 +135,16 @@ internal class AgentSessionThreadRebindSupport(
         if (thread.provider != provider) {
           return@map thread
         }
-        val hintedActivity = activityByThreadId[thread.id] ?: return@map thread
-        val hintedSummaryActivity = resolveHintedSummaryActivity(
+        val activityUpdate = activityUpdatesByThreadId[thread.id] ?: return@map thread
+        val resolvedUpdate = resolveAgentSessionThreadActivityUpdate(
           thread = thread,
-          hintedActivity = hintedActivity,
-          summaryActivityByThreadId = summaryActivityByThreadId,
+          activityUpdate = activityUpdate,
         )
-        if (hintedActivity == thread.activity && hintedSummaryActivity == thread.summaryActivity) {
+        if (resolvedUpdate.activityReport == thread.activityReport && resolvedUpdate.updatedAt == thread.updatedAt) {
           return@map thread
         }
         changed = true
-        thread.copy(activity = hintedActivity, summaryActivity = hintedSummaryActivity)
+        thread.copy(activityReport = resolvedUpdate.activityReport, updatedAt = resolvedUpdate.updatedAt)
       }
 
       if (changed) {
@@ -573,18 +571,6 @@ internal class AgentSessionThreadRebindSupport(
     }
   }
 
-}
-
-private fun resolveHintedSummaryActivity(
-  thread: AgentSessionThread,
-  hintedActivity: AgentThreadActivity,
-  summaryActivityByThreadId: Map<String, AgentThreadActivity?>,
-): AgentThreadActivity? {
-  return when {
-    summaryActivityByThreadId.containsKey(thread.id) -> summaryActivityByThreadId[thread.id]
-    thread.summaryActivity == null -> null
-    else -> hintedActivity
-  }
 }
 
 private data class PendingThreadAmbiguityState(

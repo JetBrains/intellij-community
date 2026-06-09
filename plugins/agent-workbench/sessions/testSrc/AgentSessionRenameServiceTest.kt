@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
@@ -70,7 +71,7 @@ class AgentSessionRenameServiceTest {
         threadId = "thread-1",
         title = "Original title",
         thread = threadModel(AgentSessionProvider.CODEX, "thread-1", "Original title")
-          .copy(activity = AgentThreadActivity.PROCESSING),
+          .copy(activityReport = AgentThreadActivityReport(AgentThreadActivity.PROCESSING)),
       )
       stateStore.replaceProjects(
         projects = listOf(

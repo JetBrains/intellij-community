@@ -52,7 +52,7 @@ class CodexSessionSourceRealTuiIntegrationTest {
 
           val hintsAfterRead = eventually(timeout = 30.seconds) {
             testRefreshHints(source, harness.projectDir, listOf(threadId))
-              .takeIf { it.activityByThreadId.isEmpty() }
+              .takeIf { it.activityUpdatesByThreadId.isEmpty() }
           }
 
           assertThat(hintsAfterRead)
@@ -87,7 +87,7 @@ class CodexSessionSourceRealTuiIntegrationTest {
           )
 
           val hint = eventually(timeout = 30.seconds) {
-            testRefreshHints(source, harness.projectDir, listOf(threadId)).activityByThreadId[threadId]
+            testRefreshHints(source, harness.projectDir, listOf(threadId)).activityUpdatesByThreadId[threadId]?.rowActivity
               ?.takeIf { it == AgentThreadActivity.PROCESSING }
           }
 
@@ -123,7 +123,7 @@ class CodexSessionSourceRealTuiIntegrationTest {
           )
 
           val activity = eventually(timeout = 30.seconds) {
-            testRefreshHints(source, harness.projectDir, listOf(threadId)).activityByThreadId[threadId]
+            testRefreshHints(source, harness.projectDir, listOf(threadId)).activityUpdatesByThreadId[threadId]?.rowActivity
               ?.takeIf { it == AgentThreadActivity.NEEDS_INPUT }
           }
           val mergedHint = eventually(timeout = 30.seconds) {

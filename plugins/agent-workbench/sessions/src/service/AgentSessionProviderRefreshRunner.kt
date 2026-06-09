@@ -788,28 +788,23 @@ private fun applyRefreshHintsToOutcomes(
   for ((path, outcome) in ArrayList(outcomes.entries)) {
     val threads = outcome.threads ?: continue
     val refreshHints = refreshHintsByPath[path] ?: continue
-    val activityByThreadId = refreshHints.activityByThreadId
-    if (activityByThreadId.isEmpty()) {
+    val activityUpdatesByThreadId = refreshHints.activityUpdatesByThreadId
+    if (activityUpdatesByThreadId.isEmpty()) {
       continue
     }
 
-    val summaryActivityByThreadId = refreshHints.summaryActivityByThreadId
     var changed = false
     val updatedThreads = threads.map { thread ->
       if (thread.provider != provider) {
         return@map thread
       }
-      val hintedActivity = activityByThreadId[thread.id] ?: return@map thread
-      val hintedSummaryActivity = when {
-        summaryActivityByThreadId.containsKey(thread.id) -> summaryActivityByThreadId[thread.id]
-        thread.summaryActivity == null -> null
-        else -> hintedActivity
-      }
-      if (hintedActivity == thread.activity && hintedSummaryActivity == thread.summaryActivity) {
+      val activityUpdate = activityUpdatesByThreadId[thread.id] ?: return@map thread
+      val resolvedUpdate = resolveAgentSessionThreadActivityUpdate(thread = thread, activityUpdate = activityUpdate)
+      if (resolvedUpdate.activityReport == thread.activityReport && resolvedUpdate.updatedAt == thread.updatedAt) {
         return@map thread
       }
       changed = true
-      thread.copy(activity = hintedActivity, summaryActivity = hintedSummaryActivity)
+      thread.copy(activityReport = resolvedUpdate.activityReport, updatedAt = resolvedUpdate.updatedAt)
     }
     if (changed) {
       outcomes[path] = outcome.copy(threads = updatedThreads)

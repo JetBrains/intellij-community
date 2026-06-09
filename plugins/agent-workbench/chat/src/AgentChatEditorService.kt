@@ -64,15 +64,29 @@ private object AgentChatScopedRefreshSignalBus {
     else {
       emptyMap()
     }
-    return normalizedPath.isNotBlank() && signalFlow.tryEmit(
+    if (normalizedPath.isBlank()) {
+      return false
+    }
+    val updateType = if (activityHintsByThreadId.isEmpty()) AgentSessionSourceUpdate.THREADS_CHANGED else AgentSessionSourceUpdate.HINTS_CHANGED
+    return signal(
+      provider = provider,
+      updateEvent = AgentSessionSourceUpdateEvent(
+        type = updateType,
+        scopedPaths = setOf(normalizedPath),
+        threadIds = if (activityHintsByThreadId.isEmpty()) normalizedThreadId?.let { setOf(it) } else null,
+        activityHintsByThreadId = activityHintsByThreadId,
+      ),
+    )
+  }
+
+  fun signal(
+    provider: AgentSessionProvider,
+    updateEvent: AgentSessionSourceUpdateEvent,
+  ): Boolean {
+    return signalFlow.tryEmit(
       AgentChatScopedRefreshSignal(
         provider = provider,
-        updateEvent = AgentSessionSourceUpdateEvent(
-          type = AgentSessionSourceUpdate.THREADS_CHANGED,
-          scopedPaths = setOf(normalizedPath),
-          threadIds = normalizedThreadId?.let { setOf(it) },
-          activityHintsByThreadId = activityHintsByThreadId,
-        ),
+        updateEvent = updateEvent,
       )
     )
   }
@@ -430,6 +444,13 @@ fun notifyAgentChatScopedRefresh(
   activityHint: AgentThreadActivity? = null,
 ) {
   AgentChatScopedRefreshSignalBus.signal(provider, projectPath, threadId, activityHint)
+}
+
+fun notifyAgentChatScopedRefresh(
+  provider: AgentSessionProvider,
+  updateEvent: AgentSessionSourceUpdateEvent,
+) {
+  AgentChatScopedRefreshSignalBus.signal(provider, updateEvent)
 }
 
 fun agentChatScopedRefreshSignals(provider: AgentSessionProvider): Flow<AgentSessionSourceUpdateEvent> {

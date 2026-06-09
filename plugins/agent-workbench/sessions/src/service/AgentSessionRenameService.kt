@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
@@ -172,13 +173,14 @@ class AgentSessionRenameService internal constructor(
     normalizedRequestedName: String,
     context: AgentChatEditorTabActionContext?,
   ) {
-    val activity = context?.threadActivity ?: target.thread?.activity
+    val activityReport = target.thread?.activityReport ?: context?.threadActivity?.let(::AgentThreadActivityReport)
     presentationModel.updateThread(
       path = target.path,
       provider = target.provider,
       threadId = target.threadId,
       title = normalizedRequestedName,
-      activity = activity,
+      activity = null,
+      activityReport = activityReport,
     )
   }
 }
