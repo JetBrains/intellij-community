@@ -908,11 +908,23 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   void updateFocus() {
-    Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (focusOwner == null) {
+    Window window = SwingUtilities.getWindowAncestor(myPanel);
+    if (window == null) {
       return;
     }
-    myIsCurrentlyInFocus = isEditorOwningFocus(focusOwner);
+    KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
+    Component focusOwner = focusManager.getFocusOwner();
+    if (focusOwner == null) {
+      // When the window is not the focused window, getFocusOwner() returns null.
+      // Fall back to permanentFocusOwner, which is retained across window focus changes.
+      focusOwner = focusManager.getPermanentFocusOwner();
+    }
+    if (focusOwner == null) {
+      // Still null — this happens in headless/test environments where no window is ever focused.
+      // Don't toggle the flag in this case to preserve the existing behavior in tests.
+      return;
+    }
+    myIsCurrentlyInFocus = window.isFocused() && isEditorOwningFocus(focusOwner);
   }
 
   private boolean isEditorOwningFocus(@NotNull Component focusOwner) {
