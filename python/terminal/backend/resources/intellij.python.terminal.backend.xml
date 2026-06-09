@@ -6,6 +6,5 @@
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
     <shellExecOptionsCustomizer implementation="com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer"/>
-    <terminalSettingsProvider implementation="com.intellij.python.terminal.PyVirtualEnvTerminalSettingsProvider"/>
   </extensions>
 </idea-plugin>

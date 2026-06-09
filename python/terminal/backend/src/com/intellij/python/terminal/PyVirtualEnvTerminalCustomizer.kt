@@ -5,8 +5,6 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleUtilCore
-import com.intellij.openapi.options.UiDslUnnamedConfigurable
-import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
@@ -20,8 +18,6 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.python.terminal.shared.PyTerminalBundle
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
-import com.intellij.ui.dsl.builder.Panel
-import com.intellij.ui.dsl.builder.bindSelected
 import com.jetbrains.python.orLogException
 import com.jetbrains.python.sdk.Activatable
 import com.jetbrains.python.sdk.PySdkUtil
@@ -32,7 +28,6 @@ import com.jetbrains.python.sdk.terminal.Shell
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
-import org.jetbrains.plugins.terminal.settings.TerminalSettingsProvider
 import org.jetbrains.plugins.terminal.startup.MutableShellExecOptions
 import org.jetbrains.plugins.terminal.startup.ShellExecOptionsCustomizer
 import java.nio.file.Path
@@ -254,17 +249,5 @@ fun pyTerminalDefaultWorkingDirectory(project: Project, file: VirtualFile?): Pat
   return runReadActionBlocking {
     if (project.isDisposed) return@runReadActionBlocking null
     ProjectFileIndex.getInstance(project).getContentRootForFile(file)?.toNioPathOrNull()
-  }
-}
-
-/** Adds the "Activate virtualenv" checkbox to the Terminal settings page. */
-internal class PyVirtualEnvTerminalSettingsProvider : TerminalSettingsProvider {
-  override fun createConfigurable(project: Project): UnnamedConfigurable = object : UiDslUnnamedConfigurable.Simple() {
-    override fun Panel.createContent() {
-      val settings = PyVirtualEnvTerminalSettings.getInstance(project)
-      row {
-        checkBox(PyTerminalBundle.message("activate.virtualenv.checkbox.text")).bindSelected(settings::virtualEnvActivate)
-      }
-    }
   }
 }
