@@ -13,7 +13,8 @@ const val NON_MODAL_WELCOME_SCREEN_SETTING_ID: String = "welcome.screen.non.moda
 internal val isNonModalWelcomeScreenEnabled: Boolean
   get() = AdvancedSettings.getBoolean(NON_MODAL_WELCOME_SCREEN_SETTING_ID)
 
-internal suspend fun Project.isWelcomeExperienceProject(): Boolean {
+@Internal
+suspend fun Project.isWelcomeExperienceProject(): Boolean {
   return ProjectFrameCapabilitiesService.getInstance().has(this, ProjectFrameCapability.WELCOME_EXPERIENCE)
 }
 
