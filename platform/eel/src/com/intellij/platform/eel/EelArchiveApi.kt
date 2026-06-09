@@ -10,7 +10,14 @@ import java.io.IOException
  */
 @ApiStatus.Internal
 interface EelArchiveApi {
-  /** Extracts the archive at [archive] into the [target] directory; both paths are within the environment. */
+  /**
+   * Extracts [archive] into [target]. Format is detected by the [archive] filename extension:
+   * `.zip`, `.tar`, `.tar.{gz,bz2,xz}` and the aliases `.tgz` / `.tbz2` / `.txz`.
+   * Anything else throws [IOException] (`Unsupported archive`).
+   *
+   * [target] is created if missing. Existing entries are overwritten.
+   * Symbolic links are extracted as-is from archive metadata - not safe for untrusted archives.
+   */
   @Throws(IOException::class)
   suspend fun extract(archive: EelPath, target: EelPath)
 }
