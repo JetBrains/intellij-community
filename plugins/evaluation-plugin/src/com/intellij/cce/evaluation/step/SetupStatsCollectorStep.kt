@@ -3,12 +3,8 @@ package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.evaluation.UndoableEvaluationStep
 import com.intellij.cce.evaluation.features.CCEContextFeatureProvider
-import com.intellij.cce.evaluation.features.CCEElementFeatureProvider
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
-import com.intellij.codeInsight.completion.ml.ElementFeatureProvider
-import com.intellij.completion.ml.experiments.ExperimentInfo
-import com.intellij.completion.ml.experiments.ExperimentStatus
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
@@ -45,10 +41,8 @@ class SetupStatsCollectorStep(private val experimentGroup: Int?,
   val serviceManager = ApplicationManager.getApplication() as ComponentManagerEx
   val initFileProvider: FilePathProvider? = serviceManager.getService(FilePathProvider::class.java)
   val initStatisticSender: StatisticSender? = serviceManager.getService(StatisticSender::class.java)
-  val initExperimentStatus: ExperimentStatus? = serviceManager.getService(ExperimentStatus::class.java)
   private var initSendLogsValue = false
   private var initCollectLogsInHeadlessValue = false
-  private lateinit var elementFeatureProvider: CCEElementFeatureProvider
   private lateinit var contextFeatureProvider: CCEContextFeatureProvider
 
   override val name: String = "Setup Stats Collector step"
@@ -71,22 +65,8 @@ class SetupStatsCollectorStep(private val experimentGroup: Int?,
     System.setProperty(SEND_LOGS_KEY, "false")
     initCollectLogsInHeadlessValue = java.lang.Boolean.getBoolean(COLLECT_LOGS_HEADLESS_KEY)
     System.setProperty(COLLECT_LOGS_HEADLESS_KEY, "true")
-    val experimentStatus = object : ExperimentStatus {
-      override fun forLanguage(language: Language): ExperimentInfo =
-        ExperimentInfo(experimentGroup != null,
-                       version = experimentGroup ?: 0,
-                       shouldRank = false,
-                       shouldShowArrows = false,
-                       shouldCalculateFeatures = true,
-                       shouldLogElementFeatures = true)
-
-      // it allows to ignore experiment info during ranking
-      override fun isDisabled(): Boolean = true
-      override fun disable() = Unit
-    }
     serviceManager.replaceRegularServiceInstance(FilePathProvider::class.java, filesProvider)
     serviceManager.replaceRegularServiceInstance(StatisticSender::class.java, statisticSender)
-    serviceManager.replaceRegularServiceInstance(ExperimentStatus::class.java, experimentStatus)
     LOG.runAndLogException { registerFeatureProvidersIfNeeded() }
     return workspace
   }
@@ -101,8 +81,6 @@ class SetupStatsCollectorStep(private val experimentGroup: Int?,
           serviceManager.replaceRegularServiceInstance(FilePathProvider::class.java, initFileProvider)
         if (initStatisticSender != null)
           serviceManager.replaceRegularServiceInstance(StatisticSender::class.java, initStatisticSender)
-        if (initExperimentStatus != null)
-          serviceManager.replaceRegularServiceInstance(ExperimentStatus::class.java, initExperimentStatus)
         System.setProperty(SEND_LOGS_KEY, initSendLogsValue.toString())
         System.setProperty(COLLECT_LOGS_HEADLESS_KEY, initCollectLogsInHeadlessValue.toString())
         LOG.runAndLogException { unregisterFeatureProviders() }
@@ -114,14 +92,9 @@ class SetupStatsCollectorStep(private val experimentGroup: Int?,
   private fun registerFeatureProvidersIfNeeded() {
     contextFeatureProvider = CCEContextFeatureProvider(logLocationAndTextItem)
     ContextFeatureProvider.EP_NAME.addExplicitExtension(Language.ANY, contextFeatureProvider)
-    if (!logLocationAndTextItem) return
-    elementFeatureProvider = CCEElementFeatureProvider()
-    ElementFeatureProvider.EP_NAME.addExplicitExtension(Language.ANY, elementFeatureProvider)
   }
 
   private fun unregisterFeatureProviders() {
     ContextFeatureProvider.EP_NAME.removeExplicitExtension(Language.ANY, contextFeatureProvider)
-    if (!logLocationAndTextItem) return
-    ElementFeatureProvider.EP_NAME.removeExplicitExtension(Language.ANY, elementFeatureProvider)
   }
 }

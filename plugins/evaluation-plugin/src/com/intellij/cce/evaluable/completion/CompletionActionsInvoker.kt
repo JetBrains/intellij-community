@@ -16,7 +16,6 @@ import com.intellij.cce.evaluable.common.readActionInSmartMode
 import com.intellij.cce.interpreter.ActionsInvoker
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.actions.MLCompletionFeaturesUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 
@@ -73,11 +72,6 @@ class CompletionActionsInvoker(
       return@readActionInSmartMode createSession(offset, expectedText, properties, lookup, sessionId)
     }
 
-    val features = MLCompletionFeaturesUtil.getCommonFeatures(activeLookup)
-    val resultFeatures = Features(
-      CommonFeatures(features.context, features.user, features.session),
-      activeLookup.items.map { MLCompletionFeaturesUtil.getElementFeatures(activeLookup, it).features }
-    )
     val suggestions = activeLookup.items.map { it.asSuggestion() }
 
     val success = finishSession(expectedText, prefix, editor)
@@ -89,7 +83,7 @@ class CompletionActionsInvoker(
       prefix = prefix,
       suggestions = suggestions,
       latency = latency,
-      features = resultFeatures,
+      features = Features.EMPTY,
       isNew = isNew,
       startOffset = prefix.length,
       comparator = this::comparator

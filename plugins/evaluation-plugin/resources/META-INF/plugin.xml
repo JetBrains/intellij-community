@@ -43,7 +43,6 @@
     <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.kotlinx.io"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <plugin id="com.intellij.completion.ml.ranking"/>
     <plugin id="com.intellij.stats.completion"/>
     <module name="intellij.libraries.commons.text"/>
     <module name="intellij.platform.warmup"/>
@@ -55,7 +54,6 @@
 
     <registryKey key="evaluation.plugin.disable.sdk.check" defaultValue="false"
                  description="Disables check that project sdk configured properly" restartRequired="false"/>
-    <completion.ml.featuresOverride language="" implementationClass="com.intellij.cce.interpreter.DisableUserDependentFeatures"/>
   </extensions>
 
   <extensionPoints>
