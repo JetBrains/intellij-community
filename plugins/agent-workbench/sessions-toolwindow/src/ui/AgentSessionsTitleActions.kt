@@ -24,6 +24,8 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 private const val MAX_POPUP_ROW_TITLE_LENGTH: Int = 60
+private val ACTIVITY_COUNTER_LOG = logger<AgentSessionsActivityCounterAction>()
 
 internal fun createAgentSessionsTitleActions(): List<AnAction> {
   return listOf(
@@ -189,8 +192,12 @@ internal class AgentSessionsActivityCounterAction(
   override fun update(e: AnActionEvent) {
     val presentation = e.presentation
     val project = projectProvider(e)
-    if (!visibilityProvider(project)) {
+    val visible = visibilityProvider(project)
+    if (!visible) {
       presentation.setEnabledAndVisible(false)
+      ACTIVITY_COUNTER_LOG.debug {
+        "Activity counter update bucket=$bucket project=${project?.name} place=${e.place} visible=false"
+      }
       return
     }
     val rows = rowsFor(project)
@@ -198,6 +205,10 @@ internal class AgentSessionsActivityCounterAction(
     presentation.description = AgentSessionsBundle.message(bucket.tooltipKey)
     presentation.setEnabledAndVisible(true)
     presentation.isEnabled = rows.isNotEmpty()
+    ACTIVITY_COUNTER_LOG.debug {
+      "Activity counter update bucket=$bucket project=${project?.name} place=${e.place} " +
+      "rows=${rows.size} text=${presentation.text} enabled=${presentation.isEnabled} visible=${presentation.isVisible}"
+    }
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {

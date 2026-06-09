@@ -180,6 +180,14 @@ internal class AgentSessionRefreshCoordinator(
       update.state
     }
 
+    LOG.debug {
+      "Applied ${provider.value} source activity hints " +
+      "scopedPaths=${normalizedScopedPaths.debugSizeText()} " +
+      "activityHints=${activityHintsByThreadId.size} " +
+      "summaryHints=${summaryActivityHintsByThreadId.size} " +
+      "updates=${activityUpdates.size}"
+    }
+
     if (activityUpdates.isEmpty()) {
       return
     }
@@ -663,6 +671,11 @@ private fun applyThreadActivityHintsForPath(
     if (hintedActivity == thread.activity && thread.summaryActivity == hintedSummaryActivity) {
       return@map thread
     }
+    LOG.debug {
+      "Applying ${provider.value} activity hint path=$path threadId=${thread.id} " +
+      "activity=${thread.activity}->$hintedActivity " +
+      "summaryActivity=${thread.summaryActivity}->$hintedSummaryActivity"
+    }
     activityUpdates += AgentSessionThreadActivityPresentationUpdate(
       path = path,
       threadId = thread.id,
@@ -691,6 +704,10 @@ private fun resolveHintedSummaryActivity(
     thread.summaryActivity == null -> null
     else -> hintedActivity
   }
+}
+
+private fun Set<String>?.debugSizeText(): String {
+  return this?.size?.toString() ?: "all"
 }
 
 private fun collectVfsRefreshCandidatePaths(

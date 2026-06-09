@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 private val LOG = logger<AgentSessionsActivityService>()
+private const val MAX_ACTIVITY_DEBUG_ROWS: Int = 20
 
 @Service(Service.Level.PROJECT)
 internal class AgentSessionsActivityService(
@@ -59,18 +60,25 @@ internal class AgentSessionsActivityService(
     val nextMainToolbarSummary = mainToolbarActivityState.update(nextSummary, isLoadedState)
     val rawCounts = summary.countsDebugText()
     val freshCounts = nextSummary.countsDebugText()
-    if (rawCounts != freshCounts) {
-      LOG.debug { "Filtered stale Agent activity rows raw=$rawCounts fresh=$freshCounts" }
-    }
     val previousChromeSummary = _chromeSummary.value
     val previousMainToolbarSummary = _mainToolbarSummary.value
-    if (previousChromeSummary != nextSummary || previousMainToolbarSummary != nextMainToolbarSummary) {
+    val chromeChanged = previousChromeSummary != nextSummary
+    val mainToolbarChanged = previousMainToolbarSummary != nextMainToolbarSummary
+    if (summary.hasActivityRows() || nextSummary.hasActivityRows() || nextMainToolbarSummary.hasActivityRows() || chromeChanged || mainToolbarChanged) {
       LOG.debug {
-        "Updating Agent activity summaries loaded=$isLoadedState " +
+        "Agent activity summary tick loaded=$isLoadedState " +
         "raw=$rawCounts " +
-        "chrome=${previousChromeSummary.countsDebugText()}->$freshCounts " +
-        "mainToolbar=${previousMainToolbarSummary.countsDebugText()}->${nextMainToolbarSummary.countsDebugText()}"
+        "fresh=$freshCounts " +
+        "chrome=${previousChromeSummary.countsDebugText()}->$freshCounts changed=$chromeChanged " +
+        "mainToolbar=${previousMainToolbarSummary.countsDebugText()}->${nextMainToolbarSummary.countsDebugText()} changed=$mainToolbarChanged" +
+        activityRowsDebugSuffix(
+          rawSummary = summary,
+          freshSummary = nextSummary,
+          mainToolbarSummary = nextMainToolbarSummary,
+        )
       }
+    }
+    if (chromeChanged || mainToolbarChanged) {
       _chromeSummary.value = nextSummary
       _mainToolbarSummary.value = nextMainToolbarSummary
       ActivityTracker.getInstance().inc()
@@ -88,6 +96,34 @@ internal class AgentSessionsActivityService(
 
 private fun AgentSessionsActivitySummary.countsDebugText(): String {
   return "attention=${attentionRows.size},running=${runningRows.size},done=${doneRows.size}"
+}
+
+private fun AgentSessionsActivitySummary.hasActivityRows(): Boolean {
+  return attentionRows.isNotEmpty() || runningRows.isNotEmpty() || doneRows.isNotEmpty()
+}
+
+private fun activityRowsDebugSuffix(
+  rawSummary: AgentSessionsActivitySummary,
+  freshSummary: AgentSessionsActivitySummary,
+  mainToolbarSummary: AgentSessionsActivitySummary,
+): String {
+  if (rawSummary.countsDebugText() == freshSummary.countsDebugText() &&
+      freshSummary.countsDebugText() == mainToolbarSummary.countsDebugText()) {
+    return ""
+  }
+  return " rawRows=${rawSummary.rowsDebugText()}" +
+         " freshRows=${freshSummary.rowsDebugText()}" +
+         " mainToolbarRows=${mainToolbarSummary.rowsDebugText()}"
+}
+
+private fun AgentSessionsActivitySummary.rowsDebugText(): String {
+  val rows = bucketedRows()
+  val postfix = if (rows.size > MAX_ACTIVITY_DEBUG_ROWS) ",...+${rows.size - MAX_ACTIVITY_DEBUG_ROWS}]" else "]"
+  return rows.take(MAX_ACTIVITY_DEBUG_ROWS).joinToString(prefix = "[", postfix = postfix) { bucketedRow ->
+    val row = bucketedRow.row
+    "${bucketedRow.bucket}:${row.path}:${row.thread.provider.value}:${row.thread.id}:" +
+    "activity=${row.thread.activity}:summaryActivity=${row.thread.summaryActivity}:updatedAt=${row.thread.updatedAt}"
+  }
 }
 
 internal class AgentSessionsMainToolbarActivityState {
