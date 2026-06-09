@@ -5412,11 +5412,13 @@ com.intellij.platform.ide.productMode.IdeProductMode
 - s:getInstance():com.intellij.platform.ide.productMode.IdeProductMode
 - s:isBackend():Z
 - s:isFrontend():Z
+- s:isLight():Z
 - s:isMonolith():Z
 f:com.intellij.platform.ide.productMode.IdeProductMode$Companion
 - f:getInstance():com.intellij.platform.ide.productMode.IdeProductMode
 - f:isBackend():Z
 - f:isFrontend():Z
+- f:isLight():Z
 - f:isMonolith():Z
 a:com.intellij.pom.NavigatableAdapter
 - com.intellij.pom.Navigatable
