@@ -16,7 +16,6 @@ private val communityPluginModelBuilderOptions = SourceCodeBasedPluginModelBuild
     "intellij.android.device-explorer",
   ),
   prefixesOfPathsIncludedFromLibrariesViaXiInclude = listOf(
-    "META-INF/analysis-api/analysis-api-fe10.xml",
     "META-INF/analysis-api/analysis-api-fir.xml",
     "META-INF/wizard-template-impl.xml",
     "META-INF/tips-",
@@ -24,13 +23,7 @@ private val communityPluginModelBuilderOptions = SourceCodeBasedPluginModelBuild
   additionalPatternsOfDirectoriesContainingIncludedXmlFiles = listOf(
     "org/jetbrains/android/dom",
     "com/android/tools/idea/ui/resourcemanager/META-INF",
-  ),
-  pluginVariantsWithDynamicIncludes = listOf(
-    PluginVariantWithDynamicIncludes(
-      mainModuleName = "kotlin.plugin",
-      systemPropertyName = "idea.kotlin.plugin.use.k1.obsolete",
-      systemPropertyValue = "false",
-    ),
+    "com/android/tools/idea/ui/resourcemanager/META-INF",
   ),
 )
 
@@ -47,7 +40,6 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
     "intellij.platform.syntax.psi.xml",
     "intellij.vcs.git.xml",
     "kotlin.plugin.k2.xml",
-    "kotlin.plugin.k1.xml",
   ),
   referencedPluginIdsOfExternalPlugins = setOf(
     // These modules are defined in the Ultimate part.
