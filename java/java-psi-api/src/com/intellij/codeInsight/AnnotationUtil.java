@@ -515,12 +515,27 @@ public class AnnotationUtil {
     return null;
   }
 
+  /**
+   * @param owner owner to find annotations for
+   * @param inHierarchy if true, the annotations from super-classes, super-methods and the corresponding parameters of super-methods will be returned as well.
+   * @param visited set of already visited owners; use null for fresh run
+   * @return explicit, external, and inferred annotations for a given owner, optionally annotations from the super-elements.
+   * External type annotations for variable type or method return type are not returned.
+   */
   public static PsiAnnotation @NotNull [] getAllAnnotations(@NotNull PsiModifierListOwner owner,
                                                             boolean inHierarchy,
                                                             @Nullable Set<? super PsiModifierListOwner> visited) {
     return getAllAnnotations(owner, inHierarchy, visited, true);
   }
 
+  /**
+   * @param owner owner to find annotations for
+   * @param inHierarchy if true, the annotations from super-classes, super-methods and the corresponding parameters of super-methods will be returned as well.
+   * @param visited set of already visited owners; use null for fresh run
+   * @param withInferred if true, inferred annotations will be returned.
+   * @return explicit and external annotations for a given owner, optionally including inferred annotations and annotations from the super-elements.
+   * External type annotations for variable type or method return type are not returned.
+   */
   public static PsiAnnotation @NotNull [] getAllAnnotations(@NotNull PsiModifierListOwner owner,
                                                             boolean inHierarchy,
                                                             @Nullable Set<? super PsiModifierListOwner> visited, boolean withInferred) {
