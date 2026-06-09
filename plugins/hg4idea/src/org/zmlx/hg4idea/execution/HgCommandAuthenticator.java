@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.vcsUtil.AuthDialog;
+import com.intellij.util.net.AuthenticationDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
@@ -86,7 +86,6 @@ class HgCommandAuthenticator {
 
     @Override
     public void run() {
-
       // find if we've already been here
       final HgVcs vcs = HgVcs.getInstance(myProject);
       if (vcs == null) {
@@ -124,12 +123,13 @@ class HgCommandAuthenticator {
         return;
       }
 
-      final AuthDialog dialog = new AuthDialog(myProject, HgBundle.message("hg4idea.dialog.login.password.required"),
-                                               HgBundle.message("hg4idea.dialog.login.description", myURL),
-                                               login, password, true);
+      var rememberByDefault = PasswordSafe.getInstance().isMemoryOnly() ? null : true;
+      var dialog = new AuthenticationDialog(
+        myProject, HgBundle.message("hg4idea.dialog.login.password.required"), HgBundle.message("hg4idea.dialog.login.description", myURL), login, password, rememberByDefault
+      );
       if (dialog.showAndGet()) {
         ok = true;
-        Credentials credentials = new Credentials(dialog.getUsername(), dialog.getPassword());
+        var credentials = new Credentials(dialog.getLogin(), dialog.getPassword());
         myCredentials = credentials;
         PasswordSafe.getInstance().set(createCredentialAttributes(url), credentials, !dialog.isRememberPassword());
         hgGlobalSettings.addRememberedUrl(url, credentials.getUserName());

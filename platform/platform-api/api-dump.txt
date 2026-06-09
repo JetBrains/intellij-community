@@ -10580,16 +10580,10 @@ c:com.intellij.util.config.ValueProperty
 - copy(java.lang.Object):java.lang.Object
 - getDefault(com.intellij.util.config.AbstractProperty$AbstractPropertyContainer):java.lang.Object
 - getName():java.lang.String
-c:com.intellij.util.net.AuthenticationDialog
+f:com.intellij.util.net.AuthenticationDialog
 - com.intellij.openapi.ui.DialogWrapper
-- <init>(java.awt.Component,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
-- p:createCenterPanel():javax.swing.JComponent
-- getPanel():com.intellij.util.net.AuthenticationPanel
-- getPreferredFocusedComponent():javax.swing.JComponent
-c:com.intellij.util.net.AuthenticationPanel
-- javax.swing.JPanel
-- $$$getRootComponent$$$():javax.swing.JComponent
-- <init>(java.lang.String,java.lang.String,java.lang.String,java.lang.Boolean):V
+- <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.Boolean):V
+- <init>(java.awt.Component,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.Boolean):V
 - getLogin():java.lang.String
 - getPassword():C[]
 - getPreferredFocusedComponent():javax.swing.JComponent

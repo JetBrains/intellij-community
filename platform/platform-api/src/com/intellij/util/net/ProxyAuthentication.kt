@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
 import com.intellij.credentialStore.Credentials
@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.util.WaitForProgressToShow
-import com.intellij.util.net.ProxyAuthentication.Companion.getInstance
 import com.intellij.util.net.internal.asDisabledProxyAuthPromptsManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
@@ -156,11 +155,10 @@ class PlatformProxyAuthentication(
       )
       dialog.show()
       if (dialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
-        val panel = dialog.panel
-        val credentials = Credentials(panel.login, panel.password)
-        credentialStore.setCredentials(host, port, credentials, panel.isRememberPassword)
+        val credentials = Credentials(dialog.login, dialog.password)
+        credentialStore.setCredentials(host, port, credentials, dialog.isRememberPassword)
         @Suppress("DEPRECATION", "removal") // fix after migration to PasswordSafe
-        HttpConfigurable.getInstance().KEEP_PROXY_PASSWORD = panel.isRememberPassword
+        HttpConfigurable.getInstance().KEEP_PROXY_PASSWORD = dialog.isRememberPassword
         result = credentials
       }
       else {
