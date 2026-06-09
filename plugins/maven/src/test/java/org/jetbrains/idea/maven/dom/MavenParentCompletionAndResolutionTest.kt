@@ -49,7 +49,10 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenParentCompletionAndResolutionTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion, modelVersion = modelVersion,
+    withIndices = true,
+  )
 
   @Test
   fun testVariants() = maven.runBlockingNoSync {

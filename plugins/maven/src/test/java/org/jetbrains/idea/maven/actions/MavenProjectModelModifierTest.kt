@@ -40,7 +40,10 @@ import java.util.regex.Pattern
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenProjectModelModifierTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion, modelVersion = modelVersion,
+    withIndices = true,
+  )
 
   @Test
   fun testAddExternalLibraryDependency() = runBlocking {

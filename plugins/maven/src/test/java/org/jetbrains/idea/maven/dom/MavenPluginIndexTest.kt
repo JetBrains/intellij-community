@@ -24,8 +24,11 @@ import java.util.stream.Collectors
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenPluginIndexTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, skipPluginResolution = false,
-                                       mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion, modelVersion = modelVersion,
+    skipPluginResolution = false,
+    withIndices = true,
+  )
 
   @Test
   fun testDefaultPluginsDownloadedAndIndexed() = runBlocking {

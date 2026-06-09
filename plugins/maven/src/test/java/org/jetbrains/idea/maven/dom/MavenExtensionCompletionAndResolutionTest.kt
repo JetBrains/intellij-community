@@ -27,8 +27,12 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenExtensionCompletionAndResolutionTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, initialPom = MavenDomTestFixture.DEFAULT_POM, skipPluginResolution = false, localRepoDir = "plugins", extraRepoDirs = emptyList(),
-                                       mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion, modelVersion = modelVersion,
+    initialPom = MavenDomTestFixture.DEFAULT_POM,
+    skipPluginResolution = false,
+    withIndices = true, localRepoDir = "plugins", extraRepoDirs = emptyList(),
+  )
 
   @Test
   fun testGroupIdCompletion() = runBlocking {

@@ -37,7 +37,12 @@ import org.junit.jupiter.params.provider.ArgumentsSource
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenModelValidationTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, initialPom = MavenDomTestFixture.DEFAULT_POM, skipPluginResolution = false, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion, modelVersion = modelVersion,
+    initialPom = MavenDomTestFixture.DEFAULT_POM,
+    skipPluginResolution = false,
+    withIndices = true,
+  )
 
   @Test
   fun testCompletionRelativePath() = runBlocking {

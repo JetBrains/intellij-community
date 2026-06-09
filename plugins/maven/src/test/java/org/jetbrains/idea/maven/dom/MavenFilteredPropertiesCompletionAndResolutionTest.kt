@@ -48,8 +48,11 @@ import java.util.concurrent.atomic.AtomicReference
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenFilteredPropertiesCompletionAndResolutionTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, skipPluginResolution = false,
-                                       mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion, modelVersion = modelVersion,
+    skipPluginResolution = false,
+    withIndices = true,
+  )
 
   @Test
   fun testBasic() = runBlocking {

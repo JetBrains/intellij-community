@@ -54,7 +54,11 @@ import java.io.IOException
 @ArgumentsSource(MavenVersionArguments::class)
 class MavenDependencyCompletionAndResolutionTest(mavenVersion: String, modelVersion: String) {
 
-  private val maven by mavenDomFixture(withIndices = true, initialPom = MavenDomTestFixture.DEFAULT_POM, mavenVersion = mavenVersion, modelVersion = modelVersion)
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion, modelVersion = modelVersion,
+    initialPom = MavenDomTestFixture.DEFAULT_POM,
+    withIndices = true,
+  )
 
   @Test
   fun testGroupIdCompletion() = runBlocking {
