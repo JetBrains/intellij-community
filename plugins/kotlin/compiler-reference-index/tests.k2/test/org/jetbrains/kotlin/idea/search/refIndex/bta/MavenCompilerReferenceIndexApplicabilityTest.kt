@@ -5,18 +5,9 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorageProvider
-import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.junit.Test
 
-class MavenCompilerReferenceIndexApplicabilityTest : MavenMultiVersionImportingTestCase(), ExpectedPluginModeProvider {
-    override fun setUp() {
-        setUpWithKotlinPlugin { super.setUp() }
-    }
-
-    override val pluginMode: KotlinPluginMode
-        get() = KotlinPluginMode.K2
+class MavenCompilerReferenceIndexApplicabilityTest : MavenMultiVersionImportingTestCase() {
 
     @Test
     fun `test BTA CRI provider is not applicable when Maven CRI generation property is disabled`() {
