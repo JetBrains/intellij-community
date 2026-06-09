@@ -291,6 +291,10 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
   }
 
   override fun close() {
+    val currentSegment = directoryHandle.load()
+    if (currentSegment != Windows.NULL) {
+      api.CloseHandle(currentSegment)
+    }
     api.close()
   }
 }
