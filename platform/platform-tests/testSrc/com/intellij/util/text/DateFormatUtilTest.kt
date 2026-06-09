@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -7,12 +7,15 @@ import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.io.IoTestUtil.assumeMacOS
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.rules.TempDirectory
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.time.Duration
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -20,15 +23,22 @@ import java.time.temporal.ChronoUnit
 
 class DateFormatUtilTest {
   @JvmField @Rule val appRule = ApplicationRule()
+  @JvmField @Rule val tempDir = TempDirectory()
 
   @Before fun setUp() {
     Clock.reset()
   }
 
-  @Test fun system() {
+  @Test fun macOsSystem() {
     assumeMacOS()
     val testDate = LocalDateTime.of(2019, 5, 22, 13, 45).toMillis()
-    val helper = Path.of(DateFormatUtilTest::class.java.getResource("DateFormatUtilTest_macOS")!!.toURI())
+    val url = DateFormatUtilTest::class.java.getResource("DateFormatUtilTest_macOS")!!
+    val helper = when (url.protocol) {
+      "jar" -> tempDir.newFileNio("DateFormatUtilTest_macOS").apply {
+        url.openStream().use { Files.copy(it, this, StandardCopyOption.REPLACE_EXISTING) }
+      }
+      else -> Path.of(url.toURI())
+    }
     NioFiles.setExecutable(helper)
     val expected = ExecUtil.execAndGetOutput(GeneralCommandLine(helper.toString(), "${testDate / 1000}")).stdoutLines[0]
     assertEquals(expected, DateFormatUtil.formatDateTime(testDate))
@@ -46,6 +56,7 @@ class DateFormatUtilTest {
     assertPrettyDate(DateFormatUtil.formatDate(d2.toMillis()), d2)
   }
 
+  @Suppress("GrazieStyle")
   @Test fun prettyDateTime() {
     val now = LocalDateTime.now()
     assertPrettyDateTime("Moments ago", now.minus(Duration.ofSeconds(1)))
@@ -76,8 +87,7 @@ class DateFormatUtilTest {
     assertEquals("Once in a few moments", DateFormatUtil.formatFrequency(1000L))
   }
 
-  @Test
-  fun overriding() {
+  @Test fun overriding() {
     DateTimeFormatManager.getInstance().apply {
       isOverrideSystemDateFormat = true; dateFormatPattern = "dd|MM|YYYY"; isUse24HourTime = true; resetFormats()
     }
