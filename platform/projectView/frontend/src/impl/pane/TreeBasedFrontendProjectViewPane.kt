@@ -38,6 +38,7 @@ import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
+import com.intellij.platform.projectView.pane.ProjectViewClearStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
@@ -194,6 +195,9 @@ internal abstract class TreeBasedFrontendProjectViewPane(
 
   override fun applyStateChange(event: ProjectViewPaneStateEvent) {
     when (event) {
+      is ProjectViewClearStateEvent -> {
+        treeModel.root = null
+      }
       is ProjectViewChildrenLoaded -> {
         val parent = getNodeById(event.parentId) ?: return
         if (parent.id == SUPER_ROOT_ID) {

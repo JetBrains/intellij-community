@@ -1,12 +1,16 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("DestructuringDeclaration")
+
 package com.intellij.platform.projectView.backend.pane
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.projectView.actions.ProjectViewActionState
 import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
 import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
 import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
+import com.intellij.platform.projectView.pane.ProjectViewClearStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
@@ -25,6 +29,9 @@ fun projectViewPaneStateBuilder() : ProjectViewPaneStateBuilder = ProjectViewPan
 interface ProjectViewPaneStateBuilder {
   fun getStateFlow(): Flow<ProjectViewPaneStateEvent>
   suspend fun updateState(update: ProjectViewPaneStateEvent)
+  suspend fun clear() {
+    updateState(ProjectViewClearStateEvent)
+  }
 }
 
 private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
@@ -36,6 +43,12 @@ private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
     override suspend fun applyUpdate(update: ProjectViewPaneStateEvent): ProjectViewPaneStateEvent? {
       LOG.debug("Handling update: $update")
       when (update) {
+        is ProjectViewClearStateEvent -> {
+          actionState = null
+          nodeById.clear()
+          nodeById[SUPER_ROOT_ID] = superRoot
+          superRoot.children = null
+        }
         is ProjectViewChildrenLoaded -> {
           val parent = nodeById[update.parentId] ?: return null
           val children = update.children.mapTo(mutableListOf()) { Node(it) }
@@ -71,10 +84,14 @@ private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
         }
       }
       LOG.debug("Handled update: $update")
+      if (LOG.isTraceEnabled) {
+        dumpState()
+      }
       return update
     }
 
     override suspend fun takeSnapshot(): List<ProjectViewPaneStateEvent> {
+      LOG.debug("Taking snapshot")
       val result = ArrayList<ProjectViewPaneStateEvent>(nodeById.size)
       addActionStates(result)
       addTreeSnapshot(result)
@@ -98,6 +115,26 @@ private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
         for (child in children) {
           bfsQueue.addLast(child.model.id)
         }
+      }
+    }
+    
+    private fun dumpState() {
+      val state = buildString { 
+        dumpState(id = SUPER_ROOT_ID, level = 0)
+      }
+      LOG.trace { "The current state is:\n$state" }
+    }
+    
+    private fun StringBuilder.dumpState(id: Long, level: Int) {
+      val node = nodeById.getValue(id)
+      append(" ".repeat(level))
+      append("[").append(id).append("] ")
+      append(node.model.presentation.mainText)
+      append("\n")
+      val children = node.children
+      if (children.isNullOrEmpty()) return
+      for (child in children) {
+        dumpState(child.model.id, level + 1)
       }
     }
   }

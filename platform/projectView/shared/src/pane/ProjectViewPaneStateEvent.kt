@@ -26,6 +26,10 @@ sealed class ProjectViewPaneStateSerializableEvent : ProjectViewPaneStateEvent, 
 
 @ApiStatus.Internal
 @Serializable
+data object ProjectViewClearStateEvent : ProjectViewPaneStateSerializableEvent()
+
+@ApiStatus.Internal
+@Serializable
 data class ProjectViewActionStateEvent(
   val actionState: ProjectViewActionState,
 ) : ProjectViewPaneStateSerializableEvent()

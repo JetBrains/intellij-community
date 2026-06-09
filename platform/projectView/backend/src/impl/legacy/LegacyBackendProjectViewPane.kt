@@ -1,5 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalAtomicApi::class)
+@file:Suppress("DestructuringDeclaration")
 
 package com.intellij.platform.projectView.backend.impl.legacy
 
@@ -42,7 +43,7 @@ import com.intellij.platform.projectView.actions.legacyProjectViewOption
 import com.intellij.platform.projectView.actions.toNestingRuleState
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPane
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider
-import com.intellij.platform.projectView.backend.pane.projectViewPaneStateBuilder
+import com.intellij.platform.projectView.backend.pane.ProjectViewPaneStateBuilder
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
 import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
 import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
@@ -84,6 +85,7 @@ import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.ui.treeStructure.TreeNodePresentationImpl
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.tree.TreeUtil
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -91,7 +93,6 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
@@ -183,10 +184,11 @@ private class LegacyBackendProjectViewPane(
     )
   }
 
-  override suspend fun manage() {
+  override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
     coroutineScope {
       launch(CoroutineName("Manage pane $id")) {
-        legacyPaneManager.managePane(id)
+        legacyPaneManager.subId = subId
+        legacyPaneManager.manageState(id, builder)
       }
       launch(CoroutineName("Manage request channel $id")) {
         for (request in requestChannel) {
@@ -198,11 +200,6 @@ private class LegacyBackendProjectViewPane(
 
   override fun getRequestChannel(): SendChannel<ProjectViewPaneRequest> {
     return requestChannel
-  }
-
-  override suspend fun getPaneStateFlow(): Flow<ProjectViewPaneStateEvent> {
-    legacyPaneManager.subId = subId
-    return legacyPaneManager.getStateFlow()
   }
 
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
@@ -316,10 +313,8 @@ private class AbstractProjectViewPaneStateManager(
   
   private val requestChannel = Channel<ProjectViewPaneRequest>(capacity = Channel.BUFFERED)
 
-  private val modelUpdateChannel = Channel<ModelUpdateRequest>(capacity = Channel.UNLIMITED)
+  private var modelUpdateChannel: Channel<ModelUpdateRequest>? = null
 
-  private val stateBuilder = projectViewPaneStateBuilder()
-  
   private var nextNodeId = SUPER_ROOT_ID
   
   private val nodeById = hashMapOf<Long, LegacyProjectViewNode>()
@@ -330,20 +325,16 @@ private class AbstractProjectViewPaneStateManager(
   
   private lateinit var treeModel: AsyncTreeModel
   
+  private val initDeferred = CompletableDeferred<Unit>()
+  
   init {
     coroutineScope.launch(CoroutineName("AbstractProjectViewPaneStateManager")) {
       activePanes.first { it.isNotEmpty() }
-      val manageStateJob = launch(CoroutineName("manageState")) {
-        manageState()
-      }
-      activePanes.first { it.isEmpty() }
-      manageStateJob.cancel()
+      manageLegacyBackend()
     }
   }
 
   fun getRequestChannel(): SendChannel<ProjectViewPaneRequest> = requestChannel
-  
-  fun getStateFlow(): Flow<ProjectViewPaneStateEvent> = stateBuilder.getStateFlow()
 
   suspend fun loadNode(parentId: Long, modelChild: Any): LegacyProjectViewNode? {
     return withContext(Dispatchers.UI) { // our data structures are EDT-only and updates happen there too
@@ -368,21 +359,68 @@ private class AbstractProjectViewPaneStateManager(
     }
   }
 
-  suspend fun managePane(paneId: ProjectViewPaneId) {
+  suspend fun manageState(paneId: ProjectViewPaneId, builder: ProjectViewPaneStateBuilder) {
     activePanes.update { it + paneId }
     try {
-      awaitCancellation()
+      initDeferred.await()
+      withContext(Dispatchers.UI) {
+        val currentSubId = subId
+        LOG.debug { "Updating state for pane id = $id, subId = $currentSubId" }
+        val modelUpdateChannel = Channel<ModelUpdateRequest>(capacity = Channel.UNLIMITED)
+        this@AbstractProjectViewPaneStateManager.modelUpdateChannel = modelUpdateChannel
+        sendCurrentState()
+        try {
+          for (request in modelUpdateChannel) {
+            val event = buildStateUpdateEvent(request)
+            LOG.trace { "Applying state update for pane $id: $event" }
+            builder.updateState(event)
+            updateEpochFlow.update { it + 1 }
+          }
+        }
+        finally {
+          this@AbstractProjectViewPaneStateManager.modelUpdateChannel = null
+          LOG.debug { "Done updating state for pane id = $id, subId = $currentSubId" }
+        }
+      }
     }
     finally {
       activePanes.update { it - paneId }
     }
   }
 
-  private suspend fun manageState() {
+  private fun sendCurrentState() {
+    updateActionStates()
+    sendCurrentTreeState()
+  }
+
+  private fun sendCurrentTreeState() {
+    val modelRoot = treeModel.root ?: return
+    val root = nodeByModelNode[modelRoot]
+    checkNotNull(root) { "The root exists, but not registered in nodeByModelNode" }
+    handleChildrenLoaded(SUPER_ROOT_ID, listOf(root))
+    sendChildrenRecursivelyIfLoaded(root.id)
+  }
+
+  private fun sendChildrenRecursivelyIfLoaded(id: Long) {
+    val node = nodeById[id] ?: return
+    if (node.childrenState != ChildrenState.LOADED) return
+    val children = (0 until treeModel.getChildCount(node.modelNode)).asSequence().map { i -> 
+      treeModel.getChild(node.modelNode, i)
+    }.mapNotNull { modelChild ->
+      nodeByModelNode[modelChild]
+    }.toList()
+    handleChildrenLoaded(id, children)
+    for (child in children) {
+      sendChildrenRecursivelyIfLoaded(child.id)
+    }
+  }
+
+  private suspend fun manageLegacyBackend() {
     coroutineScope {
       withContext(Dispatchers.UI) {
         var treeModelListener: MyTreeModelListener? = null
         try {
+          LOG.debug { "Managing the legacy PV pane $id" }
           launch(CoroutineName("subId updates")) {
             subIdFlow.collect { subId ->
               legacyPane.subId = subId
@@ -393,15 +431,6 @@ private class AbstractProjectViewPaneStateManager(
           treeModelListener = MyTreeModelListener()
           treeModel.addTreeModelListener(treeModelListener)
           loadInitialState()
-          launch(CoroutineName("tree model events")) {
-            LOG.debug { "Updating state for pane $id" }
-            for (request in modelUpdateChannel) {
-              val event = buildStateUpdateEvent(request)
-              LOG.trace { "Applying state update for pane $id: $event" }
-              stateBuilder.updateState(event)
-              updateEpochFlow.update { it + 1 }
-            }
-          }
           launch(CoroutineName("requests from the frontend")) {
             LOG.debug { "Processing requests from the frontend for pane $id" }
             for (request in requestChannel) {
@@ -416,6 +445,7 @@ private class AbstractProjectViewPaneStateManager(
               }
             }
           }
+          initDeferred.complete(Unit)
           awaitCancellation()
         }
         finally {
@@ -423,6 +453,7 @@ private class AbstractProjectViewPaneStateManager(
             treeModel.removeTreeModelListener(treeModelListener)
           }
           Disposer.dispose(legacyPane)
+          LOG.debug { "Disposed the legacy PV pane $id" }
         }
       }
     }
@@ -577,8 +608,8 @@ private class AbstractProjectViewPaneStateManager(
   }
 
   private fun handleModelUpdate(update: ModelUpdateRequest) {
-    val result = modelUpdateChannel.trySend(update)
-    check(result.isSuccess || result.isClosed)
+    val result = modelUpdateChannel?.trySend(update)
+    check(result == null || result.isSuccess || result.isClosed)
   }
 
   private fun updateNodeValue(modelNode: Any) {
@@ -628,6 +659,13 @@ private class AbstractProjectViewPaneStateManager(
   
   private fun setChildren(parentId: Long, modelNodes: List<Any>) {
     val newNodes = modelNodes.map { createNewNode(parentId, it) }
+    handleChildrenLoaded(parentId, newNodes)
+  }
+
+  private fun handleChildrenLoaded(
+    parentId: Long,
+    newNodes: List<LegacyProjectViewNode>,
+  ) {
     handleModelUpdate(ModelChildrenLoaded(parentId, newNodes.map { ModelChildDescriptor(it.id, it.modelNode) }))
   }
 

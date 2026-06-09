@@ -10,10 +10,8 @@ import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptor
 import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
-import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SelectInRequest
 import kotlinx.coroutines.channels.SendChannel
-import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 internal val BackendProjectViewPaneProviderEP = ExtensionPointName.create<BackendProjectViewPaneProvider>("com.intellij.project.view.pane.backend")
@@ -28,9 +26,7 @@ interface BackendProjectViewPane {
 
   suspend fun describe(builder: ProjectViewPaneDescriptorBuilder): ProjectViewPaneDescriptor
 
-  suspend fun manage()
-
-  suspend fun getPaneStateFlow(): Flow<ProjectViewPaneStateEvent>
+  suspend fun manageState(builder: ProjectViewPaneStateBuilder)
 
   fun getRequestChannel(): SendChannel<ProjectViewPaneRequest>
 

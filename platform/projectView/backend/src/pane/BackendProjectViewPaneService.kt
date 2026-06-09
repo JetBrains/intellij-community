@@ -1,4 +1,5 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(FlowPreview::class)
 package com.intellij.platform.projectView.backend.pane
 
 import com.intellij.openapi.components.Service
@@ -15,15 +16,27 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SelectInRequest
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalAtomicApi::class)
 @Service(Service.Level.PROJECT)
@@ -72,7 +85,7 @@ internal class BackendProjectViewPaneService(
   }
 
   suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent> {
-    return managersDeferred.await()[paneId]?.pane?.getPaneStateFlow() ?: emptyFlow()
+    return managersDeferred.await()[paneId]?.getPaneStateFlow() ?: emptyFlow()
   }
   
   fun getPane(paneId: ProjectViewPaneId): BackendProjectViewPane? {
@@ -105,7 +118,37 @@ private class BackendProjectViewPaneManager(val pane: BackendProjectViewPane, va
   val id: ProjectViewPaneId
     get() = descriptor.id
 
+  private val subscriberCount = MutableStateFlow(0)
+  private val stateBuilder = projectViewPaneStateBuilder()
+
   suspend fun manage() {
-    pane.manage()
+    coroutineScope {
+      subscriberCount.map { subscriberCount -> subscriberCount > 0 }
+        .distinctUntilChanged() // filter out activate / deactivate events
+        .debounce { isActive -> if (isActive) 0.seconds else 30.seconds }
+        .distinctUntilChanged() // filter out quick reconnects
+        .collectLatest { isActive ->
+          if (isActive) {
+            try {
+              pane.manageState(stateBuilder)
+            }
+            finally {
+              withContext(NonCancellable) {
+                stateBuilder.clear()
+              }
+            }
+          }
+        }
+    }
+  }
+
+  fun getPaneStateFlow(): Flow<ProjectViewPaneStateEvent> = flow {
+    subscriberCount.update { it + 1 }
+    try {
+      stateBuilder.getStateFlow().collect(this)
+    }
+    finally {
+      subscriberCount.update { it - 1 }
+    }
   }
 }
