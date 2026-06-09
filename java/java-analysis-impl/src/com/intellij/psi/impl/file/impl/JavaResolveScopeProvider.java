@@ -1,4 +1,4 @@
-// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
@@ -24,7 +23,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.ResolveScopeProvider;
 import com.intellij.psi.impl.search.JavaPlatformModuleSystemScope;
 import com.intellij.psi.impl.search.JavaVersionBasedScope;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.JavaMultiReleaseUtil;
 import com.intellij.testFramework.LightVirtualFile;
@@ -72,10 +70,6 @@ public final class JavaResolveScopeProvider extends ResolveScopeProvider {
         LanguageLevel level = LanguageLevelUtil.getEffectiveLanguageLevel(module);
         boolean includeTests = TestSourcesFilter.isTestSources(file, project);
         GlobalSearchScope baseScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module, includeTests);
-        if (includeTests && Registry.is("java.resolve.prefer.test.sources", false)) {
-          // Match javac: a same-FQN class in this module's test source root shadows the production one.
-          baseScope = new PreferTestSourcesScope(project, baseScope);
-        }
         baseScope = JavaPlatformModuleSystemScope.create(project, file, baseScope);
         return new JavaVersionBasedScope(project, baseScope, level);
       }
@@ -104,33 +98,5 @@ public final class JavaResolveScopeProvider extends ResolveScopeProvider {
       return new JavaVersionBasedScope(project, baseScope, level);
     }
     return null;
-  }
-
-  /**
-   * Ranks the current module's test sources above its production sources, so that a class with the
-   * same fully-qualified name in the test source root shadows the production one when resolving from
-   * test code (matching javac, which compiles test sources against test-then-main).
-   */
-  private static final class PreferTestSourcesScope extends DelegatingGlobalSearchScope {
-    private final Project myProject;
-
-    private PreferTestSourcesScope(@NotNull Project project, @NotNull GlobalSearchScope baseScope) {
-      super(project, baseScope);
-      myProject = project;
-    }
-
-    @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      boolean test1 = TestSourcesFilter.isTestSources(file1, myProject);
-      boolean test2 = TestSourcesFilter.isTestSources(file2, myProject);
-      // compare > 0 means "file1 is more preferable"; prefer the test-source file.
-      if (test1 != test2) return test1 ? 1 : -1;
-      return super.compare(file1, file2);
-    }
-
-    @Override
-    public String toString() {
-      return "JavaPreferTestSources, " + myBaseScope;
-    }
   }
 }
