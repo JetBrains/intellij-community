@@ -12,6 +12,7 @@ import com.intellij.gradle.toolingExtension.modelAction.GradleModelController.Gr
 import org.gradle.api.Action
 import org.gradle.tooling.BuildAction
 import org.gradle.tooling.BuildController
+import org.gradle.tooling.FetchModelResult
 import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -36,7 +37,9 @@ class GradleModelControllerImpl(
     if (!isResilientModelFetchApiUsed()) {
       return buildController.findModel(modelClass)
     }
-    return buildController.fetch(modelClass).getModel()
+    return buildController.fetch(modelClass)
+      .alsoSendModelFetchFailures()
+      .getModel()
   }
 
   private fun <Target : GradleModel, Model : Any> fetchModelOrNull(
@@ -57,7 +60,9 @@ class GradleModelControllerImpl(
     if (!isResilientModelFetchApiUsed()) {
       return buildController.findModel(target, modelClass)
     }
-    return buildController.fetch(target, modelClass).getModel()
+    return buildController.fetch(target, modelClass)
+      .alsoSendModelFetchFailures()
+      .getModel()
   }
 
   override fun <Target : GradleModel, Model : Any, Parameter : Any> fetchModelOrNull(
@@ -69,7 +74,9 @@ class GradleModelControllerImpl(
     if (!isResilientModelFetchApiUsed()) {
       return buildController.findModel(target, modelClass, modelParameterClass, modelParameterInitializer)
     }
-    return buildController.fetch(target, modelClass, modelParameterClass, modelParameterInitializer).getModel()
+    return buildController.fetch(target, modelClass, modelParameterClass, modelParameterInitializer)
+      .alsoSendModelFetchFailures()
+      .getModel()
   }
 
   override fun <Model : Any> fetchRequest(buildModels: Collection<GradleBuild>, modelClass: Class<Model>): GradleModelFetchRequest<Model> =
@@ -162,6 +169,11 @@ class GradleModelControllerImpl(
       return listOf(rootProject)
     }
     return buildModel.projects.filter { it.parent == null }
+  }
+
+  private fun <T : FetchModelResult<*>> T.alsoSendModelFetchFailures(): T = also { result ->
+    val failures = result.failures.takeIf { it.isNotEmpty() } ?: return@also
+    buildController.send(GradleModelFetchFailureState(failures.map { GradleModelFetchFailure(it) }))
   }
 
   private data class GradleModelFetchRequestImpl<Model : Any>(

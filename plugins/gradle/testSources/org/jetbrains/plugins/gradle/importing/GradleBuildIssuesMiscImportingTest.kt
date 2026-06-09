@@ -18,8 +18,9 @@ import org.jetbrains.plugins.gradle.testFramework.projectInfo.file
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.EnumSource
 import java.util.function.Consumer
 
 @TestApplication
@@ -38,21 +39,30 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
 
   private val buildView by buildViewFixture(projectFixture)
 
-  @Test
-  fun `test out of memory build failures`(): Unit = runBlocking {
+  @ParameterizedTest
+  @EnumSource(GradleDsl::class, names = ["GROOVY"])
+  fun `test out of memory build failures`(gradleDsl: GradleDsl): Unit = runBlocking {
 
-    val projectInfo = gradleProjectInfo(gradleVersion, gradleDsl = GradleDsl.GROOVY) {
+    val projectInfo = gradleProjectInfo(gradleVersion, gradleDsl = gradleDsl) {
       gradleWrapper()
       file("gradle.properties", """
         |org.gradle.jvmargs=-Xmx100m
       """.trimMargin())
       buildFile {
-        addPostfix("""
-          |def list = new ArrayList<byte[]>()
-          |while (true) {
-          |   list.add(new byte[1024 * 1024])
-          |}
-        """.trimMargin())
+        when (gradleDsl) {
+          GradleDsl.GROOVY -> addPostfix("""
+            |def list = new ArrayList<byte[]>()
+            |while (true) {
+            |   list.add(new byte[1024 * 1024])
+            |}
+          """.trimMargin())
+          GradleDsl.KOTLIN -> addPostfix("""
+            |val list = ArrayList<ByteArray>()
+            |while (true) {
+            |   list.add(ByteArray(1024 * 1024))
+            |}
+          """.trimMargin())
+        }
       }
     }
 
@@ -82,7 +92,7 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
     buildView.assertSyncViewSelectedNode("(Java heap space|GC overhead limit exceeded)".toRegex()) { text ->
       assertThat(text).matches("""
         |(\* Where:
-        |Build file '${Regex.escape(buildScriptPath.toString())}' line: 3
+        |Build file '${Regex.escape(buildScriptPath.toString())}' line: \d
         |
         |)?\* What went wrong:
         |Out of memory. (Java heap space|GC overhead limit exceeded)

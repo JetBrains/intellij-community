@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.modelAction
 
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailure
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import org.jetbrains.annotations.ApiStatus
 
@@ -32,4 +33,6 @@ interface GradleModelFetchActionListener {
    * @param exception the exception thrown by Gradle, if everything completes successfully, then this will be null.
    */
   suspend fun onModelFetchFailed(exception: Throwable)
+
+  suspend fun onModelFetchFailures(failures: List<GradleModelFetchFailure>)
 }

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.modelAction
 
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailureState
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.application
@@ -88,8 +89,13 @@ class GradleModelFetchActionResultHandlerBridge(
   }
 
   private suspend fun onStreamedValueReceived(event: StreamedValueReceived) {
-    if (event.value is GradleModelHolderState) {
-      modelFetchActionListener.onPhaseCompleted(event.value.phase!!, event.value)
+    when (val value = event.value) {
+      is GradleModelHolderState -> {
+        modelFetchActionListener.onPhaseCompleted(value.phase!!, value)
+      }
+      is GradleModelFetchFailureState -> {
+        modelFetchActionListener.onModelFetchFailures(value)
+      }
     }
   }
 
