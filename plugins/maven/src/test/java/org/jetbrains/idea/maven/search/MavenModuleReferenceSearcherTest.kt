@@ -4,9 +4,11 @@ package org.jetbrains.idea.maven.search
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.impl.file.PsiDirectoryFactory
 import com.intellij.refactoring.rename.RenameDialog
+import com.intellij.testFramework.IndexingTestUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -14,6 +16,11 @@ import org.junit.Test
 
 class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
   private suspend fun renameDirectory(directory: PsiDirectory, newName: String) {
+    // The rename refactoring resolves the <module> references via ReferencesSearch, which MavenModuleReferenceSearcher
+    // answers by walking ModuleManager.getModules() and the MavenProjectsManager model. Make sure the import has fully
+    // settled (workspace model committed, smart mode) before renaming, otherwise the reference is intermittently not
+    // found and the <module> path is left unchanged (flaky).
+    IndexingTestUtil.suspendUntilIndexesAreReady(project)
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
         val renameDialog = RenameDialog(project, directory, directory, null)
@@ -24,6 +31,10 @@ class MavenModuleReferenceSearcherTest : MavenDomTestCase() {
           renameDialog.close()
         }
       }
+      // The rename edits the <module> reference in the parent pom's in-memory document. Flush all documents to disk
+      // before the background re-import refreshes the poms from VFS, otherwise the unsaved-memory-vs-disk divergence
+      // makes MemoryDiskConflictResolver throw in tests.
+      FileDocumentManager.getInstance().saveAllDocuments()
     }
     awaitConfiguration()
   }
