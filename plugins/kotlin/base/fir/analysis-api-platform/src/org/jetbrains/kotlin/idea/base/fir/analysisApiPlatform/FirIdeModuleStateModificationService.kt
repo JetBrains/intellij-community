@@ -353,14 +353,10 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
         moduleSelector: (T) -> ModuleEntity?,
     ): Boolean {
         val oldModule = oldEntity?.takeIf(entityFilter)?.let(moduleSelector)?.findModule(storageBefore)
-        val newModule = newEntity?.takeIf(entityFilter)?.let(moduleSelector)?.findModule(storageAfter)
-        if (newModule != null && oldModule != null) {
-            check(oldModule == newModule) {
-                "$oldModule should be equal to $newModule for ${EntityChange.Replaced::class.java}"
-            }
-        }
+        if (oldModule != null) return true
 
-        return oldModule != null || newModule != null
+        val newModule = newEntity?.takeIf(entityFilter)?.let(moduleSelector)?.findModule(storageAfter)
+        return newModule != null
     }
 
     /**
