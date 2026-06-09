@@ -411,11 +411,14 @@ public class LocalFileSystemImpl
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
     if (OS.CURRENT == OS.Windows) {
-      try (final var dirStream = new WindowsBufferedDirectoryStream(Path.of(toIoPath(dir)))) {
+      try (var dirStream = new WindowsBufferedDirectoryStream(Path.of(toIoPath(dir)))) {
         return StreamSupport.stream(dirStream.spliterator(), false)
           .map(it -> it.getFirst().getFileName().toString())
           .toArray(String[]::new);
       }
+      catch (AccessDeniedException | NoSuchFileException e) { LOG.debug(e); }
+      catch (IOException | RuntimeException e) { LOG.warn(e); }
+      return ArrayUtil.EMPTY_STRING_ARRAY;
     }
     try (var dirStream = Files.newDirectoryStream(Path.of(toIoPath(dir)))) {
       return StreamSupport.stream(dirStream.spliterator(), false)

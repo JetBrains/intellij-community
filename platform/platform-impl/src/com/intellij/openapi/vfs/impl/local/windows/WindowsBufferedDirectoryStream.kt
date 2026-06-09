@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl.local.windows
 
+import com.intellij.openapi.vfs.impl.local.windows.Windows
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.io.IOException
@@ -8,12 +9,12 @@ import java.lang.foreign.Arena
 import java.lang.foreign.MemorySegment
 import java.nio.file.DirectoryIteratorException
 import java.nio.file.DirectoryStream
+import java.nio.file.NotDirectoryException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.TimeUnit
-import kotlin.concurrent.atomics.AtomicBoolean
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.io.path.div
@@ -23,10 +24,10 @@ private const val STANDARD_BUFFER_SIZE = 4096L
 private const val MAX_REPARSE_POINT_DATA_SIZE = 16384L
 
 @ApiStatus.Internal
-class WindowsBufferedDirectoryStream(val directory: Path) : DirectoryStream<com.intellij.openapi.util.Pair<Path, BasicFileAttributes>> {
+class WindowsBufferedDirectoryStream @Throws(IOException::class) constructor(val directory: Path) : DirectoryStream<com.intellij.openapi.util.Pair<Path, BasicFileAttributes>> {
 
-  val iteraror = WindowsBufferedDirectoryIterator(directory)
-  var isCalled = false
+  val iteraror: WindowsBufferedDirectoryIterator = WindowsBufferedDirectoryIterator(directory)
+  var isCalled: Boolean = false
 
   override fun iterator(): MutableIterator<com.intellij.openapi.util.Pair<Path, BasicFileAttributes>> {
     if (!isCalled) {
@@ -95,9 +96,7 @@ internal class NTWindowsFileAttributes(
 
       val handleValue = Windows.Read.HANDLE(handle)
       if (handleValue == 0L || handleValue == -1L) {
-        val error = api.GetLastFFIError()
-        // TODO handle via Winapi's FormatMessage
-        throw IOException("Windows error code: $error, path: ${this.parentPath}")
+        throw Windows.Error.win32ErrorToIOException(api.GetLastFFIError(), parentPath)
       }
 
       try {
@@ -115,8 +114,7 @@ internal class NTWindowsFileAttributes(
         )
 
         if (returnCode == 0) {
-          val error = api.GetLastFFIError()
-          throw IOException("Windows error during symlink lookup, code: $error, path: ${this.parentPath}")
+          throw Windows.Error.win32ErrorToIOException(api.GetLastFFIError(), parentPath)
         }
 
         val isSymbolicLink = Windows.Read.REPARSE_DATA_BUFFER.Tag.IO_REPARSE_TAG_SYMLINK == Windows.Read.REPARSE_DATA_BUFFER.ReparseTag(reparsePointDataBuffer)
@@ -191,12 +189,21 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
     }
     catch (e: Exception) {
       api.close()
-      throw IOException("Failed to open directory handle for $directory", e)
+      throw e
     }
     currentPath = directory
   }
 
   fun createDirectoryHandle(path: String): MemorySegment {
+    // CreateFileW with FILE_FLAG_BACKUP_SEMANTICS opens regular files too, so reject non-directories up front.
+    val attributes = api.GetFileAttributesW(path)
+    if (attributes == Windows.FileAttributes.INVALID_FILE_ATTRIBUTES) {
+      throw Windows.Error.win32ErrorToIOException(api.GetLastFFIError(), directory)
+    }
+    if ((attributes and Windows.FileAttributes.Directory) == 0) {
+      throw NotDirectoryException(directory.toString())
+    }
+
     val handle = api.CreateFileW(
       path,
       dwDesiredAccess = Windows.FileOperations.FILE_LIST_DIRECTORY,
@@ -209,9 +216,7 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
     val handleValue = Windows.Read.HANDLE(handle)
 
     if (handleValue == 0L || handleValue == -1L) {
-      val winError = api.GetLastFFIError()
-      // TODO handle via Winapi's FormatMessage
-      throw DirectoryIteratorException(IOException("Windows error code: $winError, path: $path"))
+      throw Windows.Error.win32ErrorToIOException(api.GetLastFFIError(), directory)
     }
 
     buffer = Windows.Alloc.ByteBuffer(api.arena, STANDARD_BUFFER_SIZE)
@@ -271,7 +276,7 @@ class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<co
         else -> {
           val error = api.RtlNtStatusToDosError(status)
           directoryFinished()
-          throw DirectoryIteratorException(IOException("Windows error code: $error"))
+          throw DirectoryIteratorException(Windows.Error.win32ErrorToIOException(error, directory))
         }
       }
     }

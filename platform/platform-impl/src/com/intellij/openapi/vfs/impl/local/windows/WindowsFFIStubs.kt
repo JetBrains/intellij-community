@@ -8,6 +8,7 @@ import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
+import java.io.IOException
 import java.lang.foreign.Arena
 import java.lang.foreign.FunctionDescriptor
 import java.lang.foreign.Linker
@@ -16,6 +17,10 @@ import java.lang.foreign.MemorySegment
 import java.lang.foreign.SymbolLookup
 import java.lang.invoke.MethodHandle
 import java.nio.ByteOrder
+import java.nio.file.AccessDeniedException
+import java.nio.file.FileSystemException
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.div
@@ -30,6 +35,7 @@ private enum class WindowsLibrary(val path: Path) {
 
 private enum class WindowsSymbol {
   CreateFileW,
+  GetFileAttributesW,
   NtQueryDirectoryFile,
   CloseHandle,
   RtlNtStatusToDosError,
@@ -87,6 +93,11 @@ private object WindowsStubs {
   val CloseHandle: FunctionDescriptor = FunctionDescriptor.of(
     BOOL,
     HANDLE.withName("hObject") // _In_ _Post_ptr_invalid_
+  )
+
+  val GetFileAttributesW: FunctionDescriptor = FunctionDescriptor.of(
+    DWORD, // return
+    LPCWSTR.withName("lpFileName") // _In_ LPCWSTR lpFileName
   )
 
   val NTSTATUS = canonicalLayouts["long"]!!
@@ -175,6 +186,7 @@ private object WindowsStubs {
 
   private val labelMap = mapOf(
     WindowsSymbol.CreateFileW to CreateFileW,
+    WindowsSymbol.GetFileAttributesW to GetFileAttributesW,
     WindowsSymbol.NtQueryDirectoryFile to NtQueryDirectoryFile,
     WindowsSymbol.CloseHandle to CloseHandle,
     WindowsSymbol.RtlNtStatusToDosError to RtlNtStatusToDosError,
@@ -209,6 +221,24 @@ internal class Windows(val arena: Arena) : Closeable {
 
   companion object {
     val NULL: MemorySegment = MemorySegment.NULL
+  }
+
+  object Error {
+    private const val ERROR_FILE_NOT_FOUND: Int = 2
+    private const val ERROR_PATH_NOT_FOUND: Int = 3
+    private const val ERROR_ACCESS_DENIED: Int = 5
+    private const val ERROR_DIRECTORY: Int = 267
+
+    // Maps a Win32 error code to the matching java.nio.file exception, mimicing the JDK's sun.nio.fs.WindowsException.
+    fun win32ErrorToIOException(error: Int, path: Path): IOException {
+      val file = path.toString()
+      return when (error) {
+        ERROR_FILE_NOT_FOUND, ERROR_PATH_NOT_FOUND -> NoSuchFileException(file)
+        ERROR_ACCESS_DENIED -> AccessDeniedException(file)
+        ERROR_DIRECTORY -> NotDirectoryException(file)
+        else -> FileSystemException(file, null, "Windows error code: $error")
+      }
+    }
   }
 
   object FileOperations {
@@ -338,6 +368,9 @@ internal class Windows(val arena: Arena) : Closeable {
     const val Encrypted: Int = 0x4000
     const val IntegrityStream: Int = 0x8000
     const val NoScrubData: Int = 0x20000
+
+    // GetFileAttributesW returns this (0xFFFFFFFF) when the file/directory cannot be queried.
+    const val INVALID_FILE_ATTRIBUTES: Int = 0xFFFFFFFF.toInt()
   }
 
   private val capturedStateLayout = Linker.Option.captureStateLayout()
@@ -406,6 +439,15 @@ internal class Windows(val arena: Arena) : Closeable {
       errorMemorySegment.get(),
       handle
     ) as Int
+  }
+
+  fun GetFileAttributesW(fileName: String): Int {
+    Arena.ofConfined().use {
+      return WindowsDllLookup.handleFor(WindowsLibrary.Kernel32, WindowsSymbol.GetFileAttributesW).invokeExact(
+        errorMemorySegment.get(),
+        toWinReadonlyCWSTR(it, fileName)
+      ) as Int
+    }
   }
 
   fun RtlNtStatusToDosError(ntStatus: Int): Int {

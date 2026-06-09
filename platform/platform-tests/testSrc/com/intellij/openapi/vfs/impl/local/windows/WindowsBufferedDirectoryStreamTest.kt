@@ -13,11 +13,13 @@ import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
-import java.nio.file.DirectoryIteratorException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.NotDirectoryException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.createDirectory
+import kotlin.io.path.createFile
 import kotlin.io.path.div
 import kotlin.io.path.writeText
 
@@ -89,14 +91,17 @@ class WindowsBufferedDirectoryStreamTest {
 
   @Test
   fun throwsWhenDirectoryHandleCannotBeOpened(@TempDir tempDir: Path) {
-    // CreateFileW returns INVALID_HANDLE_VALUE (-1) for a path that does not exist; createDirectoryHandle()
-    // rejects the -1/0 handle value and the constructor must fail instead of iterating a bogus directory.
+    // CreateFileW returns INVALID_HANDLE_VALUE (-1) for a path that does not exist;
+    // this translates to a NIO NoSuchFileException.
     val missing = tempDir / "does-not-exist"
-    val failure = assertThrows<IOException> { WindowsBufferedDirectoryIterator(missing) }
-    assertTrue(
-      failure.cause is DirectoryIteratorException,
-      "Failure must originate from the 0/INVALID_HANDLE_VALUE check in createDirectoryHandle(), but was: ${failure.cause}",
-    )
+    assertThrows<NoSuchFileException> { WindowsBufferedDirectoryIterator(missing) }
+  }
+
+  @Test
+  fun throwsWhenTryingToOpenFileAsDirectory(@TempDir tempDir: Path) {
+    // and here it must throw NotDirectoryException
+    val materializedFile = (tempDir / "materialized.txt").createFile()
+    assertThrows<NotDirectoryException> { WindowsBufferedDirectoryIterator(materializedFile) }
   }
 
   @Test
