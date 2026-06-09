@@ -2065,6 +2065,11 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
                 runTest("../../idea/tests/testData/editor/enterHandler/BlockCommentAfterCatch.after.kt");
             }
 
+            @TestMetadata("CommaBetweenLambdaArguments.after.kt")
+            public void testCommaBetweenLambdaArguments() throws Exception {
+                runTest("../../idea/tests/testData/editor/enterHandler/CommaBetweenLambdaArguments.after.kt");
+            }
+
             @TestMetadata("ConsecutiveCallsAfterDot.after.kt")
             public void testConsecutiveCallsAfterDot() throws Exception {
                 runTest("../../idea/tests/testData/editor/enterHandler/ConsecutiveCallsAfterDot.after.kt");
@@ -2383,6 +2388,11 @@ public abstract class K2EnterHandlerTestGenerated extends AbstractK2EnterHandler
             @TestMetadata("SplitStringByEnterMultiCaret.after.kt")
             public void testSplitStringByEnterMultiCaret() throws Exception {
                 runTest("../../idea/tests/testData/editor/enterHandler/SplitStringByEnterMultiCaret.after.kt");
+            }
+
+            @TestMetadata("TrailingCommaAfterLambda.after.kt")
+            public void testTrailingCommaAfterLambda() throws Exception {
+                runTest("../../idea/tests/testData/editor/enterHandler/TrailingCommaAfterLambda.after.kt");
             }
         }
     }

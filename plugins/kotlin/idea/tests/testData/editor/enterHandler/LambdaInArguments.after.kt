@@ -1,9 +1,7 @@
 fun a() {
     b({1
-      <caret>},
+    <caret>},
       {},
       {},
     )
 }
-
-// IGNORE_FORMATTER

@@ -4,5 +4,3 @@ fun a() {
       {},
     )
 }
-
-// IGNORE_FORMATTER

@@ -1,6 +1,6 @@
 @Anno([
     <caret>
-      ],
+],
     [2],
 )
 class A
