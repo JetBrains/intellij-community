@@ -3,7 +3,6 @@ package org.jetbrains.jps;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -32,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * @author Eugene Zhuravlev
@@ -135,7 +135,7 @@ public final class ProjectPaths {
   }
 
   private static void processModulesRecursively(ModuleChunk chunk, JpsJavaClasspathKind kind, Consumer<? super JpsModule> processor) {
-    JpsJavaExtensionService.getInstance().enumerateDependencies(chunk.getModules()).includedIn(kind).recursively().processModules(processor);
+    JpsJavaExtensionService.getInstance().enumerateDependencies(chunk.getModules()).includedIn(kind).recursively().forEachModule(processor);
   }
 
   public static @Nullable File getModuleOutputDir(JpsModule module, boolean forTests) {

@@ -415,7 +415,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     }
 
     Set<JpsModule> modules = new LinkedHashSet<>();
-    JpsJavaExtensionService.dependencies(mainModule).recursively().processModules(modules::add);
+    JpsJavaExtensionService.dependencies(mainModule).recursively().forEachModule(modules::add);
 
     indicator.setIndeterminate(false);
     double delta = 1 / (2 * Math.max(0.5, modules.size()));
