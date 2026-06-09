@@ -376,6 +376,7 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     MEM_XMX_FIELD, MEM_SAMPLES_FIELD, MEM_HISTOGRAM_TOTAL1_FIELD, MEM_HISTOGRAM_TOTAL2_FIELD
   )
 
+  @Deprecated("Not reported anymore")
   @JvmField
   internal val SLOW_OPERATIONS_ISSUES = GROUP.registerEvent(
     "slow.operation.issues",
