@@ -65,19 +65,21 @@ class AsyncRendering(
    * The new value will overwrite the previously cached presentation.
    */
   fun scheduleRendering(element: LookupElement) {
-    val renderer = element.expensiveRendererImpl ?: return
+    coroutineScope.launch {
+      val renderer = readAction { element.expensiveRendererImpl } ?: return@launch
 
-    synchronized(LAST_COMPUTATION) {
-      cancelRendering(element)
+      synchronized(LAST_COMPUTATION) {
+        cancelRendering(element)
 
-      if (!coroutineScope.isActive) {
-        return
+        if (!coroutineScope.isActive) {
+          return@launch
+        }
+
+        val job = coroutineScope.launch {
+          computeExpensivePresentation(renderer, element)
+        }
+        element.putUserData(LAST_COMPUTATION, job)
       }
-
-      val job = coroutineScope.launch {
-        computeExpensivePresentation(renderer, element)
-      }
-      element.putUserData(LAST_COMPUTATION, job)
     }
   }
 
