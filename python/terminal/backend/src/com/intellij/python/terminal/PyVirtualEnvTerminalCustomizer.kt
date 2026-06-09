@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.terminal.shared.PyTerminalBundle
 import com.intellij.python.terminal.shared.PyVirtualEnvTerminalSettings
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
