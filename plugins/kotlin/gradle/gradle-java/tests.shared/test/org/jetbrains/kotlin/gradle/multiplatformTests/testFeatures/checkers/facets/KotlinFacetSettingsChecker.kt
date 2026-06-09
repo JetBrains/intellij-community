@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.fac
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
+import com.intellij.util.PathUtil.toSystemIndependentName
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
@@ -16,9 +17,8 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.PrinterContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.WorkspaceModelChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.joinToStringWithSorting
 import org.jetbrains.kotlin.platform.TargetPlatform
-import kotlin.reflect.KProperty1
 import kotlin.io.path.Path
-import kotlin.text.replace
+import kotlin.reflect.KProperty1
 
 internal typealias FacetField = KProperty1<IKotlinFacetSettings, *>
 internal typealias CompilerArgumentField = KProperty1<CommonCompilerArguments, *>
@@ -38,28 +38,28 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
 
         val fieldsToPrint = configuration.computeFieldsToPrint()
 
-        return fieldsToPrint.mapNotNull {
-            renderFacetField(it, it.get(facetSettings), configuration)?.let { ModuleReportData(it) }
+        return fieldsToPrint.flatMap { field ->
+            renderFacetField(field, field.get(facetSettings), configuration).map { ModuleReportData(it) }
         }
     }
 
-    private fun PrinterContext.renderFacetField(field: FacetField, fieldValue: Any?, configuration: KotlinFacetSettingsChecksConfiguration): String? {
-        if (fieldValue == null || fieldValue is Collection<*> && fieldValue.isEmpty()) return null
+    private fun PrinterContext.renderFacetField(field: FacetField, fieldValue: Any?, configuration: KotlinFacetSettingsChecksConfiguration): List<String> {
+        if (fieldValue == null || fieldValue is Collection<*> && fieldValue.isEmpty()) return emptyList()
 
         return when (fieldValue) {
             is TargetPlatform ->
-                field.name + " = " + fieldValue.componentPlatforms.joinToStringWithSorting(separator = "/")
+                listOf(field.name + " = " + fieldValue.componentPlatforms.joinToStringWithSorting(separator = "/"))
 
             is LanguageVersion -> {
                 val valueSanitized = languageVersionSanitized(fieldValue)
-                "${field.name} = $valueSanitized"
+                listOf("${field.name} = $valueSanitized")
             }
 
-            is Collection<*> -> field.name + " = " + fieldValue.joinToStringWithSorting()
+            is Collection<*> -> listOf(field.name + " = " + fieldValue.joinToStringWithSorting())
 
             is CompilerSettings ->
                 fieldValue.additionalArguments.filterOutInternalArguments().let {
-                    if (it.isNotEmpty()) field.name + " = " + it else null
+                    if (it.isNotEmpty()) listOf(field.name + " = " + it) else emptyList()
                 }
 
             is CommonCompilerArguments -> {
@@ -67,8 +67,8 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
                     "Included compiler arguments cannot be null for CommonCompilerArguments field " +
                             "e.g. use `onlyCompilerArguments(CommonCompilerArguments::pluginClasspaths)`"
                 }
-                configuration.includedCompilerArguments!!.joinToString("\n") {
-                    when(it) {
+                configuration.includedCompilerArguments!!.mapNotNull { argument ->
+                    val line = when(argument) {
                         CommonCompilerArguments::pluginClasspaths -> {
                             val pluginClasspaths = fieldValue.pluginClasspaths
                             pluginClasspaths.joinToString {
@@ -78,12 +78,23 @@ object KotlinFacetSettingsChecker : WorkspaceModelChecker<KotlinFacetSettingsChe
                                 )
                             }
                         }
-                        else -> error("Unhandled CommonCompilerArguments field: ${it::class.simpleName}. Add rendering for your type.")
+                        CommonCompilerArguments::pluginOptions -> {
+                            val pluginOptions = fieldValue.pluginOptions
+                            val projectRootPath = toSystemIndependentName(projectRoot.absolutePath)
+                            pluginOptions.joinToString { option ->
+                                toSystemIndependentName(option).replace(
+                                    projectRootPath,
+                                    "{{PROJECT_DIR}}"
+                                )
+                            }
+                        }
+                        else -> error("Unhandled CommonCompilerArguments field: ${argument::class.simpleName}. Add rendering for your type.")
                     }
+                    line.ifEmpty { null }
                 }
             }
 
-            else -> field.name + " = " + fieldValue
+            else -> listOf(field.name + " = " + fieldValue)
         }
     }
 
