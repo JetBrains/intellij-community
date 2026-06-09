@@ -1969,7 +1969,6 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
         ApplicationManager.getApplication().invokeLater(() -> {
           if (!isDirectoryExists) {
             myResultsAutoloadHandler.applyBackendValidationResult(evaluateValidationInfo(isDirectoryExists));
-            myResultsAutoloadHandler.cancel();
           }
           else {
             scheduleResultsUpdate();

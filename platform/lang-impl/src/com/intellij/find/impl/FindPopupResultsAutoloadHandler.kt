@@ -109,13 +109,12 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
 
   /**
    * Backend-validator hook: apply a freshly produced [ValidationInfo] without restarting the search.
-   * For a non-replace-component validation error, also drop any stale rows from the previous
-   * (valid) search — matches the old `onStop(hash, message) + reset()` behaviour.
    */
   fun applyBackendValidationResult(info: ValidationInfo?) {
     host.applyValidationResult(info)
     if (info != null && !host.isValidationOnReplaceComponent(info)) {
       cancel()
+      onStop(loadingHash, info.message)
       host.resetUi()
     }
   }
