@@ -114,6 +114,55 @@ class PluginModelValidatorTest {
     assertWithMatchSnapshot(result.errorsAsString())
   }
 
+  @Test
+  fun `the descriptor named after the module wins over a same-named content fragment`() {
+    // Regression test for non-reproducible models: a content module's descriptor is the file named exactly
+    // `<module>.xml`. A module may also contain `<module>.*.xml` files (e.g. `<module>.content.xml`) that match the
+    // descriptor-discovery glob in SourceCodeBasedPluginModelBuilder but are NOT standalone descriptors. Registering
+    // every match under the source-module name made the winner depend on the order in which the filesystem enumerates
+    // directory entries (last write wins) — that order differs between machines, so a dependency-less fragment could
+    // shadow the real `<module>.xml` and silently flip dependency-based decisions. The canonical descriptor must win.
+    val project = JpsElementFactory.getInstance().createModel().project
+    createModuleWithXml(
+      name = "intellij.plugin",
+      project = project,
+      sourceRoot = root / "plugin",
+      content = """
+            <idea-plugin>
+              <id>$TEST_PLUGIN_ID</id>
+              <content>
+                <module name="intellij.plugin.module"/>
+              </content>
+            </idea-plugin>
+          """,
+    )
+    createModuleWithXml(
+      name = "intellij.plugin.module",
+      project = project,
+      sourceRoot = root / "intellij.plugin.module",
+      path = "intellij.plugin.module",
+      content = """
+                  <idea-plugin package="plugin.module">
+                    <dependencies>
+                      <plugin id="com.intellij.modules.lang"/>
+                    </dependencies>
+                  </idea-plugin>
+                """,
+    )
+    // A dependency-less fragment that also matches the `intellij.plugin.module.*` glob; it must not shadow `<module>.xml`.
+    writeIdeaPluginXml(
+      file = root / "intellij.plugin.module" / "intellij.plugin.module.content.xml",
+      content = "<idea-plugin/>",
+      mutator = { it },
+    )
+
+    val model = SourceCodeBasedPluginModelBuilder(project, SourceCodeBasedPluginModelBuilderOptions())
+      .buildSourceCodeBasedPluginModel()
+
+    val info = model.moduleNameToInfo["intellij.plugin.module"]
+    assertThat(info?.descriptorFile?.fileName?.toString()).isEqualTo("intellij.plugin.module.xml")
+  }
+
   private suspend fun validatePluginModel(project: JpsProject): PluginValidationResult = validatePluginModel(project, root)
 
   private fun producePluginWithContentModuleInTheSameSourceModule(

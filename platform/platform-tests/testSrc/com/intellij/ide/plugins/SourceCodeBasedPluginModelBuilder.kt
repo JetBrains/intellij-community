@@ -146,13 +146,26 @@ class SourceCodeBasedPluginModelBuilder(
 
     val moduleNameToInfo = HashMap<String, ModuleInfo>()
 
-    descriptorFileInfos.filterIsInstance<ContentModuleDescriptorFileInfo>().forEach { moduleDescriptorFileInfo ->
-      createModuleFileInfo(
-        contentModuleDescriptorFileInfo = moduleDescriptorFileInfo,
-        moduleName = moduleDescriptorFileInfo.sourceModule.name,
-        moduleNameToInfo = moduleNameToInfo,
-      )
-    }
+    // A content module's descriptor is the file named exactly `<module>.xml` (its `contentModuleName` equals the source
+    // module name). The same source module may additionally contain `<module>.*.xml` files that match the descriptor
+    // discovery glob in [findPluginAndModuleDescriptors] but are NOT standalone content-module descriptors — most
+    // commonly `<module>.content.xml` fragments pulled into `<module>.xml` via xi:include. Registering every match under
+    // the source module name made the winning descriptor depend on the order in which the filesystem enumerates
+    // directory entries (last write wins). That order differs between machines/filesystems, so the model was not
+    // reproducible: e.g. a fragment without a `<dependencies>` block could shadow the real descriptor and silently flip
+    // dependency-based decisions (see ContentModuleLoadability). Pick the canonical descriptor deterministically.
+    descriptorFileInfos.filterIsInstance<ContentModuleDescriptorFileInfo>()
+      .groupBy { it.sourceModule.name }
+      .forEach { (moduleName, infos) ->
+        val canonical = infos.singleOrNull()
+                        ?: infos.firstOrNull { it.contentModuleName == moduleName }
+                        ?: infos.minByOrNull { it.descriptorFile.fileName.toString() }!!
+        createModuleFileInfo(
+          contentModuleDescriptorFileInfo = canonical,
+          moduleName = moduleName,
+          moduleNameToInfo = moduleNameToInfo,
+        )
+      }
     val alternativeCorePluginMainModules = builderOptions.corePluginDescriptions.drop(1).mapTo(HashSet()) {
       it.mainModuleName
     }
