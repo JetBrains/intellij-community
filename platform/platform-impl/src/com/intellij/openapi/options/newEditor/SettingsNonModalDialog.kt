@@ -18,7 +18,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableGroup
-import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -106,9 +105,11 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
     /**
      * Returns the single app-wide settings window, creating it if necessary.
      * - Same project: navigates to [configurable] / applies [filter]; returns the existing window.
-     * - Different project: prompts the user to save/discard, closes the current window, and schedules
-     *   opening a new window. Returns null in this case; the caller must not call show().
-     * - No existing window: creates a new one using [create] and returns it; the caller must call show().
+     * - Different project: prompts the user to save/discard, closes the current window, and creates
+     *   a new one. If the user canceled or apply failed, returns the existing window unchanged.
+     * - No existing window: creates a new one using [create] and returns it.
+     *
+     * The caller must call [show] on the returned dialog.
      *
      * @param create factory function used to create the dialog; defaults to [SettingsNonModalDialog] constructor.
      *               Pass a custom factory from [SettingsNonModalDialogFactory] to get a subclass.
@@ -120,7 +121,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
       configurable: Configurable?,
       filter: String?,
       create: (Project, List<ConfigurableGroup>, Configurable?, String?) -> SettingsNonModalDialog = ::SettingsNonModalDialog,
-    ): SettingsNonModalDialog? {
+    ): SettingsNonModalDialog {
       val existing = ourInstance
       if (existing != null && !existing.isDisposed) {
         if (existing.project == project) {
@@ -133,8 +134,7 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
           return existing
         }
         else {
-          existing.handleDifferentProject(project, configurable, filter)
-          return null  // new window will be created and shown asynchronously
+          return existing.handleDifferentProject(project, groups, configurable, filter, create)
         }
       }
       return create(project, groups, configurable, filter).also { ourInstance = it }
@@ -314,21 +314,24 @@ open class SettingsNonModalDialog @ApiStatus.Internal constructor(
   // ── Different-project handling ────────────────────────────────────────────────
 
   /**
-   * Prompts the user to save or discard changes, closes this window, and schedules
-   * opening a new window for [newProject] via [SettingsNonModalDialogFactory].
+   * Prompts the user to save or discard changes, closes this window, and creates
+   * a new window for [newProject] via [create].
+   *
+   * If the user canceled or apply failed, returns this (existing) dialog unchanged.
    */
-  private fun handleDifferentProject(newProject: Project, toSelect: Configurable?, filter: String?) {
+  private fun handleDifferentProject(
+    newProject: Project,
+    groups: List<ConfigurableGroup>,
+    toSelect: Configurable?,
+    filter: String?,
+    create: (Project, List<ConfigurableGroup>, Configurable?, String?) -> SettingsNonModalDialog,
+  ): SettingsNonModalDialog {
     val result = resolveUnsavedChanges(
       ApplicationBundle.message("settings.switch.project.unsaved.message", project.name, newProject.name))
-    if (result == UnsavedChangesResult.CANCELED || result == UnsavedChangesResult.APPLY_FAILED) return
+    if (result == UnsavedChangesResult.CANCELED || result == UnsavedChangesResult.APPLY_FAILED) return this
 
     close()
-    EventQueue.invokeLater {
-      val newGroups = listOf(ConfigurableExtensionPointUtil.getConfigurableGroup(newProject, true))
-        .filter { it.configurables.isNotEmpty() }
-      // Route through the factory so the active service override (e.g., thin client) is used.
-      SettingsNonModalDialogFactory.getInstance().show(newProject, newGroups, toSelect, filter)
-    }
+    return create(newProject, groups, toSelect, filter).also { ourInstance = it }
   }
 
   /**

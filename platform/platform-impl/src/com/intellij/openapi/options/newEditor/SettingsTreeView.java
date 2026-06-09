@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ConfigurableTreeRenderer;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
+import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.SortedConfigurableGroup;
 import com.intellij.openapi.options.ex.Weighted;
@@ -1053,6 +1054,33 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     public AccessibleRole getAccessibleRole() {
       return AccessibleRole.PANEL;
     }
+  }
+
+  /**
+   * Triggers an async tree refilter and selects the given configurable after the tree is rebuilt.
+   * Unlike {@link #select(Configurable)}, this method goes through {@link FilteringTreeModel#updateTree}
+   * which atomically refilters the tree structure and adjusts the selection, avoiding race conditions
+   * when the filter state has just been cleared synchronously.
+   * <p>
+   * The configurable may come from an external {@link ConfigurableGroup} (e.g. when opening settings
+   * from an action like "Configure Gutter Icons"). In that case it is a different instance from the
+   * one stored in this tree's {@link IdentityHashMap}. We first try {@link #findNode(Configurable)};
+   * if that fails we fall back to matching by {@link ConfigurableVisitor#getId(Configurable)}.
+   */
+  void refilterAndSelect(@Nullable Configurable configurable) {
+    MyNode node = findNode(configurable);
+    if (node == null && configurable != null) {
+      // The configurable instance may differ from the one in our map (e.g. created from a new
+      // ConfigurableGroup). Fall back to matching by configurable ID.
+      String id = ConfigurableVisitor.getId(configurable);
+      for (Map.Entry<Configurable, MyNode> entry : myConfigurableToNodeMap.entrySet()) {
+        if (id.equals(ConfigurableVisitor.getId(entry.getKey()))) {
+          node = entry.getValue();
+          break;
+        }
+      }
+    }
+    myModel.updateTree(myTree, !myFilter.isEmptyFilter(), node);
   }
 
   void reloadWithSelection(@Nullable Configurable toSelect) {

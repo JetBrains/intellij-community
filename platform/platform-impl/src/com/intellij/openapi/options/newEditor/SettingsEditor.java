@@ -468,8 +468,8 @@ public final class SettingsEditor extends AbstractEditor implements UiDataProvid
   }
 
   void selectWithFilter(@NotNull Configurable configurable, @Nullable String filterText) {
-    treeView.select(configurable).onProcessed(it -> filter.update(filterText));
-    editor.select(configurable);
+    filter.update(filterText);
+    treeView.refilterAndSelect(configurable);
   }
 
   private @NotNull MutableConfigurableGroup.Listener createReloadListener(List<? extends ConfigurableGroup> groups) {

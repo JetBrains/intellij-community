@@ -24,7 +24,7 @@ open class SettingsNonModalDialogFactory {
   }
 
   open fun show(project: Project, groups: List<ConfigurableGroup>, configurable: Configurable?, filter: String?) {
-    SettingsNonModalDialog.getOrCreate(project, groups, configurable, filter, ::createDialog)?.show()
+    SettingsNonModalDialog.getOrCreate(project, groups, configurable, filter, ::createDialog).show()
   }
 
   @ApiStatus.OverrideOnly
