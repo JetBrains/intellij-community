@@ -13,7 +13,7 @@
   - name: intellij.evaluationPlugin.core
     reason: <- intellij.evaluationPlugin
   contentModules:
-  - name: intellij.evaluationPlugin.languages.cpp
+  - name: intellij.evaluationPlugin.languages.cppClassic
   - name: intellij.evaluationPlugin.languages.cppRider
   - name: intellij.evaluationPlugin.languages.csharp
   - name: intellij.evaluationPlugin.languages.go
