@@ -46,9 +46,10 @@ val Project.isSdkConfigurationInProgress: StateFlow<Boolean>
 /**
  * Acquires the SDK configuration mutex with appropriate progress indication.
  *
- * In a non-modal context, suspends until the lock is available.
- * In a modal context, attempts to acquire the lock without suspending and throws
- * [IllegalStateException] if it is already held (waiting would deadlock the EDT).
+ * When the current modality still lets background work run (no modality, or a non-blocking dialog
+ * such as the new non-modal Settings window), suspends until the lock is available.
+ * Under a blocking modal dialog or modal progress, attempts to acquire the lock without suspending
+ * and throws [IllegalStateException] if it is already held (waiting would deadlock the EDT).
  *
  * Progress type is chosen automatically based on the coroutine's modality state
  * (see [withProgressRespectModality]).
@@ -57,7 +58,7 @@ val Project.isSdkConfigurationInProgress: StateFlow<Boolean>
  * use [tryWithSdkConfigurationLock].
  * For `@RequiresEdt` blocking callers, use [runWithSdkConfigurationLock].
  *
- * @throws IllegalStateException if called in a modal context while the lock is already held.
+ * @throws IllegalStateException if called under a blocking modal dialog while the lock is already held.
  */
 @ApiStatus.Internal
 suspend fun <T> withSdkConfigurationLock(
@@ -66,18 +67,24 @@ suspend fun <T> withSdkConfigurationLock(
 ): T = withProgressRespectModality(project, serializeBackgroundTasks = true) {
   action()
 }.getOr {
-  throw IllegalStateException("this method shouldn't be called in a modal context if the lock is already held, because it leads to deadlock.")
+  throw IllegalStateException("this method shouldn't be called under a blocking modal dialog if the lock is already held, because it leads to deadlock.")
 }
 
 /**
  * Wraps [action] in progress indication appropriate for the current modality
  * and acquires the SDK configuration mutex.
  *
- * - **Non-modal** context: uses [withBackgroundProgress].
- *   If [serializeBackgroundTasks] is `true`, suspends until the lock is available;
- *   otherwise tries to acquire without suspending.
- * - **Modal** context (e.g., inside a dialog): always uses [withModalProgress]
- *   with a non-blocking lock attempt, because suspending here would deadlock the EDT.
+ * The choice hinges on whether NON_MODAL (background) EDT work can run during the current modality,
+ * i.e. [ModalityState.accepts] `(`[ModalityState.nonModal]`())`:
+ *
+ * - **Non-blocking context** (no modality, or a dialog under which the user can still interact and
+ *   background write actions proceed — e.g. the new non-modal Settings window): uses
+ *   [withBackgroundProgress]. If [serializeBackgroundTasks] is `true`, suspends until the lock is
+ *   available; otherwise tries to acquire without suspending.
+ * - **Blocking modal context** (a modal dialog or modal progress that pumps the EDT exclusively at
+ *   its own modality level): always uses [withModalProgress] with a non-blocking lock attempt.
+ *   Suspending here would deadlock: a background coroutine holding the lock dispatches EDT work at
+ *   NON_MODAL, which the blocking modality would never let run, so the lock would never be released.
  *
  * @return [Result.Success] with the action's result, or [Result.Failure] with [AlreadyLocked]
  *         if the lock could not be acquired without suspending.
@@ -88,7 +95,11 @@ private suspend fun <T> withProgressRespectModality(
   action: suspend CoroutineScope.() -> T,
 ): Result<T, AlreadyLocked> {
   val contextModality = currentCoroutineContext().contextModality()
-  return if (contextModality == null || contextModality == ModalityState.nonModal()) {
+  // Suspending on the lock is safe only when NON_MODAL background work can still run during this
+  // modality. A non-blocking dialog (the new Settings window) accepts NON_MODAL work; a blocking
+  // modal dialog/progress does not, so we must fall back to a non-suspending modal attempt there.
+  val backgroundWorkAllowed = contextModality == null || contextModality.accepts(ModalityState.nonModal())
+  return if (backgroundWorkAllowed) {
     withBackgroundProgress(project, PySdkBundle.message("python.configuring.interpreter.progress")) {
       if (serializeBackgroundTasks) {
         project.service<PythonSdkConfigurationMutexService>().mutex.withLock {

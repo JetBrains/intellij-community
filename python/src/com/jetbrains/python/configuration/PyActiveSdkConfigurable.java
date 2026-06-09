@@ -37,7 +37,6 @@ import com.jetbrains.python.sdk.PyRenderedSdkType;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PyTransferredSdkRootsKt;
-import com.jetbrains.python.sdk.PythonSdkConfigurationMutexKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.SdkExtKt;
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
@@ -58,6 +57,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdk;
+import static com.jetbrains.python.configuration.SdkConfigurationProgressObserverKt.observeSdkConfigurationInProgress;
 import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
 import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote;
 
@@ -76,6 +76,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   private final @NotNull ComboBox<Object> mySdkCombo;
 
+  private final @NotNull DropDownLink<?> myAddInterpreterLink;
+
   private final @NotNull PyInstalledPackagesPanel myPackagesPanel;
   private final @Nullable PyPanelWithPromo myPanelWithPromo;
 
@@ -93,12 +95,7 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     myProject = project;
     myModule = module;
 
-    boolean sdkConfigurationInProgress = PythonSdkConfigurationMutexKt.isSdkConfigurationInProgress(project).getValue();
     mySdkCombo = buildSdkComboBox(this::onShowAllSelected, this::onSdkSelected);
-    if (sdkConfigurationInProgress) {
-      HelpTooltipKt.setToolTipText(mySdkCombo, HtmlChunk.text(PyBundle.message("active.sdk.dialog.link.add.interpreter.disabled.tooltip")));
-      mySdkCombo.setEnabled(false);
-    }
 
     final PackagesNotificationPanel packagesNotificationPanel = new PyPackagesNotificationPanel();
     myPackagesPanel = new PyInstalledPackagesPanel(myProject, packagesNotificationPanel);
@@ -111,27 +108,51 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     final Pair<PyCustomSdkUiProvider, Disposable> customizer =
       customUiProvider == null ? null : new Pair<>(customUiProvider, myDisposable);
 
-    final DropDownLink<?> additionalAction = getAddInterpreterDropDownLink(project, module, sdkConfigurationInProgress);
+    myAddInterpreterLink = getAddInterpreterDropDownLink(project, module);
     myMainPanel =
-      buildPanel(project, mySdkCombo, additionalAction, freeTier ? myPanelWithPromo.getPanel() : myPackagesPanel, packagesNotificationPanel,
+      buildPanel(project, mySdkCombo, myAddInterpreterLink, freeTier ? myPanelWithPromo.getPanel() : myPackagesPanel, packagesNotificationPanel,
                  customizer);
 
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
     myProjectSdksModel = myInterpreterList.getModel();
+
+    // Reflect the SDK configuration mutex reactively: disable the controls only while the lock is
+    // held and refresh the combo once it is released, since a background configuration may have
+    // created or changed the interpreter in the meantime.
+    observeSdkConfigurationInProgress(myProject, myMainPanel, this::onSdkConfigurationInProgressChanged,
+                                      this::onSdkConfigurationFinished);
   }
 
-  private @NotNull DropDownLink<?> getAddInterpreterDropDownLink(@NotNull Project project, @Nullable Module module, boolean sdkConfigurationInProgress) {
+  private @NotNull DropDownLink<?> getAddInterpreterDropDownLink(@NotNull Project project, @Nullable Module module) {
     final DropDownLink<?> additionalAction = new DropDownLink<>(
       PyBundle.message("active.sdk.dialog.link.add.interpreter.text"),
       link -> createAddInterpreterPopup(project, module, link, this::updateSdkListAndSelect)
     );
-    if (sdkConfigurationInProgress) {
-      additionalAction.setAutoHideOnDisable(false);
-      additionalAction.setEnabled(false);
-      HelpTooltipKt.setToolTipText(additionalAction,
-                                   HtmlChunk.text(PyBundle.message("active.sdk.dialog.link.add.interpreter.disabled.tooltip")));
-    }
+    // Keep the link visible when it gets disabled while an SDK configuration is in progress.
+    additionalAction.setAutoHideOnDisable(false);
     return additionalAction;
+  }
+
+  /**
+   * Disables the SDK controls while an SDK configuration holds the mutex and re-enables them once it
+   * is released, explaining via a tooltip why interaction is blocked.
+   */
+  private void onSdkConfigurationInProgressChanged(boolean inProgress) {
+    mySdkCombo.setEnabled(!inProgress);
+    myAddInterpreterLink.setEnabled(!inProgress);
+    final HtmlChunk tooltip =
+      inProgress ? HtmlChunk.text(PyBundle.message("active.sdk.dialog.link.add.interpreter.disabled.tooltip")) : null;
+    HelpTooltipKt.setToolTipText(mySdkCombo, tooltip);
+    HelpTooltipKt.setToolTipText(myAddInterpreterLink, tooltip);
+  }
+
+  /**
+   * Called once the SDK configuration mutex is released. The background configuration may have
+   * created or changed the interpreter, so reload the combo to show the up-to-date selection.
+   */
+  private void onSdkConfigurationFinished() {
+    // reset() refreshes the SDK model from the live table and reselects the now-configured interpreter.
+    reset();
   }
 
   @ApiStatus.Internal
@@ -350,8 +371,12 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   @Override
   public void reset() {
-    Sdk sdk = getSdk();
-    updateSdkListAndSelect(sdk);
+    // The SDK model is cached per project (see PyConfigurableInterpreterList) and may have been
+    // populated before a new interpreter was created — e.g. by the interpreter widget popup, which
+    // builds its list from the same model. Refresh it from the live SDK table so a just-created
+    // interpreter is present and selectable instead of the combo showing "<No interpreter>".
+    myProjectSdksModel.reset(myProject);
+    updateSdkListAndSelect(getSdk());
   }
 
   protected @NotNull List<Sdk> getAvailableSdks() {
