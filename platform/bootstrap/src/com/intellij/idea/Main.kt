@@ -10,7 +10,7 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
-import com.intellij.ide.plugins.PluginMainDescriptor
+import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -359,14 +359,20 @@ private fun printCommands() {
   }
   val isInternal = System.getProperty(ApplicationManagerEx.IS_INTERNAL_PROPERTY).toBoolean()
   pluginSet.enabledPlugins.forEach { plugin ->
-    val starters = (sequenceOf(plugin) + plugin.contentModules.asSequence())
-      .flatMap { it.extensions["com.intellij.appStarter"] ?: emptyList() }
-      .filter { isInternal || !it.element?.attributes?.get("internal").toBoolean() }
+    val startersWithOwners = (sequenceOf(plugin) + plugin.contentModules.asSequence())
+      .flatMap { owningModule ->
+        owningModule.extensions["com.intellij.appStarter"]
+          .orEmpty()
+          .asSequence()
+          .map { it to owningModule }
+      }
+      .filter { (starter, _) -> isInternal || !starter.element?.attributes?.get("internal").toBoolean() }
       .toList()
-    if (starters.isNotEmpty()) {
+
+    if (startersWithOwners.isNotEmpty()) {
       println("=== ${if (plugin.pluginId == PluginManagerCore.CORE_ID) "Built-in" else plugin.name} commands")
-      starters.forEach { starter ->
-        val message = starterHelp(plugin, starter).replace("\n", "\n  ")
+      startersWithOwners.forEach { (starter, owningModule) ->
+        val message = starterHelp(owningModule, starter).replace("\n", "\n  ")
         println("\n${starter.orderId}\n  ${message}")
       }
       println()
@@ -374,8 +380,8 @@ private fun printCommands() {
   }
 }
 
-private fun starterHelp(plugin: PluginMainDescriptor, starter: ExtensionDescriptor): String {
-  val classLoader = plugin.pluginClassLoader
+private fun starterHelp(owner: PluginModuleDescriptor, starter: ExtensionDescriptor): String {
+  val classLoader = owner.pluginClassLoader
   if (classLoader != null) {
     val bundle = starter.element?.attributes?.get("bundle")
     val key = starter.element?.attributes?.get("key")
