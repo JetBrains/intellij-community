@@ -1,13 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.remotedev
 
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import java.nio.file.Files
-import java.nio.file.Path
-import kotlin.io.path.readText
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import java.io.IOException
 
 internal enum class SplitModeInspectionResourceReadMode(val registryValue: String) {
   BUNDLED_ONLY("bundled"),
@@ -55,18 +57,20 @@ internal class SplitModeInspectionResourceReader(private val project: Project) {
   }
 
   private fun readProjectText(resourcePath: String): String? {
-    val path = resolveProjectResourcePath(resourcePath)
-    if (path == null) {
-      LOG.info("Cannot load split-mode resource '$resourcePath' from project: project base path is unknown")
-      return null
-    }
-    if (!Files.isRegularFile(path)) {
-      LOG.info("Project split-mode resource '$resourcePath' does not exist: $path")
+    val resourceFile = findProjectResourceFile(resourcePath)
+    if (resourceFile == null) {
+      LOG.info("Project split-mode resource '$resourcePath' does not exist")
       return null
     }
 
-    LOG.info("Loading split-mode resource '$resourcePath' from project file $path")
-    return path.readText()
+    return try {
+      LOG.info("Loading split-mode resource '$resourcePath' from project file ${resourceFile.path}")
+      FileDocumentManager.getInstance().getCachedDocument(resourceFile)?.text ?: VfsUtilCore.loadText(resourceFile)
+    }
+    catch (e: IOException) {
+      LOG.warn("Cannot load split-mode resource '$resourcePath' from project file ${resourceFile.path}", e)
+      return null
+    }
   }
 
   private fun readBundledText(resourcePath: String): String? {
@@ -81,8 +85,11 @@ internal class SplitModeInspectionResourceReader(private val project: Project) {
     return inputStream.bufferedReader().use { it.readText() }
   }
 
-  private fun resolveProjectResourcePath(resourcePath: String): Path? {
-    val basePath = project.basePath ?: return null
-    return Path.of(basePath).resolve(DEVKIT_RESOURCES_PROJECT_RELATIVE_PATH).resolve(resourcePath)
+  internal fun findProjectResourceFile(resourcePath: String): VirtualFile? {
+    return getProjectResourcesDirectory()?.findFileByRelativePath(resourcePath.trimStart('/'))
+  }
+
+  private fun getProjectResourcesDirectory(): VirtualFile? {
+    return project.guessProjectDir()?.findFileByRelativePath(DEVKIT_RESOURCES_PROJECT_RELATIVE_PATH)
   }
 }

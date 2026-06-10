@@ -96,7 +96,7 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
   }
 
   fun findExclusionsFile(): VirtualFile? {
-    return getProjectRoot()?.findFileByRelativePath(EXCLUSIONS_RELATIVE_PATH)
+    return resourceReader.findProjectResourceFile(EXCLUSIONS_RESOURCE_PATH)
   }
 
   private fun isExclusionFixAvailable(): Boolean {
@@ -145,12 +145,7 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
       }
     }
 
-    val snapshot = if (exclusionsFile == null) {
-      SplitModeInspectionExclusionsSnapshot(emptyList())
-    }
-    else {
-      SplitModeInspectionExclusionsSnapshot(parseExclusionsFile(exclusionsText ?: "").exclusions)
-    }
+    val snapshot = SplitModeInspectionExclusionsSnapshot(parseExclusionsFile(exclusionsText ?: "").exclusions)
     cachedSnapshot = CachedSplitModeInspectionExclusionsSnapshot(cacheKey, snapshot)
     return snapshot
   }

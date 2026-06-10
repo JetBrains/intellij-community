@@ -5,8 +5,6 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.junit.Assert
-import java.nio.file.Files
-import java.nio.file.Path
 
 private const val API_RESTRICTIONS_PROJECT_RELATIVE_PATH =
   "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/ApiRestrictions.json"
@@ -14,8 +12,8 @@ private const val API_RESTRICTIONS_PROJECT_RELATIVE_PATH =
 internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
   fun testProjectApiRestrictionsOverrideBundledListWhenProjectModeEnabled() {
     withApiRestrictionsSourceMode(
-      sourceMode = "project",
-      projectFileContent = """
+      "project",
+      """
         [
           {"apiName": "custom.split.mode.api", "targetModules": ["frontend"]}
         ]
@@ -30,7 +28,7 @@ internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
   }
 
   fun testProjectOrBundledModeFallsBackToBundledApiRestrictionsWhenProjectFileIsMissing() {
-    withApiRestrictionsSourceMode(sourceMode = "project-or-bundled") { service ->
+    withApiRestrictionsSourceMode("project-or-bundled", null) { service ->
       Assert.assertEquals(
         SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
         service.getCodeApiKind("com.intellij.openapi.wm.ToolWindowFactory", null),
@@ -40,15 +38,10 @@ internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
 
   private fun withApiRestrictionsSourceMode(
     sourceMode: String,
-    projectFileContent: String? = null,
+    projectFileContent: String?,
     action: (SplitModeApiRestrictionsService) -> Unit,
   ) {
-    val projectFile = projectFileContent?.let {
-      Path.of(project.basePath!!).resolve(API_RESTRICTIONS_PROJECT_RELATIVE_PATH).also { file ->
-        Files.createDirectories(file.parent)
-        Files.writeString(file, it)
-      }
-    }
+    val projectFile = projectFileContent?.let { createProjectResourceFile(project, API_RESTRICTIONS_PROJECT_RELATIVE_PATH, it) }
     val service = SplitModeApiRestrictionsService.getInstance(project)
     val registryValue = RegistryManager.getInstance().get("devkit.split.mode.analysis.api.restrictions.source")
     val previousValue = registryValue.asString()
@@ -60,7 +53,7 @@ internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
     finally {
       registryValue.setValue(previousValue)
       if (projectFile != null) {
-        Files.deleteIfExists(projectFile)
+        deleteProjectResourceFile(project, projectFile)
       }
       service.reloadRestrictionsForTest()
     }
