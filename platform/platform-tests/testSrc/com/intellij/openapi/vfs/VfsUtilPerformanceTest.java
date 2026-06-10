@@ -6,6 +6,7 @@ import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -102,7 +103,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     NewVirtualFile root = managingFS.findRoot(path, fs);
     Benchmark.newBenchmark("finding root",
                            () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-                                            Collections.nCopies(500, null), null,
+                                            Collections.nCopies(500, null), new EmptyProgressIndicator(),
                                             _ -> {
                                               for (int i = 0; i < 100_000; i++) {
                                                 NewVirtualFile rootJar = managingFS.findRoot(path, fs);
@@ -191,7 +192,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   public void testAsyncRefresh() throws Throwable {
     var ex = new AtomicReference<Throwable>();
     var tasks = IntStream.range(0, JobSchedulerImpl.getJobPoolParallelism()).boxed().toList();
-    var success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, null, task -> {
+    var success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, new EmptyProgressIndicator(), task -> {
       try {
         doAsyncRefreshTest(task);
       }

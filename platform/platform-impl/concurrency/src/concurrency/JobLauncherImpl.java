@@ -58,7 +58,7 @@ public final class JobLauncherImpl extends JobLauncher {
 
   @Override
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                     ProgressIndicator progress,
+                                                     @NotNull ProgressIndicator progress,
                                                      boolean runInReadAction,
                                                      boolean failFastOnAcquireReadAction,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {

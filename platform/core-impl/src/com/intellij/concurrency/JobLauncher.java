@@ -5,9 +5,9 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public abstract class JobLauncher {
    * @throws ProcessCanceledException if at least one task has thrown ProcessCanceledException
    */
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                     ProgressIndicator progress,
+                                                     @NotNull ProgressIndicator progress,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
     ApplicationEx app = (ApplicationEx)ApplicationManager.getApplication();
     return invokeConcurrentlyUnderProgress(things, progress, app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor);
@@ -55,14 +55,14 @@ public abstract class JobLauncher {
 
   /**
    * The same as {@link #invokeConcurrentlyUnderProgress(List, ProgressIndicator, Processor)}, but tries to infer {@link ProgressIndicator}
-   * from the caller context.
+   * from the caller context. If not called under indicator, {@link EmptyProgressIndicator} is created and used.
    */
   public <T> boolean invokeConcurrentlyUnderContextProgress(@NotNull List<? extends T> things,
                                                             @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     return ConcurrencyUtils.runWithIndicatorOrContextCancellation(
       indicator ->
-        invokeConcurrentlyUnderProgress(things, ProgressIndicatorProvider.getGlobalProgressIndicator(), app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor));
+        invokeConcurrentlyUnderProgress(things, indicator, app.isReadAccessAllowed(), app.isInImpatientReader(), thingProcessor));
   }
 
   /**
@@ -83,7 +83,7 @@ public abstract class JobLauncher {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                     ProgressIndicator progress,
+                                                     @NotNull ProgressIndicator progress,
                                                      boolean failFastOnAcquireReadAction,
                                                      @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException {
     PluginException.reportDeprecatedUsage("invokeConcurrentlyUnderProgress", "do not use");
@@ -93,7 +93,7 @@ public abstract class JobLauncher {
 
 
   public abstract <T> boolean invokeConcurrentlyUnderProgress(@NotNull List<? extends T> things,
-                                                              ProgressIndicator progress,
+                                                              @NotNull ProgressIndicator progress,
                                                               boolean runInReadAction,
                                                               boolean failFastOnAcquireReadAction,
                                                               @NotNull Processor<? super T> thingProcessor) throws ProcessCanceledException;

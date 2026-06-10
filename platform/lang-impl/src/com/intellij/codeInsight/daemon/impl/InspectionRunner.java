@@ -86,7 +86,7 @@ final class InspectionRunner {
   private final boolean myInspectInjected;
   private final boolean myIsOnTheFly;
   private final boolean myDumbMode;
-  private final ProgressIndicator myProgress;
+  private final @NotNull ProgressIndicator myProgress;
   private final boolean myIgnoreSuppressed;
   private final InspectionProfileWrapper myInspectionProfileWrapper;
   private final Map<String, Set<PsiElement>> mySuppressedElements;

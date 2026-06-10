@@ -401,7 +401,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   private static void processNamesByPattern(final @NotNull ChooseByNameViewModel base,
                                             final String @NotNull [] names,
                                             final @NotNull String namePattern,
-                                            final ProgressIndicator indicator,
+                                            final @NotNull ProgressIndicator indicator,
                                             final @NotNull Consumer<? super MatchResult> consumer,
                                             final boolean preferStartMatches) {
     final var nameMatcher = buildPatternMatcher(namePattern, preferStartMatches);
