@@ -7,15 +7,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.file.Path;
 
 /**
  * @author Vladislav.Soroka
  */
+@SuppressWarnings("IO_FILE_USAGE")
 public class Jar implements Serializable {
   private static final long serialVersionUID = 1L;
 
   private final @NotNull String name;
-  private @Nullable File archivePath;
+  private @Nullable Path archivePath;
 
   private @Nullable String manifestContent;
 
@@ -36,12 +38,28 @@ public class Jar implements Serializable {
     this.manifestContent = manifestContent;
   }
 
+  /**
+   * @deprecated Use {@link getJarArchivePath()} instead.
+   */
+  @Deprecated
   public @Nullable File getArchivePath() {
-    return archivePath;
+    return archivePath == null ? null : archivePath.toFile();
   }
 
+  /**
+   * @deprecated Use {@link setArchivePath(Path)} instead.
+   */
+  @Deprecated
   public void setArchivePath(@Nullable File archivePath) {
+    this.archivePath = archivePath == null ? null : archivePath.toPath();
+  }
+
+  public void setArchivePath(@Nullable Path archivePath) {
     this.archivePath = archivePath;
+  }
+
+  public @Nullable Path getJarArchivePath() {
+    return archivePath;
   }
 
   @Override
