@@ -1,9 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.codegen.deft.meta
 
-import com.intellij.workspaceModel.codegen.deft.annotations.Cached
-import com.intellij.workspaceModel.codegen.deft.annotations.Parent
-
 interface ObjType<T> : Obj {
   val classifier: ObjType<T>
 
@@ -25,7 +22,6 @@ interface ObjClass<T : Obj> : ObjType<T> {
 
   val superTypes: List<ObjType<*>>
 
-  @Parent
   val module: ObjModule
 
   val name: String
@@ -62,13 +58,13 @@ interface ObjClass<T : Obj> : ObjType<T> {
   val nameField: OwnProperty<T, *>?
 
   val fieldsByName: Map<String, OwnProperty<in T, *>>
-    @Cached get() = fields.associateBy { it.name }
+    get() = fields.associateBy { it.name }
 
   val fieldsByLocalId: Map<Int, OwnProperty<in T, *>>
-    @Cached get() = fields.associateBy { it.classLocalId }
+    get() = fields.associateBy { it.classLocalId }
 
   val asStructure: ValueType.Structure<T>
-    @Cached get() = ValueType.Structure(fields.mapTo(mutableListOf()) { it.valueType })
+    get() = ValueType.Structure(fields.mapTo(mutableListOf()) { it.valueType })
 
   companion object
 }
