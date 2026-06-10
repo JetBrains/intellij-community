@@ -102,6 +102,7 @@ import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
 import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
+import kotlin.jvm.java
 import kotlin.math.min
 
 class KotlinStructuralSearchProfile : StructuralSearchProfile() {

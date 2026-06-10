@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.liveTemplates
 
 import com.intellij.codeInsight.lookup.LookupManager
@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.UIUtil
-import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.artifacts.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -299,7 +298,7 @@ abstract class AbstractLiveTemplatesTest : NewLightKotlinCodeInsightFixtureTestC
         }
 
     private fun checkAfter() {
-        TestCase.assertNull(templateState)
+        assertNull(templateState)
         myFixture.checkContentByExpectedPath(".exp")
     }
 
@@ -357,7 +356,7 @@ abstract class AbstractLiveTemplatesTest : NewLightKotlinCodeInsightFixtureTestC
     }
 
     private fun assertStringItems(@NonNls vararg items: String) {
-        TestCase.assertEquals(listOf(*items), listOf(*itemStringsSorted))
+        assertEquals(listOf(*items), listOf(*itemStringsSorted))
     }
 
     private val itemStrings: Array<String>

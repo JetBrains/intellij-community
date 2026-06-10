@@ -1,15 +1,35 @@
-<idea-plugin package="org.jetbrains.kotlin.idea.liveTemplates.k2">
+<idea-plugin package="org.jetbrains.kotlin.idea.liveTemplates" visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.completion.impl"/>
-    <module name="kotlin.code-insight.live-templates.shared"/>
-    <!-- endregion -->
+    <module name="intellij.kotlin.highlighting"/>
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.k2.macro.SymbolBasedAnonymousSuperMacro"/>
-    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.k2.macro.SymbolBasedSuggestVariableNameMacro"/>
-    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.k2.macro.SymbolBasedKotlinAnyVariableMacro"/>
-    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.k2.macro.SymbolBasedKotlinVariableMacro"/>
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.SymbolBasedAnonymousSuperMacro"/>
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.SymbolBasedSuggestVariableNameMacro"/>
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.SymbolBasedKotlinAnyVariableMacro"/>
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.SymbolBasedKotlinVariableMacro"/>
+    <defaultLiveTemplates file="liveTemplates/Kotlin.xml"/>
+
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.FunctionParametersMacro"/>
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.FunctionParametersToStringMacro"/>
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinClassNameMacro"/>
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinClassNameOrTopMacro"/>
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinFunctionNameMacro"/>
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinPackageNameMacro"/>
+    <liveTemplateMacro implementation="org.jetbrains.kotlin.idea.liveTemplates.macro.KotlinMainArgumentsMacro"/>
+
+    <liveTemplateContext contextId="KOTLIN" implementation="org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType$Generic"/>
+    <liveTemplateContext contextId="KOTLIN_TOPLEVEL" baseContextId="KOTLIN" implementation="org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType$TopLevel"/>
+    <liveTemplateContext contextId="KOTLIN_STATEMENT" baseContextId="KOTLIN" implementation="org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType$Statement"/>
+    <liveTemplateContext contextId="KOTLIN_CLASS" baseContextId="KOTLIN" implementation="org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType$Class"/>
+    <liveTemplateContext contextId="KOTLIN_EXPRESSION" baseContextId="KOTLIN" implementation="org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType$Expression"/>
+    <liveTemplateContext contextId="KOTLIN_COMMENT" baseContextId="KOTLIN" implementation="org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType$Comment"/>
+    <liveTemplateContext contextId="KOTLIN_OBJECT_DECLARATION" baseContextId="KOTLIN" implementation="org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType$ObjectDeclaration"/>
+
+    <liveTemplateOptionalProcessor implementation="org.jetbrains.kotlin.idea.liveTemplates.KotlinShortenFQNamesProcessor"/>
   </extensions>
 </idea-plugin>

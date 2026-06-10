@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.liveTemplates
 
 import com.intellij.codeInsight.template.impl.TemplateContextTypes
-import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.Comment
 import org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.Expression
@@ -31,32 +30,32 @@ abstract class AbstractLiveTemplatesContextTest : NewLightKotlinCodeInsightFixtu
 
     @TestMetadata("AnonymousObject.kt")
     fun testAnonymousObject() {
-        assertInContexts(Generic::class.java, org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.Class::class.java)
+        assertInContexts(Generic::class.java, KotlinTemplateContextType.Class::class.java)
     }
 
     @TestMetadata("CompanionObject.kt")
     fun testCompanionObject() {
-        assertInContexts(Generic::class.java, org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.Class::class.java, ObjectDeclaration::class.java)
+        assertInContexts(Generic::class.java, KotlinTemplateContextType.Class::class.java, ObjectDeclaration::class.java)
     }
 
     @TestMetadata("LocalObject.kt")
     fun testLocalObject() {
-        assertInContexts(Generic::class.java, org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.Class::class.java, ObjectDeclaration::class.java)
+        assertInContexts(Generic::class.java, KotlinTemplateContextType.Class::class.java, ObjectDeclaration::class.java)
     }
 
     @TestMetadata("ObjectInClass.kt")
     fun testObjectInClass() {
-        assertInContexts(Generic::class.java, org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.Class::class.java, ObjectDeclaration::class.java)
+        assertInContexts(Generic::class.java, KotlinTemplateContextType.Class::class.java, ObjectDeclaration::class.java)
     }
 
     @TestMetadata("ObjectInObject.kt")
     fun testObjectInObject() {
-        assertInContexts(Generic::class.java, org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.Class::class.java, ObjectDeclaration::class.java)
+        assertInContexts(Generic::class.java, KotlinTemplateContextType.Class::class.java, ObjectDeclaration::class.java)
     }
 
     @TestMetadata("TopLevelObject.kt")
     fun testTopLevelObject() {
-        assertInContexts(Generic::class.java, org.jetbrains.kotlin.idea.liveTemplates.KotlinTemplateContextType.Class::class.java, ObjectDeclaration::class.java)
+        assertInContexts(Generic::class.java, KotlinTemplateContextType.Class::class.java, ObjectDeclaration::class.java)
     }
 
     @TestMetadata("StatementInBlock.kt")
@@ -94,10 +93,10 @@ abstract class AbstractLiveTemplatesContextTest : NewLightKotlinCodeInsightFixtu
         assertInContexts(Generic::class.java, Statement::class.java, Expression::class.java)
     }
 
-    private fun assertInContexts(vararg expectedContexts: java.lang.Class<out KotlinTemplateContextType>) {
+    private fun assertInContexts(vararg expectedContexts: Class<out KotlinTemplateContextType>) {
         myFixture.configureByDefaultFile()
         val allContexts = TemplateContextTypes.getAllContextTypes().filterIsInstance<KotlinTemplateContextType>()
         val enabledContexts = allContexts.filter { it.isInContext(myFixture.file, myFixture.caretOffset) }.map { it::class.java }
-        UsefulTestCase.assertSameElements(enabledContexts, *expectedContexts)
+        assertSameElements(enabledContexts, *expectedContexts)
     }
 }

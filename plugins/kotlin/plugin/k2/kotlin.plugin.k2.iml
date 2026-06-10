@@ -91,7 +91,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.liveTemplates" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.postfixTemplates" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers" scope="RUNTIME" />

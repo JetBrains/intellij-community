@@ -49,7 +49,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.copyright.tests" />
     <orderEntry type="module" module-name="intellij.kotlin.injection.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.liveTemplates" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.highlighting.shared.tests" />
     <orderEntry type="module" module-name="intellij.kotlin.j2k.tests" scope="RUNTIME" />
@@ -101,7 +100,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.util.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.compose.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.completion.ml.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle.tests" scope="RUNTIME" />

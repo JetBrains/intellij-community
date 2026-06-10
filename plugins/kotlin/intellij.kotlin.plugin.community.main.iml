@@ -97,7 +97,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.evaluation" exported="" />
     <orderEntry type="module" module-name="kotlin.base.injection" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.injection" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.liveTemplates" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.lombok" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.maven" exported="" />

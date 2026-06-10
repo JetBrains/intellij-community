@@ -31,6 +31,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared"],
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",
@@ -80,6 +81,11 @@ jvm_library(
     kotlinc_opts = ":custom_kotlin-highlighting",
     module_name = "intellij.kotlin.highlighting",
     visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
+    ],
     runtime_deps = [
         # do not sort,
         ":kotlin-highlighting",

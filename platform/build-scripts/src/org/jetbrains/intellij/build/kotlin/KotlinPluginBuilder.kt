@@ -143,7 +143,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "intellij.kotlin.codeInsight",
       "kotlin.code-insight.override-implement.shared",
       "intellij.kotlin.codeInsight.overrideImplement",
-      "kotlin.code-insight.live-templates.shared",
       "intellij.kotlin.codeInsight.liveTemplates",
       "intellij.kotlin.codeInsight.postfixTemplates",
       "intellij.kotlin.codeInsight.structuralSearch",
