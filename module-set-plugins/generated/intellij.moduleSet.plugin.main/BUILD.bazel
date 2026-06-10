@@ -21,6 +21,7 @@ jvm_library(
         "//grid/plugin",
         "//platform/recentFiles/plugin",
         "//platform/execution.serviceView/plugin",
+        "//aether-dependency-resolver/plugin",
         "//platform/structuralsearch/plugin",
         "//platform/structure-view-impl/plugin",
         "//platform/todo/plugin",
@@ -47,7 +48,6 @@ jvm_library(
         "//platform/navbar/plugin",
         "//platform/bookmarks/plugin",
         "//libraries/misc/plugin",
-        "//aether-dependency-resolver/plugin",
     ],
 )
 
@@ -72,6 +72,7 @@ jvm_library(
         "//grid/plugin:plugin_test_lib",
         "//platform/recentFiles/plugin:plugin_test_lib",
         "//platform/execution.serviceView/plugin:plugin_test_lib",
+        "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//platform/structuralsearch/plugin:plugin_test_lib",
         "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//platform/todo/plugin:plugin_test_lib",
@@ -98,7 +99,6 @@ jvm_library(
         "//platform/navbar/plugin:plugin_test_lib",
         "//platform/bookmarks/plugin:plugin_test_lib",
         "//libraries/misc/plugin:plugin_test_lib",
-        "//aether-dependency-resolver/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.moduleSet.plugin.main` end
