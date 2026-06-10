@@ -111,22 +111,15 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
     }
   }
 
-  fun sessionStarted(sessionId: String, transportType: TransportType, startTimeMs: Long, localAgentId: String?) {
+  fun sessionStarted(sessionId: String, clientInfo: ClientInfo?, transportType: TransportType, startTimeMs: Long, localAgentId: String?) {
     val info = McpSessionInfo(
       sessionId = sessionId,
-      clientInfo = null,
+      clientInfo = clientInfo,
       transportType = transportType,
       startTimeMs = startTimeMs,
       localAgentId = localAgentId,
     )
     _sessions.update { it + info }
-    fireServiceViewReset()
-  }
-
-  fun sessionInitialized(sessionId: String, clientInfo: ClientInfo) {
-    _sessions.update { list ->
-      list.map { if (it.sessionId == sessionId) it.copy(clientInfo = clientInfo) else it }
-    }
     fireServiceViewReset()
   }
 

@@ -1,5 +1,7 @@
 package com.intellij.mcpserver.impl.util.network
 
+import com.intellij.mcpserver.toolwindow.McpDiagnosticService
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import io.ktor.http.HttpMethod
@@ -37,6 +39,7 @@ import io.modelcontextprotocol.kotlin.sdk.types.McpJson
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -59,12 +62,13 @@ private val PENDING_TRANSPORT_TIMEOUT = 15.seconds
 @KtorDsl
 fun Application.mcpPatched(
   prePhase: suspend PipelineContext<*, PipelineCall>.() -> Unit,
-  block: suspend (ApplicationCall, Transport) -> ServerSession,
+  block: suspend (ApplicationCall, Transport) -> Pair<ServerSession, CoroutineScope>,
 ) {
   val sseTransports = ConcurrentMap<String, SseServerTransport>()
   val streamableTransports = ConcurrentMap<String, StreamableHttpServerTransport>()
   // transports created during POST initialize but not yet connected to a GET SSE stream.
   val pendingTransports = ConcurrentMap<String, StreamableHttpServerTransport>()
+  val streamableSessionScopes = ConcurrentMap<String, CoroutineScope>()
 
   install(SSE)
   install(ContentNegotiation) { json(McpJson) }
@@ -95,23 +99,39 @@ fun Application.mcpPatched(
     route("/stream") {
       sse {
         val sessionId = call.request.headers[MCP_SESSION_ID_HEADER]
-        if (sessionId.isNullOrEmpty()) {
-          call.respond(HttpStatusCode.BadRequest, "Missing $MCP_SESSION_ID_HEADER header")
-          return@sse
-        }
+        try {
+          if (sessionId.isNullOrEmpty()) {
+            call.respond(HttpStatusCode.BadRequest, "Missing $MCP_SESSION_ID_HEADER header")
+            return@sse
+          }
 
-        val transport = pendingTransports.remove(sessionId)?.also { streamableTransports[sessionId] = it }
-                        ?: streamableTransports[sessionId]
-        if (transport == null) {
-          call.respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
-          return@sse
+          val transport = pendingTransports.remove(sessionId)?.also { streamableTransports[sessionId] = it }
+                          ?: streamableTransports[sessionId]
+          if (transport == null) {
+            call.respond(HttpStatusCode.NotFound, "Streamable HTTP session not found")
+            return@sse
+          }
+
+          launchSseHeartbeat()
+          transport.handleRequest(this, call)
         }
-        launchSseHeartbeat(transport)
-        transport.handleRequest(this, call)
+        finally {
+          if (sessionId != null) {
+            //todo temp fix for flaky tests
+            streamableTransports.remove(sessionId)
+            streamableSessionScopes.remove(sessionId)?.cancel()
+            service<McpDiagnosticService>().sessionEnded(sessionId = sessionId)
+          }
+        }
       }
 
       post {
-        val transport = obtainOrCreateStreamableTransport(call, streamableTransports, pendingTransports, this@mcpPatched, block) ?: return@post
+        val transport = obtainOrCreateStreamableTransport(call,
+                                                          streamableTransports,
+                                                          pendingTransports,
+                                                          this@mcpPatched,
+                                                          block,
+                                                          streamableSessionScopes) ?: return@post
         transport.handleRequest(null, call)
       }
 
@@ -126,11 +146,11 @@ fun Application.mcpPatched(
 private suspend fun ServerSSESession.mcpSseEndpoint(
   postEndpoint: String,
   transports: ConcurrentMap<String, SseServerTransport>,
-  block: suspend (ApplicationCall, Transport) -> ServerSession,
+  block: suspend (ApplicationCall, Transport) -> Pair<ServerSession, CoroutineScope>,
 ) {
   val transport = mcpSseTransport(postEndpoint, transports)
 
-  val serverSession = block(call, transport)
+  val (serverSession, _) = block(call, transport)
 
   serverSession.onClose {
     logger.trace { "Server connection closed for sessionId: ${transport.sessionId}" }
@@ -211,7 +231,8 @@ private suspend fun obtainOrCreateStreamableTransport(
   activeTransports: ConcurrentMap<String, StreamableHttpServerTransport>,
   pendingTransports: ConcurrentMap<String, StreamableHttpServerTransport>,
   scope: CoroutineScope,
-  block: suspend (ApplicationCall, Transport) -> ServerSession,
+  block: suspend (ApplicationCall, Transport) -> Pair<ServerSession, CoroutineScope>,
+  streamableSessionScopes: ConcurrentMap<String, CoroutineScope>,
 ): StreamableHttpServerTransport? {
   val incomingSessionId = call.request.headers[MCP_SESSION_ID_HEADER]
   if (incomingSessionId != null) {
@@ -224,6 +245,7 @@ private suspend fun obtainOrCreateStreamableTransport(
   val transport = StreamableHttpServerTransport(
     StreamableHttpServerTransport.Configuration(enableJsonResponse = true)
   )
+
   transport.setOnSessionInitialized { initializedId ->
     pendingTransports[initializedId] = transport
     logger.trace { "New StreamableHttp session initialized with sessionId: $initializedId" }
@@ -232,6 +254,7 @@ private suspend fun obtainOrCreateStreamableTransport(
     scope.launch(CoroutineName("pending-transport-timeout-$initializedId")) {
       delay(PENDING_TRANSPORT_TIMEOUT)
       if (pendingTransports.remove(initializedId) != null) {
+        streamableSessionScopes.remove(initializedId)
         logger.warn("Pending StreamableHttp transport timed out without SSE stream: $initializedId")
         try { transport.close() } catch (_: Exception) {}
       }
@@ -240,15 +263,21 @@ private suspend fun obtainOrCreateStreamableTransport(
   transport.setOnSessionClosed { closedId ->
     pendingTransports.remove(closedId)
     activeTransports.remove(closedId)
+    streamableSessionScopes.remove(closedId)
     logger.trace { "StreamableHttp session closed: $closedId" }
   }
 
-  val serverSession = block(call, transport)
+  val (serverSession, scope) = block(call, transport)
+  streamableSessionScopes[serverSession.sessionId] = scope
+  transport.setSessionIdGenerator {
+    serverSession.sessionId
+  }
   serverSession.onClose {
     val id = transport.sessionId
     if (id != null) {
       pendingTransports.remove(id)
       activeTransports.remove(id)
+      streamableSessionScopes.remove(id)
       logger.trace { "Server connection closed for StreamableHttp sessionId: $id" }
     }
   }
@@ -256,16 +285,11 @@ private suspend fun obtainOrCreateStreamableTransport(
   return transport
 }
 
-private fun ServerSSESession.launchSseHeartbeat(transport: StreamableHttpServerTransport) {
+private fun ServerSSESession.launchSseHeartbeat() {
   launch(CoroutineName("sse-heartbeat")) {
-    try {
-      while (isActive) {
-        send(SSE_HEARTBEAT_EVENT)
-        delay(SSE_HEARTBEAT_PERIOD)
-      }
-    }
-    finally {
-      transport.close()
+    while (isActive) {
+      send(SSE_HEARTBEAT_EVENT)
+      delay(SSE_HEARTBEAT_PERIOD)
     }
   }
 }

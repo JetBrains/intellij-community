@@ -18,7 +18,6 @@ import com.intellij.mcpserver.stdio.IJ_MCP_SERVER_PROJECT_PATH
 import com.intellij.mcpserver.toolwindow.McpDiagnosticService
 import com.intellij.mcpserver.toolwindow.TransportType
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.diagnostic.traceThrowable
@@ -83,7 +82,7 @@ internal class McpSessionHandler(
   private val projectPathFromInitialRequest: String?,
   useFiltersFromEP: Boolean,
 ) {
-  private val sessionScope = parentScope.childScope("SessionMcpToolsManager")
+  val sessionScope = parentScope.childScope("SessionMcpToolsManager")
 
   /**
    * The effective invocation mode for this session.
@@ -174,21 +173,15 @@ internal class McpSessionHandler(
   suspend fun createAndInitializeSession(transport: Transport, scope: CoroutineScope): ServerSession {
     val session = mcpServer.createSession(transport)
     sessionAwaiter.complete(session)
-
-    serviceAsync<McpDiagnosticService>().sessionStarted(
-      sessionId = session.sessionId,
-      transportType = transportType,
-      startTimeMs = System.currentTimeMillis(),
-      localAgentId = sessionOptions.localAgentId,
-    )
+    val sessionId = session.sessionId
 
     transport.onClose {
       sessionScope.cancel()
-      service<McpDiagnosticService>().sessionEnded(session.sessionId)
+      service<McpDiagnosticService>().sessionEnded(sessionId)
     }
 
     sessionScope.launch {
-      logger.trace { "Subscribing to MCP tools updates for session ${session.sessionId}" }
+      logger.trace { "Subscribing to MCP tools updates for session ${sessionId}" }
       mcpTools.collectLatest { updatedTools ->
         processToolsUpdate(updatedTools)
       }
@@ -204,9 +197,12 @@ internal class McpSessionHandler(
       if (clientVersion != null) {
         // Update session tools manager with client info
         updateClientInfo(clientVersion)
-        service<McpDiagnosticService>().sessionInitialized(
-          session.sessionId,
-          ClientInfo(clientVersion.name, clientVersion.version),
+        service<McpDiagnosticService>().sessionStarted(
+          sessionId = sessionId,
+          clientInfo = ClientInfo(clientVersion.name, clientVersion.version),
+          transportType = transportType,
+          startTimeMs = System.currentTimeMillis(),
+          localAgentId = sessionOptions.localAgentId,
         )
       }
 
