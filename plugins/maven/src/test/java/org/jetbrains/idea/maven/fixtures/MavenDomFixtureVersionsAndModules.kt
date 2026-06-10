@@ -3,6 +3,7 @@
 package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.compiler.CompilerConfiguration
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase.Companion.getActualVersion
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -89,4 +90,23 @@ fun MavenTestFixture.assertModuleLibDep(moduleName: String, depName: String) {
     .filterIsInstance<LibraryOrderEntry>()
     .find { it.libraryName == depName }
   assertNotNull("Library dependency $depName not found in module $moduleName", entry)
+}
+
+val MavenTestFixture.isMaven4: Boolean
+  get() = StringUtil.compareVersionNumbers(
+    getActualMavenVersion(), "4.0") >= 0
+
+fun MavenTestFixture.withModel410Only(value: String?): String? {
+  val isRc3 = getActualMavenVersion().equals("4.0.0-rc-3", true)
+  return if (isRc3 || this.modelVersion == MavenConstants.MODEL_VERSION_4_1_0) value else null
+}
+
+fun MavenTestFixture.isModel410(): Boolean {
+  val isRc3 = getActualMavenVersion().equals("4.0.0-rc-3", true)
+  if (isRc3) return true
+  return this.isMaven4 && this.modelVersion == MavenConstants.MODEL_VERSION_4_1_0
+}
+
+fun arrayOfNotNull(vararg values: String?): Array<String> {
+  return values.filterNotNull().toTypedArray()
 }
