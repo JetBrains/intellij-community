@@ -94,7 +94,6 @@ internal class IterativeMergeFlowDelegate(
   private val rootPane: JRootPane,
   private val files: List<VirtualFile>,
   private val onClose: () -> Unit,
-  private val closeResolveActionUi: () -> Unit,
   private val onAcceptAndFinish: () -> Unit,
   acceptForResolution: (MergeSession.Resolution) -> Unit,
   private val showMergeDialog: () -> Unit,
@@ -155,7 +154,12 @@ internal class IterativeMergeFlowDelegate(
       }
     }
     val defaultSpacingConfiguration = IntelliJSpacingConfiguration()
-    val resolveActionComponents = createResolveActionComponents()
+    val mergeContext = MergeResolveActionContext(
+      project = project,
+      selectionHintFilesProvider = { if (::state.isInitialized) state.selectedFiles else emptyList() },
+      closeSourceUiHandler = onAcceptAndFinish,
+    )
+    resolveActionControllers = createMergeResolveActionComponentControllers(mergeContext, ITERATIVE_MERGE_DIALOG_ACTION_PLACE)
     return panel {
       row {
         descriptionLabel = label(currentDescription).component.apply {
@@ -177,8 +181,8 @@ internal class IterativeMergeFlowDelegate(
             icon = AllIcons.Diff.MagicResolve
           }.align(AlignX.LEFT).component
 
-        for (component in resolveActionComponents) {
-          cell(component)
+        for (controller in resolveActionControllers) {
+          cell(controller.component)
             .customize(UnscaledGaps(left = defaultSpacingConfiguration.segmentedButtonHorizontalGap))
         }
 
@@ -244,22 +248,6 @@ internal class IterativeMergeFlowDelegate(
     }.customize(UnscaledGapsY(top = 32))
   }
 
-  private fun createResolveActionComponents(): List<JComponent> {
-    val mergeContext = MergeResolveActionContext(
-      project = project,
-      selectionHintFilesProvider = { if (::state.isInitialized) state.selectedFiles else emptyList() },
-      closeSourceUiHandler = closeResolveActionUi,
-    )
-    resolveActionControllers = createMergeResolveActionComponentControllers(mergeContext, ITERATIVE_MERGE_DIALOG_ACTION_PLACE)
-    return resolveActionControllers.map { it.component }
-  }
-
-  private fun refreshResolveActions() {
-    // Contributed actions can depend on merge selection. Refresh after state changes so actions
-    // that were invisible during construction are not permanently dropped.
-    resolveActionControllers.forEach { it.update() }
-  }
-
   private fun createViewOptionsToolbar(): ActionToolbar {
     val viewOptionsGroup = DefaultActionGroup(IdeBundle.message("group.view.options"), true).apply {
       templatePresentation.icon = AllIcons.Actions.Show
@@ -311,7 +299,7 @@ internal class IterativeMergeFlowDelegate(
         model?.wasReviewed == true && model.getUnresolvedChanges().isEmpty()
       })
     updateButtonsState()
-    refreshResolveActions()
+    resolveActionControllers.forEach { it.update() }
   }
 
   private fun updateButtonsState() {

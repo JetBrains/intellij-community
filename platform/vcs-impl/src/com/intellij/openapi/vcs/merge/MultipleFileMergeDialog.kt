@@ -116,6 +116,7 @@ open class MultipleFileMergeDialog(
     }.installOn(this)
     TableSpeedSearch.installOn(this, Convertor { (it as? VirtualFile)?.name })
   }
+
   private var groupByDirectory: Boolean = false
     get() = when {
       project != null -> VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY
@@ -140,7 +141,6 @@ open class MultipleFileMergeDialog(
     rootPane = rootPane,
     files = files,
     onClose = ::doCancelAction,
-    closeResolveActionUi = ::handoffToAgent,
     onAcceptAndFinish = ::acceptAndFinish,
     acceptForResolution = ::acceptForResolution,
     showMergeDialog = ::showMergeDialog,
@@ -465,9 +465,6 @@ open class MultipleFileMergeDialog(
     finishResolution()
     super.doCancelAction()
   }
-
-  @RequiresEdt
-  fun handoffToAgent(): Unit = acceptAndFinish()
 
   private fun finishResolution() {
     val iterativelyResolved =

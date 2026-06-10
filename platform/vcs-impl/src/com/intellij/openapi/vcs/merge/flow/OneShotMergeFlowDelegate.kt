@@ -50,6 +50,16 @@ internal class OneShotMergeFlowDelegate(
   private var resolveActionControllers: List<MergeResolveActionComponentController> = emptyList()
 
   override fun createCenterPanel(): JComponent {
+    val project = this.project
+    if (project != null) {
+      val mergeContext = MergeResolveActionContext(
+        project = project,
+        selectionHintFilesProvider = { selectionHintFiles },
+        closeSourceUiHandler = onClose,
+      )
+      resolveActionControllers = createMergeResolveActionComponentControllers(mergeContext, ONE_SHOT_MERGE_DIALOG_ACTION_PLACE)
+    }
+
     return panel {
       row {
         label(VcsBundle.message("merge.loading.merge.details")).applyToComponent {
@@ -91,9 +101,9 @@ internal class OneShotMergeFlowDelegate(
             cell(mergeButton)
               .align(AlignX.FILL)
           }
-          createResolveActionComponents().forEach { component ->
+          for (controller in resolveActionControllers) {
             row {
-              cell(component).align(AlignX.FILL)
+              cell(controller.component).align(AlignX.FILL)
             }
           }
         }.align(AlignY.TOP)
@@ -134,11 +144,11 @@ internal class OneShotMergeFlowDelegate(
     unacceptableFileSelected: Boolean,
   ) {
     selectionHintFiles = selectedFiles
-    val haveSelection = selectedFiles.any()
+    val haveSelection = selectedFiles.isNotEmpty()
     acceptYoursButton.isEnabled = haveSelection && !unacceptableFileSelected
     acceptTheirsButton.isEnabled = haveSelection && !unacceptableFileSelected
     mergeButton.isEnabled = haveSelection && !unmergeableFileSelected
-    refreshResolveActions()
+    resolveActionControllers.forEach { it.update() }
   }
 
   override fun buildTreeModel(
@@ -149,20 +159,4 @@ internal class OneShotMergeFlowDelegate(
 
   override fun createSouthPanel(): JComponent? = null
 
-  private fun createResolveActionComponents(): List<JComponent> {
-    val project = project ?: return emptyList()
-    val mergeContext = MergeResolveActionContext(
-      project = project,
-      selectionHintFilesProvider = { selectionHintFiles },
-      closeSourceUiHandler = onClose,
-    )
-    resolveActionControllers = createMergeResolveActionComponentControllers(mergeContext, ONE_SHOT_MERGE_DIALOG_ACTION_PLACE)
-    return resolveActionControllers.map { it.component }
-  }
-
-  private fun refreshResolveActions() {
-    // Contributed actions may depend on the current selection. The dialog UI is created before
-    // default tree selection is restored, so refresh instead of deciding visibility once up front.
-    resolveActionControllers.forEach { it.update() }
-  }
 }

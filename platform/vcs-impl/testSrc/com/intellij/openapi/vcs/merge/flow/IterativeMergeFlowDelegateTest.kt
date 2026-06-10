@@ -44,7 +44,7 @@ internal class IterativeMergeFlowDelegateTest {
     val file = LightVirtualFile("conflicts/sample.txt", "text")
     val action = TestResolveAction("Resolve with Agent")
     ExtensionTestUtil.maskExtensions(MergeResolveActionProvider.EP_NAME, listOf(TestProvider(action)), disposable)
-    var closeRequested = false
+    var acceptAndFinishRequested = false
     val delegate = IterativeMergeFlowDelegate(
       project = project,
       iterativeDataHolder = MergeConflictIterativeDataHolder(project, disposable),
@@ -54,8 +54,7 @@ internal class IterativeMergeFlowDelegateTest {
       rootPane = JRootPane(),
       files = listOf(file),
       onClose = {},
-      closeResolveActionUi = { closeRequested = true },
-      onAcceptAndFinish = {},
+      onAcceptAndFinish = { acceptAndFinishRequested = true },
       acceptForResolution = {},
       showMergeDialog = {},
       toggleGroupByDirectory = {},
@@ -82,9 +81,9 @@ internal class IterativeMergeFlowDelegateTest {
     assertSame(project, context!!.project)
     assertEquals(listOf(file), context.selectionHintFiles)
     assertTrue(context.isContextValid())
-    assertFalse(closeRequested)
+    assertFalse(acceptAndFinishRequested)
     context.closeSourceUi()
-    assertTrue(closeRequested)
+    assertTrue(acceptAndFinishRequested)
   }
 
   @Test
@@ -102,7 +101,6 @@ internal class IterativeMergeFlowDelegateTest {
       rootPane = JRootPane(),
       files = listOf(file),
       onClose = {},
-      closeResolveActionUi = {},
       onAcceptAndFinish = {},
       acceptForResolution = {},
       showMergeDialog = {},

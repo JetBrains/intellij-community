@@ -37,17 +37,17 @@ internal fun createMergeResolveActionComponentControllers(
   // contributed component and let delegates refresh it when merge selection changes.
   return MergeResolveActionProvider.EP_NAME.extensionList
     .sortedBy(MergeResolveActionProvider::order)
-    .mapNotNull { provider -> createResolveActionComponentController(provider, mergeContext, place) }
+    .map { provider -> createResolveActionComponentController(provider, mergeContext, place) }
 }
 
 private fun createResolveActionComponentController(
   provider: MergeResolveActionProvider,
   mergeContext: MergeResolveActionContext,
   place: String,
-): MergeResolveActionComponentController? {
+): MergeResolveActionComponentController {
   val action = provider.action
   return if (action is CustomComponentAction) {
-    createResolveActionCustomComponentController(action, mergeContext, place)
+    createResolveActionCustomComponentController(action, action, mergeContext, place)
   }
   else {
     createResolveActionButtonController(provider, mergeContext, place)
@@ -72,18 +72,18 @@ private fun createResolveActionButtonController(
 }
 
 private fun createResolveActionCustomComponentController(
-  action: CustomComponentAction,
+  customComponentAction: CustomComponentAction,
+  action: AnAction,
   mergeContext: MergeResolveActionContext,
   place: String,
-): MergeResolveActionComponentController? {
-  val anAction = action as? AnAction ?: return null
-  val presentation = MergeResolveActionSupport.getUpdatedPresentation(anAction, mergeContext, null, place)
-                     ?: anAction.templatePresentation.clone().apply { isVisible = false }
-  val component = action.createCustomComponent(presentation, place)
-  action.updateCustomComponent(component, presentation)
+): MergeResolveActionComponentController {
+  val presentation = MergeResolveActionSupport.getUpdatedPresentation(action, mergeContext, null, place)
+                     ?: action.templatePresentation.clone().apply { isVisible = false }
+  val component = customComponentAction.createCustomComponent(presentation, place)
+  customComponentAction.updateCustomComponent(component, presentation)
   val wrappedComponent = wrapResolveActionComponent(component, mergeContext)
   return MergeResolveActionComponentController(wrappedComponent) {
-    updateResolveActionCustomComponent(action, anAction, component, wrappedComponent, mergeContext, place)
+    updateResolveActionCustomComponent(customComponentAction, action, component, wrappedComponent, mergeContext, place)
   }.also { it.update() }
 }
 
@@ -122,11 +122,13 @@ private fun syncResolveActionButton(button: JButton, presentation: MergeResolveA
     return
   }
 
-  button.text = presentation.text
-  button.icon = presentation.icon
-  button.setToolTipText(presentation.description?.let(HtmlChunk::text))
-  button.isEnabled = presentation.isEnabled
-  button.isVisible = true
+  button.apply {
+    text = presentation.text
+    icon = presentation.icon
+    setToolTipText(presentation.description?.let(HtmlChunk::text))
+    isEnabled = presentation.isEnabled
+    isVisible = true
+  }
 }
 
 private fun wrapResolveActionComponent(
