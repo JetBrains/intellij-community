@@ -62,50 +62,40 @@ interface MinimapInteractionPolicy {
       ExtensionPointName("com.intellij.minimapInteractionPolicy")
 
     fun forEditor(editor: Editor): MinimapInteractionPolicy {
-      return EP_NAME.extensionList.firstOrNull { it.isApplicable(editor) } ?: DefaultMinimapInteractionPolicy
+      return EP_NAME.findFirstSafe { it.isApplicable(editor) } ?: DefaultMinimapInteractionPolicy
     }
 
     fun handleClick(panel: MinimapPanel, event: MouseEvent): Boolean {
       val editor = panel.editor
-      for (policy in EP_NAME.extensionList) {
-        if (!policy.isApplicable(editor)) continue
-        if (policy.handleClick(panel, event)) return true
-      }
-      return false
+      return EP_NAME.computeSafeIfAny { policy ->
+        if (policy.isApplicable(editor) && policy.handleClick(panel, event)) true else null
+      } ?: false
     }
 
     fun handleMouseMoved(panel: MinimapPanel, event: MouseEvent): Boolean {
       val editor = panel.editor
-      for (policy in EP_NAME.extensionList) {
-        if (!policy.isApplicable(editor)) continue
-        if (policy.handleMouseMoved(panel, event)) return true
-      }
-      return false
+      return EP_NAME.computeSafeIfAny { policy ->
+        if (policy.isApplicable(editor) && policy.handleMouseMoved(panel, event)) true else null
+      } ?: false
     }
 
     fun handleMouseExited(panel: MinimapPanel, event: MouseEvent): Boolean {
       val editor = panel.editor
-      for (policy in EP_NAME.extensionList) {
-        if (!policy.isApplicable(editor)) continue
-        if (policy.handleMouseExited(panel, event)) return true
-      }
-      return false
+      return EP_NAME.computeSafeIfAny { policy ->
+        if (policy.isApplicable(editor) && policy.handleMouseExited(panel, event)) true else null
+      } ?: false
     }
 
     fun useIndependentMinimapScroll(editor: Editor): Boolean {
-      for (policy in EP_NAME.extensionList) {
-        if (!policy.isApplicable(editor)) continue
-        return policy.useIndependentMinimapScroll(editor)
-      }
-      return false
+      return EP_NAME.computeSafeIfAny { policy ->
+        if (policy.isApplicable(editor)) policy.useIndependentMinimapScroll(editor) else null
+      } ?: false
     }
 
     fun isGenericInteractionLoggingEnabled(editor: Editor): Boolean {
-      for (policy in EP_NAME.extensionList) {
-        if (!policy.isApplicable(editor)) continue
-        return policy.isGenericInteractionLoggingEnabled(editor)
-      }
-      return true
+      return EP_NAME.computeSafeIfAny { policy ->
+        if (policy.isApplicable(editor)) policy.isGenericInteractionLoggingEnabled(editor) else null
+      } ?: true
     }
   }
 }
