@@ -73,6 +73,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
   private volatile boolean myHasErrorElement;
   private volatile boolean myHasErrorSeverity;
   private final boolean myRunAnnotators;
+  private final boolean myBatchMode;
   private final HighlightInfoUpdater myHighlightInfoUpdater;
   private final HighlightVisitorRunner myHighlightVisitorRunner;
 
@@ -86,11 +87,13 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
                           boolean runAnnotators,
                           boolean runVisitors,
                           boolean highlightErrorElements,
+                          boolean batchMode,
                           @NotNull HighlightInfoUpdater highlightInfoUpdater) {
     super(psiFile.getProject(), document, AnalysisBundle.message("pass.syntax"), psiFile, editor, TextRange.create(startOffset, endOffset), true, HighlightInfoProcessor.getEmpty());
     myUpdateAll = updateAll;
     myPriorityRange = priorityRange;
     myRunAnnotators = runAnnotators;
+    myBatchMode = batchMode;
     myHighlightInfoUpdater = highlightInfoUpdater;
 
     PsiUtilCore.ensureValid(psiFile);
@@ -248,7 +251,7 @@ public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighli
                                                                    myUpdateAll, () -> createInfoHolder(getFile()), resultSink);
     AnnotationSession session = AnnotationSessionImpl.create(getFile());
     setupAnnotationSession(session, myPriorityRange, restrictRange, getHighlightingSession().getMinimumSeverity());
-    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, false) : null;
+    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, myBatchMode) : null;
     if (annotatorRunner == null) {
       runnable.run();
       return true;

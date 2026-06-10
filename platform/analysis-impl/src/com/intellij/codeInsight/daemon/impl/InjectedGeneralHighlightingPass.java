@@ -59,6 +59,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
   private final @NotNull EditorColorsScheme myGlobalScheme;
   private final List<HighlightInfo> myHighlights = new ArrayList<>(); // guarded by myHighlights
   private final boolean myRunAnnotators;
+  private final boolean myBatchMode;
   private final boolean myRunVisitors;
   private final boolean myHighlightErrorElements;
   private final HighlightInfoUpdater myHighlightInfoUpdater;
@@ -74,6 +75,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
                                   boolean runAnnotators,
                                   boolean runVisitors,
                                   boolean highlightErrorElements,
+                                  boolean batchMode,
                                   @NotNull HighlightInfoUpdater highlightInfoUpdater) {
     super(psiFile.getProject(), document, AnalysisBundle.message("highlighting.pass.injected.presentable.name"), psiFile, editor, TextRange.create(startOffset, endOffset), true, HighlightInfoProcessor.getEmpty());
     myReducedRanges = reducedRanges;
@@ -81,6 +83,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     myPriorityRange = priorityRange;
     myGlobalScheme = editor != null ? editor.getColorsScheme() : EditorColorsManager.getInstance().getGlobalScheme();
     myRunAnnotators = runAnnotators;
+    myBatchMode = batchMode;
     myRunVisitors = runVisitors;
     myHighlightErrorElements = highlightErrorElements;
     myHighlightInfoUpdater = highlightInfoUpdater;
@@ -213,7 +216,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
     GeneralHighlightingPass.setupAnnotationSession(session, myPriorityRange, myRestrictRange,
                                                    getHighlightingSession().getMinimumSeverity());
 
-    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, false) : null;
+    AnnotatorRunner annotatorRunner = myRunAnnotators ? new AnnotatorRunner(session, myBatchMode) : null;
     Divider.divideInsideAndOutsideAllRoots(injectedPsi, injectedPsi.getTextRange(), injectedPsi.getTextRange(), GeneralHighlightingPass.SHOULD_HIGHLIGHT_FILTER, dividedElements -> {
       List<? extends @NotNull PsiElement> inside = dividedElements.inside();
       Runnable runnable = () -> {

@@ -27,7 +27,7 @@ final class NauseousGeneralHighlightingPass extends GeneralHighlightingPass {
                                   @NotNull ProperTextRange visibleRange,
                                   @NotNull AtomicReference<? super HighlightInfo> error) {
     super(psiFile, document, 0, document.getTextLength(), false, visibleRange, null, true, true, true,
-          HighlightInfoUpdater.EMPTY);
+          false, HighlightInfoUpdater.EMPTY);
     myError = error;
   }
 
