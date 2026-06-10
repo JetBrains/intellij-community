@@ -1,22 +1,30 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions
 
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadStatusIcon
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
+import com.intellij.agent.workbench.sessions.core.providers.clearAgentSessionThreadStatusIconCacheForTests
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.use
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
+import javax.swing.Icon
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -190,6 +198,85 @@ class AgentSessionProvidersTest {
   fun allRegisteredProvidersProvideIcon() {
     AgentSessionProviders.allProviders().forEach { descriptor ->
       assertThat(descriptor.icon).isNotNull()
+    }
+  }
+
+  @Test
+  @RegistryKey(key = "agent.workbench.use.monochrome.icons", value = "true")
+  fun providerItemMonochromeIconWithModeUsesMonochromeWhenEnabled() {
+    val coloredIcon = AgentWorkbenchCommonIcons.Claude
+    val monochromeIcon = AgentWorkbenchCommonIcons.Codex
+    val descriptor = object : TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CLAUDE,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      iconOverride = coloredIcon,
+    ) {
+      override val monochromeIcon: Icon = monochromeIcon
+    }
+    val item = AgentSessionProviderMenuItem(
+      bridge = descriptor,
+      mode = AgentSessionLaunchMode.STANDARD,
+      labelKey = "some.key",
+      isEnabled = true
+    )
+    assertThat(providerItemMonochromeIconWithMode(item)).isSameAs(monochromeIcon)
+  }
+
+  @Test
+  @RegistryKey(key = "agent.workbench.use.monochrome.icons", value = "false")
+  fun providerItemMonochromeIconWithModeUsesColoredWhenDisabled() {
+    val coloredIcon = AgentWorkbenchCommonIcons.Claude
+    val monochromeIcon = AgentWorkbenchCommonIcons.Codex
+    val descriptor = object : TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CLAUDE,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      iconOverride = coloredIcon,
+    ) {
+      override val monochromeIcon: Icon = monochromeIcon
+    }
+    val item = AgentSessionProviderMenuItem(
+      bridge = descriptor,
+      mode = AgentSessionLaunchMode.STANDARD,
+      labelKey = "some.key",
+      isEnabled = true
+    )
+    assertThat(providerItemMonochromeIconWithMode(item)).isSameAs(coloredIcon)
+  }
+
+  @Test
+  @RegistryKey(key = "agent.workbench.use.monochrome.icons", value = "true")
+  fun threadStatusIconCacheSeparatesRegistryModes() {
+    val disposable = Disposer.newDisposable()
+    disposable.use {
+      clearAgentSessionThreadStatusIconCacheForTests()
+      Disposer.register(disposable) { clearAgentSessionThreadStatusIconCacheForTests() }
+
+      val coloredIcon = AgentWorkbenchCommonIcons.Claude
+      val monochromeIcon = AgentWorkbenchCommonIcons.Codex
+      val descriptor = object : TestAgentSessionProviderDescriptor(
+        provider = AgentSessionProvider.CLAUDE,
+        supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+        cliAvailable = true,
+        iconOverride = coloredIcon,
+      ) {
+        override val monochromeIcon: Icon = monochromeIcon
+      }
+      val overrideRegistry = InMemoryAgentSessionProviderRegistry(listOf(descriptor))
+
+      AgentSessionProviders.withRegistryForTest(overrideRegistry) {
+        val registryValue = Registry.get("agent.workbench.use.monochrome.icons")
+
+        val monochromeStatusIcon = agentSessionThreadStatusIcon(AgentSessionProvider.CLAUDE, AgentThreadActivity.READY)
+
+        registryValue.setValue(false, disposable)
+        val coloredStatusIcon = agentSessionThreadStatusIcon(AgentSessionProvider.CLAUDE, AgentThreadActivity.READY)
+
+        assertThat(coloredStatusIcon).isNotSameAs(monochromeStatusIcon)
+        assertThat(monochromeStatusIcon).isSameAs(monochromeIcon)
+        assertThat(coloredStatusIcon).isSameAs(coloredIcon)
+      }
     }
   }
 }

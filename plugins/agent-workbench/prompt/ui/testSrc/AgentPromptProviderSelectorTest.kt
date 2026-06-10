@@ -26,6 +26,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.TestActionEvent
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
@@ -46,6 +47,7 @@ import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.awt.event.KeyEvent
+import javax.swing.Icon
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -107,6 +109,44 @@ class AgentPromptProviderSelectorTest {
       assertThat(fixture.view.headerControls.providerOptionActions).isEmpty()
       assertThat(collectComponentsOfType(fixture.view.rootPanel, JBCheckBox::class.java).map { it.text })
         .doesNotContain("Plan mode")
+    }
+  }
+
+  @Test
+  @RegistryKey(key = "agent.workbench.use.monochrome.icons", value = "true")
+  fun updatePresentationUsesMonochromeIconWhenRegistryEnabled() {
+    runInEdtAndWait {
+      val coloredIcon = EmptyIcon.ICON_16
+      val monochromeIcon = EmptyIcon.create(18)
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CLAUDE,
+        promptOptions = emptyList(),
+        icon = coloredIcon,
+        monochromeIconOverride = monochromeIcon,
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+
+      assertThat(fixture.view.providerIconLabel.icon).isSameAs(monochromeIcon)
+    }
+  }
+
+  @Test
+  @RegistryKey(key = "agent.workbench.use.monochrome.icons", value = "false")
+  fun updatePresentationUsesColoredIconWhenRegistryDisabled() {
+    runInEdtAndWait {
+      val coloredIcon = EmptyIcon.ICON_16
+      val monochromeIcon = EmptyIcon.create(18)
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CLAUDE,
+        promptOptions = emptyList(),
+        icon = coloredIcon,
+        monochromeIconOverride = monochromeIcon,
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+
+      assertThat(fixture.view.providerIconLabel.icon).isSameAs(coloredIcon)
     }
   }
 
@@ -1096,6 +1136,8 @@ class AgentPromptProviderSelectorTest {
     availableGenerationModelsError: Throwable? = null,
     availableGenerationModelsResolver: suspend () -> List<AgentPromptGenerationModel> = { availableGenerationModels },
     onListAvailableGenerationModels: () -> Unit = {},
+    icon: Icon = EmptyIcon.ICON_16,
+    monochromeIconOverride: Icon? = null,
   ): AgentSessionProviderDescriptor {
     return object : AgentSessionProviderDescriptor {
       override val provider: AgentSessionProvider = provider
@@ -1109,7 +1151,8 @@ class AgentPromptProviderSelectorTest {
       override val sessionSource: AgentSessionSource
         get() = error("Not required for this test")
       override val cliMissingMessageKey: String = displayNameKey
-      override val icon = EmptyIcon.ICON_16
+      override val icon = icon
+      override val monochromeIcon: Icon = monochromeIconOverride ?: icon
 
       override suspend fun isCliAvailable(): Boolean = cliAvailable
 

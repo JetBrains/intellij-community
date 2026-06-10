@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -44,7 +45,8 @@ fun providerItemIconWithMode(item: AgentSessionProviderMenuItem): Icon {
 }
 
 fun providerItemMonochromeIconWithMode(item: AgentSessionProviderMenuItem): Icon {
-  val icon = item.bridge.monochromeIcon
+  val useMonochrome = Registry.`is`("agent.workbench.use.monochrome.icons", true)
+  val icon = if (useMonochrome) item.bridge.monochromeIcon else item.bridge.icon
   if (item.mode == AgentSessionLaunchMode.YOLO) {
     return withYoloModeBadge(icon)
   }

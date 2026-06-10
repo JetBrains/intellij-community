@@ -59,5 +59,9 @@
     <registryKey key="agent.workbench.semantic.proposed.plan.navigation"
                    defaultValue="false"
                    description="Highlight and navigate proposed plans in Agent Workbench chat tabs"/>
+    <registryKey key="agent.workbench.use.monochrome.icons"
+                 defaultValue="true"
+                 description="Use monochrome line icons on main toolbar buttons, action buttons, and status indicators in Agent Workbench"
+                 restartRequired="false"/>
   </extensions>
 </idea-plugin>

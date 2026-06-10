@@ -15,7 +15,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAct
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
-class TestAgentSessionProviderDescriptor(
+open class TestAgentSessionProviderDescriptor(
   override val provider: AgentSessionProvider,
   private val supportedModes: Set<AgentSessionLaunchMode>,
   private val cliAvailable: Boolean,
