@@ -22,7 +22,7 @@ class KotlinJavaMPPSourceSetDataService : AbstractProjectDataService<GradleSourc
     override fun getTargetDataKey() = GradleSourceSetData.KEY
 
     override fun postProcess(
-        toImport: MutableCollection<out DataNode<GradleSourceSetData>>,
+        toImport: Collection<DataNode<GradleSourceSetData>>,
         projectData: ProjectData?,
         project: Project,
         modelsProvider: IdeModifiableModelsProvider

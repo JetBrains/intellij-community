@@ -327,7 +327,8 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
 
   @Test
   fun testFrozenMustNotBeModifiable() {
-    val set = VfsUtilCore.createCompactVirtualFileSet().freezed()
+    val set = VfsUtilCore.createCompactVirtualFileSet()
+    set.freezed()
     WriteAction.runAndWait<Throwable> {
       assertThrows(IllegalStateException::class.java) { set.clear() }
       assertThrows(IllegalStateException::class.java) { set.add(createFile()) }

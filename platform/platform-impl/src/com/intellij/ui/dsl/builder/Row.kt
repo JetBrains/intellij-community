@@ -348,8 +348,10 @@ interface Row {
   /**
    * Creates expandable text field with [columns] set to [COLUMNS_SHORT]
    */
-  fun expandableTextField(parser: Function<in String, out MutableList<String>> = ParametersListUtil.DEFAULT_LINE_PARSER,
-                          joiner: Function<in MutableList<String>, String> = ParametersListUtil.DEFAULT_LINE_JOINER): Cell<ExpandableTextField>
+  fun expandableTextField(
+    parser: Function<in String, out List<String>> = ParametersListUtil.DEFAULT_LINE_PARSER,
+    joiner: Function<in List<String>, String> = ParametersListUtil.DEFAULT_LINE_JOINER,
+  ): Cell<ExpandableTextField>
 
   /**
    * Creates extendable text field with [columns] set to [COLUMNS_SHORT].

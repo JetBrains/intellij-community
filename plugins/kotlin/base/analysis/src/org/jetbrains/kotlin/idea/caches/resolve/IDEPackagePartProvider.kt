@@ -19,7 +19,7 @@ class IDEPackagePartProvider(val scope: GlobalSearchScope) : PackagePartProvider
     override fun findMetadataPackageParts(packageFqName: String): List<String> =
         getPackageParts(packageFqName).flatMap(PackageParts::metadataParts).distinct()
 
-    private fun getPackageParts(packageFqName: String): MutableList<PackageParts> =
+    private fun getPackageParts(packageFqName: String): List<PackageParts> =
         FileBasedIndex.getInstance().getValues(KotlinModuleMappingIndex.NAME, packageFqName, scope)
 
     // Note that in case of several modules with the same name, we return all annotations on all of them, which is probably incorrect

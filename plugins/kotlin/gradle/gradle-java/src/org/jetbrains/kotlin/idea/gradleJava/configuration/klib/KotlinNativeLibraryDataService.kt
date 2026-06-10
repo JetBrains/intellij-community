@@ -24,7 +24,7 @@ class KotlinNativeLibraryDataService : AbstractProjectDataService<LibraryData, L
 
     // See also `com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService.postProcess()`
     override fun postProcess(
-        toImport: MutableCollection<out DataNode<LibraryData>>,
+        toImport: Collection<DataNode<LibraryData>>,
         projectData: ProjectData?,
         project: Project,
         modelsProvider: IdeModifiableModelsProvider

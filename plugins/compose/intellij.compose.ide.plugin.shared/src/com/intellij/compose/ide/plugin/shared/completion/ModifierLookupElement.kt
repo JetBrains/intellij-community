@@ -40,7 +40,7 @@ abstract class ModifierLookupElement(
     presentation.itemText = lookupString
   }
 
-  override fun getAllLookupStrings(): MutableSet<String> {
+  override fun getAllLookupStrings(): Set<String> {
     if (insertModifier) {
       val lookupStrings = super.getAllLookupStrings().toMutableSet()
       lookupStrings.add(CALL_ON_MODIFIER_OBJECT + super.getLookupString())

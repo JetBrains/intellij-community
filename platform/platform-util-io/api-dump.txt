@@ -121,6 +121,7 @@ f:com.intellij.execution.configurations.ParametersList
 - patchMacroWithEnvs(java.util.Map):V
 - prepend(java.lang.String):V
 - prependAll(java.lang.String[]):V
+- removeAt(I):V
 - removeParamsGroup(I):com.intellij.execution.configurations.ParamsGroup
 - replaceOrAppend(java.lang.String,java.lang.String):V
 - replaceOrPrepend(java.lang.String,java.lang.String):V

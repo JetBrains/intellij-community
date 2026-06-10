@@ -340,8 +340,8 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return result
   }
 
-  override fun expandableTextField(parser: Function<in String, out MutableList<String>>,
-                                   joiner: Function<in MutableList<String>, String>): Cell<ExpandableTextField> {
+  override fun expandableTextField(parser: Function<in String, out List<String>>,
+                                   joiner: Function<in List<String>, String>): Cell<ExpandableTextField> {
     val result = cell(ExpandableTextField(parser, joiner))
     result.columns(COLUMNS_SHORT)
     return result

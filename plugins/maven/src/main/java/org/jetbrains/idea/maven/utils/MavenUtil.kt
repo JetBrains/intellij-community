@@ -418,12 +418,12 @@ object MavenUtil {
     return (if (collection is MutableSet<*>) collection else HashSet<T?>(collection))
   }
 
-  fun <T, U> mapToList(map: MutableMap<T?, U?>): MutableList<Pair<T?, U?>?> {
-    return ContainerUtil.map<MutableMap.MutableEntry<T?, U?>?, Pair<T?, U?>?>(map.entries,
-                                                                              Function { tuEntry: MutableMap.MutableEntry<T?, U?>? ->
-                                                                                Pair.create<T?, U?>(
-                                                                                  tuEntry!!.key, tuEntry.value)
-                                                                              })
+  fun <T, U> mapToList(map: Map<T?, U?>): List<Pair<T?, U?>?> {
+    return ContainerUtil.map<Map.Entry<T?, U?>?, Pair<T?, U?>?>(map.entries,
+                                                                               Function { tuEntry: Map.Entry<T?, U?>? ->
+                                                                                 Pair.create<T?, U?>(
+                                                                                   tuEntry!!.key, tuEntry.value)
+                                                                               })
   }
 
   @JvmStatic

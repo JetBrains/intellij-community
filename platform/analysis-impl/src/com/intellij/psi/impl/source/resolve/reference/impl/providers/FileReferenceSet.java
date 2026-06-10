@@ -323,7 +323,7 @@ public class FileReferenceSet implements FileReferenceSetParameters {
     return result;
   }
 
-  public @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
+  public @Unmodifiable @NotNull Collection<PsiFileSystemItem> computeDefaultContexts() {
     final PsiFile file = getContainingFile();
     if (file == null) return emptyList();
 

@@ -74,7 +74,8 @@ class ModuleRootComponentBridge(
   override fun removeCachedJpsRootProperties(sourceRootUrl: VirtualFileUrl) {
   }
 
-  override fun dispose() = Unit
+  override fun dispose() {
+  }
 
   override fun dropCaches() {
     orderRootsCache.clearCache()
@@ -148,9 +149,12 @@ class ModuleRootComponentBridge(
   override fun getSdk(): Sdk? = model.sdk
   override fun getSourceRoots(): Array<VirtualFile> = model.sourceRoots
   override fun getSourceRoots(includingTests: Boolean): Array<VirtualFile> = model.getSourceRoots(includingTests)
-  override fun getSourceRoots(rootType: JpsModuleSourceRootType<*>): MutableList<VirtualFile> = model.getSourceRoots(rootType)
-  override fun getSourceRoots(rootTypes: MutableSet<out JpsModuleSourceRootType<*>>): MutableList<VirtualFile> = model.getSourceRoots(
-    rootTypes)
+
+  override fun getSourceRoots(rootType: JpsModuleSourceRootType<*>): List<VirtualFile> = model.getSourceRoots(rootType)
+
+  override fun getSourceRoots(rootTypes: MutableSet<out JpsModuleSourceRootType<*>>): List<VirtualFile> {
+    return model.getSourceRoots(rootTypes)
+  }
 
   override fun getContentRoots(): Array<VirtualFile> = model.contentRoots
   override fun getContentRootUrls(): Array<String> = model.contentRootUrls

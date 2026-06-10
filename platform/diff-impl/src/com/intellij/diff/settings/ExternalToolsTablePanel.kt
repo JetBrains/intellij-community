@@ -62,7 +62,7 @@ internal class ExternalToolsTablePanel(private val models: ExternalToolsModels) 
     settings.defaultToolConfiguration = persistedData[0]
 
     if (persistedData.size > 1) {
-      settings.externalToolsConfiguration = persistedData.subList(1, persistedData.size)
+      settings.externalToolsConfiguration = persistedData.subList(1, persistedData.size).toMutableList()
     }
     else {
       settings.externalToolsConfiguration = mutableListOf()

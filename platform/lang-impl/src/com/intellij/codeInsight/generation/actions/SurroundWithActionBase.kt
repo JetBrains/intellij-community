@@ -51,7 +51,7 @@ class SurroundWithActionBase : AnAction() {
 
   private fun findSurroundContext(file: PsiFile, startOffset: Int, endOffset: Int): SurroundContext? {
     val language = file.viewProvider.baseLanguage
-    val descriptors: MutableList<SurroundDescriptor> = LanguageSurrounders.INSTANCE.allForLanguage(language)
+    val descriptors = LanguageSurrounders.INSTANCE.allForLanguage(language)
     return descriptors.firstNotNullOfOrNull { descriptor -> findSurroundContext(descriptor, file, startOffset, endOffset) }
   }
 

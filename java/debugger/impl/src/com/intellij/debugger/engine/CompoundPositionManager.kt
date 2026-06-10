@@ -128,8 +128,9 @@ open class CompoundPositionManager() : PositionManagerWithConditionEvaluation, M
     return position
   }
 
-  override fun getAllClasses(classPosition: SourcePosition): MutableList<ReferenceType?> =
-    iterate(classPosition, mutableListOf<ReferenceType?>()) { it.getAllClasses(classPosition) }!!
+  override fun getAllClasses(classPosition: SourcePosition): List<ReferenceType?> {
+    return iterate(classPosition, emptyList<ReferenceType?>()) { it.getAllClasses(classPosition).toList() }!!
+  }
 
   override fun locationsOfLine(type: ReferenceType, position: SourcePosition): MutableList<Location> {
     var position = position
@@ -236,7 +237,7 @@ open class CompoundPositionManager() : PositionManagerWithConditionEvaluation, M
         return super.getSourcePosition(location)
       }
 
-      override fun getAllClasses(classPosition: SourcePosition): MutableList<ReferenceType?> {
+      override fun getAllClasses(classPosition: SourcePosition): List<ReferenceType?> {
         prohibitUsage()
         return super.getAllClasses(classPosition)
       }
