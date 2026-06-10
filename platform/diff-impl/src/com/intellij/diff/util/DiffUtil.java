@@ -221,6 +221,7 @@ public final class DiffUtil {
 
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
   public static final @NotNull @NonNls String DIFF_CONFIG = "diff.xml";
+  @ApiStatus.Internal
   public static final JBValue TITLE_GAP = new JBValue.Float(2);
 
   public static final NotNullLazyValue<@Unmodifiable List<Image>> DIFF_FRAME_ICONS = NotNullLazyValue.createValue(() -> {
@@ -803,7 +804,7 @@ public final class DiffUtil {
     }
 
     if (components.isEmpty()) return null;
-    return createStackedComponents(components, TITLE_GAP);
+    return createStackedTitleComponents(components);
   }
 
   private static @Nullable JComponent createTitle(@NotNull DiffViewer viewer,
@@ -925,8 +926,9 @@ public final class DiffUtil {
     return SyncHeightComponent.createSyncHeightComponents(components);
   }
 
-  public static @NotNull JComponent createStackedComponents(@NotNull List<? extends JComponent> components, @NotNull JBValue vGap) {
-    JPanel panel = new JBPanel<>(new VerticalLayout(vGap, VerticalLayout.FILL));
+  @ApiStatus.Internal
+  public static @NotNull JComponent createStackedTitleComponents(@NotNull List<? extends JComponent> components) {
+    JPanel panel = new JBPanel<>(new VerticalLayout(TITLE_GAP, VerticalLayout.FILL));
     for (JComponent component : components) {
       panel.add(component);
     }

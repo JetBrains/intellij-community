@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diff.tools.util.DiffDataKeys
-import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.dnd.DnDEvent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -31,12 +30,16 @@ import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeDnDSupport
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
+import com.intellij.openapi.vcs.changes.ui.ChangesViewUIUtil
 import com.intellij.openapi.vcs.changes.ui.ShelvedChangeListDragBean
 import com.intellij.openapi.vcs.changes.ui.subscribeOnVcsToolWindowLayoutChanges
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.JBPanel
+import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.components.panels.VerticalLayout.FILL
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.content.Content
 import com.intellij.util.ModalityUiUtil.invokeLaterIfNeeded
@@ -346,8 +349,11 @@ class ChangesViewManager internal constructor(private val project: Project, priv
       invokeLaterIfNeeded(nonModal(), { isDisposed }, Runnable {
         val components = progress.mapNotNull { it.get() }
         if (!components.isEmpty()) {
-          val component = DiffUtil.createStackedComponents(components, DiffUtil.TITLE_GAP)
-          progressLabel.setContent(FixedSizeScrollPanel(component, JBDimension(400, 100)))
+          val panel = JBPanel<JBPanel<*>?>(VerticalLayout(ChangesViewUIUtil.CHANGES_VIEW_STATUSES_GAP, FILL))
+          for (component in components) {
+            panel.add(component)
+          }
+          progressLabel.setContent(FixedSizeScrollPanel(panel, JBDimension(400, 100)))
         }
         else {
           progressLabel.setContent(null)

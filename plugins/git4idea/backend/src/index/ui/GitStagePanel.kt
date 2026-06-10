@@ -2,7 +2,6 @@
 package git4idea.index.ui
 
 import com.intellij.diff.tools.util.DiffDataKeys
-import com.intellij.diff.util.DiffUtil
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -38,6 +37,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.Companion.REPOSITORY_GROUPING
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.shouldHaveSplitterDiffPreview
+import com.intellij.openapi.vcs.changes.ui.ChangesViewUIUtil
 import com.intellij.openapi.vcs.changes.ui.HoverIcon
 import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
@@ -51,6 +51,9 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBPanel
+import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.components.panels.VerticalLayout.FILL
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.switcher.QuickActionProvider
 import com.intellij.util.EditSourceOnDoubleClickHandler
@@ -237,7 +240,11 @@ internal class GitStagePanel(
   private fun updateChangesStatusPanel() {
     val manager = ChangeListManagerImpl.getInstanceImpl(project)
     val components = manager.additionalUpdateInfo.mapNotNull { it.get() }
-    changesStatusPanel.setContent(DiffUtil.createStackedComponents(components, DiffUtil.TITLE_GAP))
+    val componentsStack = JBPanel<JBPanel<*>?>(VerticalLayout(ChangesViewUIUtil.CHANGES_VIEW_STATUSES_GAP, FILL))
+    for (component in components) {
+      componentsStack.add(component)
+    }
+    changesStatusPanel.setContent(componentsStack)
   }
 
   @RequiresEdt

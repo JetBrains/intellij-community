@@ -272,7 +272,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     titles = ContainerUtil.skipNulls(titles);
     if (titles.isEmpty()) return null;
 
-    return DiffUtil.createStackedComponents(titles, DiffUtil.TITLE_GAP);
+    return DiffUtil.createStackedTitleComponents(titles);
   }
 
   @RequiresEdt

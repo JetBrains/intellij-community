@@ -29,6 +29,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.components.JBPanel;
+import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Function;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.JComponent;
+import javax.swing.JPanel;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -667,7 +670,10 @@ public final class PushController implements Disposable {
     }
 
     notifications = DiffUtil.wrapEditorNotificationBorders(notifications);
-    JComponent panel = DiffUtil.createStackedComponents(notifications, DiffUtil.TITLE_GAP);
+    JPanel panel = new JBPanel<>(new VerticalLayout(2, VerticalLayout.FILL));
+    for (JComponent component : notifications) {
+      panel.add(component);
+    }
     if (!notifications.isEmpty()) {
       panel.setBorder(JBUI.Borders.customLineBottom(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground()));
     }

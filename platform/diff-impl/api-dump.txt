@@ -1926,7 +1926,6 @@ f:com.intellij.diff.util.DiffUtil
 - sf:DIFF_CONFIG:java.lang.String
 - sf:DIFF_FRAME_ICONS:com.intellij.openapi.util.NotNullLazyValue
 - sf:TEMP_FILE_KEY:com.intellij.openapi.util.Key
-- sf:TITLE_GAP:com.intellij.util.ui.JBValue
 - <init>():V
 - s:addActionBlock(com.intellij.openapi.actionSystem.DefaultActionGroup,java.util.List):V
 - s:addActionBlock(com.intellij.openapi.actionSystem.DefaultActionGroup,java.util.List,Z):V
@@ -1961,7 +1960,6 @@ f:com.intellij.diff.util.DiffUtil
 - s:createNotificationText(java.lang.String,java.lang.String):java.lang.String
 - s:createPatchTextTitles(com.intellij.diff.FrameDiffTool$DiffViewer,com.intellij.diff.requests.DiffRequest,java.util.List):java.util.List
 - s:createSimpleTitles(com.intellij.diff.FrameDiffTool$DiffViewer,com.intellij.diff.requests.ContentDiffRequest):java.util.List
-- s:createStackedComponents(java.util.List,com.intellij.util.ui.JBValue):javax.swing.JComponent
 - s:createSyncHeightComponents(java.util.List):java.util.List
 - s:createTextDiffProvider(com.intellij.openapi.project.Project,com.intellij.diff.requests.ContentDiffRequest,com.intellij.diff.tools.util.base.TextDiffSettingsHolder$TextDiffSettings,java.lang.Runnable,com.intellij.openapi.Disposable):com.intellij.diff.tools.util.text.TwosideTextDiffProvider
 - s:createTextTitles(com.intellij.diff.FrameDiffTool$DiffViewer,com.intellij.diff.requests.ContentDiffRequest,java.util.List):java.util.List
