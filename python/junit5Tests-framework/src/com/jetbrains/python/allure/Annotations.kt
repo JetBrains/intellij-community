@@ -24,6 +24,14 @@ object Subsystems {
   @Subsystem("Code Completion")
   @Inherited
   annotation class CodeCompletion
+
+  @Subsystem("Code Insight")
+  @Inherited
+  annotation class CodeInsight
+
+  @Subsystem("Inspections")
+  @Inherited
+  annotation class Inspections
 }
 
 object Components {
@@ -37,6 +45,14 @@ object Components {
   @Component("Postfix")
   @Inherited
   annotation class Postfix
+
+  @Component("Intentions")
+  @Inherited
+  annotation class Intentions
+
+  @Component("Grazie")
+  @Inherited
+  annotation class Grazie
 }
 
 object Layers {
