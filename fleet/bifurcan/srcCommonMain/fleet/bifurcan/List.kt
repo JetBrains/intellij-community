@@ -121,20 +121,26 @@ open class List<V> : PersistentList<V> {
     return (if (isLinear) this else clone()).pushLast(value)
   }
 
-  override fun add(element: V): List<V> {
+  override fun adding(element: V): List<V> {
     return addLast(element)
   }
+
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun add(element: V): List<V> = adding(element)
 
   fun addFirst(value: V): List<V> {
     return (if (isLinear) this else clone()).pushFirst(value)
   }
 
-  override fun addAll(elements: Collection<V>): List<V> {
+  override fun addingAll(elements: Collection<V>): List<V> {
     var l = if (isLinear) this else clone()
 
     elements.forEach { elem -> l = l.addLast(elem) }
     return l
   }
+
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun addAll(elements: Collection<V>): List<V> = addingAll(elements)
 
   fun removeLast(): List<V> {
     return (if (isLinear) this else clone()).popLast()
@@ -144,26 +150,35 @@ open class List<V> : PersistentList<V> {
     return (if (isLinear) this else clone()).popFirst()
   }
 
-  override fun remove(element: V): List<V> {
+  override fun removing(element: V): List<V> {
     val ind = indexOf(element)
-    return if (ind == -1) this else removeAt(ind)
+    return if (ind == -1) this else removingAt(ind)
   }
 
-  override fun removeAll(elements: Collection<V>): List<V> {
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun remove(element: V): List<V> = removing(element)
+
+  override fun removingAll(elements: Collection<V>): List<V> {
     var l = if (isLinear) this else clone()
     for (elem in elements) {
-      l = l.remove(elem)
+      l = l.removing(elem)
     }
     return l
   }
 
-  override fun removeAll(predicate: (V) -> Boolean): List<V> {
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun removeAll(elements: Collection<V>): List<V> = removingAll(elements)
+
+  override fun removingAll(predicate: (V) -> Boolean): List<V> {
     val l = if (isLinear) this else clone()
-    return l.removeAll(this.filter(predicate))
+    return l.removingAll(this.filter(predicate))
 
   }
 
-  override fun removeAt(index: Int): List<V> {
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun removeAll(predicate: (V) -> Boolean): List<V> = removingAll(predicate)
+
+  override fun removingAt(index: Int): List<V> {
     var l = (if (isLinear) this else clone())
     when (index) {
       0 -> {
@@ -182,11 +197,17 @@ open class List<V> : PersistentList<V> {
     return l
   }
 
-  override fun retainAll(elements: Collection<V>): List<V> {
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun removeAt(index: Int): List<V> = removingAt(index)
+
+  override fun retainingAll(elements: Collection<V>): List<V> {
     val l = if (isLinear) this else clone()
     val elementsSet = HashSet(elements)
-    return l.removeAll { elem -> !elementsSet.contains(elem) }
+    return l.removingAll { elem -> !elementsSet.contains(elem) }
   }
+
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun retainAll(elements: Collection<V>): List<V> = retainingAll(elements)
 
   override val size: Int
     get() = size().toInt()
@@ -195,13 +216,16 @@ open class List<V> : PersistentList<V> {
     TODO("Not yet implemented")
   }
 
-  override fun clear(): List<V> {
+  override fun cleared(): List<V> {
     var l = (if (isLinear) this else clone())
     for (x in 1..l.size) {
       l = l.removeFirst()
     }
     return l
   }
+
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun clear(): List<V> = cleared()
 
   override fun get(index: Int): V {
     return this.nth(index.toLong())
@@ -231,7 +255,7 @@ open class List<V> : PersistentList<V> {
     return this.indexOf(element) != -1
   }
 
-  override fun addAll(index: Int, c: Collection<V>): PersistentList<V> {
+  override fun addingAllAt(index: Int, c: Collection<V>): PersistentList<V> {
     var l = if (isLinear) this else clone()
     when (index) {
       0 -> {
@@ -251,11 +275,17 @@ open class List<V> : PersistentList<V> {
     return l
   }
 
-  override fun set(index: Int, element: V): List<V> {
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun addAll(index: Int, c: Collection<V>): PersistentList<V> = addingAllAt(index, c)
+
+  override fun replacingAt(index: Int, element: V): List<V> {
     return set(index.toLong(), element)
   }
 
-  override fun add(index: Int, element: V): List<V> {
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun set(index: Int, element: V): List<V> = replacingAt(index, element)
+
+  override fun addingAt(index: Int, element: V): List<V> {
     // splice at index, insert at end and append again
     var l = if (isLinear) this else clone()
     if (0 > index || index >= l.size) {
@@ -277,6 +307,9 @@ open class List<V> : PersistentList<V> {
 
 
   }
+
+  @Suppress("OVERRIDE_DEPRECATION")
+  override fun add(index: Int, element: V): List<V> = addingAt(index, element)
 
 
   fun set(idx: Long, value: V): List<V> {
@@ -629,7 +662,7 @@ open class List<V> : PersistentList<V> {
     fun <V> from(iterator: Iterator<V>): List<V> {
       val list = List<V>().linear()
       while (iterator.hasNext()) {
-        list.add(iterator.next())
+        list.adding(iterator.next())
       }
       return list.forked()
     }

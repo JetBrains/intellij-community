@@ -162,8 +162,8 @@ open class AndroidStudioProperties(communityHomeDir: Path) : IdeaCommunityProper
     productLayout.productImplementationModules += "intellij.idea.android.customization"
 
     val defaultBundledPlugins = IDEA_BUNDLED_PLUGINS
-      .remove("intellij.mcpserver")
-      .remove("intellij.featuresTrainer")
+      .removing("intellij.mcpserver")
+      .removing("intellij.featuresTrainer")
 
     productLayout.bundledPluginModules = defaultBundledPlugins + persistentListOf(
       "intellij.android.compose-ide-plugin",

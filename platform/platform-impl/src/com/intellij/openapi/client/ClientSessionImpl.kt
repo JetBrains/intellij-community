@@ -73,7 +73,7 @@ abstract class ClientSessionImpl(
 
   override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
     sessionConstructorMethodType,
-  ).addAll(super.supportedSignaturesOfLightServiceConstructors)
+  ).addingAll(super.supportedSignaturesOfLightServiceConstructors)
 
   fun preloadServices(syncScope: CoroutineScope) {
     assert(containerState.get() == ContainerState.PRE_INIT)
@@ -193,7 +193,7 @@ abstract class ClientAppSessionImpl(
   override val supportedSignaturesOfLightServiceConstructors: List<MethodType> = persistentListOf(
     appSessionConstructorMethodType,
     appSessionAndScopeConstructorMethodType
-  ).addAll(super.supportedSignaturesOfLightServiceConstructors)
+  ).addingAll(super.supportedSignaturesOfLightServiceConstructors)
 }
 
 private val sessionConstructorMethodType = MethodType.methodType(Void.TYPE, ClientAppSession::class.java)
@@ -231,7 +231,7 @@ open class ClientProjectSessionImpl(
     projectAndScopeMethodType,
     projectSessionConstructorMethodType,
     projectSessionAndScopeConstructorMethodType,
-  ).addAll(super.supportedSignaturesOfLightServiceConstructors)
+  ).addingAll(super.supportedSignaturesOfLightServiceConstructors)
 
   override fun getContainerDescriptor(pluginDescriptor: IdeaPluginDescriptorImpl): ContainerDescriptor {
     return pluginDescriptor.projectContainerDescriptor

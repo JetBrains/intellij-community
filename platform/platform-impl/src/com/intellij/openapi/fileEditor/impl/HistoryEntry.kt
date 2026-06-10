@@ -78,7 +78,7 @@ internal class HistoryEntry(
   fun getState(provider: FileEditorProvider): FileEditorState? = providerToState.get(provider)
 
   fun putState(provider: FileEditorProvider, state: FileEditorState) {
-    providerToState = providerToState.toPersistentMap().put(provider, state)
+    providerToState = providerToState.toPersistentMap().putting(provider, state)
   }
 
   fun destroy() {
@@ -120,7 +120,7 @@ internal class HistoryEntry(
     if (selectedProvider === provider) {
       selectedProvider = null
     }
-    providerToState = providerToState.toPersistentMap().remove(provider)
+    providerToState = providerToState.toPersistentMap().removing(provider)
   }
 }
 
@@ -156,7 +156,7 @@ private fun parseEntry(
     if (file != null) {
       val stateElement = providerElement.getChild(STATE_ELEMENT)
       val state = provider.readState(stateElement ?: EMPTY_ELEMENT, project, file)
-      providerStates = providerStates.add(provider to state)
+      providerStates = providerStates.adding(provider to state)
     }
   }
 

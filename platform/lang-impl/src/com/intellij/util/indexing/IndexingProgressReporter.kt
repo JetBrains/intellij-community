@@ -108,9 +108,9 @@ internal class IndexingProgressReporter {
       // First add, then remove. To avoid blinking if old text is the only text in the list
       // We insert to the beginning to make sure that the text is rendered immediately. Otherwise, there will be an impression that
       // indexing is slow, if the text does not change often enough.
-      subTaskTexts.update { it.add(0, value) }
+      subTaskTexts.update { it.addingAt(0, value) }
       if (oldText != null) {
-        subTaskTexts.update { it.remove(oldText!! /* this class should be used from single thread */) }
+        subTaskTexts.update { it.removing(oldText!! /* this class should be used from single thread */) }
       }
       oldText = value
     }
@@ -118,7 +118,7 @@ internal class IndexingProgressReporter {
     override fun close() {
       subTasksFinished.update { it + 1 }
       if (oldText != null) {
-        subTaskTexts.update { it.remove(oldText!! /* this class should be used from single thread */) }
+        subTaskTexts.update { it.removing(oldText!! /* this class should be used from single thread */) }
         oldText = null
       }
     }

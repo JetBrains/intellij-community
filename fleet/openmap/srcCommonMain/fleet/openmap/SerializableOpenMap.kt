@@ -23,11 +23,11 @@ data class SerializableOpenMap<D>(internal val m: PersistentMap<String, Serializ
   }
 
   fun <T : Any> assoc(key: SerializableKey<T, D>, v: T): SerializableOpenMap<D> {
-    return SerializableOpenMap(m.put(key.key, SerializedValue.fromDeserializedValue(v, key.serializer)))
+    return SerializableOpenMap(m.putting(key.key, SerializedValue.fromDeserializedValue(v, key.serializer)))
   }
 
   fun <T : Any> dissoc(key: SerializableKey<out T, D>): SerializableOpenMap<D> {
-    return SerializableOpenMap(m.remove(key.key))
+    return SerializableOpenMap(m.removing(key.key))
   }
 
   fun mut(): Mut<D> =
@@ -57,7 +57,7 @@ data class SerializableOpenMap<D>(internal val m: PersistentMap<String, Serializ
     get() = m
 
   fun merge(other: SerializableOpenMap<D>): SerializableOpenMap<D> =
-    SerializableOpenMap(m.putAll(other.m))
+    SerializableOpenMap(m.puttingAll(other.m))
 
   fun isEmpty() = m.size == 0
 

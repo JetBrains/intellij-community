@@ -32,7 +32,7 @@ internal object KeyStack : ChangeScopeKey<PersistentList<Any>>
 
 fun <T> SharedChangeScope.withKey(key: Any, body: SharedChangeScope.() -> T): T = run {
   val oldKey = meta[KeyStack]
-  meta[KeyStack] = (oldKey ?: persistentListOf()).add(key)
+  meta[KeyStack] = (oldKey ?: persistentListOf()).adding(key)
   val res = body()
   if (oldKey == null) {
     meta.remove(KeyStack)

@@ -89,7 +89,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     String stringKey = keyToString(key);
     synchronized (lock) {
       PersistentList<T> value = explicitExtensions.get(stringKey);
-      explicitExtensions = with(explicitExtensions, stringKey, value == null ? persistentListOf(t) : value.add(t));
+      explicitExtensions = with(explicitExtensions, stringKey, value == null ? persistentListOf(t) : value.adding(t));
       invalidateCacheForExtension(stringKey);
     }
   }
@@ -104,7 +104,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     synchronized (lock) {
       PersistentList<T> list = explicitExtensions.get(stringKey);
       if (list != null) {
-        list = list.remove(t);
+        list = list.removing(t);
         explicitExtensions = list.isEmpty() ? without(explicitExtensions, stringKey) : with(explicitExtensions, stringKey, list);
       }
       invalidateCacheForExtension(stringKey);
@@ -152,7 +152,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     synchronized (lock) {
       PersistentList<T> explicit = explicitExtensions.get(stringKey);
       List<T> result = buildExtensionsFromExtensionPoint(bean -> stringKey.equals(bean.getKey()), extensions);
-      return explicit == null ? result : explicit.addAll(result);
+      return explicit == null ? result : explicit.addingAll(result);
     }
   }
 
@@ -246,7 +246,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
 
         return keys.contains(key);
       }, extensions);
-      return toPersistentList(explicit).addAll(result);
+      return toPersistentList(explicit).addingAll(result);
     }
   }
 
@@ -255,7 +255,7 @@ public class KeyedExtensionCollector<T, KeyT> implements ModificationTracker {
     for (Map.Entry<String, PersistentList<T>> entry : explicitExtensions.entrySet()) {
       String key = entry.getKey();
       if (isMyBean.test(key)) {
-        result = result.addAll(entry.getValue());
+        result = result.addingAll(entry.getValue());
       }
     }
     return result;

@@ -6,7 +6,7 @@ import kotlinx.collections.immutable.PersistentMap
 data class PersistentBoundedOpenMap<Domain, V : Any>(val map: PersistentMap<Key<out V, Domain>, V>) : BoundedOpenMap<Domain, V> {
 
   override fun <T : V> assoc(k: Key<T, Domain>, v: T): BoundedOpenMap<Domain, V> {
-    return BoundedOpenMap.from(map.put(k, v))
+    return BoundedOpenMap.from(map.putting(k, v))
   }
 
   override fun <T : Any> get(k: Key<T, Domain>): T? {
@@ -36,6 +36,6 @@ data class PersistentBoundedOpenMap<Domain, V : Any>(val map: PersistentMap<Key<
   }
 
   override fun dissoc(k: Key<out V, Domain>): BoundedOpenMap<Domain, V> {
-    return BoundedOpenMap.from(map.remove(k))
+    return BoundedOpenMap.from(map.removing(k))
   }
 }

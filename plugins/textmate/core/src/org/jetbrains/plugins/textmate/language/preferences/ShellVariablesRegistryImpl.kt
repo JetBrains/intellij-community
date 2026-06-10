@@ -15,7 +15,7 @@ class ShellVariablesRegistryBuilder(private val weigher: TextMateSelectorWeigher
   fun addVariable(variable: TextMateShellVariable) {
     if (variable.name.isNotEmpty()) {
       variables.update {
-        it.put(variable.name, it[variable.name]?.add(variable) ?: persistentListOf(variable))
+        it.putting(variable.name, it[variable.name]?.adding(variable) ?: persistentListOf(variable))
       }
     }
   }

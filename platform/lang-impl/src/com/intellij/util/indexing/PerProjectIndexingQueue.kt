@@ -57,13 +57,13 @@ class PerProjectIndexingQueue(private val project: Project) {
 
     internal fun addFile(file: VirtualFile, scanningId: Long) {
       scanningIdsSoFar.add(scanningId)
-      requestsSoFar.update { it.add(FileIndexingRequest.updateRequest(file)) }
+      requestsSoFar.update { it.adding(FileIndexingRequest.updateRequest(file)) }
     }
 
     @Deprecated("Indexing should always start with scanning. You don't need this method - do scanning instead")
     internal fun addRequests(files: Collection<FileIndexingRequest>, scanningId: Collection<Long>) {
       scanningIdsSoFar.addAll(scanningId)
-      requestsSoFar.update { it.addAll(files) }
+      requestsSoFar.update { it.addingAll(files) }
     }
 
     fun asChannel(cs: CoroutineScope, bufferSize: Int): Channel<FileIndexingRequest> {

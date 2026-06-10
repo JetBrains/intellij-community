@@ -39,8 +39,8 @@ class ApiIndex private constructor(
 
   operator fun plus(other: ApiIndex): ApiIndex {
     return ApiIndex(
-      this.packages.putAll(other.packages),
-      this.classes.putAll(other.classes),
+      this.packages.puttingAll(other.packages),
+      this.classes.puttingAll(other.classes),
     )
   }
 
@@ -92,7 +92,7 @@ class ApiIndex private constructor(
 
     return ApiIndex(
       packages,
-      classes = classes.put(className, signature),
+      classes = classes.putting(className, signature),
     )
   }
 }

@@ -28,7 +28,7 @@ class TextMateSyntaxTableBuilder(private val interner: TextMateInterner) {
   fun addSyntax(plist: Plist): CharSequence? {
     return loadLanguageDescriptor(plist)?.let { languageDescriptor ->
       syntaxNodes.update {
-        it.put(languageDescriptor.scopeName, languageDescriptor)
+        it.putting(languageDescriptor.scopeName, languageDescriptor)
       }
       languageDescriptor.scopeName
     }

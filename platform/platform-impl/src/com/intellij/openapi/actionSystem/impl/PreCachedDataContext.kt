@@ -595,7 +595,7 @@ private fun composeKeyedProvider(
     data
   }
   existing !is KeyedDataProvider && lazyKey != null -> {
-    KeyedDataProvider(persistentHashMapOf<String, DataProvider>().put(lazyKey.name, data), existing)
+    KeyedDataProvider(persistentHashMapOf<String, DataProvider>().putting(lazyKey.name, data), existing)
   }
   existing is KeyedDataProvider && lazyKey == null -> {
     val first = if (toFront) data else existing
@@ -606,7 +606,7 @@ private fun composeKeyedProvider(
     val existingByKey = existing.map[lazyKey.name]
     val first = if (toFront) data else existingByKey
     val second = if (toFront) existingByKey else data
-    KeyedDataProvider((existing.map as PersistentMap).put(
+    KeyedDataProvider((existing.map as PersistentMap).putting(
       lazyKey.name, if (first == null) second!! else CompositeDataProvider.compose(first, second)), existing.generic)
   }
   else -> {
