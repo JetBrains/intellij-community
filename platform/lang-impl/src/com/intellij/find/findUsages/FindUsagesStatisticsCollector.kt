@@ -26,12 +26,9 @@ object FindUsagesStatisticsCollector : CounterUsagesCollector() {
   private val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, OPTIONS_EVENT_ID)
   private val OPEN_IN_NEW_TAB = EventFields.Boolean("openInNewTab")
 
-  private val FIND_USAGES_OPTIONS = GROUP.registerVarargEvent(OPTIONS_EVENT_ID,
-                                                              SEARCH_FOR_TEXT_OCCURRENCES_FIELD,
-                                                              IS_USAGES_FIELD,
-                                                              OPEN_IN_NEW_TAB,
-                                                              SEARCHABLE_SCOPE_EVENT_FIELD,
-                                                              ADDITIONAL)
+  private val FIND_USAGES_OPTIONS = GROUP.registerVarargEvent(
+    OPTIONS_EVENT_ID, SEARCH_FOR_TEXT_OCCURRENCES_FIELD, IS_USAGES_FIELD, OPEN_IN_NEW_TAB, SEARCHABLE_SCOPE_EVENT_FIELD, ADDITIONAL
+  )
 
   @JvmStatic
   fun logOptions(project: Project, options: FindUsagesOptions, openInNewTab: Boolean) {

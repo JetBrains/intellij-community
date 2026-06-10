@@ -40,13 +40,15 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  internal fun onSessionStarted(project: Project?,
-                                sessionId: Int,
-                                tab: SearchEverywhereTab,
-                                isNewSearchEverywhere: Boolean,
-                                sessionStartTime: Long,
-                                contextFeatures: List<EventPair<*>>,
-                                isMixedList: Boolean) {
+  internal fun onSessionStarted(
+    project: Project?,
+    sessionId: Int,
+    tab: SearchEverywhereTab,
+    isNewSearchEverywhere: Boolean,
+    sessionStartTime: Long,
+    contextFeatures: List<EventPair<*>>,
+    isMixedList: Boolean,
+  ) {
     if (!isLoggingEnabled) return
 
     SESSION_STARTED.log(project) {
@@ -184,7 +186,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     }
   }
 
-  internal val GROUP = EventLogGroup("mlse.log", 136, MLSE_RECORDER_ID,)
+  internal val GROUP = EventLogGroup("mlse.log", 136, MLSE_RECORDER_ID)
 
   // region Fields
   internal val IS_INTERNAL = EventFields.Boolean("is_internal")
@@ -253,9 +255,9 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
    * This field is used to record the name of the contributor that provided a specific element
    * within the context of a Search Everywhere action.
    */
-  internal val ELEMENT_CONTRIBUTOR = EventFields.String("contributor",
-                                                        ALLOWED_CONTRIBUTOR_ID_LIST,
-                                                        "Contributor name that provided the element")
+  internal val ELEMENT_CONTRIBUTOR = EventFields.String(
+    "contributor", ALLOWED_CONTRIBUTOR_ID_LIST, "Contributor name that provided the element"
+  )
 
   val COLLECTED_RESULTS_DATA_KEY: ObjectListEventField = ObjectListEventField(
     "collected_items",
@@ -265,40 +267,32 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
 
   private val CLASSES_WITHOUT_KEY_PROVIDERS_FIELD = ClassListEventField("unsupported_classes")
   // endregion
-  // region Events
-  internal val SESSION_STARTED: VarargEventId = GROUP.registerVarargEvent("session.started",
-                                                                          "An event denoting a start of Search Everywhere session",
-                                                                          SESSION_ID, IS_PROJECT_OPEN,
-                                                                          SE_TAB_ID_KEY, EXPERIMENT_GROUP, EXPERIMENT_VERSION,
-                                                                          IS_INTERNAL, SEARCH_START_TIME_KEY,
-                                                                          IS_PROJECT_DISPOSED_KEY,
-                                                                          FORCE_EXPERIMENT_GROUP,
-                                                                          IS_MIXED_LIST,
-                                                                          IS_NEW_SEARCH_EVERYWHERE,
-                                                                          *SearchEverywhereContextFeaturesProvider.getContextFields().toTypedArray())
 
-  internal val STATE_CHANGED: VarargEventId = GROUP.registerVarargEvent("state.changed",
-                                                                        "An event denoting change of the search state",
-                                                                        SESSION_ID, SEARCH_INDEX_DATA_KEY,
-                                                                        ORDER_BY_ML_GROUP,
-                                                                        TOTAL_NUMBER_OF_ITEMS_DATA_KEY, SE_TAB_ID_KEY,
-                                                                        TIME_TO_FIRST_RESULT_DATA_KEY, REBUILD_REASON_KEY,
-                                                                        WAS_INTERRUPTED,
-                                                                        SEARCH_STATE_FEATURES_DATA_KEY, COLLECTED_RESULTS_DATA_KEY,
-                                                                        CONTRIBUTOR_FEATURES_LIST)
-  internal val ITEM_SELECTED: VarargEventId = GROUP.registerVarargEvent("item.selected",
-                                                                        "An event denoting selection of an item from search results",
-                                                                        SESSION_ID, SEARCH_INDEX_DATA_KEY,
-                                                                        SELECTED_INDEX, SELECTED_RESULT_ID)
+  // region Events
+  internal val SESSION_STARTED: VarargEventId = GROUP.registerVarargEvent(
+    "session.started",
+    SESSION_ID, IS_PROJECT_OPEN, SE_TAB_ID_KEY, EXPERIMENT_GROUP, EXPERIMENT_VERSION, IS_INTERNAL, SEARCH_START_TIME_KEY,
+    IS_PROJECT_DISPOSED_KEY, FORCE_EXPERIMENT_GROUP, IS_MIXED_LIST, IS_NEW_SEARCH_EVERYWHERE,
+    *SearchEverywhereContextFeaturesProvider.getContextFields().toTypedArray()
+  )
+
+  internal val STATE_CHANGED: VarargEventId = GROUP.registerVarargEvent(
+    "state.changed",
+    SESSION_ID, SEARCH_INDEX_DATA_KEY, ORDER_BY_ML_GROUP, TOTAL_NUMBER_OF_ITEMS_DATA_KEY, SE_TAB_ID_KEY, TIME_TO_FIRST_RESULT_DATA_KEY,
+    REBUILD_REASON_KEY, WAS_INTERRUPTED, SEARCH_STATE_FEATURES_DATA_KEY, COLLECTED_RESULTS_DATA_KEY, CONTRIBUTOR_FEATURES_LIST
+  )
+
+  internal val ITEM_SELECTED: VarargEventId = GROUP.registerVarargEvent(
+    "item.selected",
+    SESSION_ID, SEARCH_INDEX_DATA_KEY, SELECTED_INDEX, SELECTED_RESULT_ID
+  )
 
   @VisibleForTesting
-  val SESSION_FINISHED: VarargEventId = GROUP.registerVarargEvent("session.finished",
-                                                                   "An event denoting finish of a session and closing of a popup",
-                                                                   SESSION_ID,
-                                                                   SESSION_DURATION, SE_TAB_ID_KEY, SESSION_CORRUPTED)
-  internal val KEY_NOT_COMPUTED_EVENT = GROUP.registerEvent("key.not.computed",
-                                                            SESSION_ID,
-                                                            CLASSES_WITHOUT_KEY_PROVIDERS_FIELD,
-                                                            "Event sent once per Search Everywhere session with a list of classes for which key was not computed")
+  val SESSION_FINISHED: VarargEventId = GROUP.registerVarargEvent(
+    "session.finished",
+    SESSION_ID, SESSION_DURATION, SE_TAB_ID_KEY, SESSION_CORRUPTED
+  )
+
+  internal val KEY_NOT_COMPUTED_EVENT = GROUP.registerEvent("key.not.computed", SESSION_ID, CLASSES_WITHOUT_KEY_PROVIDERS_FIELD)
   // endregion
 }
