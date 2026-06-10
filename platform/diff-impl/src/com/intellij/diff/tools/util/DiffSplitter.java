@@ -44,7 +44,7 @@ public class DiffSplitter extends JBSplitter {
 
   @Override
   protected Divider createDivider() {
-    return new DividerImpl() {
+    DividerImpl divider = new DividerImpl() {
       @Override
       public void setOrientation(boolean isVerticalSplit) {
         removeAll();
@@ -89,6 +89,8 @@ public class DiffSplitter extends JBSplitter {
         if (myPainter != null) myPainter.paint(g, this);
       }
     };
+    divider.setOpaque(false);
+    return divider;
   }
 
   public void setTopAction(@Nullable AnAction value) {
@@ -120,6 +122,7 @@ public class DiffSplitter extends JBSplitter {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("DiffSplitter", new DefaultActionGroup(action), true);
     toolbar.setTargetComponent(toolbar.getComponent());
     toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.getComponent().setOpaque(false);
     toolbar.getComponent().setCursor(Cursor.getDefaultCursor());
     return toolbar.getComponent();
   }

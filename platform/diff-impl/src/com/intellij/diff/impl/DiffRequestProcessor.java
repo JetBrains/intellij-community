@@ -16,6 +16,7 @@ import com.intellij.diff.actions.impl.DiffNextFileAction;
 import com.intellij.diff.actions.impl.DiffPreviousFileAction;
 import com.intellij.diff.editor.DiffViewerVirtualFile;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
+import com.intellij.diff.impl.ui.DiffHeaderToolbarPanel;
 import com.intellij.diff.impl.ui.DiffToolChooser;
 import com.intellij.diff.lang.DiffIgnoredRangeProvider;
 import com.intellij.diff.lang.DiffLangSpecificProvider;
@@ -65,6 +66,7 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
@@ -90,12 +92,14 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.HintHint;
+import com.intellij.ui.IslandsState;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.RemoteTransferUIManager;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.ListLayout;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.dsl.builder.components.SegmentedButtonComponent;
 import com.intellij.ui.mac.touchbar.Touchbar;
@@ -105,7 +109,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -165,15 +168,12 @@ public abstract class DiffRequestProcessor
   private final @NotNull DefaultActionGroup myPopupActionGroup;
   private final @NotNull DefaultActionGroup myTouchbarActionGroup;
 
-  private final @NotNull JPanel myPanel;
   private final @NotNull MyPanel myMainPanel;
   private final @NotNull Wrapper myContentPanel;
-  private final @NotNull JPanel myTopPanel;
+  private final @NotNull DiffHeaderToolbarPanel myTopPanel;
   private final @NotNull SegmentedButtonComponent<DiffTool> myDiffToolChooser;
   private final @NotNull ActionToolbar myToolbar;
   private final @NotNull ActionToolbar myRightToolbar;
-  private final @NotNull Wrapper myToolbarWrapper;
-  private final @NotNull Wrapper myRightToolbarWrapper;
   private final @NotNull Wrapper myToolbarStatusPanel;
   private final @NotNull MyProgressBar myProgressBar;
 
@@ -233,23 +233,34 @@ public abstract class DiffRequestProcessor
 
     myToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     myToolbar.setTargetComponent(myContentPanel);
-    myToolbarWrapper = new Wrapper(myToolbar.getComponent());
+    myToolbar.getComponent().setOpaque(false);
 
     myRightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, myRightToolbarGroup, true);
     myRightToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY);
     myRightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
-
-    myRightToolbarWrapper = new Wrapper(myRightToolbar.getComponent());
+    myRightToolbar.getComponent().setOpaque(false);
 
     myDiffToolChooser = createDiffToolChooser();
-
-    myPanel = JBUI.Panels.simplePanel(myMainPanel);
     myTopPanel = buildTopPanel();
 
     Splitter bottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
     bottomContentSplitter.setFirstComponent(myContentPanel);
 
-    myMainPanel.add(myTopPanel, BorderLayout.NORTH);
+    // only needed for lux to transfer the BG color correctly
+    var topPanelWrapper = new Wrapper(myTopPanel);
+    topPanelWrapper.setOpaque(true);
+    topPanelWrapper.setBackground(JBColor.lazy(() -> {
+      if (IslandsState.Companion.isEnabled()) {
+        EditorColorsManager manager = EditorColorsManager.getInstance();
+        return manager.getGlobalScheme().getDefaultBackground();
+      }
+      else {
+        return UIUtil.getPanelBackground();
+      }
+    }));
+    RemoteTransferUIManager.forceDirectTransfer(topPanelWrapper);
+
+    myMainPanel.add(topPanelWrapper, BorderLayout.NORTH);
     myMainPanel.add(bottomContentSplitter, BorderLayout.CENTER);
 
     myMainPanel.setFocusTraversalPolicyProvider(true);
@@ -264,14 +275,14 @@ public abstract class DiffRequestProcessor
     navigator = new DiffNavigator();
   }
 
-  private @NotNull JPanel buildTopPanel() {
-    JPanel rightPanel = new JPanel(ListLayout.horizontal(0, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.NO_GROW));
+  private @NotNull DiffHeaderToolbarPanel buildTopPanel() {
+    JPanel rightPanel = new NonOpaquePanel(ListLayout.horizontal(0, ListLayout.Alignment.CENTER, ListLayout.GrowPolicy.NO_GROW));
     rightPanel.add(myToolbarStatusPanel);
     rightPanel.add(myProgressBar);
     rightPanel.add(myDiffToolChooser);
-    rightPanel.add(myRightToolbarWrapper);
+    rightPanel.add(myRightToolbar.getComponent());
 
-    var topPanel = new JPanel(new GridBagLayout());
+    var topPanel = new DiffHeaderToolbarPanel(new GridBagLayout());
     var gbc = new GridBagConstraints();
 
     // Add toolbar on the left
@@ -281,7 +292,7 @@ public abstract class DiffRequestProcessor
     gbc.weighty = 1.0;
     gbc.anchor = GridBagConstraints.WEST;
     gbc.fill = GridBagConstraints.NONE;
-    topPanel.add(myToolbarWrapper, gbc);
+    topPanel.add(myToolbar.getComponent(), gbc);
 
     // Add spacer in the middle to push components to edges
     gbc.gridx = 1;
@@ -297,8 +308,6 @@ public abstract class DiffRequestProcessor
     topPanel.add(rightPanel, gbc);
 
     GuiUtils.installVisibilityReferents(topPanel, myToolbar.getComponent(), myRightToolbar.getComponent(), myDiffToolChooser);
-
-    RemoteTransferUIManager.forceDirectTransfer(topPanel);
 
     return topPanel;
   }
@@ -504,7 +513,7 @@ public abstract class DiffRequestProcessor
       myState.destroy();
       myToolbarStatusPanel.setContent(null);
       myContentPanel.setContent(null);
-      myTopPanel.setBorder(null);
+      myTopPanel.setNeedBottomSeparatorBorder(false);
 
       myToolbarGroup.removeAll();
       myRightToolbarGroup.removeAll();
@@ -565,7 +574,7 @@ public abstract class DiffRequestProcessor
   }
 
   protected @Nullable Runnable createAfterNavigateCallback() {
-    return () -> DiffUtil.minimizeDiffIfOpenedInWindow(myPanel);
+    return () -> DiffUtil.minimizeDiffIfOpenedInWindow(myMainPanel);
   }
 
   protected @NotNull List<AnAction> getNavigationActions() {
@@ -598,7 +607,7 @@ public abstract class DiffRequestProcessor
   //
 
   protected boolean isWindowFocused() {
-    Window window = SwingUtilities.getWindowAncestor(myPanel);
+    Window window = SwingUtilities.getWindowAncestor(myMainPanel);
     return window != null && window.isFocused();
   }
 
@@ -719,7 +728,7 @@ public abstract class DiffRequestProcessor
 
   @Override
   public void setToolbarVerticalSizeReferent(@NotNull JComponent component) {
-    myToolbarWrapper.setVerticalSizeReferent(component);
+    myTopPanel.setHeightReferent(component);
   }
 
   protected void buildActionPopup(@Nullable List<? extends AnAction> viewerActions) {
@@ -740,7 +749,7 @@ public abstract class DiffRequestProcessor
 
   @Override
   public @NotNull JComponent getComponent() {
-    return myPanel;
+    return myMainPanel;
   }
 
   @Override
@@ -927,6 +936,8 @@ public abstract class DiffRequestProcessor
 
   private @NotNull SegmentedButtonComponent<DiffTool> createDiffToolChooser() {
     var chooser = DiffToolChooser.createComponent();
+    chooser.setOpaque(false);
+    chooser.setFocusable(false);
     chooser.addModelListener(new SegmentedButtonComponent.ModelListener() {
       @Override
       public void onItemSelected() {
@@ -1048,7 +1059,7 @@ public abstract class DiffRequestProcessor
       ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
         DiffBundle.message("diff.actions"), myPopupActionGroup, e.getDataContext(),
         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
-      popup.showInCenterOf(myPanel);
+      popup.showInCenterOf(myMainPanel);
     }
   }
 
@@ -1429,7 +1440,7 @@ public abstract class DiffRequestProcessor
 
       myToolbarStatusPanel.setContent(toolbarComponents.statusPanel);
       if (shouldAddToolbarBottomBorder(toolbarComponents)) {
-        myTopPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+        myTopPanel.setNeedBottomSeparatorBorder(true);
       }
     }
 
@@ -1488,7 +1499,7 @@ public abstract class DiffRequestProcessor
 
       myToolbarStatusPanel.setContent(toolbarComponents1.statusPanel); // TODO: combine both panels ?
       if (shouldAddToolbarBottomBorder(toolbarComponents1)) {
-        myTopPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
+        myTopPanel.setNeedBottomSeparatorBorder(true);
       }
     }
 

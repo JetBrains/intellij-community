@@ -44,6 +44,7 @@ class FilePathDiffTitleCustomizer(
         weightx = 1.0;
         gridx = 1
       })
+      isOpaque = false
     }
 
     override fun dispose() {

@@ -161,6 +161,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.SingleComponentCenteringLayout;
@@ -193,6 +194,7 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Image;
+import java.awt.Insets;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
@@ -222,7 +224,7 @@ public final class DiffUtil {
   public static final Key<Boolean> TEMP_FILE_KEY = Key.create("Diff.TempFile");
   public static final @NotNull @NonNls String DIFF_CONFIG = "diff.xml";
   @ApiStatus.Internal
-  public static final JBValue TITLE_GAP = new JBValue.Float(2);
+  public static final JBValue CONTENT_TITLE_GAP = new JBValue.UIInteger("Diff.ContentTitle.gap", 2);
 
   public static final NotNullLazyValue<@Unmodifiable List<Image>> DIFF_FRAME_ICONS = NotNullLazyValue.createValue(() -> {
     return ContainerUtil.skipNulls(
@@ -849,8 +851,10 @@ public final class DiffUtil {
                                                  boolean readOnly,
                                                  @Nullable DiffEditorTitleCustomizer titleCustomizer) {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setBorder(JBUI.Borders.empty(0, 4));
-    BorderLayoutPanel labelWithIcon = new BorderLayoutPanel();
+    panel.setName("Diff Editor Title Panel");
+    panel.setOpaque(false);
+    BorderLayoutPanel labelWithIcon = new BorderLayoutPanel().andTransparent();
+    labelWithIcon.setName("Diff Editor Title Label Panel");
     JComponent titleLabel = titleCustomizer != null ? titleCustomizer.getLabel()
                                                     : new JBLabel(StringUtil.notNullize(title)).setCopyable(true);
     if (titleCustomizer != null && titleLabel instanceof Disposable disposableTitleLabel) {
@@ -869,6 +873,8 @@ public final class DiffUtil {
     panel.add(labelWithIcon, BorderLayout.CENTER);
     if (charset != null || separator != null) {
       JPanel panel2 = new JPanel();
+      panel2.setName("Diff Editor Title Status Panel");
+      panel2.setOpaque(false);
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
       if (charset != null) {
         panel2.add(Box.createRigidArea(JBUI.size(4, 0)));
@@ -881,6 +887,11 @@ public final class DiffUtil {
       panel.add(panel2, BorderLayout.EAST);
     }
     return panel;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Insets getContentTitleBorderInsets() {
+    return JBInsets.create("Diff.ContentTitle.insets", new Insets(2, 4, 0, 4));
   }
 
   private static @NotNull JComponent createCharsetPanel(@NotNull Charset charset, @Nullable Boolean bom) {
@@ -928,7 +939,9 @@ public final class DiffUtil {
 
   @ApiStatus.Internal
   public static @NotNull JComponent createStackedTitleComponents(@NotNull List<? extends JComponent> components) {
-    JPanel panel = new JBPanel<>(new VerticalLayout(TITLE_GAP, VerticalLayout.FILL));
+    JPanel panel = new JBPanel<>(new VerticalLayout(CONTENT_TITLE_GAP, VerticalLayout.FILL));
+    panel.setName("Diff Editor Titles Stack");
+    panel.setOpaque(false);
     for (JComponent component : components) {
       panel.add(component);
     }

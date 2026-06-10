@@ -33,6 +33,7 @@ internal class ContentRevisionLabel(
     text = title ?: ChangeDiffRequestProducer.getRevisionTitleOrEmpty(contentRevision)
     isEditable = false
     background = null
+    isOpaque = false
     border = null
     if (title != null) {
       caret = null

@@ -56,6 +56,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
     myContentPanel = new ThreesideContentPanel.Holders(myHolders);
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), this, 300);
+    myLoadingPanel.setOpaque(false);
     myLoadingPanel.add(myContentPanel, BorderLayout.CENTER);
 
     myPanel = new SimpleDiffPanel(myLoadingPanel, context) {

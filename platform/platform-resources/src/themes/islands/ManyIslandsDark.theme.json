@@ -1274,6 +1274,13 @@
         "hoverBackground": "toolbar-bg-hovered"
       }
     },
+    "Diff": {
+      "ContentTitle.gap": 6,
+      "ContentTitle.insets": "6,6,6,6",
+      "HeaderToolbarPanel": {
+        "UI": "com.intellij.diff.impl.ui.DiffToolbarIslandPanelUI"
+      }
+    },
 
     "VersionControl": {
       "Log": {

@@ -35,7 +35,7 @@ public class UnifiedDiffPanel extends DiffPanelBase {
   public UnifiedDiffPanel(@Nullable Project project, @NotNull JComponent content, @Nullable DiffContext context) {
     super(project, context);
     myBusyIcon = new AsyncProcessIcon.Big("UnifiedDiff");
-    JPanel centerPanel = JBUI.Panels.simplePanel(content).addToTop(myNotificationsPanel);
+    JPanel centerPanel = JBUI.Panels.simplePanel(content).addToTop(myNotificationsPanel).andTransparent();
     myContentPanel.add(centerPanel, GOOD_CONTENT);
     myContentPanel.add(myBusyIcon, LOADING_CONTENT);
     myContentPanel.add(createMessagePanel(DiffBundle.message("error.can.not.calculate.diff.file.too.big")), TOO_BIG_CONTENT);

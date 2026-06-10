@@ -738,6 +738,13 @@
       "warningBackground": "#594E32",
       "warningBorderColor": "#78550B"
     },
+    "Diff": {
+      "ContentTitle.gap": 2,
+      "ContentTitle.insets": "0,4,2,4",
+      "HeaderToolbarPanel": {
+        "UI": "com.intellij.diff.impl.ui.DiffToolbarPlainPanelUI"
+      }
+    },
 
     "VersionControl": {
       "FileHistory.Commit.selectedBranchBackground": "#49493f",

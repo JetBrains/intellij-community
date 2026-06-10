@@ -338,6 +338,16 @@
       "since": "2024.1"
     },
     {
+      "key": "Diff.ContentTitle.gap",
+      "description": "A gap between individual diff viewer title in case they are stacked on top of each other",
+      "since": "2026.2"
+    },
+    {
+      "key": "Diff.ContentTitle.insets",
+      "description": "An empty space around the diff viewer title",
+      "since": "2026.2"
+    },
+    {
       "key": "CombinedDiff.mainToolbarInsets",
       "description": "Main toolbar insets of the Combined (All in One) Diff",
       "since": "2023.3"

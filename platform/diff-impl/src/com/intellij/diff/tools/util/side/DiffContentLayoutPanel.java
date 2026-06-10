@@ -3,10 +3,14 @@ package com.intellij.diff.tools.util.side;
 
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.InvisibleWrapper;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.ui.IslandsState;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +30,15 @@ public class DiffContentLayoutPanel extends JBPanel<DiffContentLayoutPanel> {
 
   public DiffContentLayoutPanel(@NotNull JComponent content) {
     myContent = content;
+    setBackground(JBColor.lazy(() -> {
+      if (IslandsState.Companion.isEnabled()) {
+        EditorColorsManager manager = EditorColorsManager.getInstance();
+        return manager.getGlobalScheme().getDefaultBackground();
+      }
+      else {
+        return UIUtil.getPanelBackground();
+      }
+    }));
 
     initLayout(this, myTitle, myTopBreadcrumbs, myContent, myBottomBreadcrumbs);
   }
@@ -113,10 +126,6 @@ public class DiffContentLayoutPanel extends JBPanel<DiffContentLayoutPanel> {
 
         totalWidth = Math.max(size.width, totalWidth);
         totalHeight += size.height;
-
-        if (component == myTitle && size.height != 0) {
-          totalHeight += DiffUtil.TITLE_GAP.get();
-        }
       }
 
       return new Dimension(totalWidth, totalHeight);
@@ -136,7 +145,6 @@ public class DiffContentLayoutPanel extends JBPanel<DiffContentLayoutPanel> {
 
       myTitle.setBounds(0, y, width, titleSize.height);
       y += titleSize.height;
-      if (titleSize.height != 0) y += DiffUtil.TITLE_GAP.get();
 
       myTopBreadcrumbs.setBounds(0, y, width, topSize.height);
       y += topSize.height;

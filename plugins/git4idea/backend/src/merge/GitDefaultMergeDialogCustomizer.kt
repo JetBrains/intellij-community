@@ -385,6 +385,7 @@ internal fun getTitleWithShowDetailsAction(@Nls title: String, action: () -> Uni
   BorderLayoutPanel()
     .addToCenter(JBLabel(title).setCopyable(true))
     .addToRight(ActionLink(GitBundle.message("merge.dialog.customizer.show.details.link.label")) { action() })
+    .andTransparent()
 
 private fun Boolean.toInt() = if (this) 1 else 0
 

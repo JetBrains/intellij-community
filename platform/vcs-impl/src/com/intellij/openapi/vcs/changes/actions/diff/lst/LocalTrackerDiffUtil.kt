@@ -78,14 +78,16 @@ import kotlin.math.min
 @ApiStatus.Internal
 object LocalTrackerDiffUtil {
   @JvmStatic
-  fun computeDifferences(tracker: LineStatusTracker<*>?,
-                         document1: Document,
-                         document2: Document,
-                         activeChangelistId: String,
-                         allowExcludeChangesFromCommit: Boolean,
-                         textDiffProvider: TwosideTextDiffProvider,
-                         indicator: ProgressIndicator,
-                         handler: LocalTrackerDiffHandler): Runnable {
+  fun computeDifferences(
+    tracker: LineStatusTracker<*>?,
+    document1: Document,
+    document2: Document,
+    activeChangelistId: String,
+    allowExcludeChangesFromCommit: Boolean,
+    textDiffProvider: TwosideTextDiffProvider,
+    indicator: ProgressIndicator,
+    handler: LocalTrackerDiffHandler,
+  ): Runnable {
     if (tracker is SimpleLocalLineStatusTracker) {
       // partial changes are disabled for file (ex: it is marked as "unmodified")
       return handler.fallback()
@@ -206,14 +208,18 @@ object LocalTrackerDiffUtil {
   }
 
   interface LocalTrackerDiffHandler {
-    fun done(isContentsEqual: Boolean,
-             texts: Array<CharSequence>,
-             toggleableLineRanges: List<ToggleableLineRange>): Runnable = done(isContentsEqual, true, texts, toggleableLineRanges)
+    fun done(
+      isContentsEqual: Boolean,
+      texts: Array<CharSequence>,
+      toggleableLineRanges: List<ToggleableLineRange>,
+    ): Runnable = done(isContentsEqual, true, texts, toggleableLineRanges)
 
-    fun done(isContentsEqual: Boolean,
-             areVCSBoundedActionsDisabled: Boolean,
-             texts: Array<CharSequence>,
-             toggleableLineRanges: List<ToggleableLineRange>): Runnable
+    fun done(
+      isContentsEqual: Boolean,
+      areVCSBoundedActionsDisabled: Boolean,
+      texts: Array<CharSequence>,
+      toggleableLineRanges: List<ToggleableLineRange>,
+    ): Runnable
 
     fun retryLater(): Runnable
     fun fallback(): Runnable
@@ -224,14 +230,14 @@ object LocalTrackerDiffUtil {
   class ToggleableLineRange(
     val lineRange: Range,
     val fragments: List<LineFragment>,
-    val fragmentData: LineFragmentData
+    val fragmentData: LineFragmentData,
   )
 
   data class LineFragmentData(
     val activeChangelistId: String,
     val changelistId: String,
     val exclusionState: RangeExclusionState,
-    val clientIds: List<ClientId>
+    val clientIds: List<ClientId>,
   ) {
     fun isFromActiveChangelist() = isFromActiveChangelist(changelistId, activeChangelistId)
     fun isSkipped() = !isFromActiveChangelist()
@@ -246,7 +252,7 @@ object LocalTrackerDiffUtil {
         changelistId: String,
         activeChangelistId: String,
         exclusionState: RangeExclusionState,
-        allowExcludeChangesFromCommit: Boolean
+        allowExcludeChangesFromCommit: Boolean,
       ): Boolean {
         return !isFromActiveChangelist(changelistId, activeChangelistId) ||
         allowExcludeChangesFromCommit && exclusionState == RangeExclusionState.Excluded
@@ -302,9 +308,11 @@ object LocalTrackerDiffUtil {
     }
   }
 
-  private class MyLineStatusTrackerManagerListener(private val viewer: DiffViewerBase,
-                                                   private val localRequest: LocalChangeListDiffRequest,
-                                                   private val trackerListener: PartialLocalLineStatusTracker.Listener)
+  private class MyLineStatusTrackerManagerListener(
+    private val viewer: DiffViewerBase,
+    private val localRequest: LocalChangeListDiffRequest,
+    private val trackerListener: PartialLocalLineStatusTracker.Listener,
+  )
     : LineStatusTrackerManager.ListenerAdapter() {
 
     override fun onTrackerAdded(tracker: LineStatusTracker<*>) {
@@ -334,7 +342,7 @@ object LocalTrackerDiffUtil {
   private class CheckboxDiffGutterRenderer(
     icon: Icon,
     tooltip: @NlsContexts.Tooltip String?,
-    val onClick: Runnable
+    val onClick: Runnable,
   ) : DiffGutterRenderer(icon, tooltip) {
     override fun handleMouseClick() {
       onClick.run()
@@ -496,9 +504,11 @@ object LocalTrackerDiffUtil {
       }
     }
 
-    override fun doPerform(e: AnActionEvent,
-                           tracker: PartialLocalLineStatusTracker,
-                           changes: List<LocalTrackerChange>) {
+    override fun doPerform(
+      e: AnActionEvent,
+      tracker: PartialLocalLineStatusTracker,
+      changes: List<LocalTrackerChange>,
+    ) {
       val selectedLines = getLocalSelectedLines(changes)
 
       if (changes.all { !it.isFromActiveChangelist }) {
@@ -526,9 +536,11 @@ object LocalTrackerDiffUtil {
       else VcsBundle.message("changes.include.lines.into.commit")
     }
 
-    override fun doPerform(e: AnActionEvent,
-                           tracker: PartialLocalLineStatusTracker,
-                           changes: List<LocalTrackerChange>) {
+    override fun doPerform(
+      e: AnActionEvent,
+      tracker: PartialLocalLineStatusTracker,
+      changes: List<LocalTrackerChange>,
+    ) {
       val selectedLines = getLocalSelectedLines(changes)
 
       val hasExcluded = changes.any { it.exclusionState.hasExcluded }
@@ -538,8 +550,10 @@ object LocalTrackerDiffUtil {
     }
   }
 
-  internal abstract class MySelectedChangesActionBase(private val forActiveChangelistOnly: Boolean,
-                                                      protected val provider: LocalTrackerActionProvider) : DumbAwareAction() {
+  internal abstract class MySelectedChangesActionBase(
+    private val forActiveChangelistOnly: Boolean,
+    protected val provider: LocalTrackerActionProvider,
+  ) : DumbAwareAction() {
     override fun getActionUpdateThread(): ActionUpdateThread {
       return ActionUpdateThread.EDT
     }
@@ -595,14 +609,16 @@ object LocalTrackerDiffUtil {
     protected val activeChangelistId get() = provider.localRequest.changelistId
 
     @RequiresWriteLock
-    protected abstract fun doPerform(e: AnActionEvent,
-                                     tracker: PartialLocalLineStatusTracker,
-                                     changes: List<LocalTrackerChange>)
+    protected abstract fun doPerform(
+      e: AnActionEvent,
+      tracker: PartialLocalLineStatusTracker,
+      changes: List<LocalTrackerChange>,
+    )
   }
 
   internal class PartiallyExcludeSelectedLinesFromCommitAction(
     val provider: LocalTrackerActionProvider,
-    val isExclude: Boolean
+    val isExclude: Boolean,
   ) : DumbAwareAction() {
     init {
       ActionUtil.copyFrom(this, if (isExclude) "Vcs.Diff.ExcludeChangedLinesFromCommit" else "Vcs.Diff.IncludeChangedLinesIntoCommit")
@@ -794,6 +810,8 @@ object LocalTrackerDiffUtil {
       }
 
     init {
+      isOpaque = false
+
       checkbox = InplaceButton(null, AllIcons.Diff.GutterCheckBox) { toggleState() }
       checkbox.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
       checkbox.isVisible = false
@@ -817,7 +835,8 @@ object LocalTrackerDiffUtil {
       val gutter = editor.gutterComponentEx
       val gap = height - size.height
       val y = if (gap > JBUI.scale(8)) gap - JBUI.scale(2) else gap / 2
-      val x = gutter.iconAreaOffset + 2 // "+2" from EditorGutterComponentImpl.processIconsRow
+      val xOffset = DiffUtil.getContentTitleBorderInsets().left // offset to the left to account for the title panel gap
+      val x = gutter.iconAreaOffset + 2 - xOffset // "+2" from EditorGutterComponentImpl.processIconsRow
       checkbox.setBounds(min(width - AllIcons.Diff.GutterCheckBox.iconWidth, x), max(0, y), size.width, size.height)
     }
 
@@ -869,7 +888,7 @@ object LocalTrackerDiffUtil {
 
   class SelectedTrackerLine(
     val vcsLines: BitSet?,
-    val localLines: BitSet?
+    val localLines: BitSet?,
   )
 
   class LocalTrackerChange(val startLine: Int, val endLine: Int, val changelistId: String, val exclusionState: RangeExclusionState)

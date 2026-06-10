@@ -18,6 +18,7 @@ public class OnesideContentPanel extends JPanel {
 
   public OnesideContentPanel(@NotNull JComponent content) {
     super(new BorderLayout());
+    setOpaque(false);
 
     myPanel = new DiffContentPanel(content);
     add(myPanel, BorderLayout.CENTER);

@@ -36,6 +36,7 @@ public class StatusPanel extends JPanel {
     add(myBusySpinner, bag.next());
     add(myTextLabel, bag.next().weightx(1.0));
     setBorder(JBUI.Borders.empty(0, 2));
+    setOpaque(false);
   }
 
   public void update() {

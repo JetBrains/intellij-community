@@ -23,6 +23,7 @@ import java.util.List;
 public class SyncHeightComponent extends JPanel {
   private SyncHeightComponent(@NotNull SyncHeightHolder syncHeightHolder, @Nullable JComponent component) {
     super(new SyncHeightLayout(syncHeightHolder, component));
+    setOpaque(false);
     if (component != null) add(component);
   }
 

@@ -33,7 +33,7 @@ public class SimpleDiffPanel extends DiffPanelBase {
 
   public SimpleDiffPanel(@NotNull JComponent editorPanel, @NotNull DiffContext context) {
     super(context.getProject(), context);
-    JPanel centerPanel = JBUI.Panels.simplePanel(editorPanel).addToTop(myNotificationsPanel);
+    JPanel centerPanel = JBUI.Panels.simplePanel(editorPanel).addToTop(myNotificationsPanel).andTransparent();
 
     myContentPanel.add(centerPanel, GOOD_CONTENT);
 
