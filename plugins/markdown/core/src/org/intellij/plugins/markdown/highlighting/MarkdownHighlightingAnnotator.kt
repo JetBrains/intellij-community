@@ -29,6 +29,7 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
   private val syntaxHighlighter = MarkdownSyntaxHighlighter()
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+    if (holder.isBatchMode()) return
     when (element.elementType) {
       MarkdownTokenTypes.ALERT_TITLE -> {
         val key = getAlertAttributeKey(element as MarkdownAlertTitle) ?: return
