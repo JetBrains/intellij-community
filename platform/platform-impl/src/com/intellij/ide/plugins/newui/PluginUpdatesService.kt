@@ -1,310 +1,189 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.plugins.newui;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.plugins.newui
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.InstalledPluginsState;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginStateListener;
-import com.intellij.ide.plugins.PluginStateManager;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.updateSettings.impl.InternalPluginResults;
-import com.intellij.openapi.updateSettings.impl.PluginDownloader;
-import com.intellij.openapi.updateSettings.impl.PluginUpdates;
-import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.function.Consumer
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
+import kotlin.time.Duration.Companion.milliseconds
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Consumer;
+@ApiStatus.Internal
+fun interface PluginUpdateSubscription {
+  fun cancel()
+}
 
-/**
- * @author Alexander Lobas
- */
-public class PluginUpdatesService {
-  private static final Logger LOG = Logger.getInstance(PluginUpdatesService.class);
-  private static final List<PluginUpdatesService> SERVICES = new ArrayList<>();
-  private static final Object ourLock = new Object();
-  private static final @NotNull Condition<IdeaPluginDescriptor> DEFAULT_FILTER = // only enabled plugins by default
-    descriptor -> !PluginManagerCore.isDisabled(descriptor.getPluginId());
+typealias PluginUpdateCallback = Consumer<PluginUpdatesEvent>
 
-  // FIXME it is strange that users of this class need to known which updates came from custom repositories (IJPL-6087)
-  /** clients should receive filtered updates by default */
-  private static @NotNull InternalPluginResults ourAllUpdates = InternalPluginResults.empty();
-  private static @NotNull Condition<? super IdeaPluginDescriptor> ourFilter = DEFAULT_FILTER;
-  private static boolean ourPrepared;
-  private static boolean ourPreparing;
-  private static boolean ourReset;
+@ApiStatus.Internal
+@Service
+@OptIn(FlowPreview::class, ExperimentalAtomicApi::class)
+class PluginUpdatesService(val coroutineScope: CoroutineScope) {
 
-  private final List<Consumer<@NotNull InternalPluginResults>> myUpdateCallbacks = new ArrayList<>();
-  private boolean mySetFilter;
+  private val myCallbacks = CopyOnWriteArrayList<PluginUpdateCallback>()
+  private val pluginUpdateFlow = MutableStateFlow<PluginUpdatesEvent?>(null)
+  private val updateIdsFlow = MutableStateFlow<Set<PluginId>?>(null)
+  private val updateRequestFlow = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val providerSnapshots = ConcurrentHashMap<PluginUpdatesProvider, PluginUpdatesEvent>()
 
-  static {
-    PluginStateManager.addStateListener(new PluginStateListener() {
-      @Override
-      public void install(@NotNull IdeaPluginDescriptor descriptor) {
-        finishUpdate(descriptor);
-      }
+  companion object {
+    private val LOG = logger<PluginUpdatesService>()
 
-      @Override
-      public void uninstall(@NotNull IdeaPluginDescriptor descriptor) {
-        finishUpdate(descriptor);
-      }
-    });
-  }
+    @JvmStatic
+    fun getInstance(): PluginUpdatesService = service()
 
-  @ApiStatus.Internal
-  public static @NotNull PluginUpdatesService connectWithUpdates(@NotNull Consumer<@NotNull InternalPluginResults> callback) {
-    PluginUpdatesService service = new PluginUpdatesService();
-    service.myUpdateCallbacks.add(callback);
-    synchronized (ourLock) {
-      SERVICES.add(service);
-      if (ourPrepared) {
-        callback.accept(getFilteredUpdateResult());
-        return service;
-      }
-    }
-    calculateUpdates();
-    return service;
-  }
-
-  private static @NotNull InternalPluginResults getFilteredUpdateResult() {
-    synchronized (ourLock) {
-      if (ourAllUpdates.isEmpty()) {
-        return ourAllUpdates;
-      }
-      final var filter = ourFilter;
-      return new InternalPluginResults(
-        new PluginUpdates(
-          ContainerUtil.filter(ourAllUpdates.getPluginUpdates().getAllEnabled(), d -> filter.test(d.getDescriptor())),
-          ContainerUtil.filter(ourAllUpdates.getPluginUpdates().getAllDisabled(), d -> filter.test(d.getDescriptor())),
-          ourAllUpdates.getPluginUpdates().getIncompatible()
-        ),
-        ourAllUpdates.getPluginNods(),
-        ourAllUpdates.getErrors()
-      );
+    @JvmStatic
+    fun isNeedUpdate(pluginId: PluginId): Boolean {
+      return runBlockingMaybeCancellable { getInstance().awaitHasUpdate(pluginId) }
     }
   }
 
-  public void calculateUpdates(@NotNull Consumer<? super Collection<PluginUiModel>> callback) {
-    synchronized (ourLock) {
-      final var adaptedCallback = adaptDescriptorConsumerToUpdateResultConsumer(callback);
-      myUpdateCallbacks.add(adaptedCallback);
-      if (ourPrepared) {
-        adaptedCallback.accept(getFilteredUpdateResult());
-        return;
-      }
-    }
-    calculateUpdates();
+  init {
+    startUpdateCollection()
+    startUpdateTrigger()
   }
 
-  private static void finishUpdate(@NotNull IdeaPluginDescriptor descriptor) {
-    synchronized (ourLock) {
-      if (!ourPrepared) {
-        return;
+  private suspend fun ensureUpdatesStarted() {
+    if (pluginUpdateFlow.value == null) {
+      triggerUpdates()
+    }
+  }
+
+  private fun startUpdateCollection() {
+    for (provider in PluginUpdatesProvider.getInstances()) {
+      coroutineScope.launch {
+        provider.pluginUpdateEvents()
+          .catch { e -> LOG.warn("Plugin update provider failed: ${provider.javaClass.name}", e) }
+          .collect { event ->
+            event?.let {
+              providerSnapshots[provider] = event
+              onProviderUpdated()
+            }
+          }
+        }
+    }
+  }
+
+  private suspend fun onProviderUpdated() {
+    val merged = mergeUpdates(providerSnapshots.values)
+    pluginUpdateFlow.value = merged
+    updateIdsFlow.value = merged.all.mapTo(HashSet()) { plugin -> plugin.pluginId }
+    withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
+      dispatchCallbacks(merged)
+    }
+  }
+
+  private fun startUpdateTrigger() = coroutineScope.launch {
+    updateRequestFlow
+      .debounce(300.milliseconds)
+      .collect {
+        PluginUpdatesProvider.getInstances().forEach { it.update() }
       }
-      boolean removed = removeUpdate(descriptor.getPluginId());
-      if (removed) {
-        var results = getFilteredUpdateResult();
-        for (PluginUpdatesService service : SERVICES) {
-          service.runAllCallbacks(results);
+  }
+
+  private suspend fun triggerUpdates() {
+    updateRequestFlow.emit(Unit)
+  }
+
+  /**
+   * Registers a [callback] to receive plugin update events and returns a [PluginUpdateSubscription] to cancel it.
+   *
+   * By default, the [callback] is invoked on [Dispatchers.UI][com.intellij.openapi.application.UI], WIL not allowed.
+   *
+   * Note: if an update snapshot is already available, the [callback] is also invoked once synchronously on the
+   * calling thread of [subscribe] with that snapshot; all later invocations happen on [Dispatchers.UI].
+   */
+  @RequiresEdt
+  fun subscribe(@RequiresEdt callback: PluginUpdateCallback): PluginUpdateSubscription {
+    myCallbacks.add(callback)
+
+    val currentSnapshot = getLastUpdates()
+    if (currentSnapshot != null) {
+      callback.accept(currentSnapshot)
+    } else {
+      recalculateUpdates()
+    }
+
+    return PluginUpdateSubscription {
+      myCallbacks.remove(callback)
+    }
+  }
+
+  fun recalculateUpdates(): Job = coroutineScope.launch { triggerUpdates() }
+
+  suspend fun awaitUpdates(): Collection<PluginUiModel> {
+    ensureUpdatesStarted()
+    return pluginUpdateFlow.filterNotNull().first().all
+  }
+
+  @VisibleForTesting
+  fun flow(): Flow<PluginUpdatesEvent?> = pluginUpdateFlow
+
+  suspend fun awaitHasUpdate(pluginId: PluginId): Boolean {
+    ensureUpdatesStarted()
+    return updateIdsFlow.filterNotNull().first().contains(pluginId)
+  }
+
+  @RequiresEdt
+  fun rerunCallbacks() {
+    val currentUpdates = getLastUpdates()
+    if (currentUpdates != null) {
+      dispatchCallbacks(currentUpdates)
+    }
+  }
+
+  private fun getLastUpdates(): PluginUpdatesEvent? {
+    return pluginUpdateFlow.value
+  }
+
+  private fun dispatchCallbacks(updates: PluginUpdatesEvent) {
+    myCallbacks.forEach { it.accept(updates) }
+  }
+
+  @VisibleForTesting
+  internal fun mergeUpdates(updateEvents: Collection<PluginUpdatesEvent>): PluginUpdatesEvent =
+    PluginUpdatesEvent(mergePlugins(updateEvents) { it.enabledUpdates },
+                       mergePlugins(updateEvents) { it.disabledUpdates },
+                       mergePlugins(updateEvents) { it.pluginNods })
+
+  private fun mergePlugins(updateEvents: Collection<PluginUpdatesEvent>, updates: (PluginUpdatesEvent) -> List<PluginDto>): List<PluginDto> {
+    val merged = LinkedHashMap<PluginId, PluginDto>()
+    for (event in updateEvents) {
+      for (plugin in updates(event)) {
+        val existing = merged[plugin.pluginId]
+        if (existing == null) {
+          merged[plugin.pluginId] = plugin
+        }
+        else {
+          existing.source = existing.source.addSource(plugin.source)
         }
       }
     }
-  }
-
-  private static boolean removeUpdate(@NotNull PluginId pluginId) {
-    if (!ContainerUtil.exists(ourAllUpdates.getPluginUpdates().getAll(), d -> Objects.equals(d.getDescriptor().getPluginId(), pluginId))) {
-      return false;
-    }
-    ourAllUpdates = new InternalPluginResults(
-      new PluginUpdates(
-        ContainerUtil.filter(ourAllUpdates.getPluginUpdates().getAllEnabled(), d -> !Objects.equals(d.getDescriptor().getPluginId(), pluginId)),
-        ContainerUtil.filter(ourAllUpdates.getPluginUpdates().getAllDisabled(), d -> !Objects.equals(d.getDescriptor().getPluginId(), pluginId)),
-        ourAllUpdates.getPluginUpdates().getIncompatible()
-      ),
-      ourAllUpdates.getPluginNods(),
-      ourAllUpdates.getErrors()
-    );
-    return true;
-  }
-
-  public void finishUpdate() {
-    synchronized (ourLock) {
-      if (!ourPrepared) {
-        return;
-      }
-      var results = getFilteredUpdateResult();
-      for (PluginUpdatesService service : SERVICES) {
-        service.runAllCallbacks(results);
-      }
-    }
-  }
-
-  public void recalculateUpdates() {
-    synchronized (ourLock) {
-      for (PluginUpdatesService service : SERVICES) {
-        service.runAllCallbacks(InternalPluginResults.empty());
-      }
-      if (ourPreparing) {
-        resetUpdates();
-      }
-      else {
-        calculateUpdates();
-      }
-    }
-  }
-
-  private static void resetUpdates() {
-    ourReset = true;
-  }
-
-  @ApiStatus.Internal
-  public void setFilter(@NotNull Condition<? super IdeaPluginDescriptor> filter) {
-    synchronized (ourLock) {
-      if (!mySetFilter && ourFilter != DEFAULT_FILTER) {
-        LOG.warn("Filter already set to " + ourFilter + ", new filter " + filter + " will be ignored", new Throwable());
-        return;
-      }
-      mySetFilter = true;
-      setOurFilter(filter);
-    }
-  }
-
-  private static void setOurFilter(@NotNull Condition<? super IdeaPluginDescriptor> filter) {
-    ourFilter = filter;
-    reapplyFilter();
-  }
-
-  public static void reapplyFilter() {
-    synchronized (ourLock) {
-      for (PluginUpdatesService service : SERVICES) {
-        service.runAllCallbacks(InternalPluginResults.empty());
-      }
-      final var filteredUpdates = getFilteredUpdateResult();
-      for (PluginUpdatesService service : SERVICES) {
-        service.runAllCallbacks(filteredUpdates);
-      }
-    }
-  }
-
-  @ApiStatus.Internal
-  public void refreshCallbacks() {
-    reapplyFilter();
-  }
-
-  public void dispose() {
-    synchronized (ourLock) {
-      dispose(this);
-      myUpdateCallbacks.clear();
-      if (mySetFilter) {
-        setOurFilter(DEFAULT_FILTER);
-        mySetFilter = false;
-      }
-    }
-  }
-
-  private static void dispose(@NotNull PluginUpdatesService service) {
-    synchronized (ourLock) {
-      SERVICES.remove(service);
-      if (SERVICES.isEmpty()) {
-        ourAllUpdates = InternalPluginResults.empty();
-        ourPrepared = false;
-        ourPreparing = false;
-      }
-    }
-  }
-
-  public static boolean isNeedUpdate(@NotNull IdeaPluginDescriptor descriptor) {
-    PluginId pluginId = descriptor.getPluginId();
-    synchronized (ourLock) {
-      if (ourPrepared) {
-        final var filteredUpdates = getFilteredUpdateResult();
-        assert filteredUpdates != null;
-        return ContainerUtil.exists(filteredUpdates.getPluginUpdates().getAll(), d -> Objects.equals(d.getDescriptor().getPluginId(), pluginId));
-      }
-    }
-    return InstalledPluginsState.getInstance().hasNewerVersion(pluginId);
-  }
-
-
-  public static @Unmodifiable Collection<IdeaPluginDescriptor> getUpdates() {
-    synchronized (ourLock) {
-      if (!ourPrepared || ourPreparing) {
-        return List.of();
-      }
-      final var filteredUpdates = getFilteredUpdateResult();
-      return ContainerUtil.map(filteredUpdates.getPluginUpdates().getAll(), PluginDownloader::getDescriptor);
-    }
-  }
-
-  public static @Nullable @Nls String getUpdatesTooltip() {
-    Collection<IdeaPluginDescriptor> updates = getUpdates();
-    if (ContainerUtil.isEmpty(updates)) {
-      return null;
-    }
-    return IdeBundle.message("updates.plugin.ready.tooltip", StringUtil.join(updates, plugin -> plugin.getName(), ", "), updates.size());
-  }
-
-  private static void calculateUpdates() {
-    synchronized (ourLock) {
-      if (ourPreparing) {
-        return;
-      }
-      ourPreparing = true;
-      ourAllUpdates = InternalPluginResults.empty();
-    }
-    // for example, if executed as part of Traverse UI - don't wait check updates
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      return;
-    }
-
-    NonUrgentExecutor.getInstance().execute(() -> {
-      InternalPluginResults updates = UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates(null, null);
-      ApplicationManager.getApplication().invokeLater(() -> {
-        synchronized (ourLock) {
-          ourPreparing = false;
-          if (ourReset) {
-            ourReset = false;
-            calculateUpdates();
-            return;
-          }
-          ourPrepared = true;
-          ourAllUpdates = updates;
-          final var filteredUpdates = getFilteredUpdateResult();
-          for (PluginUpdatesService service : SERVICES) {
-            service.runAllCallbacks(filteredUpdates);
-          }
-        }
-      }, ModalityState.any());
-    });
-  }
-
-  private void runAllCallbacks(@NotNull InternalPluginResults filteredUpdates) {
-    for (var callback : myUpdateCallbacks) {
-      callback.accept(filteredUpdates);
-    }
-  }
-
-  private static @NotNull Consumer<InternalPluginResults> adaptDescriptorConsumerToUpdateResultConsumer(
-    @NotNull Consumer<? super Collection<PluginUiModel>> consumer
-  ) {
-    return updateResult -> {
-      assert updateResult != null;
-      consumer.accept(ContainerUtil.map(updateResult.getPluginUpdates().getAll(), downloader -> downloader.getUiModel()));
-    };
+    return merged.values.toList()
   }
 }

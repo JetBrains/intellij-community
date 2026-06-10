@@ -714,6 +714,9 @@
     <extensionPoint name="uiPluginManagerController"
                     interface="com.intellij.ide.plugins.newui.UiPluginManagerController"
                     dynamic="true"/>
+    <extensionPoint name="pluginUpdatesProvider"
+                    interface="com.intellij.ide.plugins.newui.PluginUpdatesProvider"
+                    dynamic="true"/>
     <extensionPoint name="pluginManagerCustomizer"
                     interface="com.intellij.ide.plugins.newui.PluginManagerCustomizer"
                     dynamic="true"/>

@@ -7,7 +7,6 @@ import com.intellij.ide.plugins.newui.MyPluginModel
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
 import com.intellij.ide.plugins.newui.PluginModelFacade
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
-import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -41,9 +40,6 @@ internal class DetectedPluginsPanel(project: Project?) : OrderPanel<PluginDownlo
 
   init {
     val pluginModel = MyPluginModel(project)
-    pluginModel.pluginUpdatesService = object : PluginUpdatesService() {
-      override fun finishUpdate() {}
-    }
     myDetailsComponent = PluginDetailsPageComponent(PluginModelFacade(pluginModel), LinkListener { _, _ -> }, true)
     val entryTable = getEntryTable()
     entryTable.setTableHeader(null)

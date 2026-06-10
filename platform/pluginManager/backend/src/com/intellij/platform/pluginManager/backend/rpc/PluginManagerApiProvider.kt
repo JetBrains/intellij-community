@@ -5,11 +5,10 @@ import com.intellij.platform.pluginManager.shared.rpc.PluginErrorReporterApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginUpdaterApi
+import com.intellij.platform.pluginManager.shared.rpc.PluginUpdatesProviderApi
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
 internal class PluginManagerApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<PluginManagerApi>()) {
@@ -26,6 +25,10 @@ internal class PluginManagerApiProvider : RemoteApiProvider {
 
     remoteApi(remoteApiDescriptor<PluginErrorReporterApi>()) {
       BackendPluginErrorReporterApi()
+    }
+
+    remoteApi(remoteApiDescriptor<PluginUpdatesProviderApi>()) {
+      BackendPluginUpdatesProviderApi()
     }
   }
 }

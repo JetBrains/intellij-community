@@ -230,11 +230,8 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
     }
   }
 
-  var pluginUpdatesService: PluginUpdatesService
-    get() = myPluginUpdatesService!!
-    set(service) {
-      myPluginUpdatesService = service
-    }
+  val pluginUpdatesService: PluginUpdatesService
+    get() = PluginUpdatesService.getInstance()
 
   val sessionId: String
     get() = mySessionId.toString()
@@ -501,7 +498,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       }
     }
     else {
-      myPluginUpdatesService!!.finishUpdate()
+      PluginUpdatesService.getInstance().rerunCallbacks()
     }
 
     info?.indicator?.cancel()
@@ -826,7 +823,7 @@ open class MyPluginModel(project: Project?) : InstalledPluginsTableModel(project
       group.titleWithEnabled(PluginModelFacade(this))
     }
     runInvalidFixCallback()
-    myPluginUpdatesService?.refreshCallbacks()
+    PluginUpdatesService.getInstance().rerunCallbacks()
   }
 
   override fun isDisabled(pluginId: PluginId): Boolean {

@@ -1647,14 +1647,6 @@ c:com.intellij.ide.plugins.newui.PluginSearchTextField
 - setSelectedItem(java.lang.String):V
 - setTextIgnoreEvents(java.lang.String):V
 - p:showCompletionPopup():V
-c:com.intellij.ide.plugins.newui.PluginUpdatesService
-- <init>():V
-- calculateUpdates(java.util.function.Consumer):V
-- dispose():V
-- finishUpdate():V
-- s:getUpdates():java.util.Collection
-- s:getUpdatesTooltip():java.lang.String
-- s:reapplyFilter():V
 f:com.intellij.ide.plugins.newui.TagComponent
 - <init>():V
 - setText(java.lang.String):V

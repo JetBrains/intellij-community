@@ -32,7 +32,6 @@ interface UiPluginManagerController {
   suspend fun getVisiblePlugins(showImplementationDetails: Boolean): List<PluginUiModel>
   suspend fun initSession(sessionId: String): InitSessionResult
   suspend fun getInstalledPlugins(): List<PluginUiModel>
-  suspend fun getUpdates(): List<PluginUiModel>
   suspend fun executePluginsSearch(query: String, count: Int, includeIncompatible: Boolean): PluginSearchResult
   suspend fun loadPluginDetails(model: PluginUiModel): PluginUiModel?
   suspend fun loadPluginReviews(pluginId: PluginId, page: Int): List<PluginReviewComment>?
@@ -57,7 +56,6 @@ interface UiPluginManagerController {
   suspend fun getLastCompatiblePluginUpdateModel(pluginId: PluginId, buildNumber: String? = null, indicator: ProgressIndicator? = null): PluginUiModel?
   suspend fun getLastCompatiblePluginUpdate(allIds: Set<PluginId>, throwExceptions: Boolean, buildNumber: String? = null): List<IdeCompatibleUpdate>
   suspend fun updateDescriptorsForInstalledPlugins()
-  suspend fun isNeedUpdate(pluginId: PluginId): Boolean
   suspend fun getPluginInstallationState(pluginId: PluginId): PluginInstallationState
   suspend fun getPluginInstallationStates(): Map<PluginId, PluginInstallationState>
   suspend fun checkPluginCanBeDownloaded(pluginUiModel: PluginUiModel, progressIndicator: ProgressIndicator?): Boolean
@@ -72,7 +70,6 @@ interface UiPluginManagerController {
   fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId>
   fun getAllPluginsTags(): Set<String>
   fun getAllVendors(): Set<String>
-  fun connectToPluginUpdateService(sessionId: String, callback: (List<PluginUiModel>) -> Unit): PluginUpdatesService
 
   suspend fun loadErrors(sessionId: String): Map<PluginId, CheckErrorsResult>
   suspend fun loadErrors(sessionId: String, pluginIds: List<PluginId>): Map<PluginId, CheckErrorsResult>

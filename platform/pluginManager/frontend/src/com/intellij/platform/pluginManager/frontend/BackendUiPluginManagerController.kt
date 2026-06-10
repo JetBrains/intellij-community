@@ -16,7 +16,6 @@ import com.intellij.ide.plugins.marketplace.SetEnabledStateResult
 import com.intellij.ide.plugins.newui.PluginInstallationState
 import com.intellij.ide.plugins.newui.PluginSource
 import com.intellij.ide.plugins.newui.PluginUiModel
-import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.UiPluginManagerController
 import com.intellij.ide.ui.search.TraverseUIMode
 import com.intellij.openapi.application.ModalityState
@@ -29,13 +28,9 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.FUSEventSou
 import com.intellij.platform.pluginManager.shared.rpc.PluginInstallerApi
 import com.intellij.platform.pluginManager.shared.rpc.PluginManagerApi
 import com.intellij.platform.project.projectId
-import fleet.rpc.client.durable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
@@ -63,10 +58,6 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
 
   override suspend fun getInstalledPlugins(): List<PluginUiModel> {
     return PluginManagerApi.getInstance().getInstalledPlugins().withSource()
-  }
-
-  override suspend fun getUpdates(): List<PluginUiModel> {
-    return PluginManagerApi.getInstance().getUpdates().withSource()
   }
 
   override suspend fun getPlugin(id: PluginId): PluginUiModel? {
@@ -176,19 +167,6 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     return PluginManagerApi.getInstance().loadErrors(sessionId, pluginIds)
   }
 
-  @OptIn(FlowPreview::class)
-  override fun connectToPluginUpdateService(sessionId: String, callback: (List<PluginUiModel>) -> Unit): PluginUpdatesService {
-    val result = RemotePluginUpdatesService(sessionId)
-    result.coroutineScope.launch {
-      durable {
-        PluginManagerApi.getInstance().subscribeToPluginUpdates(sessionId).debounce(100).collectLatest {
-          callback(it)
-        }
-      }
-    }
-    return result
-  }
-
   override fun filterPluginsRequiringUltimateButItsDisabled(pluginIds: List<PluginId>): List<PluginId> {
     return awaitForResult { PluginManagerApi.getInstance().filterPluginsRequiresUltimateButItsDisabled(pluginIds) }
   }
@@ -269,10 +247,6 @@ class BackendUiPluginManagerController() : UiPluginManagerController {
     service<BackendRpcCoroutineContext>().coroutineScope.launch {
       PluginManagerApi.getInstance().updateDescriptorsForInstalledPlugins()
     }
-  }
-
-  override suspend fun isNeedUpdate(pluginId: PluginId): Boolean {
-    return PluginManagerApi.getInstance().isNeedUpdate(pluginId)
   }
 
   override suspend fun closeSession(sessionId: String) {

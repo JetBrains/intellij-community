@@ -13,6 +13,7 @@ import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollect
 import com.intellij.ide.plugins.newui.ListPluginComponent
 import com.intellij.ide.plugins.newui.MultiSelectionEventHandler
 import com.intellij.ide.plugins.newui.MyPluginModel
+import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.ide.plugins.newui.NoOpPluginsViewCustomizer
 import com.intellij.ide.plugins.newui.PluginDetailsPageComponent
 import com.intellij.ide.plugins.newui.PluginInstallationState
@@ -21,7 +22,7 @@ import com.intellij.ide.plugins.newui.PluginManagerCustomizer
 import com.intellij.ide.plugins.newui.PluginModelFacade
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.PluginUiModelAdapter
-import com.intellij.ide.plugins.newui.PluginUpdatesService
+import com.intellij.ide.plugins.newui.PluginUpdateSubscription
 import com.intellij.ide.plugins.newui.PluginsGroup
 import com.intellij.ide.plugins.newui.PluginsGroupComponent
 import com.intellij.ide.plugins.newui.PluginsGroupComponentWithProgress
@@ -77,13 +78,12 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
   facade: PluginModelFacade,
   scope: CoroutineScope,
   customizer: PluginManagerCustomizer?,
-  service: PluginUpdatesService,
   searchTextFieldQueryDebouncePeriodMs: Long = 250,
 ) : PluginsTab(searchTextFieldQueryDebouncePeriodMs) {
   private val pluginModelFacade: PluginModelFacade = facade
   private val coroutineScope: CoroutineScope = scope
   private val pluginManagerCustomizer: PluginManagerCustomizer? = customizer
-  private val pluginUpdatesService: PluginUpdatesService = service
+  private var pluginUpdateSubscription: PluginUpdateSubscription? = null
 
   private val marketplaceSortByGroup: DefaultActionGroup = DefaultActionGroup().apply {
     for (option in MarketplaceTabSearchSortByOptions.entries) {
@@ -324,13 +324,8 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
                                                         marketplacePanel.doLayout()
                                                         marketplacePanel.initialSelection()
 
-                                                        pluginUpdatesService.calculateUpdates { updates ->
-                                                          val updateModels: List<PluginUiModel> = if (updates == null) {
-                                                            emptyList()
-                                                          }
-                                                          else {
-                                                            updates.filter { plugin -> pluginModelFacade.isEnabled(plugin) }
-                                                          }
+                                                        pluginUpdateSubscription = PluginUpdatesService.getInstance().subscribe { updates ->
+                                                          val updateModels: List<PluginUiModel> = updates.all.filter { plugin -> pluginModelFacade.isEnabled(plugin) }
                                                           setUpdateDescriptors(marketplacePanel, updateModels)
                                                           setUpdateDescriptors(searchPanel.panel, updateModels)
                                                           selectionListener.accept(marketplacePanel)
@@ -675,6 +670,7 @@ internal class MarketplacePluginsTab @RequiresEdt constructor(
   override fun dispose() {
     marketplacePanel.dispose()
     searchPanel.dispose()
+    pluginUpdateSubscription?.cancel()
     super.dispose()
   }
 

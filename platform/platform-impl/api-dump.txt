@@ -1294,9 +1294,6 @@ c:com.intellij.ide.plugins.newui.LinkComponent
 c:com.intellij.ide.plugins.newui.PluginSearchTextField
 - com.intellij.ui.SearchTextField
 - <init>():V
-c:com.intellij.ide.plugins.newui.PluginUpdatesService
-- s:isNeedUpdate(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
-- recalculateUpdates():V
 f:com.intellij.ide.plugins.newui.TagComponent
 - com.intellij.ide.plugins.newui.LinkComponent
 - <init>(java.lang.String):V

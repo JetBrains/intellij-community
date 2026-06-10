@@ -4,18 +4,16 @@ package com.intellij.openapi.updateSettings.impl;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginStateListener;
-import com.intellij.ide.plugins.PluginStateManager;
+import com.intellij.ide.plugins.newui.PluginUpdatesService;
 import com.intellij.ide.plugins.newui.PluginModelAsyncOperationsExecutor;
 import com.intellij.ide.plugins.newui.PluginUiModel;
-import com.intellij.ide.plugins.newui.PluginUpdatesService;
+import com.intellij.ide.plugins.newui.PluginUpdateSubscription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -24,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Pair;
+import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -51,11 +50,11 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   private static @Nullable List<String> myIncompatiblePluginNames;
 
   private static @Nullable Set<String> myAlreadyShownPluginUpdates;
-  private static @Nullable Collection<PluginDownloader> myUpdatesForPlugins;
+  private static @Nullable Collection<PluginUiModel> myUpdatesForPlugins;
   private static @Nullable Collection<PluginUiModel> myCustomRepositoryPlugins;
+  private static @Nullable Collection<PluginDownloader> myLocalUpdatesForPlugins;
 
-  private static PluginUpdatesService myUpdatesService;
-  private static PluginStateListener myPluginStateListener;
+  private static PluginUpdateSubscription myPluginUpdatesSubscription;
 
   private static boolean myEnableUpdateAction = true;
 
@@ -108,9 +107,9 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
   }
 
   private static void initPluginsListeners() {
-    if (myUpdatesService == null) {
-      myUpdatesService = PluginUpdatesService.connectWithUpdates(updateResult -> {
-        if (updateResult.isEmpty()) {
+    if (myPluginUpdatesSubscription == null) {
+      myPluginUpdatesSubscription = PluginUpdatesService.getInstance().subscribe(updateResult -> {
+        if (updateResult.getEnabledUpdates().isEmpty()) {
           newUpdatesForPlugins(null);
           myCustomRepositoryPlugins = null;
           return;
@@ -118,34 +117,22 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         if (!UpdateSettings.getInstance().isPluginsCheckNeeded()) {
           return;
         }
-        newUpdatesForPlugins(updateResult.getPluginUpdates().getAll());
-        myCustomRepositoryPlugins = updateResult.getPluginNods();
-      });
-    }
-    if (myPluginStateListener == null) {
-      PluginStateManager.addStateListener(myPluginStateListener = new PluginStateListener() {
-        @Override
-        public void install(@NotNull IdeaPluginDescriptor descriptor) {
-          removePluginsUpdate(List.of(descriptor));
-        }
-
-        @Override
-        public void uninstall(@NotNull IdeaPluginDescriptor descriptor) {
-          install(descriptor);
-        }
+        newUpdatesForPlugins(new ArrayList<>(updateResult.getEnabledUpdates()));
+        myCustomRepositoryPlugins = new ArrayList<>(updateResult.getPluginNods());
       });
     }
   }
 
   private static void clearUpdatesInfo() {
     setPlatformUpdateInfo(null);
-    newPlatformUpdate(null, null, (String)null);
+    newPlatformUpdate(null, null, (String)null, null);
     updateState();
   }
 
   public static void newPlatformUpdate(@NotNull PlatformUpdates.Loaded platformUpdateInfo,
-                                       @NotNull List<PluginDownloader> updatesForPlugins,
-                                       @NotNull List<String> incompatiblePluginNames) {
+                                       @NotNull List<PluginUiModel> updatesForPlugins,
+                                       @NotNull List<String> incompatiblePluginNames,
+                                       @NotNull List<PluginDownloader> localUpdatesForPlugins) {
     UpdateSettings settings = UpdateSettings.getInstance();
     if (settings.isCheckNeeded()) {
       setPlatformUpdateInfo(platformUpdateInfo);
@@ -154,10 +141,10 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
       setPlatformUpdateInfo(null);
     }
     if (settings.isPluginsCheckNeeded()) {
-      newPlatformUpdate(updatesForPlugins, incompatiblePluginNames, null);
+      newPlatformUpdate(updatesForPlugins, incompatiblePluginNames, null, localUpdatesForPlugins);
     }
     else {
-      newPlatformUpdate(null, null, (String)null);
+      newPlatformUpdate(null, null, (String)null, null);
     }
     updateState();
   }
@@ -180,15 +167,17 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     }
   }
 
-  private static void newPlatformUpdate(@Nullable List<PluginDownloader> updatesForPlugins,
+  private static void newPlatformUpdate(@Nullable List<PluginUiModel> updatesForPlugins,
                                         @Nullable List<String> incompatiblePluginNames,
-                                        @Nullable String nextRunPlatformUpdateVersion) {
+                                        @Nullable String nextRunPlatformUpdateVersion,
+                                        @Nullable List<PluginDownloader> localUpdatesForPlugins) {
     myUpdatesForPlugins = updatesForPlugins;
     myIncompatiblePluginNames = incompatiblePluginNames;
     myNextRunPlatformUpdateVersion = nextRunPlatformUpdateVersion;
+    myLocalUpdatesForPlugins = localUpdatesForPlugins;
   }
 
-  public static void newPluginUpdates(@NotNull Collection<PluginDownloader> updatesForPlugins,
+  public static void newPluginUpdates(@NotNull Collection<PluginUiModel> updatesForPlugins,
                                       @NotNull Collection<PluginUiModel> customRepositoryPlugins) {
     if (UpdateSettings.getInstance().isPluginsCheckNeeded()) {
       myUpdatesForPlugins = updatesForPlugins;
@@ -201,24 +190,24 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     updateState();
   }
 
-  public static @Nullable Collection<PluginDownloader> getPendingUpdates() {
+  public static @Nullable Collection<PluginUiModel> getPendingUpdates() {
     return myUpdatesForPlugins;
   }
 
-  private static void newUpdatesForPlugins(@Nullable Collection<PluginDownloader> updatesForPlugins) {
+  private static void newUpdatesForPlugins(@Nullable Collection<PluginUiModel> updatesForPlugins) {
     myUpdatesForPlugins = ContainerUtil.isEmpty(updatesForPlugins) ? null : updatesForPlugins;
     updateState();
   }
 
   static void removePluginsUpdate(@NotNull List<? extends IdeaPluginDescriptor> descriptors) {
     if (myAlreadyShownPluginUpdates != null) {
-      myAlreadyShownPluginUpdates.removeIf(name -> descriptors.stream().anyMatch(descriptor -> name.equals(descriptor.getName())));
+      myAlreadyShownPluginUpdates.removeIf(name -> ContainerUtil.exists(descriptors, descriptor -> name.equals(descriptor.getName())));
     }
     if (myUpdatesForPlugins != null) {
       Set<PluginId> pluginIds = ContainerUtil.map2Set(descriptors,
                                                       IdeaPluginDescriptor::getPluginId);
-      List<PluginDownloader> updatesForPlugins = ContainerUtil.filter(myUpdatesForPlugins,
-                                                                      downloader -> !pluginIds.contains(downloader.getId()));
+      List<PluginUiModel> updatesForPlugins = ContainerUtil.filter(myUpdatesForPlugins,
+                                                                      downloader -> !pluginIds.contains(downloader.getPluginId()));
       if (myUpdatesForPlugins.size() != updatesForPlugins.size()) {
         newUpdatesForPlugins(updatesForPlugins);
       }
@@ -227,7 +216,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
   private static boolean isAlreadyShownPluginUpdates() {
     return myUpdatesForPlugins == null || ContainerUtil.isEmpty(myAlreadyShownPluginUpdates) ||
-           myUpdatesForPlugins.stream().anyMatch(plugin -> !myAlreadyShownPluginUpdates.contains(plugin.getPluginName()));
+           ContainerUtil.exists(myUpdatesForPlugins, plugin -> !myAlreadyShownPluginUpdates.contains(plugin.getName()));
   }
 
   private static void updateAlreadyShownPluginUpdates() {
@@ -235,7 +224,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
       if (myAlreadyShownPluginUpdates == null) {
         myAlreadyShownPluginUpdates = new HashSet<>();
       }
-      myUpdatesForPlugins.forEach(plugin -> myAlreadyShownPluginUpdates.add(plugin.getPluginName()));
+      myUpdatesForPlugins.forEach(plugin -> myAlreadyShownPluginUpdates.add(plugin.getName()));
     }
   }
 
@@ -252,35 +241,35 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           Project project = e.getProject();
-          Pair<PlatformUpdates, InternalPluginResults> result = ProgressManager.getInstance()
+          Pair<PlatformUpdates, PluginUpdatesModel> result = ProgressManager.getInstance()
             .run(new Task.WithResult<>(project,
                                        IdeBundle.message("find.ide.update.title"),
                                        true) {
 
               @Override
-              protected @NotNull Pair<@NotNull PlatformUpdates, @Nullable InternalPluginResults> compute(@NotNull ProgressIndicator indicator) {
+              protected @NotNull Pair<@NotNull PlatformUpdates, @Nullable PluginUpdatesModel> compute(@NotNull ProgressIndicator indicator) {
                 PlatformUpdates platformUpdates = UpdateChecker.getPlatformUpdates(UpdateSettings.getInstance(), indicator);
-                InternalPluginResults pluginResults = platformUpdates instanceof PlatformUpdates.Loaded ?
+                PluginUpdatesModel pluginResults = platformUpdates instanceof PlatformUpdates.Loaded ?
                                                       getInternalPluginUpdates((PlatformUpdates.Loaded)platformUpdates, indicator) :
                                                       null;
                 return Pair.create(platformUpdates, pluginResults);
               }
 
-              private static @NotNull InternalPluginResults getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
+              private static PluginUpdatesModel getInternalPluginUpdates(@NotNull PlatformUpdates.Loaded loadedResult,
                                                                                      @NotNull ProgressIndicator indicator) {
-                return UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates(
-                  indicator, loadedResult.getNewBuild().getApiVersion()
-                );
+                return PluginUpdateHandler.loadAndStorePluginUpdates(loadedResult.getNewBuild().getApiVersion().asString(),
+                                                                     indicator);
               }
             });
 
           PlatformUpdates platformUpdateInfo = result.getFirst();
-          InternalPluginResults pluginResults = result.getSecond();
-          if (platformUpdateInfo instanceof PlatformUpdates.Loaded && pluginResults != null) {
+          PluginUpdatesModel pluginUpdatesModel = result.getSecond();
+          if (platformUpdateInfo instanceof PlatformUpdates.Loaded && pluginUpdatesModel != null) {
             setPlatformUpdateInfo((PlatformUpdates.Loaded)platformUpdateInfo);
-            newPlatformUpdate(pluginResults.getPluginUpdates().getAllEnabled().stream().toList(),
-                              ContainerUtil.map(pluginResults.getPluginUpdates().getIncompatible(), PluginDescriptor::getName),
-                              null);
+            newPlatformUpdate(new ArrayList<>(pluginUpdatesModel.getPluginUpdates()),
+                              pluginUpdatesModel.getIncompatiblePluginNames(),
+                              null,
+                              pluginUpdatesModel.getDownloaders());
             super.actionPerformed(e);
           }
           else {
@@ -304,12 +293,12 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
       actions.add(new IdeUpdateAction(myPlatformUpdateInfo.getNewBuild().getVersion()));
     }
     // todo[AL/RS] separate action for plugins compatible with both old and new builds
-    else if (myUpdatesForPlugins != null && !myUpdatesForPlugins.isEmpty()) {
+    else if (myUpdatesForPlugins != null && !myUpdatesForPlugins.isEmpty() && !IdeProductMode.isBackend()) {
       int size = myUpdatesForPlugins.size();
 
       actions.add(new UpdateAction(size == 1
                                    ? IdeBundle.message("settings.entry.point.update.plugin.action",
-                                                       myUpdatesForPlugins.iterator().next().getPluginName())
+                                                       myUpdatesForPlugins.iterator().next().getName())
                                    : IdeBundle.message("settings.entry.point.update.plugins.action", size)) {
         @Override
         public boolean isPluginUpdate() {
@@ -338,13 +327,11 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          Collection<PluginDownloader> updatesForPlugins = myUpdatesForPlugins;
-          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(updatesForPlugins, plugins -> {
-            List<@Nullable PluginUiModel> updateModels = ContainerUtil.map(updatesForPlugins, it -> it.getUiModel());
-            var dialog = new PluginUpdateDialog(e.getProject(), updateModels, myCustomRepositoryPlugins, plugins);
+          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(ContainerUtil.map(myUpdatesForPlugins, PluginUiModel::getPluginId), installedPlugins -> {
+            var dialog = new PluginUpdateDialog(e.getProject(), myUpdatesForPlugins, myCustomRepositoryPlugins, installedPlugins);
             dialog.setFinishCallback(() -> setEnableUpdateAction(true));
             setEnableUpdateAction(false);
-            if (!PluginUpdateDialog.showDialogAndUpdate(updatesForPlugins, dialog)) {
+            if (!PluginUpdateDialog.showDialogAndUpdate(dialog)) {
               setEnableUpdateAction(true);
             }
             return Unit.INSTANCE;
@@ -380,7 +367,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       PlatformUpdateDialog dialog = new PlatformUpdateDialog(e.getProject(), Objects.requireNonNull(myPlatformUpdateInfo),
-                                                             true, myUpdatesForPlugins, myIncompatiblePluginNames);
+                                                             true, myLocalUpdatesForPlugins, myIncompatiblePluginNames);
       if (dialog.showAndGet()) {
         clearUpdatesInfo();
       }

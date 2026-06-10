@@ -119,10 +119,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
     return InstalledPluginsState.getInstance().installedPlugins.map { PluginUiModelAdapter(it) }.withSource()
   }
 
-  override suspend fun getUpdates(): List<PluginUiModel> {
-    return PluginUpdatesService.getUpdates()?.map { PluginUiModelAdapter(it) }?.withSource() ?: emptyList()
-  }
-
   override suspend fun getPlugin(id: PluginId): PluginUiModel? {
     return PluginManagerCore.getPlugin(id)?.let { PluginUiModelAdapter(it) }?.withSource()
   }
@@ -133,11 +129,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
 
   override suspend fun isPluginInstalled(pluginId: PluginId): Boolean {
     return PluginManagerCore.isPluginInstalled(pluginId)
-  }
-
-  override suspend fun isNeedUpdate(pluginId: PluginId): Boolean {
-    val descriptor = PluginManagerCore.getPlugin(pluginId) ?: return false
-    return PluginUpdatesService.isNeedUpdate(descriptor)
   }
 
   override suspend fun isBundledUpdate(pluginIds: List<PluginId>): Boolean {
@@ -499,22 +490,6 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
       .filter { it.pluginVersion != null }
       .map { it.uiModel }
       .firstOrNull()
-  }
-
-  override fun connectToPluginUpdateService(sessionId: String, callback: (List<PluginUiModel>) -> Unit): PluginUpdatesService {
-    val session = createSession(sessionId)
-    if (session.updateService != null) {
-      val service = session.updateService!!
-      service.calculateUpdates({ updates -> callback(updates as List<PluginUiModel>) })
-      return service
-    } else {
-      val service = PluginUpdatesService.connectWithUpdates({ results ->
-                                                              callback(results.pluginUpdates.all.map { it.uiModel })
-                                                            })
-      service.setFilter { session.isPluginEnabled(it.pluginId) }
-      session.updateService = service
-      return service
-    }
   }
 
   override fun getAllPluginsTags(): Set<String> {
