@@ -10,8 +10,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.wm.impl.LinuxUiUtil.isGnomeScreenReaderSettingEnabled
-import com.intellij.openapi.wm.impl.LinuxUiUtil.isOrcaProcessRunning
 import com.intellij.ui.User32Ex
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.Foundation.NSAutoreleasePool
@@ -31,8 +29,14 @@ object AccessibilityUtils {
   val GROUPED_ELEMENTS: AccessibleRole = if (OS.CURRENT == OS.macOS) AccessibleRole.AWT_COMPONENT else AccessibleRole.PANEL
 }
 
+@OptIn(LowLevelLocalMachineAccess::class)
 @ApiStatus.Internal
 suspend fun enableScreenReaderSupportIfNecessary() {
+  if (OS.CURRENT == OS.Linux) {
+    LinuxAccessibilitySupport.enableLinuxAtkWrapper()
+    return
+  }
+
   if (isSupportScreenReadersOverridden()) {
     AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED_VM)
     return
@@ -58,18 +62,18 @@ suspend fun enableScreenReaderSupportIfNecessary() {
   }
   if (answer) {
     AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED)
-    enable = true
+    enableScreenReaderSupport = true
   }
 }
 
 @Volatile
-private var enable = false
+private var enableScreenReaderSupport = false
 
 @OptIn(LowLevelLocalMachineAccess::class)
 private fun isScreenReaderDetected(): Boolean = when (OS.CURRENT) {
   OS.Windows -> JnaLoader.isLoaded() && isWindowsScreenReaderEnabled()
   OS.macOS -> JnaLoader.isLoaded() && isMacVoiceOverEnabled()
-  OS.Linux -> JnaLoader.isLoaded() && isLinuxScreenReaderEnabled()
+  OS.Linux -> JnaLoader.isLoaded() && LinuxAccessibilitySupport.isLinuxScreenReaderEnabled()
   else -> false
 }
 
@@ -106,13 +110,10 @@ private fun isWindowsScreenReaderEnabled(): Boolean {
   return retValue && isActive.value.booleanValue()
 }
 
-private fun isLinuxScreenReaderEnabled(): Boolean {
-  return isGnomeScreenReaderSettingEnabled() || isOrcaProcessRunning()
-}
-
+@OptIn(LowLevelLocalMachineAccess::class)
 @ApiStatus.Internal
 suspend fun enableScreenReaderSupportIfNeeded() {
-  if (enable) {
+  if (OS.CURRENT != OS.Linux && enableScreenReaderSupport) {
     serviceAsync<GeneralSettings>().isSupportScreenReaders = true
   }
 }
