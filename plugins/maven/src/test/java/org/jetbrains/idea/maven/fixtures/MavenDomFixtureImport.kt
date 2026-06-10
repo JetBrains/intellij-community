@@ -4,6 +4,9 @@ package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -11,13 +14,17 @@ import com.intellij.platform.backend.observation.Observation
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import junit.framework.TestCase.assertFalse
+import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.jetbrains.idea.maven.utils.MavenUtil
 
 // Project import / sync orchestration.
 
@@ -128,4 +135,35 @@ fun MavenImportingTestFixture.initProjectsManager(enableEventHandling: Boolean) 
   if (enableEventHandling) {
     projectsManager.enableAutoImportInTests()
   }
+}
+
+// Auto-reload (external-system project tracker) assertions, mirroring MavenImportingTestCase. The legacy
+// assertAutoReloadIsEnabled() guard is omitted: the fixture does not track that flag; tests enable auto-reload via
+// projectsManager.enableAutoImportInTests() (see initProjectsManager).
+
+private val MavenImportingTestFixture.projectWithMavenNotificationExists: Boolean
+  get() = AutoImportProjectNotificationAware.getInstance(project).getProjectsWithNotification().any { it.systemId == MavenUtil.SYSTEM_ID }
+
+suspend fun MavenImportingTestFixture.assertHasPendingProjectForReload() {
+  awaitConfiguration()
+  assertTrue("Expected notification about pending projects for auto-reload",
+             AutoImportProjectNotificationAware.getInstance(project).isNotificationVisible())
+  assertTrue(projectWithMavenNotificationExists)
+}
+
+suspend fun MavenImportingTestFixture.assertNoPendingProjectForReload() {
+  awaitConfiguration()
+  assertFalse(projectWithMavenNotificationExists)
+}
+
+@RequiresBackgroundThread
+suspend fun MavenImportingTestFixture.scheduleProjectImportAndWait() {
+  // otherwise all imports will be skipped
+  assertHasPendingProjectForReload()
+  withContext(Dispatchers.EDT) {
+    AutoImportProjectTracker.getInstance(project).scheduleProjectRefresh()
+  }
+  awaitConfiguration()
+  // otherwise project settings was modified while importing
+  assertNoPendingProjectForReload()
 }
