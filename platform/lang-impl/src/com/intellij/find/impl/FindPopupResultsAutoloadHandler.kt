@@ -453,11 +453,14 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
           }
         }, modality)
       }
-      FindUsagesCollector.recordSearchFinished(
-        System.currentTimeMillis() - startTime.get(),
-        resultsCount.get(),
-        ShowUsagesAction.getUsagesPageSize(),
-      )
+      if (!loadMore) {
+        // Report search finished only for the initial request
+        FindUsagesCollector.recordSearchFinished(
+          System.currentTimeMillis() - startTime.get(),
+          resultsCount.get(),
+          maxUsages,
+        )
+      }
       onStop(hash)
 
       if (FindKey.isEnabled) {
