@@ -1,13 +1,11 @@
-// "Surround call with 'with'" "true"
+// "Surround call with 'with(i)'" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
 // API_VERSION: 2.1
-
-// DISABLE_K2_ERRORS
-// QuickFix produces red code with caret position to fill missing argument
+// K2_ERROR: No context argument for 'i: Int' found.
 context(i: Int) fun bar(x: Int, y: String): String = ""
 
-fun foo() {
-    with(<caret>) { bar(42, "hello") }
+fun foo(i: Int) {
+    with(i) { bar(42, "hello") }
 }
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SurroundCallWithContextFix

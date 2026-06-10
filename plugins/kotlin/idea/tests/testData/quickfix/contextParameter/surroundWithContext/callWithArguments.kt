@@ -1,11 +1,9 @@
-// "Surround call with 'context'" "true"
+// "Surround call with 'context(i)'" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
-
-// DISABLE_K2_ERRORS
-// QuickFix produces red code with caret position to fill missing argument
+// K2_ERROR: No context argument for 'i: Int' found.
 context(i: Int) fun bar(x: Int, y: String): String = ""
 
-fun foo() {
+fun foo(i: Int) {
     <caret>bar(42, "hello")
 }
 

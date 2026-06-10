@@ -1,14 +1,14 @@
 // "Surround call with 'with'" "false"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
 // API_VERSION: 2.1
-// K2_ERROR: No context argument for 's: String' found.
-// K2_AFTER_ERROR: No context argument for 's: String' found.
-context(i: Int, s: String) fun bar() {}
+// K2_ERROR: No context argument for 'l: MyLogger' found.
+// K2_AFTER_ERROR: No context argument for 'l: MyLogger' found.
+interface MyLogger { fun log(msg: String) }
+
+context(l: MyLogger) fun bar() {}
 
 fun foo() {
-    with(1) {
-        <caret>bar()
-    }
+    <caret>bar()
 }
 
 // FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.SurroundCallWithContextFix

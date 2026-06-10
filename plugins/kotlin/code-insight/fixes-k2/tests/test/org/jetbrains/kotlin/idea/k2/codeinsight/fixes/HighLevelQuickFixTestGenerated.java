@@ -3695,6 +3695,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/surroundWithContext/lambda.kt");
             }
 
+            @TestMetadata("noCandidateInScope.kt")
+            public void testNoCandidateInScope() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/surroundWithContext/noCandidateInScope.kt");
+            }
+
             @TestMetadata("overrideFunction.kt")
             public void testOverrideFunction() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/surroundWithContext/overrideFunction.kt");
@@ -3736,6 +3741,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             @TestMetadata("lambda.kt")
             public void testLambda() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/surroundWithWith/lambda.kt");
+            }
+
+            @TestMetadata("noCandidateInScope.kt")
+            public void testNoCandidateInScope() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/surroundWithWith/noCandidateInScope.kt");
             }
 
             @TestMetadata("overrideFunction.kt")

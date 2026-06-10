@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 internal class AddContextParameterToExistingContextFix(
@@ -22,7 +23,9 @@ internal class AddContextParameterToExistingContextFix(
         val psiFactory = KtPsiFactory(context.project)
         val argList = element.valueArgumentList ?: return
         val rightParen = argList.rightParenthesis ?: return
-        if (argList.arguments.any { it.text == candidateName }) return
+        if (argList.arguments.any {
+                (it.getArgumentExpression() as? KtNameReferenceExpression)?.getReferencedName() == candidateName
+            }) return
 
         val hasTrailingComma = PsiTreeUtil.skipWhitespacesAndCommentsBackward(rightParen)
             ?.node?.elementType == KtTokens.COMMA
