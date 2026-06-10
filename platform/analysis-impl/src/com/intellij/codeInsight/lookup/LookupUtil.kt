@@ -62,7 +62,9 @@ object LookupUtil {
 
   @JvmStatic
   fun getCaseCorrectedLookupString(item: LookupElement, prefixMatcher: PrefixMatcher, prefix: String): String {
-    val lookupString = item.lookupString
+    @Suppress("DEPRECATION")
+    val lookupString = (item as? LookupElementWithOverriddenLookupString)?.getOverriddenLookupString() ?: item.lookupString
+
     if (item.isCaseSensitive) {
       return lookupString
     }
