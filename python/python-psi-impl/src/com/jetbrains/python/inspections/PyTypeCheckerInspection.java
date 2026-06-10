@@ -449,6 +449,16 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
+    public void visitPyStarArgument(@NotNull PyStarArgument node) {
+      if (node.isKeyword()) {
+        checkUnpackMappingValue(node.getExpression());
+      }
+      else {
+        checkUnpackIterableValue(node.getExpression());
+      }
+    }
+
+    @Override
     public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
       checkClassAttributeAccess(node);
       final PyExpression assignedValue = node.findAssignedValue();
@@ -828,6 +838,14 @@ public class PyTypeCheckerInspection extends PyInspection {
     private boolean checkUnpackIterableValue(@Nullable PyExpression iteratedValue) {
       if (iteratedValue == null) return false;
       if (iteratedValue instanceof PyStarExpression starExpression) iteratedValue = starExpression.getExpression();
+      // A generic-class subscription like `*A[int]` is always iterable at runtime:
+      // `types.GenericAlias.__iter__` yields the subscript args.
+      if (iteratedValue instanceof PySubscriptionExpression subscription) {
+        final var operand = subscription.getOperand();
+        if (myTypeEvalContext.getType(operand) instanceof PyClassLikeType classLikeType && classLikeType.isDefinition()) {
+          return false;
+        }
+      }
       final PyType type = myTypeEvalContext.getType(iteratedValue);
       if (type != null &&
           !PyTypeChecker.isUnknown(type, myTypeEvalContext) &&

@@ -5858,6 +5858,16 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
         """);
   }
 
+  public void testStarOperatorTypeMismatchNoFalsePositive() {
+    doTestByText(
+      """
+        def f(*args, **kwargs): pass
+        
+        f(*(1, 2, 3))
+        f(**{"a": 1})
+        """);
+  }
+
   @TestFor(issues = "PY-12592")
   public void testStarUnpackInTypeContext() {
     doTestByText(

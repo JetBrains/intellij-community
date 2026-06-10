@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.PyNames;
@@ -34,12 +33,10 @@ import com.jetbrains.python.psi.PyStarArgument;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyABCUtil;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -159,7 +156,6 @@ public final class PyArgumentListInspection extends PyInspection {
         highlightIncorrectArguments(node, holder, mappings, context, highlightOverride);
       }
     }
-    highlightStarArgumentTypeMismatch(node, holder, context, null); // NOT covered by Pyrefly
   }
 
   private static void checkKnownSizeTupleSpreadInCall(@NotNull PyStarArgument node,
@@ -268,34 +264,6 @@ public final class PyArgumentListInspection extends PyInspection {
     }
 
     return false;
-  }
-
-  private static void highlightStarArgumentTypeMismatch(PyArgumentList node, ProblemsHolder holder, TypeEvalContext context,
-                                                        @Nullable ProblemHighlightType highlightOverride) {
-    for (PyExpression arg : node.getArguments()) {
-      if (!(arg instanceof PyStarArgument starArgument)) {
-        continue;
-      }
-      PyExpression content = PyUtil.peelArgument(PsiTreeUtil.findChildOfType(arg, PyExpression.class));
-      if (content == null) {
-        continue;
-      }
-      PyType argType = context.getType(content);
-      if (argType != null && !PyTypeChecker.isUnknown(argType, context)) {
-        if (starArgument.isKeyword()) {
-          if (!PyABCUtil.isSubtype(argType, PyNames.MAPPING, context)) {
-            // TODO: check that the key type is compatible with `str`
-            registerProblem(holder, arg, PyPsiBundle.message("INSP.expected.dict.got.type", argType.getName()), highlightOverride);
-          }
-        }
-        else {
-          // *
-          if (!PyABCUtil.isSubtype(argType, PyNames.ITERABLE, context)) {
-            registerProblem(holder, arg, PyPsiBundle.message("INSP.expected.iterable.got.type", argType.getName()), highlightOverride);
-          }
-        }
-      }
-    }
   }
 
   private static Set<String> getDuplicateKeywordArguments(@NotNull PyArgumentList node) {
