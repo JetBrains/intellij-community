@@ -1539,7 +1539,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-80837
-  public void testEnumAttributeDefaultValueType() {
+  public void testInitEnumMember() {
     doTestByText("""
                    from enum import Enum, IntEnum, StrEnum
                    
@@ -1556,6 +1556,23 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                        OK = "a"
                        BAD = <warning descr="Expected type 'str', got 'int' instead">1</warning>
                    """);
+  }
+
+  @TestFor(issues = "PY-90192")
+  public void testInitEnumMemberCustomNew() {
+    fixme("PY-90192", AssertionError.class, "Expected type 'int', got 'str' instead", () ->
+    doTestByText("""
+                   from enum import Enum
+                   
+                   class A:
+                       def __new__(cls, x: int, y: int):
+                           return object.__new__(cls)
+                   
+                   class MyEnum(A, Enum):
+                       OK = 1, 2
+                       BAD = 1, <warning descr="Expected type 'int', got 'str' instead">"abb"</warning>
+                   """)
+    );
   }
 
   @TestFor(issues = "PY-87997")
