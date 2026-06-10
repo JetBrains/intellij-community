@@ -2,6 +2,7 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.ui.UISettings;
@@ -124,6 +125,8 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import static com.intellij.openapi.options.newEditor.SettingsTreeViewNewBadgeKt.newBadgeIcon;
 
 @ApiStatus.Internal
 public class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
@@ -595,6 +598,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     private final int myLevel;
     private ConfigurableTreeRenderer myRenderer;
     private boolean myPrepareRenderer = true;
+    private Boolean myHasNewOptions;
 
     private MyNode(CachingSimpleNode parent, @NotNull Configurable configurable, int level) {
       super(prepareProject(parent, configurable), parent);
@@ -655,6 +659,13 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     public boolean isAlwaysLeaf() {
       return myComposite == null;
     }
+
+    private boolean hasNewOptions() {
+      if (myHasNewOptions == null) {
+        myHasNewOptions = SettingsTreeView.hasNewOptions(myConfigurable);
+      }
+      return myHasNewOptions;
+    }
   }
 
   private final class MyRenderer extends CellRendererPanel implements TreeCellRenderer, UiInspectorTreeRendererContextProvider {
@@ -662,6 +673,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     final JLabel myNodeIcon = new JLabel();
     final JLabel myProjectIcon = new JLabel();
     Pair<Component, ConfigurableTreeRenderer.Layout> myRenderInfo;
+    @NlsContexts.Label String myAccessibleBadgeText;
 
     MyRenderer() {
       setLayout(new BorderLayout(JBUIScale.scale(ICON_GAP - 1), 0));
@@ -687,7 +699,8 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     private final class MyAccessibleContext extends JPanel.AccessibleJPanel {
       @Override
       public String getAccessibleName() {
-        return myTextLabel.getCharSequence(true).toString();
+        @NlsContexts.Label String text = myTextLabel.getCharSequence(true).toString();
+        return myAccessibleBadgeText == null ? text : text + " " + myAccessibleBadgeText;
       }
 
       @Override
@@ -706,6 +719,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
                                                   boolean focused) {
       myTextLabel.clear();
       myTextLabel.setIconOnTheRight(false);
+      myAccessibleBadgeText = null;
       setPreferredSize(null);
 
       MyNode node = extractNode(value);
@@ -745,16 +759,18 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       }
 
       if (isBeta(configurable)) {
-        myTextLabel.setIconOnTheRight(true);
-        myTextLabel.setIconTextGap(JBUIScale.scale(8));
-        myTextLabel.setIcon(Badge.beta);
+        setRightIcon(Badge.beta);
+        myAccessibleBadgeText = IdeBundle.message("badge.text.beta");
       }
 
       Configurable.Promo promo = asPromo(configurable);
       if (promo != null) {
-        myTextLabel.setIconOnTheRight(true);
-        myTextLabel.setIconTextGap(JBUIScale.scale(8));
-        myTextLabel.setIcon(promo.getPromoIcon());
+        setRightIcon(promo.getPromoIcon());
+      }
+
+      if (node != null && node.hasNewOptions() && (leaf || !expanded)) {
+        setRightIcon(newBadgeIcon);
+        myAccessibleBadgeText = IdeBundle.message("badge.text.new");
       }
 
       if (node != null && UISettings.getInstance().getShowInplaceCommentsInternal()) {
@@ -797,6 +813,12 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
       }
 
       return this;
+    }
+
+    private void setRightIcon(@NotNull Icon icon) {
+      myTextLabel.setIconOnTheRight(true);
+      myTextLabel.setIconTextGap(JBUIScale.scale(8));
+      myTextLabel.setIcon(icon);
     }
 
     private void prepareRenderer(boolean visible, MyNode node, @Nullable UnnamedConfigurable configurable, boolean selected) {
@@ -887,6 +909,25 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     }
 
     return null;
+  }
+
+  private static boolean hasNewOptions(@NotNull Configurable configurable) {
+    if (isNewOptions(configurable)) {
+      return true;
+    }
+    if (configurable instanceof Configurable.Composite composite) {
+      for (Configurable child : composite.getConfigurables()) {
+        if (hasNewOptions(child)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isNewOptions(Configurable configurable) {
+    return configurable instanceof Configurable.NewOptions ||
+           (configurable instanceof ConfigurableWrapper w && w.getConfigurable() instanceof Configurable.NewOptions);
   }
 
   @SuppressWarnings("unused")
