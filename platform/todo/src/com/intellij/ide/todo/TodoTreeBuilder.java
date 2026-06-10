@@ -120,7 +120,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   private StructureTreeModel<? extends TodoTreeStructure> myModel;
   private boolean myDisposed;
 
-  private final TodoTreeBuilderCoroutineHelper myCoroutineHelper = new TodoTreeBuilderCoroutineHelper(this);
+  private final TodoTreeBuilderCoroutineHelper myCoroutineHelper;
 
   /**
    * To be used in {@link #rebuildCache()} only!
@@ -131,6 +131,7 @@ public abstract class TodoTreeBuilder implements Disposable {
                   @NotNull Project project) {
     myTree = tree;
     myProject = project;
+    myCoroutineHelper = new TodoTreeBuilderCoroutineHelper(this);
 
     Disposer.register(myProject, this);
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
@@ -483,6 +484,7 @@ public abstract class TodoTreeBuilder implements Disposable {
   @ApiStatus.Internal
   public void clearRemoteTodosCache(@NotNull VirtualFile file) {
     remoteTodosCache.remove(file);
+    remoteTodoFilesCache.remove(file);
   }
 
   @ApiStatus.Internal
@@ -499,6 +501,20 @@ public abstract class TodoTreeBuilder implements Disposable {
   public void cacheRemoteTodoFile(@NotNull VirtualFile file, @NotNull TodoFileResult result) {
     remoteTodoFilesCache.put(file, result);
     remoteTodosCache.put(file, result.getTodos());
+  }
+
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public void addRemoteTodoFileToTree(@NotNull VirtualFile file) {
+    myFileTree.add(file);
+  }
+
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public void removeRemoteTodoFileFromTree(@NotNull VirtualFile file) {
+    myFileTree.removeFile(file);
+    clearRemoteTodosCache(file);
+    myFile2Highlighter.remove(file);
   }
 
   /**

@@ -3,9 +3,11 @@ package com.intellij.ide.todo
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.ide.todo.rpc.TodoFileEventType
 import com.intellij.ide.todo.rpc.TodoQuerySettings
 import com.intellij.ide.todo.rpc.TodoRemoteApi
 import com.intellij.ide.todo.rpc.TodoResult
+import com.intellij.ide.todo.rpc.collectWatchedTodoFiles
 import com.intellij.ide.todo.rpc.fileMatchesFilter
 import com.intellij.ide.todo.rpc.getFilesWithTodos
 import com.intellij.ide.todo.rpc.toConfig
@@ -16,6 +18,8 @@ import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
+import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContextToIndicator
@@ -39,6 +43,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
@@ -49,15 +54,130 @@ private val ASYNC_BATCH_SIZE by lazy { RegistryManager.getInstance().get("ide.tr
 private val LOG = logger<TodoTreeBuilderCoroutineHelper>()
 
 internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeBuilder) : Disposable {
-  private val scope = CoroutineScope(SupervisorJob())
+  private val parentScope = treeBuilder.project.service<TodoCoroutineScopeHolder>().coroutineScope
+  private val scope = CoroutineScope(parentScope.coroutineContext + SupervisorJob(parentScope.coroutineContext.job))
   private var remoteCacheRefreshJob: Job? = null
+  private var remoteTodoFilesWatchJob: Job? = null
 
   init {
     Disposer.register(treeBuilder, this)
   }
 
   override fun dispose() {
+    remoteCacheRefreshJob?.cancel()
+    remoteTodoFilesWatchJob?.cancel()
     scope.cancel()
+  }
+
+  fun scheduleRemoteTodoFilesWatch(vararg constraints: ReadConstraint): CompletableFuture<*> {
+    System.out.println("TODO watch frontend: scheduleRemoteTodoFilesWatch start, builder=${treeBuilder.javaClass.name}")
+    remoteTodoFilesWatchJob?.cancel()
+    val initialScanCompleted = CompletableFuture<Unit>()
+    remoteTodoFilesWatchJob = scope.launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
+      treeBuilder.onUpdateStarted()
+
+      try {
+        readAction {
+          System.out.println("TODO watch frontend: clear cache before watch")
+          treeBuilder.clearCache()
+        }
+
+        System.out.println("TODO watch frontend: subscribing to backend watch")
+        collectWatchedTodoFiles(treeBuilder.project, treeBuilder.todoTreeStructure.todoFilter) { event ->
+          System.out.println("TODO watch frontend: event type=${event.type}, fileId=${event.fileId}, hasFile=${event.file != null}")
+
+          when (event.type) {
+            TodoFileEventType.Updated -> {
+              val result = event.file
+              if (result == null) {
+                System.out.println("TODO watch frontend: Updated event has null file")
+                return@collectWatchedTodoFiles
+              }
+
+              val virtualFile = event.virtualFile
+              if (virtualFile == null) {
+                System.out.println("TODO watch frontend: Updated event has null resolved virtual file, fileId=${event.fileId}")
+                return@collectWatchedTodoFiles
+              }
+
+              System.out.println(
+                "TODO watch frontend: update file=${virtualFile.path}, todos=${result.todos.size}, name=${result.name}, url=${result.presentableUrl}"
+              )
+
+              readAction {
+                treeBuilder.cacheRemoteTodoFile(virtualFile, result)
+                treeBuilder.addRemoteTodoFileToTree(virtualFile)
+                System.out.println(
+                  "TODO watch frontend: cached and added file=${virtualFile.path}, cachedTodos=${treeBuilder.getCachedRemoteTodos(virtualFile).size}"
+                )
+              }
+
+              if (initialScanCompleted.isDone) {
+                readAction {
+                  System.out.println("TODO watch frontend: update after initial scan, invalidating tree")
+                  treeBuilder.validateCacheAndUpdateTree()
+                }
+              }
+            }
+
+            TodoFileEventType.Removed -> {
+              val virtualFile = event.fileId?.virtualFile()
+              if (virtualFile == null) {
+                System.out.println("TODO watch frontend: Removed event cannot resolve fileId=${event.fileId}")
+                return@collectWatchedTodoFiles
+              }
+
+              System.out.println("TODO watch frontend: remove file=${virtualFile.path}")
+
+              readAction {
+                treeBuilder.removeRemoteTodoFileFromTree(virtualFile)
+                treeBuilder.validateCacheAndUpdateTree()
+              }
+            }
+
+            TodoFileEventType.Reset -> {
+              System.out.println("TODO watch frontend: reset")
+
+              readAction {
+                treeBuilder.clearCache()
+                treeBuilder.validateCacheAndUpdateTree()
+              }
+            }
+
+            TodoFileEventType.InitialScanFinished -> {
+              System.out.println("TODO watch frontend: initial scan finished; invalidating tree")
+
+              readAction {
+                treeBuilder.validateCacheAndUpdateTree()
+              }
+              treeBuilder.onUpdateFinished()
+
+              initialScanCompleted.complete(Unit)
+            }
+          }
+        }
+      }
+      catch (e: CancellationException) {
+        System.out.println("TODO watch frontend: watcher cancelled")
+        if (!initialScanCompleted.isDone) {
+          initialScanCompleted.cancel(true)
+        }
+        treeBuilder.onUpdateFinished()
+        throw e
+      }
+      catch (e: Throwable) {
+        System.out.println("TODO watch frontend: watcher failed: ${e.message}")
+        e.printStackTrace()
+
+        if (!initialScanCompleted.isDone) {
+          initialScanCompleted.completeExceptionally(e)
+        }
+        treeBuilder.onUpdateFinished()
+        throw e
+      }
+    }
+
+    return initialScanCompleted
   }
 
   @RequiresBackgroundThread
@@ -74,6 +194,14 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
   }
 
   fun scheduleCacheAndTreeUpdate(vararg constraints: ReadConstraint): CompletableFuture<*> {
+    System.out.println("TODO watch frontend: scheduleCacheAndTreeUpdate builder=${treeBuilder.javaClass.name}, split=${shouldUseSplitTodo()}")
+
+    if (shouldUseSplitTodo() && treeBuilder is AllTodosTreeBuilder) {
+      System.out.println("TODO watch frontend: using watcher for Project tab")
+      return scheduleRemoteTodoFilesWatch(*constraints)
+    }
+
+    System.out.println("TODO watch frontend: using old cache update path")
     return scope.launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
       treeBuilder.onUpdateStarted()
       constrainedReadAction(*constraints) {
@@ -110,6 +238,10 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
   }
 
   fun scheduleMarkFilesAsDirtyAndUpdateTree(files: List<VirtualFile>) {
+    if (shouldUseSplitTodo() && treeBuilder is AllTodosTreeBuilder && remoteTodoFilesWatchJob?.isActive == true) {
+      return
+    }
+
     scope.launch(Dispatchers.Default + ClientId.current.asContextElement()) {
       readActionBlocking {
         files.asSequence()
