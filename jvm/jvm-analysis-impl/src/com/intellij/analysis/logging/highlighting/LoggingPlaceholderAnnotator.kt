@@ -16,6 +16,7 @@ import org.jetbrains.uast.toUElementOfType
 
 class LoggingPlaceholderAnnotator : Annotator {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+    if (holder.isBatchMode()) return
     val literalExpression = element.toUElementOfType<UInjectionHost>() ?: return
     val textRangeList = getRanges(literalExpression) ?: return
     val startOffset = element.textRange.startOffset
