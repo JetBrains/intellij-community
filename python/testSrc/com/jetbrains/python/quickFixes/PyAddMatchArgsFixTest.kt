@@ -4,9 +4,13 @@ package com.jetbrains.python.quickFixes
 import com.intellij.testFramework.TestDataPath
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyQuickFixTestCase
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.inspections.PyPatternInspection
 
 @TestDataPath("\$CONTENT_ROOT/../testData/quickFixes/PyAddMatchArgsFixTest")
+@Subsystems.QuickFixes
+@Layers.Functional
 class PyAddMatchArgsFixTest : PyQuickFixTestCase() {
   fun testAddMatchArgsBasic() {
     doQuickFixTest(PyPatternInspection::class.java, PyPsiBundle.message("QFIX.add.match.args.to.class", "Point"))

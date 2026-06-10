@@ -10,10 +10,14 @@ import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.executeSomeCoroutineTasksAndDispatchAllInvocationEvents
 import com.jetbrains.python.PyQuickFixTestCase
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.module.PySourceRootDetectionService
 
 @TestDataPath("\$CONTENT_ROOT/../testData/quickFixes/PyMarkDirectoryAsSourceRootQuickFixTest")
+@Subsystems.QuickFixes
+@Layers.Functional
 class PyMarkDirectoryAsSourceRootQuickFixTest: PyQuickFixTestCase() {
   @Throws(Exception::class)
   override fun setUp() {

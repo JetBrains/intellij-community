@@ -19,6 +19,8 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.inspections.PyCompatibilityInspection;
 import com.jetbrains.python.inspections.PyPep8NamingInspection;
@@ -33,6 +35,8 @@ import java.util.List;
 import java.util.Set;
 
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/RenameElementQuickFixTest/")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyRenameElementQuickFixTest extends PyQuickFixTestCase {
 
   // The value renamed element will have after quick fix rename

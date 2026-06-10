@@ -14,11 +14,15 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.Collection;
 
 
 @TestDataPath("$CONTENT_ROOT/../testData/refactoring/introduceVariable/")
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   public void testSimple() {
     doTest();

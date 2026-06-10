@@ -16,12 +16,16 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.inline.PyInlineLocalHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.Objects;
 
 /**
  * @author Dennis.Ushakov
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyInlineLocalTest extends PyTestCase {
   private void doTest() {
     doTest(null);

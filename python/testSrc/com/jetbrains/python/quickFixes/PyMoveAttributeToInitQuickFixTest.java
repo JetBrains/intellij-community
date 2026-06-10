@@ -19,6 +19,8 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyAttributeOutsideInitInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +29,8 @@ import java.util.Collection;
 import java.util.List;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyMoveAttributeToInitQuickFixTest")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyMoveAttributeToInitQuickFixTest extends PyQuickFixTestCase {
 
   public void testMoveToInit() {

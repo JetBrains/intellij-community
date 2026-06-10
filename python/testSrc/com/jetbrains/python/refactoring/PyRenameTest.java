@@ -15,12 +15,16 @@ import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyRenameTest extends PyTestCase {
   public static final String RENAME_DATA_PATH = "refactoring/rename/";
 

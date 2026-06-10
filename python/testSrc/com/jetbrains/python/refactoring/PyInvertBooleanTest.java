@@ -13,6 +13,8 @@ import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.ArrayUtilRt;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +23,8 @@ import java.util.List;
  * User : ktisha
  */
 @TestDataPath("$CONTENT_ROOT/../testData/refactoring/invertBoolean/")
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyInvertBooleanTest extends PyTestCase {
 
   public void testSimple() { doTest(); }

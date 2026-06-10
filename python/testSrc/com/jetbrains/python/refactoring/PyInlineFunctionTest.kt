@@ -11,10 +11,14 @@ import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import com.jetbrains.python.refactoring.inline.PyInlineFunctionHandler
 import com.jetbrains.python.refactoring.inline.PyInlineFunctionProcessor
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 
 /**
  * @author Aleksei.Kniazev
  */
+@Subsystems.Refactoring
+@Layers.Functional
 class PyInlineFunctionTest : PyTestCase() {
 
   override fun getTestDataPath(): String = super.getTestDataPath() + "/refactoring/inlineFunction"

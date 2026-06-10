@@ -18,10 +18,14 @@ package com.jetbrains.python.quickFixes;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyReturnFromInitInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 
 @TestDataPath("$CONTENT_ROOT/../testData//quickFixes/PyRemoveStatementQuickFixTest/")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyRemoveStatementQuickFixTest extends PyQuickFixTestCase {
 
   public void testOnly() {

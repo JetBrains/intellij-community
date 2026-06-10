@@ -35,12 +35,16 @@ import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeLocalFun
 import com.jetbrains.python.refactoring.move.makeFunctionTopLevel.PyMakeMethodTopLevelProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.io.IOException;
 
 /**
  * @author Mikhail Golubev
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyMakeFunctionTopLevelTest extends PyTestCase {
 
   public void doTest(@Nullable String errorMessage) {

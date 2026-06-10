@@ -1,0 +1,36 @@
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.jetbrains.python.allure
+
+import io.qameta.allure.LabelAnnotation
+import java.lang.annotation.Inherited
+
+object Subsystems {
+
+  @Retention(AnnotationRetention.RUNTIME)
+  @Repeatable
+  @Target(AnnotationTarget.FUNCTION, AnnotationTarget.TYPE, AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS)
+  @LabelAnnotation(name = "Subsystem")
+  @Inherited
+  annotation class Subsystem(val value: String)
+
+  @Subsystem("Refactoring")
+  @Inherited
+  annotation class Refactoring
+
+  @Subsystem("Quick Fixes")
+  @Inherited
+  annotation class QuickFixes
+}
+
+object Layers {
+
+  @Retention(AnnotationRetention.RUNTIME)
+  @Target(AnnotationTarget.FUNCTION, AnnotationTarget.TYPE, AnnotationTarget.CLASS)
+  @LabelAnnotation(name = "layer")
+  @Inherited
+  annotation class Layer(val value: String)
+
+  @Layer("Functional Tests")
+  @Inherited
+  annotation class Functional
+}

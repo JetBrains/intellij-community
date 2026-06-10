@@ -5,10 +5,14 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.refactoring.convertModulePackage.PyConvertModuleToPackageAction;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 /**
  * @author Mikhail Golubev
  */
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyConvertModuleToPackageTest extends PyTestCase {
 
   // PY-4387

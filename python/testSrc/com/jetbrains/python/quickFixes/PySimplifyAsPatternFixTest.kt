@@ -4,9 +4,13 @@ package com.jetbrains.python.quickFixes
 import com.intellij.testFramework.TestDataPath
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyQuickFixTestCase
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.inspections.PyPatternInspection
 
 @TestDataPath("\$CONTENT_ROOT/../testData/quickFixes/PySimplifyAsPatternFixTest")
+@Subsystems.QuickFixes
+@Layers.Functional
 class PySimplifyAsPatternFixTest : PyQuickFixTestCase() {
   fun testSimplifyListAsPattern() {
     doQuickFixTest(PyPsiBundle.message("QFIX.simplify.as.pattern"))

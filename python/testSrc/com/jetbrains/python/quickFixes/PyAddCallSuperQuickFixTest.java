@@ -22,7 +22,11 @@ import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyMissingConstructorInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.Nullable;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
+@Subsystems.QuickFixes
+@Layers.Functional
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyAddCallSuperQuickFixTest/")
 public class PyAddCallSuperQuickFixTest extends PyQuickFixTestCase {
 

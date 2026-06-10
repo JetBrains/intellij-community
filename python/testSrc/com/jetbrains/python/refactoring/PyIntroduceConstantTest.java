@@ -7,9 +7,13 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
 import com.jetbrains.python.refactoring.introduce.constant.PyIntroduceConstantHandler;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 
 @TestDataPath("$CONTENT_ROOT/../testData/refactoring/introduceConstant/")
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyIntroduceConstantTest extends PyIntroduceTestCase {
   public void testPy1840() {
     doTest();

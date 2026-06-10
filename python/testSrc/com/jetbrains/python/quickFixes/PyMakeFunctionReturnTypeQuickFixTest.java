@@ -18,6 +18,8 @@ package com.jetbrains.python.quickFixes;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyTypeCheckerInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -25,6 +27,8 @@ import com.jetbrains.python.psi.LanguageLevel;
  * @author lada
  */
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyMakeFunctionReturnTypeQuickFixTest/")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyMakeFunctionReturnTypeQuickFixTest extends PyQuickFixTestCase {
     public void testOneReturn() {
       doQuickFixTest(PyTypeCheckerInspection.class, PyPsiBundle.message("QFIX.make.function.return.type", "f", "int"), LanguageLevel.PYTHON27);

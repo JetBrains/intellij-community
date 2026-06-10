@@ -10,9 +10,13 @@ import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.refactoring.extractmethod.PyExtractMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.io.File;
 
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyExtractMethodTest extends LightMarkedTestCase {
 
   private void doTest(String newName) {

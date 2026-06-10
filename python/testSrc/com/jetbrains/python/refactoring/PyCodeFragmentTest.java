@@ -14,9 +14,13 @@ import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragmentUtil;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 
 import java.util.TreeSet;
 
+@Subsystems.Refactoring
+@Layers.Functional
 public class PyCodeFragmentTest extends LightMarkedTestCase {
   @Override
   public String getTestDataPath() {
@@ -160,4 +164,3 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
   }
 
 }
-

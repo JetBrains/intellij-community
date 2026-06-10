@@ -18,10 +18,14 @@ package com.jetbrains.python.quickFixes;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyArgumentListInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyRemoveArgumentQuickFixTest/")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyRemoveArgumentQuickFixTest extends PyQuickFixTestCase {
 
   public void testDuplicate() {

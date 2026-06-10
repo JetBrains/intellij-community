@@ -4,9 +4,13 @@ package com.jetbrains.python.quickFixes
 import com.intellij.testFramework.TestDataPath
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyQuickFixTestCase
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.inspections.PyInconsistentReturnsInspection
 
 @TestDataPath("\$CONTENT_ROOT/../testData/quickFixes/PyMakeReturnExplicitFixTest")
+@Subsystems.QuickFixes
+@Layers.Functional
 class PyMakeReturnExplicitFixTest : PyQuickFixTestCase() {
   fun testAddExplicitReturn() {
     doQuickFixTest(PyPsiBundle.message("QFIX.add.explicit.return.none"))

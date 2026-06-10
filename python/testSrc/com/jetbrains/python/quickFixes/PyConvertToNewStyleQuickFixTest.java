@@ -19,10 +19,14 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.PyOldStyleClassesInspection;
 import org.jetbrains.annotations.Nullable;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyConvertToNewStyleQuickFixTest/")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyConvertToNewStyleQuickFixTest extends PyQuickFixTestCase {
 
   @Override

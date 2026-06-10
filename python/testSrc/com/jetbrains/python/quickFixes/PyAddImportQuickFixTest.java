@@ -25,6 +25,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.ImportCandidateHolder;
@@ -45,6 +47,8 @@ import static com.jetbrains.python.psi.PyUtil.as;
 /**
  * @author Mikhail Golubev
  */
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {

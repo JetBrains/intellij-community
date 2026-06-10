@@ -19,11 +19,15 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 @TestDataPath("$CONTENT_ROOT/../testData/quickFixes/PyRemoveUnusedLocalQuickFixTest/")
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyRemoveUnusedLocalQuickFixTest extends PyQuickFixTestCase {
   // PY-20893
   public void testExcept() {
