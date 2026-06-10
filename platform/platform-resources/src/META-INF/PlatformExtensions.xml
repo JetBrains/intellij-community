@@ -2196,6 +2196,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
               topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.ui.mac.MergeAllWindowsAction$RecentProjectsFullScreenTabSupport"
               topic="com.intellij.ide.AppLifecycleListener"/>
+    <listener class="com.intellij.openapi.keymap.impl.LockOffendersListenerInitializer"
+              topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.openapi.vcs.FileStatusCleaner"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.diagnostic.DynamicPluginUnloadDiagnosticListener"

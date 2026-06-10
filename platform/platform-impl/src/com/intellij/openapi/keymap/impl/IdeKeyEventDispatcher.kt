@@ -4,8 +4,10 @@
 package com.intellij.openapi.keymap.impl
 
 import com.intellij.diagnostic.EventWatcher
+import com.intellij.diagnostic.IdePerformanceListener
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.LocksActionsDumper
+import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
@@ -83,6 +85,7 @@ import java.awt.KeyboardFocusManager
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.nio.file.Path
 import java.util.Collections
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
@@ -161,12 +164,12 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
         }
     }
     LocksActionsDumper.setLocksAndActionsDumper {
-      val currentOffenders = actionLockOffenders.get()
-      if (currentOffenders.isNullOrEmpty()) {
+      val currentOffenders = actionLockOffenders.get().getOffendersString()
+      if (currentOffenders == null) {
         return@setLocksAndActionsDumper null
       }
       """UI is currently processing actions. The following actions require locks:
-        |${currentOffenders.mapNotNull { it::class.qualifiedName }.joinToString("\n")}
+        |${currentOffenders}
       """.trimMargin()
     }
   }
@@ -973,7 +976,39 @@ private fun getMenuActionsHolder(component: Component): JRootPane? {
   }
 }
 
-private val actionLockOffenders: AtomicReference<List<AnAction>?> = AtomicReference<List<AnAction>?>()
+private val actionLockOffenders: AtomicReference<List<AnAction>?> = AtomicReference()
+
+private fun List<AnAction>?.getOffendersString(): String? {
+  return if (this.isNullOrEmpty()) {
+    null
+  }
+  else this.mapNotNull { it::class.qualifiedName }.joinToString("\n")
+}
+
+@ApiStatus.Internal
+class LockOffendersListenerInitializer: AppLifecycleListener {
+  override fun appStarted() {
+    ApplicationManager.getApplication().messageBus.connect()
+      .subscribe(IdePerformanceListener.TOPIC, LockOffendersPerformanceListener)
+  }
+}
+
+private object LockOffendersPerformanceListener: IdePerformanceListener {
+  @Volatile
+  var capturedOffenders: List<AnAction>? = null
+
+  override fun uiFreezeStarted(reportDir: Path) {
+    capturedOffenders = actionLockOffenders.get()
+  }
+
+  override fun uiFreezeFinished(durationMs: Long, reportDir: Path?) {
+    val resultingOffenders = capturedOffenders.getOffendersString()
+    capturedOffenders = null
+    if (resultingOffenders != null) {
+      LOG.warn("UI freeze was caused by the RW lock acquisition for update of the following action:\n$resultingOffenders")
+    }
+  }
+}
 
 private fun recordActionOffenders(actions: List<AnAction>) : AutoCloseable {
   val offendingActions = actions.filter(Utils::isLockRequired)
