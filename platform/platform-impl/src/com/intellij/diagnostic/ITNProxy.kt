@@ -363,6 +363,7 @@ object ITNProxy {
         .takeIf { it.isNotEmpty() }
         ?.joinToString(",") { it.idString }
         ?.let { append(builder, "plugins.nonbundled", it) }
+      appendDynamicPluginUnloadInfo(builder, event)
 
       if (errorBean.isAutoReportedByPlatform) {
         append(builder, "report.automatic", "true")
@@ -375,6 +376,13 @@ object ITNProxy {
     }
 
     return builder
+  }
+
+  private fun appendDynamicPluginUnloadInfo(builder: StringBuilder, event: IdeaLoggingEvent) {
+    val message = event.data as? AbstractMessage ?: return
+    if (DynamicPluginUnloadDiagnosticState.wasUnloadAttemptedBefore(message.date.time)) {
+      append(builder, "plugins.dynamic.unload.attempted", "true")
+    }
   }
 
   private fun append(builder: StringBuilder, key: String, value: String?) {
