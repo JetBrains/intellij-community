@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.tasks.context;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.tasks.impl.bookmarks;
 
 import com.intellij.ide.bookmark.BookmarkGroup;
 import com.intellij.ide.bookmark.BookmarkProvider;
@@ -13,6 +13,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.context.WorkingContextProvider;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;

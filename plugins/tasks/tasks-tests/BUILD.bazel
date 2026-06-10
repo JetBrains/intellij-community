@@ -13,6 +13,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//platform/tasks-platform-impl/tasks.impl.bookmarks",
+        "//platform/tasks-platform-impl/tasks.impl.debugger",
         "//plugins/tasks/tasks-api:tasks",
         "//plugins/tasks/tasks-java:java",
         "//plugins/tasks/tasks-compatibility:compatibility",
@@ -54,6 +56,10 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//platform/tasks-platform-impl/tasks.impl.bookmarks",
+        "//platform/tasks-platform-impl/tasks.impl.bookmarks:tasks.impl.bookmarks_test_lib",
+        "//platform/tasks-platform-impl/tasks.impl.debugger",
+        "//platform/tasks-platform-impl/tasks.impl.debugger:tasks.impl.debugger_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core",

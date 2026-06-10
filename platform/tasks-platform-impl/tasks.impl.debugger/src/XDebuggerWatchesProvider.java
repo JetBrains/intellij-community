@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.tasks.context;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.tasks.impl.debugger;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.platform.debugger.impl.shared.XDebuggerWatchesManager;
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugManagerProxy;
 import com.intellij.tasks.TaskBundle;
+import com.intellij.tasks.context.WorkingContextProvider;
 import com.intellij.xdebugger.impl.WatchesManagerState;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManagerImpl;
 import org.jdom.Element;

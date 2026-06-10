@@ -379,6 +379,8 @@ object CommunityModuleSets {
     module("intellij.platform.collaborationTools.auth.base")
     module("intellij.platform.tasks")
     module("intellij.platform.tasks.impl")
+    module("intellij.platform.tasks.impl.bookmarks")
+    module("intellij.platform.tasks.impl.debugger")
     module("intellij.platform.scriptDebugger.ui")
     module("intellij.platform.scriptDebugger.backend")
     module("intellij.platform.scriptDebugger.protocolReaderRuntime")

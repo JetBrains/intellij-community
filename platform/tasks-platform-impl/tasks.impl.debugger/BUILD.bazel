@@ -1,0 +1,73 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.tasks.impl.debugger` start
+
+jvm_library(
+    name = "tasks.impl.debugger",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.tasks.impl.debugger",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/tasks-platform-api:tasks",
+        "//platform/util",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/util/jdom",
+        "//platform/core-api:core",
+        "//platform/tasks-platform-impl:tasks-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/lang-api:lang",
+        "//platform/xdebugger-impl:debugger-impl",
+        "//platform/xdebugger-api:debugger",
+        "//platform/xdebugger-impl/shared",
+        "//platform/xdebugger-impl/ui",
+    ],
+)
+
+jvm_library(
+    name = "tasks.impl.debugger_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.tasks.impl.debugger",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":tasks.impl.debugger",
+        "//platform/tasks-platform-api:tasks_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/util/jdom:jdom_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/tasks-platform-impl:tasks-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//platform/xdebugger-impl:debugger-impl_test_lib",
+        "//platform/xdebugger-api:debugger_test_lib",
+        "//platform/xdebugger-impl/shared:shared_test_lib",
+        "//platform/xdebugger-impl/ui:ui_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.tasks.impl.debugger` end
+
+### auto-generated section `iml intellij.platform.tasks.impl.debugger` start
+exports_files(
+    [
+        "intellij.platform.tasks.impl.debugger.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.tasks.impl.debugger` end
