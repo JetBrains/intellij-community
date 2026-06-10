@@ -180,7 +180,7 @@ internal object SplitModeInspectionUtil {
    * (and not because the author explicitly declared platform.frontend/platform.backend/platform.monolith),
    * the UI should show a single root-level plugin state error instead of many XML-specific warnings.
    */
-  fun shouldReportSinglePluginLevelError(file: PsiFile, moduleAnalysis: ModuleAnalysis): Boolean {
+  fun shouldReportSinglePluginLevelErrorInsteadOfManyNestedErrors(file: PsiFile, moduleAnalysis: ModuleAnalysis): Boolean {
     if (SplitModeAnalysisFlags.isXmlInspectionsForNonNativePluginEnabled()) {
       return false
     }

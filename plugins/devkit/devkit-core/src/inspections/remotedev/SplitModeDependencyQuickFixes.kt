@@ -65,6 +65,7 @@ internal object SplitModeDependencyQuickFixes {
     return fixes.toTypedArray()
   }
 
+  // Removes unsuitable and adds desired module kind dependencies, broader refactoring than the createAddExplicitDependenciesFixes
   fun createMixedModuleFixes(module: Module, currentDescriptor: IdeaPlugin?): Array<LocalQuickFix> {
     val availableDependencies = getRuntimeDependencies(module, currentDescriptor)
     val fixes = mutableListOf<LocalQuickFix>(
@@ -77,7 +78,8 @@ internal object SplitModeDependencyQuickFixes {
     return fixes.toTypedArray()
   }
 
-  fun createNonNativePluginFixes(
+  // Only adds platform.frontend/backend dependencies and does not touch others - for modules that are implicitly fe/be only
+  fun createAddExplicitDependenciesFixes(
     module: Module,
     currentDescriptor: IdeaPlugin?,
     actualModuleKind: SplitModeApiRestrictionsService.ModuleKind,
