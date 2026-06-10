@@ -5,6 +5,7 @@ import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.flavours.commonmark.CommonMarkMarkerProcessor
 import org.intellij.markdown.flavours.gfm.GFMConstraints
 import org.intellij.markdown.flavours.gfm.GFMTokenTypes
+import org.intellij.markdown.flavours.gfm.alert.GitHubAlertMarkerProvider
 import org.intellij.markdown.flavours.gfm.table.GitHubTableMarkerProvider
 import org.intellij.markdown.parser.LookaheadText
 import org.intellij.markdown.parser.MarkerProcessor
@@ -71,6 +72,7 @@ open class MarkdownDefaultMarkerProcessor(
       add(CodeBlockProvider())
       add(CodeFenceMarkerProvider())
       add(SetextHeaderProvider())
+      add(GitHubAlertMarkerProvider())
       add(BlockQuoteProvider())
       add(ListMarkerProvider())
       add(HtmlBlockProvider())

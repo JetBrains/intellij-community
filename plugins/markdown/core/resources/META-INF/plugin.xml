@@ -323,6 +323,9 @@
     <lang.commenter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownCommenter"/>
 
     <codeInsight.lineMarkerProvider language="Markdown"
+                                    implementationClass="org.intellij.plugins.markdown.highlighting.MarkdownAlertLineMarkerProvider"/>
+
+    <codeInsight.lineMarkerProvider language="Markdown"
                                     implementationClass="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceDownloadLineMarkerProvider"/>
 
     <focusModeProvider language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownFocusModeProvider"/>

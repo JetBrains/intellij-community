@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckBoxList;
 import com.intellij.ui.ListSpeedSearch;
@@ -71,6 +72,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * @author Dmitry Avdeev
@@ -343,6 +345,10 @@ public final class GutterIconsConfigurable implements SearchableConfigurable, Co
 
   public static final class ShowSettingsAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
     public ShowSettingsAction() {
+    }
+
+    public ShowSettingsAction(@NotNull Supplier<@NlsActions.ActionText String> dynamicText) {
+      super(dynamicText);
     }
 
     @Override

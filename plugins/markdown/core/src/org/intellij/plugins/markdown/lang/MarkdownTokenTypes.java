@@ -84,6 +84,8 @@ public interface MarkdownTokenTypes extends TokenType {
 
   IElementType CHECK_BOX = platformType(GFMTokenTypes.CHECK_BOX);
 
+  IElementType ALERT_TITLE = platformType(GFMTokenTypes.ALERT_TITLE);
+
   IElementType BAD_CHARACTER = platformType(org.intellij.markdown.MarkdownTokenTypes.BAD_CHARACTER);
   IElementType WHITE_SPACE = platformType(org.intellij.markdown.MarkdownTokenTypes.WHITE_SPACE);
 }

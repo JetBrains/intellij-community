@@ -5,6 +5,7 @@ import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlert
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeBlock
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
@@ -53,6 +54,7 @@ object MarkdownPsiFactory {
       MarkdownElementTypes.AUTOLINK -> MarkdownWrappedAutoLink(node)
       MarkdownElementTypes.LINK_COMMENT -> MarkdownComment(node)
       MarkdownElementTypes.CODE_SPAN -> MarkdownCodeSpan(node)
+      MarkdownElementTypes.ALERT -> MarkdownAlert(node)
       else -> when {
         elementType in MarkdownTokenTypeSets.HEADER_CONTENT -> MarkdownHeaderContent(node)
         MarkdownTokenTypeSets.HEADERS.contains(elementType) -> MarkdownHeader(node)

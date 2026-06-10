@@ -11,10 +11,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.OuterLanguageElementType
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlert
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlertTitle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.util.isFootnoteLabelText
@@ -27,6 +30,10 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     when (element.elementType) {
+      MarkdownTokenTypes.ALERT_TITLE -> {
+        val key = getAlertAttributeKey(element as MarkdownAlertTitle) ?: return
+        element.traverseAndCreateAnnotationsForContent(holder, key)
+      }
       MarkdownTokenTypes.EMPH -> annotateBasedOnParent(element, holder) {
         when (it) {
           MarkdownElementTypes.EMPH -> MarkdownHighlighterColors.ITALIC_MARKER
@@ -96,6 +103,10 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
     if (element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT) && (element.parent as? MarkdownCodeFence)?.fenceLanguage != null) {
       return
     }
+    if (element.hasType(MarkdownTokenTypes.BLOCK_QUOTE) && PsiTreeUtil.getParentOfType(element, MarkdownAlert::class.java) != null) {
+      element.traverseAndCreateAnnotationsForContent(holder, MarkdownHighlighterColors.TEXT)
+      return
+    }
     val highlights = syntaxHighlighter.getMarkdownTokenHighlights(elementType)
     val parentAttributesKey = highlights.firstOrNull() ?: return
     if (parentAttributesKey != MarkdownHighlighterColors.TEXT) {
@@ -147,6 +158,17 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
       }
     }
     return false
+  }
+
+  private fun getAlertAttributeKey(element: MarkdownAlertTitle): TextAttributesKey? {
+    return when (element.getType()) {
+      MarkdownAlertTitle.AlertType.NOTE -> MarkdownHighlighterColors.ALERT_TITLE_NOTE
+      MarkdownAlertTitle.AlertType.TIP -> MarkdownHighlighterColors.ALERT_TITLE_TIP
+      MarkdownAlertTitle.AlertType.IMPORTANT -> MarkdownHighlighterColors.ALERT_TITLE_IMPORTANT
+      MarkdownAlertTitle.AlertType.WARNING -> MarkdownHighlighterColors.ALERT_TITLE_WARNING
+      MarkdownAlertTitle.AlertType.CAUTION -> MarkdownHighlighterColors.ALERT_TITLE_CAUTION
+      null -> null
+    }
   }
 
   private fun isFootnoteDefinitionLinkDef(linkDef: PsiElement): Boolean {

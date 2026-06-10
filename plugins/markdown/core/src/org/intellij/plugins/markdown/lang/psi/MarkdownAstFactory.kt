@@ -8,6 +8,7 @@ import com.intellij.psi.tree.IElementType
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAlertTitle
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownAutoLink
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceContent
@@ -30,14 +31,15 @@ class MarkdownAstFactory: ASTFactory() {
   }
 
   override fun createLeaf(type: IElementType, text: CharSequence): LeafElement? {
-    return when {
-      type == MarkdownTokenTypes.LIST_NUMBER -> MarkdownListNumber(type, text)
-      type == MarkdownTokenTypes.CODE_FENCE_CONTENT -> MarkdownCodeFenceContent(type, text)
-      type == MarkdownElementTypes.FRONT_MATTER_HEADER_CONTENT -> MarkdownFrontMatterHeaderContent(type, text)
-      type == MarkdownTokenTypes.TABLE_SEPARATOR && text.length > 1 -> MarkdownTableSeparatorRow(text)
-      type == MarkdownTokenTypes.TABLE_SEPARATOR && text.toString() == "|" -> MarkdownTableSeparator(text)
-      type == MarkdownElementTypes.COMMENT_VALUE -> MarkdownCommentValue(text)
-      type in MarkdownTokenTypeSets.AUTO_LINKS -> MarkdownAutoLink(type, text)
+    return when (type) {
+      MarkdownTokenTypes.LIST_NUMBER -> MarkdownListNumber(type, text)
+      MarkdownTokenTypes.CODE_FENCE_CONTENT -> MarkdownCodeFenceContent(type, text)
+      MarkdownElementTypes.FRONT_MATTER_HEADER_CONTENT -> MarkdownFrontMatterHeaderContent(type, text)
+      MarkdownTokenTypes.TABLE_SEPARATOR if text.length > 1 -> MarkdownTableSeparatorRow(text)
+      MarkdownTokenTypes.TABLE_SEPARATOR if text.toString() == "|" -> MarkdownTableSeparator(text)
+      MarkdownElementTypes.COMMENT_VALUE -> MarkdownCommentValue(text)
+      MarkdownTokenTypes.ALERT_TITLE -> MarkdownAlertTitle(type, text)
+      in MarkdownTokenTypeSets.AUTO_LINKS -> MarkdownAutoLink(type, text)
       else -> super.createLeaf(type, text)
     }
   }

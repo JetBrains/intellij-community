@@ -183,3 +183,21 @@ Text with a footnote[^1] and a multiline footnote[^2].
 
     <footnote_def>Continuation line one.</footnote_def>
     <footnote_def>Continuation line two.</footnote_def>
+
+<hh2>Alerts
+---------</hh2>
+
+> <alert_note>[!NOTE]</alert_note> 
+> Note content
+
+> <alert_tip>[!TIP]</alert_tip> 
+> Tip content
+
+> <alert_important>[!IMPORTANT]</alert_important> 
+> Important content
+
+> <alert_warning>[!WARNING]</alert_warning> 
+> Warning content
+
+> <alert_caution>[!CAUTION]</alert_caution> 
+> Caution content

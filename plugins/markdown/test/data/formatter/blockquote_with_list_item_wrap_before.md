@@ -1,4 +1,4 @@
-> [!NOTE]  
+> [!QUOTE]  
 > This is some text that is quoted and does not exceed the maximum allowed
 > line length.
 > - This is a quoted bullet point.

@@ -123,4 +123,7 @@ public interface MarkdownElementTypes {
 
   @ApiStatus.Experimental
   IElementType FRONT_MATTER_HEADER_DELIMITER = platformType(FrontMatterHeaderMarkerProvider.FRONT_MATTER_HEADER_DELIMITER);
+
+  @ApiStatus.Experimental
+  IElementType ALERT = platformType(GFMElementTypes.ALERT);
 }
