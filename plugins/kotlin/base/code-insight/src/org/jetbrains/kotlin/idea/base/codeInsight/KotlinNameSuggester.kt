@@ -7,6 +7,7 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.text.NameUtilCore
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.allSupertypes
@@ -216,14 +217,22 @@ class KotlinNameSuggester(
      *  - `listOf(<selection>5</selection>)` -> {element}
      *  - `ints.filter <selection>{ it > 0 }</selection>` -> {predicate}
      */
+    @OptIn(KaContextParameterApi::class, KaExperimentalApi::class)
     context(_: KaSession)
     private fun suggestNamesByValueArgument(expression: KtExpression, validator: (String) -> Boolean): Sequence<String> {
         val argumentExpression = expression.getOutermostParenthesizerOrThis()
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return emptySequence()
         val callElement = getCallElement(valueArgument) ?: return emptySequence()
         val resolvedCall = callElement.resolveToCall()?.singleFunctionCallOrNull() ?: return emptySequence()
-        val parameter = resolvedCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return emptySequence()
-        return suggestNameByValidIdentifierName(parameter.realName?.asString(), validator)?.let { sequenceOf(it) } ?: emptySequence()
+        val argExpr = valueArgument.getArgumentExpression()
+        val parameter = resolvedCall.valueArgumentMapping[argExpr]?.symbol
+        // either a parameter or a context argument is expected in this position
+        val identifierName = if (parameter != null) {
+            parameter.realName
+        } else {
+            resolvedCall.contextArgumentMapping[argExpr]?.symbol?.name?.takeIf { !it.isSpecial }
+        }
+        return suggestNameByValidIdentifierName(identifierName?.asString(), validator)?.let { sequenceOf(it) } ?: emptySequence()
     }
 
     /**
@@ -513,7 +522,7 @@ class KotlinNameSuggester(
         private fun getSimpleExpressionName(expression: KtExpression?): String? {
             if (expression == null) return null
             return when (val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)) {
-                is KtSimpleNameExpression -> return deparenthesized.getReferencedName()
+                is KtSimpleNameExpression -> deparenthesized.getReferencedName()
                 is KtQualifiedExpression -> getSimpleExpressionName(deparenthesized.selectorExpression)
                 is KtCallExpression -> getSimpleExpressionName(deparenthesized.calleeExpression)
                 is KtPostfixExpression -> getSimpleExpressionName(deparenthesized.baseExpression)
@@ -614,13 +623,10 @@ class KotlinNameSuggester(
             }
         }
 
-        fun suggestNamesForTypeParameters(count: Int, validator: (String) -> Boolean): List<String> {
-            val result = ArrayList<String>()
-            for (i in 0 until count) {
-                result.add(suggestNameByMultipleNames(TYPE_PARAMETER_NAMES, validator))
+        fun suggestNamesForTypeParameters(count: Int, validator: (String) -> Boolean): List<String> =
+            List(count) {
+                suggestNameByMultipleNames(TYPE_PARAMETER_NAMES, validator)
             }
-            return result
-        }
 
         val TYPE_PARAMETER_NAMES: List<String> = listOf(
             "T", "U", "V", "W", "X", "Y", "Z", "A", "B", "C", "D", "E",

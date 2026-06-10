@@ -780,6 +780,16 @@ public abstract class K2IntroduceVariableTestGenerated extends AbstractK2Introdu
             runTest("../../idea/tests/testData/refactoring/introduceVariable/enumEntry.kt");
         }
 
+        @TestMetadata("explicitContextArgument.kt")
+        public void testExplicitContextArgument() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicitContextArgument.kt");
+        }
+
+        @TestMetadata("explicitContextArgument2.kt")
+        public void testExplicitContextArgument2() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/introduceVariable/explicitContextArgument2.kt");
+        }
+
         @TestMetadata("expressionBodyErrorType.kt")
         public void testExpressionBodyErrorType() throws Exception {
             runTest("../../idea/tests/testData/refactoring/introduceVariable/expressionBodyErrorType.kt");
