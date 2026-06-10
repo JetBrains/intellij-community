@@ -7,8 +7,6 @@
   {"apiName": "com.intellij.openapi.fileEditor.FileEditorManagerListener", "extensionPointNames": [], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.openapi.fileEditor.FileEditorProvider", "extensionPointNames": ["com.intellij.fileEditorProvider"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.openapi.editor.event.DocumentListener", "extensionPointNames": [], "targetModules": ["frontend"]},
-  {"apiName": "com.intellij.openapi.editor.actions.WordBoundaryFilter", "extensionPointNames": ["com.intellij.wordBoundaryFilter"], "targetModules": ["frontend"]},
-  {"apiName": "com.intellij.openapi.editor.bidi.BidiRegionsSeparator", "extensionPointNames": ["com.intellij.bidiRegionsSeparator"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.openapi.editor.NonWriteAccessTypedHandler", "extensionPointNames": ["com.intellij.nonWriteAccessTypedHandler"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.openapi.fileEditor.FileEditorManager.getFocusedEditor", "extensionPointNames": [], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.execution.services.ServiceViewContributor", "extensionPointNames": ["com.intellij.serviceViewContributor"], "targetModules": ["frontend"]},
@@ -39,7 +37,6 @@
   {"apiName": "com.intellij.codeInsight.lookup.LookupBottomPanelProvider", "extensionPointNames": ["com.intellij.lookup.bottomPanelProvider"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.codeInsight.lookup.LookupBottomPanelAdvertiserCustomizer", "extensionPointNames": ["com.intellij.lookup.bottomPanelAdvertiserCustomizer"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.codeInsight.lookup.LookupMayHaveCustomPreviewProvider", "extensionPointNames": ["com.intellij.lookup.may.have.custom.preview.provider"], "targetModules": ["frontend"]},
-  {"apiName": "com.intellij.ide.actions.CreateDirectoryCompletionContributor", "extensionPointNames": ["com.intellij.createDirectoryCompletionContributor"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.codeInsight.completion.TemplateParameterTraversalPolicy", "extensionPointNames": ["com.intellij.templateParameterTraversalPolicy"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.openapi.options.UnnamedConfigurable", "extensionPointNames": ["com.intellij.codeCompletionConfigurable", "com.intellij.generalEditorOptionsExtension", "com.intellij.inlineCompletionConfigurable", "com.intellij.mlCodeCompletionConfigurable"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.profile.codeInspection.ui.ErrorOptionsProvider", "extensionPointNames": ["com.intellij.errorOptionsProvider"], "targetModules": ["frontend"]},
@@ -50,18 +47,10 @@
   {"apiName": "com.intellij.openapi.roots.ui.configuration.LibrarySettingsProvider", "extensionPointNames": ["com.intellij.librarySettingsProvider"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider", "extensionPointNames": ["com.intellij.inspectionProfileActionProvider"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.profile.codeInspection.ui.InspectionTreeAdvertiser", "extensionPointNames": ["com.intellij.inspectionTreeAdvertiser"], "targetModules": ["frontend"]},
-  {"apiName": "com.intellij.codeInspection.ui.actions.InspectionResultsExportActionProvider", "extensionPointNames": ["com.intellij.inspectionResultsExportActionProvider"], "targetModules": ["frontend"]},
-  {"apiName": "com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider", "extensionPointNames": ["com.intellij.moduleConfigurationEditorProvider"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider", "extensionPointNames": ["com.intellij.problemsViewPanelProvider"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.analysis.problemsView.toolWindow.HighlightingProblemFactory", "extensionPointNames": ["com.intellij.problemsViewHighlightingProblemFactory"], "targetModules": ["frontend"]},
-  {"apiName": "com.intellij.ide.projectView.TreeStructureProvider", "extensionPointNames": ["com.intellij.treeStructureProvider"], "targetModules": ["frontend"]},
-  {"apiName": "com.intellij.ide.projectView.impl.AbstractProjectViewPane", "extensionPointNames": ["com.intellij.projectViewPane"], "targetModules": ["frontend"]},
-  {"apiName": "com.intellij.ide.projectView.impl.ProjectViewPaneSelectionHelper", "extensionPointNames": ["com.intellij.projectViewPaneSelectionHelper"], "targetModules": ["frontend"]},
-  {"apiName": "com.intellij.ide.projectView.ProjectViewNodeDecorator", "extensionPointNames": ["com.intellij.projectViewNodeDecorator"], "targetModules": ["frontend"]},
-  {"apiName": "com.intellij.ide.projectView.ProjectViewNestingRulesProvider", "extensionPointNames": ["com.intellij.projectViewNestingRulesProvider"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.find.impl.livePreview.EditorSearchAreaProvider", "extensionPointNames": ["com.intellij.editorSearchAreaProvider"], "targetModules": ["frontend"]},
   {"apiName": "com.intellij.codeInsight.intention.impl.IntentionPopupProvider", "extensionPointNames": ["com.intellij.intentionPopupProvider"], "targetModules": ["frontend"]},
-  {"apiName": "com.intellij.ide.actions.NewFileActionCategoryHandler", "extensionPointNames": ["com.intellij.newFileActionCategoryHandler"], "targetModules": ["frontend"]},
 
 
 
@@ -243,6 +232,11 @@
   {"apiName": "com.intellij.openapi.project.ProjectListener", "extensionPointNames": [], "targetModules": ["backend"]},
   {"apiName": "com.intellij.openapi.project.ProjectCloseListener", "extensionPointNames": [], "targetModules": ["backend"]},
   {"apiName": "com.intellij.openapi.project.VetoableProjectManagerListener", "extensionPointNames": [], "targetModules": ["backend"]},
+  {"apiName": "com.intellij.ide.projectView.TreeStructureProvider", "extensionPointNames": ["com.intellij.treeStructureProvider"], "targetModules": ["backend"]},
+  {"apiName": "com.intellij.ide.projectView.impl.AbstractProjectViewPane", "extensionPointNames": ["com.intellij.projectViewPane"], "targetModules": ["backend"]},
+  {"apiName": "com.intellij.ide.projectView.impl.ProjectViewPaneSelectionHelper", "extensionPointNames": ["com.intellij.projectViewPaneSelectionHelper"], "targetModules": ["backend"]},
+  {"apiName": "com.intellij.ide.projectView.ProjectViewNodeDecorator", "extensionPointNames": ["com.intellij.projectViewNodeDecorator"], "targetModules": ["backend"]},
+  {"apiName": "com.intellij.ide.projectView.ProjectViewNestingRulesProvider", "extensionPointNames": ["com.intellij.projectViewNestingRulesProvider"], "targetModules": ["backend"]},
 
 
 
@@ -255,7 +249,8 @@
   {"apiName": "com.intellij.lang.injection.MultiHostInjector", "extensionPointNames": ["com.intellij.multiHostInjector"], "targetModules": ["shared"]},
   {"apiName": "com.intellij.psi.ElementDescriptionProvider", "extensionPointNames": ["com.intellij.elementDescriptionProvider"], "targetModules": ["shared"]},
   {"apiName": "com.intellij.psi.ElementManipulator", "extensionPointNames": ["com.intellij.lang.elementManipulator"], "targetModules": ["shared"]},
-  {"apiName": "com.intellij.openapi.editor.rd.LocalEditorSupportBean", "extensionPointNames": ["com.intellij.editor.rd.localSupport"], "targetModules": ["shared"]},
+  {"apiName": "com.intellij.openapi.editor.bidi.BidiRegionsSeparator", "extensionPointNames": ["com.intellij.bidiRegionsSeparator"], "targetModules": ["shared"]},
+  {"apiName": "com.intellij.openapi.editor.actions.WordBoundaryFilter", "extensionPointNames": ["com.intellij.wordBoundaryFilter"], "targetModules": ["shared"]},
   {"apiName": "com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider", "extensionPointNames": ["com.intellij.colorAndFontDescriptorProvider"], "targetModules": ["shared"]},
   {"apiName": "com.intellij.application.options.GeneralCodeStyleOptionsProvider", "extensionPointNames": ["com.intellij.generalCodeStyleOptionsProvider"], "targetModules": ["shared"]},
   {"apiName": "com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider", "extensionPointNames": ["com.intellij.fileTypeIndentOptionsProvider"], "targetModules": ["shared"]},
@@ -304,11 +299,12 @@
   {"apiName": "com.intellij.codeInsight.highlighting.BraceMatcher", "extensionPointNames": ["com.intellij.braceMatcher", "com.intellij.lang.braceMatcher"], "targetModules": ["backend", "shared"]},
 
 
-  {"apiName": "com.intellij.openapi.util.registry.RegistryValueListener", "extensionPointNames": [], "targetModules": ["frontend", "backend"]},
-  {"apiName": "com.intellij.ide.plugins.DynamicPluginListener", "extensionPointNames": [], "targetModules": ["frontend", "backend"]},
+
+  {"apiName": "com.intellij.openapi.util.registry.RegistryValueListener", "extensionPointNames": [], "targetModules": ["frontend", "backend"], "hint": "Registry values are different on frontend and backend, prefer listening to them explicitly in desired IDE part"},
+  {"apiName": "com.intellij.ide.plugins.DynamicPluginListener", "extensionPointNames": [], "targetModules": ["frontend", "backend"], "hint": "Plugin lists are different on frontend and backend, prefer listening to them explicitly in desired IDE part"},
   {"apiName": "com.intellij.openapi.options.Configurable", "extensionPointNames": ["com.intellij.applicationConfigurable", "com.intellij.projectConfigurable"], "targetModules": ["frontend", "backend"]},
-  {"apiName": "com.intellij.lang.annotation.Annotator", "extensionPointNames": ["com.intellij.annotator"], "targetModules": ["frontend", "backend"]},
-  {"apiName": "com.intellij.lang.annotation.ContributedReferencesAnnotator", "extensionPointNames": ["com.intellij.contributedReferencesAnnotator"], "targetModules": ["frontend", "backend"]},
+  {"apiName": "com.intellij.lang.annotation.Annotator", "extensionPointNames": ["com.intellij.annotator"], "targetModules": ["frontend", "backend"], "hint": "Resolve-dependent annotators belong to the backend, while lightweight ones belong to frontend"},
+  {"apiName": "com.intellij.lang.annotation.ContributedReferencesAnnotator", "extensionPointNames": ["com.intellij.contributedReferencesAnnotator"], "targetModules": ["frontend", "backend"], "hint": "Resolve-dependent annotators belong to the backend, while lightweight ones belong to frontend"},
 
 
 
