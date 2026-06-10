@@ -44,17 +44,52 @@ internal class SplitModePredefinedModuleKindsSourceModeTest : BasePlatformTestCa
     }
   }
 
+  fun testProjectPredefinedModuleKindsReloadAfterProjectFileChange() {
+    withPredefinedModuleKindsSourceMode(
+      "project",
+      """
+        [
+          {"moduleName": "custom.split.mode.frontend", "moduleKind": "frontend"}
+        ]
+      """.trimIndent(),
+    ) { service ->
+      Assert.assertTrue(service.ensureLoaded())
+      Assert.assertEquals(
+        SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
+        service.getPredefinedDependencyKind("custom.split.mode.frontend"),
+      )
+      Assert.assertNull(service.getPredefinedDependencyKind("custom.split.mode.backend"))
+
+      createProjectResourceFile(
+        project,
+        PREDEFINED_MODULE_KINDS_PROJECT_RELATIVE_PATH,
+        """
+          [
+            {"moduleName": "custom.split.mode.backend", "moduleKind": "backend"}
+          ]
+        """.trimIndent(),
+      )
+
+      Assert.assertTrue(service.ensureLoaded())
+      Assert.assertNull(service.getPredefinedDependencyKind("custom.split.mode.frontend"))
+      Assert.assertEquals(
+        SplitModeApiRestrictionsService.ModuleKind.BACKEND,
+        service.getPredefinedDependencyKind("custom.split.mode.backend"),
+      )
+    }
+  }
+
   private fun withPredefinedModuleKindsSourceMode(
     sourceMode: String,
     projectFileContent: String?,
     action: (SplitModeApiRestrictionsService) -> Unit,
   ) {
     val projectFile = projectFileContent?.let { createProjectResourceFile(project, PREDEFINED_MODULE_KINDS_PROJECT_RELATIVE_PATH, it) }
-    val service = SplitModeApiRestrictionsService.getInstance(project)
     val registryValue = RegistryManager.getInstance().get("devkit.split.mode.analysis.predefined.module.kinds.source")
     val previousValue = registryValue.asString()
     try {
       registryValue.setValue(sourceMode)
+      val service = SplitModeApiRestrictionsService.getInstance(project)
       service.reloadRestrictionsForTest()
       action(service)
     }
@@ -63,7 +98,6 @@ internal class SplitModePredefinedModuleKindsSourceModeTest : BasePlatformTestCa
       if (projectFile != null) {
         deleteProjectResourceFile(project, projectFile)
       }
-      service.reloadRestrictionsForTest()
     }
   }
 }

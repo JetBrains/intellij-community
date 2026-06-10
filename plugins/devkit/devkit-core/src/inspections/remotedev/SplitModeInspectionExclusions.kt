@@ -55,11 +55,21 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
     fun getInstance(project: Project): SplitModeInspectionExclusionsService = project.service()
   }
 
-  @Volatile
-  private var cachedSnapshot: CachedSplitModeInspectionExclusionsSnapshot? = null
+  private val resourceReader = SplitModeInspectionResourceReader.getInstance(project)
 
-  private val resourceReader: SplitModeInspectionResourceReader
-    get() = SplitModeInspectionResourceReader.getInstance(project)
+  private val exclusionsResource = object : SplitModeInspectionReloadableResource<SplitModeInspectionExclusionsSnapshot>(
+    resourceReader = resourceReader,
+    resourcePath = EXCLUSIONS_RESOURCE_PATH,
+    readMode = SplitModeInspectionResourceReadMode.PROJECT_ONLY,
+  ) {
+    override fun parse(text: String): SplitModeInspectionExclusionsSnapshot {
+      return SplitModeInspectionExclusionsSnapshot(parseExclusionsFile(text).exclusions)
+    }
+
+    override fun getDefaultValue(): SplitModeInspectionExclusionsSnapshot {
+      return SplitModeInspectionExclusionsSnapshot()
+    }
+  }
 
   fun createSuppressionFixIfApplicable(
     element: PsiElement,
@@ -81,9 +91,7 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
 
   fun appendExclusion(problem: SplitModeInspectionExclusionProblem): VirtualFile? {
     val exclusionsFile = findOrCreateExclusionsFile() ?: return null
-    val currentFile = parseExclusionsFile(
-      resourceReader.readText(EXCLUSIONS_RESOURCE_PATH, SplitModeInspectionResourceReadMode.PROJECT_ONLY).orEmpty(),
-    )
+    val currentFile = SplitModeInspectionExclusionsFile(getSnapshot().exclusions)
     val newEntry = problem.toEntry()
     if (currentFile.exclusions.any { it.matches(newEntry) }) {
       return exclusionsFile
@@ -91,12 +99,8 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
 
     val updatedFile = currentFile.copy(exclusions = currentFile.exclusions + newEntry)
     exclusionsFile.writeText(json.encodeToString(updatedFile) + "\n")
-    cachedSnapshot = null
+    exclusionsResource.invalidate()
     return exclusionsFile
-  }
-
-  fun findExclusionsFile(): VirtualFile? {
-    return resourceReader.findProjectResourceFile(EXCLUSIONS_RESOURCE_PATH)
   }
 
   private fun isExclusionFixAvailable(): Boolean {
@@ -136,31 +140,7 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
   }
 
   private fun getSnapshot(): SplitModeInspectionExclusionsSnapshot {
-    val exclusionsFile = findExclusionsFile()
-    val exclusionsText = resourceReader.readText(EXCLUSIONS_RESOURCE_PATH, SplitModeInspectionResourceReadMode.PROJECT_ONLY)
-    val cacheKey = createCacheKey(exclusionsFile, exclusionsText)
-    cachedSnapshot?.let { cached ->
-      if (cached.cacheKey == cacheKey) {
-        return cached.snapshot
-      }
-    }
-
-    val snapshot = SplitModeInspectionExclusionsSnapshot(parseExclusionsFile(exclusionsText ?: "").exclusions)
-    cachedSnapshot = CachedSplitModeInspectionExclusionsSnapshot(cacheKey, snapshot)
-    return snapshot
-  }
-
-  private fun createCacheKey(exclusionsFile: VirtualFile?, exclusionsText: String?): SplitModeInspectionExclusionsCacheKey {
-    if (exclusionsFile == null) {
-      return SplitModeInspectionExclusionsCacheKey(null, -1, -1, -1)
-    }
-    val document = FileDocumentManager.getInstance().getCachedDocument(exclusionsFile)
-    return SplitModeInspectionExclusionsCacheKey(
-      file = exclusionsFile,
-      fileModificationStamp = exclusionsFile.modificationStamp,
-      documentModificationStamp = document?.modificationStamp ?: -1,
-      contentHash = exclusionsText.hashCode(),
-    )
+    return exclusionsResource.getValue()
   }
 
   private fun findOrCreateExclusionsFile(): VirtualFile? {
@@ -249,19 +229,7 @@ private class AddToSplitModeInspectionExclusionsFix(
 }
 
 private data class SplitModeInspectionExclusionsSnapshot(
-  val exclusions: List<SplitModeInspectionExclusionEntry>,
-)
-
-private data class CachedSplitModeInspectionExclusionsSnapshot(
-  val cacheKey: SplitModeInspectionExclusionsCacheKey,
-  val snapshot: SplitModeInspectionExclusionsSnapshot,
-)
-
-private data class SplitModeInspectionExclusionsCacheKey(
-  val file: VirtualFile?,
-  val fileModificationStamp: Long,
-  val documentModificationStamp: Long,
-  val contentHash: Int,
+  val exclusions: List<SplitModeInspectionExclusionEntry> = emptyList(),
 )
 
 @Serializable

@@ -36,17 +36,52 @@ internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
     }
   }
 
+  fun testProjectApiRestrictionsReloadAfterProjectFileChange() {
+    withApiRestrictionsSourceMode(
+      "project",
+      """
+        [
+          {"apiName": "custom.split.mode.api.one", "targetModules": ["frontend"]}
+        ]
+      """.trimIndent(),
+    ) { service ->
+      Assert.assertTrue(service.ensureLoaded())
+      Assert.assertEquals(
+        SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
+        service.getCodeApiKind("custom.split.mode.api.one", null),
+      )
+      Assert.assertNull(service.getCodeApiKind("custom.split.mode.api.two", null))
+
+      createProjectResourceFile(
+        project,
+        API_RESTRICTIONS_PROJECT_RELATIVE_PATH,
+        """
+          [
+            {"apiName": "custom.split.mode.api.two", "targetModules": ["backend"]}
+          ]
+        """.trimIndent(),
+      )
+
+      Assert.assertTrue(service.ensureLoaded())
+      Assert.assertNull(service.getCodeApiKind("custom.split.mode.api.one", null))
+      Assert.assertEquals(
+        SplitModeApiRestrictionsService.ModuleKind.BACKEND,
+        service.getCodeApiKind("custom.split.mode.api.two", null),
+      )
+    }
+  }
+
   private fun withApiRestrictionsSourceMode(
     sourceMode: String,
     projectFileContent: String?,
     action: (SplitModeApiRestrictionsService) -> Unit,
   ) {
     val projectFile = projectFileContent?.let { createProjectResourceFile(project, API_RESTRICTIONS_PROJECT_RELATIVE_PATH, it) }
-    val service = SplitModeApiRestrictionsService.getInstance(project)
     val registryValue = RegistryManager.getInstance().get("devkit.split.mode.analysis.api.restrictions.source")
     val previousValue = registryValue.asString()
     try {
       registryValue.setValue(sourceMode)
+      val service = SplitModeApiRestrictionsService.getInstance(project)
       service.reloadRestrictionsForTest()
       action(service)
     }
@@ -55,7 +90,6 @@ internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
       if (projectFile != null) {
         deleteProjectResourceFile(project, projectFile)
       }
-      service.reloadRestrictionsForTest()
     }
   }
 }

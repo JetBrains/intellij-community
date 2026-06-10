@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections.remotedev
 
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -65,7 +64,7 @@ internal class SplitModeInspectionResourceReader(private val project: Project) {
 
     return try {
       LOG.info("Loading split-mode resource '$resourcePath' from project file ${resourceFile.path}")
-      FileDocumentManager.getInstance().getCachedDocument(resourceFile)?.text ?: VfsUtilCore.loadText(resourceFile)
+      VfsUtilCore.loadText(resourceFile)
     }
     catch (e: IOException) {
       LOG.warn("Cannot load split-mode resource '$resourcePath' from project file ${resourceFile.path}", e)
