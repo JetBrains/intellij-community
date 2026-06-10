@@ -270,6 +270,8 @@ class ContentModuleDescriptor(
 
   override val moduleDependencies: ModuleDependencies = convertDependencies(raw.dependencies, parent)
 
+  override val pluginAliases: List<PluginId> = filterBackendRdClientAlias(super.pluginAliases, parent.pluginId)
+
   override val useCoreClassLoader: Boolean
     get() = parent.useCoreClassLoader
   override val useIdeaClassLoader: Boolean = raw.isUseIdeaClassLoader
@@ -509,3 +511,34 @@ val IdeaPluginDescriptorImpl.shortLogDescription: String get() = when (this) {
   is DependsSubDescriptor -> "<depends> config '${descriptorPath}' of plugin ${pluginId}"
   is ContentModuleDescriptor -> "module ${moduleId.displayName}"
 }
+
+/**
+ * Workaround for the `com.intellij.rd.client.capable` alias being declared in two plugins (IJPL-220139):
+ * in frontend-like modes the JetBrains Client core plugin declares it, while the dual-mode clion-radler plugin
+ * declares it in its backend-only marker module (`intellij.clion.radler.backend.marker`). That marker can never
+ * load in such modes, but its alias still conflicts with the core plugin's and would exclude the whole clion-radler
+ * plugin — so drop it from non-core content modules when `intellij.platform.backend` is unavailable.
+ *
+ * TODO remove once on-demand module loading (IJPL-242789) makes this alias-based loading of `intellij.rd.client` unnecessary
+ */
+private fun filterBackendRdClientAlias(aliases: List<PluginId>, pluginId: PluginId): List<PluginId> {
+  if (pluginId != PluginManagerCore.CORE_ID &&
+      aliases.contains(RD_CLIENT_CAPABLE_ALIAS_ID) &&
+      !isPlatformBackendModuleAvailable()) {
+    LOG.info("Plugin alias '$RD_CLIENT_CAPABLE_ALIAS_ID' is removed from a content module of plugin '$pluginId' " +
+             "because '${PLATFORM_BACKEND_MODULE_ID.displayName}' is unavailable in the current product mode")
+    return aliases.filterNot { it == RD_CLIENT_CAPABLE_ALIAS_ID }
+  }
+
+  return aliases
+}
+
+private fun isPlatformBackendModuleAvailable(): Boolean {
+  // The following logic is copied from PluginContentDescriptor.ModuleItem.determineLoadingRule
+  val initContext = PluginInitContextFactory.getInstance().getContextForEffectiveModuleLoadingRuleDetermination()
+  val backendModuleData = initContext.environmentConfiguredModules[PLATFORM_BACKEND_MODULE_ID]
+  return backendModuleData != null && backendModuleData.isAvailable
+}
+
+private val RD_CLIENT_CAPABLE_ALIAS_ID: PluginId = PluginId.getId("com.intellij.rd.client.capable")
+private val PLATFORM_BACKEND_MODULE_ID = PluginModuleId("intellij.platform.backend", PluginModuleId.JETBRAINS_NAMESPACE)
