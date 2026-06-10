@@ -23,6 +23,9 @@ interface HotSwapClassFile {
 
     @JvmStatic
     fun fromVirtualFile(virtualFile: VirtualFile): HotSwapClassFile = VirtualHotSwapFile(virtualFile)
+
+    @JvmStatic
+    fun fromBytes(bytes: ByteArray): HotSwapClassFile = ByteArrayHotSwapFile(bytes)
   }
 }
 
@@ -38,4 +41,10 @@ private class VirtualHotSwapFile(private val virtualFile: VirtualFile) : HotSwap
   override fun loadBytes(): ByteArray = virtualFile.contentsToByteArray()
 
   override fun lastModified(): Long = virtualFile.timeStamp
+}
+
+private class ByteArrayHotSwapFile(private val bytes: ByteArray) : HotSwapClassFile {
+  override fun loadBytes(): ByteArray = bytes
+
+  override fun lastModified(): Long = 0
 }

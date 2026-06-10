@@ -7,14 +7,20 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
 import org.jetbrains.annotations.ApiStatus;
@@ -22,14 +28,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 @Service(Service.Level.PROJECT)
 public final class HotSwapManager {
@@ -81,10 +92,20 @@ public final class HotSwapManager {
     }
 
     Map<String, HotSwapClassFile> result = new HashMap<>();
-    for (VirtualFile root : getClassRoots(session)) {
+    for (VirtualFile root : getClassRoots(session, qualifiedNames)) {
       if (progress.isCancelled()) {
         break;
       }
+      if (result.keySet().containsAll(qualifiedNames)) {
+        break;
+      }
+
+      Path rootPath = root.getFileSystem().getNioPath(root);
+      if (rootPath != null && Files.isRegularFile(rootPath)) {
+        collectExistingClassesFromArchive(rootPath, root.getPresentableUrl(), qualifiedNames, progress, result);
+        continue;
+      }
+
       for (String qualifiedName : qualifiedNames) {
         if (result.containsKey(qualifiedName)) {
           continue;
@@ -118,8 +139,61 @@ public final class HotSwapManager {
     return result;
   }
 
-  private static @NotNull List<VirtualFile> getClassRoots(@NotNull DebuggerSession session) {
-    return ReadAction.computeBlocking(() -> List.of(OrderEnumerator.orderEntries(session.getProject()).classes().getRoots()));
+  private static @NotNull List<VirtualFile> getClassRoots(@NotNull DebuggerSession session, @NotNull Collection<String> qualifiedNames) {
+    return ReadAction.computeBlocking(() -> {
+      Project project = session.getProject();
+      LinkedHashSet<VirtualFile> roots = new LinkedHashSet<>();
+      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      GlobalSearchScope searchScope = session.getSearchScope();
+      GlobalSearchScope allScope = GlobalSearchScope.allScope(project);
+      ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
+      for (String qualifiedName : qualifiedNames) {
+        PsiClass psiClass = findClassForHotSwap(psiFacade, qualifiedName, searchScope, allScope);
+        if (psiClass == null) {
+          continue;
+        }
+
+        PsiFile containingFile = psiClass.getContainingFile();
+        VirtualFile virtualFile = containingFile != null ? containingFile.getVirtualFile() : null;
+        if (virtualFile == null) {
+          continue;
+        }
+
+        Module module = fileIndex.getModuleForFile(virtualFile);
+        if (module == null) {
+          continue;
+        }
+
+        Collections.addAll(roots, getClassRoots(module));
+      }
+      Collections.addAll(roots, OrderEnumerator.orderEntries(project).classes().getRoots());
+      return new ArrayList<>(roots);
+    });
+  }
+
+  private static VirtualFile @NotNull [] getClassRoots(@NotNull Module module) {
+    return OrderEnumerator.orderEntries(module).withoutSdk().withoutDepModules().classes().getRoots();
+  }
+
+  private static @Nullable PsiClass findClassForHotSwap(@NotNull JavaPsiFacade psiFacade,
+                                                        @NotNull String qualifiedName,
+                                                        @NotNull GlobalSearchScope searchScope,
+                                                        @NotNull GlobalSearchScope allScope) {
+    String sourceName = qualifiedName.replace('$', '.');
+    PsiClass psiClass = psiFacade.findClass(sourceName, searchScope);
+    if (psiClass != null) return psiClass;
+
+    psiClass = psiFacade.findClass(sourceName, allScope);
+    if (psiClass != null) return psiClass;
+
+    int innerClassSeparator = qualifiedName.indexOf('$');
+    if (innerClassSeparator < 0) return null;
+
+    String topLevelName = qualifiedName.substring(0, innerClassSeparator);
+    psiClass = psiFacade.findClass(topLevelName, searchScope);
+    if (psiClass != null) return psiClass;
+
+    return psiFacade.findClass(topLevelName, allScope);
   }
 
   private static @Nullable HotSwapClassFile createHotSwapFile(@NotNull VirtualFile classFile) {
@@ -128,6 +202,47 @@ public final class HotSwapManager {
       return null;
     }
     return HotSwapClassFile.fromVirtualFile(classFile);
+  }
+
+  @SuppressWarnings("IO_FILE_USAGE")
+  private static void collectExistingClassesFromArchive(@NotNull Path archive,
+                                                        @NotNull String presentableUrl,
+                                                        @NotNull Collection<String> qualifiedNames,
+                                                        @NotNull HotSwapProgress progress,
+                                                        @NotNull Map<String, HotSwapClassFile> result) {
+    try (JarFile jarFile = new JarFile(archive.toFile())) {
+      for (String qualifiedName : qualifiedNames) {
+        if (progress.isCancelled()) {
+          return;
+        }
+        if (result.containsKey(qualifiedName)) {
+          continue;
+        }
+
+        String relativePath = getClassFileRelativePath(qualifiedName);
+        HotSwapClassFile hotSwapFile = createHotSwapFile(jarFile, relativePath);
+        if (hotSwapFile == null) {
+          continue;
+        }
+
+        progress.setText(JavaDebuggerBundle.message("progress.hotswap.scanning.path", presentableUrl + "!/" + relativePath));
+        result.put(qualifiedName, hotSwapFile);
+      }
+    }
+    catch (IOException ignored) {
+    }
+  }
+
+  private static @Nullable HotSwapClassFile createHotSwapFile(@NotNull JarFile jarFile, @NotNull String relativePath) throws IOException {
+    JarEntry entry = jarFile.getJarEntry(relativePath);
+    if (entry == null || entry.isDirectory()) {
+      return null;
+    }
+    byte[] bytes;
+    try (InputStream inputStream = jarFile.getInputStream(entry)) {
+      bytes = inputStream.readAllBytes();
+    }
+    return HotSwapClassFile.fromBytes(bytes);
   }
 
   private static @NotNull String getClassFileRelativePath(@NotNull String qualifiedName) {
