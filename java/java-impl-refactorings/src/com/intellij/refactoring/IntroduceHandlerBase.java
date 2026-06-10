@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.lang.ContextAwareActionHandler;
@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -25,15 +26,30 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
 
   @Override
   public boolean isAvailableForQuickList(@NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext dataContext) {
-    final PsiElement[] elements = ExtractMethodHandler.getElements(file.getProject(), editor, file);
-    if (elements.length > 0) return true;
+    SelectionModel model = editor.getSelectionModel();
+    int caretOffset = editor.getCaretModel().getOffset();
+    TextRange selectedRange = model.hasSelection() ?
+                              new TextRange(model.getSelectionStart(), model.getSelectionEnd()) : new TextRange(caretOffset, caretOffset);
+    if (isAvailableForQuickList(file, selectedRange)) return true;
     return acceptLocalVariable() && findLocalVariable(editor, file) != null;
+  }
+
+  /**
+   * Checks whether the introduce variable refactoring can be invoked from the refactoring popup
+   * @param file {@link PsiFile} in which the refactoring is invoked
+   * @param range {@link TextRange} of the selection
+   */
+  public static boolean isAvailableForQuickList(@NotNull PsiFile file, @NotNull TextRange range) {
+    final PsiElement[] elements = ExtractMethodHandler.getElements(file.getProject(), file, range);
+    if (elements.length > 0) return true;
+    return false;
   }
 
   private static @Nullable PsiLocalVariable findLocalVariable(@NotNull Editor editor, @NotNull PsiFile file) {
     SelectionModel selection = editor.getSelectionModel();
     if (selection.hasSelection()) {
-      return PsiTreeUtil.findElementOfClassAtRange(file, selection.getSelectionStart(), selection.getSelectionEnd(), PsiLocalVariable.class);
+      return PsiTreeUtil.findElementOfClassAtRange(file, selection.getSelectionStart(), selection.getSelectionEnd(),
+                                                   PsiLocalVariable.class);
     }
     else {
       return PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiLocalVariable.class);
@@ -51,7 +67,8 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
     final Editor editor;
     if (dataContext != null) {
       final Editor editorFromDC = CommonDataKeys.EDITOR.getData(dataContext);
-      final PsiFile cachedPsiFile = editorFromDC != null ? PsiDocumentManager.getInstance(project).getCachedPsiFile(editorFromDC.getDocument()) : null;
+      final PsiFile cachedPsiFile =
+        editorFromDC != null ? PsiDocumentManager.getInstance(project).getCachedPsiFile(editorFromDC.getDocument()) : null;
       if (PsiTreeUtil.isAncestor(cachedPsiFile, tempExpr, false)) {
         editor = editorFromDC;
       }
@@ -69,7 +86,7 @@ public abstract class IntroduceHandlerBase implements RefactoringActionHandler, 
     if (element instanceof PsiExpression) {
       invokeImpl(project, (PsiExpression)element, editor);
     }
-    else if(element instanceof PsiLocalVariable) {
+    else if (element instanceof PsiLocalVariable) {
       invokeImpl(project, (PsiLocalVariable)element, editor);
     }
     else {
