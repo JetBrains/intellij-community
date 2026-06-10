@@ -477,7 +477,10 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       type is PyCustomType && hasUnclearClassParent(type) -> true
       type is PyClassType && isDynamicClass(type, reference, name) -> true
       type is PyFunctionTypeImpl && hasUnknownAttrsDecorator(type) -> true
-      type is PyModuleType && moduleDefinesGetAttr(type) -> true
+
+      type is PyModuleType &&
+      type.module.languageLevel.isAtLeast(LanguageLevel.PYTHON37) ->
+        definesGetAttr(type.module, myTypeEvalContext)
 
       type != null -> isIgnoredByExtension(type, name)
       else -> false
@@ -519,12 +522,6 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
   private fun hasUnknownAttrsDecorator(type: PyFunctionTypeImpl): Boolean {
     val callable = type.callable
     return callable is PyFunction && PyKnownDecoratorUtil.hasUnknownOrUpdatingAttributesDecorator(callable, myTypeEvalContext)
-  }
-
-  /** Python 3.7+ module-level `__getattr__` defers unresolved attribute lookups to runtime. */
-  private fun moduleDefinesGetAttr(type: PyModuleType): Boolean {
-    val module = type.module
-    return module.languageLevel.isAtLeast(LanguageLevel.PYTHON37) && definesGetAttr(module, myTypeEvalContext)
   }
 
   private fun isIgnoredByExtension(type: PyType, name: String): Boolean =
