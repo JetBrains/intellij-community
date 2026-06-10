@@ -29,12 +29,30 @@ interface PerformanceListener {
    */
   fun uiFreezeRecorded(durationMs: Long, reportDir: Path?) {}
 
+  // used in 3rd party plugin
+  @Deprecated("Use uiResponded(latencyMs: Long, wasFreezePopupShown: Boolean)", ReplaceWith("uiResponded(latencyMs, false)"))
+  fun uiResponded(latencyMs: Long) {}
+
   /**
    * Invoked on each UI response sampled every `performance.watcher.sampling.interval.ms` set in the Registry.
    * Executed not in EDT.
-   * @param latencyMs time between scheduling a UI event and executing it, in milliseconds
    */
-  fun uiResponded(latencyMs: Long) {}
+  fun uiResponded(uiLagData: UiLagData) {
+    @Suppress("DEPRECATION")
+    uiResponded(uiLagData.latencyMs)
+  }
+
+  data class UiLagData(
+    /**
+     * Time between scheduling a UI event and executing it, in milliseconds
+     */
+    val latencyMs: Long,
+    /**
+     * Whether the freeze popup ('$ProductName' is not responding) was shown during the UI response.
+     * The appearance of this popup means that the UI was frozen due to processing of the Read-Write lock.
+     */
+    val wasFreezePopupShown: Boolean,
+    )
 
   /**
    * Invoked after thread state has been dumped to a file.

@@ -23,16 +23,16 @@ internal class FusFreezeReporter : PerformanceListener {
     }
   }
 
-  override fun uiResponded(latencyMs: Long) {
+  override fun uiResponded(uiLagData: PerformanceListener.UiLagData) {
     val currentTime = System.nanoTime()
     val elapsedMs = TimeUnit.NANOSECONDS.toMillis(currentTime - previousLoggedUiResponse)
     if (elapsedMs >= UI_RESPONSE_LOGGING_INTERVAL_MS) {
       previousLoggedUiResponse = currentTime
-      UILatencyLogger.logLatency(latencyMs)
+      UILatencyLogger.logLatency(uiLagData.latencyMs)
     }
-    if (latencyMs >= TOLERABLE_UI_LATENCY && !isDebugEnabled) {
+    if (uiLagData.latencyMs >= TOLERABLE_UI_LATENCY && !isDebugEnabled) {
       val hasIndexingGoingOn = ProjectManager.getInstance().openProjects.any { DumbService.isDumb(it) }
-      UILatencyLogger.logLagging(latencyMs, hasIndexingGoingOn)
+      UILatencyLogger.logLagging(uiLagData.latencyMs, hasIndexingGoingOn, uiLagData.wasFreezePopupShown)
     }
   }
 }

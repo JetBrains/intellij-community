@@ -35,6 +35,7 @@ import java.awt.event.MouseEvent
 import java.nio.file.Files
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JRootPane
 import javax.swing.SwingUtilities
@@ -80,6 +81,10 @@ object SuvorovProgress {
 
   private val title: AtomicReference<@Nls String?> = AtomicReference()
 
+  // a counter that is incremented each time SuvorovProgress _technically_ appears and disappears, even without the freeze popup UI.
+  // even values correspond to the dormant state (EDT is free from blocking on the lock), odd values correspond to the active state (UI is currently shown)
+  private val counter: AtomicLong = AtomicLong()
+
   fun <T> withProgressTitle(title: String, action: () -> T): T {
     val oldTitle = this.title.getAndSet(title)
     try {
@@ -124,50 +129,55 @@ object SuvorovProgress {
 
   @JvmStatic
   fun dispatchEventsUntilComputationCompletes(awaitedValue: Deferred<*>) {
-    val showingDelay = Registry.get("ide.suvorov.progress.showing.delay.ms").asInteger()
+    counter.incrementAndGet()
+    try {
+      val showingDelay = Registry.get("ide.suvorov.progress.showing.delay.ms").asInteger()
 
-    tryProgressWithPendingBackgroundWriteAction()
+      tryProgressWithPendingBackgroundWriteAction()
 
-    processInvocationEventsWithoutDialog(awaitedValue, showingDelay)
+      processInvocationEventsWithoutDialog(awaitedValue, showingDelay)
 
-    if (awaitedValue.isCompleted) {
-      return
-    }
+      if (awaitedValue.isCompleted) {
+        return
+      }
 
-    LifecycleUsageTriggerCollector.onFreezePopupShown()
+      LifecycleUsageTriggerCollector.onFreezePopupShown()
 
-    // in tests, there is no UI scale, but we still want to run SuvorovProgress
-    val isScaleInitialized = (application.isUnitTestMode || JBUIScale.isInitialized())
+      // in tests, there is no UI scale, but we still want to run SuvorovProgress
+      val isScaleInitialized = (application.isUnitTestMode || JBUIScale.isInitialized())
 
-    val value = if (!LoadingState.COMPONENTS_LOADED.isOccurred || !isScaleInitialized) {
-      "None"
-    }
-    else {
-      Registry.get("ide.suvorov.progress.kind").selectedOption
-    }
-    when (value) {
-      "None" -> processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
-      "NiceOverlay" -> {
-        try {
-          val currentFocusedPane = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow?.let(SwingUtilities::getRootPane)
-          // IJPL-203107 in remote development, there is no graphics for a component
-          if (currentFocusedPane == null || GraphicsUtil.safelyGetGraphics(currentFocusedPane) == null) {
-            // can happen also in tests
+      val value = if (!LoadingState.COMPONENTS_LOADED.isOccurred || !isScaleInitialized) {
+        "None"
+      }
+      else {
+        Registry.get("ide.suvorov.progress.kind").selectedOption
+      }
+      when (value) {
+        "None" -> processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
+        "NiceOverlay" -> {
+          try {
+            val currentFocusedPane = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusedWindow?.let(SwingUtilities::getRootPane)
+            // IJPL-203107 in remote development, there is no graphics for a component
+            if (currentFocusedPane == null || GraphicsUtil.safelyGetGraphics(currentFocusedPane) == null) {
+              // can happen also in tests
+              processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
+            }
+            else if (title.get() != null) {
+              showPotemkinProgress(awaitedValue, true)
+            } else {
+              showNiceOverlay(awaitedValue, currentFocusedPane)
+            }
+          } catch (e: Throwable) {
+            logErrorReliably(e)
+            // we still must wait for deferred with the processing of transferred events.
             processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
           }
-          else if (title.get() != null) {
-            showPotemkinProgress(awaitedValue, true)
-          } else {
-            showNiceOverlay(awaitedValue, currentFocusedPane)
-          }
-        } catch (e: Throwable) {
-          logErrorReliably(e)
-          // we still must wait for deferred with the processing of transferred events.
-          processInvocationEventsWithoutDialog(awaitedValue, Int.MAX_VALUE)
         }
+        "Bar", "Overlay" -> showPotemkinProgress(awaitedValue, isBar = value == "Bar")
+        else -> throw IllegalArgumentException("Unknown value for registry key `ide.freeze.fake.progress.kind`: $value")
       }
-      "Bar", "Overlay" -> showPotemkinProgress(awaitedValue, isBar = value == "Bar")
-      else -> throw IllegalArgumentException("Unknown value for registry key `ide.freeze.fake.progress.kind`: $value")
+    } finally {
+      counter.incrementAndGet()
     }
   }
 
@@ -283,6 +293,19 @@ object SuvorovProgress {
     @Suppress("ControlFlowWithEmptyBody")
     while (eternalStealer.dispatchExistingEvent(0, null) != EternalEventStealer.DispatchResult.NO_EVENT_PROCESSED) {
     }
+  }
+
+  data class CounterStamp(val counter: Long) {
+    fun wasShownSince(other: CounterStamp): Boolean {
+      return counter > other.counter
+    }
+  }
+
+  /**
+   * Returns an object that encapsulates the number of times the Freeze Popup was shown (or was going to be shown) since the last call to this method.
+   */
+  fun currentFreezePopupStamp(): CounterStamp {
+    return CounterStamp(counter.get())
   }
 }
 

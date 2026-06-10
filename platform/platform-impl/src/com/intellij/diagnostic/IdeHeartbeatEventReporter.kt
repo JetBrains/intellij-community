@@ -127,7 +127,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 81)
+  private val GROUP = EventLogGroup("performance", 82)
 
   private val SYSTEM_CPU_LOAD = EventFields.Int("system_cpu_load")
   private val SWAP_LOAD = EventFields.Int("swap_load")
@@ -172,7 +172,12 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   }
 
   private val LATENCY = GROUP.registerEvent("ui.latency", EventFields.DurationMs)
-  private val LAGGING = GROUP.registerEvent("ui.lagging", EventFields.DurationMs, EventFields.Boolean("during_indexing"))
+  private val LAGGING = GROUP.registerEvent(
+    eventId = "ui.lagging",
+    eventField1 = EventFields.DurationMs,
+    eventField2 = EventFields.Boolean("during_indexing"),
+    eventField3 = EventFields.Boolean("freeze_popup_shown", description = "Whether the Freeze Popup was shown (or going to be shown) during the UI lag. " +
+                                                                          "The appearance of the popup indicates that the UI thread was processing the Read-Write lock."))
   private val COLD_START = EventFields.Boolean("cold_start")
   private val ACTION_POPUP_LATENCY = GROUP.registerVarargEvent(
     "popup.latency",
@@ -184,8 +189,8 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     LATENCY.log(latencyMs)
   }
 
-  fun logLagging(latencyMs: Long, hasIndexingGoingOn: Boolean) {
-    LAGGING.log(latencyMs, hasIndexingGoingOn)
+  fun logLagging(latencyMs: Long, hasIndexingGoingOn: Boolean, wasFreezePopupShown: Boolean) {
+    LAGGING.log(latencyMs, hasIndexingGoingOn, wasFreezePopupShown)
   }
 
   @JvmStatic
