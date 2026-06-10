@@ -5,7 +5,6 @@ package com.intellij.agent.workbench.pi.sessions
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.platform.eel.fs.EelFiles
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.sha256Hex
@@ -20,7 +19,7 @@ private val THEME_LOG = logger<PiThemeSupport>()
 internal class PiThemeSupport(
   private val rootDirectoryProvider: () -> Path = ::defaultPiThemeRootDirectory,
   private val extensionResourceProvider: () -> PiBundledThemeExtensionResource = ::loadBundledPiThemeExtensionResource,
-  private val themeModeProvider: () -> PiThemeMode = ::detectCurrentPiThemeMode,
+  private val themeSnapshotProvider: () -> PiThemeSnapshot = PiThemeSnapshotBuilder()::buildSnapshot,
 ) {
   @Volatile
   private var materializationAttempted: Boolean = false
@@ -107,7 +106,7 @@ internal class PiThemeSupport(
   }
 
   private fun writeCurrentThemeState(stateFilePath: Path) {
-    writeStringIfChanged(stateFilePath, themeModeProvider().stateValue + "\n")
+    writeStringIfChanged(stateFilePath, themeSnapshotProvider().toJsonString() + "\n")
   }
 
   companion object {
@@ -124,15 +123,6 @@ internal class PiBundledThemeExtensionResource(
   val fileName: String,
   val bytes: ByteArray,
 )
-
-internal enum class PiThemeMode(val stateValue: String) {
-  DARK("dark"),
-  LIGHT("light"),
-}
-
-private fun detectCurrentPiThemeMode(): PiThemeMode {
-  return if (EditorColorsManager.getInstance().isDarkEditor) PiThemeMode.DARK else PiThemeMode.LIGHT
-}
 
 private fun defaultPiThemeRootDirectory(): Path {
   return PathManager.getSystemDir().resolve("agent-workbench").resolve("pi-themes")
@@ -233,4 +223,4 @@ private const val PI_THEME_STATE_DIRECTORY_NAME: String = "state"
 private const val PI_THEME_STATE_FILE_NAME: String = "current-theme.txt"
 private const val PI_LEGACY_THEME_DIRECTORY_NAME: String = "themes"
 private const val PI_THEME_MANIFEST_FILE_NAME: String = ".awb-theme-manifest"
-private const val PI_THEME_MATERIALIZATION_FORMAT_VERSION: Int = 2
+private const val PI_THEME_MATERIALIZATION_FORMAT_VERSION: Int = 3

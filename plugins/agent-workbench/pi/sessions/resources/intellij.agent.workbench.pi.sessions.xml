@@ -9,6 +9,7 @@
     <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
     <module name="intellij.terminal.backend"/>
   </dependencies>
   <!-- endregion -->
@@ -23,5 +24,7 @@
   <applicationListeners>
     <listener class="com.intellij.agent.workbench.pi.sessions.PiThemeChangeListener"
               topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
+    <listener class="com.intellij.agent.workbench.pi.sessions.PiThemeChangeListener"
+              topic="com.intellij.ide.ui.LafManagerListener"/>
   </applicationListeners>
 </idea-plugin>

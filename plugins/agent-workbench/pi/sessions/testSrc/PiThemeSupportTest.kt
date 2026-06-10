@@ -20,7 +20,7 @@ class PiThemeSupportTest {
   fun materializesBundledExtensionManifestAndCurrentThemeState() {
     val support = supportFor(
       PiBundledThemeExtensionResource("agent-workbench-theme.ts", bytes("extension-v1")),
-      themeModeProvider = { PiThemeMode.DARK },
+      themeSnapshotProvider = { snapshot("islands-dark", "Islands Dark", dark = true) },
     )
 
     val resources = support.launchResourcesOrNull()
@@ -32,12 +32,13 @@ class PiThemeSupportTest {
       )
     )
     assertThat(Files.readString(resources!!.extensionPath)).isEqualTo("extension-v1")
-    assertThat(Files.readString(resources.stateFilePath)).isEqualTo("dark\n")
+    assertThat(Files.readString(resources.stateFilePath))
+      .contains("\"themeId\":\"islands-dark\"", "\"dark\":true")
     assertThat(tempDir.resolve(".awb-theme-manifest")).exists()
     assertThat(Files.readString(tempDir.resolve(".awb-theme-manifest")))
       .isEqualTo(
         """
-          formatVersion=2
+          formatVersion=3
           agent-workbench-theme.ts=${DigestUtil.sha256Hex(bytes("extension-v1"))}
         """.trimIndent() + "\n"
       )
@@ -89,18 +90,18 @@ class PiThemeSupportTest {
   @Test
   fun cachesMaterializedExtensionAfterFirstSuccessAndRefreshesThemeState() {
     var loadCount = 0
-    var themeMode = PiThemeMode.DARK
+    var themeId = "islands-dark"
     val support = PiThemeSupport(
       rootDirectoryProvider = { tempDir },
       extensionResourceProvider = {
         loadCount++
         PiBundledThemeExtensionResource("agent-workbench-theme.ts", bytes("extension-v1"))
       },
-      themeModeProvider = { themeMode },
+      themeSnapshotProvider = { snapshot(themeId, themeId, dark = themeId != "islands-light") },
     )
 
     val first = support.launchResourcesOrNull()
-    themeMode = PiThemeMode.LIGHT
+    themeId = "islands-light"
     val second = support.launchResourcesOrNull()
 
     assertThat(first).isEqualTo(
@@ -111,22 +112,22 @@ class PiThemeSupportTest {
     )
     assertThat(second).isEqualTo(first)
     assertThat(loadCount).isEqualTo(1)
-    assertThat(Files.readString(second!!.stateFilePath)).isEqualTo("light\n")
+    assertThat(Files.readString(second!!.stateFilePath)).contains("\"themeId\":\"islands-light\"")
   }
 
   @Test
   fun syncCurrentThemeStateUsesMaterializedStateFile() {
-    var themeMode = PiThemeMode.DARK
+    var themeId = "islands-dark"
     val support = supportFor(
       PiBundledThemeExtensionResource("agent-workbench-theme.ts", bytes("extension-v1")),
-      themeModeProvider = { themeMode },
+      themeSnapshotProvider = { snapshot(themeId, themeId, dark = themeId != "islands-light") },
     )
     val resources = support.launchResourcesOrNull()
 
-    themeMode = PiThemeMode.LIGHT
+    themeId = "islands-light"
     support.syncCurrentThemeState()
 
-    assertThat(Files.readString(resources!!.stateFilePath)).isEqualTo("light\n")
+    assertThat(Files.readString(resources!!.stateFilePath)).contains("\"themeId\":\"islands-light\"")
   }
 
   @Test
@@ -141,14 +142,82 @@ class PiThemeSupportTest {
 
   private fun supportFor(
     extension: PiBundledThemeExtensionResource,
-    themeModeProvider: () -> PiThemeMode = { PiThemeMode.DARK },
+    themeSnapshotProvider: () -> PiThemeSnapshot = { snapshot("islands-dark", "Islands Dark", dark = true) },
   ): PiThemeSupport {
     return PiThemeSupport(
       rootDirectoryProvider = { tempDir },
       extensionResourceProvider = { extension },
-      themeModeProvider = themeModeProvider,
+      themeSnapshotProvider = themeSnapshotProvider,
     )
   }
 
   private fun bytes(text: String): ByteArray = text.toByteArray(StandardCharsets.UTF_8)
 }
+
+private fun snapshot(themeId: String, themeName: String, dark: Boolean): PiThemeSnapshot {
+  return PiThemeSnapshot(
+    formatVersion = PI_THEME_STATE_FORMAT_VERSION,
+    themeId = themeId,
+    themeName = themeName,
+    dark = dark,
+    fg = PI_THEME_TEST_FG_KEYS.associateWith { "#111111" },
+    bg = PI_THEME_TEST_BG_KEYS.associateWith { "#222222" },
+  )
+}
+
+internal val PI_THEME_TEST_FG_KEYS = listOf(
+  "accent",
+  "border",
+  "borderAccent",
+  "borderMuted",
+  "success",
+  "error",
+  "warning",
+  "muted",
+  "dim",
+  "text",
+  "thinkingText",
+  "userMessageText",
+  "customMessageText",
+  "customMessageLabel",
+  "toolTitle",
+  "toolOutput",
+  "mdHeading",
+  "mdLink",
+  "mdLinkUrl",
+  "mdCode",
+  "mdCodeBlock",
+  "mdCodeBlockBorder",
+  "mdQuote",
+  "mdQuoteBorder",
+  "mdHr",
+  "mdListBullet",
+  "toolDiffAdded",
+  "toolDiffRemoved",
+  "toolDiffContext",
+  "syntaxComment",
+  "syntaxKeyword",
+  "syntaxFunction",
+  "syntaxVariable",
+  "syntaxString",
+  "syntaxNumber",
+  "syntaxType",
+  "syntaxOperator",
+  "syntaxPunctuation",
+  "thinkingOff",
+  "thinkingMinimal",
+  "thinkingLow",
+  "thinkingMedium",
+  "thinkingHigh",
+  "thinkingXhigh",
+  "bashMode",
+)
+
+internal val PI_THEME_TEST_BG_KEYS = listOf(
+  "selectedBg",
+  "userMessageBg",
+  "customMessageBg",
+  "toolPendingBg",
+  "toolSuccessBg",
+  "toolErrorBg",
+)
