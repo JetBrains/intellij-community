@@ -31,6 +31,7 @@ import java.util.Properties;
  * Expose system-wide screen reader status for accessibility features.
  */
 public final class ScreenReader {
+  public static final String ASSISTIVE_TECHNOLOGIES_PROPERTY = "javax.accessibility.assistive_technologies";
   public static final String ATK_WRAPPER = "org.GNOME.Accessibility.AtkWrapper";
   public static final String ACCESS_BRIDGE = "com.sun.java.accessibility.AccessBridge";
 

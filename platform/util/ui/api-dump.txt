@@ -5684,6 +5684,7 @@ f:com.intellij.util.ui.accessibility.AccessibleContextUtil
 - sf:setParent(java.awt.Component,java.awt.Component):V
 f:com.intellij.util.ui.accessibility.ScreenReader
 - sf:ACCESS_BRIDGE:java.lang.String
+- sf:ASSISTIVE_TECHNOLOGIES_PROPERTY:java.lang.String
 - sf:ATK_WRAPPER:java.lang.String
 - sf:SCREEN_READER_ACTIVE_PROPERTY:java.lang.String
 - <init>():V

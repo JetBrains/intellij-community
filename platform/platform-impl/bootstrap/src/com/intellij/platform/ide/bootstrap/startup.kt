@@ -4,6 +4,7 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
+import com.intellij.accessibility.LinuxAccessibilitySupport
 import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.CliResult
@@ -382,6 +383,14 @@ fun startApplication(
 
       ClassicUiToIslandsMigration.migrateSchemeAndUiSettingsIfNeeded()
       applyIslandsTheme(afterImportSettings = false)
+
+      if (OS.CURRENT == OS.Linux && InitialConfigImportState.isFirstSession()) {
+        LinuxAccessibilitySupport.showLinuxAccessibilityDialog()
+        if (LinuxAccessibilitySupport.applyRequestedChanges()) {
+          ApplicationManagerEx.getApplicationEx().restart(true)
+        }
+      }
+
       executeApplicationStarter(starter, args)
     }
     // no need to use a pool once started
