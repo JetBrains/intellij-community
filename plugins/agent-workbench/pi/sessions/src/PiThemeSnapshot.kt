@@ -5,6 +5,7 @@ import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.laf.UIThemeLookAndFeelInfo
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -52,6 +53,9 @@ internal data class PiIdeThemeInfo(
 internal data class PiEditorThemeColors(
   val defaultForeground: Color,
   val defaultBackground: Color,
+  val terminalForeground: Color,
+  val terminalBackground: Color,
+  val caretRow: Color?,
   val selectionBackground: Color?,
   val addedLines: Color?,
   val deletedLines: Color?,
@@ -255,15 +259,15 @@ internal class PiThemeSnapshotBuilder(
 ) {
   fun buildSnapshot(): PiThemeSnapshot {
     val editorTheme = editorThemeProvider()
+    val terminalBackground = editorTheme.terminalBackground
+    val terminalForeground = editorTheme.terminalForeground
     val ideTheme = ideThemeProvider() ?: PiIdeThemeInfo(
-      id = if (isDark(editorTheme.defaultBackground)) PiThemeVariant.ISLANDS_DARK.fallbackThemeId else PiThemeVariant.ISLANDS_LIGHT.fallbackThemeId,
-      name = if (isDark(editorTheme.defaultBackground)) PiThemeVariant.ISLANDS_DARK.fallbackThemeName else PiThemeVariant.ISLANDS_LIGHT.fallbackThemeName,
-      dark = isDark(editorTheme.defaultBackground),
+      id = if (isDark(terminalBackground)) PiThemeVariant.ISLANDS_DARK.fallbackThemeId else PiThemeVariant.ISLANDS_LIGHT.fallbackThemeId,
+      name = if (isDark(terminalBackground)) PiThemeVariant.ISLANDS_DARK.fallbackThemeName else PiThemeVariant.ISLANDS_LIGHT.fallbackThemeName,
+      dark = isDark(terminalBackground),
     )
     val variant = ideTheme.variant
     val fallback = variant.fallback
-    val defaultBackground = editorTheme.defaultBackground
-    val defaultForeground = editorTheme.defaultForeground
     val accent = uiColor("Component.focusColor", "Focus.color", "Button.default.focusColor") ?: fallback.accent.toColor()
     val success = uiColor("Label.successForeground") ?: fallback.success.toColor()
     val error = uiColor("Label.errorForeground", "Component.errorFocusColor", "ValidationTooltip.errorForeground")
@@ -277,8 +281,10 @@ internal class PiThemeSnapshotBuilder(
     val selectedBg = editorTheme.selectionBackground
                      ?: uiColor("List.selectionBackground", "Tree.selectionBackground", "Table.selectionBackground")
                      ?: fallback.selectedBg.toColor()
-    val userMessageBg = uiColor("Panel.background", "TextArea.background") ?: fallback.userMessageBg.toColor()
-    val customMessageBg = uiColor("Banner.aiBackground", "Notification.background") ?: blend(accent, defaultBackground, 0.12)
+    val userMessageBg = editorTheme.caretRow?.takeIf { it != terminalBackground }
+                        ?: uiColor("Panel.background", "TextArea.background")
+                        ?: fallback.userMessageBg.toColor()
+    val customMessageBg = uiColor("Banner.aiBackground", "Notification.background") ?: blend(accent, terminalBackground, 0.12)
     val pendingBg = uiColor("ToolWindow.background", "Panel.background") ?: fallback.toolPendingBg.toColor()
 
     val fg = linkedMapOf(
@@ -291,18 +297,18 @@ internal class PiThemeSnapshotBuilder(
       "warning" to warning,
       "muted" to muted,
       "dim" to dim,
-      "text" to defaultForeground,
+      "text" to terminalForeground,
       "thinkingText" to muted,
-      "userMessageText" to defaultForeground,
-      "customMessageText" to defaultForeground,
+      "userMessageText" to terminalForeground,
+      "customMessageText" to terminalForeground,
       "customMessageLabel" to (uiColor("Component.linkColor", "Link.activeForeground") ?: accent),
-      "toolTitle" to defaultForeground,
+      "toolTitle" to terminalForeground,
       "toolOutput" to muted,
       "mdHeading" to warning,
       "mdLink" to (editorTheme.hyperlink ?: accent),
       "mdLinkUrl" to muted,
       "mdCode" to (editorTheme.type ?: editorTheme.number ?: accent),
-      "mdCodeBlock" to (editorTheme.string ?: defaultForeground),
+      "mdCodeBlock" to (editorTheme.string ?: terminalForeground),
       "mdCodeBlockBorder" to border,
       "mdQuote" to muted,
       "mdQuoteBorder" to borderMuted,
@@ -327,16 +333,16 @@ internal class PiThemeSnapshotBuilder(
       "thinkingHigh" to fallback.thinkingHigh.toColor(),
       "thinkingXhigh" to error,
       "bashMode" to success,
-    ).mapValues { (_, color) -> color.toPiHex(defaultBackground) }
+    ).mapValues { (_, color) -> color.toPiHex(terminalBackground) }
 
     val bg = linkedMapOf(
       "selectedBg" to selectedBg,
       "userMessageBg" to userMessageBg,
       "customMessageBg" to customMessageBg,
       "toolPendingBg" to pendingBg,
-      "toolSuccessBg" to (uiColor("Banner.successBackground") ?: blend(success, defaultBackground, if (ideTheme.dark) 0.18 else 0.10)),
-      "toolErrorBg" to (uiColor("Banner.errorBackground") ?: blend(error, defaultBackground, if (ideTheme.dark) 0.18 else 0.08)),
-    ).mapValues { (_, color) -> color.toPiHex(defaultBackground) }
+      "toolSuccessBg" to (uiColor("Banner.successBackground") ?: blend(success, terminalBackground, if (ideTheme.dark) 0.18 else 0.10)),
+      "toolErrorBg" to (uiColor("Banner.errorBackground") ?: blend(error, terminalBackground, if (ideTheme.dark) 0.18 else 0.08)),
+    ).mapValues { (_, color) -> color.toPiHex(terminalBackground) }
 
     return PiThemeSnapshot(
       formatVersion = PI_THEME_STATE_FORMAT_VERSION,
@@ -369,10 +375,18 @@ private fun currentEditorThemeColors(): PiEditorThemeColors {
   return scheme.toPiEditorThemeColors()
 }
 
+// External names of ConsoleViewContentType.NORMAL_OUTPUT_KEY / CONSOLE_BACKGROUND_KEY, which the IDE
+// terminal uses for its default colors; the declaring class lives in a module this one does not depend on.
+private val TERMINAL_FOREGROUND_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_NORMAL_OUTPUT")
+private val TERMINAL_BACKGROUND_KEY = ColorKey.createColorKey("CONSOLE_BACKGROUND_KEY")
+
 internal fun EditorColorsScheme.toPiEditorThemeColors(): PiEditorThemeColors {
   return PiEditorThemeColors(
     defaultForeground = defaultForeground,
     defaultBackground = defaultBackground,
+    terminalForeground = foreground(TERMINAL_FOREGROUND_KEY) ?: defaultForeground,
+    terminalBackground = getColor(TERMINAL_BACKGROUND_KEY) ?: defaultBackground,
+    caretRow = getColor(EditorColors.CARET_ROW_COLOR),
     selectionBackground = getColor(EditorColors.SELECTION_BACKGROUND_COLOR),
     addedLines = getColor(EditorColors.ADDED_LINES_COLOR),
     deletedLines = getColor(EditorColors.DELETED_LINES_COLOR),

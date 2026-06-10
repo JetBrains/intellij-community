@@ -37,9 +37,12 @@ class PiThemeSnapshotBuilderTest {
     assertThat(snapshot.fg).containsEntry("muted", "#73767C")
     assertThat(snapshot.fg).containsEntry("dim", "#4C4F56")
     assertThat(snapshot.fg).containsEntry("thinkingHigh", PiThemeVariant.HIGH_CONTRAST.fallback.thinkingHigh)
+    assertThat(snapshot.fg).containsEntry("text", "#131313")
+    assertThat(snapshot.fg).containsEntry("userMessageText", "#131313")
     assertThat(snapshot.fg).containsEntry("syntaxKeyword", "#888888")
     assertThat(snapshot.fg).containsEntry("toolDiffAdded", "#444444")
     assertThat(snapshot.bg).containsEntry("selectedBg", "#333333")
+    assertThat(snapshot.bg).containsEntry("userMessageBg", "#2A2A2A")
     assertThat(snapshot.bg).containsEntry("customMessageBg", "#261E3C")
     assertThat(snapshot.bg).containsEntry("toolSuccessBg", "#16261C")
     assertThat(snapshot.bg).containsEntry("toolErrorBg", "#371B1C")
@@ -64,6 +67,29 @@ class PiThemeSnapshotBuilderTest {
     assertThat(lightSnapshot.fg).containsEntry("accent", PiThemeVariant.ISLANDS_LIGHT.fallback.accent)
   }
 
+  @Test
+  fun fallsBackToPanelBackgroundWhenCaretRowMatchesTerminalBackground() {
+    val snapshot = PiThemeSnapshotBuilder(
+      ideThemeProvider = { PiIdeThemeInfo(id = "Islands Dark", name = "Islands Dark", dark = true) },
+      editorThemeProvider = { editorThemeColors(caretRow = Color(0x222222), terminalBackground = Color(0x222222)) },
+      uiColorProvider = { key -> if (key == "Panel.background") Color(0x2B2D30) else null },
+    ).buildSnapshot()
+
+    assertThat(snapshot.bg).containsEntry("userMessageBg", "#2B2D30")
+  }
+
+  @Test
+  fun blendsFallbackBackgroundsAgainstTerminalBackground() {
+    val snapshot = PiThemeSnapshotBuilder(
+      ideThemeProvider = { PiIdeThemeInfo(id = "Islands Dark", name = "Islands Dark", dark = true) },
+      editorThemeProvider = { editorThemeColors(terminalBackground = Color(0x000000)) },
+      uiColorProvider = { null },
+    ).buildSnapshot()
+
+    // blend(fallback success #6AAB73, terminal background #000000, 0.18)
+    assertThat(snapshot.bg).containsEntry("toolSuccessBg", "#131E14")
+  }
+
   companion object {
     private val UI_COLORS = mapOf(
       "Component.focusColor" to Color(0x123456),
@@ -77,10 +103,18 @@ class PiThemeSnapshotBuilderTest {
       "Banner.errorBackground" to Color(0x371B1C),
     )
 
-    private fun editorThemeColors(defaultBackground: Color = Color(0x222222)): PiEditorThemeColors {
+    private fun editorThemeColors(
+      defaultBackground: Color = Color(0x222222),
+      caretRow: Color? = Color(0x2A2A2A),
+      terminalForeground: Color = Color(0x131313),
+      terminalBackground: Color = defaultBackground,
+    ): PiEditorThemeColors {
       return PiEditorThemeColors(
         defaultForeground = Color(0x111111),
         defaultBackground = defaultBackground,
+        terminalForeground = terminalForeground,
+        terminalBackground = terminalBackground,
+        caretRow = caretRow,
         selectionBackground = Color(0x333333),
         addedLines = Color(0x444444),
         deletedLines = Color(0x555555),

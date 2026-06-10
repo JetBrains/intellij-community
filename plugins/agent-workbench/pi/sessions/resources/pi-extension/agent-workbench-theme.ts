@@ -165,7 +165,7 @@ export default function agentWorkbenchTheme(pi: ExtensionAPI) {
 }
 
 async function applyCurrentTheme(ctx: ExtensionContext): Promise<void> {
-  ctx.ui.setTheme(themeFromSnapshot(await readThemeSnapshot()));
+  ctx.ui.setTheme(themeFromSnapshot(await readThemeSnapshot(), ctx.ui));
   ctx.ui.setWorkingIndicator({
     frames: [
       ctx.ui.theme.fg("dim", "·"),
@@ -241,15 +241,63 @@ function isColorValue(value: unknown): value is string | number {
   return typeof value === "number" || (typeof value === "string" && (/^#[0-9a-fA-F]{6}$/.test(value) || value === ""));
 }
 
-function themeFromSnapshot(snapshot: PiThemeSnapshot): Theme {
+function themeFromSnapshot(snapshot: PiThemeSnapshot, ui: ExtensionContext["ui"]): Theme {
   const signature = JSON.stringify(snapshot);
   if (cachedTheme?.signature !== signature) {
     cachedTheme = {
       signature,
-      theme: new Theme(snapshot.fg, snapshot.bg, colorMode(), {name: `agent-workbench-${snapshot.themeName}`}),
+      theme: withBuiltinFallback(
+        new Theme(snapshot.fg, snapshot.bg, colorMode(), {name: `agent-workbench-${snapshot.themeName}`}),
+        ui.getTheme(snapshot.dark ? "dark" : "light"),
+      ),
     };
   }
   return cachedTheme.theme;
+}
+
+// Pi may add theme tokens that this snapshot format does not provide yet; Theme.fg/bg
+// throw on unknown tokens, so delegate those to the built-in theme instead of crashing.
+function withBuiltinFallback(theme: Theme, base: Theme | undefined): Theme {
+  if (base === undefined) {
+    return theme;
+  }
+  const fg = theme.fg.bind(theme);
+  const bg = theme.bg.bind(theme);
+  const getFgAnsi = theme.getFgAnsi.bind(theme);
+  const getBgAnsi = theme.getBgAnsi.bind(theme);
+  theme.fg = (color, text) => {
+    try {
+      return fg(color, text);
+    }
+    catch {
+      return base.fg(color, text);
+    }
+  };
+  theme.bg = (color, text) => {
+    try {
+      return bg(color, text);
+    }
+    catch {
+      return base.bg(color, text);
+    }
+  };
+  theme.getFgAnsi = (color) => {
+    try {
+      return getFgAnsi(color);
+    }
+    catch {
+      return base.getFgAnsi(color);
+    }
+  };
+  theme.getBgAnsi = (color) => {
+    try {
+      return getBgAnsi(color);
+    }
+    catch {
+      return base.getBgAnsi(color);
+    }
+  };
+  return theme;
 }
 
 function colorMode(): "truecolor" | "256color" {
