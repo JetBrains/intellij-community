@@ -4,6 +4,7 @@ com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskSerialisatio
 com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExternalProjectSerializationService
 com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetSerialisationService
 com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencySerialisationService
+com.intellij.gradle.toolingExtension.impl.model.dslBaseScriptModel.GradleDslBaseScriptModelSerializer
 org.jetbrains.plugins.gradle.tooling.serialization.internal.IdeaProjectSerializationService
 org.jetbrains.plugins.gradle.tooling.serialization.RepositoriesModelSerializationService
 org.jetbrains.plugins.gradle.tooling.serialization.GradleExtensionsSerializationService
