@@ -15,7 +15,6 @@ f:com.intellij.ide.macro.ColumnNumberMacro
 - <init>():V
 - getDescription():java.lang.String
 f:com.intellij.ide.macro.CompilerContextMakeMacro
-- com.intellij.ide.macro.Macro
 - sf:COMPILER_CONTEXT_MAKE_KEY:com.intellij.openapi.actionSystem.DataKey
 - <init>():V
 - expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
@@ -196,19 +195,14 @@ f:com.intellij.ide.macro.LineNumberMacro
 - getDescription():java.lang.String
 a:com.intellij.ide.macro.Macro
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
-- <init>():V
 - a:expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
 - expand(com.intellij.openapi.actionSystem.DataContext,java.lang.String[]):java.lang.String
 - expandOccurence(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.lang.String
 - findOccurence(java.lang.CharSequence,I):com.intellij.openapi.util.TextRange
 - a:getDescription():java.lang.String
-- a:getName():java.lang.String
 - p:getRangeForSuffix(java.lang.CharSequence,I,I):com.intellij.openapi.util.TextRange
 - ps:getVirtualDirOrParent(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.vfs.VirtualFile
 - preview(com.intellij.openapi.actionSystem.DataContext):java.lang.String
-f:com.intellij.ide.macro.Macro$ExecutionCancelledException
-- java.lang.Exception
-- <init>():V
 c:com.intellij.ide.macro.Macro$Silent
 - com.intellij.ide.macro.Macro
 - <init>(com.intellij.ide.macro.Macro,java.lang.String):V
@@ -229,8 +223,6 @@ f:com.intellij.ide.macro.MacroManager
 - expandMacrosInString(java.lang.String,Z,com.intellij.openapi.actionSystem.DataContext,Z):java.lang.String
 - expandSilentMacros(java.lang.String,Z,com.intellij.openapi.actionSystem.DataContext):java.lang.String
 - s:getCorrectContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
-- s:getInstance():com.intellij.ide.macro.MacroManager
-- getMacros():java.util.Collection
 com.intellij.ide.macro.MacroManager$MacroExpander
 - a:expand(com.intellij.ide.macro.Macro,java.lang.String):java.lang.String
 f:com.intellij.ide.macro.ModuleFileDirMacro
@@ -280,9 +272,6 @@ f:com.intellij.ide.macro.PasswordMacro
 - getName():java.lang.String
 com.intellij.ide.macro.PathListMacro
 f:com.intellij.ide.macro.ProjectFileDirMacro
-- com.intellij.ide.macro.Macro
-- com.intellij.ide.macro.PathMacro
-- <init>():V
 - expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
 - getDescription():java.lang.String
 - getName():java.lang.String
@@ -306,8 +295,6 @@ f:com.intellij.ide.macro.PromptMacro
 - getDescription():java.lang.String
 - getName():java.lang.String
 a:com.intellij.ide.macro.PromptingMacro
-- com.intellij.ide.macro.Macro
-- <init>():V
 - f:expand(com.intellij.openapi.actionSystem.DataContext):java.lang.String
 - expandOccurence(com.intellij.openapi.actionSystem.DataContext,java.lang.String):java.lang.String
 - p:getRangeForSuffix(java.lang.CharSequence,I,I):com.intellij.openapi.util.TextRange

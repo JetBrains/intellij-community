@@ -13,16 +13,26 @@ f:com.intellij.openapi.observable.operation.core.OperationUtilKt
 - sf:getOperationInProgressProperty(com.intellij.openapi.observable.operation.core.ObservableOperationTrace):com.intellij.openapi.observable.properties.ObservableBooleanProperty
 - sf:isOperationInProgress(com.intellij.openapi.observable.operation.core.ObservableOperationTrace):Z
 f:com.intellij.openapi.observable.properties.AtomicBooleanProperty
+- com.intellij.openapi.observable.properties.AbstractObservableBooleanProperty
+- com.intellij.openapi.observable.properties.AtomicMutableBooleanProperty
 - <init>(Z):V
+- get():java.lang.Boolean
 - set(Z):V
 Fc:com.intellij.openapi.observable.properties.AtomicLazyProperty
 - com.intellij.openapi.observable.properties.AbstractObservableProperty
+- com.intellij.openapi.observable.properties.ObservableMutableProperty
 - <init>(kotlin.jvm.functions.Function0):V
+- get():java.lang.Object
 - set(java.lang.Object):V
 - updateAndGet(kotlin.jvm.functions.Function1):java.lang.Object
+com.intellij.openapi.observable.properties.AtomicMutableBooleanProperty
+- com.intellij.openapi.observable.properties.MutableBooleanProperty
+- com.intellij.openapi.observable.properties.ObservableMutableProperty
 f:com.intellij.openapi.observable.properties.AtomicProperty
 - com.intellij.openapi.observable.properties.AbstractObservableProperty
+- com.intellij.openapi.observable.properties.ObservableMutableProperty
 - <init>(java.lang.Object):V
+- get():java.lang.Object
 - set(java.lang.Object):V
 - updateAndGet(kotlin.jvm.functions.Function1):java.lang.Object
 com.intellij.openapi.observable.properties.GraphProperty

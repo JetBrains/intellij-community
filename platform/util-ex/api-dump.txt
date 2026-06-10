@@ -1,7 +1,11 @@
 f:com.intellij.credentialStore.OneTimeString
+- com.intellij.util.text.CharArrayCharSequence
 - <init>(java.lang.String):V
+- f:toCharArray():C[]
 - f:toCharArray(Z):C[]
 - f:toString(Z):java.lang.String
+f:com.intellij.openapi.application.PathManagerEx
+- sf:getAppSystemDir():java.nio.file.Path
 f:com.intellij.openapi.util.ExtensionsKt
 - sf:component1(com.intellij.openapi.util.Pair):java.lang.Object
 - sf:component2(com.intellij.openapi.util.Pair):java.lang.Object
@@ -19,16 +23,25 @@ f:com.intellij.util.ResourceUtil
 com.intellij.util.SuspendingLazy
 - a:getValue(kotlin.coroutines.Continuation):java.lang.Object
 c:com.intellij.util.containers.HashMap
+- java.util.HashMap
+- <init>():V
 - <init>(I):V
+- clear():V
 c:com.intellij.util.containers.HashSet
+- java.util.HashSet
+- <init>():V
 - <init>(I):V
 - <init>(java.util.Collection):V
 f:com.intellij.util.containers.LookbackSequenceKt
 - sf:withPrevious(kotlin.sequences.Sequence):kotlin.sequences.Sequence
 f:com.intellij.util.containers.hash.HashMap
+- java.util.HashMap
+- <init>():V
 - <init>(I):V
 f:com.intellij.util.io.HttpSecurityUtil
 - sf:createBearerAuthHeaderValue(java.lang.String):java.lang.String
+f:com.intellij.util.io.Ksuid
+- s:generate():java.lang.String
 f:com.intellij.util.io.PathKt
 - sf:basicAttributesIfExists(java.nio.file.Path):java.nio.file.attribute.BasicFileAttributes
 - sf:createDirectories(java.nio.file.Path):java.nio.file.Path

@@ -1,13 +1,21 @@
 c:com.intellij.tasks.impl.LocalTaskImpl
+- com.intellij.tasks.LocalTask
 - getCustomProperties():java.util.Map
 - getPropertiesToShowInPreview():java.util.List
 - setAdditionalProperties(java.util.Map):V
 - setPropertiesToShowInPreview(java.util.List):V
 c:com.intellij.tasks.impl.RequestFailedException
+- java.lang.RuntimeException
 - <init>(java.lang.String):V
 - <init>(java.lang.Throwable):V
 f:com.intellij.tasks.impl.TaskManagerImpl
+- com.intellij.tasks.TaskManager
+- com.intellij.openapi.Disposable
+- com.intellij.openapi.components.PersistentStateComponent
 - constructDefaultBranchName(com.intellij.tasks.Task):java.lang.String
+- getActiveTask():com.intellij.tasks.LocalTask
+- getAllRepositories():com.intellij.tasks.TaskRepository[]
+- getState():com.intellij.tasks.impl.TaskManagerImpl$Config
 - setRepositories(java.util.List):V
 - suggestBranchName(com.intellij.tasks.Task):java.lang.String
 - updateIssues(java.lang.Runnable):V

@@ -1,8 +1,12 @@
 c:com.intellij.structuralsearch.MalformedPatternException
+- com.intellij.structuralsearch.StructuralSearchException
 - <init>(java.lang.String):V
 c:com.intellij.structuralsearch.MatchOptions
+- com.intellij.openapi.util.JDOMExternalizable
+- <init>():V
 - addVariableConstraint(com.intellij.structuralsearch.MatchVariableConstraint):V
 - fillSearchCriteria(java.lang.String):V
+- isCaseSensitiveMatch():Z
 - setCaseSensitiveMatch(Z):V
 - setDialect(com.intellij.lang.Language):V
 - setFileType(com.intellij.openapi.fileTypes.LanguageFileType):V
@@ -10,23 +14,42 @@ c:com.intellij.structuralsearch.MatchOptions
 - setRecursiveSearch(Z):V
 - setScope(com.intellij.psi.search.SearchScope):V
 - setSearchPattern(java.lang.String):V
+a:com.intellij.structuralsearch.MatchResult
+- a:getChildren():java.util.List
+- a:getMatch():com.intellij.psi.PsiElement
+- a:getMatchImage():java.lang.String
+- a:getName():java.lang.String
+- a:getRoot():com.intellij.structuralsearch.MatchResult
+- a:isMultipleMatch():Z
+- a:isScopeMatch():Z
 com.intellij.structuralsearch.MatchResultSink
 - a:getProgressIndicator():com.intellij.openapi.progress.ProgressIndicator
 - a:matchingFinished():V
 - a:newMatch(com.intellij.structuralsearch.MatchResult):V
 - a:processFile(com.intellij.psi.PsiFile):V
 - a:setMatchingProcess(com.intellij.structuralsearch.MatchingProcess):V
+f:com.intellij.structuralsearch.MatchVariableConstraint
+- com.intellij.structuralsearch.NamedScriptableDefinition
+- <init>():V
+- getNameOfExprType():java.lang.String
+- isExprTypeWithinHierarchy():Z
+- isInvertExprType():Z
+- isRegexExprType():Z
 c:com.intellij.structuralsearch.Matcher
 - findMatches(com.intellij.structuralsearch.MatchResultSink):V
 c:com.intellij.structuralsearch.StructuralSearchException
+- java.lang.RuntimeException
 - <init>(java.lang.String):V
 a:com.intellij.structuralsearch.StructuralSearchProfile
 - getTemplateContextTypeClass(com.intellij.lang.Language):java.lang.Class
 - isReplacementTypedVariable(java.lang.String):Z
 - stripReplacementTypedVariableDecorations(java.lang.String):java.lang.String
 a:com.intellij.structuralsearch.StructuralSearchProfileBase
+- com.intellij.structuralsearch.StructuralSearchProfile
+- <init>():V
 - isMatchNode(com.intellij.psi.PsiElement):Z
 a:com.intellij.structuralsearch.impl.matcher.CompiledPattern
+- <init>():V
 - getHandler(com.intellij.psi.PsiElement):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 - getHandler(java.lang.String):com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 - getTypedVarString(com.intellij.psi.PsiElement):java.lang.String
@@ -34,25 +57,80 @@ a:com.intellij.structuralsearch.impl.matcher.CompiledPattern
 - a:isTypedVar(java.lang.String):Z
 - setStrategy(com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy):V
 f:com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
+- com.intellij.dupLocator.AbstractMatchingVisitor
+- getElement():com.intellij.psi.PsiElement
+- getMatchContext():com.intellij.structuralsearch.impl.matcher.MatchContext
+- getResult():Z
 - setResult(Z):Z
+c:com.intellij.structuralsearch.impl.matcher.MatchContext
+- getMatcher():com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
+- getPattern():com.intellij.structuralsearch.impl.matcher.CompiledPattern
+- getResult():com.intellij.structuralsearch.impl.matcher.MatchResultImpl
+- pushResult():V
 f:com.intellij.structuralsearch.impl.matcher.MatchResultImpl
+- com.intellij.structuralsearch.MatchResult
 - addChild(com.intellij.structuralsearch.MatchResult):V
 - findChild(java.lang.String):com.intellij.structuralsearch.MatchResult
+c:com.intellij.structuralsearch.impl.matcher.compiler.CompileContext
+- getPattern():com.intellij.structuralsearch.impl.matcher.CompiledPattern
+- getProject():com.intellij.openapi.project.Project
 c:com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor
+- getContext():com.intellij.structuralsearch.impl.matcher.compiler.CompileContext
 - f:handle(com.intellij.psi.PsiElement):V
+e:com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor$OccurenceKind
+- java.lang.Enum
+com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler
+- a:getDelegate():com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
 a:com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- <init>():V
 - setFilter(com.intellij.dupLocator.util.NodeFilter):V
 c:com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- reset():V
 - setMatchHandler(com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
 f:com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+- com.intellij.structuralsearch.impl.matcher.handlers.DelegatingHandler
 - <init>(com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler):V
+- getDelegate():com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler
+a:com.intellij.structuralsearch.impl.matcher.predicates.MatchPredicate
+- <init>():V
 c:com.intellij.structuralsearch.inspection.SSBasedInspection
+- com.intellij.codeInspection.LocalInspectionTool
+- com.intellij.codeInspection.ex.DynamicGroupTool
+- getConfigurations():java.util.List
 - s:getStructuralSearchInspection(com.intellij.codeInspection.InspectionProfile):com.intellij.structuralsearch.inspection.SSBasedInspection
 c:com.intellij.structuralsearch.plugin.replace.ReplaceOptions
+- com.intellij.openapi.util.JDOMExternalizable
+- getReplacement():java.lang.String
 - setReplacement(java.lang.String):V
+f:com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo
+- com.intellij.openapi.util.UserDataHolderBase
+- getElement():com.intellij.psi.PsiElement
 f:com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder
 - findParameterization(com.intellij.psi.PsiElement):com.intellij.structuralsearch.plugin.replace.impl.ParameterInfo
+c:com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration
+- com.intellij.structuralsearch.plugin.ui.Configuration
+- getMatchOptions():com.intellij.structuralsearch.MatchOptions
+- getReplaceOptions():com.intellij.structuralsearch.plugin.replace.ReplaceOptions
+a:com.intellij.structuralsearch.plugin.ui.Configuration
+- com.intellij.openapi.util.JDOMExternalizable
+- getFileType():com.intellij.openapi.fileTypes.LanguageFileType
+- a:getMatchOptions():com.intellij.structuralsearch.MatchOptions
+- getUuid():java.lang.String
 c:com.intellij.structuralsearch.plugin.ui.TextFieldWithAutoCompletionWithBrowseButton
+- com.intellij.openapi.ui.ComponentWithBrowseButton
+- com.intellij.ui.TextAccessor
 - <init>(com.intellij.openapi.project.Project):V
+- getText():java.lang.String
 f:com.intellij.structuralsearch.plugin.ui.UIUtil
 - s:getTemplateContextType(com.intellij.structuralsearch.StructuralSearchProfile,com.intellij.lang.Language):com.intellij.codeInsight.template.TemplateContextType
+a:com.intellij.structuralsearch.plugin.ui.filters.FilterAction
+- com.intellij.openapi.project.DumbAwareAction
+- com.intellij.structuralsearch.plugin.ui.filters.Filter
+c:com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink
+- com.intellij.structuralsearch.DefaultMatchResultSink
+- <init>():V
+- getMatches():java.util.List
+c:com.intellij.structuralsearch.plugin.util.SmartPsiPointer
+- getElement():com.intellij.psi.PsiElement

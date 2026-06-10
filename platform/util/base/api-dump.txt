@@ -366,7 +366,12 @@ f:com.intellij.util.SystemProperties
 - s:getUserName():java.lang.String
 - s:setProperty(java.lang.String,java.lang.String):java.lang.String
 f:com.intellij.util.concurrency.Semaphore
+- <init>():V
 - <init>(I):V
+- down():V
+- isUp():Z
+- up():V
+- waitFor():V
 - waitFor(J):Z
 f:com.intellij.util.containers.CollectionFactory
 - <init>():V

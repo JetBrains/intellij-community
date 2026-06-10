@@ -1,3 +1,6 @@
+c:com.intellij.idea.IdeStarter
+- com.intellij.openapi.application.ApplicationStarter
+- <init>():V
 com.intellij.platform.ide.bootstrap.AppStarter
 - beforeImportConfigs():V
 - importFinished(java.nio.file.Path):V

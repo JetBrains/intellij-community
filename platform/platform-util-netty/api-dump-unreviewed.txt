@@ -43,15 +43,12 @@ a:org.jetbrains.ide.BinaryRequestHandler
 - a:getInboundHandler(io.netty.channel.ChannelHandlerContext):io.netty.channel.ChannelHandler
 a:org.jetbrains.ide.HttpRequestHandler
 - sf:Companion:org.jetbrains.ide.HttpRequestHandler$Companion
-- <init>():V
 - sf:checkPrefix(java.lang.String,java.lang.String):Z
 - a:process(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):Z
 - pf:sendData(B[],java.lang.String,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.Channel,io.netty.handler.codec.http.HttpHeaders):Z
 f:org.jetbrains.ide.HttpRequestHandler$Companion
 - f:checkPrefix(java.lang.String,java.lang.String):Z
-- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 e:org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
-- java.lang.Enum
 - sf:ALLOW:org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
 - sf:ASK_CONFIRMATION:org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
 - sf:FORBID:org.jetbrains.ide.HttpRequestHandler$OriginCheckResult
@@ -63,15 +60,10 @@ f:org.jetbrains.io.BufferToCharsKt
 - bs:readIntoCharBuffer$default(io.netty.buffer.ByteBuf,I,java.nio.CharBuffer,I,java.lang.Object):V
 - sf:writeIntAsAscii(I,io.netty.buffer.ByteBuf):V
 f:org.jetbrains.io.ChannelExceptionHandler
-- io.netty.channel.ChannelHandlerAdapter
 - exceptionCaught(io.netty.channel.ChannelHandlerContext,java.lang.Throwable):V
-- s:getInstance():io.netty.channel.ChannelHandler
 f:org.jetbrains.io.ChannelRegistrar
-- io.netty.channel.ChannelInboundHandlerAdapter
-- <init>():V
 - channelActive(io.netty.channel.ChannelHandlerContext):V
 - channelInactive(io.netty.channel.ChannelHandlerContext):V
-- close():V
 - isEmpty():Z
 - setServerChannel(io.netty.channel.Channel,Z):V
 a:org.jetbrains.io.Decoder
@@ -144,8 +136,6 @@ f:org.jetbrains.io.Responses
 - sf:sendPlainText(io.netty.handler.codec.http.HttpResponseStatus,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest,java.lang.String,io.netty.handler.codec.http.HttpHeaders):V
 - bs:sendPlainText$default(io.netty.handler.codec.http.HttpResponseStatus,io.netty.channel.Channel,io.netty.handler.codec.http.HttpRequest,java.lang.String,io.netty.handler.codec.http.HttpHeaders,I,java.lang.Object):V
 a:org.jetbrains.io.SimpleChannelInboundHandlerAdapter
-- io.netty.channel.SimpleChannelInboundHandler
-- p:<init>():V
 - p:<init>(Z):V
 - pf:channelRead0(io.netty.channel.ChannelHandlerContext,java.lang.Object):V
 - pa:messageReceived(io.netty.channel.ChannelHandlerContext,java.lang.Object):V

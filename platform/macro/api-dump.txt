@@ -1,7 +1,23 @@
+f:com.intellij.ide.macro.CompilerContextMakeMacro
+- com.intellij.ide.macro.Macro
 a:com.intellij.ide.macro.Macro
+- <init>():V
+- a:getName():java.lang.String
 - ps:getPath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
+f:com.intellij.ide.macro.Macro$ExecutionCancelledException
+- java.lang.Exception
+- <init>():V
 f:com.intellij.ide.macro.MacroManager
 - cacheMacrosPreview(com.intellij.openapi.actionSystem.DataContext):V
+- s:getInstance():com.intellij.ide.macro.MacroManager
+- getMacros():java.util.Collection
 com.intellij.ide.macro.MacroWithParams
 com.intellij.ide.macro.PathMacro
+f:com.intellij.ide.macro.ProjectFileDirMacro
+- com.intellij.ide.macro.Macro
+- com.intellij.ide.macro.PathMacro
+- <init>():V
+a:com.intellij.ide.macro.PromptingMacro
+- com.intellij.ide.macro.Macro
+- <init>():V
 com.intellij.ide.macro.SecondQueueExpandMacro

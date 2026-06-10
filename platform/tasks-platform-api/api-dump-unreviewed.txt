@@ -16,11 +16,7 @@ c:com.intellij.tasks.ChangeListInfo
 - hashCode():I
 a:com.intellij.tasks.Comment
 - sf:EMPTY_ARRAY:com.intellij.tasks.Comment[]
-- <init>():V
 - appendTo(java.lang.StringBuilder):V
-- a:getAuthor():java.lang.String
-- a:getDate():java.util.Date
-- a:getText():java.lang.String
 com.intellij.tasks.CommitPlaceholderProvider
 - sf:EXTENSION_POINT_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:getPlaceholderDescription(java.lang.String):java.lang.String
@@ -32,15 +28,12 @@ f:com.intellij.tasks.CustomTaskState
 - asPredefined():com.intellij.tasks.TaskState
 - equals(java.lang.Object):Z
 - s:fromPredefined(com.intellij.tasks.TaskState):com.intellij.tasks.CustomTaskState
-- getId():java.lang.String
-- getPresentableName():java.lang.String
 - hashCode():I
 - isPredefined():Z
 - setId(java.lang.String):V
 - setPredefined(Z):V
 - setPresentableName(java.lang.String):V
 a:com.intellij.tasks.LocalTask
-- com.intellij.tasks.Task
 - <init>():V
 - a:addBranch(com.intellij.tasks.BranchInfo):V
 - a:addChangelist(com.intellij.tasks.ChangeListInfo):V
@@ -50,10 +43,7 @@ a:com.intellij.tasks.LocalTask
 - a:getLastPost():java.util.Date
 - a:getShelfName():java.lang.String
 - a:getTimeSpentFromLastPost():J
-- a:getTotalTimeSpent():J
 - a:getWorkItems():java.util.List
-- a:isActive():Z
-- isDefault():Z
 - a:isRunning():Z
 - a:removeBranch(com.intellij.tasks.BranchInfo):V
 - a:removeChangelist(com.intellij.tasks.ChangeListInfo):V
@@ -66,34 +56,18 @@ a:com.intellij.tasks.LocalTask
 - a:updateFromIssue(com.intellij.tasks.Task):V
 a:com.intellij.tasks.Task
 - sf:EMPTY_ARRAY:com.intellij.tasks.Task[]
-- <init>():V
 - f:equals(java.lang.Object):Z
 - ps:extractProjectFromId(java.lang.String):java.lang.String
-- a:getComments():com.intellij.tasks.Comment[]
 - a:getCreated():java.util.Date
 - getCustomIcon():java.lang.String
-- a:getDescription():java.lang.String
-- a:getIcon():javax.swing.Icon
-- a:getId():java.lang.String
-- a:getIssueUrl():java.lang.String
-- getNumber():java.lang.String
-- getPresentableId():java.lang.String
 - getPresentableName():java.lang.String
-- getProject():java.lang.String
-- getRepository():com.intellij.tasks.TaskRepository
 - getState():com.intellij.tasks.TaskState
-- a:getSummary():java.lang.String
 - a:getType():com.intellij.tasks.TaskType
-- a:getUpdated():java.util.Date
 - f:hashCode():I
-- a:isClosed():Z
-- a:isIssue():Z
 f:com.intellij.tasks.TaskApiBundle
 - s:message(java.lang.String,java.lang.Object[]):java.lang.String
 - s:messagePointer(java.lang.String,java.lang.Object[]):java.util.function.Supplier
 c:com.intellij.tasks.TaskListenerAdapter
-- com.intellij.tasks.TaskListener
-- <init>():V
 - taskActivated(com.intellij.tasks.LocalTask):V
 - taskAdded(com.intellij.tasks.LocalTask):V
 - taskDeactivated(com.intellij.tasks.LocalTask):V
@@ -105,18 +79,13 @@ a:com.intellij.tasks.TaskManager
 - a:addTaskListener(com.intellij.tasks.TaskListener,com.intellij.openapi.Disposable):V
 - a:createLocalTask(java.lang.String):com.intellij.tasks.LocalTask
 - a:findTask(java.lang.String):com.intellij.tasks.LocalTask
-- a:getActiveTask():com.intellij.tasks.LocalTask
 - a:getActiveVcs():com.intellij.openapi.vcs.AbstractVcs
-- a:getAllRepositories():com.intellij.tasks.TaskRepository[]
 - a:getAssociatedTask(com.intellij.openapi.vcs.changes.LocalChangeList):com.intellij.tasks.LocalTask
-- a:getCachedIssues():java.util.List
 - a:getCachedIssues(Z):java.util.List
 - a:getIssues(java.lang.String):java.util.List
 - a:getIssues(java.lang.String,I,I,Z,com.intellij.openapi.progress.ProgressIndicator,Z):java.util.List
 - a:getIssues(java.lang.String,Z):java.util.List
-- a:getLocalTasks():java.util.List
 - a:isLocallyClosed(com.intellij.tasks.LocalTask):Z
-- a:isVcsEnabled():Z
 - a:removeTask(com.intellij.tasks.LocalTask):V
 - a:testConnection(com.intellij.tasks.TaskRepository):Z
 - a:trackContext(com.intellij.openapi.vcs.changes.LocalChangeList):V
@@ -157,11 +126,8 @@ a:com.intellij.tasks.TaskRepository
 - a:getPreferredCloseTaskState():com.intellij.tasks.CustomTaskState
 - a:getPreferredOpenTaskState():com.intellij.tasks.CustomTaskState
 - getPresentableName():java.lang.String
-- f:getRepositoryType():com.intellij.tasks.TaskRepositoryType
 - getTaskComment(com.intellij.tasks.Task):java.lang.String
-- getUrl():java.lang.String
 - initializeRepository():V
-- isConfigured():Z
 - isShared():Z
 - isShouldFormatCommitMessage():Z
 - isSupported(I):Z
@@ -177,35 +143,24 @@ a:com.intellij.tasks.TaskRepository
 - testConnection():V
 - updateTimeSpent(com.intellij.tasks.LocalTask,java.lang.String,java.lang.String):V
 a:com.intellij.tasks.TaskRepository$CancellableConnection
-- java.util.concurrent.Callable
-- <init>():V
 - f:call():java.lang.Exception
-- a:cancel():V
 - pa:doTest():V
 com.intellij.tasks.TaskRepositorySubtype
 - a:createRepository():com.intellij.tasks.TaskRepository
 - a:getIcon():javax.swing.Icon
 - a:getName():java.lang.String
 a:com.intellij.tasks.TaskRepositoryType
-- com.intellij.tasks.TaskRepositorySubtype
-- java.lang.Comparable
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - compareTo(com.intellij.tasks.TaskRepositoryType):I
 - a:createEditor(com.intellij.tasks.TaskRepository,com.intellij.openapi.project.Project,com.intellij.util.Consumer):com.intellij.tasks.config.TaskRepositoryEditor
-- a:createRepository():com.intellij.tasks.TaskRepository
 - createRepository(com.intellij.tasks.TaskRepositorySubtype):com.intellij.tasks.TaskRepository
 - getAdvertiser():java.lang.String
 - getAvailableSubtypes():java.util.List
-- a:getIcon():javax.swing.Icon
-- a:getName():java.lang.String
 - getPossibleTaskStates():java.util.EnumSet
-- a:getRepositoryClass():java.lang.Class
 - s:getRepositoryClasses():java.util.List
-- s:getRepositoryTypes():java.util.List
 - getSortOrder():I
 e:com.intellij.tasks.TaskState
-- java.lang.Enum
 - sf:IN_PROGRESS:com.intellij.tasks.TaskState
 - sf:OPEN:com.intellij.tasks.TaskState
 - sf:OTHER:com.intellij.tasks.TaskState
@@ -213,20 +168,14 @@ e:com.intellij.tasks.TaskState
 - sf:RESOLVED:com.intellij.tasks.TaskState
 - sf:SUBMITTED:com.intellij.tasks.TaskState
 - getPresentableName():java.lang.String
-- s:values():com.intellij.tasks.TaskState[]
 e:com.intellij.tasks.TaskType
-- java.lang.Enum
 - sf:BUG:com.intellij.tasks.TaskType
 - sf:EXCEPTION:com.intellij.tasks.TaskType
 - sf:FEATURE:com.intellij.tasks.TaskType
 - sf:OTHER:com.intellij.tasks.TaskType
-- s:values():com.intellij.tasks.TaskType[]
 a:com.intellij.tasks.config.TaskRepositoryEditor
-- com.intellij.openapi.Disposable
 - <init>():V
-- a:createComponent():javax.swing.JComponent
 - dispose():V
-- getPreferredFocusedComponent():javax.swing.JComponent
 c:com.intellij.tasks.timeTracking.model.WorkItem
 - duration:J
 - from:java.util.Date

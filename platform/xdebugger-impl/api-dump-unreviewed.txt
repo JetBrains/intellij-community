@@ -9,14 +9,12 @@ a:com.intellij.xdebugger.attach.EnvironmentAwareHost
 - getProcessOutput(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.ProcessOutput
 - isSameHost(java.lang.Object):Z
 c:com.intellij.xdebugger.attach.LocalAttachHost
-- com.intellij.xdebugger.attach.EnvironmentAwareHost
 - sf:INSTANCE:com.intellij.xdebugger.attach.LocalAttachHost
 - <init>():V
 - canReadFile(java.lang.String):Z
 - getFileContent(java.lang.String):java.io.InputStream
 - getFileSystemHostId():java.lang.String
 - getProcessHandler(com.intellij.execution.configurations.GeneralCommandLine):com.intellij.execution.process.BaseProcessHandler
-- getProcessList():java.util.List
 c:com.intellij.xdebugger.attach.WslAttachHost
 - com.intellij.xdebugger.attach.XAttachHost
 - <init>(com.intellij.execution.wsl.WSLDistribution):V
@@ -25,11 +23,9 @@ c:com.intellij.xdebugger.attach.WslAttachHost
 - getWsl():com.intellij.execution.wsl.WSLDistribution
 - hashCode():I
 com.intellij.xdebugger.attach.XAttachHost$Async
-- com.intellij.xdebugger.attach.XAttachHost
 - getProcessList():java.util.List
 - a:getProcessListAsync(kotlin.coroutines.Continuation):java.lang.Object
 com.intellij.xdebugger.attach.XAttachHostProvider$Async
-- com.intellij.xdebugger.attach.XAttachHostProvider
 - getAvailableHosts(com.intellij.openapi.project.Project):java.util.List
 - a:getAvailableHostsAsync(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.xdebugger.attach.XAttachHostProvider$Companion
@@ -84,12 +80,8 @@ c:com.intellij.xdebugger.impl.actions.AttachToProcessAction
 - com.intellij.openapi.project.DumbAware
 - <init>():V
 a:com.intellij.xdebugger.impl.actions.XDebuggerSuspendedActionHandler
-- com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
-- <init>():V
 - p:isEnabled(com.intellij.xdebugger.XDebugSession,com.intellij.openapi.actionSystem.DataContext):Z
 a:com.intellij.xdebugger.impl.actions.handlers.XDebuggerActionHandler
-- com.intellij.xdebugger.impl.actions.DebuggerActionHandler
-- <init>():V
 - isEnabled(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):Z
 - perform(com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
@@ -153,7 +145,6 @@ c:com.intellij.xdebugger.impl.settings.XDebuggerDataViewSettings
 - setValueLookupDelay(I):V
 c:com.intellij.xdebugger.impl.settings.XDebuggerGeneralSettings
 - <init>():V
-- getEvaluationDialogMode():com.intellij.xdebugger.evaluation.EvaluationMode
 - isConfirmBreakpointRemoval():Z
 - isHideDebuggerOnProcessTermination():Z
 - isRunToCursorGestureEnabled():Z
@@ -167,16 +158,11 @@ c:com.intellij.xdebugger.impl.settings.XDebuggerGeneralSettings
 - setShowDebuggerOnBreakpoint(Z):V
 - setUnmuteOnStop(Z):V
 f:com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
-- com.intellij.xdebugger.settings.XDebuggerSettingsManager
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.components.PersistentStateComponent
 - <init>():V
 - dispose():V
 - findFirstSettings(java.util.function.Predicate):com.intellij.xdebugger.settings.XDebuggerSettings
 - forEachSettings(java.util.function.Consumer):V
 - getDataViewSettings():com.intellij.xdebugger.impl.settings.XDebuggerDataViewSettings
-- getGeneralSettings():com.intellij.xdebugger.impl.settings.XDebuggerGeneralSettings
-- s:getInstanceImpl():com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 - getSettings(java.lang.Class):com.intellij.xdebugger.settings.XDebuggerSettings
 - s:getSettingsEP():com.intellij.openapi.extensions.ExtensionPointName
 - getState():com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl$SettingsState
@@ -207,15 +193,12 @@ c:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 - p:<init>(com.intellij.execution.process.ProcessInfo,java.util.List,com.intellij.openapi.util.UserDataHolder):V
 - f:getCommandLineText():java.lang.String
 - f:getCommandLineTextAttributes():com.intellij.ui.SimpleTextAttributes
-- f:getDataHolder():com.intellij.openapi.util.UserDataHolder
-- f:getDebuggers():java.util.List
 - f:getExecutableText():java.lang.String
 - f:getExecutableTextAttributes():com.intellij.ui.SimpleTextAttributes
 - f:getGroups():java.util.Set
 - f:getGroupsWithItems():java.util.List
 - f:getIndexedString():java.lang.String
 - getMainDebugger(com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState):com.intellij.xdebugger.attach.XAttachDebugger
-- f:getProcessInfo():com.intellij.execution.process.ProcessInfo
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem$Companion
 - f:create(com.intellij.execution.process.ProcessInfo,java.util.Map,com.intellij.openapi.util.UserDataHolder):com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogProcessItem
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState
@@ -261,7 +244,6 @@ a:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessView
 - pf:withUiContextAnyModality(kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessView$Companion
 a:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts
-- com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessView
 - sf:Companion:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$Companion
 - <init>(com.intellij.openapi.project.Project,com.intellij.xdebugger.impl.ui.attach.dialog.AttachDialogState,com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumnsLayout,java.util.List):V
 - p:doUpdateProcesses(kotlin.coroutines.Continuation):java.lang.Object
@@ -281,10 +263,6 @@ a:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts
 - a:saveSelectedHost(com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem):V
 - pf:updateHosts(kotlin.coroutines.Continuation):java.lang.Object
 pf:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$AddConnectionButtonAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.actionSystem.ex.CustomComponentAction
-- com.intellij.openapi.project.DumbAware
-- java.awt.event.ActionListener
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - actionPerformed(java.awt.event.ActionEvent):V
 - createCustomComponent(com.intellij.openapi.actionSystem.Presentation,java.lang.String):javax.swing.JComponent
@@ -292,16 +270,12 @@ pf:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$Add
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 - f:updateState(java.util.List):Z
 pf:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$AttachHostsComboBoxAction
-- com.intellij.openapi.actionSystem.ex.ComboBoxAction
-- com.intellij.openapi.project.DumbAware
 - <init>(com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts,Z):V
 - b:<init>(com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - f:getSelectedItem():com.intellij.xdebugger.impl.ui.attach.dialog.AttachHostItem
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
 - f:updateState(java.util.List):Z
-f:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$Companion
-- f:getDEFAULT_ATTACH_HOST():com.intellij.openapi.actionSystem.DataKey
 pf:com.intellij.xdebugger.impl.ui.attach.dialog.AttachToProcessViewWithHosts$ManageConnectionsAction
 - com.intellij.openapi.actionSystem.AnAction
 - com.intellij.openapi.project.DumbAware
@@ -313,7 +287,6 @@ f:com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProb
 - f:getActionId():java.lang.String
 - f:getActionName():java.lang.String
 f:com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemException
-- com.intellij.execution.ExecutionException
 - <init>(javax.swing.Icon,java.lang.String,com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemAction):V
 - f:getAction():com.intellij.xdebugger.impl.ui.attach.dialog.diagnostics.ProcessesFetchingProblemAction
 - f:getDescriptionDisplayText():java.lang.String
@@ -341,13 +314,10 @@ a:com.intellij.xdebugger.impl.ui.attach.dialog.items.columns.AttachDialogColumns
 - f:getMinimumViewWidth():I
 - f:setColumnWidth(java.lang.String,I):V
 a:com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase
-- com.intellij.openapi.actionSystem.AnAction
-- <init>():V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - p:isEnabled(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,com.intellij.openapi.actionSystem.AnActionEvent):Z
 - pa:perform(com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl,java.lang.String,com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.xdebugger.memory.component.InstancesTracker
-- com.intellij.openapi.components.PersistentStateComponent
 - <init>():V
 - add(java.lang.String,com.intellij.xdebugger.memory.tracking.TrackingType):V
 - addTrackerListener(com.intellij.xdebugger.memory.event.InstancesTrackerListener):V
@@ -400,9 +370,6 @@ e:com.intellij.xdebugger.memory.tracking.TrackingType
 - s:valueOf(java.lang.String):com.intellij.xdebugger.memory.tracking.TrackingType
 - s:values():com.intellij.xdebugger.memory.tracking.TrackingType[]
 a:com.intellij.xdebugger.memory.ui.ClassesFilteredViewBase
-- com.intellij.util.ui.components.BorderLayoutPanel
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.actionSystem.UiDataProvider
 - psf:DEFAULT_BATCH_SIZE:I
 - psf:DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT:D
 - psf:MAX_DELAY_MILLIS:D
@@ -414,7 +381,6 @@ a:com.intellij.xdebugger.memory.ui.ClassesFilteredViewBase
 - p:doActivate():V
 - p:doPause():V
 - p:getAdditionalSessionListener():com.intellij.xdebugger.XDebugSessionListener
-- getDefaultFocusedComponent():javax.swing.JComponent
 - pa:getInstancesWindow(com.intellij.xdebugger.memory.ui.TypeInfo,com.intellij.xdebugger.XDebugSession):com.intellij.xdebugger.memory.ui.InstancesWindowBase
 - p:getStrategy(com.intellij.xdebugger.memory.ui.TypeInfo):com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase
 - getTable():com.intellij.xdebugger.memory.ui.ClassesTable

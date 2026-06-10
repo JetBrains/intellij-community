@@ -44,12 +44,7 @@ f:com.intellij.execution.process.UnixSignal$Companion
 - f:fromExitCode(Z,I):com.intellij.execution.process.UnixSignal
 - f:fromString(java.lang.String):com.intellij.execution.process.UnixSignal
 f:com.intellij.util.concurrency.Semaphore
-- <init>():V
-- down():V
-- isUp():Z
 - tryUp():Z
-- up():V
-- waitFor():V
 - waitForUnsafe():V
 - waitForUnsafe(J):Z
 f:com.intellij.util.io.CoroutinesKt

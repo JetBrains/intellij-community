@@ -72,6 +72,13 @@ f:com.intellij.execution.rmi.ssl.SslTrustStore
 - s:getType():java.lang.String
 - s:setDefault():V
 f:com.intellij.openapi.diagnostic.Attachment
+- getBytes():B[]
+- getDisplayText():java.lang.String
+- getEncodedBytes():java.lang.String
+- getName():java.lang.String
+- getPath():java.lang.String
+- isIncluded():Z
+- openContentStream():java.io.InputStream
 - setIncluded(Z):V
 com.intellij.openapi.diagnostic.ExceptionWithAttachments
 - a:getAttachments():com.intellij.openapi.diagnostic.Attachment[]
@@ -120,6 +127,8 @@ Fc:com.intellij.openapi.util.Couple
 - iterator():java.util.Iterator
 - s:of(java.lang.Object,java.lang.Object):com.intellij.openapi.util.Couple
 f:com.intellij.openapi.util.InvalidDataException
+- java.lang.RuntimeException
+- <init>():V
 - <init>(java.lang.String):V
 - <init>(java.lang.Throwable):V
 c:com.intellij.openapi.util.Pair

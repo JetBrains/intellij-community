@@ -1,7 +1,5 @@
 c:com.intellij.idea.IdeStarter
-- com.intellij.openapi.application.ApplicationStarter
 - sf:Companion:com.intellij.idea.IdeStarter$Companion
-- <init>():V
 - isHeadless():Z
 - p:openProjectIfNeeded(java.util.List,com.intellij.openapi.application.Application,kotlinx.coroutines.CoroutineScope,com.intellij.ide.AppLifecycleListener,kotlin.coroutines.Continuation):java.lang.Object
 - start(java.util.List,kotlin.coroutines.Continuation):java.lang.Object

@@ -33,7 +33,6 @@ f:com.intellij.tasks.context.WorkingContextManager
 - saveContext(java.lang.String,java.lang.String):V
 - saveContext(org.jdom.Element):V
 c:com.intellij.tasks.impl.LocalTaskImpl
-- com.intellij.tasks.LocalTask
 - sf:DEFAULT_TASK_ID:java.lang.String
 - <init>():V
 - <init>(com.intellij.tasks.Task):V
@@ -92,16 +91,12 @@ c:com.intellij.tasks.impl.LocalTaskImpl
 - setWorkItems(java.util.List):V
 - updateFromIssue(com.intellij.tasks.Task):V
 c:com.intellij.tasks.impl.RequestFailedException
-- java.lang.RuntimeException
 - <init>(com.intellij.tasks.TaskRepository,java.lang.String):V
 - <init>(java.lang.String,java.lang.Throwable):V
 - s:forServerMessage(java.lang.String):com.intellij.tasks.impl.RequestFailedException
 - s:forStatusCode(I,java.lang.String):com.intellij.tasks.impl.RequestFailedException
 - getRepository():com.intellij.tasks.TaskRepository
 f:com.intellij.tasks.impl.TaskManagerImpl
-- com.intellij.tasks.TaskManager
-- com.intellij.openapi.Disposable
-- com.intellij.openapi.components.PersistentStateComponent
 - sf:TASK_UPDATE_COMPARATOR:java.util.Comparator
 - activateTask(com.intellij.tasks.Task,Z):com.intellij.tasks.LocalTask
 - activateTask(com.intellij.tasks.Task,Z,Z):com.intellij.tasks.LocalTask
@@ -114,9 +109,7 @@ f:com.intellij.tasks.impl.TaskManagerImpl
 - createLocalTask(java.lang.String):com.intellij.tasks.impl.LocalTaskImpl
 - dispose():V
 - findTask(java.lang.String):com.intellij.tasks.impl.LocalTaskImpl
-- getActiveTask():com.intellij.tasks.LocalTask
 - getActiveVcs():com.intellij.openapi.vcs.AbstractVcs
-- getAllRepositories():com.intellij.tasks.TaskRepository[]
 - getAssociatedTask(com.intellij.openapi.vcs.changes.LocalChangeList):com.intellij.tasks.LocalTask
 - getCachedIssues():java.util.List
 - getCachedIssues(Z):java.util.List
@@ -127,7 +120,6 @@ f:com.intellij.tasks.impl.TaskManagerImpl
 - getIssues(java.lang.String,Z):java.util.List
 - getLocalTasks():java.util.List
 - getLocalTasks(Z):java.util.List
-- getState():com.intellij.tasks.impl.TaskManagerImpl$Config
 - initializeComponent():V
 - isLocallyClosed(com.intellij.tasks.LocalTask):Z
 - isVcsEnabled():Z

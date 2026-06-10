@@ -79,7 +79,6 @@ f:com.intellij.internal.statistic.eventLog.MachineId
 - f:copy(java.lang.String,I):com.intellij.internal.statistic.eventLog.MachineId
 - bs:copy$default(com.intellij.internal.statistic.eventLog.MachineId,java.lang.String,I,I,java.lang.Object):com.intellij.internal.statistic.eventLog.MachineId
 - equals(java.lang.Object):Z
-- f:getId():java.lang.String
 - f:getRevision():I
 - hashCode():I
 f:com.intellij.internal.statistic.eventLog.MachineId$Companion

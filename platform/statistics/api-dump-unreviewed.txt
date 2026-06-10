@@ -17,7 +17,6 @@ f:com.intellij.internal.statistic.eventLog.AtomicLazyValue
 - f:getValue():java.lang.Object
 - f:updateAndGet(kotlin.jvm.functions.Function1):java.lang.Object
 f:com.intellij.internal.statistic.eventLog.EmptyEventLogFilesProvider
-- com.intellij.internal.statistic.eventLog.EventLogFilesProvider
 - sf:INSTANCE:com.intellij.internal.statistic.eventLog.EmptyEventLogFilesProvider
 - getLogFiles():java.util.List
 - getLogFilesExceptActive():java.util.List
@@ -113,23 +112,17 @@ a:com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 - getCoroutineScope():kotlinx.coroutines.CoroutineScope
 - sf:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:getLogFilesProvider():com.intellij.internal.statistic.eventLog.EventLogFilesProvider
-- getLogger():com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 - f:getRecorderId():java.lang.String
-- f:getSendFrequencyMs():J
 - f:getSendLogsOnIdeClose():Z
 - f:getUseDefaultRecorderId():Z
-- f:getVersion():I
 - f:isCharsEscapingRequired():Z
 - isLoggingAlwaysActive():Z
 - f:isLoggingEnabled():Z
 - a:isRecordEnabled():Z
-- a:isSendEnabled():Z
 f:com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider$Companion
-- f:getDEFAULT_SEND_FREQUENCY_MS():J
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 - f:parseFileSize(java.lang.String):I
 a:com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProviderExt
-- com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 - <init>(java.lang.String,I,J,I,Z):V
 - b:<init>(java.lang.String,I,J,I,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - isLoggingAlwaysActive():Z

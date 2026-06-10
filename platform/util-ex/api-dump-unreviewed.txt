@@ -1,5 +1,4 @@
 f:com.intellij.credentialStore.OneTimeString
-- com.intellij.util.text.CharArrayCharSequence
 - <init>(C[]):V
 - <init>(C[],I):V
 - <init>(C[],I,I):V
@@ -11,7 +10,6 @@ f:com.intellij.credentialStore.OneTimeString
 - f:toByteArray():B[]
 - f:toByteArray(Z):B[]
 - bs:toByteArray$default(com.intellij.credentialStore.OneTimeString,Z,I,java.lang.Object):B[]
-- f:toCharArray():C[]
 - bs:toCharArray$default(com.intellij.credentialStore.OneTimeString,Z,I,java.lang.Object):C[]
 - bs:toString$default(com.intellij.credentialStore.OneTimeString,Z,I,java.lang.Object):java.lang.String
 f:com.intellij.credentialStore.OneTimeStringKt
@@ -20,8 +18,6 @@ f:com.intellij.credentialStore.OneTimeStringKt
 - sf:OneTimeString(B[],I,I):com.intellij.credentialStore.OneTimeString
 - sf:OneTimeString(B[],I,I,Z):com.intellij.credentialStore.OneTimeString
 - bs:OneTimeString$default(B[],I,I,Z,I,java.lang.Object):com.intellij.credentialStore.OneTimeString
-f:com.intellij.openapi.application.PathManagerEx
-- sf:getAppSystemDir():java.nio.file.Path
 f:com.intellij.openapi.util.ExtensionsKt
 - sf:toNotNull(com.intellij.openapi.util.Pair):kotlin.Pair
 - sf:use(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):java.lang.Object
@@ -62,17 +58,10 @@ com.intellij.util.SuspendingLazy
 - a:getInitialized():java.lang.Object
 - a:isInitialized():Z
 c:com.intellij.util.containers.HashMap
-- java.util.HashMap
-- <init>():V
 - <init>(java.util.Map):V
-- clear():V
 c:com.intellij.util.containers.HashSet
-- java.util.HashSet
-- <init>():V
 - clear():V
 f:com.intellij.util.containers.hash.HashMap
-- java.util.HashMap
-- <init>():V
 - <init>(I,F):V
 f:com.intellij.util.io.CloseableUtil
 - sf:runClosingOnFailure(java.lang.AutoCloseable,kotlin.jvm.functions.Function1):java.lang.Object
@@ -83,7 +72,6 @@ f:com.intellij.util.io.HttpSecurityUtil
 f:com.intellij.util.io.Ksuid
 - sf:MAX_ENCODED_LENGTH:I
 - <init>():V
-- s:generate():java.lang.String
 - s:generateCustom(I,java.util.Random):java.nio.ByteBuffer
 f:com.intellij.util.io.PathKt
 - sf:copy(java.nio.file.Path,java.nio.file.Path):java.nio.file.Path

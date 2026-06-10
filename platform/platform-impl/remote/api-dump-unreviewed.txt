@@ -25,8 +25,6 @@ f:com.intellij.remote.DeferredRemoteProcess
 - supportsNormalTermination():Z
 - waitFor():I
 - waitFor(J,java.util.concurrent.TimeUnit):Z
-com.intellij.remote.ExceptionFix
-- a:apply():V
 a:com.intellij.remote.PathMappingProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
@@ -35,9 +33,7 @@ a:com.intellij.remote.PathMappingProvider
 - a:getProviderPresentableName(com.intellij.remote.RemoteSdkAdditionalData):java.lang.String
 com.intellij.remote.ProcessControlWithMappings
 - a:getFileMappings():java.util.List
-- getMappingSettings():com.intellij.util.PathMapper
 e:com.intellij.remote.RemoteConnectionType
-- java.lang.Enum
 - sf:CURRENT_VAGRANT:com.intellij.remote.RemoteConnectionType
 - sf:DEFAULT_SDK:com.intellij.remote.RemoteConnectionType
 - sf:DEPLOYMENT_SERVER:com.intellij.remote.RemoteConnectionType
@@ -52,17 +48,14 @@ com.intellij.remote.RemoteMappingsListener
 - a:mappingsChanged():V
 - a:mappingsChanged(java.lang.String,java.lang.String):V
 f:com.intellij.remote.RemoteMappingsManager
-- com.intellij.openapi.components.PersistentStateComponent
 - <init>():V
 - create(java.lang.String,java.lang.String,java.util.List):com.intellij.remote.RemoteMappingsManager$Mappings
 - getForServer(java.lang.String,java.lang.String):com.intellij.remote.RemoteMappingsManager$Mappings
 - getState():com.intellij.remote.RemoteMappingsManager$State
 - loadState(com.intellij.remote.RemoteMappingsManager$State):V
 c:com.intellij.remote.RemoteMappingsManager$Mappings
-- <init>():V
 - getDisabled():java.util.Map
 - getServerId():java.lang.String
-- getSettings():java.util.List
 - setDisabled(java.util.Map):V
 - setServerId(java.lang.String):V
 - setServerId(java.lang.String,java.lang.String):V
@@ -111,10 +104,7 @@ f:com.intellij.remote.VagrantBasedCredentialsHolder
 - setMachineName(java.lang.String):V
 - setVagrantFolder(java.lang.String):V
 f:com.intellij.remote.VagrantNotStartedException
-- java.lang.RuntimeException
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
-- getMachineName():java.lang.String
-- getVagrantFolder():java.lang.String
 a:com.intellij.remote.VagrantSupport
 - <init>():V
 - a:checkVagrantRunning(java.lang.String,java.lang.String,Z):Z
@@ -170,7 +160,6 @@ com.intellij.remote.ext.FormWithAlignableLabelsColumn
 f:com.intellij.remote.ext.FormWithAlignableLabelsColumn$Companion
 - f:findLabelWithMaxPreferredWidth(com.intellij.remote.ext.FormWithAlignableLabelsColumn):com.intellij.ui.components.JBLabel
 a:com.intellij.remote.ext.LanguageCaseCollector
-- <init>():V
 - collectCases(java.lang.Class,com.intellij.remote.ext.CredentialsCase[]):com.intellij.remote.ext.CredentialsCase[]
 - pa:processLanguageContribution(java.lang.Object,java.lang.Object):V
 a:com.intellij.remote.ext.PathMappingProviderEx

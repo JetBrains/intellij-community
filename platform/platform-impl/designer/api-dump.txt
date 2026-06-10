@@ -2,11 +2,24 @@ com.intellij.designer.DesignerEditorPanelFacade
 - a:getClientProperty(java.lang.Object):java.lang.Object
 - a:getContentSplitter():com.intellij.openapi.ui.ThreeComponentsSplitter
 - a:putClientProperty(java.lang.Object,java.lang.Object):V
+f:com.intellij.designer.LightFillLayout
+- java.awt.LayoutManager2
+- <init>():V
+f:com.intellij.designer.LightToolWindow
+- javax.swing.JPanel
 com.intellij.designer.LightToolWindowContent
 - a:dispose():V
 a:com.intellij.designer.LightToolWindowManager
+- com.intellij.openapi.Disposable
 - p:<init>(com.intellij.openapi.project.Project):V
 - f:bind(com.intellij.designer.DesignerEditorPanelFacade):V
+- pa:getAnchor():com.intellij.openapi.wm.ToolWindowAnchor
+- f:getEditorMode():com.intellij.openapi.wm.ToolWindowAnchor
+- pf:initGearActions():V
+a:com.intellij.designer.ToggleEditorModeAction
+- com.intellij.openapi.actionSystem.ToggleAction
+a:com.intellij.designer.model.PropertiesContainer
+- <init>():V
 a:com.intellij.designer.model.Property
 - setExpert(Z):V
 - setImportant(Z):V
@@ -15,6 +28,18 @@ com.intellij.designer.propertyTable.PropertyRenderer
 - a:getComponent(com.intellij.designer.model.PropertiesContainer,com.intellij.designer.model.PropertyContext,java.lang.Object,Z,Z):javax.swing.JComponent
 - a:updateUI():V
 a:com.intellij.designer.propertyTable.PropertyTable
+- com.intellij.ui.table.JBTable
+- <init>():V
+- getSelectionProperty():com.intellij.designer.model.Property
+- isShowExpertProperties():Z
 - showExpert(Z):V
+c:com.intellij.designer.propertyTable.editors.TextEditor
+- com.intellij.designer.propertyTable.PropertyEditor
+f:com.intellij.designer.propertyTable.renderers.BooleanRenderer
+- javax.swing.JCheckBox
+- com.intellij.designer.propertyTable.PropertyRenderer
+- <init>():V
 c:com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer
+- javax.swing.JLabel
+- com.intellij.designer.propertyTable.PropertyRenderer
 - <init>(java.lang.String):V

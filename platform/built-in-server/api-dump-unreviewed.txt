@@ -1,12 +1,9 @@
 f:org.jetbrains.builtInWebServer.BuiltInServerOptions
-- com.intellij.openapi.components.PersistentStateComponent
 - sf:DEFAULT_PORT:I
 - allowUnsignedRequests:Z
 - builtInServerAvailableExternally:Z
 - builtInServerPort:I
 - <init>():V
-- getEffectiveBuiltInServerPort():I
-- s:getInstance():org.jetbrains.builtInWebServer.BuiltInServerOptions
 - getState():org.jetbrains.builtInWebServer.BuiltInServerOptions
 - loadState(org.jetbrains.builtInWebServer.BuiltInServerOptions):V
 - s:onBuiltInServerPortChanged():V
@@ -17,9 +14,6 @@ f:org.jetbrains.builtInWebServer.BuiltInServerOptions$MyCustomPortServerManager
 - getPort():I
 - isAvailableExternally():Z
 c:org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProvider
-- com.intellij.ide.browsers.WebBrowserUrlProvider
-- com.intellij.openapi.project.DumbAware
-- <init>():V
 - canHandleElement(com.intellij.ide.browsers.OpenInBrowserRequest):Z
 - p:getUrl(com.intellij.ide.browsers.OpenInBrowserRequest,com.intellij.openapi.vfs.VirtualFile):com.intellij.util.Url
 - p:isFileOfMyLanguage(com.intellij.psi.PsiFile):Z
@@ -31,11 +25,9 @@ f:org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt
 - bs:getBuiltInServerUrls$default(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.lang.String,Z,com.intellij.ide.browsers.ReloadMode,I,java.lang.Object):java.util.List
 f:org.jetbrains.builtInWebServer.BuiltInWebServerAuth
 - <init>():V
-- f:acquireToken():java.lang.String
 f:org.jetbrains.builtInWebServer.BuiltInWebServerKt
 - sf:TOKEN_HEADER_NAME:java.lang.String
 - sf:TOKEN_PARAM_NAME:java.lang.String
-- sf:acquireToken():java.lang.String
 - sf:compareNameAndProjectBasePath(java.lang.String,com.intellij.openapi.project.Project):Z
 - sf:findIndexFile(java.nio.file.Path):java.nio.file.Path
 f:org.jetbrains.builtInWebServer.ConsoleManager
@@ -63,8 +55,6 @@ a:org.jetbrains.builtInWebServer.NetService
 - pf:getProcessHandler():org.jetbrains.concurrency.AsyncValueLoader
 - pf:getProject():com.intellij.openapi.project.Project
 a:org.jetbrains.builtInWebServer.PrefixlessWebServerRootsProvider
-- org.jetbrains.builtInWebServer.WebServerRootsProvider
-- <init>():V
 - a:resolve(java.lang.String,com.intellij.openapi.project.Project,org.jetbrains.builtInWebServer.FileResolver,org.jetbrains.builtInWebServer.PathQuery):org.jetbrains.builtInWebServer.PathInfo
 - f:resolve(java.lang.String,com.intellij.openapi.project.Project,org.jetbrains.builtInWebServer.PathQuery):org.jetbrains.builtInWebServer.PathInfo
 a:org.jetbrains.builtInWebServer.SingleConnectionNetService
@@ -110,19 +100,15 @@ f:org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService
 f:org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService$Companion
 - f:getInstance():org.jetbrains.builtInWebServer.liveReload.WebServerPageConnectionService
 a:org.jetbrains.ide.RestService
-- org.jetbrains.ide.HttpRequestHandler
 - sf:Companion:org.jetbrains.ide.RestService$Companion
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
 - sf:PREFIX:java.lang.String
-- <init>():V
 - sf:activateLastFocusedFrame():V
 - sf:createJsonWriter(java.io.OutputStream):com.google.gson.stream.JsonWriter
 - a:execute(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):java.lang.String
 - sf:getBooleanParameter(java.lang.String,io.netty.handler.codec.http.QueryStringDecoder):Z
 - sf:getBooleanParameter(java.lang.String,io.netty.handler.codec.http.QueryStringDecoder,Z):Z
-- pf:getGson():com.google.gson.Gson
 - sf:getIntParameter(java.lang.String,io.netty.handler.codec.http.QueryStringDecoder):I
-- sf:getLastFocusedOrOpenedProject():com.intellij.openapi.project.Project
 - p:getMaxRequestsPerMinute():I
 - p:getReportErrorsAsPlainText():Z
 - p:getRequesterId(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):java.lang.Object
@@ -138,13 +124,11 @@ a:org.jetbrains.ide.RestService
 - sf:sendResponse(io.netty.handler.codec.http.HttpRequest,io.netty.channel.ChannelHandlerContext,io.netty.handler.codec.http.HttpResponse):V
 - sf:sendStatus(io.netty.handler.codec.http.HttpResponseStatus,Z,io.netty.channel.Channel):V
 f:org.jetbrains.ide.RestService$Companion
-- f:activateLastFocusedFrame():V
 - f:createJsonReader(io.netty.handler.codec.http.FullHttpRequest):com.google.gson.stream.JsonReader
 - f:getBooleanParameter(java.lang.String,io.netty.handler.codec.http.QueryStringDecoder):Z
 - f:getBooleanParameter(java.lang.String,io.netty.handler.codec.http.QueryStringDecoder,Z):Z
 - bs:getBooleanParameter$default(org.jetbrains.ide.RestService$Companion,java.lang.String,io.netty.handler.codec.http.QueryStringDecoder,Z,I,java.lang.Object):Z
 - f:getIntParameter(java.lang.String,io.netty.handler.codec.http.QueryStringDecoder):I
-- f:getLastFocusedOrOpenedProject():com.intellij.openapi.project.Project
 - f:getStringParameter(java.lang.String,io.netty.handler.codec.http.QueryStringDecoder):java.lang.String
 - f:parameterMissedErrorMessage(java.lang.String):java.lang.String
 - f:send(com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream,io.netty.handler.codec.http.HttpRequest,io.netty.channel.ChannelHandlerContext):V
@@ -212,9 +196,7 @@ org.jetbrains.ide.UpdateActionsListener
 f:org.jetbrains.ide.UpdateActionsListener$Companion
 - f:getTOPIC():com.intellij.util.messages.Topic
 a:org.jetbrains.io.CustomPortServerManagerBase
-- org.jetbrains.ide.CustomPortServerManager
 - p:manager:org.jetbrains.ide.CustomPortServerManager$CustomPortService
-- <init>():V
 - isBound():Z
 - portChanged():V
 - setManager(org.jetbrains.ide.CustomPortServerManager$CustomPortService):V
@@ -233,7 +215,6 @@ a:org.jetbrains.io.fastCgi.FastCgiService
 - f:responseReceived(I,io.netty.buffer.ByteBuf):V
 - f:send(org.jetbrains.io.fastCgi.FastCgiRequest,io.netty.buffer.ByteBuf):V
 a:org.jetbrains.io.jsonRpc.Client
-- com.intellij.openapi.util.UserDataHolderBase
 - pf:channel:io.netty.channel.Channel
 - p:<init>(io.netty.channel.Channel):V
 - f:getByteBufAllocator():io.netty.buffer.ByteBufAllocator
@@ -304,10 +285,6 @@ c:org.jetbrains.io.webSocket.WebSocketClient
 - sendFrame(io.netty.buffer.ByteBuf,Z):io.netty.channel.ChannelFuture
 - sendHeartbeat():V
 a:org.jetbrains.io.webSocket.WebSocketHandshakeHandler
-- org.jetbrains.ide.HttpRequestHandler
-- org.jetbrains.io.jsonRpc.ClientListener
-- org.jetbrains.io.jsonRpc.ExceptionHandler
-- <init>():V
 - connected(org.jetbrains.io.jsonRpc.Client,java.util.Map):V
 - exceptionCaught(java.lang.Throwable):V
 - pa:getMessageServer():org.jetbrains.io.jsonRpc.MessageServer
@@ -315,14 +292,11 @@ a:org.jetbrains.io.webSocket.WebSocketHandshakeHandler
 - process(io.netty.handler.codec.http.QueryStringDecoder,io.netty.handler.codec.http.FullHttpRequest,io.netty.channel.ChannelHandlerContext):Z
 - p:serverCreated(org.jetbrains.io.jsonRpc.ClientManager):V
 a:org.jetbrains.io.webSocket.WebSocketProtocolHandler
-- io.netty.channel.ChannelInboundHandlerAdapter
-- <init>():V
 - f:channelRead(io.netty.channel.ChannelHandlerContext,java.lang.Object):V
 - p:closeFrameReceived(io.netty.channel.Channel,io.netty.handler.codec.http.websocketx.CloseWebSocketFrame):V
 - exceptionCaught(io.netty.channel.ChannelHandlerContext,java.lang.Throwable):V
 - pa:textFrameReceived(io.netty.channel.Channel,io.netty.handler.codec.http.websocketx.TextWebSocketFrame):V
 c:org.jetbrains.io.webSocket.WebSocketProtocolHandshakeHandler
-- io.netty.channel.ChannelInboundHandlerAdapter
 - f:channelRead(io.netty.channel.ChannelHandlerContext,java.lang.Object):V
 - p:completed():V
 f:org.jetbrains.io.webSocket.WebSocketServerOptions

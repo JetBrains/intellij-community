@@ -1,3 +1,5 @@
 com.intellij.internal.statistic.eventLog.EventLogFilesProvider
 - a:getLogFiles():java.util.List
 - a:getLogFilesExceptActive():java.util.List
+f:com.intellij.internal.statistic.eventLog.MachineId
+- f:getId():java.lang.String

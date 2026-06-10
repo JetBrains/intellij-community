@@ -1,28 +1,86 @@
+a:com.intellij.tasks.Comment
+- <init>():V
+- a:getAuthor():java.lang.String
+- a:getDate():java.util.Date
+- a:getText():java.lang.String
 c:com.intellij.tasks.CustomTaskProperty
 - <init>():V
 - <init>(java.lang.String,java.lang.String,java.lang.String):V
 - getDisplayName():java.lang.String
 - getIconUrl():java.lang.String
 - getValue():java.lang.String
+f:com.intellij.tasks.CustomTaskState
+- getId():java.lang.String
+- getPresentableName():java.lang.String
 a:com.intellij.tasks.LocalTask
+- com.intellij.tasks.Task
 - getBranches(Z):java.util.List
+- a:getTotalTimeSpent():J
+- a:isActive():Z
+- isDefault():Z
 a:com.intellij.tasks.Task
+- <init>():V
 - ps:extractNumberFromId(java.lang.String):java.lang.String
+- a:getComments():com.intellij.tasks.Comment[]
 - getCustomProperties():java.util.Map
+- a:getDescription():java.lang.String
+- a:getIcon():javax.swing.Icon
+- a:getId():java.lang.String
+- a:getIssueUrl():java.lang.String
+- getNumber():java.lang.String
+- getPresentableId():java.lang.String
+- getProject():java.lang.String
 - getPropertiesToShowInPreview():java.util.List
+- getRepository():com.intellij.tasks.TaskRepository
+- a:getSummary():java.lang.String
+- a:getUpdated():java.util.Date
+- a:isClosed():Z
+- a:isIssue():Z
 com.intellij.tasks.TaskListener
 - java.util.EventListener
 - a:taskActivated(com.intellij.tasks.LocalTask):V
 - a:taskAdded(com.intellij.tasks.LocalTask):V
 - a:taskDeactivated(com.intellij.tasks.LocalTask):V
 - a:taskRemoved(com.intellij.tasks.LocalTask):V
+c:com.intellij.tasks.TaskListenerAdapter
+- com.intellij.tasks.TaskListener
+- <init>():V
 a:com.intellij.tasks.TaskManager
+- a:getActiveTask():com.intellij.tasks.LocalTask
+- a:getAllRepositories():com.intellij.tasks.TaskRepository[]
+- a:getCachedIssues():java.util.List
+- a:getLocalTasks():java.util.List
 - a:getLocalTasks(Z):java.util.List
 - s:getManager(com.intellij.openapi.project.Project):com.intellij.tasks.TaskManager
+- a:isVcsEnabled():Z
+a:com.intellij.tasks.TaskRepository
+- f:getRepositoryType():com.intellij.tasks.TaskRepositoryType
+- getUrl():java.lang.String
+- isConfigured():Z
+a:com.intellij.tasks.TaskRepository$CancellableConnection
+- java.util.concurrent.Callable
+- <init>():V
+- a:cancel():V
+a:com.intellij.tasks.TaskRepositoryType
+- com.intellij.tasks.TaskRepositorySubtype
+- java.lang.Comparable
+- a:createRepository():com.intellij.tasks.TaskRepository
+- a:getIcon():javax.swing.Icon
+- a:getName():java.lang.String
+- a:getRepositoryClass():java.lang.Class
+- s:getRepositoryTypes():java.util.List
 e:com.intellij.tasks.TaskState
+- java.lang.Enum
 - s:valueOf(java.lang.String):com.intellij.tasks.TaskState
+- s:values():com.intellij.tasks.TaskState[]
 e:com.intellij.tasks.TaskType
+- java.lang.Enum
 - s:valueOf(java.lang.String):com.intellij.tasks.TaskType
+- s:values():com.intellij.tasks.TaskType[]
+a:com.intellij.tasks.config.TaskRepositoryEditor
+- com.intellij.openapi.Disposable
+- a:createComponent():javax.swing.JComponent
+- getPreferredFocusedComponent():javax.swing.JComponent
 a:com.intellij.tasks.context.WorkingContextProvider
 - <init>():V
 - clearContext(com.intellij.openapi.project.Project):V

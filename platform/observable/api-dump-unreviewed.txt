@@ -137,26 +137,16 @@ Fa:com.intellij.openapi.observable.properties.AbstractObservableProperty
 - <init>():V
 - afterChange(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 f:com.intellij.openapi.observable.properties.AtomicBooleanProperty
-- com.intellij.openapi.observable.properties.AbstractObservableBooleanProperty
-- com.intellij.openapi.observable.properties.AtomicMutableBooleanProperty
 - f:compareAndSet(Z,Z):Z
-- get():java.lang.Boolean
 - getAndSet(Z):Z
 - reset():V
 - set():V
 - updateAndGet(kotlin.jvm.functions.Function1):java.lang.Boolean
 Fc:com.intellij.openapi.observable.properties.AtomicLazyProperty
-- com.intellij.openapi.observable.properties.ObservableMutableProperty
 - sf:Companion:com.intellij.openapi.observable.properties.AtomicLazyProperty$Companion
-- get():java.lang.Object
 f:com.intellij.openapi.observable.properties.AtomicLazyProperty$Companion
 com.intellij.openapi.observable.properties.AtomicMutableBooleanProperty
-- com.intellij.openapi.observable.properties.MutableBooleanProperty
-- com.intellij.openapi.observable.properties.ObservableMutableProperty
 - a:getAndSet(Z):Z
-f:com.intellij.openapi.observable.properties.AtomicProperty
-- com.intellij.openapi.observable.properties.ObservableMutableProperty
-- get():java.lang.Object
 f:com.intellij.openapi.observable.properties.ListenerUtilKt
 - sf:whenPropertyChanged(com.intellij.openapi.observable.properties.ObservableProperty,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):V
 - sf:whenPropertyChanged(com.intellij.openapi.observable.properties.ObservableProperty,kotlin.jvm.functions.Function1):V
