@@ -66,6 +66,11 @@ internal class PolySymbolHighlightingAnnotator : Annotator {
         .filter { it.getProblems().isNotEmpty() }
         .forEach { ref -> annotateReference(ref, holder) }
 
+      // The automatic symbol-kind highlighting below is cosmetic (SYMBOL_TYPE_SEVERITY) and is
+      // discarded by the batch Annotator inspection, so skip its (non-trivial) computation in batch
+      // mode. The reference problems reported above are real diagnostics and must still run.
+      if (holder.isBatchMode()) return
+
       // For symbols contributed through PsiPolySymbolReferenceProvider and PolySymbolDeclarationProvider
       // provide automatic symbol kind highlighting
       val multiMap = symbolReferencesProvider.getSymbolOffsetsAndReferences(element, PolySymbolReferenceHints.NO_HINTS).first.copy()
