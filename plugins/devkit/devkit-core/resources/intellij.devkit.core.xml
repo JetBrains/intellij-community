@@ -156,14 +156,19 @@
                  description="Skips DevKit Split Mode inspections in modules and XML descriptors with predefined module kinds."/>
     <registryKey key="devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin" defaultValue="false"
                  description="Keeps XML split-mode inspections enabled in plugin.xml files that are indirectly frontend-only, backend-only, or mixed."/>
-    <registryKey key="devkit.remote.dev.split.mode.analysis.predefined.module.kinds.additional.file" defaultValue=""
-                 description="Optional filesystem path to a predefined split-mode module kinds JSON file loaded instead of the bundled DevKit data when the file exists."
+
+    <registryKey key="devkit.remote.dev.split.mode.analysis.api.restrictions.source" defaultValue="bundled"
+                 description="Source of ApiRestrictions.json for DevKit split-mode inspections: bundled, project, or project-or-bundled."
                  restartRequired="true"/>
+    <registryKey key="devkit.remote.dev.split.mode.analysis.predefined.module.kinds.source" defaultValue="bundled"
+                 description="Source of PredefinedModuleKinds.json for DevKit split-mode inspections: bundled, project, or project-or-bundled."
+                 restartRequired="true"/>
+    <registryKey key="devkit.remote.dev.split.mode.qodana.analysis.scope.source" defaultValue="project"
+                 description="Source of SplitModeQodanaAnalysisScope.json for DevKit split-mode inspections: bundled, project, or project-or-bundled."
+                 restartRequired="true"/>
+
     <registryKey key="devkit.remote.dev.split.mode.qodana.analysis.scope.limiter.enabled" defaultValue="false"
                  description="Limits DevKit split-mode inspections to modules listed in the Qodana analysis scope file."/>
-    <registryKey key="devkit.remote.dev.split.mode.qodana.analysis.scope.additional.file" defaultValue=""
-                 description="Optional filesystem path to an additional split-mode Qodana analysis scope JSON file."
-                 restartRequired="true"/>
     <registryKey key="devkit.obsolete.new.file.actions.enabled" defaultValue="false"
                  description="Enables old-fashioned File-New actions for plugin modules"/>
 

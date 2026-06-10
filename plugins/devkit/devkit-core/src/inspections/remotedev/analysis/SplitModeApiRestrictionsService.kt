@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -23,10 +24,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
+import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionResourceReader
 import org.jetbrains.uast.UAnnotated
 import org.jetbrains.uast.toUElementOfType
-import java.nio.file.Files
-import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
 @Service(Service.Level.PROJECT)
@@ -38,8 +38,8 @@ class SplitModeApiRestrictionsService(
 
   companion object {
     private val LOG: Logger = logger<SplitModeApiRestrictionsService>()
-    private const val API_RESTRICTIONS_FILE_PATH = "/remotedevInspectionData/ApiRestrictions.json"
-    private const val PREDEFINED_MODULE_KINDS_FILE_PATH = "/remotedevInspectionData/PredefinedModuleKinds.json"
+    private const val API_RESTRICTIONS_RESOURCE_PATH = "remotedevInspectionData/ApiRestrictions.json"
+    private const val PREDEFINED_MODULE_KINDS_RESOURCE_PATH = "remotedevInspectionData/PredefinedModuleKinds.json"
     private const val BACKEND_API_ANNOTATION = "com.intellij.util.remdev.BackendApi"
     private const val FRONTEND_API_ANNOTATION = "com.intellij.util.remdev.FrontendApi"
 
@@ -101,6 +101,9 @@ class SplitModeApiRestrictionsService(
     ignoreUnknownKeys = true
     isLenient = true
   }
+
+  private val resourceReader: SplitModeInspectionResourceReader
+    get() = SplitModeInspectionResourceReader.getInstance(project)
 
   fun isLoaded(): Boolean {
     return state.get().loadingState == LoadingState.COMPLETED
@@ -223,9 +226,11 @@ class SplitModeApiRestrictionsService(
   private suspend fun loadRestrictions() {
     var restrictionsState = RestrictionsState(loadingState = LoadingState.COMPLETED)
     try {
+      val apiRestrictionsReadMode = SplitModeAnalysisFlags.getApiRestrictionsReadMode()
+      val predefinedModuleKindsReadMode = SplitModeAnalysisFlags.getPredefinedModuleKindsReadMode()
       LOG.info(
-        "Loading API restrictions from $API_RESTRICTIONS_FILE_PATH, " +
-        "and predefined module kinds from $PREDEFINED_MODULE_KINDS_FILE_PATH"
+        "Loading API restrictions from $API_RESTRICTIONS_RESOURCE_PATH (${apiRestrictionsReadMode.registryValue}), " +
+        "and predefined module kinds from $PREDEFINED_MODULE_KINDS_RESOURCE_PATH (${predefinedModuleKindsReadMode.registryValue})"
       )
 
       val (apiRestrictions, predefinedModuleKinds) = withContext(Dispatchers.IO) {
@@ -264,40 +269,16 @@ class SplitModeApiRestrictionsService(
   }
 
   private fun loadApiRestrictionsData(): List<ApiRestriction> {
-    val jsonText = readRestrictionsJson(API_RESTRICTIONS_FILE_PATH) ?: return emptyList()
+    val jsonText = resourceReader.readText(API_RESTRICTIONS_RESOURCE_PATH, SplitModeAnalysisFlags.getApiRestrictionsReadMode()) ?: return emptyList()
     return json.decodeFromString(jsonText)
   }
 
   private fun loadPredefinedModuleKindsData(): List<PredefinedModuleKind> {
-    val additionalJsonText = readAdditionalPredefinedModuleKindsJson()
-    if (additionalJsonText != null) {
-      return json.decodeFromString(additionalJsonText)
-    }
-
-    val bundledJsonText = readRestrictionsJson(PREDEFINED_MODULE_KINDS_FILE_PATH) ?: return emptyList()
-    return json.decodeFromString(bundledJsonText)
-  }
-
-  private fun readRestrictionsJson(filePath: String): String? {
-    val inputStream = SplitModeApiRestrictionsService::class.java.getResourceAsStream(filePath)
-    if (inputStream == null) {
-      LOG.warn("Restrictions file not found: $filePath")
-      return null
-    }
-
-    return inputStream.bufferedReader().use { it.readText() }
-  }
-
-  private fun readAdditionalPredefinedModuleKindsJson(): String? {
-    val filePath = SplitModeAnalysisFlags.getAdditionalPredefinedModuleKindsFilePath() ?: return null
-    val path = Path.of(filePath)
-    if (!Files.isRegularFile(path)) {
-      LOG.info("Additional predefined split-mode module kinds file does not exist: $filePath")
-      return null
-    }
-
-    LOG.info("Loading predefined split-mode module kinds from $filePath instead of bundled DevKit data")
-    return Files.newBufferedReader(path).use { it.readText() }
+    val jsonText = resourceReader.readText(
+      PREDEFINED_MODULE_KINDS_RESOURCE_PATH,
+      SplitModeAnalysisFlags.getPredefinedModuleKindsReadMode(),
+    ) ?: return emptyList()
+    return json.decodeFromString(jsonText)
   }
 
   private fun buildApiRestrictionsLookup(data: List<ApiRestriction>): RestrictionsLookup {

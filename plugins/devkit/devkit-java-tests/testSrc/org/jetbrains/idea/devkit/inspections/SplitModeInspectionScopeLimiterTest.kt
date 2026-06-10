@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.inspections
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.lang.annotations.Language
@@ -70,14 +71,14 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
     }
   }
 
-  fun testEnabledLimiterCombinesProjectAndAdditionalScopeFiles() {
+  fun testEnabledLimiterUsesProjectScopeFileInProjectOrBundledMode() {
     val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
     val moduleName = getModuleName(file)
 
     withQodanaAnalysisScopeLimiter(
       enabled = true,
+      sourceMode = "project-or-bundled",
       projectScopeJson = """{ "moduleNames": ["$moduleName"] }""",
-      additionalScopeJson = """{ "moduleNames": ["other.module"] }""",
     ) {
       assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance(project).shouldInspectFileInQodanaMode(file))
     }
@@ -93,8 +94,8 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
 
   private fun withQodanaAnalysisScopeLimiter(
     enabled: Boolean,
+    sourceMode: String = "project",
     @Language("JSON") projectScopeJson: String? = null,
-    @Language("JSON") additionalScopeJson: String? = null,
     action: () -> Unit,
   ) {
     val projectScopeFile = projectScopeJson?.let {
@@ -103,29 +104,22 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
         Files.writeString(file, it)
       }
     }
-    val additionalFile = additionalScopeJson?.let {
-      Files.createTempFile("split-mode-qodana-analysis-scope", ".json").also { file ->
-        Files.writeString(file, it)
-      }
-    }
     val enabledRegistryValue = Registry.get("devkit.remote.dev.split.mode.qodana.analysis.scope.limiter.enabled")
-    val additionalFileRegistryValue = Registry.get("devkit.remote.dev.split.mode.qodana.analysis.scope.additional.file")
+    val sourceModeRegistryValue = RegistryManager.getInstance().get("devkit.remote.dev.split.mode.qodana.analysis.scope.source")
+    val previousSourceMode = sourceModeRegistryValue.asString()
     try {
       enabledRegistryValue.setValue(enabled)
-      additionalFileRegistryValue.setValue(additionalFile?.toString() ?: "")
-      SplitModeQodanaInspectionScopeLimiter.getInstance().reloadScopeForTest(project)
+      sourceModeRegistryValue.setValue(sourceMode)
+      SplitModeQodanaInspectionScopeLimiter.getInstance(project).reloadScopeForTest()
       action()
     }
     finally {
       enabledRegistryValue.setValue(false)
-      additionalFileRegistryValue.setValue("")
+      sourceModeRegistryValue.setValue(previousSourceMode)
       if (projectScopeFile != null) {
         Files.deleteIfExists(projectScopeFile)
       }
-      SplitModeQodanaInspectionScopeLimiter.getInstance().reloadScopeForTest(project)
-      if (additionalFile != null) {
-        Files.deleteIfExists(additionalFile)
-      }
+      SplitModeQodanaInspectionScopeLimiter.getInstance(project).reloadScopeForTest()
     }
   }
 

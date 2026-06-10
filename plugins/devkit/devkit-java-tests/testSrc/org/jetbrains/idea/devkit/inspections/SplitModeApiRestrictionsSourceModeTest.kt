@@ -8,57 +8,49 @@ import org.junit.Assert
 import java.nio.file.Files
 import java.nio.file.Path
 
-private const val PREDEFINED_MODULE_KINDS_PROJECT_RELATIVE_PATH =
-  "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/PredefinedModuleKinds.json"
+private const val API_RESTRICTIONS_PROJECT_RELATIVE_PATH =
+  "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/ApiRestrictions.json"
 
-internal class SplitModePredefinedModuleKindsSourceModeTest : BasePlatformTestCase() {
-  fun testProjectPredefinedModuleKindsOverrideBundledListWhenProjectModeEnabled() {
-    withPredefinedModuleKindsSourceMode(
+internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
+  fun testProjectApiRestrictionsOverrideBundledListWhenProjectModeEnabled() {
+    withApiRestrictionsSourceMode(
       sourceMode = "project",
       projectFileContent = """
         [
-          {"moduleName": "custom.split.mode.frontend", "moduleKind": "frontend"}
+          {"apiName": "custom.split.mode.api", "targetModules": ["frontend"]}
         ]
       """.trimIndent(),
     ) { service ->
       Assert.assertEquals(
         SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
-        service.getPredefinedDependencyKind("custom.split.mode.frontend"),
+        service.getCodeApiKind("custom.split.mode.api", null),
       )
-      Assert.assertNull(service.getPredefinedDependencyKind("intellij.platform.frontend"))
+      Assert.assertNull(service.getCodeApiKind("com.intellij.openapi.wm.ToolWindowFactory", null))
     }
   }
 
-  fun testProjectOrBundledModeFallsBackToBundledListWhenProjectFileIsMissing() {
-    withPredefinedModuleKindsSourceMode(sourceMode = "project-or-bundled") { service ->
+  fun testProjectOrBundledModeFallsBackToBundledApiRestrictionsWhenProjectFileIsMissing() {
+    withApiRestrictionsSourceMode(sourceMode = "project-or-bundled") { service ->
       Assert.assertEquals(
         SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
-        service.getPredefinedDependencyKind("intellij.platform.frontend"),
-      )
-      Assert.assertEquals(
-        SplitModeApiRestrictionsService.ModuleKind.SHARED,
-        service.getPredefinedDependencyKind("intellij.rd.client.base"),
-      )
-      Assert.assertEquals(
-        SplitModeApiRestrictionsService.ModuleKind.SHARED,
-        service.getPredefinedDependencyKind("intellij.rd.client"),
+        service.getCodeApiKind("com.intellij.openapi.wm.ToolWindowFactory", null),
       )
     }
   }
 
-  private fun withPredefinedModuleKindsSourceMode(
+  private fun withApiRestrictionsSourceMode(
     sourceMode: String,
     projectFileContent: String? = null,
     action: (SplitModeApiRestrictionsService) -> Unit,
   ) {
     val projectFile = projectFileContent?.let {
-      Path.of(project.basePath!!).resolve(PREDEFINED_MODULE_KINDS_PROJECT_RELATIVE_PATH).also { file ->
+      Path.of(project.basePath!!).resolve(API_RESTRICTIONS_PROJECT_RELATIVE_PATH).also { file ->
         Files.createDirectories(file.parent)
         Files.writeString(file, it)
       }
     }
     val service = SplitModeApiRestrictionsService.getInstance(project)
-    val registryValue = RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.predefined.module.kinds.source")
+    val registryValue = RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.api.restrictions.source")
     val previousValue = registryValue.asString()
     try {
       registryValue.setValue(sourceMode)

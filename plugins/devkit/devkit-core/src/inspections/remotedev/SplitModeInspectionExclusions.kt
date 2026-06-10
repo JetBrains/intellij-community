@@ -32,8 +32,9 @@ import org.jetbrains.idea.devkit.DevKitBundle.message
 import java.io.IOException
 
 internal const val EXCLUSIONS_FILE_NAME: String = "DevKitSplitModeInspectionExclusions.json"
+internal const val EXCLUSIONS_RESOURCE_PATH: String = "remotedevInspectionData/$EXCLUSIONS_FILE_NAME"
 internal const val EXCLUSIONS_RELATIVE_PATH: String =
-  "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/$EXCLUSIONS_FILE_NAME"
+  "community/plugins/devkit/devkit-core/resources/$EXCLUSIONS_RESOURCE_PATH"
 
 internal const val SPLIT_MODE_API_USAGE_SHORT_NAME: String = "SplitModeApiUsage"
 internal const val SPLIT_MODE_XML_API_USAGE_SHORT_NAME: String = "SplitModeXmlApiUsage"
@@ -57,6 +58,9 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
   @Volatile
   private var cachedSnapshot: CachedSplitModeInspectionExclusionsSnapshot? = null
 
+  private val resourceReader: SplitModeInspectionResourceReader
+    get() = SplitModeInspectionResourceReader.getInstance(project)
+
   fun createSuppressionFixIfApplicable(
     element: PsiElement,
     inspectionShortName: String,
@@ -77,7 +81,9 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
 
   fun appendExclusion(problem: SplitModeInspectionExclusionProblem): VirtualFile? {
     val exclusionsFile = findOrCreateExclusionsFile() ?: return null
-    val currentFile = parseExclusionsFile(readText(exclusionsFile))
+    val currentFile = parseExclusionsFile(
+      resourceReader.readText(EXCLUSIONS_RESOURCE_PATH, SplitModeInspectionResourceReadMode.PROJECT_ONLY).orEmpty(),
+    )
     val newEntry = problem.toEntry()
     if (currentFile.exclusions.any { it.matches(newEntry) }) {
       return exclusionsFile
@@ -131,7 +137,7 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
 
   private fun getSnapshot(): SplitModeInspectionExclusionsSnapshot {
     val exclusionsFile = findExclusionsFile()
-    val exclusionsText = exclusionsFile?.let { readText(it) }
+    val exclusionsText = resourceReader.readText(EXCLUSIONS_RESOURCE_PATH, SplitModeInspectionResourceReadMode.PROJECT_ONLY)
     val cacheKey = createCacheKey(exclusionsFile, exclusionsText)
     cachedSnapshot?.let { cached ->
       if (cached.cacheKey == cacheKey) {
@@ -175,12 +181,6 @@ internal class SplitModeInspectionExclusionsService(private val project: Project
       LOG.warn("Cannot create $EXCLUSIONS_RELATIVE_PATH", e)
       null
     }
-  }
-
-  private fun readText(file: VirtualFile): String {
-    val fileDocumentManager = FileDocumentManager.getInstance()
-    val document = fileDocumentManager.getCachedDocument(file)
-    return if (document != null && fileDocumentManager.isDocumentUnsaved(document)) document.text else VfsUtilCore.loadText(file)
   }
 
   private fun parseExclusionsFile(text: String): SplitModeInspectionExclusionsFile {

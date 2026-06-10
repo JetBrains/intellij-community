@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.inspections.remotedev.analysis
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
+import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionResourceReadMode
 
 internal object SplitModeAnalysisFlags {
 
@@ -26,19 +27,23 @@ internal object SplitModeAnalysisFlags {
     return Registry.`is`("devkit.remote.dev.split.mode.qodana.analysis.scope.limiter.enabled", false)
   }
 
-  fun getAdditionalPredefinedModuleKindsFilePath(): String? {
-    val value = RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.predefined.module.kinds.additional.file").asString()
-    if (value.isBlank()) {
-      return null
-    }
-    return value
+  fun getApiRestrictionsReadMode(): SplitModeInspectionResourceReadMode {
+    return getResourceReadMode("devkit.remote.dev.split.mode.analysis.api.restrictions.source", SplitModeInspectionResourceReadMode.BUNDLED_ONLY)
   }
 
-  fun getAdditionalQodanaAnalysisScopeFilePath(): String? {
-    val value = Registry.stringValue("devkit.remote.dev.split.mode.qodana.analysis.scope.additional.file", "")
-    if (value.isBlank()) {
-      return null
-    }
-    return value
+  fun getPredefinedModuleKindsReadMode(): SplitModeInspectionResourceReadMode {
+    return getResourceReadMode("devkit.remote.dev.split.mode.analysis.predefined.module.kinds.source", SplitModeInspectionResourceReadMode.BUNDLED_ONLY)
+  }
+
+  fun getQodanaAnalysisScopeReadMode(): SplitModeInspectionResourceReadMode {
+    return getResourceReadMode("devkit.remote.dev.split.mode.qodana.analysis.scope.source", SplitModeInspectionResourceReadMode.PROJECT_ONLY)
+  }
+
+  private fun getResourceReadMode(
+    registryKey: String,
+    defaultMode: SplitModeInspectionResourceReadMode,
+  ): SplitModeInspectionResourceReadMode {
+    val value = RegistryManager.getInstance().get(registryKey).asString()
+    return SplitModeInspectionResourceReadMode.fromRegistryValue(registryKey, value, defaultMode)
   }
 }
