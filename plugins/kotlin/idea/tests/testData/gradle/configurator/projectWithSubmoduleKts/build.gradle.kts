@@ -1,9 +1,8 @@
 plugins {
-    kotlin("jvm") version "1.3.50"
+    kotlin("jvm") version "2.4.0"
 }
 repositories {
     mavenCentral()
 }
 dependencies {
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.3.50")
 }

@@ -29,8 +29,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.ConfigurationResultBuilder
+import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
 import org.jetbrains.kotlin.idea.configuration.getAbleToRunConfigurators
@@ -140,9 +140,8 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
-    @Ignore("KTIJ-38638")
     @Test
-    @TargetVersions("6.0 <=> 7.6.x")
+    @TargetVersions("7.6+")
     fun testProjectWithSubmodule() {
         importProjectFromTestData()
         runInEdtAndWait {
@@ -155,7 +154,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("6.0 <=> 7.6.x")
+    @TargetVersions("7.6+")
     fun testProjectWithSubmoduleKts() {
         importProjectFromTestData()
         runInEdtAndWait {
