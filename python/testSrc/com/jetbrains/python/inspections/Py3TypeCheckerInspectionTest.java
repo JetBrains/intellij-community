@@ -5712,26 +5712,23 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-59260
   public void testIntFlagValueType() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON36,
-      () ->
-        doTestByText("""
-                       from enum import IntFlag, auto
-                       
-                       # IntFlag should infer int
-                       class IF(IntFlag):
-                           FIRST = auto()
-                           SECOND = auto()
-                           THIRD = 42
-                       
-                       # IntFlag.value should return int, so these should not produce type errors
-                       variable: int = IF.FIRST.value
-                       another_var: int = IF.SECOND.value
-                       explicit_var: int = IF.THIRD.value
-                       
-                       # This should produce a type error
-                       wrong_var: str = <warning descr="Expected type 'str', got 'int' instead">IF.FIRST.value</warning>
-                       """));
+    doTestByText("""
+                   from enum import IntFlag, auto
+                   
+                   # IntFlag should infer int
+                   class IF(IntFlag):
+                       FIRST = auto()
+                       SECOND = auto()
+                       THIRD = 42
+                   
+                   # IntFlag.value should return int, so these should not produce type errors
+                   variable: int = IF.FIRST.value
+                   another_var: int = IF.SECOND.value
+                   explicit_var: int = IF.THIRD.value
+                   
+                   # This should produce a type error
+                   wrong_var: str = <warning descr="Expected type 'str', got 'int' instead">IF.FIRST.value</warning>
+                   """);
   }
 
   // PY-59260
@@ -5766,26 +5763,23 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-59260
   public void testEmptyEnumValueTypes() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON311,
-      () ->
-        doTestByText("""
-                       from enum import StrEnum, Enum
-                       
-                       class EmptyStrEnum(StrEnum):
-                           pass
-                       
-                       class EmptyStrMixin(str, Enum):
-                           pass
-                       
-                       def test_empty_str_enum(x: EmptyStrEnum):
-                           s: str = x.value
-                           i: int = <warning descr="Expected type 'int', got 'str' instead">x.value</warning>
-                       
-                       def test_empty_str_mixin(x: EmptyStrMixin):
-                           s: str = x.value
-                           i: int = <warning descr="Expected type 'int', got 'str' instead">x.value</warning>
-                       """));
+    doTestByText("""
+                   from enum import StrEnum, Enum
+                   
+                   class EmptyStrEnum(StrEnum):
+                       pass
+                   
+                   class EmptyStrMixin(str, Enum):
+                       pass
+                   
+                   def test_empty_str_enum(x: EmptyStrEnum):
+                       s: str = x.value
+                       i: int = <warning descr="Expected type 'int', got 'str' instead">x.value</warning>
+                   
+                   def test_empty_str_mixin(x: EmptyStrMixin):
+                       s: str = x.value
+                       i: int = <warning descr="Expected type 'int', got 'str' instead">x.value</warning>
+                   """);
   }
 
   // PY-59260
