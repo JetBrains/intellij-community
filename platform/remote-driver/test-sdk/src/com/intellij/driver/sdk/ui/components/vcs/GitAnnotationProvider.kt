@@ -5,7 +5,7 @@ import com.intellij.driver.sdk.VirtualFile
 import java.util.Date
 
 
-@Remote("git4idea.annotate.GitAnnotationProvider", plugin = "Git4Idea")
+@Remote("git4idea.annotate.GitAnnotationProvider", plugin = "Git4Idea/intellij.vcs.git.backend")
 interface GitAnnotationProvider {
   fun annotate(file: VirtualFile): FileAnnotation
 }

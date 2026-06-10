@@ -23,8 +23,16 @@ annotation class Remote(
   val serviceInterface: String = "",
 
   /**
-   * Identifier of a plugin where the class is located, e.g. `com.intellij.spring`.
-   * If the class is declared in a module of a plugin (not main), use the following format: `some.plugin.id/some.plugin.id.submodule`.
+   * Identifier of a module where the class is located.
+   *
+   * If the class is located in the core classloader (its module is embedded into the platform), the field is not required.
+   * If the class is located in a non-embedded platform module, use the following format: `com.intellij/intellij.some.platform.module`.
+   *
+   * If the class is located in a plugin, use the following format: `some.plugin.id/some.plugin.module`.
+   * If the class is located in an embedded module (the main plugin classloader or Plugin Model V1), use the following format: `some.plugin.id`.
+   *
+   * See [Plugin Model](https://youtrack.jetbrains.com/articles/IJPL-A-31/Plugin-Model) documentation.
+   * @See com.intellij.driver.impl.Invoker#getClassLoader
    */
   val plugin: String = "",
 

@@ -16,7 +16,7 @@ class VcsLogGraphTableUi(data: ComponentData) : JTableUiComponent(data) {
   val logTable: VcsLogGraphTable by lazy { driver.cast(component, VcsLogGraphTable::class) }
 }
 
-@Remote("com.intellij.vcs.log.ui.table.VcsLogGraphTable", plugin = "Git4Idea")
+@Remote("com.intellij.vcs.log.ui.table.VcsLogGraphTable", plugin = "com.intellij/intellij.platform.vcs.log.impl")
 interface VcsLogGraphTable {
   fun getId(): String
   fun getSelection(): VcsLogCommitSelection
