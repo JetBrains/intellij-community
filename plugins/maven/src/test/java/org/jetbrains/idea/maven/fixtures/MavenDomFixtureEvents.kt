@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 // Helpers that run an [action] and assert that the expected import / index / download events fired.
 
 @RequiresBackgroundThread
-suspend fun MavenDomTestFixture.waitForImportWithinTimeout(action: suspend () -> Unit) {
+suspend fun MavenImportingTestFixture.waitForImportWithinTimeout(action: suspend () -> Unit) {
   val importStarted = AtomicBoolean(false)
   val importFinished = AtomicBoolean(false)
   val pluginResolutionFinished = AtomicBoolean(true)

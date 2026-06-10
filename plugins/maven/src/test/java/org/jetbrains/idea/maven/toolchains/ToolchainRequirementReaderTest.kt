@@ -1,27 +1,44 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.toolchains
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
 
-internal class ToolchainRequirementReaderTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class ToolchainRequirementReaderTest(mavenVersion: String, modelVersion: String) {
 
-  override fun setUp() {
-    super.setUp()
-    createProjectSubFile(".mvn/maven.config",
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
+
+  @BeforeEach
+  fun setUp() {
+    maven.createProjectSubFile(".mvn/maven.config",
                          "-t\n" +
                          ".mvn/my_toolchains.xml")
-    createProjectSubFile(".mvn/my_toolchains.xml", "<toolchains/>")
+    maven.createProjectSubFile(".mvn/my_toolchains.xml", "<toolchains/>")
   }
 
   @Test
   fun testReadToolchainFromSelectJdkToolchain() = runBlocking {
     val finder = ToolchainFinder()
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>
       <version>1</version>
@@ -55,7 +72,7 @@ internal class ToolchainRequirementReaderTest : MavenMultiVersionImportingTestCa
       </build>
 """)
 
-    val mavenProject = projectsManager.rootProjects[0]!!
+    val mavenProject = maven.projectsManager.rootProjects[0]!!
 
     val expectedRequirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
       .set("version", "99")
@@ -64,18 +81,18 @@ internal class ToolchainRequirementReaderTest : MavenMultiVersionImportingTestCa
 
     val allToolchainRequirements = finder.allToolchainRequirements(mavenProject)
     assertSameElements(allToolchainRequirements, expectedRequirement)
-    assertEquals("Main toolchain does not match", expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject))
-    assertEquals("Test toolchain does not match", expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject))
-    assertEquals("Compiler execution toolchain does not match",
-                 expectedRequirement,
-                 finder.searchToolchainRequirementForExecution(mavenProject, "test-execution"))
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
+    assertEquals(expectedRequirement,
+                 finder.searchToolchainRequirementForExecution(mavenProject, "test-execution"),
+                 "Compiler execution toolchain does not match")
   }
 
   @Test
   fun testReadToolchainFromToolchainGoal() = runBlocking {
     val finder = ToolchainFinder()
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>
       <version>1</version>
@@ -113,7 +130,7 @@ internal class ToolchainRequirementReaderTest : MavenMultiVersionImportingTestCa
       </build>
 """)
 
-    val mavenProject = projectsManager.rootProjects[0]!!
+    val mavenProject = maven.projectsManager.rootProjects[0]!!
 
     val expectedRequirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
       .set("version", "99")
@@ -122,18 +139,18 @@ internal class ToolchainRequirementReaderTest : MavenMultiVersionImportingTestCa
 
     val allToolchainRequirements = finder.allToolchainRequirements(mavenProject)
     assertSameElements(allToolchainRequirements, expectedRequirement)
-    assertEquals("Main toolchain does not match", expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject))
-    assertEquals("Test toolchain does not match", expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject))
-    assertEquals("Compiler execution toolchain does not match",
-                 expectedRequirement,
-                 finder.searchToolchainRequirementForExecution(mavenProject, "test-execution"))
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
+    assertEquals(expectedRequirement,
+                 finder.searchToolchainRequirementForExecution(mavenProject, "test-execution"),
+                 "Compiler execution toolchain does not match")
   }
 
   @Test
   fun testReadToolchainFromToolchainExecutionShouldHavePriority() = runBlocking {
     val finder = ToolchainFinder()
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>
       <version>1</version>
@@ -177,7 +194,7 @@ internal class ToolchainRequirementReaderTest : MavenMultiVersionImportingTestCa
       </build>
 """)
 
-    val mavenProject = projectsManager.rootProjects[0]!!
+    val mavenProject = maven.projectsManager.rootProjects[0]!!
 
     val expectedRequirement = ToolchainRequirement.Builder(ToolchainRequirement.JDK_TYPE)
       .set("version", "99")
@@ -192,11 +209,11 @@ internal class ToolchainRequirementReaderTest : MavenMultiVersionImportingTestCa
 
     val allToolchainRequirements = finder.allToolchainRequirements(mavenProject)
     assertSameElements(allToolchainRequirements, expectedRequirement, compilerRequirement)
-    assertEquals("Main toolchain does not match", expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject))
-    assertEquals("Test toolchain does not match", expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject))
-    assertEquals("Compiler execution toolchain does not match",
-                 compilerRequirement,
-                 finder.searchToolchainRequirementForExecution(mavenProject, "some-execution"))
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForMain(mavenProject), "Main toolchain does not match")
+    assertEquals(expectedRequirement, finder.searchToolchainRequirementForTest(mavenProject), "Test toolchain does not match")
+    assertEquals(compilerRequirement,
+                 finder.searchToolchainRequirementForExecution(mavenProject, "some-execution"),
+                 "Compiler execution toolchain does not match")
   }
 
 }

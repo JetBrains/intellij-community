@@ -16,6 +16,7 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertOrderedElementsAreEqual
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.junit.Assert.assertNotNull
+import org.junit.Assume
 import org.junit.jupiter.api.Assumptions
 
 // Maven-version assumptions and module / language-level inspection.
@@ -49,7 +50,7 @@ suspend fun MavenTestFixture.forModel41(block: suspend () -> Unit) {
   if (modelVersion == MavenConstants.MODEL_VERSION_4_1_0) block()
 }
 
-fun MavenDomTestFixture.assumeVersionAtLeast(version: String) {
+fun MavenTestFixture.assumeVersionAtLeast(version: String) {
   Assumptions.assumeTrue(
     VersionComparatorUtil.compare(MavenTestVersions.getActualVersion(mavenVersion), MavenTestVersions.getActualVersion(version)) >= 0)
 }
@@ -59,9 +60,14 @@ fun MavenTestFixture.assumeVersionMoreThan(version: String) {
     VersionComparatorUtil.compare(MavenTestVersions.getActualVersion(mavenVersion), MavenTestVersions.getActualVersion(version)) > 0)
 }
 
-fun MavenDomTestFixture.assumeVersionLessThan(version: String) {
+fun MavenTestFixture.assumeVersionLessThan(version: String) {
   Assumptions.assumeTrue(
     VersionComparatorUtil.compare(MavenTestVersions.getActualVersion(mavenVersion), MavenTestVersions.getActualVersion(version)) < 0)
+}
+
+fun MavenTestFixture.assumeVersion(version: String) {
+  Assume.assumeTrue("Version $mavenVersion is not $version, therefore skipped",
+                    VersionComparatorUtil.compare(MavenTestVersions.getActualVersion(mavenVersion), MavenTestVersions.getActualVersion(version)) == 0)
 }
 
 val MavenTestFixture.defaultLanguageLevel: LanguageLevel
