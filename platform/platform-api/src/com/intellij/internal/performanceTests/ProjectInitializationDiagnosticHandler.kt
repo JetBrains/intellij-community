@@ -11,7 +11,7 @@ interface ProjectInitializationDiagnosticHandler {
       ExtensionPointName("com.intellij.internal.performanceTests.projectInitializationDiagnosticHandler")
   }
 
-  fun registerBeginningOfInitializationActivity(project: Project, debugMessageProducer: Supplier<String>): ProjectInitializationDiagnosticService.ActivityTracker
+  fun registerBeginningOfInitializationActivity(project: Project, debugMessageProducer: Supplier<String>): ProjectInitializationDiagnostic.ActivityTracker
 
   fun isProjectInitializationAndIndexingFinished(project: Project): Boolean
 }

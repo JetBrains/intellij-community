@@ -11,7 +11,7 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.idea.AppMode
-import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
+import com.intellij.internal.performanceTests.ProjectInitializationDiagnostic
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
@@ -185,7 +185,7 @@ private fun runScriptWhenInitializedAndIndexed(project: Project, alarm: Alarm) {
           val statusBar = WindowManager.getInstance().getIdeFrame(project)?.statusBar as? StatusBarEx
           val hasUserVisibleIndicators = statusBar != null && statusBar.backgroundProcessModels.isNotEmpty()
           if (isDumb(project) || hasUserVisibleIndicators ||
-              !ProjectInitializationDiagnosticService.isProjectInitializationAndIndexingFinished(project)) {
+              !ProjectInitializationDiagnostic.isProjectInitializationAndIndexingFinished(project)) {
             runScriptWhenInitializedAndIndexed(project, alarm)
           }
           else {

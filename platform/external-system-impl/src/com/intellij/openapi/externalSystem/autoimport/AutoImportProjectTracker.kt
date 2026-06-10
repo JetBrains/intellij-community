@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.ide.file.BatchFileChangeListener
-import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
+import com.intellij.internal.performanceTests.ProjectInitializationDiagnostic
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.PersistentStateComponent
@@ -12,6 +12,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros.CACHE_FILE
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Util.bindIsPassThrough
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker.Util.bindMergingTimeSpan
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.EXTERNAL
@@ -20,7 +21,6 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModification
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModificationType.UNKNOWN
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemRefreshStatus.SUCCESS
-import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectStatus.Stamp
 import com.intellij.openapi.externalSystem.autoimport.update.PriorityEatUpdate
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemActivityKey
@@ -161,12 +161,12 @@ class AutoImportProjectTracker(
   }
 
   private val currentActivityLock = ReentrantLock()
-  private var currentActivity: ProjectInitializationDiagnosticService.ActivityTracker? = null
+  private var currentActivity: ProjectInitializationDiagnostic.ActivityTracker? = null
 
   private fun schedule(priority: Int, dispatchIterations: Int, action: () -> Unit) {
     currentActivityLock.withLock { 
       if (currentActivity == null) {
-        currentActivity = ProjectInitializationDiagnosticService.registerTracker(project, "AutoImportProjectTracker.schedule")
+        currentActivity = ProjectInitializationDiagnostic.registerTracker(project, "AutoImportProjectTracker.schedule")
       }
     }
     dispatcher.queueTracked(PriorityEatUpdate(priority) {

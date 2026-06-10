@@ -12,15 +12,15 @@ import java.util.ArrayList;
  * This service helps tests to wait till full initialization and indexing of a project.
  * To ensure tests will wait till some particular async algorithm finishes, make sure that while it's running,
  * there always is some activity, which is already registered
- * with {@link ProjectInitializationDiagnosticService#registerTracker(Project, String)},
+ * with {@link ProjectInitializationDiagnostic#registerTracker(Project, String)},
  * but not yet finished with {@link ActivityTracker#activityFinished()}.
  * </p>
  * One can register activity in the very beginning and finish in the end,
  * or split algorithm into intersecting parts, and wrap them into activities separately.
  */
-public final class ProjectInitializationDiagnosticService {
+public final class ProjectInitializationDiagnostic {
 
-  private ProjectInitializationDiagnosticService() { }
+  private ProjectInitializationDiagnostic() { }
 
   public static @NotNull ActivityTracker registerTracker(@NotNull Project project, @NotNull @NlsSafe String debugActivityName) {
     final var trackers = new ArrayList<ActivityTracker>();

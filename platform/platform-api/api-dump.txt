@@ -1429,17 +1429,17 @@ com.intellij.internal.inspector.UiInspectorTableRendererContextProvider
 - a:getUiInspectorContext(javax.swing.JTable,java.lang.Object,I,I):java.util.List
 com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider
 - a:getUiInspectorContext(javax.swing.JTree,java.lang.Object,I):java.util.List
+f:com.intellij.internal.performanceTests.ProjectInitializationDiagnostic
+- s:isProjectInitializationAndIndexingFinished(com.intellij.openapi.project.Project):Z
+- s:registerTracker(com.intellij.openapi.project.Project,java.lang.String):com.intellij.internal.performanceTests.ProjectInitializationDiagnostic$ActivityTracker
+com.intellij.internal.performanceTests.ProjectInitializationDiagnostic$ActivityTracker
+- a:activityFinished():V
 com.intellij.internal.performanceTests.ProjectInitializationDiagnosticHandler
 - sf:Companion:com.intellij.internal.performanceTests.ProjectInitializationDiagnosticHandler$Companion
 - a:isProjectInitializationAndIndexingFinished(com.intellij.openapi.project.Project):Z
-- a:registerBeginningOfInitializationActivity(com.intellij.openapi.project.Project,java.util.function.Supplier):com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService$ActivityTracker
+- a:registerBeginningOfInitializationActivity(com.intellij.openapi.project.Project,java.util.function.Supplier):com.intellij.internal.performanceTests.ProjectInitializationDiagnostic$ActivityTracker
 f:com.intellij.internal.performanceTests.ProjectInitializationDiagnosticHandler$Companion
 - f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
-f:com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
-- s:isProjectInitializationAndIndexingFinished(com.intellij.openapi.project.Project):Z
-- s:registerTracker(com.intellij.openapi.project.Project,java.lang.String):com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService$ActivityTracker
-com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService$ActivityTracker
-- a:activityFinished():V
 f:com.intellij.lang.StdLanguages
 - sf:JAVA:com.intellij.lang.Language
 - sf:XML:com.intellij.lang.Language

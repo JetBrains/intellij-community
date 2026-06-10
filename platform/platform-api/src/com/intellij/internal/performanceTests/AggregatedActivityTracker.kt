@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.performanceTests
 
-import com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService.ActivityTracker
+import com.intellij.internal.performanceTests.ProjectInitializationDiagnostic.ActivityTracker
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
