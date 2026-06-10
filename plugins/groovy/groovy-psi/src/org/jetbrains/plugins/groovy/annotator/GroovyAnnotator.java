@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.annotator;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -615,15 +615,17 @@ public final class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitEnumConstant(@NotNull GrEnumConstant enumConstant) {
     super.visitEnumConstant(enumConstant);
+    if (GroovyConfigUtils.getInstance().isVersionAtLeast(enumConstant, GroovyConfigUtils.GROOVY2_2)) {
+      // Map constructors implemented in Groovy 2.2, see https://issues.apache.org/jira/browse/GROOVY-4485
+      return;
+    }
     final GrArgumentList argumentList = enumConstant.getArgumentList();
 
-    if (argumentList != null && PsiImplUtil.hasNamedArguments(argumentList) && !PsiImplUtil.hasExpressionArguments(argumentList)) {
+    if (PsiImplUtil.hasNamedArguments(argumentList) && !PsiImplUtil.hasExpressionArguments(argumentList)) {
       final PsiMethod constructor = enumConstant.resolveConstructor();
-      if (constructor != null) {
-        if (!PsiUtil.isConstructorHasRequiredParameters(constructor)) {
-          myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle
-            .message("the.usage.of.a.map.entry.expression.to.initialize.an.enum.is.currently.not.supported")).range(argumentList).create();
-        }
+      if (constructor != null && !PsiUtil.isConstructorHasRequiredParameters(constructor)) {
+        final String message = GroovyBundle.message("the.usage.of.a.map.entry.expression.to.initialize.an.enum.is.currently.not.supported");
+        myHolder.newAnnotation(HighlightSeverity.ERROR, message).range(argumentList).create();
       }
     }
   }
