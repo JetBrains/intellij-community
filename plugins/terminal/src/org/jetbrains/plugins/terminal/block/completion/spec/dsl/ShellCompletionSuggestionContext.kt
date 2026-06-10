@@ -43,10 +43,11 @@ sealed interface ShellCompletionSuggestionContext : ShellSuggestionContext {
   fun hidden()
 
   /**
-   * By default, the name or [insertValue] is automatically escaped according to the shell syntax
-   * (e.g., handling whitespaces or special characters) before being inserted.
+   * By default, the suggestion name is automatically escaped according to the shell syntax
+   * (e.g., handling whitespaces or special characters) before being inserted unless [insertValue] is provided.
+   * If [insertValue] is provided, then it is inserted as is with no escaping.
    *
-   * Marks this suggestion to insert the name or [insertValue] exactly as provided.
+   * Marks this suggestion to insert the suggestion name exactly as provided.
    */
   fun noEscaping()
 }

@@ -31,7 +31,7 @@ internal class ShellOptionSpecImpl(
 
   override val isHidden: Boolean = false
 
-  override val shouldEscape: Boolean = true
+  override val shouldEscape: Boolean = insertValue == null
 
   init {
     if (priority !in 0..100) {

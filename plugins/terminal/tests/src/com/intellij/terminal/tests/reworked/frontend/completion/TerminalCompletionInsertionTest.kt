@@ -73,6 +73,19 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
           }
         }
       }
+      subcommand("insert-value-no-escape") {
+        argument {
+          suggestions {
+            listOf(
+              ShellCompletionSuggestion("files") {
+                priority(100)
+                insertValue("files '{cursor}'")
+              },
+              ShellCompletionSuggestion("figures")
+            )
+          }
+        }
+      }
     }
   }
 
@@ -193,6 +206,23 @@ internal class TerminalCompletionInsertionTest : BasePlatformTestCase() {
 
     val expectedText = "test_cmd custom-insert-value someCustomInsertValue"
     val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong())
+    fixture.assertOutputModelState(expectedText, expectedCursorOffset)
+  }
+
+  @Test
+  fun `test insert value is inserted unescaped`() = doTest { fixture ->
+    fixture.type("test_cmd insert-value-no-escape fi")
+    fixture.callCompletionPopup()
+    val lookup = fixture.getActiveLookup() ?: error("No active lookup")
+    assertThat(lookup.items.map { it.lookupString })
+      .hasSameElementsAs(listOf("figures", "files"))
+    assertThat(lookup.currentItem?.lookupString)
+      .isEqualTo("files")
+
+    fixture.insertSelectedItem()
+
+    val expectedText = "test_cmd insert-value-no-escape files ''"
+    val expectedCursorOffset = TerminalOffset.of(expectedText.length.toLong() - 1)
     fixture.assertOutputModelState(expectedText, expectedCursorOffset)
   }
 
