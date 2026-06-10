@@ -62,10 +62,6 @@ class IntellijModulesPublication(
 
     /**
      * URL where the artifacts will be deployed
-     *
-     *  <p>
-     *  Note: Append /;publish=1;override=1 for Bintray
-     *  </p>
      */
     var repositoryUrl: String? = property("intellij.modules.publication.repository.url")
 
