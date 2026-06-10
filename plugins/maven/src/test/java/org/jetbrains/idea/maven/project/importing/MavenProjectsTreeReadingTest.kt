@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertContain
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.assertUnorderedPathsAreEqual
 import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
@@ -31,6 +32,7 @@ import com.intellij.maven.testFramework.fixtures.pathFromBasedir
 import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.maven.testFramework.fixtures.testRootDisposable
 import com.intellij.maven.testFramework.fixtures.updateAllProjects
+import com.intellij.maven.testFramework.fixtures.updateAllProjectsFullSync
 import com.intellij.maven.testFramework.fixtures.updateModulePom
 import com.intellij.maven.testFramework.fixtures.updateProjectPom
 import com.intellij.maven.testFramework.fixtures.updateSettingsXml
@@ -56,6 +58,7 @@ import org.jetbrains.idea.maven.fixtures.updateTimestamps
 import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.model.MavenProfileKind
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -1903,6 +1906,165 @@ class MavenProjectsTreeReadingTest(mavenVersion: String, modelVersion: String) {
     assertEquals(m, mProject.file)
     assertEquals(p1Project, maven.tree.findRootProject(mProject))
     assertEquals(0, maven.tree.getModules(mProject).size)
+  }
+
+  @Test
+  fun testProfileActivatedSubModuleIsDiscoveredOnTreeUpdate() = runBlocking {
+    val projectPom = maven.createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <profiles>
+                         <profile>
+                           <id>parent-profile</id>
+                           <modules>
+                             <module>child</module>
+                           </modules>
+                         </profile>
+                       </profiles>
+                       """.trimIndent())
+    maven.createModulePom("child",
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>child</artifactId>
+                      <version>1</version>
+                      <packaging>pom</packaging>
+                      <parent>
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                      </parent>
+                      <profiles>
+                        <profile>
+                          <id>child-profile</id>
+                        </profile>
+                      </profiles>
+                      """.trimIndent())
+
+    val explicitProfiles = MavenExplicitProfiles(listOf("parent-profile", "child-profile"))
+
+    // Read the tree with profiles enabled — `tree.update(...)` must already pick up
+    // the profile-activated child even before the resolve stage runs.
+    maven.tree.update(listOf(projectPom), false, maven.mavenGeneralSettings, explicitProfiles, maven.mavenEmbedderWrappers, maven.rawProgressReporter)
+    assertEquals(1, maven.tree.getModules(maven.tree.rootProjects[0]).size, "child must be attached to parent after the initial tree read")
+
+    // Force re-read (simulates "Reload All Maven Projects"). The child must remain
+    // attached to the parent — otherwise its `child-profile` is lost.
+    maven.tree.updateAll(listOf(projectPom), true, maven.mavenGeneralSettings, explicitProfiles, maven.mavenEmbedderWrappers, maven.rawProgressReporter)
+    assertEquals(1, maven.tree.getModules(maven.tree.rootProjects[0]).size, "child must remain attached to parent after a force re-read")
+  }
+
+  @Test
+  fun testChildProfileFromProfileActivatedSubModuleVisibleAfterStaticPreimport() = runBlocking {
+    maven.createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <profiles>
+                         <profile>
+                           <id>parent-profile</id>
+                           <modules>
+                             <module>child</module>
+                           </modules>
+                         </profile>
+                       </profiles>
+                       """.trimIndent())
+    maven.createModulePom("child",
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>child</artifactId>
+                      <version>1</version>
+                      <packaging>pom</packaging>
+                      <parent>
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                      </parent>
+                      <profiles>
+                        <profile>
+                          <id>child-profile</id>
+                        </profile>
+                      </profiles>
+                      """.trimIndent())
+
+    maven.importProjectWithProfiles("parent-profile", "child-profile")
+
+    // The child profile must be both available in the tree and reported with
+    // an EXPLICIT kind, mirroring what the Maven tool window shows.
+    val statesAfterImport = maven.projectsManager.profilesWithStates.associate { it.first to it.second }
+    assertEquals(MavenProfileKind.EXPLICIT, statesAfterImport["parent-profile"], "$statesAfterImport")
+    assertEquals(MavenProfileKind.EXPLICIT, statesAfterImport["child-profile"], "$statesAfterImport")
+
+    // Simulate the "Reload All Maven Projects" action (forceReading=true).
+    maven.updateAllProjectsFullSync()
+
+    // After the reload, the user-facing profile kinds must remain unchanged.
+    val statesAfterReload = maven.projectsManager.profilesWithStates.associate { it.first to it.second }
+    assertEquals(MavenProfileKind.EXPLICIT, statesAfterReload["parent-profile"], "$statesAfterReload")
+    assertEquals(MavenProfileKind.EXPLICIT, statesAfterReload["child-profile"], "$statesAfterReload")
+  }
+
+  @Test
+  fun testChildProfileFromProfileActivatedSubModuleStaysEnabledAfterReload() = runBlocking {
+    maven.createProjectPom("""
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                       <packaging>pom</packaging>
+                       <profiles>
+                         <profile>
+                           <id>parent-profile</id>
+                           <modules>
+                             <module>child</module>
+                           </modules>
+                         </profile>
+                       </profiles>
+                       """.trimIndent())
+    maven.createModulePom("child",
+                    """
+                      <groupId>test</groupId>
+                      <artifactId>child</artifactId>
+                      <version>1</version>
+                      <packaging>pom</packaging>
+                      <parent>
+                       <groupId>test</groupId>
+                       <artifactId>parent</artifactId>
+                       <version>1</version>
+                      </parent>
+                      <profiles>
+                        <profile>
+                          <id>child-profile</id>
+                        </profile>
+                      </profiles>
+                      """.trimIndent())
+
+    // Initial import with only the parent profile enabled — this mirrors the
+    // very first time a user opens the project and switches the profile on.
+    maven.importProjectWithProfiles("parent-profile")
+
+    // After the initial import the child sub-module must have been discovered
+    // (the parent profile activates it), which makes `child-profile` visible.
+    assertContain(maven.tree.availableProfiles, "parent-profile", "child-profile")
+
+    // The user now also enables `child-profile` via the profile UI.
+    maven.projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("parent-profile", "child-profile"))
+    assertContain(maven.projectsManager.explicitProfiles.enabledProfiles, "parent-profile", "child-profile")
+
+    // Simulate the "Reload All Maven Projects" action.
+    maven.updateAllProjectsFullSync()
+
+    // The persisted state should preserve the explicitly enabled child profile.
+    assertContain(maven.projectsManager.explicitProfiles.enabledProfiles, "parent-profile", "child-profile")
+    // And the profile must still be reachable/visible in the profile tree.
+    assertContain(maven.tree.availableProfiles, "parent-profile", "child-profile")
+    // The child sub-module activated through `parent-profile` must remain a
+    // genuine child of the root project, not get re-attached as an extra root.
+    val rootProjects = maven.tree.rootProjects
+    assertEquals(1, rootProjects.size, "after reload there should remain a single root project")
+    val childProjects = maven.tree.getModules(rootProjects[0])
+    assertEquals(1, childProjects.size, "after reload the parent must keep its profile-activated child")
   }
 
   @Test

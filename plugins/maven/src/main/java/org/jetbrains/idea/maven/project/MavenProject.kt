@@ -67,10 +67,12 @@ class MavenProject(val file: VirtualFile) {
   }
 
   @Internal
+  @JvmOverloads
   fun updateFromReaderResult(
     readerResult: MavenProjectReaderResult,
     effectiveRepositoryPath: Path,
     keepPreviousArtifacts: Boolean,
+    explicitProfiles: MavenExplicitProfiles = MavenExplicitProfiles.NONE,
   ): MavenProjectChanges {
     val keepPreviousPlugins = keepPreviousArtifacts
 
@@ -89,7 +91,8 @@ class MavenProject(val file: VirtualFile) {
       keepPreviousPlugins,
       directoryPath,
       file.extension,
-      null
+      null,
+      explicitProfiles
     )
 
     return setState(newState)
@@ -804,6 +807,7 @@ class MavenProject(val file: VirtualFile) {
       directory: Path,
       fileExtension: String?,
       dependencyHash: String?,
+      explicitProfiles: MavenExplicitProfiles = MavenExplicitProfiles.NONE,
     ): MavenProjectState {
       val build = model.build
 
@@ -880,7 +884,7 @@ class MavenProject(val file: VirtualFile) {
         testOutputDirectory = build.testOutputDirectory,
         filters = build.filters,
         properties = model.properties,
-        modulesPathsAndNames = collectModulePathsAndNames(model, directory, fileExtension),
+        modulesPathsAndNames = collectModulePathsAndNames(model, directory, fileExtension, explicitProfiles),
         profiles = if (keepPreviousProfiles) {
           val modelProfileIds = model.profiles.map { it.id }.toSet()
           model.profiles.toList() + state.profiles.filter { it.id !in modelProfileIds }
@@ -903,9 +907,14 @@ class MavenProject(val file: VirtualFile) {
       )
     }
 
-    private fun collectModulePathsAndNames(mavenModel: MavenModel, baseDir: Path, fileExtension: String?): Map<String, String> {
+    private fun collectModulePathsAndNames(
+      mavenModel: MavenModel,
+      baseDir: Path,
+      fileExtension: String?,
+      explicitProfiles: MavenExplicitProfiles,
+    ): Map<String, String> {
       val result: MutableMap<String, String> = LinkedHashMap()
-      for ((relativePath, value) in collectModulesRelativePathsAndNames(mavenModel, baseDir, fileExtension)) {
+      for ((relativePath, value) in collectModulesRelativePathsAndNames(mavenModel, baseDir, fileExtension, explicitProfiles)) {
         val absolutePath = baseDir.resolve(relativePath)
         val canonicalPath = absolutePath.toCanonicalPath()
         result[PathUtil.toSystemDependentName(canonicalPath)] = value
@@ -913,10 +922,26 @@ class MavenProject(val file: VirtualFile) {
       return result
     }
 
-    private fun collectModulesRelativePathsAndNames(mavenModel: MavenModel, basePath: Path, fileExtension: String?): Map<String, String> {
+    private fun collectModulesRelativePathsAndNames(
+      mavenModel: MavenModel,
+      basePath: Path,
+      fileExtension: String?,
+      explicitProfiles: MavenExplicitProfiles,
+    ): Map<String, String> {
       val extension = fileExtension ?: ""
       val result = LinkedHashMap<String, String>()
-      val modules = mavenModel.modules
+      // IDEA-375431: include sub-modules contributed by explicitly enabled <profiles>,
+      // so that a force re-read of the POM does not drop sub-modules that exist only
+      // under an active profile (e.g. <profile><id>p</id><modules><module>m</module></modules>...).
+      // Profile activation conditions other than "explicitly enabled" (activeByDefault,
+      // OS/JDK/property triggers) are handled by the Maven embedder at resolve time;
+      // here we only consider profiles the IDE has marked as enabled.
+      val enabledIds = explicitProfiles.enabledProfiles
+      val disabledIds = explicitProfiles.disabledProfiles
+      val profileModules = mavenModel.profiles
+        .filter { it.id in enabledIds && it.id !in disabledIds }
+        .flatMap { it.modules }
+      val modules = mavenModel.modules + profileModules
       for (module in modules) {
         var name = module
         name = name.trim { it <= ' ' }
