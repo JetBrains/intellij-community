@@ -4005,8 +4005,10 @@ c:com.intellij.openapi.wm.impl.ToolbarComboButton
 - getAccessibleContext():javax.accessibility.AccessibleContext
 - f:getAccessibleNamePrefix():java.lang.String
 - f:getModel():com.intellij.openapi.wm.impl.ToolbarComboButtonModel
+- f:getShowChevron():Z
 - f:setAccessibleNamePrefix(java.lang.String):V
 - f:setMargin(java.awt.Insets):V
+- f:setShowChevron(Z):V
 com.intellij.openapi.wm.impl.ToolbarComboButtonModel
 - a:getActionListeners():java.util.List
 a:com.intellij.openapi.wm.impl.ToolbarComboWidget

@@ -23,6 +23,8 @@ import kotlin.properties.Delegates
 open class ToolbarComboButton(val model: ToolbarComboButtonModel) : AbstractToolbarCombo(), Accessible {
   var margin: Insets by Delegates.observable(JBInsets.emptyInsets(), this::fireUpdateEvents)
 
+  var showChevron: Boolean by Delegates.observable(true, this::fireUpdateEvents)
+
   internal var preferredHeightSupplier: (() -> Int)? = null
 
   var accessibleNamePrefix: @Nls String? = null
