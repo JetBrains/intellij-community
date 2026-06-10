@@ -6,9 +6,9 @@ import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.test.env.common.PredefinedPyEnvironments
-import com.intellij.python.test.env.common.createEnvironment
 import com.intellij.python.test.env.core.PyEnvironment
 import com.intellij.python.test.env.core.PyEnvironmentFactory
+import com.intellij.python.test.env.core.PyEnvironmentSpec
 import com.intellij.python.test.env.junit5.RunOnEnvironmentsExtension
 import com.intellij.python.test.env.junit5.getOrCreatePyEnvironmentFactory
 import com.intellij.testFramework.junit5.fixture.TestFixture
@@ -31,16 +31,20 @@ fun pySdkFixture(): TestFixture<SdkFixture<PyEnvironment>> = testFixture { conte
  */
 fun pySdkFixture(
   env: PredefinedPyEnvironments,
+): TestFixture<SdkFixture<PyEnvironment>> = pySdkFixture(env.spec)
+
+fun pySdkFixture(
+  envSpec: PyEnvironmentSpec<*>,
 ): TestFixture<SdkFixture<PyEnvironment>> = testFixture { context ->
   val factory = getOrCreatePyEnvironmentFactory(context.extensionContext)
-  initializedPySdkFixture(factory, env)
+  initializedPySdkFixture(factory, envSpec)
 }
 
 private suspend fun TestFixtureInitializer.R<SdkFixture<PyEnvironment>>.initializedPySdkFixture(
   factory: PyEnvironmentFactory,
-  env: PredefinedPyEnvironments,
+  envSpec: PyEnvironmentSpec<*>,
 ): TestFixtureInitializer.InitializedTestFixture<SdkFixture<PyEnvironment>> {
-  val env = factory.createEnvironment(env)
+  val env = factory.createEnvironment(envSpec)
   return initializedTestFixture(env)
 }
 

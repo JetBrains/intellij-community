@@ -23,6 +23,10 @@ jvm_library(
     ),
     kotlinc_opts = ":custom_testFramework",
     module_name = "intellij.notebooks.visualization.testFramework",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,

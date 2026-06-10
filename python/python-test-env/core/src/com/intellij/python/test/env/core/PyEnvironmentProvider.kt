@@ -97,16 +97,15 @@ abstract class PyEnvironmentProvider<S : PyEnvironmentSpec<S>>(
   abstract suspend fun setupEnvironment(context: Context, spec: S): PyEnvironment
 
   /**
-   * Extract archive using Decompressor framework.
+   * Extract archive using the root directory used by Python archives.
    * Supports tar.gz, .tgz, and .zip formats.
-   * 
+   *
    * @param archiveFile Path to the archive file
    * @param targetDir Directory where archive contents will be extracted
-   * @param prefixToStrip Path prefix to strip during extraction (e.g., "uv-x86_64-unknown-linux-gnu" for UV archives)
    * @throws IllegalArgumentException if archive format is not supported
    */
-  protected fun unpackArchive(archiveFile: Path, targetDir: Path, prefixToStrip: String? = null) {
-    com.intellij.python.test.env.core.unpackArchive(archiveFile, targetDir, prefixToStrip)
+  protected fun unpackArchive(archiveFile: Path, targetDir: Path) {
+    unpackArchive(archiveFile, targetDir, prefixToStrip = "python")
   }
 
   /**
@@ -119,13 +118,13 @@ abstract class PyEnvironmentProvider<S : PyEnvironmentSpec<S>>(
      * Can be used to create nested or dependent environments.
      */
     val factory: PyEnvironmentFactory
-    
+
     /**
      * Working directory where environments are created.
      * Each environment typically gets its own subdirectory.
      */
     val workingDir: Path
-    
+
     /**
      * Cache directory for storing downloaded artifacts.
      * Used to avoid re-downloading Python distributions and other resources.
