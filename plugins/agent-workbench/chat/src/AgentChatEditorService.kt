@@ -693,11 +693,18 @@ suspend fun rebindOpenPendingAgentChatTabs(
           }
         }
 
+        val targetPresentation = resolveAgentChatConcreteThreadPresentation(
+          projectPath = request.target.projectPath,
+          provider = request.target.provider,
+          threadId = request.target.threadId,
+          fallbackTitle = request.target.threadTitle,
+          fallbackActivity = request.target.threadActivity,
+        )
         val changed = pendingFile.rebindPendingThread(
           threadIdentity = request.target.threadIdentity,
           threadId = request.target.threadId,
-          threadTitle = request.target.threadTitle,
-          threadActivity = request.target.threadActivity,
+          threadTitle = targetPresentation.title,
+          threadActivity = targetPresentation.activity,
         )
         if (!changed) {
           outcomes.add(
@@ -862,11 +869,18 @@ suspend fun rebindOpenConcreteAgentChatTabs(
         }
 
         val previousIdentity = concreteFile.threadIdentity
+        val targetPresentation = resolveAgentChatConcreteThreadPresentation(
+          projectPath = request.target.projectPath,
+          provider = request.target.provider,
+          threadId = request.target.threadId,
+          fallbackTitle = request.target.threadTitle,
+          fallbackActivity = request.target.threadActivity,
+        )
         val changed = concreteFile.rebindConcreteThread(
           threadIdentity = request.target.threadIdentity,
           threadId = request.target.threadId,
-          threadTitle = request.target.threadTitle,
-          threadActivity = request.target.threadActivity,
+          threadTitle = targetPresentation.title,
+          threadActivity = targetPresentation.activity,
         )
         if (!changed) {
           outcomes.add(

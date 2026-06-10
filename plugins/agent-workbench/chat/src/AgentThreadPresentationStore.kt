@@ -3,6 +3,8 @@
 // @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentation
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
@@ -43,5 +45,30 @@ internal fun resolveAgentChatThreadPresentation(file: AgentChatVirtualFile): Age
   return AgentSessionThreadPresentation(
     title = resolvedTitle,
     activity = sharedPresentation.activity,
+  )
+}
+
+internal fun resolveAgentChatConcreteThreadPresentation(
+  projectPath: String,
+  provider: AgentSessionProvider,
+  threadId: String,
+  fallbackTitle: String,
+  fallbackActivity: AgentThreadActivity,
+): AgentSessionThreadPresentation {
+  val fallbackPresentation = AgentSessionThreadPresentation(title = fallbackTitle, activity = fallbackActivity)
+  val key = AgentSessionThreadPresentationKey.create(
+    projectPath = projectPath,
+    provider = provider,
+    threadId = threadId,
+  ) ?: return fallbackPresentation
+  val application = ApplicationManager.getApplication()
+  if (application == null || application.isDisposed) {
+    return fallbackPresentation
+  }
+  val sharedPresentation = application.service<AgentSessionThreadPresentationModel>().resolve(key) ?: return fallbackPresentation
+  return AgentSessionThreadPresentation(
+    title = sharedPresentation.title.takeIf { it.isNotBlank() } ?: fallbackTitle,
+    activityReport = sharedPresentation.activityReport,
+    updatedAt = sharedPresentation.updatedAt,
   )
 }

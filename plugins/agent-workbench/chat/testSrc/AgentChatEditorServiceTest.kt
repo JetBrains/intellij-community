@@ -863,6 +863,57 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
+  fun testRebindOpenPendingChatTabUsesAlreadyPublishedConcreteThreadPresentation(): Unit = timeoutRunBlocking {
+    val targetThreadId = "019eb1ec-416a-7572-9578-abac8b6181ce"
+    val staleTitle = "Thread ${targetThreadId.take(8)}"
+    val sharedTitle = "what idea theme do we use as source for pi?"
+    openChatInModal(
+      threadIdentity = "CODEX:new-shared-presentation",
+      shellCommand = listOf("codex"),
+      threadId = "",
+      threadTitle = staleTitle,
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    assertThat(publishThreadPresentation(
+      path = projectPath,
+      provider = AgentSessionProvider.CODEX,
+      threadId = targetThreadId,
+      title = sharedTitle,
+      activity = AgentThreadActivity.PROCESSING,
+    )).isEqualTo(0)
+
+    val rebindReport = rebindOpenPendingCodexTabs(
+      requestsByProjectPath = mapOf(
+        projectPath to listOf(
+          AgentChatPendingTabRebindRequest(
+            pendingTabKey = file.tabKey,
+            pendingThreadIdentity = file.threadIdentity,
+            target = rebindTarget(
+              threadIdentity = "CODEX:$targetThreadId",
+              threadId = targetThreadId,
+              threadTitle = staleTitle,
+              threadActivity = AgentThreadActivity.READY,
+            ),
+          )
+        )
+      )
+    )
+
+    assertThat(rebindReport.reboundBindings).isEqualTo(1)
+    assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
+      .isEqualTo(AgentChatPendingTabRebindStatus.REBOUND)
+    assertThat(file.threadIdentity).isEqualTo("CODEX:$targetThreadId")
+    assertThat(file.threadId).isEqualTo(targetThreadId)
+    assertThat(file.bootstrapThreadTitle).isEqualTo(sharedTitle)
+    assertThat(file.threadTitle).isEqualTo(sharedTitle)
+    assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.PROCESSING)
+    assertThat(editorTabTitle(file)).isEqualTo(sharedTitle)
+    assertThat(editorTabTooltip(file)).isEqualTo(sharedTitle)
+  }
+
+  @Test
   fun testRebindOpenPendingCodexTabKeepsConcreteNewThreadAnchorTabOpen(): Unit = timeoutRunBlocking {
     openChatInModal(
       threadIdentity = "CODEX:thread-old",
@@ -1187,6 +1238,61 @@ class AgentChatEditorServiceTest {
     assertThat(file.threadTitle).isEqualTo("New thread")
     assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
     assertThat(file.newThreadRebindRequestedAtMs).isNull()
+  }
+
+  @Test
+  fun testRebindOpenConcreteCodexTabUsesAlreadyPublishedNewThreadPresentation(): Unit = timeoutRunBlocking {
+    val targetThreadId = "thread-shared-concrete"
+    val staleTitle = "Thread shared"
+    val sharedTitle = "Parsed concrete new thread title"
+    openChatInModal(
+      threadIdentity = "CODEX:thread-1",
+      shellCommand = listOf("codex", "resume", "thread-1"),
+      threadId = "thread-1",
+      threadTitle = "Original thread",
+      subAgentId = null,
+    )
+
+    val file = openedChatFiles().single()
+    file.updateNewThreadRebindRequestedAtMs(1_000L)
+    service<AgentChatTabsService>().upsert(file.toSnapshot())
+    assertThat(publishThreadPresentation(
+      path = projectPath,
+      provider = AgentSessionProvider.CODEX,
+      threadId = targetThreadId,
+      title = sharedTitle,
+      activity = AgentThreadActivity.PROCESSING,
+    )).isEqualTo(0)
+
+    val rebindReport = rebindOpenConcreteCodexTabs(
+      requestsByProjectPath = mapOf(
+        projectPath to listOf(
+          AgentChatConcreteTabRebindRequest(
+            tabKey = file.tabKey,
+            currentThreadIdentity = file.threadIdentity,
+            newThreadRebindRequestedAtMs = 1_000L,
+            target = rebindTarget(
+              threadIdentity = "CODEX:$targetThreadId",
+              threadId = targetThreadId,
+              threadTitle = staleTitle,
+              threadActivity = AgentThreadActivity.READY,
+            ),
+          )
+        )
+      )
+    )
+
+    assertThat(rebindReport.reboundBindings).isEqualTo(1)
+    assertThat(rebindReport.outcomesByPath[projectPath].orEmpty().single().status)
+      .isEqualTo(AgentChatConcreteTabRebindStatus.REBOUND)
+    assertThat(file.threadIdentity).isEqualTo("CODEX:$targetThreadId")
+    assertThat(file.threadId).isEqualTo(targetThreadId)
+    assertThat(file.bootstrapThreadTitle).isEqualTo(sharedTitle)
+    assertThat(file.threadTitle).isEqualTo(sharedTitle)
+    assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.PROCESSING)
+    assertThat(file.newThreadRebindRequestedAtMs).isNull()
+    assertThat(editorTabTitle(file)).isEqualTo(sharedTitle)
+    assertThat(editorTabTooltip(file)).isEqualTo(sharedTitle)
   }
 
   @Test
@@ -2187,10 +2293,26 @@ private suspend fun publishThreadPresentation(
   activity: AgentThreadActivity?,
 ): Int {
   val provider = checkNotNull(file.provider)
-  val changeSet = service<AgentSessionThreadPresentationModel>().updateThread(
+  return publishThreadPresentation(
     path = path,
     provider = provider,
     threadId = file.sessionId,
+    title = title,
+    activity = activity,
+  )
+}
+
+private suspend fun publishThreadPresentation(
+  path: String,
+  provider: AgentSessionProvider,
+  threadId: String,
+  title: String,
+  activity: AgentThreadActivity?,
+): Int {
+  val changeSet = service<AgentSessionThreadPresentationModel>().updateThread(
+    path = path,
+    provider = provider,
+    threadId = threadId,
     title = title,
     activity = activity,
   )
