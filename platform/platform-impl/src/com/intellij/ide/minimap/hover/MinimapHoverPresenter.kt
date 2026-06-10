@@ -31,7 +31,6 @@ class MinimapHoverPresenter(private val panel: MinimapPanel) {
     }
     MinimapUsageCollector.logHoverShown(
       scaleMode = panel.settings.state.scaleMode,
-      targetType = hoverTargetType(target),
     )
     balloonController.show(target.text, target.rect, target.icon)
   }
@@ -56,11 +55,6 @@ class MinimapHoverPresenter(private val panel: MinimapPanel) {
     val lineGap = MinimapLineGeometryUtil.lineGap(baseLineHeight)
 
     return MinimapLineGeometryUtil.lineHeight(baseLineHeight, lineGap).roundToInt().coerceAtLeast(1)
-  }
-
-  private fun hoverTargetType(target: MinimapHoverTarget): MinimapUsageCollector.HoverTargetType {
-    return if (target.entry.element != null) MinimapUsageCollector.HoverTargetType.STRUCTURE
-    else MinimapUsageCollector.HoverTargetType.UNKNOWN
   }
 
   private fun hoverColor(): Color {

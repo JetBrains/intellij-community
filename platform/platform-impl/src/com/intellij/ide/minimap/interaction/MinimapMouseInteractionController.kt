@@ -34,7 +34,6 @@ class MinimapMouseInteractionController(
   private var independentDragLastY = 0
   private var independentWheelRemainderPx = 0.0
   private var lastScrollLogTimeMs: Long = 0
-  private var lastScrollLogDirection: MinimapUsageCollector.ScrollDirection? = null
 
   fun install() {
     panel.addMouseListener(this)
@@ -55,7 +54,6 @@ class MinimapMouseInteractionController(
     independentDragLastY = 0
     independentWheelRemainderPx = 0.0
     lastScrollLogTimeMs = 0
-    lastScrollLogDirection = null
 
     panel.removeMouseListener(this)
     panel.removeMouseWheelListener(this)
@@ -111,7 +109,9 @@ class MinimapMouseInteractionController(
     if (e.button != MouseEvent.BUTTON1) return
 
     val wasDragging = interactionState == MinimapMouseInteractionState.DRAGGING
-    if (interactionState == MinimapMouseInteractionState.DRAGGING && dragDistancePx > 0) {
+    if (interactionState == MinimapMouseInteractionState.DRAGGING &&
+        dragDistancePx > 0 &&
+        MinimapInteractionPolicy.isGenericInteractionLoggingEnabled(editor)) {
       logDragged()
     }
 
@@ -135,10 +135,12 @@ class MinimapMouseInteractionController(
     val preciseWheelRotation = mouseWheelEvent.preciseWheelRotation
     if (preciseWheelRotation == 0.0) return
     val direction = if (preciseWheelRotation > 0) MinimapUsageCollector.ScrollDirection.DOWN else MinimapUsageCollector.ScrollDirection.UP
-    val interactionSource = wheelInteractionSource(mouseWheelEvent)
-    if (shouldLogWheelScroll(direction)) {
-      logWheelScrolled(direction, interactionSource)
-      MinimapInteractionPolicy.forEditor(editor).onWheelScrolled(panel, direction, interactionSource)
+    if (shouldLogWheelScroll()) {
+      val interactionPolicy = MinimapInteractionPolicy.forEditor(editor)
+      if (interactionPolicy.isGenericInteractionLoggingEnabled(editor)) {
+        logWheelScrolled(direction)
+      }
+      interactionPolicy.onWheelScrolled(panel, direction)
     }
 
     if (panel.isIndependentScrollEnabled()) {
@@ -178,7 +180,9 @@ class MinimapMouseInteractionController(
 
   override fun mouseClicked(e: MouseEvent) {
     if (e.button != MouseEvent.BUTTON1) return
-    logClicked()
+    if (MinimapInteractionPolicy.isGenericInteractionLoggingEnabled(editor)) {
+      logClicked()
+    }
     handleClick(e)
   }
 
@@ -238,11 +242,10 @@ class MinimapMouseInteractionController(
 
   private fun fileType(): FileType? = FileDocumentManager.getInstance().getFile(editor.document)?.fileType
 
-  private fun shouldLogWheelScroll(direction: MinimapUsageCollector.ScrollDirection): Boolean {
+  private fun shouldLogWheelScroll(): Boolean {
     val now = System.currentTimeMillis()
-    if (direction != lastScrollLogDirection || now - lastScrollLogTimeMs >= SCROLL_LOG_COOLDOWN_MS) {
+    if (now - lastScrollLogTimeMs >= SCROLL_LOG_COOLDOWN_MS) {
       lastScrollLogTimeMs = now
-      lastScrollLogDirection = direction
       return true
     }
     return false
@@ -253,7 +256,6 @@ class MinimapMouseInteractionController(
     MinimapUsageCollector.logClicked(
       scaleMode = settings.scaleMode,
       rightAligned = settings.rightAligned,
-      source = MinimapUsageCollector.InteractionSource.MOUSE,
       fileType = fileType(),
     )
   }
@@ -264,30 +266,17 @@ class MinimapMouseInteractionController(
       scaleMode = settings.scaleMode,
       rightAligned = settings.rightAligned,
       dragDistanceBucket = MinimapUsageCollector.toDragDistanceBucket(dragDistancePx),
-      source = MinimapUsageCollector.InteractionSource.MOUSE,
       fileType = fileType(),
     )
   }
 
-  private fun logWheelScrolled(direction: MinimapUsageCollector.ScrollDirection, source: MinimapUsageCollector.InteractionSource) {
+  private fun logWheelScrolled(direction: MinimapUsageCollector.ScrollDirection) {
     val settings = panel.settings.state
     MinimapUsageCollector.logWheelScrolled(
       scaleMode = settings.scaleMode,
       direction = direction,
-      source = source,
       fileType = fileType(),
     )
-  }
-
-  private fun wheelInteractionSource(mouseWheelEvent: MouseWheelEvent): MinimapUsageCollector.InteractionSource {
-    val absolutePreciseRotation = abs(mouseWheelEvent.preciseWheelRotation)
-    val absoluteWheelRotation = abs(mouseWheelEvent.wheelRotation.toDouble())
-    return if (absoluteWheelRotation == 0.0 || absolutePreciseRotation < absoluteWheelRotation) {
-      MinimapUsageCollector.InteractionSource.TOUCHPAD
-    }
-    else {
-      MinimapUsageCollector.InteractionSource.MOUSE
-    }
   }
 
   private fun independentWheelDeltaPx(preciseWheelRotation: Double): Int {
@@ -306,6 +295,6 @@ class MinimapMouseInteractionController(
 
   companion object {
     private const val WHEEL_SCROLL_LINES: Int = 10
-    private const val SCROLL_LOG_COOLDOWN_MS: Long = 500
+    private const val SCROLL_LOG_COOLDOWN_MS: Long = 10_000
   }
 }

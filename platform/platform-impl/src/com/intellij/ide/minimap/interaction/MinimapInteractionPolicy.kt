@@ -40,6 +40,12 @@ interface MinimapInteractionPolicy {
   fun useIndependentMinimapScroll(editor: Editor): Boolean = false
 
   /**
+   * Returns whether generic `editor.minimap` interaction events should be logged for this editor.
+   * Policies that report domain-specific minimap interactions can disable the generic collector.
+   */
+  fun isGenericInteractionLoggingEnabled(editor: Editor): Boolean = true
+
+  /**
    * Multiplier applied to wheel rotation when scrolling the independent minimap viewport.
    * Lower values produce slower, less sensitive scrolling.
    */
@@ -48,7 +54,6 @@ interface MinimapInteractionPolicy {
   fun onWheelScrolled(
     panel: MinimapPanel,
     direction: MinimapUsageCollector.ScrollDirection,
-    source: MinimapUsageCollector.InteractionSource,
   ) { }
 
   companion object {
@@ -93,6 +98,14 @@ interface MinimapInteractionPolicy {
         return policy.useIndependentMinimapScroll(editor)
       }
       return false
+    }
+
+    fun isGenericInteractionLoggingEnabled(editor: Editor): Boolean {
+      for (policy in EP_NAME.extensionList) {
+        if (!policy.isApplicable(editor)) continue
+        return policy.isGenericInteractionLoggingEnabled(editor)
+      }
+      return true
     }
   }
 }
