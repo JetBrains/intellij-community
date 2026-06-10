@@ -16,6 +16,8 @@ import kotlin.time.Duration.Companion.milliseconds
 internal sealed interface AgentChatInitialMessageRetryDecision {
   data object Proceed : AgentChatInitialMessageRetryDecision
 
+  data object ProceedAndResetReadiness : AgentChatInitialMessageRetryDecision
+
   data class RetryWithoutReadiness(@JvmField val backoffMs: Long) : AgentChatInitialMessageRetryDecision
 
   data object Stop : AgentChatInitialMessageRetryDecision
@@ -77,7 +79,10 @@ internal class AgentChatInitialMessageDispatcher(
         if (sendResult.stopDispatching) {
           return@launch
         }
-        if (sendResult.nextReadinessCheckpoint != null) {
+        if (sendResult.clearReadinessCheckpoint) {
+          readinessCheckpoint = null
+        }
+        else if (sendResult.nextReadinessCheckpoint != null) {
           readinessCheckpoint = sendResult.nextReadinessCheckpoint
         }
         retryCurrentStepWithoutReadiness = sendResult.retryCurrentStepWithoutReadiness
@@ -117,7 +122,8 @@ internal class AgentChatInitialMessageDispatcher(
     }
     val dispatch = file.acquireInitialMessageDispatch() ?: return AgentChatInitialMessageSendResult.NO_PROGRESS
     when (val decision = behavior.beforeInitialMessageSend(file, tab, dispatch, retryAttempt)) {
-      AgentChatInitialMessageRetryDecision.Proceed -> Unit
+      AgentChatInitialMessageRetryDecision.Proceed,
+      AgentChatInitialMessageRetryDecision.ProceedAndResetReadiness -> Unit
       AgentChatInitialMessageRetryDecision.Stop -> {
         return stopInitialMessageDispatch(dispatch)
       }
@@ -161,6 +167,9 @@ internal class AgentChatInitialMessageDispatcher(
       val observedText = observation.text + "\n" + tab.readRecentOutputTail()
       when (val decision = behavior.afterInitialMessageSendObservation(file, dispatch, observedText, retryAttempt)) {
         AgentChatInitialMessageRetryDecision.Proceed -> Unit
+        AgentChatInitialMessageRetryDecision.ProceedAndResetReadiness -> {
+          return completeInitialMessageDispatch(dispatch, readinessCheckpoint = null, clearReadinessCheckpoint = true)
+        }
         AgentChatInitialMessageRetryDecision.Stop -> {
           return stopInitialMessageDispatch(dispatch)
         }
@@ -210,17 +219,20 @@ internal class AgentChatInitialMessageDispatcher(
   private suspend fun completeInitialMessageDispatch(
     dispatch: AgentChatInitialMessageDispatch,
     readinessCheckpoint: AgentChatTerminalOutputCheckpoint?,
+    clearReadinessCheckpoint: Boolean = false,
   ): AgentChatInitialMessageSendResult {
     if (!file.completeInitialMessageDispatch(dispatch)) {
       return AgentChatInitialMessageSendResult(
         progressed = false,
         nextReadinessCheckpoint = readinessCheckpoint.takeIf { file.hasPendingInitialMessageForDispatch() },
+        clearReadinessCheckpoint = clearReadinessCheckpoint,
       )
     }
     tabSnapshotWriter.upsert(file.toSnapshot())
     return AgentChatInitialMessageSendResult(
       progressed = true,
       nextReadinessCheckpoint = readinessCheckpoint.takeIf { file.hasPendingInitialMessageForDispatch() },
+      clearReadinessCheckpoint = clearReadinessCheckpoint,
     )
   }
 }
@@ -228,6 +240,7 @@ internal class AgentChatInitialMessageDispatcher(
 private data class AgentChatInitialMessageSendResult(
   @JvmField val progressed: Boolean,
   @JvmField val nextReadinessCheckpoint: AgentChatTerminalOutputCheckpoint? = null,
+  @JvmField val clearReadinessCheckpoint: Boolean = false,
   @JvmField val retryCurrentStepWithoutReadiness: Boolean = false,
   @JvmField val stopDispatching: Boolean = false,
 ) {

@@ -1522,6 +1522,32 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun codexTerminalPlanModeFallbackSendsPromptWhenPlanModeIsNotConfirmed() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
+    terminalTabs.tab.enqueuePostSendOutput("Default mode", "Default mode", "Default mode")
+    val file = testFile().also {
+      it.updateInitialMessageMetadata(
+        initialMessageDispatchSteps = codexTerminalPlanDispatchSteps("Send after plan fallback"),
+        initialMessageDispatchStepIndex = 0,
+        initialMessageToken = "token-terminal-plan-fallback",
+        initialMessageSent = false,
+      )
+    }
+    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+
+    editor.selectNotify()
+    terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
+    terminalTabs.tab.emitMeaningfulOutput("Codex ready")
+
+    waitForCondition(timeoutMs = 5_000) { file.initialMessageSent }
+    assertThat(terminalTabs.tab.backTabCount.get()).isEqualTo(3)
+    assertThat(file.initialMessageDispatchStepIndex).isEqualTo(2)
+    assertThat(terminalTabs.tab.sentTexts)
+      .containsExactly(SentTerminalText("Send after plan fallback", shouldExecute = true))
+  }
+
+  @Test
   fun codexPlanModeOldBusyOutputDoesNotBlockOnceLatestTailIsIdle() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
@@ -2142,6 +2168,16 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
 
   override fun sendText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean) {
     sentTexts += SentTerminalText(text, shouldExecute, useBracketedPasteMode)
+    emitNextPostSendOutput()
+  }
+
+  override fun sendBackTab(): Boolean {
+    backTabCount.incrementAndGet()
+    emitNextPostSendOutput()
+    return true
+  }
+
+  private fun emitNextPostSendOutput() {
     postSendOutputQueue.pollFirst()?.let { output ->
       if (output.delayMs <= 0) {
         emitMeaningfulOutput(output.text)
@@ -2155,11 +2191,6 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
           .start()
       }
     }
-  }
-
-  override fun sendBackTab(): Boolean {
-    backTabCount.incrementAndGet()
-    return true
   }
 
   override suspend fun awaitInitialMessageReadiness(
@@ -2405,6 +2436,23 @@ private fun codexPlanDispatchSteps(
   return listOf(
     AgentInitialMessageDispatchStep(
       text = "/plan",
+      timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+      completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
+    ),
+    AgentInitialMessageDispatchStep(
+      text = prompt,
+      timeoutPolicy = promptTimeoutPolicy,
+    ),
+  )
+}
+
+private fun codexTerminalPlanDispatchSteps(
+  prompt: String,
+  promptTimeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+): List<AgentInitialMessageDispatchStep> {
+  return listOf(
+    AgentInitialMessageDispatchStep(
+      action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
       timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
       completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
     ),

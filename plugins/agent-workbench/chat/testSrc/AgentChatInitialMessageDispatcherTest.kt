@@ -77,7 +77,7 @@ class AgentChatInitialMessageDispatcherTest {
   }
 
   @Test
-  fun codexPlanModeEnsureFailureStopsBeforePromptSubmission(): Unit = timeoutRunBlocking {
+  fun codexPlanModeEnsureFailureFallsBackToPromptSubmission(): Unit = timeoutRunBlocking {
     val file = createFile(
       listOf(
         terminalPlanModeStep(
@@ -92,7 +92,11 @@ class AgentChatInitialMessageDispatcherTest {
     val snapshots = mutableListOf<AgentChatTabSnapshot>()
     val tab = FakeTerminalTab(
       coroutineScope = this,
-      outputObservations = listOf(AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Default mode")),
+      outputObservations = listOf(
+        AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Default mode"),
+        AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Default mode"),
+        AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Default mode"),
+      ),
     )
 
     AgentChatInitialMessageDispatcher(
@@ -101,11 +105,11 @@ class AgentChatInitialMessageDispatcherTest {
       tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot -> snapshots.add(snapshot) },
     ).schedule(tab)
 
-    waitForCondition { !file.hasPendingInitialMessageForDispatch() }
-    assertThat(tab.events).containsExactly("backtab")
-    assertThat(file.initialMessageSent).isFalse()
-    assertThat(file.initialMessageDispatchSteps).isEmpty()
-    assertThat(snapshots).hasSize(1)
+    waitForCondition { file.initialMessageSent }
+    assertThat(tab.events).containsExactly("backtab", "backtab", "backtab", "text:Refactor this")
+    assertThat(file.initialMessageDispatchStepIndex).isEqualTo(2)
+    assertThat(snapshots).hasSize(2)
+    assertThat(snapshots.last().runtime.initialMessageSent).isTrue()
   }
 
   @Test
