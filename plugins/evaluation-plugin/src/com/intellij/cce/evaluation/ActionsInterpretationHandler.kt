@@ -2,7 +2,6 @@
 package com.intellij.cce.evaluation
 
 import com.intellij.cce.actions.DatasetContext
-import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.interpreter.InterpretFilter
 import com.intellij.cce.interpreter.InterpretationHandlerImpl
 import com.intellij.cce.util.ExceptionsUtil
@@ -29,7 +28,6 @@ class ActionsInterpretationHandler(
   }
 
   private fun createLogsSaver(workspace: EvaluationWorkspace): LogsSaver = listOf(
-    logsSaverIf(config.interpret.saveLogs) { workspace.statLogsSaver },
     logsSaverIf(config.interpret.saveFusLogs) { workspace.fusLogsSaver }
   ).asCompositeLogsSaver()
 
@@ -105,7 +103,6 @@ class ActionsInterpretationHandler(
       }
     }
     logsSaver.save(config.actions?.language, config.interpret.trainTestSplit)
-    SetupStatsCollectorStep.deleteLogs()
     workspace.saveMetadata()
     LOG.info("Interpreting actions completed")
   }

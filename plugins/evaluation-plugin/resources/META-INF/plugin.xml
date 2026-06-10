@@ -43,7 +43,6 @@
     <module name="intellij.libraries.ktor.client"/>
     <module name="intellij.libraries.kotlinx.io"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <plugin id="com.intellij.stats.completion"/>
     <module name="intellij.libraries.commons.text"/>
     <module name="intellij.platform.warmup"/>
     <!-- endregion -->

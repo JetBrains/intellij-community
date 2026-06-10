@@ -19,7 +19,6 @@ import com.intellij.cce.evaluation.EvaluationProcess
 import com.intellij.cce.evaluation.FinishEvaluationStep
 import com.intellij.cce.evaluation.allPreliminarySteps
 import com.intellij.cce.evaluation.step.ReportGenerationStep
-import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.evaluation.step.run
 import com.intellij.cce.util.ExceptionsUtil.stackTraceToString
 import com.intellij.cce.workspace.Config
@@ -128,7 +127,7 @@ internal class CompletionEvaluationStarter : ModernApplicationStarter() {
     override suspend fun asyncRun() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the $featureName")
       val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
-      val workspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
+      val workspace = EvaluationWorkspace.create(config)
       val datasetContext = DatasetContext(workspace, workspace, configPath)
       runPreliminarySteps(feature, workspace)
       feature.prepareEnvironment(config, workspace).use { environment ->
@@ -168,7 +167,7 @@ internal class CompletionEvaluationStarter : ModernApplicationStarter() {
 
     override suspend fun asyncRun() {
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
-      val workspace = EvaluationWorkspace.open(workspacePath, SetupStatsCollectorStep.statsCollectorLogsDirectory)
+      val workspace = EvaluationWorkspace.open(workspacePath)
       val datasetContext = DatasetContext(workspace, workspace, null)
       val config = workspace.readConfig(feature.getStrategySerializer())
       runPreliminarySteps(feature, workspace)
@@ -192,11 +191,11 @@ internal class CompletionEvaluationStarter : ModernApplicationStarter() {
     override suspend fun asyncRun() {
       val workspacesToCompare = getWorkspaces()
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
-      val config = workspacesToCompare.map { EvaluationWorkspace.open(it, SetupStatsCollectorStep.statsCollectorLogsDirectory) }.buildMultipleEvaluationsConfig(
+      val config = workspacesToCompare.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(
         feature.getStrategySerializer(),
         "COMPARING",
       )
-      val outputWorkspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
+      val outputWorkspace = EvaluationWorkspace.create(config)
       val datasetContext = DatasetContext(outputWorkspace, null, null)
       feature.prepareEnvironment(config, outputWorkspace).use { environment ->
         val stepFactory = BackgroundStepFactory(feature, config, environment, workspacesToCompare, datasetContext)
@@ -229,12 +228,12 @@ internal class CompletionEvaluationStarter : ModernApplicationStarter() {
     override suspend fun asyncRun() {
       val workspacesToMerge = readWorkspacesFromDirectory(root)
       val feature = EvaluableFeature.forFeature(featureName) ?: throw Exception("No support for the feature")
-      val config = workspacesToMerge.map { EvaluationWorkspace.open(it, SetupStatsCollectorStep.statsCollectorLogsDirectory) }.buildMultipleEvaluationsConfig(
+      val config = workspacesToMerge.map { EvaluationWorkspace.open(it) }.buildMultipleEvaluationsConfig(
         feature.getStrategySerializer()
       )
-      val outputWorkspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
+      val outputWorkspace = EvaluationWorkspace.create(config)
       for (workspacePath in workspacesToMerge) {
-        val workspace = EvaluationWorkspace.open(workspacePath, SetupStatsCollectorStep.statsCollectorLogsDirectory)
+        val workspace = EvaluationWorkspace.open(workspacePath)
         workspace.readAdditionalStats(LAYOUT_NAME)?.let {
           outputWorkspace.saveAdditionalStats(LAYOUT_NAME, it)
         }
