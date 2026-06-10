@@ -148,7 +148,8 @@ internal class KotlinModuleBuilder(
             val dependencies =
                 withBackgroundProgress(
                     project,
-                    KotlinNewProjectWizardUIBundle.message("progress.title.loading.kotlin.stdlib.library.0", repositoryProperties.version)
+                    KotlinNewProjectWizardUIBundle.message("progress.title.loading.kotlin.stdlib.library.0", repositoryProperties.version),
+                    cancellable = false
                 ) {
                     JarRepositoryManager.loadDependenciesModal(
                         /* project = */ project,
@@ -160,18 +161,18 @@ internal class KotlinModuleBuilder(
                     )
                 }
 
+            val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+            val libraryRoots = dependencies.map {
+                LibraryRoot(
+                    it.file.toVirtualFileUrl(virtualFileUrlManager),
+                    it.type.toLibraryRootType()
+                )
+            }
 
-            project.workspaceModel.update("update") { storage: MutableEntityStorage ->
+            project.workspaceModel.update("update roots of '$libraryName'") { storage: MutableEntityStorage ->
                 val libraryEntity = libraryId.resolve(storage) ?: return@update
-                val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
                 storage.modifyEntity(LibraryEntityBuilder::class.java, libraryEntity) {
-
-                    this.roots.addAll(0, dependencies.map {
-                        LibraryRoot(
-                            it.file.toVirtualFileUrl(virtualFileUrlManager),
-                            it.type.toLibraryRootType()
-                        )
-                    })
+                    this.roots.addAll(0, libraryRoots)
                 }
             }
         }
@@ -179,8 +180,8 @@ internal class KotlinModuleBuilder(
         kotlinJavaRuntime.modifiableModel.apply {
             kind = RepositoryLibraryType.REPOSITORY_LIBRARY_KIND
             properties = repositoryProperties
-
         }.commit()
+
         return rootModel.addLibraryEntry(kotlinJavaRuntime)
     }
 
