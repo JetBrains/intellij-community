@@ -4,16 +4,16 @@ package org.jetbrains.idea.maven.server
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpProxyServerFixture
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.UsefulTestCase.assertContainsElements
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.ZipUtil
 import com.intellij.util.net.ProxyConfiguration
@@ -21,11 +21,26 @@ import com.intellij.util.net.ProxySettings
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assumeMaven3
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.project.BundledMaven3
 import org.jetbrains.idea.maven.project.MavenInSpecificPath
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenWrapper
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.InetSocketAddress
@@ -37,14 +52,23 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.createTempDirectory
 import kotlin.io.path.deleteRecursively
 
-class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenDistributionResolveTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   private val myEvents: MutableList<Pair<BuildEvent, Throwable>> = ArrayList()
   private lateinit var mySyncViewManager: SyncViewManager
   private lateinit var mavenHomeDir: Path
 
-  override fun setUp() {
-    super.setUp()
-    mySyncViewManager = object : SyncViewManager(project) {
+  @BeforeEach
+  fun setUp() {
+    mySyncViewManager = object : SyncViewManager(maven.project) {
       override fun onEvent(
         buildId: Any,
         event: BuildEvent,
@@ -52,31 +76,27 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
         myEvents.add(event to Exception())
       }
     }
-    project.replaceService(SyncViewManager::class.java, mySyncViewManager, testRootDisposable)
+    maven.project.replaceService(SyncViewManager::class.java, mySyncViewManager, maven.disposable)
     mavenHomeDir = createTempDirectory()
   }
 
-  override fun tearDown() {
-    RunAll(
-      ThrowableRunnable {
-        MavenServerManager.getInstance().closeAllConnectorsAndWait()
-        @OptIn(ExperimentalPathApi::class)
-        mavenHomeDir.deleteRecursively()
-      },
-      ThrowableRunnable { super.tearDown() },
-    ).run()
+  @AfterEach
+  fun tearDown() {
+    MavenServerManager.getInstance().closeAllConnectorsAndWait()
+    @OptIn(ExperimentalPathApi::class)
+    mavenHomeDir.deleteRecursively()
   }
 
   @Throws(IOException::class)
   @Test
   fun testShouldUseEmbedMavenIfWrapperIsBad() = runBlocking {
-    createProjectPom("<groupId>test</groupId>" +
+    maven.createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
     createWrapperProperties("distributionUrl=http://example.org/repo/maven.bin.zip")
-    MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
-    importProjectAsync()
-    val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+    MavenWorkspaceSettingsComponent.getInstance(maven.project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
+    maven.importProjectAsync()
+    val connector = MavenServerManager.getInstance().getConnector(maven.project, maven.projectRoot.path)
     assertEquals(
       MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toCanonicalPath(), connector.mavenDistribution.mavenHome.toCanonicalPath())
     assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.message == "Cannot install wrapped maven, set Bundled Maven" }
@@ -85,33 +105,33 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   @Throws(IOException::class)
   @Test
   fun testShouldNotRestartMavenConnectorIfWrapperIsBadButNotChanged() = runBlocking {
-    createProjectPom("<groupId>test</groupId>" +
+    maven.createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
     createWrapperProperties("distributionUrl=http://example.org/repo/maven.bin.zip")
-    MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
-    importProjectAsync()
-    val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+    MavenWorkspaceSettingsComponent.getInstance(maven.project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
+    maven.importProjectAsync()
+    val connector = MavenServerManager.getInstance().getConnector(maven.project, maven.projectRoot.path)
     assertEquals(
       MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toCanonicalPath(), connector.mavenDistribution.mavenHome.toCanonicalPath())
-    createProjectPom("<groupId>test</groupId>" +
+    maven.createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>2</version>")
-    importProjectAsync()
-    assertSame(connector, MavenServerManager.getInstance().getConnector(project, projectRoot.path))
+    maven.importProjectAsync()
+    assertSame(connector, MavenServerManager.getInstance().getConnector(maven.project, maven.projectRoot.path))
   }
 
   @Throws(IOException::class)
   @Test
   fun testShouldShowWarningIfWrapperDownloadedViaUnsecureProtocol() = runBlocking {
     runWithServer { url ->
-      createProjectPom("<groupId>test</groupId>" +
+      maven.createProjectPom("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
                        "<version>1</version>")
       createWrapperProperties("distributionUrl=$url")
-      MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
-      importProjectAsync()
-      val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+      MavenWorkspaceSettingsComponent.getInstance(maven.project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
+      maven.importProjectAsync()
+      val connector = MavenServerManager.getInstance().getConnector(maven.project, maven.projectRoot.path)
       assertTrue(connector.mavenDistribution.mavenHome.absolutePathString().contains("wrapper"))
       assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.message == "HTTP used to download maven distribution" }
     }
@@ -121,13 +141,13 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testShouldNotUseWrapperIfSettingsNotSetToUseIt() = runBlocking {
     runWithServer { url ->
-      createProjectPom("<groupId>test</groupId>" +
+      maven.createProjectPom("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
                        "<version>1</version>")
       createWrapperProperties("distributionUrl=$url")
-      MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = BundledMaven3
-      importProjectAsync()
-      val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+      MavenWorkspaceSettingsComponent.getInstance(maven.project).settings.getGeneralSettings().mavenHomeType = BundledMaven3
+      maven.importProjectAsync()
+      val connector = MavenServerManager.getInstance().getConnector(maven.project, maven.projectRoot.path)
       assertFalse(connector.mavenDistribution.mavenHome.absolutePathString().contains(".wrapper"))
       assertNotContains<BuildEvent> { it.message == "Running maven wrapper" }
     }
@@ -136,13 +156,13 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
   @Throws(IOException::class)
   @Test
   fun testShouldUseEmbeddedMavenForUnexistingHome() = runBlocking {
-    createProjectPom("<groupId>test</groupId>" +
+    maven.createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
-    MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenInSpecificPath(
+    MavenWorkspaceSettingsComponent.getInstance(maven.project).settings.getGeneralSettings().mavenHomeType = MavenInSpecificPath(
       "path/to/unexisted/maven/home")
-    importProjectAsync()
-    val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+    maven.importProjectAsync()
+    val connector = MavenServerManager.getInstance().getConnector(maven.project, maven.projectRoot.path)
     assertEquals(
       MavenDistributionsCache.resolveEmbeddedMavenHome().mavenHome.toCanonicalPath(), connector.mavenDistribution.mavenHome.toCanonicalPath())
     //assertContainsOnce<MessageEvent> { it.kind == MessageEvent.Kind.WARNING && it.description!= null && it.description!!.contains("is not correct maven home, reverting to embedded") }
@@ -168,15 +188,15 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
         }
       }
 
-      ApplicationManager.getApplication().replaceService(Environment::class.java, environment, testRootDisposable)
+      ApplicationManager.getApplication().replaceService(Environment::class.java, environment, maven.disposable)
 
-      createProjectPom("<groupId>test</groupId>" +
+      maven.createProjectPom("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
                        "<version>1</version>")
       createWrapperProperties("distributionUrl=https://something.com/org/apache/maven/apache-maven/3.6.3/apache-maven-3.6.3-bin.zip")
-      MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
-      importProjectAsync()
-      val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+      MavenWorkspaceSettingsComponent.getInstance(maven.project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
+      maven.importProjectAsync()
+      val connector = MavenServerManager.getInstance().getConnector(maven.project, maven.projectRoot.path)
       assertTrue(connector.mavenDistribution.mavenHome.absolutePathString().contains("wrapper"))
       assertNotContains<BuildEvent> { it.message.contains("something.com") }
       assertContainsOnce<BuildEvent> { it.message == "Downloading Maven wrapper with Basic authentication\n" }
@@ -186,7 +206,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldUseProxyWhenDownloadingWrapper() = runBlocking {
-    assumeMaven3()
+    maven.assumeMaven3()
     runWithServer { url ->
       withEnvironment("MAVEN_USER_HOME" to mavenHomeDir.absolutePathString()) {
         val uri = URI.create(url)
@@ -199,13 +219,13 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
         val defaultConfig = proxySettings.getProxyConfiguration()
         try {
           proxySettings.setProxyConfiguration(ProxyConfiguration.proxy(ProxyConfiguration.ProxyProtocol.HTTP, "localhost", proxy.port))
-          createProjectPom("<groupId>test</groupId>" +
+          maven.createProjectPom("<groupId>test</groupId>" +
                            "<artifactId>project</artifactId>" +
                            "<version>1</version>")
           createWrapperProperties("distributionUrl=$wrapperUrl")
-          MavenWorkspaceSettingsComponent.getInstance(project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
-          importProjectAsync()
-          val connector = MavenServerManager.getInstance().getConnector(project, projectRoot.path)
+          MavenWorkspaceSettingsComponent.getInstance(maven.project).settings.getGeneralSettings().mavenHomeType = MavenWrapper
+          maven.importProjectAsync()
+          val connector = MavenServerManager.getInstance().getConnector(maven.project, maven.projectRoot.path)
           assertTrue(connector.mavenDistribution.mavenHome.absolutePathString().contains("wrapper"))
           assertContainsElements(proxy.requestedFiles, "/apache-maven-3.6.3-bin.zip")
         }
@@ -228,7 +248,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
         return map[name]
       }
     }
-    val disposable = Disposer.newDisposable(testRootDisposable)
+    val disposable = Disposer.newDisposable(maven.disposable)
     ApplicationManager.getApplication().replaceService(Environment::class.java, environment, disposable)
     invoke()
     Disposer.dispose(disposable)
@@ -262,14 +282,16 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
 
   private inline fun <reified T : BuildEvent> assertContains(predicate: (T) -> Boolean) {
     val filteredList = myEvents.filter { val event = it.first; event is T && predicate(event) }
-    assertFalse("Expected event not found", filteredList.isEmpty())
+    assertFalse(filteredList.isEmpty(), "Expected event not found")
   }
 
 
   private inline fun <reified T : BuildEvent> assertContainsOnce(predicate: (T) -> Boolean) {
     val filteredList = myEvents.filter { val event = it.first; event is T && predicate(event) }
-    assertFalse("Expected event not found, found ${myEvents.size} events: ${myEvents.map { it.first }}", filteredList.isEmpty())
-    assertEquals("Event was received several times: See stacktraces \n ${getStacktraces(filteredList.map { it.second })}", 1, filteredList.size)
+    assertFalse(filteredList.isEmpty(), "Expected event not found, found ${myEvents.size} events: ${myEvents.map { it.first }}")
+    Assertions.assertEquals(1,
+                            filteredList.size,
+                            "Event was received several times: See stacktraces \n ${getStacktraces(filteredList.map { it.second })}")
   }
 
   private inline fun <reified T : BuildEvent> assertNotContains(predicate: (T) -> Boolean) {
@@ -284,6 +306,6 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
 
   @Throws(IOException::class)
   private fun createWrapperProperties(content: String) {
-    createProjectSubFile(".mvn/wrapper/maven-wrapper.properties", content)
+    maven.createProjectSubFile(".mvn/wrapper/maven-wrapper.properties", content)
   }
 }
