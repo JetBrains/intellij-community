@@ -641,6 +641,7 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/util/coroutines:coroutines_test_lib",
         "@lib//:jetbrains-annotations",
+        "@lib//:kotlinx-coroutines-test",
         "//libraries/lz4",
         "//libraries/lz4:lz4_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",

@@ -60,7 +60,7 @@ internal class PluginsUpdateStep: SmartUpdateStep {
     val updates = getPendingUpdates()
     if (updates.isNullOrEmpty()) return SmartUpdateBundle.message("no.updates.available")
     return if (updates.size == 1)
-      SmartUpdateBundle.message("update.plugin", updates.first().pluginName) else
+      SmartUpdateBundle.message("update.plugin", updates.first().name ?: "") else
       SmartUpdateBundle.message("update.several.plugins", updates.size)
   }
 }

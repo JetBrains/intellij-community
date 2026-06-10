@@ -13,11 +13,11 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 @ApiStatus.Internal
 interface PluginUpdaterApi : RemoteApi<Unit> {
-  suspend fun loadAndStorePluginUpdates(apiVersion: String?, sessionId: String): PluginUpdatesModel
+  suspend fun loadAndStorePluginUpdates(apiVersion: String?): PluginUpdatesModel
 
-  suspend fun installUpdates(sessionId: String, updates: List<PluginDto>): Deferred<Boolean>
+  suspend fun installUpdates(updates: List<PluginDto>): Deferred<Boolean>
 
-  suspend fun ignorePluginUpdates(sessionId: String)
+  suspend fun ignorePluginUpdates()
 
   companion object {
     suspend fun getInstance(): PluginUpdaterApi {

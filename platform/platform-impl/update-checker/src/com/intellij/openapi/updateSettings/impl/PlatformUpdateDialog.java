@@ -267,8 +267,8 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
         @Override
         public void actionPerformed(ActionEvent e) {
           close(OK_EXIT_CODE);
-          var downloaders = myUpdatesForPlugins != null ? myUpdatesForPlugins : Set.<PluginDownloader>of();
-          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(downloaders, plugins -> {
+          var pluginIdsToUpdate = ContainerUtil.map2Set((myUpdatesForPlugins != null ? myUpdatesForPlugins : List.of()), PluginDownloader::getId);
+          PluginModelAsyncOperationsExecutor.INSTANCE.findPlugins(pluginIdsToUpdate, plugins -> {
             downloadPatchAndRestart(plugins);
             return Unit.INSTANCE;
           });
@@ -305,11 +305,12 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
   private void downloadPatchAndRestart(Map<PluginId, PluginUiModel> installedPlugins) {
     Collection<PluginDownloader> selectedPluginsToUpdate = new ArrayList<>();
     if (myUpdatesForPlugins != null && !installedPlugins.isEmpty()) {
-      var dialog = new PluginUpdateDialog(myProject, ContainerUtil.map(myUpdatesForPlugins, it -> it.getUiModel()), null, installedPlugins);
+      var dialog = new PluginUpdateDialog(myProject, new ArrayList<>(ContainerUtil.map(myUpdatesForPlugins, PluginDownloader::getUiModel)), null, installedPlugins);
       if (!dialog.showAndGet()) {
         return;  // update cancelled
       }
-      selectedPluginsToUpdate.addAll(PluginUpdateDialog.getSelectedDownloaders(myUpdatesForPlugins, dialog));
+      Set<PluginId> selectedPlugins = ContainerUtil.map2Set(dialog.getSelectedPluginModels(), PluginUiModel::getPluginId);
+      selectedPluginsToUpdate.addAll(ContainerUtil.filter(myUpdatesForPlugins, it -> selectedPlugins.contains(it.getId())));
     }
 
     //noinspection UsagesOfObsoleteApi
