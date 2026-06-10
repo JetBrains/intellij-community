@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormat
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReason
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.sessions.service.AgentDeferredNewSessionHandle
 import com.intellij.agent.workbench.prompt.core.number
 import com.intellij.agent.workbench.prompt.core.objOrNull
 import com.intellij.openapi.vcs.FileStatus
@@ -12,6 +13,7 @@ import com.intellij.openapi.vcs.merge.MergeData
 import com.intellij.openapi.vcs.merge.MergeProvider
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
+import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -78,6 +80,41 @@ class AgentVcsMergeSessionSupportTest {
     gate.finish()
 
     assertThat(gate.tryStart()).isTrue()
+  }
+
+  @Test
+  fun noSelectedConflictsOutcomeStartsDeferredThreadAndDisposesSession(): Unit = runBlocking {
+    val handle = RecordingDeferredNewSessionHandle()
+    var disposed = false
+
+    handleAgentVcsMergePreparationOutcome(
+      outcome = AgentVcsMergePreparationOutcome.NoSelectedConflicts,
+      deferredHandle = handle,
+      initialMessageRequest = initialMessageRequestWithSelectionHint(),
+      disposeSession = { disposed = true },
+    )
+
+    assertThat(handle.events).containsExactly("start")
+    assertThat(handle.startedRequest?.contextItems?.single()?.body).isEqualTo("file: src/conflict.txt")
+    assertThat(disposed).isTrue()
+  }
+
+  @Test
+  fun autoResolvedOutcomeCompletesDeferredThreadWithoutStartingTerminal(): Unit = runBlocking {
+    val handle = RecordingDeferredNewSessionHandle()
+    var disposed = false
+
+    handleAgentVcsMergePreparationOutcome(
+      outcome = AgentVcsMergePreparationOutcome.AutoResolved,
+      deferredHandle = handle,
+      initialMessageRequest = initialMessageRequestWithSelectionHint(),
+      disposeSession = { disposed = true },
+    )
+
+    assertThat(handle.events).containsExactly("complete")
+    assertThat(handle.completedTitle).isEqualTo("Merge conflicts resolved")
+    assertThat(handle.completedMessage).isEqualTo("All conflicts were resolved automatically.")
+    assertThat(disposed).isTrue()
   }
 
   @Test
@@ -159,6 +196,40 @@ class AgentVcsMergeSessionSupportTest {
     )
 
     assertThat(files).isEmpty()
+  }
+}
+
+private fun initialMessageRequestWithSelectionHint(): AgentPromptInitialMessageRequest {
+  return AgentPromptInitialMessageRequest(
+    prompt = AgentVcsMergeSessionSupport.buildInitialPrompt(),
+    projectPath = "/repo",
+    contextItems = listOfNotNull(AgentVcsMergeSessionSupport.buildSelectionHintContextItem(listOf("src/conflict.txt"))),
+  )
+}
+
+private class RecordingDeferredNewSessionHandle : AgentDeferredNewSessionHandle {
+  override val file: VirtualFile = LightVirtualFile("agent-chat", "")
+  val events = mutableListOf<String>()
+  var startedRequest: AgentPromptInitialMessageRequest? = null
+    private set
+  var completedTitle: String? = null
+    private set
+  var completedMessage: String? = null
+    private set
+
+  override suspend fun start(initialMessageRequest: AgentPromptInitialMessageRequest?) {
+    events += "start"
+    startedRequest = initialMessageRequest
+  }
+
+  override suspend fun completeWithoutStart(title: String, message: String?) {
+    events += "complete"
+    completedTitle = title
+    completedMessage = message
+  }
+
+  override suspend fun fail(title: String, message: String?) {
+    events += "fail"
   }
 }
 

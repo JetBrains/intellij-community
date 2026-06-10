@@ -97,10 +97,49 @@ private data class ActiveAgentVcsMergeSession(
   @Volatile @JvmField var threadFile: VirtualFile? = null,
 )
 
-private sealed interface PreparationOutcome {
-  data object AutoResolved : PreparationOutcome
-  data object Ready : PreparationOutcome
-  data class Failed(@JvmField val message: @Nls String) : PreparationOutcome
+internal sealed interface AgentVcsMergePreparationOutcome {
+  data object NoSelectedConflicts : AgentVcsMergePreparationOutcome
+  data object AutoResolved : AgentVcsMergePreparationOutcome
+  data object Ready : AgentVcsMergePreparationOutcome
+  data class Failed(@JvmField val message: @Nls String) : AgentVcsMergePreparationOutcome
+}
+
+internal suspend fun handleAgentVcsMergePreparationOutcome(
+  outcome: AgentVcsMergePreparationOutcome,
+  deferredHandle: AgentDeferredNewSessionHandle,
+  initialMessageRequest: AgentPromptInitialMessageRequest,
+  disposeSession: () -> Unit,
+) {
+  when (outcome) {
+    AgentVcsMergePreparationOutcome.NoSelectedConflicts -> {
+      try {
+        deferredHandle.start(initialMessageRequest)
+      }
+      finally {
+        disposeSession()
+      }
+    }
+
+    AgentVcsMergePreparationOutcome.AutoResolved -> {
+      deferredHandle.completeWithoutStart(
+        title = AgentVcsMergeBundle.message("merge.agent.thread.completed.title"),
+        message = AgentVcsMergeBundle.message("merge.agent.resolve.launch.success.auto.resolved"),
+      )
+      disposeSession()
+    }
+
+    AgentVcsMergePreparationOutcome.Ready -> {
+      deferredHandle.start(initialMessageRequest)
+    }
+
+    is AgentVcsMergePreparationOutcome.Failed -> {
+      deferredHandle.fail(
+        title = AgentVcsMergeBundle.message("merge.agent.thread.failed.title"),
+        message = outcome.message,
+      )
+      disposeSession()
+    }
+  }
 }
 
 @Service(Service.Level.PROJECT)
@@ -161,27 +200,12 @@ internal class AgentVcsMergeSessionService(
         return@launch
       }
 
-      when (val outcome = prepareSession(session)) {
-        PreparationOutcome.AutoResolved -> {
-          deferredHandle.completeWithoutStart(
-            title = AgentVcsMergeBundle.message("merge.agent.thread.completed.title"),
-            message = AgentVcsMergeBundle.message("merge.agent.resolve.launch.success.auto.resolved"),
-          )
-          disposeSession(session)
-        }
-
-        PreparationOutcome.Ready -> {
-          deferredHandle.start(buildInitialMessageRequest(projectPath, session.selectionHintFiles))
-        }
-
-        is PreparationOutcome.Failed -> {
-          deferredHandle.fail(
-            title = AgentVcsMergeBundle.message("merge.agent.thread.failed.title"),
-            message = outcome.message,
-          )
-          disposeSession(session)
-        }
-      }
+      handleAgentVcsMergePreparationOutcome(
+        outcome = prepareSession(session),
+        deferredHandle = deferredHandle,
+        initialMessageRequest = buildInitialMessageRequest(projectPath, session.selectionHintFiles),
+        disposeSession = { disposeSession(session) },
+      )
     }
   }
 
@@ -268,17 +292,17 @@ internal class AgentVcsMergeSessionService(
     return session
   }
 
-  private suspend fun prepareSession(session: ActiveAgentVcsMergeSession): PreparationOutcome {
+  private suspend fun prepareSession(session: ActiveAgentVcsMergeSession): AgentVcsMergePreparationOutcome {
     return try {
       val discoveredConflicts = discoverSelectedConflicts(project, session.selectionHintFiles)
       if (!discoveredConflicts.hadConflicts) {
-        return PreparationOutcome.AutoResolved
+        return AgentVcsMergePreparationOutcome.NoSelectedConflicts
       }
       if (discoveredConflicts.scopes.isEmpty()) {
-        return PreparationOutcome.Failed(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.unsupported"))
+        return AgentVcsMergePreparationOutcome.Failed(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.unsupported"))
       }
       if (discoveredConflicts.scopes.none { scope -> scope.nonBinaryFiles.isNotEmpty() }) {
-        return PreparationOutcome.Failed(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.unsupported"))
+        return AgentVcsMergePreparationOutcome.Failed(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.unsupported"))
       }
 
       val requestFactory = DiffRequestFactory.getInstance()
@@ -316,21 +340,21 @@ internal class AgentVcsMergeSessionService(
 
       val unresolvedFiles = session.snapshotUnresolvedFiles()
       if (unresolvedFiles.isEmpty()) {
-        PreparationOutcome.AutoResolved
+        AgentVcsMergePreparationOutcome.AutoResolved
       }
       else {
         val launchableFiles = unresolvedFiles.filter { file ->
           session.fileScopes[file]?.nonBinaryFiles?.contains(file) == true
         }
-        if (launchableFiles.isEmpty()) PreparationOutcome.Failed(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.unsupported"))
-        else PreparationOutcome.Ready
+        if (launchableFiles.isEmpty()) AgentVcsMergePreparationOutcome.Failed(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.unsupported"))
+        else AgentVcsMergePreparationOutcome.Ready
       }
     }
     catch (_: VcsException) {
-      PreparationOutcome.Failed(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.prepare"))
+      AgentVcsMergePreparationOutcome.Failed(AgentVcsMergeBundle.message("merge.agent.resolve.launch.failed.prepare"))
     }
     catch (e: InvalidDiffRequestException) {
-      PreparationOutcome.Failed(e.asUserMessage())
+      AgentVcsMergePreparationOutcome.Failed(e.asUserMessage())
     }
   }
 
