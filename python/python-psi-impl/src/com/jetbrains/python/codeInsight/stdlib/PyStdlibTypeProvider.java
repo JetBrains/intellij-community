@@ -404,7 +404,6 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       return cache.getStrType();
     }
 
-    // If it's a mixin with basic scalar types - check str first for the failing test
     if (enumClass.isSubclass("builtins.str", context) || enumClass.isSubclass("str", context)) {
       return cache.getStrType();
     }
