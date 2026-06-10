@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
@@ -9,27 +8,45 @@ import com.intellij.openapi.diagnostic.LogLevel
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.testFramework.common.runAll
-import junit.framework.TestCase
+import com.intellij.testFramework.UsefulTestCase.assertSize
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.annotator.MavenDomGutterAnnotatorLogger
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
-import org.junit.Test
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenDomAnnotatorTest : MavenDomTestCase() {
-  override fun setUp() {
-    super.setUp()
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenDomAnnotatorTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
+  @BeforeEach
+  fun setUp() {
     MavenDomGutterAnnotatorLogger.setLogLevel(LogLevel.WARNING)
   }
 
-  override fun tearDown() {
-    runAll(
-      { super.tearDown() },
-      { MavenDomGutterAnnotatorLogger.resetLogLevel() },
-    )
+  @AfterEach
+  fun tearDown() {
+    MavenDomGutterAnnotatorLogger.resetLogLevel()
   }
 
   @Test
@@ -50,9 +67,9 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   </plugins>
 </build>
 """
-    val modulePom = createModulePom("m", modulePomContent)
+    val modulePom = maven.createModulePom("m", modulePomContent)
 
-    createProjectPom("""
+    maven.createProjectPom("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -74,13 +91,13 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </build>
 """)
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
     withContext(Dispatchers.EDT) {
-      val modules = project.modules
+      val modules = maven.project.modules
       assertSize(2, modules)
-      val projectsManager = MavenProjectsManager.getInstance(project)
-      val tree = projectsManager.projectsTree
+      val projectsManager = MavenProjectsManager.getInstance(maven.project)
+      val tree = maven.projectsManager.projectsTree
       assertSize(2, tree.projects)
       assertSize(2, tree.nonIgnoredProjects)
     }
@@ -111,9 +128,9 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   </dependency>
 </dependencies>
 """
-    val modulePom = createModulePom("m", modulePomContent)
+    val modulePom = maven.createModulePom("m", modulePomContent)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -164,9 +181,9 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
   </dependency>
 </dependencies>
 """
-    val modulePom = createModulePom("m", modulePomContent)
+    val modulePom = maven.createModulePom("m", modulePomContent)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -202,7 +219,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 
   @Test
   fun testChildrenProjectsOrder() = runBlocking {
-    createModulePom("module-c", """
+    maven.createModulePom("module-c", """
 <parent>
   <groupId>test</groupId>
   <artifactId>project</artifactId>
@@ -210,7 +227,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </parent>
 <artifactId>module-c</artifactId>
 """)
-    createModulePom("module-a", """
+    maven.createModulePom("module-a", """
 <parent>
   <groupId>test</groupId>
   <artifactId>project</artifactId>
@@ -218,7 +235,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </parent>
 <artifactId>module-a</artifactId>
 """)
-    createModulePom("module-d", """
+    maven.createModulePom("module-d", """
 <parent>
   <groupId>test</groupId>
   <artifactId>project</artifactId>
@@ -226,7 +243,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 </parent>
 <artifactId>module-d</artifactId>
 """)
-    createModulePom("module-b", """
+    maven.createModulePom("module-b", """
 <parent>
   <groupId>test</groupId>
   <artifactId>project</artifactId>
@@ -235,7 +252,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 <artifactId>module-b</artifactId>
 """)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -250,7 +267,7 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
 """)
 
     val artifactIds = readAction {
-      val model = MavenDomUtil.getMavenDomProjectModel(project, projectPom)!!
+      val model = MavenDomUtil.getMavenDomProjectModel(maven.project, maven.projectPom)!!
       MavenDomProjectProcessorUtils.getChildrenProjects(model)
         .map { it.artifactId.stringValue }
     }
@@ -263,13 +280,13 @@ class MavenDomAnnotatorTest : MavenDomTestCase() {
       //maybe narrower
       //maybe readaction
       writeIntentReadAction {
-        val file = PsiManager.getInstance(project).findFile(virtualFile)!!
+        val file = PsiManager.getInstance(maven.project).findFile(virtualFile)!!
         val text = file.text
-        TestCase.assertTrue("Unexpected pom content:\n$text", text.contains(expectedFileContent))
+        assertTrue(text.contains(expectedFileContent), "Unexpected pom content:\n$text")
 
-        //fixture.configureFromExistingVirtualFile(virtualFile)
-        fixture.configureByText("pom.xml", text)
-        val highlighting = fixture.doHighlighting()
+        //maven.fixture.configureFromExistingVirtualFile(virtualFile)
+        maven.fixture.configureByText("pom.xml", text)
+        val highlighting = maven.fixture.doHighlighting()
         MavenLog.LOG.warn("Highlighting:\n\n" + highlighting.joinToString("\n\n") { it.toString() })
         val actualProperties = highlighting
           .filter { it.gutterIconRenderer != null }
