@@ -5736,35 +5736,32 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-59260
   public void testEnumValueTypeInference() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () ->
-        doTestByText("""
-                       from enum import Enum, IntFlag, StrEnum
-                       
-                       # IntFlag should infer int
-                       class IF(IntFlag):
-                           A = 1
-                       i: int = IF.A.value
-                       
-                       # StrEnum should infer str
-                       class SE(StrEnum):
-                           B = "b"
-                       s: str = SE.B.value
-                       
-                       # str mixin should infer str
-                       class StrMixin(str, Enum):
-                           C = "c"
-                       s2: str = StrMixin.C.value
-                       s3: int = <warning descr="Expected type 'int', got 'str' instead">StrMixin.C.value</warning>
-                       
-                       # Empty str mixin should also infer str
-                       class EmptyStrMixin(str, Enum):
-                           pass
-                       def test_empty(x: EmptyStrMixin):
-                           s4: str = x.value
-                           i2: int = <warning descr="Expected type 'int', got 'str' instead">x.value</warning>
-                       """));
+    doTestByText("""
+                   from enum import Enum, IntFlag, StrEnum
+                   
+                   # IntFlag should infer int
+                   class IF(IntFlag):
+                       A = 1
+                   i: int = IF.A.value
+                   
+                   # StrEnum should infer str
+                   class SE(StrEnum):
+                       B = "b"
+                   s: str = SE.B.value
+                   
+                   # str mixin should infer str
+                   class StrMixin(str, Enum):
+                       C = "c"
+                   s2: str = StrMixin.C.value
+                   s3: int = <warning descr="Expected type 'int', got 'str' instead">StrMixin.C.value</warning>
+                   
+                   # Empty str mixin should also infer str
+                   class EmptyStrMixin(str, Enum):
+                       pass
+                   def test_empty(x: EmptyStrMixin):
+                       s4: str = x.value
+                       i2: int = <warning descr="Expected type 'int', got 'str' instead">x.value</warning>
+                   """);
   }
 
   // PY-59260
@@ -5793,32 +5790,29 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
   // PY-59260
   public void testEnumValueTypeIgnoresNonMembers() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () ->
-        doTestByText("""
-                       from enum import Enum, nonmember
-                       
-                       # Simple enum with just integer members
-                       class SimpleEnum(Enum):
-                           A = 1
-                           B = 2
-                       
-                       # Should infer int
-                       x: int = SimpleEnum.A.value
-                       y: str = <warning descr="Expected type 'str', got 'int' instead">SimpleEnum.B.value</warning>
-                       
-                       # Enum with non-member first, then actual members
-                       class E(Enum):
-                           # This should be classified as a non-member
-                           HELPER_CONSTANT = nonmember("not a member")
-                           # These are the actual members - should infer int from first member
-                           FIRST_MEMBER = 42
-                           SECOND_MEMBER = 43
-                       
-                       # Should infer int from FIRST_MEMBER (ignoring HELPER_CONSTANT)
-                       a: int = E.FIRST_MEMBER.value
-                       b: str = <warning descr="Expected type 'str', got 'int' instead">E.SECOND_MEMBER.value</warning>
-                       """));
+    doTestByText("""
+                   from enum import Enum, nonmember
+                   
+                   # Simple enum with just integer members
+                   class SimpleEnum(Enum):
+                       A = 1
+                       B = 2
+                   
+                   # Should infer int
+                   x: int = SimpleEnum.A.value
+                   y: str = <warning descr="Expected type 'str', got 'int' instead">SimpleEnum.B.value</warning>
+                   
+                   # Enum with non-member first, then actual members
+                   class E(Enum):
+                       # This should be classified as a non-member
+                       HELPER_CONSTANT = nonmember("not a member")
+                       # These are the actual members - should infer int from first member
+                       FIRST_MEMBER = 42
+                       SECOND_MEMBER = 43
+                   
+                   # Should infer int from FIRST_MEMBER (ignoring HELPER_CONSTANT)
+                   a: int = E.FIRST_MEMBER.value
+                   b: str = <warning descr="Expected type 'str', got 'int' instead">E.SECOND_MEMBER.value</warning>
+                   """);
   }
 }
