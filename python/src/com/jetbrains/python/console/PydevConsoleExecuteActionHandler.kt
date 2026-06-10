@@ -31,7 +31,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
 
   private val project = myConsoleView.project
   private val myEnterHandler = PyConsoleEnterHandler()
-  protected open var ipythonInputPromptCount = 2
+  protected open var ipythonInputPromptCount: Int = 2
 
   fun decreaseInputPromptCount(value : Int) {
     ipythonInputPromptCount -= value
@@ -79,7 +79,7 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
     }
     if (PyConsoleUtil.isCommandQueueEnabled(project)) {
       // add new command to CommandQueue service
-      service<CommandQueueForPythonConsoleService>().addNewCommand(this, code)
+      project.service<CommandQueueForPythonConsoleService>().addNewCommand(this, code)
     } else {
       consoleComm.execInterpreter(code) {}
     }

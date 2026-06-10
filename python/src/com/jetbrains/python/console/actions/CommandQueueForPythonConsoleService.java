@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
  * Service for command queue in Python console.
  * It has own listener(CommandQueueListener myListener), which it notifies about the changes in the command queue.
  */
-@Service
+@Service(Service.Level.PROJECT)
 public final class CommandQueueForPythonConsoleService {
   private final Map<ConsoleCommunication, CommandQueueListener> myListeners = new ConcurrentHashMap<>();
   private final Map<ConsoleCommunication, Queue<ConsoleCommunication.ConsoleCodeFragment>> queues = new ConcurrentHashMap<>();
@@ -178,6 +178,6 @@ public final class CommandQueueForPythonConsoleService {
   }
 
   private static void execCommand(@NotNull ConsoleCommunication comm, @NotNull ConsoleCommunication.ConsoleCodeFragment code) {
-    comm.execInterpreter(code, x -> null);
+    comm.execInterpreter(code, _ -> null);
   }
 }

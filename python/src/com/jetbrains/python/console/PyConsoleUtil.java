@@ -200,12 +200,11 @@ public final class PyConsoleUtil {
     return PyConsoleOptions.getInstance(project).isCommandQueueEnabled();
   }
 
-  public static boolean isCommandQueueEmpty(@Nullable ConsoleCommunication communication) {
+  public static boolean isCommandQueueEmpty(@NotNull Project project, @Nullable ConsoleCommunication communication) {
     if (communication != null) {
-      return ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).isEmpty(communication);
+      return project.getService(CommandQueueForPythonConsoleService.class).isEmpty(communication);
     }
     return true;
   }
 }
-
 

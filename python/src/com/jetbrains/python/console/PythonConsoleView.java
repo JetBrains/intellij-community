@@ -203,7 +203,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
   }
 
   public void addCommandQueuePanelListener(final ConsoleCommunication communication) {
-    ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
+    getProject().getService(CommandQueueForPythonConsoleService.class)
       .addListener(communication, new CommandQueueListener() {
         @Override
         public void removeCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
@@ -648,7 +648,7 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
       ApplicationManager.getApplication().invokeLater(() -> Disposer.dispose(myCommandQueue));
     }
     if (removeCommand) {
-      ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class)
+      getProject().getService(CommandQueueForPythonConsoleService.class)
         .removeCommand(myRunner.getPydevConsoleCommunication(), true);
     }
   }
@@ -710,10 +710,11 @@ public final class PythonConsoleView extends LanguageConsoleImpl implements Obse
   public void dispose() {
     super.dispose();
 
-    if (!getProject().isDisposed()) {
+    Project project = getProject();
+    if (!project.isDisposed()) {
       ConsoleCommunication communication = getFile().getCopyableUserData(CONSOLE_COMMUNICATION_KEY);
       if (communication != null) {
-        ApplicationManager.getApplication().getService(CommandQueueForPythonConsoleService.class).removeListener(communication);
+        project.getService(CommandQueueForPythonConsoleService.class).removeListener(communication);
       }
     }
 

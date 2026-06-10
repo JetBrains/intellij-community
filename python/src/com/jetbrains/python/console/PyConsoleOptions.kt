@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -22,11 +21,12 @@ import com.jetbrains.python.run.AbstractPythonRunConfigurationParams
 import com.jetbrains.python.run.PythonRunParams
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @State(
   name = "PyConsoleOptionsProvider",
   storages = [Storage(StoragePathMacros.WORKSPACE_FILE)]
 )
-class PyConsoleOptions : PersistentStateComponent<PyConsoleOptions.State> {
+class PyConsoleOptions(private val project: Project) : PersistentStateComponent<PyConsoleOptions.State> {
   private val myState: State = State()
 
   val pythonConsoleSettings: PyConsoleSettings get() = myState.myPythonConsoleState
@@ -61,8 +61,7 @@ class PyConsoleOptions : PersistentStateComponent<PyConsoleOptions.State> {
     set(value) {
       myState.myCommandQueueEnabled = value
       if (!value) {
-        ApplicationManager.getApplication()
-          .getService(CommandQueueForPythonConsoleService::class.java).disableCommandQueue()
+        project.getService(CommandQueueForPythonConsoleService::class.java).disableCommandQueue()
       }
     }
 
@@ -296,7 +295,7 @@ class PyConsoleOptions : PersistentStateComponent<PyConsoleOptions.State> {
       myEnvs = envs
     }
 
-    override fun getMappingSettings(): PathMappingSettings? = getMappings()
+    override fun getMappingSettings(): PathMappingSettings = getMappings()
 
     override fun setMappingSettings(mappingSettings: PathMappingSettings?) {
     }
