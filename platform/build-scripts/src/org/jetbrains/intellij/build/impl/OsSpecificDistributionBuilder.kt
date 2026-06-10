@@ -12,10 +12,12 @@ import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.LibcImpl
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.executeStep
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
@@ -119,9 +121,11 @@ interface OsSpecificDistributionBuilder {
   }
 
   private suspend fun sign(context: BuildContext, hashFile: Path) {
-    context.proprietaryBuildTools.signTool.signFilesWithGpg(
-      listOf(hashFile), context
-    )
+    context.executeStep(spanBuilder("sign checksums").setAttribute("file", "$hashFile"), BuildOptions.CHECKSUM_SIGN_STEP) {
+      context.proprietaryBuildTools.signTool.signFilesWithGpg(
+        listOf(hashFile), context,
+      )
+    }
   }
 }
 

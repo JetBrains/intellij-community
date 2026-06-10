@@ -87,6 +87,7 @@ fun customizeBuildOptionsForTest(options: BuildOptions, outDir: Path, skipDepend
     BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP,
     BuildOptions.WIN_SIGN_STEP,
     BuildOptions.MAC_SIGN_STEP,
+    BuildOptions.CHECKSUM_SIGN_STEP,
     BuildOptions.MAC_NOTARIZE_STEP,
     BuildOptions.MAC_DMG_STEP,
   )
