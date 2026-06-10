@@ -15,6 +15,13 @@
  */
 package com.jetbrains.python.postfix;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
+@Subsystems.CodeCompletion
+@Components.Postfix
+@Layers.Functional
 public class PyIsNonePostfixTemplateTest extends PyPostfixTemplateTestCase {
 
   public void testTopLevel() {

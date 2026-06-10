@@ -20,6 +20,23 @@ object Subsystems {
   @Subsystem("Quick Fixes")
   @Inherited
   annotation class QuickFixes
+
+  @Subsystem("Code Completion")
+  @Inherited
+  annotation class CodeCompletion
+}
+
+object Components {
+
+  @Retention(AnnotationRetention.RUNTIME)
+  @Target(AnnotationTarget.FUNCTION, AnnotationTarget.TYPE, AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS)
+  @LabelAnnotation(name = "Component")
+  @Inherited
+  annotation class Component(val value: String)
+
+  @Component("Postfix")
+  @Inherited
+  annotation class Postfix
 }
 
 object Layers {
