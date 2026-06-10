@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 final class JsonPathFunctionCallAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (holder.isBatchMode()) return;
     if (element instanceof JsonPathId && element.getParent() instanceof JsonPathFunctionCall) {
       holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
         .range(element.getTextRange())
