@@ -404,16 +404,16 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       return cache.getStrType();
     }
 
-    if (enumClass.isSubclass("builtins.str", context) || enumClass.isSubclass("str", context)) {
+    if (enumClass.isSubclass("str", context)) {
       return cache.getStrType();
     }
-    if (enumClass.isSubclass("builtins.int", context) || enumClass.isSubclass("int", context)) {
+    if (enumClass.isSubclass("int", context)) {
       return cache.getIntType();
     }
-    if (enumClass.isSubclass("builtins.bytes", context) || enumClass.isSubclass("bytes", context)) {
+    if (enumClass.isSubclass("bytes", context)) {
       return cache.getBytesType(LanguageLevel.forElement(enumClass));
     }
-    if (enumClass.isSubclass("builtins.float", context) || enumClass.isSubclass("float", context)) {
+    if (enumClass.isSubclass("float", context)) {
       return cache.getFloatType();
     }
 
