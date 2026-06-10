@@ -213,12 +213,12 @@ Predefined module kind for module 'intellij.platform.frontend'">localInspection<
 
 Computed module kind reasoning:
 
-No frontend or backend dependencies were found for module 'unique.module.name.3'">fileEditorProvider</warning>/>
+No frontend or backend dependencies were found for descriptor 'plugin.xml' in module 'unique.module.name.3'">fileEditorProvider</warning>/>
             <<warning descr="'com.intellij.localInspection' can only be used in 'backend' module type. Actual module type is 'shared'.
 
 Computed module kind reasoning:
 
-No frontend or backend dependencies were found for module 'unique.module.name.3'">localInspection</warning>/>
+No frontend or backend dependencies were found for descriptor 'plugin.xml' in module 'unique.module.name.3'">localInspection</warning>/>
             <lang.parserDefinition/>
           </extensions>
         </idea-plugin>
@@ -1041,7 +1041,7 @@ via dependency 'unique.module.name.40' -> descriptor 'unique.module.name.40.xml'
 
 Computed module kind reasoning:
 
-No frontend or backend dependencies were found for module 'unique.module.name.47'">localInspection</warning>/>
+No frontend or backend dependencies were found for descriptor 'unique.module.name.47.xml' in module 'unique.module.name.47'">localInspection</warning>/>
           </extensions>
         </idea-plugin>
       """.trimIndent()

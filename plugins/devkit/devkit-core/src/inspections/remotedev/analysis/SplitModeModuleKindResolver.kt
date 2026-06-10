@@ -48,25 +48,25 @@ internal object SplitModeModuleKindResolver {
       }
 
     return computeModuleAnalysis(
-      moduleName = module.name,
       ownDependencyFacts = ownDependencyFacts,
       containingPlugins = containingPlugins,
       hasOwnExplicitFrontendDependency = directDependencyNames.any(::isExplicitFrontendDependency),
       hasOwnExplicitBackendDependency = directDependencyNames.any(::isExplicitBackendDependency),
       hasOwnExplicitMonolithDependency = directDependencyNames.any(::isExplicitMonolithDependency),
+      analysisTargetDescription = getAnalysisTargetDescription(module.name, descriptorFile),
     )
   }
 
   private fun computeModuleAnalysis(
-    moduleName: String,
     ownDependencyFacts: DependencyFacts,
     containingPlugins: List<ContainingPlugin>,
     hasOwnExplicitFrontendDependency: Boolean,
     hasOwnExplicitBackendDependency: Boolean,
     hasOwnExplicitMonolithDependency: Boolean,
+    analysisTargetDescription: String,
   ): ModuleAnalysis {
     val dependencyAnalysis = DependencyAnalysis(
-      moduleName = moduleName,
+      analysisTargetDescription = analysisTargetDescription,
       ownFacts = ownDependencyFacts,
       containingPlugins = containingPlugins,
       hasOwnExplicitFrontendDependency = hasOwnExplicitFrontendDependency,
@@ -154,12 +154,12 @@ internal object SplitModeModuleKindResolver {
           }
           else {
             computeModuleAnalysis(
-              moduleName = containingModule.name,
               ownDependencyFacts = ownDependencyFacts,
               containingPlugins = emptyList(),
               hasOwnExplicitFrontendDependency = directDependencyNames.any(::isExplicitFrontendDependency),
               hasOwnExplicitBackendDependency = directDependencyNames.any(::isExplicitBackendDependency),
               hasOwnExplicitMonolithDependency = directDependencyNames.any(::isExplicitMonolithDependency),
+              analysisTargetDescription = getAnalysisTargetDescription(containingModule.name, pluginXml),
             ).resolvedModuleKind
           }
 
@@ -195,7 +195,7 @@ private data class ContainingPlugin(
 )
 
 private class DependencyAnalysis(
-  private val moduleName: String,
+  private val analysisTargetDescription: String,
   private val ownFacts: DependencyFacts,
   private val containingPlugins: List<ContainingPlugin>,
   val hasOwnExplicitFrontendDependency: Boolean,
@@ -277,7 +277,7 @@ private class DependencyAnalysis(
       containingFacts.monolithEvidence?.name,
     ).distinct()
     if (dependencyNames.isEmpty()) {
-      return "No frontend or backend dependencies were found for module '$moduleName'"
+      return "No frontend or backend dependencies were found for $analysisTargetDescription"
     }
 
     return "No frontend or backend dependencies were found among:\n${dependencyNames.joinToString("\n") { dependencyName -> "'$dependencyName'" }}"
@@ -353,5 +353,14 @@ private fun asContainingPluginFacts(dependencyFacts: DependencyFacts): Dependenc
       cacheKey = "containing|${trace.cacheKey}",
       description = "containing plugin ${trace.description}",
     )
+  }
+}
+
+private fun getAnalysisTargetDescription(moduleName: String, descriptorFile: XmlFile?): String {
+  return if (descriptorFile != null) {
+    "descriptor '${descriptorFile.name}' in module '$moduleName'"
+  }
+  else {
+    "module '$moduleName'"
   }
 }
