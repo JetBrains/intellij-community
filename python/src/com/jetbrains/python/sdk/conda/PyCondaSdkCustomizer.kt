@@ -2,28 +2,13 @@
 package com.jetbrains.python.sdk.conda
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-interface PyCondaSdkCustomizer {
-  val preferCondaEnvironments: Boolean
-    get() = false
-
-  val detectBaseEnvironment: Boolean
-    get() = false
-
-  val preferExistingEnvironments: Boolean
-    get() = false
+internal interface PyCondaSdkCustomizer {
 
   val sharedEnvironmentsByDefault: Boolean
     get() = false
-
-  val suggestSharedCondaEnvironments: Boolean
-    get() = false
-
-  val fallbackConfigurator: PyProjectSdkConfigurationExtension?
-    get() = null
 
   companion object {
     val EP_NAME: ExtensionPointName<PyCondaSdkCustomizer> = ExtensionPointName.create("Pythonid.condaSdkCustomizer")

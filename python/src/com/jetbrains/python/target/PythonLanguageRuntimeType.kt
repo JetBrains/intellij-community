@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 import javax.swing.Icon
 
-class PythonLanguageRuntimeType : LanguageRuntimeType<PythonLanguageRuntimeConfiguration>(PythonLanguageRuntimeConfiguration.TYPE_ID), CustomToolLanguageRuntimeType {
+internal class PythonLanguageRuntimeType : LanguageRuntimeType<PythonLanguageRuntimeConfiguration>(PythonLanguageRuntimeConfiguration.TYPE_ID), CustomToolLanguageRuntimeType {
   override val displayName: @NlsSafe String = "Python"
 
   override val icon: Icon

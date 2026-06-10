@@ -2,8 +2,6 @@
 package com.jetbrains.python.sdk.add.v2.conda
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.io.toNioPathOrNull
@@ -29,8 +27,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
-
-private val LOG: Logger = fileLogger()
 
 class CondaViewModel<P : PathHolder>(
   val fileSystem: FileSystem<P>,

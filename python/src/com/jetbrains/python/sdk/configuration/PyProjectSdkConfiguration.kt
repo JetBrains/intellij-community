@@ -4,8 +4,6 @@ package com.jetbrains.python.sdk.configuration
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.python.common.tools.ToolId
 import com.intellij.python.community.services.systemPython.SystemPythonService
@@ -22,7 +20,6 @@ import com.jetbrains.python.sdk.installExecutableViaPythonScript
 import com.jetbrains.python.util.ShowingMessageErrorSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 object PyProjectSdkConfiguration {
@@ -52,15 +49,6 @@ object PyProjectSdkConfiguration {
     configurePythonSdk(module.project, module, sdk)
     thisLogger().debug("Successfully configured sdk using ${createSdkInfoWithTool.toolId}")
     true
-  }
-
-  @ApiStatus.Obsolete
-  fun setReadyToUseSdk(project: Project, module: Module, sdk: Sdk) {
-    if (module.isDisposed) {
-      return
-    }
-
-    configurePythonSdk(project, module, sdk)
   }
 
   fun suppressTipAndInspectionsFor(module: Module, toolName: String): Disposable {

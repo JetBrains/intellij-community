@@ -40,7 +40,7 @@ import java.awt.Dimension
 import java.nio.file.Path
 import java.util.function.Supplier
 
-class PythonLanguageRuntimeUI(
+internal class PythonLanguageRuntimeUI(
   val project: Project,
   val config: PythonLanguageRuntimeConfiguration,
   val targetSupplier: Supplier<TargetEnvironmentConfiguration>,

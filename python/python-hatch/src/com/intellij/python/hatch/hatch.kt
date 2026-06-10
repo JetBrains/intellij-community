@@ -129,11 +129,6 @@ suspend fun Module.getHatchService(
   return workingDirectoryPath.getHatchService(fileSystem = fileSystem, hatchExecutablePath = hatchExecutablePath)
 }
 
-/**
- * ../hatch/env/virtual/{normalized-project-name}/{hash}/{python-home}
- */
-fun PythonHomePath.getHatchEnvVirtualProjectPath(): Path = this.parent.parent
-
 fun resolveHatchWorkingDirectory(project: Project, module: Module?): PyResult<Path> {
   val pathString = module?.baseDir?.path ?: project.basePath
 

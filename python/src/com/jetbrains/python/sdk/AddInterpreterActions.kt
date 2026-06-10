@@ -130,10 +130,6 @@ internal class AddLocalInterpreterAction(
   }
 }
 
-@ApiStatus.Internal
-fun addLocalInterpreter(moduleOrProject: ModuleOrProject, onSdkCreated: (Sdk) -> Unit): Unit =
-  createAddLocalInterpreterAction(moduleOrProject, onSdkCreated).createDialog().show()
-
 internal class AddInterpreterOnTargetAction(
   private val project: Project,
   private val targetType: TargetEnvironmentType<*>,

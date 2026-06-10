@@ -27,7 +27,6 @@ import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil.isPythonSdk
 import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.createDetectedSdk
@@ -41,14 +40,6 @@ private data class TargetAndPath(
   val target: TargetEnvironmentConfiguration?,
   val path: FullPathOnTarget?,
 )
-
-@Internal
-fun mostPreferred(sdks: List<Sdk>): Sdk? = sdks.minWithOrNull(PreferredSdkComparator.INSTANCE)
-
-@Internal
-fun filterSystemWideSdks(existingSdks: List<Sdk>): List<Sdk> {
-  return existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
-}
 
 @Internal
 fun configurePythonSdk(project: Project, module: Module, sdk: Sdk) {
@@ -129,11 +120,6 @@ fun detectVirtualEnvs(module: Module?, existingSdks: List<Sdk>, context: UserDat
   filterSuggestedPaths(VirtualEnvSdkFlavor.getInstance(), existingSdks, module, context)
 
 @Internal
-fun filterAssociatedSdks(module: Module, existingSdks: List<Sdk>): List<Sdk> {
-  return existingSdks.filter { isPythonSdk(it) && it.isAssociatedWithModule(module) }
-}
-
-@Internal
 fun Sdk.isAssociatedWithModule(module: Module?): Boolean {
   val basePath = module?.baseDir?.path
   val associatedPath = associatedModulePath
@@ -203,7 +189,7 @@ val Sdk.isReadOnly: Boolean
 val Sdk.readOnlyErrorMessage: String
   get() = PythonSdkReadOnlyProvider.getReadOnlyMessage(this) ?: PyBundle.message("python.sdk.read.only", name)
 
-val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = pySdkAdditionalData.flavor
+internal val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = pySdkAdditionalData.flavor
 
 private fun Sdk.isLocatedInsideModule(module: Module): Boolean {
   val moduleDir = module.baseDir
@@ -222,7 +208,7 @@ private val PY_VER_REGEX = Regex(""".*python(\d\.\d)""")
 
 @Deprecated("See com.intellij.python.junit5Tests.env.services.internal.impl.PythonWithLanguageLevelImplTest.testSunnyDay")
 @get:Internal
-val Sdk.guessedLanguageLevel: LanguageLevel?
+private val Sdk.guessedLanguageLevel: LanguageLevel?
   get() {
     val path = homePath ?: return null
     val result = PY_VER_REGEX.find(path) ?: return null
