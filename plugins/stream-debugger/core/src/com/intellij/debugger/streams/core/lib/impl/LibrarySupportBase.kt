@@ -26,6 +26,11 @@ abstract class LibrarySupportBase(private val compatibleLibrary: EvaluateExpress
   private val mySupportedIntermediateOperations: MutableMap<String, IntermediateOperation> = mutableMapOf()
   private val mySupportedTerminalOperations: MutableMap<String, TerminalOperation> = mutableMapOf()
 
+  protected val supportedIntermediateOperations: Map<String, IntermediateOperation>
+    get() = mySupportedIntermediateOperations
+  protected val supportedTerminalOperations: Map<String, TerminalOperation>
+    get() = mySupportedTerminalOperations
+
   final override fun createHandlerFactory(dsl: Dsl): HandlerFactory {
     val compatibleLibraryFactory = compatibleLibrary.createHandlerFactory(dsl)
     return object : HandlerFactory {
@@ -59,11 +64,11 @@ abstract class LibrarySupportBase(private val compatibleLibrary: EvaluateExpress
     }
   }
 
-  protected open fun addIntermediateOperationsSupport(vararg operations: IntermediateOperation) {
+  protected fun addIntermediateOperationsSupport(vararg operations: IntermediateOperation) {
     operations.forEach { mySupportedIntermediateOperations[it.name] = it }
   }
 
-  protected open fun addTerminationOperationsSupport(vararg operations: TerminalOperation) {
+  protected fun addTerminationOperationsSupport(vararg operations: TerminalOperation) {
     operations.forEach { mySupportedTerminalOperations[it.name] = it }
   }
 
