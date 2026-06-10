@@ -996,7 +996,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       final Project project = e.getProject();
       if (project != null) {
         final String name = getConsoleDisplayName(project);
-        if (!displayName.equals(name)) {
+        if (displayName == null || !displayName.equals(name)) {
           displayName = name;
         }
       }
