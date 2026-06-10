@@ -103,7 +103,12 @@ suspend fun buildNonBundledPlugins(mainPluginModules: List<String>, context: Bui
   val platformLayout = createPlatformLayout(context)
   val distState = DistributionBuilderState(platformLayout = platformLayout, pluginsToPublish = pluginsToPublishEffective, context = context)
 
-  val searchableOptionSet = buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
+  val searchableOptionSet = if (context.isStepSkipped(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
+    null
+  }
+  else {
+    buildSearchableOptions(context.createProductRunner(mainPluginModules + dependencyModules), context)
+  }
 
   buildNonBundledPlugins(
     pluginsToPublish = pluginsToPublish,
