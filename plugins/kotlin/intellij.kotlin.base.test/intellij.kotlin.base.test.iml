@@ -53,7 +53,6 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm.shared" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution.impl" scope="TEST" />
@@ -99,5 +98,6 @@
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" scope="TEST" />
   </component>
 </module>

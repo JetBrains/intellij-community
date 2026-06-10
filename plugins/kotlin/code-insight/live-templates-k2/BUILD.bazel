@@ -47,7 +47,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//java/java-impl:impl",
         "//plugins/kotlin/base/project-structure",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
+        "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
     ],
 )
 
@@ -79,7 +79,7 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//java/java-impl:impl_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared_test_lib",
+        "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.liveTemplates` end

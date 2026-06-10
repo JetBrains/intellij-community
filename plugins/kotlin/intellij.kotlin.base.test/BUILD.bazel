@@ -122,8 +122,6 @@ jvm_library(
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
         "//plugins/kotlin/jvm/shared",
         "//plugins/kotlin/jvm/shared:shared_test_lib",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared",
-        "//plugins/kotlin/code-insight/override-implement-shared:kotlin-code-insight-override-implement-shared_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
         "//java/execution/openapi:java-execution",
@@ -209,6 +207,8 @@ jvm_library(
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
         "//plugins/kotlin/code-insight/line-markers",
         "//plugins/kotlin/code-insight/line-markers:line-markers_test_lib",
+        "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
+        "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.test` end

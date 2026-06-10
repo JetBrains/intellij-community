@@ -43,7 +43,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.intentions" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight" exported="" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.structuralSearch" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers" exported="" />

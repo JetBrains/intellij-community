@@ -146,7 +146,6 @@
   - name: intellij.kotlin.codeInsight.api
   - name: intellij.kotlin.codeInsight.utils
   - name: intellij.kotlin.codeInsight.descriptions
-  - name: kotlin.code-insight.override-implement.shared
   - name: intellij.kotlin.codeInsight.overrideImplement
   - name: kotlin.fir
   - name: intellij.kotlin.searching.base

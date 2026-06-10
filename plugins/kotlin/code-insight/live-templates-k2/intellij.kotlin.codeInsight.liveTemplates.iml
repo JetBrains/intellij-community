@@ -42,6 +42,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
-    <orderEntry type="module" module-name="kotlin.code-insight.override-implement.shared" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" />
   </component>
 </module>
