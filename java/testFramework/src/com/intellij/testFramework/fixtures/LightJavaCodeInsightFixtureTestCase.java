@@ -66,7 +66,7 @@ import java.io.File;
  */
 @TestDataPath("$CONTENT_ROOT/testData")
 public abstract class LightJavaCodeInsightFixtureTestCase extends UsefulTestCase implements TestIndexingModeSupporter {
-  protected static class ProjectDescriptor extends DefaultLightProjectDescriptor {
+  public static class ProjectDescriptor extends DefaultLightProjectDescriptor {
     protected final LanguageLevel myLanguageLevel;
     private final boolean myWithAnnotations;
 

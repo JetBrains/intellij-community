@@ -1038,10 +1038,14 @@ public final class JavaChangeSignatureUsageProcessor implements ChangeSignatureU
         nullability = NullableNotNullManager.getNullability(owner);
       }
     }
-    if (nullability != origType.getNullability().nullability()) {
-      String annotation = NullableNotNullManager.getInstance(typeElement.getProject())
-        .getDefaultAnnotation(origType.getNullability().nullability(), typeElement);
-      typeElement.addAnnotation(annotation);
+    Nullability wantedNullability = origType.getNullability().nullability();
+    if (wantedNullability != Nullability.UNKNOWN && nullability != wantedNullability) {
+      Project project = typeElement.getProject();
+      String annotation = NullableNotNullManager.getInstance(project)
+        .getDefaultAnnotation(wantedNullability, typeElement);
+      if (JavaPsiFacade.getInstance(project).findClass(annotation, typeElement.getResolveScope()) != null) {
+        typeElement.addAnnotation(annotation);
+      }
     }
   }
 
