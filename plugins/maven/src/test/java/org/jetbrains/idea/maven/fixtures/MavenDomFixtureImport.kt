@@ -122,3 +122,10 @@ fun MavenTestFixture.runBlockingNoSync(test: suspend () -> Unit) {
     preventionFixture.tearDown()
   }
 }
+
+fun MavenImportingTestFixture.initProjectsManager(enableEventHandling: Boolean) {
+  projectsManager.initForTests()
+  if (enableEventHandling) {
+    projectsManager.enableAutoImportInTests()
+  }
+}

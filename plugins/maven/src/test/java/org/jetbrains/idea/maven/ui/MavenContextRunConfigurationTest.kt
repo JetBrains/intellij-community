@@ -3,29 +3,51 @@ package org.jetbrains.idea.maven.ui
 
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
-import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import junit.framework.TestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.execution.MavenConfigurationProducer
 import org.jetbrains.idea.maven.execution.MavenGoalLocation
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.initProjectsManager
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.jetbrains.idea.maven.fixtures.mn
+import org.jetbrains.idea.maven.fixtures.updateAllProjects
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenContextRunConfigurationTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenContextRunConfigurationTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   private lateinit var myNavigator: MavenProjectsNavigator
 
-  public override fun setUp() = runBlocking {
-    super.setUp()
-    initProjectsManager(false)
-    myNavigator = MavenProjectsNavigator.getInstance(project)
+  @BeforeEach
+  fun setUp(): Unit = runBlocking {
+    maven.initProjectsManager(false)
+    myNavigator = MavenProjectsNavigator.getInstance(maven.project)
     withContext(Dispatchers.EDT) {
       myNavigator.initForTests()
     }
@@ -34,48 +56,48 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
 
   @Test
   fun testCreateMavenRunConfigurationFromToolWindow() = runBlocking {
-    val projectPom = createProjectPom("""
+    val projectPom = maven.createProjectPom("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    projectsManager.state.originalFiles = listOf(projectPom.path)
-    projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
-    updateAllProjects()
-    projectsManager.fireActivatedInTests()
+    maven.projectsManager.state.originalFiles = listOf(maven.projectPom.path)
+    maven.projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
+    maven.updateAllProjects()
+    maven.projectsManager.fireActivatedInTests()
 
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
-        val runConfiguration = createRunConfiguration(projectPom, "validate")
-        TestCase.assertNotNull(runConfiguration)
-        TestCase.assertEquals("project [validate]", runConfiguration!!.name)
+        val runConfiguration = createRunConfiguration(maven.projectPom, "validate")
+        assertNotNull(runConfiguration)
+        assertEquals("project [validate]", runConfiguration!!.name)
       }
     }
   }
 
   @Test
   fun testCheckMavenRunConfigurationFromToolWindow() = runBlocking {
-    val projectPom = createProjectPom("""
+    val projectPom = maven.createProjectPom("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    projectsManager.state.originalFiles = listOf(projectPom.path)
-    projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
-    updateAllProjects()
-    projectsManager.fireActivatedInTests()
+    maven.projectsManager.state.originalFiles = listOf(maven.projectPom.path)
+    maven.projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
+    maven.updateAllProjects()
+    maven.projectsManager.fireActivatedInTests()
 
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
-        val psiFile = PsiManager.getInstance(project).findFile(projectPom)
+        val psiFile = PsiManager.getInstance(maven.project).findFile(maven.projectPom)
         val context = ConfigurationContext.createEmptyContextForLocation(
-          MavenGoalLocation(project, psiFile, arrayOf("validate").asList()))
+          MavenGoalLocation(maven.project, psiFile, arrayOf("validate").asList()))
         val configurationFromContext = RunConfigurationProducer.getInstance(
           MavenConfigurationProducer::class.java).createConfigurationFromContext(context)
-        TestCase.assertNotNull(configurationFromContext)
+        assertNotNull(configurationFromContext)
         val runConfiguration = configurationFromContext?.configuration as? MavenRunConfiguration
-        TestCase.assertNotNull(runConfiguration)
-        TestCase.assertTrue(RunConfigurationProducer.getInstance(
+        assertNotNull(runConfiguration)
+        assertTrue(RunConfigurationProducer.getInstance(
           MavenConfigurationProducer::class.java).isConfigurationFromContext(runConfiguration!!, context))
       }
     }
@@ -84,8 +106,8 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
 
 
   @Test
-  fun testMavenRunConfigurationFromToolWindowShouldBeDifferent() = runBlocking {
-    createProjectPom("""
+  fun testMavenRunConfigurationFromToolWindowShouldBeDifferent(): Unit = runBlocking {
+    maven.createProjectPom("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
   <version>1</version>
@@ -95,49 +117,49 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
     <module>m2</module>
   </modules>
   """)
-    val m1 = createModulePom("m1", """<parent>
+    val m1 = maven.createModulePom("m1", """<parent>
                             <groupId>test</groupId>
                             <artifactId>project</artifactId>
                             <version>1</version>
                           </parent>
                           <artifactId>m1</artifactId>""")
-    val m2 = createModulePom("m2", """<parent>
+    val m2 = maven.createModulePom("m2", """<parent>
                             <groupId>test</groupId>
                             <artifactId>project</artifactId>
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    projectsManager.state.originalFiles = (listOf(projectPom, m2, m2)).map { it.path }
-    projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
-    updateAllProjects()
-    projectsManager.fireActivatedInTests()
+    maven.projectsManager.state.originalFiles = (listOf(maven.projectPom, m2, m2)).map { it.path }
+    maven.projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
+    maven.updateAllProjects()
+    maven.projectsManager.fireActivatedInTests()
 
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
-        val psiFile = PsiManager.getInstance(project).findFile(m1)
+        val psiFile = PsiManager.getInstance(maven.project).findFile(m1)
         val context = ConfigurationContext.createEmptyContextForLocation(
-          MavenGoalLocation(project, psiFile, arrayOf("validate").asList()))
+          MavenGoalLocation(maven.project, psiFile, arrayOf("validate").asList()))
         val configurationFromContext = RunConfigurationProducer.getInstance(
           MavenConfigurationProducer::class.java).createConfigurationFromContext(context)
-        TestCase.assertNotNull(configurationFromContext)
+        assertNotNull(configurationFromContext)
         val runConfiguration = configurationFromContext?.configuration as? MavenRunConfiguration
-        val psiFile2 = PsiManager.getInstance(project).findFile(m2)
+        val psiFile2 = PsiManager.getInstance(maven.project).findFile(m2)
         val context2 = ConfigurationContext.createEmptyContextForLocation(
-          MavenGoalLocation(project, psiFile2, arrayOf("validate").asList()))
+          MavenGoalLocation(maven.project, psiFile2, arrayOf("validate").asList()))
         val configurationFromContext2 = RunConfigurationProducer.getInstance(
           MavenConfigurationProducer::class.java).createConfigurationFromContext(context2)
         val runConfiguration2 = configurationFromContext2?.configuration as? MavenRunConfiguration
 
-        TestCase.assertTrue(RunConfigurationProducer.getInstance(
+        assertTrue(RunConfigurationProducer.getInstance(
           MavenConfigurationProducer::class.java).isConfigurationFromContext(runConfiguration!!, context))
 
-        TestCase.assertTrue(RunConfigurationProducer.getInstance(
+        assertTrue(RunConfigurationProducer.getInstance(
           MavenConfigurationProducer::class.java).isConfigurationFromContext(runConfiguration2!!, context2))
 
-        TestCase.assertFalse(RunConfigurationProducer.getInstance(
+        assertFalse(RunConfigurationProducer.getInstance(
           MavenConfigurationProducer::class.java).isConfigurationFromContext(runConfiguration2, context))
 
-        TestCase.assertFalse(RunConfigurationProducer.getInstance(
+        assertFalse(RunConfigurationProducer.getInstance(
           MavenConfigurationProducer::class.java).isConfigurationFromContext(runConfiguration, context2))
       }
     }
@@ -146,7 +168,7 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
 
   @Test
   fun testMavenRunConfigurationFromToolWindowForMultimodule() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
   <version>1</version>
@@ -156,42 +178,42 @@ class MavenContextRunConfigurationTest : MavenDomTestCase() {
     <module>m2</module>
   </modules>
   """)
-    val m1 = createModulePom("m1", """<parent>
+    val m1 = maven.createModulePom("m1", """<parent>
                             <groupId>test</groupId>
                             <artifactId>project</artifactId>
                             <version>1</version>
                           </parent>
                           <artifactId>m1</artifactId>""")
-    val m2 = createModulePom("m2", """<parent>
+    val m2 = maven.createModulePom("m2", """<parent>
                             <groupId>test</groupId>
                             <artifactId>project</artifactId>
                             <version>1</version>
                           </parent>
                           <artifactId>m2</artifactId>""")
-    projectsManager.state.originalFiles = listOf(projectPom, m2, m2).map { it.path }
-    projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
-    updateAllProjects()
-    projectsManager.fireActivatedInTests()
+    maven.projectsManager.state.originalFiles = listOf(maven.projectPom, m2, m2).map { it.path }
+    maven.projectsManager.explicitProfiles = MavenExplicitProfiles.NONE
+    maven.updateAllProjects()
+    maven.projectsManager.fireActivatedInTests()
 
     withContext(Dispatchers.EDT) {
       writeIntentReadAction {
         val runConfiguration1 = createRunConfiguration(m1, "validate")
-        TestCase.assertNotNull(runConfiguration1)
-        TestCase.assertEquals(mn("project", "m1") + " [validate]", runConfiguration1!!.name)
+        assertNotNull(runConfiguration1)
+        assertEquals(maven.mn("project", "m1") + " [validate]", runConfiguration1!!.name)
         val runConfiguration2 = createRunConfiguration(m2, "validate")
-        TestCase.assertEquals(mn("project", "m2") + " [validate]", runConfiguration2!!.name)
+        assertEquals(maven.mn("project", "m2") + " [validate]", runConfiguration2!!.name)
       }
     }
   }
 
 
   private fun createRunConfiguration(projectPom: VirtualFile, vararg goals: String): MavenRunConfiguration? {
-    val psiFile = PsiManager.getInstance(project).findFile(projectPom)
+    val psiFile = PsiManager.getInstance(maven.project).findFile(projectPom)
     val context = ConfigurationContext.createEmptyContextForLocation(
-      MavenGoalLocation(project, psiFile, goals.asList()))
+      MavenGoalLocation(maven.project, psiFile, goals.asList()))
     val configurationFromContext = RunConfigurationProducer.getInstance(
       MavenConfigurationProducer::class.java).createConfigurationFromContext(context)
-    TestCase.assertNotNull(configurationFromContext)
+    assertNotNull(configurationFromContext)
     return configurationFromContext?.configuration as? MavenRunConfiguration
   }
 
