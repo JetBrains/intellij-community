@@ -72,6 +72,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
 import java.util.ArrayDeque
 import java.util.concurrent.CopyOnWriteArrayList
@@ -564,6 +565,7 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
   ) : BackgroundRefreshController {
     private var isStarted = false
     private var refreshJob: Job? = null
+
     @Volatile
     private var jobNumber: Int = 0
 
@@ -649,11 +651,15 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
     val queue = serviceAsync<RefreshQueue>()
     try {
       while (keepRefreshing()) {
-        val projects = ProjectManager.getInstanceIfCreated()?.openProjects?.filter { !it.isDisposed }.orEmpty()
+        val projectManager = ProjectManager.getInstanceIfCreated()
+
+        // do not store projects themselves to avoid "leak" if a project is closed while waiting for other to be configured
+        val projectHashes = projectManager?.openProjects?.filter { !it.isDisposed }?.map { it.locationHash }.orEmpty()
         val canTryRefresh = settings.isBackgroundSync &&
-                            projects.isNotEmpty() &&
+                            projectHashes.isNotEmpty() &&
+                            projectManager != null &&
                             // wait for all projects to be configured. `true` if all are already configured
-                            projects.all { !Observation.awaitConfiguration(it, null) }
+                            awaitAllConfigurations(projectManager, projectHashes)
 
         if (canTryRefresh && keepRefreshing() && refreshAllLocalRootsInBackground(queue)) {
           sessions.incrementAndGet()
@@ -666,6 +672,17 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
         logBackgroundRefresh(NANOSECONDS.toMillis(System.nanoTime() - startTime), sessions.get(), 0)
       }
     }
+  }
+}
+
+/**
+ * @return `true` if all projects are already configured. `false`, if a project was configured during the execution
+ * @see Observation.awaitConfiguration
+ */
+private suspend fun awaitAllConfigurations(projectManager: ProjectManager, projectHashes: List<@NonNls String>): Boolean {
+  return projectHashes.all { hash ->
+    val project = projectManager.findOpenProjectByHash(hash) ?: return@all false
+    !Observation.awaitConfiguration(project) { message -> LOG.trace("Periodic VFS refresh is blocked because project.name=${project.name} being configured, message=$message") }
   }
 }
 
