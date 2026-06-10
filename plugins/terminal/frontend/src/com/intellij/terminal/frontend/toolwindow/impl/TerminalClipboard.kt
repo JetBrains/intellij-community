@@ -28,9 +28,12 @@ internal object TerminalClipboard {
     scrollingModel: TerminalOutputScrollingModel? = null,
     preferSystemSelection: Boolean = false,
   ) {
-    val content = CopyPasteManager.getInstance().contents ?: return
+    val systemContents = CopyPasteManager.getInstance().systemSelectionContents
+    val defaultContents = CopyPasteManager.getInstance().contents
+
     view.coroutineScope.launch {
-      val text = getContentAsText(view, content) ?: return@launch
+      val text = sequenceOf(if (preferSystemSelection) systemContents else null, defaultContents)
+                   .firstNotNullOfOrNull { getContentAsText(it, view) } ?: return@launch
 
       withContext(Dispatchers.EDT) {
         view.createSendTextBuilder()
@@ -44,7 +47,8 @@ internal object TerminalClipboard {
     }
   }
 
-  private suspend fun getContentAsText(view: TerminalView, content: Transferable): String? {
+  private suspend fun getContentAsText(content: Transferable?, view: TerminalView): String? {
+    if (content == null) return null
     val terminalContext = getTerminalContext(view) ?: return null
 
     return try {
@@ -66,7 +70,6 @@ internal object TerminalClipboard {
 
   private suspend fun getFilePathsAsText(content: Transferable, terminalContext: TerminalContext): String? = withContext(Dispatchers.IO) {
     val files = content.getTransferData(DataFlavor.javaFileListFlavor) as? List<*> ?: return@withContext null
-
     val paths = files.filterIsInstance<File>().map { it.toPath() }
     val copiedFiles = resolveVirtualFiles(paths)
 
@@ -81,7 +84,7 @@ internal object TerminalClipboard {
 
     val eelApi = eelDescriptor.toEelApi()
     val tempFile = eelApi.fs.createTemporaryFile()
-      .prefix("terminal-paste-image-")
+      .prefix("pasted-image-")
       .suffix(".png")
       .deleteOnExit(true)
       .getOrThrow()
@@ -91,7 +94,7 @@ internal object TerminalClipboard {
       ImageIO.write(ImageUtil.toBufferedImage(image), "png", output)
     }
     if (!written) {
-      return@withContext null
+      error("Failed to write clipboard image to temporary file")
     }
 
     tempFile.toString()
