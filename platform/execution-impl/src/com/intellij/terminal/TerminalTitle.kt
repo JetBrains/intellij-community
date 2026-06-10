@@ -24,10 +24,18 @@ class TerminalTitle {
   private var state = State()
 
   fun change(block: State.() -> Unit) {
-    val newState = state.copy()
-    newState.block()
-    if (newState != state) {
-      state = newState
+    // The read-modify-write must be atomic: the title is mutated concurrently from several threads
+    val changed = synchronized(this@TerminalTitle) {
+      val newState = state.copy()
+      newState.block()
+      if (newState != state) {
+        state = newState
+        true
+      }
+      else false
+    }
+    // Notify listeners outside the lock: they can run on any thread and may re-enter change().
+    if (changed) {
       fireTitleChanged()
     }
   }
