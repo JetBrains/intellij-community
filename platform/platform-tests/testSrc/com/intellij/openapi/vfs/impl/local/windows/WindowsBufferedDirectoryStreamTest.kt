@@ -144,4 +144,43 @@ class WindowsBufferedDirectoryStreamTestExceptions {
     val materializedFile = (tempDir / "materialized.txt").createFile()
     assertThrows<NotDirectoryException> { WindowsBufferedDirectoryIterator(materializedFile) }
   }
+
+  @Test
+  fun nextWithoutHasNextReturnsEveryEntryThenThrows(@TempDir tempDir: Path) {
+    // Driving the iterator through next() alone must yield each entry once, then NoSuchElementException.
+    val names = setOf("a", "b", "c")
+    for (name in names) (tempDir / name).writeText(name)
+
+    WindowsBufferedDirectoryIterator(tempDir).use { iter ->
+      val collected = HashSet<String>()
+      repeat(names.size) { collected += iter.next().first.fileName.toString() }
+      assertEquals(names, collected, "next() must return each entry once without a preceding hasNext()")
+      assertThrows<NoSuchElementException> { iter.next() }
+    }
+  }
+
+  @Test
+  fun repeatedHasNextIsIdempotent(@TempDir tempDir: Path) {
+    // hasNext() must not consume or skip entries when called several times in a row.
+    (tempDir / "only").writeText("x")
+
+    WindowsBufferedDirectoryIterator(tempDir).use { iter ->
+      assertTrue(iter.hasNext())
+      assertTrue(iter.hasNext())
+      assertTrue(iter.hasNext())
+      assertEquals("only", iter.next().first.fileName.toString(), "Repeated hasNext() must not advance past the entry")
+      assertFalse(iter.hasNext(), "hasNext() must report exhaustion once the single entry is consumed")
+      assertFalse(iter.hasNext(), "hasNext() must stay false after exhaustion")
+      assertThrows<NoSuchElementException> { iter.next() }
+    }
+  }
+
+  @Test
+  fun emptyDirectoryHasNoEntries(@TempDir tempDir: Path) {
+    // The '.'/'..' entries are skipped, so an empty directory must be reported as having no elements.
+    WindowsBufferedDirectoryIterator(tempDir).use { iter ->
+      assertFalse(iter.hasNext(), "An empty directory must have no enumerable entries")
+      assertThrows<NoSuchElementException> { iter.next() }
+    }
+  }
 }
