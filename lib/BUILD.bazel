@@ -5,17 +5,17 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library")
 load("@rules_kotlin//kotlin:kotlin.bzl", "kt_compiler_plugin")
 
 kt_compiler_plugin(
-  name = "kotlin-serialization-plugin",
-  id = "org.jetbrains.kotlin.kotlin-serialization-compiler-plugin",
-  visibility = ["//visibility:public"],
-  deps = ["@rules_jvm//:kotlin-serialization-compiler-plugin-embeddable_import"],
+    name = "kotlin-serialization-plugin",
+    id = "org.jetbrains.kotlin.kotlin-serialization-compiler-plugin",
+    visibility = ["//visibility:public"],
+    deps = ["@rules_jvm//:kotlin-serialization-compiler-plugin-embeddable_import"],
 )
 
 kt_compiler_plugin(
-  name = "compose-plugin",
-  id = "org.jetbrains.kotlin.kotlin-compose-compiler-plugin",
-  visibility = ["//visibility:public"],
-  deps = ["@rules_jvm//:kotlin-compose-compiler-plugin-embeddable_import"],
+    name = "compose-plugin",
+    id = "org.jetbrains.kotlin.kotlin-compose-compiler-plugin",
+    visibility = ["//visibility:public"],
+    deps = ["@rules_jvm//:kotlin-compose-compiler-plugin-embeddable_import"],
 )
 
 ### auto-generated section `local-libs` start
