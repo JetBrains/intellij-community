@@ -53,8 +53,12 @@ internal fun applyToWithConversion(
 }
 
 internal fun KtCallExpression.toCollectionLiteralString(): String? {
-    val argumentListText = valueArgumentList?.text ?: return null
-    return "[${argumentListText.drop(1).dropLast(1)}]"
+    val regularArgsContent = valueArgumentList?.text?.run { drop(1).dropLast(1) } ?: ""
+    val lambdaArgTexts = lambdaArguments.map { it.getLambdaExpression()?.text ?: return null }
+    val lambdaArgsContent = lambdaArgTexts.joinToString(", ")
+    val allArgs = listOf(regularArgsContent, lambdaArgsContent).filter { it.isNotEmpty() }.joinToString(", ")
+    if (allArgs.isEmpty() && valueArgumentList == null) return null
+    return "[$allArgs]"
 }
 
 internal val TARGET_FUNCTION_FQ_NAMES: Set<FqName> = setOf(

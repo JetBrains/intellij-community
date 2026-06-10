@@ -25,16 +25,20 @@ import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.isCollectionLi
 import org.jetbrains.kotlin.idea.k2.codeinsight.inspections.utils.toCollectionLiteralString
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtBinaryExpression
+import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtParenthesizedExpression
 import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.types.Variance
 
 internal class ConvertToCollectionLiteralsInspection :
@@ -63,8 +67,7 @@ internal class ConvertToCollectionLiteralsInspection :
         val calleeExpression = element.calleeExpression as? KtNameReferenceExpression ?: return false
         if (calleeExpression.getReferencedNameAsName() !in TARGET_FUNCTION_SHORT_NAMES) return false
         if (element.valueArguments.any { it.getArgumentName() != null || it.getSpreadElement() != null }) return false
-        val parent = element.parent
-        return !(parent is KtDotQualifiedExpression && parent.receiverExpression == element)
+        return true
     }
 
     override fun KaSession.prepareContext(element: KtCallExpression): Context? {
@@ -78,26 +81,33 @@ internal class ConvertToCollectionLiteralsInspection :
 
         var renderedType: String? = null
         when (parent) {
-            is KtProperty -> {
-                if (parent.typeReference != null && fqName !in LIST_FQ_NAMES) {
+            is KtProperty, is KtPropertyAccessor, is KtNamedFunction -> {
+                val property = when (parent) {
+                    is KtProperty, is KtNamedFunction -> parent
+                    else -> (parent as KtPropertyAccessor).parent as? KtProperty ?: return null
+                }
+
+                if (property.typeReference != null && fqName !in LIST_FQ_NAMES) {
                     expectedType ?: return null
                     if (expressionType !is KaClassType || expectedType !is KaClassType) return null
                     if (expressionType.classId != expectedType.classId) return null
                 }
-                if (parent.typeReference == null) {
+                if (property.typeReference == null) {
                     renderedType = renderExplicitTypeIfNeeded(element, fqName)
                 }
             }
 
-            is KtNamedFunction -> renderedType = renderExplicitTypeIfNeeded(element, fqName)
-
             is KtValueArgument -> {
-                if (!isCollectionLiteralSafeAsArgument(element, expressionType)) return null
+                if ((fqName !in LIST_FQ_NAMES || element.typeArguments.isNotEmpty()) && !isCollectionLiteralSafeAsArgument(element, expressionType)) return null
                 renderedType = renderExplicitTypeIfNeeded(element, fqName)
             }
 
+            is KtBinaryExpression -> return null
+            is KtBlockExpression -> if (parent.parent is KtFunctionLiteral) return null
+
             else -> {
-                if (fqName !in LIST_FQ_NAMES) {
+                if (parent is KtWhenEntry && renderExplicitTypeIfNeeded(element, fqName) != null) return null
+                if (fqName !in LIST_FQ_NAMES || parent is KtWhenEntry) {
                     if (expectedType == null || !expressionType.semanticallyEquals(expectedType))
                         return null
                 }
@@ -105,7 +115,6 @@ internal class ConvertToCollectionLiteralsInspection :
         }
         return Context(renderedType)
     }
-
 
     @OptIn(KaExperimentalApi::class)
     private fun KaSession.renderExplicitTypeIfNeeded(element: KtCallExpression, fqName: FqName): String? {
@@ -128,8 +137,11 @@ internal class ConvertToCollectionLiteralsInspection :
         override fun applyFix(project: Project, element: KtCallExpression, updater: ModPsiUpdater) {
             val directParent = element.parent
             val container = if (directParent is KtParenthesizedExpression) directParent.parent else directParent
-            if ((container is KtProperty || container is KtNamedFunction) && context.renderedType != null) {
-                container.setTypeReference(context.renderedType)
+            if (context.renderedType != null) {
+                when(container) {
+                    is KtPropertyAccessor -> { (container.parent as? KtProperty)?.setTypeReference(context.renderedType) }
+                    is KtProperty, is KtNamedFunction -> container.setTypeReference(context.renderedType)
+                }
             }
 
             val collectionLiteralString = element.toCollectionLiteralString() ?: return

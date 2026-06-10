@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+class A {
+
+    val x: Array<Double> get() = []
+
+}

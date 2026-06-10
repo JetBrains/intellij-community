@@ -13296,6 +13296,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/arrayOf.kt");
             }
 
+            @TestMetadata("buildMap.kt")
+            public void testBuildMap() throws Exception {
+                runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/buildMap.kt");
+            }
+
             @TestMetadata("chainCall.kt")
             public void testChainCall() throws Exception {
                 runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/chainCall.kt");
@@ -13339,6 +13344,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("inReturnExpression.kt")
             public void testInReturnExpression() throws Exception {
                 runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/inReturnExpression.kt");
+            }
+
+            @TestMetadata("infix.kt")
+            public void testInfix() throws Exception {
+                runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/infix.kt");
+            }
+
+            @TestMetadata("infix3.kt")
+            public void testInfix3() throws Exception {
+                runTest("testData/inspectionsLocal/convertCollectionLiteralToFunctionCall/infix3.kt");
             }
 
             @TestMetadata("intArrayOf.kt")
@@ -13703,6 +13718,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("addition.kt")
+            public void testAddition() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/addition.kt");
+            }
+
             @TestMetadata("alreadyHasType.kt")
             public void testAlreadyHasType() throws Exception {
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/alreadyHasType.kt");
@@ -13718,6 +13738,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/alreadyHasTypeEmptyListOf.kt");
             }
 
+            @TestMetadata("alreadyHasTypeEmptyListOf2.kt")
+            public void testAlreadyHasTypeEmptyListOf2() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/alreadyHasTypeEmptyListOf2.kt");
+            }
+
             @TestMetadata("alreadyHasTypeEmptySetOf.kt")
             public void testAlreadyHasTypeEmptySetOf() throws Exception {
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/alreadyHasTypeEmptySetOf.kt");
@@ -13726,6 +13751,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("alreadyHasTypeEmptySetOf2.kt")
             public void testAlreadyHasTypeEmptySetOf2() throws Exception {
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/alreadyHasTypeEmptySetOf2.kt");
+            }
+
+            @TestMetadata("alreadyHasTypeEmptySetOf3.kt")
+            public void testAlreadyHasTypeEmptySetOf3() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/alreadyHasTypeEmptySetOf3.kt");
             }
 
             @TestMetadata("alreadyHasTypeListOf.kt")
@@ -13763,6 +13793,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/arrayOfNulls.kt");
             }
 
+            @TestMetadata("buildList.kt")
+            public void testBuildList() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/buildList.kt");
+            }
+
+            @TestMetadata("buildMap.kt")
+            public void testBuildMap() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/buildMap.kt");
+            }
+
             @TestMetadata("comments.kt")
             public void testComments() throws Exception {
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/comments.kt");
@@ -13786,6 +13826,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("dotQualifiedExpression2.kt")
             public void testDotQualifiedExpression2() throws Exception {
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/dotQualifiedExpression2.kt");
+            }
+
+            @TestMetadata("dotQualifiedExpression3.kt")
+            public void testDotQualifiedExpression3() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/dotQualifiedExpression3.kt");
+            }
+
+            @TestMetadata("dotQualifiedExpression4.kt")
+            public void testDotQualifiedExpression4() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/dotQualifiedExpression4.kt");
             }
 
             @TestMetadata("doubleArrayOf.kt")
@@ -13838,9 +13888,34 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/emptySequence.kt");
             }
 
+            @TestMetadata("enumCreation.kt")
+            public void testEnumCreation() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/enumCreation.kt");
+            }
+
+            @TestMetadata("enumCreation2.kt")
+            public void testEnumCreation2() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/enumCreation2.kt");
+            }
+
+            @TestMetadata("enumCreation3.kt")
+            public void testEnumCreation3() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/enumCreation3.kt");
+            }
+
             @TestMetadata("expressionBody.kt")
             public void testExpressionBody() throws Exception {
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/expressionBody.kt");
+            }
+
+            @TestMetadata("getterEmptyInitialization.kt")
+            public void testGetterEmptyInitialization() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/getterEmptyInitialization.kt");
+            }
+
+            @TestMetadata("getterEmptyInitialization2.kt")
+            public void testGetterEmptyInitialization2() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/getterEmptyInitialization2.kt");
             }
 
             @TestMetadata("inNamedArgument.kt")
@@ -13856,6 +13931,31 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("inReturnExpression2.kt")
             public void testInReturnExpression2() throws Exception {
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/inReturnExpression2.kt");
+            }
+
+            @TestMetadata("infixCalls.kt")
+            public void testInfixCalls() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/infixCalls.kt");
+            }
+
+            @TestMetadata("infixCalls2.kt")
+            public void testInfixCalls2() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/infixCalls2.kt");
+            }
+
+            @TestMetadata("infixCalls3.kt")
+            public void testInfixCalls3() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/infixCalls3.kt");
+            }
+
+            @TestMetadata("infixCalls4.kt")
+            public void testInfixCalls4() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/infixCalls4.kt");
+            }
+
+            @TestMetadata("infixCalls5.kt")
+            public void testInfixCalls5() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/infixCalls5.kt");
             }
 
             @TestMetadata("intArrayOf.kt")
@@ -13908,6 +14008,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/isValueArgument9.kt");
             }
 
+            @TestMetadata("lambda.kt")
+            public void testLambda() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/lambda.kt");
+            }
+
+            @TestMetadata("lambda2.kt")
+            public void testLambda2() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/lambda2.kt");
+            }
+
             @TestMetadata("mutableListOf.kt")
             public void testMutableListOf() throws Exception {
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/mutableListOf.kt");
@@ -13923,6 +14033,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/onCreation.kt");
             }
 
+            @TestMetadata("operatorCalls.kt")
+            public void testOperatorCalls() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/operatorCalls.kt");
+            }
+
             @TestMetadata("overridenFunctions.kt")
             public void testOverridenFunctions() throws Exception {
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/overridenFunctions.kt");
@@ -13936,6 +14051,21 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("parenthesis2.kt")
             public void testParenthesis2() throws Exception {
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/parenthesis2.kt");
+            }
+
+            @TestMetadata("receiverList.kt")
+            public void testReceiverList() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/receiverList.kt");
+            }
+
+            @TestMetadata("receiverSet.kt")
+            public void testReceiverSet() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/receiverSet.kt");
+            }
+
+            @TestMetadata("run.kt")
+            public void testRun() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/run.kt");
             }
 
             @TestMetadata("sequenceOf.kt")
@@ -13961,6 +14091,26 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("spreadOperator.kt")
             public void testSpreadOperator() throws Exception {
                 runTest("testData/inspectionsLocal/convertToCollectionLiterals/spreadOperator.kt");
+            }
+
+            @TestMetadata("when.kt")
+            public void testWhen() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/when.kt");
+            }
+
+            @TestMetadata("when2.kt")
+            public void testWhen2() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/when2.kt");
+            }
+
+            @TestMetadata("when3.kt")
+            public void testWhen3() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/when3.kt");
+            }
+
+            @TestMetadata("when4.kt")
+            public void testWhen4() throws Exception {
+                runTest("testData/inspectionsLocal/convertToCollectionLiterals/when4.kt");
             }
 
             @TestMetadata("withTypeArgument.kt")

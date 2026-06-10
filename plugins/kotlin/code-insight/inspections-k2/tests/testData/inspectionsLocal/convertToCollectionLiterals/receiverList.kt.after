@@ -1,0 +1,5 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+
+fun main() {
+    [true, false].forEach { print(it) }
+}

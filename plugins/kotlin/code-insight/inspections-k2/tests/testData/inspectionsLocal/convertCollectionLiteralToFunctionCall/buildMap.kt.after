@@ -1,0 +1,6 @@
+// COMPILER_ARGUMENTS: -Xcollection-literals
+// FIX: Replace with a function call
+
+val map = buildMap {
+    getOrPut("key") { listOf(1, 2, 4) }
+}
