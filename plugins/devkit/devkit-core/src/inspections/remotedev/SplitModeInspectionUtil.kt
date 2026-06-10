@@ -9,9 +9,10 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.xml.XmlFile
@@ -214,14 +215,31 @@ internal object SplitModeInspectionUtil {
     val moduleVirtualFile = contentModuleDescriptor.virtualFile ?: return emptySequence()
     val moduleName = moduleVirtualFile.nameWithoutExtension
     val psiManager = contentModuleDescriptor.manager
-    @Suppress("UNCHECKED_CAST")
-    return PluginIdDependenciesIndex.findFilesIncludingContentModule(contentModuleDescriptor.project, moduleVirtualFile).asSequence()
-             .flatMap { dependingFile ->
-               val psiFile = psiManager.findFile(dependingFile) as? XmlFile ?: return@flatMap emptySequence<PsiElement>()
-               val plugin = DescriptorUtil.getIdeaPlugin(psiFile) ?: return@flatMap emptySequence<PsiElement>()
-               val modules = plugin.content.flatMap { it.moduleEntry }
-               modules.filter { it.name.stringValue == moduleName }.asSequence()
-             } as? Sequence<ModuleDescriptor> ?: emptySequence()
+    val indexedMatches = PluginIdDependenciesIndex.findFilesIncludingContentModule(contentModuleDescriptor.project, moduleVirtualFile)
+      .asSequence()
+      .flatMap { dependingFile ->
+        findDependingContentModuleEntries(psiManager.findFile(dependingFile) as? XmlFile, moduleName)
+      }
+      .toList()
+    if (indexedMatches.isNotEmpty()) {
+      return indexedMatches.asSequence()
+    }
+
+    val project = contentModuleDescriptor.project
+    return FilenameIndex.getAllFilesByExt(project, "xml", GlobalSearchScopesCore.projectProductionScope(project))
+      .asSequence()
+      .mapNotNull { xmlFile -> psiManager.findFile(xmlFile) as? XmlFile }
+      .flatMap { pluginXml -> findDependingContentModuleEntries(pluginXml, moduleName) }
+  }
+
+  private fun findDependingContentModuleEntries(
+    pluginXml: XmlFile?,
+    moduleName: String,
+  ): Sequence<ModuleDescriptor> {
+    val plugin = pluginXml?.let(DescriptorUtil::getIdeaPlugin) ?: return emptySequence()
+    return plugin.content.asSequence()
+      .flatMap { contentDescriptor -> contentDescriptor.moduleEntry.asSequence() }
+      .filter { moduleDescriptor -> moduleDescriptor.name.stringValue == moduleName }
   }
 
   private fun shouldSuppressForSingleModuleExternalPlugin(module: Module): Boolean {

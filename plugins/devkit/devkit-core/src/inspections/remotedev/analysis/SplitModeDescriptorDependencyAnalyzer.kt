@@ -94,6 +94,13 @@ internal object SplitModeDescriptorDependencyAnalyzer {
         accumulator.recordTransitiveDependencies(dependencyName, predefinedDependencyFacts)
         hasPredefinedDependencyFacts = true
       }
+      if (!hasPredefinedDependencyFacts) {
+        val predefinedDependencyFacts = getDirectPredefinedDependencyFacts(ideaPlugin, dependencyName, descriptorLocation)
+        if (predefinedDependencyFacts != null) {
+          accumulator.recordFacts(predefinedDependencyFacts)
+          hasPredefinedDependencyFacts = true
+        }
+      }
       if (hasPredefinedDependencyFacts) {
         if (accumulator.hasMonolithEvidence()) {
           return accumulator.toDependencyFacts()
@@ -210,6 +217,21 @@ private fun resolvePluginDependencyDescriptors(ideaPlugin: IdeaPlugin, dependenc
   return matchingPlugins.filter { it.pluginId == dependencyName }.ifEmpty { matchingPlugins }
 }
 
+private fun getDirectPredefinedDependencyFacts(
+  ideaPlugin: IdeaPlugin,
+  dependencyName: String,
+  descriptorLocation: DescriptorLocation,
+): DependencyFacts? {
+  val project = ideaPlugin.xmlElement?.project ?: return null
+  val dependencyInfo = DependencyInfo(dependencyName, directDependencyTrace(descriptorLocation))
+  return when (SplitModeApiRestrictionsService.getInstance(project).getPredefinedDependencyKind(dependencyName)) {
+    SplitModeApiRestrictionsService.ModuleKind.FRONTEND -> DependencyFacts(frontendEvidence = dependencyInfo)
+    SplitModeApiRestrictionsService.ModuleKind.BACKEND -> DependencyFacts(backendEvidence = dependencyInfo)
+    SplitModeApiRestrictionsService.ModuleKind.MONOLITH -> DependencyFacts(monolithEvidence = dependencyInfo)
+    else -> null
+  }
+}
+
 private fun getPredefinedDependencyFacts(ideaPlugin: IdeaPlugin): DependencyFacts? {
   val descriptorFile = getDescriptorXmlFile(ideaPlugin) ?: return null
   val module = ModuleUtilCore.findModuleForPsiElement(descriptorFile) ?: return null
@@ -261,31 +283,56 @@ private class DependencyFactsAccumulator(
   private var monolithEvidence: DependencyInfo? = null
 
   fun record(dependencyInfo: DependencyInfo) {
+    val dependencyKind = when {
+      isExplicitMonolithDependency(dependencyInfo.name) -> SplitModeApiRestrictionsService.ModuleKind.MONOLITH
+      isFrontendDependency(dependencyInfo.name) -> SplitModeApiRestrictionsService.ModuleKind.FRONTEND
+      isBackendDependency(dependencyInfo.name) -> SplitModeApiRestrictionsService.ModuleKind.BACKEND
+      else -> null
+    }
+    record(dependencyInfo, dependencyKind)
+  }
+
+  fun recordFacts(dependencyFacts: DependencyFacts) {
+    dependencyFacts.frontendEvidence?.let { record(it, SplitModeApiRestrictionsService.ModuleKind.FRONTEND) }
+    dependencyFacts.backendEvidence?.let { record(it, SplitModeApiRestrictionsService.ModuleKind.BACKEND) }
+    dependencyFacts.monolithEvidence?.let { record(it, SplitModeApiRestrictionsService.ModuleKind.MONOLITH) }
+  }
+
+  private fun record(
+    dependencyInfo: DependencyInfo,
+    dependencyKind: SplitModeApiRestrictionsService.ModuleKind?,
+  ) {
     if (!seenDependencyNames.add(dependencyInfo.name)) {
       return
     }
 
-    when {
-      isExplicitMonolithDependency(dependencyInfo.name) -> {
+    when (dependencyKind) {
+      SplitModeApiRestrictionsService.ModuleKind.MONOLITH -> {
         if (monolithEvidence == null) {
           monolithEvidence = dependencyInfo
         }
       }
-      isFrontendDependency(dependencyInfo.name) -> {
+      SplitModeApiRestrictionsService.ModuleKind.FRONTEND -> {
         frontendEvidence = pickPreferredEvidence(frontendEvidence, dependencyInfo, ::isExplicitFrontendDependency)
       }
-      isBackendDependency(dependencyInfo.name) -> {
+      SplitModeApiRestrictionsService.ModuleKind.BACKEND -> {
         backendEvidence = pickPreferredEvidence(backendEvidence, dependencyInfo, ::isExplicitBackendDependency)
+      }
+      null,
+      SplitModeApiRestrictionsService.ModuleKind.MIXED,
+      SplitModeApiRestrictionsService.ModuleKind.SHARED,
+      is SplitModeApiRestrictionsService.ModuleKind.Composite,
+        -> {
       }
     }
   }
 
   fun recordTransitiveDependencies(dependencyName: String, dependencyFacts: DependencyFacts) {
-    for (dependencyInfo in dependencyFacts.representativeDependencies()) {
+    for ((name, trace) in dependencyFacts.representativeDependencies()) {
       record(
         DependencyInfo(
-          dependencyInfo.name,
-          transitiveDependencyTrace(descriptorLocation, dependencyName, dependencyInfo.trace),
+          name,
+          transitiveDependencyTrace(descriptorLocation, dependencyName, trace),
         )
       )
     }
@@ -295,11 +342,11 @@ private class DependencyFactsAccumulator(
     loadingRule: ModuleLoadingRule,
     dependencyFacts: DependencyFacts,
   ) {
-    for (dependencyInfo in dependencyFacts.representativeDependencies()) {
+    for ((name, trace) in dependencyFacts.representativeDependencies()) {
       record(
         DependencyInfo(
-          dependencyInfo.name,
-          contentModuleDependencyTrace(loadingRule, dependencyInfo.trace),
+          name,
+          contentModuleDependencyTrace(loadingRule, trace),
         )
       )
     }

@@ -629,6 +629,8 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
 
       class SharedDynamicPluginListener : <weak_warning descr="'com.intellij.ide.plugins.DynamicPluginListener' can only be used in 'frontend or backend' module type. Actual module type is 'shared'.
 
+Plugin lists are different on frontend and backend, prefer listening to them explicitly in desired IDE part
+
 Computed module kind reasoning:
 
 No frontend or backend dependencies were found for module 'light_idea_test_case'">DynamicPluginListener</weak_warning>

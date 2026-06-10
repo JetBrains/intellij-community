@@ -27,7 +27,8 @@ internal object SplitModeModuleKindResolver {
     }
 
     val parsedXmlDescriptor = DescriptorUtil.getIdeaPlugin(xmlDescriptor)
-    val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance(module.project).getPredefinedModuleKind(module, xmlDescriptor, parsedXmlDescriptor)
+    val predefinedModuleKind =
+      SplitModeApiRestrictionsService.getInstance(module.project).getPredefinedModuleKind(module, xmlDescriptor, parsedXmlDescriptor)
     if (predefinedModuleKind != null) {
       return ModuleAnalysis(ResolvedModuleKind(predefinedModuleKind.moduleKind, predefinedModuleKind.reasoning))
     }
@@ -35,13 +36,18 @@ internal object SplitModeModuleKindResolver {
       return ModuleAnalysis(ResolvedModuleKind(SplitModeApiRestrictionsService.ModuleKind.SHARED, ""))
     }
 
+    val mainPluginXmlDescriptor = PluginModuleType.getPluginXml(module)
     val contentModuleXmlDescriptor = PluginModuleType.getContentModuleDescriptorXml(module)
+    val shouldAnalyzeContainingPlugins =
+      SplitModeAnalysisFlags.isContainingPluginsAnalysisEnabled()
+      && isContentModuleDescriptor(xmlDescriptor, descriptorFile, mainPluginXmlDescriptor, contentModuleXmlDescriptor)
     val descriptorAnalysisStates = mutableMapOf<XmlFile, DescriptorDependencyFactsState>()
-    val ownDependencyFacts = SplitModeDescriptorDependencyAnalyzer.getOrComputeOwnDescriptorDependencyFacts(parsedXmlDescriptor, descriptorAnalysisStates)
+    val ownDependencyFacts =
+      SplitModeDescriptorDependencyAnalyzer.getOrComputeOwnDescriptorDependencyFacts(parsedXmlDescriptor, descriptorAnalysisStates)
     val directDependencyNames = SplitModeDescriptorDependencyAnalyzer.collectDirectDependencyNames(parsedXmlDescriptor).toSet()
     val containingPlugins =
-      if (contentModuleXmlDescriptor?.virtualFile == xmlDescriptor.virtualFile && SplitModeAnalysisFlags.isContainingPluginsAnalysisEnabled()) {
-        analyzeContainingPlugins(collectContainingPlugins(contentModuleXmlDescriptor), descriptorAnalysisStates)
+      if (shouldAnalyzeContainingPlugins) {
+        analyzeContainingPlugins(collectContainingPlugins(xmlDescriptor), descriptorAnalysisStates)
       }
       else {
         emptyList()
@@ -136,6 +142,21 @@ internal object SplitModeModuleKindResolver {
       .toList()
   }
 
+  private fun isContentModuleDescriptor(
+    xmlDescriptor: XmlFile,
+    explicitlyRequestedDescriptor: XmlFile?,
+    mainPluginXmlDescriptor: XmlFile?,
+    registeredContentModuleXmlDescriptor: XmlFile?,
+  ): Boolean {
+    if (registeredContentModuleXmlDescriptor?.virtualFile == xmlDescriptor.virtualFile) {
+      return true
+    }
+
+    val explicitDescriptor = explicitlyRequestedDescriptor ?: return false
+    return explicitDescriptor.virtualFile == xmlDescriptor.virtualFile
+           && explicitDescriptor.virtualFile != mainPluginXmlDescriptor?.virtualFile
+  }
+
   private fun analyzeContainingPlugins(
     containingPluginXmlFiles: List<XmlFile>,
     descriptorAnalysisStates: MutableMap<XmlFile, DescriptorDependencyFactsState>,
@@ -147,7 +168,8 @@ internal object SplitModeModuleKindResolver {
         val ownDependencyFacts =
           SplitModeDescriptorDependencyAnalyzer.getOrComputeOwnDescriptorDependencyFacts(ideaPlugin, descriptorAnalysisStates)
         val directDependencyNames = SplitModeDescriptorDependencyAnalyzer.collectDirectDependencyNames(ideaPlugin).toSet()
-        val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance(containingModule.project).getPredefinedModuleKind(containingModule, pluginXml, ideaPlugin)
+        val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance(containingModule.project)
+          .getPredefinedModuleKind(containingModule, pluginXml, ideaPlugin)
         val resolvedModuleKind =
           if (predefinedModuleKind != null) {
             ResolvedModuleKind(predefinedModuleKind.moduleKind, predefinedModuleKind.reasoning)
@@ -331,8 +353,8 @@ private fun computeContainingPluginsKind(containingPlugins: List<ContainingPlugi
   }
 
   val firstKind = containingPlugins.first().moduleKind.kind
-  for (containingPlugin in containingPlugins) {
-    if (containingPlugin.moduleKind.kind != firstKind) {
+  for ((_, _, moduleKind) in containingPlugins) {
+    if (moduleKind.kind != firstKind) {
       return SplitModeApiRestrictionsService.ModuleKind.MIXED
     }
   }

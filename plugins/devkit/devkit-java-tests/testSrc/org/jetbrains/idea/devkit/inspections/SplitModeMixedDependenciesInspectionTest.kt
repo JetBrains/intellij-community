@@ -302,12 +302,12 @@ Backend dependency 'intellij.platform.kernel.backend' from descriptor 'unique.mo
       moduleName = "unique.module.name.50",
       descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
       pluginXmlContent = """
-        <<error descr="This plugin effectively depends on frontend-only modules and will work only in frontend in Split Mode.
+        <<weak_warning descr="This plugin effectively depends on frontend-only modules and will work only in frontend in Split Mode. Consider adding a frontend dependency to explicitly indicate target IDE.
 
 Computed module kind reasoning:
 
 Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in module 'unique.module.name.50'
-via dependency 'unique.module.name.50.frontend.support' -> descriptor 'unique.module.name.50.frontend.support.xml' in module 'unique.module.name.50.frontend.support'.">idea-plugin</error>>
+via dependency 'unique.module.name.50.frontend.support' -> descriptor 'unique.module.name.50.frontend.support.xml' in module 'unique.module.name.50.frontend.support'.">idea-plugin</weak_warning>>
           <dependencies>
             <module name="unique.module.name.50.frontend.support"/>
           </dependencies>
@@ -317,6 +317,7 @@ via dependency 'unique.module.name.50.frontend.support' -> descriptor 'unique.mo
     myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
 
     myFixture.checkHighlighting()
+    moveCaretToIdeaPluginTag()
     myFixture.findSingleIntention("Make module 'unique.module.name.50' work in 'frontend' only")
     myFixture.findSingleIntention("Make module 'unique.module.name.50' work in 'monolith' only")
     Assert.assertTrue(myFixture.filterAvailableIntentions("Make module 'unique.module.name.50' work in 'backend' only").isEmpty())
@@ -341,12 +342,12 @@ via dependency 'unique.module.name.50.frontend.support' -> descriptor 'unique.mo
       moduleName = "unique.module.name.52",
       descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
       pluginXmlContent = """
-        <<error descr="This plugin effectively depends on backend-only modules and will work only in backend in Split Mode.
+        <<weak_warning descr="This plugin effectively depends on backend-only modules and will work only in backend in Split Mode. Consider adding a backend dependency to explicitly indicate target IDE.
 
 Computed module kind reasoning:
 
 Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in module 'unique.module.name.52'
-via dependency 'unique.module.name.52.backend.support' -> descriptor 'unique.module.name.52.backend.support.xml' in module 'unique.module.name.52.backend.support'.">idea-plugin</error>>
+via dependency 'unique.module.name.52.backend.support' -> descriptor 'unique.module.name.52.backend.support.xml' in module 'unique.module.name.52.backend.support'.">idea-plugin</weak_warning>>
           <dependencies>
             <module name="unique.module.name.52.backend.support"/>
           </dependencies>
@@ -356,6 +357,7 @@ via dependency 'unique.module.name.52.backend.support' -> descriptor 'unique.mod
     myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
 
     myFixture.checkHighlighting()
+    moveCaretToIdeaPluginTag()
     myFixture.findSingleIntention("Make module 'unique.module.name.52' work in 'backend' only")
     myFixture.findSingleIntention("Make module 'unique.module.name.52' work in 'monolith' only")
     Assert.assertTrue(myFixture.filterAvailableIntentions("Make module 'unique.module.name.52' work in 'frontend' only").isEmpty())
@@ -442,7 +444,7 @@ via dependency 'unique.module.name.52.backend.support' -> descriptor 'unique.mod
       moduleName = "unique.module.name.51",
       descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
       pluginXmlContent = """
-        <<error descr="This plugin effectively depends on frontend-only and backend-only modules simultaneously. It may not get loaded in Split Mode.
+        <<weak_warning descr="This plugin effectively depends on frontend-only and backend-only modules simultaneously. It may not get loaded in Split Mode.
 
 Computed module kind reasoning:
 
@@ -450,7 +452,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
 via dependency 'unique.module.name.51.frontend.support' -> descriptor 'unique.module.name.51.frontend.support.xml' in module 'unique.module.name.51.frontend.support'.
 
 Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in module 'unique.module.name.51'
-via dependency 'unique.module.name.51.backend.support' -> descriptor 'unique.module.name.51.backend.support.xml' in module 'unique.module.name.51.backend.support'.">idea-plugin</error>>
+via dependency 'unique.module.name.51.backend.support' -> descriptor 'unique.module.name.51.backend.support.xml' in module 'unique.module.name.51.backend.support'.">idea-plugin</weak_warning>>
           <dependencies>
             <module name="unique.module.name.51.frontend.support"/>
             <module name="unique.module.name.51.backend.support"/>
@@ -669,6 +671,12 @@ via dependency 'unique.module.name.51.backend.support' -> descriptor 'unique.mod
       "Shared module reasoning should mention containing plugin descriptors.\nReasoning: ${moduleAnalysis.resolvedModuleKind.reasoning}",
       moduleAnalysis.resolvedModuleKind.reasoning.contains("containing plugin.xml files do"),
     )
+  }
+
+  private fun moveCaretToIdeaPluginTag() {
+    val ideaPluginTagOffset = myFixture.file.text.indexOf("idea-plugin")
+    Assert.assertTrue("idea-plugin tag should be present in the test descriptor", ideaPluginTagOffset >= 0)
+    myFixture.editor.caretModel.moveToOffset(ideaPluginTagOffset)
   }
 
   private fun addModuleWithXmlDescriptor(

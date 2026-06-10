@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
@@ -119,7 +120,7 @@ class SplitModeApiRestrictionsService(
   }
 
   fun ensureLoaded(timeout: Duration = 1.seconds): Boolean {
-    val loadedInTime = runBlockingCancellable {
+    val loadedInTime = runBlockingMaybeCancellable {
       withTimeoutOrNull(timeout) {
         withContext(Dispatchers.IO) {
           refreshRestrictionsSnapshot()

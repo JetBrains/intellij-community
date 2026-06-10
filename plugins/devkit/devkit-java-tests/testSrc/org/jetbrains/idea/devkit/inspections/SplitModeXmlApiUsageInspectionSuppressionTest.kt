@@ -52,12 +52,12 @@ internal class SplitModeXmlApiUsageInspectionSuppressionTest : JavaCodeInsightFi
       moduleName = "unique.module.name.60",
       descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
       pluginXmlContent = """
-        <<error descr="This plugin effectively depends on frontend-only modules and will work only in frontend in Split Mode.
+        <<weak_warning descr="This plugin effectively depends on frontend-only modules and will work only in frontend in Split Mode. Consider adding a frontend dependency to explicitly indicate target IDE.
 
 Computed module kind reasoning:
 
 Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in module 'unique.module.name.60'
-via dependency 'unique.module.name.60.frontend.support' -> descriptor 'unique.module.name.60.frontend.support.xml' in module 'unique.module.name.60.frontend.support'.">idea-plugin</error>>
+via dependency 'unique.module.name.60.frontend.support' -> descriptor 'unique.module.name.60.frontend.support.xml' in module 'unique.module.name.60.frontend.support'.">idea-plugin</weak_warning>>
           <extensions defaultExtensionNs="com.intellij">
             <localInspection/>
           </extensions>
@@ -88,12 +88,12 @@ via dependency 'unique.module.name.60.frontend.support' -> descriptor 'unique.mo
       moduleName = "unique.module.name.61",
       descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
       pluginXmlContent = """
-        <<error descr="This plugin effectively depends on backend-only modules and will work only in backend in Split Mode.
+        <<weak_warning descr="This plugin effectively depends on backend-only modules and will work only in backend in Split Mode. Consider adding a backend dependency to explicitly indicate target IDE.
 
 Computed module kind reasoning:
 
 Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in module 'unique.module.name.61'
-via dependency 'unique.module.name.61.backend.support' -> descriptor 'unique.module.name.61.backend.support.xml' in module 'unique.module.name.61.backend.support'.">idea-plugin</error>>
+via dependency 'unique.module.name.61.backend.support' -> descriptor 'unique.module.name.61.backend.support.xml' in module 'unique.module.name.61.backend.support'.">idea-plugin</weak_warning>>
           <extensions defaultExtensionNs="com.intellij">
             <typedHandler/>
           </extensions>
@@ -255,13 +255,13 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
       moduleName = "unique.module.name.33",
       descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
       pluginXmlContent = """
-        <<error descr="This plugin effectively depends on frontend-only and backend-only modules simultaneously. It may not get loaded in Split Mode.
+        <<weak_warning descr="This plugin effectively depends on frontend-only and backend-only modules simultaneously. It may not get loaded in Split Mode.
 
 Computed module kind reasoning:
 
 Frontend dependency 'intellij.platform.frontend' from required content module descriptor 'unique.module.name.31.xml' in module 'unique.module.name.31'
 
-Backend dependency 'intellij.platform.backend' from embedded content module descriptor 'unique.module.name.32.xml' in module 'unique.module.name.32'">idea-plugin</error>>
+Backend dependency 'intellij.platform.backend' from embedded content module descriptor 'unique.module.name.32.xml' in module 'unique.module.name.32'">idea-plugin</weak_warning>>
           <content>
             <module name="unique.module.name.31" loading="required"/>
             <module name="unique.module.name.32" loading="embedded"/>
