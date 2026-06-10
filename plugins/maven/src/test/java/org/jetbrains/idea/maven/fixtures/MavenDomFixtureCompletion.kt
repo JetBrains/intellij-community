@@ -4,8 +4,8 @@ package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.openapi.application.EDT
 import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.UsefulTestCase.assertContainsElements
 import com.intellij.testFramework.UsefulTestCase.assertDoesntContain
@@ -14,6 +14,7 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil
 import org.jetbrains.idea.maven.model.MavenRepoArtifactInfo
 import org.junit.Assert.assertNotNull
@@ -98,4 +99,32 @@ fun MavenDomTestFixture.getCompletionVariants(fixture: CodeInsightTestFixture, l
 /** Wraps [xml] into a full `pom.xml` document the same way [createProjectPom] does, for `fixture.checkResult(...)`. */
 fun MavenDomTestFixture.createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): String {
   return MavenTestCase.createPomXml(modelVersion, xml, false)
+}
+
+@Language("XML")
+fun MavenDomTestFixture.createPomXml(
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?,
+  omitModelVersionTag: Boolean = false,
+): @NonNls String {
+  return createPomXml(modelVersion, xml, omitModelVersionTag)
+}
+
+@Language("XML")
+fun createPomXml(
+  modelVersion: String,
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: @NonNls String?,
+  omitModelVersionTag: Boolean,
+): @NonNls String {
+  val projectStartTag = """
+        <?xml version="1.0"?>
+        <project xmlns="http://maven.apache.org/POM/$modelVersion"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
+      """.trimIndent()
+  return if (omitModelVersionTag) {
+    "$projectStartTag\n$xml</project>"
+  }
+  else {
+    "$projectStartTag\n  <modelVersion>$modelVersion</modelVersion>\n$xml</project>"
+  }
 }

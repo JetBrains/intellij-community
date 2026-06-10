@@ -3,34 +3,54 @@
 package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
 import com.intellij.openapi.project.ModuleListener
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.rename.PsiElementRenameHandler
 import com.intellij.refactoring.rename.RenameHandler
 import com.intellij.refactoring.rename.RenameHandlerRegistry
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler
+import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.UsefulTestCase.assertContainsElements
 import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.usages.UsageTargetUtil
+import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertUnorderedElementsAreEqual
 import org.junit.Assert.assertNotNull
 
 // Rename refactoring and find-usages helpers.
+suspend fun MavenDomTestFixture.assertRenameResult(value: String, expectedXml: String, omitModelVersionTag: Boolean = false) {
+  doRename(projectPom, value)
+  assertEquals(createPomXml(expectedXml, omitModelVersionTag), getTestPsiFile(projectPom).text)
+}
+
+suspend fun MavenDomTestFixture.assertCannotRename() {
+  val context = createRenameDataContext(projectPom, "new name")
+  val handler = readAction { RenameHandlerRegistry.getInstance().getRenameHandler(context) }
+  if (null == handler) return
+  try {
+    invokeRename(context, handler)
+  }
+  catch (e: RefactoringErrorHintException) {
+    if (!e.message!!.startsWith("Cannot perform refactoring.")) {
+      throw e
+    }
+  }
+}
 
 suspend fun MavenDomTestFixture.doRename(f: VirtualFile, value: String) {
   val context = createRenameDataContext(f, value)
