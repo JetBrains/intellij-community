@@ -12,11 +12,13 @@ import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.TargetClassCandidateParameter
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.K2MoveToClassDialog
+import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.TargetClassCandidateParameter
 import org.jetbrains.kotlin.idea.k2.refactoring.move.ui.findTargetClassCandidates
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
 internal class MoveFunctionToClassIntention : SelfTargetingRangeIntention<KtNamedFunction>(
@@ -51,6 +53,7 @@ internal class MoveFunctionToClassIntention : SelfTargetingRangeIntention<KtName
         if (!Registry.`is`("kotlin.move.enable.move.to.class.intention")) return false
         if (element.modifierList?.getModifier(inapplicableModifiersTokenSet) != null) return false
         if (element.isExpectDeclaration() || element.isEffectivelyActual()) return false
+        if ((element.containingClassOrObject as? KtClass)?.isInterface() == true) return false
         return true
     }
 
