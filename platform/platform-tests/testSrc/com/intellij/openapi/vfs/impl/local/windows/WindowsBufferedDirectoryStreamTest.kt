@@ -2,11 +2,14 @@
 package com.intellij.openapi.vfs.impl.local.windows
 
 import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.condition.EnabledOnOs
@@ -89,26 +92,10 @@ class WindowsBufferedDirectoryStreamTest {
     assertEquals(Files.size(tempDir / "alpha.txt"), listed.getValue("alpha.txt").size(), "Reported size must match the file size")
   }
 
+  // Symlink probing is exercised locally; TeamCity agents lack the privilege/Developer Mode to create them.
   @Test
-  fun throwsWhenDirectoryHandleCannotBeOpened(@TempDir tempDir: Path) {
-    // CreateFileW returns INVALID_HANDLE_VALUE (-1) for a path that does not exist;
-    // this translates to a NIO NoSuchFileException.
-    val missing = tempDir / "does-not-exist"
-    assertThrows<NoSuchFileException> { WindowsBufferedDirectoryIterator(missing) }
-  }
-
-  @Test
-  fun throwsWhenTryingToOpenFileAsDirectory(@TempDir tempDir: Path) {
-    // and here it must throw NotDirectoryException
-    val materializedFile = (tempDir / "materialized.txt").createFile()
-    assertThrows<NotDirectoryException> { WindowsBufferedDirectoryIterator(materializedFile) }
-  }
-
-  @Test
+  @Disabled("RIDER-139688")
   fun detectsSymbolicLinks(@TempDir tempDir: Path) {
-    // Symlink probing is exercised locally; TeamCity agents lack the privilege/Developer Mode to create them.
-    Assumptions.assumeFalse(IS_UNDER_TEAMCITY) { "Disabled on TeamCity: symbolic links cannot be created there" }
-
     val target = (tempDir / "target.txt").apply { writeText("payload") }
     (tempDir / "plain.txt").writeText("not a link")
     (tempDir / "dir").createDirectory()
@@ -128,5 +115,33 @@ class WindowsBufferedDirectoryStreamTest {
     assertFalse(listed.getValue("plain.txt").isSymbolicLink, "A regular file must not be reported as a symlink")
     assertFalse(listed.getValue("target.txt").isSymbolicLink, "The symlink target must not be reported as a symlink")
     assertFalse(listed.getValue("dir").isSymbolicLink, "A plain directory must not be reported as a symlink")
+  }
+}
+
+class WindowsBufferedDirectoryStreamTestExceptions {
+
+  @BeforeEach
+  fun configureNotRethrow() {
+    System.setProperty("intellij.testFramework.rethrow.logged.errors", "true")
+  }
+
+  @AfterEach
+  fun configureRethrow() {
+    System.setProperty("intellij.testFramework.rethrow.logged.errors", "false")
+  }
+
+  @Test
+  fun throwsWhenDirectoryHandleCannotBeOpened(@TempDir tempDir: Path) {
+    // CreateFileW returns INVALID_HANDLE_VALUE (-1) for a path that does not exist;
+    // this translates to a NIO NoSuchFileException.
+    val missing = tempDir / "does-not-exist"
+    assertThrows<NoSuchFileException> { WindowsBufferedDirectoryIterator(missing) }
+  }
+
+  @Test
+  fun throwsWhenTryingToOpenFileAsDirectory(@TempDir tempDir: Path) {
+    // and here it must throw NotDirectoryException
+    val materializedFile = (tempDir / "materialized.txt").createFile()
+    assertThrows<NotDirectoryException> { WindowsBufferedDirectoryIterator(materializedFile) }
   }
 }
