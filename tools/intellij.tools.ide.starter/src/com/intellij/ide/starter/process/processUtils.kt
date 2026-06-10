@@ -120,18 +120,21 @@ suspend fun findAndKillProcessesBySubPathInArguments(pathToSearch: String, onFou
 
 suspend fun findAndKillProcessesByName(nameToSearch: String, onFoundProcesses: (List<ProcessInfo>) -> Unit = {}) {
   return findAndKillProcesses(message = "Killing process with name '$nameToSearch'",
-                              filter = { p -> p.name == nameToSearch },
-                              onFoundProcesses = onFoundProcesses)
+                              processName = nameToSearch,
+                              onFoundProcesses = onFoundProcesses,
+                              filter = { true })
 }
 
 suspend fun findAndKillProcesses(
   message: String? = null,
+  processName: String? = null,
   filter: Predicate<ProcessInfo>,
   onFoundProcesses: (List<ProcessInfo>) -> Unit = {},
 ) {
   val prefix = message ?: "Killing process matching '$filter' in command line"
   logOutput("$prefix ...")
-  val processInfosToKill = getProcessList(filter)
+  val processInfosToKill = processName?.let { getProcessList(processName = it).filter { filter.test(it) } }
+                           ?: getProcessList(filter)
 
   if (processInfosToKill.any { it.pid == ProcessHandle.current().pid() }) {
     error("The filter has resolved the current process")
