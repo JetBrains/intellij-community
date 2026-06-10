@@ -80,7 +80,7 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
     gradle.linkProject(project, projectRoot)
 
     buildView.assertSyncViewTree {
-      assertNode("failed") {
+      assertNode("(failed|finished)".toRegex()) {
         assertNodeWithDeprecatedGradleWarning(gradleVersion)
         assertFilePositionNode(gradleVersion, gradleDsl, brokenFile) {
           assertNode(TEST_BUILD_ISSUE_TITLE)

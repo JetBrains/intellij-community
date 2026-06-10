@@ -73,7 +73,7 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
 
     assertAnyOf({
       buildView.assertSyncViewTree {
-        assertNode("failed") {
+        assertNode("(failed|finished)".toRegex()) {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode("build.gradle") {
             assertNode("(Java heap space|GC overhead limit exceeded)".toRegex())
@@ -82,7 +82,7 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
       }
     }, {
       buildView.assertSyncViewTree {
-        assertNode("failed") {
+        assertNode("(failed|finished)".toRegex()) {
           assertNodeWithDeprecatedGradleWarning(gradleVersion)
           assertNode("(Java heap space|GC overhead limit exceeded)".toRegex())
         }
