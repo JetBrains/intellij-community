@@ -103,6 +103,7 @@ internal class AgentChatFileEditor(
   private var pendingContextPanelInstalled: Boolean = false
   private var initializationStarted: Boolean = false
   private var initializationRequested: Boolean = false
+  private var focusTerminalAfterInitialization: Boolean = false
   private var stateApplied: Boolean = file.projectPath.isNotBlank() || file.threadIdentity.isNotBlank()
   private var initializationJob: Job? = null
   private var disposed: Boolean = false
@@ -180,11 +181,19 @@ internal class AgentChatFileEditor(
   override fun getFile(): AgentChatVirtualFile = file
 
   override fun selectNotify() {
+    if (tab == null) {
+      focusTerminalAfterInitialization = true
+    }
     ensureInitialized()
+  }
+
+  override fun deselectNotify() {
+    focusTerminalAfterInitialization = false
   }
 
   override fun dispose() {
     disposed = true
+    focusTerminalAfterInitialization = false
     initializationJob?.cancel()
     initializationJob = null
     ownedTerminalStartupJob?.cancel()
@@ -405,6 +414,15 @@ internal class AgentChatFileEditor(
     pendingContextPanel?.let(::ensurePendingContextPanelInstalled)
     component.revalidate()
     component.repaint()
+    focusTerminalIfRequested(createdTab)
+  }
+
+  private fun focusTerminalIfRequested(createdTab: AgentChatTerminalTab) {
+    if (!focusTerminalAfterInitialization) {
+      return
+    }
+    focusTerminalAfterInitialization = false
+    createdTab.preferredFocusableComponent.requestFocusInWindow()
   }
 
   private fun scheduleSemanticRegionControllerInstallation(
@@ -656,6 +674,10 @@ private class AgentChatFileEditorComponent(
   private var showingForTests: Boolean = false
   private var showingContinuation: CancellableContinuation<Unit>? = null
   private var showingListener: HierarchyListener? = null
+
+  init {
+    isFocusable = true
+  }
 
   suspend fun awaitShowing() {
     if (isShowing || showingForTests) {

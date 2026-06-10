@@ -600,6 +600,22 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun selectNotifyFocusesTerminalAfterEditorComponentIsShown() {
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val editor = testEditor(terminalTabs = terminalTabs, showComponent = false)
+
+    editor.selectNotify()
+
+    assertThat(terminalTabs.createCalls).isEqualTo(0)
+    assertThat(terminalTabs.tab.focusRequests).isEqualTo(0)
+
+    editor.showComponentForTests()
+
+    assertThat(terminalTabs.createCalls).isEqualTo(1)
+    assertThat(terminalTabs.tab.focusRequests).isEqualTo(1)
+  }
+
+  @Test
   fun pendingContextCanBeQueuedBeforeAsyncTerminalInitialization() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     val editorScope = object : CoroutineScope {
@@ -2029,8 +2045,10 @@ private class FakeAgentChatTerminalTabs : AgentChatTerminalTabs {
 }
 
 private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
+  private val focusableComponent = RecordingFocusComponent()
+
   override val component: JComponent = JPanel()
-  override val preferredFocusableComponent: JComponent = JButton("focus")
+  override val preferredFocusableComponent: JComponent = focusableComponent
   override val coroutineScope: CoroutineScope = object : CoroutineScope {
     override val coroutineContext = Job()
   }
@@ -2050,6 +2068,9 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
 
   @JvmField
   val sentTexts: CopyOnWriteArrayList<SentTerminalText> = CopyOnWriteArrayList()
+
+  val focusRequests: Int
+    get() = focusableComponent.requestFocusInWindowCalls
 
   @JvmField
   val backTabCount: AtomicInteger = AtomicInteger()
@@ -2168,6 +2189,16 @@ private class FakeAgentChatTerminalTab : AgentChatTerminalTab {
     return emittedOutputChunks
       .filter { chunk -> chunk.version > checkpoint.regularEndOffset }
       .joinToString(separator = "\n") { chunk -> chunk.text }
+  }
+}
+
+private class RecordingFocusComponent : JButton("focus") {
+  var requestFocusInWindowCalls: Int = 0
+    private set
+
+  override fun requestFocusInWindow(): Boolean {
+    requestFocusInWindowCalls++
+    return true
   }
 }
 
