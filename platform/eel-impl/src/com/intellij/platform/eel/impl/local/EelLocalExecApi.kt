@@ -199,9 +199,9 @@ class EelLocalExecPosixApi(
     }
 
     if (shell == null) {
-      val err = IllegalStateException("No shell detected for the current user")
-      errorsToAttach.forEach(err::addSuppressed)
-      throw err
+      // The last resort. It may be not what the user wants to see.
+      LOG.info("Failed to get OS-specific shell. Using /bin/sh as a fallback", errorsToAttach.lastOrNull())
+      shell = "/bin/sh"
     }
 
     return shell
@@ -210,6 +210,10 @@ class EelLocalExecPosixApi(
 
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)
+
+  override suspend fun getUserLoginShell(): EelPath {
+    return EelPath.parse(getUserShell(), descriptor)
+  }
 
   override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelExecApi.ExternalCliEntrypoint {
     TODO("Not yet implemented")
@@ -242,6 +246,15 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
 
   override suspend fun findExeFilesInPath(binaryName: String): List<EelPath> =
     findExeFilesInPath(binaryName, LOG)
+
+  override suspend fun getUserLoginShell(): EelPath {
+    for (name in listOf("pwsh.exe", "powershell.exe")) {
+      val found = findExeFilesInPath(name, LOG).firstOrNull()
+      if (found != null) return found
+    }
+    val systemRoot = System.getenv("SystemRoot") ?: "C:\\Windows"
+    return EelPath.parse("$systemRoot\\System32\\cmd.exe", descriptor)
+  }
 
   override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelExecApi.ExternalCliEntrypoint {
     TODO("Not yet implemented")

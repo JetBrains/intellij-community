@@ -226,6 +226,12 @@ sealed interface EelExecApi {
   fun environmentVariables(@GeneratedBuilder opts: EnvironmentVariablesOptions): EnvironmentVariablesDeferred
 
   /**
+   * Returns the path to the user's login shell on the Eel target.
+   */
+  @ApiStatus.Internal
+  suspend fun getUserLoginShell(): EelPath
+
+  /**
    * Indicates on the failure during fetching environment variables.
    * As an API user, you can't gracefully handle this error. You can either ignore it or show the message to the user as a critical error.
    * The message text may be localized with the locale of the remote machine.
