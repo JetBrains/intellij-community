@@ -944,6 +944,10 @@
                           implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinParametersContext"/>
     <listSplitJoinContext language="JAVA"
                           implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinRecordComponentsContext"/>
+    <listSplitJoinContext language="JAVA"
+                          implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinArrayInitializerContext"/>
+    <listSplitJoinContext language="JAVA"
+                          implementationClass="com.intellij.codeInsight.intention.impl.lists.JavaSplitJoinAnnotationAttributesContext"/>
     <regExpModifierProvider language="JAVA" implementationClass="com.intellij.codeInsight.JavaRegExpModifierProvider"/>
     <colorProvider implementation="com.intellij.codeInsight.daemon.impl.JavaColorProvider"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaLineMarkerProvider"/>
