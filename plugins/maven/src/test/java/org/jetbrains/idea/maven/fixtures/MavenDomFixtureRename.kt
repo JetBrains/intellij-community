@@ -11,6 +11,10 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleWithNameAlreadyExists
+import com.intellij.openapi.project.ModuleListener
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.rename.PsiElementRenameHandler
@@ -86,5 +90,21 @@ suspend fun MavenDomTestFixture.search(file: VirtualFile): List<PsiElement> {
     val targets = UsageTargetUtil.findUsageTargets(editor, psiFile, psiElement)
     val target = (targets?.firstOrNull() as? PsiElement2UsageTargetAdapter)?.element ?: return@readAction emptyList()
     ReferencesSearch.search(target).findAll().map { it.element }
+  }
+}
+
+suspend fun MavenTestFixture.renameModule(oldName: String, newName: String) {
+  val moduleManager = ModuleManager.getInstance(project)
+  val module = moduleManager.findModuleByName(oldName)!!
+  val modifiableModel = moduleManager.getModifiableModel()
+  try {
+    modifiableModel.renameModule(module, newName)
+  }
+  catch (e: ModuleWithNameAlreadyExists) {
+    throw RuntimeException(e)
+  }
+  edtWriteAction {
+    modifiableModel.commit()
+    project.getMessageBus().syncPublisher(ModuleListener.TOPIC).modulesRenamed(project, listOf(module)) { oldName }
   }
 }
