@@ -1,14 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.modTree;
+package com.intellij.openapi.editor.impl.modTree;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.editor.modTree.ModificationTreeImplTest.TreeImplementation;
-import static com.intellij.openapi.editor.modTree.ModificationTreeImplTest.unwrapChecked;
-import static com.intellij.openapi.editor.modTree.ModificationTreeImplTest.wrapChecked;
+import static com.intellij.openapi.editor.impl.modTree.ModificationTreeImplTest.TreeImplementation;
+import static com.intellij.openapi.editor.impl.modTree.ModificationTreeImplTest.unwrapChecked;
+import static com.intellij.openapi.editor.impl.modTree.ModificationTreeImplTest.wrapChecked;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ModificationTreeImplDeleteTest {
   static Stream<TreeImplementation> implementations() {
-    return Stream.of(                   
+    return Stream.of(
       new TreeImplementation("binary", length -> wrapChecked(ModificationTreeImpl.initial(length))),
       new TreeImplementation("b+tree", length -> wrapChecked(ModificationBTreeImpl.initial(length)))
     );
@@ -30,7 +30,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void deleteMiddleOfOriginalText(TreeImplementation implementation) {
     ModificationTree tree = implementation.tree(6);
 
@@ -60,7 +60,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void deleteAtBeginningOfOriginalText(TreeImplementation implementation) {
     ModificationTree tree = implementation.tree(5);
 
@@ -85,7 +85,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void deleteAtEndOfOriginalText(TreeImplementation implementation) {
     ModificationTree tree = implementation.tree(5);
 
@@ -112,7 +112,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void deleteWholeOriginalText(TreeImplementation implementation) {
     ModificationTree tree = implementation.tree(5);
 
@@ -127,7 +127,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void deleteOnlyPartOfInsertedGap(TreeImplementation implementation) {
     ModificationTree tree = implementation.tree(11)
       .insert(6, 10);
@@ -160,7 +160,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void deleteEntireInsertedGapRestoresIdentityMapping(TreeImplementation implementation) {
     ModificationTree tree = implementation.tree(11)
       .insert(6, 10);
@@ -171,7 +171,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void deleteOriginalTextAfterInsertedGap(TreeImplementation implementation) {
     ModificationTree tree = implementation.tree(11)
       .insert(6, 10);
@@ -200,7 +200,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void deleteRangeSpanningOriginalTextInsertedGapAndMoreOriginalText(TreeImplementation implementation) {
     ModificationTree tree = implementation.tree(11)
       .insert(6, 10);
@@ -246,7 +246,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void deleteInsideOriginalRunAfterPreviousInsertions(TreeImplementation implementation) {
     ModificationTree tree = implementation.tree(11)
       .insert(6, 10)
@@ -284,7 +284,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void zeroLengthDeleteReturnsSameInstance(TreeImplementation implementation) {
     ModificationTree tree = implementation.tree(11)
       .insert(6, 10);
@@ -295,7 +295,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void deleteIsPersistentAndDoesNotChangeOldTree(TreeImplementation implementation) {
     ModificationTree original = implementation.tree(11);
     ModificationTree afterInsert = original.insert(6, 10);
@@ -317,7 +317,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void liveOriginalOffsetsRoundTripAfterDeletion(TreeImplementation implementation) {
     ModificationTree tree = implementation.tree(11)
       .insert(6, 10)
@@ -339,7 +339,7 @@ class ModificationTreeImplDeleteTest {
   }
 
   @ParameterizedTest
-  @MethodSource("implementations")  
+  @MethodSource("implementations")
   void invalidDeleteArgumentsAreRejected(TreeImplementation implementation) {
     ModificationTree tree = implementation.tree(5);
 

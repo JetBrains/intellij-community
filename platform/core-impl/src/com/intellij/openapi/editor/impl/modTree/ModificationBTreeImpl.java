@@ -1,16 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.modTree;
+package com.intellij.openapi.editor.impl.modTree;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 @ApiStatus.Internal
 public final class ModificationBTreeImpl implements ModificationTree {
-  private static final int BRANCHING_FACTOR = 8;
+  private static final int BRANCHING_FACTOR = 32;
   private static final int MAX_CHILDREN = BRANCHING_FACTOR;
   private static final int MIN_CHILDREN = MAX_CHILDREN / 2;
 
@@ -37,9 +38,7 @@ public final class ModificationBTreeImpl implements ModificationTree {
       throw new IllegalArgumentException("length must be >= 0: " + length);
     }
 
-    Node root = length == 0
-                ? null
-                : new Leaf(0, length, 0);
+    Node root = length == 0 ? null : new Leaf(0, length, 0);
 
     return new ModificationBTreeImpl(root, length, length);
   }
@@ -59,12 +58,14 @@ public final class ModificationBTreeImpl implements ModificationTree {
     while (node != null) {
       accumulatedDelta += node.delta();
 
-      if (node instanceof Leaf leaf) {
-        if (offsetInVersion0 < leaf.start0) {
-          return leaf.start0 + accumulatedDelta;
+      if (node instanceof Leaf) {
+        Leaf leaf = (Leaf)node;
+
+        if (offsetInVersion0 < leaf.start0()) {
+          return leaf.start0() + accumulatedDelta;
         }
 
-        if (offsetInVersion0 < leaf.end0) {
+        if (offsetInVersion0 < leaf.end0()) {
           return offsetInVersion0 + accumulatedDelta;
         }
 
@@ -73,16 +74,18 @@ public final class ModificationBTreeImpl implements ModificationTree {
 
       Branch branch = (Branch)node;
       Node next = null;
-      Node[] children = branch.children;
+      Node[] children = branch.children();
 
-      int i = searchChild/*Seq*/(offsetInVersion0, children);
-      if (i >= 0) {
-        next = children[i];
-      }
-      else {
-        int insertionIndex = -i - 1;
-        if (insertionIndex < children.length) {
-          return children[insertionIndex].currentStart() + accumulatedDelta;
+      for (int i = 0; i < children.length; i++) {
+        Node child = children[i];
+
+        if (offsetInVersion0 < child.start0()) {
+          return accumulatedDelta + child.currentStart();
+        }
+
+        if (offsetInVersion0 < child.end0()) {
+          next = child;
+          break;
         }
       }
 
@@ -94,37 +97,6 @@ public final class ModificationBTreeImpl implements ModificationTree {
     }
 
     return currentLength;
-  }
-
-  private static int searchChild(int offsetInVersion0, Node[] children) {
-    int low = 0;
-    int high = children.length - 1;
-    while (low <= high) {
-      int mid = (low + high) >>> 1;
-      Node child = children[mid];
-      if (offsetInVersion0 < child.start0()) {
-        high = mid - 1;
-      }
-      else if (offsetInVersion0 >= child.end0()) {
-        low = mid + 1;
-      }
-      else {
-        return mid;
-      }
-    }
-    return -(low + 1);
-  }
-  private static int searchChildSeq(int offsetInVersion0, Node[] children) {
-    for (int i = 0; i < children.length; i++) {
-      Node child = children[i];
-      if (offsetInVersion0 < child.start0()) {
-        return -i-1;
-      }
-      if (offsetInVersion0 < child.end0()) {
-        return i;
-      }
-    }
-    return -children.length-1;
   }
 
   @Override
@@ -140,18 +112,20 @@ public final class ModificationBTreeImpl implements ModificationTree {
     int accumulatedDelta = 0;
 
     while (node != null) {
-      accumulatedDelta = Math.addExact(accumulatedDelta, node.delta());
+      accumulatedDelta += node.delta();
 
-      if (node instanceof Leaf leaf) {
-        int currentStart = Math.addExact(leaf.start0(), accumulatedDelta);
-        int currentEnd = Math.addExact(leaf.end0(), accumulatedDelta);
+      if (node instanceof Leaf) {
+        Leaf leaf = (Leaf)node;
+
+        int currentStart = leaf.start0() + accumulatedDelta;
+        int currentEnd = leaf.end0() + accumulatedDelta;
 
         if (offsetInCurrent < currentStart) {
           return leaf.start0();
         }
 
         if (offsetInCurrent < currentEnd) {
-          return Math.subtractExact(offsetInCurrent, accumulatedDelta);
+          return offsetInCurrent - accumulatedDelta;
         }
 
         return version0Length;
@@ -159,10 +133,13 @@ public final class ModificationBTreeImpl implements ModificationTree {
 
       Branch branch = (Branch)node;
       Node next = null;
+      Node[] children = branch.children();
 
-      for (Node child : branch.children()) {
-        int childCurrentStart = Math.addExact(accumulatedDelta, child.currentStart());
-        int childCurrentEnd = Math.addExact(accumulatedDelta, child.currentEnd());
+      for (int i = 0; i < children.length; i++) {
+        Node child = children[i];
+
+        int childCurrentStart = accumulatedDelta + child.currentStart();
+        int childCurrentEnd = accumulatedDelta + child.currentEnd();
 
         if (offsetInCurrent < childCurrentStart) {
           return child.start0();
@@ -210,7 +187,7 @@ public final class ModificationBTreeImpl implements ModificationTree {
     return new ModificationBTreeImpl(
       newRoot,
       version0Length,
-      Math.addExact(currentLength, length)
+      currentLength + length
     );
   }
 
@@ -255,7 +232,7 @@ public final class ModificationBTreeImpl implements ModificationTree {
     return new ModificationBTreeImpl(
       newRoot,
       version0Length,
-      Math.subtractExact(currentLength, deletedLength)
+      currentLength - deletedLength
     );
   }
 
@@ -314,7 +291,7 @@ public final class ModificationBTreeImpl implements ModificationTree {
     }
   }
 
-  /// # Node model
+  /// Node model.
   ///
   /// The tree stores only surviving original text.
   ///
@@ -332,8 +309,7 @@ public final class ModificationBTreeImpl implements ModificationTree {
   ///
   /// Deleted original text is absent from the tree.
   /// Inserted current text is represented as gaps between transformed leaves.
-
-  private sealed interface Node permits Branch, Leaf {
+  private interface Node {
     int delta();
 
     int start0();
@@ -349,27 +325,46 @@ public final class ModificationBTreeImpl implements ModificationTree {
     int runCount();
   }
 
-  private record Leaf(
-    int start0,
-    int end0,
-    int delta
-  ) implements Node {
-    Leaf {
+  private static final class Leaf implements Node {
+    private final int start0;
+    private final int end0;
+    private final int delta;
+
+    private Leaf(int start0, int end0, int delta) {
       if (start0 >= end0) {
         throw new IllegalArgumentException(
           "Invalid leaf range: [" + start0 + ", " + end0 + ")"
         );
       }
+
+      this.start0 = start0;
+      this.end0 = end0;
+      this.delta = delta;
+    }
+
+    @Override
+    public int delta() {
+      return delta;
+    }
+
+    @Override
+    public int start0() {
+      return start0;
+    }
+
+    @Override
+    public int end0() {
+      return end0;
     }
 
     @Override
     public int currentStart() {
-      return Math.addExact(start0, delta);
+      return start0 + delta;
     }
 
     @Override
     public int currentEnd() {
-      return Math.addExact(end0, delta);
+      return end0 + delta;
     }
 
     @Override
@@ -383,26 +378,27 @@ public final class ModificationBTreeImpl implements ModificationTree {
     }
 
     @NotNull
-    Leaf addDelta(int deltaDiff) {
+    private Leaf addDelta(int deltaDiff) {
       if (deltaDiff == 0) {
         return this;
       }
 
-      return new Leaf(start0, end0, Math.addExact(delta, deltaDiff));
+      return new Leaf(start0, end0, delta + deltaDiff);
     }
   }
 
-  private record Branch(
-    int delta,
-    @NotNull Node[] children,
-    int start0,
-    int end0,
-    int currentStart,
-    int currentEnd,
-    int height,
-    int runCount
-  ) implements Node {
-    static @NotNull Branch of(int delta, @NotNull Node[] children) {
+  private static final class Branch implements Node {
+    private final int delta;
+    private final Node[] children;
+    private final int start0;
+    private final int end0;
+    private final int currentStart;
+    private final int currentEnd;
+    private final int height;
+    private final int runCount;
+
+    @NotNull
+    private static Branch of(int delta, @NotNull Node[] children) {
       Objects.requireNonNull(children, "children");
 
       if (children.length < 2) {
@@ -433,7 +429,7 @@ public final class ModificationBTreeImpl implements ModificationTree {
           throw new IllegalArgumentException("Overlapping current child ranges");
         }
 
-        runCount = Math.addExact(runCount, child.runCount());
+        runCount += child.runCount();
       }
 
       Node first = children[0];
@@ -444,45 +440,165 @@ public final class ModificationBTreeImpl implements ModificationTree {
         children,
         first.start0(),
         last.end0(),
-        Math.addExact(delta, first.currentStart()),
-        Math.addExact(delta, last.currentEnd()),
+        delta + first.currentStart(),
+        delta + last.currentEnd(),
         childHeight + 1,
         runCount
       );
     }
 
-    Branch {
-      Objects.requireNonNull(children, "children");
+    private Branch(
+      int delta,
+      @NotNull Node[] children,
+      int start0,
+      int end0,
+      int currentStart,
+      int currentEnd,
+      int height,
+      int runCount
+    ) {
+      this.delta = delta;
+      this.children = children;
+      this.start0 = start0;
+      this.end0 = end0;
+      this.currentStart = currentStart;
+      this.currentEnd = currentEnd;
+      this.height = height;
+      this.runCount = runCount;
+    }
+
+    @Override
+    public int delta() {
+      return delta;
+    }
+
+    @Override
+    public int start0() {
+      return start0;
+    }
+
+    @Override
+    public int end0() {
+      return end0;
+    }
+
+    @Override
+    public int currentStart() {
+      return currentStart;
+    }
+
+    @Override
+    public int currentEnd() {
+      return currentEnd;
+    }
+
+    @Override
+    public int height() {
+      return height;
+    }
+
+    @Override
+    public int runCount() {
+      return runCount;
     }
 
     @NotNull
-    Branch addDelta(int deltaDiff) {
+    private Node[] children() {
+      return children;
+    }
+
+    @NotNull
+    private Branch addDelta(int deltaDiff) {
       if (deltaDiff == 0) {
         return this;
       }
 
-      return Branch.of(Math.addExact(delta, deltaDiff), children);
+      return Branch.of(delta + deltaDiff, children);
     }
   }
 
-  private record Split(Node left, Node right) {
+  private static final class Split {
+    private final Node left;
+    private final Node right;
+
+    private Split(Node left, Node right) {
+      this.left = left;
+      this.right = right;
+    }
+
+    private Node left() {
+      return left;
+    }
+
+    private Node right() {
+      return right;
+    }
   }
 
-  private record CheckInfo(
-    int start0,
-    int end0,
-    int currentStart,
-    int currentEnd,
-    int height,
-    int runCount,
-    int firstEffectiveDelta,
-    int lastEffectiveDelta
-  ) {
+  private static final class CheckInfo {
+    private final int start0;
+    private final int end0;
+    private final int currentStart;
+    private final int currentEnd;
+    private final int height;
+    private final int runCount;
+    private final int firstEffectiveDelta;
+    private final int lastEffectiveDelta;
+
+    private CheckInfo(
+      int start0,
+      int end0,
+      int currentStart,
+      int currentEnd,
+      int height,
+      int runCount,
+      int firstEffectiveDelta,
+      int lastEffectiveDelta
+    ) {
+      this.start0 = start0;
+      this.end0 = end0;
+      this.currentStart = currentStart;
+      this.currentEnd = currentEnd;
+      this.height = height;
+      this.runCount = runCount;
+      this.firstEffectiveDelta = firstEffectiveDelta;
+      this.lastEffectiveDelta = lastEffectiveDelta;
+    }
+
+    private int start0() {
+      return start0;
+    }
+
+    private int end0() {
+      return end0;
+    }
+
+    private int currentStart() {
+      return currentStart;
+    }
+
+    private int currentEnd() {
+      return currentEnd;
+    }
+
+    private int height() {
+      return height;
+    }
+
+    private int runCount() {
+      return runCount;
+    }
+
+    private int firstEffectiveDelta() {
+      return firstEffectiveDelta;
+    }
+
+    private int lastEffectiveDelta() {
+      return lastEffectiveDelta;
+    }
   }
 
-  /// # Split
-  ///
-  /// Splits the tree by version-0 coordinate.
+  /// Split the tree by version-0 coordinate.
   ///
   /// Result:
   ///
@@ -490,8 +606,8 @@ public final class ModificationBTreeImpl implements ModificationTree {
   /// - `right`: all live original ranges at or after `boundary0`
   ///
   /// If `boundary0` falls inside a leaf, the leaf is split into two leaves.
-
-  private static @NotNull Split splitByVersion0(Node node, int boundary0) {
+  @NotNull
+  private static Split splitByVersion0(Node node, int boundary0) {
     if (node == null) {
       return new Split(null, null);
     }
@@ -504,9 +620,11 @@ public final class ModificationBTreeImpl implements ModificationTree {
       return new Split(node, null);
     }
 
-    if (node instanceof Leaf(int start0, int end0, int delta)) {
-      Leaf left = new Leaf(start0, boundary0, delta);
-      Leaf right = new Leaf(boundary0, end0, delta);
+    if (node instanceof Leaf) {
+      Leaf leaf = (Leaf)node;
+
+      Leaf left = new Leaf(leaf.start0(), boundary0, leaf.delta());
+      Leaf right = new Leaf(boundary0, leaf.end0(), leaf.delta());
 
       return new Split(left, right);
     }
@@ -514,12 +632,14 @@ public final class ModificationBTreeImpl implements ModificationTree {
     Branch branch = (Branch)node;
     Node[] children = materializedChildren(branch);
 
-    ArrayList<Node> left = new ArrayList<>(children.length);
-    ArrayList<Node> right = new ArrayList<>(children.length);
+    ArrayList<Node> left = new ArrayList<Node>(children.length);
+    ArrayList<Node> right = new ArrayList<Node>(children.length);
 
     boolean splitDone = false;
 
-    for (Node child : children) {
+    for (int i = 0; i < children.length; i++) {
+      Node child = children[i];
+
       if (splitDone) {
         appendNode(right, child);
         continue;
@@ -553,9 +673,7 @@ public final class ModificationBTreeImpl implements ModificationTree {
     );
   }
 
-  /// # Concatenation with fringe repacking
-  ///
-  /// Concatenates two ordered trees.
+  /// Concatenate two ordered trees with fringe repacking.
   ///
   /// This descends only through the touching fringes:
   ///
@@ -564,7 +682,6 @@ public final class ModificationBTreeImpl implements ModificationTree {
   ///
   /// Boundary nodes are repacked evenly, which prevents the tree from
   /// degrading into a binary-shaped tree after many edits.
-
   private static Node concat(Node left, Node right) {
     if (left == null) {
       return right;
@@ -580,23 +697,21 @@ public final class ModificationBTreeImpl implements ModificationTree {
   private static Node concatAll(@NotNull List<Node> nodes) {
     Node result = null;
 
-    for (Node node : nodes) {
-      result = concat(result, node);
+    for (int i = 0; i < nodes.size(); i++) {
+      result = concat(result, nodes.get(i));
     }
 
     return result;
   }
 
-  private static @NotNull List<Node> appendNodes(
-    @NotNull Node left,
-    @NotNull Node right
-  ) {
+  @NotNull
+  private static List<Node> appendNodes(@NotNull Node left, @NotNull Node right) {
     if (left.height() == right.height()) {
-      if (left instanceof Leaf leftLeaf && right instanceof Leaf rightLeaf) {
-        ArrayList<Node> nodes = new ArrayList<>(2);
+      if (left instanceof Leaf && right instanceof Leaf) {
+        ArrayList<Node> nodes = new ArrayList<Node>(2);
 
-        appendNode(nodes, leftLeaf);
-        appendNode(nodes, rightLeaf);
+        appendNode(nodes, left);
+        appendNode(nodes, right);
 
         return nodes;
       }
@@ -607,14 +722,16 @@ public final class ModificationBTreeImpl implements ModificationTree {
       Node[] leftChildren = materializedChildren(leftBranch);
       Node[] rightChildren = materializedChildren(rightBranch);
 
-      ArrayList<Node> children = new ArrayList<>(leftChildren.length + rightChildren.length);
+      ArrayList<Node> children = new ArrayList<Node>(leftChildren.length + rightChildren.length);
 
       for (int i = 0; i < leftChildren.length - 1; i++) {
         appendNode(children, leftChildren[i]);
       }
 
-      for (Node node : appendNodes(leftChildren[leftChildren.length - 1], rightChildren[0])) {
-        appendNode(children, node);
+      List<Node> boundary = appendNodes(leftChildren[leftChildren.length - 1], rightChildren[0]);
+
+      for (int i = 0; i < boundary.size(); i++) {
+        appendNode(children, boundary.get(i));
       }
 
       for (int i = 1; i < rightChildren.length; i++) {
@@ -628,14 +745,16 @@ public final class ModificationBTreeImpl implements ModificationTree {
       Branch leftBranch = (Branch)left;
       Node[] children = materializedChildren(leftBranch);
 
-      ArrayList<Node> newChildren = new ArrayList<>(children.length + 1);
+      ArrayList<Node> newChildren = new ArrayList<Node>(children.length + 1);
 
       for (int i = 0; i < children.length - 1; i++) {
         appendNode(newChildren, children[i]);
       }
 
-      for (Node node : appendNodes(children[children.length - 1], right)) {
-        appendNode(newChildren, node);
+      List<Node> boundary = appendNodes(children[children.length - 1], right);
+
+      for (int i = 0; i < boundary.size(); i++) {
+        appendNode(newChildren, boundary.get(i));
       }
 
       return packChildren(newChildren);
@@ -644,10 +763,12 @@ public final class ModificationBTreeImpl implements ModificationTree {
     Branch rightBranch = (Branch)right;
     Node[] children = materializedChildren(rightBranch);
 
-    ArrayList<Node> newChildren = new ArrayList<>(children.length + 1);
+    ArrayList<Node> newChildren = new ArrayList<Node>(children.length + 1);
 
-    for (Node node : appendNodes(left, children[0])) {
-      appendNode(newChildren, node);
+    List<Node> boundary = appendNodes(left, children[0]);
+
+    for (int i = 0; i < boundary.size(); i++) {
+      appendNode(newChildren, boundary.get(i));
     }
 
     for (int i = 1; i < children.length; i++) {
@@ -657,15 +778,10 @@ public final class ModificationBTreeImpl implements ModificationTree {
     return packChildren(newChildren);
   }
 
-  /// # Packing
-  ///
-  /// `packChildren` packs same-height nodes into branches.
-  ///
-  /// `packUpAsRoot` repeatedly packs levels until one root remains.
+  /// Pack same-height nodes into branch nodes.
   ///
   /// Root nodes may be underfull.
   /// Non-root branches are expected to have at least `MIN_CHILDREN` children.
-
   private static Node packUpAsRoot(@NotNull List<Node> nodes) {
     if (nodes.isEmpty()) {
       return null;
@@ -680,27 +796,30 @@ public final class ModificationBTreeImpl implements ModificationTree {
     return level.get(0);
   }
 
-  private static @NotNull List<Node> packChildren(@NotNull List<Node> children) {
+  @NotNull
+  private static List<Node> packChildren(@NotNull List<Node> children) {
     if (children.isEmpty()) {
-      return List.of();
+      return Collections.emptyList();
     }
 
     if (children.size() == 1) {
-      return List.of(children.get(0));
+      return Collections.singletonList(children.get(0));
     }
 
     int height = children.get(0).height();
 
-    for (Node child : children) {
+    for (int i = 0; i < children.size(); i++) {
+      Node child = children.get(i);
+
       if (child.height() != height) {
         throw new IllegalArgumentException(
-          "Cannot pack children with different heights: "+height+"; "+child.height()+"; "+children
+          "Cannot pack children with different heights"
         );
       }
     }
 
     int groupCount = groupCount(children.size(), MAX_CHILDREN);
-    ArrayList<Node> result = new ArrayList<>(groupCount);
+    ArrayList<Node> result = new ArrayList<Node>(groupCount);
 
     int baseSize = children.size() / groupCount;
     int remainder = children.size() % groupCount;
@@ -734,13 +853,10 @@ public final class ModificationBTreeImpl implements ModificationTree {
     return (itemCount + maxGroupSize - 1) / maxGroupSize;
   }
 
-  /// # Boundary coalescing
+  /// Coalesce adjacent leaves with equal effective delta.
   ///
-  /// Adjacent leaves with equal effective delta are merged.
-  ///
-  /// This is what keeps repeated insert/delete around the same original
-  /// boundary from producing unnecessary fragmentation.
-
+  /// This keeps repeated insert/delete around the same original boundary from
+  /// producing unnecessary fragmentation.
   private static void appendNode(@NotNull List<Node> nodes, @NotNull Node node) {
     if (nodes.isEmpty()) {
       nodes.add(node);
@@ -749,12 +865,17 @@ public final class ModificationBTreeImpl implements ModificationTree {
 
     Node last = nodes.get(nodes.size() - 1);
 
-    if (last instanceof Leaf leftLeaf && node instanceof Leaf rightLeaf && canMerge(leftLeaf, rightLeaf)) {
-      nodes.set(
-        nodes.size() - 1,
-        new Leaf(leftLeaf.start0(), rightLeaf.end0(), leftLeaf.delta())
-      );
-      return;
+    if (last instanceof Leaf && node instanceof Leaf) {
+      Leaf leftLeaf = (Leaf)last;
+      Leaf rightLeaf = (Leaf)node;
+
+      if (canMerge(leftLeaf, rightLeaf)) {
+        nodes.set(
+          nodes.size() - 1,
+          new Leaf(leftLeaf.start0(), rightLeaf.end0(), leftLeaf.delta())
+        );
+        return;
+      }
     }
 
     nodes.add(node);
@@ -765,25 +886,23 @@ public final class ModificationBTreeImpl implements ModificationTree {
            && left.delta() == right.delta();
   }
 
-  /// # Lazy delta handling
-  ///
-  /// Adding delta to a subtree shifts all live ranges in that subtree.
+  /// Add delta to an entire subtree.
   ///
   /// Since deltas are path-summed, this only changes the subtree root.
-
   private static Node addDelta(Node node, int deltaDiff) {
     if (node == null || deltaDiff == 0) {
       return node;
     }
 
-    if (node instanceof Leaf leaf) {
-      return leaf.addDelta(deltaDiff);
+    if (node instanceof Leaf) {
+      return ((Leaf)node).addDelta(deltaDiff);
     }
 
     return ((Branch)node).addDelta(deltaDiff);
   }
 
-  private static @NotNull Node[] materializedChildren(@NotNull Branch branch) {
+  @NotNull
+  private static Node[] materializedChildren(@NotNull Branch branch) {
     Node[] source = branch.children();
     Node[] result = new Node[source.length];
 
@@ -794,20 +913,21 @@ public final class ModificationBTreeImpl implements ModificationTree {
     return result;
   }
 
-  /// # Invariant checking
-
+  /// Invariant checking.
+  @NotNull
   private CheckInfo checkNode(
     @NotNull Node node,
     boolean isRoot,
     int accumulatedDeltaBeforeNode
   ) {
-    if (node instanceof Leaf leaf) {
-      return checkLeaf(leaf, accumulatedDeltaBeforeNode);
+    if (node instanceof Leaf) {
+      return checkLeaf((Leaf)node, accumulatedDeltaBeforeNode);
     }
 
     return checkBranch((Branch)node, isRoot, accumulatedDeltaBeforeNode);
   }
 
+  @NotNull
   private CheckInfo checkLeaf(
     @NotNull Leaf leaf,
     int accumulatedDeltaBeforeLeaf
@@ -837,9 +957,9 @@ public final class ModificationBTreeImpl implements ModificationTree {
       throw new IllegalStateException("leaf runCount must be 1");
     }
 
-    int effectiveDelta = Math.addExact(accumulatedDeltaBeforeLeaf, leaf.delta());
-    int currentStart = Math.addExact(leaf.start0(), effectiveDelta);
-    int currentEnd = Math.addExact(leaf.end0(), effectiveDelta);
+    int effectiveDelta = accumulatedDeltaBeforeLeaf + leaf.delta();
+    int currentStart = leaf.start0() + effectiveDelta;
+    int currentEnd = leaf.end0() + effectiveDelta;
 
     if (currentStart < 0) {
       throw new IllegalStateException("leaf currentStart < 0: " + currentStart);
@@ -858,11 +978,11 @@ public final class ModificationBTreeImpl implements ModificationTree {
       );
     }
 
-    if (Math.addExact(accumulatedDeltaBeforeLeaf, leaf.currentStart()) != currentStart) {
+    if (accumulatedDeltaBeforeLeaf + leaf.currentStart() != currentStart) {
       throw new IllegalStateException("leaf currentStart summary mismatch");
     }
 
-    if (Math.addExact(accumulatedDeltaBeforeLeaf, leaf.currentEnd()) != currentEnd) {
+    if (accumulatedDeltaBeforeLeaf + leaf.currentEnd() != currentEnd) {
       throw new IllegalStateException("leaf currentEnd summary mismatch");
     }
 
@@ -878,6 +998,7 @@ public final class ModificationBTreeImpl implements ModificationTree {
     );
   }
 
+  @NotNull
   private CheckInfo checkBranch(
     @NotNull Branch branch,
     boolean isRoot,
@@ -906,7 +1027,7 @@ public final class ModificationBTreeImpl implements ModificationTree {
       );
     }
 
-    int accumulatedDelta = Math.addExact(accumulatedDeltaBeforeBranch, branch.delta());
+    int accumulatedDelta = accumulatedDeltaBeforeBranch + branch.delta();
     int childHeight = children[0].height();
     int expectedRunCount = 0;
 
@@ -914,7 +1035,9 @@ public final class ModificationBTreeImpl implements ModificationTree {
     CheckInfo previousInfo = null;
     CheckInfo lastInfo = null;
 
-    for (Node child : children) {
+    for (int i = 0; i < children.length; i++) {
+      Node child = children[i];
+
       if (child == null) {
         throw new IllegalStateException("null child");
       }
@@ -925,7 +1048,7 @@ public final class ModificationBTreeImpl implements ModificationTree {
 
       CheckInfo childInfo = checkNode(child, false, accumulatedDelta);
 
-      expectedRunCount = Math.addExact(expectedRunCount, childInfo.runCount());
+      expectedRunCount += childInfo.runCount();
 
       if (firstInfo == null) {
         firstInfo = childInfo;
@@ -954,6 +1077,10 @@ public final class ModificationBTreeImpl implements ModificationTree {
       lastInfo = childInfo;
     }
 
+    if (firstInfo == null || lastInfo == null) {
+      throw new IllegalStateException("unreachable empty branch");
+    }
+
     int expectedHeight = childHeight + 1;
 
     if (branch.height() != expectedHeight) {
@@ -978,11 +1105,11 @@ public final class ModificationBTreeImpl implements ModificationTree {
       throw new IllegalStateException("branch end0 summary mismatch");
     }
 
-    if (Math.addExact(accumulatedDeltaBeforeBranch, branch.currentStart()) != firstInfo.currentStart()) {
+    if (accumulatedDeltaBeforeBranch + branch.currentStart() != firstInfo.currentStart()) {
       throw new IllegalStateException("branch currentStart summary mismatch");
     }
 
-    if (Math.addExact(accumulatedDeltaBeforeBranch, branch.currentEnd()) != lastInfo.currentEnd()) {
+    if (accumulatedDeltaBeforeBranch + branch.currentEnd() != lastInfo.currentEnd()) {
       throw new IllegalStateException("branch currentEnd summary mismatch");
     }
 

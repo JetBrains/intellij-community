@@ -1,134 +1,39 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.modTree;
+package com.intellij.openapi.editor.impl.modTree;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Internal
 public final class ModificationTreeImpl implements ModificationTree {
   private final Node root;
-
   private final int version0Length;
   private final int currentLength;
 
   private ModificationTreeImpl(Node root, int version0Length, int currentLength) {
+    if (version0Length < 0) {
+      throw new IllegalArgumentException("version0Length must be >= 0: " + version0Length);
+    }
+
+    if (currentLength < 0) {
+      throw new IllegalArgumentException("currentLength must be >= 0: " + currentLength);
+    }
+
     this.root = root;
     this.version0Length = version0Length;
     this.currentLength = currentLength;
   }
 
-  static @NotNull ModificationTreeImpl initial(int length) {
+  public static @NotNull ModificationTreeImpl initial(int length) {
+    if (length < 0) {
+      throw new IllegalArgumentException("length must be >= 0: " + length);
+    }
+
     Node root = length == 0
                 ? null
-                : new Node(
-                  0,          // start in version 0
-                  length,     // end in version 0
-                  0,          // local delta
-                  null,
-                  null
-                );
+                : new Node(0, length, 0, null, null);
 
     return new ModificationTreeImpl(root, length, length);
-  }
-
-  /// One persistent mapping node.
-  ///
-  /// The node represents one live run of original text:
-  ///
-  /// [start0, end0)
-  ///
-  /// in version-0 coordinates.
-  ///
-  /// Its current-version range is:
-  ///
-  /// [start0 + effectiveDelta, end0 + effectiveDelta)
-  ///
-  /// where:
-  ///
-  /// effectiveDelta = sum(delta from root to this node)
-  ///
-  /// Deleted original ranges are absent from the tree.
-  /// Inserted current text is represented as gaps between transformed nodes.
-  private record Node(
-    int start0,
-    int end0,
-    int delta,
-    Node left,
-    Node right,
-    int height
-  ) {
-    Node(int start0, int end0, int delta, Node left, Node right) {
-      this(
-        start0,
-        end0,
-        delta,
-        left,
-        right,
-        1 + Math.max(height(left), height(right))
-      );
-    }
-
-    Node {
-      if (start0 >= end0) {
-        throw new IllegalArgumentException(
-          "Invalid live run: [" + start0 + ", " + end0 + ")"
-        );
-      }
-
-      int expectedHeight = 1 + Math.max(height(left), height(right));
-      if (height != expectedHeight) {
-        throw new IllegalArgumentException(
-          "Invalid height: " + height + ", expected " + expectedHeight
-        );
-      }
-    }
-
-    int length0() {
-      return end0 - start0;
-    }
-
-    int currentStart(int accumulatedDeltaBeforeThisNode) {
-      int effectiveDelta = accumulatedDeltaBeforeThisNode + delta;
-      return start0 + effectiveDelta;
-    }
-
-    int currentEnd(int accumulatedDeltaBeforeThisNode) {
-      int effectiveDelta = accumulatedDeltaBeforeThisNode + delta;
-      return end0 + effectiveDelta;
-    }
-
-    Node withDelta(int newDelta) {
-      if (delta == newDelta) {
-        return this;
-      }
-      return new Node(start0, end0, newDelta, left, right);
-    }
-
-    Node addDelta(int deltaDiff) {
-      if (deltaDiff == 0) {
-        return this;
-      }
-      return new Node(start0, end0, delta + deltaDiff, left, right);
-    }
-
-    Node withChildren(Node newLeft, Node newRight) {
-      if (left == newLeft && right == newRight) {
-        return this;
-      }
-      return new Node(start0, end0, delta, newLeft, newRight);
-    }
-
-    Node withRange(int newStart0, int newEnd0) {
-      if (start0 == newStart0 && end0 == newEnd0) {
-        return this;
-      }
-      return new Node(newStart0, newEnd0, delta, left, right);
-    }
-
-    static int height(@Nullable Node node) {
-      return node == null ? 0 : node.height;
-    }
   }
 
   @Override
@@ -295,39 +200,299 @@ public final class ModificationTreeImpl implements ModificationTree {
     );
   }
 
-  private record Split(Node left, Node right) {
+  @Override
+  public @NotNull ModificationTree delete(int startInCurrent, int endInCurrent) {
+    if (startInCurrent < 0 || startInCurrent > currentLength) {
+      throw new IndexOutOfBoundsException(
+        "startInCurrent=" + startInCurrent +
+        ", currentLength=" + currentLength
+      );
+    }
+
+    if (endInCurrent < 0 || endInCurrent > currentLength) {
+      throw new IndexOutOfBoundsException(
+        "endInCurrent=" + endInCurrent +
+        ", currentLength=" + currentLength
+      );
+    }
+
+    if (startInCurrent > endInCurrent) {
+      throw new IllegalArgumentException(
+        "startInCurrent must be <= endInCurrent: " +
+        startInCurrent + " > " + endInCurrent
+      );
+    }
+
+    int deletedLength = endInCurrent - startInCurrent;
+
+    if (deletedLength == 0) {
+      return this;
+    }
+
+    int start0 = toVersion0Offset(startInCurrent);
+    int end0 = toVersion0Offset(endInCurrent);
+
+    Split first = splitByVersion0(root, start0);
+    Split second = splitByVersion0(first.right(), end0);
+
+    Node shiftedRight = addDelta(second.right(), -deletedLength);
+    Node newRoot = concatCoalescing(first.left(), shiftedRight);
+
+    return new ModificationTreeImpl(
+      newRoot,
+      version0Length,
+      currentLength - deletedLength
+    );
   }
 
-  private record RemoveMax(Node rest, Node max) {
+  @Override
+  public void checkInvariants() {
+    if (version0Length < 0) {
+      throw new IllegalStateException("version0Length < 0: " + version0Length);
+    }
+
+    if (currentLength < 0) {
+      throw new IllegalStateException("currentLength < 0: " + currentLength);
+    }
+
+    if (root != null) {
+      CheckInfo info = checkNode(root, 0);
+
+      if (info.start0() < 0) {
+        throw new IllegalStateException("root starts before version 0");
+      }
+
+      if (info.end0() > version0Length) {
+        throw new IllegalStateException(
+          "root end exceeds version0Length: " +
+          info.end0() + " > " + version0Length
+        );
+      }
+
+      if (info.currentStart() < 0) {
+        throw new IllegalStateException("root currentStart < 0: " + info.currentStart());
+      }
+
+      if (info.currentEnd() > currentLength) {
+        throw new IllegalStateException(
+          "root currentEnd exceeds currentLength: " +
+          info.currentEnd() + " > " + currentLength
+        );
+      }
+    }
+
+    checkBoundaryMappings();
   }
 
-  /// Adds delta to the whole subtree.
+  /// A node represents one live original run `[start0, end0)`.
   ///
-  /// Since `node.delta` is path-summed, increasing the root node's delta shifts
-  /// the entire subtree.
-  private static Node addDelta(Node node, int delta) {
-    if (node == null || delta == 0) {
+  /// Its current range is:
+  ///
+  /// `[start0 + effectiveDelta, end0 + effectiveDelta)`
+  ///
+  /// where:
+  ///
+  /// `effectiveDelta = sum(delta on path from root to this node)`
+  private static final class Node {
+    private final int start0;
+    private final int end0;
+    private final int delta;
+    private final Node left;
+    private final Node right;
+    private final int height;
+
+    private Node(int start0, int end0, int delta, Node left, Node right) {
+      if (start0 >= end0) {
+        throw new IllegalArgumentException(
+          "Invalid live run: [" + start0 + ", " + end0 + ")"
+        );
+      }
+
+      this.start0 = start0;
+      this.end0 = end0;
+      this.delta = delta;
+      this.left = left;
+      this.right = right;
+      this.height = 1 + Math.max(height(left), height(right));
+    }
+
+    private int start0() {
+      return start0;
+    }
+
+    private int end0() {
+      return end0;
+    }
+
+    private int delta() {
+      return delta;
+    }
+
+    private Node left() {
+      return left;
+    }
+
+    private Node right() {
+      return right;
+    }
+
+    private int height() {
+      return height;
+    }
+
+    private Node addDelta(int deltaDiff) {
+      if (deltaDiff == 0) {
+        return this;
+      }
+
+      return new Node(start0, end0, delta + deltaDiff, left, right);
+    }
+
+    private static int height(Node node) {
+      return node == null ? 0 : node.height;
+    }
+  }
+
+  private static final class Split {
+    private final Node left;
+    private final Node right;
+
+    private Split(Node left, Node right) {
+      this.left = left;
+      this.right = right;
+    }
+
+    private Node left() {
+      return left;
+    }
+
+    private Node right() {
+      return right;
+    }
+  }
+
+  private static final class RemoveMax {
+    private final Node rest;
+    private final Node max;
+
+    private RemoveMax(Node rest, Node max) {
+      this.rest = rest;
+      this.max = max;
+    }
+
+    private Node rest() {
+      return rest;
+    }
+
+    private Node max() {
+      return max;
+    }
+  }
+
+  private static final class RemoveMin {
+    private final Node min;
+    private final Node rest;
+
+    private RemoveMin(Node min, Node rest) {
+      this.min = min;
+      this.rest = rest;
+    }
+
+    private Node min() {
+      return min;
+    }
+
+    private Node rest() {
+      return rest;
+    }
+  }
+
+  private static final class CheckInfo {
+    private final int start0;
+    private final int end0;
+    private final int currentStart;
+    private final int currentEnd;
+    private final int height;
+    private final int runCount;
+    private final int firstEffectiveDelta;
+    private final int lastEffectiveDelta;
+
+    private CheckInfo(
+      int start0,
+      int end0,
+      int currentStart,
+      int currentEnd,
+      int height,
+      int runCount,
+      int firstEffectiveDelta,
+      int lastEffectiveDelta
+    ) {
+      this.start0 = start0;
+      this.end0 = end0;
+      this.currentStart = currentStart;
+      this.currentEnd = currentEnd;
+      this.height = height;
+      this.runCount = runCount;
+      this.firstEffectiveDelta = firstEffectiveDelta;
+      this.lastEffectiveDelta = lastEffectiveDelta;
+    }
+
+    private int start0() {
+      return start0;
+    }
+
+    private int end0() {
+      return end0;
+    }
+
+    private int currentStart() {
+      return currentStart;
+    }
+
+    private int currentEnd() {
+      return currentEnd;
+    }
+
+    private int height() {
+      return height;
+    }
+
+    private int runCount() {
+      return runCount;
+    }
+
+    private int firstEffectiveDelta() {
+      return firstEffectiveDelta;
+    }
+
+    private int lastEffectiveDelta() {
+      return lastEffectiveDelta;
+    }
+  }
+
+  /// Add `deltaDiff` to a whole subtree.
+  ///
+  /// Since deltas are path-summed, changing the subtree root is enough.
+  private static Node addDelta(Node node, int deltaDiff) {
+    if (node == null || deltaDiff == 0) {
       return node;
     }
 
-    return node.addDelta(delta);
+    return node.addDelta(deltaDiff);
   }
 
-  /// Creates a node from standalone children.
+  /// Build a node from standalone child subtrees.
   ///
-  /// Important:
-  ///
-  /// The children passed to this method are standalone roots, meaning their delta
-  /// already represents their effective shift without this parent.
-  ///
-  /// But once attached under this parent, they will inherit parent.delta.
-  /// Therefore we subtract parent.delta from the child root delta.
-  private static @NotNull Node makeNode(
+  /// The child roots already contain their standalone effective deltas.
+  /// Once attached under this node, they inherit this node's delta, so their
+  /// root deltas are adjusted by `-delta`.
+  private static Node makeNode(
     int start0,
     int end0,
     int delta,
     Node leftStandalone,
-    Node rightStandalone) {
+    Node rightStandalone
+  ) {
     return new Node(
       start0,
       end0,
@@ -337,7 +502,7 @@ public final class ModificationTreeImpl implements ModificationTree {
     );
   }
 
-  private static @NotNull Node nodeAlone(@NotNull Node node) {
+  private static Node nodeAlone(Node node) {
     return new Node(
       node.start0(),
       node.end0(),
@@ -347,24 +512,20 @@ public final class ModificationTreeImpl implements ModificationTree {
     );
   }
 
-  /// Returns `node.left` as a standalone subtree.
-  private static Node standaloneLeft(@NotNull Node node) {
+  private static Node standaloneLeft(Node node) {
     return addDelta(node.left(), node.delta());
   }
 
-  /// Returns `node.right` as a standalone subtree.
-  private static Node standaloneRight(@NotNull Node node) {
+  private static Node standaloneRight(Node node) {
     return addDelta(node.right(), node.delta());
   }
 
-  /// Splits the tree by a version-0 boundary.
+  /// Split the tree by version-0 coordinate.
   ///
   /// Result:
   ///
-  /// left  contains all live runs before boundary0
-  /// right contains all live runs at or after boundary0
-  ///
-  /// If boundary0 falls inside a live run, that run is split.
+  /// - `left`: all live original runs before `boundary0`
+  /// - `right`: all live original runs at or after `boundary0`
   private static @NotNull Split splitByVersion0(Node node, int boundary0) {
     if (node == null) {
       return new Split(null, null);
@@ -428,7 +589,7 @@ public final class ModificationTreeImpl implements ModificationTree {
     );
   }
 
-  /// Concatenates two trees where every run in left is before every run in right.
+  /// Concatenate two ordered standalone trees.
   private static Node concat(Node left, Node right) {
     if (left == null) {
       return right;
@@ -476,11 +637,56 @@ public final class ModificationTreeImpl implements ModificationTree {
     ));
   }
 
-  private static @NotNull RemoveMax removeMax(@NotNull Node node) {
+  /// Concatenate and merge adjacent boundary runs when possible.
+  private static Node concatCoalescing(Node left, Node right) {
+    if (left == null) {
+      return right;
+    }
+
+    if (right == null) {
+      return left;
+    }
+
+    RemoveMax leftRemoved = removeMax(left);
+    RemoveMin rightRemoved = removeMin(right);
+
+    Node leftMax = leftRemoved.max();
+    Node rightMin = rightRemoved.min();
+
+    if (canMerge(leftMax, rightMin)) {
+      Node merged = new Node(
+        leftMax.start0(),
+        rightMin.end0(),
+        leftMax.delta(),
+        null,
+        null
+      );
+
+      return concat(
+        concat(leftRemoved.rest(), merged),
+        rightRemoved.rest()
+      );
+    }
+
+    return concat(
+      concat(leftRemoved.rest(), leftMax),
+      concat(rightMin, rightRemoved.rest())
+    );
+  }
+
+  private static boolean canMerge(Node left, Node right) {
+    return left.end0() == right.start0()
+           && left.delta() == right.delta();
+  }
+
+  private static RemoveMax removeMax(Node node) {
     Node right = standaloneRight(node);
 
     if (right == null) {
-      return new RemoveMax(standaloneLeft(node), nodeAlone(node));
+      return new RemoveMax(
+        standaloneLeft(node),
+        nodeAlone(node)
+      );
     }
 
     RemoveMax removed = removeMax(right);
@@ -496,7 +702,34 @@ public final class ModificationTreeImpl implements ModificationTree {
     return new RemoveMax(rebuilt, removed.max());
   }
 
-  private static @NotNull Node balance(@NotNull Node node) {
+  private static RemoveMin removeMin(Node node) {
+    Node left = standaloneLeft(node);
+
+    if (left == null) {
+      return new RemoveMin(
+        nodeAlone(node),
+        standaloneRight(node)
+      );
+    }
+
+    RemoveMin removed = removeMin(left);
+
+    Node rebuilt = balance(makeNode(
+      node.start0(),
+      node.end0(),
+      node.delta(),
+      removed.rest(),
+      standaloneRight(node)
+    ));
+
+    return new RemoveMin(removed.min(), rebuilt);
+  }
+
+  private static Node balance(Node node) {
+    if (node == null) {
+      return null;
+    }
+
     int balance = Node.height(node.left()) - Node.height(node.right());
 
     if (balance > 1) {
@@ -538,7 +771,7 @@ public final class ModificationTreeImpl implements ModificationTree {
     return node;
   }
 
-  private static @NotNull Node rotateRight(@NotNull Node node) {
+  private static Node rotateRight(Node node) {
     Node left = standaloneLeft(node);
 
     Node a = standaloneLeft(left);
@@ -562,7 +795,7 @@ public final class ModificationTreeImpl implements ModificationTree {
     );
   }
 
-  private static @NotNull Node rotateLeft(@NotNull Node node) {
+  private static Node rotateLeft(Node node) {
     Node right = standaloneRight(node);
 
     Node a = standaloneLeft(node);
@@ -586,222 +819,19 @@ public final class ModificationTreeImpl implements ModificationTree {
     );
   }
 
-  @Override
-  public @NotNull ModificationTree delete(int startInCurrent, int endInCurrent) {
-    if (startInCurrent < 0 || startInCurrent > currentLength) {
-      throw new IndexOutOfBoundsException(
-        "startInCurrent=" + startInCurrent +
-        ", currentLength=" + currentLength
-      );
-    }
-
-    if (endInCurrent < 0 || endInCurrent > currentLength) {
-      throw new IndexOutOfBoundsException(
-        "endInCurrent=" + endInCurrent +
-        ", currentLength=" + currentLength
-      );
-    }
-
-    if (startInCurrent > endInCurrent) {
-      throw new IllegalArgumentException(
-        "startInCurrent must be <= endInCurrent: " +
-        startInCurrent + " > " + endInCurrent
-      );
-    }
-
-    int deletedLength = endInCurrent - startInCurrent;
-
-    if (deletedLength == 0) {
-      return this;
-    }
-
-    /*
-     * Convert current-version deletion endpoints to version-0 boundaries.
-     *
-     * If an endpoint lies inside inserted text, toVersion0Offset() returns the
-     * right-biased original boundary after that inserted gap.
-     */
-    int start0 = toVersion0Offset(startInCurrent);
-    int end0 = toVersion0Offset(endInCurrent);
-
-    /*
-     * Split by original coordinates:
-     *
-     *   left   = live original text before deleted range
-     *   middle = live original text deleted by this operation
-     *   right  = live original text after deleted range
-     *
-     * Inserted current text inside [startInCurrent, endInCurrent) is not stored
-     * as nodes, so deleting it is represented only by shifting the suffix left.
-     */
-    Split first = splitByVersion0(root, start0);
-    Split second = splitByVersion0(first.right(), end0);
-
-    Node left = first.left();
-
-    // second.left() is discarded: it is original text deleted from this version.
-    Node right = second.right();
-
-    /*
-     * Everything after the deleted current range moves left.
-     */
-    Node shiftedRight = addDelta(right, -deletedLength);
-
-    /*
-     * concatCoalescing() is not required for correctness, but it keeps the tree
-     * compact when deleting an inserted gap makes two adjacent original runs
-     * have the same effective delta again.
-     */
-    Node newRoot = concatCoalescing(left, shiftedRight);
-
-    return new ModificationTreeImpl(
-      newRoot,
-      version0Length,
-      Math.subtractExact(currentLength, deletedLength)
-    );
-  }
-
-  private record RemoveMin(Node min, Node rest) {
-  }
-
-  /**
-   * Concatenates two ordered trees and merges the boundary runs when possible.
-   * <p>
-   * This preserves the invariant that adjacent live original runs with the same
-   * effective delta should be represented as one run.
-   */
-  private static Node concatCoalescing(Node left, Node right) {
-    if (left == null) {
-      return right;
-    }
-
-    if (right == null) {
-      return left;
-    }
-
-    RemoveMax leftRemoved = removeMax(left);
-    RemoveMin rightRemoved = removeMin(right);
-
-    Node leftMax = leftRemoved.max();
-    Node rightMin = rightRemoved.min();
-
-    if (canMerge(leftMax, rightMin)) {
-      Node merged = new Node(
-        leftMax.start0(),
-        rightMin.end0(),
-        leftMax.delta(),
-        null,
-        null
-      );
-
-      return concat(
-        concat(leftRemoved.rest(), merged),
-        rightRemoved.rest()
-      );
-    }
-
-    return concat(
-      concat(leftRemoved.rest(), leftMax),
-      concat(rightMin, rightRemoved.rest())
-    );
-  }
-
-  private static boolean canMerge(@NotNull Node left, @NotNull Node right) {
-    return left.end0() == right.start0()
-           && left.delta() == right.delta();
-  }
-
-  private static @NotNull RemoveMin removeMin(Node node) {
-    Node left = standaloneLeft(node);
-
-    if (left == null) {
-      return new RemoveMin(
-        nodeAlone(node),
-        standaloneRight(node)
-      );
-    }
-
-    RemoveMin removed = removeMin(left);
-
-    Node rebuilt = balance(makeNode(
-      node.start0(),
-      node.end0(),
-      node.delta(),
-      removed.rest(),
-      standaloneRight(node)
-    ));
-
-    return new RemoveMin(removed.min(), rebuilt);
-  }
-
-  @Override
-  public void checkInvariants() {
-    if (version0Length < 0) {
-      throw new IllegalStateException("version0Length < 0: " + version0Length);
-    }
-
-    if (currentLength < 0) {
-      throw new IllegalStateException("currentLength < 0: " + currentLength);
-    }
-
-    if (root == null) {
-      // No surviving original text.
-      // This is valid: the current document may still contain only inserted text.
-      checkBoundaryMappings();
-      return;
-    }
-
-    CheckInfo info = checkNode(root, 0);
-
-    if (info.start0() < 0) {
-      throw new IllegalStateException("root starts before version 0");
-    }
-
-    if (info.end0() > version0Length) {
-      throw new IllegalStateException(
-        "root end exceeds version0Length: " +
-        info.end0() + " > " + version0Length
-      );
-    }
-
-    if (info.currentStart() < 0) {
-      throw new IllegalStateException("root currentStart < 0: " + info.currentStart());
-    }
-
-    if (info.currentEnd() > currentLength) {
-      throw new IllegalStateException(
-        "root currentEnd exceeds currentLength: " +
-        info.currentEnd() + " > " + currentLength
-      );
-    }
-
-    checkBoundaryMappings();
-  }
-
-  private record CheckInfo(
-    int start0,
-    int end0,
-    int currentStart,
-    int currentEnd,
-    int height,
-    int runCount,
-    int firstEffectiveDelta,
-    int lastEffectiveDelta
-  ) {
-  }
-
+  /// Invariant checking.
   private CheckInfo checkNode(Node node, int accumulatedDeltaBeforeNode) {
     if (node == null) {
       throw new IllegalStateException("checkNode called with null");
     }
 
-    int effectiveDelta = Math.addExact(accumulatedDeltaBeforeNode, node.delta());
+    int effectiveDelta = accumulatedDeltaBeforeNode + node.delta();
 
     checkNodeOwnFields(node, effectiveDelta);
     checkNodeHeightAndBalance(node);
 
-    int nodeCurrentStart = Math.addExact(node.start0(), effectiveDelta);
-    int nodeCurrentEnd = Math.addExact(node.end0(), effectiveDelta);
+    int nodeCurrentStart = node.start0() + effectiveDelta;
+    int nodeCurrentEnd = node.end0() + effectiveDelta;
 
     CheckInfo leftInfo = null;
     CheckInfo rightInfo = null;
@@ -915,8 +945,8 @@ public final class ModificationTreeImpl implements ModificationTree {
       );
     }
 
-    int currentStart = Math.addExact(node.start0(), effectiveDelta);
-    int currentEnd = Math.addExact(node.end0(), effectiveDelta);
+    int currentStart = node.start0() + effectiveDelta;
+    int currentEnd = node.end0() + effectiveDelta;
 
     if (currentStart < 0) {
       throw new IllegalStateException(

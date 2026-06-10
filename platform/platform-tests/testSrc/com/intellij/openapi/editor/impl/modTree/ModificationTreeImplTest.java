@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.editor.modTree;
+package com.intellij.openapi.editor.impl.modTree;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.TimeoutUtil;
@@ -7,16 +7,16 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.List;
 import java.util.function.IntFunction;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 
-class ModificationTreeImplTest {
-  record TreeImplementation(String name, IntFunction<? extends ModificationTree> factory) {
-    ModificationTree tree(int version0Length) {
+public class ModificationTreeImplTest {
+  public record TreeImplementation(String name, IntFunction<? extends ModificationTree> factory) {
+    public ModificationTree tree(int version0Length) {
       return factory.apply(version0Length);
     }
 
@@ -26,8 +26,8 @@ class ModificationTreeImplTest {
     }
   }
 
-  static Stream<TreeImplementation> implementations() {
-    return Stream.of(
+  static List<TreeImplementation> implementations() {
+    return List.of(
       new TreeImplementation("binary", length -> wrapChecked(ModificationTreeImpl.initial(length))),
       new TreeImplementation("b+tree", length1 -> wrapChecked(ModificationBTreeImpl.initial(length1)))
     );
@@ -36,6 +36,7 @@ class ModificationTreeImplTest {
   static ModificationTree unwrapChecked(ModificationTree tree) {
     return tree instanceof WrappedCheckedModificationTree(ModificationTree myTree) ? myTree : tree;
   }
+
   static ModificationTree wrapChecked(ModificationTree tree) {
     return new WrappedCheckedModificationTree(tree);
   }
@@ -343,12 +344,12 @@ class ModificationTreeImplTest {
     });
     long que = TimeoutUtil.measureExecutionTime(() -> {
       ModificationTree t = tree.get();
-      for (int n=0;n<100;n++) {
+      for (int n = 0; n < 100; n++) {
         for (int i = 0; i < 1_000_000; i++) {
           assertEquals(2 * i + 1, t.toCurrentOffset(i));
         }
       }
     });
-    System.out.println("insert:"+ins+"ms; query:"+que+"ms");
+    System.out.println("insert:" + ins + "ms; query:" + que + "ms");
   }
 }
