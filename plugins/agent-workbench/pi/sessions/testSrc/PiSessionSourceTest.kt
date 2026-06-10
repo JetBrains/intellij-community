@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Timeout
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
 
@@ -355,6 +356,60 @@ class PiSessionSourceTest {
   }
 
   @Test
+  fun `completed observed session is marked unread until read`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-completed-observed")
+      val sessionDir = tempDir.resolve("completed-observed-sessions")
+      val sessionFile = writePiSession(
+        sessionDir = sessionDir,
+        sessionId = "session-completed-observed",
+        cwd = projectDir,
+        piUserMessageEntry(id = "user-completed-observed", content = "Run task", timestamp = 3_000L),
+      )
+      val source = sourceFor(sessionDir)
+
+      val workingThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      assertThat(workingThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      appendPiSessionEntry(
+        sessionFile,
+        piAssistantMessageEntry(id = "assistant-completed-observed", parentId = "user-completed-observed", timestamp = 4_000L),
+      )
+
+      val completedThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      assertThat(completedThread.activity).isEqualTo(AgentThreadActivity.UNREAD)
+      source.markThreadAsRead("session-completed-observed", 4_000L)
+      val readThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      assertThat(readThread.activity).isEqualTo(AgentThreadActivity.READY)
+    }
+  }
+
+  @Test
+  fun `active working session completion is not premarked read`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-active-completed")
+      val sessionDir = tempDir.resolve("active-completed-sessions")
+      val sessionFile = writePiSession(
+        sessionDir = sessionDir,
+        sessionId = "session-active-completed",
+        cwd = projectDir,
+        piUserMessageEntry(id = "user-active-completed", content = "Run task", timestamp = 3_000L),
+      )
+      val source = sourceFor(sessionDir)
+      source.setActiveThreadId("session-active-completed")
+
+      val workingThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      assertThat(workingThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      appendPiSessionEntry(
+        sessionFile,
+        piAssistantMessageEntry(id = "assistant-active-completed", parentId = "user-active-completed", timestamp = 4_000L),
+      )
+
+      val completedThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      assertThat(completedThread.activity).isEqualTo(AgentThreadActivity.UNREAD)
+    }
+  }
+
+  @Test
   fun `effective session dir follows pi precedence`() {
     val homeDir = tempDir.resolve("home")
     val projectDir = tempDir.resolve("project-settings")
@@ -392,6 +447,10 @@ class PiSessionSourceTest {
       """{"type":"session","version":3,"id":"$sessionId","timestamp":"2026-01-01T00:00:01Z","cwd":"${cwd.toString().jsonEscape()}"}"""
     Files.writeString(sessionFile, (listOf(header) + entries).joinToString(separator = "\n", postfix = "\n"))
     return sessionFile
+  }
+
+  private fun appendPiSessionEntry(sessionFile: Path, entry: String) {
+    Files.writeString(sessionFile, entry + "\n", StandardOpenOption.APPEND)
   }
 
   private fun lineCount(path: Path): Int {

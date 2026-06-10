@@ -41,8 +41,8 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
   [@test] ../pi/sessions/testSrc/PiSessionSourceTest.kt
 
 - Pi thread activity must be inferred from the persisted JSONL leaf. User, tool-result, custom, and assistant `toolUse` leaves are shown
-  as `PROCESSING`; completed assistant leaves use the shared read/unread tracker. Pi does not report `NEEDS_INPUT` from session JSONL
-  until an explicit persisted status signal exists.
+  as `PROCESSING`; completed assistant leaves use the shared Done/read semantics when observed work completes. Pi does not report
+  `NEEDS_INPUT` from session JSONL until an explicit persisted status signal exists.
   [@test] ../pi/sessions/testSrc/PiSessionSourceTest.kt
 
 - Rename must append a Pi-compatible `session_info` entry to the session JSONL file. Archive and unarchive must persist Agent Workbench sidecar state keyed by normalized project path and session id.
