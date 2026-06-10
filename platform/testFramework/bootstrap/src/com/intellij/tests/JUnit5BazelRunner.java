@@ -1,11 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
+import com.intellij.platform.bazel.runfiles.BazelRunfilesManifest;
 import com.intellij.tests.bazel.BazelJUnitOutputListener;
 import com.intellij.tests.bazel.IjSmTestExecutionListener;
 import com.intellij.tests.bazel.TestExecutionOutputDecorator;
 import com.intellij.tests.bazel.bucketing.BucketsPostDiscoveryFilter;
-import com.intellij.platform.bazel.runfiles.BazelRunfilesManifest;
 import com.intellij.util.ArrayUtil;
 import org.junit.platform.engine.DiscoverySelector;
 import org.junit.platform.engine.Filter;
@@ -116,12 +116,16 @@ public final class JUnit5BazelRunner {
   public static LauncherDiscoveryRequest createDiscoveryRequest(List<? extends DiscoverySelector> bazelTestSelectors, String engineVintage) {
     LauncherDiscoveryRequestBuilder builder = LauncherDiscoveryRequestBuilder.request()
       .configurationParameter("junit.jupiter.extensions.autodetection.enabled", "true")
-      .configurationParameter(CAPTURE_STDOUT_PROPERTY_NAME, "true")
-      .configurationParameter(CAPTURE_STDERR_PROPERTY_NAME, "true")
       .selectors(bazelTestSelectors)
       .filters(getTestFilters(bazelTestSelectors))
       .filters(generateFiltersFromJbEnv().toArray(new Filter[0]))
       .filters(getEngineFilters(engineVintage));
+
+    if (!"true".equals(System.getenv(jbEnvIdeSmRun))) {
+      builder
+        .configurationParameter(CAPTURE_STDOUT_PROPERTY_NAME, "true")
+        .configurationParameter(CAPTURE_STDERR_PROPERTY_NAME, "true");
+    }
 
     if (!"false".equals(engineVintage)) {
       builder = builder.filters(ignorePostDiscoveryFilter);

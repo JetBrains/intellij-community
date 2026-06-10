@@ -209,7 +209,7 @@ public final class IjSmTestExecutionListener implements TestExecutionListener {
         } else {
           Map<String, String> fail = baseAttrs(testIdentifier);
           String message = t.getMessage();
-          if (message != null && !message.isEmpty()) fail.put("message", message);
+          fail.put("message", message != null ? message : "");  // required parameter
           if (t instanceof AssertionFailedError) {
             AssertionFailedError afe = (AssertionFailedError) t;
             if (afe.isExpectedDefined() || afe.isActualDefined()) {
