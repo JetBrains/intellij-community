@@ -47,6 +47,7 @@ android/android/gradle.project.sync
 android/android/gutter
 android/android/imports
 android/android/integration
+android/android/integration/adb_wifi
 android/android/jetbrains
 android/android/lang
 android/android/model
