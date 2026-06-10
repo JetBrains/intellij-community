@@ -1429,15 +1429,14 @@ com.intellij.internal.inspector.UiInspectorTableRendererContextProvider
 - a:getUiInspectorContext(javax.swing.JTable,java.lang.Object,I,I):java.util.List
 com.intellij.internal.inspector.UiInspectorTreeRendererContextProvider
 - a:getUiInspectorContext(javax.swing.JTree,java.lang.Object,I):java.util.List
-c:com.intellij.internal.performanceTests.DummyProjectInitializationDiagnosticService
-- com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
-- <init>():V
-- isProjectInitializationAndIndexingFinished():Z
-- registerBeginningOfInitializationActivity(java.util.function.Supplier):com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService$ActivityTracker
-com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
-- s:getInstance(com.intellij.openapi.project.Project):com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
-- a:isProjectInitializationAndIndexingFinished():Z
-- a:registerBeginningOfInitializationActivity(java.util.function.Supplier):com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService$ActivityTracker
+com.intellij.internal.performanceTests.ProjectInitializationDiagnosticHandler
+- sf:Companion:com.intellij.internal.performanceTests.ProjectInitializationDiagnosticHandler$Companion
+- a:isProjectInitializationAndIndexingFinished(com.intellij.openapi.project.Project):Z
+- a:registerBeginningOfInitializationActivity(com.intellij.openapi.project.Project,java.util.function.Supplier):com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService$ActivityTracker
+f:com.intellij.internal.performanceTests.ProjectInitializationDiagnosticHandler$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+f:com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService
+- s:isProjectInitializationAndIndexingFinished(com.intellij.openapi.project.Project):Z
 - s:registerTracker(com.intellij.openapi.project.Project,java.lang.String):com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService$ActivityTracker
 com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService$ActivityTracker
 - a:activityFinished():V

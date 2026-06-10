@@ -748,5 +748,9 @@
 
 
     <extensionPoint name="openAnotherToolHandler" interface="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.OpenAnotherToolHandler" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.internal.performanceTests.projectInitializationDiagnosticHandler"
+                    interface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticHandler"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

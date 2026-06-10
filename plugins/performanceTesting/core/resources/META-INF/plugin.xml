@@ -82,9 +82,8 @@
                  description="Setup PlaybackRunner to use direct action calls over key strokes for actions in Playback framework"
                  restartRequired="false"/>
 
-    <projectService overrides="true"
-                    serviceInterface="com.intellij.internal.performanceTests.ProjectInitializationDiagnosticService"
-                    serviceImplementation="com.jetbrains.performancePlugin.ProjectInitializationDiagnosticServiceImpl"/>
+    <internal.performanceTests.projectInitializationDiagnosticHandler
+      implementation="com.jetbrains.performancePlugin.ProjectInitializationDiagnosticHandlerImpl"/>
 
     <ide.dynamicPluginVetoer implementation="com.jetbrains.performancePlugin.PlaybackRunnerExtended$PlaybackRunnerExtendedPluginUnloadVetoer"/>
     <ApplicationLoadListener implementation="com.jetbrains.performancePlugin.IntegrationTestApplicationLoadListener" id="testApplicationLoadListener"/>

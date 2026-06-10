@@ -185,7 +185,7 @@ private fun runScriptWhenInitializedAndIndexed(project: Project, alarm: Alarm) {
           val statusBar = WindowManager.getInstance().getIdeFrame(project)?.statusBar as? StatusBarEx
           val hasUserVisibleIndicators = statusBar != null && statusBar.backgroundProcessModels.isNotEmpty()
           if (isDumb(project) || hasUserVisibleIndicators ||
-              !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished) {
+              !ProjectInitializationDiagnosticService.isProjectInitializationAndIndexingFinished(project)) {
             runScriptWhenInitializedAndIndexed(project, alarm)
           }
           else {

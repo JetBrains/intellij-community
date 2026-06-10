@@ -3,35 +3,40 @@ package com.intellij.internal.performanceTests;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Supplier;
+import java.util.ArrayList;
 
 /**
  * This service helps tests to wait till full initialization and indexing of a project.
  * To ensure tests will wait till some particular async algorithm finishes, make sure that while it's running,
  * there always is some activity, which is already registered
- * with {@link ProjectInitializationDiagnosticService#registerBeginningOfInitializationActivity(Supplier)},
+ * with {@link ProjectInitializationDiagnosticService#registerTracker(Project, String)},
  * but not yet finished with {@link ActivityTracker#activityFinished()}.
  * </p>
  * One can register activity in the very beginning and finish in the end,
  * or split algorithm into intersecting parts, and wrap them into activities separately.
  */
-public interface ProjectInitializationDiagnosticService {
+public final class ProjectInitializationDiagnosticService {
 
-  static @NotNull ProjectInitializationDiagnosticService getInstance(@NotNull Project project) {
-    return project.getService(ProjectInitializationDiagnosticService.class);
+  private ProjectInitializationDiagnosticService() { }
+
+  public static @NotNull ActivityTracker registerTracker(@NotNull Project project, @NotNull @NlsSafe String debugActivityName) {
+    final var trackers = new ArrayList<ActivityTracker>();
+    ProjectInitializationDiagnosticHandler.Companion.getEP_NAME().forEachExtensionSafe(ext -> {
+      var tracker = ext.registerBeginningOfInitializationActivity(project, () -> debugActivityName);
+      trackers.add(tracker);
+    });
+    return new AggregatedActivityTracker(trackers);
   }
 
-  static @NotNull ActivityTracker registerTracker(@NotNull Project project, @NotNull @NlsSafe String debugActivityName) {
-    return getInstance(project).registerBeginningOfInitializationActivity(() -> debugActivityName);
+  public static boolean isProjectInitializationAndIndexingFinished(@NotNull Project project) {
+    return ContainerUtil.and(ProjectInitializationDiagnosticHandler.Companion.getEP_NAME().getExtensionList(),
+                             ext -> ext.isProjectInitializationAndIndexingFinished(project));
   }
 
-  ActivityTracker registerBeginningOfInitializationActivity(@NotNull Supplier<@NotNull @NlsSafe String> debugMessageProducer);
-
-  boolean isProjectInitializationAndIndexingFinished();
-
-  interface ActivityTracker {
+  public interface ActivityTracker {
     void activityFinished();
   }
 }
