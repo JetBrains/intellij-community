@@ -17,6 +17,9 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.idea.TestFor;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedFunctionInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
@@ -26,6 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   public void testPy2() {

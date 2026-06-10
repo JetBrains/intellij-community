@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections.flake8;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.grazie.spellcheck.GrazieSpellCheckingInspection;
 import com.intellij.psi.PsiFile;
@@ -11,6 +14,8 @@ import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferenc
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class Flake8InspectionSuppressorTest extends PyTestCase {
 
   public void testInlineComment() {

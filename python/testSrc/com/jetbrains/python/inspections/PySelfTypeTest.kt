@@ -1,9 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.codeInspection.LocalInspectionTool
 import com.jetbrains.python.fixtures.PyInspectionTestCase
 
+@Subsystems.Inspections
+@Layers.Functional
 internal class PySelfTypeTest : PyInspectionTestCase() {
   override fun getInspectionClass(): Class<out PyInspection> = PyAssertTypeInspection::class.java
 
