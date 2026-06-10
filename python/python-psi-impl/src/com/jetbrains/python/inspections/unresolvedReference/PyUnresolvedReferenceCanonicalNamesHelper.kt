@@ -60,9 +60,8 @@ private fun appendQualifiedNamesFromQualifierType(
   exprName: String,
 ) {
   qualifierType.toStream()
-    .map { type -> qualifiedNameForType(type, element, exprName) }
-    .nonNull()
-    .forEach { name -> if (name != null) result.add(name) }
+    .toList()
+    .mapNotNullTo(result) { type -> qualifiedNameForType(type, element, exprName) }
 }
 
 private fun qualifiedNameForType(type: PyType?, element: PyReferenceExpression, exprName: String): QualifiedName? {

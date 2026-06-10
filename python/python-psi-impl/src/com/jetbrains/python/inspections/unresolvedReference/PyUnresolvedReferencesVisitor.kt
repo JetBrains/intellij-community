@@ -56,12 +56,12 @@ import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTryExceptStatement
 import com.jetbrains.python.psi.PyTryPart
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.impl.PyBuiltinCache.Companion.getInstance
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator
 import com.jetbrains.python.psi.impl.references.PyFromImportNameReference
 import com.jetbrains.python.psi.impl.references.PyImportReference
 import com.jetbrains.python.psi.impl.references.PyOperatorReference
-import com.jetbrains.python.psi.impl.references.hasattr.PyHasAttrHelper.getNamesFromHasAttrs
+import com.jetbrains.python.psi.impl.references.hasattr.PyHasAttrHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassMembersProvider
@@ -83,7 +83,6 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.Collections
-import java.util.function.Function
 
 abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor(
   holder: ProblemsHolder?,
@@ -143,7 +142,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
 
   private fun overridesSetAttr(cls: PyClass): Boolean {
     val setAttr = cls.findMethodByName("__setattr__", true, myTypeEvalContext)
-    return setAttr != null && !getInstance(cls).isBuiltin(setAttr)
+    return setAttr != null && !PyBuiltinCache.getInstance(cls).isBuiltin(setAttr)
   }
 
   override fun visitPyElement(node: PyElement) {
@@ -170,7 +169,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
     if (node is PyQualifiedExpression) {
       val qualifier = node.getQualifier()
       val name = node.getName()
-      if (qualifier != null && name != null && getNamesFromHasAttrs(node, qualifier).contains(name)) {
+      if (qualifier != null && name != null && PyHasAttrHelper.getNamesFromHasAttrs(node, qualifier).contains(name)) {
         return
       }
     }
@@ -455,11 +454,11 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
   private fun isDeclaredInSlots(type: PyType, attrName: String): Boolean {
     return type.toStream()
       .select(PyClassType::class.java)
-      .map { obj: PyClassType? -> obj!!.getPyClass() }
-      .flatMap { cls: PyClass? -> StreamEx.of<PyClass>(cls).append(cls!!.getAncestorClasses(myTypeEvalContext)) }
+      .map { it.pyClass }
+      .flatMap { cls -> StreamEx.of(cls).append(cls.getAncestorClasses(myTypeEvalContext)) }
       .nonNull()
-      .filter { c: PyClass? -> c!!.isNewStyleClass(myTypeEvalContext) }
-      .flatCollection(Function { obj: PyClass? -> obj!!.getOwnSlots() })
+      .filter { it.isNewStyleClass(myTypeEvalContext) }
+      .flatCollection { it.ownSlots }
       .anyMatch { it == attrName }
   }
 
