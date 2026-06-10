@@ -16,12 +16,14 @@ class ProcessInfo private constructor(
   val pid: Long,
   val parentPid: Long?,
   val name: String,
-  val arguments: List<String>,
+  val argumentsProvider: () -> List<String>,
   private val startTime: Instant?,
   private val user: String?,
   val processHandle: ProcessHandle? = null,
   private val portThatIsUsedByProcess: Int? = null,
 ) {
+
+  val arguments: List<String> by lazy { argumentsProvider() }
 
   companion object {
     suspend fun create(pid: Long, portThatIsUsedByProcess: Int? = null): ProcessInfo {
@@ -30,7 +32,7 @@ class ProcessInfo private constructor(
         pid = pid,
         parentPid = internal.parentPid,
         name = internal.name,
-        arguments = internal.arguments,
+        argumentsProvider = { internal.arguments },
         startTime = internal.startTime,
         user = internal.user,
         processHandle = internal.processHandle,
@@ -42,7 +44,7 @@ class ProcessInfo private constructor(
       pid = p.processID.toLong(),
       parentPid = p.parentProcessID.toLong(),
       name = p.name ?: "Not Available",
-      arguments = p.arguments ?: emptyList(),
+      argumentsProvider = { p.arguments ?: emptyList() },
       startTime = p.startTime.let(Instant::ofEpochMilli),
       user = p.user,
       processHandle = ProcessHandle.of(p.processID.toLong()).getOrNull(),
@@ -95,7 +97,7 @@ class ProcessInfo private constructor(
               pid = pid,
               parentPid = opProcess?.parentProcessID?.toLong(),
               name = opProcess?.name ?: "Not Available",
-              arguments = opProcess?.arguments ?: emptyList(),
+              argumentsProvider = { opProcess?.arguments ?: emptyList() },
               startTime = opProcess?.startTime?.let(Instant::ofEpochMilli),
               user = opProcess?.user,
               processHandle = ProcessHandle.of(pid).getOrNull(),
@@ -115,14 +117,16 @@ class ProcessInfo private constructor(
 
   override fun toString(): String = "$pid $name"
 
-  val description: String = buildString {
-    appendLine("PID: $pid")
-    if (portThatIsUsedByProcess != null) {
-      appendLine("Port that is used by a process: $portThatIsUsedByProcess")
+  val description: String by lazy {
+    buildString {
+      appendLine("PID: $pid")
+      if (portThatIsUsedByProcess != null) {
+        appendLine("Port that is used by a process: $portThatIsUsedByProcess")
+      }
+      appendLine("Name: $name")
+      appendLine("Arguments: $arguments")
+      appendLine("Start time: $startTime")
+      appendLine("User: $user")
     }
-    appendLine("Name: $name")
-    appendLine("Arguments: $arguments")
-    appendLine("Start time: $startTime")
-    appendLine("User: $user")
   }
 }
