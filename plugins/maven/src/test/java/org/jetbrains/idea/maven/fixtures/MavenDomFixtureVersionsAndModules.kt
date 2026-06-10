@@ -8,10 +8,12 @@ import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.text.VersionComparatorUtil
+import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertOrderedElementsAreEqual
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.junit.Assert.assertNotNull
 import org.junit.jupiter.api.Assumptions
@@ -90,6 +92,28 @@ fun MavenTestFixture.assertModuleLibDep(moduleName: String, depName: String) {
     .filterIsInstance<LibraryOrderEntry>()
     .find { it.libraryName == depName }
   assertNotNull("Library dependency $depName not found in module $moduleName", entry)
+}
+
+fun MavenTestFixture.assertModuleModuleDeps(moduleName: String, vararg expectedDeps: String) {
+  assertModuleDeps(moduleName, ModuleOrderEntry::class.java, *expectedDeps)
+}
+
+private fun MavenTestFixture.assertModuleDeps(moduleName: String, clazz: Class<*>, vararg expectedDeps: String) {
+  assertOrderedElementsAreEqual(collectModuleDepsNames(moduleName, clazz), *expectedDeps)
+}
+
+private fun MavenTestFixture.collectModuleDepsNames(moduleName: String, clazz: Class<*>): List<String> {
+  val actual: MutableList<String> = ArrayList()
+  for (e in getRootManager(moduleName).getOrderEntries()) {
+    if (clazz.isInstance(e)) {
+      actual.add(e.getPresentableName())
+    }
+  }
+  return actual
+}
+
+private fun MavenTestFixture.getRootManager(module: String): ModuleRootManager {
+  return ModuleRootManager.getInstance(getModule(module))
 }
 
 val MavenTestFixture.isMaven4: Boolean

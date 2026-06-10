@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.fixtures
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.fail
+import junit.framework.TestCase.failNotEquals
 
 internal object MavenAssertions {
   fun <T> assertContain(actual: Collection<T>, vararg expected: T) {
@@ -30,5 +31,28 @@ internal object MavenAssertions {
     val actualCopy: MutableList<T> = ArrayList(actual)
     actualCopy.removeAll(expected.toSet())
     assertEquals(actual.toString(), actualCopy.size, actual.size)
+  }
+
+  fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, vararg expected: T) {
+    assertOrderedElementsAreEqual(actual, expected.toList())
+  }
+
+  fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, expected: List<T>) {
+    val s = "\nexpected: $expected\nactual: $actual"
+    assertEquals(s, expected.size, actual.size)
+
+    val actualList: List<T> = ArrayList(actual)
+    for (i in expected.indices) {
+      val expectedElement = expected[i]
+      val actualElement = actualList[i]
+      if (actualElement != expectedElement) {
+        failNotEquals(
+          "collections have different elements or order",
+          expected.joinToString("\n"),
+          actual.joinToString("\n"),
+        )
+      }
+      assertEquals(s, expectedElement, actualElement)
+    }
   }
 }
