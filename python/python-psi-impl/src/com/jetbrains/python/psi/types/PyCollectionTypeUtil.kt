@@ -9,6 +9,7 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PySetLiteralExpression
+import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 
@@ -31,7 +32,16 @@ object PyCollectionTypeUtil {
   private fun getListOrSetIteratedValueType(sequence: PySequenceExpression, context: TypeEvalContext): PyType? {
     val elements = sequence.elements
     val analyzedElementsType = PyUnionType.union(
-      elements.take(MAX_ANALYZED_ELEMENTS_OF_LITERALS).map { PyTypeUtil.widenLiteralAndNumeric(context.getType(it)) }
+      elements.take(MAX_ANALYZED_ELEMENTS_OF_LITERALS).map { element ->
+        if (element is PyStarExpression) {
+          val innerExpr = element.expression ?: return@map null
+          val innerType = context.getType(innerExpr)
+          PyTypeUtil.widenLiteralAndNumeric((innerType as? PyCollectionType)?.iteratedItemType)
+        }
+        else {
+          PyTypeUtil.widenLiteralAndNumeric(context.getType(element))
+        }
+      }
     )
     return if (elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {
       PyUnionType.createWeakType(analyzedElementsType)

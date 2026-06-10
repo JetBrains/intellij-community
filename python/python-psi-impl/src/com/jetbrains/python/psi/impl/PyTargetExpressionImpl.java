@@ -53,6 +53,7 @@ import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PyPattern;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PySequenceExpression;
+import com.jetbrains.python.psi.PyStarExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyTupleExpression;
 import com.jetbrains.python.psi.PyTypedElement;
@@ -208,9 +209,12 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       }
       return PyAnyType.getUnknown();
     }
-    if (parent instanceof PyTupleExpression || parent instanceof PyListLiteralExpression) {
+    PsiElement containingSeq = parent instanceof PyStarExpression
+                               ? PsiTreeUtil.skipParentsOfType(parent, PyParenthesizedExpression.class)
+                               : parent;
+    if (containingSeq instanceof PyTupleExpression || containingSeq instanceof PyListLiteralExpression) {
       PsiElement nextParent =
-        PsiTreeUtil.skipParentsOfType(parent, PyParenthesizedExpression.class, PyTupleExpression.class, PyListLiteralExpression.class);
+        PsiTreeUtil.skipParentsOfType(containingSeq, PyParenthesizedExpression.class, PyTupleExpression.class, PyListLiteralExpression.class);
       if (nextParent instanceof PyAssignmentStatement assignment) {
         final PyExpression value = assignment.getAssignedValue();
         final PyExpression lhs = assignment.getLeftHandSideExpression();
@@ -218,12 +222,11 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         if (value != null && (targetTupleOrList instanceof PyTupleExpression || targetTupleOrList instanceof PyListLiteralExpression)) {
           PyType assignedType = PyUnionType.toNonWeakType(context.getType(value));
           if (assignedType != null) {
-            @Nullable PyType positionalItemType = getTargetTypeFromIterableUnpacking(targetTupleOrList, value, assignedType, context);
+            PyType positionalItemType = getTargetTypeFromIterableUnpacking(targetTupleOrList, value, assignedType, context);
             if (positionalItemType != null) {
               return positionalItemType;
             }
           }
-
         }
       }
     }
@@ -291,7 +294,8 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         }
 
         for (PyExpression element : elements) {
-          if (element instanceof PySequenceExpression sequenceExpression && sequenceExpression.getTextRange().contains(getTextRange())) {
+          if (PyPsiUtils.flattenParens(element) instanceof PySequenceExpression sequenceExpression
+              && sequenceExpression.getTextRange().contains(getTextRange())) {
             PyType foundType = getTargetTypeFromIterableUnpacking(sequenceExpression, null, iterationType, context);
             if (foundType != null) {
               return foundType;

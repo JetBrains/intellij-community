@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PySequenceExpression
+import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
@@ -2079,6 +2080,58 @@ object PyTypeChecker {
   ): PyType? {
     val count = assignedTupleType.elementCount
     val elements = parentTupleOrList.elements
+
+    // Handle starred target (e.g. `head, *tail = (1, "b")`)
+    val starElementIndex = elements.indexOfFirst { it is PyStarExpression }
+    if (starElementIndex >= 0) {
+      val starElement = elements[starElementIndex] as PyStarExpression
+
+      if (assignedTupleType.isHomogeneous) {
+        val elementType = PyLiteralType.upcastLiteralToClass(assignedTupleType.getIteratedItemType())
+        if (starElement.expression == target) {
+          val listClass = PyBuiltinCache.getInstance(target).getClass("list") ?: return PyAnyType.unknown
+          return PyCollectionTypeImpl(listClass, false, listOf(elementType))
+        }
+        return elementType.takeIf { target in elements }
+      }
+
+      val nonStarCount = elements.lastIndex
+      if (count < nonStarCount) return null
+
+      if (starElement.expression == target) {
+        // Star target collects the middle slice of the assigned tuple as a list
+        val afterCount = nonStarCount - starElementIndex
+        val sliceTypes = (starElementIndex..<(count - afterCount)).map { assignedTupleType.getElementType(it) }
+        // Widen literal types: the slice becomes a `list`, whose element type should not be a literal
+        val elementType = PyLiteralType.upcastLiteralToClass(PyUnionType.union(sliceTypes))
+        val listClass = PyBuiltinCache.getInstance(target).getClass("list") ?: return PyAnyType.unknown
+        return PyCollectionTypeImpl(listClass, false, listOf(elementType))
+      }
+
+      // Non-star target: map each LHS position to the corresponding assigned-tuple index,
+      // accounting for the star element that consumes the middle slice, and recurse into
+      // nested sequence targets (e.g. `(x,)` in `((x,), *_) = ...`).
+      for (i in elements.indices) {
+        if (i == starElementIndex) continue
+        val effectiveIndex = if (i < starElementIndex) i else count - (elements.size - i)
+        if (effectiveIndex !in 0 until count) continue
+        val element = PyPsiUtils.flattenParens(elements[i])
+        if (element == target) {
+          return assignedTupleType.getElementType(effectiveIndex)
+        }
+        if (element is PyTupleExpression || element is PyListLiteralExpression) {
+          val elementType = assignedTupleType.getElementType(effectiveIndex)
+          if (elementType is PyTupleType) {
+            val result = getTargetTypeFromTupleAssignment(target, element, elementType)
+            if (result != null) {
+              return result
+            }
+          }
+        }
+      }
+      return null
+    }
+
     if (elements.size == count || assignedTupleType.isHomogeneous) {
       val index = elements.indexOf(target)
       if (index >= 0) {

@@ -5826,4 +5826,120 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    b: str = <warning descr="Expected type 'str', got 'int' instead">E.SECOND_MEMBER.value</warning>
                    """);
   }
+
+  @TestFor(issues = "PY-12592")
+  public void testUnpackAnnotatedTargetMismatch() {
+    doTestByText(
+      """
+        a = 1, 2
+        b: str
+        b, c = <warning descr="Expected type 'str', got 'int' instead">a</warning>
+        """);
+  }
+
+  public void testStarOperatorTypeMismatch() {
+    doTestByText(
+      """
+        def f(a, b, c): pass
+
+        f(*<warning descr="Expected an iterable, got 'int'">1</warning>)
+        f(*<warning descr="Expected an iterable, got 'int'">(1)</warning>)
+        (*<warning descr="Expected an iterable, got 'int'">1</warning>,)
+        [*<warning descr="Expected an iterable, got 'int'">1</warning>]
+        {*<warning descr="Expected an iterable, got 'int'">1</warning>}
+        {*<warning descr="Expected an iterable, got 'int'">(1)</warning>}
+        
+        def g(**kwargs): pass
+
+        g(**<warning descr="Expected a mapping, got 'int'">1</warning>)
+        g(**<warning descr="Expected a mapping, got 'int'">(1)</warning>)
+        {**<warning descr="Expected a mapping, got 'int'">1</warning>}
+        {**<warning descr="Expected a mapping, got 'int'">(1)</warning>}
+        """);
+  }
+
+  @TestFor(issues = "PY-12592")
+  public void testStarUnpackInTypeContext() {
+    doTestByText(
+      """
+        def f(*a: *tuple[int, str]): ...
+
+        x: tuple[*tuple[int, str]]
+        """);
+  }
+
+  @TestFor(issues = "PY-89352")
+  public void testUnpackTargetCorrectType() {
+    doTestByText(
+      """
+        x: int
+        x, = <warning descr="Expected type 'int', got 'str' instead">"a"</warning>,
+        (x,) = <warning descr="Expected type 'int', got 'str' instead">"a"</warning>,
+        [x] = <warning descr="Expected type 'int', got 'str' instead">"a"</warning>,
+        """);
+  }
+
+  @TestFor(issues = "PY-89352")
+  public void testUnpackTargetCorrectTypeStarred() {
+    doTestByText(
+      """
+        x: int
+        *x, = <warning descr="Expected type 'int', got 'list[int]' instead">[1, 2, 3]</warning>
+        (*x,) = <warning descr="Expected type 'int', got 'list[int]' instead">[1, 2, 3]</warning>
+        [*x] = <warning descr="Expected type 'int', got 'list[int]' instead">[1, 2, 3]</warning>
+        """);
+  }
+
+  @TestFor(issues = "PY-12592")
+  public void testSpread() {
+    doTestByText(
+      """
+        a = []
+        b, c, d = 1, *a
+
+        t = (1, 2)
+        b, c, d = 1, *t
+        b, c, d, e = <warning descr="Not enough values to unpack (expected 4, got 3)">1, *t</warning>
+        """);
+  }
+
+  @TestFor(issues = {"PY-4357", "PY-4360", "PY-12592"})
+  public void testTupleUnpackCountBalance() {
+    doTestByText(
+      """
+        a, b, c = <warning descr="Too many values to unpack (expected 3, got 4)">1, 2, 3, 4</warning>
+        a, b, c, d = 1, 2, 3, 4
+        a = 1, 2, 3, 4
+
+        c = 1, 2, 3
+        a, b = <warning descr="Too many values to unpack (expected 2, got 3)">c</warning>
+        (a, b) = <warning descr="Too many values to unpack (expected 2, got 3)">1, 2, 3</warning>
+
+        *a, b = 1, 2, 3
+        *a, b, c = 1, 2
+        b, c, *a, d = <warning descr="Not enough values to unpack (expected 3, got 2)">1, 2</warning>
+        <warning descr="Only one starred expression allowed in assignment">a, *b, c, *d</warning> = 1, 2, 3, 4, 5, 6
+        """);
+  }
+
+  // PY-12592: a starred target must not shift the value bound to the targets that follow it
+  @TestFor(issues = "PY-12592")
+  public void testStarredTargetBindsCorrectValues() {
+    doTestByText(
+      """
+        a: list[int | str]
+        b: bool
+
+        *a, b = 1, "a", False
+        """);
+  }
+
+  @TestFor(issues = "PY-12592")
+  public void testStarredTargetBindsLastValue() {
+    doTestByText(
+      """
+        b: bool
+        *a, b = 1, 2, <warning descr="Expected type 'bool', got 'str' instead">"x"</warning>
+        """);
+  }
 }

@@ -17,7 +17,6 @@ import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.AccessDirection
-import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyAugAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
@@ -47,6 +46,8 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -1553,10 +1554,7 @@ object PyCallExpressionHelper {
         seenKeywordArgument = true
       }
       else {
-        if (seenKeywordArgument ||
-            seenVariadicKeywordArgument || seenVariadicPositionalArgument && LanguageLevel.forElement(argument).isOlderThan(
-            LanguageLevel.PYTHON35)
-        ) {
+        if (seenKeywordArgument || seenVariadicKeywordArgument || seenVariadicPositionalArgument) {
           continue
         }
         allPositionalArguments.add(argument)

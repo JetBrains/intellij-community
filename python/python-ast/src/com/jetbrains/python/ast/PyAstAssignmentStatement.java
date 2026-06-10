@@ -141,6 +141,10 @@ public interface PyAstAssignmentStatement extends PyAstStatement, PyAstNamedElem
    * Elements of tuples and tuples themselves may get interspersed in complex mappings.
    * For "{@code a = b,c = 1,2}" the result will be [(a,(1,2)), (b,1), (c,2)].
    * <br/>
+   * List literals on the left-hand side are unpacked like tuples: "{@code [a, b] = 1, 2}" yields [(a,1), (b,2)].
+   * A starred target absorbs an arbitrary-length slice and is not mapped to a single value:
+   * "{@code a, *b, c = 1, 2, 3, 4}" yields [(a,1), (c,4)].
+   * <br/>
    * If RHS and LHS are mis-balanced, certain target or value expressions may be null.
    * If source is severely incorrect, the returned mapping is empty.
    * @return a list of [target, value] pairs; either part of a pair may be null, but not both.
@@ -163,10 +167,11 @@ public interface PyAstAssignmentStatement extends PyAstStatement, PyAstNamedElem
   private static void mapToValues(@Nullable PyAstExpression lhs,
                                   @Nullable PyAstExpression rhs,
                                   List<Pair<PyAstExpression, PyAstExpression>> map) {
-    // cast for convenience
     PyAstSequenceExpression lhs_tuple = null;
     PyAstExpression lhs_one = null;
-    if (PyPsiUtilsCore.flattenParens(lhs) instanceof PyAstTupleExpression<?> tupleExpr) lhs_tuple = tupleExpr;
+    final PyAstExpression flattenedLhs = PyPsiUtilsCore.flattenParens(lhs);
+    if (flattenedLhs instanceof PyAstTupleExpression<?> tupleExpr) lhs_tuple = tupleExpr;
+    else if (flattenedLhs instanceof PyAstListLiteralExpression listExpr) lhs_tuple = listExpr; // [a, b] = ...
     else if (lhs != null) lhs_one = lhs;
 
     PyAstSequenceExpression rhs_tuple = null;
@@ -174,36 +179,87 @@ public interface PyAstAssignmentStatement extends PyAstStatement, PyAstNamedElem
 
     if (PyPsiUtilsCore.flattenParens(rhs) instanceof PyAstTupleExpression<?> tupleExpr) rhs_tuple = tupleExpr;
     else if (rhs != null) rhs_one = rhs;
-    //
     if (lhs_one != null) { // single LHS, single RHS (direct mapping) or multiple RHS (packing)
       map.add(Pair.create(lhs_one, rhs));
     }
     else if (lhs_tuple != null && rhs_one != null) { // multiple LHS, single RHS: unpacking
       // PY-2648, PY-2649
-      PyAstElementGenerator elementGenerator = PyAstElementGenerator.getInstance(rhs_one.getProject());
-      final LanguageLevel languageLevel = LanguageLevel.forElement(lhs);
-      int counter = 0;
-      for (PyAstExpression tuple_elt : lhs_tuple.getElements()) {
-        try {
-          final PyAstExpression expression =
-            elementGenerator.createExpressionFromText(languageLevel, "(" + rhs_one.getText() + ")[" + counter + "]");
-          mapToValues(tuple_elt, expression, map);
-        }
-        catch (IncorrectOperationException e) {
-          // not parsed, no problem
-        }
-        ++counter;
-      }
+      mapTargetsToSubscriptions(lhs_tuple.getElements(), rhs_one, map);
     }
     else if (lhs_tuple != null && rhs_tuple != null) { // multiple both sides: piecewise mapping
-      final List<PyAstExpression> lhsTupleElements = Arrays.asList(lhs_tuple.getElements());
-      final List<PyAstExpression> rhsTupleElements = Arrays.asList(rhs_tuple.getElements());
-      final int size = Math.max(lhsTupleElements.size(), rhsTupleElements.size());
-      for (int index = 0; index < size; index++) {
-        mapToValues(ContainerUtil.getOrElse(lhsTupleElements, index, null),
-                    ContainerUtil.getOrElse(rhsTupleElements, index, null), map);
+      mapTargetsToValues(lhs_tuple.getElements(), rhs_tuple.getElements(), map);
+    }
+  }
+
+  /**
+   * Unpacks a sequence of targets from a single RHS expression by generating subscription expressions.
+   * A starred target absorbs an arbitrary-length slice, so targets following it are addressed with
+   * negative indices counted from the end: {@code a, *b, c = expr} maps {@code a} to {@code (expr)[0]}
+   * and {@code c} to {@code (expr)[-1]}, while the starred target itself is not mapped to a single value.
+   */
+  private static void mapTargetsToSubscriptions(PyAstExpression @NotNull [] targets,
+                                                @NotNull PyAstExpression rhs,
+                                                List<Pair<PyAstExpression, PyAstExpression>> map) {
+    final PyAstElementGenerator elementGenerator = PyAstElementGenerator.getInstance(rhs.getProject());
+    final LanguageLevel languageLevel = LanguageLevel.forElement(rhs);
+    final int starIndex = indexOfStar(targets);
+    for (int i = 0; i < targets.length; i++) {
+      if (targets[i] instanceof PyAstStarExpression) continue; // starred target maps to a slice, not a single value
+      final int index = starIndex < 0 || i < starIndex ? i : i - targets.length;
+      try {
+        final PyAstExpression expression =
+          elementGenerator.createExpressionFromText(languageLevel, "(" + rhs.getText() + ")[" + index + "]");
+        mapToValues(targets[i], expression, map);
+      }
+      catch (IncorrectOperationException e) {
+        // not parsed, no problem
       }
     }
+  }
+
+  /**
+   * Maps a sequence of targets to a sequence of values element-wise.
+   * A single starred target absorbs the middle, so targets before it are aligned from the start and
+   * targets after it from the end; the starred target itself is not mapped to a single value.
+   */
+  private static void mapTargetsToValues(PyAstExpression @NotNull [] targets,
+                                         PyAstExpression @NotNull [] values,
+                                         List<Pair<PyAstExpression, PyAstExpression>> map) {
+    final int targetStar = indexOfStar(targets);
+    final int valueStar = indexOfStar(values);
+    if (targetStar < 0 && valueStar < 0) {
+      final List<PyAstExpression> targetList = Arrays.asList(targets);
+      final List<PyAstExpression> valueList = Arrays.asList(values);
+      final int size = Math.max(targetList.size(), valueList.size());
+      for (int index = 0; index < size; index++) {
+        mapToValues(ContainerUtil.getOrElse(targetList, index, null),
+                    ContainerUtil.getOrElse(valueList, index, null), map);
+      }
+      return;
+    }
+    // Align the leading run up to the first starred element on either side.
+    final int front = Math.min(targetStar < 0 ? targets.length : targetStar,
+                               valueStar < 0 ? values.length : valueStar);
+    for (int i = 0; i < front; i++) {
+      mapToValues(targets[i], values[i], map);
+    }
+    // Align the trailing run from the end, up to the last starred element on either side.
+    final int back = Math.min(targetStar < 0 ? targets.length : targets.length - targetStar - 1,
+                              valueStar < 0 ? values.length : values.length - valueStar - 1);
+    for (int k = back; k > 0; k--) {
+      final int targetIndex = targets.length - k;
+      final int valueIndex = values.length - k;
+      if (targetIndex < front || valueIndex < front) break; // exhausted; avoid overlapping the leading run
+      mapToValues(targets[targetIndex], values[valueIndex], map);
+    }
+    // A starred element absorbs the remaining middle and is not mapped to a single value.
+  }
+
+  private static int indexOfStar(PyAstExpression @NotNull [] elements) {
+    for (int i = 0; i < elements.length; i++) {
+      if (elements[i] instanceof PyAstStarExpression) return i;
+    }
+    return -1;
   }
 
   default @Nullable PyAstExpression getLeftHandSideExpression() {

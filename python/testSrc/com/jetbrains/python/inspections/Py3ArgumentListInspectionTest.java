@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
 import com.intellij.idea.TestFor;
@@ -411,11 +411,11 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testKeywordUnpack() {
     doTestByText("""
                    from collections.abc import Mapping
-                   
+
                    class M(Mapping[str, str]): pass
-                   
+
                    dict(**M())
-                   
+
                    dict(<warning descr="Expected a mapping, got int">**1</warning>)
                    """);
   }
@@ -424,7 +424,6 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testGenericDataclassExplicitType() {
     doTest();
   }
-
 
   // PY-79816
   public void testGenericDataclassExplicitTypeDeconstructed() {
@@ -879,5 +878,31 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
   public void testPydanticValidateByNameTrueAndAliasFalse() {
     myFixture.copyDirectoryToProject("stubs/pydantic", "pydantic");
     doTest();
+  }
+
+  @TestFor(issues = "PY-12592")
+  public void testKnownSpreadInFunctionCall() {
+    doTestByText(
+      """
+        def f(a: str, b: str, c: int): ...
+
+        tup = ("a", "b")
+        f(*tup, 1)
+        f(*tup<warning descr="Parameter 'c' unfilled">)</warning>
+        """);
+  }
+
+  @TestFor(issues = "PY-89177")
+  public void testUnknownSpreadInFunctionCall() {
+    fixme("not implemented", AssertionError.class, "f(*lst[<warning descr=\"Parameter 'c' unfilled\">)<warning>]", () ->
+      doTestByText(
+        """
+          def f(a: str, b: str, c: int): ...
+
+          lst = ["a"]
+          f(*lst<warning descr="Parameter 'c' unfilled">)<warning>
+          f(*lst, 0)
+          """)
+    );
   }
 }

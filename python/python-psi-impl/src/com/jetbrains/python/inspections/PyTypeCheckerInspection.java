@@ -26,6 +26,7 @@ import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyAnnotationOwner;
+import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyCallExpression;
@@ -34,11 +35,14 @@ import com.jetbrains.python.psi.PyCallable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyComprehensionElement;
 import com.jetbrains.python.psi.PyComprehensionForComponent;
+import com.jetbrains.python.psi.PyDictLiteralExpression;
+import com.jetbrains.python.psi.PyDoubleStarExpression;
 import com.jetbrains.python.psi.PyEllipsisLiteralExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyForStatement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyListLiteralExpression;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
@@ -48,6 +52,7 @@ import com.jetbrains.python.psi.PyReferenceOwner;
 import com.jetbrains.python.psi.PyReturnStatement;
 import com.jetbrains.python.psi.PySequenceExpression;
 import com.jetbrains.python.psi.PyStarArgument;
+import com.jetbrains.python.psi.PyStarExpression;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PySubscriptionExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -70,6 +75,7 @@ import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyCollectionType;
+import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyConcatenateType;
 import com.jetbrains.python.psi.types.PyDescriptorTypeUtil;
 import com.jetbrains.python.psi.types.PyInstantiableType;
@@ -326,6 +332,123 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
+      final PyExpression lhs = PyPsiUtils.flattenParens(node.getLeftHandSideExpression());
+      final PyExpression rhs = node.getAssignedValue();
+      if (!(lhs instanceof PyTupleExpression || lhs instanceof PyListLiteralExpression) || rhs == null) return;
+      final var lhsSeq = (PySequenceExpression) lhs;
+
+      // Check that the RHS is iterable
+      if (checkUnpackIterableValue(rhs)) return;
+
+      final PyType rhsType = myTypeEvalContext.getType(rhs);
+      if (!(rhsType instanceof PyTupleType rhsTupleType) || rhsTupleType.isHomogeneous()) return;
+
+      final PyExpression[] targets = lhsSeq.getElements();
+      var lhsStarCount = StreamEx.of(targets).select(PyStarExpression.class).count();
+
+      // The RHS value count. A starred RHS element contributes its operand's length only when that operand is a
+      // statically known (heterogeneous) tuple; an unbounded operand (e.g. `*list_value`) makes the count
+      // indeterminate, in which case the balance check is skipped.
+      final int rhsCount = rhs instanceof PyTupleExpression rhsTupleExpr &&
+                           ContainerUtil.exists(rhsTupleExpr.getElements(), PyStarExpression.class::isInstance)
+                           ? getUnpackedTupleLength(rhsTupleExpr)
+                           : rhsTupleType.getElementCount();
+      if (rhsCount >= 0) {
+        if (lhsStarCount > 1) {
+          registerProblem(lhs, PyPsiBundle.message("INSP.tuple.assignment.balance.only.one.starred.expression.allowed.in.assignment"));
+          return;
+        }
+        if (lhsStarCount == 0 && targets.length != rhsCount) {
+          final String key = targets.length < rhsCount
+                             ? "INSP.tuple.assignment.balance.too.many.values.to.unpack"
+                             : "INSP.tuple.assignment.balance.need.more.values.to.unpack";
+          registerProblem(rhs, PyPsiBundle.message(key, targets.length, rhsCount),
+                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+          return;
+        }
+        if (lhsStarCount == 1 && targets.length - 1 > rhsCount) {
+          registerProblem(rhs, PyPsiBundle.message("INSP.tuple.assignment.balance.need.more.values.to.unpack",
+                                                   targets.length - 1, rhsCount),
+                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+          return;
+        }
+      }
+
+      // Per-element type mismatch check for annotated targets with a non-tuple RHS (`x, y = expr` / `[x] = expr`).
+      // findAssignedValue() yields a synthetic subscription for these, so the mismatch is reported on the RHS itself.
+      // A tuple RHS (`x, y = 1, 2` / `[x] = 1, 2`) maps to real value elements and is handled by
+      // visitPyTargetExpression via findAssignedValue().
+      if (lhsStarCount == 0 && !(rhs instanceof PyTupleExpression)) {
+        for (PyExpression target : targets) {
+          if (!(target instanceof PyTargetExpression targetExpr)) continue;
+          if (!targetOrResolvedHasExplicitType(targetExpr)) continue;
+          final PyType annotatedType = myTypeEvalContext.getType(targetExpr);
+          final PyType unpackedType = PyTypeChecker.getTargetTypeFromTupleAssignment(targetExpr, lhsSeq, rhsTupleType);
+          if (unpackedType == null || PyTypeChecker.match(annotatedType, unpackedType, myTypeEvalContext)) continue;
+          final PyType displayType = PyLiteralType.upcastLiteralToClass(unpackedType);
+          registerProblem(rhs,
+                          PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
+                                              PythonDocumentationProvider.getVerboseTypeName(annotatedType, myTypeEvalContext),
+                                              PythonDocumentationProvider.getTypeName(displayType, myTypeEvalContext)),
+                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+          // stop after the first error, because otherwise we might start reporting different type errors on the same element
+          return;
+        }
+      }
+    }
+
+    @Override
+    public void visitPyStarExpression(@NotNull PyStarExpression node) {
+      final PsiElement parent = node.getParent();
+      if (parent instanceof PySequenceExpression sequenceExpr) {
+        // Skip star expressions that are assignment targets: `a, *b = ...`
+        final var possibleLhs = PsiTreeUtil.skipParentsOfType(sequenceExpr, PyParenthesizedExpression.class);
+        if (possibleLhs instanceof PyAssignmentStatement assignment &&
+            PyPsiUtils.flattenParens(assignment.getLeftHandSideExpression()) == sequenceExpr) {
+          // Check type annotation compatibility for annotated star targets like `x: int; (*x,) = [1, 2, 3]`
+          final PyExpression innerExpr = node.getExpression();
+          if (innerExpr instanceof PyTargetExpression targetExpr && targetOrResolvedHasExplicitType(targetExpr)) {
+            final PyExpression rhs = assignment.getAssignedValue();
+            if (rhs != null) {
+              final PyType rhsType = myTypeEvalContext.getType(rhs);
+              if (rhsType instanceof PyCollectionType collectionType) {
+                final PyType elementType = PyLiteralType.upcastLiteralToClass(collectionType.getIteratedItemType());
+                final PyClass listClass = PyBuiltinCache.getInstance(node).getClass("list");
+                if (listClass != null) {
+                  final PyType actualType = new PyCollectionTypeImpl(listClass, false, Collections.singletonList(elementType));
+                  final PyType annotatedType = myTypeEvalContext.getType(targetExpr);
+                  if (annotatedType != null && !PyTypeChecker.isUnknown(annotatedType, myTypeEvalContext) &&
+                      !PyTypeChecker.match(annotatedType, actualType, myTypeEvalContext)) {
+                    registerProblem(rhs,
+                                    PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
+                                                        PythonDocumentationProvider.getVerboseTypeName(annotatedType, myTypeEvalContext),
+                                                        PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)),
+                                    effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+                  }
+                }
+              }
+            }
+          }
+          return;
+        }
+        // Check iterability of starred operand in sequence literals `[*a], {*a}, (*a,)`
+        // Skip type unpack expressions in type hints: [*tuple[T]], (*Ts,), etc.
+        // TODO: consider Annotated[T, [*1]]
+        if (PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext)) return;
+        checkUnpackIterableValue(node.getExpression());
+      }
+    }
+
+    @Override
+    public void visitPyDoubleStarExpression(@NotNull PyDoubleStarExpression node) {
+      // Check that **expr in dict literals ({**a}) has a mapping type
+      if (node.getParent() instanceof PyDictLiteralExpression) {
+        checkUnpackMappingValue(node.getExpression());
+      }
+    }
+
+    @Override
     public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
       checkClassAttributeAccess(node);
       final PyExpression assignedValue = node.findAssignedValue();
@@ -347,10 +470,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       PyType expected = myTypeEvalContext.getType(node);
 
       if (scopeOwner instanceof PyClass) {
-        if (!hasExplicitType(node)) {
-          PsiElement resolved = node.getReference(PyResolveContext.defaultContext(myTypeEvalContext)).resolve();
-          if (!(resolved instanceof PyTargetExpression resolvedTarget) || !hasExplicitType(resolvedTarget)) return;
-        }
+        if (!targetOrResolvedHasExplicitType(node)) return;
       }
 
       if (node.isQualified()) {
@@ -684,22 +804,54 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     private boolean checkIteratedValue(@Nullable PyExpression iteratedValue, boolean isAsync) {
-      if (iteratedValue != null) {
-        final PyType type = myTypeEvalContext.getType(iteratedValue);
-        final String iterableClassName = isAsync ? PyNames.ASYNC_ITERABLE : PyNames.ITERABLE;
+      return checkIteratedValue(iteratedValue, iteratedValue, isAsync);
+    }
 
-        if (type != null &&
-            !PyTypeChecker.isUnknown(type, myTypeEvalContext) &&
-            !PyABCUtil.isSubtype(type, iterableClassName, myTypeEvalContext)) {
-          final String typeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
+    private boolean checkIteratedValue(@Nullable PyExpression iteratedValue, @Nullable PsiElement highlightElement, boolean isAsync) {
+      if (iteratedValue == null || highlightElement == null) return false;
+      final PyType type = myTypeEvalContext.getType(iteratedValue);
+      final String iterableClassName = isAsync ? PyNames.ASYNC_ITERABLE : PyNames.ITERABLE;
 
-          String qualifiedName = "collections." + iterableClassName;
-          registerProblem(iteratedValue, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", qualifiedName, typeName),
-                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
-          return true;
-        }
+      if (type != null &&
+          !PyTypeChecker.isUnknown(type, myTypeEvalContext) &&
+          !PyABCUtil.isSubtype(type, iterableClassName, myTypeEvalContext)) {
+        final String typeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
+
+        String qualifiedName = "collections." + iterableClassName;
+        registerProblem(highlightElement, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", qualifiedName, typeName),
+                        effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        return true;
       }
       return false;
+    }
+
+    private boolean checkUnpackIterableValue(@Nullable PyExpression iteratedValue) {
+      if (iteratedValue == null) return false;
+      if (iteratedValue instanceof PyStarExpression starExpression) iteratedValue = starExpression.getExpression();
+      final PyType type = myTypeEvalContext.getType(iteratedValue);
+      if (type != null &&
+          !PyTypeChecker.isUnknown(type, myTypeEvalContext) &&
+          !PyABCUtil.isSubtype(type, PyNames.ITERABLE, myTypeEvalContext)) {
+        final String typeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
+        registerProblem(iteratedValue, PyPsiBundle.message("INSP.type.checker.unpack.expected.iterable", typeName),
+                        effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+        return true;
+      }
+      return false;
+    }
+
+    private void checkUnpackMappingValue(@Nullable PyExpression mappingValue) {
+      if (mappingValue == null) return;
+      if (mappingValue instanceof PyDoubleStarExpression starExpression) mappingValue = starExpression.getExpression();
+      final PyType type = myTypeEvalContext.getType(mappingValue);
+      if (type != null &&
+          !PyTypeChecker.isUnknown(type, myTypeEvalContext) &&
+          // TODO: it's not Mapping, but a more wider type
+          !PyABCUtil.isSubtype(type, PyNames.MAPPING, myTypeEvalContext)) {
+        final String typeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
+        registerProblem(mappingValue, PyPsiBundle.message("INSP.type.checker.unpack.expected.mapping", typeName),
+                        effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
+      }
     }
 
     private void checkContextManagerValue(@Nullable PyExpression iteratedValue, boolean isAsync) {
@@ -1065,6 +1217,40 @@ public class PyTypeCheckerInspection extends PyInspection {
       if (node instanceof PyAnnotationOwner owner && owner.getAnnotation() != null) return true;
       if (node instanceof PyTypeCommentOwner owner && owner.getTypeCommentAnnotation() != null) return true;
       return false;
+    }
+
+    private boolean targetOrResolvedHasExplicitType(@NotNull PyTargetExpression target) {
+      PsiElement current = target;
+      while (current instanceof PyTargetExpression currentTarget) {
+        if (hasExplicitType(currentTarget)) return true;
+        final PsiElement resolved = currentTarget.getReference(PyResolveContext.defaultContext(myTypeEvalContext)).resolve();
+        if (resolved == current) break;
+        current = resolved;
+      }
+      return false;
+    }
+
+    /**
+     * Number of values produced by a tuple expression used as the right-hand side of an unpacking assignment.
+     * A starred element contributes the length of its operand only when the operand is a statically known
+     * (heterogeneous, bounded) tuple; if any starred operand has an indeterminate length, returns {@code -1}.
+     */
+    private int getUnpackedTupleLength(@NotNull PyTupleExpression rhsTuple) {
+      int count = 0;
+      for (PyExpression element : rhsTuple.getElements()) {
+        if (element instanceof PyStarExpression starExpression) {
+          final PyExpression operand = starExpression.getExpression();
+          if (operand == null) return -1;
+          if (!(myTypeEvalContext.getType(operand) instanceof PyTupleType operandTupleType) || operandTupleType.isHomogeneous()) {
+            return -1;
+          }
+          count += operandTupleType.getElementCount();
+        }
+        else {
+          count++;
+        }
+      }
+      return count;
     }
   }
 

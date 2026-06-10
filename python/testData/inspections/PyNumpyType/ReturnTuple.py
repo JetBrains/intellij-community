@@ -43,4 +43,4 @@ def unique(ar, return_index=False, return_inverse=False, return_counts=False):
     ar = np.asanyarray(ar).flatten()
 
 a=1
-u, indices = <warning descr="Too many values to unpack">unique(a, return_index=True)</warning>
+u, indices = <warning descr="Too many values to unpack (expected 2, got 4)">unique(a, return_index=True)</warning>

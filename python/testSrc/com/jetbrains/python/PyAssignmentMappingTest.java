@@ -175,6 +175,38 @@ public class PyAssignmentMappingTest extends LightMarkedTestCase {
     );
   }
 
+  // List literal on the left-hand side is unpacked like a tuple: [a, b] = 1, 2
+  public void testListLiteralUnpack() {
+    List<Pair<PyExpression, PyExpression>> expectedMappings = loadMultiMappingTest(IntStream.of(1, 2));
+    PyAssignmentStatement stmt =
+      PsiTreeUtil.getParentOfType(expectedMappings.get(0).second, PyAssignmentStatement.class);
+    assertSameElements(stmt.getTargetsToValuesMapping(), expectedMappings);
+  }
+
+  // A starred target absorbs the middle and is not mapped to a single value: a, *b, c = 1, 2, 3, 4
+  public void testStarredTargetMapped() {
+    List<Pair<PyExpression, PyExpression>> expectedMappings = loadMultiMappingTest(IntStream.of(1, 2));
+    PyAssignmentStatement stmt =
+      PsiTreeUtil.getParentOfType(expectedMappings.get(0).second, PyAssignmentStatement.class);
+    assertSameElements(stmt.getTargetsToValuesMapping(), expectedMappings);
+  }
+
+  // A starred target unpacked from a single RHS addresses trailing targets with negative indices:
+  // a, *b, c = returnTuple() maps a -> (returnTuple())[0] and c -> (returnTuple())[-1]
+  public void testStarredTargetUnpack() {
+    Map<String, PsiElement> marks = loadTest();
+    List<Pair<PyExpression, PyExpression>> expectedMapping = getMapping(marks, IntStream.rangeClosed(1, 2));
+
+    PsiElement src = marks.get("<src>").getParent();
+    PyAssignmentStatement stmt = (PyAssignmentStatement)src.getParent().getParent();
+    List<Pair<PyExpression, PyExpression>> mapping = stmt.getTargetsToValuesMapping();
+
+    assertSameElements(
+      ContainerUtil.map(mapping, pair -> Pair.create(pair.first, pair.second.getText())),
+      ContainerUtil.map(expectedMapping, pair -> Pair.create(pair.first, pair.second.getText()))
+    );
+  }
+
   private List<Pair<PyExpression, PyExpression>> loadMultiMappingTest(IntStream indices) {
     Map<String, PsiElement> marks = loadTest();
     return getMapping(marks, indices);

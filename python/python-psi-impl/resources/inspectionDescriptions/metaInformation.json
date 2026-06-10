@@ -289,10 +289,6 @@
       "codeQualityCategory": "Sanity"
     },
     {
-      "id": "PyTupleAssignmentBalanceInspection",
-      "codeQualityCategory": "Reliability"
-    },
-    {
       "id": "PyReturnFromInitInspection",
       "codeQualityCategory": "Reliability"
     },
