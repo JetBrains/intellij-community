@@ -302,9 +302,7 @@
 
   <!-- Line markers -->
   <extensions defaultExtensionNs="com.intellij">
-    <runLineMarkerContributor
-            language="kotlin"
-            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.KotlinRunLineMarkerContributor"/>
+
   </extensions>
 
   <projectListeners>

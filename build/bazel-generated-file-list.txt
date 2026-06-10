@@ -1254,7 +1254,6 @@ plugins/kotlin/code-insight/intentions-k2
 plugins/kotlin/code-insight/intentions-k2/tests
 plugins/kotlin/code-insight/kotlin.code-insight.k2
 plugins/kotlin/code-insight/line-markers
-plugins/kotlin/code-insight/line-markers-shared
 plugins/kotlin/code-insight/live-templates-k2
 plugins/kotlin/code-insight/live-templates-shared
 plugins/kotlin/code-insight/override-implement-k2

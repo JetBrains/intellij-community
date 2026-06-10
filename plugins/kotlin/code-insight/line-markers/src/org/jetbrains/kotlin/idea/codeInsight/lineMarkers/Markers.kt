@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared
+package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
 import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer
 import com.intellij.icons.AllIcons
@@ -208,8 +208,8 @@ fun buildNavigateToActualDeclarationsPopup(element: PsiElement?, allNavigatableA
         val name = it.name ?: ""
         return NavigationPopupDescriptor(
             navigatableActualDeclarations,
-            KotlinLineMarkersSharedBundle.message("highlighter.title.choose.actual.for", name),
-            KotlinLineMarkersSharedBundle.message("highlighter.title.actuals.for", name),
+            KotlinLineMarkersBundle.message("highlighter.title.choose.actual.for", name),
+            KotlinLineMarkersBundle.message("highlighter.title.actuals.for", name),
             ActualExpectedPsiElementCellRenderer(onlyModuleNames = navigatableActualDeclarations.hasUniqueModuleNames())
         )
     }
@@ -223,8 +223,8 @@ fun buildNavigateToExpectedDeclarationsPopup(element: PsiElement?, allNavigatabl
         val name = it.name ?: ""
         return NavigationPopupDescriptor(
             navigatableExpectedDeclarations,
-            KotlinLineMarkersSharedBundle.message("highlighter.title.choose.expected.for", name),
-            KotlinLineMarkersSharedBundle.message("highlighter.title.expected.for", name),
+            KotlinLineMarkersBundle.message("highlighter.title.choose.expected.for", name),
+            KotlinLineMarkersBundle.message("highlighter.title.expected.for", name),
             ActualExpectedPsiElementCellRenderer(onlyModuleNames = navigatableExpectedDeclarations.hasUniqueModuleNames())
         )
     }

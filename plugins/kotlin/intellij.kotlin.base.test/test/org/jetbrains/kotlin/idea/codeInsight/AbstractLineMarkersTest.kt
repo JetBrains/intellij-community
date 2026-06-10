@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerCodeMetaInfo
 import org.jetbrains.kotlin.idea.base.test.InnerLineMarkerConfiguration
 import org.jetbrains.kotlin.idea.base.test.KotlinExpectedHighlightingData
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
+import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.TestableLineMarkerNavigator
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.idea.navigation.NavigationTestUtils
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil

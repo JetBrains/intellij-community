@@ -27,8 +27,6 @@ import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.psi.isEffectivelyActual
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.dsl.collectHighlightingDslMarkers
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.AbstractKotlinLineMarkerProvider
-import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.LineMarkerInfos
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.highlighter.markers.InheritanceMergeableLineMarkerInfo
 import org.jetbrains.kotlin.idea.highlighter.markers.KotlinGutterTooltipHelper

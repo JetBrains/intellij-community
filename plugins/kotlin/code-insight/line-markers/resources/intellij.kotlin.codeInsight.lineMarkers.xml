@@ -5,10 +5,15 @@
     <module name="intellij.kotlin.codeInsight"/>
     <module name="intellij.kotlin.highlighting"/>
     <module name="intellij.kotlin.searching"/>
+    <module name="intellij.kotlin.projectStructure"/>
     <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
+
+    <runLineMarkerContributor
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinRunLineMarkerContributor"/>
 
     <codeInsight.lineMarkerProvider
             language="kotlin"

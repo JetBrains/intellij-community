@@ -94,7 +94,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.liveTemplates" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.postfixTemplates" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.code-insight.line-markers.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.core" scope="RUNTIME" />

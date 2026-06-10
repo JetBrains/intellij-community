@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared
+package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.LineMarkerInfo
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComme
 typealias LineMarkerInfos = MutableCollection<in LineMarkerInfo<*>>
 
 abstract class AbstractKotlinLineMarkerProvider : LineMarkerProviderDescriptor() {
-    override fun getName(): String = KotlinLineMarkersSharedBundle.message("highlighter.name.kotlin.line.markers")
+    override fun getName(): String = KotlinLineMarkersBundle.message("highlighter.name.kotlin.line.markers")
 
     override fun getOptions(): Array<Option> = KotlinLineMarkerOptions.options
 
