@@ -28,58 +28,53 @@ private val JSON_MAPPER = ObjectMapper()
 internal object JunieAcpGenerationModelCatalog {
   suspend fun listAvailableGenerationModels(executable: String, projectPath: String): List<AgentPromptGenerationModel> {
     var process: EelProcess? = null
-    var probeFailed = false
     try {
       val response = withTimeoutOrNull(JUNIE_ACP_CATALOG_TIMEOUT) {
-        try {
-          val eelApi = LocalEelDescriptor.toEelApi()
-          val acpProcess = eelApi.exec
+        val eelApi = LocalEelDescriptor.toEelApi()
+        val acpProcess = try {
+          eelApi.exec
             .spawnProcess(executable)
             .args(ACP_FLAG)
             .workingDirectory(EelPath.parse(projectPath, eelApi.descriptor))
             .eelIt()
-          process = acpProcess
-
-          acpProcess.sendJsonRpcRequest(
-            id = INITIALIZE_REQUEST_ID,
-            method = "initialize",
-            params = linkedMapOf(
-              "protocolVersion" to 1,
-              "clientCapabilities" to linkedMapOf(
-                "fs" to linkedMapOf(
-                  "readTextFile" to true,
-                  "writeTextFile" to true,
-                ),
-                "terminal" to false,
-              ),
-            ),
-          )
-          if (acpProcess.readJsonRpcResponse(INITIALIZE_REQUEST_ID) == null) {
-            return@withTimeoutOrNull null
-          }
-
-          acpProcess.sendJsonRpcRequest(
-            id = SESSION_NEW_REQUEST_ID,
-            method = "session/new",
-            params = linkedMapOf(
-              "cwd" to projectPath,
-              "mcpServers" to emptyList<Map<String, Any?>>(),
-            ),
-          )
-          acpProcess.readJsonRpcResponse(SESSION_NEW_REQUEST_ID)
         }
         catch (e: ExecuteProcessException) {
-          probeFailed = true
-          LOG.debug("Failed to query Junie ACP generation models for $executable", e)
-          null
+          throw IllegalStateException("Failed to start Junie ACP model catalog probe for $executable", e)
         }
+        process = acpProcess
+
+        acpProcess.sendJsonRpcRequest(
+          id = INITIALIZE_REQUEST_ID,
+          method = "initialize",
+          params = linkedMapOf(
+            "protocolVersion" to 1,
+            "clientCapabilities" to linkedMapOf(
+              "fs" to linkedMapOf(
+                "readTextFile" to true,
+                "writeTextFile" to true,
+              ),
+              "terminal" to false,
+            ),
+          ),
+        )
+        val initializeResponse = acpProcess.readJsonRpcResponse(INITIALIZE_REQUEST_ID)
+                                 ?: error("Junie ACP initialize response is missing")
+        parseJsonRpcSuccess(initializeResponse, "initialize")
+
+        acpProcess.sendJsonRpcRequest(
+          id = SESSION_NEW_REQUEST_ID,
+          method = "session/new",
+          params = linkedMapOf(
+            "cwd" to projectPath,
+            "mcpServers" to emptyList<Map<String, Any?>>(),
+          ),
+        )
+        val sessionNewResponse = acpProcess.readJsonRpcResponse(SESSION_NEW_REQUEST_ID)
+                                 ?: error("Junie ACP session/new response is missing")
+        sessionNewResponse
       }
       if (response == null) {
-        if (!probeFailed) {
-          process?.kill()
-          LOG.debug("Timed out while querying Junie ACP generation models for $executable")
-        }
-        return emptyList()
+        error("Timed out while querying Junie ACP generation models for $executable")
       }
       return parseJunieAcpGenerationModels(response)
     }
@@ -88,7 +83,7 @@ internal object JunieAcpGenerationModelCatalog {
     }
     catch (e: Throwable) {
       LOG.debug("Failed to query Junie ACP generation models for $executable", e)
-      return emptyList()
+      throw e
     }
     finally {
       process?.kill()
@@ -97,8 +92,11 @@ internal object JunieAcpGenerationModelCatalog {
 }
 
 internal fun parseJunieAcpGenerationModels(sessionNewResponseJson: String): List<AgentPromptGenerationModel> {
-  val response = runCatching { JSON_MAPPER.readTree(sessionNewResponseJson) }.getOrNull() ?: return emptyList()
+  val response = parseJsonRpcSuccess(sessionNewResponseJson, "session/new")
   val result = response.path("result")
+  if (result.isMissingNode || result.isNull || !result.isObject) {
+    error("Junie ACP session/new result is missing")
+  }
   val models = result.path("models")
   val currentModelId = models.path("currentModelId").textValueOrNull()
   val supportedReasoningEfforts = result.path("configOptions")
@@ -146,6 +144,15 @@ internal fun parseJunieAcpGenerationModels(sessionNewResponseJson: String): List
     }
     ?.toList()
     .orEmpty()
+}
+
+private fun parseJsonRpcSuccess(responseJson: String, method: String): JsonNode {
+  val response = JSON_MAPPER.readTree(responseJson)
+  val errorNode = response.path("error")
+  if (!errorNode.isMissingNode && !errorNode.isNull) {
+    error("Junie ACP $method failed: $errorNode")
+  }
+  return response
 }
 
 private suspend fun EelProcess.sendJsonRpcRequest(id: Int, method: String, params: Map<String, Any?>) {

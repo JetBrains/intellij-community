@@ -23,6 +23,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
@@ -278,6 +279,49 @@ class JunieAgentSessionProviderDescriptorTest {
       AgentPromptReasoningEffort.MEDIUM,
       AgentPromptReasoningEffort.HIGH,
     )
+  }
+
+  @Test
+  fun `ACP session new parser preserves successful empty model catalog`() {
+    val models = parseJunieAcpGenerationModels(
+      """
+      {
+        "jsonrpc": "2.0",
+        "id": 2,
+        "result": {
+          "sessionId": "session-1",
+          "models": {
+            "availableModels": []
+          },
+          "configOptions": []
+        }
+      }
+      """.trimIndent()
+    )
+
+    assertThat(models).isEmpty()
+  }
+
+  @Test
+  fun `ACP session new parser rejects failed or malformed responses`() {
+    assertThatThrownBy {
+      parseJunieAcpGenerationModels(
+        """
+        {
+          "jsonrpc": "2.0",
+          "id": 2,
+          "error": {
+            "code": -32000,
+            "message": "startup failed"
+          }
+        }
+        """.trimIndent()
+      )
+    }.hasMessageContaining("session/new")
+
+    assertThatThrownBy {
+      parseJunieAcpGenerationModels("not-json")
+    }.isInstanceOf(Exception::class.java)
   }
 
   @Test

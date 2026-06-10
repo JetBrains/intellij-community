@@ -68,6 +68,7 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   fun refreshSelectedProviderModels() {
+    providerSelector.selectedProvider?.let(::requestModelCatalogRefresh)
     refreshPresentation()
   }
 
@@ -230,7 +231,7 @@ internal class AgentPromptGenerationSettingsController(
       return
     }
 
-    val group = createModelActionGroup(modelCatalogState(providerId))
+    val group = createModelActionGroup(providerId, modelCatalogState(providerId))
 
     val popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(
@@ -366,7 +367,7 @@ internal class AgentPromptGenerationSettingsController(
     if (loadIfNeeded) {
       requestModelCatalogRefresh(selectedProvider)
     }
-    return createModelActionGroup(modelCatalogState(providerId))
+    return createModelActionGroup(providerId, modelCatalogState(providerId))
   }
 
   @TestOnly
@@ -381,7 +382,7 @@ internal class AgentPromptGenerationSettingsController(
     return createReasoningEffortActionGroup(supportedEfforts)
   }
 
-  private fun createModelActionGroup(modelCatalogState: ModelCatalogState?): DefaultActionGroup {
+  private fun createModelActionGroup(providerId: String, modelCatalogState: ModelCatalogState?): DefaultActionGroup {
     val group = DefaultActionGroup()
     group.add(ModelAction(modelId = null, text = AgentPromptBundle.message("popup.generation.model.popup.auto")))
     when (modelCatalogState) {
@@ -394,13 +395,13 @@ internal class AgentPromptGenerationSettingsController(
       }
       is ModelCatalogState.RefreshFailed -> {
         addModelActions(group, modelCatalogState.models)
-        group.add(ModelCatalogStatusAction(AgentPromptBundle.message("popup.generation.model.refresh.failed")))
+        addModelCatalogRetryActions(group, providerId, AgentPromptBundle.message("popup.generation.model.refresh.failed"))
       }
       ModelCatalogState.Loading -> {
         group.add(ModelCatalogStatusAction(AgentPromptBundle.message("popup.generation.model.loading"), AnimatedIcon.Default.INSTANCE))
       }
       ModelCatalogState.Failed -> {
-        group.add(ModelCatalogStatusAction(AgentPromptBundle.message("popup.generation.model.load.failed")))
+        addModelCatalogRetryActions(group, providerId, AgentPromptBundle.message("popup.generation.model.load.failed"))
       }
       null -> Unit
     }
@@ -415,6 +416,11 @@ internal class AgentPromptGenerationSettingsController(
     else {
       models.forEach { model -> group.add(ModelAction(modelId = model.id, text = model.displayName)) }
     }
+  }
+
+  private fun addModelCatalogRetryActions(group: DefaultActionGroup, providerId: String, statusText: @Nls String) {
+    group.add(ModelCatalogStatusAction(statusText))
+    group.add(RetryModelCatalogAction(providerId))
   }
 
   private fun createReasoningEffortActionGroup(supportedEfforts: Set<AgentPromptReasoningEffort>): DefaultActionGroup {
@@ -492,6 +498,28 @@ internal class AgentPromptGenerationSettingsController(
     }
 
     override fun actionPerformed(e: AnActionEvent) {
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  }
+
+  private inner class RetryModelCatalogAction(
+    private val providerId: String,
+  ) : DumbAwareAction(AgentPromptBundle.message("popup.generation.model.retry")) {
+    init {
+      templatePresentation.description = AgentPromptBundle.message("popup.generation.model.retry.description")
+      templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Never
+    }
+
+    override fun actionPerformed(e: AnActionEvent) {
+      val selectedProvider = providerSelector.selectedProvider ?: return
+      if (selectedProvider.bridge.provider.value != providerId) {
+        return
+      }
+
+      requestModelCatalogRefresh(selectedProvider)
+      refreshPresentation()
+      refreshModelPopupIfOpen(providerId)
     }
 
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

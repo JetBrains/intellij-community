@@ -186,6 +186,7 @@ internal class AgentPromptPaletteSessionController(
     draftController.overrideInitialTextIfProvided(initialText)
     if (initialAddContextRequest != null) {
       applyInitialAddContextTarget(initialAddContextRequest.target)
+      generationSettingsController.refreshSelectedProviderModels()
       contextController.syncActiveExtensionTab(view.tabbedPane.selectedComponent as? JPanel)
     }
     draftController.loadPromptTextForSelectedTab()

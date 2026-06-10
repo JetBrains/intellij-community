@@ -4,7 +4,9 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -16,6 +18,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 private val MODEL_CATALOG_REFRESH_COOLDOWN = 30.seconds
+private val LOG = logger<AgentPromptGenerationModelCatalogService>()
 
 @Service(Service.Level.PROJECT)
 internal class AgentPromptGenerationModelCatalogService(
@@ -45,15 +48,25 @@ internal class AgentPromptGenerationModelCatalogService(
     }
 
     val deferred = coroutineScope.async(Dispatchers.IO, start = CoroutineStart.LAZY) {
-      val models = provider.listAvailableGenerationModels(project).normalizedModelCatalog()
-      synchronized(lock) {
-        cachedCatalogsByProviderId = cachedCatalogsByProviderId + (providerId to CachedModelCatalog(models, System.currentTimeMillis()))
+      try {
+        val models = provider.listAvailableGenerationModels(project).normalizedModelCatalog()
+        synchronized(lock) {
+          cachedCatalogsByProviderId = cachedCatalogsByProviderId + (providerId to CachedModelCatalog(models, System.currentTimeMillis()))
+        }
+        models
       }
-      models
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.warn("Failed to refresh generation model catalog for provider '$providerId'", e)
+        throw e
+      }
     }
     val existingDeferred = synchronized(lock) {
-      inFlightRefreshesByProviderId[providerId]
-        ?: deferred.also { inFlightRefreshesByProviderId[providerId] = it }
+      inFlightRefreshesByProviderId[providerId] ?: deferred.also {
+        inFlightRefreshesByProviderId[providerId] = it
+      }
     }
     if (existingDeferred !== deferred) {
       deferred.cancel()
