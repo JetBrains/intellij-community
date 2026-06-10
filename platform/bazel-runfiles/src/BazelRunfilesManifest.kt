@@ -46,9 +46,46 @@ class BazelRunfilesManifest @JvmOverloads constructor(
   private val calculatedManifestEntries: MutableMap<String, String> = mutableMapOf()
 
   private fun parseManifestEntry(line: String): Pair<String, String> {
+    if (line.startsWith(" ")) {
+      val separatorIndex = line.indexOf(' ', startIndex = 1)
+      require(separatorIndex > 1) { "escaped runfiles_manifest line must have exactly 2 space-separated values: '$line'" }
+      return unescapeManifestPath(line.substring(1, separatorIndex)) to line.substring(separatorIndex + 1)
+    }
+
     val parts = line.split(" ", limit = 2)
     require(parts.size == 2) { "runfiles_manifest line must have exactly 2 space-separated values: '$line'" }
     return parts[0] to parts[1]
+  }
+
+  /**
+   * escaped path if there are whitespace symbols in the path, see
+   * https://github.com/bazelbuild/bazel/blob/5b6147736c14d1804df8ab1b2ff544e060465dd3/src/main/java/com/google/devtools/build/lib/analysis/SourceManifestAction.java#L363
+   * If rootRelativePath contains spaces, then each backslash is replaced with '\b', each space
+   * is replaced with '\s' and the line is prefixed with a space.
+   */
+  private fun unescapeManifestPath(path: String): String {
+    if ('\\' !in path) {
+      return path
+    }
+
+    return buildString(path.length) {
+      var index = 0
+      while (index < path.length) {
+        val char = path[index++]
+        if (char != '\\') {
+          append(char)
+          continue
+        }
+
+        require(index < path.length) { "Unterminated escape sequence in runfiles_manifest path: '$path'" }
+        append(when (val escapedChar = path[index++]) {
+          's' -> ' '
+          'n' -> '\n'
+          'b' -> '\\'
+          else -> error("Unexpected escape sequence in runfiles_manifest path '$path': \\$escapedChar")
+        })
+      }
+    }
   }
 
   fun get(key: String) : String {
