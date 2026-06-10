@@ -311,7 +311,7 @@ class PluginInstallOperation(
   }
 
   internal fun checkMissingDependencies(
-    pluginNode: IdeaPluginDescriptor,
+    pluginNode: PluginMainDescriptor,
     pluginIdsBeingInstalled: List<PluginId>?,
   ): Boolean {
     LOG.debug { "Checking missing dependencies for $pluginNode. Plugins being installed: $pluginIdsBeingInstalled" }
@@ -324,12 +324,10 @@ class PluginInstallOperation(
     if (pluginIdsBeingInstalled != null) {
       addedPluginIdsAfterInstallation.addAll(pluginIdsBeingInstalled)
     }
-    if (pluginNode is PluginMainDescriptor) {
-      addedPluginIdsAfterInstallation.addAll(pluginNode.pluginAliases)
-      for (module in pluginNode.contentModules) {
-        addedPluginIdsAfterInstallation.addAll(module.pluginAliases)
-        addedContentModuleIdsAfterInstallation.add(module.moduleId)
-      }
+    addedPluginIdsAfterInstallation.addAll(pluginNode.pluginAliases)
+    for (module in pluginNode.contentModules) {
+      addedPluginIdsAfterInstallation.addAll(module.pluginAliases)
+      addedContentModuleIdsAfterInstallation.add(module.moduleId)
     }
 
     val missingRequiredPlugins: MutableMap<PluginId, PluginUiModel> = HashMap()
@@ -374,86 +372,84 @@ class PluginInstallOperation(
       }
     }
 
-    if (pluginNode is PluginMainDescriptor) {
-      val processRequiredModuleDependencies = Function<PluginModuleDescriptor, Void?> { module ->
-        for (dependencyPluginId in module.moduleDependencies.plugins) {
-          LOG.debug {
-            "Processing v2 plugin dependency: " + dependencyPluginId.idString + " in " +
-            (if (module is ContentModuleDescriptor) "content module " + module.getModuleNameString() else "main descriptor")
-          }
-          val shouldSkip = Function<PluginId, Boolean> { pluginId ->
-            existingPluginIds.contains(pluginId) ||
-            addedPluginIdsAfterInstallation.contains(pluginId) ||
-            InstalledPluginsState.getInstance().wasInstalled(pluginId) ||
-            InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId) ||
-            missingRequiredPlugins.containsKey(pluginId)
-          }
-          if (shouldSkip.apply(dependencyPluginId)) {
-            LOG.debug { "Dependency is already satisfied" }
-            continue
-          }
-          var resolvedDependencyId = resolveModuleInMarketplaceWithCache(dependencyPluginId.idString)
-          if (resolvedDependencyId == null) {
-            resolvedDependencyId = dependencyPluginId
-          }
-          if (resolvedDependencyId != dependencyPluginId) LOG.debug { "Dependency is resolved into $resolvedDependencyId" }
-          if (shouldSkip.apply(resolvedDependencyId)) {
-            LOG.debug { "Dependency is already satisfied" }
-            continue
-          }
-          val depPluginDescriptor = findPluginInRepo(resolvedDependencyId)
-          if (depPluginDescriptor != null) {
-            LOG.debug { "Adding $resolvedDependencyId to missing dependencies" }
-            missingRequiredPlugins[resolvedDependencyId] = depPluginDescriptor
-          }
-          else {
-            LOG.debug { "Plugin $resolvedDependencyId is not found in the repository" }
-          }
+    val processRequiredModuleDependencies = Function<PluginModuleDescriptor, Void?> { module ->
+      for (dependencyPluginId in module.moduleDependencies.plugins) {
+        LOG.debug {
+          "Processing v2 plugin dependency: " + dependencyPluginId.idString + " in " +
+          (if (module is ContentModuleDescriptor) "content module " + module.getModuleNameString() else "main descriptor")
         }
-        for (dependencyModuleId in module.moduleDependencies.modules) {
-          LOG.debug {
-            "Processing v2 module dependency: " + dependencyModuleId.name + " in " +
-            (if (module is ContentModuleDescriptor) "content module " + module.getModuleNameString() else "main descriptor")
-          }
-          if (existingContentModuleIds.contains(dependencyModuleId) ||
-              addedContentModuleIdsAfterInstallation.contains(dependencyModuleId)) {
-            LOG.debug { "Dependency is already satisfied" }
-            continue
-          }
-          val resolvedDependencyId = resolveModuleInMarketplaceWithCache(dependencyModuleId.name)
-          if (resolvedDependencyId == null) {
-            LOG.debug { "Dependency is not resolved" }
-            continue
-          }
-          LOG.debug { "Dependency is resolved into $resolvedDependencyId" }
-          if (existingPluginIds.contains(resolvedDependencyId) ||
-              addedPluginIdsAfterInstallation.contains(resolvedDependencyId) ||
-              InstalledPluginsState.getInstance().wasInstalled(resolvedDependencyId) ||
-              InstalledPluginsState.getInstance().wasInstalledWithoutRestart(resolvedDependencyId) ||
-              missingRequiredPlugins.containsKey(resolvedDependencyId)) {
-            LOG.debug { "Dependency is already satisfied" }
-            continue
-          }
-          val depPluginDescriptor = findPluginInRepo(resolvedDependencyId)
-          if (depPluginDescriptor != null) {
-            LOG.debug { "Adding $resolvedDependencyId to missing dependencies" }
-            missingRequiredPlugins[resolvedDependencyId] = depPluginDescriptor
-          }
-          else {
-            LOG.debug { "Plugin $resolvedDependencyId is not found in the repository" }
-          }
+        val shouldSkip = Function<PluginId, Boolean> { pluginId ->
+          existingPluginIds.contains(pluginId) ||
+          addedPluginIdsAfterInstallation.contains(pluginId) ||
+          InstalledPluginsState.getInstance().wasInstalled(pluginId) ||
+          InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId) ||
+          missingRequiredPlugins.containsKey(pluginId)
         }
-        null
-      }
-
-      processRequiredModuleDependencies.apply(pluginNode)
-      for (module in pluginNode.contentModules) {
-        if (module.moduleLoadingRule.required) {
-          processRequiredModuleDependencies.apply(module)
+        if (shouldSkip.apply(dependencyPluginId)) {
+          LOG.debug { "Dependency is already satisfied" }
+          continue
+        }
+        var resolvedDependencyId = resolveModuleInMarketplaceWithCache(dependencyPluginId.idString)
+        if (resolvedDependencyId == null) {
+          resolvedDependencyId = dependencyPluginId
+        }
+        if (resolvedDependencyId != dependencyPluginId) LOG.debug { "Dependency is resolved into $resolvedDependencyId" }
+        if (shouldSkip.apply(resolvedDependencyId)) {
+          LOG.debug { "Dependency is already satisfied" }
+          continue
+        }
+        val depPluginDescriptor = findPluginInRepo(resolvedDependencyId)
+        if (depPluginDescriptor != null) {
+          LOG.debug { "Adding $resolvedDependencyId to missing dependencies" }
+          missingRequiredPlugins[resolvedDependencyId] = depPluginDescriptor
+        }
+        else {
+          LOG.debug { "Plugin $resolvedDependencyId is not found in the repository" }
         }
       }
-      // optional modules are skipped because they form a majority of content modules and the result is not really used, see comment below
+      for (dependencyModuleId in module.moduleDependencies.modules) {
+        LOG.debug {
+          "Processing v2 module dependency: " + dependencyModuleId.name + " in " +
+          (if (module is ContentModuleDescriptor) "content module " + module.getModuleNameString() else "main descriptor")
+        }
+        if (existingContentModuleIds.contains(dependencyModuleId) ||
+            addedContentModuleIdsAfterInstallation.contains(dependencyModuleId)) {
+          LOG.debug { "Dependency is already satisfied" }
+          continue
+        }
+        val resolvedDependencyId = resolveModuleInMarketplaceWithCache(dependencyModuleId.name)
+        if (resolvedDependencyId == null) {
+          LOG.debug { "Dependency is not resolved" }
+          continue
+        }
+        LOG.debug { "Dependency is resolved into $resolvedDependencyId" }
+        if (existingPluginIds.contains(resolvedDependencyId) ||
+            addedPluginIdsAfterInstallation.contains(resolvedDependencyId) ||
+            InstalledPluginsState.getInstance().wasInstalled(resolvedDependencyId) ||
+            InstalledPluginsState.getInstance().wasInstalledWithoutRestart(resolvedDependencyId) ||
+            missingRequiredPlugins.containsKey(resolvedDependencyId)) {
+          LOG.debug { "Dependency is already satisfied" }
+          continue
+        }
+        val depPluginDescriptor = findPluginInRepo(resolvedDependencyId)
+        if (depPluginDescriptor != null) {
+          LOG.debug { "Adding $resolvedDependencyId to missing dependencies" }
+          missingRequiredPlugins[resolvedDependencyId] = depPluginDescriptor
+        }
+        else {
+          LOG.debug { "Plugin $resolvedDependencyId is not found in the repository" }
+        }
+      }
+      null
     }
+
+    processRequiredModuleDependencies.apply(pluginNode)
+    for (module in pluginNode.contentModules) {
+      if (module.moduleLoadingRule.required) {
+        processRequiredModuleDependencies.apply(module)
+      }
+    }
+    // optional modules are skipped because they form a majority of content modules and the result is not really used, see comment below
 
     if (!prepareDependencies(pluginNode, missingRequiredPlugins.values.toMutableList(), "plugin.manager.dependencies.detected.title",
                              "plugin.manager.dependencies.detected.message", false)) {
