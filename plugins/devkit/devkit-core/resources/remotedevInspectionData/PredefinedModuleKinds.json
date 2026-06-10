@@ -25,12 +25,15 @@
   {"moduleName": "intellij.codeWithMe.datagrip.main", "moduleKind": "backend"},
   {"moduleName": "intellij.codeWithMe.pycharm.community.main", "moduleKind": "backend"},
   {"moduleName": "intellij.codeWithMe.appcode.main", "moduleKind": "backend"},
+
   {"moduleName": "intellij.cwm.connection", "moduleKind": "shared"},
   {"moduleName": "intellij.cwm.plugin.common", "moduleKind": "shared"},
   {"moduleName": "intellij.rd.client.base", "moduleKind": "shared"},
   {"moduleName": "intellij.rd.client", "moduleKind": "shared"},
 
+  {"pluginId": "com.intellij.modules.ultimate", "moduleKind": "shared"},
   {"pluginId": "com.intellij.modules.lang", "moduleKind": "shared"},
+
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/META-INF/PlatformLangPlugin.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/META-INF/PlatformLangComponents.xml", "moduleKind": "shared"},
   {"moduleName": "intellij.platform.resources", "descriptorRelativePath": "src/idea/PriorityEditorLangActions.xml", "moduleKind": "shared"},
