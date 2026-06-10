@@ -33,6 +33,8 @@ Agent Chat tabs are protocol-backed editor tabs around terminal-backed agent ses
   [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
+- Open pending Agent Chat editor tabs are tracked by the pending-tabs state/lifecycle service. Closing a pending tab removes its matching ephemeral projection.
+
 - Terminal content initialization is lazy: the lightweight editor shell appears immediately, and the terminal starts only after explicit tab selection/focus.
   [@test] ../chat/testSrc/AgentChatTabSelectionServiceTest.kt
 

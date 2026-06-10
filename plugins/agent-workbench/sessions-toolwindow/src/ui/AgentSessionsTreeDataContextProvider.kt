@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_PROJECT_PATH_CONTEX
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathContext
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.archiveThreadTargetKey
+import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupActionContext
 import com.intellij.agent.workbench.sessions.toolwindow.actions.AgentSessionsTreePopupDataKeys
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
@@ -68,6 +69,7 @@ internal class AgentSessionsTreeDataContextProvider(
     selectedTreeIds().forEach { id ->
       val threadNode = nodeResolver(id) as? SessionTreeNode.Thread ?: return@forEach
       if (threadNode.thread.archived != archived) return@forEach
+      if (isAgentSessionNewSessionId(threadNode.thread.id)) return@forEach
       val target = archiveTargetFromThreadNode(id, threadNode)
       targetsByKey.putIfAbsent(archiveThreadTargetKey(target), target)
     }

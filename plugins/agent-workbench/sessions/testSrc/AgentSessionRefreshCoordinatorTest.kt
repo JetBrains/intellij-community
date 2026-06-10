@@ -2518,7 +2518,9 @@ class AgentSessionRefreshCoordinatorTest {
         threadsChangedEvent(
           scopedPaths = setOf(PROJECT_PATH),
           threadIds = setOf("codex-1"),
-          activityUpdatesByThreadId = mapOf("codex-1" to activityUpdate(AgentThreadActivity.PROCESSING, chromeActivity = null, updatedAt = 200L)),
+          activityUpdatesByThreadId = mapOf("codex-1" to activityUpdate(AgentThreadActivity.PROCESSING,
+                                                                        chromeActivity = null,
+                                                                        updatedAt = 200L)),
         )
       )
 
@@ -4137,7 +4139,7 @@ class AgentSessionRefreshCoordinatorTest {
   }
 
   @Test
-  fun pendingCodexScopedRefreshProjectsPendingThreadsForUnloadedPath() = runBlocking(Dispatchers.Default) {
+  fun pendingCodexScopedRefreshDoesNotPersistPendingThreadsForUnloadedPath() = runBlocking(Dispatchers.Default) {
     val pendingPath = "/work/project-pending"
     val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
 
@@ -4182,20 +4184,20 @@ class AgentSessionRefreshCoordinatorTest {
 
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == pendingPath }
-          ?.threads
-          ?.any { it.provider == AgentSessionProvider.CODEX && it.id == "new-pending" } == true
+          ?.providerLoadStates
+          ?.get(AgentSessionProvider.CODEX) == AgentSessionProviderLoadState.LOADED
       }
 
       val pendingProject = stateStore.snapshot().projects.first { it.path == pendingPath }
-      val pendingThread = pendingProject.threads.single { it.provider == AgentSessionProvider.CODEX && it.id == "new-pending" }
       assertThat(pendingProject.providerLoadStates[AgentSessionProvider.CODEX]).isEqualTo(AgentSessionProviderLoadState.LOADED)
-      assertThat(pendingThread.title).isEqualTo(AgentSessionsBundle.message("toolwindow.action.new.thread"))
-      assertThat(pendingThread.updatedAt).isEqualTo(700L)
+      assertThat(pendingProject.threads).noneMatch { thread ->
+        thread.provider == AgentSessionProvider.CODEX && thread.id == "new-pending"
+      }
     }
   }
 
   @Test
-  fun pendingClaudeScopedRefreshProjectsPendingThreadsForUnloadedPath() = runBlocking(Dispatchers.Default) {
+  fun pendingClaudeScopedRefreshDoesNotPersistPendingThreadsForUnloadedPath() = runBlocking(Dispatchers.Default) {
     val pendingPath = "/work/project-pending"
     val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
 
@@ -4241,15 +4243,15 @@ class AgentSessionRefreshCoordinatorTest {
 
       waitForCondition {
         stateStore.snapshot().projects.firstOrNull { it.path == pendingPath }
-          ?.threads
-          ?.any { it.provider == AgentSessionProvider.CLAUDE && it.id == "new-pending" } == true
+          ?.providerLoadStates
+          ?.get(AgentSessionProvider.CLAUDE) == AgentSessionProviderLoadState.LOADED
       }
 
       val pendingProject = stateStore.snapshot().projects.first { it.path == pendingPath }
-      val pendingThread = pendingProject.threads.single { it.provider == AgentSessionProvider.CLAUDE && it.id == "new-pending" }
       assertThat(pendingProject.providerLoadStates[AgentSessionProvider.CLAUDE]).isEqualTo(AgentSessionProviderLoadState.LOADED)
-      assertThat(pendingThread.title).isEqualTo(AgentSessionsBundle.message("toolwindow.action.new.thread"))
-      assertThat(pendingThread.updatedAt).isEqualTo(700L)
+      assertThat(pendingProject.threads).noneMatch { thread ->
+        thread.provider == AgentSessionProvider.CLAUDE && thread.id == "new-pending"
+      }
     }
   }
 
@@ -4338,6 +4340,90 @@ class AgentSessionRefreshCoordinatorTest {
       assertThat(rebindInvocations).hasSize(1)
       val project = stateStore.snapshot().projects.first { it.path == pendingPath }
       assertThat(project.threads.map { it.id }).containsExactly("codex-resolved")
+    }
+  }
+
+  @Test
+  fun scopedRefreshDoesNotBindPendingTabsForProviderWithoutPendingEditorRebindSupport() = runBlocking(Dispatchers.Default) {
+    val pendingPath = "/work/project-pending"
+    val scopedRefreshSignals = MutableSharedFlow<Set<String>>(replay = 1, extraBufferCapacity = 1)
+    val rebindRequests = mutableListOf<AgentChatPendingTabRebindRequest>()
+    val pendingCreatedAtMs = System.currentTimeMillis() - 1_000L
+
+    val source = ScriptedSessionSource(
+      provider = AgentSessionProvider.CODEX,
+      supportsUpdates = false,
+      listFromClosedProject = { path ->
+        if (path != pendingPath) {
+          emptyList()
+        }
+        else {
+          listOf(
+            thread(
+              id = "codex-resolved",
+              updatedAt = pendingCreatedAtMs + 200L,
+              title = "Resolved thread",
+              provider = AgentSessionProvider.CODEX,
+            )
+          )
+        }
+      },
+    )
+    val providerDescriptor = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = emptySet(),
+      cliAvailable = true,
+      supportsPendingEditorTabRebind = false,
+      supportsNewThreadRebind = true,
+      emitsScopedRefreshSignals = true,
+    )
+
+    withLoadingCoordinator(
+      sessionSourcesProvider = { listOf(source) },
+      providerDescriptors = listOf(providerDescriptor),
+      isRefreshGateActive = { true },
+      openChatPathsProvider = { setOf(pendingPath) },
+      codexScopedRefreshSignalsProvider = { scopedRefreshSignals },
+      openPendingCodexTabsProvider = {
+        mapOf(
+          pendingPath to listOf(
+            pendingCodexTab(
+              pendingThreadIdentity = "codex:new-pending",
+              projectPath = pendingPath,
+              pendingCreatedAtMs = pendingCreatedAtMs,
+              pendingLaunchMode = "standard",
+            )
+          )
+        )
+      },
+      openChatPendingTabsBinder = { requestsByPath ->
+        rebindRequests += requestsByPath.values.flatten()
+        successfulPendingCodexRebindReport(requestsByPath)
+      },
+    ) { coordinator, stateStore ->
+      stateStore.replaceProjects(
+        projects = listOf(
+          AgentProjectSessions(
+            path = pendingPath,
+            name = "Pending",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            threads = listOf(thread(id = "codex-existing", updatedAt = 100L, provider = AgentSessionProvider.CODEX)),
+          )
+        ),
+        visibleThreadCounts = emptyMap(),
+      )
+
+      coordinator.observeSessionSourceUpdates()
+      scopedRefreshSignals.tryEmit(setOf(pendingPath))
+
+      waitForCondition {
+        stateStore.snapshot().projects.firstOrNull { it.path == pendingPath }
+          ?.threads
+          ?.map { it.id } == listOf("codex-resolved")
+      }
+
+      assertThat(rebindRequests).isEmpty()
     }
   }
 

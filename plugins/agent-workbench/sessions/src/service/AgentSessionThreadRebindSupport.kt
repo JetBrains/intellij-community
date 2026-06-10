@@ -4,20 +4,16 @@ package com.intellij.agent.workbench.sessions.service
 import com.intellij.agent.workbench.chat.AgentChatConcreteTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindReport
 import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
-import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindStatus
 import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.common.session.AgentSessionThread
-import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.isConcreteCodexNewThreadRebindAnchorActive
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_POST_WINDOW_MS
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_PRE_WINDOW_MS
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_NO_BASELINE_AUTO_BIND_MAX_AGE_MS
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
-import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.agent.workbench.sessions.util.parseAgentSessionIdentity
@@ -32,12 +28,10 @@ private const val PENDING_THREAD_AMBIGUITY_NOTIFY_AFTER_POLLS = 2
 private const val PENDING_THREAD_AMBIGUITY_NOTIFY_COOLDOWN_MS = 5 * 60 * 1000L
 private const val PROVIDER_REFRESH_HINT_MAX_LISTED_THREAD_IDS_PER_PATH = 200
 
-internal data class PendingTabBindOutcome(
-  val pendingTabsForProjectionByPath: Map<String, List<AgentChatPendingTabSnapshot>>,
-)
-
 internal class AgentSessionThreadRebindSupport(
   private val provider: AgentSessionProvider,
+  internal val canBindPendingOpenChatTabs: Boolean,
+  private val canRebindConcreteNewThreads: Boolean,
   private val openAgentChatPendingTabsBinder: suspend (
     AgentSessionProvider,
     Map<String, List<AgentChatPendingTabRebindRequest>>,
@@ -60,6 +54,7 @@ internal class AgentSessionThreadRebindSupport(
     if (targetPaths.isEmpty()) {
       return emptyMap()
     }
+    val effectivePendingTabsByPath = if (canBindPendingOpenChatTabs) pendingTabsByPath else emptyMap()
 
     val hintThreadIdsByPath = LinkedHashMap<String, LinkedHashSet<String>>()
     for (path in targetPaths) {
@@ -79,7 +74,7 @@ internal class AgentSessionThreadRebindSupport(
         .take(PROVIDER_REFRESH_HINT_MAX_LISTED_THREAD_IDS_PER_PATH)
         .forEach { thread -> ids.add(thread.id) }
 
-      pendingTabsByPath[path]
+      effectivePendingTabsByPath[path]
         .orEmpty()
         .forEach { pendingTab ->
           val identity = parseAgentSessionIdentity(pendingTab.pendingThreadIdentity) ?: return@forEach
@@ -89,7 +84,7 @@ internal class AgentSessionThreadRebindSupport(
           ids.add(identity.sessionId)
         }
 
-      if (ids.isNotEmpty() || pendingTabsByPath[path]?.isNotEmpty() == true) {
+      if (ids.isNotEmpty() || effectivePendingTabsByPath[path]?.isNotEmpty() == true) {
         hintThreadIdsByPath[path] = ids
       }
     }
@@ -167,10 +162,10 @@ internal class AgentSessionThreadRebindSupport(
     allowedThreadIdsByPath: Map<String, Set<String>>? = null,
     refreshHintsByPath: Map<String, AgentSessionRefreshHints> = emptyMap(),
     pendingTabsByPath: Map<String, List<AgentChatPendingTabSnapshot>> = emptyMap(),
-  ): PendingTabBindOutcome {
-    if (pendingTabsByPath.isEmpty()) {
+  ) {
+    if (!canBindPendingOpenChatTabs || pendingTabsByPath.isEmpty()) {
       clearPendingThreadAmbiguityState()
-      return PendingTabBindOutcome(emptyMap())
+      return
     }
     val eligiblePendingTabsByPath = selectPendingTabsEligibleForRebind(
       pendingTabsByPath = pendingTabsByPath,
@@ -179,7 +174,7 @@ internal class AgentSessionThreadRebindSupport(
     )
     if (eligiblePendingTabsByPath.isEmpty()) {
       clearPendingThreadAmbiguityState()
-      return PendingTabBindOutcome(pendingTabsForProjectionByPath = pendingTabsByPath)
+      return
     }
 
     val candidatesByPath = LinkedHashMap<String, MutableList<AgentChatTabRebindTarget>>()
@@ -216,22 +211,22 @@ internal class AgentSessionThreadRebindSupport(
         continue
       }
       val pathCandidates = candidatesByPath.getOrPut(path) { ArrayList(rebindCandidates.size) }
-      for (candidate in rebindCandidates) {
+      for ((threadId, title, updatedAt, activity) in rebindCandidates) {
         pathCandidates.add(
           buildAgentSessionChatRebindTarget(
             path = path,
             provider = provider,
-            threadId = candidate.threadId,
-            title = candidate.title,
-            activity = candidate.activity,
-            updatedAt = candidate.updatedAt,
+            threadId = threadId,
+            title = title,
+            activity = activity,
+            updatedAt = updatedAt,
           )
         )
       }
     }
 
     if (candidatesByPath.isEmpty()) {
-      return PendingTabBindOutcome(pendingTabsForProjectionByPath = pendingTabsByPath)
+      return
     }
 
     val matchResult = PendingAgentChatTabMatcher.match(
@@ -249,7 +244,7 @@ internal class AgentSessionThreadRebindSupport(
 
     val bindingsByPath = matchResult.bindingsByPath
     if (bindingsByPath.isEmpty()) {
-      return PendingTabBindOutcome(pendingTabsForProjectionByPath = pendingTabsByPath)
+      return
     }
 
     val requestsByPath = LinkedHashMap<String, List<AgentChatPendingTabRebindRequest>>(bindingsByPath.size)
@@ -271,19 +266,14 @@ internal class AgentSessionThreadRebindSupport(
       "requestedBindings=${rebindReport.requestedBindings}, candidatePaths=${candidatesByPath.size}, matchedPaths=${bindingsByPath.size})"
     }
 
-    return PendingTabBindOutcome(
-      pendingTabsForProjectionByPath = reconcilePendingTabsForProjection(
-        pendingTabsByPath = pendingTabsByPath,
-        rebindReport = rebindReport,
-      ),
-    )
+    return
   }
 
   suspend fun clearStaleConcreteOpenChatNewThreadRebindAnchors(
     refreshId: Long,
     concreteTabsByPath: Map<String, List<AgentChatConcreteTabSnapshot>> = emptyMap(),
   ) {
-    if (concreteTabsByPath.isEmpty()) {
+    if (!canRebindConcreteNewThreads || concreteTabsByPath.isEmpty()) {
       return
     }
 
@@ -348,165 +338,6 @@ internal class AgentSessionThreadRebindSupport(
       }
     }
     return eligibleByPath
-  }
-
-  fun mergePendingThreadsFromOpenTabs(
-    outcomes: MutableMap<String, ProviderRefreshOutcome>,
-    targetPaths: Set<String>,
-    refreshId: Long,
-    pendingTabsByPath: Map<String, List<AgentChatPendingTabSnapshot>>,
-  ): Set<String> {
-    if (pendingTabsByPath.isEmpty() || outcomes.isEmpty()) {
-      return emptySet()
-    }
-
-    val normalizedTargetPaths = targetPaths
-      .asSequence()
-      .map(::normalizeAgentWorkbenchPath)
-      .toHashSet()
-    val outcomePathByNormalizedPath = LinkedHashMap<String, String>()
-    outcomes.keys.forEach { path ->
-      outcomePathByNormalizedPath.putIfAbsent(normalizeAgentWorkbenchPath(path), path)
-    }
-
-    val projectedPaths = LinkedHashSet<String>()
-    var projectedThreads = 0
-    for ((path, pendingTabs) in pendingTabsByPath) {
-      val normalizedPath = normalizeAgentWorkbenchPath(path)
-      if (normalizedPath !in normalizedTargetPaths) {
-        continue
-      }
-
-      val outcomePath = outcomePathByNormalizedPath[normalizedPath] ?: continue
-      val pendingThreads = buildPendingThreads(pendingTabs)
-      if (pendingThreads.isEmpty()) {
-        continue
-      }
-
-      val existingOutcome = outcomes[outcomePath] ?: ProviderRefreshOutcome()
-      val mergedThreads = mergeProviderThreadsWithPendingThreads(
-        sourceThreads = existingOutcome.threads.orEmpty(),
-        pendingThreads = pendingThreads,
-      )
-      outcomes[outcomePath] = existingOutcome.copy(threads = mergedThreads)
-      projectedPaths += normalizedPath
-      projectedThreads += pendingThreads.size
-    }
-
-    if (projectedPaths.isNotEmpty()) {
-      LOG.debug {
-        "Provider refresh id=$refreshId provider=${provider.value} projected pending rows " +
-        "(paths=${projectedPaths.size}, threads=$projectedThreads)"
-      }
-    }
-
-    return projectedPaths
-  }
-
-  private fun buildPendingThreads(
-    pendingTabs: List<AgentChatPendingTabSnapshot>,
-  ): List<AgentSessionThread> {
-    val threadsById = LinkedHashMap<String, AgentSessionThread>()
-    for (pendingTab in pendingTabs) {
-      val identity = parseAgentSessionIdentity(pendingTab.pendingThreadIdentity) ?: continue
-      if (identity.provider != provider) continue
-      if (!isAgentSessionNewSessionId(identity.sessionId)) continue
-
-      val updatedAt = pendingTab.pendingFirstInputAtMs ?: pendingTab.pendingCreatedAtMs ?: 0L
-      val pendingThread = AgentSessionThread(
-        id = identity.sessionId,
-        title = AgentSessionsBundle.message("toolwindow.action.new.thread"),
-        updatedAt = updatedAt,
-        archived = false,
-        activity = AgentThreadActivity.READY,
-        provider = provider,
-      )
-      val existing = threadsById[identity.sessionId]
-      if (existing == null || pendingThread.updatedAt > existing.updatedAt) {
-        threadsById[identity.sessionId] = pendingThread
-      }
-    }
-    return threadsById.values.toList()
-  }
-
-  private fun mergeProviderThreadsWithPendingThreads(
-    sourceThreads: List<AgentSessionThread>,
-    pendingThreads: List<AgentSessionThread>,
-  ): List<AgentSessionThread> {
-    if (pendingThreads.isEmpty()) {
-      return sourceThreads
-    }
-
-    val threadsById = LinkedHashMap<String, AgentSessionThread>(sourceThreads.size + pendingThreads.size)
-    sourceThreads.forEach { thread ->
-      threadsById[thread.id] = thread
-    }
-    pendingThreads.forEach { pendingThread ->
-      val existing = threadsById[pendingThread.id]
-      threadsById[pendingThread.id] = if (existing == null || pendingThread.updatedAt >= existing.updatedAt) {
-        pendingThread
-      }
-      else {
-        existing
-      }
-    }
-    return sortAgentSessionThreadsForDisplay(threadsById.values.toList())
-  }
-
-  private fun reconcilePendingTabsForProjection(
-    pendingTabsByPath: Map<String, List<AgentChatPendingTabSnapshot>>,
-    rebindReport: AgentChatPendingTabRebindReport,
-  ): Map<String, List<AgentChatPendingTabSnapshot>> {
-    val staleRefsByPath = collectStalePendingTabRefsByPath(rebindReport)
-    if (staleRefsByPath.isEmpty()) {
-      return pendingTabsByPath
-    }
-
-    val reconciled = LinkedHashMap<String, List<AgentChatPendingTabSnapshot>>(pendingTabsByPath.size)
-    for ((path, pendingTabs) in pendingTabsByPath) {
-      val staleRefs = staleRefsByPath[path]
-      if (staleRefs.isNullOrEmpty()) {
-        reconciled[path] = pendingTabs
-        continue
-      }
-      val filtered = pendingTabs.filterNot { pendingTab ->
-        PendingTabRef(
-          pendingTabKey = pendingTab.pendingTabKey,
-          pendingThreadIdentity = pendingTab.pendingThreadIdentity,
-        ) in staleRefs
-      }
-      if (filtered.isNotEmpty()) {
-        reconciled[path] = filtered
-      }
-    }
-    return reconciled
-  }
-
-  private fun collectStalePendingTabRefsByPath(
-    rebindReport: AgentChatPendingTabRebindReport,
-  ): Map<String, Set<PendingTabRef>> {
-    if (rebindReport.outcomesByPath.isEmpty()) {
-      return emptyMap()
-    }
-
-    val staleRefsByPath = LinkedHashMap<String, LinkedHashSet<PendingTabRef>>()
-    for ((path, outcomes) in rebindReport.outcomesByPath) {
-      val normalizedPath = normalizeAgentWorkbenchPath(path)
-      for (outcome in outcomes) {
-        if (!outcome.status.shouldDropFromPendingProjection()) {
-          continue
-        }
-        staleRefsByPath
-          .getOrPut(normalizedPath) { LinkedHashSet() }
-          .add(
-            PendingTabRef(
-              pendingTabKey = outcome.request.pendingTabKey,
-              pendingThreadIdentity = outcome.request.pendingThreadIdentity,
-            )
-          )
-      }
-    }
-    return staleRefsByPath
   }
 
   private fun clearPendingThreadAmbiguityState() {
@@ -577,18 +408,6 @@ private data class PendingThreadAmbiguityState(
   @JvmField val pollCount: Int,
   @JvmField val lastWarnedAtMs: Long?,
 )
-
-private data class PendingTabRef(
-  val pendingTabKey: String,
-  val pendingThreadIdentity: String,
-)
-
-private fun AgentChatPendingTabRebindStatus.shouldDropFromPendingProjection(): Boolean {
-  return this == AgentChatPendingTabRebindStatus.REBOUND ||
-         this == AgentChatPendingTabRebindStatus.PENDING_TAB_NOT_OPEN ||
-         this == AgentChatPendingTabRebindStatus.INVALID_PENDING_TAB ||
-         this == AgentChatPendingTabRebindStatus.TARGET_ALREADY_OPEN
-}
 
 private fun AgentChatPendingTabSnapshot.isEligibleForNoBaselineAutoBind(nowMs: Long): Boolean {
   val createdAtMs = pendingCreatedAtMs ?: return false

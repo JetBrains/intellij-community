@@ -74,6 +74,8 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
 - Project/worktree rows expose hover-or-selection new-thread affordances and loading indicators without changing normal tree selection semantics.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
 
+- The active tree view overlays currently open pending Agent Chat tabs as ephemeral placeholders. The archived view ignores them, and placeholders are not archive, cost, or row-action targets.
+
 - Collapse/expand state must persist by normalized project path and must not store transient thread content.
   [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeStatePersistenceTest.kt
   [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt

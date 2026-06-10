@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForMoreThreadsNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.pathForThreadNode
+import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.openapi.project.Project
 
 internal fun createAgentSessionsTreePopupActionContext(
@@ -44,6 +45,7 @@ internal fun resolveSessionActionTarget(nodeId: SessionTreeId, node: SessionTree
     }
 
     is SessionTreeNode.Thread -> {
+      if (isAgentSessionNewSessionId(node.thread.id)) return null
       when (nodeId) {
         is SessionTreeId.Thread,
         is SessionTreeId.WorktreeThread,

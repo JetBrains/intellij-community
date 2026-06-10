@@ -57,6 +57,8 @@ Session refresh is event-driven and provider-agnostic. It merges provider result
 - Thread-targeted source updates must refresh only resolvable loaded/open paths and must not widen unresolved thread-only events into a full refresh.
   [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 
+- Refresh and rebind flows may inspect open pending Agent Chat tabs for materialization or rebind, but synthetic pending rows must not be persisted to `AgentSessionsStateStore`.
+
 - Provider refresh outcomes may be complete path snapshots or partial thread updates/removals. Partial outcomes must not remove unrelated provider rows or shared thread presentation.
   [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 

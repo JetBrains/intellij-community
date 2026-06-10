@@ -116,13 +116,14 @@ internal class AgentSessionProviderRefreshRunner(
 
       val refreshSupport = refreshSupportProvider(provider)
       val pendingTabsSnapshotByPath = openChatSnapshot.pendingTabsByPath(provider)
+      val pendingTabsForRebindByPath = if (refreshSupport?.canBindPendingOpenChatTabs == true) pendingTabsSnapshotByPath else emptyMap()
       val concreteTabsSnapshotByPath = openChatSnapshot.concreteTabsAwaitingNewThreadRebindByPath(provider)
 
       val hintThreadIdsByPath = refreshSupport?.collectRefreshHintThreadIdsByPath(
         targetPaths = targetPaths,
         outcomes = outcomes,
         knownThreadIdsByPath = knownThreadIdsByPath,
-        pendingTabsByPath = pendingTabsSnapshotByPath,
+        pendingTabsByPath = pendingTabsForRebindByPath,
         openConcreteThreadIdentitiesByPath = openChatSnapshot.concreteThreadIdentitiesByPath,
       ) ?: emptyMap()
 
@@ -131,7 +132,7 @@ internal class AgentSessionProviderRefreshRunner(
           .asSequence()
           .filter { path ->
             hintThreadIdsByPath.containsKey(path) ||
-            pendingTabsSnapshotByPath[path]?.isNotEmpty() == true
+            pendingTabsForRebindByPath[path]?.isNotEmpty() == true
           }
           .toCollection(LinkedHashSet())
       }
@@ -171,32 +172,21 @@ internal class AgentSessionProviderRefreshRunner(
         concreteTabsByPath = concreteTabsSnapshotByPath,
       )
 
-      val pendingBindOutcome = refreshSupport?.bindPendingOpenChatTabs(
+      refreshSupport?.bindPendingOpenChatTabs(
         outcomes = outcomes,
         refreshId = refreshId,
         allowedThreadIdsByPath = allowedNewThreadIdsByPath,
         refreshHintsByPath = refreshHintsByPath,
-        pendingTabsByPath = pendingTabsSnapshotByPath,
+        pendingTabsByPath = pendingTabsForRebindByPath,
       )
 
-      val pendingTabsForProjectionByPath =
-        pendingBindOutcome?.pendingTabsForProjectionByPath ?: pendingTabsSnapshotByPath
-
       syncOpenChatTabPresentation(provider = provider, outcomes = outcomes, refreshId = refreshId)
-
-      val pendingProjectionPaths = refreshSupport?.mergePendingThreadsFromOpenTabs(
-        outcomes = outcomes,
-        targetPaths = targetPaths,
-        refreshId = refreshId,
-        pendingTabsByPath = pendingTabsForProjectionByPath,
-      ) ?: emptySet()
 
       applyProviderOutcomesToState(
         provider = provider,
         refreshId = refreshId,
         logLabel = "Provider refresh",
         outcomes = outcomes,
-        pendingProjectionPaths = pendingProjectionPaths,
       )
       contentRepository.syncWarmSnapshotsFromRuntime(targetPaths)
       LOG.debug { "Finished provider refresh id=$refreshId provider=${provider.value}" }
@@ -296,22 +286,13 @@ internal class AgentSessionProviderRefreshRunner(
         concreteTabsByPath = concreteTabsSnapshotByPath,
       )
 
-      val pendingBindOutcome = refreshSupport?.bindPendingOpenChatTabs(
+      refreshSupport?.bindPendingOpenChatTabs(
         outcomes = outcomes,
         refreshId = refreshId,
         allowedThreadIdsByPath = null,
         refreshHintsByPath = refreshHintsByPath,
         pendingTabsByPath = pendingTabsSnapshotByPath,
       )
-
-      val pendingTabsForProjectionByPath =
-        pendingBindOutcome?.pendingTabsForProjectionByPath ?: pendingTabsSnapshotByPath
-      val pendingProjectionPaths = refreshSupport?.mergePendingThreadsFromOpenTabs(
-        outcomes = outcomes,
-        targetPaths = targetPaths,
-        refreshId = refreshId,
-        pendingTabsByPath = pendingTabsForProjectionByPath,
-      ) ?: emptySet()
 
       syncOpenChatTabPresentation(provider = provider, outcomes = outcomes, refreshId = refreshId)
 
@@ -320,9 +301,8 @@ internal class AgentSessionProviderRefreshRunner(
         refreshId = refreshId,
         logLabel = "Provider hint refresh",
         outcomes = outcomes,
-        pendingProjectionPaths = pendingProjectionPaths,
       )
-      if (pendingProjectionPaths.isNotEmpty() || refreshHintsByPath.isNotEmpty()) {
+      if (refreshHintsByPath.isNotEmpty()) {
         contentRepository.syncWarmSnapshotsFromRuntime(targetPaths)
       }
       LOG.debug { "Finished provider hint refresh id=$refreshId provider=${provider.value}" }
@@ -439,12 +419,11 @@ internal class AgentSessionProviderRefreshRunner(
     refreshId: Long,
     logLabel: String,
     outcomes: Map<String, ProviderRefreshOutcome>,
-    pendingProjectionPaths: Set<String>,
   ) {
     stateStore.update { state ->
       var changed = false
       val nextProjects = state.projects.map { project ->
-        val shouldApplyProjectOutcome = project.isOpen || project.hasProviderSnapshot(provider) || project.path in pendingProjectionPaths
+        val shouldApplyProjectOutcome = project.isOpen || project.hasProviderSnapshot(provider)
         val updatedProject = if (shouldApplyProjectOutcome) {
           val outcome = outcomes[project.path]
           if (outcome != null) {
@@ -464,7 +443,7 @@ internal class AgentSessionProviderRefreshRunner(
 
         val nextWorktrees = updatedProject.worktrees.map { worktree ->
           val shouldApplyWorktreeOutcome =
-            worktree.isOpen || worktree.hasProviderSnapshot(provider) || worktree.path in pendingProjectionPaths
+            worktree.isOpen || worktree.hasProviderSnapshot(provider)
           if (!shouldApplyWorktreeOutcome) return@map worktree
           val outcome = outcomes[worktree.path] ?: return@map worktree
           val refreshedWorktree = worktree.withProviderRefreshOutcome(provider, outcome)

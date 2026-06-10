@@ -121,6 +121,37 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
+  fun pendingThreadRowsDoNotCreatePopupActionContext() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val pendingThread = thread(id = "new-pending", provider = AgentSessionProvider.CODEX)
+
+    val projectThreadContext = createAgentSessionsTreePopupActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      nodeId = SessionTreeId.Thread(
+        projectPath = "/work/project-a",
+        provider = AgentSessionProvider.CODEX,
+        threadId = "new-pending",
+      ),
+      node = SessionTreeNode.Thread(project = project, thread = pendingThread),
+      archiveTargets = emptyList(),
+    )
+    val worktreeThreadContext = createAgentSessionsTreePopupActionContext(
+      project = ProjectManager.getInstance().defaultProject,
+      nodeId = SessionTreeId.WorktreeThread(
+        projectPath = "/work/project-a",
+        worktreePath = "/work/project-a-feature",
+        provider = AgentSessionProvider.CODEX,
+        threadId = "new-pending",
+      ),
+      node = SessionTreeNode.Thread(project = project, thread = pendingThread),
+      archiveTargets = emptyList(),
+    )
+
+    assertThat(projectThreadContext).isNull()
+    assertThat(worktreeThreadContext).isNull()
+  }
+
+  @Test
   fun moreActionUsesNodeSpecificCommandAndLabel() {
     var showMoreProjectsCalls = 0
     var showMoreThreadsPath: String? = null

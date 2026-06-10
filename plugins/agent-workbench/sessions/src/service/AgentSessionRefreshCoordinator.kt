@@ -118,7 +118,9 @@ internal class AgentSessionRefreshCoordinator(
     scopedRefreshProvidersProvider = {
       service<AgentSessionProviderSettingsService>().enabledProviders(providerDescriptorsByIdProvider())
         .asSequence()
-        .filter { provider -> provider.emitsScopedRefreshSignals }
+        .filter { provider ->
+          provider.emitsScopedRefreshSignals || provider.supportsPendingEditorTabRebind || provider.supportsNewThreadRebind
+        }
         .map { provider -> provider.provider }
         .toList()
     },
@@ -147,6 +149,8 @@ internal class AgentSessionRefreshCoordinator(
       providerRefreshSupportByProvider.getOrPut(provider) {
         AgentSessionThreadRebindSupport(
           provider = provider,
+          canBindPendingOpenChatTabs = descriptor.supportsPendingEditorTabRebind,
+          canRebindConcreteNewThreads = descriptor.supportsNewThreadRebind,
           openAgentChatPendingTabsBinder = openAgentChatPendingTabsBinder,
           clearOpenConcreteNewThreadRebindAnchors = clearOpenConcreteNewThreadRebindAnchors,
         )

@@ -6,6 +6,8 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 // @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
+import com.intellij.agent.workbench.chat.AgentChatOpenPendingTabsStateService
+import com.intellij.agent.workbench.chat.AgentChatPendingEditorLifecycleService
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintBanner
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintStateService
@@ -28,6 +30,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModelDiff
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
+import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
@@ -166,6 +169,7 @@ internal class AgentSessionsToolWindowPanel(
     archivedSessionsStateFlow = service<AgentArchivedSessionsService>().stateFlow(),
     threadViewStateFlow = service<AgentSessionThreadViewStateService>().state,
     selectedChatTabFlow = project.service<AgentChatTabSelectionService>().selectedChatTab,
+    pendingChatTabsStateFlow = service<AgentChatOpenPendingTabsStateService>().state,
     markThreadAsRead = { path, provider, threadId, updatedAt ->
       service<AgentSessionRefreshService>().markThreadAsRead(path, provider, threadId, updatedAt)
     },
@@ -194,6 +198,8 @@ internal class AgentSessionsToolWindowPanel(
   private val northPanel: JPanel = buildNorthPanel()
 
   init {
+    project.service<AgentChatPendingEditorLifecycleService>()
+    service<AgentChatOpenPendingTabsStateService>().refreshOpenTabs()
     dataContextProvider = AgentSessionsTreeDataContextProvider(
       project = project,
       tree = tree,
@@ -474,7 +480,8 @@ internal class AgentSessionsToolWindowPanel(
 
 internal fun sessionTreeModelShouldMarkCostHintEligible(model: SessionTreeModel): Boolean {
   return model.entriesById.values.any { entry ->
-    entry.node is SessionTreeNode.Thread
+    val threadNode = entry.node as? SessionTreeNode.Thread ?: return@any false
+    !isAgentSessionNewSessionId(threadNode.thread.id)
   }
 }
 

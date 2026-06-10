@@ -25,6 +25,7 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
@@ -69,7 +70,8 @@ private object AgentChatScopedRefreshSignalBus {
     if (normalizedPath.isBlank()) {
       return false
     }
-    val updateType = if (activityUpdatesByThreadId.isEmpty()) AgentSessionSourceUpdate.THREADS_CHANGED else AgentSessionSourceUpdate.HINTS_CHANGED
+    val updateType =
+      if (activityUpdatesByThreadId.isEmpty()) AgentSessionSourceUpdate.THREADS_CHANGED else AgentSessionSourceUpdate.HINTS_CHANGED
     return signal(
       provider = provider,
       updateEvent = AgentSessionSourceUpdateEvent(
@@ -343,8 +345,12 @@ suspend fun openChat(
   }
 
   val pendingProvider = pendingProviderForThreadIdentity(threadIdentity)
-  if (pendingProvider != null && AgentSessionProviders.find(pendingProvider)?.emitsScopedRefreshSignals == true) {
-    notifyAgentChatScopedRefresh(provider = pendingProvider, projectPath = projectPath)
+  if (pendingProvider != null) {
+    project.service<AgentChatPendingEditorLifecycleService>()
+    service<AgentChatOpenPendingTabsStateService>().refreshOpenTabs()
+    if (AgentSessionProviders.find(pendingProvider)?.emitsScopedRefreshSignals == true) {
+      notifyAgentChatScopedRefresh(provider = pendingProvider, projectPath = projectPath)
+    }
   }
 
   return file
@@ -726,6 +732,9 @@ suspend fun rebindOpenPendingAgentChatTabs(
         manager.updateFilePresentation(changedFile)
         updatedPresentations++
       }
+    }
+    if (changedFiles.isNotEmpty()) {
+      service<AgentChatOpenPendingTabsStateService>().refreshOpenTabs()
     }
 
     val requestedBindings = normalizedRequestsByPath.values.sumOf { it.size }

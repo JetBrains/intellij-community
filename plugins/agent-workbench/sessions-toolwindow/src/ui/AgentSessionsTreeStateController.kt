@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
+import com.intellij.agent.workbench.chat.AgentChatOpenPendingTabsState
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.parseAgentThreadIdentity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
@@ -17,6 +18,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModelDiff
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.diffSessionTreeModels
+import com.intellij.agent.workbench.sessions.toolwindow.tree.overlayPendingAgentChatTabs
 import com.intellij.agent.workbench.sessions.toolwindow.tree.parentNodesForSelection
 import com.intellij.agent.workbench.sessions.toolwindow.tree.resolveSelectedSessionTreeId
 import com.intellij.openapi.application.UI
@@ -41,6 +43,7 @@ internal class AgentSessionsTreeStateController(
   private val archivedSessionsStateFlow: StateFlow<AgentArchivedSessionsState>,
   private val threadViewStateFlow: StateFlow<AgentSessionThreadViewState>,
   private val selectedChatTabFlow: StateFlow<AgentChatTabSelection?>,
+  private val pendingChatTabsStateFlow: StateFlow<AgentChatOpenPendingTabsState>,
   private val markThreadAsRead: (String, AgentSessionProvider, String, Long) -> Unit,
   private val ensureArchivedSessionsLoaded: () -> Unit,
   private val tree: Tree,
@@ -60,6 +63,7 @@ internal class AgentSessionsTreeStateController(
   private var archivedSessionsState: AgentArchivedSessionsState = AgentArchivedSessionsState()
   private var threadViewState: AgentSessionThreadViewState = AgentSessionThreadViewState()
   private var selectedChatTab: AgentChatTabSelection? = null
+  private var pendingChatTabsState: AgentChatOpenPendingTabsState = AgentChatOpenPendingTabsState.EMPTY
   private var treeUpdateSequence: Long = 0
   private var rebuildJob: Job? = null
   private var treeSelectionInitialized = false
@@ -105,6 +109,13 @@ internal class AgentSessionsTreeStateController(
     }
 
     scope.launch {
+      pendingChatTabsStateFlow.collect { state ->
+        pendingChatTabsState = state
+        rebuildTree(SessionTreeRebuildReason.PENDING_CHAT_TABS_CHANGED)
+      }
+    }
+
+    scope.launch {
       serviceAsync<AgentSessionUiPreferencesStateService>().lastUsedProviderFlow.collect { provider ->
         onLastUsedProviderChanged(provider)
       }
@@ -134,7 +145,10 @@ internal class AgentSessionsTreeStateController(
 
   fun displayedStateSnapshot(): AgentSessionsState {
     return when (threadViewState.mode) {
-      AgentSessionThreadViewMode.ACTIVE -> activeSessionsState
+      AgentSessionThreadViewMode.ACTIVE -> overlayPendingAgentChatTabs(
+        state = activeSessionsState,
+        pendingTabsState = pendingChatTabsState,
+      )
       AgentSessionThreadViewMode.ARCHIVED -> buildArchivedDisplayState(
         archivedState = archivedSessionsState,
         rangePreset = threadViewState.archivedRangePreset,
@@ -362,6 +376,7 @@ internal class AgentSessionsTreeStateController(
 internal enum class SessionTreeRebuildReason {
   SESSION_STATE_CHANGED,
   CHAT_TAB_SELECTION_CHANGED,
+  PENDING_CHAT_TABS_CHANGED,
   THREAD_VIEW_CHANGED,
 }
 
@@ -416,6 +431,7 @@ internal fun sessionTreeSelectionTargetsAfterModelSwap(
     selectionInitialized && previouslySelectedTreeIds.isEmpty() && lastAppliedSelectedTreeIds.isNotEmpty()
   return when (reason) {
     SessionTreeRebuildReason.SESSION_STATE_CHANGED,
+    SessionTreeRebuildReason.PENDING_CHAT_TABS_CHANGED,
     SessionTreeRebuildReason.THREAD_VIEW_CHANGED,
       -> {
       when {
