@@ -15,11 +15,16 @@
  */
 package com.jetbrains.python.codeInsight.liveTemplates;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyLiveTemplatesExpandingTest extends PyTestCase {
 
   @Override

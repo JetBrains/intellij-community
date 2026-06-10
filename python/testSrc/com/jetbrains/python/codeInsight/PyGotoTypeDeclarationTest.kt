@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction
 import com.intellij.idea.TestFor
 import com.intellij.psi.PsiElement
@@ -10,6 +13,8 @@ import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyGotoTypeDeclarationTest : PyTestCase() {
 
   // PY-41452

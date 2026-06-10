@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python.codeInsight;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -47,6 +50,8 @@ import java.util.List;
 /**
  * @author Ilya.Kazakevich
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public final class PyLineMarkerProviderTest extends PyTestCase {
 
   /**

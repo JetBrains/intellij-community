@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python.codeInsight.runLineMarker;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.execution.lineMarker.RunLineMarkerProvider;
@@ -24,6 +27,8 @@ import com.jetbrains.python.fixtures.PyTestCase;
 
 import java.util.List;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyRunLineMarkerTest extends PyTestCase {
   public void testRunnableMain() {
     List<LineMarkerInfo<?>> infos = getInfos("runnable.py");

@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python.intentions;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -23,6 +26,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * User : ktisha
  */
+@Subsystems.CodeInsight
+@Components.Intentions
+@Layers.Functional
 public class PyConvertFormatOperatorToMethodIntentionTest extends PyIntentionTestCase {
 
   @Override

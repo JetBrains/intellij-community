@@ -15,11 +15,17 @@
  */
 package com.jetbrains.python.intentions;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.PyPsiBundle;
 
 /**
  * User : ktisha
  */
+@Subsystems.CodeInsight
+@Components.Intentions
+@Layers.Functional
 public class PyConvertMethodToPropertyIntentionTest extends PyIntentionTestCase {
 
   public void testParamList() {

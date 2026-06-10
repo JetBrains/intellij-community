@@ -1,12 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.intentions;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 
 /**
  * Tests for PyFStringToTStringIntention
  */
+@Subsystems.CodeInsight
+@Components.Intentions
+@Layers.Functional
 public class PyFStringToTStringIntentionTest extends PyIntentionTestCase {
   public void testSimpleFString() {
     doFStringToTStringTest();

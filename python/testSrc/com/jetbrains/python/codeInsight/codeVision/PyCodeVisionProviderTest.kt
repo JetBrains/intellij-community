@@ -1,8 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.codeVision
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.testFramework.utils.codeVision.CodeVisionTestCase
 
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyCodeVisionProviderTest : CodeVisionTestCase() {
   fun testDynamicUsages() = doTest("""
     /*<# block [1 usage] #>*/
