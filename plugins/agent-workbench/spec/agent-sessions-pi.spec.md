@@ -37,6 +37,11 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 - Listed Pi threads must be filtered by the session header `cwd`, use the header `id`, use the latest `session_info.name` as the title, fall back to the first user message, and sort newest first by latest user/assistant activity timestamp, header timestamp, or file mtime.
   [@test] ../pi/sessions/testSrc/PiSessionSourceTest.kt
 
+- Pi thread activity must be inferred from the persisted JSONL leaf. User, tool-result, custom, and assistant `toolUse` leaves are shown
+  as `PROCESSING`; completed assistant leaves use the shared read/unread tracker. Pi does not report `NEEDS_INPUT` from session JSONL
+  until an explicit persisted status signal exists.
+  [@test] ../pi/sessions/testSrc/PiSessionSourceTest.kt
+
 - Rename must append a Pi-compatible `session_info` entry to the session JSONL file. Archive and unarchive must persist Agent Workbench sidecar state keyed by normalized project path and session id.
   [@test] ../pi/sessions/testSrc/PiSessionSourceTest.kt
 

@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.json.createJsonParser
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
@@ -131,6 +132,7 @@ internal class PiSessionStore(
       sessionFile = sessionFile,
       leafId = state.leafId,
       entryIds = state.entryIds,
+      activity = state.leafActivity,
       archived = false,
     )
   }
@@ -407,6 +409,7 @@ internal data class PiSessionIndexEntry(
   val sessionFile: Path,
   val leafId: String?,
   val entryIds: Set<String>,
+  val activity: AgentThreadActivity?,
   val archived: Boolean,
 )
 
@@ -422,6 +425,7 @@ private data class PiSessionFileState(
   var name: String? = null,
   var lastActivityAtMs: Long? = null,
   var leafId: String? = null,
+  var leafActivity: AgentThreadActivity? = null,
   val entryIds: LinkedHashSet<String> = LinkedHashSet(),
 )
 
@@ -467,6 +471,7 @@ private fun parseSessionObject(parser: JsonParser, state: PiSessionFileState) {
   var messageRole: String? = null
   var messageText: String? = null
   var messageTimestamp: Long? = null
+  var messageStopReason: String? = null
 
   forEachJsonObjectField(parser) { fieldName ->
     when (fieldName) {
@@ -481,6 +486,7 @@ private fun parseSessionObject(parser: JsonParser, state: PiSessionFileState) {
         messageRole = parsedMessage.role
         messageText = parsedMessage.text
         messageTimestamp = parsedMessage.timestamp
+        messageStopReason = parsedMessage.stopReason
       }
       else -> parser.skipChildren()
     }
@@ -500,16 +506,18 @@ private fun parseSessionObject(parser: JsonParser, state: PiSessionFileState) {
   if (entryId != null) {
     state.entryIds += entryId
     state.leafId = entryId
+    state.leafActivity = null
   }
   else if (parentId != null) {
     state.leafId = parentId
+    state.leafActivity = null
   }
 
   when (normalizedType) {
     "session_info" -> state.name = sessionInfoName?.trim()?.takeIf { it.isNotEmpty() }
     "message" -> {
       val role = messageRole ?: return
-      if (role != "user" && role != "assistant") return
+      if (!isPiActivityMessageRole(role)) return
       val activityTime = messageTimestamp ?: timestamp?.let(::parseIsoTimestamp)
       if (activityTime != null) {
         state.lastActivityAtMs = maxOf(state.lastActivityAtMs ?: 0L, activityTime)
@@ -517,7 +525,27 @@ private fun parseSessionObject(parser: JsonParser, state: PiSessionFileState) {
       if (role == "user" && state.firstUserMessage == null) {
         state.firstUserMessage = messageText?.takeIf { it.isNotBlank() }
       }
+      state.leafActivity = resolvePiLeafActivity(role, messageStopReason)
     }
+    "custom", "custom_message" -> {
+      val activityTime = timestamp?.let(::parseIsoTimestamp)
+      if (activityTime != null) {
+        state.lastActivityAtMs = maxOf(state.lastActivityAtMs ?: 0L, activityTime)
+      }
+      state.leafActivity = AgentThreadActivity.PROCESSING
+    }
+  }
+}
+
+private fun isPiActivityMessageRole(role: String): Boolean {
+  return role == "user" || role == "assistant" || role == "toolResult"
+}
+
+private fun resolvePiLeafActivity(role: String, stopReason: String?): AgentThreadActivity? {
+  return when (role) {
+    "user", "toolResult" -> AgentThreadActivity.PROCESSING
+    "assistant" -> if (stopReason?.trim() == "toolUse") AgentThreadActivity.PROCESSING else null
+    else -> null
   }
 }
 
@@ -525,26 +553,29 @@ private data class PiParsedMessage(
   val role: String?,
   val text: String?,
   val timestamp: Long?,
+  val stopReason: String?,
 )
 
 private fun parsePiMessage(parser: JsonParser): PiParsedMessage {
   if (parser.currentToken() != JsonToken.START_OBJECT) {
     parser.skipChildren()
-    return PiParsedMessage(role = null, text = null, timestamp = null)
+    return PiParsedMessage(role = null, text = null, timestamp = null, stopReason = null)
   }
   var role: String? = null
   var text: String? = null
   var timestamp: Long? = null
+  var stopReason: String? = null
   forEachJsonObjectField(parser) { fieldName ->
     when (fieldName) {
       "role" -> role = readJsonStringOrNull(parser)
       "content" -> text = readPiMessageContent(parser)
       "timestamp" -> timestamp = readJsonLongOrNull(parser)
+      "stopReason" -> stopReason = readJsonStringOrNull(parser)
       else -> parser.skipChildren()
     }
     true
   }
-  return PiParsedMessage(role = role, text = text, timestamp = timestamp)
+  return PiParsedMessage(role = role, text = text, timestamp = timestamp, stopReason = stopReason)
 }
 
 private fun readPiMessageContent(parser: JsonParser): String? {
@@ -651,7 +682,7 @@ private fun PiSessionIndexEntry.toAgentSessionThread(readTracker: Map<String, Lo
     title = title,
     updatedAt = updatedAt,
     archived = archived,
-    activity = resolveReadTrackedActivity(readTracker = readTracker, threadId = sessionId, updatedAt = updatedAt),
+    activity = activity ?: resolveReadTrackedActivity(readTracker = readTracker, threadId = sessionId, updatedAt = updatedAt),
     provider = AgentSessionProvider.PI,
   )
 }
