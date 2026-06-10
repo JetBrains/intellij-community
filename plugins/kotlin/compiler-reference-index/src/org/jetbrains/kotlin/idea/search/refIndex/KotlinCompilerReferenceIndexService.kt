@@ -176,7 +176,11 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
         })
     }
 
-    private fun installBtaFileWatcherIfApplicable() {
+    /**
+     * Installs the BTA file watcher if / when it is applicable for this project; idempotent
+     */
+    @ApiStatus.Internal
+    fun installBtaFileWatcherIfApplicable() {
         if (!BtaFileWatcher.isApplicable(project)) return
         if (!btaWatcherInstalled.compareAndSet(false, true)) return
         BtaFileWatcher(project).watchIn(coroutineScope) { updatedModules ->
@@ -185,6 +189,11 @@ class KotlinCompilerReferenceIndexService(private val project: Project, private 
             }
         }
     }
+
+    @get:TestOnly
+    @get:ApiStatus.Internal
+    val isBtaFileWatcherInstalled: Boolean
+        get() = btaWatcherInstalled.get()
 
     private fun onExternalCompilationDetected(compiledModules: Collection<Module>) {
         val allModules = if (!initialized) allModules() else null

@@ -35,7 +35,15 @@
 
     <languageCompilerRefAdapter.directInheritorProvider
             implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinDirectInheritorProvider"/>
+
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.search.refIndex.bta.CriMavenStartupActivity"
+                         order="after org.jetbrains.idea.maven.project.MavenProjectsManagerProjectActivity"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="org.jetbrains.kotlin.idea.search.refIndex.bta.CriMavenImportListener"
+              topic="org.jetbrains.idea.maven.project.MavenImportListener"/>
+  </projectListeners>
 
   <extensionPoints>
     <extensionPoint
