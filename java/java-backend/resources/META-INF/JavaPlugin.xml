@@ -1348,6 +1348,7 @@
     <referenceInjector implementation="com.intellij.microservices.jvm.url.HttpMethodReferenceInjector"/>
 
     <java.expressionTypeNullabilityPatcher implementation="com.intellij.psi.impl.StreamNullabilityPatcher"/>
+    <java.expressionTypeNullabilityPatcher implementation="com.intellij.psi.impl.AssertNullabilityPatcher"/>
 
     <!--from JavaAnalaysisPlugin.xml for java.analysis-->
     <metaLanguageProvider implementation="com.intellij.uast.UastMetaLanguage$Provider"/>
