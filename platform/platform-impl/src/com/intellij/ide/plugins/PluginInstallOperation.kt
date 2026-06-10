@@ -31,7 +31,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -65,8 +64,8 @@ class PluginInstallOperation(
     pluginEnabler: PluginEnabler,
     indicator: ProgressIndicator,
   ) : this(
-    ContainerUtil.map(pluginsToInstall) { PluginUiModelAdapter(it) },
-    ContainerUtil.map(customReposPlugins) { PluginUiModelAdapter(it) },
+    pluginsToInstall.map { PluginUiModelAdapter(it) },
+    customReposPlugins.map { PluginUiModelAdapter(it) },
     indicator,
     pluginEnabler,
   )
@@ -253,7 +252,7 @@ class PluginInstallOperation(
                              else {
                                DynamicPlugins.allowLoadUnloadWithoutRestart(
                                  descriptor, null,
-                                 ContainerUtil.map(myPendingDynamicPluginInstalls) { pluginInstall -> pluginInstall.pluginDescriptor },
+                                 myPendingDynamicPluginInstalls.map { pluginInstall -> pluginInstall.pluginDescriptor },
                                )
                              }
                            }
@@ -285,8 +284,8 @@ class PluginInstallOperation(
   }
 
   fun checkDependenciesAndReplacements(pluginNode: IdeaPluginDescriptor): IdeaPluginDescriptor? {
-    val pluginReplacement = ContainerUtil.find(PluginReplacement.EP_NAME.extensionList) { r ->
-      r.newPluginId == pluginNode.getPluginId().idString
+    val pluginReplacement = PluginReplacement.EP_NAME.extensionList.find {
+      it.newPluginId == pluginNode.getPluginId().idString
     }
     if (pluginReplacement == null) {
       return null
@@ -456,12 +455,12 @@ class PluginInstallOperation(
       // optional modules are skipped because they form a majority of content modules and the result is not really used, see comment below
     }
 
-    if (!prepareDependencies(pluginNode, missingRequiredPlugins.values.stream().toList(), "plugin.manager.dependencies.detected.title",
+    if (!prepareDependencies(pluginNode, missingRequiredPlugins.values.toMutableList(), "plugin.manager.dependencies.detected.title",
                              "plugin.manager.dependencies.detected.message", false)) {
       return false
     }
     if (Registry.`is`("ide.plugins.suggest.install.optional.dependencies") && // TODO only 2 users use this, let's drop?
-        !prepareDependencies(pluginNode, missingOptionalPlugins.values.stream().toList(), "plugin.manager.optional.dependencies.detected.title",
+        !prepareDependencies(pluginNode, missingOptionalPlugins.values.toMutableList(), "plugin.manager.optional.dependencies.detected.title",
                              "plugin.manager.optional.dependencies.detected.message", true)) {
       return false
     }
@@ -545,19 +544,15 @@ class PluginInstallOperation(
    * Searches for a plugin with id 'depPluginId' in custom repos and Marketplace and then takes one with a bigger version number
    */
   private fun findPluginInRepo(depPluginId: PluginId): PluginUiModel? {
-    val pluginFromCustomRepos = myCustomReposPlugins.stream()
-      .parallel()
-      .filter { p -> p.pluginId == depPluginId }
-      .findAny()
-      .orElse(null)
-
-    val pluginFromMarketplace = MarketplaceRequests.getInstance()
-      .getLastCompatiblePluginUpdateModel(depPluginId)
-
+    val pluginFromCustomRepos = myCustomReposPlugins
+      .firstOrNull { p -> p.pluginId == depPluginId }
+    val pluginFromMarketplace = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdateModel(depPluginId)
     val fromCustomRepos = pluginFromMarketplace == null ||
                           pluginFromCustomRepos != null &&
-                          PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginFromCustomRepos.version!!,
-                                                                                    pluginFromMarketplace.getDescriptor()) > 0
+                          PluginDownloader.compareVersionsSkipBrokenAndIncompatible(
+                            newPluginVersion = pluginFromCustomRepos.version!!,
+                            existingPlugin = pluginFromMarketplace.getDescriptor()
+                          ) > 0
     return if (fromCustomRepos) pluginFromCustomRepos else pluginFromMarketplace
   }
 
@@ -588,7 +583,7 @@ class PluginInstallOperation(
     }
 
     private fun getPluginsText(nodes: List<PluginUiModel>): @Nls String {
-      val pluginNames = ContainerUtil.map(nodes) { node -> StringUtil.wrapWithDoubleQuote(node.name!!) }
+      val pluginNames = nodes.map { node -> StringUtil.wrapWithDoubleQuote(node.name!!) }
       val size = pluginNames.size
       if (size == 1) {
         return pluginNames[0]
