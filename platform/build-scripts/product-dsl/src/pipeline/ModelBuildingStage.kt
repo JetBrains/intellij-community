@@ -141,12 +141,17 @@ internal object ModelBuildingStage {
     )
     // Build lookup for DSL-defined test plugins keyed by PluginId (semantically correct)
     // Note: PluginId is the XML plugin identifier, distinct from ModuleName (JPS module)
-    val dslTestPluginsByProduct = discovery.products
-      .mapNotNull { product ->
-        val testPlugins = product.spec?.testPlugins?.takeIf { it.isNotEmpty() } ?: return@mapNotNull null
-        product.name to testPlugins
+    // Includes both real products and test-only product specs (e.g. lambda-test fixtures).
+    val dslTestPluginsByProduct = buildMap<String, List<TestPluginSpec>> {
+      for (product in discovery.products) {
+        val plugins = product.spec?.testPlugins?.takeIf { it.isNotEmpty() } ?: continue
+        put(product.name, plugins)
       }
-      .toMap()
+      for ((name, spec) in discovery.testProductSpecs) {
+        val plugins = spec.testPlugins.takeIf { it.isNotEmpty() } ?: continue
+        put(name, plugins)
+      }
+    }
     val dslTestPluginIdOwners = LinkedHashMap<PluginId, MutableList<String>>()
     for ((productName, testPlugins) in dslTestPluginsByProduct) {
       for (spec in testPlugins) {
@@ -247,9 +252,11 @@ internal object ModelBuildingStage {
 
     val pluginGraph = builder.buildFrozen()
 
-    // Build per-product allowedMissingDependencies map
-    val productAllowedMissing = discovery.products
-      .mapNotNull { d -> d.spec?.allowedMissingDependencies?.let { d.name to it } }
+    // Build per-product allowedMissingDependencies map — includes both real products and test product specs
+    val productAllowedMissing = (
+      discovery.products.mapNotNull { d -> d.spec?.allowedMissingDependencies?.let { d.name to it } } +
+      discovery.testProductSpecs.mapNotNull { (name, spec) -> spec.allowedMissingDependencies.takeIf { it.isNotEmpty() }?.let { name to it } }
+    )
       .toMap()
 
     return GenerationModel(
@@ -824,6 +831,62 @@ internal object ModelBuildingStage {
 
       if (expandedSpecs.isNotEmpty()) {
         expandedDslTestPluginsByProduct[product.name] = expandedSpecs
+      }
+    }
+
+    // Also expand test plugins from testProductSpecs (e.g. lambda-test fixtures).
+    // For test product specs, keep wrapper specs small but disable content auto-add by marking all
+    // graph modules as "resolvable". The dependency planner still generates <dependencies>.
+    // Content auto-add would otherwise pull in the transitive closure of every declared module,
+    // including non-bundled test-infrastructure modules (like intellij.tools.ide.starter) that own
+    // native libraries (pty4j) conflicting with what the core IDE already extracted at runtime.
+    val allGraphContentModules: Set<ContentModuleName> by lazy {
+      val result = LinkedHashSet<ContentModuleName>()
+      graphView.query { contentModules { result.add(it.contentName()) } }
+      result
+    }
+
+    for ((specName, _) in discovery.testProductSpecs) {
+      val dslSpecs = dslTestPluginsByProduct[specName].orEmpty()
+      if (dslSpecs.isEmpty()) continue
+
+      // Register as a product node so validators can apply per-product allowed-missing rules.
+      builder.addProduct(specName)
+
+      val expandedSpecs = ArrayList<TestPluginSpec>(dslSpecs.size)
+      for (dslSpec in dslSpecs) {
+        val pluginModule = TargetName(dslSpec.pluginId.value)
+        val declaredModules = collectDeclaredContentModules(dslSpec.spec)
+        val resolvableModules = LinkedHashSet<ContentModuleName>(allGraphContentModules)
+        resolvableModules.addAll(declaredModules)
+
+        val dependencyChains = LinkedHashMap<ContentModuleName, List<ContentModuleName>>()
+        val content = computePluginContentFromDslSpec(
+          testPluginSpec = dslSpec,
+          projectRoot = projectRoot,
+          resolvableModules = resolvableModules,
+          productName = specName,
+          pluginGraph = graphView,
+          errorSink = errorSink,
+          suppressionConfig = suppressionConfig,
+          updateSuppressions = updateSuppressions,
+          suppressionUsageSink = dslTestPluginSuppressionUsages,
+          descriptorCache = descriptorCache,
+          autoAddedModulesLoadingMode = config.dslTestPluginAutoAddLoadingMode,
+          dependencyChainsSink = dependencyChains,
+        )
+        pluginContentCache.addDslTestPlugin(pluginModule, content)
+        builder.addPluginWithContent(pluginModule, content, config.testFrameworkContentModules)
+        // Link to the test product so the validator's per-product allowed-missing check applies.
+        builder.linkProductBundlesPlugin(specName, pluginModule, isTest = true)
+        expandedSpecs.add(expandTestPluginSpec(dslSpec, content, declaredModules, config.dslTestPluginAutoAddLoadingMode))
+        if (dependencyChains.isNotEmpty()) {
+          dslTestPluginDependencyChains.put(dslSpec.pluginId, dependencyChains)
+        }
+      }
+
+      if (expandedSpecs.isNotEmpty()) {
+        expandedDslTestPluginsByProduct[specName] = expandedSpecs
       }
     }
 

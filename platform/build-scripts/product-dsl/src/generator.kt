@@ -137,7 +137,18 @@ internal fun generateTestPluginXml(
 ): TestPluginFileResult {
   val pluginXmlPath = projectRoot.resolve(spec.pluginXmlPath)
   val sortedContentSpec = sortTestPluginContentSpec(spec.spec)
-  val sortedModuleDependencies = moduleDependencies.sortedBy { it.value }
+  val contentModules = buildContentBlocksAndChainMapping(sortedContentSpec, collectModuleSetAliases = false)
+    .contentBlocks
+    .asSequence()
+    .flatMap { it.modules }
+    .mapTo(HashSet()) { ContentModuleName(it.moduleId.name) }
+  // Prepend the explicit platformModule (loading directive) before planner-computed module deps.
+  val externalModuleDependencies = moduleDependencies.filterNot { it in contentModules }
+  val allModuleDependencies = if (spec.platformModule != null)
+    listOf(ContentModuleName(spec.platformModule)) + externalModuleDependencies
+  else
+    externalModuleDependencies
+  val sortedModuleDependencies = allModuleDependencies.sortedBy { it.value }
   val sortedPluginDependencies = pluginDependencies.sortedBy { it.value }
 
   val moduleCommentProvider: (ContentModuleName, List<String>?) -> String? = { moduleName, moduleSetChain ->

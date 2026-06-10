@@ -87,6 +87,61 @@ class TestPluginXmlGeneratorTest {
   }
 
   @Test
+  fun `does not render module dependency already declared as DSL test plugin content`(@TempDir tempDir: Path) {
+    runBlocking(Dispatchers.Default) {
+    val graph = pluginGraph {
+      testPlugin("intellij.consumer.test.plugin") {
+        pluginId("intellij.consumer.test.plugin")
+        content("intellij.consumer.module")
+      }
+      target("intellij.consumer.test.plugin") {
+        dependsOn("intellij.declared.dep")
+      }
+      linkPluginMainTarget("intellij.consumer.test.plugin")
+    }
+
+    val spec = TestPluginSpec(
+      pluginId = PluginId("intellij.consumer.test.plugin"),
+      name = "Consumer Test Plugin",
+      pluginXmlPath = "test-plugin/META-INF/plugin.xml",
+      spec = productModules {
+        requiredModule("intellij.consumer.module")
+        module("intellij.declared.dep")
+      }
+    )
+
+    val fileUpdater = DeferredFileUpdater(tempDir)
+    val baseModel = testGenerationModel(graph, fileUpdater = fileUpdater)
+    val discovery = baseModel.discovery.copy(
+      products = listOf(
+        DiscoveredProduct(
+          name = "TestProduct",
+          config = ProductConfiguration(modules = emptyList(), className = "TestProduct"),
+          properties = null,
+          spec = null,
+          pluginXmlPath = null,
+        )
+      )
+    )
+    val model = baseModel.copy(
+      discovery = discovery,
+      projectRoot = tempDir,
+      fileUpdater = fileUpdater,
+      dslTestPluginsByProduct = mapOf("TestProduct" to listOf(spec)),
+    )
+
+    val ctx = ComputeContextImpl(model)
+    runPlannerAndGenerator(ctx)
+
+    val diffs = fileUpdater.getDiffs()
+    assertThat(diffs).hasSize(1)
+    val xml = diffs.single().expectedContent
+    assertThat(xml).doesNotContain("<dependencies>")
+    assertThat(xml).contains("<module name=\"intellij.declared.dep\"/>")
+    }
+  }
+
+  @Test
   fun `skips unresolvable plugin dependency in DSL test plugin`(@TempDir tempDir: Path) {
     runBlocking(Dispatchers.Default) {
     val graph = pluginGraph {
