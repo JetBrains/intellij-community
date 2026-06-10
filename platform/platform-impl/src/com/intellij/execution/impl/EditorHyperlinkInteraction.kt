@@ -166,7 +166,9 @@ internal class EditorHyperlinkInteraction(
     private val originalTextAttrs: TextAttributes? = linkRangeHighlighter.getTextAttributes(editor.getColorsScheme())
 
     init {
-      linkRangeHighlighter.setTextAttributes(newTextAttrs)
+      if (linkRangeHighlighter.isValid) {
+        linkRangeHighlighter.setTextAttributes(newTextAttrs)
+      }
     }
 
     fun isSame(linkRangeHighlighter: RangeHighlighter): Boolean = this.linkRangeHighlighter === linkRangeHighlighter
