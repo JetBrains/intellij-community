@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public final class JavaDocAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (holder.isBatchMode()) return;
     if (element instanceof PsiDocTag) {
       String name = ((PsiDocTag)element).getName();
       if ("param".equals(name)) {
