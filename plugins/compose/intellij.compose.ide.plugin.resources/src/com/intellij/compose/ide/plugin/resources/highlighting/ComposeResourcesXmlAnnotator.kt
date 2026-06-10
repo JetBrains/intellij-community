@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.util.module
 internal class ComposeResourcesXmlAnnotator : Annotator, DumbAware {
 
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
+    if (holder.isBatchMode()) return
     if (element !is XmlText || element.textLength == 0) return
     if (!shouldHighlight(element)) return
 
@@ -48,4 +49,3 @@ internal class ComposeResourcesXmlAnnotator : Annotator, DumbAware {
   }
 
 }
-
