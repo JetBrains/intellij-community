@@ -18,6 +18,6 @@ internal class TerminalCompletionLookupArranger(process: CompletionProcessEx) : 
     }
 
     val typedPrefix = itemPattern(item)
-    return canExecuteWithChosenItem(item.lookupString, typedPrefix)
+    return isItemFullyTyped(item.lookupString, typedPrefix)
   }
 }

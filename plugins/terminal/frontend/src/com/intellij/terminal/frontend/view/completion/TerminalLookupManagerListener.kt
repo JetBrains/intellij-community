@@ -18,8 +18,10 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.TerminalUiSettingsManager
+import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.frontend.view.impl.TerminalInput
 import kotlinx.coroutines.cancel
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.reworked.TerminalCommandCompletion
 import org.jetbrains.plugins.terminal.block.reworked.TerminalUsageLocalStorage
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.isOutputModelEditor
@@ -96,7 +98,7 @@ private class TerminalLookupListener : LookupListener {
       return
     }
     val typedString = lookup.itemPattern(chosenItem)
-    if (canExecuteWithChosenItem(chosenItem.lookupString, typedString)) {
+    if (canExecuteWithChosenItem(chosenItem, typedString)) {
       executeCommand(lookup)
     }
     else {
@@ -153,7 +155,7 @@ private class TerminalSelectedItemIconUpdater(private val lookup: LookupImpl) : 
     }
 
     val typedPrefix = lookup.itemPattern(selectedItem)
-    if (canExecuteWithChosenItem(selectedItem.lookupString, typedPrefix)) {
+    if (canExecuteWithChosenItem(selectedItem, typedPrefix)) {
       selectedItem.getTerminalIcon()?.forceIcon(AllIcons.Actions.Execute)
       curSelectedItem = selectedItem
       lookup.list.repaint()
@@ -212,11 +214,29 @@ private class TerminalLookupOutputModelListener(
 }
 
 /**
- * Returns `true` if we need to execute the command immediately if user select [chosenItemString] in the Lookup.
+ * Returns `true` if we need to execute the command immediately if user select [chosenItem] in the Lookup.
  */
-internal fun canExecuteWithChosenItem(chosenItemString: String, typedString: String): Boolean {
-  return chosenItemString.equals(typedString, ignoreCase = true)
-         // If the typed string differs only by the absence of the trailing slash, execute the command as well
-         || chosenItemString.equals("$typedString/", ignoreCase = true)
-         || chosenItemString.equals("$typedString\\", ignoreCase = true)
+internal fun canExecuteWithChosenItem(chosenItem: LookupElement, typedString: String): Boolean {
+  val suggestion = chosenItem.`object` as ShellCompletionSuggestion
+  val insertValue = suggestion.insertValue
+  return (insertValue == null || canExecuteWithInsertValue(insertValue))
+         && isItemFullyTyped(chosenItem.lookupString, typedString)
+}
+
+private fun canExecuteWithInsertValue(insertValue: String): Boolean {
+  // Consider that the insert value can be executed immediately
+  // if it doesn't contain the cursor marker or
+  // if the cursor marker is at the end of the insert value.
+  val cursorIndex = insertValue.indexOf(TerminalCompletionUtil.CURSOR_MARKER)
+  return cursorIndex == -1 || cursorIndex == insertValue.length - TerminalCompletionUtil.CURSOR_MARKER.length
+}
+
+/**
+ * Returns `true` if we consider that [typedString] fully represents the [itemString] shown in the completion popup.
+ */
+internal fun isItemFullyTyped(itemString: String, typedString: String): Boolean {
+  return itemString.equals(typedString, ignoreCase = true)
+         // If the typed string differs only by the absence of the trailing slash, still consider it as fully typed
+         || itemString.equals("$typedString/", ignoreCase = true)
+         || itemString.equals("$typedString\\", ignoreCase = true)
 }
