@@ -16,6 +16,7 @@
     <module name="intellij.evaluationPlugin.languages.kotlin"/>
 
     <module name="intellij.evaluationPlugin.languages.cppClassic"/>
+    <module name="intellij.evaluationPlugin.languages.cppNova"/>
     <module name="intellij.evaluationPlugin.languages.cppRider"/>
     <module name="intellij.evaluationPlugin.languages.csharp"/>
     <module name="intellij.evaluationPlugin.languages.go"/>

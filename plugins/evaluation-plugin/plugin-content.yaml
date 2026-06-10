@@ -42,6 +42,9 @@
 - name: lib/modules/intellij.evaluationPlugin.inlineCompletion.jar
   contentModules:
   - name: intellij.evaluationPlugin.inlineCompletion
+- name: lib/modules/intellij.evaluationPlugin.languages.cppNova.jar
+  contentModules:
+  - name: intellij.evaluationPlugin.languages.cppNova
 - name: lib/modules/intellij.evaluationPlugin.languages.java.jar
   contentModules:
   - name: intellij.evaluationPlugin.languages.java
