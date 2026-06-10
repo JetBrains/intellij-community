@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
 import org.jetbrains.kotlin.resolution.KtResolvableCall
@@ -170,7 +171,9 @@ private fun isStaticallyImportedReceiver(
 @OptIn(KaExperimentalApi::class, KtExperimentalApi::class)
 context(_: KaSession)
 private fun resolveDispatchReceiver(element: KtElement, targetSymbol: KaCallableSymbol): KaReceiverValue? {
-    val adjustedElement = element.callableReferenceExpressionForCallableReference() ?: element
+    val adjustedElement = element.callableReferenceExpressionForCallableReference()
+        ?: (element as? KtOperationReferenceExpression)?.parent // TODO remove after KT-86872 is fixed
+        ?: element
 
     if (adjustedElement !is KtResolvableCall) return null
 
