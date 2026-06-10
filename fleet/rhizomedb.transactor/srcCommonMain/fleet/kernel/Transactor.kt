@@ -325,7 +325,6 @@ sealed interface SubscriptionEvent {
  * [middleware] is applied to every change fn synchronously, being able to supply meta to the change, or alter the behavior of fn in other ways
  * Consider adding KernelMiddleware if additional routine has to be performed on every [Transactor.changeAsync]
  */
-@OptIn(ExperimentalForInheritanceCoroutinesApi::class)
 suspend fun <T> withTransactor(
   middleware: TransactorMiddleware = TransactorMiddleware.Identity,
   registerEntityTypeOnEntityCreation: Boolean = false,

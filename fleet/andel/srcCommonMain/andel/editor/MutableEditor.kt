@@ -16,12 +16,12 @@ import andel.text.TextRange
 import andel.undo.DefaultUndoGroupKey
 import andel.undo.NavigationUndoGroupKey
 import andel.undo.UndoGroupKey
-import andel.undo.UndoLog
 import andel.undo.UndoScope
 import fleet.openmap.BoundedOpenMap
 import fleet.openmap.Key
 import fleet.openmap.MutableOpenMap
 import fleet.openmap.OpenMap
+import fleet.util.Either
 import fleet.util.UID
 import fleet.util.serialization.DataSerializer
 import kotlinx.serialization.Serializable
@@ -115,7 +115,6 @@ interface MutableMultiCaret : MultiCaret {
 
 interface Editor {
   val document: Document
-  val undoLog: UndoLog
   val multiCaret: MultiCaret
   val oneLine: Boolean
   val writable: Boolean
@@ -124,6 +123,10 @@ interface Editor {
 
   val composableTextRange: TextRange?
   val timestamp: Long
+}
+
+fun interface AsynchronousCommand {
+  suspend fun perform()
 }
 
 interface MutableEditor : Editor {
@@ -136,17 +139,27 @@ interface MutableEditor : Editor {
 
   fun scrollTo(scrollCommand: EditorScrollCommand)
 
-  fun command(
+  fun <T> command(
     commandType: EditorCommandType,
     groupKey: UndoGroupKey = commandType.defaultGroupKey(),
-    command: UndoScope.() -> Unit
-  )
+    command: UndoScope.() -> T
+  ): T?
 
   fun addHistoryPlace()
 
   fun switchFocus(place: EditorFocusPlace)
 
   override var composableTextRange: TextRange?
+
+  /**
+   * @param isCaretMovementUndoStep if caret movement should be treated as a separate step in undo history
+   *                                in IJ and Fleet people press undo twice:
+   *                                First press returns the caret to the previous position,
+   *                                Second press restores the actual text before some operation.
+   *                                But in Vim undo undoes changes in text, caret movement doesn't require one more press.
+   */
+  fun undo(isCaretMovementUndoStep: Boolean = true): Either<Unit, AsynchronousCommand>
+  fun redo(isCaretMovementUndoStep: Boolean = true): Either<Unit, AsynchronousCommand>
 }
 
 interface EditorLayout {

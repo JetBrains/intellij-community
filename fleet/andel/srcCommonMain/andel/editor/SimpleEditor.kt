@@ -22,17 +22,22 @@ import andel.operation.Sticky
 import andel.text.Text
 import andel.text.TextRange
 import andel.text.charSequence
+import andel.undo.CachedComposition
+import andel.undo.CompositionCache
+import andel.undo.EditGroup
 import andel.undo.DocumentUndoGroup
 import andel.undo.UndoGroupKey
-import andel.undo.UndoLog
-import andel.undo.UndoLogData
 import andel.undo.UndoOperationType
 import andel.undo.UndoScope
-import andel.undo.addGroup
+import andel.undo.UndoStack
+import andel.undo.editorUndo
+import andel.undo.amendDocumentEdit
+import andel.undo.computeCompositionWithCache
 import fleet.openmap.BoundedOpenMap
 import fleet.openmap.MutableBoundedOpenMap
 import fleet.openmap.MutableOpenMap
 import fleet.openmap.OpenMap
+import fleet.util.Either
 import fleet.util.UID
 
 fun simpleEditor(
@@ -43,8 +48,7 @@ fun simpleEditor(
   softWrapEnabled: Boolean = false,
   guideToSoftWrapBy: Int = -1,
   scrollCommandTimestamp: Long = 0,
-  softWrapBuilder: SoftWrapBuilder = FixedWidthSoftWrapBuilder(Float.POSITIVE_INFINITY,
-                                                               6f),
+  softWrapBuilder: SoftWrapBuilder = FixedWidthSoftWrapBuilder(Float.POSITIVE_INFINITY, 6f),
   components: BoundedOpenMap<MutableDocument, DocumentComponent> = BoundedOpenMap.emptyBounded(),
 ): SimpleEditorState {
   val caretPosition = when {
@@ -65,7 +69,6 @@ fun simpleEditor(
       text = text,
       edits = EditLog.empty(),
       anchorStorage = AnchorStorage.empty(),
-      undoLog = UndoLogData.EMPTY,
       components = components
     ),
     multiCaret = SimpleMultiCaretState(caretPosition, text, linesCache),
@@ -110,10 +113,10 @@ data class SimpleEditorLayout(
   override var postlines: Intervals<Long, Postline>,
   override var folds: Intervals<Long, Fold>,
 ) : MutableEditorLayout {
-  
+
   override val linesCache: LinesLayout
     get() = linesCacheImpl.linesLayout()
-  
+
   fun edit(before: Text, after: Text, edit: Operation): SimpleEditorLayout {
     val newInlays = inlays.edit(edit)
     val newInterlines = interlines.edit(edit)
@@ -140,8 +143,9 @@ data class SimpleEditorLayout(
   }
 
   override fun toggleFolds(add: List<Interval<*, Fold>>, remove: List<Interval<*, Fold>>) {
+    @Suppress("UNCHECKED_CAST")
     folds = folds.removeByIds(remove.map { it.id as Long }).addIntervals(add as List<Interval<Long, Fold>>)
-  // we should update lines cache here, but right now simple editor with folds is used only in tests
+    // we should update lines cache here, but right now simple editor with folds is used only in tests
   }
 }
 
@@ -168,7 +172,6 @@ data class SimpleEditorState(
   override val composableTextRange: TextRange? = null,
   override val timestamp: Long
 ) : Editor {
-  override val undoLog: UndoLog get() = document.undoLog
   override val layout: EditorLayout
     get() = editorLayout
 
@@ -184,26 +187,31 @@ fun SimpleDocumentState.mutate(f: MutableDocument.() -> Unit): SimpleDocumentSta
 fun SimpleEditorState.mutate(f: MutableEditor.() -> Unit): SimpleEditorState {
   val mutableDocument = SimpleMutableDocument(document)
   val editorLayoutComponent = SimpleEditorLayoutComponent(editorLayout)
-  val mutableEditor = SimpleMutableEditor(mutableDocument,
-                                          SimpleMutableMultiCaret(mutableDocument, multiCaret),
-                                          oneLine,
-                                          writable,
-                                          timestamp,
-                                          editorLayoutComponent,
-                                          focusPlace,
-                                          scrollCommand,
-                                          composableTextRange,
-                                          userActionTimestamp)
+  val mutableEditor = SimpleMutableEditor(
+    document = mutableDocument,
+    multiCaret = SimpleMutableMultiCaret(mutableDocument, multiCaret),
+    oneLine = oneLine,
+    writable = writable,
+    timestamp = timestamp,
+    editorLayout = editorLayoutComponent,
+    focusPlace = focusPlace,
+    scrollCommand = scrollCommand,
+    composableTextRange = composableTextRange,
+    userActionTimestamp = userActionTimestamp,
+  )
   mutableDocument.addEditor(mutableEditor)
   f(mutableEditor)
   val documentStateAfter = mutableEditor.document.state
-  return this.copy(document = documentStateAfter, multiCaret = mutableEditor.multiCaret.state,
-                   editorLayout = mutableEditor.editorLayout.state,
-                   scrollCommand = mutableEditor.scrollCommand,
-                   focusPlace = mutableEditor.focusPlace,
-                   userActionTimestamp = mutableEditor.userActionTimestamp,
-                   composableTextRange = mutableEditor.composableTextRange,
-                   timestamp = documentStateAfter.timestamp + 1)
+  return this.copy(
+    document = documentStateAfter,
+    multiCaret = mutableEditor.multiCaret.state,
+    editorLayout = mutableEditor.editorLayout.state,
+    scrollCommand = mutableEditor.scrollCommand,
+    focusPlace = mutableEditor.focusPlace,
+    userActionTimestamp = mutableEditor.userActionTimestamp,
+    composableTextRange = mutableEditor.composableTextRange,
+    timestamp = documentStateAfter.timestamp + 1,
+  )
 }
 
 data class SimpleMultiCaretState(
@@ -306,7 +314,6 @@ class SimpleMutableEditor(
   override var composableTextRange: TextRange?,
   var userActionTimestamp: Map<EditorCommandType, Long>,
 ) : MutableEditor {
-  override val undoLog: UndoLog get() = document.undoLog
   override val components: MutableBoundedOpenMap<MutableEditor, DocumentComponent> = MutableBoundedOpenMap.emptyBounded()
   override val meta: MutableOpenMap<EditorMeta> = MutableOpenMap.empty()
   override fun scrollTo(scrollCommand: EditorScrollCommand) {
@@ -317,7 +324,7 @@ class SimpleMutableEditor(
     focusPlace = place
   }
 
-  override fun command(commandType: EditorCommandType, groupKey: UndoGroupKey, command: UndoScope.() -> Unit) {
+  override fun <T> command(commandType: EditorCommandType, groupKey: UndoGroupKey, command: UndoScope.() -> T): T {
     val current = userActionTimestamp.maxOfOrNull { it.value } ?: 0L
     userActionTimestamp += commandType to current.inc()
 
@@ -327,16 +334,41 @@ class SimpleMutableEditor(
       }
     }
 
-    if (meta.contains(EditorCommandKey)) {
+    return if (meta.contains(EditorCommandKey)) {
       dummyUndoScope.command()
-      return
     }
-    meta[EditorCommandKey] = listOfNotNull(meta[EditorCommandKey], commandType).max()
-    document.command(groupKey, multiCaret.carets.map(Caret::position)) {
-      dummyUndoScope.command()
-      multiCaret.carets.map(Caret::position)
+    else {
+      meta[EditorCommandKey] = listOfNotNull(meta[EditorCommandKey], commandType).max()
+      try {
+        document.command(
+          groupKey = groupKey,
+          carets = { multiCaret.carets.map(Caret::position) },
+        ) {
+          dummyUndoScope.command()
+        }
+      }
+      finally {
+        meta.remove(EditorCommandKey)
+      }
     }
-    meta.remove(EditorCommandKey)
+  }
+
+  override fun undo(isCaretMovementUndoStep: Boolean): Either<Unit, AsynchronousCommand> {
+    checkUndoRedoIsAllowed()
+    val editGroup = document.undoStack.peekExecuted() ?: return Either.value(Unit)
+    val revertedGroup = maybeRevertEditGroup(editGroup, isCaretMovementUndoStep) ?: return Either.value(Unit)
+    val (stackWithoutExecutedGroup, _) = checkNotNull(document.undoStack.removeNextExecuted())
+    document.undoStack = stackWithoutExecutedGroup.pushReverted(revertedGroup)
+    return Either.value(Unit)
+  }
+
+  override fun redo(isCaretMovementUndoStep: Boolean): Either<Unit, AsynchronousCommand> {
+    checkUndoRedoIsAllowed()
+    val editGroup = document.undoStack.peekReverted() ?: return Either.value(Unit)
+    val executedGroup = maybeRevertEditGroup(editGroup, isCaretMovementUndoStep) ?: return Either.value(Unit)
+    val (stackWithoutRevertedGroup, _) = checkNotNull(document.undoStack.removeNextReverted())
+    document.undoStack = stackWithoutRevertedGroup.pushExecutedFromReverted(executedGroup)
+    return Either.value(Unit)
   }
 
   override fun addHistoryPlace() {
@@ -345,14 +377,29 @@ class SimpleMutableEditor(
 
   override val layout: MutableEditorLayout
     get() = editorLayout.state
+
+  private fun checkUndoRedoIsAllowed() {
+    check(!meta.contains(EditorCommandKey)) {
+      "Undo/redo must not be invoked inside an editor command"
+    }
+  }
+
+  private fun maybeRevertEditGroup(editGroup: EditGroup, isCaretMovementUndoStep: Boolean): EditGroup? {
+    return editorUndo(
+      editor = this,
+      compositionCache = document.compositionCache,
+      editGroup = editGroup,
+      isCaretMovementUndoStep = isCaretMovementUndoStep,
+      )
+  }
 }
 
 data class SimpleDocumentState(
-  override val text: Text,
-  override val edits: EditLog,
-  val anchorStorage: AnchorStorage,
-  val undoLog: UndoLogData,
-  val components: BoundedOpenMap<MutableDocument, DocumentComponent>,
+    override val text: Text,
+    override val edits: EditLog,
+    val anchorStorage: AnchorStorage,
+    val components: BoundedOpenMap<MutableDocument, DocumentComponent>,
+    val undoStack: UndoStack<EditGroup> = UndoStack(),
 ) : Document {
 
   override val timestamp: Long get() = edits.timestamp
@@ -369,6 +416,7 @@ data class SimpleDocumentState(
 class SimpleMutableDocument(internal var state: SimpleDocumentState) : MutableDocument {
   private val mutableEditors = mutableListOf<SimpleMutableEditor>()
   private var intermediateAnchorStorage: AnchorStorage = AnchorStorage.empty()
+  private var undoBaseOperationCache: CachedComposition? = null
 
   val editors: List<SimpleMutableEditor> get() = mutableEditors
 
@@ -383,13 +431,27 @@ class SimpleMutableDocument(internal var state: SimpleDocumentState) : MutableDo
     get() = state.timestamp
   override val edits: EditLog
     get() = state.edits
-  var undoLog: UndoLogData
-    get() = state.undoLog
-    set(undoLog) {
-      state = state.copy(undoLog = undoLog)
-    }
+
   override val components: MutableBoundedOpenMap<MutableDocument, DocumentComponent> = state.components.mutable().persistent().mutable()
   override val meta: MutableOpenMap<DocumentMeta> = MutableOpenMap.empty()
+
+  internal var undoStack: UndoStack<EditGroup>
+    get() = state.undoStack
+    set(undoStack) {
+      state = state.copy(undoStack = undoStack)
+    }
+
+  internal val compositionCache: CompositionCache =
+    object : CompositionCache {
+      override val edits: EditLog
+        get() = this@SimpleMutableDocument.edits
+
+      override fun computeComposition(fromTimestamp: Long, toTimestamp: Long): Operation {
+        val (cache, result) = computeCompositionWithCache(undoBaseOperationCache, edits, fromTimestamp, toTimestamp)
+        undoBaseOperationCache = cache
+        return result
+      }
+    }
 
   override fun edit(operation: Operation) {
     val textBefore = state.text
@@ -409,7 +471,7 @@ class SimpleMutableDocument(internal var state: SimpleDocumentState) : MutableDo
     }
     state = state.copy(
       text = textAfter,
-      edits = state.edits.append(UID.random(), operation).trim(),
+      edits = state.edits.append(UID.random(), operation),
       anchorStorage = state.anchorStorage.edit(textBefore, textAfter, operation)
     )
     intermediateAnchorStorage = intermediateAnchorStorage.edit(textBefore, textAfter, operation)
@@ -422,23 +484,37 @@ class SimpleMutableDocument(internal var state: SimpleDocumentState) : MutableDo
     }
   }
 
-  fun command(
+  internal fun <T> command(
     groupKey: UndoGroupKey,
-    caretsBefore: List<CaretPosition>,
-    command: () -> List<CaretPosition>,
-  ) {
+    carets: () -> List<CaretPosition>,
+    command: () -> T,
+  ): T {
     val idBefore = state.edits.timestamp
-    val undoLogBefore = state.undoLog
-    val caretsAfter = command.invoke()
-    val idAfter = state.edits.timestamp
-    val undoGroup = DocumentUndoGroup(
-      entryIndices = (idBefore until idAfter).toList(),
-      entryIndexFrom = idBefore,
-      caretStateBefore = caretsBefore,
-      caretStateAfter = caretsAfter,
-      attributes = groupKey.toAttributes()
-    )
-    state = state.copy(undoLog = undoLogBefore.addGroup(undoGroup, state))
+    val caretsBefore = carets.invoke()
+    return command.invoke().also {
+      val caretsAfter = carets.invoke()
+      val idAfter = state.edits.timestamp
+      val undoGroup = DocumentUndoGroup(
+        entryIndices = (idBefore until idAfter).toList(),
+        entryIndexFrom = idBefore,
+        caretStateBefore = caretsBefore,
+        caretStateAfter = caretsAfter,
+        attributes = groupKey.toAttributes()
+      )
+      val editGroup = EditGroup(
+        entryIndices = (idBefore until idAfter).toList(),
+        entryIndexFrom = idBefore,
+        caretStateBefore = caretsBefore,
+        caretStateAfter = caretsAfter,
+        attributes = groupKey.toAttributes(),
+        openForMerge = true,
+      )
+      state = state.copy(
+        undoStack = undoStack.pushExecuted(editGroup) { prev, next ->
+          amendDocumentEdit(state, prev, next)
+        },
+      )
+    }
   }
 
   override fun createAnchor(offset: Long, lifetime: AnchorLifetime, sticky: Sticky): AnchorId {
@@ -462,10 +538,21 @@ class SimpleMutableDocument(internal var state: SimpleDocumentState) : MutableDo
   override fun createRangeMarker(rangeStart: Long, rangeEnd: Long, lifetime: AnchorLifetime): RangeMarkerId {
     val markerId = RangeMarkerId(UID.random())
     when (lifetime) {
-      AnchorLifetime.MUTATION -> intermediateAnchorStorage = intermediateAnchorStorage.addRangeMarker(markerId, rangeStart, rangeEnd, false,
-                                                                                                      false)
+      AnchorLifetime.MUTATION -> intermediateAnchorStorage = intermediateAnchorStorage.addRangeMarker(
+        markerId = markerId,
+        from = rangeStart,
+        to = rangeEnd,
+        closedLeft = false,
+        closedRight = false,
+      )
       AnchorLifetime.DOCUMENT -> state = state.copy(
-        anchorStorage = state.anchorStorage.addRangeMarker(markerId, rangeStart, rangeEnd, false, false))
+        anchorStorage = state.anchorStorage.addRangeMarker(
+          markerId = markerId,
+          from = rangeStart,
+          to = rangeEnd,
+          closedLeft = false,
+          closedRight = false,
+        ))
     }
     return markerId
   }

@@ -23,12 +23,11 @@ import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlin.jvm.JvmInline
 
-data class CompositionCache(
-  val operation: Operation,
-  val fromEdit: Long,
-  val toEdit: Long,
-)
 
+// it has several responsibilities at the same time:
+// - contains well-known attributes that are consumed by andel.undo itself (like `mergeKey` or `includeIntoLog`)
+// - serves as an extension mechanism for the platform, see UndoOperationsDataKey
+// - records undo
 @Serializable
 data class UndoGroupAttributes(val map: SerializableOpenMap<UndoGroupAttributes>) {
   fun <V : Any> with(key: SerializableKey<V, UndoGroupAttributes>, value: V): UndoGroupAttributes {
@@ -55,17 +54,16 @@ data class UndoGroupAttributes(val map: SerializableOpenMap<UndoGroupAttributes>
     val description = SerializableKey<String, UndoGroupAttributes>("undoGroup.description", String.serializer())
     val mergeKey = SerializableKey<String, UndoGroupAttributes>("undoGroup.merge.key", String.serializer())
     val mergeAlways = SerializableKey<Boolean, UndoGroupAttributes>("undoGroup.merge.always", Boolean.serializer())
-    val blockOpen = SerializableKey<Unit, UndoGroupAttributes>("undoGroup.block.open", Unit.serializer())
-    val blockClose = SerializableKey<List<UndoGroupReference>, UndoGroupAttributes>("undoGroup.block.close", ListSerializer(UndoGroupReference.serializer()))
-    val undo = SerializableKey<List<UndoGroupReference>, UndoGroupAttributes>("undoGroup.undo", ListSerializer(UndoGroupReference.serializer()))
-    val redo = SerializableKey<List<UndoGroupReference>, UndoGroupAttributes>("undoGroup.redo", ListSerializer(UndoGroupReference.serializer()))
+
+    val undo =
+      SerializableKey<List<UndoGroupReference>, UndoGroupAttributes>("undoGroup.undo", ListSerializer(UndoGroupReference.serializer()))
+    val redo =
+      SerializableKey<List<UndoGroupReference>, UndoGroupAttributes>("undoGroup.redo", ListSerializer(UndoGroupReference.serializer()))
 
     // default: include if contains some changes
     val includeIntoLog = SerializableKey<Boolean, UndoGroupAttributes>("undoGroup.includeIntoLog", Boolean.serializer())
-    val renameSession = SerializableKey<UID, UndoGroupAttributes>("undoGroup.rename.session", UID.serializer())
-    val refactoringSession = SerializableKey<UID, UndoGroupAttributes>("undoGroup.refactoring.session", UID.serializer())
-    val expensiveIndentationSession = SerializableKey<UID, UndoGroupAttributes>("undoGroup.indent.expensive.session", UID.serializer())
-    val globalGroups = SerializableKey<List<GlobalUndoLogRef>, UndoGroupAttributes>("undoGroup.globalGroups", ListSerializer(Long.serializer()))
+    val globalGroups =
+      SerializableKey<List<GlobalUndoLogRef>, UndoGroupAttributes>("undoGroup.globalGroups", ListSerializer(Long.serializer()))
   }
 }
 
@@ -156,7 +154,7 @@ class UndoLogData(
   val id: UndoLogDataReference,
   val undoStack: IBifurcanVector<DocumentUndoGroup>, // Do not use
   val openForMerge: Boolean,
-  var undoBaseOperationCache: CompositionCache? = null,
+  var undoBaseOperationCache: CachedComposition? = null,
 ) : UndoLog {
   override val indicesComparator: Comparator<UndoGroupReference>
     get() = compareBy { it.undoGroupPosition }
@@ -183,21 +181,11 @@ class UndoLogData(
   }
 
   override fun computeComposition(edits: EditLog, fromTimestamp: Long, toTimestamp: Long): Operation {
-    var result = with(undoBaseOperationCache) {
-      when {
-        this != null && fromTimestamp <= fromEdit && toTimestamp >= toEdit -> {
-          val head = edits.slice(fromTimestamp, fromEdit).compose()
-          val tail = edits.slice(toEdit, toTimestamp).compose()
-          listOf(head, operation, tail).compose()
-        }
-        else -> {
-          edits.slice(fromTimestamp, toTimestamp).compose()
-        }
+    return computeCompositionWithCache(undoBaseOperationCache, edits, fromTimestamp, toTimestamp)
+      .let { (cache, result) ->
+        undoBaseOperationCache = cache
+        result
       }
-    }
-    result = result.normalizeHard()
-    undoBaseOperationCache = CompositionCache(result, fromTimestamp, toTimestamp)
-    return result
   }
 
   val size: Long
@@ -218,30 +206,30 @@ class UndoLogData(
     )
   }
 
+  fun change(change: UndoLogChange): UndoLogData {
+    if (change.addedGroup == null) {
+      return UndoLogData(
+        id = this.id,
+        openForMerge = change.openForMerge,
+        undoStack = this.undoStack,
+        undoBaseOperationCache = this.undoBaseOperationCache
+      )
+    }
+    else {
+      return UndoLogData(
+        id = this.id,
+        undoStack = this.undoStack.set(change.index, change.addedGroup),
+        openForMerge = this.openForMerge,
+        undoBaseOperationCache = this.undoBaseOperationCache
+      )
+    }
+  }
+
   data class UndoLogChange(
     val addedGroup: DocumentUndoGroup?,
     val index: Long,
     val openForMerge: Boolean,
-  ) {
-    fun apply(undoLog: UndoLogData): UndoLogData {
-      if (this.addedGroup == null) {
-        return UndoLogData(
-          id = undoLog.id,
-          openForMerge = this.openForMerge,
-          undoStack = undoLog.undoStack,
-          undoBaseOperationCache = undoLog.undoBaseOperationCache
-        )
-      }
-      else {
-        return UndoLogData(
-          id = undoLog.id,
-          undoStack = undoLog.undoStack.set(this.index, this.addedGroup),
-          openForMerge = this.openForMerge,
-          undoBaseOperationCache = undoLog.undoBaseOperationCache
-        )
-      }
-    }
-  }
+  )
 
   fun closeForMerge(): UndoLogData {
     return UndoLogData(id = id,
@@ -255,7 +243,10 @@ class UndoLogData(
   }
 
   fun take(sizeToTrim: Long): UndoLogData {
-    return UndoLogData(id = id, undoStack = undoStack.slice(0, sizeToTrim), openForMerge = false, undoBaseOperationCache = undoBaseOperationCache)
+    return UndoLogData(id = id,
+                       undoStack = undoStack.slice(0, sizeToTrim),
+                       openForMerge = false,
+                       undoBaseOperationCache = undoBaseOperationCache)
   }
 
 }
@@ -301,7 +292,8 @@ data class CustomIndexedValue<I, out T>(val index: I, val value: T)
 
 @Serializable
 data class UndoGroupReference(val logData: UndoLogDataReference, val undoGroupPosition: Long) {
-  constructor(editLogId: UID, undoGroupPosition: Long) : this(DocumentUndoLogDataReference.Type.reference(DocumentUndoLogDataReference(editLogId)), undoGroupPosition)
+  constructor(editLogId: UID, undoGroupPosition: Long) : this(DocumentUndoLogDataReference.Type.reference(DocumentUndoLogDataReference(
+    editLogId)), undoGroupPosition)
 }
 
 typealias GlobalUndoLogRef = Long
