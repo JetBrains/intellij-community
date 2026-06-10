@@ -14,7 +14,7 @@ interface Tool {
   }
 
   val id: ToolId
-  val ui: PyToolUIInfo?
+  val ui: PyToolUIInfo
 
   /**
    * Tools that support old (tool-specific) naming should return it here
