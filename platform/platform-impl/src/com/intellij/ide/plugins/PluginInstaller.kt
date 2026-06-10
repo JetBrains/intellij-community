@@ -345,7 +345,7 @@ object PluginInstaller {
           val repositoryPlugins = CustomPluginRepositoryService.getInstance().getCustomRepositoryPlugins()
           val operation = PluginInstallOperation(emptyList(), repositoryPlugins, indicator, pluginEnabler)
           operation.setAllowInstallWithoutRestart(true)
-          return if (operation.checkMissingDependencies(pluginDescriptor, null)) {
+          return if (operation.checkMissingDependencies(pluginDescriptor, MutablePluginInstallationModel())) {
             Pair(operation, operation.checkDependenciesAndReplacements(pluginDescriptor))
           }
           else {

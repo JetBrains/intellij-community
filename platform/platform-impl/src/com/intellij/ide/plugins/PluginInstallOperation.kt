@@ -29,13 +29,11 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
-import com.intellij.util.SmartList
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.io.IOException
-import java.util.Collections
 import java.util.IdentityHashMap
 import java.util.Optional
 import java.util.concurrent.TimeUnit
@@ -104,7 +102,7 @@ class PluginInstallOperation(
   @RequiresBackgroundThread
   fun run() {
     updateUrls()
-    mySuccess = prepareToInstall(myPluginsToInstall)
+    mySuccess = prepareToInstall(myPluginsToInstall, MutablePluginInstallationModel())
   }
 
   val isSuccess: Boolean
@@ -151,17 +149,16 @@ class PluginInstallOperation(
   }
 
   @RequiresBackgroundThread
-  private fun prepareToInstall(pluginsToInstall: List<PluginUiModel>): Boolean {
-    val pluginIdsBeingInstalled: MutableList<PluginId> = SmartList()
-    for (pluginNode in pluginsToInstall) {
-      pluginIdsBeingInstalled.add(pluginNode.pluginId)
+  private fun prepareToInstall(pluginsToInstall: List<PluginUiModel>, installModel: MutablePluginInstallationModel): Boolean {
+    for (plugin in pluginsToInstall) {
+      installModel.assumeInstalled(plugin)
     }
 
     var result = false
     for (pluginNode in pluginsToInstall) {
       myIndicator.setText(pluginNode.name)
       try {
-        result = result or prepareToInstallWithCallback(pluginNode, pluginIdsBeingInstalled)
+        result = result or prepareToInstallWithCallback(pluginNode, installModel)
       }
       catch (e: IOException) {
         val title = IdeBundle.message("title.plugin.error")
@@ -178,7 +175,7 @@ class PluginInstallOperation(
   @Throws(IOException::class)
   private fun prepareToInstallWithCallback(
     pluginNode: PluginUiModel,
-    pluginIdsBeingInstalled: List<PluginId>,
+    installModel: MutablePluginInstallationModel,
   ): Boolean {
     val id = pluginNode.pluginId
     val localCallback = myLocalInstallCallbacks.remove(id)
@@ -186,13 +183,13 @@ class PluginInstallOperation(
     if (localCallback == null) {
       val callback = myLocalWaitInstallCallbacks.remove(id)
       if (callback == null) {
-        return prepareToInstall(pluginNode, pluginIdsBeingInstalled)
+        return prepareToInstall(pluginNode, installModel)
       }
       return callback.waitFor(-1) && callback.isDone
     }
     else {
       try {
-        val result = prepareToInstall(pluginNode, pluginIdsBeingInstalled)
+        val result = prepareToInstall(pluginNode, installModel)
         removeInstallCallback(id, localCallback, result)
         return result
       }
@@ -211,7 +208,7 @@ class PluginInstallOperation(
   @Throws(IOException::class)
   private fun prepareToInstall(
     pluginNode: PluginUiModel,
-    pluginIdsBeingInstalled: List<PluginId>,
+    installModel: MutablePluginInstallationModel,
   ): Boolean {
     if (!PluginManagementPolicy.getInstance().canInstallPlugin(pluginNode.getDescriptor())) {
       LOG.warn("The plugin ${pluginNode.pluginId} is not allowed to install for the organization")
@@ -231,7 +228,7 @@ class PluginInstallOperation(
     val prepared = downloader.prepareToInstall(myIndicator)
     if (prepared) {
       val descriptor = downloader.descriptor as PluginMainDescriptor
-      if (!checkMissingDependencies(descriptor, pluginIdsBeingInstalled)) {
+      if (!checkMissingDependencies(descriptor, installModel)) {
         return false
       }
       val newPluginVersions = buildList {
@@ -312,23 +309,10 @@ class PluginInstallOperation(
 
   internal fun checkMissingDependencies(
     pluginNode: PluginMainDescriptor,
-    pluginIdsBeingInstalled: List<PluginId>?,
+    installModel: MutablePluginInstallationModel,
   ): Boolean {
-    LOG.debug { "Checking missing dependencies for $pluginNode. Plugins being installed: $pluginIdsBeingInstalled" }
-    val pluginSet = PluginManagerCore.getPluginSetOrNull() // TODO assert that plugins are initialized at this point
-    val existingPluginIds: Set<PluginId> = pluginSet?.buildPluginIdMap()?.keys ?: Collections.emptySet()
-    val existingContentModuleIds: Set<PluginModuleId> = pluginSet?.buildContentModuleIdMap()?.keys ?: Collections.emptySet()
-    val addedPluginIdsAfterInstallation: MutableSet<PluginId> = HashSet()
-    val addedContentModuleIdsAfterInstallation: MutableSet<PluginModuleId> = HashSet()
-    addedPluginIdsAfterInstallation.add(pluginNode.getPluginId())
-    if (pluginIdsBeingInstalled != null) {
-      addedPluginIdsAfterInstallation.addAll(pluginIdsBeingInstalled)
-    }
-    addedPluginIdsAfterInstallation.addAll(pluginNode.pluginAliases)
-    for (module in pluginNode.contentModules) {
-      addedPluginIdsAfterInstallation.addAll(module.pluginAliases)
-      addedContentModuleIdsAfterInstallation.add(module.moduleId)
-    }
+    LOG.debug { "Checking missing dependencies for $pluginNode. Plugins being installed: $installModel" }
+    installModel.assumeInstalled(pluginNode)
 
     val missingRequiredPlugins: MutableMap<PluginId, PluginUiModel> = HashMap()
     val missingOptionalPlugins: MutableMap<PluginId, PluginUiModel> = HashMap()
@@ -341,10 +325,8 @@ class PluginInstallOperation(
       // pluginNode that comes from the Marketplace contains mixed dependencies on both plugins and modules
       val shouldSkip = Function<PluginId, Boolean> { pluginId ->
         val pluginIdAsModuleId = PluginModuleId.getId(pluginId.idString, PluginModuleId.JETBRAINS_NAMESPACE)
-        existingPluginIds.contains(pluginId) ||
-        existingContentModuleIds.contains(pluginIdAsModuleId) ||
-        addedPluginIdsAfterInstallation.contains(pluginId) ||
-        addedContentModuleIdsAfterInstallation.contains(pluginIdAsModuleId) ||
+        installModel.isPluginIdAvailable(pluginId) ||
+        installModel.isModuleIdAvailable(pluginIdAsModuleId) ||
         InstalledPluginsState.getInstance().wasInstalled(pluginId) ||
         InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId) ||
         targetCollector.containsKey(pluginId)
@@ -366,6 +348,9 @@ class PluginInstallOperation(
       if (depPluginDescriptor != null) {
         LOG.debug { "Adding " + resolvedDependencyId + " to missing dependencies (optional=" + dependency.isOptional + ")" }
         targetCollector[resolvedDependencyId] = depPluginDescriptor
+        if (targetCollector === missingRequiredPlugins) {
+          installModel.assumeInstalled(depPluginDescriptor)
+        }
       }
       else {
         LOG.debug { "Plugin $resolvedDependencyId is not found in the repository" }
@@ -379,8 +364,7 @@ class PluginInstallOperation(
           (if (module is ContentModuleDescriptor) "content module " + module.getModuleNameString() else "main descriptor")
         }
         val shouldSkip = Function<PluginId, Boolean> { pluginId ->
-          existingPluginIds.contains(pluginId) ||
-          addedPluginIdsAfterInstallation.contains(pluginId) ||
+          installModel.isPluginIdAvailable(pluginId) ||
           InstalledPluginsState.getInstance().wasInstalled(pluginId) ||
           InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId) ||
           missingRequiredPlugins.containsKey(pluginId)
@@ -402,6 +386,7 @@ class PluginInstallOperation(
         if (depPluginDescriptor != null) {
           LOG.debug { "Adding $resolvedDependencyId to missing dependencies" }
           missingRequiredPlugins[resolvedDependencyId] = depPluginDescriptor
+          installModel.assumeInstalled(depPluginDescriptor)
         }
         else {
           LOG.debug { "Plugin $resolvedDependencyId is not found in the repository" }
@@ -412,8 +397,7 @@ class PluginInstallOperation(
           "Processing v2 module dependency: " + dependencyModuleId.name + " in " +
           (if (module is ContentModuleDescriptor) "content module " + module.getModuleNameString() else "main descriptor")
         }
-        if (existingContentModuleIds.contains(dependencyModuleId) ||
-            addedContentModuleIdsAfterInstallation.contains(dependencyModuleId)) {
+        if (installModel.isModuleIdAvailable(dependencyModuleId)) {
           LOG.debug { "Dependency is already satisfied" }
           continue
         }
@@ -423,8 +407,7 @@ class PluginInstallOperation(
           continue
         }
         LOG.debug { "Dependency is resolved into $resolvedDependencyId" }
-        if (existingPluginIds.contains(resolvedDependencyId) ||
-            addedPluginIdsAfterInstallation.contains(resolvedDependencyId) ||
+        if (installModel.isPluginIdAvailable(resolvedDependencyId) ||
             InstalledPluginsState.getInstance().wasInstalled(resolvedDependencyId) ||
             InstalledPluginsState.getInstance().wasInstalledWithoutRestart(resolvedDependencyId) ||
             missingRequiredPlugins.containsKey(resolvedDependencyId)) {
@@ -435,6 +418,7 @@ class PluginInstallOperation(
         if (depPluginDescriptor != null) {
           LOG.debug { "Adding $resolvedDependencyId to missing dependencies" }
           missingRequiredPlugins[resolvedDependencyId] = depPluginDescriptor
+          installModel.assumeInstalled(depPluginDescriptor)
         }
         else {
           LOG.debug { "Plugin $resolvedDependencyId is not found in the repository" }
@@ -451,13 +435,25 @@ class PluginInstallOperation(
     }
     // optional modules are skipped because they form a majority of content modules and the result is not really used, see comment below
 
-    if (!prepareDependencies(pluginNode, missingRequiredPlugins.values.toMutableList(), "plugin.manager.dependencies.detected.title",
-                             "plugin.manager.dependencies.detected.message", false)) {
+    if (!prepareDependencies(
+        pluginNode = pluginNode,
+        dependencies = missingRequiredPlugins.values.toMutableList(),
+        installModel = installModel,
+        titleKey = "plugin.manager.dependencies.detected.title",
+        messageKey = "plugin.manager.dependencies.detected.message",
+        askConfirmation = false,
+      )) {
       return false
     }
-    if (Registry.`is`("ide.plugins.suggest.install.optional.dependencies") && // TODO only 2 users use this, let's drop?
-        !prepareDependencies(pluginNode, missingOptionalPlugins.values.toMutableList(), "plugin.manager.optional.dependencies.detected.title",
-                             "plugin.manager.optional.dependencies.detected.message", true)) {
+    if (Registry.`is`("ide.plugins.suggest.install.optional.dependencies") && // TODO only 2 users use this, let's drop it?
+        !prepareDependencies(
+          pluginNode = pluginNode,
+          dependencies = missingOptionalPlugins.values.toMutableList(),
+          installModel = installModel,
+          titleKey = "plugin.manager.optional.dependencies.detected.title",
+          messageKey = "plugin.manager.optional.dependencies.detected.message",
+          askConfirmation = true,
+        )) {
       return false
     }
     return true
@@ -467,6 +463,7 @@ class PluginInstallOperation(
   private fun prepareDependencies(
     pluginNode: IdeaPluginDescriptor,
     dependencies: MutableList<PluginUiModel>,
+    installModel: MutablePluginInstallationModel,
     @NonNls titleKey: String,
     @NonNls messageKey: String,
     askConfirmation: Boolean,
@@ -529,7 +526,7 @@ class PluginInstallOperation(
       }, ModalityState.any())
 
       return dependencies.isEmpty() ||
-             result.get() && prepareToInstall(dependencies)
+             result.get() && prepareToInstall(dependencies, installModel)
     }
     catch (_: Exception) {
       return false
@@ -601,5 +598,50 @@ class PluginInstallOperation(
       LOG.debug("Resolved module $moduleId in Marketplace: $result")
       return result
     }
+  }
+}
+
+/**
+ * Helps keep track of which ids would resolve when we intend to install multiple plugins and their dependencies.
+ */
+internal class MutablePluginInstallationModel() {
+  val existingPluginSet = PluginManagerCore.getPluginSetOrNull()?.allPlugins.let { allPlugins ->
+    AmbiguousPluginSet.build(allPlugins?.toList() ?: emptyList())
+  }
+  val assumePluginIdsInstalled = mutableSetOf<PluginId>()
+  val assumeContentModuleIdsInstalled = mutableSetOf<PluginModuleId>()
+
+  fun isPluginIdAvailable(pluginId: PluginId): Boolean {
+    return existingPluginSet.resolvePluginId(pluginId).firstOrNull() != null || assumePluginIdsInstalled.contains(pluginId)
+  }
+
+  fun isModuleIdAvailable(moduleId: PluginModuleId): Boolean {
+    return existingPluginSet.resolveContentModuleId(moduleId).firstOrNull() != null || assumeContentModuleIdsInstalled.contains(moduleId)
+  }
+
+  fun assumeInstalled(plugin: PluginMainDescriptor) {
+    assumePluginIdsInstalled.add(plugin.pluginId)
+    assumePluginIdsInstalled.addAll(plugin.pluginAliases)
+    for (contentModule in plugin.contentModules) {
+      assumePluginIdsInstalled.addAll(contentModule.pluginAliases)
+      assumeContentModuleIdsInstalled.add(contentModule.moduleId)
+    }
+  }
+
+  fun assumeInstalled(pluginModel: PluginUiModel) {
+    assumePluginIdsInstalled.add(pluginModel.pluginId)
+    // addedPluginIdsAfterInstallation.addAll(plugin.pluginAliases) // FIXME no aliases
+    for (contentModule in pluginModel.contentModules) {
+      // FIXME this won't work for third-party plugins
+      assumeContentModuleIdsInstalled.add(PluginModuleId.getId(contentModule.moduleName, PluginModuleId.JETBRAINS_NAMESPACE))
+      // FIXME no aliases
+    }
+  }
+
+  override fun toString(): String {
+    return "MutablePluginInstallationModel(" +
+           "assumePluginIdsInstalled=${assumePluginIdsInstalled.joinToString(prefix = "[", postfix = "]")}, " +
+           "assumeContentModuleIdsInstalled=${assumeContentModuleIdsInstalled.joinToString(prefix = "[", postfix = "]")}" +
+           ")"
   }
 }
