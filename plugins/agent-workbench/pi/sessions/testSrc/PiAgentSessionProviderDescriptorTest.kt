@@ -19,6 +19,7 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 @TestApplication
@@ -28,6 +29,12 @@ class PiAgentSessionProviderDescriptorTest {
     executableResolver = { "pi" },
     sessionIdGenerator = { "pi-session-1" },
     cliAvailableProbe = { true },
+    themeLaunchResourcesResolver = {
+      PiThemeLaunchResources(
+        extensionPath = Path.of("/tmp/pi-theme-extension/agent-workbench-theme.ts"),
+        stateFilePath = Path.of("/tmp/pi-theme-extension/state/current-theme.txt"),
+      )
+    },
   )
 
   @Test
@@ -51,14 +58,42 @@ class PiAgentSessionProviderDescriptorTest {
   fun buildNewSessionLaunchSpecUsesSessionIdFlag(): Unit = runBlocking(Dispatchers.Default) {
     val launchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
 
-    assertThat(launchSpec.command).containsExactly("pi", "--session-id", "pi-session-1")
+    assertThat(launchSpec.command).containsExactly(
+      "pi", "--extension", "/tmp/pi-theme-extension/agent-workbench-theme.ts", "--session-id", "pi-session-1"
+    )
+    assertThat(launchSpec.envVariables).containsEntry(
+      PI_THEME_STATE_ENVIRONMENT_VARIABLE,
+      "/tmp/pi-theme-extension/state/current-theme.txt",
+    )
     assertThat(launchSpec.preallocatedSessionId).isEqualTo("pi-session-1")
   }
 
   @Test
   fun buildResumeLaunchSpecUsesSessionFlag(): Unit = runBlocking(Dispatchers.Default) {
-    assertThat(descriptor.buildResumeLaunchSpec("thread-1").command)
-      .containsExactly("pi", "--session", "thread-1")
+    val launchSpec = descriptor.buildResumeLaunchSpec("thread-1")
+
+    assertThat(launchSpec.command).containsExactly(
+      "pi", "--extension", "/tmp/pi-theme-extension/agent-workbench-theme.ts", "--session", "thread-1"
+    )
+    assertThat(launchSpec.envVariables).containsEntry(
+      PI_THEME_STATE_ENVIRONMENT_VARIABLE,
+      "/tmp/pi-theme-extension/state/current-theme.txt",
+    )
+  }
+
+  @Test
+  fun buildLaunchSpecOmitsThemeExtensionWhenThemeSupportUnavailable(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = PiAgentSessionProviderDescriptor(
+      executableResolver = { "pi" },
+      sessionIdGenerator = { "pi-session-1" },
+      cliAvailableProbe = { true },
+      themeLaunchResourcesResolver = { null },
+    )
+
+    val launchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(launchSpec.command).containsExactly("pi", "--session-id", "pi-session-1")
+    assertThat(launchSpec.envVariables).isEmpty()
   }
 
   @Test
@@ -68,7 +103,13 @@ class PiAgentSessionProviderDescriptorTest {
       initialMessagePlan = AgentInitialMessagePlan(message = "Summarize changes"),
     )
 
-    assertThat(launchSpec.command).containsExactly("pi", "--session", "thread-1", "Summarize changes")
+    assertThat(launchSpec.command).containsExactly(
+      "pi", "--extension", "/tmp/pi-theme-extension/agent-workbench-theme.ts", "--session", "thread-1", "Summarize changes"
+    )
+    assertThat(launchSpec.envVariables).containsEntry(
+      PI_THEME_STATE_ENVIRONMENT_VARIABLE,
+      "/tmp/pi-theme-extension/state/current-theme.txt",
+    )
   }
 
   @Test

@@ -8,6 +8,7 @@
     <module name="intellij.agent.workbench.prompt.core"/>
     <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.platform.editor.ui"/>
     <module name="intellij.terminal.backend"/>
   </dependencies>
   <!-- endregion -->
@@ -18,4 +19,9 @@
       order="after agentWorkbenchJunie"
       implementation="com.intellij.agent.workbench.pi.sessions.PiAgentSessionProviderDescriptor"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.agent.workbench.pi.sessions.PiThemeChangeListener"
+              topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
+  </applicationListeners>
 </idea-plugin>
