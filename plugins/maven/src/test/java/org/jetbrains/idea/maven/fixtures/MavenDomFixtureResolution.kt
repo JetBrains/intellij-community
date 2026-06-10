@@ -29,7 +29,7 @@ import org.junit.Assert.assertSame
 
 suspend fun MavenDomTestFixture.getReferenceAtCaret(f: VirtualFile): PsiReference? {
   configTest(f)
-  val editorOffset = getEditorOffset(f)
+  val editorOffset = doGetEditorOffset(f)
   val psiFile = findPsiFile(f)
   return readAction { psiFile.findReferenceAt(editorOffset) }
 }
@@ -143,9 +143,14 @@ suspend fun MavenDomTestFixture.findTagValue(file: VirtualFile, path: String, cl
   return readAction { tag.value }
 }
 
-private suspend fun MavenDomTestFixture.getEditorOffset(f: VirtualFile): Int {
+private suspend fun MavenDomTestFixture.doGetEditorOffset(f: VirtualFile): Int {
   configTest(f)
   return readAction { fixture.editor.caretModel.offset }
+}
+
+suspend fun MavenDomTestFixture.getEditorOffset(f: VirtualFile): Int {
+  val editor = getEditor(f)
+  return readAction { editor.caretModel.offset }
 }
 
 suspend fun MavenDomTestFixture.assertDocumentation(expectedText: String?) {

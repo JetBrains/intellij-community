@@ -72,6 +72,20 @@ suspend fun MavenDomTestFixture.getEditor(f: VirtualFile): Editor {
   return fixture.editor
 }
 
+/**
+ * Executes an editor action against the current fixture editor. Unlike `CodeInsightTestFixture.performEditorAction`, which
+ * builds its event from `EditorUtil.getEditorDataContext` and silently no-ops when the action is reported disabled in this
+ * headless fixture (e.g. "GotoSuperMethod"), this routes through [EditorTestUtil.executeAction], which supplies a full
+ * editor data context (EDITOR/PROJECT/VIRTUAL_FILE) and asserts the action is enabled.
+ */
+suspend fun MavenDomTestFixture.performEditorAction(actionId: String) {
+  withContext(Dispatchers.EDT) {
+    writeIntentReadAction {
+      EditorTestUtil.executeAction(fixture.editor, actionId, true)
+    }
+  }
+}
+
 suspend fun MavenDomTestFixture.moveCaretTo(f: VirtualFile, textWithCaret: String) {
   val caretOffset = textWithCaret.indexOf("<caret>")
   assertTrue(caretOffset > 0)
