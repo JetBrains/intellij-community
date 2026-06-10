@@ -3,11 +3,17 @@
 package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiElement
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertUnorderedElementsAreEqual
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
 import org.junit.Assert.assertNotNull
 import org.junit.ComparisonFailure
@@ -57,3 +63,57 @@ fun MavenDomTestFixture.assertHighlighting(highlightingInfos: Collection<Highlig
     assertNotNull("Not highlighted: $expected", highlightingInfos.firstOrNull { expected.matches(it) })
   }
 }
+
+internal suspend fun MavenDomTestFixture.assertHighlighted(file: VirtualFile, vararg expected: HighlightPointer) {
+  val editor = getEditor(file)
+  val psiFile = getTestPsiFile(file)
+  withContext(Dispatchers.EDT) {
+    //readaction is not enough
+    writeIntentReadAction {
+      HighlightUsagesHandler.invoke(project, editor, psiFile)
+    }
+  }
+
+  val highlighters = editor.markupModel.allHighlighters
+  val actual: MutableList<HighlightPointer> = ArrayList()
+  for (each in highlighters) {
+    if (!each.isValid) continue
+    val offset = each.startOffset
+    val elementAtOffset = readAction { psiFile.findElementAt(offset) }
+    val element = readAction {
+      PsiTreeUtil.getParentOfType(elementAtOffset, XmlTag::class.java)
+    }
+    val text = editor.document.text.substring(offset, each.endOffset)
+    actual.add(HighlightPointer(element, text))
+  }
+
+  assertUnorderedElementsAreEqual(actual, *expected)
+}
+
+internal class HighlightPointer(var element: PsiElement?, var text: String?) {
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (o == null || javaClass != o.javaClass) return false
+
+    val that = o as HighlightPointer
+
+    if (if (element != null) element != that.element else that.element != null) return false
+    if (if (text != null) text != that.text else that.text != null) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = if (element != null) element.hashCode() else 0
+    result = 31 * result + (if (text != null) text.hashCode() else 0)
+    return result
+  }
+
+  override fun toString(): String {
+    return "HighlightInfo{" +
+           "element=" + element +
+           ", text='" + text + '\'' +
+           '}'
+  }
+}
+

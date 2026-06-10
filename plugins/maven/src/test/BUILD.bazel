@@ -186,6 +186,8 @@ jvm_library(
         "//xml/xml-analysis-impl:analysis-impl_test_lib",
         "//platform/testFramework/junit5/codeInsight",
         "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
+        "//platform/usageView",
+        "//platform/usageView:usageView_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.tests` end

@@ -1,17 +1,42 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.readAction
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.HighlightPointer
+import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertContain
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertHighlighted
+import org.jetbrains.idea.maven.fixtures.assertSearchResults
+import org.jetbrains.idea.maven.fixtures.assertSearchResultsInclude
+import org.jetbrains.idea.maven.fixtures.createProjectSubDir
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.envVar
+import org.jetbrains.idea.maven.fixtures.findTag
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.jetbrains.idea.maven.fixtures.search
+import org.jetbrains.idea.maven.fixtures.updateAllProjects
+import org.jetbrains.idea.maven.fixtures.updateProjectPom
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenPropertyFindUsagesTest : MavenDomTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenPropertyFindUsagesTest(mavenVersion: String, modelVersion: String) {
 
-  override fun setUp() = runBlocking {
-    super.setUp()
+  private val maven by mavenDomFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
 
-    importProjectAsync("""
+  @BeforeEach
+  fun setUp(): Unit = runBlocking {
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>module1</artifactId>
                     <version>1</version>
@@ -20,7 +45,7 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
   @Test
   fun testFindModelPropertyFromReference() = runBlocking {
-    updateProjectPom("""
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -28,14 +53,14 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{project.version}</description>
                        """.trimIndent())
 
-    assertSearchResults(projectPom,
-                        findTag("project.name"),
-                        findTag("project.description"))
+    maven.assertSearchResults(maven.projectPom,
+                              maven.findTag("project.name"),
+                              maven.findTag("project.description"))
   }
 
   @Test
   fun testFindModelPropertyFromReferenceWithDifferentQualifiers() = runBlocking {
-    updateProjectPom("""
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -43,14 +68,14 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{pom.version}</description>
                        """.trimIndent())
 
-    assertSearchResults(projectPom,
-                        findTag("project.name"),
-                        findTag("project.description"))
+    maven.assertSearchResults(maven.projectPom,
+                              maven.findTag("project.name"),
+                              maven.findTag("project.description"))
   }
 
   @Test
   fun testFindUsagesFromTag() = runBlocking {
-    updateProjectPom("""
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <<caret>version>1</version>
@@ -58,26 +83,26 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{version}</description>
                        """.trimIndent())
 
-    assertSearchResults(projectPom,
-                        findTag("project.name"),
-                        findTag("project.description"))
+    maven.assertSearchResults(maven.projectPom,
+                              maven.findTag("project.name"),
+                              maven.findTag("project.description"))
   }
 
   @Test
   fun testFindUsagesFromTagValue() = runBlocking {
-    updateProjectPom("""
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1<caret>1</version>
                        <name>${'$'}{project.version}</name>
                        """.trimIndent())
 
-    assertSearchResults(projectPom, findTag("project.name"))
+    maven.assertSearchResults(maven.projectPom, maven.findTag("project.name"))
   }
 
   @Test
   fun testFindUsagesFromProperty() = runBlocking {
-    updateProjectPom("""
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>11</version>
@@ -87,12 +112,13 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        </properties>
                        """.trimIndent())
 
-    assertSearchResultsInclude(projectPom, findTag("project.name"))
+    maven.assertSearchResultsInclude(maven.projectPom, maven.findTag("project.name"))
   }
 
   @Test
   fun testFindUsagesForEnvProperty() = runBlocking {
-    updateProjectPom("""
+    val envVar = maven.envVar
+    maven.updateProjectPom("""
   <groupId>test</groupId>
   <artifactId>module1</artifactId>
   <version>11</version>
@@ -100,12 +126,12 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   <description>${"$"}{env.${envVar}}</description>
   """.trimIndent())
 
-    assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
+    maven.assertSearchResultsInclude(maven.projectPom, maven.findTag("project.name"), maven.findTag("project.description"))
   }
 
   @Test
   fun testFindUsagesForSystemProperty() = runBlocking {
-    updateProjectPom("""
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>11</version>
@@ -113,14 +139,14 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${'$'}{user.home}</description>
                        """.trimIndent())
 
-    assertSearchResultsInclude(projectPom, findTag("project.name"), findTag("project.description"))
+    maven.assertSearchResultsInclude(maven.projectPom, maven.findTag("project.name"), maven.findTag("project.description"))
   }
 
   @Test
   fun testFindUsagesForSystemPropertyInFilteredResources() = runBlocking {
-    createProjectSubDir("res")
+    maven.createProjectSubDir("res")
 
-    updateProjectPom("""
+    maven.updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>module1</artifactId>
                     <version>1</version>
@@ -134,19 +160,19 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                       </resources>
                     </build>
                     """.trimIndent())
-    updateAllProjects()
+    maven.updateAllProjects()
 
-    val f = createProjectSubFile("res/foo.properties",
+    val f = maven.createProjectSubFile("res/foo.properties",
                                  "foo=abc\${user<caret>.home}abc")
 
-    val result = search(f)
-    val expected = readAction { MavenDomUtil.findPropertyValue(project, f, "foo") }
-    assertContain(result, findTag("project.name"), expected)
+    val result = maven.search(f)
+    val expected = readAction { MavenDomUtil.findPropertyValue(maven.project, f, "foo") }
+    assertContain(result, maven.findTag("project.name"), expected)
   }
 
   @Test
   fun testHighlightingFromTag() = runBlocking {
-    updateProjectPom($$"""
+    maven.updateProjectPom($$"""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version><caret>1</version>
@@ -154,8 +180,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                        <description>${version}</description>
                        """.trimIndent())
 
-    assertHighlighted(projectPom,
-                      HighlightPointer(findTag("project.name"), "project.version"),
-                      HighlightPointer(findTag("project.description"), "version"))
+    maven.assertHighlighted(maven.projectPom,
+                            HighlightPointer(maven.findTag("project.name"), "project.version"),
+                            HighlightPointer(maven.findTag("project.description"), "version"))
   }
 }

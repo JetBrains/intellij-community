@@ -2,6 +2,7 @@
 @file:Suppress("unused")
 package org.jetbrains.idea.maven.fixtures
 
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
@@ -14,6 +15,7 @@ import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.EditorTestUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -47,7 +49,22 @@ suspend fun MavenDomTestFixture.configTest(f: VirtualFile) {
 
 suspend fun MavenDomTestFixture.type(f: VirtualFile, c: Char) {
   configTest(f)
-  fixture.type(c)
+  // EditorTestFixture.type(char) routes non-printable characters through a keymap shortcut lookup and silently falls
+  // back to typing the character literally when the keystroke is unbound; the @TestApplication active keymap has no
+  // Backspace binding, so type('\b') would insert a literal backspace char instead of deleting. Invoke the backspace
+  // editor action directly against a full editor data context (keymap-independent). CodeInsightTestFixture.performEditorAction
+  // is not used here because its EditorUtil.getEditorDataContext leaves the action reported as disabled in this headless
+  // fixture, so it would silently no-op; EditorTestUtil.executeAction supplies EDITOR/PROJECT/VIRTUAL_FILE explicitly.
+  if (c == '\b') {
+    withContext(Dispatchers.EDT) {
+      writeIntentReadAction {
+        EditorTestUtil.executeAction(fixture.editor, IdeActions.ACTION_EDITOR_BACKSPACE, true)
+      }
+    }
+  }
+  else {
+    fixture.type(c)
+  }
 }
 
 suspend fun MavenDomTestFixture.getEditor(f: VirtualFile): Editor {
