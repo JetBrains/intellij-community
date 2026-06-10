@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.searchEverywhereMl.ranking.core.features
 
 import com.intellij.find.FindManager
@@ -12,7 +13,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLSearchSession
-import com.intellij.usages.impl.ScopeRuleValidator
+import com.jetbrains.fus.reporting.api.ValidationResultType
 
 internal object SearchEverywhereStateFeaturesProvider {
   val QUERY_LENGTH_DATA_KEY = EventFields.Int("query_length")
@@ -24,7 +25,7 @@ internal object SearchEverywhereStateFeaturesProvider {
   val QUERY_CONTAINS_ABBREVIATIONS_DATA_KEY = EventFields.Boolean("query_contains_abbreviations")
   val QUERY_IS_ALL_UPPERCASE_DATA_KEY = EventFields.Boolean("query_is_all_uppercase")
   val IS_DUMB_MODE = EventFields.Boolean("is_dumb_mode")
-  val SEARCH_SCOPE_DATA_KEY = EventFields.StringValidatedByCustomRule("search_scope", ScopeRuleValidator::class.java)
+  val SEARCH_SCOPE_DATA_KEY = EventFields.String("search_scope", ScopeIdMapper.standardNames.toList(), defaultValue = ValidationResultType.THIRD_PARTY.description)
   val IS_SEARCH_EVERYWHERE_DATA_KEY = EventFields.Boolean("is_search_everywhere")
 
   val IS_CASE_SENSITIVE = EventFields.Boolean("is_case_sensitive")

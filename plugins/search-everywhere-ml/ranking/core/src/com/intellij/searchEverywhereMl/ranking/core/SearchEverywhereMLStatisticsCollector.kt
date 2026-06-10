@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereEssentialContributorMarker
@@ -184,8 +184,7 @@ object SearchEverywhereMLStatisticsCollector : CounterUsagesCollector() {
     }
   }
 
-  internal val GROUP = EventLogGroup("mlse.log", 135, MLSE_RECORDER_ID,
-                                      "ML in Search Everywhere Log Group")
+  internal val GROUP = EventLogGroup("mlse.log", 136, MLSE_RECORDER_ID,)
 
   // region Fields
   internal val IS_INTERNAL = EventFields.Boolean("is_internal")
