@@ -13,6 +13,8 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.project.MavenSettingsCache
+import org.jetbrains.idea.maven.utils.MavenLog
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.absolutePathString
@@ -83,6 +85,49 @@ fun MavenTestFixture.createProfilesXml(@Language(value = "XML", prefix = "<profi
   val f = projectRoot.findChild("profiles.xml") ?: throw AssertionError("can't find profiles.xml in VFS")
   refreshFiles(listOf(f))
   return f
+}
+
+fun MavenTestFixture.createProfilesXml(relativePath: String, xml: String): VirtualFile {
+  return createProfilesFile(createProjectSubDir(relativePath), xml, false)
+}
+
+private fun MavenTestFixture.createProfilesFile(dir: VirtualFile, xml: String, oldStyle: Boolean): VirtualFile {
+  return createProfilesFile(dir, createValidProfiles(xml, oldStyle))
+}
+
+private fun MavenTestFixture.createProfilesFile(dir: VirtualFile, content: String): VirtualFile {
+  val fileName = "profiles.xml"
+  val filePath = Path.of(dir.path, fileName)
+  setFileContent(filePath, content)
+  var f = dir.findChild(fileName)
+  if (null == f) {
+    refreshFiles(listOf(dir))
+    f = dir.findChild(fileName)!!
+  }
+  refreshFiles(listOf(f))
+  return f
+}
+
+private fun MavenTestFixture.setFileContent(file: Path, content: String) {
+  val relativePath = dir.relativize(file)
+  MavenLog.LOG.debug("Writing content to $relativePath")
+  Files.write(file, content.toByteArray(StandardCharsets.UTF_8))
+}
+
+@Language("XML")
+private fun createValidProfiles(@Language("XML") xml: String, oldStyle: Boolean): String {
+  if (oldStyle) {
+    return "<?xml version=\"1.0\"?>" +
+           "<profiles>" +
+           xml +
+           "</profiles>"
+  }
+  return "<?xml version=\"1.0\"?>" +
+         "<profilesXml>" +
+         "<profiles>" +
+         xml +
+         "</profiles>" +
+         "</profilesXml>"
 }
 
 fun MavenTestFixture.updateProjectSubFile(relativePath: String, content: String): VirtualFile {

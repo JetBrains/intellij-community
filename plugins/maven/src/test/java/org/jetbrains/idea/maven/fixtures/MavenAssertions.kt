@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import junit.framework.TestCase.assertEquals
 import junit.framework.TestCase.fail
 
 internal object MavenAssertions {
@@ -23,5 +24,11 @@ internal object MavenAssertions {
 
   fun <T> assertUnorderedElementsAreEqual(actual: Collection<T>, expected: Collection<T>) {
     assertSameElements(actual, expected)
+  }
+
+  fun <T> assertDoNotContain(actual: List<T>, vararg expected: T) {
+    val actualCopy: MutableList<T> = ArrayList(actual)
+    actualCopy.removeAll(expected.toSet())
+    assertEquals(actual.toString(), actualCopy.size, actual.size)
   }
 }
