@@ -361,6 +361,57 @@ via dependency 'unique.module.name.52.backend.support' -> descriptor 'unique.mod
     Assert.assertTrue(myFixture.filterAvailableIntentions("Make module 'unique.module.name.52' work in 'frontend' only").isEmpty())
   }
 
+  fun testPluginXmlWithAmbiguousAliasDependencyBecomesMixed() {
+    addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.53.frontend.alias.provider",
+      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <id>unique.module.name.53.frontend.alias.provider</id>
+          <module value="unique.module.name.53.shared.alias"/>
+          <dependencies>
+            <module name="intellij.platform.frontend"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.53.backend.alias.provider",
+      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <id>unique.module.name.53.backend.alias.provider</id>
+          <module value="unique.module.name.53.shared.alias"/>
+          <dependencies>
+            <module name="intellij.platform.backend"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent()
+    )
+    val pluginXml = addModuleWithXmlDescriptor(
+      moduleName = "unique.module.name.53.consumer",
+      descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
+      pluginXmlContent = """
+        <idea-plugin>
+          <depends>unique.module.name.53.shared.alias</depends>
+        </idea-plugin>
+      """.trimIndent()
+    )
+
+    val recognizedKind = recognizeSplitModeModuleKind(pluginXml as com.intellij.psi.xml.XmlFile)
+    Assert.assertNotNull("Module kind should be recognized", recognizedKind)
+    Assert.assertEquals("unique.module.name.53.consumer", recognizedKind!!.moduleName)
+    Assert.assertEquals("mixed", recognizedKind.kindId)
+    Assert.assertTrue(
+      "Reasoning should mention the frontend alias provider.\nReasoning: ${recognizedKind.reasoning}",
+      recognizedKind.reasoning.contains("unique.module.name.53.frontend.alias.provider"),
+    )
+    Assert.assertTrue(
+      "Reasoning should mention the backend alias provider.\nReasoning: ${recognizedKind.reasoning}",
+      recognizedKind.reasoning.contains("unique.module.name.53.backend.alias.provider"),
+    )
+  }
+
   fun testMixedPluginXmlGetsSingleRootErrorWhenXmlInspectionsAreDisabled() {
     RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
       .setValue(false, testRootDisposable)

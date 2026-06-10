@@ -13,6 +13,7 @@ import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.devkit.dom.ContentDescriptor.ModuleDescriptor.ModuleLoadingRule
 import org.jetbrains.idea.devkit.dom.Dependency
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
+import org.jetbrains.idea.devkit.dom.index.PluginIdModuleIndex
 
 private val OWN_DESCRIPTOR_DEPENDENCY_FACTS_KEY =
   Key.create<CachedValue<DependencyFacts>>("SplitModeDescriptorDependencyAnalyzer.ownDescriptorDependencyFacts")
@@ -85,18 +86,24 @@ internal object SplitModeDescriptorDependencyAnalyzer {
 
     val descriptorLocation = getDescriptorLocation(ideaPlugin)
     val accumulator = DependencyFactsAccumulator(descriptorLocation)
-    val directDependencies = collectDirectDependencies(ideaPlugin)
-    for (dependency in directDependencies) {
-      val dependencyDescriptor = dependency.resolveDescriptor()
-      val predefinedDependencyFacts = if (dependencyDescriptor == null) null else getPredefinedDependencyFacts(dependencyDescriptor)
-      if (predefinedDependencyFacts != null) {
-        accumulator.recordTransitiveDependencies(dependency.name, predefinedDependencyFacts)
+    val directDependencies = collectDirectDependencies(ideaPlugin).toList()
+    for ((dependencyName, dependencyDescriptors) in directDependencies) {
+      var hasPredefinedDependencyFacts = false
+      for (dependencyDescriptor in dependencyDescriptors) {
+        val predefinedDependencyFacts = getPredefinedDependencyFacts(dependencyDescriptor) ?: continue
+        accumulator.recordTransitiveDependencies(dependencyName, predefinedDependencyFacts)
+        hasPredefinedDependencyFacts = true
+      }
+      if (hasPredefinedDependencyFacts) {
+        if (accumulator.hasMonolithEvidence()) {
+          return accumulator.toDependencyFacts()
+        }
       }
       else {
-        accumulator.record(DependencyInfo(dependency.name, directDependencyTrace(descriptorLocation)))
-      }
-      if (accumulator.hasMonolithEvidence()) {
-        return accumulator.toDependencyFacts()
+        accumulator.record(DependencyInfo(dependencyName, directDependencyTrace(descriptorLocation)))
+        if (accumulator.hasMonolithEvidence()) {
+          return accumulator.toDependencyFacts()
+        }
       }
     }
 
@@ -104,12 +111,13 @@ internal object SplitModeDescriptorDependencyAnalyzer {
       return accumulator.toDependencyFacts()
     }
 
-    for (dependency in directDependencies) {
-      val dependencyDescriptor = dependency.resolveDescriptor() ?: continue
-      val dependencyFacts = getOrComputeOwnDescriptorDependencyFacts(dependencyDescriptor, analysisStates)
-      accumulator.recordTransitiveDependencies(dependency.name, dependencyFacts)
-      if (accumulator.hasMonolithEvidence()) {
-        return accumulator.toDependencyFacts()
+    for ((dependencyName, dependencyDescriptors) in directDependencies) {
+      for (dependencyDescriptor in dependencyDescriptors) {
+        val dependencyFacts = getOrComputeOwnDescriptorDependencyFacts(dependencyDescriptor, analysisStates)
+        accumulator.recordTransitiveDependencies(dependencyName, dependencyFacts)
+        if (accumulator.hasMonolithEvidence()) {
+          return accumulator.toDependencyFacts()
+        }
       }
     }
 
@@ -130,12 +138,13 @@ internal object SplitModeDescriptorDependencyAnalyzer {
     descriptorFile.putUserData(
       OWN_DESCRIPTOR_DEPENDENCY_FACTS_KEY,
       CachedValuesManager.getManager(project).createCachedValue({
-        CachedValueProvider.Result.create(
-          dependencyFacts,
-          ProjectRootModificationTracker.getInstance(project),
-          PsiManager.getInstance(project).modificationTracker.forLanguage(XMLLanguage.INSTANCE),
-        )
-      }, false)
+                                                                  CachedValueProvider.Result.create(
+                                                                    dependencyFacts,
+                                                                    ProjectRootModificationTracker.getInstance(project),
+                                                                    PsiManager.getInstance(project).modificationTracker.forLanguage(
+                                                                      XMLLanguage.INSTANCE),
+                                                                  )
+                                                                }, false)
     )
   }
 
@@ -146,7 +155,7 @@ internal object SplitModeDescriptorDependencyAnalyzer {
           continue
         }
         val dependencyName = dependency.rawText ?: dependency.stringValue ?: continue
-        yield(DirectDependency(dependencyName) { dependency.value })
+        yield(DirectDependency(dependencyName, resolvePluginDependencyDescriptors(ideaPlugin, dependencyName)))
       }
 
       val pluginDependencies = ideaPlugin.dependencies
@@ -156,12 +165,12 @@ internal object SplitModeDescriptorDependencyAnalyzer {
 
       for (moduleDescriptor in pluginDependencies.moduleEntry) {
         val dependencyName = moduleDescriptor.name.stringValue ?: continue
-        yield(DirectDependency(dependencyName) { moduleDescriptor.name.value })
+        yield(DirectDependency(dependencyName, listOfNotNull(moduleDescriptor.name.value)))
       }
 
       for (pluginDescriptor in pluginDependencies.plugin) {
         val dependencyName = pluginDescriptor.id.stringValue ?: continue
-        yield(DirectDependency(dependencyName) { pluginDescriptor.id.value })
+        yield(DirectDependency(dependencyName, resolvePluginDependencyDescriptors(ideaPlugin, dependencyName)))
       }
     }
       .distinctBy { it.name }
@@ -193,10 +202,20 @@ internal object SplitModeDescriptorDependencyAnalyzer {
 
 private fun Dependency.isOptionalOldStyleDependency(): Boolean = optional.value == true
 
+private fun resolvePluginDependencyDescriptors(ideaPlugin: IdeaPlugin, dependencyName: String): List<IdeaPlugin> {
+  val project = ideaPlugin.xmlElement?.project ?: return emptyList()
+  val matchingPlugins = PluginIdModuleIndex.findPlugins(dependencyName, project)
+    .distinctBy(::getDescriptorResolutionKey)
+    .sortedBy(::getDescriptorPath)
+  return matchingPlugins.filter { it.pluginId == dependencyName }.ifEmpty { matchingPlugins }
+}
+
 private fun getPredefinedDependencyFacts(ideaPlugin: IdeaPlugin): DependencyFacts? {
   val descriptorFile = getDescriptorXmlFile(ideaPlugin) ?: return null
   val module = ModuleUtilCore.findModuleForPsiElement(descriptorFile) ?: return null
-  val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance(descriptorFile.project).getPredefinedModuleKind(module, descriptorFile, ideaPlugin) ?: return null
+  val predefinedModuleKind =
+    SplitModeApiRestrictionsService.getInstance(descriptorFile.project).getPredefinedModuleKind(module, descriptorFile, ideaPlugin)
+    ?: return null
   return createPredefinedDependencyFacts(predefinedModuleKind)
 }
 
@@ -314,10 +333,8 @@ private class DependencyFactsAccumulator(
 
 private data class DirectDependency(
   val name: String,
-  private val resolver: () -> IdeaPlugin?,
-) {
-  fun resolveDescriptor(): IdeaPlugin? = resolver()
-}
+  val descriptors: List<IdeaPlugin>,
+)
 
 private data class ContentModuleDependency(
   val moduleName: String,
@@ -391,4 +408,12 @@ private fun getDescriptorLocation(ideaPlugin: IdeaPlugin): DescriptorLocation {
 
 private fun getDescriptorXmlFile(ideaPlugin: IdeaPlugin): XmlFile? {
   return ideaPlugin.xmlElement?.containingFile?.originalFile as? XmlFile
+}
+
+private fun getDescriptorPath(ideaPlugin: IdeaPlugin): String {
+  return getDescriptorXmlFile(ideaPlugin)?.virtualFile?.path ?: ""
+}
+
+private fun getDescriptorResolutionKey(ideaPlugin: IdeaPlugin): String {
+  return getDescriptorXmlFile(ideaPlugin)?.virtualFile?.path ?: ideaPlugin.pluginId ?: ""
 }
