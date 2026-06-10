@@ -64,6 +64,9 @@ internal class CodexAgentSessionProviderDescriptor(
   override val icon: Icon
     get() = AgentWorkbenchCommonIcons.Codex
 
+  override val monochromeIcon: Icon
+    get() = AgentWorkbenchCommonIcons.CodexGray
+
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
 

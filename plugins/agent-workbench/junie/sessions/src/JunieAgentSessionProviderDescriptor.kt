@@ -56,6 +56,9 @@ internal class JunieAgentSessionProviderDescriptor(
   override val icon: Icon
     get() = AgentWorkbenchCommonIcons.Junie
 
+  override val monochromeIcon: Icon
+    get() = AgentWorkbenchCommonIcons.JunieGray
+
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
 

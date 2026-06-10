@@ -222,7 +222,7 @@ internal class AgentPromptProviderSelector(
       return
     }
 
-    providerIconLabel.icon = getIcon(provider.icon, selectedLaunchMode)
+    providerIconLabel.icon = getIcon(provider.bridge.monochromeIcon, selectedLaunchMode)
     providerIconLabel.setToolTipText(HtmlChunk.text(provider.displayName))
     providerIconLabel.accessibleContext.accessibleName = provider.displayName
     providerIconLabel.accessibleContext.accessibleDescription = AgentPromptBundle.message("popup.provider.selector.tooltip")

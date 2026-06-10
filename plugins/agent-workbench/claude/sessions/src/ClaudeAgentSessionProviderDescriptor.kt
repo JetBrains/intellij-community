@@ -68,6 +68,9 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override val icon: Icon
     get() = AgentWorkbenchCommonIcons.Claude
 
+  override val monochromeIcon: Icon
+    get() = AgentWorkbenchCommonIcons.ClaudeGray
+
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)
 
