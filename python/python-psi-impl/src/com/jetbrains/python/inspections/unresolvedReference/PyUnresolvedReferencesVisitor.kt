@@ -82,6 +82,7 @@ import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import one.util.streamex.StreamEx
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.Collections
 import java.util.function.Function
 
 abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor(
@@ -96,7 +97,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
 
   @Volatile
   private var myIsEnabled: Boolean? = null
-  protected val myUnresolvedRefs: MutableList<PyPackageInstallAllProblemInfo> = ArrayList()
+  protected val myUnresolvedRefs: MutableList<PyPackageInstallAllProblemInfo> = Collections.synchronizedList(ArrayList())
 
   override fun visitPyTargetExpression(node: PyTargetExpression) {
     // Augmented assignments (e.g., `x += 1`) do have a target expression,
