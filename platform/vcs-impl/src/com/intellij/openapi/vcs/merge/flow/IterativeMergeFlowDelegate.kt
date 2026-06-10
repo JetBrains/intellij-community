@@ -186,9 +186,9 @@ internal class IterativeMergeFlowDelegate(
             .customize(UnscaledGaps(left = defaultSpacingConfiguration.segmentedButtonHorizontalGap))
         }
 
-        resolveStatusLabel = label("").component
-
-        cell(JPanel()).resizableColumn()
+        resolveStatusLabel = label("")
+          .resizableColumn()
+          .component
         cell(createViewOptionsToolbar().component)
           .align(AlignX.RIGHT)
       }
