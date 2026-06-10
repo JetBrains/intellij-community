@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.folding
 
-import com.intellij.compose.ide.plugin.resources.ANDROID_MAIN
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesTestCase
 import com.intellij.compose.ide.plugin.resources.TARGET_GRADLE_VERSION
 import com.intellij.lang.folding.FoldingDescriptor
@@ -11,7 +10,6 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import kotlin.test.assertNotNull as kAssertNotNull
 
@@ -61,7 +59,6 @@ class ComposeResourcesFoldingTest : ComposeResourcesTestCase() {
   }
 
   private fun doFoldingTest(quick: Boolean = false, assertions: (Array<out FoldingDescriptor?>) -> Unit) {
-    assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
     val files = importProjectFromTestData()
 
     timeoutRunBlocking(context = Dispatchers.EDT) {

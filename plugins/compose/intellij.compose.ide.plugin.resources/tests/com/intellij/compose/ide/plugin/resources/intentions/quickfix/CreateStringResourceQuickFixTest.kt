@@ -2,7 +2,6 @@
 package com.intellij.compose.ide.plugin.resources.intentions.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.compose.ide.plugin.resources.ANDROID_MAIN
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesTestCase
 import com.intellij.compose.ide.plugin.resources.ResourceType
 import com.intellij.compose.ide.plugin.resources.STRINGS_XML_FILENAME
@@ -18,7 +17,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.Assume.assumeTrue
 import org.junit.Test
 import kotlin.test.DefaultAsserter.assertEquals
 import kotlin.test.assertFalse
@@ -67,7 +65,6 @@ internal class CreateStringResourceQuickFixTest : ComposeResourcesTestCase() {
     expectAvailable: Boolean = true,
     codeLine: String,
   ) {
-    assumeTrue("temporarily disable for androidMain since it's not recognised as source root", sourceSetName != ANDROID_MAIN)
     invokeAndWaitIfNeeded(ModalityState.nonModal()) {
       val files = importProjectFromTestData()
 
