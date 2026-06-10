@@ -77,6 +77,12 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
 
   fun `test non-breaking space before text`() = doTest(rightMargin = 20)
 
+  fun `test do not wrap codespan when wrap settings disabled`() = doTest(
+    rightMargin = 120,
+    wrapOnTyping = false,
+    wrapTextIfLong = false,
+  )
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }
@@ -86,17 +92,23 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
     return name.trimStart().replace(' ', '_')
   }
 
-  private fun doTest(rightMargin: Int = 40, keepLineBreaks: Boolean = false, insertQuoteArrows: Boolean = false) {
+  private fun doTest(
+    rightMargin: Int = 40,
+    keepLineBreaks: Boolean = false,
+    insertQuoteArrows: Boolean = false,
+    wrapOnTyping: Boolean = true,
+    wrapTextIfLong: Boolean = true,
+  ) {
     val before = getTestName(true) + "_before.md"
     val after = getTestName(true) + "_after.md"
     runWithTemporaryStyleSettings(project) { settings ->
       settings.apply {
-        WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true
+        WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = wrapOnTyping
         getCommonSettings(MarkdownLanguage.INSTANCE).apply {
           RIGHT_MARGIN = rightMargin
         }
         getCustomSettings(MarkdownCustomCodeStyleSettings::class.java).apply {
-          WRAP_TEXT_IF_LONG = true
+          WRAP_TEXT_IF_LONG = wrapTextIfLong
           KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = keepLineBreaks
           // These tests are not aware of the fact that tables can be reformatted now by TablePostFormatProcessor
           // and wrapping block quotes can be fixed be BlockQuotePostFormatProcessor
