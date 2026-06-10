@@ -1,5 +1,4 @@
 load("@bazel_skylib//rules:copy_file.bzl", "copy_file")
-load("@bazel_skylib//rules:run_binary.bzl", "run_binary")
 load("@rules_java//java:defs.bzl", "java_binary", "java_import", "java_library")
 load("@rules_jvm//:jvm.bzl", "jvm_import")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_import", "kt_jvm_library")
@@ -17301,14 +17300,6 @@ copy_file(
 )
 
 copy_file(
-    name = "org.apache.maven.resolver/maven-resolver-transport-jdk-2.0.13.jar_copy",
-    src = "@org_apache_maven_resolver-maven-resolver-transport-jdk-2_0_13_http//file",
-    out = "org.apache.maven.resolver/maven-resolver-transport-jdk-2.0.13.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.apache.maven/maven-di-4.0.0-rc-5.jar_copy",
     src = "@org_apache_maven-maven-di-4_0_0-rc-5_http//file",
     out = "org.apache.maven/maven-di-4.0.0-rc-5.jar",
@@ -17627,7 +17618,6 @@ java_library(
         ":org_apache_maven-maven-repository-metadata-4_0_0-rc-5_http_import",
         ":org_apache_maven-maven-cli-4_0_0-rc-5_http_import",
         ":org_apache_maven_resolver-maven-resolver-transport-file-2_0_13_http_import",
-        ":org_apache_maven_resolver-maven-resolver-transport-jdk-2_0_13_http_import",
         ":org_jdom-jdom2-2_0_6_1_http_import",
         ":org_apache_maven-maven-di-4_0_0-rc-5_http_import",
         ":org_apache_maven-maven-jline-4_0_0-rc-5_http_import",
@@ -17777,12 +17767,6 @@ jvm_import(
     name = "org_apache_maven_resolver-maven-resolver-transport-file-2_0_13_http_import",
     jar = "@org_apache_maven_resolver-maven-resolver-transport-file-2_0_13_http//file",
     source_jar = "@org_apache_maven_resolver-maven-resolver-transport-file-2_0_13-sources_http//file",
-)
-
-jvm_import(
-    name = "org_apache_maven_resolver-maven-resolver-transport-jdk-2_0_13_http_import",
-    jar = "@org_apache_maven_resolver-maven-resolver-transport-jdk-2_0_13_http//file",
-    source_jar = "@org_apache_maven_resolver-maven-resolver-transport-jdk-2_0_13-sources_http//file",
 )
 
 jvm_import(

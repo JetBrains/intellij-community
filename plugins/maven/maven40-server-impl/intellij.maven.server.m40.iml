@@ -70,9 +70,6 @@
             <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/2.0.13/maven-resolver-transport-file-2.0.13.jar">
               <sha256sum>5c5236527d30873611703feb24c3d13c6f95d410d790c82ae3208cbf49d05b1b</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-jdk/2.0.13/maven-resolver-transport-jdk-2.0.13.jar">
-              <sha256sum>0fe67531ddeb93cdab8a2db799cc9fe024c6eceb80bd106c9980170064428f24</sha256sum>
-            </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.jar">
               <sha256sum>0b20f45e3a0fd8f0d12cdc5316b06776e902b1365db00118876f9175c60f302c</sha256sum>
             </artifact>
@@ -194,6 +191,9 @@
               <sha256sum>edc471fdb1af2fd06be0195857f0088577766aa0cfcde82eb258d049342d25d5</sha256sum>
             </artifact>
           </verification>
+          <exclude>
+            <dependency maven-id="org.apache.maven.resolver:maven-resolver-transport-jdk" />
+          </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-embedder/4.0.0-rc-5/maven-embedder-4.0.0-rc-5.jar!/" />
@@ -214,7 +214,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/4.0.0-rc-5/maven-repository-metadata-4.0.0-rc-5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-cli/4.0.0-rc-5/maven-cli-4.0.0-rc-5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/2.0.13/maven-resolver-transport-file-2.0.13.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-jdk/2.0.13/maven-resolver-transport-jdk-2.0.13.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-di/4.0.0-rc-5/maven-di-4.0.0-rc-5.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-jline/4.0.0-rc-5/maven-jline-4.0.0-rc-5.jar!/" />
@@ -276,7 +275,6 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/4.0.0-rc-5/maven-repository-metadata-4.0.0-rc-5-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-cli/4.0.0-rc-5/maven-cli-4.0.0-rc-5-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/2.0.13/maven-resolver-transport-file-2.0.13-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-jdk/2.0.13/maven-resolver-transport-jdk-2.0.13-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6.1/jdom2-2.0.6.1-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-di/4.0.0-rc-5/maven-di-4.0.0-rc-5-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-jline/4.0.0-rc-5/maven-jline-4.0.0-rc-5-sources.jar!/" />

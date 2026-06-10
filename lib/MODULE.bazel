@@ -13434,13 +13434,6 @@ http_file(
 )
 
 http_file(
-    name = "org_apache_maven_resolver-maven-resolver-transport-jdk-2_0_13_http",
-    downloaded_file_path = "maven-resolver-transport-jdk-2.0.13.jar",
-    sha256 = "0fe67531ddeb93cdab8a2db799cc9fe024c6eceb80bd106c9980170064428f24",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-jdk/2.0.13/maven-resolver-transport-jdk-2.0.13.jar",
-)
-
-http_file(
     name = "org_apache_maven-maven-di-4_0_0-rc-5_http",
     downloaded_file_path = "maven-di-4.0.0-rc-5.jar",
     sha256 = "987458d92cea980445267db98fe701cbfd53f9b2ea7947d88575f867eccd20cd",
@@ -13823,13 +13816,6 @@ http_file(
     downloaded_file_path = "maven-resolver-transport-file-2.0.13-sources.jar",
     sha256 = "10ba12e27a3f25601a76ce65d9d4e18e8d234a9be933f6eca6da1c45e5e2f321",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-file/2.0.13/maven-resolver-transport-file-2.0.13-sources.jar",
-)
-
-http_file(
-    name = "org_apache_maven_resolver-maven-resolver-transport-jdk-2_0_13-sources_http",
-    downloaded_file_path = "maven-resolver-transport-jdk-2.0.13-sources.jar",
-    sha256 = "2c820f7c2b1fa8babc11ded25c02dcc187e1485a6684f988babb9898518720cd",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/apache/maven/resolver/maven-resolver-transport-jdk/2.0.13/maven-resolver-transport-jdk-2.0.13-sources.jar",
 )
 
 http_file(
