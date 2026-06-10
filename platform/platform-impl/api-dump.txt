@@ -22,6 +22,9 @@ com.intellij.application.options.colors.ColorAndFontPanelFactory
 - getConfigurableId():java.lang.String
 - getOriginalClass():java.lang.Class
 - a:getPanelDisplayName():java.lang.String
+com.intellij.application.options.colors.ColorAndFontPanelFactoryEx
+- com.intellij.application.options.colors.ColorAndFontPanelFactory
+- com.intellij.psi.codeStyle.DisplayPrioritySortable
 com.intellij.application.options.colors.ColorAndFontSettingsListener
 - java.util.EventListener
 - a:fontChanged():V
@@ -58,6 +61,12 @@ com.intellij.application.options.colors.PreviewPanel
 - a:disposeUIResources():V
 - a:getPanel():javax.swing.JComponent
 - a:updateView():V
+com.intellij.application.options.colors.RainbowStateChangeListener
+- sf:Companion:com.intellij.application.options.colors.RainbowStateChangeListener$Companion
+- s:getTOPIC():com.intellij.util.messages.Topic
+- a:onRainbowStateChanged(com.intellij.openapi.editor.colors.EditorColorsScheme,java.util.Set):V
+f:com.intellij.application.options.colors.RainbowStateChangeListener$Companion
+- f:getTOPIC():com.intellij.util.messages.Topic
 c:com.intellij.application.options.colors.SchemesPanel
 - <init>(com.intellij.application.options.colors.ColorAndFontOptions):V
 - addListener(com.intellij.application.options.colors.ColorAndFontSettingsListener):V
@@ -74,6 +83,8 @@ com.intellij.application.options.editor.EditorOptionsListener
 - a:changesApplied():V
 com.intellij.application.options.editor.EditorOptionsProvider
 - com.intellij.openapi.options.SearchableConfigurable
+com.intellij.application.options.editor.EditorTabsOptionsCustomSection
+- com.intellij.openapi.options.UnnamedConfigurable
 a:com.intellij.application.options.schemes.AbstractSchemeActions
 - p:<init>(com.intellij.application.options.schemes.AbstractSchemesPanel):V
 a:com.intellij.application.options.schemes.SchemesCombo
@@ -91,6 +102,12 @@ com.intellij.application.options.schemes.SchemesModel
 - a:removeScheme(com.intellij.openapi.options.Scheme):V
 a:com.intellij.application.options.schemes.SimpleSchemesPanel
 - <init>(I):V
+com.intellij.codeInsight.actions.ReaderModeDefaultsOverride
+- sf:Companion:com.intellij.codeInsight.actions.ReaderModeDefaultsOverride$Companion
+- s:getInstance():com.intellij.codeInsight.actions.ReaderModeDefaultsOverride
+- a:getShowWarningsDefault():Z
+f:com.intellij.codeInsight.actions.ReaderModeDefaultsOverride$Companion
+- f:getInstance():com.intellij.codeInsight.actions.ReaderModeDefaultsOverride
 com.intellij.codeInsight.actions.ReaderModeSettings
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.codeInsight.actions.ReaderModeSettings$Companion
@@ -116,7 +133,11 @@ com.intellij.codeInsight.actions.ReaderModeSettings
 - a:setUseActiveSchemeForVisualFormatting(Z):V
 - a:setVisualFormattingChosenScheme(com.intellij.codeInsight.actions.ReaderModeSettings$Scheme):V
 f:com.intellij.codeInsight.actions.ReaderModeSettings$Companion
+- f:applyReaderMode(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.openapi.vfs.VirtualFile,Z,Z):V
+- bs:applyReaderMode$default(com.intellij.codeInsight.actions.ReaderModeSettings$Companion,com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.openapi.vfs.VirtualFile,Z,Z,I,java.lang.Object):V
 - f:getInstance(com.intellij.openapi.project.Project):com.intellij.codeInsight.actions.ReaderModeSettings
+- f:matchMode(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Editor):Z
+- bs:matchMode$default(com.intellij.codeInsight.actions.ReaderModeSettings$Companion,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.editor.Editor,I,java.lang.Object):Z
 c:com.intellij.codeInsight.daemon.impl.HintRenderer
 - <init>(java.lang.String):V
 - p:getTextAttributes(com.intellij.openapi.editor.Editor):com.intellij.openapi.editor.markup.TextAttributes
@@ -128,6 +149,8 @@ com.intellij.codeInsight.hint.EditorCodePreview
 - com.intellij.openapi.Disposable
 - sf:Companion:com.intellij.codeInsight.hint.EditorCodePreview$Companion
 - a:addPreview(kotlin.ranges.IntRange,kotlin.jvm.functions.Function0):V
+f:com.intellij.codeInsight.hint.EditorCodePreview$Companion
+- f:create(com.intellij.openapi.editor.Editor):com.intellij.codeInsight.hint.EditorCodePreview
 f:com.intellij.codeInsight.hint.EditorFragmentComponent
 - s:createEditorFragmentBorder(com.intellij.openapi.editor.Editor):javax.swing.border.CompoundBorder
 - s:getBackgroundColor(com.intellij.openapi.editor.Editor):java.awt.Color
@@ -158,16 +181,36 @@ com.intellij.codeInsight.hint.TooltipRenderer
 - a:show(com.intellij.openapi.editor.Editor,java.awt.Point,Z,com.intellij.codeInsight.hint.TooltipGroup,com.intellij.ui.HintHint):com.intellij.ui.LightweightHint
 com.intellij.codeInsight.template.impl.TemplateColors
 - sf:TEMPLATE_VARIABLE_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
+com.intellij.configurationStore.BatchUpdateListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- onBatchUpdateFinished():V
+- onBatchUpdateStarted():V
 f:com.intellij.configurationStore.StoreUtil
 - sf:saveDocumentsAndProjectSettings(com.intellij.openapi.project.Project):V
 f:com.intellij.configurationStore.StoreUtilKt
 - sf:getStateSpec(java.lang.Class):com.intellij.openapi.components.State
 f:com.intellij.conversion.CannotConvertException
 - <init>(java.lang.Throwable):V
+com.intellij.conversion.ConversionListener
+- cannotWriteToFiles(java.util.List):V
+- a:conversionNeeded():V
+- a:error(java.lang.String):V
+- successfullyConverted(java.nio.file.Path):V
 com.intellij.conversion.ConversionResult
 - a:conversionNotNeeded():Z
 - a:openingIsCanceled():Z
 - a:postStartupActivity(com.intellij.openapi.project.Project):V
+a:com.intellij.conversion.ConversionService
+- sf:Companion:com.intellij.conversion.ConversionService$Companion
+- <init>():V
+- f:blockingConvertSilently(java.nio.file.Path,com.intellij.conversion.ConversionListener):com.intellij.conversion.ConversionResult
+- a:convert(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
+- a:convertModule(com.intellij.openapi.project.Project,java.nio.file.Path):com.intellij.conversion.ConversionResult
+- a:convertSilently(java.nio.file.Path,com.intellij.conversion.ConversionListener,kotlin.coroutines.Continuation):java.lang.Object
+- sf:getInstance():com.intellij.conversion.ConversionService
+- a:saveConversionResult(java.nio.file.Path,kotlin.coroutines.Continuation):java.lang.Object
+f:com.intellij.conversion.ConversionService$Companion
+- f:getInstance():com.intellij.conversion.ConversionService
 f:com.intellij.credentialStore.CredentialPromptDialog
 - sf:getTrimmedChars(javax.swing.JPasswordField):C[]
 f:com.intellij.credentialStore.RememberCheckBoxState
@@ -789,6 +832,8 @@ f:com.intellij.ide.ui.MaximizeDialogKt
 - sf:normalize(javax.swing.JDialog):V
 - sf:setMaximizeButtonShown(javax.swing.JDialog,Z):V
 - sf:toggleMaximized(javax.swing.JDialog):V
+com.intellij.ide.ui.OptionsSearchTopHitProvider
+- a:getId():java.lang.String
 com.intellij.ide.ui.OptionsSearchTopHitProvider$ApplicationLevelProvider
 - com.intellij.ide.SearchTopHitProvider
 - com.intellij.ide.ui.OptionsSearchTopHitProvider
@@ -927,6 +972,9 @@ c:com.intellij.ide.ui.newItemPopup.NewItemSimplePopupPanel
 - setError(java.lang.String):V
 c:com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel
 - p:setTemplatesListVisible(Z):V
+com.intellij.ide.ui.search.ComponentHighlightingListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:highlight(javax.swing.JComponent,java.lang.String):V
 f:com.intellij.ide.ui.search.SearchUtil
 - sf:expand(com.intellij.openapi.options.ConfigurableGroup[]):java.util.List
 a:com.intellij.ide.util.ChooseElementsDialog
@@ -1390,6 +1438,17 @@ com.intellij.openapi.editor.ex.ErrorStripTooltipRendererProvider
 - a:calcTooltipRenderer(java.lang.String,I):com.intellij.codeInsight.hint.TooltipRenderer
 - calcTooltipRenderer(java.lang.String,com.intellij.openapi.editor.ex.TooltipAction,I):com.intellij.codeInsight.hint.TooltipRenderer
 - a:calcTooltipRenderer(java.util.Collection):com.intellij.codeInsight.hint.TooltipRenderer
+f:com.intellij.openapi.editor.ex.ErrorStripeEvent
+- java.util.EventObject
+- <init>(com.intellij.openapi.editor.Editor,java.awt.event.MouseEvent,com.intellij.openapi.editor.markup.RangeHighlighter):V
+- getEditor():com.intellij.openapi.editor.Editor
+- getHighlighter():com.intellij.openapi.editor.markup.RangeHighlighter
+- getMouseEvent():java.awt.event.MouseEvent
+com.intellij.openapi.editor.ex.ErrorStripeListener
+- java.util.EventListener
+- sf:EMPTY_ARRAY:com.intellij.openapi.editor.ex.ErrorStripeListener[]
+- errorMarkerChanged(com.intellij.openapi.editor.ex.ErrorStripeEvent):V
+- errorMarkerClicked(com.intellij.openapi.editor.ex.ErrorStripeEvent):V
 com.intellij.openapi.editor.ex.FocusChangeListener
 - java.util.EventListener
 - focusGained(com.intellij.openapi.editor.Editor):V
@@ -1480,6 +1539,11 @@ f:com.intellij.openapi.editor.impl.EditorFactoryImpl
 - createDocument(Z):com.intellij.openapi.editor.Document
 - createEditor(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Editor
 - createViewer(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.Editor
+com.intellij.openapi.editor.impl.EditorGutterListener
+- java.util.EventListener
+- lineNumberConvertersChanged():V
+- textAnnotationAdded(com.intellij.openapi.editor.TextAnnotationGutterProvider):V
+- textAnnotationRemoved(com.intellij.openapi.editor.TextAnnotationGutterProvider):V
 f:com.intellij.openapi.editor.impl.EditorIdKt
 f:com.intellij.openapi.editor.impl.EditorImpl
 - addEditorMouseListener(com.intellij.openapi.editor.event.EditorMouseListener):V
@@ -1568,6 +1632,12 @@ com.intellij.openapi.editor.impl.TextDrawingCallback
 f:com.intellij.openapi.editor.impl.event.EditorEventMulticasterImpl
 - registerDocument(com.intellij.openapi.editor.ex.DocumentEx):V
 f:com.intellij.openapi.editor.impl.multiverse.CodeInsightContextPresentationKt
+e:com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType
+- java.lang.Enum
+- sf:AFTER_SOFT_WRAP:com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType
+- sf:BEFORE_SOFT_WRAP_LINE_FEED:com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType
+- s:valueOf(java.lang.String):com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType
+- s:values():com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType[]
 com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapApplianceManager$VisibleAreaWidthProvider
 - a:getVisibleAreaWidth():I
 f:com.intellij.openapi.editor.impl.view.EditorPainter
@@ -1576,9 +1646,51 @@ a:com.intellij.openapi.editor.impl.view.FontLayoutService
 - a:getHeight(java.awt.FontMetrics):I
 f:com.intellij.openapi.editor.impl.view.IterationState
 - s:createByLayerThenByAttributesComparator(com.intellij.openapi.editor.colors.EditorColorsScheme):java.util.Comparator
+e:com.intellij.openapi.editor.markup.AnalyzingType
+- java.lang.Enum
+- sf:COMPLETE:com.intellij.openapi.editor.markup.AnalyzingType
+- sf:EMPTY:com.intellij.openapi.editor.markup.AnalyzingType
+- sf:PARTIAL:com.intellij.openapi.editor.markup.AnalyzingType
+- sf:SUSPENDED:com.intellij.openapi.editor.markup.AnalyzingType
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.editor.markup.AnalyzingType
+- s:values():com.intellij.openapi.editor.markup.AnalyzingType[]
 com.intellij.openapi.editor.markup.LineMarkerRendererEx
 - com.intellij.openapi.editor.markup.LineMarkerRenderer
 - a:getPosition():com.intellij.openapi.editor.markup.LineMarkerRendererEx$Position
+f:com.intellij.openapi.editor.markup.SeverityStatusItem
+- <init>(com.intellij.lang.annotation.HighlightSeverity,javax.swing.Icon,I,java.lang.String):V
+- f:component1():com.intellij.lang.annotation.HighlightSeverity
+- f:component2():javax.swing.Icon
+- f:component3():I
+- f:component4():java.lang.String
+- f:copy(com.intellij.lang.annotation.HighlightSeverity,javax.swing.Icon,I,java.lang.String):com.intellij.openapi.editor.markup.SeverityStatusItem
+- bs:copy$default(com.intellij.openapi.editor.markup.SeverityStatusItem,com.intellij.lang.annotation.HighlightSeverity,javax.swing.Icon,I,java.lang.String,I,java.lang.Object):com.intellij.openapi.editor.markup.SeverityStatusItem
+- equals(java.lang.Object):Z
+- f:getCountMessage():java.lang.String
+- f:getIcon():javax.swing.Icon
+- f:getProblemCount():I
+- f:getSeverity():com.intellij.lang.annotation.HighlightSeverity
+- hashCode():I
+f:com.intellij.openapi.editor.markup.StatusItem
+- <init>(java.lang.String):V
+- <init>(java.lang.String,javax.swing.Icon):V
+- <init>(java.lang.String,javax.swing.Icon,java.lang.String):V
+- <init>(java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.editor.markup.StatusItemMetadata):V
+- b:<init>(java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.editor.markup.StatusItemMetadata,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:component1():java.lang.String
+- f:component2():javax.swing.Icon
+- f:component3():java.lang.String
+- f:component4():com.intellij.openapi.editor.markup.StatusItemMetadata
+- f:copy(java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.editor.markup.StatusItemMetadata):com.intellij.openapi.editor.markup.StatusItem
+- bs:copy$default(com.intellij.openapi.editor.markup.StatusItem,java.lang.String,javax.swing.Icon,java.lang.String,com.intellij.openapi.editor.markup.StatusItemMetadata,I,java.lang.Object):com.intellij.openapi.editor.markup.StatusItem
+- equals(java.lang.Object):Z
+- f:getDetailsText():java.lang.String
+- f:getIcon():javax.swing.Icon
+- f:getMetadata():com.intellij.openapi.editor.markup.StatusItemMetadata
+- f:getText():java.lang.String
+- hashCode():I
+com.intellij.openapi.editor.markup.StatusItemMetadata
 Fa:com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarComponent
 - setAutoHideable(Z):V
 - setBackgroundAlpha(F):V
@@ -1610,6 +1722,8 @@ com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider
 - isApplicable(com.intellij.openapi.actionSystem.DataContext):Z
 - isApplicableAsync(com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
 - register(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent,com.intellij.openapi.Disposable):V
+f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$Companion
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider$DefaultImpls
 - s:isApplicableAsync(com.intellij.openapi.editor.toolbar.floating.FloatingToolbarProvider,com.intellij.openapi.actionSystem.DataContext,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.openapi.editor.toolbar.floating.FloatingToolbarUtilKt
@@ -1622,6 +1736,7 @@ com.intellij.openapi.fileChooser.ex.FileDrop$Target
 - a:dropFiles(java.util.List):V
 - a:getDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
 - a:isHiddenShown():Z
+com.intellij.openapi.fileChooser.ex.FileLookup
 com.intellij.openapi.fileChooser.ex.FileLookup$Finder
 - a:find(java.lang.String):com.intellij.openapi.fileChooser.ex.FileLookup$LookupFile
 - a:getSeparator():java.lang.String
@@ -1848,6 +1963,8 @@ f:com.intellij.openapi.options.SchemeImportUtil
 - s:loadSchemeDom(com.intellij.openapi.vfs.VirtualFile):org.jdom.Element
 f:com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil
 - s:createApplicationConfigurableForProvider(java.lang.Class):com.intellij.openapi.options.Configurable
+com.intellij.openapi.options.ex.ConfigurableFilter
+- a:isIncluded(com.intellij.openapi.options.Configurable):Z
 a:com.intellij.openapi.options.ex.ConfigurableVisitor
 - f:find(com.intellij.openapi.options.ConfigurableGroup[]):com.intellij.openapi.options.Configurable
 c:com.intellij.openapi.options.ex.ConfigurableWrapper
@@ -1892,10 +2009,18 @@ com.intellij.openapi.progress.util.ProgressWindow$Listener
 - a:progressWindowCreated(com.intellij.openapi.progress.util.ProgressWindow):V
 f:com.intellij.openapi.progress.util.StatusBarProgress
 - setText(java.lang.String):V
+com.intellij.openapi.project.ProjectNameListener
+- java.util.EventListener
+- sf:Companion:com.intellij.openapi.project.ProjectNameListener$Companion
+- sf:TOPIC:com.intellij.util.messages.Topic
+- a:nameChanged(java.lang.String):V
+f:com.intellij.openapi.project.ProjectNameListener$Companion
 com.intellij.openapi.project.configuration.ConfigurationResult
 com.intellij.openapi.project.configuration.ConfigurationResult$Failure
 - com.intellij.openapi.project.configuration.ConfigurationResult
 - a:getMessage():java.lang.String
+com.intellij.openapi.project.configuration.ConfigurationResult$Success
+- com.intellij.openapi.project.configuration.ConfigurationResult
 f:com.intellij.openapi.project.impl.UndefinedMacrosConfigurable
 - <init>(com.intellij.openapi.project.Project,java.lang.String,java.util.Collection):V
 f:com.intellij.openapi.roots.ui.configuration.SidePanelCountLabel
@@ -1949,6 +2074,21 @@ f:com.intellij.openapi.updateSettings.PluginUpdateInfo$NoUpdate
 f:com.intellij.openapi.updateSettings.PluginUpdateInfo$UpdateAvailable
 - com.intellij.openapi.updateSettings.PluginUpdateInfo
 - f:getUpdate():com.intellij.openapi.updateSettings.impl.PluginDownloader
+c:com.intellij.openapi.updateSettings.UpdateStrategyCustomization
+- sf:Companion:com.intellij.openapi.updateSettings.UpdateStrategyCustomization$Companion
+- <init>():V
+- canBeUsedForIntermediatePatches(com.intellij.openapi.updateSettings.impl.UpdateChannel,com.intellij.openapi.updateSettings.impl.ChannelStatus):Z
+- changeDefaultChannel(com.intellij.openapi.updateSettings.impl.ChannelStatus):com.intellij.openapi.updateSettings.impl.ChannelStatus
+- forceEapUpdateChannelForEapBuilds():Z
+- getChannelSelectionLockedMessage():java.lang.String
+- sf:getInstance():com.intellij.openapi.updateSettings.UpdateStrategyCustomization
+- getShowWhatIsNewPageAfterUpdate():Z
+- haveSameMajorVersion(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.util.BuildNumber):Z
+- isChannelActive(com.intellij.openapi.updateSettings.impl.ChannelStatus):Z
+- isChannelApplicableForUpdates(com.intellij.openapi.updateSettings.impl.UpdateChannel,com.intellij.openapi.updateSettings.impl.ChannelStatus):Z
+- isNewerVersion(com.intellij.openapi.util.BuildNumber,com.intellij.openapi.util.BuildNumber):Z
+f:com.intellij.openapi.updateSettings.UpdateStrategyCustomization$Companion
+- f:getInstance():com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 e:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
 - java.lang.Enum
 - sf:ACTUAL:com.intellij.openapi.updateSettings.impl.ExternalUpdateManager
@@ -2030,6 +2170,9 @@ f:com.intellij.openapi.util.ZipperUpdater
 - queue(java.lang.Runnable):V
 f:com.intellij.openapi.util.io.FileUtilKt
 - sf:getSystemIndependentPath(java.io.File):java.lang.String
+com.intellij.openapi.vcs.changes.RefreshablePanel
+- a:getPanel():javax.swing.JPanel
+- a:refresh():V
 a:com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 - installOn(java.awt.Component):V
 - s:installSingleTagOn(com.intellij.ui.SimpleColoredComponent):V
@@ -2037,6 +2180,13 @@ c:com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener
 - <init>(com.intellij.ui.ColoredTreeCellRenderer):V
 com.intellij.openapi.vcs.impl.FileStatusProvider
 - a:getFileStatus(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vcs.FileStatus
+e:com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8
+- java.lang.Enum
+- sf:ABSOLUTELY:com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8
+- sf:NO_WAY:com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8
+- sf:WELL_IF_YOU_INSIST:com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8
+- s:valueOf(java.lang.String):com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8
+- s:values():com.intellij.openapi.vfs.encoding.EncodingUtil$Magic8[]
 com.intellij.openapi.vfs.impl.http.RemoteContentProvider$DownloadingCallback
 - a:errorOccurred(java.lang.String,Z):V
 - a:finished(com.intellij.openapi.fileTypes.FileType):V
@@ -2280,6 +2430,12 @@ f:com.intellij.platform.CommandLineProjectOpenProcessor$Companion
 com.intellij.platform.DirectoryProjectConfigurator
 - a:configureProject(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Ref,Z):V
 - isEdtRequired():Z
+a:com.intellij.platform.DirectoryProjectConfigurator$AsyncDirectoryProjectConfigurator
+- com.intellij.platform.DirectoryProjectConfigurator
+- <init>():V
+- a:configure(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Ref,Z,kotlin.coroutines.Continuation):java.lang.Object
+- f:configureProject(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.util.Ref,Z):V
+- f:isEdtRequired():Z
 com.intellij.platform.DirectoryProjectGenerator
 - createLazyPeer():com.intellij.openapi.util.NotNullLazyValue
 - createPeer():com.intellij.platform.ProjectGeneratorPeer
@@ -2314,6 +2470,11 @@ com.intellij.platform.ProjectGeneratorPeer$SettingsListener
 - a:stateChanged(Z):V
 a:com.intellij.platform.ProjectTemplatesFactory
 - getGroupIcon(java.lang.String):javax.swing.Icon
+a:com.intellij.platform.WebProjectGenerator
+- com.intellij.platform.DirectoryProjectGeneratorBase
+- <init>():V
+- a:getDescription():java.lang.String
+- f:validate(java.lang.String):com.intellij.facet.ui.ValidationResult
 com.intellij.platform.WebProjectGenerator$GeneratorPeer
 - com.intellij.platform.ProjectGeneratorPeer
 - a:addSettingsStateListener(com.intellij.platform.WebProjectGenerator$SettingsStateListener):V
@@ -2848,6 +3009,15 @@ f:com.intellij.ui.colorpicker.ColorPickerBuilder
 - f:setOriginalColor(java.awt.Color):com.intellij.ui.colorpicker.ColorPickerBuilder
 com.intellij.ui.colorpicker.ColorPickerComponentProvider
 - a:createComponent(com.intellij.ui.colorpicker.ColorPickerModel):javax.swing.JComponent
+com.intellij.ui.colorpicker.ColorPipette
+- a:getIcon():javax.swing.Icon
+- a:getPressedIcon():javax.swing.Icon
+- a:getRolloverIcon():javax.swing.Icon
+- a:pick(com.intellij.ui.colorpicker.ColorPipette$Callback):V
+com.intellij.ui.colorpicker.ColorPipette$Callback
+- cancel():V
+- a:picked(java.awt.Color):V
+- update(java.awt.Color):V
 com.intellij.ui.colorpicker.ColorPipetteProvider
 - a:createPipette(javax.swing.JComponent):com.intellij.ui.colorpicker.ColorPipette
 c:com.intellij.ui.colorpicker.CommonButton
@@ -2927,21 +3097,69 @@ c:com.intellij.ui.content.impl.ContentImpl
 - setPreferredFocusableComponent(javax.swing.JComponent):V
 c:com.intellij.ui.content.impl.ContentManagerImpl
 - addContent(com.intellij.ui.content.Content):V
+com.intellij.ui.content.impl.ContentManagerImpl$ContentUiProducer
+- a:createContent(com.intellij.ui.content.ContentManager,java.util.function.Supplier):com.intellij.ui.content.ContentUI
 c:com.intellij.ui.content.tabs.TabbedContentAction$CloseAction
 - <init>(com.intellij.ui.content.Content):V
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
+f:com.intellij.ui.dsl.ValidationExceptionKt
+- sf:stringToInt(java.lang.String):I
+- sf:validateIntInRange(I,kotlin.ranges.IntRange):V
 com.intellij.ui.dsl.builder.Align
 - sf:CENTER:com.intellij.ui.dsl.builder.Align
 - sf:Companion:com.intellij.ui.dsl.builder.Align$Companion
 - sf:FILL:com.intellij.ui.dsl.builder.Align
+f:com.intellij.ui.dsl.builder.Align$Companion
+f:com.intellij.ui.dsl.builder.AlignKt
+- sf:plus(com.intellij.ui.dsl.builder.AlignX,com.intellij.ui.dsl.builder.AlignY):com.intellij.ui.dsl.builder.Align
+- sf:plus(com.intellij.ui.dsl.builder.AlignY,com.intellij.ui.dsl.builder.AlignX):com.intellij.ui.dsl.builder.Align
 com.intellij.ui.dsl.builder.AlignX
 - com.intellij.ui.dsl.builder.Align
+f:com.intellij.ui.dsl.builder.AlignX$CENTER
+- com.intellij.ui.dsl.builder.AlignX
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignX$CENTER
+f:com.intellij.ui.dsl.builder.AlignX$FILL
+- com.intellij.ui.dsl.builder.AlignX
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignX$FILL
+f:com.intellij.ui.dsl.builder.AlignX$LEFT
+- com.intellij.ui.dsl.builder.AlignX
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignX$LEFT
+f:com.intellij.ui.dsl.builder.AlignX$RIGHT
+- com.intellij.ui.dsl.builder.AlignX
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignX$RIGHT
 com.intellij.ui.dsl.builder.AlignY
 - com.intellij.ui.dsl.builder.Align
+f:com.intellij.ui.dsl.builder.AlignY$BOTTOM
+- com.intellij.ui.dsl.builder.AlignY
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignY$BOTTOM
+f:com.intellij.ui.dsl.builder.AlignY$CENTER
+- com.intellij.ui.dsl.builder.AlignY
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignY$CENTER
+f:com.intellij.ui.dsl.builder.AlignY$FILL
+- com.intellij.ui.dsl.builder.AlignY
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignY$FILL
+f:com.intellij.ui.dsl.builder.AlignY$TOP
+- com.intellij.ui.dsl.builder.AlignY
+- sf:INSTANCE:com.intellij.ui.dsl.builder.AlignY$TOP
+e:com.intellij.ui.dsl.builder.BottomGap
+- java.lang.Enum
+- sf:MEDIUM:com.intellij.ui.dsl.builder.BottomGap
+- sf:NONE:com.intellij.ui.dsl.builder.BottomGap
+- sf:SMALL:com.intellij.ui.dsl.builder.BottomGap
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.BottomGap
+- s:values():com.intellij.ui.dsl.builder.BottomGap[]
 f:com.intellij.ui.dsl.builder.BuilderKt
 - sf:panel(kotlin.jvm.functions.Function1):com.intellij.openapi.ui.DialogPanel
 f:com.intellij.ui.dsl.builder.ButtonKt
+- sf:actionListener(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.Cell
+- sf:bindSelected(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindSelected(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindSelected(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindSelected(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:bindState(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.Cell
 - sf:getSelected(com.intellij.ui.dsl.builder.Cell):com.intellij.ui.layout.ComponentPredicate
+- sf:selected(com.intellij.ui.dsl.builder.Cell,Z):com.intellij.ui.dsl.builder.Cell
 com.intellij.ui.dsl.builder.Cell
 - com.intellij.ui.dsl.builder.CellBase
 - a:accessibleDescription(java.lang.String):com.intellij.ui.dsl.builder.Cell
@@ -2996,8 +3214,11 @@ com.intellij.ui.dsl.builder.Cell
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Cell
 - a:widthGroup(java.lang.String):com.intellij.ui.dsl.builder.Cell
 Ff:com.intellij.ui.dsl.builder.Cell$DefaultImpls
+- bs:comment$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:commentRight$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:contextHelp$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:label$default(com.intellij.ui.dsl.builder.Cell,java.lang.String,com.intellij.ui.dsl.builder.LabelPosition,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:label$default(com.intellij.ui.dsl.builder.Cell,javax.swing.JLabel,com.intellij.ui.dsl.builder.LabelPosition,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 com.intellij.ui.dsl.builder.CellBase
 - a:align(com.intellij.ui.dsl.builder.Align):com.intellij.ui.dsl.builder.CellBase
 - a:customize(com.intellij.ui.dsl.gridLayout.UnscaledGaps):com.intellij.ui.dsl.builder.CellBase
@@ -3018,6 +3239,27 @@ com.intellij.ui.dsl.builder.CollapsibleRow
 - a:setPackWindowHeight(Z):V
 - a:setTitle(java.lang.String):V
 - a:setTitleFont(java.awt.Font):V
+f:com.intellij.ui.dsl.builder.ComboBoxKt
+- sf:bindItem(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindItem(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindItem(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindItem(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:columns(com.intellij.openapi.ui.ComboBox,I):com.intellij.openapi.ui.ComboBox
+- sf:columns(com.intellij.ui.dsl.builder.Cell,I):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.ExtensionsKt
+- sf:actionButton(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction,java.lang.String):com.intellij.ui.dsl.builder.Cell
+- bs:actionButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- sf:actionsButton(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction[],java.lang.String,javax.swing.Icon):com.intellij.ui.dsl.builder.Cell
+- bs:actionsButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.actionSystem.AnAction[],java.lang.String,javax.swing.Icon,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.LabelKt
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Cell
+e:com.intellij.ui.dsl.builder.LabelPosition
+- java.lang.Enum
+- sf:LEFT:com.intellij.ui.dsl.builder.LabelPosition
+- sf:TOP:com.intellij.ui.dsl.builder.LabelPosition
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.LabelPosition
+- s:values():com.intellij.ui.dsl.builder.LabelPosition[]
 com.intellij.ui.dsl.builder.Panel
 - com.intellij.ui.dsl.builder.CellBase
 - a:align(com.intellij.ui.dsl.builder.Align):com.intellij.ui.dsl.builder.Panel
@@ -3054,6 +3296,23 @@ com.intellij.ui.dsl.builder.Panel
 - bs:twoColumnsRow$default(com.intellij.ui.dsl.builder.Panel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
 - a:visible(Z):com.intellij.ui.dsl.builder.Panel
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Panel
+Ff:com.intellij.ui.dsl.builder.Panel$DefaultImpls
+- bs:buttonsGroup$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.ButtonsGroup
+- bs:collapsibleGroup$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.CollapsibleRow
+- bs:group$default(com.intellij.ui.dsl.builder.Panel,com.intellij.ui.components.JBLabel,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:group$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:groupRowsRange$default(com.intellij.ui.dsl.builder.Panel,java.lang.String,Z,java.lang.Boolean,java.lang.Boolean,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.RowsRange
+- bs:row$default(com.intellij.ui.dsl.builder.Panel,javax.swing.JLabel,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:separator$default(com.intellij.ui.dsl.builder.Panel,java.awt.Color,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:threeColumnsRow$default(com.intellij.ui.dsl.builder.Panel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:twoColumnsRow$default(com.intellij.ui.dsl.builder.Panel,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+e:com.intellij.ui.dsl.builder.RightGap
+- java.lang.Enum
+- sf:COLUMNS:com.intellij.ui.dsl.builder.RightGap
+- sf:SMALL:com.intellij.ui.dsl.builder.RightGap
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.RightGap
+- s:values():com.intellij.ui.dsl.builder.RightGap[]
 com.intellij.ui.dsl.builder.Row
 - a:bottomGap(com.intellij.ui.dsl.builder.BottomGap):com.intellij.ui.dsl.builder.Row
 - a:browserLink(java.lang.String,java.lang.String):com.intellij.ui.dsl.builder.Cell
@@ -3111,6 +3370,30 @@ com.intellij.ui.dsl.builder.Row
 - a:visible(Z):com.intellij.ui.dsl.builder.Row
 - a:visibleIf(com.intellij.openapi.observable.properties.ObservableProperty):com.intellij.ui.dsl.builder.Row
 - a:visibleIf(com.intellij.ui.layout.ComponentPredicate):com.intellij.ui.dsl.builder.Row
+Ff:com.intellij.ui.dsl.builder.Row$DefaultImpls
+- bs:button$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.actionSystem.AnAction,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:comboBox$default(com.intellij.ui.dsl.builder.Row,java.util.Collection,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:comboBox$default(com.intellij.ui.dsl.builder.Row,javax.swing.ComboBoxModel,javax.swing.ListCellRenderer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:comment$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:contextHelp$default(com.intellij.ui.dsl.builder.Row,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:expandableTextField$default(com.intellij.ui.dsl.builder.Row,com.intellij.util.Function,com.intellij.util.Function,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:intTextField$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.IntRange,java.lang.Integer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:radioButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,java.lang.Object,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:rowComment$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Row
+- bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.ClosedRange,D,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:spinner$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.IntRange,I,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:text$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- s:textFieldWithBrowseButton(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:textFieldWithBrowseButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.openapi.project.Project,com.intellij.openapi.fileChooser.FileChooserDescriptor,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+e:com.intellij.ui.dsl.builder.RowLayout
+- java.lang.Enum
+- sf:INDEPENDENT:com.intellij.ui.dsl.builder.RowLayout
+- sf:LABEL_ALIGNED:com.intellij.ui.dsl.builder.RowLayout
+- sf:PARENT_GRID:com.intellij.ui.dsl.builder.RowLayout
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.RowLayout
+- s:values():com.intellij.ui.dsl.builder.RowLayout[]
 com.intellij.ui.dsl.builder.SegmentedButton
 - com.intellij.ui.dsl.builder.CellBase
 - sf:Companion:com.intellij.ui.dsl.builder.SegmentedButton$Companion
@@ -3130,6 +3413,10 @@ com.intellij.ui.dsl.builder.SegmentedButton
 - a:update(java.lang.Object[]):V
 - a:validation(kotlin.jvm.functions.Function2):com.intellij.ui.dsl.builder.SegmentedButton
 - a:visible(Z):com.intellij.ui.dsl.builder.SegmentedButton
+f:com.intellij.ui.dsl.builder.SegmentedButton$Companion
+- sf:DEFAULT_MAX_BUTTONS_COUNT:I
+- f:createPresentation(java.lang.String,java.lang.String,javax.swing.Icon,Z):com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
+- bs:createPresentation$default(com.intellij.ui.dsl.builder.SegmentedButton$Companion,java.lang.String,java.lang.String,javax.swing.Icon,Z,I,java.lang.Object):com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
 com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
 - a:getEnabled():Z
 - a:getIcon():javax.swing.Icon
@@ -3140,7 +3427,61 @@ com.intellij.ui.dsl.builder.SegmentedButton$ItemPresentation
 - a:setText(java.lang.String):V
 - a:setToolTipText(java.lang.String):V
 f:com.intellij.ui.dsl.builder.SliderKt
+- sf:bindValue(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindValue(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:labelTable(com.intellij.ui.dsl.builder.Cell,java.util.Map):com.intellij.ui.dsl.builder.Cell
 - sf:showValueHint(com.intellij.ui.dsl.builder.Cell):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.SpinnerKt
+- sf:bindIntValue(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindIntValue(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:bindValue(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindValue(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.TextAreaKt
+- sf:columns(com.intellij.ui.dsl.builder.Cell,I):com.intellij.ui.dsl.builder.Cell
+- sf:rows(com.intellij.ui.dsl.builder.Cell,I):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.TextFieldKt
+- sf:COLUMNS_LARGE:I
+- sf:COLUMNS_MEDIUM:I
+- sf:COLUMNS_SHORT:I
+- sf:COLUMNS_TINY:I
+- sf:bindIntText(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindIntText(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindIntText(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindIntText(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:columns(com.intellij.ui.dsl.builder.Cell,I):com.intellij.ui.dsl.builder.Cell
+- sf:columns(javax.swing.JTextField,I):javax.swing.JTextField
+- sf:text(com.intellij.ui.dsl.builder.Cell,java.lang.String):com.intellij.ui.dsl.builder.Cell
+- sf:textValidation(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.ui.validation.DialogValidation$WithParameter[]):com.intellij.ui.dsl.builder.Cell
+- sf:trimmedTextValidation(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.ui.validation.DialogValidation$WithParameter[]):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.TextFieldWithBrowseButtonKt
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.observable.properties.ObservableMutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:columns(com.intellij.ui.dsl.builder.Cell,I):com.intellij.ui.dsl.builder.Cell
+- sf:text(com.intellij.ui.dsl.builder.Cell,java.lang.String):com.intellij.ui.dsl.builder.Cell
+- sf:textValidation(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.ui.validation.DialogValidation$WithParameter[]):com.intellij.ui.dsl.builder.Cell
+- sf:trimmedTextValidation(com.intellij.ui.dsl.builder.Cell,com.intellij.openapi.ui.validation.DialogValidation$WithParameter[]):com.intellij.ui.dsl.builder.Cell
+f:com.intellij.ui.dsl.builder.TextFieldWithHistoryWithBrowseButtonKt
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,com.intellij.ui.dsl.builder.MutableProperty):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,kotlin.jvm.functions.Function0,kotlin.jvm.functions.Function1):com.intellij.ui.dsl.builder.Cell
+- sf:bindText(com.intellij.ui.dsl.builder.Cell,kotlin.reflect.KMutableProperty0):com.intellij.ui.dsl.builder.Cell
+- sf:text(com.intellij.ui.dsl.builder.Cell,java.lang.String):com.intellij.ui.dsl.builder.Cell
+e:com.intellij.ui.dsl.builder.TopGap
+- java.lang.Enum
+- sf:MEDIUM:com.intellij.ui.dsl.builder.TopGap
+- sf:NONE:com.intellij.ui.dsl.builder.TopGap
+- sf:SMALL:com.intellij.ui.dsl.builder.TopGap
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.builder.TopGap
+- s:values():com.intellij.ui.dsl.builder.TopGap[]
+f:com.intellij.ui.dsl.builder.components.ValidationTooltipKt
+- sf:validationTooltip(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.ui.components.ActionLink,com.intellij.ui.components.ActionLink,com.intellij.ui.dsl.builder.components.ValidationType,Z):com.intellij.ui.dsl.builder.Cell
+- bs:validationTooltip$default(com.intellij.ui.dsl.builder.Row,java.lang.String,com.intellij.ui.components.ActionLink,com.intellij.ui.components.ActionLink,com.intellij.ui.dsl.builder.components.ValidationType,Z,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 com.intellij.ui.dsl.validation.CellValidation
 - a:addApplyRule(java.lang.String,com.intellij.ui.dsl.validation.Level,kotlin.jvm.functions.Function0):V
 - a:addApplyRule(kotlin.jvm.functions.Function0):V
@@ -3152,6 +3493,13 @@ com.intellij.ui.dsl.validation.CellValidation
 - a:enabledIf(com.intellij.ui.layout.ComponentPredicate):V
 - a:getEnabled():Z
 - a:setEnabled(Z):V
+e:com.intellij.ui.dsl.validation.Level
+- java.lang.Enum
+- sf:ERROR:com.intellij.ui.dsl.validation.Level
+- sf:WARNING:com.intellij.ui.dsl.validation.Level
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.ui.dsl.validation.Level
+- s:values():com.intellij.ui.dsl.validation.Level[]
 a:com.intellij.ui.filterField.FilterField
 - <init>(java.lang.String):V
 f:com.intellij.ui.filterField.FilterFieldAction
@@ -3165,6 +3513,8 @@ com.intellij.ui.layout.CellBuilder
 - a:constraints(com.intellij.ui.layout.CCFlags[]):com.intellij.ui.layout.CellBuilder
 - ba:focused():com.intellij.ui.layout.CellBuilder
 - a:getComponent():javax.swing.JComponent
+@:com.intellij.ui.layout.CellMarker
+- java.lang.annotation.Annotation
 com.intellij.ui.layout.LayoutBuilderImpl
 - a:build(java.awt.Container,com.intellij.ui.layout.LCFlags[]):V
 - a:getPreferredFocusedComponent():javax.swing.JComponent
@@ -3213,6 +3563,11 @@ com.intellij.ui.popup.BackendRenderedPopup
 f:com.intellij.ui.popup.BalloonPopupBuilderImpl
 - setShowCallout(Z):com.intellij.openapi.ui.popup.BalloonBuilder
 com.intellij.ui.popup.ClosableByLeftArrow
+com.intellij.ui.popup.NextStepHandler
+- a:handleNextStep(com.intellij.openapi.ui.popup.PopupStep,java.lang.Object):V
+com.intellij.ui.popup.NumericMnemonicItem
+- a:digitMnemonicsEnabled():Z
+- a:getMnemonicChar():java.lang.Character
 com.intellij.ui.popup.PopupComponent
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
 - a:getWindow():java.awt.Window
@@ -3249,6 +3604,13 @@ f:com.intellij.ui.popup.list.ListPopupModel
 - get(I):java.lang.Object
 - getCaptionAboveOf(java.lang.Object):java.lang.String
 - isSeparatorAboveOf(java.lang.Object):Z
+com.intellij.ui.popup.list.ListPopupWrapper
+- com.intellij.openapi.ui.popup.ListPopup
+- sf:Companion:com.intellij.ui.popup.list.ListPopupWrapper$Companion
+- a:getBasePopup():com.intellij.openapi.ui.popup.ListPopup
+- s:getRootPopup(com.intellij.openapi.ui.popup.ListPopup):com.intellij.openapi.ui.popup.ListPopup
+f:com.intellij.ui.popup.list.ListPopupWrapper$Companion
+- f:getRootPopup(com.intellij.openapi.ui.popup.ListPopup):com.intellij.openapi.ui.popup.ListPopup
 c:com.intellij.ui.popup.list.PopupListElementRenderer
 - <init>(com.intellij.ui.popup.list.ListPopupImpl):V
 - isReserveSpaceForExtraButtons():Z
@@ -3298,6 +3660,8 @@ a:com.intellij.ui.tree.BaseTreeModel
 - isLeaf(java.lang.Object):Z
 com.intellij.ui.tree.ChildrenProvider
 - a:getChildren(java.lang.Object):java.util.List
+com.intellij.ui.tree.Searchable
+- a:getTreePath(java.lang.Object):org.jetbrains.concurrency.Promise
 c:com.intellij.ui.tree.StructureTreeModel
 - f:getChildren(java.lang.Object):java.util.List
 - f:promiseVisitor(java.lang.Object):org.jetbrains.concurrency.Promise
@@ -3401,8 +3765,12 @@ f:com.intellij.util.PopupUtilsKt
 f:com.intellij.util.UriUtilKt
 - sf:getFragmentParameters(java.net.URI):java.util.Map
 - sf:getQueryParameters(java.net.URI):java.util.Map
+f:com.intellij.util.net.IdeHttpClientHelpers
 f:com.intellij.util.net.IdeHttpClientHelpers$ApacheHttpClient4
+- <init>():V
+- s:setProxyCredentialsForUrlIfEnabled(org.apache.http.client.CredentialsProvider,java.lang.String):V
 - s:setProxyCredentialsIfEnabled(org.apache.http.client.CredentialsProvider):V
+- s:setProxyForUrlIfEnabled(org.apache.http.client.config.RequestConfig$Builder,java.lang.String):V
 - s:setProxyIfEnabled(org.apache.http.client.config.RequestConfig$Builder):V
 com.intellij.util.textCompletion.TextCompletionCache
 - a:getItems(java.lang.String,com.intellij.codeInsight.completion.CompletionParameters):java.util.Collection
@@ -3490,6 +3858,8 @@ com.intellij.util.ui.table.JBTableRow
 - a:getValueAt(I):java.lang.Object
 a:com.intellij.util.ui.table.JBTableRowEditor
 - f:addDocumentListener(com.intellij.util.ui.table.JBTableRowEditor$RowDocumentListener):V
+com.intellij.util.ui.table.JBTableRowEditor$RowDocumentListener
+- a:documentChanged(com.intellij.openapi.editor.event.DocumentEvent,I):V
 com.intellij.util.ui.table.JBTableRowRenderer
 - a:getRowRendererComponent(javax.swing.JTable,I,Z,Z):javax.swing.JComponent
 c:com.intellij.util.ui.table.TableModelEditor
