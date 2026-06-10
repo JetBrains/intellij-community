@@ -1,11 +1,13 @@
 package com.intellij.ide.starter.driver.engine.remoteDev
 
 import com.intellij.driver.sdk.waitNotNullAsync
+import com.intellij.ide.starter.ci.CIServer
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.process.getProcessList
 import com.intellij.ide.starter.runner.IDERunContext
 import com.intellij.ide.starter.utils.getRunningDisplays
+import com.intellij.platform.testFramework.teamCity.TeamCityReporter.SyntheticTestKind
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
 import com.intellij.tools.ide.util.common.withRetry
@@ -50,7 +52,8 @@ object XorgWindowManagerHandler {
 
     if (!isFluxBoxIsRunning(displayWithColumn)) {
       val fluxboxRunLog = ideRunContext.logsDir / "$fluxboxName.log"
-      withRetry("$fluxboxName failed to start", retries = 5, delay = 3.seconds) {
+      val failureMessage = "$fluxboxName failed to start"
+      val started = withRetry(failureMessage, retries = 5, delay = 3.seconds) {
         ProcessExecutor(
           presentableName = "Start $fluxboxName",
           timeout = 2.hours,
@@ -59,6 +62,17 @@ object XorgWindowManagerHandler {
           stdoutRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog),
           stderrRedirect = ExecOutputRedirect.ToFile(fluxboxRunLog)
         ).startCancellable()
+      }
+
+      if (started == null) {
+        CIServer.instance.reportTestFailure(
+          testName = failureMessage,
+          message = Throwable(failureMessage).stackTraceToString(),
+          generifyTestName = false,
+          kind = SyntheticTestKind.TEST_INFRA_EXCEPTION,
+          details = "",
+        )
+        return
       }
     }
     else {
