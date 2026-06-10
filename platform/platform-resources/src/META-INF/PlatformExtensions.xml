@@ -2130,7 +2130,7 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.PluginUpdateSourceServiceImpl"/>
     <notificationGroup id="Plugin Update Sources Reset" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.plugin.update.sources.reset.action"/>
-    <registryKey key="platform.enable.plugin.update.source.feature" defaultValue="false" description="Enables plugin update sources feature (IJPL-171317)"/>
+    <registryKey key="platform.enable.plugin.update.source.feature" defaultValue="true" description="Enables plugin update sources feature (IJPL-171317)"/>
 
     <universalFileChooserContributor implementation="com.intellij.openapi.fileChooser.universal.LocalFileChooserContributor"/>
     <projectSettings service="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
