@@ -85,7 +85,8 @@ private class ValueContextImpl(
 
   override fun clazz(className: String): ClassType = loadType(className) as ClassType
 
-  override fun clazz(cls: Class<*>): ClassType = ClassLoadingUtils.getHelperClass(cls, evaluationContext)!!
+  override fun clazz(cls: Class<*>): ClassType = ClassLoadingUtils.getHelperClass(cls, evaluationContext)
+                                                 ?: error("Failed to load helper class ${cls.name}")
 
   override fun ReferenceType.method(name: String, signature: String): Method =
     DebuggerUtilsImpl.findMethod(this, name, signature)
@@ -128,11 +129,12 @@ private class ValueContextImpl(
 
   override fun array(vararg values: Value?): ArrayReference {
     val valueTypes = values.map { it?.type() }.distinct()
+    val firstType = valueTypes.firstOrNull()
     val componentType = when {
       values.isEmpty() -> error("Could not infer type for empty array.")
       valueTypes.all { it is ReferenceType || it == null } -> CommonClassNames.JAVA_LANG_OBJECT
       valueTypes.size > 1 -> error("Could not create array of non-reference types from a list of values with different types")
-      valueTypes.first() is PrimitiveType -> valueTypes.first()!!.name()
+      firstType is PrimitiveType -> firstType.name()
       // All values of the same (but not primitive or reference) type. For ex. void value
       else -> error("All values in an array must be of a reference type or of the same primitive type.")
     }

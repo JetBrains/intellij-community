@@ -6,6 +6,8 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.core.wrapper.QualifierExpression
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.trace.breakpoint.ObjectStorage
+import com.intellij.debugger.streams.trace.breakpoint.frameProxyOrThrow
+import com.intellij.debugger.streams.trace.breakpoint.threadOrThrow
 import com.intellij.openapi.diagnostic.logger
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.Method
@@ -77,9 +79,9 @@ internal class StreamInstrumentationManager private constructor(
   ): Value? {
     DebuggerManagerThreadImpl.assertIsManagerThread()
 
-    val frameProxy = evaluationContext.frameProxy!!
+    val frameProxy = evaluationContext.frameProxyOrThrow()
 
-    val threadProxy = evaluationContext.suspendContext.thread!!
+    val threadProxy = evaluationContext.suspendContext.threadOrThrow()
     val currentStackDepth = threadProxy.frameCount()
 
     val variable = frameProxy.visibleVariableByName(qualifierExpression.text)
@@ -119,9 +121,9 @@ internal class StreamInstrumentationManager private constructor(
       return
     }
 
-    val frameProxy = evaluationContext.frameProxy!!
+    val frameProxy = evaluationContext.frameProxyOrThrow()
 
-    val threadProxy = evaluationContext.suspendContext.thread!!
+    val threadProxy = evaluationContext.suspendContext.threadOrThrow()
     val currentStackDepth = threadProxy.frameCount()
 
     if (currentStackDepth != stackDepthWhenReplaced) {
@@ -132,7 +134,7 @@ internal class StreamInstrumentationManager private constructor(
       )
     }
 
-    val variable = frameProxy.visibleVariableByName(qualifierVariableName!!)
+    val variable = frameProxy.visibleVariableByName(checkNotNull(qualifierVariableName))
     frameProxy.setValue(variable, originalQualifierValue)
 
     originalQualifierValue = null

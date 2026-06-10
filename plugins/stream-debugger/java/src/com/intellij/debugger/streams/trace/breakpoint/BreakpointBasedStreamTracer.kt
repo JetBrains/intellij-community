@@ -18,8 +18,6 @@ import com.intellij.debugger.streams.lib.impl.BreakpointBasedLibrarySupport
 import com.intellij.debugger.streams.ui.impl.PrimitiveValueDescriptor
 import com.intellij.xdebugger.frame.XValue
 import com.sun.jdi.Value
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.withContext
 
 /**
  * StreamTracer implementation that uses breakpoints for value interception.
@@ -40,12 +38,14 @@ internal class BreakpointBasedStreamTracer(
                     ?: return StreamTracer.Result.EvaluationFailed("", StreamDebuggerBundle.message("could.not.find.breakpoint.positions"))
 
     // Create ObjectStorage for protecting traced objects from GC
+    val debugProcess = xDebugProcess.debuggerSession.process
     val objectStorage = ObjectStorage()
     val breakpointFactory = JdiBreakpointFactory()
     val manager = StreamTracingManager(
       breakpointFactory,
       objectStorage,
-      librarySupport.createRuntimeHandlerFactory(objectStorage)
+      librarySupport.createRuntimeHandlerFactory(objectStorage),
+      debugProcess,
     )
 
     return try {
@@ -66,12 +66,8 @@ internal class BreakpointBasedStreamTracer(
         is TracingResult.Error -> StreamTracer.Result.EvaluationFailed("", result.errorMessage)
       }
     } finally {
-      val debuggerContext = xDebugProcess.debuggerSession.contextManager.context
-      withContext(NonCancellable) {
-        withDebugContext(debuggerContext.managerThread!!) {
-          scheduleReleaseOnResume(objectStorage, debuggerContext.debugProcess!!)
-        }
-      }
+      // Registering the resume listener is thread-safe and non-suspending, so it runs even on cancellation.
+      scheduleReleaseOnResume(objectStorage, debugProcess)
     }
   }
 

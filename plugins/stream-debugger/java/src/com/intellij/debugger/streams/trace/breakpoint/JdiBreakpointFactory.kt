@@ -217,14 +217,14 @@ internal class JdiBreakpointFactory {
   }
 
   private fun getMethodArguments(suspendContext: SuspendContextImpl, method: Method): List<Value?> {
-    val frameProxy = suspendContext.frameProxy!!
+    val frameProxy = suspendContext.frameProxyOrThrow()
     return method.arguments().map { param ->
       frameProxy.visibleValueByName(param.name())
     }
   }
 
   private fun replaceArguments(suspendContext: SuspendContextImpl, method: Method, newArgumentsList: List<Value?>) {
-    val frameProxy = suspendContext.frameProxy!!
+    val frameProxy = suspendContext.frameProxyOrThrow()
     method
       .arguments()
       .zip(newArgumentsList)

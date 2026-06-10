@@ -82,8 +82,8 @@ internal class MatchRuntimeHandler(
   override fun result(evaluationContextImpl: EvaluationContextImpl): Value =
     objectStorage.watch(evaluationContextImpl) {
       val typeBefore = call.getTypeBefore()
-      val beforeFormatted = beforeValuesMap?.let { formatMap(it, typeBefore) } ?: emptyResult()
-      val afterFormatted = afterValuesMap?.let { formatMap(it, typeBefore) } ?: emptyResult()
+      val beforeFormatted = formatMap(beforeValuesMap, typeBefore)
+      val afterFormatted = formatMap(afterValuesMap, typeBefore)
 
       val info = array(beforeFormatted, afterFormatted)
       val result = array(streamResult)

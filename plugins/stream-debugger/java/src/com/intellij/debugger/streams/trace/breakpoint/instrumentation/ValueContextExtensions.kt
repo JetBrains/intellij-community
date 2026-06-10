@@ -14,7 +14,9 @@ internal fun ValueContext.addSequentialOperator(streamObject: ObjectReference): 
     .invoke(streamObject) as ObjectReference
 }
 
-internal fun ValueContext.formatMap(map: ObjectReference, type: GenericType): ArrayReference {
+internal fun ValueContext.formatMap(map: ObjectReference?, type: GenericType?): ArrayReference {
+  if (map == null || type == null) return emptyResult()
+
   val streamTypeInfo = StreamTypeInfo.forType(type.genericTypeName)
   val utilsClass = clazz(StreamDebuggerUtils::class.java)
   val formatMethod = utilsClass.method(streamTypeInfo.formatterMethod, "(Ljava/util/Map;)[Ljava/lang/Object;")

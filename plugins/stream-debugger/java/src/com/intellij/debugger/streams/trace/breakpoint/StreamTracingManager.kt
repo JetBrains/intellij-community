@@ -4,6 +4,7 @@ package com.intellij.debugger.streams.trace.breakpoint
 import com.intellij.debugger.engine.DebugProcessAdapterImpl
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebugProcessListener
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
@@ -66,6 +67,7 @@ internal class StreamTracingManager(
   private val breakpointFactory: JdiBreakpointFactory,
   private val objectStorage: ObjectStorage,
   private val handlerFactory: BreakpointBasedHandlerFactory,
+  private val debugProcess: DebugProcessImpl,
 ) {
   private val evaluationFinished = CompletableDeferred<TracingResult>()
 
@@ -74,7 +76,9 @@ internal class StreamTracingManager(
     breakpointPositions: BreakpointResolveResult.Found,
     chain: StreamChain,
   ): TracingResult {
-    val started = when (val setupResult = startTracingAndResume(debuggerContext, breakpointPositions, chain)) {
+    val managerThread = debuggerContext.managerThread
+                        ?: return TracingResult.Error(StreamDebuggerBundle.message("program.is.not.suspended"))
+    val started = when (val setupResult = startTracingAndResume(debuggerContext, managerThread, breakpointPositions, chain)) {
       is EvaluationStatus.EvaluationFinished -> return setupResult.result
       is EvaluationStatus.EvaluationStarted -> setupResult
     }
@@ -83,8 +87,8 @@ internal class StreamTracingManager(
       evaluationFinished.await()
     } finally {
       withContext(NonCancellable) {
-        withDebugContext(debuggerContext.managerThread!!) {
-          started.cleanUp(debuggerContext.debugProcess!!)
+        withDebugContext(managerThread) {
+          started.cleanUp(debugProcess)
         }
       }
     }
@@ -92,10 +96,10 @@ internal class StreamTracingManager(
 
   private suspend fun startTracingAndResume(
     debuggerContext: DebuggerContextImpl,
+    managerThread: DebuggerManagerThreadImpl,
     breakpointPositions: BreakpointResolveResult.Found,
     chain: StreamChain,
-  ): EvaluationStatus = withDebugContext(debuggerContext.managerThread!!) {
-    val debugProcess = debuggerContext.debugProcess!!
+  ): EvaluationStatus = withDebugContext(managerThread) {
     val evaluationContext = debuggerContext.createEvaluationContext()
                             ?: return@withDebugContext EvaluationStatus.EvaluationFinished(
                               TracingResult.Error(StreamDebuggerBundle.message("program.is.not.suspended")))

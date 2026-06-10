@@ -30,8 +30,8 @@ internal abstract class DistinctPeekCallHandler(
   override fun result(evaluationContextImpl: EvaluationContextImpl): Value {
     DebuggerManagerThreadImpl.assertIsManagerThread()
     return objectStorage.watch(evaluationContextImpl) {
-      val beforeFormatted = beforeValuesMap?.let { formatMap(it, typeBefore!!) } ?: emptyResult()
-      val afterFormatted = afterValuesMap?.let { formatMap(it, typeAfter!!) } ?: emptyResult()
+      val beforeFormatted = formatMap(beforeValuesMap, typeBefore)
+      val afterFormatted = formatMap(afterValuesMap, typeAfter)
       array(array(beforeFormatted, afterFormatted), computeMapping())
     }
   }
