@@ -1,6 +1,42 @@
 <idea-plugin visibility="internal">
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.jetbrains.performancePlugin"/>
+    <module name="intellij.driver.client"/>
+    <module name="intellij.libraries.assertj.core"/>
+    <module name="intellij.libraries.junit5"/>
+    <module name="intellij.libraries.junit5.launcher"/>
+    <module name="intellij.libraries.junit5.params"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinTest"/>
+    <module name="intellij.libraries.rd.core"/>
+    <module name="intellij.libraries.rd.framework"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.testFramework"/>
+    <module name="intellij.platform.testFramework.junit5"/>
+    <module name="intellij.platform.testFramework.teamCity"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.remoteDev.util"/>
+    <module name="intellij.tools.ide.starter"/>
+    <module name="intellij.tools.ide.starter.driver"/>
     <module name="intellij.tools.ide.util.common"/>
+    <!-- endregion -->
   </dependencies>
 </idea-plugin>

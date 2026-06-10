@@ -3,7 +3,7 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 ### auto-generated section `build intellij.lambda.sampleTestsWithPlugin.plugin` start
 
 jvm_library(
-    name = "plugin",
+    name = "lambda-sampleTestsWithPlugin-plugin",
     srcs = glob(
         [],
         allow_empty = True,
@@ -13,19 +13,19 @@ jvm_library(
 )
 
 jvm_library(
-    name = "plugin_test_lib",
+    name = "lambda-sampleTestsWithPlugin-plugin_test_lib",
     testonly = True,
     srcs = glob(
         [],
         allow_empty = True,
     ),
     module_name = "intellij.lambda.sampleTestsWithPlugin.plugin",
-    resource_strip_prefix = "testResources",
+    resource_strip_prefix = "resources",
     resources = glob(
-        ["testResources/**/*"],
+        ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":plugin"],
+    runtime_deps = [":lambda-sampleTestsWithPlugin-plugin"],
 )
 ### auto-generated section `build intellij.lambda.sampleTestsWithPlugin.plugin` end
 

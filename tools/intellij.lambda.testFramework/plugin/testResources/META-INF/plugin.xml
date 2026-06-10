@@ -1,9 +1,140 @@
+<!-- DO NOT EDIT: This file is auto-generated from Kotlin code -->
+<!-- To regenerate, run 'Generate Product Layouts' or directly UltimateGenerator.main() -->
+<!-- Source: test-product.getProductContentDescriptor() -->
 <idea-plugin>
   <id>com.intellij.lambda.test.plugin</id>
+  <name>Lambda Test Framework</name>
   <vendor>JetBrains</vendor>
 
+  <dependencies>
+    <module name="intellij.libraries.asm.tools"/>
+    <module name="intellij.libraries.commons.compress"/>
+    <module name="intellij.libraries.commons.io"/>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.http.client"/>
+    <module name="intellij.libraries.jackson"/>
+    <module name="intellij.libraries.jackson.databind"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.libraries.kotlin.reflect"/>
+    <module name="intellij.libraries.kotlinx.collections.immutable"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.coroutines.slf4j"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.json"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.libraries.rd.core"/>
+    <module name="intellij.libraries.rd.framework"/>
+    <module name="intellij.libraries.teamcity.service.messages"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.buildScripts.downloader"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.debugger.impl"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.runtime.product"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.remoteDev.util"/>
+  </dependencies>
+
   <content namespace="jetbrains">
-    <module name="intellij.lambda.testFramework" />
-    <module name="intellij.tools.ide.util.common"/>
+    <!-- region lambda.testFrameworkLibraries -->
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.byte.buddy"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.hamcrest"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.junit4"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.junit5"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.junit5.jupiter"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.junit5.launcher"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.junit5.params"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.junit5.pioneer"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.junit5.vintage"/>
+    <!-- chain: moduleSet lambda.testFrameworkLibraries -->
+    <module name="intellij.libraries.kotlinTest"/>
+    <!-- endregion -->
+
+    <!-- region platform.testFrameworks.core -->
+    <!-- chain: moduleSet platform.testFrameworks.core -->
+    <module name="intellij.codeowners"/>
+    <!-- chain: moduleSet platform.testFrameworks.core -->
+    <module name="intellij.codeowners.monorepo.resolver"/>
+    <!-- chain: moduleSet platform.testFrameworks.core -->
+    <module name="intellij.codeowners.runtime.resolver"/>
+    <!-- chain: moduleSet platform.testFrameworks.core -->
+    <module name="intellij.platform.testFramework"/>
+    <!-- chain: moduleSet platform.testFrameworks.core -->
+    <module name="intellij.platform.testFramework.common"/>
+    <!-- chain: moduleSet platform.testFrameworks.core -->
+    <module name="intellij.platform.testFramework.core"/>
+    <!-- chain: moduleSet platform.testFrameworks.core -->
+    <module name="intellij.platform.testFramework.impl"/>
+    <!-- chain: moduleSet platform.testFrameworks.core -->
+    <module name="intellij.platform.testFramework.teamCity"/>
+    <!-- endregion -->
+
+    <!-- region platform.testFrameworks.junit5 -->
+    <!-- chain: moduleSet platform.testFrameworks.junit5 -->
+    <module name="intellij.platform.testFramework.junit5"/>
+    <!-- chain: moduleSet platform.testFrameworks.junit5 -->
+    <module name="intellij.platform.testFramework.junit5.codeInsight"/>
+    <!-- chain: moduleSet platform.testFrameworks.junit5 -->
+    <module name="intellij.platform.testFramework.junit5.eel.tests"/>
+    <!-- chain: moduleSet platform.testFrameworks.junit5 -->
+    <module name="intellij.platform.testFramework.junit5.projectStructure"/>
+    <!-- chain: moduleSet platform.testFrameworks.junit5 -->
+    <module name="intellij.platform.testFramework.junit5.tests"/>
+    <!-- endregion -->
+
   </content>
+  <!-- region additional -->
+  <content namespace="jetbrains">
+    <!-- chain: direct -->
+    <module name="intellij.java.rt"/>
+    <!-- chain: direct -->
+    <module name="intellij.lambda.testFramework"/>
+    <!-- chain: direct -->
+    <module name="intellij.tools.ide.starter"/>
+    <!-- chain: direct -->
+    <module name="intellij.tools.ide.starter.driver"/>
+    <!-- chain: direct -->
+    <module name="intellij.tools.ide.util.common"/>
+    <!-- chain: direct -->
+    <module name="intellij.tools.testsBootstrap"/>
+  </content>
+  <content>
+    <!-- chain: direct -->
+    <module name="intellij.libraries.assertj.core"/>
+  </content>
+  <!-- endregion -->
 </idea-plugin>

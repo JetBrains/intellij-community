@@ -1,27 +1,8 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
+  <!-- @skip-dependency-generation: Lambda fixture tests intentionally keep only wrapper-level dependencies. -->
   <dependencies>
-    <module name="intellij.java.rt"/>
-
-    <module name="intellij.tools.testsBootstrap" />
-
+    <module name="intellij.lambda.testFramework"/>
     <module name="intellij.libraries.assertj.core"/>
-    <module name="intellij.libraries.hamcrest"/>
-    <module name="intellij.libraries.junit4"/>
-    <module name="intellij.libraries.junit5.vintage"/>
-    <module name="intellij.libraries.junit5.launcher"/>
-
-    <module name="intellij.platform.testFramework"/>
-    <module name="intellij.platform.testFramework.junit5.codeInsight"/>
-    <module name="intellij.platform.testFramework.impl"/>
-    <module name="intellij.platform.testFramework.junit5"/>
-    <module name="intellij.platform.testFramework.core"/>
-    <module name="intellij.platform.testFramework.common"/>
-    <module name="intellij.platform.codeStyle"/>
-    <module name="intellij.platform.editor.ex"/>
-    <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.usageView"/>
-    <module name="intellij.codeowners.runtime.resolver"/>
-
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">

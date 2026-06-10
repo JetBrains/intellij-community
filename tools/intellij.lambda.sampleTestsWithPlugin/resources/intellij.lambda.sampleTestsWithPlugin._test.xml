@@ -1,4 +1,5 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
+  <!-- @skip-dependency-generation: Lambda test plugin descriptors intentionally keep only wrapper-level dependencies. -->
   <dependencies>
     <module name="intellij.libraries.assertj.core"/>
   </dependencies>
