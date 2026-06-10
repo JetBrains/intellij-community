@@ -74,7 +74,7 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
 
     private val sessionBar = createBar(sessionBarColor)
     private val weeklyBar = createBar(weeklyBarColor)
-    private val iconLabel = JLabel(AgentWorkbenchCommonIcons.Claude_14x14)
+    private val iconLabel = JLabel(AgentWorkbenchCommonIcons.Claude)
     private val barsBox = JPanel()
     private var shouldDisplay = false
 

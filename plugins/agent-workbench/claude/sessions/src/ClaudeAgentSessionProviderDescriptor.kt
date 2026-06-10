@@ -66,7 +66,7 @@ internal class ClaudeAgentSessionProviderDescriptor(
     get() = "toolwindow.action.new.session.claude.yolo"
 
   override val icon: Icon
-    get() = AgentWorkbenchCommonIcons.Claude_14x14
+    get() = AgentWorkbenchCommonIcons.Claude
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)

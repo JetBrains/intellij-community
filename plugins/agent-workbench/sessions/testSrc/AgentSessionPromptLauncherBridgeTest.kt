@@ -2376,7 +2376,7 @@ private class RecordingPromptLaunchProviderBridge(
     get() = "toolwindow.action.new.session.codex"
 
   override val icon: Icon
-    get() = if (provider == AgentSessionProvider.CLAUDE) AgentWorkbenchCommonIcons.Claude_14x14 else AgentWorkbenchCommonIcons.Codex_14x14
+    get() = if (provider == AgentSessionProvider.CLAUDE) AgentWorkbenchCommonIcons.Claude else AgentWorkbenchCommonIcons.Codex
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = supportedModes

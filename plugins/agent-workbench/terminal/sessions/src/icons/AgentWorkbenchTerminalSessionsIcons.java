@@ -14,5 +14,5 @@ public final class AgentWorkbenchTerminalSessionsIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, AgentWorkbenchTerminalSessionsIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 14x14 */ public static final @NotNull Icon Terminal_14x14 = load("icons/terminal@14x14.svg", 1110725473, 0);
+  /** 16x16 */ public static final @NotNull Icon Terminal = load("icons/terminal.svg", 1626039715, 0);
 }

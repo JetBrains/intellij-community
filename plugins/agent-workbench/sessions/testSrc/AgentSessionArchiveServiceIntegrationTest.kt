@@ -78,7 +78,7 @@ class AgentSessionArchiveServiceIntegrationTest {
       override val newSessionLabelKey: String
         get() = "toolwindow.action.new.session.claude"
       override val icon: Icon
-        get() = AgentWorkbenchCommonIcons.Claude_14x14
+        get() = AgentWorkbenchCommonIcons.Claude
       override val sessionSource: AgentSessionSource = claudeSource
       override val cliMissingMessageKey: String
         get() = "toolwindow.error.claude.cli"
@@ -1114,7 +1114,7 @@ private fun testCodexBridge(
       get() = "toolwindow.action.new.session.codex"
 
     override val icon: Icon
-      get() = AgentWorkbenchCommonIcons.Codex_14x14
+      get() = AgentWorkbenchCommonIcons.Codex
 
     override val sessionSource: AgentSessionSource = sessionSource
 
@@ -1173,7 +1173,7 @@ private fun testClaudeBridge(
       get() = "toolwindow.action.new.session.claude"
 
     override val icon: Icon
-      get() = AgentWorkbenchCommonIcons.Claude_14x14
+      get() = AgentWorkbenchCommonIcons.Claude
 
     override val sessionSource: AgentSessionSource = sessionSource
 

@@ -62,7 +62,7 @@ internal class CodexAgentSessionProviderDescriptor(
     get() = "toolwindow.action.new.session.codex.yolo"
 
   override val icon: Icon
-    get() = AgentWorkbenchCommonIcons.Codex_14x14
+    get() = AgentWorkbenchCommonIcons.Codex
 
   override val supportedLaunchModes: Set<AgentSessionLaunchMode>
     get() = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO)

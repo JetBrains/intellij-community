@@ -37,7 +37,7 @@ internal class PiAgentSessionProviderDescriptor(
     get() = "toolwindow.action.new.session.pi"
 
   override val icon: Icon
-    get() = AgentWorkbenchCommonIcons.Pi_14x14
+    get() = AgentWorkbenchCommonIcons.PI
 
   override val cliMissingMessageKey: String
     get() = "toolwindow.error.pi.cli"

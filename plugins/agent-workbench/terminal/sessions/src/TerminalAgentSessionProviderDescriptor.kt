@@ -17,7 +17,7 @@ import com.intellij.openapi.components.service
 import java.util.UUID
 import javax.swing.Icon
 
-private val TERMINAL_PROVIDER_ICON: Icon = AgentWorkbenchTerminalSessionsIcons.Terminal_14x14
+private val TERMINAL_PROVIDER_ICON: Icon = AgentWorkbenchTerminalSessionsIcons.Terminal
 
 internal class TerminalAgentSessionProviderDescriptor(
   private val stateService: TerminalSessionStateService = service(),

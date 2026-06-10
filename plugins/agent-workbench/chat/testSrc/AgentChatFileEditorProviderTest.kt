@@ -750,7 +750,7 @@ class AgentChatFileEditorProviderTest {
     assertThat(reviewingIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.REVIEWING))
     assertThat(needsInputIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.NEEDS_INPUT))
     assertThat(unreadIcon).isSameAs(agentSessionThreadStatusIcon(AgentSessionProvider.CODEX, AgentThreadActivity.UNREAD))
-    assertThat(readyIcon).isSameAs(AgentWorkbenchCommonIcons.Codex_14x14)
+    assertThat(readyIcon).isSameAs(AgentWorkbenchCommonIcons.Codex)
     assertThat(processingIcon).isNotSameAs(readyIcon)
     assertThat(reviewingIcon).isNotSameAs(readyIcon)
     assertThat(needsInputIcon).isNotSameAs(readyIcon)
@@ -778,7 +778,7 @@ class AgentChatFileEditorProviderTest {
       assertThat(icon).isSameAs(sharedHelperIcon)
       assertThat(icon.iconWidth).isEqualTo(expected.iconWidth)
       assertThat(icon.iconHeight).isEqualTo(expected.iconHeight)
-      assertThat(icon.iconWidth).isNotEqualTo(AgentWorkbenchCommonIcons.Codex_14x14.iconWidth)
+      assertThat(icon.iconWidth).isNotEqualTo(AgentWorkbenchCommonIcons.Codex.iconWidth)
     }
   }
 }
