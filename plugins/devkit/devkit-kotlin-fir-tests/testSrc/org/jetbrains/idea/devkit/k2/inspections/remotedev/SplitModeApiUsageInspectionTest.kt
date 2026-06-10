@@ -24,7 +24,7 @@ class SplitModeApiUsageInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     super.setUp()
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
 
-    val service = SplitModeApiRestrictionsService.getInstance()
+    val service = SplitModeApiRestrictionsService.getInstance(project)
     service.scheduleLoadRestrictions()
     timeoutRunBlocking {
       waitUntil("API restrictions failed to load", 2.seconds) { service.isLoaded() }

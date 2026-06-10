@@ -27,7 +27,7 @@ internal object SplitModeModuleKindResolver {
     }
 
     val parsedXmlDescriptor = DescriptorUtil.getIdeaPlugin(xmlDescriptor)
-    val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance().getPredefinedModuleKind(module, xmlDescriptor, parsedXmlDescriptor)
+    val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance(module.project).getPredefinedModuleKind(module, xmlDescriptor, parsedXmlDescriptor)
     if (predefinedModuleKind != null) {
       return ModuleAnalysis(ResolvedModuleKind(predefinedModuleKind.moduleKind, predefinedModuleKind.reasoning))
     }
@@ -147,7 +147,7 @@ internal object SplitModeModuleKindResolver {
         val ownDependencyFacts =
           SplitModeDescriptorDependencyAnalyzer.getOrComputeOwnDescriptorDependencyFacts(ideaPlugin, descriptorAnalysisStates)
         val directDependencyNames = SplitModeDescriptorDependencyAnalyzer.collectDirectDependencyNames(ideaPlugin).toSet()
-        val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance().getPredefinedModuleKind(containingModule, pluginXml, ideaPlugin)
+        val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance(containingModule.project).getPredefinedModuleKind(containingModule, pluginXml, ideaPlugin)
         val resolvedModuleKind =
           if (predefinedModuleKind != null) {
             ResolvedModuleKind(predefinedModuleKind.moduleKind, predefinedModuleKind.reasoning)

@@ -23,8 +23,9 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspection : DevKitPlugi
   private val coreModuleNames = moduleNameSuffixToRequiredRuntimeDependency.map { it.second }
 
   override fun isAllowed(holder: DomElementAnnotationHolder): Boolean {
+    val inspectedFile = holder.fileElement.file
     return super.isAllowed(holder)
-           && SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(holder.fileElement.file)
+           && SplitModeQodanaInspectionScopeLimiter.getInstance(inspectedFile.project).shouldInspectFileInQodanaMode(inspectedFile)
   }
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {

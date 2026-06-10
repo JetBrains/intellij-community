@@ -19,8 +19,8 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
   fun testDisabledLimiterAllowsFileOutsideConfiguredModules() {
     val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
 
-    withQodanaAnalysisScopeLimiter(false, additionalScopeJson = """{ "moduleNames": ["other.module"] }""") {
-      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
+    withQodanaAnalysisScopeLimiter(false, projectScopeJson = """{ "moduleNames": ["other.module"] }""") {
+      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance(project).shouldInspectFileInQodanaMode(file))
     }
   }
 
@@ -29,7 +29,7 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
     val moduleName = getModuleName(file)
 
     withQodanaAnalysisScopeLimiter(true, projectScopeJson = """{ "moduleNames": ["$moduleName"] }""") {
-      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
+      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance(project).shouldInspectFileInQodanaMode(file))
     }
   }
 
@@ -37,7 +37,7 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
     val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
 
     withQodanaAnalysisScopeLimiter(true, projectScopeJson = """{ "moduleNames": ["other.module"] }""") {
-      assertFalse(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
+      assertFalse(SplitModeQodanaInspectionScopeLimiter.getInstance(project).shouldInspectFileInQodanaMode(file))
     }
   }
 
@@ -46,15 +46,15 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
     val moduleName = getModuleName(file)
 
     withQodanaAnalysisScopeLimiter(true, projectScopeJson = """{ "ignoredModules": ["$moduleName"] }""") {
-      assertFalse(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
+      assertFalse(SplitModeQodanaInspectionScopeLimiter.getInstance(project).shouldInspectFileInQodanaMode(file))
     }
   }
 
   fun testEnabledLimiterAllowsModuleOutsideIgnoredModules() {
     val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
 
-    withQodanaAnalysisScopeLimiter(true, additionalScopeJson = """{ "ignoredModules": ["other.module"] }""") {
-      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
+    withQodanaAnalysisScopeLimiter(true, projectScopeJson = """{ "ignoredModules": ["other.module"] }""") {
+      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance(project).shouldInspectFileInQodanaMode(file))
     }
   }
 
@@ -63,10 +63,10 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
     val moduleName = getModuleName(file)
 
     withQodanaAnalysisScopeLimiter(
-      true,
+      enabled = true,
       projectScopeJson = """{ "moduleNames": ["other.module"], "ignoredModules": ["$moduleName"] }""",
     ) {
-      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
+      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance(project).shouldInspectFileInQodanaMode(file))
     }
   }
 
@@ -79,7 +79,7 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
       projectScopeJson = """{ "moduleNames": ["$moduleName"] }""",
       additionalScopeJson = """{ "moduleNames": ["other.module"] }""",
     ) {
-      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
+      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance(project).shouldInspectFileInQodanaMode(file))
     }
   }
 
@@ -87,7 +87,7 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
     val file = myFixture.configureByText(PlainTextFileType.INSTANCE, "text")
 
     withQodanaAnalysisScopeLimiter(true) {
-      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(file))
+      assertTrue(SplitModeQodanaInspectionScopeLimiter.getInstance(project).shouldInspectFileInQodanaMode(file))
     }
   }
 

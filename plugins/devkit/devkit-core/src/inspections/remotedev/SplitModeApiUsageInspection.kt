@@ -43,7 +43,7 @@ class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java,
   override fun isAllowed(holder: ProblemsHolder): Boolean {
     return super.isAllowed(holder)
            && SplitModeInspectionUtil.isAllowedForSplitModeInspection(holder.file)
-           && SplitModeQodanaInspectionScopeLimiter.getInstance().shouldInspectFileInQodanaMode(holder.file)
+           && SplitModeQodanaInspectionScopeLimiter.getInstance(holder.file.project).shouldInspectFileInQodanaMode(holder.file)
   }
 
   override fun checkClass(
@@ -113,13 +113,13 @@ class SplitModeApiUsageInspection : DevKitUastInspectionBase(UClass::class.java,
     descriptors: MutableList<ProblemDescriptor>,
   ) {
     val resolvedApi = resolveApiUsage(expression) ?: return
-    val expectedModuleKind =
-      SplitModeApiRestrictionsService.getInstance().getCodeApiKind(resolvedApi.qualifiedName, resolvedApi.owner) ?: return
+    val sourcePsi = expression.sourcePsi ?: return
+    val restrictionsService = SplitModeApiRestrictionsService.getInstance(sourcePsi.project)
+    val expectedModuleKind = restrictionsService.getCodeApiKind(resolvedApi.qualifiedName, resolvedApi.owner) ?: return
     val currentModuleType = currentModuleAnalysis.resolvedModuleKind
 
     if (!doesApiKindMatchExpectedModuleKind(currentModuleType, expectedModuleKind)) {
-      val sourcePsi = expression.sourcePsi ?: return
-      val hint = SplitModeApiRestrictionsService.getInstance().getCodeApiHint(resolvedApi.qualifiedName)
+      val hint = restrictionsService.getCodeApiHint(resolvedApi.qualifiedName)
       val message = buildModuleKindMismatchMessage(resolvedApi.qualifiedName, expectedModuleKind, currentModuleType, hint)
       val tooltipMessage = buildModuleKindMismatchTooltipMessage(resolvedApi.qualifiedName, expectedModuleKind, currentModuleType, hint)
       val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return

@@ -26,7 +26,7 @@ internal class SplitModeXmlApiUsageInspectionTest : JavaCodeInsightFixtureTestCa
     RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
       .setValue(true, testRootDisposable)
 
-    val service = SplitModeApiRestrictionsService.getInstance()
+    val service = SplitModeApiRestrictionsService.getInstance(project)
     service.scheduleLoadRestrictions()
     timeoutRunBlocking {
       waitUntil("API restrictions failed to load", 2.seconds) { service.isLoaded() }
@@ -102,7 +102,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
   }
 
   fun testApiRestrictionsJsonHasNoDuplicateApiTargets() {
-    SplitModeApiRestrictionsService.getInstance().assertApiRestrictionsCanBeReadForTest()
+    SplitModeApiRestrictionsService.getInstance(project).assertApiRestrictionsCanBeReadForTest()
   }
 
   fun testModuleKindCanBePredefinedInRestrictionsService() {

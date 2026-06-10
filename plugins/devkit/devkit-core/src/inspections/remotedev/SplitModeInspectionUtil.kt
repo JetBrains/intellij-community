@@ -162,7 +162,7 @@ internal object SplitModeInspectionUtil {
   }
 
   fun isAllowedForSplitModeInspection(file: PsiFile): Boolean {
-    val restrictionsService = SplitModeApiRestrictionsService.getInstance()
+    val restrictionsService = SplitModeApiRestrictionsService.getInstance(file.project)
     if (shouldSuppressForSingleModuleExternalPlugin(file)) {
       return false
     }

@@ -22,7 +22,7 @@ internal suspend fun recognizeSplitModeModuleKindForPath(descriptorPath: String)
                              ?: VirtualFileManager.getInstance().refreshAndFindFileByNioPath(resolvedDescriptorPath)
                              ?: mcpFail("File not found: $descriptorPath")
 
-  val service = SplitModeApiRestrictionsService.getInstance()
+  val service = SplitModeApiRestrictionsService.getInstance(project)
   service.scheduleLoadRestrictions()
   withTimeoutOrNull(5.seconds) {
     while (!service.isLoaded()) {

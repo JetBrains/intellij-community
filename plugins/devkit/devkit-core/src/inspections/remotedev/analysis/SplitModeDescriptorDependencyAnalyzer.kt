@@ -196,7 +196,7 @@ private fun Dependency.isOptionalOldStyleDependency(): Boolean = optional.value 
 private fun getPredefinedDependencyFacts(ideaPlugin: IdeaPlugin): DependencyFacts? {
   val descriptorFile = getDescriptorXmlFile(ideaPlugin) ?: return null
   val module = ModuleUtilCore.findModuleForPsiElement(descriptorFile) ?: return null
-  val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance().getPredefinedModuleKind(module, descriptorFile, ideaPlugin) ?: return null
+  val predefinedModuleKind = SplitModeApiRestrictionsService.getInstance(descriptorFile.project).getPredefinedModuleKind(module, descriptorFile, ideaPlugin) ?: return null
   return createPredefinedDependencyFacts(predefinedModuleKind)
 }
 

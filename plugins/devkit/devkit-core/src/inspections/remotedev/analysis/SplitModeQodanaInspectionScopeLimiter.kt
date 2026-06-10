@@ -23,9 +23,9 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
-@Service(Service.Level.APP)
+@Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class SplitModeQodanaInspectionScopeLimiter {
+class SplitModeQodanaInspectionScopeLimiter(private val project: Project) {
 
   companion object {
     private val LOG: Logger = logger<SplitModeQodanaInspectionScopeLimiter>()
@@ -33,7 +33,7 @@ class SplitModeQodanaInspectionScopeLimiter {
       "community/plugins/devkit/devkit-core/resources/remotedevInspectionData/SplitModeQodanaAnalysisScope.json"
 
     @JvmStatic
-    fun getInstance(): SplitModeQodanaInspectionScopeLimiter = service()
+    fun getInstance(project: Project): SplitModeQodanaInspectionScopeLimiter = project.service()
   }
 
   @Volatile
@@ -49,7 +49,7 @@ class SplitModeQodanaInspectionScopeLimiter {
       return true
     }
 
-    val scope = getScope(file.project)
+    val scope = getScope()
     if (scope.isEmpty()) {
       return true
     }
@@ -63,8 +63,8 @@ class SplitModeQodanaInspectionScopeLimiter {
   }
 
   @TestOnly
-  fun reloadScopeForTest(project: Project) {
-    cachedScope = loadScope(project.basePath, SplitModeAnalysisFlags.getAdditionalQodanaAnalysisScopeFilePath())
+  fun reloadScopeForTest() {
+    cachedScope = loadScope(SplitModeAnalysisFlags.getQodanaAnalysisScopeReadMode())
   }
 
   private fun getScope(project: Project): ScopeConfiguration {

@@ -29,9 +29,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
-@Service(Service.Level.APP)
+@Service(Service.Level.PROJECT)
 @ApiStatus.Internal
-class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope) {
+class SplitModeApiRestrictionsService(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+) {
 
   companion object {
     private val LOG: Logger = logger<SplitModeApiRestrictionsService>()
@@ -41,7 +44,7 @@ class SplitModeApiRestrictionsService(private val coroutineScope: CoroutineScope
     private const val FRONTEND_API_ANNOTATION = "com.intellij.util.remdev.FrontendApi"
 
     @JvmStatic
-    fun getInstance(): SplitModeApiRestrictionsService = service()
+    fun getInstance(project: Project): SplitModeApiRestrictionsService = project.service()
   }
 
   @SafeTypeForPreview
