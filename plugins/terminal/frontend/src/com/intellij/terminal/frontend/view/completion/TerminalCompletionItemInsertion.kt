@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.frontend.view.impl.TerminalInput
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.CURSOR_MARKER
 import org.jetbrains.plugins.terminal.session.ShellName
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 
@@ -198,7 +199,5 @@ private fun String.isEscaped(): Boolean {
   return isSurroundedBy("'") && !removeSurrounding("'").contains("'")
          || isSurroundedBy("\"") && !removeSurrounding("\"").contains("\"")
 }
-
-private const val CURSOR_MARKER = "{cursor}"
 
 private val LOG = fileLogger()

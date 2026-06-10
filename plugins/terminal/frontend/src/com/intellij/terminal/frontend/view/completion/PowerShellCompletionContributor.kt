@@ -12,6 +12,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.completion.TerminalCommandCompletionShowingMode
+import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionItem
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionResultType
 import org.jetbrains.plugins.terminal.block.completion.powershell.PowerShellCompletionResultWithContext
@@ -133,7 +134,7 @@ class PowerShellCompletionContributor : TerminalCommandCompletionContributor {
 
     // Set the cursor position inside the insert string.
     // If the value is in quotes, the cursor will be placed before the closing quote.
-    insertValue = insertValue.appendQuotesAware("{cursor}")
+    insertValue = insertValue.appendQuotesAware(TerminalCompletionUtil.CURSOR_MARKER)
 
     return ShellCompletionSuggestion(lookupString) {
       insertValue(insertValue)

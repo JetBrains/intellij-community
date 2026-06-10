@@ -251,7 +251,7 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
 
   private fun ShellCompletionSuggestion.toLookupElement(shellType: ShellType): LookupElement {
     val actualIcon = icon ?: findIconForSuggestion(name, type)
-    val realInsertValue = insertValue?.replace("{cursor}", "")
+    val realInsertValue = insertValue?.replace(TerminalCompletionUtil.CURSOR_MARKER, "")
     val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
     val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: name, ' ')
 
@@ -298,7 +298,7 @@ internal class TerminalCommandSpecCompletionContributorGen1 : CompletionContribu
         context.document.insertString(tailOffset, File.separator)
         context.editor.caretModel.moveToOffset(tailOffset + 1)
       }
-      val cursorOffset = suggestion.insertValue?.indexOf("{cursor}")
+      val cursorOffset = suggestion.insertValue?.indexOf(TerminalCompletionUtil.CURSOR_MARKER)
       if (cursorOffset != null && cursorOffset != -1) {
         context.editor.caretModel.moveToOffset(context.startOffset + cursorOffset)
       }
