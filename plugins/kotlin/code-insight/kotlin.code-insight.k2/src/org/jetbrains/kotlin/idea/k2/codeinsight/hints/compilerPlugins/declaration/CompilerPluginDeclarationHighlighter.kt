@@ -148,7 +148,7 @@ internal object CompilerPluginDeclarationHighlighter {
 
         private fun withNewTag(tag: TokenTag, action: () -> Unit) {
             val oldTags = tagsInTheCurrentScope
-            tagsInTheCurrentScope = tagsInTheCurrentScope.add(tag)
+            tagsInTheCurrentScope = tagsInTheCurrentScope.adding(tag)
             try {
                 action()
             } finally {

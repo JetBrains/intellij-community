@@ -258,7 +258,7 @@ class BuildContextImpl internal constructor(
     }
     if (!options.compatiblePluginsToIgnore.isEmpty()) {
       productProperties.productLayout.compatiblePluginsToIgnore =
-        productProperties.productLayout.compatiblePluginsToIgnore.addAll(options.compatiblePluginsToIgnore)
+        productProperties.productLayout.compatiblePluginsToIgnore.addingAll(options.compatiblePluginsToIgnore)
     }
     check(options.isInDevelopmentMode || bundledRuntime.prefix == productProperties.runtimeDistribution.artifactPrefix || LibcImpl.current(OsFamily.currentOs) == LinuxLibcImpl.MUSL) {
       "The runtime type doesn't match the one specified in the product properties: ${bundledRuntime.prefix} != ${productProperties.runtimeDistribution.artifactPrefix}"
@@ -521,7 +521,7 @@ class BuildContextImpl internal constructor(
 
   override fun addExtraExecutablePattern(os: OsFamily, pattern: String) {
     extraExecutablePatterns.updateAndGet { prev ->
-      prev.with(os, (prev.get(os) ?: persistentListOf()).add(pattern))
+      prev.with(os, (prev.get(os) ?: persistentListOf()).adding(pattern))
     }
   }
 

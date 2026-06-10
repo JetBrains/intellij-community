@@ -123,17 +123,17 @@ public abstract class Language extends UserDataHolderBase {
         }
 
         PersistentList<Language> list = registeredMimeTypes.get(mimeType);
-        registeredMimeTypes = with(registeredMimeTypes, mimeType, list == null ? persistentListOf(this) : list.add(this));
+        registeredMimeTypes = with(registeredMimeTypes, mimeType, list == null ? persistentListOf(this) : list.adding(this));
       }
     }
 
     if (baseLanguage != null) {
       synchronized (baseLanguage.instanceLock) {
-        baseLanguage.dialects = baseLanguage.dialects.add(this);
+        baseLanguage.dialects = baseLanguage.dialects.adding(this);
       }
       while (baseLanguage != null) {
         synchronized (baseLanguage.instanceLock) {
-          baseLanguage.transitiveDialects = baseLanguage.transitiveDialects.add(this);
+          baseLanguage.transitiveDialects = baseLanguage.transitiveDialects.adding(this);
         }
         baseLanguage = baseLanguage.getBaseLanguage();
       }
@@ -186,11 +186,11 @@ public abstract class Language extends UserDataHolderBase {
   @ApiStatus.Internal
   public void unregisterDialect(@NotNull Language language) {
     synchronized (instanceLock) {
-      dialects = dialects.remove(language);
+      dialects = dialects.removing(language);
     }
     for (Language baseLanguage = this; baseLanguage != null; baseLanguage = baseLanguage.getBaseLanguage()) {
       synchronized (baseLanguage.instanceLock) {
-        baseLanguage.transitiveDialects = baseLanguage.transitiveDialects.remove(language);
+        baseLanguage.transitiveDialects = baseLanguage.transitiveDialects.removing(language);
       }
     }
   }
@@ -329,11 +329,11 @@ public abstract class Language extends UserDataHolderBase {
   @ApiStatus.Internal
   protected void registerDialect(@NotNull Language dialect) {
     synchronized (instanceLock) {
-      dialects = dialects.add(dialect);
+      dialects = dialects.adding(dialect);
     }
     for (Language baseLanguage = this; baseLanguage != null; baseLanguage = baseLanguage.getBaseLanguage()) {
       synchronized (baseLanguage.instanceLock) {
-        baseLanguage.transitiveDialects = baseLanguage.transitiveDialects.add(dialect);
+        baseLanguage.transitiveDialects = baseLanguage.transitiveDialects.adding(dialect);
       }
     }
   }

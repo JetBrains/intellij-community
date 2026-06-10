@@ -39,7 +39,7 @@ class ScopeHolder(
       it.attachAsChildTo(pluginScope)
     }
     while (true) {
-      val newScopes = scopes.put(pluginScope, intersectionScope)
+      val newScopes = scopes.putting(pluginScope, intersectionScope)
       val witness = _registeredScopes.compareAndExchange(scopes, newScopes)
       if (witness === scopes) {
         intersectionScope.coroutineContext.job.invokeOnCompletion {
@@ -61,7 +61,7 @@ class ScopeHolder(
 
   private fun unregisterScope(scope: CoroutineScope) {
     _registeredScopes.updateAndGet { scopes ->
-      scopes.remove(scope)
+      scopes.removing(scope)
     }
   }
 }

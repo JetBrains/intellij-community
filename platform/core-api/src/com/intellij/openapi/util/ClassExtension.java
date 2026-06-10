@@ -35,10 +35,10 @@ public class ClassExtension<T> extends KeyedExtensionCollector<T, Class<?>> {
     synchronized (lock) {
       PersistentList<T> result = persistentListOf();
       for (String aSuper : supers) {
-        result = result.addAll(buildExtensionsFromExplicitRegistration(key -> aSuper.equals(key)));
+        result = result.addingAll(buildExtensionsFromExplicitRegistration(key -> aSuper.equals(key)));
       }
       for (String aSuper : supers) {
-        result = result.addAll(buildExtensionsFromExtensionPoint(bean -> aSuper.equals(bean.getKey()), extensions));
+        result = result.addingAll(buildExtensionsFromExtensionPoint(bean -> aSuper.equals(bean.getKey()), extensions));
       }
       return result;
     }

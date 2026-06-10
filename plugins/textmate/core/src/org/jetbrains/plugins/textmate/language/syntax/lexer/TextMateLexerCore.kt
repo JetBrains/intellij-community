@@ -120,7 +120,7 @@ class TextMateLexerCore(
         var whileStates = states
         while (!whileStates.isEmpty()) {
           val whileState = whileStates.last()
-          whileStates = whileStates.removeAt(whileStates.size - 1)
+          whileStates = whileStates.removingAt(whileStates.size - 1)
           if (whileState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
             val matchWhile = mySyntaxMatcher.matchStringRegex(keyName = Constants.StringKey.WHILE,
                                                               string = string,
@@ -178,7 +178,7 @@ class TextMateLexerCore(
             // if begin hasn't matched EOL, it was performed on the same line; we need to use its anchor
             anchorByteOffset = poppedState.matchData.byteRange().end
           }
-          states = states.removeAt(states.size - 1)
+          states = states.removingAt(states.size - 1)
 
           val endRange = endMatch.charRange(string)
           endPosition = endRange.start
@@ -206,7 +206,7 @@ class TextMateLexerCore(
           endPosition = currentRange.end
 
           if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
-            states = states.add(currentState)
+            states = states.adding(currentState)
 
             val name = getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch)
             openScopeSelector(output, name, startPosition + lineStartOffset)
@@ -333,7 +333,7 @@ class TextMateLexerCore(
                                                 line = capturedTextMateString)
           parseLine(line = capturedString,
                     output = output,
-                    states = states.add(captureState),
+                    states = states.adding(captureState),
                     lineStartOffset = startLineOffset,
                     linePosition = captureRange.start,
                     lineByteOffset = byteRange.start,

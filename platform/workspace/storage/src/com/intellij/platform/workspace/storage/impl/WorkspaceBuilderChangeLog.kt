@@ -95,7 +95,7 @@ internal class WorkspaceBuilderChangeLog {
       val newAddedParents = if (replaceEntity.references != null) {
         if (!replaceEntity.references.newParents.contains(newConnectionId, newParentId)
             && !replaceEntity.references.removedParents.contains(newConnectionId, newParentId)) {
-          replaceEntity.references.newParents.put(newConnectionId, newParentId)
+          replaceEntity.references.newParents.putting(newConnectionId, newParentId)
         }
         else {
           replaceEntity.references.newParents
@@ -104,7 +104,7 @@ internal class WorkspaceBuilderChangeLog {
       else persistentHashMapOf(newConnectionId to newParentId)
 
       val newRemovedParents = if (replaceEntity.references != null) {
-        replaceEntity.references.removedParents.remove(newConnectionId, newParentId)
+        replaceEntity.references.removedParents.removing(newConnectionId, newParentId)
       }
       else persistentHashMapOf()
 
@@ -160,14 +160,14 @@ internal class WorkspaceBuilderChangeLog {
       val newRemovedParents = if (replaceEntity.references != null) {
         if (!replaceEntity.references.removedParents.contains(removedConnectionId, removedParentId)
             && !replaceEntity.references.newParents.contains(removedConnectionId, removedParentId)) {
-          replaceEntity.references.removedParents.put(removedConnectionId, removedParentId)
+          replaceEntity.references.removedParents.putting(removedConnectionId, removedParentId)
         }
         else replaceEntity.references.removedParents
       }
       else persistentHashMapOf(removedConnectionId to removedParentId)
 
       val newAddedParents = if (replaceEntity.references != null) {
-        replaceEntity.references.newParents.remove(removedConnectionId, removedParentId)
+        replaceEntity.references.newParents.removing(removedConnectionId, removedParentId)
       }
       else persistentHashMapOf()
 
@@ -223,7 +223,7 @@ internal class WorkspaceBuilderChangeLog {
       val connectionToId = addedChildConnectionId to addedChildId
       val newAddedChildren = if (replaceEntity.references != null) {
         if (connectionToId !in replaceEntity.references.newChildren && connectionToId !in replaceEntity.references.removedChildren) {
-          replaceEntity.references.newChildren.add(connectionToId)
+          replaceEntity.references.newChildren.adding(connectionToId)
         }
         else {
           replaceEntity.references.newChildren
@@ -233,12 +233,12 @@ internal class WorkspaceBuilderChangeLog {
         persistentHashSetOf(connectionToId)
       }
       val newRemovedChildren = if (replaceEntity.references != null) {
-        replaceEntity.references.removedChildren.remove(connectionToId)
+        replaceEntity.references.removedChildren.removing(connectionToId)
       }
       else persistentHashSetOf()
 
       val newOrder = if (replaceEntity.references != null) {
-        replaceEntity.references.childrenOrdering.getOrElse(addedChildConnectionId) { persistentSetOf() }.add(addedChildId)
+        replaceEntity.references.childrenOrdering.getOrElse(addedChildConnectionId) { persistentSetOf() }.adding(addedChildId)
       } else {
         persistentSetOf(addedChildId)
       }
@@ -248,7 +248,7 @@ internal class WorkspaceBuilderChangeLog {
           if (replaceEntity.data == null) null else replaceEntity.copy(references = null)
         }
         else {
-          val ordering = replaceEntity.references.childrenOrdering.put(addedChildConnectionId, newOrder)
+          val ordering = replaceEntity.references.childrenOrdering.putting(addedChildConnectionId, newOrder)
           replaceEntity.copy(
             references = replaceEntity.references.copy(newChildren = newAddedChildren, removedChildren = newRemovedChildren,
                                                        childrenOrdering = ordering))
@@ -302,7 +302,7 @@ internal class WorkspaceBuilderChangeLog {
 
       val newRemovedChildren = if (replaceEntity.references != null) {
         if (connectionToId !in replaceEntity.references.removedChildren && connectionToId !in replaceEntity.references.newChildren) {
-          replaceEntity.references.removedChildren.add(connectionToId)
+          replaceEntity.references.removedChildren.adding(connectionToId)
         }
         else {
           replaceEntity.references.removedChildren
@@ -311,12 +311,12 @@ internal class WorkspaceBuilderChangeLog {
       else persistentHashSetOf(connectionToId)
 
       val newAddedChildren = if (replaceEntity.references != null) {
-        replaceEntity.references.newChildren.remove(connectionToId)
+        replaceEntity.references.newChildren.removing(connectionToId)
       }
       else persistentHashSetOf()
 
       val newOrder = if (replaceEntity.references != null) {
-        replaceEntity.references.childrenOrdering.getOrElse(removedChildConnectionId) { persistentSetOf() }.remove(removedChildId)
+        replaceEntity.references.childrenOrdering.getOrElse(removedChildConnectionId) { persistentSetOf() }.removing(removedChildId)
       } else {
         persistentSetOf()
       }
@@ -326,7 +326,7 @@ internal class WorkspaceBuilderChangeLog {
           if (replaceEntity.data == null) null else replaceEntity.copy(references = null)
         }
         else {
-          val ordering = replaceEntity.references.childrenOrdering.put(removedChildConnectionId, newOrder)
+          val ordering = replaceEntity.references.childrenOrdering.putting(removedChildConnectionId, newOrder)
           replaceEntity.copy(references = replaceEntity.references.copy(
             newChildren = newAddedChildren,
             removedChildren = newRemovedChildren,

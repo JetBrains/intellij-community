@@ -134,7 +134,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
   private @NotNull PersistentList<T> collectAllForLanguage(@NotNull Language language) {
     PersistentList<T> result = persistentListOf();
     for (Language l = language; l != null; l = l.getBaseLanguage()) {
-      result = result.addAll(forKey(l));
+      result = result.addingAll(forKey(l));
     }
     return result;
   }
@@ -154,7 +154,7 @@ public class LanguageExtension<T> extends KeyedExtensionCollector<T, Language> {
 
     PersistentList<T> result = collectAllForLanguage(language);
     if (!result.contains(defaultImplementation)) {
-      result = result.add(defaultImplementation);
+      result = result.adding(defaultImplementation);
     }
     return language.putUserDataIfAbsent(allCacheWithDefaultKey, result);
   }
