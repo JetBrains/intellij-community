@@ -277,12 +277,22 @@ internal class Windows(val arena: Arena) : Closeable {
     }
 
     object IO_STATUS_BLOCK {
+      private val informationHandle = WindowsStubs.IO_STATUS_BLOCK.varHandle(MemoryLayout.PathElement.groupElement("Information"))
+
       fun Information(memorySegment: MemorySegment): Long {
-        return (WindowsStubs.IO_STATUS_BLOCK.varHandle(MemoryLayout.PathElement.groupElement("Information")).get(memorySegment, 0L) as MemorySegment).address()
+        return (informationHandle.get(memorySegment, 0L) as MemorySegment).address()
       }
     }
 
     object FILE_FULL_DIR_INFORMATION {
+      private val nextEntryOffsetHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("NextEntryOffset"))
+      private val fileNameLengthHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("FileNameLength"))
+      private val creationTimeHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("CreationTime"))
+      private val lastAccessTimeHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("LastAccessTime"))
+      private val lastWriteTimeHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("LastWriteTime"))
+      private val fileAttributesHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("FileAttributes"))
+      private val endOfFileHandle = WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("EndOfFile"))
+
       fun fetchNextInBuffer(current: MemorySegment, buffer: MemorySegment): MemorySegment {
         if (current == NULL) return NULL
         val offset = NextEntryOffset(current)
@@ -295,11 +305,11 @@ internal class Windows(val arena: Arena) : Closeable {
       }
 
       fun NextEntryOffset(buffer: MemorySegment): Int {
-        return WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("NextEntryOffset")).get(buffer, 0L) as Int
+        return nextEntryOffsetHandle.get(buffer, 0L) as Int
       }
 
       fun FileNameLength(buffer: MemorySegment): Int {
-        return WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("FileNameLength")).get(buffer, 0L) as Int
+        return fileNameLengthHandle.get(buffer, 0L) as Int
       }
 
       // buffer should start with current
@@ -309,29 +319,31 @@ internal class Windows(val arena: Arena) : Closeable {
       }
 
       fun CreationTime(buffer: MemorySegment): Long {
-        return WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("CreationTime")).get(buffer, 0L) as Long
+        return creationTimeHandle.get(buffer, 0L) as Long
       }
 
       fun LastAccessTime(buffer: MemorySegment): Long {
-        return WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("LastAccessTime")).get(buffer, 0L) as Long
+        return lastAccessTimeHandle.get(buffer, 0L) as Long
       }
 
       fun LastWriteTime(buffer: MemorySegment): Long {
-        return WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("LastWriteTime")).get(buffer, 0L) as Long
+        return lastWriteTimeHandle.get(buffer, 0L) as Long
       }
 
       fun FileAttributes(buffer: MemorySegment): Int {
-        return WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("FileAttributes")).get(buffer, 0L) as Int
+        return fileAttributesHandle.get(buffer, 0L) as Int
       }
 
       fun EndOfFile(buffer: MemorySegment): Long {
-        return WindowsStubs.FILE_FULL_DIR_INFORMATION.varHandle(MemoryLayout.PathElement.groupElement("EndOfFile")).get(buffer, 0L) as Long
+        return endOfFileHandle.get(buffer, 0L) as Long
       }
     }
 
     object REPARSE_DATA_BUFFER {
+      private val reparseTagHandle = WindowsStubs.REPARSE_DATA_BUFFER.varHandle(MemoryLayout.PathElement.groupElement("ReparseTag"))
+
       fun ReparseTag(buffer: MemorySegment): Int {
-        return WindowsStubs.REPARSE_DATA_BUFFER.varHandle(MemoryLayout.PathElement.groupElement("ReparseTag")).get(buffer, 0L) as Int
+        return reparseTagHandle.get(buffer, 0L) as Int
       }
 
       object Tag {
