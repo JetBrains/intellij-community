@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  */
 class PyFStringFormatSpecAnnotator : PyAnnotatorBase() {
   override fun annotate(element: PsiElement, holder: PyAnnotationHolder) {
+    if (holder.isBatchMode()) return
     element.accept(PyFStringFormatSpecVisitor(holder))
   }
 }

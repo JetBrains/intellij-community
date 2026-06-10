@@ -22,6 +22,8 @@ public final class PyAnnotationHolder {
 
   public PyAnnotationHolder(@NotNull AnnotationHolder holder) { myHolder = holder; }
 
+  public boolean isBatchMode() { return myHolder.isBatchMode(); }
+
   @Contract(pure = true)
   public @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @InspectionMessage String message) {
     return myHolder.newAnnotation(severity, message);

@@ -38,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyBuiltinHighlightingAnnotator extends PyAnnotatorBase {
   @Override
   protected void annotate(@NotNull PsiElement element, @NotNull PyAnnotationHolder holder) {
+    if (holder.isBatchMode()) return;
     element.accept(new MyVisitor(holder));
   }
 
