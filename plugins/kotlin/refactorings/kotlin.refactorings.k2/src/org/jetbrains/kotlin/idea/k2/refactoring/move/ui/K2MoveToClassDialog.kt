@@ -15,6 +15,7 @@ import com.intellij.refactoring.RefactoringBundle
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBList
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.RowLayout
@@ -36,6 +37,7 @@ import java.awt.event.ItemEvent
 import javax.swing.JComponent
 import javax.swing.JList
 import javax.swing.ListSelectionModel
+import javax.swing.ScrollPaneConstants
 
 @ApiStatus.Internal
 class K2MoveToClassDialog(
@@ -91,7 +93,7 @@ class K2MoveToClassDialog(
         if (candidates.isNotEmpty()) selectedIndex = 0
         addListSelectionListener { selectionEvent ->
             if (!selectionEvent.valueIsAdjusting) {
-                classChooser.text = candidateList.selectedValue.targetClassFqName.asString()
+                classChooser.text = candidateList.selectedValue?.targetClassFqName?.asString().orEmpty()
             }
         }
     }
@@ -119,11 +121,15 @@ class K2MoveToClassDialog(
                     addItemListener {
                         if (it.stateChange == ItemEvent.SELECTED) {
                             classChooserPredicate.set(false)
+                            if (candidateList.isSelectionEmpty && !candidateList.isEmpty) {
+                                candidateList.selectedIndex = 0
+                            }
                         }
                     }
                 }.enabled(!candidateList.isEmpty)
-                scrollCell(candidateList).enabledIf(classChooserPredicate.not())
-                    .align(AlignX.FILL).align(AlignY.TOP).resizableColumn() // TODO: doesn't grey out the disabled list, confusing
+                cell(JBScrollPane(candidateList).apply {
+                    horizontalScrollBarPolicy = ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+                }).enabledIf(classChooserPredicate.not()).align(AlignX.FILL).align(AlignY.TOP).resizableColumn()
             }
             row {
                 layout(RowLayout.LABEL_ALIGNED)
@@ -134,6 +140,7 @@ class K2MoveToClassDialog(
                     border = JBUI.Borders.emptyTop(UIUtil.DEFAULT_VGAP)
                     addItemListener {
                         classChooserPredicate.set(it.stateChange == ItemEvent.SELECTED)
+                        candidateList.removeSelectionInterval(candidateList.selectedIndex, candidateList.selectedIndex)
                     }
                 }
                 cell(classChooser)
@@ -200,7 +207,8 @@ class K2MoveToClassDialog(
             hasFocus: Boolean,
         ) {
             if (value == null) return
-            append(value.displayName, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+            val nameAttributes = if (list.isEnabled) SimpleTextAttributes.REGULAR_ATTRIBUTES else SimpleTextAttributes.GRAYED_ATTRIBUTES
+            append(value.displayName, nameAttributes)
             if (value.typeText.isNotEmpty()) {
                 append(": ", SimpleTextAttributes.GRAYED_ATTRIBUTES)
                 append(value.typeText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
