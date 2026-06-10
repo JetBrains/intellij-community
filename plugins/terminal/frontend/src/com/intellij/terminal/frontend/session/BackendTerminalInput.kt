@@ -93,7 +93,7 @@ private suspend fun handleInputEvent(event: TerminalInputEvent, services: JediTe
           val lastLine = textBuffer.getLine(controller.y - 1)
           textBuffer.clearScreenBuffer()
           textBuffer.addLine(lastLine)
-          controller.y = 1
+          controller.linePositionAbsolute(1)
         }
       }
     }
