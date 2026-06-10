@@ -417,9 +417,6 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     if (enumClass.isSubclass("builtins.float", context) || enumClass.isSubclass("float", context)) {
       return cache.getFloatType();
     }
-    if (enumClass.isSubclass("builtins.bool", context) || enumClass.isSubclass("bool", context)) {
-      return cache.getBoolType();
-    }
 
     // Infer from the MEMBERS' assigned values (not non-members like helpers/descriptors).
     List<PyType> memberValueTypes = new ArrayList<>();
