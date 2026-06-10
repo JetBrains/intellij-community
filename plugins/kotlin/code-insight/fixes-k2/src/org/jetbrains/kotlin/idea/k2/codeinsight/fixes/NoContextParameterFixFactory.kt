@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.util.containers.addIfNotNull
-import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeImplicitArgumentValue
@@ -29,6 +28,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtLambdaArgument
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -48,17 +48,24 @@ internal object NoContextParameterFixFactory {
 
         buildList {
             val surroundingCall = findSurroundingContextCall(expression)
+            val candidates = findValueCandidates(expression, surroundingCall, requiredType)
             if (surroundingCall != null) {
-                findValueCandidates(expression, surroundingCall, requiredType).forEach { candidate ->
-                    add(AddContextParameterToExistingContextFix(surroundingCall, candidate, requiredTypeText))
+                if (!candidates.isEmpty()) {
+                    candidates.forEach { candidateName ->
+                        add(AddContextParameterToExistingContextFix(surroundingCall, candidateName, requiredTypeText))
+                    }
+                }
+            } else {
+                val wrapper = contextWrapperFor(expression)
+                if (!candidates.isEmpty()) {
+                    candidates.forEach { candidateName ->
+                        add(SurroundCallWithContextFix(expression, wrapper, candidateName))
+                    }
                 }
             }
-            add(SurroundCallWithContextFix(expression, contextWrapperFor(expression)))
             addIfNotNull(buildExplicitContextArgumentFix(expression, symbol))
-
             val containingFunction = expression.getStrictParentOfType<KtNamedFunction>()
             if (containingFunction != null && !containingFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                add(AddContextParameterFix(expression, listOf(requiredTypeText)))
                 add(AddContextParameterFix(expression, contextType))
             }
         }
@@ -73,41 +80,41 @@ internal object NoContextParameterFixFactory {
 
     private fun KaSession.findSurroundingContextCall(element: KtElement): KtCallExpression? {
         val parentCall = element.getStrictParentOfType<KtLambdaArgument>()?.parent as? KtCallExpression ?: return null
-        val callee = parentCall.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
-        if (callee.callableId?.asSingleFqName() != CONTEXT_FQ_NAME) return null
-        return parentCall
+        val calleeName = (parentCall.calleeExpression as? KtNameReferenceExpression)?.getReferencedName()
+        if (calleeName != CONTEXT_FQ_NAME.shortName().asString()) return null
+        val resolvedFqName = parentCall.resolveToCall()?.singleFunctionCallOrNull()?.symbol?.callableId?.asSingleFqName()
+        return if (resolvedFqName == null || resolvedFqName == CONTEXT_FQ_NAME) parentCall else null
     }
 
     private fun KaSession.findValueCandidates(
         useSite: KtElement,
-        surroundingContextCall: KtCallExpression,
+        surroundingContextCall: KtCallExpression?,
         requiredType: KaType,
-    ): List<String> {
-        if (innerContextScopeAlreadyContainsType(useSite, surroundingContextCall, requiredType)) return emptyList()
+    ): Set<String> {
+        if (surroundingContextCall != null &&
+            innerContextScopeAlreadyContainsType(useSite, surroundingContextCall, requiredType)) return emptySet()
 
         val scopeContext = useSite.containingKtFile.scopeContext(useSite)
-        val candidates = LinkedHashSet<String>()
+        return buildSet {
+            // Named callables visible at the use site: local vals/vars, parameters,
+            // properties of enclosing classes, top-level declarations. Checking inside file, imports pollute candidates.
+            scopeContext.compositeScope().callables.forEach { sym ->
+                if (sym !is KaVariableSymbol) return@forEach
+                if (sym.receiverParameter != null) return@forEach
+                val name = sym.name
+                if (sym.psi?.containingFile != useSite.containingFile) return@forEach
+                if (name == ANONYMOUS_NAME) return@forEach
+                if (sym.returnType.isSubtypeOf(requiredType)) add(name.asString())
+            }
 
-        // Named callables visible at the use site: local vals/vars, parameters,
-        // properties of enclosing classes, top-level declarations. Checking inside file, imports pollute candidates.
-        scopeContext.compositeScope().callables.forEach { sym ->
-            if (sym !is KaVariableSymbol) return@forEach
-            if (sym.receiverParameter != null) return@forEach
-            val name = sym.name
-            if (sym.psi?.containingFile != useSite.containingFile) return@forEach
-            if (name == ANONYMOUS_NAME) return@forEach
-            if (sym.returnType.isSubtypeOf(requiredType)) candidates += name.asString()
+            // Context parameters of enclosing declarations are exposed as implicit argument values.
+            scopeContext.implicitValues.forEach { value ->
+                if (value !is KaScopeImplicitArgumentValue) return@forEach
+                val name = value.symbol.name
+                if (name == ANONYMOUS_NAME) return@forEach
+                if (value.type.isSubtypeOf(requiredType)) add(name.asString())
+            }
         }
-
-        // Context parameters of enclosing declarations are exposed as implicit argument values.
-        scopeContext.implicitValues.forEach { value ->
-            if (value !is KaScopeImplicitArgumentValue) return@forEach
-            val name = value.symbol.name
-            if (name == ANONYMOUS_NAME) return@forEach
-            if (value.type.isSubtypeOf(requiredType)) candidates += name.asString()
-        }
-
-        return candidates.toList()
     }
 
 
