@@ -89,17 +89,17 @@ class ProcessInfo private constructor(
         else {
           GlobalScope.async(Dispatchers.IO) {
             // null if the process doesn't exist
-            val opProcess: OSProcess? by lazy {
+            val osProcess: OSProcess? by lazy {
               SystemInfo().operatingSystem.getProcess(pid.toInt())
             }
 
             ProcessInfo(
               pid = pid,
-              parentPid = opProcess?.parentProcessID?.toLong(),
-              name = opProcess?.name ?: "Not Available",
-              argumentsProvider = { opProcess?.arguments ?: emptyList() },
-              startTime = opProcess?.startTime?.let(Instant::ofEpochMilli),
-              user = opProcess?.user,
+              parentPid = osProcess?.parentProcessID?.toLong(),
+              name = osProcess?.name ?: "Not Available",
+              argumentsProvider = { osProcess?.arguments ?: emptyList() },
+              startTime = osProcess?.startTime?.let(Instant::ofEpochMilli),
+              user = osProcess?.user,
               processHandle = ProcessHandle.of(pid).getOrNull(),
               portThatIsUsedByProcess = null,
             )
