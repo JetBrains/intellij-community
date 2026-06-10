@@ -47,11 +47,6 @@ internal class SessionTreeCellRenderer(
     @JvmField val rightReservedWidth: Int,
   )
 
-  private data class ThreadCompositeIconCacheKey(
-    val provider: AgentSessionProvider,
-    @JvmField val activity: AgentThreadActivity,
-  )
-
   private data class ProjectCompositeIconCacheKey(
     @JvmField val badgeId: String,
     @JvmField val baseIconWidth: Int,
@@ -61,8 +56,6 @@ internal class SessionTreeCellRenderer(
   private var threadTrailingPaint: SessionTreeThreadTrailingPaint? = null
   private var sharedTimeColumnWidthCacheKey: SharedTimeColumnWidthCacheKey? = null
   private var sharedTimeColumnWidthCacheValue: Int = 0
-  private var cachedThreadIconSize: Int = -1
-  private val threadCompositeIconCache = LinkedHashMap<ThreadCompositeIconCacheKey, Icon>()
   private val projectCompositeIconCache = LinkedHashMap<ProjectCompositeIconCacheKey, Icon>()
   private val middleTextCache = LinkedHashMap<MiddleTextCacheKey, @NlsSafe String>()
   private val middleTextClipper = SessionTreeMiddleTextClipper(::clipMiddleText)
@@ -301,17 +294,8 @@ internal class SessionTreeCellRenderer(
   }
 
   private fun threadCompositeIcon(provider: AgentSessionProvider, activity: AgentThreadActivity): Icon {
-    val iconSize = JBUI.scale(SESSION_TREE_THREAD_PROVIDER_ICON_SIZE)
-    if (cachedThreadIconSize != iconSize) {
-      cachedThreadIconSize = iconSize
-      threadCompositeIconCache.clear()
-    }
-    val key = ThreadCompositeIconCacheKey(provider = provider, activity = activity)
-    return threadCompositeIconCache.getOrPut(key) {
-      val threadStatusIcon = providerIconProvider?.let { agentSessionThreadStatusIcon(it(provider), activity) }
-                             ?: agentSessionThreadStatusIcon(provider, activity)
-      IconUtil.toSize(threadStatusIcon, iconSize, iconSize)
-    }
+    return providerIconProvider?.let { agentSessionThreadStatusIcon(it(provider), activity) }
+           ?: agentSessionThreadStatusIcon(provider, activity)
   }
 
   private fun projectCompositeIcon(project: AgentProjectSessions): Icon {

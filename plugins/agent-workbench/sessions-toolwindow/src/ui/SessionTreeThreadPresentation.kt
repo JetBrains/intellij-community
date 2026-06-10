@@ -17,7 +17,6 @@ import java.awt.Color
 import java.awt.FontMetrics
 import java.math.RoundingMode
 
-internal const val SESSION_TREE_THREAD_PROVIDER_ICON_SIZE = 12
 private val SESSION_TREE_TIME_LABEL_SAMPLES = listOf("59m", "23h", "7d", "4w", "11mo", "9y")
 
 internal const val SESSION_TREE_MORE_ROW_FRAGMENT_TAG = "agent.sessions.tree.more.row"
