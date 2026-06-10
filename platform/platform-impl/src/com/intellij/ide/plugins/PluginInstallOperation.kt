@@ -310,7 +310,7 @@ class PluginInstallOperation(
     return if (toDisable.get()) oldPlugin else null
   }
 
-  fun checkMissingDependencies(
+  internal fun checkMissingDependencies(
     pluginNode: IdeaPluginDescriptor,
     pluginIdsBeingInstalled: List<PluginId>?,
   ): Boolean {
