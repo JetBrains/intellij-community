@@ -287,7 +287,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
   }
 
   fun testCodeInspectionIsNotSkippedForPluginIdWithPredefinedModuleKindWhenFlagDisabled() {
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.skip.predefined")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.skip.predefined")
       .setValue(false, testRootDisposable)
 
     configurePluginXml(

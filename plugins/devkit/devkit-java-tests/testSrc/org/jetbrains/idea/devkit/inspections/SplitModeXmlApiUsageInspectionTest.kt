@@ -21,9 +21,9 @@ internal class SplitModeXmlApiUsageInspectionTest : JavaCodeInsightFixtureTestCa
   override fun setUp() {
     super.setUp()
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.containing.plugins")
+    RegistryManager.getInstance().get("devkit.split.mode.analysis.containing.plugins")
       .setValue(true, testRootDisposable)
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
       .setValue(true, testRootDisposable)
 
     val service = SplitModeApiRestrictionsService.getInstance(project)
@@ -169,7 +169,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
   }
 
   fun testSkippingPredefinedModuleInspectionsCanBeDisabled() {
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.skip.predefined")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.skip.predefined")
       .setValue(false, testRootDisposable)
 
     val pluginXml = addModuleWithXmlDescriptor(
@@ -977,7 +977,7 @@ via dependency 'unique.module.name.40' -> descriptor 'unique.module.name.40.xml'
   }
 
   fun testFrontendExtensionInModuleWithTransitiveAnalysisDisabled() {
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.transitive.dependencies")
+    RegistryManager.getInstance().get("devkit.split.mode.analysis.transitive.dependencies")
       .setValue(false, testRootDisposable)
 
     addModuleWithXmlDescriptor(
@@ -1008,12 +1008,12 @@ via dependency 'unique.module.name.40' -> descriptor 'unique.module.name.40.xml'
     myFixture.configureFromExistingVirtualFile(pluginXml.virtualFile)
 
     myFixture.checkHighlighting()
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.transitive.dependencies")
+    RegistryManager.getInstance().get("devkit.split.mode.analysis.transitive.dependencies")
       .setValue(true, testRootDisposable)
   }
 
   fun testBackendExtensionInContentModuleWithContainingPluginAnalysisDisabled() {
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.containing.plugins")
+    RegistryManager.getInstance().get("devkit.split.mode.analysis.containing.plugins")
       .setValue(false, testRootDisposable)
 
     addModuleWithXmlDescriptor(
@@ -1049,7 +1049,7 @@ No frontend or backend dependencies were found for module 'unique.module.name.47
     myFixture.configureFromExistingVirtualFile(contentModuleDescriptor.virtualFile)
 
     myFixture.checkHighlighting()
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.containing.plugins")
+    RegistryManager.getInstance().get("devkit.split.mode.analysis.containing.plugins")
       .setValue(true, testRootDisposable)
   }
 

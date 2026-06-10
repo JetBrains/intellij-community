@@ -23,9 +23,9 @@ internal class SplitModeMixedDependenciesInspectionTest : JavaCodeInsightFixture
   override fun setUp() {
     super.setUp()
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.containing.plugins")
+    RegistryManager.getInstance().get("devkit.split.mode.analysis.containing.plugins")
       .setValue(true, testRootDisposable)
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
       .setValue(true, testRootDisposable)
 
     val service = SplitModeApiRestrictionsService.getInstance(project)
@@ -284,7 +284,7 @@ Backend dependency 'intellij.platform.kernel.backend' from descriptor 'unique.mo
   }
 
   fun testPluginXmlWithIndirectFrontendOnlyDependenciesGetsSingleRootErrorWhenXmlInspectionsAreDisabled() {
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
       .setValue(false, testRootDisposable)
 
     addModuleWithXmlDescriptor(
@@ -323,7 +323,7 @@ via dependency 'unique.module.name.50.frontend.support' -> descriptor 'unique.mo
   }
 
   fun testPluginXmlWithIndirectBackendOnlyDependenciesGetsSingleRootErrorWhenXmlInspectionsAreDisabled() {
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
       .setValue(false, testRootDisposable)
 
     addModuleWithXmlDescriptor(
@@ -362,7 +362,7 @@ via dependency 'unique.module.name.52.backend.support' -> descriptor 'unique.mod
   }
 
   fun testMixedPluginXmlGetsSingleRootErrorWhenXmlInspectionsAreDisabled() {
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
       .setValue(false, testRootDisposable)
 
     addModuleWithXmlDescriptor(

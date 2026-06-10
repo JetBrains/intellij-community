@@ -104,8 +104,8 @@ internal class SplitModeInspectionScopeLimiterTest : BasePlatformTestCase() {
         Files.writeString(file, it)
       }
     }
-    val enabledRegistryValue = Registry.get("devkit.remote.dev.split.mode.qodana.analysis.scope.limiter.enabled")
-    val sourceModeRegistryValue = RegistryManager.getInstance().get("devkit.remote.dev.split.mode.qodana.analysis.scope.source")
+    val enabledRegistryValue = Registry.get("devkit.split.mode.qodana.analysis.scope.limiter.enabled")
+    val sourceModeRegistryValue = RegistryManager.getInstance().get("devkit.split.mode.qodana.analysis.scope.source")
     val previousSourceMode = sourceModeRegistryValue.asString()
     try {
       enabledRegistryValue.setValue(enabled)

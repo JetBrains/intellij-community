@@ -50,7 +50,7 @@ internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
       }
     }
     val service = SplitModeApiRestrictionsService.getInstance(project)
-    val registryValue = RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.api.restrictions.source")
+    val registryValue = RegistryManager.getInstance().get("devkit.split.mode.analysis.api.restrictions.source")
     val previousValue = registryValue.asString()
     try {
       registryValue.setValue(sourceMode)

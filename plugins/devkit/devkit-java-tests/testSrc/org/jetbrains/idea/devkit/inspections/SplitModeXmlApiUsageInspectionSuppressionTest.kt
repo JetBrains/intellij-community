@@ -22,9 +22,9 @@ internal class SplitModeXmlApiUsageInspectionSuppressionTest : JavaCodeInsightFi
   override fun setUp() {
     super.setUp()
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.containing.plugins")
+    RegistryManager.getInstance().get("devkit.split.mode.analysis.containing.plugins")
       .setValue(true, testRootDisposable)
-    RegistryManager.getInstance().get("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
       .setValue(false, testRootDisposable)
 
     val service = SplitModeApiRestrictionsService.getInstance(project)

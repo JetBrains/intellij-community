@@ -58,7 +58,7 @@ internal class SplitModePredefinedModuleKindsSourceModeTest : BasePlatformTestCa
       }
     }
     val service = SplitModeApiRestrictionsService.getInstance(project)
-    val registryValue = RegistryManager.getInstance().get("devkit.remote.dev.split.mode.analysis.predefined.module.kinds.source")
+    val registryValue = RegistryManager.getInstance().get("devkit.split.mode.analysis.predefined.module.kinds.source")
     val previousValue = registryValue.asString()
     try {
       registryValue.setValue(sourceMode)

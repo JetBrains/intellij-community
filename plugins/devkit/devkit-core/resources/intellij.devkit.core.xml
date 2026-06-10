@@ -148,26 +148,26 @@
 
     <registryKey defaultValue="false" description="Enables experimental new remote dev module in intellij repository"
                  key="devkit.new.remdev.module.action"/>
-    <registryKey key="devkit.remote.dev.split.mode.analysis.transitive.dependencies" defaultValue="true"
+    <registryKey key="devkit.split.mode.analysis.transitive.dependencies" defaultValue="true"
                  description="Enables transitive descriptor dependency analysis for DevKit split-mode inspections."/>
-    <registryKey key="devkit.remote.dev.split.mode.analysis.containing.plugins" defaultValue="false"
+    <registryKey key="devkit.split.mode.analysis.containing.plugins" defaultValue="false"
                  description="Enables containing plugin descriptor analysis for DevKit split-mode inspections."/>
-    <registryKey key="devkit.remote.dev.split.mode.inspections.skip.predefined" defaultValue="true"
+    <registryKey key="devkit.split.mode.inspections.skip.predefined" defaultValue="true"
                  description="Skips DevKit Split Mode inspections in modules and XML descriptors with predefined module kinds."/>
-    <registryKey key="devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin" defaultValue="false"
+    <registryKey key="devkit.split.mode.inspections.enable.xml.for.non.native.plugin" defaultValue="false"
                  description="Keeps XML split-mode inspections enabled in plugin.xml files that are indirectly frontend-only, backend-only, or mixed."/>
 
-    <registryKey key="devkit.remote.dev.split.mode.analysis.api.restrictions.source" defaultValue="bundled"
+    <registryKey key="devkit.split.mode.analysis.api.restrictions.source" defaultValue="bundled"
                  description="Source of ApiRestrictions.json for DevKit split-mode inspections: bundled, project, or project-or-bundled."
                  restartRequired="true"/>
-    <registryKey key="devkit.remote.dev.split.mode.analysis.predefined.module.kinds.source" defaultValue="bundled"
+    <registryKey key="devkit.split.mode.analysis.predefined.module.kinds.source" defaultValue="bundled"
                  description="Source of PredefinedModuleKinds.json for DevKit split-mode inspections: bundled, project, or project-or-bundled."
                  restartRequired="true"/>
-    <registryKey key="devkit.remote.dev.split.mode.qodana.analysis.scope.source" defaultValue="project"
+    <registryKey key="devkit.split.mode.qodana.analysis.scope.source" defaultValue="project"
                  description="Source of SplitModeQodanaAnalysisScope.json for DevKit split-mode inspections: bundled, project, or project-or-bundled."
                  restartRequired="true"/>
 
-    <registryKey key="devkit.remote.dev.split.mode.qodana.analysis.scope.limiter.enabled" defaultValue="false"
+    <registryKey key="devkit.split.mode.qodana.analysis.scope.limiter.enabled" defaultValue="false"
                  description="Limits DevKit split-mode inspections to modules listed in the Qodana analysis scope file."/>
     <registryKey key="devkit.obsolete.new.file.actions.enabled" defaultValue="false"
                  description="Enables old-fashioned File-New actions for plugin modules"/>

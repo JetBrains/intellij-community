@@ -8,35 +8,35 @@ import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionResour
 internal object SplitModeAnalysisFlags {
 
   fun isTransitiveDependenciesAnalysisEnabled(): Boolean {
-    return RegistryManager.getInstance().`is`("devkit.remote.dev.split.mode.analysis.transitive.dependencies")
+    return RegistryManager.getInstance().`is`("devkit.split.mode.analysis.transitive.dependencies")
   }
 
   fun isContainingPluginsAnalysisEnabled(): Boolean {
-    return RegistryManager.getInstance().`is`("devkit.remote.dev.split.mode.analysis.containing.plugins")
+    return RegistryManager.getInstance().`is`("devkit.split.mode.analysis.containing.plugins")
   }
 
   fun isSkippingInspectionsForPredefinedModuleKindsEnabled(): Boolean {
-    return RegistryManager.getInstance().`is`("devkit.remote.dev.split.mode.inspections.skip.predefined")
+    return RegistryManager.getInstance().`is`("devkit.split.mode.inspections.skip.predefined")
   }
 
   fun isXmlInspectionsForNonNativePluginEnabled(): Boolean {
-    return RegistryManager.getInstance().`is`("devkit.remote.dev.split.mode.inspections.enable.xml.for.non.native.plugin")
+    return RegistryManager.getInstance().`is`("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
   }
 
   fun isQodanaAnalysisScopeLimiterEnabled(): Boolean {
-    return Registry.`is`("devkit.remote.dev.split.mode.qodana.analysis.scope.limiter.enabled", false)
+    return Registry.`is`("devkit.split.mode.qodana.analysis.scope.limiter.enabled", false)
   }
 
   fun getApiRestrictionsReadMode(): SplitModeInspectionResourceReadMode {
-    return getResourceReadMode("devkit.remote.dev.split.mode.analysis.api.restrictions.source", SplitModeInspectionResourceReadMode.BUNDLED_ONLY)
+    return getResourceReadMode("devkit.split.mode.analysis.api.restrictions.source", SplitModeInspectionResourceReadMode.BUNDLED_ONLY)
   }
 
   fun getPredefinedModuleKindsReadMode(): SplitModeInspectionResourceReadMode {
-    return getResourceReadMode("devkit.remote.dev.split.mode.analysis.predefined.module.kinds.source", SplitModeInspectionResourceReadMode.BUNDLED_ONLY)
+    return getResourceReadMode("devkit.split.mode.analysis.predefined.module.kinds.source", SplitModeInspectionResourceReadMode.BUNDLED_ONLY)
   }
 
   fun getQodanaAnalysisScopeReadMode(): SplitModeInspectionResourceReadMode {
-    return getResourceReadMode("devkit.remote.dev.split.mode.qodana.analysis.scope.source", SplitModeInspectionResourceReadMode.PROJECT_ONLY)
+    return getResourceReadMode("devkit.split.mode.qodana.analysis.scope.source", SplitModeInspectionResourceReadMode.PROJECT_ONLY)
   }
 
   private fun getResourceReadMode(
