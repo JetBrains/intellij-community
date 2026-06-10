@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -16,6 +17,9 @@ import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.terminal.frontend.toolwindow.impl.createTerminalTab
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import java.nio.file.Path
@@ -36,8 +40,12 @@ internal class RevealFileInReworkedTerminalAction : DumbAwareAction(), ActionRem
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val file = getContextFile(e) ?: return
-    val path = getNearestDirectoryPath(file, project) ?: return
-    createTerminalTab(project, workingDirectory = path.toString())
+    e.coroutineScope.launch(Dispatchers.IO) {
+      val path = getNearestDirectoryPath(file, project) ?: return@launch
+      withContext(Dispatchers.EDT) {
+        createTerminalTab(project, workingDirectory = path.toString())
+      }
+    }
   }
 
   override fun update(e: AnActionEvent) {
