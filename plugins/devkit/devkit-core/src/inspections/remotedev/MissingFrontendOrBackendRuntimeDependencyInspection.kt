@@ -11,7 +11,7 @@ import org.jetbrains.idea.devkit.inspections.remotedev.analysis.BACKEND_PLATFORM
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.FRONTEND_PLATFORM_MODULE_BASE_NAME
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeDescriptorDependencyAnalyzer
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeQodanaInspectionScopeLimiter
-import org.jetbrains.idea.devkit.inspections.remotedev.analysis.resolveDependencyKind
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.recognizeExplicitDependencyKind
 
 internal class MissingFrontendOrBackendRuntimeDependencyInspection : DevKitPluginXmlInspectionBase() {
 
@@ -42,7 +42,7 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspection : DevKitPlugi
       if (currentModuleName.endsWith(moduleNameSuffix)) {
         val dependencies = element.dependencies
         if (!SplitModeDescriptorDependencyAnalyzer.hasTransitiveDependency(element, requiredRuntimeDependency)) {
-          val requiredModuleKind = resolveDependencyKind(requiredRuntimeDependency)
+          val requiredModuleKind = recognizeExplicitDependencyKind(requiredRuntimeDependency)
                                    ?: error("Unsupported split-mode runtime dependency: $requiredRuntimeDependency")
           val reportedElement = if (dependencies.exists()) dependencies else element
           val reportedXmlElement = reportedElement.xmlElement ?: return

@@ -34,7 +34,7 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.getExplicitPlatformDependencyName
-import org.jetbrains.idea.devkit.inspections.remotedev.analysis.resolveDependencyKind
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.recognizeExplicitDependencyKind
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 
@@ -665,7 +665,7 @@ private fun resolveDependencyKindForQuickFix(
   project: Project?,
   dependencyName: String,
 ): SplitModeApiRestrictionsService.ModuleKind? {
-  val dependencyKind = resolveDependencyKind(dependencyName)
+  val dependencyKind = recognizeExplicitDependencyKind(dependencyName)
   if (dependencyKind != null) {
     return dependencyKind
   }
