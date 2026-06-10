@@ -49,6 +49,7 @@ final class ThemeColorAnnotator implements Annotator, DumbAware {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (holder.isBatchMode()) return;
     if (!isColorLineMarkerProviderEnabled() || !isTargetElement(element, holder.getCurrentAnnotationSession().getFile())) return;
 
     JsonStringLiteral literal = (JsonStringLiteral)element;
