@@ -531,7 +531,7 @@ public final class IterationState {
     myCurrentBackgroundColor = myMergedAttributes.getBackgroundColor();
   }
 
-  private void setAttributes(TextAttributes attributes, boolean atBreak, boolean beforeBreak) {
+  private void setAttributes(@NotNull TextAttributes attributes, boolean atBreak, boolean beforeBreak) {
     boolean isInSelection = isInSelection(atBreak);
     boolean isInCaretRow = isInCaretRow(
       !myReverseIteration && (!atBreak || !beforeBreak),

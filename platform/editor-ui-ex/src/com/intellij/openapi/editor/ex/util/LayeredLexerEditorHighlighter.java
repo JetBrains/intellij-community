@@ -422,8 +422,14 @@ public class LayeredLexerEditorHighlighter extends LexerEditorHighlighter {
       return attrs;
     }
 
-    private TextAttributesKey @NotNull [] getAttributesKeys(IElementType tokenType) {
-      return myKeysMap.computeIfAbsent(tokenType, type -> SyntaxHighlighterBase.pack(myBackground, mySyntaxHighlighter.getTokenHighlights(type)));
+    private @NotNull TextAttributesKey @NotNull [] getAttributesKeys(IElementType tokenType) {
+      TextAttributesKey[] keys = myKeysMap.get(tokenType);
+      if (keys != null) {
+        return keys;
+      }
+      // some SyntaxHighlighters implemented in so convoluted way that their getTokenHighlights() changed myKeysMap, so we can't call it inside computeIfAbsent to avoid CME
+      TextAttributesKey[] newKeys = SyntaxHighlighterBase.pack(myBackground, mySyntaxHighlighter.getTokenHighlights(tokenType));
+      return myKeysMap.computeIfAbsent(tokenType, _ -> newKeys);
     }
 
     @NotNull HighlighterIterator createIterator(@NotNull MappedRange mapper, int shift) {
