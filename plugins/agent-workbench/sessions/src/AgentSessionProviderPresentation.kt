@@ -4,7 +4,6 @@ package com.intellij.agent.workbench.sessions
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.openapi.util.NlsSafe
-import javax.swing.Icon
 
 internal fun providerDisplayName(provider: AgentSessionProvider): @NlsSafe String {
   val bridge = AgentSessionProviders.find(provider)
@@ -13,8 +12,4 @@ internal fun providerDisplayName(provider: AgentSessionProvider): @NlsSafe Strin
   }
   return runCatching { AgentSessionsBundle.message(bridge.displayNameKey) }
     .getOrDefault(bridge.displayNameFallback)
-}
-
-fun providerIcon(provider: AgentSessionProvider): Icon? {
-  return AgentSessionProviders.find(provider)?.icon
 }

@@ -11,7 +11,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderActionModel
-import com.intellij.agent.workbench.sessions.providerIconWithMode
+import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
@@ -101,8 +101,8 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
       else -> menuItems(actionModel.menuModel).firstNotNullOfOrNull(::disabledDescription)
               ?: AgentVcsMergeBundle.message("merge.agent.resolve.no.providers")
     }
-    presentation.icon = rememberedQuickStartItem?.let { providerIconWithMode(it.bridge.provider, it.mode) }
-                        ?: enabledItems.firstOrNull()?.let { providerIconWithMode(it.bridge.provider, it.mode) }
+    presentation.icon = rememberedQuickStartItem?.let { providerItemMonochromeIconWithMode(it) }
+                        ?: enabledItems.firstOrNull()?.let { providerItemMonochromeIconWithMode(it) }
                         ?: AllIcons.Actions.InlayGear
   }
 

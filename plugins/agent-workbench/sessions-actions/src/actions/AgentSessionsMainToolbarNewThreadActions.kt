@@ -6,7 +6,7 @@ package com.intellij.agent.workbench.sessions.actions
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.providerItemIconWithMode
+import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
@@ -226,7 +226,7 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
       super.update(e)
     }
     val quickStartItem = actionModel.quickStartItem
-    e.presentation.icon = quickStartItem?.let(::providerItemIconWithMode) ?: AllIcons.General.Add
+    e.presentation.icon = quickStartItem?.let(::providerItemMonochromeIconWithMode) ?: AllIcons.General.Add
     e.presentation.text = quickStartItem
                             ?.let(::quickStartActionText)
                           ?: AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.text")
@@ -287,7 +287,7 @@ private class DirectPathQuickStartAction(
     e.presentation.isEnabledAndVisible = true
     e.presentation.text = quickStartActionText(quickStartItem)
     e.presentation.description = quickStartActionDescription(quickStartItem)
-    e.presentation.icon = providerItemIconWithMode(quickStartItem)
+    e.presentation.icon = providerItemMonochromeIconWithMode(quickStartItem)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -354,7 +354,7 @@ internal abstract class AgentSessionsNewThreadSplitButtonAction(
     }
     val quickStartItem = resolveSplitButtonQuickStartItem(menuModel)
     e.presentation.icon = quickStartItem
-                            ?.let(::providerItemIconWithMode)
+                            ?.let(::providerItemMonochromeIconWithMode)
                           ?: AllIcons.General.Add
     e.presentation.text = quickStartItem
                             ?.let(::quickStartActionText)
@@ -490,7 +490,7 @@ internal class QuickStartAction(
       val disabledReasonKey = quickStartItem.disabledReasonKey
       if (disabledReasonKey != null) AgentSessionsBundle.message(disabledReasonKey) else quickStartActionDescription(quickStartItem)
     }
-    e.presentation.icon = providerItemIconWithMode(quickStartItem)
+    e.presentation.icon = providerItemMonochromeIconWithMode(quickStartItem)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
