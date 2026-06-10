@@ -17,32 +17,32 @@ import org.junit.jupiter.api.Assumptions
 
 // Maven-version assumptions and module / language-level inspection.
 
-fun MavenDomTestFixture.getActualMavenVersion(): String = MavenTestVersions.getActualVersion(mavenVersion)
+fun MavenTestFixture.getActualMavenVersion(): String = MavenTestVersions.getActualVersion(mavenVersion)
 
-fun MavenDomTestFixture.mavenVersionIsOrMoreThan(version: String): Boolean =
+fun MavenTestFixture.mavenVersionIsOrMoreThan(version: String): Boolean =
   StringUtil.compareVersionNumbers(version, MavenTestVersions.getActualVersion(mavenVersion)) <= 0
 
-fun MavenDomTestFixture.assumeMaven3() {
+fun MavenTestFixture.assumeMaven3() {
   Assumptions.assumeTrue(MavenTestVersions.getActualVersion(mavenVersion).startsWith("3."))
 }
 
-fun MavenDomTestFixture.assumeMaven4() {
+fun MavenTestFixture.assumeMaven4() {
   Assumptions.assumeTrue(MavenTestVersions.getActualVersion(mavenVersion).startsWith("4."))
 }
 
-fun MavenDomTestFixture.assumeModel_4_0_0(message: String) {
+fun MavenTestFixture.assumeModel_4_0_0(message: String) {
   Assumptions.assumeTrue(modelVersion == MavenConstants.MODEL_VERSION_4_0_0, message)
 }
 
-fun MavenDomTestFixture.assumeModel_4_1_0(message: String) {
+fun MavenTestFixture.assumeModel_4_1_0(message: String) {
   Assumptions.assumeTrue(modelVersion == MavenConstants.MODEL_VERSION_4_1_0, message)
 }
 
-suspend fun MavenDomTestFixture.forModel40(block: suspend () -> Unit) {
+suspend fun MavenTestFixture.forModel40(block: suspend () -> Unit) {
   if (modelVersion == MavenConstants.MODEL_VERSION_4_0_0) block()
 }
 
-suspend fun MavenDomTestFixture.forModel41(block: suspend () -> Unit) {
+suspend fun MavenTestFixture.forModel41(block: suspend () -> Unit) {
   if (modelVersion == MavenConstants.MODEL_VERSION_4_1_0) block()
 }
 
@@ -51,7 +51,7 @@ fun MavenDomTestFixture.assumeVersionAtLeast(version: String) {
     VersionComparatorUtil.compare(MavenTestVersions.getActualVersion(mavenVersion), MavenTestVersions.getActualVersion(version)) >= 0)
 }
 
-fun MavenDomTestFixture.assumeVersionMoreThan(version: String) {
+fun MavenTestFixture.assumeVersionMoreThan(version: String) {
   Assumptions.assumeTrue(
     VersionComparatorUtil.compare(MavenTestVersions.getActualVersion(mavenVersion), MavenTestVersions.getActualVersion(version)) > 0)
 }
@@ -61,7 +61,7 @@ fun MavenDomTestFixture.assumeVersionLessThan(version: String) {
     VersionComparatorUtil.compare(MavenTestVersions.getActualVersion(mavenVersion), MavenTestVersions.getActualVersion(version)) < 0)
 }
 
-val MavenDomTestFixture.defaultLanguageLevel: LanguageLevel
+val MavenTestFixture.defaultLanguageLevel: LanguageLevel
   get() {
     val version = MavenTestVersions.getActualVersion(mavenVersion)
     if (VersionComparatorUtil.compare("3.9.3", version) <= 0) return LanguageLevel.JDK_1_8
@@ -69,22 +69,22 @@ val MavenDomTestFixture.defaultLanguageLevel: LanguageLevel
     return LanguageLevel.JDK_1_5
   }
 
-fun MavenDomTestFixture.getModule(name: String): Module {
+fun MavenTestFixture.getModule(name: String): Module {
   val m = ModuleManager.getInstance(project).findModuleByName(name)
   assertNotNull("Module $name not found", m)
   return m!!
 }
 
-fun MavenDomTestFixture.getSourceLanguageLevelForModule(moduleName: String): LanguageLevel? {
+fun MavenTestFixture.getSourceLanguageLevelForModule(moduleName: String): LanguageLevel? {
   return LanguageLevelUtil.getCustomLanguageLevel(getModule(moduleName))
 }
 
-fun MavenDomTestFixture.getTargetLanguageLevelForModule(moduleName: String): LanguageLevel? {
+fun MavenTestFixture.getTargetLanguageLevelForModule(moduleName: String): LanguageLevel? {
   val targetLevel = CompilerConfiguration.getInstance(project).getBytecodeTargetLevel(getModule(moduleName)) ?: return null
   return LanguageLevel.parse(targetLevel)
 }
 
-fun MavenDomTestFixture.assertModuleLibDep(moduleName: String, depName: String) {
+fun MavenTestFixture.assertModuleLibDep(moduleName: String, depName: String) {
   val entry = ModuleRootManager.getInstance(getModule(moduleName)).orderEntries
     .filterIsInstance<LibraryOrderEntry>()
     .find { it.libraryName == depName }

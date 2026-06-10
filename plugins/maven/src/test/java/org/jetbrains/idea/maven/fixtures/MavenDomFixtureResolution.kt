@@ -60,6 +60,21 @@ suspend fun MavenDomTestFixture.resolveReference(file: VirtualFile, referenceTex
   return resolved
 }
 
+suspend fun MavenDomTestFixture.resolveReference(file: VirtualFile, referenceText: String, index: Int): PsiElement? {
+  var index = index
+  val text = VfsUtilCore.loadText(file)
+  var k = -1
+
+  do {
+    k = text.indexOf(referenceText, k + 1)
+    assert(k >= 0) { index }
+  }
+  while (--index >= 0)
+
+  val psiReference = getReferenceAt(file, k)!!
+  return readAction { psiReference.resolve() }
+}
+
 suspend fun MavenDomTestFixture.assertResolved(file: VirtualFile, expected: PsiElement) {
   doAssertResolved(file, expected)
 }
