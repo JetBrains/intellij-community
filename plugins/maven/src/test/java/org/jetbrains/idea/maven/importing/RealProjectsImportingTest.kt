@@ -3,13 +3,33 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertModuleLibDeps
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class RealProjectsImportingTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class RealProjectsImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
 
   @Test
   fun testImportStringBootStarter() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
     |  <parent>
     |    <groupId>org.springframework.boot</groupId>
     |    <artifactId>spring-boot-starter-parent</artifactId>
@@ -29,7 +49,7 @@ class RealProjectsImportingTest : MavenMultiVersionImportingTestCase() {
     |
     """.trimMargin())
 
-    assertModuleLibDeps("project",
+    maven.assertModuleLibDeps("project",
                         "Maven: org.springframework.boot:spring-boot-starter:3.0.0",
                         "Maven: org.springframework.boot:spring-boot:3.0.0",
                         "Maven: org.springframework:spring-context:6.0.2",
@@ -53,7 +73,7 @@ class RealProjectsImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportLog4Sl4j() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
     |  <groupId>test</groupId>
     |  <artifactId>project</artifactId>
     |  <version>0.0.1-SNAPSHOT</version>
@@ -67,7 +87,7 @@ class RealProjectsImportingTest : MavenMultiVersionImportingTestCase() {
     |
     """.trimMargin())
 
-    assertModuleLibDeps("project",
+    maven.assertModuleLibDeps("project",
                         "Maven: org.apache.logging.log4j:log4j-to-slf4j:2.19.0",
                         "Maven: org.slf4j:slf4j-api:1.7.36",
                         "Maven: org.apache.logging.log4j:log4j-api:2.19.0")
