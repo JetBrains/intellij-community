@@ -3,14 +3,37 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertModuleModuleDeps
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.assumeMaven3
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.importProjectsAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenWorkspaceImportingTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenWorkspaceImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
 
   @Test
   fun testImportingProjectWithDynamicWorkspace() = runBlocking {
-    assumeMaven3()
-    val firstRootWithChild = createModulePom("parentone",
+    maven.assumeMaven3()
+    val firstRootWithChild = maven.createModulePom("parentone",
                                              $$"""
                              <groupId>test</groupId>
                              <artifactId>parentone</artifactId>
@@ -23,7 +46,7 @@ class MavenWorkspaceImportingTest : MavenMultiVersionImportingTestCase() {
                                  <module>child</module>
                              </modules>
                              """.trimIndent())
-    val child = createModulePom("parentone/child",
+    val child = maven.createModulePom("parentone/child",
                                 $$"""
                              <parent>
                                <groupId>test</groupId>
@@ -32,7 +55,7 @@ class MavenWorkspaceImportingTest : MavenMultiVersionImportingTestCase() {
                              </parent>
                               <artifactId>child</artifactId>
                              """.trimIndent())
-    val secondRoot = createModulePom("second",
+    val secondRoot = maven.createModulePom("second",
                                      """
                              <groupId>test</groupId>
                              <artifactId>second</artifactId>
@@ -46,8 +69,8 @@ class MavenWorkspaceImportingTest : MavenMultiVersionImportingTestCase() {
                              </dependencies>
                              """.trimIndent())
 
-    importProjectsAsync(firstRootWithChild, secondRoot)
-    assertModules("parentone", "child", "second")
-    assertModuleModuleDeps("second", "child")
+    maven.importProjectsAsync(firstRootWithChild, secondRoot)
+    maven.assertModules("parentone", "child", "second")
+    maven.assertModuleModuleDeps("second", "child")
   }
 }
