@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EditorLockFreeTyping
 import com.intellij.openapi.application.backgroundWriteAction
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -80,6 +81,7 @@ class CodeInsightContextManagerImpl(
     allContexts.invalidate()
     project.messageBus.syncPublisher(CodeInsightContextManager.topic).contextsChanged()
     _changeFlow.tryEmit(Unit)
+    log.debug { "[ctx-diag] all contexts invalidated" }
     log.trace { "all contexts are invalidated" }
   }
 
@@ -94,7 +96,9 @@ class CodeInsightContextManagerImpl(
 
     return allContexts.getOrPut(file) {
       log.trace { "requested all contexts of file ${file.path}" }
-      getContextSequence(file).toContextOrArray()
+      getContextSequence(file).toContextOrArray().also {
+        log.debug { "[ctx-diag] computed contexts of ${file.path}: ${it.wrapToList()}" }
+      }
     }.wrapToList()
   }
 

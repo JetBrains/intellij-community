@@ -346,25 +346,35 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
         })
       }
 
+      val diagEmittedCount = java.util.concurrent.atomic.AtomicInteger(0)
       when (provider) {
         is ChooseByNameInScopeItemProvider -> {
           val parameters = FindSymbolParameters.wrap(pattern, scope)
           provider.filterElementsWithWeights(viewModel, parameters, progressIndicator
           ) { item: FoundItemDescriptor<*> ->
+            diagEmittedCount.incrementAndGet()
             processElement(progressIndicator, consumer, model, item.item, item.weight)
           }
         }
         is ChooseByNameWeightedItemProvider -> {
           provider.filterElementsWithWeights(viewModel, pattern, everywhere, progressIndicator
           ) { item: FoundItemDescriptor<*> ->
+            diagEmittedCount.incrementAndGet()
             processElement(progressIndicator, consumer, model, item.item, item.weight)
           }
         }
         else -> {
           provider.filterElements(viewModel, pattern, everywhere, progressIndicator) { element: Any ->
+            diagEmittedCount.incrementAndGet()
             processElement(progressIndicator, consumer, model, element, getElementPriority(element, pattern))
           }
         }
+      }
+      if (LOG.isDebugEnabled) {
+        LOG.debug(
+          "[symbol-se-diag] $searchProviderId finished: pattern='$pattern'," +
+          " scope='${scope.displayName}', everywhere=$everywhere, elementsFromModel=${diagEmittedCount.get()}"
+        )
       }
     }
 
@@ -550,4 +560,3 @@ private fun getSelectedScopes(project: Project): MutableMap<String, String?> {
   }
   return map
 }
-
