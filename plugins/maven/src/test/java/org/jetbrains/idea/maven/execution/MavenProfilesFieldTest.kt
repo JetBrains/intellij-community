@@ -4,12 +4,32 @@ package org.jetbrains.idea.maven.execution
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.run.configuration.MavenProfilesFiled
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.testRootDisposable
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenProfilesFieldTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenProfilesFieldTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testNoDuplicateProfiles() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -18,8 +38,8 @@ class MavenProfilesFieldTest : MavenMultiVersionImportingTestCase() {
       </profiles>
     """.trimIndent())
 
-    val field = MavenProfilesFiled(project, projectRoot, testRootDisposable)
-    val profiles = field.getProfiles(project, projectRoot).toList()
-    assertEquals("Profiles should not contain duplicates", profiles.distinct(), profiles)
+    val field = MavenProfilesFiled(maven.project, maven.projectRoot, maven.testRootDisposable)
+    val profiles = field.getProfiles(maven.project, maven.projectRoot).toList()
+    assertEquals(profiles.distinct(), profiles, "Profiles should not contain duplicates")
   }
 }
