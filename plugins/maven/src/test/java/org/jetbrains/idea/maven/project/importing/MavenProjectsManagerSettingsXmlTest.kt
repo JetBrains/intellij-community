@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.fixtures.createProjectPom
 import org.jetbrains.idea.maven.fixtures.createSettingsXml
 import org.jetbrains.idea.maven.fixtures.importProjectAsync
 import org.jetbrains.idea.maven.fixtures.initProjectsManager
+import org.jetbrains.idea.maven.fixtures.mavenGeneralSettings
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.fixtures.projectPath
 import org.jetbrains.idea.maven.fixtures.projectsTree
@@ -157,7 +158,11 @@ class MavenProjectsManagerSettingsXmlTest(mavenVersion: String, modelVersion: St
   }
 
   private suspend fun deleteSettingsXmlAndWaitForImport() {
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Paths.get(maven.dir.toString(), "settings.xml"))!!
+    // Delete whatever the active user settings.xml is: the fixture bootstraps it under project.basePath, but
+    // updateSettingsXml/createSettingsXml write it under maven.dir — so resolve the current path instead of guessing
+    // a fixed location (the first call in a "create then delete" test would otherwise NPE on a missing maven.dir copy).
+    val settingsPath = maven.mavenGeneralSettings.userSettingsFile
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Paths.get(settingsPath)) ?: return
     maven.waitForImportWithinTimeout {
       edtWriteAction {
         f.delete(this)
