@@ -65,6 +65,7 @@ import com.intellij.python.pytools.lsp.PyLspToolSettings
 import com.intellij.python.pytools.ui.configuration.PyExternalToolsConfigurable
 import com.intellij.python.pytools.ui.getInstalledToolPackage
 import com.intellij.ui.JBColor
+import com.jetbrains.python.PythonPluginDisposable
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -100,6 +101,9 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
         listenerConnectedForProjects.remove(project)
       }
       subscribeOnChanges(descriptor.pyTool, project, listenerDisposable)
+      // The set is app-level (the provider is an application extension); drop the project when it is
+      // disposed so we don't retain disposed projects (caught by the test-framework leak checker).
+      Disposer.register(PythonPluginDisposable.getInstance(project), Disposable { listenerConnectedForProjects.remove(project) })
     }
 
     runBlockingMaybeCancellable {

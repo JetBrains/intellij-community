@@ -1405,6 +1405,16 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//python/python-lsp-core:lsp-core",
         "//python/python-lsp-core:lsp-core_test_lib",
+        "//platform/lsp",
+        "//platform/lsp:lsp_test_lib",
+        "//platform/lsp-impl",
+        "//platform/lsp-impl:lsp-impl_test_lib",
+        "//python/python-ty:ty",
+        "//python/python-ty:ty_test_lib",
+        "//python/python-ruff:ruff",
+        "//python/python-ruff:ruff_test_lib",
+        "//python/python-pyright:pyright",
+        "//python/python-pyright:pyright_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.tests` end

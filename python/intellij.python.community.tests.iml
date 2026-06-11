@@ -140,6 +140,11 @@
     <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.lsp.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lsp" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lsp.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.ty" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.ruff" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pyright" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.python.community.impl" />
 </module>

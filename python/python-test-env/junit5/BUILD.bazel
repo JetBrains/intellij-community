@@ -23,6 +23,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/execution",
         "//libraries/junit5",
+        "//python/python-pytools:pytools",
     ],
 )
 
@@ -101,6 +102,8 @@ jvm_library(
         "//platform/testFramework/common:common_test_lib",
         "//python/services/system-python",
         "//python/services/system-python:system-python_test_lib",
+        "//python/python-pytools:pytools",
+        "//python/python-pytools:pytools_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.test.env.junit5` end
