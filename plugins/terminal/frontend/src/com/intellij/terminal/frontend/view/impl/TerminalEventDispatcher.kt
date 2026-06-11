@@ -239,6 +239,7 @@ private class TerminalEventDispatcher(
       "Terminal.SwitchFocusToEditor",
       "Terminal.CopySelectedText",
       "Terminal.Paste",
+      "Terminal.PasteFromHistory",
       "Terminal.LineUp",
       "Terminal.LineDown",
       "Terminal.PageUp",

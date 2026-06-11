@@ -5,6 +5,7 @@ import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionUiKind;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -35,8 +36,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-final class PasteFromHistoryAction extends DumbAwareAction {
-  PasteFromHistoryAction() {
+@ApiStatus.Internal
+public class PasteFromHistoryAction extends DumbAwareAction {
+  protected PasteFromHistoryAction() {
     setEnabledInModalContext(true);
   }
 
@@ -62,7 +64,7 @@ final class PasteFromHistoryAction extends DumbAwareAction {
       List<Transferable> selectedContents = chooser.getSelectedContents();
       CopyPasteManagerEx copyPasteManager = CopyPasteManagerEx.getInstanceEx();
       if (selectedContents.size() == 1) {
-        copyPasteManager.moveContentToStackTop(selectedContents.get(0));
+        copyPasteManager.moveContentToStackTop(selectedContents.getFirst());
       }
       else {
         copyPasteManager.setContents(new StringSelection(chooser.getSelectedText()));
@@ -71,22 +73,25 @@ final class PasteFromHistoryAction extends DumbAwareAction {
       if (editor != null) {
         if (editor.isViewer()) return;
       }
-      final AnAction pasteAction = ActionManager.getInstance().getAction(chooser.getExitCode() == getPasteSimpleExitCode()
-                                                                           ? IdeActions.ACTION_EDITOR_PASTE_SIMPLE : IdeActions.ACTION_PASTE);
-      var dataContextForEvent = DataManager.getInstance().getDataContext(focusedComponent);
-      if (pasteAction != null && PlatformDataKeys.PASTE_PROVIDER.getData(dataContextForEvent) != null) {
-        AnActionEvent newEvent = new AnActionEvent(e.getInputEvent(),
-                                                   dataContextForEvent,
-                                                   e.getPlace(), e.getPresentation(),
-                                                   ActionManager.getInstance(),
-                                                   e.getModifiers());
-        pasteAction.actionPerformed(newEvent);
-      }
-      else {
-        final Action defaultPasteAction = ((JComponent)focusedComponent).getActionMap().get(DefaultEditorKit.pasteAction);
-        if (defaultPasteAction != null) {
-          defaultPasteAction.actionPerformed(new ActionEvent(focusedComponent, ActionEvent.ACTION_PERFORMED, ""));
-        }
+      performPaste(e, (JComponent)focusedComponent, chooser.getExitCode() == getPasteSimpleExitCode());
+    }
+  }
+
+  @ApiStatus.Internal
+  protected void performPaste(@NotNull AnActionEvent e, @NotNull JComponent focusedComponent, boolean pasteSimple) {
+    final AnAction pasteAction = ActionManager.getInstance().getAction(pasteSimple
+                                                                       ? IdeActions.ACTION_EDITOR_PASTE_SIMPLE
+                                                                       : IdeActions.ACTION_PASTE);
+    var dataContextForEvent = DataManager.getInstance().getDataContext(focusedComponent);
+    if (pasteAction != null && PlatformDataKeys.PASTE_PROVIDER.getData(dataContextForEvent) != null) {
+      AnActionEvent newEvent = AnActionEvent.createEvent(pasteAction, dataContextForEvent, e.getPresentation(),
+                                                         e.getPlace(), ActionUiKind.NONE, e.getInputEvent());
+      pasteAction.actionPerformed(newEvent);
+    }
+    else {
+      final Action defaultPasteAction = focusedComponent.getActionMap().get(DefaultEditorKit.pasteAction);
+      if (defaultPasteAction != null) {
+        defaultPasteAction.actionPerformed(new ActionEvent(focusedComponent, ActionEvent.ACTION_PERFORMED, ""));
       }
     }
   }

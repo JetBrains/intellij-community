@@ -152,7 +152,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
       {"shift control T",          "GotoTest", "ServiceView.ShowServices", "Terminal.NewTab"},
       {"shift control TAB",        "Switcher", "Diff.FocusOppositePane"},
       {"shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase", "Markdown.Styling.CreateLink"},
-      {"shift control V",          "PasteMultiple", "JupyterNotebookPasteCellAboveCommandModeAction"},
+      {"shift control V",          "PasteMultiple", "JupyterNotebookPasteCellAboveCommandModeAction", "Terminal.PasteFromHistory"},
       {"shift control alt D",      "UML.ShowChanges", "Console.TableResult.CloneColumn"},
       {"shift control alt ENTER",  "Console.Jpa.GenerateDDL", "Console.TableResult.SubmitAndCommit", "Console.Transaction.Commit",
                                    "NotebookRunAllAction", "org.jetbrains.r.actions.RDebugAction"},

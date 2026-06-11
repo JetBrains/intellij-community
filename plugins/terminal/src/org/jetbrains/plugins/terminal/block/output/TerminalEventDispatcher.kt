@@ -184,6 +184,7 @@ internal abstract class TerminalEventDispatcher(
       "TerminalDecreaseFontSize",
       "TerminalResetFontSize",
       "Terminal.Paste",
+      "Terminal.PasteFromHistory",
       "Terminal.CopySelectedText",
       "Terminal.CopyBlock"
     )
