@@ -28,7 +28,9 @@ internal class IDEBackendHandler(
   companion object {
     internal fun Driver.remoteDevDirectLink(): String {
       return waitNotNull("Join link", 20.seconds) {
-        service(UnattendedModeManagerImpl::class).remoteDevDirectLink()
+        val service = runCatching { service(UnattendedModeManagerImpl::class).also {it.remoteDevDirectLink()} }
+          .getOrElse { service(UnattendedModeManagerImplFallback::class) }
+        service.remoteDevDirectLink()
       }
     }
   }
@@ -94,4 +96,12 @@ internal class IDEBackendHandler(
   interface UnattendedModeManagerImpl {
     fun remoteDevDirectLink(): String?
   }
+
+  /**
+   * Needed for compatibility of 262 driver with older version of IDE.
+   * e.g. for update tests.
+   */
+  @Remote(value = "com.jetbrains.rdserver.unattendedHost.connection.UnattendedModeManagerImpl",
+          plugin = "com.jetbrains.remoteDevelopment")
+  interface UnattendedModeManagerImplFallback : UnattendedModeManagerImpl
 }
