@@ -7,15 +7,38 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PsiTestUtil
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
 import java.nio.file.Files
 import java.nio.file.Path
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertModuleLibDep
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createPomXml
+import org.jetbrains.idea.maven.fixtures.getModule
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.BeforeEach
 
-class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() = runBlocking {
-    super.setUp()
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class WorkingWithOpenProjectTest(mavenVersion: String, modelVersion: String) {
 
-    importProjectAsync("""
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
+  @BeforeEach
+  fun setUp(): Unit = runBlocking {
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -24,13 +47,13 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testShouldNotFailOnNewEmptyPomCreation() = runBlocking {
-    createModulePom("module", "") // should not throw an exception
+    maven.createModulePom("module", "") // should not throw an exception
     return@runBlocking
   }
 
   @Test
   fun testShouldNotFailOnAddingNewContentRootWithAPomFile() = runBlocking {
-    val newRootDir = Path.of(dir.toString(), "newRoot")
+    val newRootDir = Path.of(maven.dir.toString(), "newRoot")
     Files.createDirectories(newRootDir)
 
     val pomFile = newRootDir.resolve("pom.xml")
@@ -38,7 +61,7 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
 
     val root = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(newRootDir)
 
-    PsiTestUtil.addContentRoot(getModule("project"), root!!) // should not throw an exception
+    PsiTestUtil.addContentRoot(maven.getModule("project"), root!!) // should not throw an exception
 
     return@runBlocking
   }
@@ -46,10 +69,10 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
   fun _testSavingAllDocumentBeforeReimport() = runBlocking {
     // cannot make it work die to order of document listeners
 
-    projectsManager.listenForExternalChanges()
-    val d = FileDocumentManager.getInstance().getDocument(projectPom)
+    maven.projectsManager.listenForExternalChanges()
+    val d = FileDocumentManager.getInstance().getDocument(maven.projectPom)
     edtWriteAction {
-      d!!.setText(createPomXml("""
+      d!!.setText(maven.createPomXml("""
                                 <groupId>test</groupId>
                                 <artifactId>project</artifactId>
                                 <version>1</version>
@@ -63,6 +86,6 @@ class WorkingWithOpenProjectTest : MavenMultiVersionImportingTestCase() {
                                 """.trimIndent()))
     }
 
-    assertModuleLibDep("project", "Maven: junit:junit:4.0")
+    maven.assertModuleLibDep("project", "Maven: junit:junit:4.0")
   }
 }
