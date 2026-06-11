@@ -1,0 +1,33 @@
+<idea-plugin>
+  <id>com.intellij.platform.ui.webview</id>
+  <name>WebView Runtime</name>
+  <vendor>JetBrains</vendor>
+  <category>Other Tools</category>
+  <description>Provides WebView runtime platform modules for the IDE.</description>
+
+  <content namespace="jetbrains">
+    <module name="intellij.platform.ui.webview.jcef" loading="optional"/>
+  </content>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.webViewEngineProvider"
+                    interface="com.intellij.ui.webview.impl.engine.WebViewEngineProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="ide.webview.engine"
+                 defaultValue="[SYSTEM*|JCEF]"
+                 restartRequired="true"
+                 description="Forces the ui.webview engine: SYSTEM or JCEF. JCEF rendering follows the JBCEF registry flags"/>
+    <registryKey key="ide.webview.debug.engine.overlay"
+                 defaultValue="false"
+                 restartRequired="false"
+                 description="Shows a diagnostic engine label inside ui.webview pages"/>
+    <registryKey key="ide.webview.heavyweight.hwfacade.enabled"
+                 defaultValue="true"
+                 restartRequired="false"
+                 description="Enable heavyweight facade for Swing overlays shown above native WebView hosts"/>
+    <hwFacadeProvider implementation="com.intellij.ui.webview.impl.WebViewHwFacadeProvider" order="first"/>
+  </extensions>
+</idea-plugin>

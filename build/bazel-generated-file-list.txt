@@ -912,6 +912,13 @@ platform/todo/plugin
 platform/tracing
 platform/tracing-ide
 platform/ui.jcef
+platform/ui.webview
+platform/ui.webview/demo
+platform/ui.webview/jcef
+platform/ui.webview/jcef/tests
+platform/ui.webview/markdown-preview
+platform/ui.webview/markdown-preview/tests
+platform/ui.webview/tests
 platform/usageView
 platform/usageView-impl
 platform/util

@@ -1,0 +1,205 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ui.webview.impl.engine
+
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
+import com.intellij.ui.webview.api.WebView
+import com.intellij.ui.webview.api.WebViewAssetPath
+import com.intellij.ui.webview.api.WebViewAssetRoot
+import com.intellij.ui.webview.api.WebViewEngineAvailability
+import com.intellij.ui.webview.api.WebViewEngineCapabilities
+import com.intellij.ui.webview.api.WebViewEngineId
+import com.intellij.ui.webview.api.WebViewEnginePreference
+import com.intellij.ui.webview.api.WebViewInterop
+import com.intellij.ui.webview.api.WebViewMessageRegistration
+import com.intellij.ui.webview.api.WebViewNotification
+import com.intellij.ui.webview.api.WebViewRuntimeInfo
+import com.intellij.ui.webview.api.WebViewScriptResult
+import com.intellij.ui.webview.impl.SwingWebViewHostPanel
+import com.intellij.ui.webview.impl.WebViewEngineBridge
+import com.intellij.ui.webview.impl.WebViewLogger
+import com.intellij.ui.webview.impl.host.NativeWebViewHostPeer
+import com.intellij.ui.webview.impl.rpc.WebViewMessageBusImpl
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DisposableHandle
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.job
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
+import java.util.MissingResourceException
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
+import javax.swing.JComponent
+
+@ApiStatus.Internal
+interface WebViewEngineProvider {
+  val id: WebViewEngineId
+  val displayName: String
+  val capabilities: WebViewEngineCapabilities
+
+  fun selectionPriority(preference: WebViewEnginePreference): Int?
+
+  suspend fun availability(): WebViewEngineAvailability = availabilityBlocking()
+
+  fun availabilityBlocking(): WebViewEngineAvailability
+
+  suspend fun createWebView(
+    webViewScope: CoroutineScope,
+    options: WebViewEngineCreationOptions,
+  ): CreatedWebView {
+    val provider = this
+    val engine = createEngine(webViewScope, options)
+    val runtimeInfoValue = runtimeInfo(engine)
+    val bus = WebViewMessageBusImpl(webViewScope, engine)
+    bus.registerRuntimeInfoHandler(runtimeInfoValue)
+    val themeRegistration = bus.interop.registerThemeHandler()
+    engine.connectMessageBus { rawJson -> bus.transferFromJs(rawJson) }
+    val closed = AtomicBoolean(false)
+    val closeOnScopeCompletion = AtomicReference<DisposableHandle?>(null)
+    val createdWebView = object : WebView, CreatedWebView {
+      private var hostComponent: SwingWebViewHostPanel? = null
+      private var focusRegistration: WebViewMessageRegistration? = null
+
+      override val webView: WebView
+        get() = this
+
+      override val runtimeInfo: WebViewRuntimeInfo = runtimeInfoValue
+      override val interop: WebViewInterop = bus.interop
+      override val isHeavyweight: Boolean = engine.isHeavyweight
+
+      override fun createHostComponent(): JComponent {
+        hostComponent?.let { return it }
+
+        val host = SwingWebViewHostPanel(
+          webViewScope,
+          engine,
+          bus.interop.createWebViewFocusEntrySink(),
+          provider.createNativeHostPeer(webViewScope, engine),
+        )
+        focusRegistration = bus.interop.registerWebViewFocusExitHandler(host)
+        hostComponent = host
+        return host
+      }
+
+      override suspend fun loadFile(file: VirtualFile) {
+        val path = file.toNioPathOrNull() ?: error("WebView can load only local files: ${file.presentableUrl}")
+        engine.loadFile(path)
+      }
+
+      override suspend fun loadAsset(root: WebViewAssetRoot, entry: WebViewAssetPath, query: String?) {
+        engine.loadAsset(root, entry, query.withWebViewTheme())
+      }
+
+      override suspend fun loadHtml(html: String) {
+        engine.loadHtml(html)
+      }
+
+      override suspend fun evaluateJavaScript(script: String): WebViewScriptResult {
+        return WebViewScriptResult(engine.evaluateJavaScript(script))
+      }
+
+      override suspend fun close() {
+        if (!closed.compareAndSet(false, true)) return
+        closeOnScopeCompletion.getAndSet(null)?.dispose()
+        focusRegistration?.close()
+        focusRegistration = null
+        themeRegistration.close()
+        bus.close()
+        engine.close()
+      }
+    }
+    // TODO agent: rework this code, it's bullshit
+    closeOnScopeCompletion.set(webViewScope.coroutineContext.job.invokeOnCompletion {
+      runCatching {
+        runBlocking(NonCancellable) {
+          createdWebView.close()
+        }
+      }.onFailure {
+        WebViewLogger.LOG.warn("Failed to close WebView after its scope completed", it)
+      }
+    })
+    return createdWebView
+  }
+
+  fun runtimeInfo(engine: WebViewEngineBridge): WebViewRuntimeInfo {
+    return WebViewRuntimeInfo(id, capabilities, displayName)
+  }
+
+  fun createEngine(
+    scope: CoroutineScope,
+    options: WebViewEngineCreationOptions,
+  ): WebViewEngineBridge
+
+  fun createNativeHostPeer(
+    scope: CoroutineScope,
+    engine: WebViewEngineBridge,
+  ): NativeWebViewHostPeer? = null
+
+  interface CreatedWebView {
+    val webView: WebView
+
+    val isHeavyweight: Boolean
+
+    fun createHostComponent(): JComponent
+  }
+
+  companion object {
+    @JvmField
+    val EP_NAME: ExtensionPointName<WebViewEngineProvider> =
+      ExtensionPointName.create("com.intellij.webViewEngineProvider")
+  }
+}
+
+@ApiStatus.Internal
+data class WebViewEngineCreationOptions(
+  val strictPreference: Boolean,
+  val jcefNativeBundlePath: Path?,
+  val debugName: String?,
+)
+
+private fun WebViewMessageBusImpl.registerRuntimeInfoHandler(runtimeInfo: WebViewRuntimeInfo) {
+  registerNotificationHandler(WebViewRuntimeNotifications.runtimeInfoRequest) { _, _ ->
+    notify(
+      WebViewRuntimeNotifications.runtimeInfo,
+      WebViewRuntimeInfoPayload(
+        displayName = runtimeInfo.displayName,
+        overlayVisible = isEngineOverlayEnabled(),
+      ),
+    )
+  }
+}
+
+private fun isEngineOverlayEnabled(): Boolean {
+  return try {
+    RegistryManager.getInstance().get(WEBVIEW_ENGINE_OVERLAY_REGISTRY_KEY).asBoolean()
+  }
+  catch (_: MissingResourceException) {
+    false
+  }
+}
+
+private class WebViewRuntimeNotification<Params : Any>(
+  override val method: String,
+  override val paramsSerializer: KSerializer<Params>,
+) : WebViewNotification<Params>
+
+@Serializable
+private object EmptyWebViewRuntimePayload
+
+@Serializable
+private data class WebViewRuntimeInfoPayload(
+  val displayName: String,
+  val overlayVisible: Boolean,
+)
+
+private object WebViewRuntimeNotifications {
+  val runtimeInfoRequest = WebViewRuntimeNotification("$/webview/runtimeInfoRequest", EmptyWebViewRuntimePayload.serializer())
+  val runtimeInfo = WebViewRuntimeNotification("$/webview/runtimeInfo", WebViewRuntimeInfoPayload.serializer())
+}
+
+private const val WEBVIEW_ENGINE_OVERLAY_REGISTRY_KEY = "ide.webview.debug.engine.overlay"

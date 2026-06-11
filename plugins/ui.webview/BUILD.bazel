@@ -1,0 +1,107 @@
+load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load(":webview_plugin_zip.bzl", "webview_plugin_zip")
+
+exports_files(["build-web-assets"], visibility = ["//visibility:public"])
+
+native_binary(
+  name = "build_web_assets",
+  src = "build-web-assets",
+  env = {
+    "WEBVIEW_SRC_DIR": "community/platform/ui.webview/webview-src",
+  },
+  tags = ["manual", "local"],
+)
+
+webview_plugin_zip(
+    name = "webview_plugin_zip",
+    files = {
+        ":ui.webview.jar": "lib/com.intellij.platform.ui.webview.jar",
+        "//platform/ui.webview/jcef:jcef.jar": "lib/modules/intellij.platform.ui.webview.jcef.jar",
+    },
+    native_files = glob(["lib/webview-native/win/**"]),
+    out = "webview.zip",
+    root_dir = "webview",
+    visibility = ["//visibility:public"],
+)
+
+### auto-generated section `build intellij.platform.ui.webview` start
+
+create_kotlinc_options(
+    name = "custom_ui.webview",
+    api_version = "2.3",
+    language_version = "2.3",
+)
+
+jvm_library(
+    name = "ui.webview",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ui.webview",
+    module_name = "intellij.platform.ui.webview",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//libraries/kotlin/reflect",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//platform/core-api:core",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/jbr",
+        "//platform/util:util-ui",
+        "//platform/util",
+        "@lib//:jna",
+    ],
+)
+
+jvm_library(
+    name = "ui.webview_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ui.webview",
+    module_name = "intellij.platform.ui.webview",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ui.webview",
+        "//libraries/kotlin/reflect:reflect_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/jbr:jbr_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/util:util_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ui.webview` end
+
+### auto-generated section `iml intellij.platform.ui.webview` start
+exports_files(
+    [
+        "intellij.platform.ui.webview.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ui.webview` end
