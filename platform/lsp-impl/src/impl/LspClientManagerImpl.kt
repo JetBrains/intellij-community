@@ -88,7 +88,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
   private fun startIfNeeded(providerClass: Class<out LspClientProvider>) {
     if (!TrustedProjects.isProjectTrusted(project)) return
 
-    val provider = findProvider(providerClass)
+    val provider = LspClientProvider.getAllExtensions().firstOrNull { it.javaClass == providerClass }
     if (provider == null) {
       logger.error(providerClass.name + " is not loaded")
       return
@@ -128,10 +128,6 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
       descriptorsToStart.forEach { ensureStarted(providerClass, it) }
     }
   }
-
-  /** Finds the registered provider with the given class among both the new and the deprecated extension points. */
-  private fun findProvider(providerClass: Class<*>): LspClientProvider? =
-    LspClientProvider.getAllExtensions().firstOrNull { it.javaClass == providerClass }
 
   private fun callFileOpened(provider: LspClientProvider, file: VirtualFile, starter: LspStarterImpl): Unit =
     provider.fileOpened(project, file, starter)
