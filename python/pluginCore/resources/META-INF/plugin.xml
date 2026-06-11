@@ -94,6 +94,13 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.terminal.frontend"/>
     <module name="intellij.python.pytools.ui"/>
     <module name="intellij.python.black"/>
+    <module name="intellij.python.lsp.core"/>
+    <module name="intellij.python.lsp.impl"/>
+    <module name="intellij.python.typeEngine"/>
+    <module name="intellij.python.ty"/>
+    <module name="intellij.python.ruff"/>
+    <module name="intellij.python.pyrefly"/>
+    <module name="intellij.python.pyright"/>
   </content>
   <content>
     <module name="intellij.libraries.tuweni.toml"/>

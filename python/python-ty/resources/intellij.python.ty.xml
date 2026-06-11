@@ -1,0 +1,26 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.python.lsp.core"/>
+    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.pytools.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.lsp.integrationProvider implementation="com.intellij.python.ty.TyLspIntegrationProvider"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.python.ty.TyUsageCollector"/>
+
+    <registryKey key="ty.type.engine.support" defaultValue="false"
+                 description="Support ty type engine"/>
+
+    <python.lsp.typeEngineConfigurable implementation="com.intellij.python.ty.typeProvider.TyPyTypeEngine"/>
+    <projectSettings service="com.intellij.python.ty.TyConfiguration"/>
+    <python.pytools.pyTool implementation="com.intellij.python.ty.TyPyTool"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <typeEvalTypeEngineProvider implementation="com.intellij.python.ty.typeProvider.TyExternalPyTypeResolverProvider"/>
+  </extensions>
+</idea-plugin>

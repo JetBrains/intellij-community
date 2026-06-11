@@ -1,0 +1,20 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.modules.json"/>
+    <module name="intellij.json"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.python.lsp.core"/>
+    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.pytools.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.lsp.integrationProvider implementation="com.intellij.python.pyright.PyrightLspIntegrationProvider"/>
+    <projectSettings service="com.intellij.python.pyright.PyrightConfiguration"/>
+    <projectSettings service="com.intellij.python.pyright.BasedpyrightConfiguration"/>
+    <python.pytools.pyTool implementation="com.intellij.python.pyright.PyrightPyTool"/>
+    <python.pytools.pyTool implementation="com.intellij.python.pyright.BasedpyrightPyTool"/>
+  </extensions>
+</idea-plugin>

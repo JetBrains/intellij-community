@@ -1,1 +1,22 @@
-{ "exclusions": [] }
+{
+  "exclusions": [
+    {
+      "inspection": "SplitModeApiUsage",
+      "file": "community/python/python-type-engine/src/com/intellij/python/typeEngine/PyTypeEngineStatusBarWidget.kt",
+      "line": 49,
+      "reason": "PY-90092: Python LSP/type-engine tools were moved from PyCharm Pro into PyCharm Community. The type engine status bar widget is monolith-only UI that has not been split into frontend/backend yet."
+    },
+    {
+      "inspection": "SplitModeApiUsage",
+      "file": "community/python/python-type-engine/src/com/intellij/python/typeEngine/PyTypeEngineStatusBarWidget.kt",
+      "line": 132,
+      "reason": "PY-90092: JBPopupFactory usage in the monolith-only Python type engine status bar widget (not yet split for remote dev)."
+    },
+    {
+      "inspection": "SplitModeXmlApiUsage",
+      "file": "community/python/python-type-engine/resources/intellij.python.typeEngine.xml",
+      "line": 42,
+      "reason": "PY-90092: statusBarWidgetFactory registration for the monolith-only Python type engine widget (not yet split for remote dev)."
+    }
+  ]
+}
