@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.impl.modTree;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /// Persistent mapping between offsets in version 0 and offsets in the current version.
@@ -47,6 +48,7 @@ public interface ModificationTree {
   /// `offsetInCurrent` must be in `[0, currentLength]`.
   /// `length` must be greater than or equal to zero.
   @NotNull
+  @Contract(pure = true)
   ModificationTree insert(int offsetInCurrent, int length);
 
   /// Returns a new tree representing deletion of current-version text in
@@ -57,6 +59,7 @@ public interface ModificationTree {
   /// `startInCurrent` and `endInCurrent` must be in `[0, currentLength]`.
   /// `startInCurrent` must be less than or equal to `endInCurrent`.
   @NotNull
+  @Contract(pure = true)
   ModificationTree delete(int startInCurrent, int endInCurrent);
 
   /// Checks internal structural invariants.
