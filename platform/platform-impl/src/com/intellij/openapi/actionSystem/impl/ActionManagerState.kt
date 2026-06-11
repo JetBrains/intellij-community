@@ -20,7 +20,7 @@ internal class ActionManagerState {
   // (KeymapImpl.getActionIds sorts candidates by registration order on each level of the keymap chain),
   // so the snapshot is cached until an action is (re-)registered or removed.
   // The cached map is shared with callers and must never be mutated after publication.
-  private var registrationOrderSnapshotCache: HashMap<String, Int>? = null
+  private var registrationOrderSnapshotCache: Map<String, Int>? = null
 
   private val groupMappings: MutableMap<String, List<String>> = HashMap()
 
@@ -170,7 +170,7 @@ internal class ActionManagerState {
     }
   }
 
-  fun registrationOrderSnapshot(): HashMap<String, Int> {
+  fun registrationOrderSnapshot(): Map<String, Int> {
     synchronized(lock) {
       registrationOrderSnapshotCache?.let { return it }
       val result = HashMap<String, Int>(registrationData.size)
