@@ -131,7 +131,7 @@ data class ConfigurableEntry(
 )
 
 @Internal
-val INDEX_ENTRY_REGEXP: Regex = Regex("""\|b\|([^|]+)\|k\|([^|]+)\|""")
+val INDEX_ENTRY_REGEXP: Regex = Regex("""\|b\|([^|]+)\|k\|([^|]+)(?:\||\.{3})""")
 
 private val LOCATION_EP_NAME = ExtensionPointName<AdditionalLocationProvider>("com.intellij.search.additionalOptionsLocation")
 

@@ -38,6 +38,14 @@ class GetMessageByCoordinateTest {
   }
 
   @Test
+  fun `unresolvable marker with dots ending returns null instead of raw marker text`(@TempDir tempDir: Path) {
+    val classLoader = URLClassLoader(arrayOf(tempDir.toUri().toURL()), null)
+    val marker = "|b|messages.IdeBundle|k|encoding.name..."
+    val result = getMessageByCoordinate(s = marker, classLoader = classLoader, locale = Locale.ROOT)
+    assertNull(result, "Unresolvable marker must return null so doRegisterIndex drops the entry")
+  }
+
+  @Test
   fun `resolvable marker returns the localized value`(@TempDir tempDir: Path) {
     writeProperties(
       tempDir.resolve("messages/GetMessageByCoordinateTestBundle.properties"),
