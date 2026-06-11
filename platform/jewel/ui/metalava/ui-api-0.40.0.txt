@@ -154,6 +154,9 @@ package org.jetbrains.jewel.ui {
     method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getMedium();
     method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getRegular();
     method @androidx.compose.runtime.Composable public androidx.compose.ui.text.TextStyle getSmall();
+    method @androidx.compose.runtime.Composable public default androidx.compose.ui.text.TextStyle rememberConsoleTextStyle(optional long fontSize, optional androidx.compose.ui.text.font.FontWeight? fontWeight, optional androidx.compose.ui.text.font.FontStyle? fontStyle);
+    method @androidx.compose.runtime.Composable public default androidx.compose.ui.text.TextStyle rememberDefaultTextStyle(optional long fontSize, optional androidx.compose.ui.text.font.FontWeight? fontWeight, optional androidx.compose.ui.text.font.FontStyle? fontStyle);
+    method @androidx.compose.runtime.Composable public default androidx.compose.ui.text.TextStyle rememberEditorTextStyle(optional long fontSize, optional androidx.compose.ui.text.font.FontWeight? fontWeight, optional androidx.compose.ui.text.font.FontStyle? fontStyle);
     property @androidx.compose.runtime.Composable public abstract androidx.compose.ui.text.TextStyle consoleTextStyle;
     property @androidx.compose.runtime.Composable public abstract androidx.compose.ui.text.TextStyle editorTextStyle;
     property @androidx.compose.runtime.Composable public abstract androidx.compose.ui.text.TextStyle h0TextStyle;
