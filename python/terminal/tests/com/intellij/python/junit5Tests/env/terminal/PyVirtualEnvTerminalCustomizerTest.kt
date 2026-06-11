@@ -41,6 +41,8 @@ import org.hamcrest.CoreMatchers.hasItem
 import org.hamcrest.MatcherAssert.assertThat
 import org.jetbrains.plugins.terminal.ShellStartupOptions
 import org.jetbrains.plugins.terminal.runner.LocalShellIntegrationInjector
+import org.jetbrains.plugins.terminal.startup.MutableShellExecOptionsImpl
+import org.jetbrains.plugins.terminal.startup.ShellExecCommandImpl
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.jupiter.api.AfterEach
@@ -202,6 +204,52 @@ class PyVirtualEnvTerminalCustomizerTest {
       process.kill()
       process.exitCode.await()
     }
+  }
+
+  /**
+   * Regression test for PY-90240.
+   *
+   * Production activation goes through [PyVirtualEnvTerminalCustomizer.customizeExecOptions] ->
+   * [MutableShellExecOptionsImpl.setEnvironmentVariable], which mirrors every variable into a
+   * `_INTELLIJ_FORCE_SET_<name>` copy. An *empty* `_INTELLIJ_FORCE_SET_JEDITERM_SOURCE_ARGS` breaks
+   * the PowerShell integration on Windows (`Get-ChildItem` lists the empty-valued var, but
+   * `Remove-Item` reports it as non-existent), so we must never force-set an empty value.
+   *
+   * Unlike [testShellActivation], this exercises [PyVirtualEnvTerminalCustomizer.customizeExecOptions]
+   * (the `_INTELLIJ_FORCE_SET_*` path), not the [PyVirtualEnvTerminalCustomizer.customizeEnvironment]
+   * plain-map overload, which is why the original change slipped through.
+   */
+  @CartesianTest
+  fun forceSetVariablesAreNeverEmpty(
+    @CartesianTest.Enum shellType: ShellType,
+  ): Unit = timeoutRunBlocking {
+    when (shellType) {
+      ShellType.POWERSHELL -> Assumptions.assumeTrue(SystemInfo.isWindows, "PowerShell is Windows only")
+      ShellType.FISH -> Assumptions.abort("Fish terminal activation isn't supported")
+      ShellType.ZSH, ShellType.BASH -> Assumptions.assumeFalse(SystemInfo.isWindows, "Unix shells do not work on Windows")
+    }
+    val shellPath = getShellPath(shellType)
+    Assumptions.assumeTrue(withContext(Dispatchers.IO) { shellPath.exists() && shellPath.isExecutable() }, "$shellPath not found")
+
+    // The terminal working directory is the module content root that owns the venv (see testShellActivation).
+    val execOptions = MutableShellExecOptionsImpl(
+      _execCommand = ShellExecCommandImpl(listOf(shellPath.pathString)),
+      workingDirectory = tempDirFixture.get().asEelPath(),
+      mutableEnvs = mutableMapOf(),
+      shellIntegrationAvailable = true,
+      requester = PyVirtualEnvTerminalCustomizer::class.java,
+    )
+
+    PyVirtualEnvTerminalCustomizer().customizeExecOptions(projectFixture.get(), execOptions)
+
+    // Sanity: the venv was actually activated, otherwise the check below would be vacuous.
+    assertThat("venv must be activated via JEDITERM_SOURCE", execOptions.envs.keys,
+               hasItem("_INTELLIJ_FORCE_SET_JEDITERM_SOURCE"))
+
+    // PY-90240: a force-set variable must never carry an empty value.
+    val emptyForceSet = execOptions.envs.filterKeys { it.startsWith("_INTELLIJ_FORCE_SET_") }.filterValues { it.isEmpty() }.keys
+    Assertions.assertTrue(emptyForceSet.isEmpty(),
+                          "No _INTELLIJ_FORCE_SET_* variable may be empty (PY-90240, breaks PowerShell on Windows), but found: $emptyForceSet")
   }
 
   private suspend fun getShellStartupOptions(workDir: Path, shellType: ShellType): ShellStartupOptions {

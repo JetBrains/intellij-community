@@ -53,8 +53,12 @@ private data class Jediterm(val source: String, val sourceArgs: List<String>? = 
 
   fun buildEnvironmentVariables(): Map<String, String> = buildMap {
     put(JEDITERM_SOURCE, source)
-    put(JEDITERM_SOURCE_ARGS, sourceArgs?.joinToString(" ") ?: "")
+    // Only emit the args vars when there actually are arguments. An empty JEDITERM_SOURCE_ARGS is
+    // meaningless, and since these vars are now force-set via `_INTELLIJ_FORCE_SET_*`, an empty
+    // `_INTELLIJ_FORCE_SET_JEDITERM_SOURCE_ARGS` breaks the PowerShell integration on Windows:
+    // Get-ChildItem lists the empty-valued var, but Remove-Item reports it as non-existent (PY-90240).
     sourceArgs?.takeIf { it.isNotEmpty() }?.let {
+      put(JEDITERM_SOURCE_ARGS, it.joinToString(" "))
       put(JEDITERM_SOURCE_SINGLE_ARG, "1")
     }
   }
