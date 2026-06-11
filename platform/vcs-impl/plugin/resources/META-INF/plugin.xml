@@ -1,7 +1,7 @@
 <!--suppress SplitModeMixedDependencies -->
 <!--suppress PluginXmlPluginLogo -->
 <!--suppress AllContentModulesOptionalLoadingRule -->
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>intellij.vcs.frontend.plugin</id>
   <name>VCS Frontend</name>
   <description>Provides VCS Frontend platform modules for the IDE.</description>

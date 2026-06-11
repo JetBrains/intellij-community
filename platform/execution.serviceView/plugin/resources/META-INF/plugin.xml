@@ -1,7 +1,7 @@
 <!--suppress SplitModeMixedDependencies -->
 <!--suppress PluginXmlPluginLogo -->
 <!--suppress AllContentModulesOptionalLoadingRule -->
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>intellij.execution.serviceView.plugin</id>
   <name>Services View</name>
   <description>Provides Services View platform modules for the IDE.</description>

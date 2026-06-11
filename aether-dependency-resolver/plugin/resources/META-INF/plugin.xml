@@ -1,5 +1,5 @@
 <!--suppress PluginXmlPluginLogo -->
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>intellij.java.aetherDependencyResolver.plugin</id>
   <name>Aether Dependency Resolver</name>
   <description>Provides Aether dependency resolver modules for IntelliJ-based IDEs.</description>

@@ -1,7 +1,7 @@
 <!--suppress SplitModeMixedDependencies -->
 <!--suppress PluginXmlPluginLogo -->
 <!--suppress AllContentModulesOptionalLoadingRule -->
-<idea-plugin>
+<idea-plugin implementation-detail="true">
   <id>intellij.structureView.plugin</id>
   <name>Structure View</name>
   <description>Provides Structure View platform modules for the IDE.</description>
