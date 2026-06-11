@@ -267,6 +267,7 @@
     <module value="com.intellij.modules.php-capable"/>
     <module value="com.intellij.modules.ruby-capable"/>
     <module value="com.intellij.modules.c-capable"/>
+    <module value="com.intellij.modules.kmm-capable"/>
     <module value="com.intellij.modules.go-capable"/>
     <module value="com.intellij.modules.database-capable"/>
     <module value="com.intellij.modules.nativeDebug-plugin-capable"/>
