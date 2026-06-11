@@ -4895,6 +4895,16 @@ pc:com.intellij.refactoring.changeSignature.ParameterTableModelBase$TypeColumn
 - valueOf(com.intellij.refactoring.changeSignature.ParameterTableModelItemBase):com.intellij.psi.PsiCodeFragment
 a:com.intellij.refactoring.changeSignature.ParameterTableModelItemBase
 - a:isEllipsisType():Z
+com.intellij.refactoring.changeSignature.inplace.LanguageChangeSignatureDetector
+- a:createInitialChangeInfo(com.intellij.psi.PsiElement):com.intellij.refactoring.changeSignature.ChangeInfo
+- a:createNextChangeInfo(java.lang.String,com.intellij.refactoring.changeSignature.ChangeInfo,Z):com.intellij.refactoring.changeSignature.ChangeInfo
+- extractSignature(com.intellij.refactoring.changeSignature.ChangeInfo):java.lang.String
+- a:getFileType():com.intellij.openapi.fileTypes.FileType
+- a:getHighlightingRange(com.intellij.refactoring.changeSignature.ChangeInfo):com.intellij.openapi.util.TextRange
+- getMethodSignaturePreview(com.intellij.refactoring.changeSignature.ChangeInfo,java.util.List,java.util.List):java.lang.String
+- a:ignoreChanges(com.intellij.psi.PsiElement):Z
+- a:isChangeSignatureAvailableOnElement(com.intellij.psi.PsiElement,com.intellij.refactoring.changeSignature.ChangeInfo):Z
+- a:performChange(com.intellij.refactoring.changeSignature.ChangeInfo,com.intellij.openapi.editor.Editor,java.lang.String):V
 a:com.intellij.refactoring.classMembers.AbstractMemberInfoStorage
 - getClassMemberInfos(com.intellij.psi.PsiElement):java.util.List
 a:com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel
@@ -5023,6 +5033,38 @@ e:com.intellij.refactoring.introduce.inplace.OccurrencesChooser$ReplaceChoice
 - com.intellij.refactoring.introduce.inplace.OccurrencesChooser$BaseReplaceChoice
 - isAll():Z
 - s:values():com.intellij.refactoring.introduce.inplace.OccurrencesChooser$ReplaceChoice[]
+a:com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor
+- <init>(java.lang.String,java.lang.String,Z,Z,java.lang.String,Z,com.intellij.refactoring.changeSignature.ParameterInfo[]):V
+- a:createClass(com.intellij.psi.PsiNamedElement,com.intellij.codeInsight.highlighting.ReadWriteAccessDetector$Access[]):com.intellij.psi.PsiElement
+- a:findCompatibleConstructorInExistingClass(com.intellij.psi.PsiNamedElement):com.intellij.psi.PsiNamedElement
+- getClassName():java.lang.String
+- getExistingClass():com.intellij.psi.PsiElement
+- getExistingClassCompatibleConstructor():com.intellij.psi.PsiNamedElement
+- a:getGetterName(com.intellij.refactoring.changeSignature.ParameterInfo,com.intellij.psi.PsiElement,com.intellij.codeInsight.highlighting.ReadWriteAccessDetector$Access):java.lang.String
+- getNewVisibility():java.lang.String
+- getPackageName():java.lang.String
+- getParameterInfo(I):com.intellij.refactoring.changeSignature.ParameterInfo
+- getParamsToMerge():com.intellij.refactoring.changeSignature.ParameterInfo[]
+- a:getSetterName(com.intellij.refactoring.changeSignature.ParameterInfo,com.intellij.psi.PsiElement):java.lang.String
+- isCreateInnerClass():Z
+- isGenerateAccessors():Z
+- isUseExistingClass():Z
+- setExistingClass(com.intellij.psi.PsiElement):V
+- setExistingClassCompatibleConstructor(com.intellij.psi.PsiNamedElement):V
+a:com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate
+- sf:EP_NAME:com.intellij.lang.LanguageExtension
+- <init>():V
+- a:collectAdditionalFixes(java.util.Collection,com.intellij.psi.PsiNamedElement,com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor):V
+- a:collectConflicts(com.intellij.util.containers.MultiMap,com.intellij.usageView.UsageInfo[],com.intellij.psi.PsiNamedElement,com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor):V
+- a:collectInternalUsages(java.util.Collection,com.intellij.psi.PsiNamedElement,com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor,com.intellij.refactoring.changeSignature.ParameterInfo,java.lang.String):com.intellij.codeInsight.highlighting.ReadWriteAccessDetector$Access
+- a:collectUsagesToGenerateMissedFieldAccessors(java.util.Collection,com.intellij.psi.PsiNamedElement,com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor,com.intellij.codeInsight.highlighting.ReadWriteAccessDetector$Access[]):V
+- a:createChangeSignatureInfo(com.intellij.psi.PsiNamedElement,java.util.List,Z):com.intellij.refactoring.changeSignature.ChangeInfo
+- a:createMergedParameterInfo(com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor,com.intellij.psi.PsiNamedElement,java.util.List):com.intellij.refactoring.changeSignature.ParameterInfo
+- a:createNewParameterInitializerAtCallSite(com.intellij.psi.PsiElement,com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor,java.util.List,java.lang.Object):com.intellij.psi.PsiElement
+- s:findDelegate(com.intellij.psi.PsiElement):com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate
+- a:getAllMethodParameters(com.intellij.psi.PsiNamedElement):java.util.List
+- a:getHandler(com.intellij.psi.PsiElement):com.intellij.refactoring.RefactoringActionHandler
+- a:isEnabledOn(com.intellij.psi.PsiElement):Z
 a:com.intellij.refactoring.invertBoolean.InvertBooleanDelegate
 - <init>():V
 a:com.intellij.refactoring.memberPullUp.PullUpDialogBase
