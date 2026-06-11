@@ -1,670 +1,620 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.roots.ui.configuration;
+package com.intellij.openapi.roots.ui.configuration
 
-import com.intellij.compiler.server.BuildManager;
-import com.intellij.facet.Facet;
-import com.intellij.ide.JavaUiBundle;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.UiDataProvider;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.OrderEntry;
-import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
-import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
-import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.ui.DetailsComponent;
-import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
-import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.ui.JBSplitter;
-import com.intellij.ui.OnePixelSplitter;
-import com.intellij.ui.UIBundle;
-import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.navigation.BackAction;
-import com.intellij.ui.navigation.ForwardAction;
-import com.intellij.ui.navigation.History;
-import com.intellij.ui.navigation.Place;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.compiler.server.BuildManager
+import com.intellij.facet.Facet
+import com.intellij.ide.JavaUiBundle
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.actionSystem.DataKey.Companion.create
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.Configurable.NoMargin
+import com.intellij.openapi.options.Configurable.NoScroll
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.LibraryOrderEntry
+import com.intellij.openapi.roots.OrderEntry
+import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter.ConfigurableId
+import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurable
+import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseLibrariesConfigurable
+import com.intellij.openapi.roots.ui.configuration.projectRoot.BaseStructureConfigurable
+import com.intellij.openapi.roots.ui.configuration.projectRoot.FacetStructureConfigurable
+import com.intellij.openapi.roots.ui.configuration.projectRoot.GlobalLibrariesConfigurable
+import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkListConfigurable
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectLibrariesConfigurable
+import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext
+import com.intellij.openapi.ui.DetailsComponent
+import com.intellij.openapi.ui.MasterDetailsComponent
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
+import com.intellij.packaging.artifacts.Artifact
+import com.intellij.ui.JBSplitter
+import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.UIBundle
+import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.navigation.BackAction
+import com.intellij.ui.navigation.ForwardAction
+import com.intellij.ui.navigation.History
+import com.intellij.ui.navigation.Place
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import java.awt.BorderLayout
+import java.awt.Dimension
+import java.util.Objects
+import javax.swing.JComponent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.SwingConstants
+import kotlin.math.max
 
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+class ProjectStructureConfigurable(val project: Project) : SearchableConfigurable, Place.Navigator, NoMargin, NoScroll, Disposable {
+  protected val myUiState: UIState = UIState()
+  private var mySplitter: JBSplitter? = null
+  private var myToolbarComponent: JComponent? = null
+  private var myToFocus: JComponent? = null
 
-import static com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurableFilter.ConfigurableId;
+  class UIState {
+    var proportion: Float = 0f
+    var sideProportion: Float = 0f
 
-public class ProjectStructureConfigurable implements SearchableConfigurable, Place.Navigator,
-                                                     Configurable.NoMargin, Configurable.NoScroll, Disposable {
-  public static final DataKey<ProjectStructureConfigurable> KEY = DataKey.create("ProjectStructureConfiguration");
-
-  protected final UIState myUiState = new UIState();
-  private JBSplitter mySplitter;
-  private JComponent myToolbarComponent;
-  public static final @NonNls String CATEGORY = "category";
-  private JComponent myToFocus;
-
-  public static class UIState {
-    public float proportion;
-    public float sideProportion;
-
-    public String lastEditedConfigurable;
+    var lastEditedConfigurable: String? = null
   }
 
-  private final Project myProject;
-  private final FacetStructureConfigurable myFacetStructureConfigurable;
-  private final ArtifactsStructureConfigurable myArtifactsStructureConfigurable;
+  val facetStructureConfigurable: FacetStructureConfigurable
+  val artifactsStructureConfigurable: ArtifactsStructureConfigurable
 
-  private History myHistory;
-  private SidePanel mySidePanel;
+  private var myHistory: History? = null
+  private var mySidePanel: SidePanel? = null
 
-  private JPanel myComponent;
-  private Wrapper myDetails;
+  private var myComponent: JPanel? = null
+  private var myDetails: Wrapper? = null
 
-  private Configurable mySelectedConfigurable;
+  private var mySelectedConfigurable: Configurable? = null
 
-  private final ProjectSdksModel myProjectJdksModel = new ProjectSdksModel();
+  val projectJdksModel: ProjectSdksModel = ProjectSdksModel()
 
-  private ProjectConfigurable myProjectConfig;
-  private final ProjectLibrariesConfigurable myProjectLibrariesConfig;
-  private final GlobalLibrariesConfigurable myGlobalLibrariesConfig;
-  private final ModuleStructureConfigurable myModulesConfig;
+  var projectConfig: ProjectConfigurable? = null
+    private set
+  val projectLibrariesConfigurable: ProjectLibrariesConfigurable
+  val globalLibrariesConfigurable: GlobalLibrariesConfigurable
+  val modulesConfig: ModuleStructureConfigurable
 
-  private boolean myUiInitialized;
+  var isUiInitialized: Boolean = false
+    private set
 
-  private final List<Configurable> myName2Config = new ArrayList<>();
-  private final StructureConfigurableContext myContext;
-  private final ModulesConfigurator myModuleConfigurator;
-  private final JdkListConfigurable myJdkListConfig;
+  private val myName2Config: MutableList<Configurable> = ArrayList<Configurable>()
+  val context: StructureConfigurableContext
+  private val myModuleConfigurator: ModulesConfigurator
+  val jdkConfig: JdkListConfigurable
 
-  private JLabel myEmptySelection;
+  private var myEmptySelection: JLabel? = null
 
-  private final ObsoleteLibraryFilesRemover myObsoleteLibraryFilesRemover;
+  private val myObsoleteLibraryFilesRemover: ObsoleteLibraryFilesRemover
 
-  public ProjectStructureConfigurable(@NotNull Project project) {
-    myProject = project;
-    myFacetStructureConfigurable = new FacetStructureConfigurable(this);
-    myArtifactsStructureConfigurable = new ArtifactsStructureConfigurable(this);
+  init {
+    this.facetStructureConfigurable = FacetStructureConfigurable(this)
+    this.artifactsStructureConfigurable = ArtifactsStructureConfigurable(this)
 
-    myModuleConfigurator = new ModulesConfigurator(project, this);
-    myContext = new StructureConfigurableContext(myProject, myModuleConfigurator);
-    myModuleConfigurator.setContext(myContext);
+    myModuleConfigurator = ModulesConfigurator(project, this)
+    this.context = StructureConfigurableContext(this.project, myModuleConfigurator)
+    myModuleConfigurator.setContext(this.context)
 
-    myProjectLibrariesConfig = new ProjectLibrariesConfigurable(this);
-    myGlobalLibrariesConfig = new GlobalLibrariesConfigurable(this);
-    myModulesConfig = new ModuleStructureConfigurable(this);
+    this.projectLibrariesConfigurable = ProjectLibrariesConfigurable(this)
+    this.globalLibrariesConfigurable = GlobalLibrariesConfigurable(this)
+    this.modulesConfig = ModuleStructureConfigurable(this)
 
-    myJdkListConfig = new JdkListConfigurable(this);
+    this.jdkConfig = JdkListConfigurable(this)
 
-    myProjectLibrariesConfig.init(myContext);
-    myGlobalLibrariesConfig.init(myContext);
-    myModulesConfig.init(myContext);
-    myFacetStructureConfigurable.init(myContext);
-    myJdkListConfig.init(myContext);
+    projectLibrariesConfigurable.init(this.context)
+    globalLibrariesConfigurable.init(this.context)
+    modulesConfig.init(this.context)
+    facetStructureConfigurable.init(this.context)
+    jdkConfig.init(this.context)
     if (!project.isDefault()) {
-      myArtifactsStructureConfigurable.init(myContext, myModulesConfig, myProjectLibrariesConfig, myGlobalLibrariesConfig);
+      artifactsStructureConfigurable.init(
+        this.context,
+        this.modulesConfig,
+        this.projectLibrariesConfigurable,
+        this.globalLibrariesConfigurable
+      )
     }
     else {
-      Disposer.register(this, myArtifactsStructureConfigurable);
+      Disposer.register(this, this.artifactsStructureConfigurable)
     }
 
-    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    myUiState.lastEditedConfigurable = propertiesComponent.getValue("project.structure.last.edited");
-    final String proportion = propertiesComponent.getValue("project.structure.proportion");
-    myUiState.proportion = proportion != null ? Float.parseFloat(proportion) : 0;
-    final String sideProportion = propertiesComponent.getValue("project.structure.side.proportion");
-    myUiState.sideProportion = sideProportion != null ? Float.parseFloat(sideProportion) : 0;
-    myObsoleteLibraryFilesRemover = new ObsoleteLibraryFilesRemover(project);
+    val propertiesComponent = PropertiesComponent.getInstance(this.project)
+    myUiState.lastEditedConfigurable = propertiesComponent.getValue("project.structure.last.edited")
+    val proportion = propertiesComponent.getValue("project.structure.proportion")
+    myUiState.proportion = if (proportion != null) proportion.toFloat() else 0f
+    val sideProportion = propertiesComponent.getValue("project.structure.side.proportion")
+    myUiState.sideProportion = if (sideProportion != null) sideProportion.toFloat() else 0f
+    myObsoleteLibraryFilesRemover = ObsoleteLibraryFilesRemover(project)
   }
 
-  public @NotNull Project getProject() {
-    return myProject;
+  @NonNls
+  override fun getId(): @NonNls String {
+    return "project.structure"
   }
 
-  @Override
-  public @NotNull @NonNls String getId() {
-    return "project.structure";
+  @Nls
+  override fun getDisplayName(): @Nls String {
+    return JavaUiBundle.message("project.settings.display.name")
   }
 
-  @Override
-  public @Nls String getDisplayName() {
-    return JavaUiBundle.message("project.settings.display.name");
+  @NonNls
+  override fun getHelpTopic(): @NonNls String? {
+    val topic = if (mySelectedConfigurable != null) mySelectedConfigurable!!.getHelpTopic() else null
+    return Objects.requireNonNullElse<String?>(topic, "reference.settingsdialog.project.structure.general")
   }
 
-  @Override
-  public @Nullable @NonNls String getHelpTopic() {
-    String topic = mySelectedConfigurable != null ? mySelectedConfigurable.getHelpTopic() : null;
-    return Objects.requireNonNullElse(topic, "reference.settingsdialog.project.structure.general");
-  }
+  override fun createComponent(): JComponent? {
+    myComponent = MyPanel()
+    myDetails = Wrapper()
+    myHistory = History(this)
+    myEmptySelection = JLabel(JavaUiBundle.message("project.structure.empty.text"), SwingConstants.CENTER)
+    mySplitter = OnePixelSplitter(false, .15f)
+    mySplitter!!.setSplitterProportionKey("ProjectStructure.TopLevelElements")
+    mySplitter!!.setHonorComponentsMinimumSize(true)
 
-  @Override
-  public JComponent createComponent() {
-    myComponent = new MyPanel();
-    myDetails = new Wrapper();
-    myHistory = new History(this);
-    myEmptySelection = new JLabel(JavaUiBundle.message("project.structure.empty.text"), SwingConstants.CENTER);
-    mySplitter = new OnePixelSplitter(false, .15f);
-    mySplitter.setSplitterProportionKey("ProjectStructure.TopLevelElements");
-    mySplitter.setHonorComponentsMinimumSize(true);
+    initSidePanel()
 
-    initSidePanel();
-
-    final JPanel left = new JPanel(new BorderLayout()) {
-      @Override
-      public Dimension getMinimumSize() {
-        final Dimension original = super.getMinimumSize();
-        return new Dimension(Math.max(original.width, 100), original.height);
+    val left: JPanel = object : JPanel(BorderLayout()) {
+      override fun getMinimumSize(): Dimension {
+        val original = super.getMinimumSize()
+        return Dimension(max(original.width, 100), original.height)
       }
-    };
-
-    final DefaultActionGroup toolbarGroup = new DefaultActionGroup();
-    toolbarGroup.add(new BackAction(myComponent, myContext));
-    toolbarGroup.add(new ForwardAction(myComponent, myContext));
-    final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructure", toolbarGroup, true);
-    toolbar.setTargetComponent(myComponent);
-    myToolbarComponent = toolbar.getComponent();
-    left.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    myToolbarComponent.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    left.add(myToolbarComponent, BorderLayout.NORTH);
-    left.add(mySidePanel, BorderLayout.CENTER);
-
-    mySplitter.setFirstComponent(left);
-    mySplitter.setSecondComponent(myDetails);
-
-    myComponent.add(mySplitter, BorderLayout.CENTER);
-
-    myUiInitialized = true;
-
-    return myComponent;
-  }
-
-  @Override
-  public void dispose() {
-  }
-
-  private void initSidePanel() {
-    boolean isDefaultProject = myProject == ProjectManager.getInstance().getDefaultProject();
-
-    mySidePanel = new SidePanel(this);
-    mySidePanel.addSeparator(JavaUiBundle.message("project.settings.title"));
-    addProjectConfig();
-    if (!isDefaultProject) {
-      addModulesConfig();
     }
-    addProjectLibrariesConfig();
+
+    val toolbarGroup = DefaultActionGroup()
+    toolbarGroup.add(BackAction(myComponent, this.context))
+    toolbarGroup.add(ForwardAction(myComponent, this.context))
+    val toolbar = ActionManager.getInstance().createActionToolbar("ProjectStructure", toolbarGroup, true)
+    toolbar.setTargetComponent(myComponent)
+    myToolbarComponent = toolbar.getComponent()
+    left.setBackground(UIUtil.SIDE_PANEL_BACKGROUND)
+    myToolbarComponent!!.setBackground(UIUtil.SIDE_PANEL_BACKGROUND)
+    left.add(myToolbarComponent, BorderLayout.NORTH)
+    left.add(mySidePanel, BorderLayout.CENTER)
+
+    mySplitter!!.setFirstComponent(left)
+    mySplitter!!.setSecondComponent(myDetails)
+
+    myComponent!!.add(mySplitter, BorderLayout.CENTER)
+
+    this.isUiInitialized = true
+
+    return myComponent
+  }
+
+  override fun dispose() {
+  }
+
+  private fun initSidePanel() {
+    val isDefaultProject = this.project === ProjectManager.getInstance().getDefaultProject()
+
+    mySidePanel = SidePanel(this)
+    mySidePanel!!.addSeparator(JavaUiBundle.message("project.settings.title"))
+    addProjectConfig()
+    if (!isDefaultProject) {
+      addModulesConfig()
+    }
+    addProjectLibrariesConfig()
 
     if (!isDefaultProject) {
-      addFacetsConfig();
-      addArtifactsConfig();
+      addFacetsConfig()
+      addArtifactsConfig()
     }
 
-    mySidePanel.addSeparator(JavaUiBundle.message("project.structure.platform.title"));
-    addJdkListConfig();
-    addGlobalLibrariesConfig();
+    mySidePanel!!.addSeparator(JavaUiBundle.message("project.structure.platform.title"))
+    addJdkListConfig()
+    addGlobalLibrariesConfig()
 
-    mySidePanel.addSeparator("--");
-    addErrorPane();
-    mySidePanel.getList().getAccessibleContext().setAccessibleName(UIBundle.message("project.structure.categories.accessible.name"));
+    mySidePanel!!.addSeparator("--")
+    addErrorPane()
+    mySidePanel!!.getList().getAccessibleContext().setAccessibleName(UIBundle.message("project.structure.categories.accessible.name"))
   }
 
-  private void addArtifactsConfig() {
-    addConfigurable(myArtifactsStructureConfigurable, ConfigurableId.ARTIFACTS);
+  private fun addArtifactsConfig() {
+    addConfigurable(this.artifactsStructureConfigurable, ConfigurableId.ARTIFACTS)
   }
 
-  private void addConfigurable(final Configurable configurable, final ConfigurableId configurableId) {
-    addConfigurable(configurable, isAvailable(configurableId));
+  private fun addConfigurable(configurable: Configurable, configurableId: ConfigurableId) {
+    addConfigurable(configurable, isAvailable(configurableId))
   }
 
-  private boolean isAvailable(ConfigurableId id) {
-    for (ProjectStructureConfigurableFilter filter : ProjectStructureConfigurableFilter.EP_NAME.getExtensions()) {
-      if (!filter.isAvailable(id, myProject)) {
-        return false;
+  private fun isAvailable(id: ConfigurableId): Boolean {
+    for (filter in ProjectStructureConfigurableFilter.EP_NAME.extensions) {
+      if (!filter.isAvailable(id, this.project)) {
+        return false
       }
     }
-    return true;
+    return true
   }
 
-  public ArtifactsStructureConfigurable getArtifactsStructureConfigurable() {
-    return myArtifactsStructureConfigurable;
-  }
-
-  private void addFacetsConfig() {
-    if (myFacetStructureConfigurable.isVisible()) {
-      addConfigurable(myFacetStructureConfigurable, ConfigurableId.FACETS);
+  private fun addFacetsConfig() {
+    if (facetStructureConfigurable.isVisible()) {
+      addConfigurable(this.facetStructureConfigurable, ConfigurableId.FACETS)
     }
   }
 
-  private void addJdkListConfig() {
-    addConfigurable(myJdkListConfig, ConfigurableId.JDK_LIST);
+  private fun addJdkListConfig() {
+    addConfigurable(this.jdkConfig, ConfigurableId.JDK_LIST)
   }
 
-  private void addProjectConfig() {
-    myProjectConfig = new ProjectConfigurable(myProject, myContext, myModuleConfigurator, myProjectJdksModel);
-    addConfigurable(myProjectConfig, ConfigurableId.PROJECT);
+  private fun addProjectConfig() {
+    this.projectConfig = ProjectConfigurable(this.project, this.context, myModuleConfigurator, this.projectJdksModel)
+    addConfigurable(this.projectConfig!!, ConfigurableId.PROJECT)
   }
 
-  private void addProjectLibrariesConfig() {
-    addConfigurable(myProjectLibrariesConfig, ConfigurableId.PROJECT_LIBRARIES);
+  private fun addProjectLibrariesConfig() {
+    addConfigurable(this.projectLibrariesConfigurable, ConfigurableId.PROJECT_LIBRARIES)
   }
 
-  private void addErrorPane() {
-    addConfigurable(new ErrorPaneConfigurable(myProject, myContext, () -> mySidePanel.getList().repaint()), true);
+  private fun addErrorPane() {
+    addConfigurable(ErrorPaneConfigurable(this.project, this.context, Runnable { mySidePanel!!.getList().repaint() }), true)
   }
 
-  private void addGlobalLibrariesConfig() {
-    addConfigurable(myGlobalLibrariesConfig, ConfigurableId.GLOBAL_LIBRARIES);
+  private fun addGlobalLibrariesConfig() {
+    addConfigurable(this.globalLibrariesConfigurable, ConfigurableId.GLOBAL_LIBRARIES)
   }
 
-  private void addModulesConfig() {
-    addConfigurable(myModulesConfig, ConfigurableId.MODULES);
+  private fun addModulesConfig() {
+    addConfigurable(this.modulesConfig, ConfigurableId.MODULES)
   }
 
-  @Override
-  public boolean isModified() {
-    if (myProjectJdksModel.isModified()) {
-      return true;
+  override fun isModified(): Boolean {
+    if (projectJdksModel.isModified()) {
+      return true
     }
-    for (Configurable each : myName2Config) {
-      if (each.isModified()) return true;
+    for (each in myName2Config) {
+      if (each.isModified()) return true
     }
 
-    return false;
+    return false
   }
 
-  @Override
-  public void apply() throws ConfigurationException {
-    if (myProjectJdksModel.isModified()) {
-      myProjectJdksModel.apply();
+  @Throws(ConfigurationException::class)
+  override fun apply() {
+    if (projectJdksModel.isModified()) {
+      projectJdksModel.apply()
     }
-    for (Configurable each : myName2Config) {
-      if (each instanceof BaseStructureConfigurable && each.isModified()) {
-        ((BaseStructureConfigurable)each).checkCanApply();
+    for (each in myName2Config) {
+      if (each is BaseStructureConfigurable && each.isModified()) {
+        each.checkCanApply()
       }
     }
-    final Ref<ConfigurationException> exceptionRef = Ref.create();
+    val exceptionRef = Ref.create<ConfigurationException>()
     try {
-      for (Configurable each : myName2Config) {
+      for (each in myName2Config) {
         if (each.isModified()) {
-          each.apply();
+          each.apply()
         }
       }
     }
-    catch (ConfigurationException e) {
-      exceptionRef.set(e);
+    catch (e: ConfigurationException) {
+      exceptionRef.set(e)
     }
 
-    if (!exceptionRef.isNull()) {
-      throw exceptionRef.get();
+    if (!exceptionRef.isNull) {
+      throw exceptionRef.get()
     }
 
-    myObsoleteLibraryFilesRemover.deleteFiles();
-    myContext.getDaemonAnalyzer().clearCaches();
-    BuildManager.getInstance().scheduleAutoMake();
+    myObsoleteLibraryFilesRemover.deleteFiles()
+    context.daemonAnalyzer.clearCaches()
+    BuildManager.getInstance().scheduleAutoMake()
   }
 
-  @Override
-  public void reset() {
-    myContext.reset();
+  override fun reset() {
+    context.reset()
 
-    myProjectJdksModel.reset(myProject);
+    projectJdksModel.reset(this.project)
 
-    Configurable toSelect = null;
-    for (Configurable each : myName2Config) {
-      if (myUiState.lastEditedConfigurable != null && myUiState.lastEditedConfigurable.equals(each.getDisplayName())) {
-        toSelect = each;
+    var toSelect: Configurable? = null
+    for (each in myName2Config) {
+      if (myUiState.lastEditedConfigurable != null && myUiState.lastEditedConfigurable == each.getDisplayName()) {
+        toSelect = each
       }
-      if (each instanceof MasterDetailsComponent) {
-        ((MasterDetailsComponent)each).setHistory(myHistory);
+      if (each is MasterDetailsComponent) {
+        each.setHistory(myHistory)
       }
-      each.reset();
+      each.reset()
     }
 
-    myHistory.clear();
+    myHistory!!.clear()
 
     if (toSelect == null && !myName2Config.isEmpty()) {
-      toSelect = myName2Config.iterator().next();
+      toSelect = myName2Config.iterator().next()
     }
 
-    removeSelected();
+    removeSelected()
 
-    navigateTo(toSelect != null ? createPlaceFor(toSelect) : null, false);
+    navigateTo(if (toSelect != null) createPlaceFor(toSelect) else null, false)
 
     if (myUiState.proportion > 0) {
-      mySplitter.setProportion(myUiState.proportion);
+      mySplitter!!.setProportion(myUiState.proportion)
     }
   }
 
-  @Override
-  public void disposeUIResources() {
-    if (!myUiInitialized) return;
-    final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(myProject);
-    propertiesComponent.setValue("project.structure.last.edited", myUiState.lastEditedConfigurable);
-    propertiesComponent.setValue("project.structure.proportion", String.valueOf(myUiState.proportion));
-    propertiesComponent.setValue("project.structure.side.proportion", String.valueOf(myUiState.sideProportion));
+  override fun disposeUIResources() {
+    if (!this.isUiInitialized) return
+    val propertiesComponent = PropertiesComponent.getInstance(this.project)
+    propertiesComponent.setValue("project.structure.last.edited", myUiState.lastEditedConfigurable)
+    propertiesComponent.setValue("project.structure.proportion", myUiState.proportion.toString())
+    propertiesComponent.setValue("project.structure.side.proportion", myUiState.sideProportion.toString())
 
-    myUiState.proportion = mySplitter.getProportion();
-    saveSideProportion();
-    myContext.getDaemonAnalyzer().stop();
-    for (Configurable each : myName2Config) {
-      each.disposeUIResources();
+    myUiState.proportion = mySplitter!!.getProportion()
+    saveSideProportion()
+    context.getDaemonAnalyzer().stop()
+    for (each in myName2Config) {
+      each.disposeUIResources()
     }
-    myContext.clear();
-    myName2Config.clear();
+    context.clear()
+    myName2Config.clear()
 
-    myModuleConfigurator.getFacetsConfigurator().clearMaps();
-    myHistory.clear();
+    myModuleConfigurator.getFacetsConfigurator().clearMaps()
+    myHistory!!.clear()
 
-    myUiInitialized = false;
-    myComponent = null;
-    mySplitter.removeAll();
-    mySplitter = null;
-    myToolbarComponent = null;
-    myDetails.removeAll();
-    mySidePanel = null;
+    this.isUiInitialized = false
+    myComponent = null
+    mySplitter!!.removeAll()
+    mySplitter = null
+    myToolbarComponent = null
+    myDetails!!.removeAll()
+    mySidePanel = null
   }
 
-  public boolean isUiInitialized() {
-    return myUiInitialized;
+  fun getHistory(): History {
+    return myHistory!!
   }
 
-  public History getHistory() {
-    return myHistory;
+  override fun setHistory(history: History) {
+    myHistory = history
   }
 
-  @Override
-  public void setHistory(final History history) {
-    myHistory = history;
+  override fun queryPlace(place: Place) {
+    place.putPath(CATEGORY, mySelectedConfigurable)
+    Place.queryFurther(mySelectedConfigurable, place)
   }
 
-  @Override
-  public void queryPlace(final @NotNull Place place) {
-    place.putPath(CATEGORY, mySelectedConfigurable);
-    Place.queryFurther(mySelectedConfigurable, place);
+  fun selectProjectGeneralSettings(requestFocus: Boolean): ActionCallback {
+    return navigateTo(createProjectConfigurablePlace(), requestFocus)
   }
 
-  public ActionCallback selectProjectGeneralSettings(final boolean requestFocus) {
-    return navigateTo(createProjectConfigurablePlace(), requestFocus);
+  fun createProjectConfigurablePlace(): Place {
+    return createPlaceFor(this.projectConfig)
   }
 
-  public Place createProjectConfigurablePlace() {
-    return createPlaceFor(myProjectConfig);
-  }
-
-  public ActionCallback select(final @Nullable String moduleToSelect, @Nullable String editorNameToSelect, final boolean requestFocus) {
-    Place place = createModulesPlace();
+  fun select(moduleToSelect: String?, editorNameToSelect: String?, requestFocus: Boolean): ActionCallback {
+    var place = createModulesPlace()
     if (moduleToSelect != null) {
-      final Module module = ModuleManager.getInstance(myProject).findModuleByName(moduleToSelect);
-      assert module != null;
-      place = place.putPath(MasterDetailsComponent.TREE_OBJECT, module).putPath(ModuleEditor.SELECTED_EDITOR_NAME, editorNameToSelect);
+      val module: Module = checkNotNull(ModuleManager.getInstance(this.project).findModuleByName(moduleToSelect))
+      place = place.putPath(MasterDetailsComponent.TREE_OBJECT, module).putPath(ModuleEditor.SELECTED_EDITOR_NAME, editorNameToSelect)
     }
-    return navigateTo(place, requestFocus);
+    return navigateTo(place, requestFocus)
   }
 
-  public Place createModulesPlace() {
-    return createPlaceFor(myModulesConfig);
+  fun createModulesPlace(): Place {
+    return createPlaceFor(this.modulesConfig)
   }
 
-  public Place createModulePlace(@NotNull Module module) {
-    return createModulesPlace().putPath(MasterDetailsComponent.TREE_OBJECT, module);
+  fun createModulePlace(module: Module): Place {
+    return createModulesPlace().putPath(MasterDetailsComponent.TREE_OBJECT, module)
   }
 
-  public ActionCallback select(final @Nullable Facet facetToSelect, final boolean requestFocus) {
-    Place place = createModulesPlace();
+  fun select(facetToSelect: Facet<*>?, requestFocus: Boolean): ActionCallback {
+    var place = createModulesPlace()
     if (facetToSelect != null) {
-      place = place.putPath(MasterDetailsComponent.TREE_OBJECT, facetToSelect);
+      place = place.putPath(MasterDetailsComponent.TREE_OBJECT, facetToSelect)
     }
-    return navigateTo(place, requestFocus);
+    return navigateTo(place, requestFocus)
   }
 
-  public ActionCallback select(@NotNull Sdk sdk, final boolean requestFocus) {
-    Place place = createPlaceFor(myJdkListConfig);
-    place.putPath(MasterDetailsComponent.TREE_NAME, sdk.getName());
-    return navigateTo(place, requestFocus);
+  fun select(sdk: Sdk, requestFocus: Boolean): ActionCallback {
+    val place: Place = createPlaceFor(
+      this.jdkConfig
+    )
+    place.putPath(MasterDetailsComponent.TREE_NAME, sdk.getName())
+    return navigateTo(place, requestFocus)
   }
 
-  public ActionCallback selectGlobalLibraries(final boolean requestFocus) {
-    Place place = createPlaceFor(myGlobalLibrariesConfig);
-    return navigateTo(place, requestFocus);
+  fun selectGlobalLibraries(requestFocus: Boolean): ActionCallback {
+    val place: Place = createPlaceFor(
+      this.globalLibrariesConfigurable
+    )
+    return navigateTo(place, requestFocus)
   }
 
-  public ActionCallback selectProjectOrGlobalLibrary(@NotNull Library library, boolean requestFocus) {
-    Place place = createProjectOrGlobalLibraryPlace(library);
-    return navigateTo(place, requestFocus);
+  fun selectProjectOrGlobalLibrary(library: Library, requestFocus: Boolean): ActionCallback {
+    val place = createProjectOrGlobalLibraryPlace(library)
+    return navigateTo(place, requestFocus)
   }
 
-  public Place createProjectOrGlobalLibraryPlace(Library library) {
-    Place place = createPlaceFor(getConfigurableFor(library));
-    place.putPath(MasterDetailsComponent.TREE_NAME, library.getName());
-    return place;
+  fun createProjectOrGlobalLibraryPlace(library: Library): Place {
+    val place: Place = createPlaceFor(getConfigurableFor(library))
+    place.putPath(MasterDetailsComponent.TREE_NAME, library.getName())
+    return place
   }
 
-  public ActionCallback select(@Nullable Artifact artifact, boolean requestFocus) {
-    Place place = createArtifactPlace(artifact);
-    return navigateTo(place, requestFocus);
+  fun select(artifact: Artifact?, requestFocus: Boolean): ActionCallback {
+    val place = createArtifactPlace(artifact)
+    return navigateTo(place, requestFocus)
   }
 
-  public Place createArtifactPlace(Artifact artifact) {
-    Place place = createPlaceFor(myArtifactsStructureConfigurable);
+  fun createArtifactPlace(artifact: Artifact?): Place {
+    val place: Place = createPlaceFor(
+      this.artifactsStructureConfigurable
+    )
     if (artifact != null) {
-      place.putPath(MasterDetailsComponent.TREE_NAME, artifact.getName());
+      place.putPath(MasterDetailsComponent.TREE_NAME, artifact.getName())
     }
-    return place;
+    return place
   }
 
-  public ActionCallback select(@NotNull LibraryOrderEntry libraryOrderEntry, final boolean requestFocus) {
-    final Library lib = libraryOrderEntry.getLibrary();
+  fun select(libraryOrderEntry: LibraryOrderEntry, requestFocus: Boolean): ActionCallback? {
+    val lib = libraryOrderEntry.getLibrary()
     if (lib == null || lib.getTable() == null) {
-      return selectOrderEntry(libraryOrderEntry.getOwnerModule(), libraryOrderEntry);
+      return selectOrderEntry(libraryOrderEntry.getOwnerModule(), libraryOrderEntry)
     }
-    Place place = createPlaceFor(getConfigurableFor(lib));
-    place.putPath(MasterDetailsComponent.TREE_NAME, libraryOrderEntry.getLibraryName());
-    return navigateTo(place, requestFocus);
+    val place: Place = createPlaceFor(getConfigurableFor(lib))
+    place.putPath(MasterDetailsComponent.TREE_NAME, libraryOrderEntry.getLibraryName())
+    return navigateTo(place, requestFocus)
   }
 
-  public ActionCallback selectOrderEntry(final @NotNull Module module, final @Nullable OrderEntry orderEntry) {
-    return myModulesConfig.selectOrderEntry(module, orderEntry);
+  fun selectOrderEntry(module: Module, orderEntry: OrderEntry?): ActionCallback? {
+    return modulesConfig.selectOrderEntry(module, orderEntry)
   }
 
-  @Override
-  public ActionCallback navigateTo(final @Nullable Place place, final boolean requestFocus) {
-    final Configurable toSelect = (Configurable)place.getPath(CATEGORY);
+  override fun navigateTo(place: Place?, requestFocus: Boolean): ActionCallback {
+    val toSelect = place!!.getPath(CATEGORY) as Configurable?
 
-    JComponent detailsContent = myDetails.getTargetComponent();
+    var detailsContent = myDetails!!.getTargetComponent()
 
-    if (mySelectedConfigurable != toSelect) {
-      if (mySelectedConfigurable instanceof BaseStructureConfigurable) {
-        ((BaseStructureConfigurable)mySelectedConfigurable).onStructureUnselected();
+    if (mySelectedConfigurable !== toSelect) {
+      if (mySelectedConfigurable is BaseStructureConfigurable) {
+        (mySelectedConfigurable as BaseStructureConfigurable).onStructureUnselected()
       }
-      saveSideProportion();
-      removeSelected();
+      saveSideProportion()
+      removeSelected()
 
       if (toSelect != null) {
-        detailsContent = toSelect.createComponent();
-        myDetails.setContent(detailsContent);
+        detailsContent = toSelect.createComponent()
+        myDetails!!.setContent(detailsContent)
       }
 
-      mySelectedConfigurable = toSelect;
+      mySelectedConfigurable = toSelect
       if (mySelectedConfigurable != null) {
-        myUiState.lastEditedConfigurable = mySelectedConfigurable.getDisplayName();
+        myUiState.lastEditedConfigurable = mySelectedConfigurable!!.getDisplayName()
       }
 
-      if (toSelect instanceof MasterDetailsComponent masterDetails) {
+      if (toSelect is MasterDetailsComponent) {
         if (myUiState.sideProportion > 0) {
-          masterDetails.getSplitter().setProportion(myUiState.sideProportion);
+          toSelect.getSplitter().setProportion(myUiState.sideProportion)
         }
-        masterDetails.setHistory(myHistory);
+        toSelect.setHistory(myHistory)
       }
 
-      if (toSelect instanceof DetailsComponent.Facade) {
-        ((DetailsComponent.Facade)toSelect).getDetailsComponent().setBannerMinHeight(myToolbarComponent.getPreferredSize().height);
+      if (toSelect is DetailsComponent.Facade) {
+        (toSelect as DetailsComponent.Facade).getDetailsComponent()
+          .setBannerMinHeight(myToolbarComponent!!.getPreferredSize().height)
       }
 
-      if (toSelect instanceof BaseStructureConfigurable) {
-        ((BaseStructureConfigurable)toSelect).onStructureSelected();
+      if (toSelect is BaseStructureConfigurable) {
+        toSelect.onStructureSelected()
       }
     }
-
 
 
     if (detailsContent != null) {
-      JComponent toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(detailsContent);
+      var toFocus = IdeFocusTraversalPolicy.getPreferredFocusedComponent(detailsContent)
       if (toFocus == null) {
-        toFocus = detailsContent;
+        toFocus = detailsContent
       }
       if (requestFocus) {
-        myToFocus = toFocus;
-        UIUtil.requestFocus(toFocus);
+        myToFocus = toFocus
+        UIUtil.requestFocus(toFocus)
       }
     }
 
-    final ActionCallback result = new ActionCallback();
-    Place.goFurther(toSelect, place, requestFocus).notifyWhenDone(result);
+    val result = ActionCallback()
+    Place.goFurther(toSelect, place, requestFocus).notifyWhenDone(result)
 
-    myDetails.revalidate();
-    myDetails.repaint();
+    myDetails!!.revalidate()
+    myDetails!!.repaint()
 
     if (toSelect != null) {
-      mySidePanel.select(createPlaceFor(toSelect));
+      mySidePanel!!.select(createPlaceFor(toSelect))
     }
 
-    if (!myHistory.isNavigatingNow() && mySelectedConfigurable != null) {
-      myHistory.pushQueryPlace();
+    if (!myHistory!!.isNavigatingNow() && mySelectedConfigurable != null) {
+      myHistory!!.pushQueryPlace()
     }
 
-    return result;
+    return result
   }
 
-  private void saveSideProportion() {
-    if (mySelectedConfigurable instanceof MasterDetailsComponent) {
-      myUiState.sideProportion = ((MasterDetailsComponent)mySelectedConfigurable).getSplitter().getProportion();
+  private fun saveSideProportion() {
+    if (mySelectedConfigurable is MasterDetailsComponent) {
+      myUiState.sideProportion = (mySelectedConfigurable as MasterDetailsComponent).getSplitter().getProportion()
     }
   }
 
-  private void removeSelected() {
-    myDetails.removeAll();
-    mySelectedConfigurable = null;
-    myUiState.lastEditedConfigurable = null;
+  private fun removeSelected() {
+    myDetails!!.removeAll()
+    mySelectedConfigurable = null
+    myUiState.lastEditedConfigurable = null
 
-    myDetails.add(myEmptySelection, BorderLayout.CENTER);
+    myDetails!!.add(myEmptySelection, BorderLayout.CENTER)
   }
 
-  public static ProjectStructureConfigurable getInstance(final @NotNull Project project) {
-    return project.getService(ProjectStructureConfigurable.class);
+  fun registerObsoleteLibraryRoots(roots: Collection<VirtualFile>) {
+    myObsoleteLibraryFilesRemover.registerObsoleteLibraryRoots(roots)
   }
 
-  public @NotNull ProjectSdksModel getProjectJdksModel() {
-    return myProjectJdksModel;
-  }
-
-  public JdkListConfigurable getJdkConfig() {
-    return myJdkListConfig;
-  }
-
-  public ModuleStructureConfigurable getModulesConfig() {
-    return myModulesConfig;
-  }
-
-  public ProjectConfigurable getProjectConfig() {
-    return myProjectConfig;
-  }
-
-  public void registerObsoleteLibraryRoots(@NotNull Collection<? extends VirtualFile> roots) {
-    myObsoleteLibraryFilesRemover.registerObsoleteLibraryRoots(roots);
-  }
-
-  private void addConfigurable(Configurable configurable, boolean addToSidePanel) {
-    myName2Config.add(configurable);
+  private fun addConfigurable(configurable: Configurable, addToSidePanel: Boolean) {
+    myName2Config.add(configurable)
 
     if (addToSidePanel) {
-      mySidePanel.addPlace(createPlaceFor(configurable), new Presentation(configurable.getDisplayName()));
+      mySidePanel!!.addPlace(createPlaceFor(configurable), Presentation(configurable.getDisplayName()))
     }
   }
 
-  private static Place createPlaceFor(final Configurable configurable) {
-    return new Place().putPath(CATEGORY, configurable);
-  }
-
-
-  public StructureConfigurableContext getContext() {
-    return myContext;
-  }
-
-  private class MyPanel extends JPanel implements UiDataProvider {
-    MyPanel() {
-      super(new BorderLayout());
+  private inner class MyPanel : JPanel(BorderLayout()), UiDataProvider {
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink.set<ProjectStructureConfigurable>(KEY, this@ProjectStructureConfigurable)
+      sink.set<History>(History.KEY, getHistory())
     }
 
-    @Override
-    public void uiDataSnapshot(@NotNull DataSink sink) {
-      sink.set(KEY, ProjectStructureConfigurable.this);
-      sink.set(History.KEY, getHistory());
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return JBUI.size(1024, 768);
+    override fun getPreferredSize(): Dimension {
+      return JBUI.size(1024, 768)
     }
   }
 
-  public BaseLibrariesConfigurable getConfigurableFor(final Library library) {
-    if (LibraryTablesRegistrar.PROJECT_LEVEL.equals(library.getTable().getTableLevel())) {
-      return myProjectLibrariesConfig;
-    } else {
-      return myGlobalLibrariesConfig;
+  fun getConfigurableFor(library: Library): BaseLibrariesConfigurable {
+    if (LibraryTablesRegistrar.PROJECT_LEVEL == library.getTable().getTableLevel()) {
+      return this.projectLibrariesConfigurable
+    }
+    else {
+      return this.globalLibrariesConfigurable
     }
   }
 
-  public ProjectLibrariesConfigurable getProjectLibrariesConfigurable() {
-    return myProjectLibrariesConfig;
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return myToFocus
   }
 
-  public GlobalLibrariesConfigurable getGlobalLibrariesConfigurable() {
-    return myGlobalLibrariesConfig;
-  }
+  companion object {
+    val KEY: DataKey<ProjectStructureConfigurable> = create<ProjectStructureConfigurable>("ProjectStructureConfiguration")
 
-  public FacetStructureConfigurable getFacetStructureConfigurable() {
-    return myFacetStructureConfigurable;
-  }
+    @NonNls
+    const val CATEGORY: @NonNls String = "category"
 
-  @Override
-  public @Nullable JComponent getPreferredFocusedComponent() {
-    return myToFocus;
+    @JvmStatic
+    fun getInstance(project: Project): ProjectStructureConfigurable {
+      return project.getService(ProjectStructureConfigurable::class.java)
+    }
+
+    private fun createPlaceFor(configurable: Configurable?): Place {
+      return Place().putPath(CATEGORY, configurable)
+    }
   }
 }
