@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -410,7 +411,7 @@ public class LocalFileSystemImpl
     if (!dir.isDirectory()) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
-    if (OS.CURRENT == OS.Windows) {
+    if (OS.CURRENT == OS.Windows && Registry.is("vfs.windows.use.buffered.directory.stream", true)) {
       try (var dirStream = new WindowsBufferedDirectoryStream(Path.of(toIoPath(dir)))) {
         return StreamSupport.stream(dirStream.spliterator(), false)
           .map(it -> it.getFirst().getFileName().toString())
