@@ -338,3 +338,6 @@ fun MavenTestFixture.assumeOnLocalEnvironmentOnly(cause: String) {
   Assumptions.assumeTrue(LocalEelDescriptor == project.getEelDescriptor(),
                          "Unable to run the test in non-local environment: $cause")
 }
+
+val MavenTestFixture.repositoryPathCanonical: String
+  get() = FileUtil.toCanonicalPath(repositoryPath.toString())
