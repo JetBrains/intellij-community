@@ -16,13 +16,6 @@
     libraries:
       jettison:
       - name: $MAVEN_REPOSITORY$/org/codehaus/jettison/jettison/1/jettison-1.jar
-- name: lib/modules/intellij.libraries.kotlinx.document.store.mvstore.jar
-  contentModules:
-  - name: intellij.libraries.kotlinx.document.store.mvstore
-    libraries:
-      kotlinx-document-store-mvstore:
-      - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-mvstore/0/kotlinx-document-store-mvstore-0.jar
-      - name: $MAVEN_REPOSITORY$/com/github/lamba92/kotlinx-document-store-core-jvm/0/kotlinx-document-store-core-jvm-0.jar
 - name: lib/modules/intellij.libraries.lucene.common.jar
   projectLibraries:
   - name: lucene-analysis-common
@@ -42,25 +35,6 @@
       opencsv:
       - name: $MAVEN_REPOSITORY$/com/opencsv/opencsv/5/opencsv-5.jar
       - name: $MAVEN_REPOSITORY$/commons-beanutils/commons-beanutils/1/commons-beanutils-1.jar
-- name: lib/modules/intellij.libraries.sshd.osgi.jar
-  contentModules:
-  - name: intellij.libraries.sshd.osgi
-    libraries:
-      apache.sshd.osgi:
-      - name: $MAVEN_REPOSITORY$/org/apache/sshd/sshd-osgi/2/sshd-osgi-2.jar
-- name: lib/modules/intellij.libraries.tuweni.toml.jar
-  contentModules:
-  - name: intellij.libraries.tuweni.toml
-    libraries:
-      tuweni-toml:
-      - name: $MAVEN_REPOSITORY$/io/consensys/tuweni/tuweni-toml/2/tuweni-toml-2.jar
-      - name: $MAVEN_REPOSITORY$/org/antlr/antlr4-runtime/4/antlr4-runtime-4.jar
-- name: lib/modules/intellij.libraries.xml.rpc.jar
-  contentModules:
-  - name: intellij.libraries.xml.rpc
-    libraries:
-      xml-rpc:
-      - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
 - name: lib/modules/intellij.libraries.xstream.jar
   contentModules:
   - name: intellij.libraries.xstream

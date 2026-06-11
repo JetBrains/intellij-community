@@ -95,4 +95,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.pytools.ui"/>
     <module name="intellij.python.black"/>
   </content>
+  <content>
+    <module name="intellij.libraries.tuweni.toml"/>
+  </content>
 </idea-plugin>

@@ -45,8 +45,6 @@ jvm_library(
         "//libraries/io",
         "//libraries/ktor/client",
         "@lib//:package-search-api-client",
-        "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore",
-        "//libraries/mvstore",
         "//platform/eel",
     ],
 )
@@ -88,8 +86,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//libraries/io:io_test_lib",
         "//libraries/ktor/client:client_test_lib",
-        "//libraries/kotlinx/document-store-mvstore:libraries-kotlinx-document-store-mvstore_test_lib",
-        "//libraries/mvstore:mvstore_test_lib",
         "//platform/eel:eel_test_lib",
     ],
 )

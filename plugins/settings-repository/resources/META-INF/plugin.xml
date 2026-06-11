@@ -24,8 +24,10 @@
     <plugin id="com.intellij.modules.xml"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.impl"/>
-    <module name="intellij.libraries.sshd.osgi"/>
   </dependencies>
+  <content>
+    <module name="intellij.libraries.sshd.osgi" loading="embedded"/>
+  </content>
 
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="org.jetbrains.settingsRepository.IcsApplicationLoadListener"/>

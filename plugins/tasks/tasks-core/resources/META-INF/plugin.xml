@@ -18,6 +18,9 @@
     <module name="intellij.tasks.bugzilla"/>
     <module name="intellij.tasks.jira"/>
   </content>
+  <content>
+    <module name="intellij.libraries.xml.rpc"/>
+  </content>
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->

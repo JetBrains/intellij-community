@@ -16,6 +16,12 @@
   module: intellij.tasks.compatibility
   files:
   - name: $PROJECT_DIR$/community/lib/commons-httpclient-3.jar
+- name: lib/modules/intellij.libraries.xml.rpc.jar
+  contentModules:
+  - name: intellij.libraries.xml.rpc
+    libraries:
+      xml-rpc:
+      - name: $MAVEN_REPOSITORY$/org/apache/ws/xmlrpc/xmlrpc/2/xmlrpc-2.jar
 - name: lib/modules/intellij.tasks.bugzilla.jar
   contentModules:
   - name: intellij.tasks.bugzilla

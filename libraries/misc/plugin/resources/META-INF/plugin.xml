@@ -6,14 +6,10 @@
   <vendor>JetBrains</vendor>
   <content namespace="jetbrains">
     <module name="intellij.libraries.javax.activation"/>
-    <module name="intellij.libraries.xml.rpc"/>
-    <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
     <module name="intellij.libraries.opencsv"/>
     <module name="intellij.libraries.lucene.common"/>
     <module name="intellij.libraries.jettison"/>
     <module name="intellij.libraries.xstream"/>
     <module name="intellij.libraries.commons.text" loading="required"/>
-    <module name="intellij.libraries.sshd.osgi" loading="required"/>
-    <module name="intellij.libraries.tuweni.toml"/>
   </content>
 </idea-plugin>

@@ -12,11 +12,7 @@
     <module name="intellij.repository.search.completion"/>
     <module name="intellij.repository.search.ultimate"/>
   </content>
-
-  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-  <dependencies>
+  <content>
     <module name="intellij.libraries.kotlinx.document.store.mvstore"/>
-  </dependencies>
-  <!-- endregion -->
-
+  </content>
 </idea-plugin>

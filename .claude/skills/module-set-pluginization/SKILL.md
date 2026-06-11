@@ -15,6 +15,7 @@ Use this workflow when a group of platform modules that currently live inside an
 - Read `community/platform/build-scripts/product-dsl/.claude/rules/product-dsl.md` before changing product-dsl sources.
 - Look at `community/platform/navbar/plugin/` as the reference: a sibling `plugin/` directory of the feature modules with its own `.iml`, `resources/META-INF/plugin.xml`, and `plugin-content.yaml`.
 - Decide whether the modules should still be inlined inside a parent module set in any product. Pluginized wrappers usually stop being emitted through the aggregate `intellij.moduleSets.<name>.xml` and become a bundled plugin instead.
+- For library modules with only a small closed consumer set, do **not** create or keep a shared wrapper just to make the library available. Prefer `visibility="private"` on the library descriptor and register the module as unnamed `<content>` in each consuming plugin, so each copy lives in that plugin's implicit private namespace.
 
 ## Create the Wrapper Plugin Module
 
