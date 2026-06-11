@@ -84,6 +84,14 @@ public final class PluginsTabFactory implements WelcomeTabFactory {
     JComponent topComponent = configurable.getTopComponent();
     BorderLayoutPanel pluginsPanel = JBUI.Panels.simplePanel(mainPanel).addToTop(topComponent)
       .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
+    pluginsPanel.addAncestorListener(new AncestorListenerAdapter() {
+      @Override
+      public void ancestorRemoved(AncestorEvent event) {
+        if (configurable.isModified()) {
+          configurable.scheduleApply();
+        }
+      }
+    });
     if (topComponent instanceof TabbedPaneHeaderComponent tabbedPanel) {
       tabbedPanel.setWelcomeScreen(true);
     }
