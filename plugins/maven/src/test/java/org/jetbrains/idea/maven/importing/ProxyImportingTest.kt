@@ -1,10 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpProxyServerFixture
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.UsefulTestCase.assertContainsElements
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.runBlocking
@@ -16,21 +17,17 @@ import org.jetbrains.idea.maven.fixtures.mavenGeneralSettings
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.fixtures.removeFromLocalRepository
 import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.net.URI
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
-import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedClass
-import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.AfterEach
-import com.intellij.testFramework.UsefulTestCase.assertContainsElements
 
 @TestApplication
 @ParameterizedClass
@@ -39,7 +36,8 @@ class ProxyImportingTest(mavenVersion: String, modelVersion: String) {
 
   private val maven by mavenImportingFixture(
     mavenVersion = mavenVersion,
-    modelVersion = modelVersion
+    modelVersion = modelVersion,
+    skipPluginResolution = false,
   )
   
 
