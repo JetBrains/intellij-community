@@ -186,6 +186,23 @@ class PiSessionSourceTest {
   }
 
   @Test
+  fun `pi extension session info update creates scoped thread refresh`() {
+    val projectStatusDir = tempDir.resolve("project-status-name")
+    val projectStatusDirJson = projectStatusDir.toString().jsonString()
+    val updateEvent = PiExtensionStatusBridge.parseStatusUpdate(
+      content = """
+        {"sessionId":"session-status-name","cwd":$projectStatusDirJson,"event":"session_info_changed","name":"Renamed"}
+      """.trimIndent(),
+      receivedAtMs = 6_000L,
+    )
+
+    assertThat(updateEvent?.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+    assertThat(updateEvent?.scopedPaths).containsExactly(projectStatusDir.toString())
+    assertThat(updateEvent?.threadIds).containsExactly("session-status-name")
+    assertThat(updateEvent?.activityUpdatesByThreadId).isEmpty()
+  }
+
+  @Test
   fun `array text content is used as first user message fallback title`() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-array-content")

@@ -11,6 +11,7 @@ const STATUS_TOKEN_ENV = "AGENT_WORKBENCH_PI_STATUS_TOKEN";
 const STATUS_ENDPOINT = process.env[STATUS_ENDPOINT_ENV];
 const STATUS_TOKEN = process.env[STATUS_TOKEN_ENV];
 const DONE_STATUS_IDLE_RECHECK_MS = 150;
+const SESSION_INFO_LEAF_POLL_MS = 1000;
 const THEME_COLOR_KEYS: ThemeColor[] = [
   "accent",
   "border",
@@ -139,13 +140,20 @@ type PiThemeSnapshot = {
 };
 
 export default function agentWorkbenchTheme(pi: ExtensionAPI) {
-  let watcher: FSWatcher | undefined;
+  let themeWatcher: FSWatcher | undefined;
+  let sessionInfoPoll: ReturnType<typeof setInterval> | undefined;
   let scheduledApply: ReturnType<typeof setTimeout> | undefined;
   let scheduledDoneStatus: ReturnType<typeof setTimeout> | undefined;
   let lastStatusSignature: string | undefined;
+  let lastSessionInfoSignature: string | undefined;
+  let lastSessionInfoLeafId: string | null | undefined;
 
   const updateLastStatusSignature = (signature: string) => {
     lastStatusSignature = signature;
+  };
+
+  const updateLastSessionInfoSignature = (signature: string) => {
+    lastSessionInfoSignature = signature;
   };
 
   const clearScheduledDoneStatus = () => {
@@ -158,14 +166,17 @@ export default function agentWorkbenchTheme(pi: ExtensionAPI) {
   const postProcessingStatus = (ctx: ExtensionContext) => {
     clearScheduledDoneStatus();
     postStatusIfChanged(ctx, "processing", updateLastStatusSignature, lastStatusSignature);
+    checkSessionInfoChanged(ctx, updateLastSessionInfoSignature, lastSessionInfoSignature, rememberSessionInfoLeafId);
   };
 
   const postDoneStatus = (ctx: ExtensionContext) => {
     clearScheduledDoneStatus();
     postStatusIfChanged(ctx, "done", updateLastStatusSignature, lastStatusSignature);
+    checkSessionInfoChanged(ctx, updateLastSessionInfoSignature, lastSessionInfoSignature, rememberSessionInfoLeafId);
   };
 
   const scheduleDoneStatus = (ctx: ExtensionContext) => {
+    checkSessionInfoChanged(ctx, updateLastSessionInfoSignature, lastSessionInfoSignature, rememberSessionInfoLeafId);
     clearScheduledDoneStatus();
     scheduledDoneStatus = setTimeout(() => {
       scheduledDoneStatus = undefined;
@@ -185,13 +196,37 @@ export default function agentWorkbenchTheme(pi: ExtensionAPI) {
     }, 100);
   };
 
+  const ensureSessionInfoPolling = (ctx: ExtensionContext) => {
+    if (sessionInfoPoll !== undefined) {
+      return;
+    }
+    sessionInfoPoll = setInterval(() => {
+      const leafId = ctx.sessionManager.getLeafId();
+      if (leafId !== lastSessionInfoLeafId) {
+        lastSessionInfoLeafId = leafId;
+        checkSessionInfoChanged(ctx, updateLastSessionInfoSignature, lastSessionInfoSignature, rememberSessionInfoLeafId);
+      }
+    }, SESSION_INFO_LEAF_POLL_MS);
+  };
+
+  const rememberSessionInfoLeafId = (ctx: ExtensionContext) => {
+    lastSessionInfoLeafId = ctx.sessionManager.getLeafId();
+  };
+
   pi.on("session_start", async (_event, ctx) => {
     await applyCurrentTheme(ctx);
     clearScheduledDoneStatus();
     postStatusIfChanged(ctx, resolveStartupActivity(ctx), updateLastStatusSignature, lastStatusSignature);
-    if (watcher === undefined) {
-      watcher = startStateWatcher(scheduleApply, ctx);
+    checkSessionInfoChanged(ctx, updateLastSessionInfoSignature, lastSessionInfoSignature, rememberSessionInfoLeafId);
+    ensureSessionInfoPolling(ctx);
+    if (themeWatcher === undefined) {
+      themeWatcher = startStateWatcher(scheduleApply, ctx);
     }
+  });
+
+  (pi.on as AgentWorkbenchSessionInfoChangedOn)("session_info_changed", (event, ctx) => {
+    postSessionInfoChangedIfChanged(ctx, event.name, updateLastSessionInfoSignature, lastSessionInfoSignature);
+    rememberSessionInfoLeafId(ctx);
   });
 
   pi.on("agent_start", (_event, ctx) => {
@@ -224,12 +259,43 @@ export default function agentWorkbenchTheme(pi: ExtensionAPI) {
       scheduledApply = undefined;
     }
     clearScheduledDoneStatus();
-    watcher?.close();
-    watcher = undefined;
+    if (sessionInfoPoll !== undefined) {
+      clearInterval(sessionInfoPoll);
+      sessionInfoPoll = undefined;
+    }
+    lastSessionInfoSignature = undefined;
+    lastSessionInfoLeafId = undefined;
+    themeWatcher?.close();
+    themeWatcher = undefined;
   });
 }
 
 type AgentWorkbenchStatusActivity = "ready" | "processing" | "done";
+
+type AgentWorkbenchSessionInfoChangedEvent = {
+  type: "session_info_changed";
+  name?: string;
+};
+
+type AgentWorkbenchSessionInfoChangedOn = (
+  event: "session_info_changed",
+  handler: (event: AgentWorkbenchSessionInfoChangedEvent, ctx: ExtensionContext) => void,
+) => void;
+
+type AgentWorkbenchStatusPayload = {
+  sessionId: string;
+  cwd: string;
+  activity: AgentWorkbenchStatusActivity;
+  updatedAt: number;
+};
+
+type AgentWorkbenchSessionInfoPayload = {
+  sessionId: string;
+  cwd: string;
+  event: "session_info_changed";
+  name?: string;
+  updatedAt: number;
+};
 
 function resolveStartupActivity(ctx: ExtensionContext): AgentWorkbenchStatusActivity {
   return ctx.isIdle() ? "ready" : "processing";
@@ -258,12 +324,68 @@ function postStatusIfChanged(
   });
 }
 
-async function postStatus(payload: {
-  sessionId: string;
-  cwd: string;
-  activity: AgentWorkbenchStatusActivity;
-  updatedAt: number;
-}): Promise<boolean> {
+function postSessionInfoChangedIfChanged(
+  ctx: ExtensionContext,
+  name: string | undefined,
+  updateLastSessionInfoSignature: (signature: string) => void,
+  lastSessionInfoSignature: string | undefined,
+): void {
+  const signature = createSessionInfoSignature(ctx, name);
+  if (signature === undefined || signature === lastSessionInfoSignature) {
+    return;
+  }
+
+  const sessionId = ctx.sessionManager.getSessionId();
+  const cwd = ctx.cwd;
+  if (STATUS_ENDPOINT === undefined || STATUS_TOKEN === undefined || sessionId === undefined || cwd === undefined) {
+    updateLastSessionInfoSignature(signature);
+    return;
+  }
+
+  void postStatus({sessionId, cwd, event: "session_info_changed", name, updatedAt: Date.now()}).then((posted) => {
+    if (posted) {
+      updateLastSessionInfoSignature(signature);
+    }
+  });
+}
+
+function checkSessionInfoChanged(
+  ctx: ExtensionContext,
+  updateLastSessionInfoSignature: (signature: string) => void,
+  lastSessionInfoSignature: string | undefined,
+  rememberSessionInfoLeafId: (ctx: ExtensionContext) => void,
+): void {
+  const name = ctx.sessionManager.getSessionName();
+  if (lastSessionInfoSignature === undefined && name === undefined) {
+    rememberSessionInfoSignature(ctx, name, updateLastSessionInfoSignature);
+    rememberSessionInfoLeafId(ctx);
+    return;
+  }
+  postSessionInfoChangedIfChanged(ctx, name, updateLastSessionInfoSignature, lastSessionInfoSignature);
+  rememberSessionInfoLeafId(ctx);
+}
+
+function rememberSessionInfoSignature(
+  ctx: ExtensionContext,
+  name: string | undefined,
+  updateLastSessionInfoSignature: (signature: string) => void,
+): void {
+  const signature = createSessionInfoSignature(ctx, name);
+  if (signature !== undefined) {
+    updateLastSessionInfoSignature(signature);
+  }
+}
+
+function createSessionInfoSignature(ctx: ExtensionContext, name: string | undefined): string | undefined {
+  const sessionId = ctx.sessionManager.getSessionId();
+  const cwd = ctx.cwd;
+  if (sessionId === undefined || cwd === undefined) {
+    return undefined;
+  }
+  return `${sessionId}\u0000${cwd}\u0000${name ?? ""}`;
+}
+
+async function postStatus(payload: AgentWorkbenchStatusPayload | AgentWorkbenchSessionInfoPayload): Promise<boolean> {
   try {
     const response = await fetch(STATUS_ENDPOINT!, {
       method: "POST",

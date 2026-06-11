@@ -93,6 +93,17 @@ internal object PiExtensionStatusBridge {
   private fun createStatusUpdate(payload: PiStatusPayload, receivedAtMs: Long): AgentSessionSourceUpdateEvent? {
     val sessionId = payload.sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
     val scopedPath = payload.cwd?.let(::normalizePiProjectPath) ?: return null
+    val event = payload.event?.trim()?.lowercase()?.replace('-', '_')
+    if (event != null) {
+      return when (event) {
+        PI_SESSION_INFO_CHANGED_EVENT -> AgentSessionSourceUpdateEvent(
+          type = AgentSessionSourceUpdate.THREADS_CHANGED,
+          scopedPaths = setOf(scopedPath),
+          threadIds = setOf(sessionId),
+        )
+        else -> null
+      }
+    }
     val activity = payload.activity?.let(::parsePiStatusActivity) ?: return null
     val updatedAt = payload.updatedAt ?: receivedAtMs
     return AgentSessionSourceUpdateEvent(
@@ -131,6 +142,7 @@ internal enum class PiExtensionStatusRequestResult {
 private data class PiStatusPayload(
   @JvmField val sessionId: String? = null,
   @JvmField val cwd: String? = null,
+  @JvmField val event: String? = null,
   @JvmField val activity: String? = null,
   @JvmField val updatedAt: Long? = null,
 )
@@ -138,12 +150,14 @@ private data class PiStatusPayload(
 private fun readStatusPayload(parser: JsonParser): PiStatusPayload {
   var sessionId: String? = null
   var cwd: String? = null
+  var event: String? = null
   var activity: String? = null
   var updatedAt: Long? = null
   forEachJsonObjectField(parser) { fieldName ->
     when (fieldName) {
       "sessionId" -> sessionId = readJsonStringOrNull(parser)
       "cwd" -> cwd = readJsonStringOrNull(parser)
+      "event" -> event = readJsonStringOrNull(parser)
       "activity" -> activity = readJsonStringOrNull(parser)
       "updatedAt" -> updatedAt = readJsonLongOrNull(parser)
       else -> parser.skipChildren()
@@ -153,6 +167,7 @@ private fun readStatusPayload(parser: JsonParser): PiStatusPayload {
   return PiStatusPayload(
     sessionId = sessionId,
     cwd = cwd,
+    event = event,
     activity = activity,
     updatedAt = updatedAt,
   )
@@ -173,3 +188,5 @@ private fun parsePiStatusActivity(value: String): AgentThreadActivity? {
 internal const val PI_STATUS_ENDPOINT_ENVIRONMENT_VARIABLE: String = "AGENT_WORKBENCH_PI_STATUS_ENDPOINT"
 internal const val PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE: String = "AGENT_WORKBENCH_PI_STATUS_TOKEN"
 internal const val PI_STATUS_ENDPOINT_PREFIX: String = "agent-workbench/pi/status"
+
+private const val PI_SESSION_INFO_CHANGED_EVENT: String = "session_info_changed"

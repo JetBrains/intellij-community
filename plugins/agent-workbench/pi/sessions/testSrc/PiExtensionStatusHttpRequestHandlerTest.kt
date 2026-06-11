@@ -66,6 +66,35 @@ class PiExtensionStatusHttpRequestHandlerTest {
   }
 
   @Test
+  fun `valid session info request emits thread update`(@TestDisposable disposable: Disposable): Unit = runBlocking(Dispatchers.Default) {
+    registerStatusHandler(disposable)
+    val sessionId = "session-http-name"
+    val projectDir = tempDir.resolve("project-name")
+    val launchEnvironment = createStatusLaunchEnvironment(sessionId)
+    val update = async(start = CoroutineStart.UNDISPATCHED) {
+      withTimeout(5.seconds) {
+        PiExtensionStatusBridge.updateEvents.first { event ->
+          event.threadIds?.contains(sessionId) == true && event.type == AgentSessionSourceUpdate.THREADS_CHANGED
+        }
+      }
+    }
+
+    val response = postStatus(
+      launchEnvironment = launchEnvironment,
+      payload = """
+        {"sessionId":"$sessionId","cwd":${projectDir.toString().jsonString()},"event":"session_info_changed","name":"Renamed"}
+      """.trimIndent(),
+    )
+
+    assertThat(response.statusCode()).isEqualTo(200)
+    val event = update.await()
+    assertThat(event.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+    assertThat(event.scopedPaths).containsExactly(checkNotNull(normalizePiProjectPath(projectDir.toString())))
+    assertThat(event.threadIds).containsExactly(sessionId)
+    assertThat(event.activityUpdatesByThreadId).isEmpty()
+  }
+
+  @Test
   fun `missing bearer token is rejected`(@TestDisposable disposable: Disposable): Unit = runBlocking(Dispatchers.Default) {
     registerStatusHandler(disposable)
     val sessionId = "session-http-missing-token"
