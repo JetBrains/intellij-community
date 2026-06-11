@@ -26,6 +26,36 @@ import org.jetbrains.jewel.ui.Typography
  * [JBFont] as a reference for font sizes and style.
  */
 public object BridgeTypography : Typography {
+    @Composable
+    override fun rememberDefaultTextStyle(
+        fontSize: TextUnit,
+        fontWeight: FontWeight?,
+        fontStyle: FontStyle?,
+    ): TextStyle =
+        remember(JewelTheme.instanceUuid, fontSize, fontWeight, fontStyle) {
+            retrieveDefaultTextStyle(fontSize, fontWeight, fontStyle)
+        }
+
+    @Composable
+    override fun rememberEditorTextStyle(
+        fontSize: TextUnit,
+        fontWeight: FontWeight?,
+        fontStyle: FontStyle?,
+    ): TextStyle =
+        remember(JewelTheme.instanceUuid, fontSize, fontWeight, fontStyle) {
+            retrieveEditorTextStyle(fontSize, fontWeight, fontStyle)
+        }
+
+    @Composable
+    override fun rememberConsoleTextStyle(
+        fontSize: TextUnit,
+        fontWeight: FontWeight?,
+        fontStyle: FontStyle?,
+    ): TextStyle =
+        remember(JewelTheme.instanceUuid, fontSize, fontWeight, fontStyle) {
+            retrieveConsoleTextStyle(fontSize, fontWeight, fontStyle)
+        }
+
     @get:Composable
     override val labelTextStyle: TextStyle
         get() = remember(JewelTheme.instanceUuid) { retrieveDefaultTextStyle() }

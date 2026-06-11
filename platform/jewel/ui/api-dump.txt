@@ -106,6 +106,16 @@ org.jetbrains.jewel.ui.Typography
 - a:getMedium(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - a:getRegular(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - a:getSmall(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- rememberConsoleTextStyle-bgE_P6U(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- b:rememberConsoleTextStyle-e402vg0(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.text.TextStyle
+- rememberDefaultTextStyle-bgE_P6U(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- b:rememberDefaultTextStyle-e402vg0(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.text.TextStyle
+- rememberEditorTextStyle-bgE_P6U(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- b:rememberEditorTextStyle-e402vg0(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.text.TextStyle
+f:org.jetbrains.jewel.ui.Typography$ComposeDefaultImpls
+- sf:rememberConsoleTextStyle$default-otp-t0o(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,org.jetbrains.jewel.ui.Typography,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.text.TextStyle
+- sf:rememberDefaultTextStyle$default-otp-t0o(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,org.jetbrains.jewel.ui.Typography,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.text.TextStyle
+- sf:rememberEditorTextStyle$default-otp-t0o(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,org.jetbrains.jewel.ui.Typography,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.text.TextStyle
 f:org.jetbrains.jewel.ui.TypographyKt
 - sf:getLocalTypography():androidx.compose.runtime.ProvidableCompositionLocal
 - sf:getTypography(org.jetbrains.jewel.foundation.theme.JewelTheme$Companion,androidx.compose.runtime.Composer,I):org.jetbrains.jewel.ui.Typography

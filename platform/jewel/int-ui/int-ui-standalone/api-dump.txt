@@ -30,6 +30,9 @@ f:org.jetbrains.jewel.intui.standalone.IntUiTypography
 - getMedium(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - getRegular(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - getSmall(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- rememberConsoleTextStyle-e402vg0(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.text.TextStyle
+- rememberDefaultTextStyle-e402vg0(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.text.TextStyle
+- rememberEditorTextStyle-e402vg0(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.runtime.Composer,I,I):androidx.compose.ui.text.TextStyle
 f:org.jetbrains.jewel.intui.standalone.InterFontKt
 - sf:getInter(androidx.compose.ui.text.font.FontFamily$Companion):androidx.compose.ui.text.font.FontFamily
 f:org.jetbrains.jewel.intui.standalone.JetBrainsMonoFontKt
