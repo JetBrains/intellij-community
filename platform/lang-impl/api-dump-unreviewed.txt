@@ -783,12 +783,6 @@ f:com.intellij.build.FileNavigatable
 - getFileDescriptor():com.intellij.openapi.fileEditor.OpenFileDescriptor
 - getFilePosition():com.intellij.build.FilePosition
 - navigate(Z):V
-com.intellij.build.Filterable
-- a:addFilter(java.util.function.Predicate):V
-- a:contains(java.util.function.Predicate):Z
-- a:getFilter():java.util.function.Predicate
-- a:isFilteringEnabled():Z
-- a:removeFilter(java.util.function.Predicate):V
 c:com.intellij.build.SyncViewManager
 - <init>(com.intellij.openapi.project.Project):V
 - getViewName():java.lang.String
@@ -1774,17 +1768,6 @@ pa:com.intellij.codeInsight.documentation.AbstractExternalFilter$RefConvertor
 com.intellij.codeInsight.documentation.DocCommentFixer
 - sf:EXTENSION:com.intellij.lang.LanguageExtension
 - a:fixComment(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiComment):V
-com.intellij.codeInsight.documentation.DocToolWindowManager
-- sf:LANGUAGE_MANAGER:com.intellij.codeInsight.documentation.DocToolWindowManager$DocToolWindowLanguageManager
-- a:createToolWindow(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.codeInsight.documentation.DocumentationManager):com.intellij.openapi.wm.ToolWindow
-- a:disposeToolWindow(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):V
-- a:getDocumentationComponent(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):com.intellij.codeInsight.documentation.DocumentationComponent
-- a:getDocumentationContent(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):com.intellij.ui.content.Content
-- a:installToolWindowActions(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):V
-- a:isAutoUpdateAvailable():Z
-- a:prepareForShowDocumentation(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):V
-- a:setToolWindowDefaultState(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):V
-- a:updateToolWindowDocumentationTabName(com.intellij.openapi.wm.ToolWindow,com.intellij.psi.PsiElement,com.intellij.codeInsight.documentation.DocumentationManager):V
 f:com.intellij.codeInsight.documentation.DocToolWindowManager$DocToolWindowLanguageManager
 - com.intellij.lang.LanguageExtension
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
@@ -4084,8 +4067,6 @@ f:com.intellij.codeInspection.actions.ViewOfflineResultsAction
 - s:showOfflineView(com.intellij.openapi.project.Project,java.lang.String,java.util.Map,java.lang.String):com.intellij.codeInspection.ui.InspectionResultsView
 - s:showOfflineView(com.intellij.openapi.project.Project,java.util.Map,com.intellij.codeInspection.ex.InspectionProfileImpl,java.lang.String):com.intellij.codeInspection.ui.InspectionResultsView
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.codeInspection.ex.ApplicationInspectionProfileManager$Companion
-- f:getInstanceImpl():com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
 c:com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction
 - <init>(com.intellij.codeInsight.daemon.HighlightDisplayKey,com.intellij.openapi.util.Computable):V
 - generatePreview(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -4504,20 +4485,6 @@ f:com.intellij.execution.console.ConsoleHistoryController$ModelHelper
 - getModel():com.intellij.execution.console.ConsoleHistoryModel
 - loadHistory(java.lang.String):Z
 - setContent(java.lang.String):V
-com.intellij.execution.console.ConsoleHistoryModel
-- a:getCurrentIndex():I
-- a:getHistoryNext():com.intellij.execution.console.ConsoleHistoryModel$Entry
-- a:getHistoryPrev():com.intellij.execution.console.ConsoleHistoryModel$Entry
-- a:hasHistory():Z
-- prevOnLastLine():Z
-- a:setContent(java.lang.String):V
-f:com.intellij.execution.console.ConsoleHistoryModel$Entry
-- java.lang.Record
-- <init>(java.lang.CharSequence,I):V
-- f:equals(java.lang.Object):Z
-- f:hashCode():I
-- offset():I
-- text():java.lang.CharSequence
 com.intellij.execution.console.ConsoleHistoryModelProvider
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - a:createModel(java.lang.String,com.intellij.execution.console.LanguageConsoleView):com.intellij.execution.console.ConsoleHistoryModel

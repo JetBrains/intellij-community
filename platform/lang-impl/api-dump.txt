@@ -391,6 +391,12 @@ c:com.intellij.build.ExecutionNode
 - setTitle(java.lang.String):V
 f:com.intellij.build.FileNavigatable
 - com.intellij.pom.Navigatable
+com.intellij.build.Filterable
+- a:addFilter(java.util.function.Predicate):V
+- a:contains(java.util.function.Predicate):Z
+- a:getFilter():java.util.function.Predicate
+- a:isFilteringEnabled():Z
+- a:removeFilter(java.util.function.Predicate):V
 c:com.intellij.build.SyncViewManager
 - com.intellij.build.AbstractViewManager
 c:com.intellij.build.events.impl.FailureImpl
@@ -864,6 +870,17 @@ a:com.intellij.codeInsight.documentation.AbstractExternalFilter
 - getExternalDocInfo(java.lang.String):java.lang.String
 pa:com.intellij.codeInsight.documentation.AbstractExternalFilter$RefConvertor
 - <init>(java.util.regex.Pattern):V
+com.intellij.codeInsight.documentation.DocToolWindowManager
+- sf:LANGUAGE_MANAGER:com.intellij.codeInsight.documentation.DocToolWindowManager$DocToolWindowLanguageManager
+- a:createToolWindow(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.codeInsight.documentation.DocumentationManager):com.intellij.openapi.wm.ToolWindow
+- a:disposeToolWindow(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):V
+- a:getDocumentationComponent(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):com.intellij.codeInsight.documentation.DocumentationComponent
+- a:getDocumentationContent(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):com.intellij.ui.content.Content
+- a:installToolWindowActions(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):V
+- a:isAutoUpdateAvailable():Z
+- a:prepareForShowDocumentation(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):V
+- a:setToolWindowDefaultState(com.intellij.openapi.wm.ToolWindow,com.intellij.codeInsight.documentation.DocumentationManager):V
+- a:updateToolWindowDocumentationTabName(com.intellij.openapi.wm.ToolWindow,com.intellij.psi.PsiElement,com.intellij.codeInsight.documentation.DocumentationManager):V
 a:com.intellij.codeInsight.documentation.DockablePopupManager
 - <init>(com.intellij.openapi.project.Project):V
 - p:createActions():com.intellij.openapi.actionSystem.AnAction[]
@@ -1861,6 +1878,8 @@ f:com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
 - getState():org.jdom.Element
 - loadProfile(java.lang.String):com.intellij.codeInspection.ex.InspectionProfileImpl
 - loadState(org.jdom.Element):V
+f:com.intellij.codeInspection.ex.ApplicationInspectionProfileManager$Companion
+- f:getInstanceImpl():com.intellij.codeInspection.ex.ApplicationInspectionProfileManager
 c:com.intellij.codeInspection.ex.CustomEditInspectionToolsSettingsAction
 - com.intellij.codeInsight.intention.IntentionAction
 - com.intellij.openapi.util.Iconable
@@ -1992,6 +2011,19 @@ c:com.intellij.execution.console.ConsoleHistoryController
 - setMultiline(Z):com.intellij.execution.console.ConsoleHistoryController
 com.intellij.execution.console.ConsoleHistoryModel
 - com.intellij.openapi.util.ModificationTracker
+- a:getCurrentIndex():I
+- a:getHistoryNext():com.intellij.execution.console.ConsoleHistoryModel$Entry
+- a:getHistoryPrev():com.intellij.execution.console.ConsoleHistoryModel$Entry
+- a:hasHistory():Z
+- prevOnLastLine():Z
+- a:setContent(java.lang.String):V
+f:com.intellij.execution.console.ConsoleHistoryModel$Entry
+- java.lang.Record
+- <init>(java.lang.CharSequence,I):V
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- offset():I
+- text():java.lang.CharSequence
 com.intellij.execution.console.ConsoleOptionsProvider
 - com.intellij.openapi.options.UnnamedConfigurable
 f:com.intellij.execution.console.ConsoleOptionsProviderEP
