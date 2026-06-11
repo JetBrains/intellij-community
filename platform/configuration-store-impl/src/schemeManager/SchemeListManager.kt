@@ -51,6 +51,7 @@ internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeMa
     if (!schemeListRef.compareAndSet(oldList, newList)) {
       throw IllegalStateException("Scheme list was modified")
     }
+    schemeManager.incModificationCount()
   }
 
   inline fun mutate(task: (schemes: MutableList<T>,
@@ -83,7 +84,7 @@ internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeMa
       }
 
       if (existing.javaClass != scheme.javaClass) {
-        LOG.warn("'${processor.getSchemeKey(scheme)}' ${existing.javaClass.simpleName} replaced with ${scheme.javaClass.simpleName}")
+        LOG.warn("'${processor.getSchemeKey(scheme)}' ${existing.javaClass} replaced with ${scheme.javaClass}")
       }
 
       if (replaceExisting && processor.isExternalizable(existing)) {
@@ -107,6 +108,7 @@ internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeMa
         schemes.add(scheme)
       }
     }
+    schemeManager.incModificationCount()
 
     if (processor.isExternalizable(scheme) && schemeManager.filesToDelete.isNotEmpty()) {
       schemeToInfo.get(scheme)?.let {
@@ -149,7 +151,7 @@ internal class SchemeListManager<T : Scheme>(private val schemeManager: SchemeMa
         schemeManager.activeScheme = newCurrentScheme
         newScheme = newCurrentScheme
       }
-      else if (oldCurrentScheme != null && !newSchemesMutable.contains(oldCurrentScheme)) {
+      else if (!newSchemesMutable.contains(oldCurrentScheme)) {
         newScheme = newSchemesMutable.firstOrNull()
         schemeManager.activeScheme = newScheme
       }

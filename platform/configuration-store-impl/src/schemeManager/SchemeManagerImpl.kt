@@ -196,6 +196,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
           LOG.warn("Duplicated scheme $schemeKey - old: $oldScheme, new $scheme")
         }
         schemes.add(scheme)
+        incModificationCount()
         return scheme
       }
     }
@@ -348,6 +349,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
 
     retainExternalInfo(isScheduleToDelete = false, schemeToInfo = list.schemeToInfo, newSchemes = list.list)
+    incModificationCount()
   }
 
   internal fun getFileName(scheme: T): String? = schemeListManager.getExternalInfo(scheme)?.fileNameWithoutExtension
@@ -420,6 +422,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       if (!hasSchemes && (provider == null || !provider.isApplicable(fileSpec, roamingType))) {
         removeDirectoryIfEmpty(errorCollector, events)
       }
+      incModificationCount()
     }
 
     errorCollector.getError()?.let {
@@ -470,7 +473,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     if (fileNameWithoutExtension == null || isRenamed(scheme)) {
       fileNameWithoutExtension = nameGenerator.generateUniqueName(schemeNameToFileName(processor.getSchemeKey(scheme)))
       if (LOG.isDebugEnabled) {
-        val allSchemes = schemeListManager.schemes
+        val allSchemes = schemes
         LOG.debug("""
           |Generate scheme file name '$fileNameWithoutExtension' for '$scheme'@${System.identityHashCode(scheme)}
           | currentFileNameWithoutExtension=$currentFileNameWithoutExtension
@@ -563,6 +566,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
     }
     externalInfo.digest = newDigest
     externalInfo.schemeKey = processor.getSchemeKey(scheme)
+    incModificationCount()
   }
 
   private fun isEqualToBundledScheme(
@@ -727,6 +731,7 @@ class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
       if (isScheduleToDelete && processor.isExternalizable(scheme)) {
         schemeListManager.data.schemeToInfo.remove(scheme)?.scheduleDelete(filesToDelete, "requested to delete (removeFirstScheme)")
       }
+      incModificationCount()
       return scheme
     }
 
@@ -738,7 +743,7 @@ private class ErrorCollector {
   private var error: Throwable? = null
 
   fun addError(error: Throwable) {
-    if (error is CancellationException || error is ProcessCanceledException) {
+    if (error is CancellationException) {
       throw error
     }
     this.error = addSuppressed(this.error, error)

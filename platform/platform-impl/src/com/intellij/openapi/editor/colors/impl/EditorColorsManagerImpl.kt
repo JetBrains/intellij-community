@@ -50,10 +50,12 @@ import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.PsiManager
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.ExperimentalUI
+import com.intellij.openapi.editor.colors.CachedVersionedColorScheme
 import com.intellij.util.ComponentTreeEventDispatcher
 import com.intellij.util.ResourceUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -86,6 +88,9 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   private var state = State()
   private var themeIsCustomized = false
   private var isInitialConfigurationLoaded = false
+  private val cachedDefaultScheme = CachedVersionedColorScheme { getScheme(EditorColorsScheme.getDefaultSchemeName()) }
+  private val cachedDarculaScheme = CachedVersionedColorScheme { getScheme("Darcula") }
+  private val cachedGlobalScheme = CachedVersionedColorScheme { activeVisibleScheme ?: getEditableDefaultScheme() }
 
   constructor() : this(SchemeManagerFactory.getInstance())
 
@@ -159,7 +164,11 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }
   }
 
-  override fun getSchemeModificationCounter(): Long = schemeModificationCounter.get()
+  /**
+  the [SchemeManager] modification (when [SchemeManager.addScheme],[SchemeManager.removeScheme],[SchemeManager.activeScheme] changed) plus
+  our own [schemeModificationCounter] (when someone called [schemeChangedOrSwitched] even though nothing was changed)
+   */
+  override fun getSchemeModificationCounter(): Long = (schemeManager as ModificationTracker).modificationCount + schemeModificationCounter.get()
 
   override fun reloadKeepingActiveScheme() {
     val activeScheme = schemeManager.currentSchemeName
@@ -298,11 +307,10 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
   }
 
   fun getDefaultAttributes(key: TextAttributesKey): TextAttributes? {
-    @Suppress("DEPRECATION") val dark = StartupUiUtil.isUnderDarcula && getScheme("Darcula") != null
     // It is reasonable to fetch attributes from a Default color scheme.
     // Otherwise, if we launch IDE and then try to switch from a custom colors scheme (e.g., with a dark background) to the default one.
     // The editor will show incorrect highlighting with "traces" of a color scheme which was active during IDE startup.
-    return getScheme(if (dark) "Darcula" else EditorColorsScheme.getDefaultSchemeName())?.getAttributes(key)
+    return (if (StartupUiUtil.isDarkTheme) cachedDarculaScheme.get() else cachedDefaultScheme.get())?.getAttributes(key)
   }
 
   override fun addColorScheme(scheme: EditorColorsScheme) {
@@ -366,7 +374,7 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }.getOrLogException(LOG)
   }
 
-  override fun getGlobalScheme(): EditorColorsScheme = activeVisibleScheme ?: getEditableDefaultScheme()
+  override fun getGlobalScheme(): EditorColorsScheme = cachedGlobalScheme.get()
 
   override fun getActiveVisibleScheme(): EditorColorsScheme? {
     val scheme = schemeManager.activeScheme
@@ -413,16 +421,11 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
       return scheme
     }
     val editableCopyName = when (scheme) {
-      is DefaultColorsScheme if scheme.hasEditableCopy() -> scheme.editableCopyName
+      is DefaultColorsScheme -> if (scheme.hasEditableCopy()) scheme.editableCopyName else return null
       is BundledEditorColorScheme -> Scheme.EDITABLE_COPY_PREFIX + scheme.name
-      else -> null
+      else -> return null
     }
-    if (editableCopyName != null) {
-      getScheme(editableCopyName)?.let {
-        return it
-      }
-    }
-    return null
+    return getScheme(editableCopyName)
   }
 
   override fun getState(): State {
