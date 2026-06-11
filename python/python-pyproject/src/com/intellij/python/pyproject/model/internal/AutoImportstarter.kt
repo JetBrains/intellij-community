@@ -22,8 +22,8 @@ suspend fun startAutoImportIfNeeded(project: Project, importReasonForDebug: @Nls
   log.info("Import started $importReasonForDebug")
   startVenvExclusion(project)
   askUserIfPyProjectMustBeEnabled(project)
-  // Only start autoImport if both: registry and user flags are enabled
-  if (PyProjectModelSettings.isEnabledByUserAndRegistry(project)) {
+  // Only start autoImport if the feature is enabled (registry default + user choice).
+  if (PyProjectModelSettings.getInstance(project).usePyprojectToml) {
     try {
       project.service<PyProjectAutoImportService>().start()
     }

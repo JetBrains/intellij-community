@@ -11,6 +11,7 @@ import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -45,9 +46,19 @@ internal class PyProjectSyncActivityTest {
 
   @Test
   @RegistryKey("intellij.python.pyproject.model", "[off|on*|ask]")
-  fun testImportAlwaysEnabled(): Unit = timeoutRunBlocking {
-    val sut = callStartAutoImport(userEnabledImport = false)
-    assertTrue(sut.initialized, "Autoimport should start unconditionally")
+  fun testEnabledByDefaultWhenOn() {
+    val settings = project.service<PyProjectModelSettings>()
+    settings.loadState(PyProjectModelSettings.State())
+    assertTrue(settings.usePyprojectToml, "Feature must be enabled by default when registry is ON")
+  }
+
+  @ParameterizedTest
+  @ValueSource(booleans = [true, false])
+  @RegistryKey("intellij.python.pyproject.model", "[off|on*|ask]")
+  fun testImportFollowsUserSettingWhenOn(userEnabledImport: Boolean): Unit = timeoutRunBlocking {
+    val sut = callStartAutoImport(userEnabledImport = userEnabledImport)
+    assertEquals(userEnabledImport, sut.initialized,
+                 "When registry is ON the user setting governs autoimport, so the user can turn it off")
   }
 
   @ParameterizedTest

@@ -10,7 +10,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.python.pyproject.model.PyProjectModelSettings.Companion.isEnabledByUserAndRegistry
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ASK
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.OFF
 import com.intellij.python.pyproject.model.PyProjectModelSettings.FeatureState.ON
@@ -24,7 +23,11 @@ class PyProjectModelSettings(private val project: Project) :
   PersistentStateComponent<PyProjectModelSettings.State>, Disposable {
   override fun dispose() {}
   class State : BaseState() {
-    var usePyprojectToml: Boolean by property(false)
+    /**
+     * `null` means the user hasn't made an explicit choice yet, so the effective default depends on
+     * [featureStateInRegistry] (`true` for [ON], `false` for [ASK]). See [PyProjectModelSettings.usePyprojectToml].
+     */
+    var usePyprojectToml: Boolean? by property(null) { it == null }
     var showConfigurationNotification: Boolean by property(true)
   }
 
@@ -33,22 +36,31 @@ class PyProjectModelSettings(private val project: Project) :
 
   var usePyprojectToml: Boolean
     get() = when (featureStateInRegistry) {
-      ON, ASK -> myState.usePyprojectToml
       OFF -> false
+      // `ON` enables the feature by default but the user may still turn it off; `ASK` is off until enabled.
+      ON, ASK -> myState.usePyprojectToml ?: enabledByDefault
     }
     set(value) {
-      if (myState.usePyprojectToml != value) {
-        myState.usePyprojectToml = value
-        project.service<PyProjectAutoImportService>().apply {
-          PyProjectTomlCollector.pyProjectBasedModelModeChanged(value)
-          if (value) {
-            start()
-          }
-          else {
-            stop()
-          }
+      if (usePyprojectToml == value) return
+      // Persist an explicit choice only when it deviates from the registry default; otherwise keep it unset
+      // (null) so it's omitted from storage and keeps following the default. See [State.usePyprojectToml].
+      myState.usePyprojectToml = value.takeIf { it != enabledByDefault }
+      project.service<PyProjectAutoImportService>().apply {
+        PyProjectTomlCollector.pyProjectBasedModelModeChanged(value)
+        if (value) {
+          start()
+        }
+        else {
+          stop()
         }
       }
+    }
+
+  /** `true` when the feature is enabled by default for the current [featureStateInRegistry] (only for [ON]). */
+  private val enabledByDefault: Boolean
+    get() = when (featureStateInRegistry) {
+      ON -> true
+      ASK, OFF -> false
     }
 
   var showConfigurationNotification: Boolean
@@ -68,26 +80,15 @@ class PyProjectModelSettings(private val project: Project) :
     fun getInstance(project: Project): PyProjectModelSettings = project.service()
 
     /**
-     * Auto-import (converting `pyproject.toml` to modules) enabled *both* in registry and on user level.
-     */
-    fun isEnabledByUserAndRegistry(project: Project): Boolean =
-      when (featureStateInRegistry) {
-        ON -> true
-        OFF -> false
-        ASK -> getInstance(project).usePyprojectToml
-      }
-
-    /**
-     * Hard setting: if disabled -> feature is disabled on the Registry.
-     * For user-defined setting, check [isEnabledByUserAndRegistry] or (more low-level) [PyProjectModelSettings.usePyprojectToml].
-     * Be sure to check **both** (by means of [isEnabledByUserAndRegistry]) except for UI for the aforementioned service.
+     * Hard setting controlling the feature on the registry level (see [FeatureState]).
+     * For the effective per-project state (registry default + user choice) use [PyProjectModelSettings.usePyprojectToml].
      */
     val featureStateInRegistry: FeatureState get() = Registry.get("intellij.python.pyproject.model").asEnum(FeatureState.entries)
   }
 
   enum class FeatureState {
     /**
-     * Always convert `pyproject.toml` to modules
+     * Convert `pyproject.toml` to modules by default (without asking the user), but let the user turn it off.
      */
     ON,
 
@@ -97,7 +98,7 @@ class PyProjectModelSettings(private val project: Project) :
     OFF,
 
     /**
-     * Look for `pyproject.toml` and, if any, ask user. Then, store the answer on project level. See [PyProjectModelSettings]
+     * Off by default. Look for `pyproject.toml` and, if any, ask user. Then, store the answer on project level. See [PyProjectModelSettings]
      */
     ASK
   }
