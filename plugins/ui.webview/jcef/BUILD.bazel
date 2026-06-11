@@ -1,0 +1,78 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.platform.ui.webview.jcef` start
+
+create_kotlinc_options(
+    name = "custom_jcef",
+    api_version = "2.3",
+    language_version = "2.3",
+)
+
+jvm_library(
+    name = "jcef",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_jcef",
+    module_name = "intellij.platform.ui.webview.jcef",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "@lib//:jetbrains-annotations",
+        "//libraries/jcef",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
+        "//platform/core-api:core",
+        "//platform/ui.jcef",
+        "//platform/ui.webview",
+        "//platform/util:util-ui",
+        "//platform/util",
+    ],
+)
+
+jvm_library(
+    name = "jcef_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_jcef",
+    module_name = "intellij.platform.ui.webview.jcef",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":jcef",
+        "//libraries/jcef:jcef_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/ui.jcef:ui.jcef_test_lib",
+        "//platform/ui.webview:ui.webview_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/util:util_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ui.webview.jcef` end
+
+### auto-generated section `iml intellij.platform.ui.webview.jcef` start
+exports_files(
+    [
+        "intellij.platform.ui.webview.jcef.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ui.webview.jcef` end
