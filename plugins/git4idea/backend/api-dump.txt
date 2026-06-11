@@ -97,6 +97,9 @@ git4idea.commands.Git
 - a:runCommand(com.intellij.openapi.util.Computable):git4idea.commands.GitCommandResult
 - a:runCommand(git4idea.commands.GitLineHandler):git4idea.commands.GitCommandResult
 - a:runCommandWithoutCollectingOutput(git4idea.commands.GitLineHandler):git4idea.commands.GitCommandResult
+- a:runHook(git4idea.repo.GitRepository,java.lang.String,java.util.List,java.util.List):git4idea.commands.GitCommandResult
+f:git4idea.commands.GitCommand
+- sf:HOOK:git4idea.commands.GitCommand
 c:git4idea.commands.GitCommandResult
 - s:error(java.lang.String):git4idea.commands.GitCommandResult
 - getOutputOrThrow(I[]):java.lang.String
@@ -105,6 +108,8 @@ c:git4idea.commands.GitCommandResult
 a:git4idea.commands.GitHandler
 - addParameters(java.lang.String[]):V
 - setInputProcessor(com.intellij.util.ThrowableConsumer):V
+c:git4idea.commands.GitImpl
+- runHook(git4idea.repo.GitRepository,java.lang.String,java.util.List,java.util.List):git4idea.commands.GitCommandResult
 c:git4idea.commands.GitLineHandler
 - addLineListener(git4idea.commands.GitLineHandlerListener):V
 - p:processTerminated(I):V
