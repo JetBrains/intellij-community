@@ -2,9 +2,13 @@
 package org.intellij.plugins.markdown.reference
 
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiPackage
+import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.intellij.plugins.markdown.lang.references.backtick.BacktickReference
@@ -111,6 +115,108 @@ class BacktickReferenceTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `test qualified class name resolves to class`() {
+    val sample = createSampleClass()
+    assertResolvesTo("See `com.example.Samp<caret>le` for details", sample)
+  }
+
+  @Test
+  fun `test qualified name package segment resolves to package`() {
+    createSampleClass()
+    val reference = configureAndGetReferenceAtCaret("doc.md", "See `com.exa<caret>mple.Sample`")
+    val resolved = reference!!.resolve()
+    assertInstanceOf(resolved, PsiPackage::class.java)
+    assertEquals("com.example", (resolved as PsiPackage).qualifiedName)
+  }
+
+  @Test
+  fun `test qualified name with hash resolves to method`() {
+    val method = createSampleClass().findMethodsByName("doStuff", false).single()
+    assertResolvesTo("Call `com.example.Sample#doSt<caret>uff`", method)
+  }
+
+  @Test
+  fun `test qualified name with hash resolves to variable`() {
+    val field = createSampleClass().findFieldByName("varStuff", false)!!
+    assertResolvesTo("Call `com.example.Sample#varSt<caret>uff`", field)
+  }
+
+  @Test
+  fun `test qualified name with dot resolves to method`() {
+    val method = createSampleClass().findMethodsByName("doStuff", false).single()
+    assertResolvesTo("Call `com.example.Sample.doSt<caret>uff`", method)
+  }
+
+  @Test
+  fun `test qualified name class part resolves to class when member is present`() {
+    val sample = createSampleClass()
+    assertResolvesTo("Call `com.example.Samp<caret>le#doStuff`", sample)
+  }
+
+  @Test
+  fun `test qualified method reference multi resolves overloads`() {
+    createFile(
+      "com/example/Sample.java",
+      """
+        package com.example;
+        public class Sample {
+          public void doStuff() {}
+          public void doStuff(int value) {}
+        }
+      """.trimIndent()
+    )
+    val reference = configureAndGetReferenceAtCaret("doc.md", "Call `com.example.Sample#doSt<caret>uff`")
+    assertInstanceOf(reference, PsiPolyVariantReference::class.java)
+    val resolved = (reference as PsiPolyVariantReference).multiResolve(false)
+    assertEquals(2, resolved.size)
+    assertTrue(resolved.all { it.element is PsiMethod })
+  }
+
+  @Test
+  fun `test member completion after hash with prefix`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See `com.example.Sample#do<caret>`")
+    myFixture.completeBasic()
+    myFixture.checkResult("See `com.example.Sample#doStuff`")
+  }
+
+  @Test
+  fun `test member completion after bare hash suggests all members`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See `com.example.Sample#<caret>`")
+    val items = myFixture.completeBasic()
+    assertNotNull(items)
+    assertContainsElements(items!!.map { it.lookupString }, "doStuff", "varStuff")
+  }
+
+  @Test
+  fun `test member completion deduplicates overloaded methods`() {
+    createFile(
+      "com/example/Overloaded.java",
+      """
+        package com.example;
+        public class Overloaded {
+          public int value;
+          public void doStuff() {}
+          public void doStuff(int x) {}
+        }
+      """.trimIndent()
+    )
+    myFixture.configureByText("doc.md", "See `com.example.Overloaded#<caret>`")
+    val items = myFixture.completeBasic()
+    assertNotNull(items)
+    assertEquals(2, items!!.size)
+  }
+
+  @Test
+  fun `test package completion`() {
+    createSampleClass()
+    myFixture.configureByText("doc.md", "See `com.e<caret>`")
+    myFixture.completeBasic()
+    myFixture.checkResult("See `com.example`")
+  }
+
+  @Test
   fun `test path reference resolves from project root`() {
     val target = createFile("community/module-set-plugins/generated/intellij.moduleSet.plugin.main/README.md").parent!!
     val generated = target.parent!!
@@ -204,6 +310,20 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     return file.children.single { it is PsiClass } as PsiClass
   }
 
+  private fun createSampleClass(): PsiClass {
+    val file = createFile(
+      "com/example/Sample.java",
+      """
+        package com.example;
+        public class Sample {
+          public int varStuff;
+          public void doStuff() {}
+        }
+      """.trimIndent()
+    )
+    return file.children.single { it is PsiClass } as PsiClass
+  }
+
   private fun createFile(path: String, text: String = ""): PsiFileSystemItem {
     return myFixture.addFileToProject(path, text)
   }
@@ -224,7 +344,11 @@ class BacktickReferenceTest : BasePlatformTestCase() {
 
   private fun assertFileReferenceResolves(fileName: String, text: String, target: PsiFileSystemItem) {
     val reference = configureAndGetReferenceAtCaret(fileName, text)
-    assertInstanceOf(reference, FileReference::class.java)
+    if (reference is PsiMultiReference) {
+      assertTrue(reference.references.any { it is FileReference })
+    } else {
+      assertInstanceOf(reference, FileReference::class.java)
+    }
     assertTrue(reference!!.isReferenceTo(target))
     assertTrue(myFixture.psiManager.areElementsEquivalent(target, reference.resolve()))
   }
@@ -233,6 +357,12 @@ class BacktickReferenceTest : BasePlatformTestCase() {
     val reference = configureAndGetReferenceAtCaret(fileName, text)
     assertTrue(reference is BacktickReference)
     assertTrue(reference!!.resolve() is PsiMethod)
+  }
+
+  private fun assertResolvesTo(text: String, expected: PsiElement) {
+    val reference = configureAndGetReferenceAtCaret("doc.md", text)
+    assertNotNull(reference)
+    assertTrue(myFixture.psiManager.areElementsEquivalent(expected, reference!!.resolve()))
   }
 
   companion object {

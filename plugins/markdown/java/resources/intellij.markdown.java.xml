@@ -1,11 +1,16 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java.impl"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.java.psi.impl"/>
     <module name="intellij.markdown"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <psi.referenceContributor language="Markdown" implementation="com.intellij.markdown.java.JvmBacktickReferenceContributor"/>
+  </extensions>
   <extensions defaultExtensionNs="org.intellij.markdown">
     <codeSpanRunnableSearcher implementation="com.intellij.markdown.java.JvmCodeSpanConfigurationContextSearcher"/>
   </extensions>

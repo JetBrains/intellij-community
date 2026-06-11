@@ -9,12 +9,14 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.annotations.ApiStatus
 
 class MarkdownCodeSpan(node: ASTNode) : MarkdownCompositePsiElementBase(node), PsiExternalReferenceHost {
   override fun getPresentableTagName(): String = "code_span"
   override fun getReferences(): Array<PsiReference> = ReferenceProvidersRegistry.getReferencesFromProviders(this)
 
-  internal fun getContentRange(): TextRange? {
+  @ApiStatus.Internal
+  fun getContentRange(): TextRange? {
     val text = text
     val openingMarkerLength = text.takeWhile { it == '`' }.length
     val closingMarkerLength = text.takeLastWhile { it == '`' }.length
