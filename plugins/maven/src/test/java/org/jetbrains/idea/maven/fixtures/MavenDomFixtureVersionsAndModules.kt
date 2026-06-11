@@ -21,6 +21,9 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor.equals
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import com.intellij.util.text.VersionComparatorUtil
@@ -34,6 +37,8 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.jupiter.api.Assumptions
+import java.nio.file.Path
+import kotlin.io.path.readBytes
 
 // Maven-version assumptions and module / language-level inspection.
 
@@ -317,4 +322,19 @@ fun MavenTestFixture.assertModuleLibDep(
   assertModuleLibDepPath(lib, OrderRootType.CLASSES, classesPaths)
   assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePaths)
   assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), javadocPaths)
+}
+
+// Language-level expectations (2-tier; distinct from the 3-tier defaultLanguageLevel above).
+fun MavenTestFixture.getExpectedSourceLanguageLevel(): LanguageLevel =
+  if (mavenVersionIsOrMoreThan("3.9.3")) LanguageLevel.JDK_1_8 else LanguageLevel.JDK_1_5
+
+fun MavenTestFixture.getExpectedTargetLanguageLevel(): String =
+  if (mavenVersionIsOrMoreThan("3.9.3")) "1.8" else "1.5"
+
+fun MavenTestFixture.fileContentEqual(file1: Path, file2: Path): Boolean =
+  file1.readBytes().contentEquals(file2.readBytes())
+
+fun MavenTestFixture.assumeOnLocalEnvironmentOnly(cause: String) {
+  Assumptions.assumeTrue(LocalEelDescriptor == project.getEelDescriptor(),
+                         "Unable to run the test in non-local environment: $cause")
 }
