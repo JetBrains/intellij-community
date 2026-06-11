@@ -64,6 +64,31 @@ class ShortenPathTest {
   }
 
   @Test
+  @DisplayName("name (\\) and home path (/) with different separators still match")
+  fun `windows venv name with backslashes matches home path stored with forward slashes`() {
+    // `suggestSdkName` yields the name via Path.toString() (backslashes on Windows), while homePath
+    // may be stored with forward slashes (EEL/nio). The classification must survive that mismatch.
+    val name = """C:\Users\me\envs\myenv"""
+    val home = "C:/Users/me/envs/myenv/Scripts/python.exe"
+    assertTrue(isNameDerivedFromHomePath(name, home))
+  }
+
+  @Test
+  fun `venv name with forward slashes matches home path with backslashes`() {
+    val name = "C:/Users/me/envs/myenv"
+    val home = """C:\Users\me\envs\myenv\Scripts\python.exe"""
+    assertTrue(isNameDerivedFromHomePath(name, home))
+  }
+
+  @Test
+  fun `sibling directory sharing a name prefix is not classified as derived`() {
+    // `myenv2` must not be treated as living under `myenv`.
+    val name = """C:\Users\me\envs\myenv"""
+    val home = """C:\Users\me\envs\myenv2\Scripts\python.exe"""
+    assertFalse(isNameDerivedFromHomePath(name, home))
+  }
+
+  @Test
   @DisplayName("PY-89560: SSH label is not classified as derived from home path")
   fun `ssh label is not classified as derived from home path`() {
     val name = "SSH (sftp://user@host:22/usr/bin/python)"

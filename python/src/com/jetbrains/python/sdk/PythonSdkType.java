@@ -296,10 +296,10 @@ public final class PythonSdkType extends SdkType {
     }
     var pythonEnvironment = PythonEnvironmentKt.detectPythonEnvironment(pythonBinary).getSuccessOrNull();
     if (pythonEnvironment == null) {
-      return FileUtil.getLocationRelativeToUserHome(pythonBinary.toAbsolutePath().toString());
+      return FileUtil.getLocationRelativeToUserHome(pythonBinary.toAbsolutePath().toString(), false);
     }
     var path = pythonEnvironment instanceof HasPythonHome ? ((HasPythonHome)pythonEnvironment).getPythonHomePath() : pythonBinary;
-    return FileUtil.getLocationRelativeToUserHome(path.toAbsolutePath().toString());
+    return FileUtil.getLocationRelativeToUserHome(path.toAbsolutePath().toString(), false);
   }
 
   @Override
