@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.CheckboxTree;
+import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
@@ -41,6 +42,7 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -72,7 +74,33 @@ abstract class IntentionSettingsTree {
   }
 
   private void initTree() {
-    myTree = new CheckboxTree(new IntentionsTreeCellRenderer(), new IntentionTreeNode(null));
+    myTree = new CheckboxTree(new IntentionsTreeCellRenderer(), new IntentionTreeNode(null)) {
+      @Override
+      protected void onDoubleClick(@Nullable CheckedTreeNode node) {
+        if (node == null) return;
+        if (node.getChildCount() == 0) {
+          node.setChecked(!node.isChecked());
+        }
+        else {
+          TreePath path = new TreePath(node.getPath());
+          if (myTree.isExpanded(path)) {
+            myTree.collapsePath(path);
+          }
+          else {
+            myTree.expandPath(path);
+          }
+        }
+        myTree.repaint();
+      }
+
+      @Override
+      public @Nullable TreePath getPathForLocation(int x, int y) {
+        TreePath path = getClosestPathForLocation(x, y);
+        if (path == null) return null;
+        Rectangle pathBounds = getPathBounds(path);
+        return pathBounds != null && y >= pathBounds.y && y < (pathBounds.y + pathBounds.height) ? path : null;
+      }
+    };
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
