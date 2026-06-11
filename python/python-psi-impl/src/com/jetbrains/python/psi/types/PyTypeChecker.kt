@@ -74,6 +74,12 @@ import kotlin.jvm.optionals.getOrElse
 
 object PyTypeChecker {
   /**
+   * The largest number of parameter combinations that [matchSingleCallableAgainstOverloads] checks.
+   * Above it, the check is [matchAnyOverloadItem] only.
+   */
+  private const val MAX_OVERLOAD_PARAMETER_COMBINATIONS = 24
+
+  /**
    * See [match] for description.
    */
   @JvmStatic
@@ -557,13 +563,11 @@ object PyTypeChecker {
       // An overload is tried on a copy first, so that a failed overload does not bind type parameters for the next one.
       // When more than one overload can match, the choice is arbitrary, so the substitutions do not keep their bound sides.
       val matched = withoutRecording(context) {
-        if (context.tracksBoundSides) {
-          matchFirstCandidate(actual.items, context) { item, itemContext -> match(expected, item, itemContext) == Optional.of(true) }
+        if (expected is PyCallableType && expected !is PyClassLikeType) {
+          matchSingleCallableAgainstOverloads(expected, actual, context)
         }
         else {
-          actual.items.any { item ->
-            matchOnCopy(context) { match(expected, item, it) } == Optional.of(true)
-          }
+          matchAnyOverloadItem(expected, actual, context)
         }
       }
       return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
@@ -2200,18 +2204,105 @@ object PyTypeChecker {
         }
       }
       is PyCallableType -> {
-        // If __call__ is not overloaded, check if any overload matches the single callable
-        return overloadType.items.any { item ->
-          // Match with correct argument order based on which is expected
-          if (expectedIsOverload) {
-            match(item, callType, context).getOrDefault(false)
-          }
-          else {
-            match(callType, item, context).getOrDefault(false)
-          }
+        if (expectedIsOverload) {
+          // If __call__ is not overloaded, check if any overload matches the single callable
+          return overloadType.items.any { item -> match(item, callType, context).getOrDefault(false) }
         }
+        return matchSingleCallableAgainstOverloads(callType, overloadType, context)
       }
       else -> return false
+    }
+  }
+
+  /**
+   * Decides whether the overload type [actual] matches the single callable [expected].
+   *
+   * Some overload item must accept each call that [expected] accepts.
+   * First, the check looks for one item that matches all of [expected], as [matchAnyOverloadItem] does.
+   * When no item matches, each union parameter of [expected] splits into its members.
+   * Then each combination of the members must match some item.
+   * Thus the items `(x: int) -> int` and `(x: str) -> str` match `(x: int | str) -> int | str`.
+   *
+   * The split keeps the arity of [expected]. Items that cover an optional parameter by their arity do not match.
+   * Above [MAX_OVERLOAD_PARAMETER_COMBINATIONS] combinations, the result is the result of [matchAnyOverloadItem].
+   * Each combination is an independent call, so it matches on its own copy of the substitutions.
+   * The split keeps none of these substitutions.
+   */
+  private fun matchSingleCallableAgainstOverloads(
+    expected: PyCallableType,
+    actual: PyOverloadType,
+    context: MatchContext,
+  ): Boolean {
+    if (matchAnyOverloadItem(expected, actual, context)) return true
+
+    val combinations = unionParameterCombinations(expected, context.context) ?: return false
+    val typeParameters = expected.getTypeParameters(context.context)
+    val returnType = expected.getReturnType(context.context)
+    return combinations.all { parameters ->
+      val combination = PyCallableTypeImpl(typeParameters, PyCallableParameterListTypeImpl(parameters), returnType,
+                                           expected.callable, expected.modifier)
+      val combinationContext = context.withSubstitutions(context.mySubstitutions.copy(KeyImpl))
+      matchAnyOverloadItem(combination, actual, combinationContext)
+    }
+  }
+
+  /**
+   * Returns each combination of the members of the union parameters of [callable].
+   * Returns `null` when [callable] has no union parameter, or more than [MAX_OVERLOAD_PARAMETER_COMBINATIONS] combinations.
+   */
+  private fun unionParameterCombinations(callable: PyCallableType, context: TypeEvalContext): List<List<PyCallableParameter>>? {
+    val parameters = callable.getParameters(context) ?: return null
+    val variants = parameters.map { parameter ->
+      distributableUnionMembers(parameter, context)?.map { withParameterType(parameter, it) } ?: listOf(parameter)
+    }
+    var count = 1
+    for (parameterVariants in variants) {
+      // The same as `count * parameterVariants.size > MAX_OVERLOAD_PARAMETER_COMBINATIONS`, with no overflow.
+      if (parameterVariants.size > MAX_OVERLOAD_PARAMETER_COMBINATIONS / count) return null
+      count *= parameterVariants.size
+    }
+    if (count == 1) return null
+    return variants.fold(listOf<List<PyCallableParameter>>(emptyList())) { prefixes, parameterVariants ->
+      prefixes.flatMap { prefix -> parameterVariants.map { prefix + it } }
+    }
+  }
+
+  private fun distributableUnionMembers(parameter: PyCallableParameter, context: TypeEvalContext): List<PyType?>? {
+    if (parameter.isSelf || parameter.isPositionalContainer || parameter.isKeywordContainer ||
+        parameter.isPositionOnlySeparator || parameter.isKeywordOnlySeparator) {
+      return null
+    }
+    val type = parameter.getArgumentType(context)
+    return if (type is PyUnionType && type.members.size > 1) type.members.toList() else null
+  }
+
+  private fun withParameterType(parameter: PyCallableParameter, type: PyType?): PyCallableParameter {
+    return PyCallableParameterImpl(
+      parameter.name,
+      Ref.create(type),
+      parameter.defaultValue,
+      parameter.defaultValueText,
+      parameter.parameter,
+      parameter.isPositionalContainer,
+      parameter.isKeywordContainer,
+      parameter.isSelf,
+      parameter.isKeywordOnlySeparator,
+      parameter.isPositionOnlySeparator,
+      parameter.declarationElement,
+    )
+  }
+
+  /**
+   * Decides whether some item of the overload type [actual] matches [expected].
+   * An item is tried on a copy first, so that a failed item does not bind type parameters for the next one.
+   * When more than one item can match, the choice is arbitrary, so the substitutions do not keep their bound sides.
+   */
+  private fun matchAnyOverloadItem(expected: PyType?, actual: PyOverloadType, context: MatchContext): Boolean {
+    if (context.tracksBoundSides) {
+      return matchFirstCandidate(actual.items, context) { item, itemContext -> match(expected, item, itemContext) == Optional.of(true) }
+    }
+    return actual.items.any { item ->
+      matchOnCopy(context) { match(expected, item, it) } == Optional.of(true)
     }
   }
 
