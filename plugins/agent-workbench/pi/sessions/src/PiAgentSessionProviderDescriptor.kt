@@ -27,6 +27,13 @@ import javax.swing.Icon
 
 private val LOG = logger<PiAgentSessionProviderDescriptor>()
 
+internal val PI_SUPPORTED_REASONING_EFFORTS: Set<AgentPromptReasoningEffort> = setOf(
+  AgentPromptReasoningEffort.LOW,
+  AgentPromptReasoningEffort.MEDIUM,
+  AgentPromptReasoningEffort.HIGH,
+  AgentPromptReasoningEffort.XHIGH,
+)
+
 internal class PiAgentSessionProviderDescriptor(
   override val sessionSource: AgentSessionSource = PiSessionSource(),
   private val threadMutationBackend: PiSessionThreadMutationBackend =
@@ -36,9 +43,12 @@ internal class PiAgentSessionProviderDescriptor(
   private val sessionIdGenerator: () -> String = { UUID.randomUUID().toString() },
   private val extensionLaunchResourcesResolver: () -> PiExtensionLaunchResources? = PiThemeSupport.DEFAULT::launchResourcesOrNull,
   private val statusLaunchEnvironmentResolver: (String) -> Map<String, String> = PiExtensionStatusBridge::createLaunchEnvironment,
-  private val generationModelCatalogResolver: suspend () -> List<AgentPromptGenerationModel> =
+  private val omlxGenerationModelCatalogResolver: suspend () -> List<AgentPromptGenerationModel> =
     PiOmlxModelCatalog.DEFAULT::listAvailableGenerationModels,
+  private val jbCentralGenerationModelCatalogResolver: suspend (String, String?) -> List<AgentPromptGenerationModel> =
+    PiJbCentralModelCatalog.DEFAULT::listAvailableGenerationModels,
   private val omlxSupportEnabledResolver: () -> Boolean = PiOmlxSupportSettings::isEnabled,
+  private val jbCentralSupportEnabledResolver: () -> Boolean = PiJbCentralSupportSettings::isEnabled,
 ) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.PI
@@ -74,7 +84,7 @@ internal class PiAgentSessionProviderDescriptor(
     get() = PiCliSupport.PI_TERMINAL_AGENT_KEY
 
   override val supportsGenerationModelSelection: Boolean
-    get() = omlxSupportEnabledResolver()
+    get() = omlxSupportEnabledResolver() || jbCentralSupportEnabledResolver()
 
   override val providerSettings: List<AgentWorkbenchCheckboxSetting>
     get() = listOf(
@@ -83,6 +93,12 @@ internal class PiAgentSessionProviderDescriptor(
         description = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.omlx.models.description"),
         isSelected = PiOmlxSupportSettings::isEnabled,
         setSelected = PiOmlxSupportSettings::setEnabled,
+      ),
+      AgentWorkbenchCheckboxSetting(
+        text = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.jbcentral.models"),
+        description = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.jbcentral.models.description"),
+        isSelected = PiJbCentralSupportSettings::isEnabled,
+        setSelected = PiJbCentralSupportSettings::setEnabled,
       )
     )
 
@@ -105,10 +121,19 @@ internal class PiAgentSessionProviderDescriptor(
   override suspend fun isCliAvailable(): Boolean = cliAvailableProbe()
 
   override suspend fun listAvailableGenerationModels(project: Project?): List<AgentPromptGenerationModel> {
-    if (!omlxSupportEnabledResolver()) {
+    if (!supportsGenerationModelSelection) {
       return emptyList()
     }
-    return generationModelCatalogResolver()
+    return buildList {
+      if (omlxSupportEnabledResolver()) {
+        addAll(omlxGenerationModelCatalogResolver())
+      }
+      if (jbCentralSupportEnabledResolver()) {
+        val piExecutable = executableResolver()
+        val extensionPath = resolveExtensionLaunchResources()?.extensionPath?.toString()
+        addAll(jbCentralGenerationModelCatalogResolver(piExecutable, extensionPath))
+      }
+    }
   }
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
@@ -146,29 +171,63 @@ internal class PiAgentSessionProviderDescriptor(
   }
 
   override fun sanitizeGenerationSettings(generationSettings: AgentPromptGenerationSettings): AgentPromptGenerationSettings {
-    if (!omlxSupportEnabledResolver()) {
+    if (!supportsGenerationModelSelection) {
       return AgentPromptGenerationSettings.AUTO
     }
-    val settings = super.sanitizeGenerationSettings(generationSettings)
-    return settings.copy(
-      modelId = settings.modelId?.takeIf { modelId -> PiOmlxModelCatalog.decodeGenerationModelId(modelId) != null },
-      reasoningEffort = AgentPromptReasoningEffort.AUTO,
-    )
+    val modelId = generationSettings.modelId
+      ?.trim()
+      ?.takeIf { it.isNotEmpty() }
+      ?.takeIf(::isEnabledPiGenerationModelId)
+    val reasoningEffort = generationSettings.reasoningEffort
+                            .takeIf { effort ->
+                              effort == AgentPromptReasoningEffort.AUTO ||
+                              (modelId != null && supportsPiReasoningEffort(modelId, effort))
+                            }
+                          ?: AgentPromptReasoningEffort.AUTO
+    return AgentPromptGenerationSettings(modelId = modelId, reasoningEffort = reasoningEffort)
+  }
+
+  private fun isEnabledPiGenerationModelId(modelId: String): Boolean {
+    return (omlxSupportEnabledResolver() && PiOmlxModelCatalog.decodeGenerationModelId(modelId) != null) ||
+           (jbCentralSupportEnabledResolver() && PiJbCentralModelCatalog.decodeGenerationModelId(modelId) != null)
+  }
+
+  private fun supportsPiReasoningEffort(modelId: String, effort: AgentPromptReasoningEffort): Boolean {
+    if (effort !in PI_SUPPORTED_REASONING_EFFORTS) {
+      return false
+    }
+    if (omlxSupportEnabledResolver() && PiOmlxModelCatalog.decodeGenerationModelId(modelId)?.reasoning == true) {
+      return true
+    }
+    return jbCentralSupportEnabledResolver() && PiJbCentralModelCatalog.decodeGenerationModelId(modelId) != null
   }
 
   override fun applyGenerationSettings(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     generationSettings: AgentPromptGenerationSettings,
   ): AgentSessionTerminalLaunchSpec {
-    val modelSelection = PiOmlxModelCatalog.decodeGenerationModelId(sanitizeGenerationSettings(generationSettings).modelId)
-                         ?: return baseLaunchSpec
+    val settings = sanitizeGenerationSettings(generationSettings)
+    val sanitizedModelId = settings.modelId ?: return baseLaunchSpec
+    val reasoningArgs = buildPiReasoningArgs(settings.reasoningEffort)
+    PiOmlxModelCatalog.decodeGenerationModelId(sanitizedModelId)?.let { modelSelection ->
+      return baseLaunchSpec.copy(
+        command = insertPiGenerationArgs(
+          command = baseLaunchSpec.command,
+          args = listOf(PI_PROVIDER_FLAG, modelSelection.baseUrl, PI_MODEL_FLAG, modelSelection.modelId) + reasoningArgs,
+        ),
+        envVariables = baseLaunchSpec.envVariables + mapOf(
+          PI_OMLX_PROVIDER_ENVIRONMENT_VARIABLE to PiOmlxModelCatalog.toLaunchEnvironmentValue(modelSelection)
+        ),
+      )
+    }
+    val jbCentralModelSelection = PiJbCentralModelCatalog.decodeGenerationModelId(sanitizedModelId) ?: return baseLaunchSpec
     return baseLaunchSpec.copy(
       command = insertPiGenerationArgs(
         command = baseLaunchSpec.command,
-        args = listOf(PI_PROVIDER_FLAG, modelSelection.baseUrl, PI_MODEL_FLAG, modelSelection.modelId),
+        args = listOf(PI_PROVIDER_FLAG, jbCentralModelSelection.provider, PI_MODEL_FLAG, jbCentralModelSelection.modelId) + reasoningArgs,
       ),
       envVariables = baseLaunchSpec.envVariables + mapOf(
-        PI_OMLX_PROVIDER_ENVIRONMENT_VARIABLE to PiOmlxModelCatalog.toLaunchEnvironmentValue(modelSelection)
+        PI_JBCENTRAL_PROVIDER_ENVIRONMENT_VARIABLE to PiJbCentralModelCatalog.toLaunchEnvironmentValue(jbCentralModelSelection)
       ),
     )
   }
@@ -213,7 +272,7 @@ private fun List<String>.withoutPiGenerationArgs(): List<String> {
   var index = 0
   while (index < size) {
     val token = this[index]
-    if (token == PI_PROVIDER_FLAG || token == PI_MODEL_FLAG) {
+    if (token == PI_PROVIDER_FLAG || token == PI_MODEL_FLAG || token == PI_THINKING_FLAG) {
       index += if (index + 1 < size) 2 else 1
     }
     else {
@@ -224,9 +283,21 @@ private fun List<String>.withoutPiGenerationArgs(): List<String> {
   return result
 }
 
+private fun buildPiReasoningArgs(reasoningEffort: AgentPromptReasoningEffort): List<String> {
+  if (reasoningEffort == AgentPromptReasoningEffort.AUTO) {
+    return emptyList()
+  }
+  return listOf(PI_THINKING_FLAG, reasoningEffort.piThinkingValue())
+}
+
+private fun AgentPromptReasoningEffort.piThinkingValue(): String {
+  return name.lowercase()
+}
+
 private const val PI_EXTENSION_FLAG: String = "--extension"
 private const val PI_PROVIDER_FLAG: String = "--provider"
 private const val PI_MODEL_FLAG: String = "--model"
+private const val PI_THINKING_FLAG: String = "--thinking"
 private const val PI_SESSION_FLAG: String = "--session"
 private const val PI_SESSION_ID_FLAG: String = "--session-id"
 
@@ -247,4 +318,22 @@ internal object PiOmlxSupportSettings {
   }
 }
 
+internal object PiJbCentralSupportSettings {
+  fun isEnabled(): Boolean {
+    return service<AgentSessionProviderSettingsService>().isProviderFeatureEnabled(
+      AgentSessionProvider.PI,
+      PI_JBCENTRAL_PROVIDER_FEATURE_ID,
+    )
+  }
+
+  fun setEnabled(enabled: Boolean) {
+    service<AgentSessionProviderSettingsService>().setProviderFeatureEnabled(
+      AgentSessionProvider.PI,
+      PI_JBCENTRAL_PROVIDER_FEATURE_ID,
+      enabled,
+    )
+  }
+}
+
 private const val PI_OMLX_PROVIDER_FEATURE_ID: String = "omlx.models"
+private const val PI_JBCENTRAL_PROVIDER_FEATURE_ID: String = "jbcentral.models"

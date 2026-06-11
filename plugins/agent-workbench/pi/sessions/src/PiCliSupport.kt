@@ -26,6 +26,7 @@ private object PiResolverTerminalAgent : TerminalAgent {
   override val binaryName: String = PiCliSupport.PI_COMMAND
   override val posixKnownLocationCandidates: List<String> = listOf(
     $$"$HOME/.local/bin",
+    "/opt/homebrew/bin",
     "/usr/local/bin",
   )
   override val windowsKnownLocationCandidates: List<String> = listOf(

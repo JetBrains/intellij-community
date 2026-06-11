@@ -645,6 +645,61 @@ class AgentPromptProviderSelectorTest {
 
   @Test
   @Suppress("RAW_SCOPE_CREATION")
+  fun generationSettingsSelectedProviderRefreshUsesRestoredProvider(): Unit = timeoutRunBlocking {
+    val modelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+    try {
+      val codexCatalogRequests = AtomicInteger()
+      val piCatalogRequests = AtomicInteger()
+      val codexProvider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportsGenerationModelSelection = true,
+        availableGenerationModels = listOf(
+          AgentPromptGenerationModel(id = "gpt-5.1-codex", displayName = "GPT-5.1 Codex"),
+        ),
+        onListAvailableGenerationModels = codexCatalogRequests::incrementAndGet,
+      )
+      val piProvider = testProviderBridge(
+        provider = AgentSessionProvider.PI,
+        promptOptions = emptyList(),
+        supportsGenerationModelSelection = true,
+        availableGenerationModels = listOf(
+          AgentPromptGenerationModel(id = "gpt-5.5", displayName = "GPT-5.5"),
+        ),
+        onListAvailableGenerationModels = piCatalogRequests::incrementAndGet,
+      )
+      val controller = withContext(Dispatchers.EDT) {
+        val fixture = createSelectorFixture(listOf(codexProvider, piProvider)).also { fixture ->
+          fixture.selector.refresh()
+          fixture.selector.selectProvider(AgentSessionProvider.PI)
+        }
+        AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = modelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = {},
+        ).also { controller -> controller.refreshSelectedProviderModels() }
+      }
+
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          modelActionTexts(controller) == listOf("Default", "GPT-5.5")
+        }
+      }
+      assertThat(codexCatalogRequests.get()).isZero()
+      assertThat(piCatalogRequests.get()).isEqualTo(1)
+    }
+    finally {
+      modelCatalogScope.cancel()
+    }
+  }
+
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
   fun generationSettingsModelPopupRetriesAfterInitialCatalogFailure(): Unit = timeoutRunBlocking {
     val modelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
     try {

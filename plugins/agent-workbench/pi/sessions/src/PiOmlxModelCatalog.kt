@@ -49,6 +49,7 @@ internal class PiOmlxModelCatalog(
       AgentPromptGenerationModel(
         id = encodeGenerationModelId(model.selection),
         displayName = model.toPromptDisplayName(multipleConnections),
+        supportedReasoningEfforts = if (model.selection.reasoning) PI_SUPPORTED_REASONING_EFFORTS else emptySet(),
         isDefault = model.selection == defaultSelection,
       )
     }

@@ -170,12 +170,12 @@ internal class AgentPromptPaletteSessionController(
       launcherProvider()?.loadProviderPreferences()?.generationSettingsByProviderId.orEmpty()
     )
     refreshProviders()
-    generationSettingsController.refreshSelectedProviderModels()
     contextController.loadInitialContext(initialAddContextRequest?.contextItems)
     contextController.resolveExtensionTabs()
 
     val draft = draftController.restoreDraft(restoreContextSnapshot = initialAddContextRequest == null)
     draftController.restoreTaskDrafts(draft)
+    generationSettingsController.refreshSelectedProviderModels()
     refreshExtensionTaskDraftsFromContext()
 
     if (invocationData.attributes[com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY] == true) {

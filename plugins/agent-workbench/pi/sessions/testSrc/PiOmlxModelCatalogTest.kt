@@ -134,7 +134,35 @@ class PiOmlxModelCatalogTest {
     )
     assertThat(models.map { it.displayName }).containsExactly("Qwen 27B (oMLX)")
     assertThat(models.single().isDefault).isTrue()
+    assertThat(models.single().supportedReasoningEfforts).isEqualTo(PI_SUPPORTED_REASONING_EFFORTS)
     assertThat(PiOmlxModelCatalog.decodeGenerationModelId(models.single().id)?.tokenSource).isEqualTo(PiOmlxTokenSource.PI_AUTH)
+  }
+
+  @Test
+  fun omitsReasoningEffortsForNonThinkingOmlxModels(): Unit = runBlocking(Dispatchers.Default) {
+    val agentDir = tempDir.resolve("pi-agent")
+    val files = mapOf(
+      agentDir.resolve("auth.json") to """
+        {
+          "http://127.0.0.1:8000": {
+            "type": "api_key",
+            "key": "pi-key"
+          }
+        }
+      """.trimIndent(),
+    )
+    val catalog = PiOmlxModelCatalog(
+      environmentProvider = { mapOf("PI_CODING_AGENT_DIR" to agentDir.toString()) },
+      userHomeProvider = { tempDir },
+      fileTextReader = { path -> files[path] },
+      modelsStatusFetcher = {
+        statusJson(modelId = "FastModel", displayName = "Fast Model", loaded = true, thinking = false)
+      },
+    )
+
+    val models = catalog.listAvailableGenerationModels()
+
+    assertThat(models.single().supportedReasoningEfforts).isEmpty()
   }
 
   @Test
@@ -182,6 +210,7 @@ class PiOmlxModelCatalogTest {
       "Beta (oMLX http://127.0.0.1:9000)",
     )
     assertThat(models.map { it.isDefault }).containsExactly(false, true)
+    assertThat(models.map { it.supportedReasoningEfforts }).containsOnly(PI_SUPPORTED_REASONING_EFFORTS)
     assertThat(models.map { PiOmlxModelCatalog.decodeGenerationModelId(it.id)?.tokenSource })
       .containsExactly(PiOmlxTokenSource.PI_AUTH, PiOmlxTokenSource.OMLX_SETTINGS)
   }
@@ -208,7 +237,7 @@ class PiOmlxModelCatalogTest {
   }
 }
 
-private fun statusJson(modelId: String, displayName: String, loaded: Boolean): String {
+private fun statusJson(modelId: String, displayName: String, loaded: Boolean, thinking: Boolean = true): String {
   return """
     {
       "models": [
@@ -217,7 +246,7 @@ private fun statusJson(modelId: String, displayName: String, loaded: Boolean): S
           "display_name": "$displayName",
           "max_context_window": 262144,
           "max_tokens": 32768,
-          "thinking_default": true,
+          "thinking_default": $thinking,
           "model_type": "llm",
           "config_model_type": "qwen3_5",
           "loaded": $loaded

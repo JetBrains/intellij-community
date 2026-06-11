@@ -1,8 +1,15 @@
+import {execFile} from "node:child_process";
 import {watch, type FSWatcher} from "node:fs";
 import {readFile} from "node:fs/promises";
 import {homedir} from "node:os";
 import {basename, dirname, join} from "node:path";
-import {streamSimpleOpenAICompletions, type Model} from "@earendil-works/pi-ai";
+import {promisify} from "node:util";
+import {
+  streamSimpleOpenAICodexResponses,
+  streamSimpleOpenAICompletions,
+  streamSimpleOpenAIResponses,
+  type Model,
+} from "@earendil-works/pi-ai";
 import {
   AuthStorage,
   Theme,
@@ -19,12 +26,18 @@ const THEME_STATE_ENV = "AGENT_WORKBENCH_PI_THEME_STATE";
 const THEME_STATE_FILE = process.env[THEME_STATE_ENV];
 const OMLX_PROVIDER_ENV = "AGENT_WORKBENCH_PI_OMLX_PROVIDER";
 const OMLX_PROVIDER_METADATA = process.env[OMLX_PROVIDER_ENV];
+const JBCENTRAL_PROVIDER_ENV = "AGENT_WORKBENCH_PI_JBCENTRAL_PROVIDER";
+const JBCENTRAL_PROVIDER_METADATA = process.env[JBCENTRAL_PROVIDER_ENV];
 const STATUS_ENDPOINT_ENV = "AGENT_WORKBENCH_PI_STATUS_ENDPOINT";
 const STATUS_TOKEN_ENV = "AGENT_WORKBENCH_PI_STATUS_TOKEN";
 const STATUS_ENDPOINT = process.env[STATUS_ENDPOINT_ENV];
 const STATUS_TOKEN = process.env[STATUS_TOKEN_ENV];
 const DEFAULT_OMLX_CONTEXT_WINDOW = 128000;
 const DEFAULT_OMLX_MAX_TOKENS = 16384;
+const JBCENTRAL_CODEX_API_KEY = "wire-proxy";
+const JBCENTRAL_CODEX_BASE_PATH = "codex/openai";
+const JBCENTRAL_PROXY_START_ARGS = ["proxy", "start", "--ensure-updated", "--return-key"];
+const execFileAsync = promisify(execFile);
 const DONE_STATUS_IDLE_RECHECK_MS = 150;
 const SESSION_INFO_LEAF_POLL_MS = 1000;
 const THEME_COLOR_KEYS: ThemeColor[] = [
@@ -168,8 +181,16 @@ type AgentWorkbenchOmlxProvider = {
   modelType?: string;
 };
 
+type AgentWorkbenchJbCentralProvider = {
+  formatVersion: 1;
+  provider: "openai-codex";
+  jbCentralExecutable: string;
+  proxyPort: number;
+};
+
 export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
   await registerSelectedOmlxProvider(pi);
+  await registerSelectedJbCentralProvider(pi);
 
   let themeWatcher: FSWatcher | undefined;
   let sessionInfoPoll: ReturnType<typeof setInterval> | undefined;
@@ -299,6 +320,94 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
     themeWatcher?.close();
     themeWatcher = undefined;
   });
+}
+
+async function registerSelectedJbCentralProvider(pi: ExtensionAPI): Promise<void> {
+  try {
+    const provider = parseJbCentralProviderMetadata(JBCENTRAL_PROVIDER_METADATA);
+    if (provider === undefined) {
+      return;
+    }
+    const proxySecret = await resolveJbCentralProxySecret(provider);
+    if (proxySecret === undefined) {
+      return;
+    }
+    pi.registerProvider(provider.provider, toJbCentralProviderConfig(provider, proxySecret));
+  }
+  catch {
+    // JBCentral registration is opportunistic; theme/status hooks should still load if the CLI setup changed.
+  }
+}
+
+function parseJbCentralProviderMetadata(value: string | undefined): AgentWorkbenchJbCentralProvider | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!isJbCentralProviderMetadata(parsed)) {
+      return undefined;
+    }
+    return {
+      formatVersion: 1,
+      provider: "openai-codex",
+      jbCentralExecutable: parsed.jbCentralExecutable,
+      proxyPort: parsed.proxyPort,
+    };
+  }
+  catch {
+    return undefined;
+  }
+}
+
+function isJbCentralProviderMetadata(value: unknown): value is {
+  formatVersion: 1;
+  provider: "openai-codex";
+  jbCentralExecutable: string;
+  proxyPort: number;
+} {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const metadata = value as Record<string, unknown>;
+  return metadata.formatVersion === 1 &&
+    metadata.provider === "openai-codex" &&
+    typeof metadata.jbCentralExecutable === "string" && metadata.jbCentralExecutable.trim() !== "" &&
+    typeof metadata.proxyPort === "number" && Number.isInteger(metadata.proxyPort) && metadata.proxyPort > 0;
+}
+
+async function resolveJbCentralProxySecret(provider: AgentWorkbenchJbCentralProvider): Promise<string | undefined> {
+  try {
+    const result = await execFileAsync(provider.jbCentralExecutable, JBCENTRAL_PROXY_START_ARGS, {timeout: 10000});
+    return String(result.stdout).trim() || undefined;
+  }
+  catch {
+    return undefined;
+  }
+}
+
+function toJbCentralProviderConfig(provider: AgentWorkbenchJbCentralProvider, proxySecret: string): ProviderConfig {
+  return {
+    name: "JBCentral Codex",
+    baseUrl: buildJbCentralCodexBaseUrl(provider, proxySecret),
+    apiKey: JBCENTRAL_CODEX_API_KEY,
+    api: "openai-codex-responses",
+    streamSimple: (providerModel, context, options) => {
+      const codexModel = providerModel as Model<"openai-codex-responses">;
+      if (isJbCentralCodexModel(codexModel)) {
+        return streamSimpleOpenAIResponses(codexModel as Model<"openai-responses">, context, options);
+      }
+      return streamSimpleOpenAICodexResponses(codexModel, context, options);
+    },
+  };
+}
+
+function buildJbCentralCodexBaseUrl(provider: AgentWorkbenchJbCentralProvider, proxySecret: string): string {
+  return `http://127.0.0.1:${provider.proxyPort}/wire/${proxySecret}/${JBCENTRAL_CODEX_BASE_PATH}`;
+}
+
+function isJbCentralCodexModel(model: Model<"openai-codex-responses">): boolean {
+  return model.provider === "openai-codex" && normalizeBaseUrl(model.baseUrl).endsWith(`/${JBCENTRAL_CODEX_BASE_PATH}`);
 }
 
 async function registerSelectedOmlxProvider(pi: ExtensionAPI): Promise<void> {
