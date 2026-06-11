@@ -74,15 +74,19 @@ internal class ExecutionPositionUi private constructor(
   init {
     coroutineScope.launch(start = UNDISPATCHED) {
       vm.isActiveSourceKindState.collect { isActiveSourceKind ->
-        val useTopFrameAttributes = vm.isTopFrame && isActiveSourceKind
-        val attributesKey = if (useTopFrameAttributes) DebuggerColors.EXECUTIONPOINT_ATTRIBUTES else DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES
-        rangeHighlighter.setTextAttributesKey(attributesKey)
-        rangeHighlighter.putUserData(ExecutionPointHighlighter.EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY, useTopFrameAttributes)
+        if (rangeHighlighter.isValid) {
+          val useTopFrameAttributes = vm.isTopFrame && isActiveSourceKind
+          val attributesKey = if (useTopFrameAttributes) DebuggerColors.EXECUTIONPOINT_ATTRIBUTES else DebuggerColors.NOT_TOP_FRAME_ATTRIBUTES
+          rangeHighlighter.setTextAttributesKey(attributesKey)
+          rangeHighlighter.putUserData(ExecutionPointHighlighter.EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY, useTopFrameAttributes)
+        }
       }
     }
     coroutineScope.launch(start = UNDISPATCHED) {
       vm.gutterVm.gutterIconRendererState.collect { gutterIconRenderer ->
-        rangeHighlighter.gutterIconRenderer = gutterIconRenderer
+        if (rangeHighlighter.isValid) {
+          rangeHighlighter.gutterIconRenderer = gutterIconRenderer
+        }
       }
     }
   }
