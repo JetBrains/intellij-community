@@ -4,5 +4,5 @@ fun usage() {
     FooBar.<caret>serializer()
 }
 
-// REF_EMPTY
+// REF: (test).FooBar
 // SKIP_IS_REFERENCE_TO_CHECK
