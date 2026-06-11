@@ -2,6 +2,8 @@ package com.intellij.terminal.frontend.toolwindow.impl
 
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.completion.escapeShellArgument
 import org.jetbrains.plugins.terminal.session.ShellName
@@ -18,6 +20,12 @@ internal object TerminalFilePathHandler {
   fun formatPath(nioPath: Path, context: TerminalProcessContext): String {
     val pathInMonolith = getPathInMonolith(nioPath, context.eelDescriptor)
     return escapeShellArgument(pathInMonolith, context.shellName)
+  }
+
+  fun isSameEnvironment(nioPath: Path?, eelDescriptor: EelDescriptor): Boolean {
+    val fileMachine = nioPath?.getEelDescriptor()?.getResolvedEelMachine() ?: return false
+    val eelMachine = eelDescriptor.getResolvedEelMachine() ?: return false
+    return fileMachine == eelMachine
   }
 
   private fun getPathInMonolith(nioPath: Path, eelDescriptor: EelDescriptor): String =

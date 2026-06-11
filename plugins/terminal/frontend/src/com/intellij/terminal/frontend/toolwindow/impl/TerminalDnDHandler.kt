@@ -12,6 +12,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.terminal.frontend.toolwindow.impl.TerminalFilePathHandler.getPathAsText
@@ -77,8 +78,11 @@ internal object TerminalDnDHandler {
 
     coroutineScope.launch {
       val droppedFiles = data.virtualFiles?.mapNotNull { it.toNioPathOrNull() } ?: data.paths
-      val dir = getDirectory(droppedFiles.firstOrNull()) ?: return@launch
+      val filePath = droppedFiles.firstOrNull()
+      if (!TerminalFilePathHandler.isSameEnvironment(filePath, window.project.getEelDescriptor()))
+        return@launch
 
+      val dir = getDirectory(filePath) ?: return@launch
       val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.DND_FILE_TO_TOOLWINDOW)
       withContext(Dispatchers.EDT) {
         createTerminalTab(
