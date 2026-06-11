@@ -10,6 +10,7 @@ import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.Text
 import com.intellij.grazie.utils.getNotSoDistantSimilarSiblings
 import com.intellij.grazie.utils.replaceBackslashEscapedWhitespace
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
@@ -31,6 +32,10 @@ internal class KotlinTextExtractor : TextExtractor() {
     .removingIndents(" \t").removingLineSuffixes(" \t")
 
   public override fun buildTextContents(root: PsiElement, allowedDomains: Set<TextContent.TextDomain>): List<TextContent> {
+      val viewProvider = root.containingFile.viewProvider
+      val injectedLanguageManager = InjectedLanguageManager.getInstance(root.project)
+      if (injectedLanguageManager.isInjectedViewProvider(viewProvider) && injectedLanguageManager.shouldInspectionsBeLenient(root)) return emptyList()
+
     if (DOCUMENTATION in allowedDomains) {
       if (root is KDocSection) {
         return splitAtMarkdownHeadings(
