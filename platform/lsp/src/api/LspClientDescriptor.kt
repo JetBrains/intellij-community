@@ -3,6 +3,7 @@ package com.intellij.platform.lsp.api
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.BaseProcessHandler
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -118,7 +119,7 @@ abstract class LspClientDescriptor protected constructor(
    */
   @RequiresBackgroundThread
   @Throws(ExecutionException::class)
-  open fun startServerProcess(): OSProcessHandler {
+  open fun startServerProcess(): BaseProcessHandler<*> {
     // LSP spec says: "It defaults to utf-8, which is the only encoding supported right now"
     // see https://microsoft.github.io/language-server-protocol/specification/#contentPart
     val startingCommandLine = createCommandLine().withCharset(Charsets.UTF_8)

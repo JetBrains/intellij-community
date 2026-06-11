@@ -71,7 +71,7 @@ a:com.intellij.platform.lsp.api.LspClientDescriptor
 - f:getRoots():com.intellij.openapi.vfs.VirtualFile[]
 - getWorkspaceConfiguration(org.eclipse.lsp4j.ConfigurationItem):java.lang.Object
 - a:isSupportedFile(com.intellij.openapi.vfs.VirtualFile):Z
-- startServerProcess():com.intellij.execution.process.OSProcessHandler
+- startServerProcess():com.intellij.execution.process.BaseProcessHandler
 f:com.intellij.platform.lsp.api.LspClientDescriptor$Companion
 - f:getLanguageId(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 com.intellij.platform.lsp.api.LspClientManager
@@ -123,6 +123,7 @@ a:com.intellij.platform.lsp.api.LspServerDescriptor
 - sf:Companion:com.intellij.platform.lsp.api.LspServerDescriptor$Companion
 - sf:LOG:com.intellij.openapi.diagnostic.Logger
 - p:<init>(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.vfs.VirtualFile[]):V
+- startServerProcess():com.intellij.execution.process.OSProcessHandler
 f:com.intellij.platform.lsp.api.LspServerDescriptor$Companion
 - f:getLanguageId(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 com.intellij.platform.lsp.api.LspServerListener
