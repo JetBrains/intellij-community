@@ -1710,12 +1710,6 @@
       "errorBackground": "#3D3223",
       "errorBorder": "#5E4D33",
       "errorForeground": "#DFE1E5"
-    },
-
-    "AgentPicker": {
-      "Advertiser": {
-        "background": "gray-40"
-      }
     }
   },
 
