@@ -41,7 +41,7 @@ internal class MinimapStructureMarkerCollector(
     val existing = previousByElement[element]
     val data = resolveElementData(element, existing) ?: return
 
-    val marker = resolveRangeMarker(existing, data.range, data.pointer)
+    val marker = resolveRangeMarker(existing, data.range)
     markAsReused(existing, marker, data.pointer)
     result.add(MinimapStructureMarker(element, marker, data.pointer))
   }
@@ -63,19 +63,13 @@ internal class MinimapStructureMarkerCollector(
 
   private fun resolveRangeMarker(
     existing: MinimapStructureMarker?,
-    range: TextRange,
-    pointer: SmartPsiElementPointer<out PsiElement>?
-  ): RangeMarker? {
-    return when {
-      pointer != null -> null
-      existing?.rangeMarker?.isValid == true -> existing.rangeMarker
-      else -> {
-        val documentLength = document.textLength
-        val startOffset = range.startOffset.coerceIn(0, documentLength)
-        val endOffset = range.endOffset.coerceIn(startOffset, documentLength)
-        document.createRangeMarker(startOffset, endOffset)
-      }
-    }
+    range: TextRange
+  ): RangeMarker {
+    existing?.rangeMarker?.let { if (it.isValid) return it }
+    val documentLength = document.textLength
+    val startOffset = range.startOffset.coerceIn(0, documentLength)
+    val endOffset = range.endOffset.coerceIn(startOffset, documentLength)
+    return document.createRangeMarker(startOffset, endOffset)
   }
 
   private fun markAsReused(

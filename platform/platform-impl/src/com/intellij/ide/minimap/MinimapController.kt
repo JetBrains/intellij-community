@@ -17,6 +17,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
@@ -108,29 +109,34 @@ class MinimapController(
   fun scheduleDiagnosticsUpdate(): Boolean = diagnosticsUpdates.tryEmit(Unit)
 
   fun refreshSnapshot() {
-    val state = settings.state
-    val panelHeight = max(if (panel.height > 0) panel.height else container.height, 0)
-    val effectiveScaleMode = MinimapLayoutPolicy.getEffectiveScaleMode(editor, state.scaleMode)
-    val scaleData = MinimapScaleUtil.computeScale(editor, panelHeight, state.width, effectiveScaleMode)
-    if (!updatePanelVisibility(scaleData.width)) {
-      return
-    }
-    if (panel.updatePreferredWidth(scaleData.width)) {
-      panel.revalidate()
-    }
+    // The snapshot pass resolves structure markers and reads the editor/document model in
+    // MinimapSceneBuilder, which needs read access. This runs on EDT from many call sites
+    // (resize, scroll, settings, LAF changes, …); wrap once here so every caller is protected.
+    WriteIntentReadAction.run {
+      val state = settings.state
+      val panelHeight = max(if (panel.height > 0) panel.height else container.height, 0)
+      val effectiveScaleMode = MinimapLayoutPolicy.getEffectiveScaleMode(editor, state.scaleMode)
+      val scaleData = MinimapScaleUtil.computeScale(editor, panelHeight, state.width, effectiveScaleMode)
+      if (!updatePanelVisibility(scaleData.width)) {
+        return@run
+      }
+      if (panel.updatePreferredWidth(scaleData.width)) {
+        panel.revalidate()
+      }
 
-    val panelWidth = max(panel.width, scaleData.width)
-    val areaStartOverride = if (isIndependentScrollEnabled()) independentAreaStart else null
-    val snapshot = sceneBuilder.buildSnapshot(
-      panelWidth,
-      panelHeight,
-      scaleData,
-      effectiveScaleMode,
-      areaStartOverride,
-    )
-    panel.updateSnapshot(snapshot)
-    if (isIndependentScrollEnabled()) {
-      independentAreaStart = snapshot.geometry.areaStart
+      val panelWidth = max(panel.width, scaleData.width)
+      val areaStartOverride = if (isIndependentScrollEnabled()) independentAreaStart else null
+      val snapshot = sceneBuilder.buildSnapshot(
+        panelWidth,
+        panelHeight,
+        scaleData,
+        effectiveScaleMode,
+        areaStartOverride,
+      )
+      panel.updateSnapshot(snapshot)
+      if (isIndependentScrollEnabled()) {
+        independentAreaStart = snapshot.geometry.areaStart
+      }
     }
   }
 

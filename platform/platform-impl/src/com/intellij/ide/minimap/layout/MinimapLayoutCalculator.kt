@@ -301,9 +301,6 @@ class MinimapLayoutCalculator(private val editor: Editor) {
   }
 
   private fun resolveRange(structureMarker: MinimapStructureMarker): TextRange? {
-    val pointerRange = structureMarker.pointer?.range
-    if (pointerRange != null) return TextRange(pointerRange.startOffset, pointerRange.endOffset)
-
     val rangeMarker = structureMarker.rangeMarker ?: return null
     if (!rangeMarker.isValid) return null
 
