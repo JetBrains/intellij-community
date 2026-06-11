@@ -11,7 +11,7 @@ class RemoteKeyboard(private val robot: Robot) {
       get() = logger<RemoteKeyboard>()
   }
 
-  fun key(key: Int) = step("Press key $key") { robot.pressAndReleaseKey(key) }
+  fun key(key: Int): Unit = step("Press key $key") { robot.pressAndReleaseKey(key) }
 
   fun enter() {
     step("Press enter") {
