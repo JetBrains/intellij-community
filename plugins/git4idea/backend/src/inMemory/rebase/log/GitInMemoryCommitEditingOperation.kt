@@ -21,6 +21,8 @@ import git4idea.rebase.interactive.getRebaseUpstreamFor
 import git4idea.rebase.log.GitCommitEditingOperationResult
 import git4idea.reset.GitResetMode
 import git4idea.util.GitPreservingProcess
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
@@ -56,6 +58,7 @@ internal abstract class GitInMemoryCommitEditingOperation(
       else {
         updateRefToNewHead(result.newHead)
       }
+      runPostRewriteHook(result.rewrittenList)
 
       objectRepo.repository.update()
       val upstream = getRebaseUpstreamFor(baseToHeadCommitsRange.first())
@@ -106,6 +109,19 @@ internal abstract class GitInMemoryCommitEditingOperation(
     )
   }
 
+  private suspend fun runPostRewriteHook(rewrittenList: List<Pair<Oid, Oid>>) {
+    if (rewrittenList.isEmpty()) return
+
+    val lines = rewrittenList.map { (old, new) -> "${old.hex()} ${new.hex()}" }
+    val result = withContext(Dispatchers.IO) {
+      Git.getInstance().runHook(objectRepo.repository, "post-rewrite", listOf("rebase"), lines)
+    }
+
+    if (!result.success()) {
+      LOG.warn("post-rewrite hook exited with errors: ${result.errorOutputAsJoinedString}")
+    }
+  }
+
   protected fun assertCurrentRevMatchesInitialHead(performUpdate: Boolean = true) {
     if (performUpdate) {
       objectRepo.repository.update()
@@ -116,11 +132,16 @@ internal abstract class GitInMemoryCommitEditingOperation(
     }
   }
 
+  /**
+   * @property rewrittenList A mapping from the original commit
+   * to the corresponding rewritten commit. Serves as input to `post-rewrite` git hook
+   */
   protected data class CommitEditingResult(
     val newHead: Oid,
     val requiresWorkingTreeUpdate: Boolean,
     val commitToFocus: Oid? = null,
     val commitToFocusOnUndo: Oid? = null,
+    val rewrittenList: List<Pair<Oid, Oid>> = emptyList()
   )
 
   companion object {
