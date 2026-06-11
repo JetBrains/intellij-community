@@ -3,14 +3,34 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.projectsTree
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
 
-class MavenPluginResolutionTest : MavenMultiVersionImportingTestCase() {
-  override fun skipPluginResolution() = false
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenPluginResolutionTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
 
   @Test
   fun `test resolve bundle packaging plugin versions`() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -26,8 +46,8 @@ class MavenPluginResolutionTest : MavenMultiVersionImportingTestCase() {
                       </plugins>
                     </build>
                     """.trimIndent())
-    assertEquals(1, projectsTree.projects.size)
-    val errors = projectsTree.projects.first().problems.filter { it.isError }
+    assertEquals(1, maven.projectsTree.projects.size)
+    val errors = maven.projectsTree.projects.first().problems.filter { it.isError }
     assertEmpty(errors)
   }
 }
