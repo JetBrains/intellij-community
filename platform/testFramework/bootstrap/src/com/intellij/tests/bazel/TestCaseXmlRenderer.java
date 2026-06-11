@@ -11,6 +11,7 @@ import org.junit.platform.launcher.TestIdentifier;
 import org.junit.platform.launcher.TestPlan;
 import org.junit.platform.launcher.listeners.LegacyReportingUtils;
 import org.opentest4j.AssertionFailedError;
+import org.opentest4j.MultipleFailuresError;
 import org.opentest4j.ValueWrapper;
 
 import javax.xml.stream.XMLStreamException;
@@ -123,22 +124,27 @@ class TestCaseXmlRenderer {
 
     StringWriter stringWriter =  new StringWriter();
     PrintWriter printWriter = new PrintWriter(stringWriter);
-    if (throwable instanceof AssertionFailedError error) {
-      // Both fields are optional on AssertionFailedError; e.g. kotlin.test.fail(message) constructs
-      // one with neither set. Skip the expected/actual block when either is missing — the stack
-      // trace below still describes the failure.
-      ValueWrapper expectedWrapper = error.getExpected();
-      ValueWrapper actualWrapper = error.getActual();
-      if (expectedWrapper != null && actualWrapper != null) {
-        String expected = expectedWrapper.getStringRepresentation();
-        String actual = actualWrapper.getStringRepresentation();
-        printWriter.println("---- expected -------------------------------");
-        printWriter.print(expected);
-        printWriter.println("---- actual ---------------------------------");
-        printWriter.print(actual);
-        printWriter.println("---- diff -----------------------------------");
-        printWriter.println(computeLineDiff(expected, actual));
-        printWriter.println("---------------------------------------------");
+    List<Throwable> failures = throwable instanceof MultipleFailuresError multipleFailures
+                               ? multipleFailures.getFailures()
+                               : List.of(throwable);
+    for (Throwable failure : failures) {
+      if (failure instanceof AssertionFailedError error) {
+        // Both fields are optional on AssertionFailedError; e.g. kotlin.test.fail(message) constructs
+        // one with neither set. Skip the expected/actual block when either is missing — the stack
+        // trace below still describes the failure.
+        ValueWrapper expectedWrapper = error.getExpected();
+        ValueWrapper actualWrapper = error.getActual();
+        if (expectedWrapper != null && actualWrapper != null) {
+          String expected = expectedWrapper.getStringRepresentation();
+          String actual = actualWrapper.getStringRepresentation();
+          printWriter.println("---- expected -------------------------------");
+          printWriter.print(expected);
+          printWriter.println("---- actual ---------------------------------");
+          printWriter.print(actual);
+          printWriter.println("---- diff -----------------------------------");
+          printWriter.println(computeLineDiff(expected, actual));
+          printWriter.println("---------------------------------------------");
+        }
       }
     }
     throwable.printStackTrace(printWriter);

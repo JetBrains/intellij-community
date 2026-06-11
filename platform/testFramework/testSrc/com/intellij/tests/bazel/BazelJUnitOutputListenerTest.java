@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 class BazelJUnitOutputListenerTest {
@@ -79,6 +81,18 @@ class BazelJUnitOutputListenerTest {
     assertThat(suite.getAttribute("skipped")).isEqualTo("1");
     assertThat(getOnlyTestCase(xml, "abortedTest").getElementsByTagName("skipped").getLength()).isEqualTo(1);
     assertThat(getOnlyTestCase(xml, "successfulTest").getElementsByTagName("skipped").getLength()).isEqualTo(0);
+  }
+
+  @Test
+  void includesComparisonDiffForEachNestedFailureInAssertAll(@TempDir Path tempDir) throws Exception {
+    Document xml = executeAndReadXml(MultipleComparisonFailuresScenario.class, tempDir.resolve("assertAll.xml"));
+
+    Element testCase = getOnlyTestCase(xml, "assertAllWithTwoComparisonFailures");
+    NodeList failures = testCase.getElementsByTagName("failure");
+    assertThat(failures.getLength()).isEqualTo(1);
+
+    String failureText = failures.item(0).getTextContent();
+    assertThat(failureText).contains("expected-1", "actual-1", "expected-2", "actual-2");
   }
 
   private static Document executeAndReadXml(Class<?> scenarioRootClass, Path xmlOutputFile) throws Exception {
@@ -195,6 +209,16 @@ class BazelJUnitOutputListenerTest {
 
     @Test
     void successfulTest() {
+    }
+  }
+
+  static class MultipleComparisonFailuresScenario {
+    @Test
+    void assertAllWithTwoComparisonFailures() {
+      assertAll(
+        () -> assertEquals("expected-1", "actual-1"),
+        () -> assertEquals("expected-2", "actual-2")
+      );
     }
   }
 
