@@ -219,7 +219,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
           final PsiType methodReturnType = ((PsiMethod)resolve).getReturnType();
           if (TypeConversionUtil.isPrimitiveWrapper(methodReturnType) && NullableNotNullManager.isNullable((PsiMethod)resolve)) {
             final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(expression);
-            if (TypeConversionUtil.isPrimitiveAndNotNull(returnType)) {
+            if (TypeConversionUtil.isPrimitiveAndNotNull(returnType) && !PsiTypes.voidType().equals(returnType)) {
               holder.registerProblem(expression, JavaAnalysisBundle.message("dataflow.message.unboxing.method.reference"));
             }
           }

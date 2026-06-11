@@ -306,4 +306,9 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testOptionalInsideLambda() {
     doTest();
   }
+  
+  @TestFor(issues = "IDEA-389893")
+  public void testUnboxedMethodReferenceVoidType() {
+    doTest();
+  }
 }
