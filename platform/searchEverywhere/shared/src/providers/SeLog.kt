@@ -34,6 +34,7 @@ enum class SeLog {
       LISTENERS,
       BALANCING,
       EQUALITY,
+      SCOPE,
       PATTERN,
       CARET,
     )
