@@ -551,10 +551,6 @@ f:com.intellij.codeInsight.highlighting.HighlightUsagesHandler
 - sf:SEARCH_EVERYWHERE:com.intellij.codeInsight.intention.IntentionSource
 - s:valueOf(java.lang.String):com.intellij.codeInsight.intention.IntentionSource
 - s:values():com.intellij.codeInsight.intention.IntentionSource[]
-*:com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponentHolder
-- com.intellij.openapi.Disposable
-- a:isDisposed():Z
-- a:jComponent():javax.swing.JComponent
 *:com.intellij.codeInsight.lookup.LookupBottomPanelProvider
 - *sf:Companion:com.intellij.codeInsight.lookup.LookupBottomPanelProvider$Companion
 - a:createBottomPanel(com.intellij.codeInsight.lookup.Lookup):javax.swing.JComponent

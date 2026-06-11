@@ -18,8 +18,6 @@ com/intellij/openapi/editor/markup/AnalyzerStatus
 com/intellij/openapi/editor/markup/UIController
 com/intellij/openapi/roots/impl/storage/ClasspathStorageProvider
 com/intellij/openapi/roots/ui/configuration/ContentFolderRef
-com/intellij/packageDependencies/DependencyAnalysisResult
-com/intellij/platform/backend/navigation/impl/RawNavigationRequest
 com/intellij/psi/search/impl/VirtualFileEnumeration
 com/intellij/slicer/SliceManager$StoredSettingsBean
 com/intellij/util/indexing/dependencies/AppIndexingDependenciesToken

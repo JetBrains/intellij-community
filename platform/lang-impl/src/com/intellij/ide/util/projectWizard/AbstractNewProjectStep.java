@@ -40,6 +40,7 @@ import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.TemplateProjectDirectoryGenerator;
 import com.intellij.util.PairConsumer;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,6 +112,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
     addAll(myCustomization.getActions(projectGenerators, callback));
   }
 
+  @ApiStatus.Internal
   protected void addProjectSpecificAction(final @NotNull ProjectSpecificAction projectSpecificAction) {
     addAll(projectSpecificAction.getChildren(ActionManager.getInstance()));
   }
@@ -119,6 +121,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
 
     private AbstractNewProjectStep<T> myProjectStep;
 
+    @ApiStatus.Internal
     protected @NotNull ProjectSpecificAction createProjectSpecificAction(final @NotNull AbstractCallback<T> callback) {
       DirectoryProjectGenerator<T> emptyProjectGenerator = createEmptyProjectGenerator();
       return new ProjectSpecificAction(emptyProjectGenerator, createProjectSpecificSettingsStep(emptyProjectGenerator, callback));
