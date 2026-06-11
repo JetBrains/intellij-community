@@ -1,0 +1,16 @@
+<idea-plugin allow-bundled-update="true">
+  <id>org.intellij.plugins.markdown.webview.preview</id>
+  <name>Markdown WebView Preview</name>
+  <vendor>JetBrains</vendor>
+  <category>Languages</category>
+  <description>Provides a WebView-based preview renderer for Markdown files.</description>
+
+  <dependencies>
+    <plugin id="org.intellij.plugins.markdown"/>
+    <plugin id="com.intellij.platform.ui.webview"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="org.intellij.markdown">
+    <html.panel.provider implementation="org.intellij.plugins.markdown.webview.preview.WebViewMarkdownPreviewPanelProvider"/>
+  </extensions>
+</idea-plugin>

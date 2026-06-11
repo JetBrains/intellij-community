@@ -54,6 +54,7 @@
     <orderEntry type="module" module-name="intellij.restructuredtext" scope="TEST" />
     <orderEntry type="module" module-name="intellij.markdown.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mermaid" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.markdown.webview.preview.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.jps.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.jps.tests" scope="TEST" />
