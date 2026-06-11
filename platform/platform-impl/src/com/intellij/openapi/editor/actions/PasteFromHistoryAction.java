@@ -15,7 +15,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.UIBundle;
@@ -34,11 +34,8 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-public final class MultiplePasteAction extends AnAction implements DumbAware {
-
-  private static final char P = 'P';
-
-  public MultiplePasteAction() {
+final class PasteFromHistoryAction extends DumbAwareAction {
+  PasteFromHistoryAction() {
     setEnabledInModalContext(true);
   }
 
@@ -125,7 +122,8 @@ public final class MultiplePasteAction extends AnAction implements DumbAware {
     ClipboardContentChooser(Project project) {
       super(project, UIBundle.message("choose.content.to.paste.dialog.title"), true, true);
       setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
-      setOKButtonMnemonic(P);
+      //noinspection HardCodedStringLiteral
+      setOKButtonMnemonic('P');
       setKeepPopupsOpen(true);
     }
 

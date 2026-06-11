@@ -4049,13 +4049,6 @@ f:com.intellij.openapi.editor.actions.MoveUpAndScrollAction
 f:com.intellij.openapi.editor.actions.MoveUpWithSelectionAndScrollAction
 - com.intellij.openapi.editor.actionSystem.EditorAction
 - <init>():V
-f:com.intellij.openapi.editor.actions.MultiplePasteAction
-- com.intellij.openapi.actionSystem.AnAction
-- com.intellij.openapi.project.DumbAware
-- <init>():V
-- actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
-- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- update(com.intellij.openapi.actionSystem.AnActionEvent):V
 f:com.intellij.openapi.editor.actions.NextWordAction
 - com.intellij.openapi.editor.actions.TextComponentEditorAction
 - <init>():V
