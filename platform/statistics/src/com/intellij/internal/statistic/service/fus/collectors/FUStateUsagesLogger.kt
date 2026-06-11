@@ -28,7 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.future.asDeferred
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -133,7 +133,7 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
 
         val data = FeatureUsageData(recorder).addProject(project)
         @Suppress("UnstableApiUsage")
-        logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_FAILED, data.build(), true).asDeferred().join()
+        logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_FAILED, data.build(), true).await()
 
         LOG.error(e)
       }
@@ -156,13 +156,14 @@ class FUStateUsagesLogger private constructor(coroutineScope: CoroutineScope) : 
             val data = mergeWithEventData(groupData, metric.data)
             val eventData = data?.build() ?: emptyMap()
             launch {
-              logger.logAsync(group, metric.eventId, eventData, true).asDeferred().join()
+              logger.logAsync(group, metric.eventId, eventData, true).await()
             }
           }
         }
 
         launch {
-          logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, FeatureUsageData(group.recorder).addProject(project).build(), true).join()
+          val data = FeatureUsageData(group.recorder).addProject(project).build()
+          logger.logAsync(group, EventLogSystemEvents.STATE_COLLECTOR_INVOKED, data, true).await()
         }
       }
     }
