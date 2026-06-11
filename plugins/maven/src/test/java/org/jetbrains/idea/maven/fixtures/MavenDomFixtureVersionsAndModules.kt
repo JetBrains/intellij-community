@@ -3,19 +3,35 @@
 package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.compiler.CompilerConfiguration
+import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.CompilerModuleExtension
+import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.RootPolicy
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.project.MavenImportingSettings
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.jupiter.api.Assumptions
 
@@ -171,4 +187,134 @@ fun MavenTestFixture.isModel410(): Boolean {
 
 fun arrayOfNotNull(vararg values: String?): Array<String> {
   return values.filterNotNull().toTypedArray()
+}
+
+fun MavenTestFixture.assertModuleLibDepScope(moduleName: String, depName: String, scope: DependencyScope?) {
+  val dep = getModuleLibDep(moduleName, depName)
+  assertEquals(scope, dep.scope)
+}
+
+fun MavenTestFixture.assertModuleModuleDepScope(moduleName: String, depName: String, scope: DependencyScope) {
+  val dep = getModuleModuleDep(moduleName, depName)
+  assertEquals(scope, dep.scope)
+}
+
+private fun MavenTestFixture.getModuleModuleDep(moduleName: String, depName: String): ModuleOrderEntry {
+  return getModuleDep(moduleName, depName, ModuleOrderEntry::class.java)
+}
+
+private fun <T> MavenTestFixture.getModuleDep(moduleName: String, depName: String, clazz: Class<T>): T {
+  val entry = ModuleRootManager.getInstance(getModule(moduleName)).orderEntries
+    .filter { clazz.isInstance(it) }
+    .find { it.presentableName == depName }
+  assertNotNull("Dependency $depName not found in module $moduleName", entry)
+  @Suppress("UNCHECKED_CAST")
+  return entry as T
+}
+
+fun MavenTestFixture.assertProjectLibraries(vararg expectedNames: String) {
+  val actualNames = LibraryTablesRegistrar.getInstance().getLibraryTable(project).libraries
+    .map { it.name ?: "<unnamed>" }
+  assertUnorderedElementsAreEqual(actualNames, *expectedNames)
+}
+
+fun MavenTestFixture.assertProjectLibraryCoordinates(
+  libraryName: String,
+  groupId: String?,
+  artifactId: String?,
+  version: String?,
+) {
+  assertProjectLibraryCoordinates(libraryName, groupId, artifactId, null, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING, version)
+}
+
+fun MavenTestFixture.assertProjectLibraryCoordinates(
+  libraryName: String,
+  groupId: String?,
+  artifactId: String?,
+  classifier: String?,
+  packaging: String?,
+  version: String?,
+) {
+  val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(libraryName)
+  assertNotNull("Library [$libraryName] not found", lib)
+  val libraryProperties = (lib as LibraryEx?)!!.properties
+  assertInstanceOf(libraryProperties, LibraryWithMavenCoordinatesProperties::class.java)
+  val coords = (libraryProperties as LibraryWithMavenCoordinatesProperties).mavenCoordinates
+  assertNotNull("Expected non-empty maven coordinates", coords)
+  assertEquals("Unexpected groupId", groupId, coords!!.groupId)
+  assertEquals("Unexpected artifactId", artifactId, coords.artifactId)
+  assertEquals("Unexpected classifier", classifier, coords.classifier)
+  assertEquals("Unexpected packaging", packaging, coords.packaging)
+  assertEquals("Unexpected version", version, coords.version)
+}
+
+fun MavenTestFixture.assertMavenizedModule(name: String) {
+  assertTrue(MavenProjectsManager.getInstance(project).isMavenizedModule(getModule(name)))
+}
+
+fun MavenTestFixture.assertNotMavenizedModule(name: String) {
+  assertFalse(MavenProjectsManager.getInstance(project).isMavenizedModule(getModule(name)))
+}
+
+/** Name of the OS environment variable that points at the temp dir (used by repository-path tests). */
+val MavenTestFixture.envVar: String
+  get() = if (SystemInfo.isWindows) "TEMP" else "TMPDIR"
+
+val MavenTestFixture.modulesTag: String get() = if (isModel410()) "subprojects" else "modules"
+val MavenTestFixture.moduleTag: String get() = if (isModel410()) "subproject" else "module"
+
+fun MavenTestFixture.forMaven3(r: Runnable) {
+  if (getActualMavenVersion().startsWith("3.")) r.run()
+}
+
+fun MavenTestFixture.forMaven4(r: Runnable) {
+  if (getActualMavenVersion().startsWith("4.")) r.run()
+}
+
+val MavenImportingTestFixture.mavenImporterSettings: MavenImportingSettings
+  get() = projectsManager.importingSettings
+
+fun MavenImportingTestFixture.assertRootProjects(vararg expectedNames: String?) {
+  val actualNames = projectsManager.projectsTree.rootProjects.map { it.mavenId.artifactId }
+  assertUnorderedElementsAreEqual(actualNames, *expectedNames)
+}
+
+private fun MavenTestFixture.getCompilerExtension(module: String): CompilerModuleExtension? =
+  CompilerModuleExtension.getInstance(getRootManager(module).module)
+
+private fun absModulePath(url: String?): String =
+  if (url == null) "" else FileUtil.toSystemIndependentName(FileUtil.toCanonicalPath(VirtualFileManager.extractPath(url)))
+
+fun MavenTestFixture.assertModuleOutput(moduleName: String, output: String, testOutput: String) {
+  val e = getCompilerExtension(moduleName)!!
+  assertFalse(e.isCompilerOutputPathInherited)
+  assertEquals(absModulePath(output), absModulePath(e.compilerOutputUrl))
+  assertEquals(absModulePath(testOutput), absModulePath(e.compilerOutputUrlForTests))
+}
+
+fun MavenTestFixture.assertProjectOutput(module: String) {
+  assertTrue(getCompilerExtension(module)!!.isCompilerOutputPathInherited)
+}
+
+fun MavenTestFixture.assertExportedDeps(moduleName: String, vararg expectedDeps: String) {
+  val actual = ArrayList<String?>()
+  getRootManager(moduleName).orderEntries().withoutSdk().withoutModuleSourceEntries().exportedOnly().process<Any?>(
+    object : RootPolicy<Any?>() {
+      override fun visitModuleOrderEntry(e: ModuleOrderEntry, value: Any?): Any? { actual.add(e.moduleName); return null }
+      override fun visitLibraryOrderEntry(e: LibraryOrderEntry, value: Any?): Any? { actual.add(e.libraryName); return null }
+    }, null)
+  assertOrderedElementsAreEqual(actual, *expectedDeps)
+}
+
+fun MavenTestFixture.assertModuleLibDep(
+  moduleName: String,
+  depName: String,
+  classesPaths: List<String>,
+  sourcePaths: List<String>,
+  javadocPaths: List<String>,
+) {
+  val lib = getModuleLibDep(moduleName, depName)
+  assertModuleLibDepPath(lib, OrderRootType.CLASSES, classesPaths)
+  assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePaths)
+  assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), javadocPaths)
 }

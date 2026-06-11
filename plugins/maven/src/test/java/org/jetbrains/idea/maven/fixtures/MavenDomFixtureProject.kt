@@ -2,7 +2,11 @@
 @file:Suppress("unused")
 package org.jetbrains.idea.maven.fixtures
 
+import com.intellij.ide.DataManager
 import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.CustomizedDataContext
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
@@ -10,18 +14,22 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialogManager
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.project.MavenSettingsCache
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.io.path.absolutePathString
 
 // Project-model authoring: creating/updating poms, profiles, sub-files and settings.
@@ -171,8 +179,22 @@ fun MavenTestFixture.assertModules(vararg expectedNames: String) {
 
 fun MavenTestFixture.mn(parent: String, moduleName: String): String = moduleName
 
-fun MavenTestFixture.configConfirmationForYesAnswer() {
-  TestDialogManager.setTestDialog { Messages.YES }
+fun MavenTestFixture.configConfirmationForYesAnswer(): AtomicInteger {
+  val counter = AtomicInteger()
+  TestDialogManager.setTestDialog {
+    counter.getAndIncrement()
+    Messages.YES
+  }
+  return counter
+}
+
+fun MavenTestFixture.configConfirmationForNoAnswer(): AtomicInteger {
+  val counter = AtomicInteger()
+  TestDialogManager.setTestDialog {
+    counter.getAndIncrement()
+    Messages.NO
+  }
+  return counter
 }
 
 fun MavenTestFixture.createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): String {
@@ -198,3 +220,63 @@ fun MavenImportingTestFixture.createSettingsXml(@Language(value = "XML", prefix 
   projectsManager.generalSettings.setUserSettingsFile(path.toString())
   return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
 }
+
+/** Builds a [DataContext] for an action under test, carrying the project and the pom as the selected file. */
+fun MavenImportingTestFixture.createTestDataContext(pomFile: VirtualFile): DataContext {
+  val defaultContext = DataManager.getInstance().getDataContext()
+  return CustomizedDataContext.withSnapshot(defaultContext) { sink ->
+    sink[CommonDataKeys.PROJECT] = project
+    sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = arrayOf(pomFile)
+  }
+}
+
+fun <R, E : Throwable?> MavenTestFixture.runWriteAction(computable: ThrowableComputable<R, E>): R {
+  return WriteCommandAction.writeCommandAction(project).compute(computable)
+}
+
+fun <E : Throwable?> MavenTestFixture.runWriteAction(runnable: ThrowableRunnable<E>) {
+  WriteCommandAction.writeCommandAction(project).run(runnable)
+}
+
+fun MavenTestFixture.createProjectPom(
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  omitModelVersionTag: Boolean,
+): VirtualFile {
+  return createPomFile(projectRoot, xml, omitModelVersionTag).also { projectPom = it }
+}
+
+fun MavenTestFixture.createModulePom(
+  relativePath: String,
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  omitModelVersionTag: Boolean,
+): VirtualFile {
+  return createPomFile(createProjectSubDir(relativePath), xml, omitModelVersionTag)
+}
+
+fun MavenTestFixture.updateModulePom(
+  relativePath: String,
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  omitModelVersionTag: Boolean,
+): VirtualFile {
+  val pom = createModulePom(relativePath, xml, omitModelVersionTag)
+  refreshFiles(listOf(pom))
+  return pom
+}
+
+fun MavenTestFixture.createPomFile(
+  dir: VirtualFile,
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  omitModelVersionTag: Boolean,
+): VirtualFile {
+  val filePath = Path.of(dir.path, "pom.xml")
+  Files.writeString(filePath, MavenTestCase.createPomXml(modelVersion, xml, omitModelVersionTag))
+  dir.refresh(false, false)
+  val f = dir.findChild("pom.xml") ?: throw AssertionError("can't find pom.xml ${filePath.absolutePathString()} in VFS")
+  refreshFiles(listOf(f))
+  return f
+}
+
+fun MavenTestFixture.pathFromBasedir(relPath: String): String = pathFromBasedir(projectRoot, relPath)
+
+fun MavenTestFixture.pathFromBasedir(root: VirtualFile?, relPath: String): String =
+  FileUtil.toSystemIndependentName(root!!.path + "/" + relPath)

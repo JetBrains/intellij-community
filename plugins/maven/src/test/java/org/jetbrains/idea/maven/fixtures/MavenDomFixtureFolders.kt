@@ -5,6 +5,8 @@ package org.jetbrains.idea.maven.fixtures
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.ModuleId
@@ -153,4 +155,44 @@ private fun MavenTestFixture.doAssertSourceRootPaths(moduleEntity: ModuleEntity,
   // compare absolute + relative paths
   val expectedAbsolutePaths = expectedPaths.map { basePath.resolve(it) }
   assertSameElements("Unexpected list of source roots ", actualPaths, expectedAbsolutePaths)
+}
+
+fun MavenTestFixture.assertContentRoots(moduleName: String, vararg expectedRoots: String) {
+  val actual = getContentRoots(moduleName).map { it.url }
+  assertUnorderedPathsAreEqual(actual, expectedRoots.map { VfsUtilCore.pathToUrl(it) })
+}
+
+fun MavenTestFixture.assertContentRoots(moduleName: String, vararg expectedRoots: Path) {
+  assertContentRoots(moduleName, *expectedRoots.map { it.toString() }.toTypedArray())
+}
+
+fun MavenTestFixture.assertRelativeContentRoots(moduleName: String, vararg expectedRelativeRoots: String) {
+  val expectedRoots = expectedRelativeRoots.map { projectPath.resolve(it).toCanonicalPath() }.toTypedArray()
+  assertContentRoots(moduleName, *expectedRoots)
+}
+
+private fun MavenTestFixture.getContentRoot(moduleName: String, path: String): ContentEntry {
+  val expectedUrl = VfsUtilCore.pathToUrl(path)
+  return getContentRoots(moduleName).firstOrNull { it.url == expectedUrl }
+         ?: throw AssertionError("Content root $path not found in module $moduleName")
+}
+
+fun MavenTestFixture.assertContentRootSources(moduleName: String, contentRoot: String, vararg expectedSources: String) {
+  val root = getContentRoot(moduleName, contentRoot)
+  doAssertContentFolders(root, root.getSourceFolders(JavaSourceRootType.SOURCE), *expectedSources)
+}
+
+fun MavenTestFixture.assertContentRootResources(moduleName: String, contentRoot: String, vararg expectedResources: String) {
+  val root = getContentRoot(moduleName, contentRoot)
+  doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.RESOURCE), *expectedResources)
+}
+
+fun MavenTestFixture.assertContentRootTestSources(moduleName: String, contentRoot: String, vararg expectedSources: String) {
+  val root = getContentRoot(moduleName, contentRoot)
+  doAssertContentFolders(root, root.getSourceFolders(JavaSourceRootType.TEST_SOURCE), *expectedSources)
+}
+
+fun MavenTestFixture.assertContentRootTestResources(moduleName: String, contentRoot: String, vararg expectedResources: String) {
+  val root = getContentRoot(moduleName, contentRoot)
+  doAssertContentFolders(root, root.getSourceFolders(JavaResourceRootType.TEST_RESOURCE), *expectedResources)
 }

@@ -5,7 +5,6 @@ package org.jetbrains.idea.maven.fixtures
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -180,11 +179,3 @@ suspend fun MavenDomTestFixture.findPsiFileAndGetText(f: VirtualFile?): String? 
   if (f == null) return null
   return readAction { PsiManager.getInstance(project).findFile(f)?.text }
 }
-
-internal val MavenDomTestFixture.envVar: String
-  get() {
-    if (SystemInfo.isWindows) {
-      return "TEMP"
-    }
-    return "TMPDIR"
-  }
