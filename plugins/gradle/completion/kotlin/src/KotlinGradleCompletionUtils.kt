@@ -2,13 +2,17 @@
 package com.intellij.gradle.completion.kotlin
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PlatformPatterns.psiFile
 import com.intellij.patterns.PsiElementPattern
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.storage.entities
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -29,8 +33,10 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.KtValueArgumentName
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isKotlinDslScriptsModelImportSupported
 import org.jetbrains.plugins.gradle.settings.GradleExtensionsSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
+import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.jetbrains.plugins.gradle.util.useDependencyCompletionService
 
 internal fun isGradleDependenciesCompletionEnabled(parameters: CompletionParameters): Boolean =
@@ -319,13 +325,23 @@ private fun GradleExtensionsSettings.GradleConfiguration.canBeUsedInDependencies
 /** Starts with a letter or underscore, then might contain only letters, digits, and underscores */
 private val kotlinMethodNamePattern = Regex("^[a-zA-Z_][a-zA-Z0-9_]*$")
 
-internal fun isConfigurationNamePsiResolvable(configurationName: String, context: PsiElement): Boolean =
-  isNameResolvableToMethod(
+internal fun isConfigurationNamePsiResolvable(configurationName: String, context: PsiElement, file: VirtualFile?): Boolean {
+  if (DumbService.isDumb(context.project)) return true
+  // For Gradle < 6.0, the Kotlin DSL scripts model is not imported by the IDE,
+  // so generated accessor extension functions are not available in the PSI scope.
+  // Skip the PSI check for these versions to avoid incorrectly quoting standard configurations.
+  val containingFile = context.containingFile ?: return true
+  val virtualFile = containingFile.virtualFile ?: file
+  // If we can't determine Gradle version reliably--skip the PSI check
+  if (null == virtualFile) return true
+  val gradleVersion = GradleUtil.getGradleVersion(context.project, virtualFile.path)
+  return !isKotlinDslScriptsModelImportSupported(gradleVersion) || isNameResolvableToMethod(
     methodName = configurationName,
     returnType = GRADLE_DEPENDENCY_CLASS_ID,
     receiverType = GRADLE_DEPENDENCY_HANDLER_CLASS_ID,
     context
   )
+}
 
 private val PsiElement.surroundingArgumentsSize
   get(): Int =

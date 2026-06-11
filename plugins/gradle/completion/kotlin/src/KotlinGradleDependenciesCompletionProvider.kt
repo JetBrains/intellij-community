@@ -39,6 +39,7 @@ import com.intellij.gradle.completion.removeDummySuffix
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerCore.isDisabled
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.psi.PsiElement
 import com.intellij.repository.search.completion.api.DependencyArtifactCompletionRequest
@@ -168,10 +169,11 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
 
   private fun suggestConfigurations(result: CompletionResultSet, parameters: CompletionParameters) {
     val dependencyConfigurations = findConfigurationsForDependencies(parameters.originalFile) ?: return
+    val file = FileDocumentManager.getInstance().getFile(parameters.editor.document)
     val lookup = dependencyConfigurations.map { configurationName ->
       LookupElementBuilder.create(configurationName)
         .withInsertHandler(KotlinGradleConfigurationInsertHandler(
-          isConfigurationNamePsiResolvable(configurationName, parameters.position)
+          isConfigurationNamePsiResolvable(configurationName, parameters.position, file)
         ))
         .withIcon(GradleIcons.Gradle)
         .withTypeText("Gradle Configuration")

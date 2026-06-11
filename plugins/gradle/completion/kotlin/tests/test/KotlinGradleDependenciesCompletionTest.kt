@@ -110,6 +110,33 @@ internal class KotlinGradleDependenciesCompletionTest : AbstractKotlinGradleComp
     }
 
   @ParameterizedTest
+  @BaseGradleVersionSource("false,true")
+  fun `test standard configuration is completed without quotes`(gradleVersion: GradleVersion, runInDumbMode: Boolean) =
+    test(gradleVersion, KOTLIN_GRADLE_COMPLETION_FIXTURE, runInDumbMode) {
+      val buildScriptFile = writeTextAndCommit(
+        "build.gradle.kts", """
+          dependencies {
+              impl<caret>
+          }
+        """.trimIndent()
+      )
+      runInEdtAndWait {
+        codeInsightFixture.configureFromExistingVirtualFile(buildScriptFile)
+        codeInsightFixture.completeBasic()
+        val implementationItem = codeInsightFixture.lookupElements
+          ?.firstOrNull { it.lookupString == "implementation" }
+        assertNotNull(implementationItem) { "Expected 'implementation' in the completion list" }
+        codeInsightFixture.lookup.currentItem = implementationItem
+        codeInsightFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
+        codeInsightFixture.checkResult("""
+          dependencies {
+              implementation(<caret>)
+          }
+        """.trimIndent())
+      }
+    }
+
+  @ParameterizedTest
   @BaseGradleVersionSource("""
     dependencies { dependencie<caret> } : dependencies,
     dependencies { inn<caret> } : inn
