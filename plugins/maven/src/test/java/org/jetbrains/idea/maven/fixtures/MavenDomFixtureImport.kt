@@ -79,7 +79,11 @@ suspend fun MavenImportingTestFixture.importProjectsWithErrors(vararg files: Vir
 }
 
 suspend fun MavenImportingTestFixture.importProjectWithProfiles(vararg profiles: String) {
-  projectsManager.addManagedFilesWithProfiles(listOf(projectPom), MavenExplicitProfiles(profiles.toList(), emptyList()), null, null, true)
+  importProjectsWithProfiles(listOf(projectPom), *profiles)
+}
+
+suspend fun MavenImportingTestFixture.importProjectsWithProfiles(files: List<VirtualFile>, vararg profiles: String) {
+  projectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles(profiles.toList(), emptyList()), null, null, true)
   IndexingTestUtil.suspendUntilIndexesAreReady(project)
   awaitConfiguration()
 }

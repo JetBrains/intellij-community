@@ -1,66 +1,117 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource.FileInDirectory
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertContentRoots
+import org.jetbrains.idea.maven.fixtures.assertExcludes
+import org.jetbrains.idea.maven.fixtures.assertMavenizedModule
+import org.jetbrains.idea.maven.fixtures.assertModuleLibDeps
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.assertNotMavenizedModule
+import org.jetbrains.idea.maven.fixtures.assertSources
+import org.jetbrains.idea.maven.fixtures.assumeMaven3
+import org.jetbrains.idea.maven.fixtures.assumeMaven4
+import org.jetbrains.idea.maven.fixtures.assumeModel_4_0_0
+import org.jetbrains.idea.maven.fixtures.assumeVersionMoreThan
+import org.jetbrains.idea.maven.fixtures.createModule
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.createProjectSubDirs
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.executeGoal
+import org.jetbrains.idea.maven.fixtures.getModule
+import org.jetbrains.idea.maven.fixtures.hasMavenInstallation
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.importProjectWithProfiles
+import org.jetbrains.idea.maven.fixtures.importProjectsWithProfiles
+import org.jetbrains.idea.maven.fixtures.isMaven4
+import org.jetbrains.idea.maven.fixtures.mavenGeneralSettings
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.mn
+import org.jetbrains.idea.maven.fixtures.projectPath
+import org.jetbrains.idea.maven.fixtures.projectsTree
+import org.jetbrains.idea.maven.fixtures.refreshFiles
+import org.jetbrains.idea.maven.fixtures.runWithoutStaticSync
+import org.jetbrains.idea.maven.fixtures.setupJdkForModule
+import org.jetbrains.idea.maven.fixtures.updateAllProjects
+import org.jetbrains.idea.maven.fixtures.updateProjectPom
+import org.jetbrains.idea.maven.fixtures.updateSettingsXml
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.IOException
 import java.nio.file.Files
 
-class StructureImportingTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class StructureImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testInheritProjectJdkForModules() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    assertTrue(ModuleRootManager.getInstance(getModule("project")).isSdkInherited())
+    assertTrue(ModuleRootManager.getInstance(maven.getModule("project")).isSdkInherited())
   }
 
   @Test
   fun testDoNotResetSomeSettingsAfterReimport() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    val sdk = setupJdkForModule("project")
+    val sdk = maven.setupJdkForModule("project")
 
-    updateAllProjects()
+    maven.updateAllProjects()
 
-    assertFalse(ModuleRootManager.getInstance(getModule("project")).isSdkInherited())
-    assertEquals(sdk, ModuleRootManager.getInstance(getModule("project")).getSdk())
+    assertFalse(ModuleRootManager.getInstance(maven.getModule("project")).isSdkInherited())
+    assertEquals(sdk, ModuleRootManager.getInstance(maven.getModule("project")).getSdk())
   }
 
   @Test
   fun testImportWithAlreadyExistingModules() = runBlocking {
-    createModule("m1")
-    createModule("m2")
-    createModule("m3")
-    createModule("m4")
+    maven.createModule("m1")
+    maven.createModule("m2")
+    maven.createModule("m3")
+    maven.createModule("m4")
 
-    PsiTestUtil.addSourceRoot(getModule("m1"), createProjectSubFile("m1/user-sources"))
-    PsiTestUtil.addSourceRoot(getModule("m2"), createProjectSubFile("m2/user-sources"))
-    PsiTestUtil.addSourceRoot(getModule("m3"), createProjectSubFile("m3/user-sources"))
-    PsiTestUtil.addSourceRoot(getModule("m4"), createProjectSubFile("m4/user-sources"))
-    PsiTestUtil.addSourceRoot(getModule("m4"), createProjectSubFile("m4/src/main/java"))
+    PsiTestUtil.addSourceRoot(maven.getModule("m1"), maven.createProjectSubFile("m1/user-sources"))
+    PsiTestUtil.addSourceRoot(maven.getModule("m2"), maven.createProjectSubFile("m2/user-sources"))
+    PsiTestUtil.addSourceRoot(maven.getModule("m3"), maven.createProjectSubFile("m3/user-sources"))
+    PsiTestUtil.addSourceRoot(maven.getModule("m4"), maven.createProjectSubFile("m4/user-sources"))
+    PsiTestUtil.addSourceRoot(maven.getModule("m4"), maven.createProjectSubFile("m4/src/main/java"))
 
-    assertModules("m1", "m2", "m3", "m4")
-    assertSources("m1", "user-sources")
-    assertSources("m2", "user-sources")
-    assertSources("m3", "user-sources")
-    assertSources("m4", "user-sources", "src/main/java")
+    maven.assertModules("m1", "m2", "m3", "m4")
+    maven.assertSources("m1", "user-sources")
+    maven.assertSources("m2", "user-sources")
+    maven.assertSources("m3", "user-sources")
+    maven.assertSources("m4", "user-sources", "src/main/java")
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -71,36 +122,36 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    createModulePom("m4", """
+    maven.createModulePom("m4", """
       <groupId>test</groupId>
       <artifactId>m4</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    createProjectSubDirs("m1/src/main/java",
+    maven.createProjectSubDirs("m1/src/main/java",
                          "m2/src/main/java",
                          "m3/src/main/java")
 
-    importProjectAsync()
-    assertModules("project", "m1", "m2", "m3", "m4")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1", "m2", "m3", "m4")
 
-    assertSources("m1", "user-sources", "src/main/java")
-    assertSources("m2", "user-sources", "src/main/java")
-    assertSources("m3", "user-sources")
-    assertSources("m4", "user-sources", "src/main/java")
+    maven.assertSources("m1", "user-sources", "src/main/java")
+    maven.assertSources("m2", "user-sources", "src/main/java")
+    maven.assertSources("m3", "user-sources")
+    maven.assertSources("m4", "user-sources", "src/main/java")
 
-    val mFour = project.workspaceModel.currentSnapshot.resolve(ModuleId("m4"))
+    val mFour = maven.project.workspaceModel.currentSnapshot.resolve(ModuleId("m4"))
     assertNotNull(mFour)
     val sourceEntitySource = mFour!!.contentRoots.first().sourceRoots.first { it.url.url.endsWith("java") }.entitySource
     assertTrue(sourceEntitySource is FileInDirectory)
@@ -108,20 +159,20 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportWithAlreadyExistingModulesWithCustomExcludes() = runBlocking {
-    createModule("m1")
-    createModule("m2")
-    createModule("m3")
+    maven.createModule("m1")
+    maven.createModule("m2")
+    maven.createModule("m3")
 
-    PsiTestUtil.addExcludedRoot(getModule("m1"), createProjectSubFile("m1/user-sources"))
-    PsiTestUtil.addExcludedRoot(getModule("m2"), createProjectSubFile("m2/user-sources"))
-    PsiTestUtil.addExcludedRoot(getModule("m3"), createProjectSubFile("m3/user-sources"))
+    PsiTestUtil.addExcludedRoot(maven.getModule("m1"), maven.createProjectSubFile("m1/user-sources"))
+    PsiTestUtil.addExcludedRoot(maven.getModule("m2"), maven.createProjectSubFile("m2/user-sources"))
+    PsiTestUtil.addExcludedRoot(maven.getModule("m3"), maven.createProjectSubFile("m3/user-sources"))
 
-    assertModules("m1", "m2", "m3")
-    assertExcludes("m1", "user-sources")
-    assertExcludes("m2", "user-sources")
-    assertExcludes("m3", "user-sources")
+    maven.assertModules("m1", "m2", "m3")
+    maven.assertExcludes("m1", "user-sources")
+    maven.assertExcludes("m2", "user-sources")
+    maven.assertExcludes("m3", "user-sources")
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -132,27 +183,27 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    createProjectSubDirs("m1/src/main/java",
+    maven.createProjectSubDirs("m1/src/main/java",
                          "m2/src/main/java",
                          "m3/src/main/java")
 
-    importProjectAsync()
-    assertModules("project", "m1", "m2", "m3")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1", "m2", "m3")
 
-    assertExcludes("m1", "target", "user-sources")
-    assertExcludes("m2", "target", "user-sources")
-    assertExcludes("m3", "user-sources")
+    maven.assertExcludes("m1", "target", "user-sources")
+    maven.assertExcludes("m2", "target", "user-sources")
+    maven.assertExcludes("m3", "user-sources")
   }
 
   /**
@@ -160,52 +211,52 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
    */
   @Test
   fun testImportWithAlreadyExistingModuleWithDifferentNameButSameContentRoot() = runBlocking {
-    val userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot")
+    val userModuleWithConflictingRoot = maven.createModule("userModuleWithConflictingRoot")
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null)
-    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, projectRoot)
-    val anotherContentRoot = createProjectSubFile("m1/user-content")
+    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, maven.projectRoot)
+    val anotherContentRoot = maven.createProjectSubFile("m1/user-content")
     PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, anotherContentRoot)
-    assertContentRoots(userModuleWithConflictingRoot.getName(), projectPath.toString(), anotherContentRoot.getPath())
+    maven.assertContentRoots(userModuleWithConflictingRoot.getName(), maven.projectPath.toString(), anotherContentRoot.getPath())
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", userModuleWithConflictingRoot.getName())
-    assertContentRoots("project", projectPath.toString())
-    assertContentRoots(userModuleWithConflictingRoot.getName(), anotherContentRoot.getPath())
+    maven.importProjectAsync()
+    maven.assertModules("project", userModuleWithConflictingRoot.getName())
+    maven.assertContentRoots("project", maven.projectPath.toString())
+    maven.assertContentRoots(userModuleWithConflictingRoot.getName(), anotherContentRoot.getPath())
   }
 
   @Test
   fun testImportWithAlreadyExistingModuleWithPartiallySameContentRoots() = runBlocking {
-    val userModuleWithConflictingRoot = createModule("userModuleWithConflictingRoot")
+    val userModuleWithConflictingRoot = maven.createModule("userModuleWithConflictingRoot")
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null)
-    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, projectRoot)
-    assertContentRoots(userModuleWithConflictingRoot.getName(), projectPath.toString())
+    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, maven.projectRoot)
+    maven.assertContentRoots(userModuleWithConflictingRoot.getName(), maven.projectPath.toString())
 
-    val userModuleWithUniqueRoot = createModule("userModuleWithUniqueRoot")
-    assertContentRoots(userModuleWithUniqueRoot.getName(), "$projectPath/userModuleWithUniqueRoot")
+    val userModuleWithUniqueRoot = maven.createModule("userModuleWithUniqueRoot")
+    maven.assertContentRoots(userModuleWithUniqueRoot.getName(), "${maven.projectPath}/userModuleWithUniqueRoot")
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", userModuleWithUniqueRoot.getName())
-    assertContentRoots("project", projectPath.toString())
-    assertContentRoots(userModuleWithUniqueRoot.getName(), "$projectPath/userModuleWithUniqueRoot")
+    maven.importProjectAsync()
+    maven.assertModules("project", userModuleWithUniqueRoot.getName())
+    maven.assertContentRoots("project", maven.projectPath.toString())
+    maven.assertContentRoots(userModuleWithUniqueRoot.getName(), "${maven.projectPath}/userModuleWithUniqueRoot")
   }
 
   @Test
   fun testMarkModulesAsMavenized() = runBlocking {
-    createModule("userModule")
+    maven.createModule("userModule")
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -215,19 +266,19 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", "m1", "userModule")
-    assertMavenizedModule("project")
-    assertMavenizedModule("m1")
-    assertNotMavenizedModule("userModule")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1", "userModule")
+    maven.assertMavenizedModule("project")
+    maven.assertMavenizedModule("m1")
+    maven.assertNotMavenizedModule("userModule")
 
-    updateProjectPom("""
+    maven.updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -237,23 +288,23 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    updateAllProjects()
-    assertModules("project", "m2", "userModule")
-    assertMavenizedModule("project")
-    assertMavenizedModule("m2")
-    assertNotMavenizedModule("userModule")
+    maven.updateAllProjects()
+    maven.assertModules("project", "m2", "userModule")
+    maven.assertMavenizedModule("project")
+    maven.assertMavenizedModule("m2")
+    maven.assertNotMavenizedModule("userModule")
   }
 
 
   @Test
   fun testModulesWithSlashesRegularAndBack() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -264,26 +315,26 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("dir/m1", """
+    maven.createModulePom("dir/m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    createModulePom("dir/m2", """
+    maven.createModulePom("dir/m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", "m1", "m2")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1", "m2")
 
-    val roots = projectsTree.rootProjects
+    val roots = maven.projectsTree.rootProjects
     assertEquals(1, roots.size)
     assertEquals("project", roots[0].mavenId.artifactId)
 
-    val modules = projectsTree.getModules(roots[0])
+    val modules = maven.projectsTree.getModules(roots[0])
     assertEquals(2, modules.size)
     assertEquals("m1", modules[0].mavenId.artifactId)
     assertEquals("m2", modules[1].mavenId.artifactId)
@@ -291,7 +342,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testModulesAreNamedAfterArtifactIds() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -303,26 +354,26 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("dir1", """
+    maven.createModulePom("dir1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       <name>name1</name>
       """.trimIndent())
 
-    createModulePom("dir2", """
+    maven.createModulePom("dir2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       <name>name2</name>
       """.trimIndent())
-    importProjectAsync()
-    assertModules("project", "m1", "m2")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1", "m2")
   }
 
   @Test
   fun testModulesWithSlashesAtTheEnds() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -334,31 +385,31 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    createModulePom("m3", """
+    maven.createModulePom("m3", """
       <groupId>test</groupId>
       <artifactId>m3</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", "m1", "m2", "m3")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1", "m2", "m3")
   }
 
   @Test
   fun testModulesWithSameArtifactId() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -369,25 +420,25 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("dir1/m", """
+    maven.createModulePom("dir1/m", """
       <groupId>test.group1</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    createModulePom("dir2/m", """
+    maven.createModulePom("dir2/m", """
       <groupId>test.group2</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", "m (1) (test.group1)", "m (2) (test.group2)")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m (1) (test.group1)", "m (2) (test.group2)")
   }
 
   @Test
   fun testModulesWithSameArtifactIdAndGroup() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -398,25 +449,25 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("dir1/m", """
+    maven.createModulePom("dir1/m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    createModulePom("dir2/m", """
+    maven.createModulePom("dir2/m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", "m (1)", "m (2)")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m (1)", "m (2)")
   }
 
   @Test
   fun testModuleWithRelativePath() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -426,19 +477,19 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("../m", """
+    maven.createModulePom("../m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", "m")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m")
   }
 
   @Test
   fun testModuleWithRelativeParent() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -450,22 +501,22 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </parent>
                        """.trimIndent())
 
-    createModulePom("../parent", """
+    maven.createModulePom("../parent", """
       <groupId>test</groupId>
       <artifactId>parent</artifactId>
       <version>1</version>
       <packaging>pom</packaging>
       """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project")
+    maven.importProjectAsync()
+    maven.assertModules("project")
   }
 
   @Test
   fun testModulePathsAsProperties() = runBlocking {
     // Maven 4 doesn't allow module paths as properties
-    assumeMaven3()
-    createProjectPom("""
+    maven.assumeMaven3()
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -480,26 +531,26 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", "m1", "m2")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1", "m2")
 
-    val roots = projectsTree.rootProjects
+    val roots = maven.projectsTree.rootProjects
     assertEquals(1, roots.size)
     assertEquals("project", roots[0].mavenId.artifactId)
 
-    val modules = projectsTree.getModules(roots[0])
+    val modules = maven.projectsTree.getModules(roots[0])
     assertEquals(2, modules.size)
     assertEquals("m1", modules[0].mavenId.artifactId)
     assertEquals("m2", modules[1].mavenId.artifactId)
@@ -507,7 +558,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testRecursiveParent() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <parent>
                          <groupId>org.apache.maven.archetype.test</groupId>
                          <artifactId>test-create-2</artifactId>
@@ -517,14 +568,14 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        <name>Maven archetype Test create-2-subModule</name>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
   }
 
   @Test
   fun testParentWithoutARelativePath() = runBlocking {
-    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
-    runWithoutStaticSync()
-    createProjectPom("""
+    maven.assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
+    maven.runWithoutStaticSync()
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -537,7 +588,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("modules/m", """
+    maven.createModulePom("modules/m", """
       <groupId>test</groupId>
       <artifactId>${'$'}{moduleName}</artifactId>
       <version>1</version>
@@ -548,22 +599,22 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
       </parent>
       """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", mn("project", "m1"))
+    maven.importProjectAsync()
+    maven.assertModules("project", maven.mn("project", "m1"))
 
-    val roots = projectsTree.rootProjects
+    val roots = maven.projectsTree.rootProjects
     assertEquals(1, roots.size)
     assertEquals("project", roots[0].mavenId.artifactId)
 
-    val modules = projectsTree.getModules(roots[0])
+    val modules = maven.projectsTree.getModules(roots[0])
     assertEquals(1, modules.size)
     assertEquals("m1", modules[0].mavenId.artifactId)
   }
 
   @Test
   fun testModuleWithPropertiesWithParentWithoutARelativePath() = runBlocking {
-    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
-    createProjectPom("""
+    maven.assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -576,7 +627,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("modules/m", """
+    maven.createModulePom("modules/m", """
       <groupId>test</groupId>
       <artifactId>${'$'}{moduleName}</artifactId>
       <version>1</version>
@@ -587,23 +638,23 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
       </parent>
       """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", mn("project", "m1"))
+    maven.importProjectAsync()
+    maven.assertModules("project", maven.mn("project", "m1"))
 
-    val roots = projectsTree.rootProjects
+    val roots = maven.projectsTree.rootProjects
     assertEquals(1, roots.size)
     assertEquals("project", roots[0].mavenId.artifactId)
 
-    val modules = projectsTree.getModules(roots[0])
+    val modules = maven.projectsTree.getModules(roots[0])
     assertEquals(1, modules.size)
     assertEquals("m1", modules[0].mavenId.artifactId)
   }
 
   @Test
   fun testParentInLocalRepository() = runBlocking {
-    if (!hasMavenInstallation()) return@runBlocking
+    if (!maven.hasMavenInstallation()) return@runBlocking
 
-    val parent = createModulePom("parent",
+    val parent = maven.createModulePom("parent",
                                  """
                                                  <groupId>test</groupId>
                                                  <artifactId>parent</artifactId>
@@ -617,12 +668,12 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                                                    </dependency>
                                                  </dependencies>
                                                  """.trimIndent())
-    executeGoal("parent", "install")
+    maven.executeGoal("parent", "install")
 
     WriteAction.runAndWait<IOException> { parent.delete(null) }
 
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>m</artifactId>
                        <version>1</version>
@@ -633,16 +684,16 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </parent>
                        """.trimIndent())
 
-    importProjectAsync()
-    assertModules("m")
-    assertModuleLibDeps("m", "Maven: junit:junit:4.0")
+    maven.importProjectAsync()
+    maven.assertModules("m")
+    maven.assertModuleLibDeps("m", "Maven: junit:junit:4.0")
   }
 
   @Test
   fun testParentInRemoteRepository() = runBlocking {///Users/dk/.m2/repository
-    val defaultRepositoryPath = repositoryPath
-    repositoryPath = dir.resolve("repo")
-    updateSettingsXml("""
+    val defaultRepositoryPath = maven.repositoryPath
+    maven.repositoryPath = maven.dir.resolve("repo")
+    maven.updateSettingsXml("""
       <profiles>
         <profile>
           <id>custom-repos</id>
@@ -662,13 +713,13 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
         <activeProfile>custom-repos</activeProfile>
       </activeProfiles>
       
-      <localRepository>${repositoryPath}</localRepository>
+      <localRepository>${maven.repositoryPath}</localRepository>
     """.trimIndent())
 
-    val parentDir = repositoryPath.resolve("asm/asm-parent/3.0")
+    val parentDir = maven.repositoryPath.resolve("asm/asm-parent/3.0")
     assertFalse(Files.exists(parentDir))
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -679,18 +730,18 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </parent>
                        """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project")
+    maven.importProjectAsync()
+    maven.assertModules("project")
 
-    assertTrue("File $parentDir doesn't exist", Files.exists(parentDir))
+    assertTrue(Files.exists(parentDir), "File $parentDir doesn't exist")
 
-    assertEquals("asm-parent", projectsTree.rootProjects[0].parentId!!.artifactId)
+    assertEquals("asm-parent", maven.projectsTree.rootProjects[0].parentId!!.artifactId)
     assertTrue(Files.exists(parentDir.resolve("asm-parent-3.0.pom")))
   }
 
   @Test
   fun testReleaseCompilerPropertyInPerSourceTypeModules() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -709,12 +760,12 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                     """.trimIndent()
     )
 
-    assertModules("project", "project.main", "project.test")
+    maven.assertModules("project", "project.main", "project.test")
   }
 
   @Test
   fun testProjectWithBuiltExtension() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -728,12 +779,12 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                       </extensions>
                     </build>
                     """.trimIndent())
-    assertModules("project")
+    maven.assertModules("project")
   }
 
   @Test
   fun testUsingPropertyInBuildExtensionsOfChildModule() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -746,7 +797,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m", """
+    maven.createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <parent>
@@ -765,13 +816,13 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
       </build>
       """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project", mn("project", "m"))
+    maven.importProjectAsync()
+    maven.assertModules("project", maven.mn("project", "m"))
   }
 
   @Test
   fun testFileProfileActivationInParentPom() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -799,7 +850,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <parent>
@@ -809,7 +860,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
       </parent>
       """.trimIndent())
 
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <parent>
@@ -818,19 +869,19 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
         <version>1</version>
       </parent>
       """.trimIndent())
-    createProjectSubFile("m2/src/io.properties", "")
+    maven.createProjectSubFile("m2/src/io.properties", "")
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    assertModules("project", mn("project", "m1"), mn("project", "m2"))
-    assertModuleLibDeps(mn("project", "m1"))
-    assertModuleLibDeps(mn("project", "m2"), "Maven: junit:junit:4.0")
+    maven.assertModules("project", maven.mn("project", "m1"), maven.mn("project", "m2"))
+    maven.assertModuleLibDeps(maven.mn("project", "m1"))
+    maven.assertModuleLibDeps(maven.mn("project", "m2"), "Maven: junit:junit:4.0")
   }
 
   @Test
   fun testFileProfileActivationInParentPom2() = runBlocking {
-    assumeMaven4()
-    createProjectPom("""
+    maven.assumeMaven4()
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -858,7 +909,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    val m1 =createModulePom("m1", """
+    val m1 =maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <parent>
@@ -868,7 +919,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
       </parent>
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <parent>
@@ -877,22 +928,22 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
         <version>1</version>
       </parent>
       """.trimIndent())
-    createProjectSubFile("m2/src/io.properties", "")
+    maven.createProjectSubFile("m2/src/io.properties", "")
 
-    assertTrue("File src/io.properties not found", Files.exists(m2.toNioPath().parent.resolve("src/io.properties")))
+    assertTrue(Files.exists(m2.toNioPath().parent.resolve("src/io.properties")), "File src/io.properties not found")
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    val m1Project = projectsManager.findProject(m1)!!
+    val m1Project = maven.projectsManager.findProject(m1)!!
     assertSameElements("m1 enabled profiles", m1Project.activatedProfilesIds.enabledProfiles, emptyList())
 
-    val m2Project = projectsManager.findProject(m2)!!
+    val m2Project = maven.projectsManager.findProject(m2)!!
     assertSameElements("m2 enabled profiles", m2Project.activatedProfilesIds.enabledProfiles, listOf("xxx"))
   }
 
   @Test
   fun testProjectWithProfiles() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -925,20 +976,20 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    importProjectWithProfiles("one")
-    assertModules("project")
+    maven.importProjectWithProfiles("one")
+    maven.assertModules("project")
 
-    assertModuleLibDeps("project", "Maven: junit:junit:4.0")
+    maven.assertModuleLibDeps("project", "Maven: junit:junit:4.0")
 
-    importProjectWithProfiles("two")
-    assertModules("project")
+    maven.importProjectWithProfiles("two")
+    maven.assertModules("project")
 
-    assertModuleLibDeps("project", "Maven: junit:junit:3.8.1")
+    maven.assertModuleLibDeps("project", "Maven: junit:junit:3.8.1")
   }
 
   @Test
   fun testProjectWithDefaultProfile() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -962,16 +1013,16 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    importProjectAsync()
-    assertModules("project")
+    maven.importProjectAsync()
+    maven.assertModules("project")
 
-    assertModuleLibDeps("project", "Maven: junit:junit:4.0")
+    maven.assertModuleLibDeps("project", "Maven: junit:junit:4.0")
   }
 
   @Test
   fun testErrorImportArtifactVersionCannotBeEmpty() = runBlocking {
-    assumeVersionMoreThan("3.0.5")
-    createProjectPom("""
+    maven.assumeVersionMoreThan("3.0.5")
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                          <artifactId>parent</artifactId>
                          <packaging>pom</packaging>
@@ -1006,7 +1057,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                          </dependencyManagement>
                          """.trimIndent())
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
       <parent>
       <groupId>test</groupId>
       <artifactId>parent</artifactId>
@@ -1021,15 +1072,19 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
       </dependencies>
       """.trimIndent())
 
-    doImportProjectsAsync(listOf(projectPom), false, "profile-test")
+    maven.importProjectWithProfiles("profile-test")
+    maven.assertModuleLibDeps("parent", "Maven: junit:junit:4.0")
+    if (maven.isMaven4) {
+      maven.assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
+    }
   }
 
   @Test
   fun testProjectWithMavenConfigCustomUserSettingsXml() = runBlocking {
-    runWithoutStaticSync()
-    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
-    val configFile = createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml")
-    val settingsFile = createProjectSubFile(".mvn/custom-settings.xml",
+    maven.runWithoutStaticSync()
+    maven.assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
+    val configFile = maven.createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml")
+    val settingsFile = maven.createProjectSubFile(".mvn/custom-settings.xml",
                          """
                            <settings>
                                <profiles>
@@ -1044,29 +1099,29 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                                    <activeProfile>custom1</activeProfile>
                                </activeProfiles></settings>
                                """.trimIndent())
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>${'$'}{projectName}</artifactId>
                        <version>1</version>
                        """.trimIndent())
-    refreshFiles(listOf(configFile, settingsFile))
+    maven.refreshFiles(listOf(configFile, settingsFile))
 
-    val settings = mavenGeneralSettings
+    val settings = maven.mavenGeneralSettings
     settings.setUserSettingsFile("")
     settings.isUseMavenConfig = true
-    importProjectAsync()
-    assertModules("customName")
+    maven.importProjectAsync()
+    maven.assertModules("customName")
   }
 
   @Test
   fun testProjectWithActiveProfilesFromSettingsXml() = runBlocking {
-    updateSettingsXml("""
+    maven.updateSettingsXml("""
                         <activeProfiles>
                           <activeProfile>one</activeProfile>
                         </activeProfiles>
                         """.trimIndent())
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1087,22 +1142,22 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </dependencies>
                        """.trimIndent())
 
-    importProjectAsync()
-    assertModuleLibDeps("project", "Maven: group:artifact:1.2.3")
+    maven.importProjectAsync()
+    maven.assertModuleLibDeps("project", "Maven: group:artifact:1.2.3")
   }
 
   @Test
   fun testProjectWithActiveProfilesAndInactiveFromSettingsXml() = runBlocking {
-    runWithoutStaticSync()
-    assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
-    updateSettingsXml("""
+    maven.runWithoutStaticSync()
+    maven.assumeModel_4_0_0("4.1.0 model does not allow such case: - [FATAL] 'artifactId' contains an expression but should be a constant")
+    maven.updateSettingsXml("""
                         <activeProfiles>
                           <activeProfile>one</activeProfile>
                           <activeProfile>two</activeProfile>
                         </activeProfiles>
                         """.trimIndent())
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>${'$'}{projectName}</artifactId>
                        <version>1</version>
@@ -1122,8 +1177,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        </profiles>
                        """.trimIndent())
 
-    val disabledProfiles = listOf("one")
-    doImportProjectsAsync(listOf(projectPom), true, disabledProfiles)
-    assertModules("project-two")
+    maven.importProjectsWithProfiles(listOf(maven.projectPom), "one")
+    maven.assertModules("project-two")
   }
 }
