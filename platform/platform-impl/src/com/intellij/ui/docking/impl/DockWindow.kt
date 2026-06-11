@@ -192,6 +192,9 @@ internal class DockWindow(
         updateNorthPanel(visible)
       }
     })
+    IdeRootPaneNorthExtension.EP_NAME.addChangeListener(coroutineScope) {
+      updateNorthPanel(DockManagerImpl.isNorthPanelVisible(UISettings.getInstance()))
+    }
     updateNorthPanel(DockManagerImpl.isNorthPanelVisible(UISettings.getInstance()))
   }
 

@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.extensions.trackEachExtensionSafe
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
@@ -13,7 +14,9 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.JBBox
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.FlowCollector
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
@@ -48,11 +51,6 @@ internal class IdeProjectFrameHelper(
   }
 
   private suspend fun installNorthComponents(project: Project) {
-    val northExtensions = IdeRootPaneNorthExtension.EP_NAME.extensionList
-    if (northExtensions.isEmpty()) {
-      return
-    }
-
     val northPanel = withContext(Dispatchers.UI) {
       JBBox.createVerticalBox().also {
         contentPane.add(it, BorderLayout.NORTH)
@@ -60,39 +58,51 @@ internal class IdeProjectFrameHelper(
       }
     }
 
-    for (extension in northExtensions) {
-      val flow = extension.component(project = project, isDocked = false, statusBar = statusBar!!)
+    IdeRootPaneNorthExtension.EP_NAME.trackEachExtensionSafe(coroutineScope) { extension, extensionScope ->
       val key = extension.key
-      if (flow != null) {
-        coroutineScope.launch(ModalityState.any().asContextElement()) {
-          flow.collect(FlowCollector { component ->
-            withContext(Dispatchers.UI) {
-              if (component == null) {
-                val count = northPanel.componentCount
-                for (i in count - 1 downTo 0) {
-                  val c = northPanel.getComponent(i)
-                  if (ClientProperty.isSet(c, EXTENSION_KEY, key)) {
-                    northPanel.remove(i)
-                    break
-                  }
-                }
-              }
-              else {
-                ClientProperty.put(component, EXTENSION_KEY, key)
-                northPanel.add(component)
-              }
-            }
-          })
-        }
-        continue
-      }
+      val flow = extension.component(project = project, isDocked = false, statusBar = statusBar!!)
+                 ?: channelFlow {
+                   withContext(Dispatchers.UI) {
+                     send(extension.createComponent(project = project, isDocked = false))
+                   }
+                   awaitClose()
+                 }
 
-      withContext(Dispatchers.UI) {
-        extension.createComponent(project, isDocked = false)?.let {
-          ClientProperty.put(it, EXTENSION_KEY, key)
-          northPanel.add(it)
+      extensionScope.launch(ModalityState.any().asContextElement()) {
+        try {
+          flow.collect { component ->
+            withContext(Dispatchers.UI) {
+              updateNorthPanelComponent(northPanel, key, component)
+            }
+          }
+        }
+        finally {
+          coroutineScope.launch(Dispatchers.UI + ModalityState.any().asContextElement()) {
+            updateNorthPanelComponent(northPanel, key, null)
+          }
         }
       }
+    }
+  }
+
+  private fun updateNorthPanelComponent(northPanel: JBBox, key: String, component: JComponent?) {
+    var insertIndex: Int = -1
+
+    val count = northPanel.componentCount
+    for (i in count - 1 downTo 0) {
+      val c = northPanel.getComponent(i)
+      if (ClientProperty.isSet(c, EXTENSION_KEY, key)) {
+        if (c === component) return // nothing to do
+
+        northPanel.remove(i) // remove old panel for this EP
+        insertIndex = i
+        break
+      }
+    }
+
+    if (component != null) {
+      ClientProperty.put(component, EXTENSION_KEY, key)
+      northPanel.add(component, null, insertIndex)
     }
   }
 

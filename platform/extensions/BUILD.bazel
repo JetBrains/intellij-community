@@ -32,6 +32,7 @@ jvm_library(
         "@lib//:jetbrains-annotations",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
+        "//platform/util/coroutines",
     ],
 )
 
@@ -70,6 +71,7 @@ jvm_library(
         "//platform/testFramework/core:core_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.extensions` end
