@@ -22,24 +22,50 @@ import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.UsefulTestCase.assertNotEmpty
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.getModule
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.importing.MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE
 import org.jetbrains.idea.maven.importing.MAVEN_DEFAULT_ANNOTATION_PROFILE
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getModuleProfileName
 import org.junit.Assert
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.Assertions.assertNull
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
 
-class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class AnnotationProcessorImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testImportAnnotationProcessorProfiles() = runBlocking {
-    createModulePom("module1", """
+    maven.createModulePom("module1", """
 <groupId>test</groupId>
 <artifactId>module1</artifactId>
 <version>1</version>
 """)
 
-    createModulePom("module2", """
+    maven.createModulePom("module2", """
 <groupId>test</groupId>
 <artifactId>module2</artifactId>
 <version>1</version>
@@ -58,7 +84,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </build>
 """)
 
-    createModulePom("module3", """
+    maven.createModulePom("module3", """
 <groupId>test</groupId>
 <artifactId>module3</artifactId>
 <version>1</version>
@@ -75,7 +101,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </build>
 """)
 
-    createModulePom("module3_1", """
+    maven.createModulePom("module3_1", """
 <groupId>test</groupId>
 <artifactId>module3_1</artifactId>
 <version>1</version>
@@ -97,7 +123,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </build>
 """)
 
-    createModulePom("module4", """
+    maven.createModulePom("module4", """
 <groupId>test</groupId>
 <artifactId>module4</artifactId>
 <version>1</version>
@@ -115,7 +141,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </build>
 """)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -130,7 +156,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
 """)
 
-    val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val compilerConfiguration = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     assertEquals(
       compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)?.moduleNames,
@@ -148,7 +174,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testOverrideGeneratedOutputDir() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -166,7 +192,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 </build>
 """)
 
-    val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val compilerConfiguration = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     assertNull(compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE))
     val profile = compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("project"))
@@ -176,7 +202,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportAnnotationProcessorOptions() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -201,7 +227,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 </build>
 """)
 
-    val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val compilerConfiguration = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     assertNull(compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE))
     val processorOptions =
@@ -211,7 +237,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testMavenProcessorPlugin() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -261,7 +287,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 </build>
 """)
 
-    val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val compilerConfiguration = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     assertNull(compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE))
     val profile = compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("project"))
@@ -273,7 +299,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testMavenProcessorPluginDefault() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -321,7 +347,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 </build>
 """)
 
-    val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val compilerConfiguration = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     assertNull(compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE))
     val profile = compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("project"))
@@ -332,7 +358,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testProcessorsViaBscMavenPlugin() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
 <groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
@@ -370,7 +396,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </build>
 """)
 
-    val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val compilerConfiguration = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     TestCase.assertEquals(
       compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("project"))?.processors,
@@ -379,7 +405,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testExternalDependencyPath() = runBlocking {
-    importProjectAsync("""<groupId>test</groupId>
+    maven.importProjectAsync("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <build>
@@ -398,7 +424,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     </plugin>
   </plugins>
 </build>""")
-    val mavenProject = projectsManager.findProject(getModule("project"))
+    val mavenProject = maven.projectsManager.findProject(maven.getModule("project"))
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
@@ -408,7 +434,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
       annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger-compiler" == it.artifactId && "2.2" == it.version })
     assertTrue(annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger" == it.artifactId && "2.2" == it.version })
 
-    val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val config = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
     val projectProfile = config.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNotNull(projectProfile)
     val path = projectProfile!!.processorPath
@@ -417,7 +443,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testExternalDependencyAnnotationPath() = runBlocking {
-    importProjectAsync("""<groupId>test</groupId>
+    maven.importProjectAsync("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <build>
@@ -437,7 +463,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </plugins>
 </build>""")
 
-    val mavenProject = projectsManager.findProject(getModule("project"))
+    val mavenProject = maven.projectsManager.findProject(maven.getModule("project"))
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
@@ -447,7 +473,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
       annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger-compiler" == it.artifactId && "2.2" == it.version })
     assertTrue(annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger" == it.artifactId && "2.2" == it.version })
 
-    val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val config = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     val projectProfile = config.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNotNull(projectProfile)
@@ -457,7 +483,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testLocalDependency() = runBlocking {
-    createProjectPom("""<groupId>test</groupId>
+    maven.createProjectPom("""<groupId>test</groupId>
 <artifactId>project</artifactId>
 <version>1</version>
 <packaging>pom</packaging>
@@ -466,7 +492,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   <module>m2</module>
 </modules>""")
 
-    createModulePom("m1", """<groupId>test</groupId>
+    maven.createModulePom("m1", """<groupId>test</groupId>
 <artifactId>m1</artifactId>
 <version>1</version>
 <dependencies>
@@ -477,7 +503,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   </dependency>
 </dependencies>""")
 
-    createModulePom("m2", """<groupId>test</groupId>
+    maven.createModulePom("m2", """<groupId>test</groupId>
 <artifactId>m2</artifactId>
 <version>1</version>
 <build>
@@ -496,19 +522,19 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     </plugin>
   </plugins>
 </build>""")
-    createProjectSubFile("m1/src/main/java/A.java", "public class A{}")
-    importProjectAsync()
+    maven.createProjectSubFile("m1/src/main/java/A.java", "public class A{}")
+    maven.importProjectAsync()
 
-    val module = getModule("m2")
+    val module = maven.getModule("m2")
     assertNotNull(module)
 
-    val mavenProject = projectsManager.findProject(module)
+    val mavenProject = maven.projectsManager.findProject(module)
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
     UsefulTestCase.assertEmpty(annotationProcessors)
 
-    val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val config = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     val defaultProfile = config.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
     assertNotNull(defaultProfile)
@@ -524,12 +550,12 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testDisabledAnnotationProcessor() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
   <groupId>test</groupId>
   <artifactId>project</artifactId>
   <version>1</version>
   """.trimIndent())
-    val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val compilerConfiguration = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     var profile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
     Assert.assertNotNull(profile)
@@ -543,7 +569,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     Assert.assertNotNull(profile)
     Assert.assertFalse(profile!!.isEnabled)
 
-    importProjectAsync()
+    maven.importProjectAsync()
     profile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
     Assert.assertNotNull(profile)
     Assert.assertFalse(profile!!.isEnabled)
@@ -551,13 +577,13 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testNotRemoveEmptyUserProfile() = runBlocking {
-    val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val compilerConfiguration = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
     WriteAction.runAndWait<RuntimeException> {
       compilerConfiguration.addNewProcessorProfile("test-profile").isEnabled = true
     }
     Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"))
 
-    importProjectAsync("<groupId>test</groupId>" +
+    maven.importProjectAsync("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
                        "<packaging>pom</packaging>" +
                        "<version>1</version>")
@@ -567,14 +593,14 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testRemoveEmptyInnerProfile() = runBlocking {
-    val compilerConfiguration = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val compilerConfiguration = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
     val profileName = getModuleProfileName("test-profile")
     WriteAction.runAndWait<RuntimeException> {
       compilerConfiguration.addNewProcessorProfile(profileName).isEnabled = true
     }
     Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile(profileName))
 
-    importProjectAsync("<groupId>test</groupId>" +
+    maven.importProjectAsync("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
                        "<packaging>pom</packaging>" +
                        "<version>1</version>")
@@ -584,7 +610,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportManagedDependencyAnnotationProcessor() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1.0</version>
@@ -617,7 +643,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     </build>
 """)
 
-    val mavenProject = projectsManager.findProject(getModule("project"))
+    val mavenProject = maven.projectsManager.findProject(maven.getModule("project"))
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
@@ -627,7 +653,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
       annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger-compiler" == it.artifactId && "2.2" == it.version })
     assertTrue(annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger" == it.artifactId && "2.2" == it.version })
 
-    val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val config = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     val projectProfile = config.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNotNull(projectProfile)
@@ -637,7 +663,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testImportManagedDependencyAnnotationProcessorFromExecution() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1.0</version>
@@ -678,7 +704,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
     </build>
 """)
 
-    val mavenProject = projectsManager.findProject(getModule("project"))
+    val mavenProject = maven.projectsManager.findProject(maven.getModule("project"))
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
@@ -688,7 +714,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
       annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger-compiler" == it.artifactId && "2.2" == it.version })
     assertTrue(annotationProcessors.any { "com.google.dagger" == it!!.groupId && "dagger" == it.artifactId && "2.2" == it.version })
 
-    val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val config = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     val projectProfile = config.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNotNull(projectProfile)
@@ -699,7 +725,7 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   @TestFor(issues = ["IDEA-368907"])
   fun testShouldNotImportManagedDependencyAnnotationProcessorForNonCompilePhases() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1.0</version>
@@ -732,13 +758,13 @@ class AnnotationProcessorImportingTest : MavenMultiVersionImportingTestCase() {
       </build>  
       """)
 
-    val mavenProject = projectsManager.findProject(getModule("project"))
+    val mavenProject = maven.projectsManager.findProject(maven.getModule("project"))
     assertNotNull(mavenProject)
 
     val annotationProcessors = mavenProject!!.externalAnnotationProcessors
     assertEmpty(annotationProcessors)
 
-    val config = CompilerConfiguration.getInstance(project) as CompilerConfigurationImpl
+    val config = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     val projectProfile = config.findModuleProcessorProfile(getModuleProfileName("project"))
     assertNull(projectProfile)
