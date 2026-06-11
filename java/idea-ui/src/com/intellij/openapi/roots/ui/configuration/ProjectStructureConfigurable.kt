@@ -13,6 +13,8 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.Configurable
@@ -67,8 +69,9 @@ import javax.swing.JPanel
 import javax.swing.SwingConstants
 import kotlin.math.max
 
+@Service(Service.Level.PROJECT)
 class ProjectStructureConfigurable(val project: Project) : SearchableConfigurable, Place.Navigator, NoMargin, NoScroll, Disposable {
-  protected val myUiState: UIState = UIState()
+  private val myUiState: UIState = UIState()
   private var mySplitter: JBSplitter? = null
   private var myToolbarComponent: JComponent? = null
   private var myToFocus: JComponent? = null
@@ -80,8 +83,8 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
     var lastEditedConfigurable: String? = null
   }
 
-  val facetStructureConfigurable: FacetStructureConfigurable
-  val artifactsStructureConfigurable: ArtifactsStructureConfigurable
+  val facetStructureConfigurable: FacetStructureConfigurable = FacetStructureConfigurable(this)
+  val artifactsStructureConfigurable: ArtifactsStructureConfigurable = ArtifactsStructureConfigurable(this)
 
   private var myHistory: History? = null
   private var mySidePanel: SidePanel? = null
@@ -104,7 +107,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
 
   private val myName2Config: MutableList<Configurable> = ArrayList<Configurable>()
   val context: StructureConfigurableContext
-  private val myModuleConfigurator: ModulesConfigurator
+  private val myModuleConfigurator: ModulesConfigurator = ModulesConfigurator(project, this)
   val jdkConfig: JdkListConfigurable
 
   private var myEmptySelection: JLabel? = null
@@ -112,10 +115,6 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
   private val myObsoleteLibraryFilesRemover: ObsoleteLibraryFilesRemover
 
   init {
-    this.facetStructureConfigurable = FacetStructureConfigurable(this)
-    this.artifactsStructureConfigurable = ArtifactsStructureConfigurable(this)
-
-    myModuleConfigurator = ModulesConfigurator(project, this)
     this.context = StructureConfigurableContext(this.project, myModuleConfigurator)
     myModuleConfigurator.setContext(this.context)
 
@@ -130,7 +129,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
     modulesConfig.init(this.context)
     facetStructureConfigurable.init(this.context)
     jdkConfig.init(this.context)
-    if (!project.isDefault()) {
+    if (!project.isDefault) {
       artifactsStructureConfigurable.init(
         this.context,
         this.modulesConfig,
@@ -145,9 +144,9 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
     val propertiesComponent = PropertiesComponent.getInstance(this.project)
     myUiState.lastEditedConfigurable = propertiesComponent.getValue("project.structure.last.edited")
     val proportion = propertiesComponent.getValue("project.structure.proportion")
-    myUiState.proportion = if (proportion != null) proportion.toFloat() else 0f
+    myUiState.proportion = proportion?.toFloat() ?: 0f
     val sideProportion = propertiesComponent.getValue("project.structure.side.proportion")
-    myUiState.sideProportion = if (sideProportion != null) sideProportion.toFloat() else 0f
+    myUiState.sideProportion = sideProportion?.toFloat() ?: 0f
     myObsoleteLibraryFilesRemover = ObsoleteLibraryFilesRemover(project)
   }
 
@@ -163,8 +162,8 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
 
   @NonNls
   override fun getHelpTopic(): @NonNls String? {
-    val topic = if (mySelectedConfigurable != null) mySelectedConfigurable!!.getHelpTopic() else null
-    return Objects.requireNonNullElse<String?>(topic, "reference.settingsdialog.project.structure.general")
+    val topic = if (mySelectedConfigurable != null) mySelectedConfigurable!!.helpTopic else null
+    return Objects.requireNonNullElse(topic, "reference.settingsdialog.project.structure.general")
   }
 
   override fun createComponent(): JComponent? {
@@ -210,7 +209,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
   }
 
   private fun initSidePanel() {
-    val isDefaultProject = this.project === ProjectManager.getInstance().getDefaultProject()
+    val isDefaultProject = this.project.isDefault
 
     mySidePanel = SidePanel(this)
     mySidePanel!!.addSeparator(JavaUiBundle.message("project.settings.title"))
@@ -231,7 +230,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
 
     mySidePanel!!.addSeparator("--")
     addErrorPane()
-    mySidePanel!!.getList().getAccessibleContext().setAccessibleName(UIBundle.message("project.structure.categories.accessible.name"))
+    mySidePanel!!.list.getAccessibleContext().setAccessibleName(UIBundle.message("project.structure.categories.accessible.name"))
   }
 
   private fun addArtifactsConfig() {
@@ -252,7 +251,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
   }
 
   private fun addFacetsConfig() {
-    if (facetStructureConfigurable.isVisible()) {
+    if (facetStructureConfigurable.isVisible) {
       addConfigurable(this.facetStructureConfigurable, ConfigurableId.FACETS)
     }
   }
@@ -271,7 +270,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
   }
 
   private fun addErrorPane() {
-    addConfigurable(ErrorPaneConfigurable(this.project, this.context, Runnable { mySidePanel!!.getList().repaint() }), true)
+    addConfigurable(ErrorPaneConfigurable(this.project, this.context, Runnable { mySidePanel!!.list.repaint() }), true)
   }
 
   private fun addGlobalLibrariesConfig() {
@@ -283,7 +282,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
   }
 
   override fun isModified(): Boolean {
-    if (projectJdksModel.isModified()) {
+    if (projectJdksModel.isModified) {
       return true
     }
     for (each in myName2Config) {
@@ -295,7 +294,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
 
   @Throws(ConfigurationException::class)
   override fun apply() {
-    if (projectJdksModel.isModified()) {
+    if (projectJdksModel.isModified) {
       projectJdksModel.apply()
     }
     for (each in myName2Config) {
@@ -362,16 +361,16 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
     propertiesComponent.setValue("project.structure.proportion", myUiState.proportion.toString())
     propertiesComponent.setValue("project.structure.side.proportion", myUiState.sideProportion.toString())
 
-    myUiState.proportion = mySplitter!!.getProportion()
+    myUiState.proportion = mySplitter!!.proportion
     saveSideProportion()
-    context.getDaemonAnalyzer().stop()
+    context.daemonAnalyzer.stop()
     for (each in myName2Config) {
       each.disposeUIResources()
     }
     context.clear()
     myName2Config.clear()
 
-    myModuleConfigurator.getFacetsConfigurator().clearMaps()
+    myModuleConfigurator.facetsConfigurator.clearMaps()
     myHistory!!.clear()
 
     this.isUiInitialized = false
@@ -487,7 +486,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
   override fun navigateTo(place: Place?, requestFocus: Boolean): ActionCallback {
     val toSelect = place!!.getPath(CATEGORY) as Configurable?
 
-    var detailsContent = myDetails!!.getTargetComponent()
+    var detailsContent = myDetails!!.targetComponent
 
     if (mySelectedConfigurable !== toSelect) {
       if (mySelectedConfigurable is BaseStructureConfigurable) {
@@ -508,7 +507,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
 
       if (toSelect is MasterDetailsComponent) {
         if (myUiState.sideProportion > 0) {
-          toSelect.getSplitter().setProportion(myUiState.sideProportion)
+          toSelect.splitter.setProportion(myUiState.sideProportion)
         }
         toSelect.setHistory(myHistory)
       }
@@ -545,7 +544,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
       mySidePanel!!.select(createPlaceFor(toSelect))
     }
 
-    if (!myHistory!!.isNavigatingNow() && mySelectedConfigurable != null) {
+    if (!myHistory!!.isNavigatingNow && mySelectedConfigurable != null) {
       myHistory!!.pushQueryPlace()
     }
 
@@ -554,7 +553,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
 
   private fun saveSideProportion() {
     if (mySelectedConfigurable is MasterDetailsComponent) {
-      myUiState.sideProportion = (mySelectedConfigurable as MasterDetailsComponent).getSplitter().getProportion()
+      myUiState.sideProportion = (mySelectedConfigurable as MasterDetailsComponent).splitter.proportion
     }
   }
 
@@ -580,8 +579,8 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
 
   private inner class MyPanel : JPanel(BorderLayout()), UiDataProvider {
     override fun uiDataSnapshot(sink: DataSink) {
-      sink.set<ProjectStructureConfigurable>(KEY, this@ProjectStructureConfigurable)
-      sink.set<History>(History.KEY, getHistory())
+      sink[KEY] = this@ProjectStructureConfigurable
+      sink[History.KEY] = getHistory()
     }
 
     override fun getPreferredSize(): Dimension {
@@ -603,14 +602,15 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
   }
 
   companion object {
-    val KEY: DataKey<ProjectStructureConfigurable> = create<ProjectStructureConfigurable>("ProjectStructureConfiguration")
+    @JvmField
+    val KEY: DataKey<ProjectStructureConfigurable> = create("ProjectStructureConfiguration")
 
     @NonNls
     const val CATEGORY: @NonNls String = "category"
 
     @JvmStatic
     fun getInstance(project: Project): ProjectStructureConfigurable {
-      return project.getService(ProjectStructureConfigurable::class.java)
+      return project.service<ProjectStructureConfigurable>()
     }
 
     private fun createPlaceFor(configurable: Configurable?): Place {
