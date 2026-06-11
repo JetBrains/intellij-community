@@ -21,7 +21,6 @@ import org.jetbrains.intellij.build.impl.PluginLayout
  * Default bundled plugins for all products.
  */
 val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
-  "intellij.platform.acp.plugin",
   "intellij.platform.images",
   "intellij.dev"
 )
@@ -29,9 +28,9 @@ val DEFAULT_BUNDLED_PLUGINS: PersistentList<String> = persistentListOf(
 class ProductModulesLayout {
   /**
    * Names of the additional product-specific modules which need to be packed into product.jar in the product's 'lib' directory.
-   *
+   * 
    * **Note that these modules will be loaded by the core classloader.**
-   *
+   * 
    * It's better to include them as content modules in a regular or the core plugin instead, this way they'll be loaded by separate classloaders and you won't need to register
    * them explicitly in the build scripts.
    */
@@ -51,8 +50,8 @@ class ProductModulesLayout {
    * These are the names of the main modules (which contain META-INF/plugin.xml).
    * They belong to the plugins that need to be included with the product.
    * You can find the layouts of these bundled plugins in the [pluginLayouts] list.
-   *
-   * This property can be used for writing only.
+   * 
+   * This property can be used for writing only. 
    * If you need to read the list of plugins which should be bundled, use [org.jetbrains.intellij.build.BuildContext.getBundledPluginModules] instead.
    */
   var bundledPluginModules: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS
@@ -135,14 +134,14 @@ class ProductModulesLayout {
   var compatiblePluginsToIgnore: PersistentList<String> = persistentListOf()
 
   /**
-   * If this property is set to `true`, modules registered as optional in `content` tag in `plugin.xml` files which doesn't exist in the JPS project configuration, will be excluded
+   * If this property is set to `true`, modules registered as optional in `content` tag in `plugin.xml` files which doesn't exist in the JPS project configuration, will be excluded 
    * from the distribution (by default, in such cases build scripts fail with an error).
    * This can be used to build a product from a subset of a source repository. E.g., a plugin from intellij-community may refer to some additional modules located in the ultimate
-   * part of the project, and they should be skipped while building from intellij-community sources.
+   * part of the project, and they should be skipped while building from intellij-community sources. 
    */
   @ApiStatus.Internal
   var skipUnresolvedContentModules: Boolean = false
-
+  
   /**
    * Module names which should be excluded from this product.
    * Allows filtering out default platform modules (both api and implementation) as well as product modules.
