@@ -9,6 +9,51 @@ f:com.intellij.diagnostic.ThreadDump
 f:com.intellij.diagnostic.ThreadDumper
 - s:dumpEdtToString():java.lang.String
 - s:dumpThreadsToString():java.lang.String
+e:com.intellij.execution.process.UnixSignal
+- java.lang.Enum
+- sf:Companion:com.intellij.execution.process.UnixSignal$Companion
+- sf:EXIT_CODE_OFFSET:I
+- sf:SIGABRT:com.intellij.execution.process.UnixSignal
+- sf:SIGALRM:com.intellij.execution.process.UnixSignal
+- sf:SIGBUS:com.intellij.execution.process.UnixSignal
+- sf:SIGCHLD:com.intellij.execution.process.UnixSignal
+- sf:SIGCONT:com.intellij.execution.process.UnixSignal
+- sf:SIGFPE:com.intellij.execution.process.UnixSignal
+- sf:SIGHUP:com.intellij.execution.process.UnixSignal
+- sf:SIGILL:com.intellij.execution.process.UnixSignal
+- sf:SIGINT:com.intellij.execution.process.UnixSignal
+- sf:SIGIO:com.intellij.execution.process.UnixSignal
+- sf:SIGKILL:com.intellij.execution.process.UnixSignal
+- sf:SIGPIPE:com.intellij.execution.process.UnixSignal
+- sf:SIGPROF:com.intellij.execution.process.UnixSignal
+- sf:SIGQUIT:com.intellij.execution.process.UnixSignal
+- sf:SIGSEGV:com.intellij.execution.process.UnixSignal
+- sf:SIGSTOP:com.intellij.execution.process.UnixSignal
+- sf:SIGSYS:com.intellij.execution.process.UnixSignal
+- sf:SIGTERM:com.intellij.execution.process.UnixSignal
+- sf:SIGTRAP:com.intellij.execution.process.UnixSignal
+- sf:SIGTSTP:com.intellij.execution.process.UnixSignal
+- sf:SIGTTIN:com.intellij.execution.process.UnixSignal
+- sf:SIGTTOU:com.intellij.execution.process.UnixSignal
+- sf:SIGURG:com.intellij.execution.process.UnixSignal
+- sf:SIGUSR1:com.intellij.execution.process.UnixSignal
+- sf:SIGUSR2:com.intellij.execution.process.UnixSignal
+- sf:SIGVTALRM:com.intellij.execution.process.UnixSignal
+- sf:SIGWINCH:com.intellij.execution.process.UnixSignal
+- sf:SIGXCPU:com.intellij.execution.process.UnixSignal
+- sf:SIGXFSZ:com.intellij.execution.process.UnixSignal
+- f:asExitCode(Z):I
+- sf:fromExitCode(Z,I):com.intellij.execution.process.UnixSignal
+- sf:fromString(java.lang.String):com.intellij.execution.process.UnixSignal
+- f:getDarwinCode():I
+- s:getEntries():kotlin.enums.EnumEntries
+- f:getLinuxCode():I
+- f:getSignalNumber(Z):I
+- s:valueOf(java.lang.String):com.intellij.execution.process.UnixSignal
+- s:values():com.intellij.execution.process.UnixSignal[]
+f:com.intellij.execution.process.UnixSignal$Companion
+- f:fromExitCode(Z,I):com.intellij.execution.process.UnixSignal
+- f:fromString(java.lang.String):com.intellij.execution.process.UnixSignal
 f:com.intellij.filename.UniqueNameBuilder
 - <init>(java.lang.String,java.lang.String):V
 - addPath(java.lang.Object,java.lang.String):V
@@ -370,9 +415,12 @@ f:com.intellij.util.concurrency.Semaphore
 - <init>(I):V
 - down():V
 - isUp():Z
+- tryUp():Z
 - up():V
 - waitFor():V
 - waitFor(J):Z
+- waitForUnsafe():V
+- waitForUnsafe(J):Z
 f:com.intellij.util.containers.CollectionFactory
 - <init>():V
 - s:createCaseInsensitiveStringMap():java.util.Map
@@ -526,8 +574,18 @@ f:com.intellij.util.containers.SoftArrayHashMap
 - get(java.lang.Object[]):java.lang.Object
 - processLeafEntries(java.util.function.BiPredicate):Z
 - put(java.lang.Object[],java.lang.Object):V
+f:com.intellij.util.io.CoroutinesKt
+- sf:await(java.util.concurrent.CompletableFuture,kotlin.coroutines.Continuation):java.lang.Object
+- sf:await(java.util.concurrent.Future,kotlin.coroutines.Continuation):java.lang.Object
+- sf:awaitFor(com.intellij.util.concurrency.Semaphore,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.util.io.IoKt
 - sf:decodeBase64(java.lang.String):B[]
+- sf:readCharSequence(java.io.Reader,I):java.lang.CharSequence
+- sf:toByteArray(java.nio.ByteBuffer,Z):B[]
+- bs:toByteArray$default(java.nio.ByteBuffer,Z,I,java.lang.Object):B[]
+f:com.intellij.util.io.ProcessKt
+- sf:awaitExit(java.lang.Process,kotlin.coroutines.Continuation):java.lang.Object
+- sf:readLineAsync(java.io.BufferedReader,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.util.text.CharArrayUtil
 - s:containLineBreaks(java.lang.CharSequence):Z
 - s:containLineBreaks(java.lang.CharSequence,I,I):Z
