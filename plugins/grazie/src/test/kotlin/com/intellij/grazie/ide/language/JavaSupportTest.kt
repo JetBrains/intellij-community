@@ -8,6 +8,9 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieTestBase
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
+import com.intellij.grazie.text.TextContent
+import com.intellij.grazie.text.TextContentTest
+import com.intellij.grazie.text.TextExtractor
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -21,6 +24,7 @@ import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import org.junit.Assert.assertArrayEquals
 import org.junit.jupiter.api.assertDoesNotThrow
 import java.util.function.Consumer
 
@@ -198,6 +202,32 @@ class JavaSupportTest : GrazieTestBase() {
 
   fun `test no highlighting inside of markdown code`() {
     runHighlightTestForFile("ide/language/java/MarkdownCode.java")
+  }
+
+  fun `test text extraction from markdown doc reference link`() {
+    val text = """
+      class A {
+        /// Please do not use directly; use [EventFields#Class(String)] instead.
+        void foo() {}
+      }
+    """.trimIndent()
+    val file = myFixture.configureByText("a.java", text)
+    val content = TextExtractor.findTextAt(file, text.indexOf("Please"), TextContent.TextDomain.ALL)
+    assertEquals("Please do not use directly; use | instead.", TextContentTest.unknownOffsets(content))
+    assertEmpty(content!!.markupOffsets().toList())
+  }
+
+  fun `test text extraction from markdown doc inline link preserves label`() {
+    val text = """
+      class A {
+        /// Please read [the manual](https://example.com/manual) before use.
+        void foo() {}
+      }
+    """.trimIndent()
+    val file = myFixture.configureByText("a.java", text)
+    val content = TextExtractor.findTextAt(file, text.indexOf("Please"), TextContent.TextDomain.ALL)
+    assertEquals("Please read the manual before use.", TextContentTest.unknownOffsets(content))
+    assertArrayEquals(intArrayOf("Please read ".length, "Please read the manual".length), content!!.markupOffsets())
   }
 
   fun `test java keeps trailing spaces properly`() {

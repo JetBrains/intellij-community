@@ -9,6 +9,7 @@ import com.intellij.grazie.text.TextExtractor;
 import com.intellij.grazie.utils.HtmlUtilsKt;
 import com.intellij.grazie.utils.PsiUtilsKt;
 import com.intellij.grazie.utils.Text;
+import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
@@ -16,6 +17,9 @@ import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.javadoc.PsiMarkdownCodeBlock;
+import com.intellij.psi.javadoc.PsiMarkdownLink;
+import com.intellij.psi.javadoc.PsiMarkdownReferenceLink;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -43,9 +47,24 @@ public class JavaTextExtractor extends TextExtractor {
     TokenSet.create(DOC_COMMENT_START, DOC_COMMENT_LEADING_ASTERISKS, DOC_COMMENT_END, DOC_PARAMETER_REF, DOC_REFERENCE_HOLDER);
 
   private static final TextContentBuilder javadocBuilder = TextContentBuilder.FromPsi
-    .withUnknown(e -> e instanceof PsiInlineDocTag)
-    .excluding(e -> EXCLUDED.contains(PsiUtilCore.getElementType(e)))
+    .withUnknown(e -> e instanceof PsiInlineDocTag || e instanceof PsiMarkdownReferenceLink)
+    .withMarkup(JavaTextExtractor::isMarkdownLinkBracket)
+    .excluding(e -> EXCLUDED.contains(PsiUtilCore.getElementType(e)) || isMarkdownLinkDestinationOrParen(e))
     .removingIndents(" \t").removingLineSuffixes(" \t");
+
+  private static boolean isMarkdownLinkBracket(PsiElement e) {
+    if (!(e.getParent() instanceof PsiMarkdownLink)) return false;
+    IElementType t = PsiUtilCore.getElementType(e);
+    return t == JavaDocTokenType.DOC_LBRACKET || t == JavaDocTokenType.DOC_RBRACKET;
+  }
+
+  private static boolean isMarkdownLinkDestinationOrParen(PsiElement e) {
+    if (!(e.getParent() instanceof PsiMarkdownLink)) return false;
+    IElementType t = PsiUtilCore.getElementType(e);
+    if (t == JavaDocTokenType.DOC_LPAREN || t == JavaDocTokenType.DOC_RPAREN) return true;
+    PsiElement prev = e.getPrevSibling();
+    return prev != null && PsiUtilCore.getElementType(prev) == JavaDocTokenType.DOC_LPAREN;
+  }
 
   @Override
   public @NotNull List<TextContent> buildTextContents(@NotNull PsiElement root, @NotNull Set<TextContent.TextDomain> allowedDomains) {
