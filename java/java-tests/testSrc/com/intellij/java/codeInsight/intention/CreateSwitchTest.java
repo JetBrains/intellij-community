@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
@@ -31,59 +17,20 @@ public class CreateSwitchTest extends JavaCodeInsightFixtureTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/codeInsight/createSwitch/";
   }
 
-  public void testEnum() {
-    doTest();
-  }
-
-  public void testEnum2() {
-    doTest();
-  }
-
-  public void testString() {
-    withJava7(this::doTest);
-  }
-
-  public void testPrimitive() {
-    doTest();
-  }
-
-  public void testBoxedType() {
-    doTest();
-  }
-
-  public void testNotAvailable() {
-    doTestNotAvailable();
-  }
-
-  public void testNotAvailable2() {
-    doTestNotAvailable();
-  }
-
-  public void testNotAvailableInForUpdate() {
-    doTestNotAvailable();
-  }
-  
-  public void testNotAvailableInAssignment() {
-    doTestNotAvailable();
-  }
-  
-  public void testNotAvailableOnRedCode() {
-    withJava7(this::doTestNotAvailable);
-  }
-
-  public void testNotFailingOnBadEscapes() { withJava7(this::doTestNotAvailable); }
-
+  public void testEnum() { doTest(); }
+  public void testEnum2() { doTest(); }
+  public void testString() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_7, this::doTest); }
+  public void testPrimitive() { doTest(); }
+  public void testBoxedType() { doTest(); }
+  public void testNotAvailable() { doTestNotAvailable(); }
+  public void testNotAvailable2() { doTestNotAvailable(); }
+  public void testNotAvailableInForUpdate() { doTestNotAvailable(); }
+  public void testNotAvailableInAssignment() { doTestNotAvailable(); }
+  public void testNotAvailableOnRedCode() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_7, this::doTestNotAvailable); }
+  public void testNotFailingOnBadEscapes() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_7, this::doTestNotAvailable); }
   public void testNotAvailableOnLiteral() { doTestNotAvailable(); }
-
-  private void withJava7(Runnable runnable) {
-    final LanguageLevel oldLanguageLevel = IdeaTestUtil.setProjectLanguageLevel(getProject(), LanguageLevel.JDK_1_7);
-    try {
-      runnable.run();
-    }
-    finally {
-      IdeaTestUtil.setProjectLanguageLevel(getProject(), oldLanguageLevel);
-    }
-  }
+  public void testPatternMatching() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21, this::doTest); }
+  public void testNoPatternMatching() { doTestNotAvailable(); }
 
   private void doTest() {
     final String name = getTestName(true);

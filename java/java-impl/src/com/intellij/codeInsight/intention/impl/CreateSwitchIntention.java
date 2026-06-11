@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -71,11 +71,10 @@ public final class CreateSwitchIntention extends PsiUpdateModCommandAction<PsiEx
   }
 
   private static boolean isValidTypeForSwitch(@Nullable PsiType type, PsiElement context) {
-    if (type instanceof PsiClassType) {
-      PsiClass resolvedClass = ((PsiClassType)type).resolve();
-      if (resolvedClass == null) {
-        return false;
-      }
+    if (type instanceof PsiClassType classType) {
+      if (PsiUtil.isAvailable(JavaFeature.PATTERNS_IN_SWITCH, context)) return true;
+      PsiClass resolvedClass = classType.resolve();
+      if (resolvedClass == null) return false;
       return (PsiUtil.isAvailable(JavaFeature.ENUMS, context) && 
               (resolvedClass.isEnum() || isSuitablePrimitiveType(PsiPrimitiveType.getUnboxedType(type)))) || 
              (PsiUtil.isAvailable(JavaFeature.STRING_SWITCH, context) && 
@@ -85,10 +84,11 @@ public final class CreateSwitchIntention extends PsiUpdateModCommandAction<PsiEx
   }
 
   private static boolean isSuitablePrimitiveType(@Nullable PsiType type) {
-    if (type == null) {
-      return false;
-    }
-    return type.equals(PsiTypes.intType()) || type.equals(PsiTypes.byteType()) || type.equals(PsiTypes.shortType()) || type.equals(PsiTypes.charType());
+    if (type == null) return false;
+    return type.equals(PsiTypes.intType())
+           || type.equals(PsiTypes.byteType())
+           || type.equals(PsiTypes.shortType())
+           || type.equals(PsiTypes.charType());
   }
 
   @Override
