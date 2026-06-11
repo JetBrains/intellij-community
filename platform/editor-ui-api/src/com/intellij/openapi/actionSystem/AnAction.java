@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.ClientProperty;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -429,6 +430,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * @see AnActionEvent#getCoroutineScope for running suspend computations in Kotlin implementations.
    */
   @ApiStatus.OverrideOnly
+  @RequiresEdt(generateAssertion = false)
   public abstract void actionPerformed(@NotNull AnActionEvent e);
 
   @ApiStatus.Internal
