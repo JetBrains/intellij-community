@@ -106,6 +106,26 @@ internal class GitNewBranchDialog @JvmOverloads constructor(
       }
       return directories
     }
+
+    internal fun TextFieldWithCompletion.cleanBranchNameAndAdjustCursorIfNeeded(validator: GitRefNameValidator) {
+      val caretModel = caretModel ?: return
+
+      val initialText = text
+      val initialCaret = caretModel.offset
+
+      val fixedText = validator.cleanUpBranchNameOnTyping(initialText)
+
+      // if the text didn't change, there's no point in updating it or cursorPosition
+      if (fixedText == initialText) return
+
+      val initialTextBeforeCaret = initialText.take(initialCaret)
+      val fixedTextBeforeCaret = validator.cleanUpBranchNameOnTyping(initialTextBeforeCaret)
+
+      val fixedCaret = fixedTextBeforeCaret.length
+
+      text = fixedText
+      caretModel.moveToOffset(fixedCaret)
+    }
   }
 
   private var checkout = true
@@ -280,29 +300,9 @@ internal class GitNewBranchDialog @JvmOverloads constructor(
     whenDocumentChanged(disposable) {
       // Do not change Document inside DocumentListener callback
       invokeLater {
-        cleanBranchNameAndAdjustCursorIfNeeded()
+        cleanBranchNameAndAdjustCursorIfNeeded(validator)
       }
     }
-  }
-
-  private fun TextFieldWithCompletion.cleanBranchNameAndAdjustCursorIfNeeded() {
-    if (isDisposed) return
-
-    val initialText = text
-    val initialCaret = caretModel.offset
-
-    val fixedText = validator.cleanUpBranchNameOnTyping(initialText)
-
-    // if the text didn't change, there's no point in updating it or cursorPosition
-    if (fixedText == initialText) return
-
-    val initialTextBeforeCaret = initialText.take(initialCaret)
-    val fixedTextBeforeCaret = validator.cleanUpBranchNameOnTyping(initialTextBeforeCaret)
-
-    val fixedCaret = fixedTextBeforeCaret.length
-
-    text = fixedText
-    caretModel.moveToOffset(fixedCaret)
   }
 
   internal class BranchNamesCompletion(
