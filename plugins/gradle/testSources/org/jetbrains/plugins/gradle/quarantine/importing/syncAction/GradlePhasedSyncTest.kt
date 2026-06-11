@@ -1,5 +1,5 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.importing.syncAction
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.quarantine.importing.syncAction
 
 import com.google.common.collect.HashBasedTable
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
@@ -46,6 +46,13 @@ import org.gradle.tooling.model.idea.IdeaProject
 import org.jetbrains.plugins.gradle.connection.GradleConnectorService.Companion.USE_PRODUCTION_DISPOSE_FOR_TESTS_KEY
 import org.jetbrains.plugins.gradle.importing.TestModelProvider
 import org.jetbrains.plugins.gradle.importing.TestPhasedModel
+import org.jetbrains.plugins.gradle.importing.syncAction.AbstractTestProjectResolverService
+import org.jetbrains.plugins.gradle.importing.syncAction.GradlePhasedSyncTestCase
+import org.jetbrains.plugins.gradle.importing.syncAction.addSyncContributor
+import org.jetbrains.plugins.gradle.importing.syncAction.whenModelFetchCompleted
+import org.jetbrains.plugins.gradle.importing.syncAction.whenModelFetchPhaseCompleted
+import org.jetbrains.plugins.gradle.importing.syncAction.whenProjectLoaded
+import org.jetbrains.plugins.gradle.importing.syncAction.whenSyncPhaseCompleted
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 import org.jetbrains.plugins.gradle.service.project.DefaultProjectResolverContext
