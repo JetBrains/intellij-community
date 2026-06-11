@@ -1,9 +1,13 @@
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import org.junit.Assert
 import org.junit.Test
 import kotlin.io.path.absolutePathString
 
+@Subsystems.Interpreters
+@Layers.Functional
 class PySdkSettingsTest {
   @Test
   fun testPreferredVirtualEnvBasePath() {

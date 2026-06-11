@@ -32,6 +32,14 @@ object Subsystems {
   @Subsystem("Inspections")
   @Inherited
   annotation class Inspections
+
+  @Subsystem("Interpreters")
+  @Inherited
+  annotation class Interpreters
+
+  @Subsystem("Packaging. Requirements")
+  @Inherited
+  annotation class PackagingRequirements
 }
 
 object Components {
@@ -53,6 +61,18 @@ object Components {
   @Component("Grazie")
   @Inherited
   annotation class Grazie
+
+  @Component("uv")
+  @Inherited
+  annotation class Uv
+
+  @Component("Inspection")
+  @Inherited
+  annotation class Inspection
+
+  @Component("Completion")
+  @Inherited
+  annotation class Completion
 }
 
 object Layers {
@@ -66,4 +86,8 @@ object Layers {
   @Layer("Functional Tests")
   @Inherited
   annotation class Functional
+
+  @Layer("UI Tests")
+  @Inherited
+  annotation class UI
 }

@@ -1,8 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.openapi.actionSystem.IdeActions
 
+@Subsystems.PackagingRequirements
+@Layers.Functional
 class RequirementsCommenterTest : PythonDependencyTestCase() {
 
   fun testComment() = doTest(

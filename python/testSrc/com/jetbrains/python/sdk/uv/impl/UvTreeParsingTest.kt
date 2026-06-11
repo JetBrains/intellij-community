@@ -1,6 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.uv.impl
 
+import com.jetbrains.python.allure.Components
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.common.PyDependencyGroupName
 import com.jetbrains.python.packaging.packageRequirements.PackageTreeNode
@@ -12,6 +16,9 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
+@Subsystems.Interpreters
+@Components.Uv
+@Layers.Functional
 class UvTreeParsingTest {
 
   @Nested
