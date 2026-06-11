@@ -524,6 +524,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @Ignore("K1 test")
     fun testNoPluginsInAdditionalArgs() {
         configureByFiles()
         importProject()
@@ -545,6 +546,7 @@ class GradleFacetImportTest8 : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @Ignore("K1 test")
     fun testNoArgInvokeInitializers() {
         configureByFiles()
         importProject()
