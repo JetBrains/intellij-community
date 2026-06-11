@@ -53,7 +53,7 @@ internal class SplitModePredefinedModuleKindsSourceModeTest : BasePlatformTestCa
         ]
       """.trimIndent(),
     ) { service ->
-      Assert.assertTrue(service.ensureLoaded())
+      Assert.assertTrue(service.ensureLoadedBlocking())
       Assert.assertEquals(
         SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
         service.getPredefinedDependencyKind("custom.split.mode.frontend"),
@@ -70,7 +70,7 @@ internal class SplitModePredefinedModuleKindsSourceModeTest : BasePlatformTestCa
         """.trimIndent(),
       )
 
-      Assert.assertTrue(service.ensureLoaded())
+      Assert.assertTrue(service.ensureLoadedBlocking())
       Assert.assertNull(service.getPredefinedDependencyKind("custom.split.mode.frontend"))
       Assert.assertEquals(
         SplitModeApiRestrictionsService.ModuleKind.BACKEND,

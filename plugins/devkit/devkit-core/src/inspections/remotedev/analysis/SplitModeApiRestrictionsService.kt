@@ -8,7 +8,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingCancellable
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
@@ -120,12 +119,17 @@ class SplitModeApiRestrictionsService(
   }
 
   fun ensureLoaded(timeout: Duration = 1.seconds): Boolean {
-    val loadedInTime = runBlockingMaybeCancellable {
-      withTimeoutOrNull(timeout) {
-        withContext(Dispatchers.IO) {
-          refreshRestrictionsSnapshot()
-        }
-      }
+    val loadedInTime = runBlockingCancellable {
+      loadRestrictions(timeout)
+    }
+    return loadedInTime == true
+  }
+
+  @TestOnly
+  @Suppress("RAW_RUN_BLOCKING")
+  fun ensureLoadedBlocking(timeout: Duration = 1.seconds): Boolean {
+    val loadedInTime = runBlocking {
+      loadRestrictions(timeout)
     }
     return loadedInTime == true
   }
@@ -211,6 +215,14 @@ class SplitModeApiRestrictionsService(
     apiRestrictionsResource = createApiRestrictionsResource(SplitModeAnalysisFlags.getApiRestrictionsReadMode())
     predefinedModuleKindsResource = createPredefinedModuleKindsResource(SplitModeAnalysisFlags.getPredefinedModuleKindsReadMode())
     publishRestrictionsSnapshot(buildRestrictionsSnapshot())
+  }
+
+  private suspend fun loadRestrictions(timeout: Duration): Boolean? {
+    return withTimeoutOrNull(timeout) {
+      withContext(Dispatchers.IO) {
+        refreshRestrictionsSnapshot()
+      }
+    }
   }
 
   fun scheduleLoadRestrictions() {

@@ -45,7 +45,7 @@ internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
         ]
       """.trimIndent(),
     ) { service ->
-      Assert.assertTrue(service.ensureLoaded())
+      Assert.assertTrue(service.ensureLoadedBlocking())
       Assert.assertEquals(
         SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
         service.getCodeApiKind("custom.split.mode.api.one", null),
@@ -62,7 +62,7 @@ internal class SplitModeApiRestrictionsSourceModeTest : BasePlatformTestCase() {
         """.trimIndent(),
       )
 
-      Assert.assertTrue(service.ensureLoaded())
+      Assert.assertTrue(service.ensureLoadedBlocking())
       Assert.assertNull(service.getCodeApiKind("custom.split.mode.api.one", null))
       Assert.assertEquals(
         SplitModeApiRestrictionsService.ModuleKind.BACKEND,
