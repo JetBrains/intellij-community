@@ -1,0 +1,64 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
+export const controlsTokenStyleId = "jb-webview-controls-tokens"
+
+export const controlsTokenStyles = `
+:root {
+  --jb-font-family: var(--ij-font, "Inter", "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif);
+  --jb-font-size: var(--ij-font-size, 13px);
+  --jb-font-size-small: var(--ij-font-size-small, 12px);
+  --jb-line-height: var(--ij-line-height-default, 16px);
+  --jb-line-height-paragraph: var(--ij-line-height-paragraph, 18px);
+  --jb-font-weight-regular: var(--ij-font-weight-regular, 400);
+  --jb-font-weight-medium: var(--ij-font-weight-medium, 500);
+  --jb-control-height: 28px;
+  --jb-control-height-compact: 24px;
+  --jb-control-radius: var(--ij-radius-control, 4px);
+  --jb-control-padding-x: 8px;
+  --jb-control-gap: 6px;
+  --jb-space-xs: 4px;
+  --jb-space-sm: 8px;
+  --jb-space-md: 12px;
+  --jb-space-lg: 16px;
+  --jb-bg-window: var(--ij-bg-window, #ffffff);
+  --jb-bg-panel: var(--ij-bg-panel, #f7f8f9);
+  --jb-bg-control: var(--ij-bg-control-raised, #ffffff);
+  --jb-bg-input: var(--ij-bg-input, #ffffff);
+  --jb-bg-hover: var(--ij-bg-hover, #00000012);
+  --jb-bg-pressed: var(--ij-bg-pressed, #00000020);
+  --jb-bg-selected: var(--ij-bg-selected, #d0dffe);
+  --jb-bg-selected-muted: var(--ij-bg-selected-muted, #e3ebfe);
+  --jb-border-color: var(--ij-control-border-raised, #b5b7bd);
+  --jb-border-color-muted: var(--ij-border-inline, #e9eaee);
+  --jb-border-color-strong: var(--ij-border-strong, #d1d3d9);
+  --jb-text-color: var(--ij-text-primary, #000000);
+  --jb-text-muted: var(--ij-text-muted, #5f6269);
+  --jb-text-secondary: var(--ij-text-secondary, #73767c);
+  --jb-text-disabled: var(--ij-text-disabled, #9fa2a8);
+  --jb-text-on-accent: var(--ij-text-on-accent, #ffffff);
+  --jb-accent-color: var(--ij-accent, #3871e1);
+  --jb-accent-hover-color: var(--ij-accent-hover, #2f5eb9);
+  --jb-accent-text-color: var(--ij-accent-text, #2f5eb9);
+  --jb-accent-soft-bg: var(--ij-accent-soft, #3871e129);
+  --jb-danger-color: var(--ij-danger, #c54e58);
+  --jb-danger-bg: var(--ij-danger-soft, #fff6f5);
+  --jb-danger-border-color: var(--ij-danger-border, #ffc4c5);
+  --jb-warning-color: var(--ij-warning, #a56906);
+  --jb-warning-bg: var(--ij-warning-soft, #fff6e9);
+  --jb-warning-border-color: var(--ij-warning-border, #f4cd9a);
+  --jb-focus-ring: var(--ij-focus-ring, 0 0 0 2px rgba(56, 113, 225, 0.32));
+  --jb-popup-shadow: var(--ij-popup-shadow, 0 8px 24px #00000026);
+}
+`
+
+export function ensureControlsTokensInstalled(): void {
+  if (typeof document === "undefined" || document.getElementById(controlsTokenStyleId)) {
+    return
+  }
+
+  const style = document.createElement("style")
+  style.id = controlsTokenStyleId
+  style.textContent = controlsTokenStyles
+  const target = document.head || document.documentElement
+  target.insertBefore(style, target.firstChild)
+}
