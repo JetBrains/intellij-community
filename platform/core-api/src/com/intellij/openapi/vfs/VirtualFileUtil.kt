@@ -66,9 +66,16 @@ fun VirtualFile.isTooLargeForIntellijSense(): Boolean {
   return length > maxFileSize
 }
 
-fun VirtualFile.toNioPathOrNull(): Path? {
-  return runCatching { toNioPath() }.getOrNull()
-}
+/**
+ * Works as [VirtualFile.toNioPath] but returns `null` instead of throwing [UnsupportedOperationException]
+ */
+fun VirtualFile.toNioPathOrNull(): Path? =
+  try {
+    toNioPath()
+  }
+  catch (_: UnsupportedOperationException) {
+    null
+  }
 
 @RequiresReadLock
 fun VirtualFile.findDocument(): Document? {
