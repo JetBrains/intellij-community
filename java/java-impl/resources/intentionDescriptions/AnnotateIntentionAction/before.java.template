@@ -1,5 +1,5 @@
 class A {
-  Object getObject() {
+  Object <spot>getObject</spot>() {
     //do smth
     return null;
   }
