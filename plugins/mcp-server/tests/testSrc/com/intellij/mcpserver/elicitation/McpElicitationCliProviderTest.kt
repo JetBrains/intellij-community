@@ -62,7 +62,7 @@ class McpElicitationCliProviderTest : McpToolsetTestBase() {
   @McpDescription("Asks the client to confirm via MCP elicitation")
   suspend fun request_elicitation() {
     confirmationResult.complete(
-      provider()?.requestElicitation<ConfirmInput> {
+      elicitationProvider()?.requestElicitation<ConfirmInput> {
         message = "Confirm?"
         booleanField("confirm") { required = true }
       }
@@ -142,7 +142,7 @@ class McpElicitationCliProviderTest : McpToolsetTestBase() {
   @McpDescription("Requests a form with every elicitation field kind")
   suspend fun request_complex_elicitation() {
     complexResult.complete(
-      provider()?.requestElicitation<ComplexInput> {
+      elicitationProvider()?.requestElicitation<ComplexInput> {
         message = "All field kinds"
         stringField("text") {
           title = "Text"

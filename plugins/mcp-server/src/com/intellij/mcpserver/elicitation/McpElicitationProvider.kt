@@ -9,7 +9,7 @@ import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
 /** Returns the applicable [McpElicitationProvider] for the current session, or `null`. */
-suspend fun provider(): McpElicitationProvider? {
+suspend fun elicitationProvider(): McpElicitationProvider? {
   val kind = currentCoroutineContext()[McpSessionElement]?.elicitationKind ?: return null
   return McpElicitationProvider.EP.extensionList.firstOrNull { it.isApplicable(kind) }
 }
@@ -17,7 +17,7 @@ suspend fun provider(): McpElicitationProvider? {
 /**
  * Strategy for satisfying an elicitation request for a given [McpElicitationKind].
  *
- * Implementations are contributed via [EP] and selected by [provider] using
+ * Implementations are contributed via [EP] and selected by [elicitationProvider] using
  * [isApplicable]. The built-in [McpElicitationCliProvider] handles CLI sessions over the MCP
  * transport; other environments (e.g. in-IDE AI chat with custom UI) can contribute their own.
  */
@@ -125,7 +125,7 @@ enum class McpElicitationKind {
 /**
  * Carries the current MCP session's [session] and [elicitationKind] in the coroutine context
  * for the duration of a tool call. Installed by the MCP session handler.
- * Read by [provider] (for [elicitationKind]) and [McpElicitationCliProvider] (for [session]).
+ * Read by [elicitationProvider] (for [elicitationKind]) and [McpElicitationCliProvider] (for [session]).
  * Internal: keeps the SDK [ServerSession] type out of the public API.
  */
 internal class McpSessionElement(
