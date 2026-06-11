@@ -112,7 +112,7 @@ object PluginInitializationDiagnosticUtils {
         val rootCause = resolvedPluginSet.getExclusionReason(chain[0])!! as DependencyIsNotResolved
         appendDependencyIsNotResolvedLogMessage(rootCause.dependency, broadResolveContext, resolvedPluginSet)
         for ((index, excludedDescriptor) in chain.withIndex()) {
-          appendLine()
+          if (index > 0) appendLine()
           val exclusionReason = resolvedPluginSet.getExclusionReason(excludedDescriptor)!!
           appendIndentString(index + 1)
           append(exclusionReason.logMessage())
