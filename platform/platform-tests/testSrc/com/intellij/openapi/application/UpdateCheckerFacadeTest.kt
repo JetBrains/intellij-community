@@ -391,6 +391,41 @@ class UpdateCheckerFacadeTest {
   }
 
   @Test
+  fun `custom repository receives os and arch in query`() {
+    installedPluginsFacade.setPlugins(listOf(
+      InstalledPluginMock("ImageView", "Image View", "JetBrains", "0.1", "1.0", "999.99999", true),
+    ))
+
+    setServerPlugins(emptyList(), "[]")
+
+    installedPluginsFacade.setHosts(listOf(server.url + "/custom-repository"))
+
+    var capturedUri: URI? = null
+    server.createContext("/custom-repository") { handler ->
+      capturedUri = handler.requestURI
+      handler.sendResponseHeaders(200, 0)
+      handler.responseBody.writer().use { out ->
+        out.write("""<?xml version="1.0" encoding="UTF-8"?><plugins/>""")
+      }
+    }
+
+    UpdateCheckerFacade.getInstance().checkInstalledPluginUpdates()
+
+    assertNotNull(capturedUri, "Custom repository must receive a request")
+    val params = capturedUri.queryParameters
+
+    assertTrue(params.contains("build"), "Query parameters must contain 'build'")
+    assertEquals(ApplicationInfoImpl.getShadowInstanceImpl().getPluginCompatibleBuildAsNumber().asString(),
+                 params["build"])
+
+    assertTrue(params.contains("os"), "Query parameters must contain 'os'")
+    assertEquals("${OS.CURRENT} ${OS.CURRENT.version()}", params["os"])
+
+    assertTrue(params.contains("arch"), "Query parameters must contain 'arch'")
+    assertEquals(CpuArch.CURRENT.name, params["arch"])
+  }
+
+  @Test
   fun `disabled plugin`() {
     installedPluginsFacade.setPlugins(listOf(
       InstalledPluginMock("ColourChooser", "Colour Chooser", "JetBrains", "1.0", "0", "999.99999", true),
