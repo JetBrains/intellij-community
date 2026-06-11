@@ -120,6 +120,7 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
 
   private val callbackLock: Any = Any()
   private var shutdownCallbackExecuted: Boolean = false
+  private var applyScheduled: Boolean = false
 
   init {
     pluginModelFacade = PluginModelFacade(MyPluginModel(null))
@@ -377,18 +378,31 @@ class PluginManagerConfigurablePanel @RequiresEdt constructor(searchQuery: Strin
   }
 
   fun scheduleApply() {
+    synchronized(callbackLock) {
+      if (applyScheduled) {
+        return
+      }
+      applyScheduled = true
+    }
     application.invokeLater({
       try {
-        apply()
-        WelcomeScreenEventCollector.logPluginsModified()
-        synchronized(callbackLock) {
-          if (disposeStarted && !shutdownCallbackExecuted) {
-            InstalledPluginsState.getInstance().runShutdownCallback()
+        if (isModified()) {
+          apply()
+          WelcomeScreenEventCollector.logPluginsModified()
+          synchronized(callbackLock) {
+            if (disposeStarted && !shutdownCallbackExecuted) {
+              InstalledPluginsState.getInstance().runShutdownCallback()
+            }
           }
         }
       }
       catch (exception: ConfigurationException) {
         Logger.getInstance(PluginsTabFactory::class.java).error(exception)
+      }
+      finally {
+        synchronized(callbackLock) {
+          applyScheduled = false
+        }
       }
     }, ModalityState.nonModal())
   }
