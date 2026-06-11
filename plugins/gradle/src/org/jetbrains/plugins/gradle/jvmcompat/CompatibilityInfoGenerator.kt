@@ -123,7 +123,8 @@ internal fun getGeneratedString(data: ClassFileData): String {
     |
     |/**
     | * NOTE THIS FILE IS AUTO-GENERATED
-    | * DO NOT EDIT IT BY HAND, run "Generate Gradle Compatibility Matrix" configuration instead
+    | * DO NOT EDIT IT BY HAND,
+    | * update gradle/resources/compatibility/compatibility.json and run "Generate Gradle Compatibility Matrix" configuration instead
     | */
     |internal val DEFAULT_DATA = GradleCompatibilityState(
     |  supportedJavaVersions = listOf(
