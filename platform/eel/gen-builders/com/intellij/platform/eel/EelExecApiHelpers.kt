@@ -9,6 +9,7 @@ import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.EelExecApi.ExternalCliEntrypoint
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.path.EelPath
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
@@ -77,6 +78,17 @@ fun EelExecApi.spawnProcess(
 @ApiStatus.Internal
 fun EelExecApi.createExternalCli(): EelExecApiHelpers.CreateExternalCli =
   EelExecApiHelpers.CreateExternalCli(
+    owner = this,
+  )
+
+/**
+ * Spawns the user's login shell (resolved via [getUserLoginShell]) so that its full startup runs,
+ * captures the resulting environment, and hands back a live PTY-attached interactive shell.
+ */
+@GeneratedBuilder.Result
+@ApiStatus.Internal
+fun EelExecApi.spawnLoginShell(): EelExecApiHelpers.SpawnLoginShell =
+  EelExecApiHelpers.SpawnLoginShell(
     owner = this,
   )
 
@@ -468,6 +480,88 @@ object EelExecApiHelpers {
           exactName = exactName,
           filePrefix = filePrefix,
           lifecycle = lifecycle,
+        )
+      )
+
+    override val eelDescriptor: EelDescriptor get() = owner.descriptor
+  }
+
+  /**
+   * Create it via [com.intellij.platform.eel.EelExecApi.spawnLoginShell].
+   */
+  @GeneratedBuilder.Result
+  @ApiStatus.Internal
+  class SpawnLoginShell(
+    private val owner: EelExecApi,
+  ) : EelOwnedBuilder<EelExecApi.LoginShellHandle> {
+    private var env: Map<String, String> = mapOf()
+
+    private var interactive: Boolean = true
+
+    private var pty: EelExecApi.Pty? = null
+
+    private var scope: CoroutineScope? = null
+
+    private var workingDirectory: EelPath? = null
+
+    /**
+     * Extra environment variables to pass to the outer shell process (e.g. `DISABLE_AUTO_UPDATE=true`
+     * to silence oh-my-zsh's update prompt, or `LANG=en_US.UTF-8`). Merged into the inherited env
+     * by the underlying [spawnProcess] — same semantics as [ExecuteProcessOptions.env].
+     */
+    @ApiStatus.Internal
+    fun env(arg: Map<String, String>): SpawnLoginShell = apply {
+      this.env = arg
+    }
+
+    /**
+     * Start the login shell with `-i` or equivalent so that the interactive profile is loaded.
+     */
+    @ApiStatus.Internal
+    fun interactive(arg: Boolean): SpawnLoginShell = apply {
+      this.interactive = arg
+    }
+
+    /**
+     * PTY dimensions for the underlying shell session. If null, a default PTY is used.
+     */
+    @ApiStatus.Internal
+    fun pty(arg: EelExecApi.Pty?): SpawnLoginShell = apply {
+      this.pty = arg
+    }
+
+    /**
+     * Lifetime of the spawn. When canceled, the shell process is killed and
+     * [LoginShellHandle.capturedEnv] completes exceptionally with [CancellationException].
+     */
+    @ApiStatus.Internal
+    fun scope(arg: CoroutineScope?): SpawnLoginShell = apply {
+      this.scope = arg
+    }
+
+    /**
+     * Working directory of the outer shell process. Useful e.g. when the caller wants the shell to
+     * start in a project root rather than `$HOME` — same semantics as [ExecuteProcessOptions.workingDirectory].
+     */
+    @ApiStatus.Internal
+    fun workingDirectory(arg: EelPath?): SpawnLoginShell = apply {
+      this.workingDirectory = arg
+    }
+
+    /**
+     * Complete the builder and call [com.intellij.platform.eel.EelExecApi.spawnLoginShell]
+     * with an instance of [com.intellij.platform.eel.EelExecApi.LoginShellOptions].
+     */
+    @Throws(ExecuteProcessException::class)
+    @ThrowsChecked(ExecuteProcessException::class)
+    override suspend fun eelIt(): EelExecApi.LoginShellHandle =
+      owner.spawnLoginShell(
+        LoginShellOptionsImpl(
+          env = env,
+          interactive = interactive,
+          pty = pty,
+          scope = scope,
+          workingDirectory = workingDirectory,
         )
       )
 
