@@ -3,8 +3,10 @@ package com.jetbrains.python.psi.types
 
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.isProtocol
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteOwner
 import com.jetbrains.python.psi.PyClass
@@ -240,10 +242,12 @@ class PyTypedDictType(
      */
     @ApiStatus.Internal
     @JvmStatic
+    @JvmOverloads
     fun match(
       expected: PyType,
       actual: PyTypedDictType,
       context: TypeEvalContext,
+      mismatch: ((ProblemMessage) -> Unit)? = null,
     ): Boolean? {
       if (expected is PyCollectionType) {
         matchTypedDictWithCollection(expected, actual, context)?.let { return it }
@@ -263,24 +267,30 @@ class PyTypedDictType(
         }
         val actualField = actual.fields[expectedKey]
         if (actualField == null) {
+          if (mismatch != null) mismatch(keyMissing(expectedKey))
           return false
         }
         if (!strictUnionMatch(expectedField.type, actualField.type, context)) {
+          if (mismatch != null) mismatch(keyTypeIncompatible(expectedKey))
           return false
         }
         if (!expectedField.isReadOnly) {
           if (!(strictUnionMatch(actualField.type, expectedField.type, context) && !actualField.isReadOnly)) {
+            // A mutable key is invariant: the value types must match both ways and the source key must stay writable.
+            if (mismatch != null) mismatch(if (actualField.isReadOnly) keyReadOnly(expectedKey) else keyTypeIncompatible(expectedKey))
             return false
           }
         }
         if (expectedField.isRequired) {
           if (!actualField.isRequired) {
+            if (mismatch != null) mismatch(keyRequiredMismatch(expectedKey))
             return false
           }
         }
         else {
           if (!expectedField.isReadOnly) {
             if (actualField.isRequired) {
+              if (mismatch != null) mismatch(keyRequiredMismatch(expectedKey))
               return false
             }
           }
@@ -288,6 +298,19 @@ class PyTypedDictType(
       }
       return true
     }
+
+    // Localized per-key reasons for the breakdown shown by PyTypeChecker.explainMismatch.
+    private fun keyMissing(key: String): ProblemMessage =
+      PyPsiBundle.problemMessage("INSP.type.checker.breakdown.typed.dict.key.missing", key)
+
+    private fun keyTypeIncompatible(key: String): ProblemMessage =
+      PyPsiBundle.problemMessage("INSP.type.checker.breakdown.typed.dict.key.type", key)
+
+    private fun keyReadOnly(key: String): ProblemMessage =
+      PyPsiBundle.problemMessage("INSP.type.checker.breakdown.typed.dict.key.readonly", key)
+
+    private fun keyRequiredMismatch(key: String): ProblemMessage =
+      PyPsiBundle.problemMessage("INSP.type.checker.breakdown.typed.dict.key.required", key)
 
     @ApiStatus.Internal
     @JvmStatic

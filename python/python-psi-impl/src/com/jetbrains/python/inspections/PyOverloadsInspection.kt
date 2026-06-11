@@ -2,11 +2,13 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.buildHtmlChunk
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.Processor
 import com.intellij.util.containers.SortedList
@@ -28,12 +30,14 @@ import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.impl.PyClassImpl
 import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl
 import com.jetbrains.python.psi.types.PyCallableType
+import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import org.jetbrains.annotations.Nls
 import java.util.EnumSet
+import java.util.function.Supplier
 
 class PyOverloadsInspection : PyInspection() {
 
@@ -110,20 +114,29 @@ class PyOverloadsInspection : PyInspection() {
       }
 
       if (implementation != null) {
-        overloads
-          .asSequence()
-          .filter {
-            val overloadInputSignature = PyCallableParameterListTypeImpl(it.getParameters(myTypeEvalContext))
-            val implementationInputSignature = PyCallableParameterListTypeImpl(implementation.getParameters(myTypeEvalContext))
-
-            !PyTypeChecker.match(overloadInputSignature, implementationInputSignature, myTypeEvalContext)
+        val implementationInputSignature = PyCallableParameterListTypeImpl(implementation.getParameters(myTypeEvalContext))
+        for (overload in overloads) {
+          val overloadInputSignature = PyCallableParameterListTypeImpl(overload.getParameters(myTypeEvalContext))
+          if (!PyTypeChecker.match(overloadInputSignature, implementationInputSignature, myTypeEvalContext)) {
+            val message = PyPsiBundle.message("INSP.overloads.this.overload.signature.not.compatible.with.implementation",
+                                              if (owner is PyClass) 1 else 0)
+            registerSignatureMismatch(overload.nameIdentifier, overloadInputSignature, implementationInputSignature, message)
           }
-          .forEach {
-            registerProblem(it.nameIdentifier,
-                            PyPsiBundle.message("INSP.overloads.this.overload.signature.not.compatible.with.implementation",
-                                                if (owner is PyClass) 1 else 0))
-          }
+        }
       }
+    }
+
+    /**
+     * Registers an overload-incompatibility problem, attaching the breakdown ([PyTypeChecker.explainMismatch]) as a
+     * separate on-the-fly HTML tooltip while keeping the one-line [message] as the flat description.
+     */
+    private fun registerSignatureMismatch(element: PsiElement?,
+                                          expected: PyType?,
+                                          actual: PyType?,
+                                          @InspectionMessage message: String) {
+      if (element == null) return
+      registerProblemWithTooltip(element, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
+                                  { PyTypeCheckerInspectionProblemRegistrar.breakdownTooltip(message, expected, actual, myTypeEvalContext, element) }
     }
 
     private fun checkClassMethodAndStaticMethodConsistency(overloads: List<PyFunction>, implementation: PyFunction?) {

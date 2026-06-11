@@ -11,8 +11,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.util.ArrayUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.xml.util.XmlStringUtil
 import com.jetbrains.python.ProtectionLevel
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
@@ -20,6 +22,9 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.getProtocolMembers
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
+import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.PyInspectionMessages
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyCallable
@@ -45,7 +50,10 @@ import com.jetbrains.python.psi.types.PyLiteralStringType.Companion.match
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.match
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.convertToType
+import com.jetbrains.python.psi.types.PyTypeChecker.explainMismatch
 import com.jetbrains.python.psi.types.PyTypeChecker.match
+import com.jetbrains.python.psi.types.PyTypeChecker.recordFrame
+import com.jetbrains.python.psi.types.PyTypeChecker.recordLeaf
 import com.jetbrains.python.psi.types.PyTypeParameterMapping.Option.USE_DEFAULTS
 import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
@@ -106,6 +114,166 @@ object PyTypeChecker {
   ): Boolean {
     return match(expected, actual, MatchContext(context, substitutions, false, ))
       .orElse(true)!!
+  }
+
+  /**
+   * Re-runs the match between [expected] and [actual], collecting a structured breakdown of *why*
+   * they do not match (see [PyTypeMismatchExplanation]).
+   *
+   * Returns `null` when the types actually match, or when the failing category has not been
+   * instrumented (in which case the caller should fall back to a flat message). Collecting the
+   * breakdown is comparatively expensive, so this is intentionally separate from [match]: callers
+   * run it only once a type error is about to be reported.
+   *
+   * [substitutions], when provided, is copied so the re-run starts from the same pre-bound state as
+   * the original match without perturbing it.
+   */
+  @JvmStatic
+  @JvmOverloads
+  @ApiStatus.Internal
+  fun explainMismatch(
+    expected: PyType?,
+    actual: PyType?,
+    context: TypeEvalContext,
+    anchor: PsiElement? = null,
+    substitutions: GenericSubstitutions? = null,
+  ): PyTypeMismatchExplanation? {
+    val baseSubstitutions = substitutions?.addToCopy(null, null, null) ?: GenericSubstitutions()
+    val matchContext = MatchContext(context, baseSubstitutions, false)
+    val collector = DiagnosticsCollector()
+    matchContext.diagnostics = collector
+    matchContext.anchor = anchor
+    val matched = match(expected, actual, matchContext).orElse(true)!!
+    if (matched) return null
+    val roots = collector.current
+    return when (roots.size) {
+      0 -> null
+      1 -> roots.single()
+      else -> PyTypeMismatchExplanation(
+        PyPsiBundle.problemMessage("INSP.type.checker.type.not.assignable", codifiedType(matchContext, actual),
+                                   codifiedType(matchContext, expected)),
+        roots.toList()
+      )
+    }
+  }
+
+  /**
+   * Runs [body] and, only while a breakdown is being collected, records a node carrying [message]
+   * whenever [body] reports a mismatch. The node's children are whatever nested frames [body]
+   * recorded, so the resulting tree follows exactly the path that explains the failure; successful
+   * or abandoned branches discard their buffer and leave no trace.
+   *
+   * Inlined so there is genuinely no allocation when diagnostics are off (the common case).
+   */
+  private inline fun recordFrame(
+    context: MatchContext,
+    message: () -> ProblemMessage,
+    body: () -> Optional<Boolean>,
+  ): Optional<Boolean> {
+    val collector = context.diagnostics ?: return body()
+    val parent = collector.current
+    val child = mutableListOf<PyTypeMismatchExplanation>()
+    collector.current = child
+    val result: Optional<Boolean>
+    try {
+      result = body()
+    }
+    finally {
+      collector.current = parent
+    }
+    if (result.orElse(true) == false) {
+      parent.add(PyTypeMismatchExplanation(message(), child.toList()))
+    }
+    return result
+  }
+
+  /** [recordFrame] for the many helpers that return a plain [Boolean]. */
+  private inline fun recordFrameBool(
+    context: MatchContext,
+    message: () -> ProblemMessage,
+    body: () -> Boolean,
+  ): Boolean {
+    val collector = context.diagnostics ?: return body()
+    val parent = collector.current
+    val child = mutableListOf<PyTypeMismatchExplanation>()
+    collector.current = child
+    val result: Boolean
+    try {
+      result = body()
+    }
+    finally {
+      collector.current = parent
+    }
+    if (!result) {
+      parent.add(PyTypeMismatchExplanation(message(), child.toList()))
+    }
+    return result
+  }
+
+  /** Records a terminal reason (no children) at the current frame, if a breakdown is being collected. */
+  private inline fun recordLeaf(context: MatchContext, message: () -> ProblemMessage) {
+    val collector = context.diagnostics ?: return
+    collector.current.add(PyTypeMismatchExplanation(message(), emptyList()))
+  }
+
+  /**
+   * Runs [body] with recording diverted to a throwaway buffer, so nested matches leave no nodes.
+   * Used when a branch explores many candidates (e.g. union members) and we want to emit a single
+   * summarizing reason instead of one node per dead-end candidate.
+   */
+  private inline fun <T> withoutRecording(context: MatchContext, body: () -> T): T {
+    val collector = context.diagnostics ?: return body()
+    val parent = collector.current
+    collector.current = mutableListOf()
+    return try {
+      body()
+    }
+    finally {
+      collector.current = parent
+    }
+  }
+
+  /**
+   * Renders [type] as a [PyInspectionMessages.CodifiedParam] for a breakdown message: the description is the plain
+   * type name (so [PyTypeMismatchExplanation.message]'s description stays the same text the Problems view would show),
+   * and the tooltip is the same type with highlighted, clickable class links — resolved against [MatchContext.anchor].
+   * When no anchor is available (a programmatic [explainMismatch] call), the tooltip falls back to a plain `<code>` span.
+   */
+  private fun codifiedType(context: MatchContext, type: PyType?): PyInspectionMessages.CodifiedParam {
+    val anchor = context.anchor
+    if (anchor != null) {
+      return PyInspectionMessages.CodifiedParam.ofType(type, anchor, context.context)
+    }
+    val name = PythonDocumentationProvider.getTypeName(type, context.context)
+    return PyInspectionMessages.CodifiedParam(name, "<code>" + XmlStringUtil.escapeString(name) + "</code>")
+  }
+
+  /**
+   * Records a single "not assignable" leaf for a failed overload match (when [matched] is `false`) and
+   * returns [matched] unchanged, so the overload branches stay one-liners.
+   */
+  private fun recordOverloadLeaf(context: MatchContext, expected: PyType?, actual: PyType?, matched: Boolean): Boolean {
+    if (!matched) {
+      recordLeaf(context) {
+        PyPsiBundle.problemMessage("INSP.type.checker.type.not.assignable", codifiedType(context, actual), codifiedType(context, expected))
+      }
+    }
+    return matched
+  }
+
+  /** Best-effort reason a protocol member didn't match, used as the breakdown node above the type leaf. */
+  private fun protocolMemberFailureMessage(protocolMember: PyTypeMember, candidates: List<PyTypeMember>): ProblemMessage {
+    val name = protocolMember.name
+    val candidate = candidates.singleOrNull()
+    if (candidate != null) {
+      if (protocolMember.isWritable && !candidate.isWritable) {
+        return PyPsiBundle.problemMessage("INSP.type.checker.breakdown.member.not.writable", name)
+      }
+      if (protocolMember.isClassVar != candidate.isClassVar) {
+        return PyPsiBundle.problemMessage("INSP.type.checker.breakdown.member.classvar.mismatch", name)
+      }
+    }
+    return PyPsiBundle.problemMessage("INSP.type.checker.breakdown.member.incompatible", name)
   }
 
   private fun match(expected: PyType?, actual: PyType?, context: MatchContext): Optional<Boolean> {
@@ -225,8 +393,18 @@ object PyTypeChecker {
     }
 
     if (expected is PyClassType && actual is PyClassType) {
+      val collector = context.diagnostics
+      val reasonsBefore = collector?.current?.size ?: 0
       val match = match(expected, actual, context)
       if (match.isPresent) {
+        // Several class-vs-class sub-branches (e.g. an outright incompatible pair like `bytes`/`int`)
+        // decide `false` without recording a reason, unlike the protocol/TypedDict/type-argument paths.
+        // Add the universal leaf only when nothing was recorded, so breakdowns never lose a member.
+        if (collector != null && !match.get() && collector.current.size == reasonsBefore) {
+          recordLeaf(context) {
+            PyPsiBundle.problemMessage("INSP.type.checker.type.not.assignable", codifiedType(context, actual), codifiedType(context, expected))
+          }
+        }
         return match
       }
     }
@@ -262,43 +440,52 @@ object PyTypeChecker {
       return match(expected, actual.moduleClassType, context)
     }
 
-    // Handle PyOverloadType matching
+    // Handle PyOverloadType matching. Each branch fans out over candidate overloads; we discard the
+    // per-candidate dead-ends ([withoutRecording]) and record a single summarizing leaf instead.
     if (expected is PyOverloadType) {
       if (actual is PyOverloadType) {
         // When both are overload types, check if all overloads in expected have a match in actual (subset matching)
-        return Optional.of(
+        val matched = withoutRecording(context) {
           expected.items.all { expectedItem ->
             actual.items.any { actualItem ->
               match(expectedItem, actualItem, context).orElse(false)!!
             }
           }
-        )
+        }
+        return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
       }
       // If expected is overload but actual is not, check if actual is a callable class/protocol
       // Extract the __call__ type and compare with the overload
       if (actual is PyClassLikeType && actual.isCallable) {
-        return Optional.of(matchOverloadWithCallable(expected, actual, context, true))
+        val matched = withoutRecording(context) { matchOverloadWithCallable(expected, actual, context, true) }
+        return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
       }
-      return Optional.of(false)
+      return Optional.of(recordOverloadLeaf(context, expected, actual, false))
     }
 
     if (actual is PyOverloadType) {
       // If actual is overload but expected is not, first check if expected is a callable protocol
       if (expected is PyClassLikeType && expected.isCallable) {
-        return Optional.of(matchOverloadWithCallable(actual, expected, context, false))
+        val matched = withoutRecording(context) { matchOverloadWithCallable(actual, expected, context, false) }
+        return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
       }
       // Otherwise, check if any overload in actual matches expected
-      return Optional.of(
+      val matched = withoutRecording(context) {
         actual.items.any { item ->
           match(expected, item, context).orElse(false)!!
         }
-      )
+      }
+      return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
     }
 
-    if (PyNumericTowerUtil.isEnabled) {
-      return Optional.of(false)
+    val numericMatch = !PyNumericTowerUtil.isEnabled && matchNumericTypes(expected, actual)
+    if (!numericMatch) {
+      // Universal terminal reason: every plain class / numeric mismatch funnels through here.
+      recordLeaf(context) {
+        PyPsiBundle.problemMessage("INSP.type.checker.type.not.assignable", codifiedType(context, actual), codifiedType(context, expected))
+      }
     }
-    return Optional.of(matchNumericTypes(expected, actual))
+    return Optional.of(numericMatch)
   }
 
   private fun match(
@@ -621,13 +808,27 @@ object PyTypeChecker {
       }
     }
 
-    if (!PyUnionType.isStrictSemanticsEnabled()) { // checking strictly separately until PY-24834 gets implemented
-      if (actual.members.any { it is PyLiteralStringType || it is PyLiteralType }) {
-        return actual.members.all { type -> match(expected, type, context).orElse(false)!! }
+    // When collecting a breakdown, record which member(s) of `actual` aren't assignable to `expected`
+    // under one summary node; otherwise this is the original short-circuiting `all`/`any` with zero overhead.
+    return recordFrameBool(context, {
+      PyPsiBundle.problemMessage("INSP.type.checker.breakdown.union.member.not.assignable",
+                                 codifiedType(context, actual), codifiedType(context, expected))
+    }) {
+      // `||` short-circuits, so when strict semantics are off the literal scan still runs exactly as before.
+      val requireAll = PyUnionType.isStrictSemanticsEnabled() || // checking strictly separately until PY-24834 gets implemented
+                       actual.members.any { it is PyLiteralStringType || it is PyLiteralType }
+      if (context.diagnostics == null) {
+        if (requireAll) actual.members.all { type -> match(expected, type, context).orElse(false)!! }
+        else actual.members.any { type -> match(expected, type, context).orElse(false)!! }
       }
-      return actual.members.any { type -> match(expected, type, context).orElse(false)!! }
+      else {
+        // `all`/`any` short-circuit on the first decisive member, which would drop the reasons for later
+        // non-assignable members; visit every member so each contributes a leaf (the boolean result is
+        // unchanged because `all`/`any` over the full list equals the short-circuited one).
+        val perMember = actual.members.map { type -> match(expected, type, context).orElse(false)!! }
+        if (requireAll) perMember.all { it } else perMember.any { it }
+      }
     }
-    return actual.members.all { type -> match(expected, type, context).orElse(false)!! }
   }
 
   private fun match(
@@ -651,7 +852,15 @@ object PyTypeChecker {
     if (actual in expected.members) {
       return true
     }
-    return expected.members.any { type: PyType? -> match(type, actual, context).orElse(true)!! }
+    // When collecting a breakdown, record why `actual` fails against every member under one summary
+    // node (each member's own match contributes its sub-reasons); otherwise this collapses to the
+    // original `any` with zero overhead.
+    return recordFrameBool(context, {
+      PyPsiBundle.problemMessage("INSP.type.checker.breakdown.not.assignable.to.union",
+                                 codifiedType(context, actual), codifiedType(context, expected))
+    }) {
+      expected.members.any { type: PyType? -> match(type, actual, context).orElse(true)!! }
+    }
   }
 
   private fun match(expected: PyType, actual: PyIntersectionType, context: MatchContext): Boolean {
@@ -670,7 +879,13 @@ object PyTypeChecker {
     if (actual in expected.members) {
       return true
     }
-    return expected.members.any { type: PyType? -> match(type, actual, context).orElse(true)!! }
+    // Mirror of the [PyUnionType] case: record a per-member breakdown when collecting, otherwise plain `any`.
+    return recordFrameBool(context, {
+      PyPsiBundle.problemMessage("INSP.type.checker.breakdown.not.assignable.to.union",
+                                 codifiedType(context, actual), codifiedType(context, expected))
+    }) {
+      expected.members.any { type: PyType? -> match(type, actual, context).orElse(true)!! }
+    }
   }
 
   private fun match(
@@ -705,12 +920,31 @@ object PyTypeChecker {
     }
 
     if (expected is PyTypedDictType && actual !is PyTypedDictType) {
+      recordLeaf(matchContext) {
+        PyPsiBundle.problemMessage("INSP.type.checker.breakdown.typed.dict.incompatible",
+                                   codifiedType(matchContext, actual), codifiedType(matchContext, expected))
+      }
       return Optional.of(false)
     }
 
     if (actual is PyTypedDictType) {
-      val matchResult = PyTypedDictType.match(expected, actual, context)
-      if (matchResult != null) return Optional.of(matchResult)
+      // Capture which key fails only while collecting a breakdown; null sink keeps normal matching cheap.
+      var keyMismatchReason: ProblemMessage? = null
+      val matchResult = PyTypedDictType.match(expected, actual, context,
+                                              if (matchContext.diagnostics != null) ({ reason -> keyMismatchReason = reason }) else null)
+      if (matchResult != null) {
+        if (!matchResult) {
+          recordLeaf(matchContext) {
+            if (expected is PyTypedDictType)
+              keyMismatchReason ?: PyPsiBundle.problemMessage("INSP.type.checker.breakdown.typed.dict.incompatible",
+                                                              codifiedType(matchContext, actual), codifiedType(matchContext, expected))
+            else
+              PyPsiBundle.problemMessage("INSP.type.checker.type.not.assignable",
+                                         codifiedType(matchContext, actual), codifiedType(matchContext, expected))
+          }
+        }
+        return Optional.of(matchResult)
+      }
     }
 
     if (expected is PyLiteralStringType) {
@@ -734,7 +968,11 @@ object PyTypeChecker {
 
     if (expected.isProtocol(context) &&
         (!subClass.isSubclass(superClass, context) || isDefinitionWithCustomMetaclass)) {
-      return Optional.of(matchProtocols(expected, actual, matchContext))
+      return recordFrame(matchContext,
+                         { PyPsiBundle.problemMessage("INSP.type.checker.breakdown.incompatible.with.protocol",
+                                                      codifiedType(matchContext, actual), codifiedType(matchContext, expected)) }) {
+        Optional.of(matchProtocols(expected, actual, matchContext))
+      }
     }
 
     if (expected is PyCollectionType) {
@@ -763,35 +1001,42 @@ object PyTypeChecker {
     val protocolSubstitutions = GenericSubstitutions()
     protocolSubstitutions.qualifierType = actual.toInstance()
     val protocolContext = MatchContext(context, protocolSubstitutions, matchContext.reversedSubstitutions, matchContext.literalInference)
+    protocolContext.diagnostics = matchContext.diagnostics
+    protocolContext.anchor = matchContext.anchor
 
     for (pair in inspectProtocolSubclass(expected, actual, context)) {
       val protocolMember = pair.first
       val subclassElementMembers = pair.second
       if (ContainerUtil.isEmpty(subclassElementMembers)) {
+        recordLeaf(matchContext) {
+          PyPsiBundle.problemMessage("INSP.type.checker.breakdown.member.missing", protocolMember.name)
+        }
         return false
       }
       val rawProtocolElementType = dropSelfInProtocolMember(expected, protocolMember.type, context)
 
       val protocolElementType = substitute(rawProtocolElementType, expectedSubstitutions, context)
       val elementResult: Boolean =
-        subclassElementMembers.any { subclassElementMember: PyTypeMember? ->
-          if (protocolMember.isWritable && !subclassElementMember!!.isWritable) {
-            return@any false
-          }
-          if (protocolMember.isDeletable && !subclassElementMember!!.isDeletable) {
-            return@any false
-          }
-          val isProtocolMemberClassVar = protocolMember.isClassVar
-          val isSubclassMemberClassVar = subclassElementMember!!.isClassVar
-          if (isSubclassMemberClassVar != isProtocolMemberClassVar) {
-            return@any false
-          }
+        recordFrameBool(protocolContext, { protocolMemberFailureMessage(protocolMember, subclassElementMembers) }) {
+          subclassElementMembers.any { subclassElementMember: PyTypeMember? ->
+            if (protocolMember.isWritable && !subclassElementMember!!.isWritable) {
+              return@any false
+            }
+            if (protocolMember.isDeletable && !subclassElementMember!!.isDeletable) {
+              return@any false
+            }
+            val isProtocolMemberClassVar = protocolMember.isClassVar
+            val isSubclassMemberClassVar = subclassElementMember!!.isClassVar
+            if (isSubclassMemberClassVar != isProtocolMemberClassVar) {
+              return@any false
+            }
 
-          var subclassElementType = substituteSelfInProtocolMember(actual, subclassElementMember.type, context)
-          subclassElementType = dropSelfInProtocolMember(expected, subclassElementType, context)
-          subclassElementType = substitute(subclassElementType, actualSubstitutions, context)
+            var subclassElementType = substituteSelfInProtocolMember(actual, subclassElementMember.type, context)
+            subclassElementType = dropSelfInProtocolMember(expected, subclassElementType, context)
+            subclassElementType = substitute(subclassElementType, actualSubstitutions, context)
 
-          match(protocolElementType, subclassElementType, protocolContext).orElse(true)!!
+            match(protocolElementType, subclassElementType, protocolContext).orElse(true)!!
+          }
         }
 
       if (!elementResult) {
@@ -1035,20 +1280,38 @@ object PyTypeChecker {
       }
     }
 
+    // Capture the specific structural reason only while collecting a breakdown; null sink keeps normal matching cheap.
+    var listMismatchReason: ProblemMessage? = null
+    // Collected only while building a breakdown, to name the offending parameter in the per-parameter message.
+    val parameterNames = if (matchContext.diagnostics != null) mutableListOf<String?>() else null
     val mapping = mapCallableParameters(
       ContainerUtil.subList(expectedParameters, startIndex),
       ContainerUtil.subList(actualParameters, startIndex),
-      context
+      context,
+      if (matchContext.diagnostics != null) ({ reason -> listMismatchReason = reason }) else null,
+      parameterNames
     )
     if (mapping == null) {
+      recordLeaf(matchContext) {
+        listMismatchReason ?: PyPsiBundle.problemMessage("INSP.type.checker.breakdown.parameter.list.incompatible")
+      }
       return false
     }
+    // The collected names align with the mapped pairs only when every pair came from a plain parameter; a shorter list
+    // means a container/variadic reshuffled the mapping, so fall back to the position-less message.
+    val alignedNames = parameterNames?.takeIf { it.size == mapping.mappedTypes.size }
     // actual callable type could accept more general parameter type
-    for (pair in mapping.mappedTypes) {
-      val matched = if (matchContext.reverseSubstitutions().reversedSubstitutions)
-        match(pair.getSecond(), pair.getFirst(), matchContext.reverseSubstitutions())
-      else
-        match(pair.getFirst(), pair.getSecond(), matchContext.reverseSubstitutions())
+    for ((index, pair) in mapping.mappedTypes.withIndex()) {
+      val parameterName = alignedNames?.get(index)
+      val matched = recordFrame(matchContext, {
+        if (parameterName != null) PyPsiBundle.problemMessage("INSP.type.checker.breakdown.parameter.type.incompatible.named", parameterName)
+        else PyPsiBundle.problemMessage("INSP.type.checker.breakdown.parameter.type.incompatible")
+      }) {
+        if (matchContext.reverseSubstitutions().reversedSubstitutions)
+          match(pair.getSecond(), pair.getFirst(), matchContext.reverseSubstitutions())
+        else
+          match(pair.getFirst(), pair.getSecond(), matchContext.reverseSubstitutions())
+      }
       if (!matched.orElse(true)!!) {
         return false
       }
@@ -1112,7 +1375,11 @@ object PyTypeChecker {
           return Optional.of(false)
         }
       }
-      if (!match(expected.getReturnType(context), getActualReturnType(actual, context), matchContext).orElse(true)!!) {
+      val returnMatched = recordFrame(matchContext,
+                                      { PyPsiBundle.problemMessage("INSP.type.checker.breakdown.return.type.incompatible") }) {
+        match(expected.getReturnType(context), getActualReturnType(actual, context), matchContext)
+      }
+      if (!returnMatched.orElse(true)!!) {
         return Optional.of(false)
       }
       return Optional.of(true)
@@ -1310,12 +1577,14 @@ object PyTypeChecker {
     if (mapping == null) {
       return false
     }
-    for (pair in mapping.mappedTypes) {
-      val matched = if (context.reversedSubstitutions)
-        match(pair.getSecond(), pair.getFirst(), context)
-      else
-        match(pair.getFirst(), pair.getSecond(), context)
-      if (!matched.orElse(true)!!) {
+    for ((typeArgIndex, pair) in mapping.mappedTypes.withIndex()) {
+      val matched = recordTypeArgumentFrame(context, typeArgIndex) {
+        if (context.reversedSubstitutions)
+          match(pair.getSecond(), pair.getFirst(), context).orElse(true)!!
+        else
+          match(pair.getFirst(), pair.getSecond(), context).orElse(true)!!
+      }
+      if (!matched) {
         return false
       }
     }
@@ -1331,12 +1600,13 @@ object PyTypeChecker {
     val mapping = PyTypeParameterMapping.mapByShape(expectedTypeParameters, actualTypeParameters, USE_DEFAULTS) ?: return false
     for ((typeArgIndex, pair) in mapping.mappedTypes.withIndex()) {
       val (first, second) = pair
-      val variance = findTypeParameterVariance(genericType, typeArgIndex, context)
+      val typeParameter = findTypeParameter(genericType, typeArgIndex, context)
+      val variance = if (typeParameter == null) Variance.COVARIANT else getDeclaredOrInferredVariance(typeParameter, context.context)
 
       val matched = if (context.reversedSubstitutions)
-        matchCapturedType(variance, second, first, context)
+        matchCapturedType(typeParameter, genericType, typeArgIndex, variance, second, first, context)
       else
-        matchCapturedType(variance, first, second, context)
+        matchCapturedType(typeParameter, genericType, typeArgIndex, variance, first, second, context)
       if (!matched) {
         return false
       }
@@ -1344,38 +1614,75 @@ object PyTypeChecker {
     return true
   }
 
-  private fun findTypeParameterVariance(
-    genericType: PyCollectionType?,
+  /** Wraps [body] in the generic "Type argument N has an incompatible type" frame for the type argument [typeArgIndex]. */
+  private inline fun recordTypeArgumentFrame(context: MatchContext, typeArgIndex: Int, body: () -> Boolean): Boolean =
+    recordFrameBool(context, { PyPsiBundle.problemMessage("INSP.type.checker.breakdown.type.argument", typeArgIndex + 1) }, body)
+
+  /**
+   * The declared type variable at [typeArgumentIndex] of [genericType]'s class, or null when there isn't one
+   * (no generic class, a tuple, or a non-[PyTypeVarType] parameter — see PY-89623). Used both to find the
+   * variance and to name the parameter in breakdowns.
+   */
+  private fun findTypeParameter(
+    genericType: PyClassType?,
     typeArgumentIndex: Int,
     context: MatchContext,
-  ): Variance {
-    if (genericType == null) return Variance.COVARIANT
-    if (genericType is PyTupleType) return Variance.COVARIANT
+  ): PyTypeVarType? {
+    if (genericType == null) return null
+    if (genericType is PyTupleType) return null
     val genericDefType = findGenericDefinitionType(genericType.pyClass, context.context)
-    val typeParameter = genericDefType?.elementTypes?.getOrNull(typeArgumentIndex) as? PyTypeParameterType
-    if (typeParameter == null) return Variance.COVARIANT
-    if (typeParameter !is PyTypeVarType) return Variance.COVARIANT // TODO: PY-89623
-    return getDeclaredOrInferredVariance(typeParameter, context.context)
+    return genericDefType?.elementTypes?.getOrNull(typeArgumentIndex) as? PyTypeVarType
   }
 
   private fun matchCapturedType(
+    typeParameter: PyTypeVarType?,
+    genericType: PyClassType?,
+    typeArgIndex: Int,
     variance: Variance,
     expectedType: PyType?,
     actualType: PyType?,
     context: MatchContext,
   ): Boolean {
     if (expectedType is PyTypeParameterType && actualType is PyTypeParameterType) {
-      return match(expectedType, actualType, context).getOrElse { false }
+      return recordTypeArgumentFrame(context, typeArgIndex) { match(expectedType, actualType, context).getOrElse { false } }
     }
 
     return when (variance) {
       Variance.INVARIANT -> {
-        match(expectedType, actualType, context).getOrElse { false }
-        && match(actualType, expectedType, context).getOrElse { false }
+        // First leg: the actual type argument must be assignable to the expected one. If it isn't, that's an
+        // ordinary subtype failure whose own breakdown ("X is not assignable to Y") is the useful reason, so
+        // run it under the generic type-argument frame.
+        val assignable = recordTypeArgumentFrame(context, typeArgIndex) { match(expectedType, actualType, context).getOrElse { false } }
+        if (!assignable) {
+          false
+        }
+        else {
+          // Invariance also requires the reverse direction. When only this leg fails, the actual is a strict
+          // subtype (e.g. `list[bool]` where `list[int]` is expected); recording the reversed leg would read
+          // backwards ("int is not assignable to bool"), so discard it and emit one invariance-specific reason.
+          val sameType = withoutRecording(context) { match(actualType, expectedType, context).getOrElse { false } }
+          if (!sameType) {
+            recordLeaf(context) {
+              // Name the offending type variable and its owner (e.g. "`_T` of `list`"); fall back to the 1-based
+              // position only if the declared parameter can't be resolved (it always can in the invariant case).
+              // The owner class is rendered as a clickable reference; the type variable stays a plain code span
+              // (the tooltip link handler resolves only classes and functions, so a type-variable link is dead).
+              val typeVarName = typeParameter?.name ?: (typeArgIndex + 1).toString()
+              val ownerClass = genericType?.pyClass
+              val owner: Any = if (ownerClass != null) PyInspectionMessages.CodifiedParam.ofReference(ownerClass) else ""
+              PyPsiBundle.problemMessage("INSP.type.checker.breakdown.type.argument.invariant",
+                                         typeVarName, owner,
+                                         codifiedType(context, actualType), codifiedType(context, expectedType))
+            }
+          }
+          sameType
+        }
       }
-      Variance.COVARIANT -> match(expectedType, actualType, context).getOrElse { false }
-      Variance.CONTRAVARIANT -> match(actualType, expectedType, context.reverseSubstitutions()).getOrElse { false }
-      Variance.BIVARIANT -> match(expectedType, actualType, context).getOrElse { false }
+      Variance.COVARIANT -> recordTypeArgumentFrame(context, typeArgIndex) { match(expectedType, actualType, context).getOrElse { false } }
+      Variance.CONTRAVARIANT -> recordTypeArgumentFrame(context, typeArgIndex) {
+        match(actualType, expectedType, context.reverseSubstitutions()).getOrElse { false }
+      }
+      Variance.BIVARIANT -> recordTypeArgumentFrame(context, typeArgIndex) { match(expectedType, actualType, context).getOrElse { false } }
       else -> false
     }
   }
@@ -2469,12 +2776,37 @@ object PyTypeChecker {
      */
     val literalInference: Boolean = false,
   ) {
+    /**
+     * `null` during normal (cheap) matching, so it adds no overhead. Non-null only while
+     * [explainMismatch] re-runs the match to collect a breakdown for an already-decided type error.
+     * Declared as a settable field rather than a constructor parameter so the many `MatchContext(...)`
+     * call sites need no changes; it is propagated only along the copy methods and the protocol
+     * sub-context, which are the parts of the match that form the user-facing failure narrative.
+     */
+    @JvmField
+    var diagnostics: DiagnosticsCollector? = null
+
+    /**
+     * The element a collected breakdown is reported on, used to resolve type and class names to their
+     * declarations so the tooltip can show clickable links. Set together with [diagnostics] by
+     * [explainMismatch] and propagated, like it, along the copy methods and the protocol sub-context.
+     */
+    @JvmField
+    var anchor: PsiElement? = null
+
     fun reverseSubstitutions(): MatchContext {
       return MatchContext(context, mySubstitutions, !reversedSubstitutions, literalInference)
+        .also { it.diagnostics = diagnostics; it.anchor = anchor }
     }
 
     fun resetSubstitutions(): MatchContext {
       return MatchContext(context, mySubstitutions, false, literalInference)
+        .also { it.diagnostics = diagnostics; it.anchor = anchor }
     }
+  }
+
+  /** Accumulates the [PyTypeMismatchExplanation] tree as [recordFrame]/[recordLeaf] descend the failing path. */
+  private class DiagnosticsCollector {
+    var current: MutableList<PyTypeMismatchExplanation> = mutableListOf()
   }
 }

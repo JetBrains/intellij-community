@@ -1,6 +1,8 @@
 package com.jetbrains.python.psi.types
 
 import com.jetbrains.python.ProtectionLevel
+import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.psi.impl.ParamHelper
 import org.jetbrains.annotations.ApiStatus
 import java.util.ArrayDeque
@@ -41,14 +43,25 @@ object PyCallableParameterMapping {
    * @param expectedCallableParameters a list of callable parameters from the expected Callable.
    * @param actualCallableParameters a list of callable parameters from the actual Callable.
    * @param context TypeEvalContext.
+   * @param mismatch optional sink, invoked at most once with a localized reason when the signatures do not match
+   *        by structure. Pass `null` (the default) during normal matching for zero overhead; supply a collector
+   *        only when building a [PyTypeChecker.explainMismatch] breakdown.
+   * @param parameterNames optional out-list collecting the name of the parameter behind each mapped type pair, in the
+   *        same order they are added to the type lists. Populated only for plain positional/keyword parameters; when a
+   *        container (`*args`/`**kwargs`) or variadic is involved the list is left shorter than the mapping so callers
+   *        can detect the misalignment by size and fall back to a generic, position-less message. Pass `null` (the
+   *        default) during normal matching for zero overhead.
    * @return a `PyCallableParameterMapping` object representing the result of the parameter mapping,
    *         or `null` if one of the signatures is specified incorrectly, or they do not match by structure
    */
   @JvmStatic
+  @JvmOverloads
   fun mapCallableParameters(
     expectedCallableParameters: List<PyCallableParameter>,
     actualCallableParameters: List<PyCallableParameter>,
     context: TypeEvalContext,
+    mismatch: ((ProblemMessage) -> Unit)? = null,
+    parameterNames: MutableList<String?>? = null,
   ): PyTypeParameterMapping? {
     if (!handleUnwrappedTypedDict(expectedCallableParameters, actualCallableParameters, context)) return null
 
@@ -105,14 +118,17 @@ object PyCallableParameterMapping {
           }
           else if (actualParameter.acceptsPositionalArgument) {
             if (expectedParameter.hasDefault && !actualParameter.hasDefault) {
+              mismatch?.invoke(defaultRequired(expectedParameter.name))
               return null
             }
             expectedTypes.add(expectedParameter.getArgumentType(context))
             expectedParameters.pop()
             actualTypes.add(actualParameter.getArgumentType(context))
             actualParameters.pop()
+            parameterNames?.add(actualParameter.name ?: expectedParameter.name)
           }
           else {
+            mismatch?.invoke(incompatibleKind(expectedParameter.name))
             return null
           }
         }
@@ -120,13 +136,20 @@ object PyCallableParameterMapping {
         ParameterKind.POSITIONAL_OR_KEYWORD -> {
           if (actualParameter.kind == ParameterKind.POSITIONAL_OR_KEYWORD) {
             when {
-              expectedParameter.name != actualParameter.name -> return null
-              expectedParameter.hasDefault && !actualParameter.hasDefault -> return null
+              expectedParameter.name != actualParameter.name -> {
+                mismatch?.invoke(nameMismatch(expectedParameter.name, actualParameter.name))
+                return null
+              }
+              expectedParameter.hasDefault && !actualParameter.hasDefault -> {
+                mismatch?.invoke(defaultRequired(expectedParameter.name))
+                return null
+              }
             }
             expectedTypes.add(expectedParameter.getArgumentType(context))
             expectedParameters.pop()
             actualTypes.add(actualParameter.getArgumentType(context))
             actualParameters.pop()
+            parameterNames?.add(actualParameter.name ?: expectedParameter.name)
           }
           else if (actualParameter.kind == ParameterKind.POSITIONAL_CONTAINER && actualKeywordContainer != null) {
             expectedTypes.add(expectedParameter.getArgumentType(context))
@@ -134,6 +157,7 @@ object PyCallableParameterMapping {
             expectedParameters.pop()
           }
           else {
+            mismatch?.invoke(incompatibleKind(expectedParameter.name))
             return null
           }
         }
@@ -143,12 +167,14 @@ object PyCallableParameterMapping {
           val actualKwOnlyOrPositionalParam = actualKeywordOrPositional.remove(expectedParameter.name)
           if (actualKwOnlyOrPositionalParam != null) {
             if (expectedParameter.hasDefault && !actualKwOnlyOrPositionalParam.hasDefault) {
+              mismatch?.invoke(defaultRequired(expectedParameter.name))
               return null
             }
             expectedTypes.add(expectedParameter.getArgumentType(context))
             expectedParameters.pop()
             actualTypes.add(actualKwOnlyOrPositionalParam.getArgumentType(context))
             require(actualParameters.remove(actualKwOnlyOrPositionalParam))
+            parameterNames?.add(actualKwOnlyOrPositionalParam.name ?: expectedParameter.name)
           }
           else if (actualKeywordContainer != null) {
             expectedTypes.add(expectedParameter.getArgumentType(context))
@@ -157,6 +183,7 @@ object PyCallableParameterMapping {
             expectedParameters.pop()
           }
           else {
+            mismatch?.invoke(missingParameter(expectedParameter.name))
             return null
           }
         }
@@ -250,7 +277,10 @@ object PyCallableParameterMapping {
             expectedTypes.add(type)
           }
         }
-        else -> return null
+        else -> {
+          mismatch?.invoke(missingParameter(parameter.name))
+          return null
+        }
       }
     }
     // Handle unmatched actual parameters (extra in actual)
@@ -259,12 +289,40 @@ object PyCallableParameterMapping {
       when {
         parameter.parameter.isPositionalContainer || parameter.parameter.isKeywordContainer -> continue
         parameter.hasDefault -> continue
-        else -> return null
+        else -> {
+          mismatch?.invoke(unexpectedParameter(parameter.name))
+          return null
+        }
       }
     }
 
     return PyTypeParameterMapping.mapByShape(expectedTypes, actualTypes)
   }
+
+  // Localized reasons for the breakdown shown by PyTypeChecker.explainMismatch. Each falls back to the generic
+  // "parameter lists are incompatible" line when there is no usable parameter name to point at.
+  private fun parameterListIncompatible(): ProblemMessage =
+    PyPsiBundle.problemMessage("INSP.type.checker.breakdown.parameter.list.incompatible")
+
+  private fun defaultRequired(name: String?): ProblemMessage =
+    if (name != null) PyPsiBundle.problemMessage("INSP.type.checker.breakdown.parameter.default.required", name)
+    else parameterListIncompatible()
+
+  private fun nameMismatch(expected: String?, actual: String?): ProblemMessage =
+    if (expected != null && actual != null) PyPsiBundle.problemMessage("INSP.type.checker.breakdown.parameter.name.mismatch", expected, actual)
+    else parameterListIncompatible()
+
+  private fun missingParameter(name: String?): ProblemMessage =
+    if (name != null) PyPsiBundle.problemMessage("INSP.type.checker.breakdown.parameter.missing", name)
+    else parameterListIncompatible()
+
+  private fun unexpectedParameter(name: String?): ProblemMessage =
+    if (name != null) PyPsiBundle.problemMessage("INSP.type.checker.breakdown.parameter.unexpected", name)
+    else parameterListIncompatible()
+
+  private fun incompatibleKind(name: String?): ProblemMessage =
+    if (name != null) PyPsiBundle.problemMessage("INSP.type.checker.breakdown.parameter.kind.incompatible", name)
+    else parameterListIncompatible()
 
   /**
    * Special handling for keyword containers annotated with `Unpacked[TypedDict]` type:
