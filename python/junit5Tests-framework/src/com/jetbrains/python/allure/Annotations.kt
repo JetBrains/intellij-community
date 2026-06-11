@@ -6,6 +6,11 @@ import java.lang.annotation.Inherited
 
 object Subsystems {
 
+  /**
+   *  Represents a subsystem that can be used to annotate tests in Allure
+   *
+   * @param value The name of the subsystem.
+   */
   @Retention(AnnotationRetention.RUNTIME)
   @Repeatable
   @Target(AnnotationTarget.FUNCTION, AnnotationTarget.TYPE, AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS)
@@ -44,6 +49,11 @@ object Subsystems {
 
 object Components {
 
+  /**
+   * Represents a component that can be used to annotate tests in Allure
+   *
+   * @param value The name or description of the feature.
+   */
   @Retention(AnnotationRetention.RUNTIME)
   @Target(AnnotationTarget.FUNCTION, AnnotationTarget.TYPE, AnnotationTarget.CLASS, AnnotationTarget.ANNOTATION_CLASS)
   @LabelAnnotation(name = "Component")
@@ -77,6 +87,11 @@ object Components {
 
 object Layers {
 
+  /**
+   * Represents a test layer that can be used to annotate tests in Allure
+   *
+   * @param value The name or description of the suite.
+   */
   @Retention(AnnotationRetention.RUNTIME)
   @Target(AnnotationTarget.FUNCTION, AnnotationTarget.TYPE, AnnotationTarget.CLASS)
   @LabelAnnotation(name = "layer")
