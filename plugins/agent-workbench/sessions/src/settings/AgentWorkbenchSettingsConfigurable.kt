@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.settings
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
+import com.intellij.agent.workbench.sessions.core.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchCheckboxSetting
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsComponent
@@ -15,10 +16,14 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.selected
+import javax.swing.AbstractButton
 
 const val AGENT_WORKBENCH_SETTINGS_CONFIGURABLE_ID: String = "com.intellij.agent.workbench.settings"
+const val AGENT_WORKBENCH_PROVIDERS_SETTINGS_CONFIGURABLE_ID: String = "com.intellij.agent.workbench.settings.providers"
 
 internal class AgentWorkbenchSettingsConfigurable : BoundSearchableConfigurable(
   displayName = AgentSessionsBundle.message("settings.agent.workbench.name"),
@@ -26,9 +31,9 @@ internal class AgentWorkbenchSettingsConfigurable : BoundSearchableConfigurable(
   _id = ID,
 ) {
   override fun createPanel(): DialogPanel {
-    val providerSettings = service<AgentSessionProviderSettingsService>()
+    val components = settingsComponents()
     return panel {
-      for (component in settingsComponents()) {
+      for (component in components.filterNot(AgentWorkbenchSettingsComponent::isStatusBarWidgetsComponent)) {
         renderSettingsComponent(component)
       }
 
@@ -37,16 +42,9 @@ internal class AgentWorkbenchSettingsConfigurable : BoundSearchableConfigurable(
         renderCheckboxSetting(sleepPreventionSetting())
         renderCheckboxSettings(AgentWorkbenchSettingsContributors.checkboxSettings())
       }
-      group(AgentSessionsBundle.message("settings.agent.workbench.providers.group")) {
-        for (provider in AgentSessionProviders.allProviders()) {
-          row {
-            checkBox(AgentSessionsBundle.message(provider.displayNameKey))
-              .bindSelected(
-                { providerSettings.isProviderEnabled(provider.provider) },
-                { enabled -> providerSettings.setProviderEnabled(provider.provider, enabled) },
-              )
-          }
-        }
+
+      components.firstOrNull(AgentWorkbenchSettingsComponent::isStatusBarWidgetsComponent)?.let { component ->
+        renderSettingsComponent(component)
       }
     }
   }
@@ -56,8 +54,39 @@ internal class AgentWorkbenchSettingsConfigurable : BoundSearchableConfigurable(
   }
 }
 
+internal class AgentWorkbenchProvidersSettingsConfigurable : BoundSearchableConfigurable(
+  displayName = AgentSessionsBundle.message("settings.agent.workbench.providers.name"),
+  helpTopic = "settings.agent.workbench.providers",
+  _id = ID,
+) {
+  override fun createPanel(): DialogPanel {
+    val providerSettings = service<AgentSessionProviderSettingsService>()
+    return panel {
+      for (provider in AgentSessionProviders.allProviders()) {
+        lateinit var providerEnabledCheckbox: Cell<AbstractButton>
+        row {
+          providerEnabledCheckbox = checkBox(AgentSessionsBundle.message(provider.displayNameKey))
+            .bindSelected(
+              { providerSettings.isProviderEnabled(provider.provider) },
+              { enabled -> providerSettings.setProviderEnabled(provider.provider, enabled) },
+            )
+        }
+        renderProviderCheckboxSettings(provider.providerSettings, providerEnabledCheckbox)
+      }
+    }
+  }
+
+  companion object {
+    const val ID: String = AGENT_WORKBENCH_PROVIDERS_SETTINGS_CONFIGURABLE_ID
+  }
+}
+
 private fun settingsComponents(): List<AgentWorkbenchSettingsComponent> {
   return mergeSettingsComponents(listOf(chatSettingsComponent()) + AgentWorkbenchSettingsContributors.components())
+}
+
+private fun AgentWorkbenchSettingsComponent.isStatusBarWidgetsComponent(): Boolean {
+  return id == AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
 }
 
 private fun mergeSettingsComponents(components: List<AgentWorkbenchSettingsComponent>): List<AgentWorkbenchSettingsComponent> {
@@ -120,6 +149,18 @@ private fun Panel.renderCheckboxSettings(settings: List<AgentWorkbenchCheckboxSe
   for (setting in settings) {
     renderCheckboxSetting(setting)
   }
+}
+
+private fun Panel.renderProviderCheckboxSettings(
+  settings: List<AgentWorkbenchCheckboxSetting>,
+  providerEnabledCheckbox: Cell<AbstractButton>,
+) {
+  if (settings.isEmpty()) {
+    return
+  }
+  indent {
+    renderCheckboxSettings(settings)
+  }.enabledIf(providerEnabledCheckbox.selected)
 }
 
 private fun Panel.renderCheckboxSetting(setting: AgentWorkbenchCheckboxSetting) {

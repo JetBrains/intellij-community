@@ -24,6 +24,7 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.JBCheckBox
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
@@ -62,6 +63,10 @@ class AgentWorkbenchSettingsConfigurableTest {
       .contains("id=\"${AgentWorkbenchSettingsConfigurable.ID}\"")
       .contains("key=\"settings.agent.workbench.name\"")
       .contains("parentId=\"tools\"")
+      .contains("instance=\"com.intellij.agent.workbench.sessions.settings.AgentWorkbenchProvidersSettingsConfigurable\"")
+      .contains("id=\"${AgentWorkbenchProvidersSettingsConfigurable.ID}\"")
+      .contains("key=\"settings.agent.workbench.providers.name\"")
+      .contains("parentId=\"${AgentWorkbenchSettingsConfigurable.ID}\"")
       .contains("<applicationSettings service=\"com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService\"/>")
   }
 
@@ -159,6 +164,13 @@ class AgentWorkbenchSettingsConfigurableTest {
         val component = configurable.createComponent()
         configurable.reset()
 
+        assertThat(component.titledSeparatorTexts())
+          .containsSubsequence(
+            AgentSessionsBundle.message("settings.agent.workbench.chat.group"),
+            AgentSessionsBundle.message("settings.agent.workbench.general.group"),
+            AgentSessionsBundle.message("settings.agent.workbench.status.bar.widgets.group"),
+          )
+
         val checkbox = component.checkBox(AgentSessionsBundle.message("settings.agent.workbench.jbcentral.quota.status.bar.widget"))
         assertThat(checkbox.isSelected).isFalse()
 
@@ -216,7 +228,7 @@ class AgentWorkbenchSettingsConfigurableTest {
       )
     ) {
       runInEdtAndWait {
-        val configurable = AgentWorkbenchSettingsConfigurable()
+        val configurable = AgentWorkbenchProvidersSettingsConfigurable()
         try {
           val component = configurable.createComponent()
           configurable.reset()
@@ -237,8 +249,57 @@ class AgentWorkbenchSettingsConfigurableTest {
     assertThat(providerSettings.isProviderEnabled(AgentSessionProvider.CODEX)).isFalse()
   }
 
+  @Test
+  fun configurableAppliesProviderFeatureSettings() {
+    var providerFeatureEnabled = true
+
+    AgentSessionProviders.withRegistryForTest(
+      InMemoryAgentSessionProviderRegistry(
+        listOf(
+          TestAgentSessionProviderDescriptor(
+            provider = AgentSessionProvider.CODEX,
+            supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+            cliAvailable = true,
+            providerSettings = listOf(
+              AgentWorkbenchCheckboxSetting(
+                text = TEST_PROVIDER_FEATURE_CHECKBOX_TEXT,
+                description = TEST_PROVIDER_FEATURE_CHECKBOX_DESCRIPTION,
+                isSelected = { providerFeatureEnabled },
+                setSelected = { enabled -> providerFeatureEnabled = enabled },
+              )
+            ),
+          )
+        )
+      )
+    ) {
+      runInEdtAndWait {
+        val configurable = AgentWorkbenchProvidersSettingsConfigurable()
+        try {
+          val component = configurable.createComponent()
+          configurable.reset()
+
+          val providerFeatureCheckBox = component.checkBox(TEST_PROVIDER_FEATURE_CHECKBOX_TEXT)
+          assertThat(providerFeatureCheckBox.isSelected).isTrue()
+
+          providerFeatureCheckBox.isSelected = false
+          assertThat(configurable.isModified).isTrue()
+          configurable.apply()
+        }
+        finally {
+          configurable.disposeUIResources()
+        }
+      }
+    }
+
+    assertThat(providerFeatureEnabled).isFalse()
+  }
+
   private fun JComponent.checkBox(text: String): JBCheckBox {
     return componentsOfType(JBCheckBox::class.java).single { it.text == text }
+  }
+
+  private fun JComponent.titledSeparatorTexts(): List<String> {
+    return componentsOfType(TitledSeparator::class.java).map { it.text }
   }
 
   private fun isJbCentralQuotaWidgetEnabled(): Boolean {
@@ -314,5 +375,7 @@ class AgentWorkbenchSettingsConfigurableTest {
     private const val JBCENTRAL_QUOTA_WIDGET_ID = "jbcentral.quota"
     private const val TEST_CONTRIBUTOR_CHECKBOX_TEXT = "Test provider setting"
     private const val TEST_CHAT_COMPONENT_CHECKBOX_TEXT = "Test chat setting"
+    private const val TEST_PROVIDER_FEATURE_CHECKBOX_TEXT = "Test provider feature"
+    private const val TEST_PROVIDER_FEATURE_CHECKBOX_DESCRIPTION = "Test provider feature description"
   }
 }

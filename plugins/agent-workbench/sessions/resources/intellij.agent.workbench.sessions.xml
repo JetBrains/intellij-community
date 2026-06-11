@@ -23,6 +23,13 @@
       bundle="messages.AgentSessionsBundle"
       dynamic="true"
       parentId="tools"/>
+    <applicationConfigurable
+      instance="com.intellij.agent.workbench.sessions.settings.AgentWorkbenchProvidersSettingsConfigurable"
+      id="com.intellij.agent.workbench.settings.providers"
+      key="settings.agent.workbench.providers.name"
+      bundle="messages.AgentSessionsBundle"
+      dynamic="true"
+      parentId="com.intellij.agent.workbench.settings"/>
     <advancedSetting
       id="agent.workbench.chat.open.in.dedicated.frame"
       default="true"

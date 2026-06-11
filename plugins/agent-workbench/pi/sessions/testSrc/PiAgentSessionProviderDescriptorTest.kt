@@ -6,7 +6,10 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
@@ -41,6 +44,7 @@ class PiAgentSessionProviderDescriptorTest {
         PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE to "status-token-$sessionId",
       )
     },
+    omlxSupportEnabledResolver = { true },
   )
 
   @Test
@@ -59,6 +63,44 @@ class PiAgentSessionProviderDescriptorTest {
     assertThat(descriptor.supportsNewThreadRebind).isTrue()
     assertThat(descriptor.emitsScopedRefreshSignals).isTrue()
     assertThat(descriptor.refreshPathAfterCreateNewSession).isTrue()
+    assertThat(descriptor.supportsGenerationModelSelection).isTrue()
+  }
+
+  @Test
+  fun listsInjectedOmlxGenerationModels(): Unit = runBlocking(Dispatchers.Default) {
+    val generationModel = AgentPromptGenerationModel(
+      id = PiOmlxModelCatalog.encodeGenerationModelId(omlxSelection()),
+      displayName = "Qwen3.6-27B-MLX-8bit (oMLX)",
+    )
+    val descriptor = PiAgentSessionProviderDescriptor(
+      executableResolver = { "pi" },
+      generationModelCatalogResolver = { listOf(generationModel) },
+      omlxSupportEnabledResolver = { true },
+    )
+
+    assertThat(descriptor.listAvailableGenerationModels(null)).containsExactly(generationModel)
+  }
+
+  @Test
+  fun disabledOmlxSupportHidesGenerationModelSelectionAndSkipsCatalogRefresh(): Unit = runBlocking(Dispatchers.Default) {
+    var catalogQueried = false
+    val descriptor = PiAgentSessionProviderDescriptor(
+      executableResolver = { "pi" },
+      generationModelCatalogResolver = {
+        catalogQueried = true
+        listOf(
+          AgentPromptGenerationModel(
+            id = PiOmlxModelCatalog.encodeGenerationModelId(omlxSelection()),
+            displayName = "Qwen3.6-27B-MLX-8bit (oMLX)",
+          )
+        )
+      },
+      omlxSupportEnabledResolver = { false },
+    )
+
+    assertThat(descriptor.supportsGenerationModelSelection).isFalse()
+    assertThat(descriptor.listAvailableGenerationModels(null)).isEmpty()
+    assertThat(catalogQueried).isFalse()
   }
 
   @Test
@@ -105,6 +147,7 @@ class PiAgentSessionProviderDescriptorTest {
       sessionIdGenerator = { "pi-session-1" },
       cliAvailableProbe = { true },
       extensionLaunchResourcesResolver = { null },
+      omlxSupportEnabledResolver = { true },
     )
 
     val launchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
@@ -127,6 +170,80 @@ class PiAgentSessionProviderDescriptorTest {
       PI_THEME_STATE_ENVIRONMENT_VARIABLE,
       "/tmp/pi-extension/state/current-theme.txt",
     )
+  }
+
+  @Test
+  fun applyGenerationSettingsAddsOmlxProviderAndModelBeforeSessionFlags(): Unit = runBlocking(Dispatchers.Default) {
+    val modelId = PiOmlxModelCatalog.encodeGenerationModelId(omlxSelection())
+    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    val launchSpec = descriptor.applyGenerationSettings(
+      baseLaunchSpec,
+      AgentPromptGenerationSettings(
+        modelId = modelId,
+        reasoningEffort = AgentPromptReasoningEffort.HIGH,
+      ),
+    )
+
+    assertThat(launchSpec.command).containsExactly(
+      "pi",
+      "--extension",
+      "/tmp/pi-extension/agent-workbench-extension.ts",
+      "--provider",
+      "http://127.0.0.1:8000",
+      "--model",
+      "Qwen3.6-27B-MLX-8bit",
+      "--session-id",
+      "pi-session-1",
+    )
+    assertThat(launchSpec.envVariables).containsEntry(
+      PI_THEME_STATE_ENVIRONMENT_VARIABLE,
+      "/tmp/pi-extension/state/current-theme.txt",
+    )
+    assertThat(launchSpec.envVariables).containsEntry(PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE, "status-token-pi-session-1")
+    val providerMetadata = launchSpec.envVariables[PI_OMLX_PROVIDER_ENVIRONMENT_VARIABLE]
+    assertThat(providerMetadata)
+      .contains(
+        "\"baseUrl\":\"http://127.0.0.1:8000\"",
+        "\"modelId\":\"Qwen3.6-27B-MLX-8bit\"",
+        "\"tokenSource\":\"pi-auth\"",
+      )
+      .doesNotContain("local-api-key")
+  }
+
+  @Test
+  fun applyGenerationSettingsLeavesAutoAndUnknownModelsUnchanged(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, AgentPromptGenerationSettings.AUTO)).isEqualTo(baseLaunchSpec)
+
+    val sanitized = descriptor.sanitizeGenerationSettings(
+      AgentPromptGenerationSettings(
+        modelId = "Qwen3.6-27B-MLX-8bit",
+        reasoningEffort = AgentPromptReasoningEffort.HIGH,
+      )
+    )
+    assertThat(sanitized.modelId).isNull()
+    assertThat(sanitized.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.AUTO)
+    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, sanitized)).isEqualTo(baseLaunchSpec)
+  }
+
+  @Test
+  fun disabledOmlxSupportIgnoresSavedOmlxSelection(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = PiAgentSessionProviderDescriptor(
+      executableResolver = { "pi" },
+      sessionIdGenerator = { "pi-session-1" },
+      extensionLaunchResourcesResolver = { null },
+      omlxSupportEnabledResolver = { false },
+    )
+    val generationSettings = AgentPromptGenerationSettings(
+      modelId = PiOmlxModelCatalog.encodeGenerationModelId(omlxSelection()),
+      reasoningEffort = AgentPromptReasoningEffort.HIGH,
+    )
+    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(descriptor.sanitizeGenerationSettings(generationSettings)).isEqualTo(AgentPromptGenerationSettings.AUTO)
+    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, generationSettings)).isEqualTo(baseLaunchSpec)
   }
 
   @Test
@@ -156,6 +273,7 @@ class PiAgentSessionProviderDescriptorTest {
       sessionSource = emptySource(),
       executableResolver = { "pi" },
       cliAvailableProbe = { false },
+      omlxSupportEnabledResolver = { true },
     )
 
     assertThat(unavailableDescriptor.isCliAvailable()).isFalse()
@@ -219,6 +337,19 @@ class PiAgentSessionProviderDescriptorTest {
     assertThat(renamedThreadId).isEqualTo("thread-1")
     assertThat(renamedName).isEqualTo("Renamed thread")
   }
+}
+
+private fun omlxSelection(): PiOmlxModelSelection {
+  return PiOmlxModelSelection(
+    baseUrl = "http://127.0.0.1:8000",
+    modelId = "Qwen3.6-27B-MLX-8bit",
+    displayName = "Qwen3.6-27B-MLX-8bit",
+    tokenSource = PiOmlxTokenSource.PI_AUTH,
+    contextWindow = 262_144,
+    maxTokens = 32_768,
+    reasoning = true,
+    modelType = "vlm/qwen3_5",
+  )
 }
 
 private fun emptySource(): AgentSessionSource {

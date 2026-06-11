@@ -22,11 +22,31 @@ class AgentSessionProviderSettingsServiceTest {
   fun resetProviderSettings() {
     service.setProviderEnabled(AgentSessionProvider.CODEX, true)
     service.setProviderEnabled(AgentSessionProvider.CLAUDE, true)
+    service.setProviderFeatureEnabled(AgentSessionProvider.CODEX, TEST_PROVIDER_FEATURE_ID, true)
   }
 
   @Test
   fun providersAreEnabledByDefault() {
     assertThat(service.isProviderEnabled(AgentSessionProvider.CODEX)).isTrue()
+  }
+
+  @Test
+  fun providerFeaturesAreEnabledByDefault() {
+    assertThat(service.isProviderFeatureEnabled(AgentSessionProvider.CODEX, TEST_PROVIDER_FEATURE_ID)).isTrue()
+  }
+
+  @Test
+  fun disabledProviderFeaturesAreTrackedIndependentlyFromProviderEnabledState() {
+    service.setProviderFeatureEnabled(AgentSessionProvider.CODEX, TEST_PROVIDER_FEATURE_ID, false)
+    service.setProviderEnabled(AgentSessionProvider.CODEX, false)
+
+    assertThat(service.isProviderEnabled(AgentSessionProvider.CODEX)).isFalse()
+    assertThat(service.isProviderFeatureEnabled(AgentSessionProvider.CODEX, TEST_PROVIDER_FEATURE_ID)).isFalse()
+
+    service.setProviderFeatureEnabled(AgentSessionProvider.CODEX, TEST_PROVIDER_FEATURE_ID, true)
+
+    assertThat(service.isProviderEnabled(AgentSessionProvider.CODEX)).isFalse()
+    assertThat(service.isProviderFeatureEnabled(AgentSessionProvider.CODEX, TEST_PROVIDER_FEATURE_ID)).isTrue()
   }
 
   @Test
@@ -46,5 +66,9 @@ class AgentSessionProviderSettingsServiceTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
+  }
+
+  companion object {
+    private const val TEST_PROVIDER_FEATURE_ID = "test.feature"
   }
 }

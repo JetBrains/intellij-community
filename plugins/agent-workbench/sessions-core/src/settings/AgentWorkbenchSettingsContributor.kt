@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.Nls
 
 const val AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID: String = "agent.workbench.chat"
+const val AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID: String = "agent.workbench.status.bar.widgets"
 
 data class AgentWorkbenchCheckboxSetting(
   @JvmField val text: @Nls String,

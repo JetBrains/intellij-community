@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
+import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchCheckboxSetting
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -132,6 +133,8 @@ interface AgentSessionProviderDescriptor {
   val monochromeIcon: Icon
     get() = icon
   val promptOptions: List<AgentPromptProviderOption>
+    get() = emptyList()
+  val providerSettings: List<AgentWorkbenchCheckboxSetting>
     get() = emptyList()
 
   /**

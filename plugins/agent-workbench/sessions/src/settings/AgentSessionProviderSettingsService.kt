@@ -28,7 +28,13 @@ interface AgentSessionProviderSettingsListener {
 }
 
 @Service(Service.Level.APP)
-@State(name = "AgentSessionProviderSettings", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
+@State(
+  name = "AgentSessionProviderSettings",
+  storages = [
+    Storage("agentWorkbenchSettings.xml"),
+    Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, deprecated = true),
+  ],
+)
 class AgentSessionProviderSettingsService
   : SerializablePersistentStateComponent<AgentSessionProviderSettingsService.ProviderSettingsState>(ProviderSettingsState()) {
 
@@ -41,6 +47,19 @@ class AgentSessionProviderSettingsService
     val updated = if (enabled) disabledProviderIds - provider.value else disabledProviderIds + provider.value
     if (updated == disabledProviderIds) return
     updateState { current -> current.copy(disabledProviderIds = updated) }
+    publishChanged()
+  }
+
+  fun isProviderFeatureEnabled(provider: AgentSessionProvider, featureId: String): Boolean {
+    return providerFeatureStorageId(provider, featureId) !in state.disabledProviderFeatureIds
+  }
+
+  fun setProviderFeatureEnabled(provider: AgentSessionProvider, featureId: String, enabled: Boolean) {
+    val storageId = providerFeatureStorageId(provider, featureId)
+    val disabledFeatureIds = state.disabledProviderFeatureIds
+    val updated = if (enabled) disabledFeatureIds - storageId else disabledFeatureIds + storageId
+    if (updated == disabledFeatureIds) return
+    updateState { current -> current.copy(disabledProviderFeatureIds = updated) }
     publishChanged()
   }
 
@@ -60,5 +79,10 @@ class AgentSessionProviderSettingsService
   @Serializable
   data class ProviderSettingsState(
     @JvmField val disabledProviderIds: Set<String> = emptySet(),
+    @JvmField val disabledProviderFeatureIds: Set<String> = emptySet(),
   )
+}
+
+private fun providerFeatureStorageId(provider: AgentSessionProvider, featureId: String): String {
+  return "${provider.value}:$featureId"
 }

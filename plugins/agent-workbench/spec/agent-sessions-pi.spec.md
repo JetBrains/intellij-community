@@ -8,6 +8,9 @@ targets:
   - ../pi/sessions/resources/pi-extension/agent-workbench-extension.ts
   - ../pi/sessions/src/**/*.kt
   - ../pi/sessions/testSrc/*.kt
+  - ../sessions-core/src/providers/AgentSessionProviderDescriptor.kt
+  - ../sessions/src/settings/*.kt
+  - ../sessions/testSrc/settings/*.kt
   - ../pi/sessions-filewatch/src/**/*.kt
   - ../pi/sessions-filewatch/testSrc/*.kt
   - ../plugin/resources/META-INF/plugin.xml
@@ -29,6 +32,11 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 
 - Pi launch support must use the shared Terminal agent resolver for the `pi` executable without registering Pi as a built-in Terminal agent. New Agent Workbench sessions must launch `pi --extension <agentWorkbenchExtension> --session-id <uuid>` with a provider-allocated session id, while resumed sessions must launch `pi --extension <agentWorkbenchExtension> --session <threadId>`. The launch environment must pass `AGENT_WORKBENCH_PI_THEME_STATE=<stateFile>`, `AGENT_WORKBENCH_PI_STATUS_ENDPOINT=<url>`, and a launch-scoped `AGENT_WORKBENCH_PI_STATUS_TOKEN=<token>` when the Agent Workbench-managed Pi extension is available; the token must be retained only in memory by the IDE bridge, must not be persisted in tab state, and must be invalidated when the live terminal session closes. If the extension cannot be materialized, launch must continue without `--extension`.
   [@test] ../pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
+
+- Pi oMLX model support must be enabled by default but controllable through a Pi provider setting under Agent Workbench > Providers. When enabled, Pi discovers local oMLX generation models and a selected oMLX model launches with `--provider`, `--model`, and `AGENT_WORKBENCH_PI_OMLX_PROVIDER` metadata so the bundled Pi extension can register the selected local provider. When disabled, model selection is hidden, oMLX catalog refresh is skipped, saved oMLX selections sanitize back to provider default, and launches must not include oMLX registration metadata.
+  [@test] ../pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
+  [@test] ../sessions/testSrc/settings/AgentSessionProviderSettingsServiceTest.kt
+  [@test] ../sessions/testSrc/settings/AgentWorkbenchSettingsConfigurableTest.kt
 
 - Agent Workbench must provide one bundled Pi extension for IDE integration. It reads a managed JSON theme snapshot, validates all required Pi foreground/background theme keys, applies a full Pi `Theme`, and watches the managed theme-state file for IDE theme changes. The snapshot must be built from the active IDE look-and-feel, Swing UI defaults, and editor color scheme so Islands Dark, Islands Light, Islands Darcula, High Contrast, and customized user colors are reflected at runtime. Theme state must be refreshed on both IDE look-and-feel and editor color scheme changes. The extension resource is materialized into a managed IDE system-cache directory with a non-JSON sidecar manifest containing a format version and SHA-256 hash.
   [@test] ../pi/sessions/testSrc/PiThemeSupportTest.kt

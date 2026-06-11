@@ -1,15 +1,30 @@
 import {watch, type FSWatcher} from "node:fs";
 import {readFile} from "node:fs/promises";
-import {basename, dirname} from "node:path";
-import {Theme, type ExtensionAPI, type ExtensionContext, type ThemeBg, type ThemeColor} from "@earendil-works/pi-coding-agent";
+import {homedir} from "node:os";
+import {basename, dirname, join} from "node:path";
+import {streamSimpleOpenAICompletions, type Model} from "@earendil-works/pi-ai";
+import {
+  AuthStorage,
+  Theme,
+  type ExtensionAPI,
+  type ExtensionContext,
+  type ProviderConfig,
+  type ProviderModelConfig,
+  type ThemeBg,
+  type ThemeColor,
+} from "@earendil-works/pi-coding-agent";
 import {getCapabilities} from "@earendil-works/pi-tui";
 
 const THEME_STATE_ENV = "AGENT_WORKBENCH_PI_THEME_STATE";
 const THEME_STATE_FILE = process.env[THEME_STATE_ENV];
+const OMLX_PROVIDER_ENV = "AGENT_WORKBENCH_PI_OMLX_PROVIDER";
+const OMLX_PROVIDER_METADATA = process.env[OMLX_PROVIDER_ENV];
 const STATUS_ENDPOINT_ENV = "AGENT_WORKBENCH_PI_STATUS_ENDPOINT";
 const STATUS_TOKEN_ENV = "AGENT_WORKBENCH_PI_STATUS_TOKEN";
 const STATUS_ENDPOINT = process.env[STATUS_ENDPOINT_ENV];
 const STATUS_TOKEN = process.env[STATUS_TOKEN_ENV];
+const DEFAULT_OMLX_CONTEXT_WINDOW = 128000;
+const DEFAULT_OMLX_MAX_TOKENS = 16384;
 const DONE_STATUS_IDLE_RECHECK_MS = 150;
 const SESSION_INFO_LEAF_POLL_MS = 1000;
 const THEME_COLOR_KEYS: ThemeColor[] = [
@@ -139,7 +154,23 @@ type PiThemeSnapshot = {
   bg: Record<ThemeBg, string | number>;
 };
 
-export default function agentWorkbenchTheme(pi: ExtensionAPI) {
+type AgentWorkbenchOmlxTokenSource = "pi-auth" | "omlx-settings";
+
+type AgentWorkbenchOmlxProvider = {
+  formatVersion: 1;
+  baseUrl: string;
+  modelId: string;
+  displayName: string;
+  tokenSource: AgentWorkbenchOmlxTokenSource;
+  contextWindow?: number;
+  maxTokens?: number;
+  reasoning: boolean;
+  modelType?: string;
+};
+
+export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
+  await registerSelectedOmlxProvider(pi);
+
   let themeWatcher: FSWatcher | undefined;
   let sessionInfoPoll: ReturnType<typeof setInterval> | undefined;
   let scheduledApply: ReturnType<typeof setTimeout> | undefined;
@@ -268,6 +299,171 @@ export default function agentWorkbenchTheme(pi: ExtensionAPI) {
     themeWatcher?.close();
     themeWatcher = undefined;
   });
+}
+
+async function registerSelectedOmlxProvider(pi: ExtensionAPI): Promise<void> {
+  try {
+    const model = parseOmlxProviderMetadata(OMLX_PROVIDER_METADATA);
+    if (model === undefined) {
+      return;
+    }
+    const apiKey = await resolveOmlxApiKey(model);
+    if (apiKey === undefined) {
+      return;
+    }
+    pi.registerProvider(model.baseUrl, toOmlxProviderConfig(model, apiKey));
+  }
+  catch {
+    // oMLX registration is opportunistic; theme/status hooks should still load if local model setup changed.
+  }
+}
+
+function parseOmlxProviderMetadata(value: string | undefined): AgentWorkbenchOmlxProvider | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!isOmlxProviderMetadata(parsed)) {
+      return undefined;
+    }
+    return {
+      formatVersion: 1,
+      baseUrl: normalizeBaseUrl(parsed.baseUrl),
+      modelId: parsed.modelId,
+      displayName: parsed.displayName,
+      tokenSource: parsed.tokenSource,
+      contextWindow: optionalNumber(parsed.contextWindow),
+      maxTokens: optionalNumber(parsed.maxTokens),
+      reasoning: parsed.reasoning === true,
+      modelType: optionalString(parsed.modelType),
+    };
+  }
+  catch {
+    return undefined;
+  }
+}
+
+function isOmlxProviderMetadata(value: unknown): value is {
+  formatVersion: 1;
+  baseUrl: string;
+  modelId: string;
+  displayName: string;
+  tokenSource: AgentWorkbenchOmlxTokenSource;
+  contextWindow?: unknown;
+  maxTokens?: unknown;
+  reasoning?: unknown;
+  modelType?: unknown;
+} {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const metadata = value as Record<string, unknown>;
+  return metadata.formatVersion === 1 &&
+    typeof metadata.baseUrl === "string" && metadata.baseUrl.trim() !== "" &&
+    typeof metadata.modelId === "string" && metadata.modelId.trim() !== "" &&
+    typeof metadata.displayName === "string" && metadata.displayName.trim() !== "" &&
+    (metadata.tokenSource === "pi-auth" || metadata.tokenSource === "omlx-settings");
+}
+
+async function resolveOmlxApiKey(model: AgentWorkbenchOmlxProvider): Promise<string | undefined> {
+  if (model.tokenSource === "pi-auth") {
+    return resolvePiAuthApiKey(model.baseUrl) ?? await readOmlxSettingsApiKey(model.baseUrl);
+  }
+  return await readOmlxSettingsApiKey(model.baseUrl) ?? resolvePiAuthApiKey(model.baseUrl);
+}
+
+function resolvePiAuthApiKey(baseUrl: string): string | undefined {
+  const credential = AuthStorage.create().get(baseUrl);
+  if (credential?.type !== "api_key") {
+    return undefined;
+  }
+  return credential.key ?? "";
+}
+
+async function readOmlxSettingsApiKey(expectedBaseUrl: string): Promise<string | undefined> {
+  try {
+    const text = await readFile(join(homedir(), ".omlx", "settings.json"), "utf8");
+    const settings = JSON.parse(text) as unknown;
+    if (typeof settings !== "object" || settings === null) {
+      return undefined;
+    }
+    const raw = settings as Record<string, unknown>;
+    const server = typeof raw.server === "object" && raw.server !== null ? raw.server as Record<string, unknown> : undefined;
+    const host = optionalString(server?.host) ?? "127.0.0.1";
+    const port = optionalNumber(server?.port);
+    if (normalizeBaseUrl(buildOmlxSettingsBaseUrl(host, port)) !== expectedBaseUrl) {
+      return undefined;
+    }
+    const auth = typeof raw.auth === "object" && raw.auth !== null ? raw.auth as Record<string, unknown> : undefined;
+    return optionalString(auth?.api_key) ?? "";
+  }
+  catch {
+    return undefined;
+  }
+}
+
+function buildOmlxSettingsBaseUrl(host: string, port: number | undefined): string {
+  const endpointHost = host.trim() === "0.0.0.0" ? "127.0.0.1" : host.trim() === "::" ? "[::1]" : host.trim();
+  const endpoint = endpointHost.startsWith("http://") || endpointHost.startsWith("https://") ? endpointHost : `http://${endpointHost}`;
+  if (port === undefined) {
+    return endpoint;
+  }
+  try {
+    const url = new URL(endpoint);
+    if (url.port !== "") {
+      return endpoint;
+    }
+    url.port = String(port);
+    return url.toString();
+  }
+  catch {
+    return `${endpoint}:${port}`;
+  }
+}
+
+function toOmlxProviderConfig(model: AgentWorkbenchOmlxProvider, apiKey: string): ProviderConfig {
+  return {
+    baseUrl: `${model.baseUrl}/v1`,
+    apiKey,
+    api: "openai-completions",
+    authHeader: true,
+    streamSimple: (providerModel, context, options) =>
+      streamSimpleOpenAICompletions(providerModel as Model<"openai-completions">, context, options),
+    models: [toOmlxProviderModel(model)],
+  };
+}
+
+function toOmlxProviderModel(model: AgentWorkbenchOmlxProvider): ProviderModelConfig {
+  return {
+    id: model.modelId,
+    name: model.displayName,
+    reasoning: model.reasoning,
+    input: model.modelType?.includes("vlm") ? ["text", "image", "audio"] : ["text"],
+    cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0},
+    contextWindow: model.contextWindow ?? DEFAULT_OMLX_CONTEXT_WINDOW,
+    maxTokens: model.maxTokens ?? DEFAULT_OMLX_MAX_TOKENS,
+  };
+}
+
+function normalizeBaseUrl(raw: string): string {
+  const trimmed = raw.trim().replace(/\/+$/, "");
+  return trimmed.endsWith("/v1") ? trimmed.slice(0, -3).replace(/\/+$/, "") : trimmed;
+}
+
+function optionalString(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim() !== "" ? value : undefined;
+}
+
+function optionalNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
 }
 
 type AgentWorkbenchStatusActivity = "ready" | "processing" | "done";

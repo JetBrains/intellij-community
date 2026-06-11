@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
+import com.intellij.agent.workbench.sessions.core.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributors
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -40,7 +41,11 @@ class AgentSessionsClaudeQuotaWidgetActionRegistrationTest {
     try {
       ClaudeQuotaStatusBarWidgetSettings.setEnabled(false)
 
-      val setting = ClaudeQuotaSettingsContributor().checkboxSettings().single()
+      val component = ClaudeQuotaSettingsContributor().components().single()
+      assertThat(component.id).isEqualTo(AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID)
+      assertThat(component.displayName).isEqualTo(ClaudeSessionsBundle.message("settings.agent.workbench.status.bar.widgets.group"))
+
+      val setting = component.checkboxSettings.single()
       assertThat(setting.text).isEqualTo(ClaudeSessionsBundle.message("settings.agent.workbench.claude.quota.status.bar.widget"))
       assertThat(setting.description).isEqualTo(ClaudeSessionsBundle.message("settings.agent.workbench.claude.quota.status.bar.widget.description"))
       assertThat(setting.isSelected()).isFalse()
