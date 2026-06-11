@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.descriptor
 
-import com.intellij.devkit.core.icons.DevkitCoreIcons
+import com.intellij.devkit.core.icons.DevkitCoreIcons.SharedModule
 import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -16,16 +16,16 @@ internal class PluginDescriptorTest : LightJavaCodeInsightFixtureTestCase() {
     assertPsiIcon(pluginXml, AllIcons.Nodes.Plugin)
 
     val v2PluginXmlPackage = myFixture.configureByText("plugin_v2.xml", "<idea-plugin package=\"dummy\"></idea-plugin>")
-    assertPsiIcon(v2PluginXmlPackage, DevkitCoreIcons.PluginV2)
+    assertPsiIcon(v2PluginXmlPackage, SharedModule)
 
     val v2PluginXmlContent = myFixture.configureByText("plugin_v2.xml", "<idea-plugin><content/></idea-plugin>")
-    assertPsiIcon(v2PluginXmlContent, DevkitCoreIcons.PluginV2)
+    assertPsiIcon(v2PluginXmlContent, SharedModule)
 
     val v2PluginXmlDependencies = myFixture.configureByText("plugin_v2.xml", "<idea-plugin><dependencies/></idea-plugin>")
-    assertPsiIcon(v2PluginXmlDependencies, DevkitCoreIcons.PluginV2)
+    assertPsiIcon(v2PluginXmlDependencies, SharedModule)
   }
 
-  private fun assertPsiIcon(psiElement: PsiElement, expectedIcon: Icon) {
+  private fun assertPsiIcon(psiElement: PsiElement, @Suppress("SameParameterValue") expectedIcon: Icon) {
     val iconFromProviders = PsiIconUtil.getIconFromProviders(psiElement, 0)
     assertNotNull(iconFromProviders)
     val unwrapIcon = IconTestUtil.unwrapIcon(iconFromProviders!!)

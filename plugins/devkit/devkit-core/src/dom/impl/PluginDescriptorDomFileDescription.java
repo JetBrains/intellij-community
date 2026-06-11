@@ -9,6 +9,7 @@ import com.intellij.util.xml.DomFileDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindIcons;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import javax.swing.Icon;
@@ -23,6 +24,11 @@ final class PluginDescriptorDomFileDescription extends DomFileDescription<IdeaPl
   public @Nullable Icon getFileIcon(@NotNull XmlFile file, @Iconable.IconFlags int flags) {
     IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin(file);
     if (ideaPlugin == null) return null;
+
+    Icon splitModeIcon = SplitModeModuleKindIcons.getDescriptorIcon(file);
+    if (splitModeIcon != null) {
+      return splitModeIcon;
+    }
 
     if (ideaPlugin.isV2Descriptor()) {
       return DevkitCoreIcons.PluginV2;

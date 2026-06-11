@@ -9,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.ui.icons.IconWrapperWithToolTip
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindIcons
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -21,12 +22,14 @@ internal class ScaffoldingDirectoryIconProvider : IconProvider() {
     if (element is PsiDirectory) {
       val project = element.project
       if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
-        val kind = directoryKind(project, element.virtualFile)
-        return when (kind) {
-          DirectoryKind.PLUGIN -> pluginDirectoryIcon
-          DirectoryKind.LEGACY_PLUGIN_WITH_MAIN_MODULE -> legacyPluginWithModuleIcon
-          DirectoryKind.MODULE -> moduleDirectoryIcon
-          null -> null
+        val kind = directoryKind(project, element.virtualFile) ?: return null
+        return when (kind.kind) {
+          DirectoryKind.PLUGIN -> kind.toDirectoryIcon(pluginDirectoryIcon, messagePointer("plugin.directory.tooltip"))
+          DirectoryKind.LEGACY_PLUGIN_WITH_MAIN_MODULE -> kind.toDirectoryIcon(
+            legacyPluginWithModuleIcon,
+            messagePointer("plugin.and.module.directory.tooltip"),
+          )
+          DirectoryKind.MODULE -> kind.toDirectoryIcon(moduleDirectoryIcon, messagePointer("module.directory.tooltip"))
         }
       }
     }
@@ -42,6 +45,11 @@ private val moduleDirectoryIcon = DevkitCoreIcons.PluginModule
 
 private val legacyPluginWithModuleIcon = DevkitCoreIcons.LegacyPluginModule
   .withTooltip(messagePointer("plugin.and.module.directory.tooltip"))
+
+private fun DirectoryKindInfo.toDirectoryIcon(fallbackIcon: Icon, tooltip: Supplier<String>): Icon {
+  val splitModeIcon = SplitModeModuleKindIcons.getDescriptorIcon(descriptorFile) ?: return fallbackIcon
+  return splitModeIcon.withTooltip(tooltip)
+}
 
 private fun Icon.withTooltip(message: Supplier<String>): Icon {
   return IconWrapperWithToolTip(this, message)

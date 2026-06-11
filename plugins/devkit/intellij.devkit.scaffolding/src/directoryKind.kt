@@ -6,11 +6,12 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
+import com.intellij.psi.xml.XmlFile
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 
-internal fun directoryKind(project: Project, directory: VirtualFile): DirectoryKind? {
+internal fun directoryKind(project: Project, directory: VirtualFile): DirectoryKindInfo? {
   val resourceDirectory = directory.findChild("resources") ?: return null
   val projectFileIndex = ProjectFileIndex.getInstance(project)
   if (projectFileIndex.getSourceRootForFile(resourceDirectory) != resourceDirectory) return null
@@ -22,20 +23,22 @@ internal fun directoryKind(project: Project, directory: VirtualFile): DirectoryK
   if (directory != contentRoot) return null
 
   val pluginDescriptorFile = resourceDirectory.findChild("META-INF")?.findChild("plugin.xml")
-  if (pluginDescriptorFile != null && isIdeaPluginXml(project, pluginDescriptorFile)) {
+  val pluginDescriptorPsi = pluginDescriptorFile?.let { getIdeaPluginXml(project, it) }
+  if (pluginDescriptorPsi != null) {
     if (rootManager.hasOtherSourceRoots()) {
-      return DirectoryKind.LEGACY_PLUGIN_WITH_MAIN_MODULE
+      return DirectoryKindInfo(DirectoryKind.LEGACY_PLUGIN_WITH_MAIN_MODULE, pluginDescriptorPsi)
     }
     else if (rootManager.getSourceRoots(JavaResourceRootType.RESOURCE).size == 1) {
-      return DirectoryKind.PLUGIN
+      return DirectoryKindInfo(DirectoryKind.PLUGIN, pluginDescriptorPsi)
     }
     else {
       return null
     }
   }
   val moduleDescriptorFile = resourceDirectory.findChild(module.name + ".xml")
-  if (moduleDescriptorFile != null && isIdeaPluginXml(project, moduleDescriptorFile)) {
-    return DirectoryKind.MODULE
+  val moduleDescriptorPsi = moduleDescriptorFile?.let { getIdeaPluginXml(project, it) }
+  if (moduleDescriptorPsi != null) {
+    return DirectoryKindInfo(DirectoryKind.MODULE, moduleDescriptorPsi)
   }
   return null
 }
@@ -46,10 +49,15 @@ private fun ModuleRootManager.hasOtherSourceRoots(): Boolean {
          getSourceRoots(JavaResourceRootType.TEST_RESOURCE).isNotEmpty()
 }
 
-private fun isIdeaPluginXml(project: Project, file: VirtualFile): Boolean {
-  val descriptorPsiFile = PsiManager.getInstance(project).findFile(file) ?: return false
-  return DescriptorUtil.isPluginXml(descriptorPsiFile)
+private fun getIdeaPluginXml(project: Project, file: VirtualFile): XmlFile? {
+  val descriptorPsiFile = PsiManager.getInstance(project).findFile(file) as? XmlFile ?: return null
+  return descriptorPsiFile.takeIf { DescriptorUtil.isPluginXml(it) }
 }
+
+internal data class DirectoryKindInfo(
+  val kind: DirectoryKind,
+  val descriptorFile: XmlFile,
+)
 
 internal enum class DirectoryKind {
 
