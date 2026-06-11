@@ -56,7 +56,7 @@ import java.util.function.Predicate;
 
 @ApiStatus.Internal
 public sealed class GeneralHighlightingPass extends ProgressableTextEditorHighlightingPass implements DumbAware
-  permits NasueousGeneralHighlightingPass {
+  permits NauseousGeneralHighlightingPass {
   static final Logger LOG = Logger.getInstance(GeneralHighlightingPass.class);
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   static final Predicate<? super PsiFile> SHOULD_HIGHLIGHT_FILTER = file -> {

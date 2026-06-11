@@ -169,7 +169,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     try {
       ProperTextRange visibleRange = new ProperTextRange(0, document.getTextLength());
       DaemonCodeAnalyzerEx.getInstanceEx(myProject).runInsideAdditionalHighlightingSession(psiFile, EditorColorsUtil.getGlobalOrDefaultColorScheme(), visibleRange, false, _-> {
-        GeneralHighlightingPass pass = new NasueousGeneralHighlightingPass(psiFile, document, visibleRange, error);
+        GeneralHighlightingPass pass = new NauseousGeneralHighlightingPass(psiFile, document, visibleRange, error);
         pass.setContext(context);
         pass.collectInformation(progressIndicator);
       });
