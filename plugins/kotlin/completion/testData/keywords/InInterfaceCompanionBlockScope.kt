@@ -41,4 +41,5 @@ interface Test {
 // EXIST:  expect
 // EXIST:  actual
 // EXIST: data object
+// EXIST: context
 // NOTHING_ELSE

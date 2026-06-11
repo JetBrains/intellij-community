@@ -10,6 +10,7 @@ class Completion(@get:Ann val p1: String, @<caret>)
 // EXIST: param
 // EXIST: setparam
 // EXIST: property
+// EXIST: all
 
 /*TODO: in fact is not applicable */
 // EXIST: receiver

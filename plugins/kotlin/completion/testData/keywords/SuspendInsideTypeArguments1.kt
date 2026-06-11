@@ -10,5 +10,6 @@ class Su() {
 // EXIST: in
 // EXIST: out
 // EXIST: suspend
+// EXIST: context
 
 // NOTHING_ELSE
