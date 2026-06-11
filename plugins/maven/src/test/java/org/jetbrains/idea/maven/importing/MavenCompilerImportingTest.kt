@@ -7,13 +7,12 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
 import com.intellij.idea.TestFor
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.JavaRelease
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.UsefulTestCase
-import junit.framework.TestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertModules
@@ -34,15 +33,11 @@ import org.jetbrains.idea.maven.fixtures.mn
 import org.jetbrains.idea.maven.fixtures.testRootDisposable
 import org.jetbrains.idea.maven.fixtures.updateProjectPom
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.BeforeEach
 
 @TestApplication
 @ParameterizedClass
@@ -121,7 +116,7 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
       </build>
     """.trimIndent())
     maven.assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule())
+    assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule())
   }
 
   @Test
@@ -170,7 +165,7 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
       </build>
     """.trimIndent())
     maven.assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_6, getLanguageLevelForModule())
+    assertEquals(LanguageLevel.JDK_1_6, getLanguageLevelForModule())
   }
 
   @Test
@@ -247,7 +242,7 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
       </build>
     """.trimIndent())
     maven.assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule())
+    assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule())
   }
 
   @Test
@@ -283,7 +278,7 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
       </parent>
     """.trimIndent())
     maven.assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule())
+    assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule())
   }
 
   @Test
@@ -316,7 +311,7 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
       </build>
     """.trimIndent())
     maven.assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_3, getLanguageLevelForModule())
+    assertEquals(LanguageLevel.JDK_1_3, getLanguageLevelForModule())
   }
 
   @Test
@@ -424,7 +419,7 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
                         "  </plugins>" +
                         "</build>"))
     maven.assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule())
+    assertEquals(LanguageLevel.JDK_1_4, getLanguageLevelForModule())
   }
 
   private fun getLanguageLevelForModule(): LanguageLevel? {
@@ -450,10 +445,9 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
         </plugins>
       </build>
     """.trimIndent())
-    TestCase.assertEquals("-Xmm500m -Xms128m",
-                          JavacConfiguration.getOptions(maven.project,
-                                                        JavacConfiguration::class.java).ADDITIONAL_OPTIONS_STRING.trim { it <= ' ' })
-    TestCase.assertEquals("1.3", ideCompilerConfiguration.getBytecodeTargetLevel(maven.getModule("project")))
+    assertEquals("-Xmm500m -Xms128m", JavacConfiguration.getOptions(maven.project,
+                                                                    JavacConfiguration::class.java).ADDITIONAL_OPTIONS_STRING.trim { it <= ' ' })
+    assertEquals("1.3", ideCompilerConfiguration.getBytecodeTargetLevel(maven.getModule("project")))
   }
 
   @Test
@@ -531,12 +525,9 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
       </build>
     """.trimIndent())
     maven.importProjectAsync()
-    TestCase.assertEquals("1.3",
-                          ideCompilerConfiguration.getBytecodeTargetLevel(maven.getModule("project")))
-    TestCase.assertEquals("1.3",
-                          ideCompilerConfiguration.getBytecodeTargetLevel(maven.getModule(maven.mn("project", "m1"))))
-    TestCase.assertEquals("1.5",
-                          ideCompilerConfiguration.getBytecodeTargetLevel(maven.getModule(maven.mn("project", "m2"))))
+    assertEquals("1.3", ideCompilerConfiguration.getBytecodeTargetLevel(maven.getModule("project")))
+    assertEquals("1.3", ideCompilerConfiguration.getBytecodeTargetLevel(maven.getModule(maven.mn("project", "m1"))))
+    assertEquals("1.5", ideCompilerConfiguration.getBytecodeTargetLevel(maven.getModule(maven.mn("project", "m2"))))
   }
 
   @Test
@@ -770,7 +761,7 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
     maven.createProjectPom(javacPom)
     maven.importProjectAsync()
 
-    TestCase.assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
+    assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
 
   }
 
@@ -781,7 +772,7 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
     maven.createProjectPom(eclipsePom)
     maven.importProjectAsync()
 
-    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+    assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
   }
 
 
@@ -791,12 +782,12 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
 
     maven.createProjectPom(eclipsePom)
     maven.importProjectAsync()
-    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+    assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
 
     maven.updateProjectPom(javacPom)
     maven.importProjectAsync()
 
-    TestCase.assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
+    assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
   }
 
 
@@ -806,12 +797,12 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
 
     maven.createProjectPom(eclipsePom)
     maven.importProjectAsync()
-    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+    assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
 
     maven.createProjectPom(eclipsePom)
     maven.importProjectAsync()
 
-    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+    assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
   }
 
   @Test
@@ -820,12 +811,12 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
 
     maven.createProjectPom(javacPom)
     maven.importProjectAsync()
-    TestCase.assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
+    assertEquals("Javac", ideCompilerConfiguration.defaultCompiler.id)
 
     maven.updateProjectPom(eclipsePom)
     maven.importProjectAsync()
 
-    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+    assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
   }
 
   @Test
@@ -834,14 +825,14 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
 
     maven.createProjectPom(eclipsePom)
     maven.importProjectAsync()
-    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+    assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
 
     MavenProjectsManager.getInstance(maven.project).importingSettings.isAutoDetectCompiler = false
 
     maven.createProjectPom(javacPom)
     maven.importProjectAsync()
 
-    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+    assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
   }
 
   @Test
@@ -850,13 +841,13 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
 
     maven.createProjectPom(eclipsePom)
     maven.importProjectAsync()
-    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+    assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
 
     maven.createProjectPom(javacPom)
     MavenProjectsManager.getInstance(maven.project).importingSettings.isAutoDetectCompiler = false
     maven.importProjectAsync()
 
-    TestCase.assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
+    assertEquals("Eclipse", ideCompilerConfiguration.defaultCompiler.id)
   }
 
   @Test
@@ -1417,9 +1408,9 @@ class MavenCompilerImportingTest(mavenVersion: String, modelVersion: String) {
       </build>""")
     maven.assertModules("project", "project.main", "project.test")
     maven.assertModules("project", "project.main", "project.test")
-    TestCase.assertEquals(LanguageLevel.JDK_11, LanguageLevel.parse(
+    assertEquals(LanguageLevel.JDK_11, LanguageLevel.parse(
       ideCompilerConfiguration.getBytecodeTargetLevel(maven.getModule("project.main"))))
-    TestCase.assertEquals(LanguageLevel.JDK_17, LanguageLevel.parse(
+    assertEquals(LanguageLevel.JDK_17, LanguageLevel.parse(
       ideCompilerConfiguration.getBytecodeTargetLevel(maven.getModule("project.test"))))
   }
 

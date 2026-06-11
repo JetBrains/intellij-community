@@ -18,12 +18,12 @@ package org.jetbrains.idea.maven.compiler
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.idea.TestFor
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
 import com.intellij.testFramework.UsefulTestCase.assertNotEmpty
-import junit.framework.TestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.createModulePom
@@ -35,17 +35,14 @@ import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.importing.MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE
 import org.jetbrains.idea.maven.importing.MAVEN_DEFAULT_ANNOTATION_PROFILE
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getModuleProfileName
-import org.junit.Assert
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.Assertions.assertNull
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
 
 @TestApplication
 @ParameterizedClass
@@ -398,9 +395,8 @@ class AnnotationProcessorImportingTest(mavenVersion: String, modelVersion: Strin
 
     val compilerConfiguration = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
-    TestCase.assertEquals(
-      compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("project"))?.processors,
-      hashSetOf("com.test.SourceCodeGeneratingAnnotationProcessor2", "com.mysema.query.apt.jpa.JPAAnnotationProcessor"))
+    assertEquals(compilerConfiguration.findModuleProcessorProfile(getModuleProfileName("project"))?.processors,
+                 hashSetOf("com.test.SourceCodeGeneratingAnnotationProcessor2", "com.mysema.query.apt.jpa.JPAAnnotationProcessor"))
   }
 
   @Test
@@ -558,21 +554,21 @@ class AnnotationProcessorImportingTest(mavenVersion: String, modelVersion: Strin
     val compilerConfiguration = CompilerConfiguration.getInstance(maven.project) as CompilerConfigurationImpl
 
     var profile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
-    Assert.assertNotNull(profile)
-    Assert.assertTrue(profile!!.isEnabled)
+    assertNotNull(profile)
+    assertTrue(profile!!.isEnabled)
 
     WriteAction.runAndWait<RuntimeException> {
       val p = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
       p!!.isEnabled = false
     }
     profile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
-    Assert.assertNotNull(profile)
-    Assert.assertFalse(profile!!.isEnabled)
+    assertNotNull(profile)
+    assertFalse(profile!!.isEnabled)
 
     maven.importProjectAsync()
     profile = compilerConfiguration.findModuleProcessorProfile(MAVEN_DEFAULT_ANNOTATION_PROFILE)
-    Assert.assertNotNull(profile)
-    Assert.assertFalse(profile!!.isEnabled)
+    assertNotNull(profile)
+    assertFalse(profile!!.isEnabled)
   }
 
   @Test
@@ -581,14 +577,14 @@ class AnnotationProcessorImportingTest(mavenVersion: String, modelVersion: Strin
     WriteAction.runAndWait<RuntimeException> {
       compilerConfiguration.addNewProcessorProfile("test-profile").isEnabled = true
     }
-    Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"))
+    assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"))
 
     maven.importProjectAsync("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
                        "<packaging>pom</packaging>" +
                        "<version>1</version>")
 
-    Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"))
+    assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"))
   }
 
   @Test
@@ -598,14 +594,14 @@ class AnnotationProcessorImportingTest(mavenVersion: String, modelVersion: Strin
     WriteAction.runAndWait<RuntimeException> {
       compilerConfiguration.addNewProcessorProfile(profileName).isEnabled = true
     }
-    Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile(profileName))
+    assertNotNull(compilerConfiguration.findModuleProcessorProfile(profileName))
 
     maven.importProjectAsync("<groupId>test</groupId>" +
                        "<artifactId>project</artifactId>" +
                        "<packaging>pom</packaging>" +
                        "<version>1</version>")
 
-    Assert.assertNull(compilerConfiguration.findModuleProcessorProfile(profileName))
+    assertNull(compilerConfiguration.findModuleProcessorProfile(profileName))
   }
 
   @Test
