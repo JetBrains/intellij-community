@@ -523,7 +523,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
             }
             val logFile = PathManager.getLogDir().resolve("jps-project-loaded-timeout-${System.currentTimeMillis()}.txt")
             logFile.writeText(threadDump)
-            thisLogger().error(
+            thisLogger().warn(
               "JPS project loaded callback was not called within $timeout, proceeding anyway. " +
               "Thread dump saved to ${logFile}. " +
               "Project: ${project.name} (locationHash=${project.locationHash})."
