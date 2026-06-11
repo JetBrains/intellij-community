@@ -212,4 +212,30 @@ class PyGenericBaseMethodOverrideTest : PyCodeInsightTestCase() {
     #                         ^^^ WARNING Return type of method 'Numbers.__next__()' does not match return type the base method in class 'Iterator'
             return ""
     """)
+
+  @TestFor(issues = ["PY-88976"])
+  @Test
+  fun `overloaded override of a method of a generic base class`() = test("""
+    from typing import overload
+
+    class Base[T]:
+        def f(self, x: T) -> T: ...
+
+    class Compatible(Base[int]):
+        @overload
+        def f(self, x: int) -> int: ...
+        @overload
+        def f(self, x: str) -> str: ...
+        def f(self, x: int | str) -> int | str:
+            return x
+
+    class Incompatible(Base[int]):
+        @overload
+        def f(self, x: str) -> str: ...
+        @overload
+        def f(self, x: bytes) -> bytes: ...
+        def f(self, x: str | bytes) -> str | bytes:
+    #        ^^^^^^^^^^^^^^^^^^^^^^ WARNING Signature of method 'Incompatible.f()' does not match signature of the base method in class 'Base'
+            return x
+    """)
 }
