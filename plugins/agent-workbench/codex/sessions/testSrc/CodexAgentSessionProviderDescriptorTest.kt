@@ -149,10 +149,10 @@ class CodexAgentSessionProviderDescriptorTest {
   @Test
   fun buildLaunchSpecWithInitialMessageForYoloCommand(): Unit = runBlocking(Dispatchers.Default) {
     assertThat(
-      bridge.buildLaunchSpecWithInitialMessage(
+      checkNotNull(bridge.buildLaunchSpecWithInitialMessage(
         baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.YOLO),
         initialMessagePlan = AgentInitialMessagePlan(message = "-draft plan\nstep 2"),
-      ).command
+      )).command
     )
       .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--yolo", "--", "-draft plan\nstep 2"))
   }
@@ -162,12 +162,31 @@ class CodexAgentSessionProviderDescriptorTest {
     val resumeLaunchSpec = bridge.buildResumeLaunchSpec("thread-1")
 
     assertThat(
-      bridge.buildLaunchSpecWithInitialMessage(
+      checkNotNull(bridge.buildLaunchSpecWithInitialMessage(
         baseLaunchSpec = resumeLaunchSpec,
         initialMessagePlan = AgentInitialMessagePlan(message = "Summarize changes"),
-      ).command
+      )).command
     )
       .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("resume", "thread-1", "--", "Summarize changes"))
+  }
+
+  @Test
+  fun buildLaunchSpecWithInitialMessageSkipsPlanModeStartupPrompt(): Unit = runBlocking(Dispatchers.Default) {
+    val initialMessagePlan = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(
+        prompt = "Plan this refactor",
+        providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
+      )
+    )
+
+    assertThat(initialMessagePlan.mode).isEqualTo(AgentInitialMessageMode.PLAN)
+    assertThat(initialMessagePlan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.POST_START_ONLY)
+    assertThat(
+      bridge.buildLaunchSpecWithInitialMessage(
+        baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD),
+        initialMessagePlan = initialMessagePlan,
+      )
+    ).isNull()
   }
 
   @Test

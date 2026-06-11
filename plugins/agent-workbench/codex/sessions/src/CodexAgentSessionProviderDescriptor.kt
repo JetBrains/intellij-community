@@ -199,8 +199,11 @@ internal class CodexAgentSessionProviderDescriptor(
   override fun buildLaunchSpecWithInitialMessage(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     initialMessagePlan: AgentInitialMessagePlan,
-  ): AgentSessionTerminalLaunchSpec {
-    val message = initialMessagePlan.message ?: return baseLaunchSpec
+  ): AgentSessionTerminalLaunchSpec? {
+    val message = initialMessagePlan.message ?: return null
+    if (initialMessagePlan.startupPolicy != AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND) {
+      return null
+    }
     return baseLaunchSpec.copy(command = baseLaunchSpec.command + listOf("--", message))
   }
 

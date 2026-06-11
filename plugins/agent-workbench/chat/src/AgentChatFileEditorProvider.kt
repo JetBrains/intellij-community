@@ -5,16 +5,19 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jdom.Element
+import java.util.concurrent.atomic.AtomicReference
 
 @Suppress("unused")
 internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
@@ -30,13 +33,13 @@ internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
   ): FileEditor {
     val chatFile = file as AgentChatVirtualFile
     return withContext(Dispatchers.EDT) {
-      AgentChatFileEditor(project = project, file = chatFile, editorCoroutineScope = editorCoroutineScope)
+      createAgentChatFileEditor(project = project, file = chatFile, editorCoroutineScope = editorCoroutineScope)
     }
   }
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val chatFile = file as AgentChatVirtualFile
-    return AgentChatFileEditor(project = project, file = chatFile)
+    return createAgentChatFileEditor(project = project, file = chatFile, editorCoroutineScope = null)
   }
 
   override fun readState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState {
@@ -52,6 +55,28 @@ internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
   override fun getEditorTypeId(): String = "agent.workbench-chat-editor"
 
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_OTHER_EDITORS
+}
+
+internal fun interface AgentChatFileEditorFactory {
+  fun create(project: Project, file: AgentChatVirtualFile, editorCoroutineScope: CoroutineScope?): AgentChatFileEditor
+}
+
+private val agentChatFileEditorFactoryOverrideForTests: AtomicReference<AgentChatFileEditorFactory?> = AtomicReference(null)
+
+internal fun registerAgentChatFileEditorFactoryOverrideForTests(factory: AgentChatFileEditorFactory, parentDisposable: Disposable) {
+  agentChatFileEditorFactoryOverrideForTests.set(factory)
+  Disposer.register(parentDisposable) {
+    agentChatFileEditorFactoryOverrideForTests.compareAndSet(factory, null)
+  }
+}
+
+private fun createAgentChatFileEditor(
+  project: Project,
+  file: AgentChatVirtualFile,
+  editorCoroutineScope: CoroutineScope?,
+): AgentChatFileEditor {
+  return agentChatFileEditorFactoryOverrideForTests.get()?.create(project, file, editorCoroutineScope)
+         ?: AgentChatFileEditor(project = project, file = file, editorCoroutineScope = editorCoroutineScope)
 }
 
 internal fun validateAgentChatFile(file: AgentChatVirtualFile): String? {

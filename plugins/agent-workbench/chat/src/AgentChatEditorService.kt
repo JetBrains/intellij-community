@@ -38,12 +38,10 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicReference
 
 private class AgentChatEditorServiceLog
 
 private val LOG = logger<AgentChatEditorServiceLog>()
-private val fileEditorProviderOverrideForTests: AtomicReference<FileEditorProvider?> = AtomicReference(null)
 
 private data class AgentChatScopedRefreshSignal(
   val provider: AgentSessionProvider,
@@ -330,11 +328,8 @@ suspend fun openChat(
     }
   }
   if (ApplicationManager.getApplication().isUnitTestMode) {
-    val provider = fileEditorProviderOverrideForTests.get()
-    if (provider != null) {
-      // TestEditorManagerImpl uses FileEditorProvider.KEY for non-text editors and otherwise falls back to doOpenTextEditor.
-      file.putUserData(FileEditorProvider.KEY, provider)
-    }
+    // TestEditorManagerImpl uses FileEditorProvider.KEY for non-text editors and otherwise falls back to doOpenTextEditor.
+    file.putUserData(FileEditorProvider.KEY, AgentChatFileEditorProvider())
   }
   manager.openFile(file = file, options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true))
   if (existing != null && hasExplicitInitialMessageDispatch && !file.initialMessageSent) {

@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
+import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.service.AgentSessionChatOpenExecutor
 import com.intellij.openapi.project.Project
@@ -252,6 +253,57 @@ fun assertNewThreadPromptLaunchOpensNewChat(
   }
 
   return checkNotNull(observation)
+}
+
+fun launchNewThreadPromptRequestWithDefaultChatOpenExecutor(
+  descriptor: AgentSessionProviderDescriptor,
+  request: AgentPromptLaunchRequest,
+  projectName: String = "Project A",
+  openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
+  verifyLaunchSideEffects: suspend () -> Unit = {},
+) {
+  require(request.targetThreadId == null) {
+    "New-thread prompt launch requires request.targetThreadId to be null"
+  }
+
+  AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+    runBlocking(Dispatchers.Default) {
+      withTestServiceAndLaunch(
+        sessionSourcesProvider = { listOf(descriptor.sessionSource) },
+        projectEntriesProvider = { listOf(openTestProjectEntry(request.projectPath, projectName)) },
+      ) { service, launchService ->
+        service.refresh()
+        waitForCondition {
+          val project = service.state.value.projects.firstOrNull { project -> project.path == request.projectPath }
+                        ?: return@waitForCondition false
+          project.providerLoadStates[descriptor.provider] == AgentSessionProviderLoadState.LOADED
+        }
+
+        var result: AgentPromptLaunchResult? = null
+        launchService.createNewSession(
+          path = request.projectPath,
+          provider = request.provider,
+          mode = request.launchMode,
+          entryPoint = AgentWorkbenchEntryPoint.PROMPT,
+          initialMessageRequest = request.initialMessageRequest,
+          preferredDedicatedFrame = request.preferredDedicatedFrame,
+          openedChatHandler = openedChatHandler,
+          promptLaunchResolved = { launchResult -> result = launchResult },
+          generationSettings = request.generationSettings,
+          extraEnvVariables = request.containerSessionEnvVariables,
+          extraCommandArgs = request.containerSessionExtraArgs,
+        )
+        waitForCondition {
+          result != null
+        }
+        val launchResult = checkNotNull(result)
+        assertThat(launchResult.launched).isTrue()
+        assertThat(launchResult.error).isNull()
+
+        verifyLaunchSideEffects()
+      }
+    }
+  }
 }
 
 internal class RecordingChatOpenExecutor(
