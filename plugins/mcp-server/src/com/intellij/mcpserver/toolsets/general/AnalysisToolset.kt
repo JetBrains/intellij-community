@@ -33,7 +33,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -386,22 +385,6 @@ class AnalysisToolset : McpToolset {
   suspend fun get_project_dependencies(): ProjectDependenciesResult {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.checking.dependencies"))
     val project = currentCoroutineContext().project
-
-    val jpsDependencies = readAction {
-      val moduleManager = ModuleManager.getInstance(project)
-      moduleManager.modules.flatMap { module ->
-        OrderEnumerator.orderEntries(module)
-          .librariesOnly()
-          .classes()
-          .roots
-          .map { root ->
-            DependencyInfo(
-              name = root.name,
-              source = "jps-library",
-            )
-          }
-      }.distinctBy { it.name }
-    }
 
     val providedDependencies = McpProjectDependenciesProvider.EP.extensionList.flatMap { provider ->
       provider.collectDependencies(project).map {
