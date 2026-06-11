@@ -4,6 +4,8 @@ package com.intellij.openapi.actionSystem.impl
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -53,6 +55,28 @@ internal class ActionManagerStateTest {
 
     assertFalse(writer.isAlive)
     failure.get()?.let { throw it }
+  }
+
+  @Test
+  fun registrationOrderSnapshotIsCachedUntilRegistrationChanges() {
+    val state = ActionManagerState()
+    state.registerAction(actionId = "first", pluginId = null, oldIndex = -1, oldGroups = null)
+
+    val cached = state.registrationOrderSnapshot()
+    assertSame(cached, state.registrationOrderSnapshot())
+    // Group mappings are not part of the snapshot and must not invalidate it.
+    state.addGroupMapping(actionId = "first", groupId = "group")
+    assertSame(cached, state.registrationOrderSnapshot())
+
+    state.registerAction(actionId = "second", pluginId = null, oldIndex = -1, oldGroups = null)
+    val afterRegister = state.registrationOrderSnapshot()
+    assertNotSame(cached, afterRegister)
+    assertEquals(mapOf("first" to 0, "second" to 1), afterRegister)
+
+    state.removeAction("first")
+    val afterRemove = state.registrationOrderSnapshot()
+    assertNotSame(afterRegister, afterRemove)
+    assertEquals(mapOf("second" to 1), afterRemove)
   }
 
   @Test

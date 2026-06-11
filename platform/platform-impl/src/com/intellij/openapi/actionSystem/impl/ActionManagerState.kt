@@ -16,6 +16,12 @@ internal class ActionManagerState {
 
   private val registrationData: MutableMap<String, ActionManagerRegistrationData> = HashMap()
 
+  // Rebuilding the id->index map costs a full copy of registrationData and is requested on every keystroke
+  // (KeymapImpl.getActionIds sorts candidates by registration order on each level of the keymap chain),
+  // so the snapshot is cached until an action is (re-)registered or removed.
+  // The cached map is shared with callers and must never be mutated after publication.
+  private var registrationOrderSnapshotCache: HashMap<String, Int>? = null
+
   private val groupMappings: MutableMap<String, List<String>> = HashMap()
 
   private var registeredActionCount: Int = 0
@@ -139,6 +145,7 @@ internal class ActionManagerState {
 
   fun registerAction(actionId: String, pluginId: PluginId?, oldIndex: Int, oldGroups: List<String>?) {
     synchronized(lock) {
+      registrationOrderSnapshotCache = null
       val data = registrationData.computeIfAbsent(actionId) { ActionManagerRegistrationData() }
       data.index = if (oldIndex >= 0) oldIndex else registeredActionCount++
       if (pluginId != null) {
@@ -157,6 +164,7 @@ internal class ActionManagerState {
 
   fun removeAction(actionId: String): List<String> {
     synchronized(lock) {
+      registrationOrderSnapshotCache = null
       registrationData.remove(actionId)
       return groupMappings.remove(actionId) ?: java.util.List.of()
     }
@@ -164,10 +172,12 @@ internal class ActionManagerState {
 
   fun registrationOrderSnapshot(): HashMap<String, Int> {
     synchronized(lock) {
+      registrationOrderSnapshotCache?.let { return it }
       val result = HashMap<String, Int>(registrationData.size)
       for ((id, data) in registrationData) {
         result.put(id, data.index)
       }
+      registrationOrderSnapshotCache = result
       return result
     }
   }
