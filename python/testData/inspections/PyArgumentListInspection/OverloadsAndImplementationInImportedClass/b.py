@@ -1,3 +1,3 @@
 import c
 
-c.A().foo(<warning descr="Parameter(s) unfilledPossible callees:A.foo(self: Self@A, value: None)A.foo(self: Self@A, value: int)A.foo(self: Self@A, value: str)">)</warning>
+c.A().foo(<warning descr="No overload of 'foo' matches the arguments. Argument types: (). Expected one of: (value: None), (value: int), (value: str)">)</warning>

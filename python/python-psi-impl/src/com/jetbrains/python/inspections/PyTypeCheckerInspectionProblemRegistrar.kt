@@ -5,9 +5,7 @@ import com.google.common.collect.Sets
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.psi.PsiElement
-import com.intellij.xml.util.XmlStringUtil
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.typing.matchingProtocolDefinitions
@@ -17,6 +15,8 @@ import com.jetbrains.python.inspections.PyTypeCheckerInspection.AnalyzeCalleeRes
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteOwner
+import com.jetbrains.python.psi.PyExpression
+import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.impl.PyPsiUtils.getFirstChildOfType
 import com.jetbrains.python.psi.types.PyClassLikeType
@@ -29,7 +29,6 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
   fun registerProblem(
     visitor: PyInspectionVisitor,
     callSite: PyCallSiteOwner,
-    argumentTypes: List<PyType?>,
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
     highlightOverride: ProblemHighlightType?,
@@ -44,7 +43,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
       )
     }
     else if (!calleesResults.isEmpty()) {
-      registerMultiCalleeProblem(visitor, callSite, argumentTypes, calleesResults, context, highlightOverride)
+      registerMultiCalleeProblem(visitor, callSite, calleesResults, context, highlightOverride)
     }
   }
 
@@ -134,22 +133,43 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
   private fun registerMultiCalleeProblem(
     visitor: PyInspectionVisitor,
     callSite: PyCallSiteOwner,
-    argumentTypes: List<PyType?>,
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
     highlightOverride: ProblemHighlightType?,
   ) {
     if (callSite is PyBinaryExpression) {
-      registerMultiCalleeProblemForBinaryExpression(
-        visitor, callSite, argumentTypes, calleesResults, context,
-        highlightOverride
-      )
+      registerMultiCalleeProblemForBinaryExpression(visitor, callSite, calleesResults, context, highlightOverride)
     }
     else {
-      registerWithOverride(
-        visitor, getMultiCalleeElementToHighlight(callSite),
-        getMultiCalleeProblemMessage(argumentTypes, calleesResults, context, isOnTheFly(visitor)), highlightOverride
-      )
+      registerMultiCalleeProblem(visitor, getMultiCalleeElementToHighlight(callSite), calleesResults, context, highlightOverride)
+    }
+  }
+
+  private fun registerMultiCalleeProblem(
+    visitor: PyInspectionVisitor,
+    element: PsiElement?,
+    calleesResults: List<AnalyzeCalleeResults>,
+    context: TypeEvalContext,
+    highlightOverride: ProblemHighlightType?,
+  ) {
+    val header = PyMismatchTooltips.header(calleesResults.map { it.callable })
+    val argumentSlots = getReferenceResults(calleesResults).map { argumentResult ->
+      PyMismatchTooltips.Slot(getActualArgumentRepresentation(argumentResult, context),
+                              !argumentMatchesNoCallee(argumentResult.argument, calleesResults))
+    }
+    val expectedRows = calleesResults.map { calleeResults ->
+      calleeResults.results.map { PyMismatchTooltips.Slot(getExpectedParameterRepresentation(it, context), it.isMatched) }
+    }
+
+    val description = PyMismatchTooltips.description(header, argumentSlots, expectedRows)
+    val highlightType = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+    if (isOnTheFly(visitor)) {
+      visitor.registerProblem(element,
+                              PyInspectionMessages.ProblemMessage(description, PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows)),
+                              highlightType)
+    }
+    else {
+      visitor.registerProblem(element, description, highlightType)
     }
   }
 
@@ -212,7 +232,6 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
   private fun registerMultiCalleeProblemForBinaryExpression(
     visitor: PyInspectionVisitor,
     binaryExpression: PyBinaryExpression,
-    argumentTypes: List<PyType?>,
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
     highlightOverride: ProblemHighlightType?,
@@ -238,11 +257,10 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
       )
     }
     else {
-      registerWithOverride(
+      registerMultiCalleeProblem(
         visitor,
-        (if (allCalleesAreRightOperators) binaryExpression.leftExpression else binaryExpression.rightExpression)!!,
-        getMultiCalleeProblemMessage(argumentTypes, preferredOperatorsResults, context, isOnTheFly(visitor)),
-        highlightOverride
+        if (allCalleesAreRightOperators) binaryExpression.leftExpression else binaryExpression.rightExpression,
+        preferredOperatorsResults, context, highlightOverride
       )
     }
   }
@@ -266,27 +284,18 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     }
   }
 
-  @InspectionMessage
-  private fun getMultiCalleeProblemMessage(
-    argumentTypes: List<PyType?>,
-    calleesResults: List<AnalyzeCalleeResults>,
-    context: TypeEvalContext,
-    isOnTheFly: Boolean,
-  ): @InspectionMessage String {
-    val actualTypesRepresentation = getMultiCalleeActualTypesRepresentation(argumentTypes, context)
-    val expectedTypesRepresentation = getMultiCalleePossibleExpectedTypesRepresentation(calleesResults, context, isOnTheFly)
+  /**
+   * Results of the callee that maps the most arguments; used as the source of actual argument types,
+   * so that their order is consistent with the per-callee expected parameter rows.
+   */
+  private fun getReferenceResults(calleesResults: List<AnalyzeCalleeResults>): List<AnalyzeArgumentResult> =
+    calleesResults.map { it.results }.maxByOrNull { it.size } ?: emptyList()
 
-    if (isOnTheFly) {
-      return HtmlBuilder()
-        .append(PyPsiBundle.message("INSP.type.checker.unexpected.types.prefix")).br().appendRaw(actualTypesRepresentation).br()
-        .append(PyPsiBundle.message("INSP.type.checker.expected.types.prefix")).br().appendRaw(expectedTypesRepresentation)
-        .wrapWith("html").toString()
-    }
-    else {
-      return PyPsiBundle.message("INSP.type.checker.unexpected.types.prefix") + " " + actualTypesRepresentation + " " +
-             PyPsiBundle.message("INSP.type.checker.expected.types.prefix") + " " +
-             expectedTypesRepresentation
-    }
+  private fun argumentMatchesNoCallee(
+    argument: PyExpression,
+    calleesResults: List<AnalyzeCalleeResults>,
+  ): Boolean = calleesResults.none { calleeResults ->
+    calleeResults.results.any { it.argument === argument && it.isMatched }
   }
 
   private fun isOnTheFly(visitor: PyInspectionVisitor): Boolean {
@@ -305,27 +314,31 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
   }
 
   @NlsSafe
-  private fun getMultiCalleeActualTypesRepresentation(
-    argumentTypes: List<PyType?>,
+  private fun getActualArgumentRepresentation(
+    argumentResult: AnalyzeArgumentResult,
     context: TypeEvalContext,
-  ): @NlsSafe String = argumentTypes.joinToString(", ", "(", ")") { PythonDocumentationProvider.getTypeName(it, context) }
+  ): @NlsSafe String {
+    val typeName = PythonDocumentationProvider.getTypeName(argumentResult.actualType, context)
+    val argument = argumentResult.argument
+    if (argument is PyKeywordArgument) {
+      val keyword = argument.keyword
+      if (keyword != null) {
+        return "$keyword=$typeName"
+      }
+    }
+    return typeName
+  }
 
   @NlsSafe
-  private fun getMultiCalleePossibleExpectedTypesRepresentation(
-    calleesResults: List<AnalyzeCalleeResults>,
+  private fun getExpectedParameterRepresentation(
+    argumentResult: AnalyzeArgumentResult,
     context: TypeEvalContext,
-    isOnTheFly: Boolean,
-  ): @NlsSafe String = calleesResults
-    .joinToString(if (isOnTheFly) "<br>" else " ") {
-      val expectedTypesRepresentation = getMultiCalleeExpectedTypesRepresentation(it.results, context)
-      if (isOnTheFly) XmlStringUtil.escapeString(expectedTypesRepresentation) else expectedTypesRepresentation
-    }
-
-  private fun getMultiCalleeExpectedTypesRepresentation(
-    calleeResults: List<AnalyzeArgumentResult>,
-    context: TypeEvalContext,
-  ): String = calleeResults
-    .joinToString(", ", "(", ")") { result ->
-      PythonDocumentationProvider.getTypeName((result.expectedTypeAfterSubstitution ?: result.expectedType), context)
-    }
+  ): @NlsSafe String {
+    val type = argumentResult.expectedTypeAfterSubstitution ?: argumentResult.expectedType
+    val typeName = PythonDocumentationProvider.getTypeName(type, context)
+    val parameter = argumentResult.parameter
+    val parameterName = parameter?.name ?: return typeName
+    val prefix = if (parameter.isPositionalContainer) "*" else if (parameter.isKeywordContainer) "**" else ""
+    return "$prefix$parameterName: $typeName"
+  }
 }

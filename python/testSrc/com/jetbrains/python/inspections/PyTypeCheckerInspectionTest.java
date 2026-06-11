@@ -1175,8 +1175,8 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            movie2 = Movie2()
                            s: str = movie['address'][0]
                            s: str = movie2['address'][0]
-                           s: str = movie['address'][<warning descr="Unexpected type(s):(str)Possible type(s):(int)(slice)">'i'</warning>]
-                           s2: str = movie2['address'][<warning descr="Unexpected type(s):(str)Possible type(s):(int)(slice)">'i'</warning>]
+                           s: str = movie['address'][<warning descr="No overload of '__getitem__' matches the arguments. Argument types: (str). Expected one of: (i: int), (s: slice)">'i'</warning>]
+                           s2: str = movie2['address'][<warning descr="No overload of '__getitem__' matches the arguments. Argument types: (str). Expected one of: (i: int), (s: slice)">'i'</warning>]
                            """));
   }
 

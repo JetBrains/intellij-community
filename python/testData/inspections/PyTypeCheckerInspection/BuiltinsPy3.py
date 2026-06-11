@@ -11,6 +11,6 @@ def test_numerics():
     float(False)
     complex(False)
     divmod(False, False)
-    divmod<warning descr="Unexpected type(s):(bytes, str)Possible type(s):(SupportsDivMod[_T_contra, _T_co], str)(bytes, SupportsRDivMod[bytes, _T_co])">(b'foo', 'bar')</warning>
+    divmod<warning descr="No overload of 'divmod' matches the arguments. Argument types: (bytes, str). Expected one of: (x: SupportsDivMod[_T_contra, _T_co], y: str), (x: bytes, y: SupportsRDivMod[bytes, _T_co])">(b'foo', 'bar')</warning>
     pow(False, True)
-    round<warning descr="Unexpected type(s):(bool, str)Possible type(s):(_SupportsRound1[int], None)(_SupportsRound2[int], SupportsIndex)">(False, 'foo')</warning>
+    round<warning descr="No overload of 'round' matches the arguments. Argument types: (bool, str). Expected one of: (number: _SupportsRound1[int], ndigits: None), (number: _SupportsRound2[int], ndigits: SupportsIndex)">(False, 'foo')</warning>

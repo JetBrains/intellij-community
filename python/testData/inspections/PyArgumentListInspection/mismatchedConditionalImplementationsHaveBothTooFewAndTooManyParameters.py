@@ -5,4 +5,4 @@ else:
     def f(x, y, z):
         pass
 
-f<warning descr="Incorrect argument(s)Possible callees:f(x)f(x, y, z)">(1, 2)</warning>
+f<warning descr="No overload of 'f' matches the arguments. Argument types: (int, int). Expected one of: (x), (x, y, z)">(1, 2)</warning>

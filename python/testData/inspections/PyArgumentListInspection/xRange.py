@@ -1,5 +1,5 @@
-print(xrange(<warning descr="Parameter(s) unfilledPossible callees:xrange(self: Self@xrange, stop: int)xrange(self: Self@xrange, start: int, stop: int, step: int = ...)">)</warning>)
+print(xrange(<warning descr="No overload of 'xrange' matches the arguments. Argument types: (). Expected one of: (stop: int), (start: int, stop: int, step: int)">)</warning>)
 print(xrange(1))
 print(xrange(1, 2))
 print(xrange(1, 2, 3))
-print(xrange<warning descr="Unexpected argument(s)Possible callees:xrange(self: Self@xrange, stop: int)xrange(self: Self@xrange, start: int, stop: int, step: int = ...)">(1, 2, 3, 4)</warning>)
+print(xrange<warning descr="No overload of 'xrange' matches the arguments. Argument types: (int, int, int, int). Expected one of: (stop: int), (start: int, stop: int, step: int)">(1, 2, 3, 4)</warning>)
