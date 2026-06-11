@@ -24,7 +24,8 @@ class MavenPluginResolutionTest(mavenVersion: String, modelVersion: String) {
 
   private val maven by mavenImportingFixture(
     mavenVersion = mavenVersion,
-    modelVersion = modelVersion
+    modelVersion = modelVersion,
+    skipPluginResolution = false,
   )
   
 
