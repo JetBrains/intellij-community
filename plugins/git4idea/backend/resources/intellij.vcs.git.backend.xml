@@ -269,16 +269,18 @@
       <reference ref="Git.CreateNewWorkingTree"/>
       <separator/>
       <action class="git4idea.actions.branch.GitUpdateSelectedBranchAction"/>
-      <action class="git4idea.actions.branch.GitPushBranchAction"/>
+      <action class="git4idea.actions.branch.GitPushBranchAction"
+              use-shortcut-of="Vcs.Push"/>
       <group id="Git.Branch.Tracked" class="git4idea.actions.branch.GitTrackedBranchActionGroup" popup="true"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithRebase"/>
       <action class="git4idea.actions.branch.GitPullBranchAction$WithMerge"/>
       <separator/>
       <group id="Git.Push.Tags" class="git4idea.actions.tag.GitPushTagsActionGroup"/>
       <separator/>
-      <action class="git4idea.actions.branch.GitRenameBranchAction" id="Git.Rename.Local.Branch"/>
-      <action class="git4idea.actions.ref.GitDeleteRefAction"/>
-
+      <action id="Git.Rename.Local.Branch"
+              class="git4idea.actions.branch.GitRenameBranchAction"/>
+      <action class="git4idea.actions.ref.GitDeleteRefAction"
+              use-shortcut-of="$Delete"/>
       <add-to-group group-id="Git.Branch.Placeholder"/>
     </group>
 
