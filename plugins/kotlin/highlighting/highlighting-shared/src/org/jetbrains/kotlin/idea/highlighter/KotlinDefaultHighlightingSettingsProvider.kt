@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -24,6 +25,11 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
         }
 
         val psiFile = file.toPsiFile(project) ?: return null
+        val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
+        if (injectedLanguageManager.isInjectedFragment(psiFile)) {
+            val inspectionsBeLenient = injectedLanguageManager.shouldInspectionsBeLenient(psiFile)
+            if (inspectionsBeLenient) FileHighlightingSetting.SKIP_INSPECTION
+        }
         return when {
             psiFile is KtFile ->
                 when {
