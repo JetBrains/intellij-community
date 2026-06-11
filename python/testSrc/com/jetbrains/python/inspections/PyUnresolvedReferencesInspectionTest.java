@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -797,6 +798,126 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                    >>> foo("Hello")
                    Hello
                    ""\"""");
+  }
+
+  @TestFor(issues = "PY-89997")
+  public void testUnresolvedReferenceInDoctestBlock() {
+    doTestByText("""
+                   def foo():
+                       ""\"
+                       >>> <warning descr="Unresolved reference 'unresolved_name'">unresolved_name</warning>
+                       ""\"""
+                       pass
+                   """);
+  }
+
+  @TestFor(issues = "PY-89997")
+  public void testNoUnresolvedReferenceInCodeBlock() {
+    doTestByText("""
+                   def foo():
+                       ""\"
+                       .. code-block:: python
+
+                           unresolved_name
+                       ""\"""
+                       pass
+                   """);
+  }
+
+  @TestFor(issues = "PY-89997")
+  public void testNoUnresolvedReferenceInCodeBlockWithDoctestPrompt() {
+    doTestByText("""
+                   def foo():
+                       ""\"
+                       .. code-block:: python
+
+                           >>> unresolved_name
+                       ""\"
+                       pass
+                   """);
+  }
+
+  @TestFor(issues = "PY-89997")
+  public void testUnresolvedReferenceInDoctestOutsideCodeBlock() {
+    doTestByText("""
+                   def foo():
+                       ""\"
+                       >>> <warning descr="Unresolved reference 'unresolved_name'">unresolved_name</warning>
+
+                       .. code-block:: python
+
+                           some_other_unresolved_name
+                       ""\"
+                       pass
+                   """);
+  }
+
+  @TestFor(issues = "PY-89997")
+  public void testCodeBlockBeforeDoctest() {
+    doTestByText("""
+                   def foo():
+                       ""\"
+                       .. code-block:: python
+
+                           some_unresolved_name
+
+                       >>> <warning descr="Unresolved reference 'unresolved_name'">unresolved_name</warning>
+                       ""\"
+                       pass
+                   """);
+  }
+
+  @TestFor(issues = "PY-89997")
+  public void testCodeBlockWithPromptBeforeDoctest() {
+    doTestByText("""
+                   def foo():
+                       ""\"
+                       .. code-block:: python
+
+                           some_unresolved_name
+
+                       >>> <warning descr="Unresolved reference 'unresolved_name'">unresolved_name</warning>
+                       ... <warning descr="Unresolved reference 'more_unresolved'">more_unresolved</warning>
+                       ""\"
+                       pass
+                   """);
+  }
+
+  @TestFor(issues = "PY-89997")
+  public void testMultipleCodeBlocksNoInspections() {
+    doTestByText("""
+                   def foo():
+                       ""\"
+                       .. code-block:: python
+
+                           first_unresolved_name
+
+                       .. code-block:: python
+
+                           second_unresolved_name
+                       ""\"
+                       pass
+                   """);
+  }
+
+  @TestFor(issues = "PY-89997")
+  public void testDoctestBetweenCodeBlocks() {
+    doTestByText("""
+                   def foo():
+                       ""\"
+                       .. code-block:: python
+
+                           first_code_block_unresolved
+
+                       >>> <warning descr="Unresolved reference 'unresolved_name'">unresolved_name</warning>
+                       ... <warning descr="Unresolved reference 'more_unresolved'">more_unresolved</warning>
+
+                       .. code-block:: python
+
+                           second_code_block_unresolved
+                       ""\"
+                       pass
+                   """);
   }
 
   // PY-37755 PY-2700

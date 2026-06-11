@@ -30,12 +30,12 @@ public final class PyRestDocstringLanguageInjector implements LanguageInjector {
         if (!trimmedString.startsWith(">>>") && !trimmedString.startsWith("...") && gotExample && start < end) {
           gotExample = false;
           if (!endsWithSlash)
-            injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
+            injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
         }
         if (endsWithSlash) {
           endsWithSlash = false;
           injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(),
-                                            TextRange.create(start, getEndOffset(currentPosition, string)),  null, null);
+                                            TextRange.create(start, getEndOffset(currentPosition, string)), null, null);
         }
 
         if (trimmedString.startsWith(">>>")) {
@@ -57,7 +57,7 @@ public final class PyRestDocstringLanguageInjector implements LanguageInjector {
         currentPosition += string.length();
       }
       if (gotExample && start < end)
-        injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end),  null, null);
+        injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
     }
   }
 

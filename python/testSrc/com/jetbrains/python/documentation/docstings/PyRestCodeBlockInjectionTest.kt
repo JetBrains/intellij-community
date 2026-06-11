@@ -1,16 +1,18 @@
 package com.jetbrains.python.documentation.docstings
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.lang.Language
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.util.Pair
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.documentation.docstrings.DocStringFormat
 import com.jetbrains.python.documentation.docstrings.DocStringParser
 import com.jetbrains.python.documentation.docstrings.DocStringUtil
-import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
@@ -49,7 +51,7 @@ class PyRestCodeBlockInjectionTest : PyTestCase() {
     val pyInjectedFile = injected!!
       .map { it.first }
       .filterIsInstance<PsiFile>()
-      .firstOrNull { it.language is PyDocstringLanguageDialect }
+      .firstOrNull { it.language.`is`(PythonLanguage.INSTANCE) }
       ?: error("Python docstring language injection not found")
 
     val highlightInfos: List<HighlightInfo> =
@@ -121,7 +123,7 @@ class PyRestCodeBlockInjectionTest : PyTestCase() {
     testCodeBlockInjection("b.py", fileContent, "       def hello():\n           x = 1\n\n           print(\"world\")\n")
   }
 
-  private fun testCodeBlockInjection(fileName: String, fileContent: String, expectedInjectedText: String) {
+  private fun testCodeBlockInjection(fileName: String, fileContent: String, expectedInjectedText: String, language: Language = PythonLanguage.INSTANCE) {
     myFixture.configureByText(fileName, fileContent)
 
     val doc = getDocstringOfFunction("foo") ?: error("Docstring not found")
@@ -132,15 +134,15 @@ class PyRestCodeBlockInjectionTest : PyTestCase() {
     val injected = ilm.getInjectedPsiFiles(doc) ?: error("No injected PSI files found")
     assertTrue("Expected at least one injected PSI file", injected.isNotEmpty())
 
-    val doctestInjections = injected
+    val codeBlockInjections = injected
       .mapNotNull { it.first as? PsiFile }
-      .filter { it.language.id == "Doctest" }
+      .filter { it.language.`is`(language) }
 
-    assertTrue("Expected at least one Doctest injection from code-block", doctestInjections.isNotEmpty())
+    assertTrue("Expected at least one injection from code-block", codeBlockInjections.isNotEmpty())
 
-    val matchingInjection = doctestInjections.firstOrNull { it.text == expectedInjectedText }
+    val matchingInjection = codeBlockInjections.firstOrNull { it.text == expectedInjectedText }
     assertNotNull(
-      "Expected to find Doctest injection with text:\n'$expectedInjectedText'\n\nBut found:\n${doctestInjections.joinToString("\n---\n") { "'${it.text}'" }}",
+      "Expected to find the injection with text:\n'$expectedInjectedText'\n\nBut found:\n${codeBlockInjections.joinToString("\n---\n") { "'${it.text}'" }}",
       matchingInjection
     )
   }
@@ -157,5 +159,31 @@ class PyRestCodeBlockInjectionTest : PyTestCase() {
       if (expr is PyStringLiteralExpression) return expr
     }
     return null
+  }
+
+  fun `test inspections are disabled for code block`() {
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    myFixture.configureByText("a.py", """
+        def foo():
+            '''
+            .. code-block:: python
+
+                completely_unresolved_name
+            '''
+            pass
+    """.trimIndent())
+    myFixture.checkHighlighting(false, false, false) // no warnings expected
+  }
+
+  fun `test inspections are enabled for doctest`() {
+    myFixture.enableInspections(PyUnresolvedReferencesInspection::class.java)
+    myFixture.configureByText("a.py", """
+        def foo():
+            '''
+            >>> <warning descr="Unresolved reference 'completely_unresolved_name'">completely_unresolved_name</warning>
+            '''
+            pass
+    """.trimIndent())
+    myFixture.checkHighlighting(true, false, true)
   }
 }
