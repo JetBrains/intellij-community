@@ -49,8 +49,12 @@ fun MavenImportingTestFixture.executeGoal(relativePath: String?, goal: String) {
   assertTrue("Maven execution failed", ok)
 }
 
-/** The fixture always provisions a Maven distribution (bundled or wrapper), so the legacy guard always passes. */
-fun MavenTestFixture.hasMavenInstallation(): Boolean = true
+/**
+ * Matches legacy MavenTestCase.hasMavenInstallation(): goal-running tests (executeGoal/deploy) require a real
+ * external Maven home. When `idea.maven.test.home` is not set the test early-returns (skips) — same as legacy,
+ * which kept these tests fast (~150ms) instead of running real Maven.
+ */
+fun MavenTestFixture.hasMavenInstallation(): Boolean = System.getProperty("idea.maven.test.home") != null
 
 /** Disables the Maven pre-import (static sync) registry flag for the test, mirroring the legacy no-arg helper. */
 fun MavenImportingTestFixture.runWithoutStaticSync() {

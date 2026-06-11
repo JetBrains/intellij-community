@@ -23,6 +23,8 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.project.ArtifactDownloadResult
+import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
@@ -198,3 +200,14 @@ val MavenImportingTestFixture.projectsTree: MavenProjectsTree
 
 val MavenImportingTestFixture.testRootDisposable: Disposable
   get() = disposable
+
+suspend fun MavenImportingTestFixture.downloadArtifacts(): ArtifactDownloadResult {
+  return projectsManager.downloadArtifacts(
+    MavenDownloadSourcesRequest.builder()
+      .forProjects(projectsManager.projects)
+      .forAllArtifacts()
+      .withSources()
+      .withDocs()
+      .build()
+  )
+}
