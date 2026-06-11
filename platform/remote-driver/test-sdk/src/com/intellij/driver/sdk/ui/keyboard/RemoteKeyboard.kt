@@ -12,6 +12,24 @@ class RemoteKeyboard(private val robot: Robot) {
       get() = logger<RemoteKeyboard>()
 
     val defaultModifierKey: Int = if (SystemInfoRt.isMac) KeyEvent.VK_META else KeyEvent.VK_CONTROL
+
+    /**
+     * To keep references up to date:
+     * [com.intellij.driver.sdk.invokeAction]
+     * [com.intellij.driver.sdk.invokeActionByShortcut]
+     * Please update the message in RequiresOptIn if references change.
+     */
+    @RequiresOptIn(
+      level = RequiresOptIn.Level.WARNING,
+      message = "Prefer not to use hard-coded shortcuts, as it can cause test instability.\n" +
+                "If you need to invoke an action as part of test setup, use `com.intellij.driver.sdk.invokeAction`.\n" +
+                "If you want to verify that an action can be invoked via a shortcut, use `com.intellij.driver.sdk.invokeActionByShortcut`.\n" +
+                "If you need to verify that a specific shortcut works, it is better to add a separate check for it.\n" +
+                "If you have considered all of the above, add `@Suppress(\"OPT_IN_USAGE\")` to the statement."
+    )
+    @Retention(AnnotationRetention.BINARY)
+    @Target(AnnotationTarget.FUNCTION)
+    private annotation class DirectHotKeyUsage
   }
 
   fun key(key: Int): Unit = step("Press key $key") { robot.pressAndReleaseKey(key) }
@@ -70,10 +88,12 @@ class RemoteKeyboard(private val robot: Robot) {
     }
   }
 
+  @DirectHotKeyUsage
   fun hotKeyWithDefaultModifierKey(vararg keyCodes: Int) {
     hotKey(defaultModifierKey, *keyCodes)
   }
 
+  @DirectHotKeyUsage
   fun hotKey(vararg keyCodes: Int) {
     if (keyCodes.size == 1) {
       key(keyCodes.single())
