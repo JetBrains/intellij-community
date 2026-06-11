@@ -566,9 +566,9 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
             results.addAll(state.result)
           }
           else if (editorOpenTimeNs == null || shouldConsiderProvider(editorOpenTimeNs)) {
-                everyProviderReadyToUpdate = false
-              }
-            }
+            everyProviderReadyToUpdate = false
+          }
+        }
 
         if (modCount != modificationCount(editor)) {
           // psi or document changed, aborting current run as outdated
