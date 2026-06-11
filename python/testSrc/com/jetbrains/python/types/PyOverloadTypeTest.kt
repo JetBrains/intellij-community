@@ -1532,4 +1532,93 @@ class PyOverloadTypeTest : PyCodeInsightTestCase() {
     #   └ TYPE UnsafeUnion[int, str] | UnsafeUnion[bool, str]
     """.trimIndent())
 
+  @Nested
+  @TestFor(issues = ["PY-88976"])
+  inner class OverloadsThatSplitUnionParameter {
+    @Test
+    fun `overloads that cover each member of a union parameter match a callable`() = test("""
+      from typing import Callable, overload
+
+      @overload
+      def f(x: int) -> int: ...
+      @overload
+      def f(x: str) -> str: ...
+      def f(x: int | str) -> int | str: ...
+
+      @overload
+      def g(x: int) -> int: ...
+      @overload
+      def g(x: bytes) -> bytes: ...
+      def g(x: int | bytes) -> int | bytes: ...
+
+      covered: Callable[[int | str], int | str] = f
+      not_covered: Callable[[int | str], int | str] = g # WARNING Expected type '(int | str) -> int | str', got 'Overload[(x: int) -> int, (x: bytes) -> bytes]' instead
+      return_not_assignable: Callable[[int | str], int] = f # WARNING Expected type '(int | str) -> int', got 'Overload[(x: int) -> int, (x: str) -> str]' instead
+      """.trimIndent())
+
+    @Test
+    fun `overloads that cover only the diagonal of two union parameters do not match`() = test("""
+      from typing import Callable, overload
+
+      @overload
+      def f(x: int, y: int) -> None: ...
+      @overload
+      def f(x: str, y: str) -> None: ...
+      def f(x: int | str, y: int | str) -> None: ...
+
+      diagonal: Callable[[int | str, int | str], None] = f # WARNING Expected type '(int | str, int | str) -> None', got 'Overload[(x: int, y: int) -> None, (x: str, y: str) -> None]' instead
+      """.trimIndent())
+
+    @Test
+    fun `overloads that cover each member of a union parameter match a callback protocol`() = test("""
+      from typing import Protocol, overload
+
+      class Handler(Protocol):
+          def __call__(self, x: int | str) -> int | str: ...
+
+      @overload
+      def f(x: int) -> int: ...
+      @overload
+      def f(x: str) -> str: ...
+      def f(x: int | str) -> int | str: ...
+
+      @overload
+      def g(x: int) -> int: ...
+      @overload
+      def g(x: bytes) -> bytes: ...
+      def g(x: int | bytes) -> int | bytes: ...
+
+      covered: Handler = f
+      not_covered: Handler = g # WARNING Expected type 'Handler', got 'Overload[(x: int) -> int, (x: bytes) -> bytes]' instead
+      """.trimIndent())
+
+    @Test
+    fun `overload item with a type parameter matches each combination on its own`() = test("""
+      from typing import Callable, overload
+
+      @overload
+      def f(x: int) -> int: ...
+      @overload
+      def f[T](x: list[T]) -> T: ...
+      def f(x): ...
+
+      covered: Callable[[int | list[str]], int | str] = f
+      """.trimIndent())
+
+    // 16 combinations are in the limit of 24. 32 combinations are above it, so the check does not split the unions.
+    // Then it reports overloads that cover the expected callable.
+    @Test
+    fun `no split above the limit of combinations`() = test("""
+      from typing import Callable, overload
+
+      @overload
+      def f(a: int, b: int | str, c: int | str, d: int | str, e: int | str = 0) -> None: ...
+      @overload
+      def f(a: str, b: int | str, c: int | str, d: int | str, e: int | str = 0) -> None: ...
+      def f(a: int | str, b: int | str, c: int | str, d: int | str, e: int | str = 0) -> None: ...
+
+      in_limit: Callable[[int | str, int | str, int | str, int | str], None] = f
+      above_limit: Callable[[int | str, int | str, int | str, int | str, int | str], None] = f # WARNING Expected type '(int | str, int | str, int | str, int | str, int | str) -> None', got 'Overload[(a: int, b: int | str, c: int | str, d: int | str, e: int | str) -> None, (a: str, b: int | str, c: int | str, d: int | str, e: int | str) -> None]' instead
+      """.trimIndent())
+  }
 }
