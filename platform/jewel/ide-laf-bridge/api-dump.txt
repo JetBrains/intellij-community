@@ -16,6 +16,9 @@ f:org.jetbrains.jewel.bridge.BridgeTypography
 - getMedium(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - getRegular(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 - getSmall(androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- rememberConsoleTextStyle-bgE_P6U(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- rememberDefaultTextStyle-bgE_P6U(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
+- rememberEditorTextStyle-bgE_P6U(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,androidx.compose.runtime.Composer,I):androidx.compose.ui.text.TextStyle
 f:org.jetbrains.jewel.bridge.BridgeUriHandler
 - androidx.compose.ui.platform.UriHandler
 - sf:$stable:I
@@ -125,6 +128,12 @@ f:org.jetbrains.jewel.bridge.theme.IntUiBridgeSplitButtonKt
 - sf:readOutlinedSplitButtonStyle():org.jetbrains.jewel.ui.component.styling.SplitButtonStyle
 f:org.jetbrains.jewel.bridge.theme.IntUiBridgeTextKt
 - sf:retrieveConsoleTextStyle():androidx.compose.ui.text.TextStyle
+- sf:retrieveConsoleTextStyle-2z3RXDk(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle):androidx.compose.ui.text.TextStyle
+- bs:retrieveConsoleTextStyle-2z3RXDk$default(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,I,java.lang.Object):androidx.compose.ui.text.TextStyle
 - sf:retrieveDefaultTextStyle():androidx.compose.ui.text.TextStyle
+- sf:retrieveDefaultTextStyle-2z3RXDk(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle):androidx.compose.ui.text.TextStyle
+- bs:retrieveDefaultTextStyle-2z3RXDk$default(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,I,java.lang.Object):androidx.compose.ui.text.TextStyle
 - sf:retrieveEditorTextStyle():androidx.compose.ui.text.TextStyle
+- sf:retrieveEditorTextStyle-2z3RXDk(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle):androidx.compose.ui.text.TextStyle
+- bs:retrieveEditorTextStyle-2z3RXDk$default(J,androidx.compose.ui.text.font.FontWeight,androidx.compose.ui.text.font.FontStyle,I,java.lang.Object):androidx.compose.ui.text.TextStyle
 f:org.jetbrains.jewel.bridge.theme.SwingBridgeThemeKt

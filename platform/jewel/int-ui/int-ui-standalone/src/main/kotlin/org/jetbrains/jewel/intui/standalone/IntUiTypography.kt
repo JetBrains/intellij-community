@@ -4,9 +4,12 @@ package org.jetbrains.jewel.intui.standalone
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.takeOrElse
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.intui.standalone.theme.DefaultFontSize
 import org.jetbrains.jewel.intui.standalone.theme.createDefaultTextStyle
@@ -17,6 +20,60 @@ import org.jetbrains.jewel.ui.component.plus
 
 /** An implementation of [Typography] that uses default Int UI typography information. */
 public object IntUiTypography : Typography {
+    @Composable
+    override fun rememberDefaultTextStyle(
+        fontSize: TextUnit,
+        fontWeight: FontWeight?,
+        fontStyle: FontStyle?,
+    ): TextStyle =
+        if (fontSize.isUnspecified || fontSize.isSp) {
+            remember(fontSize, fontWeight, fontStyle) {
+                JewelTheme.createDefaultTextStyle(
+                    fontSize = fontSize.takeOrElse { DefaultFontSize },
+                    fontWeight = fontWeight ?: FontWeight.Normal,
+                    fontStyle = fontStyle ?: FontStyle.Normal,
+                )
+            }
+        } else {
+            super.rememberDefaultTextStyle(fontSize, fontWeight, fontStyle)
+        }
+
+    @Composable
+    override fun rememberEditorTextStyle(
+        fontSize: TextUnit,
+        fontWeight: FontWeight?,
+        fontStyle: FontStyle?,
+    ): TextStyle =
+        if (fontSize.isUnspecified || fontSize.isSp) {
+            remember(fontSize, fontWeight, fontStyle) {
+                JewelTheme.createEditorTextStyle(
+                    fontSize = fontSize.takeOrElse { DefaultFontSize },
+                    fontWeight = fontWeight ?: FontWeight.Normal,
+                    fontStyle = fontStyle ?: FontStyle.Normal,
+                )
+            }
+        } else {
+            super.rememberEditorTextStyle(fontSize, fontWeight, fontStyle)
+        }
+
+    @Composable
+    override fun rememberConsoleTextStyle(
+        fontSize: TextUnit,
+        fontWeight: FontWeight?,
+        fontStyle: FontStyle?,
+    ): TextStyle =
+        if (fontSize.isUnspecified || fontSize.isSp) {
+            remember(fontSize, fontWeight, fontStyle) {
+                JewelTheme.createEditorTextStyle(
+                    fontSize = fontSize.takeOrElse { DefaultFontSize },
+                    fontWeight = fontWeight ?: FontWeight.Normal,
+                    fontStyle = fontStyle ?: FontStyle.Normal,
+                )
+            }
+        } else {
+            super.rememberConsoleTextStyle(fontSize, fontWeight, fontStyle)
+        }
+
     @get:Composable
     override val labelTextStyle: TextStyle
         get() = remember { JewelTheme.createDefaultTextStyle() }
