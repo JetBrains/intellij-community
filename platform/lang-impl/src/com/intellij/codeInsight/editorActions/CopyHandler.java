@@ -64,10 +64,15 @@ public final class CopyHandler extends EditorActionHandler implements CopyAction
   }
 
   /**
-   * @return transferable, or null if copy action was cancelled by a user
+   * @return transferable or null if the copy action was canceled by a user
    */
-  private static @Nullable Transferable getSelection(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file,
-                                                     @NotNull CopyPasteOptions options) {
+  @ApiStatus.Internal
+  public static @Nullable Transferable getSelection(
+    @NotNull Editor editor,
+    @NotNull Project project,
+    @NotNull PsiFile file,
+    @NotNull CopyPasteOptions options
+  ) {
     TypingActionsExtension typingActionsExtension = TypingActionsExtension.findForContext(project, editor);
     try {
       typingActionsExtension.startCopy(project, editor);
