@@ -71,7 +71,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.writeText
 import kotlin.system.measureTimeMillis
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.minutes
 
 private val EP_NAME: ExtensionPointName<BridgeInitializer> = ExtensionPointName("com.intellij.workspace.bridgeInitializer")
 
@@ -512,7 +512,7 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
         // Safety net: if the callback is never invoked (e.g. due to a platform bug), unblock waiters after a timeout.
         coroutineScope.launch {
           // JpsGlobalModelSynchronizerImpl has a 5-second delay and ModuleManagerComponentBridgeInitializer has a 1-second delay;
-          val timeout = 20.seconds
+          val timeout = 1.minutes
           delay(timeout)
           if (deferred.complete(Unit) && !waitingTimedOut.getAndSet(true)) {
             val threadDump = buildString {
