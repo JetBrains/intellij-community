@@ -450,15 +450,12 @@ internal object DynamicPluginsLegacyImpl {
   /**
    * Checks if the plugin can be loaded/unloaded immediately when the corresponding action is invoked in the
    * plugins settings, without pressing the Apply button.
+   *
+   * TODO bad method name, drop it later
    */
-  // TODO migrate to isUIOnlyDynamicPlugin
   @JvmStatic
   fun allowLoadUnloadSynchronously(module: IdeaPluginDescriptorImpl): Boolean {
-    val extensions = module.extensions.takeIf { it.isNotEmpty() } ?: emptyMap()
-    if (!extensions.all { it.key == UIThemeProvider.EP_NAME.name || it.key == BundledKeymapBean.EP_NAME.name || it.key == LanguageBundleEP.EP_NAME.name}) {
-      return false
-    }
-    return checkNoComponentsOrServiceOverrides(module) == null && module.actions.isEmpty()
+    return module is PluginMainDescriptor && isUIOnlyDynamicPlugin(module)
   }
 
   private fun checkNoComponentsOrServiceOverrides(module: IdeaPluginDescriptorImpl): String? {
