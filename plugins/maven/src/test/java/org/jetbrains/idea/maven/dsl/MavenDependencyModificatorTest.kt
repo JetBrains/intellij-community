@@ -5,15 +5,36 @@ import com.intellij.buildsystem.model.DeclaredDependency
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
 
-class MavenDependencyModificatorTest : MavenMultiVersionImportingTestCase() {
-  override fun runInDispatchThread() = false
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenDependencyModificatorTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
 
   @Test
   fun testShouldReturnDependencyDirectlyDeclared() = runBlocking {
-    val dep = MavenDependencyModificator(project)
-    val file = createProjectPom("""
+    val dep = MavenDependencyModificator(maven.project)
+    val file = maven.createProjectPom("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>
       <version>1.0</version>
@@ -26,15 +47,15 @@ class MavenDependencyModificatorTest : MavenMultiVersionImportingTestCase() {
           </dependency>
       </dependencies>
     """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
     val dependencyList = dep.declaredDependencies(file)
     assertDependencies(dependencyList, "org.test:test-dep:2.0")
   }
 
   @Test
   fun testShouldReturnDependencyManagedInParent() = runBlocking {
-    val dep = MavenDependencyModificator(project)
-    createProjectPom("""
+    val dep = MavenDependencyModificator(maven.project)
+    maven.createProjectPom("""
       <groupId>test</groupId>
       <artifactId>test</artifactId>
       <version>1.0</version>
@@ -53,7 +74,7 @@ class MavenDependencyModificatorTest : MavenMultiVersionImportingTestCase() {
       </dependencyManagement>
     """.trimIndent())
 
-    val moduleFile = createModulePom("m1", """
+    val moduleFile = maven.createModulePom("m1", """
         <parent>
           <groupId>test</groupId>
           <artifactId>test</artifactId>
@@ -70,7 +91,7 @@ class MavenDependencyModificatorTest : MavenMultiVersionImportingTestCase() {
       
      
     """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
     val dependencyList = dep.declaredDependencies(moduleFile)
     assertDependencies(dependencyList, "org.test:test-dep:2.0")
   }
