@@ -12,6 +12,7 @@ import com.intellij.build.events.FinishBuildEvent
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.StartBuildEvent
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.mcpserver.McpProjectDependenciesProvider
 import com.intellij.mcpserver.McpServerBundle
 import com.intellij.mcpserver.McpToolset
 import com.intellij.mcpserver.annotations.McpDescription
@@ -376,13 +377,17 @@ class AnalysisToolset : McpToolset {
   @McpTool
   @McpDescription("""
     |Get a list of all dependencies defined in the project.
+    |Includes JPS module libraries and ecosystem-specific dependencies contributed by language plugins.
+    |(e.g. package.json, deno.json dependencies)
+    |Each entry has a name and, when known, a version, a dependencyType (e.g. devDependencies),
+    |and a source (e.g. jps-library, package.json).
     |Returns structured information about project library names.
   """)
   suspend fun get_project_dependencies(): ProjectDependenciesResult {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.checking.dependencies"))
     val project = currentCoroutineContext().project
 
-    val dependencies = readAction {
+    val jpsDependencies = readAction {
       val moduleManager = ModuleManager.getInstance(project)
       moduleManager.modules.flatMap { module ->
         OrderEnumerator.orderEntries(module)
@@ -391,13 +396,20 @@ class AnalysisToolset : McpToolset {
           .roots
           .map { root ->
             DependencyInfo(
-              name = root.name
+              name = root.name,
+              source = "jps-library",
             )
           }
       }.distinctBy { it.name }
     }
 
-    return ProjectDependenciesResult(dependencies)
+    val providedDependencies = McpProjectDependenciesProvider.EP.extensionList.flatMap { provider ->
+      provider.collectDependencies(project).map {
+        DependencyInfo(it.name, it.version, it.dependencyType, it.source)
+      }
+    }
+
+    return ProjectDependenciesResult(providedDependencies.distinct())
   }
 
   private suspend fun collectLintFiles(
@@ -555,6 +567,12 @@ class AnalysisToolset : McpToolset {
   @Serializable
   data class DependencyInfo(
     @JvmField val name: String,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    @JvmField val version: String? = null,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    @JvmField val dependencyType: String? = null,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    @JvmField val source: String? = null,
   )
 
   @Serializable
