@@ -18,17 +18,17 @@ Most review findings are still open. Stage 1 of the [off-EDT plan](windows-webvi
 
 ## Overview
 
-JNI bridge crate that backs the Windows WebView2 path of `intellij.platform.ui.webview`. Source lives in `community/platform/ui.webview/native/WinWebView2Bridge/src/lib.rs` (~1200 lines, single file), built as a `cdylib`. The Java side is `WinWebView2Bridge.kt` (declarations) plus `WinWebViewEngine.kt` (orchestration, which currently funnels every JNI call through `runOnEdt`).
+JNI bridge crate that backs the Windows WebView2 path of `intellij.platform.ui.webview`. Source lives in `community/plugins/ui.webview/native/WinWebView2Bridge/src/lib.rs` (~1200 lines, single file), built as a `cdylib`. The Java side is `WinWebView2Bridge.kt` (declarations) plus `WinWebViewEngine.kt` (orchestration, which currently funnels every JNI call through `runOnEdt`).
 
 This document inventories issues found in the Rust crate. The proposed off-EDT refactor is in [windows-webview2-off-edt-plan.md](windows-webview2-off-edt-plan.md).
 
 ## Files reviewed
 
-- `community/platform/ui.webview/native/WinWebView2Bridge/src/lib.rs` — single Rust source.
-- `community/platform/ui.webview/native/WinWebView2Bridge/Cargo.toml` — `jni 0.21`, `webview2-com 0.38`, `windows 0.61`.
-- `community/platform/ui.webview/src/com/intellij/ui/webview/impl/windows/WinWebView2Bridge.kt` — Kotlin JNI declarations and ABI sentinel.
-- `community/platform/ui.webview/src/com/intellij/ui/webview/impl/windows/WinWebViewEngine.kt` — engine that orchestrates native calls on EDT.
-- `community/platform/ui.webview/tests/testSrc/com/intellij/ui/webview/WindowsWebViewSmokeTest.kt` — smoke tests.
+- `community/plugins/ui.webview/native/WinWebView2Bridge/src/lib.rs` — single Rust source.
+- `community/plugins/ui.webview/native/WinWebView2Bridge/Cargo.toml` — `jni 0.21`, `webview2-com 0.38`, `windows 0.61`.
+- `community/plugins/ui.webview/src/com/intellij/ui/webview/impl/windows/WinWebView2Bridge.kt` — Kotlin JNI declarations and ABI sentinel.
+- `community/plugins/ui.webview/src/com/intellij/ui/webview/impl/windows/WinWebViewEngine.kt` — engine that orchestrates native calls on EDT.
+- `community/plugins/ui.webview/tests/testSrc/com/intellij/ui/webview/WindowsWebViewSmokeTest.kt` — smoke tests.
 
 ## Issues
 
@@ -145,7 +145,7 @@ This relies on the caller calling `setVisible` afterwards. `WinWebViewEngine.app
 
 ## Verification
 
-- Build: `cd community/platform/ui.webview/native/WinWebView2Bridge && cargo build --target x86_64-pc-windows-msvc` on a Windows host. On macOS/Linux the `#![cfg(target_os = "windows")]` produces an empty crate, as expected.
+- Build: `cd community/plugins/ui.webview/native/WinWebView2Bridge && cargo build --target x86_64-pc-windows-msvc` on a Windows host. On macOS/Linux the `#![cfg(target_os = "windows")]` produces an empty crate, as expected.
 - Smoke tests: `WindowsWebViewSmokeTest` covers the main paths — `evaluateJavaScript_returnsResult`, `webMessageReceived_reachesBus`, `swingTextField_acceptsTypingAfterWebViewFocus`, `facade_survives_host_detach_reattach`. Windows host, non-headless.
 - For C3, add a payload containing a control character to `transferToJs` and assert that the in-page `JSON.parse` does not throw.
 - For C1, simulate a `CreateCoreWebView2EnvironmentWithOptions` failure (e.g. corrupt the user-data directory) and confirm that repeated `createNative` invocations do not accumulate `NativeWebView` instances (Process Hacker / `tasklist /v`).

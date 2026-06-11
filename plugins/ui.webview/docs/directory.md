@@ -2,7 +2,7 @@
 
 > Status legend: ✅ done · ⏳ in progress · ⬜ todo · 🚫 blocked · 🗑️ dropped · 📊 analysis-only.
 >
-> This is the single entry point for `community/platform/ui.webview/` docs. Open the linked sub-plans for full detail.
+> This is the single entry point for `community/plugins/ui.webview/` docs. Open the linked sub-plans for full detail.
 
 ## 1. Quick start
 

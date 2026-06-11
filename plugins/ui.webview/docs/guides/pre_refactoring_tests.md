@@ -59,8 +59,8 @@ The test should be skipped, not failed, when the current machine cannot run any 
 Add test resources under:
 
 ```text
-community/platform/ui.webview/tests/testResources/webview/views/smoke/index.html
-community/platform/ui.webview/tests/testResources/webview/views/smoke/smoke.js
+community/plugins/ui.webview/tests/testResources/webview/views/smoke/index.html
+community/plugins/ui.webview/tests/testResources/webview/views/smoke/smoke.js
 ```
 
 The page should be intentionally tiny. It must not depend on React, CDN resources, the demo board, product UI state, network, or timing-sensitive animations.

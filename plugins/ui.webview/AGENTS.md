@@ -8,6 +8,6 @@
 ## WebView Local Code Style
 
 - In WebView Kotlin, Java, and native bridge code, mark string literals that embed HTML or JavaScript code.
-- Apply the same rule to related WebView native bridge files under `community/platform/ui.webview/native/LinuxWebKitGtkBridge` and `community/platform/ui.webview/native/WinWebView2Bridge`.
+- Apply the same rule to related WebView native bridge files under `community/plugins/ui.webview/native/LinuxWebKitGtkBridge` and `community/plugins/ui.webview/native/WinWebView2Bridge`.
 - Prefer `@Language("HTML")` or `@Language("JavaScript")` on a parameter, property, local variable, or helper function when the language applies to the whole value.
 - If an annotation cannot be attached cleanly, put an IntelliLang marker immediately before the literal: `/*language=HTML*/` or `/*language=JavaScript*/`.

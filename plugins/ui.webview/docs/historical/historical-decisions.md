@@ -1,6 +1,6 @@
 # WebView — Historical Decisions Digest
 
-One-line summaries of approaches that were tried and changed in `community/platform/ui.webview/`. Use this when reviewing why current code looks the way it does, or before proposing to revisit a direction that has already been considered.
+One-line summaries of approaches that were tried and changed in `community/plugins/ui.webview/`. Use this when reviewing why current code looks the way it does, or before proposing to revisit a direction that has already been considered.
 
 Source POC documents have been removed; this digest is the only persistent record of the why. For the live design, see [`directory.md`](../directory.md).
 

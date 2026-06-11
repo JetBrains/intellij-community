@@ -10,7 +10,7 @@ The Windows backend is implemented by:
 - `src/com/intellij/ui/webview/internal/windows/WinNativeWebViewHostPeer.kt`
 - `src/com/intellij/ui/webview/internal/windows/WinWebView2Bridge.kt`
 - `src/com/intellij/ui/webview/internal/windows/WinWebViewShortcutInterop.kt`
-- `community/platform/ui.webview/native/WinWebView2Bridge`
+- `community/plugins/ui.webview/native/WinWebView2Bridge`
 
 `WindowsWebView2EngineProvider` registers it as `WebViewEngineId.SYSTEM_WINDOWS`.
 
@@ -54,12 +54,12 @@ Do not reintroduce extracted-file asset loaders or a localhost server.
 Build the native bridge locally with:
 
 ```text
-pwsh -File community/platform/ui.webview/native/WinWebView2Bridge/build.ps1
+pwsh -File community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1
 ```
 
-The script runs Cargo in release mode for the current Windows architecture and copies the resulting DLL into `community/platform/ui.webview/lib/webview-native/win/<plugin-arch>/`. Pass `-Target aarch64-pc-windows-msvc` to update the arm64 committed artifact after installing the matching Rust standard library and ARM64 MSVC toolchain. Run arm64 builds from the Visual Studio `x64_arm64` developer environment, and if Rust is installed both through rustup and as a standalone toolchain, make sure the `cargo` selected by `PATH` is the one where the target is installed.
+The script runs Cargo in release mode for the current Windows architecture and copies the resulting DLL into `community/plugins/ui.webview/lib/webview-native/win/<plugin-arch>/`. Pass `-Target aarch64-pc-windows-msvc` to update the arm64 committed artifact after installing the matching Rust standard library and ARM64 MSVC toolchain. Run arm64 builds from the Visual Studio `x64_arm64` developer environment, and if Rust is installed both through rustup and as a standalone toolchain, make sure the `cargo` selected by `PATH` is the one where the target is installed.
 
-If a dev IDE process has loaded the bridge DLL, stop that process before replacing the committed copy; Windows keeps loaded DLLs locked. At runtime the provider loads `win_webview2_bridge.dll` from WebView plugin-local native resources. In a checkout, the source-tree fallback checks `community/platform/ui.webview/lib/webview-native/win/<plugin-arch>/`, so the committed `community/platform/ui.webview/lib/webview-native/win/x86_64/win_webview2_bridge.dll` is the canonical x64 artifact.
+If a dev IDE process has loaded the bridge DLL, stop that process before replacing the committed copy; Windows keeps loaded DLLs locked. At runtime the provider loads `win_webview2_bridge.dll` from WebView plugin-local native resources. In a checkout, the source-tree fallback checks `community/plugins/ui.webview/lib/webview-native/win/<plugin-arch>/`, so the committed `community/plugins/ui.webview/lib/webview-native/win/x86_64/win_webview2_bridge.dll` is the canonical x64 artifact.
 
 ## Verification
 

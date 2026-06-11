@@ -75,7 +75,7 @@ An earlier draft chose a tick-based pump as "minimally invasive": keep `pumpMess
 
 ### Step 1. Create the dispatcher and start `WebView2-Thread`
 
-New file `community/platform/ui.webview/src/com/intellij/ui/webview/impl/windows/WebView2Dispatcher.kt`:
+New file `community/plugins/ui.webview/src/com/intellij/ui/webview/impl/windows/WebView2Dispatcher.kt`:
 
 ```kotlin
 internal object WebView2Dispatcher {
@@ -263,11 +263,11 @@ Set in `create_native`, check in `run_with_handle` and `destroyNative`.
 
 | File | Change |
 |---|---|
-| `community/platform/ui.webview/native/WinWebView2Bridge/src/lib.rs` | + `runMessageLoopNative` / `postTaskNative` / `stopMessageLoopNative` / `currentThreadIdNative` / `attachThreadInputNative` / `detachThreadInputNative`; − `pump_pending_messages_limited`, `should_leave_message_for_awt`, `is_message_in_range`, `PumpResult`, `Java_..._pumpMessagesNative` (~70 lines); add `assert_owning_thread` in `run_with_handle`. |
-| `community/platform/ui.webview/src/com/intellij/ui/webview/impl/windows/WebView2Dispatcher.kt` | **New file:** daemon `WebView2-Thread` runs `runMessageLoopNative`; custom `CoroutineDispatcher.dispatch` posts via `postTaskNative`. |
-| `community/platform/ui.webview/src/com/intellij/ui/webview/impl/windows/WinWebView2Bridge.kt` | + `external fun runMessageLoopNative()`, `postTaskNative(runnable: Runnable, targetTid: Long)`, `stopMessageLoopNative(targetTid: Long)`, `currentThreadIdNative(): Long`, `attachThreadInputNative(edtTid: Long)`, `detachThreadInputNative(edtTid: Long)`; − `pumpMessagesNative`; bump ABI sentinel `wvi-scoped-pump-v1` → `wvi-dedicated-thread-v1`. |
-| `community/platform/ui.webview/src/com/intellij/ui/webview/impl/windows/WinWebViewEngine.kt` | `runOnEdt` → `invokeOnWebView`; **delete** `startMessagePump`, `stopMessagePump`, `messagePumpTimer`, `PUMP_INTERVAL_MILLIS`, `MAX_PUMP_MESSAGES_PER_TICK` and all call sites; `AttachThreadInput` on first attach; `DetachThreadInput` on close. Possible `withContext(Dispatchers.Swing)` wrappers in callbacks per Step 6. |
-| `community/platform/ui.webview/src/com/intellij/ui/webview/impl/windows/WinWebViewShortcutInterop.kt` (if present) | Possible refactor — see Step 6. |
+| `community/plugins/ui.webview/native/WinWebView2Bridge/src/lib.rs` | + `runMessageLoopNative` / `postTaskNative` / `stopMessageLoopNative` / `currentThreadIdNative` / `attachThreadInputNative` / `detachThreadInputNative`; − `pump_pending_messages_limited`, `should_leave_message_for_awt`, `is_message_in_range`, `PumpResult`, `Java_..._pumpMessagesNative` (~70 lines); add `assert_owning_thread` in `run_with_handle`. |
+| `community/plugins/ui.webview/src/com/intellij/ui/webview/impl/windows/WebView2Dispatcher.kt` | **New file:** daemon `WebView2-Thread` runs `runMessageLoopNative`; custom `CoroutineDispatcher.dispatch` posts via `postTaskNative`. |
+| `community/plugins/ui.webview/src/com/intellij/ui/webview/impl/windows/WinWebView2Bridge.kt` | + `external fun runMessageLoopNative()`, `postTaskNative(runnable: Runnable, targetTid: Long)`, `stopMessageLoopNative(targetTid: Long)`, `currentThreadIdNative(): Long`, `attachThreadInputNative(edtTid: Long)`, `detachThreadInputNative(edtTid: Long)`; − `pumpMessagesNative`; bump ABI sentinel `wvi-scoped-pump-v1` → `wvi-dedicated-thread-v1`. |
+| `community/plugins/ui.webview/src/com/intellij/ui/webview/impl/windows/WinWebViewEngine.kt` | `runOnEdt` → `invokeOnWebView`; **delete** `startMessagePump`, `stopMessagePump`, `messagePumpTimer`, `PUMP_INTERVAL_MILLIS`, `MAX_PUMP_MESSAGES_PER_TICK` and all call sites; `AttachThreadInput` on first attach; `DetachThreadInput` on close. Possible `withContext(Dispatchers.Swing)` wrappers in callbacks per Step 6. |
+| `community/plugins/ui.webview/src/com/intellij/ui/webview/impl/windows/WinWebViewShortcutInterop.kt` (if present) | Possible refactor — see Step 6. |
 
 ## Stages (each shippable independently)
 

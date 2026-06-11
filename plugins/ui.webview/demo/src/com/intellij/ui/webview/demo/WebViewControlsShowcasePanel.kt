@@ -29,7 +29,7 @@ import javax.swing.SwingConstants
 import javax.swing.SwingUtilities
 
 private const val SHOWCASE_RESOURCE_ROOT = "webview/views/controls-showcase"
-private const val SHOWCASE_SOURCE_PATH = "community/platform/ui.webview/demo/webview-src/views/controls-showcase/src/main.ts"
+private const val SHOWCASE_SOURCE_PATH = "community/plugins/ui.webview/demo/webview-src/views/controls-showcase/src/main.ts"
 
 private val LOG = logger<WebViewControlsShowcasePanel>()
 private val SHOWCASE_ASSET_ROOT = WebViewAssetRoot.fromClasspath(

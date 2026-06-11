@@ -92,7 +92,7 @@ internal fun webViewNativeArchDirectory(): String {
   }
 }
 
-private const val WEBVIEW_PLUGIN_SOURCE_ROOT = "community/platform/ui.webview"
+private const val WEBVIEW_PLUGIN_SOURCE_ROOT = "community/plugins/ui.webview"
 private const val IDEA_DEV_PROJECT_ROOT_PROPERTY = "idea.dev.project.root"
 
 private fun defaultSourceFileLookup(relativePath: String): Path? {

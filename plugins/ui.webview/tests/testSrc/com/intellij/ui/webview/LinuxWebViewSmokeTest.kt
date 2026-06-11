@@ -90,7 +90,7 @@ class LinuxWebViewSmokeTest {
       LinuxWaylandWindowUtil.isSupportedToolkit(),
       "Linux WebKitGTK WebView smoke tests require WLToolkit/Wayland",
     )
-    assumeTrue(nativeBridgeAvailable(), "LinuxWebKitGtkBridge is not built; run cargo build in community/platform/ui.webview/native/LinuxWebKitGtkBridge")
+    assumeTrue(nativeBridgeAvailable(), "LinuxWebKitGtkBridge is not built; run cargo build in community/plugins/ui.webview/native/LinuxWebKitGtkBridge")
 
     @Suppress("RAW_SCOPE_CREATION") // Test: no parent scope available without IJ platform
     scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

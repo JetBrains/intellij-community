@@ -4,7 +4,7 @@ Status: current architecture snapshot after the May 2026 runtime refactoring. Th
 
 ## Current Model
 
-`community/platform/ui.webview` exposes an engine-neutral runtime around four public concepts:
+`community/plugins/ui.webview` exposes an engine-neutral runtime around four public concepts:
 
 - `WebViewRuntime` is the application service that selects an engine provider and creates a `WebView`.
 - `WebView` is one browser/page instance. It owns `messageBus`, `runtimeInfo`, load/eval operations, and `close()`.

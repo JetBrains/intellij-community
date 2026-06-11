@@ -94,24 +94,24 @@ CSS code splitting is disabled for view builds. CSS remains a separate browser a
 The manual build commands are:
 
 ```shell
-cd community/platform/ui.webview/webview-src && bun run build
-cd community/platform/ui.webview/demo/webview-src && bun run build
-cd community/platform/ui.webview/markdown-preview/webview-src && bun run build
+cd community/plugins/ui.webview/webview-src && bun run build
+cd community/plugins/ui.webview/demo/webview-src && bun run build
+cd community/plugins/ui.webview/markdown-preview/webview-src && bun run build
 ```
 
 Module-level view builds also accept view ids after `--` for local targeted rebuilds, and `--watch` for Vite watch mode:
 
 ```shell
-cd community/platform/ui.webview/demo/webview-src && bun run build -- sample-panel
-cd community/platform/ui.webview/demo/webview-src && bun run build -- --watch sample-panel
+cd community/plugins/ui.webview/demo/webview-src && bun run build -- sample-panel
+cd community/plugins/ui.webview/demo/webview-src && bun run build -- --watch sample-panel
 ```
 
 The repository also has manual Bazel targets that run the same asset builds:
 
 ```shell
-./bazel.cmd run @community//platform/ui.webview:build_web_assets
-./bazel.cmd run @community//platform/ui.webview/demo:build_web_assets
-./bazel.cmd run @community//platform/ui.webview/markdown-preview:build_web_assets
+./bazel.cmd run @community//plugins/ui.webview:build_web_assets
+./bazel.cmd run @community//plugins/ui.webview/demo:build_web_assets
+./bazel.cmd run @community//plugins/ui.webview/markdown-preview:build_web_assets
 ```
 
 After running the frontend build, commit the generated `resources/webview/` output together with the source changes. Do not hand-edit generated `resources/webview/views/<view-id>/index.html`, `view.js`, `styles.css`, or `assets/*`; change the corresponding `webview-src/views/<view-id>` source and rebuild.
@@ -145,7 +145,7 @@ import { Button, Toolbar } from "@jetbrains/intellij-webview-controls"
 Do not import shared code through Java-module-relative paths:
 
 ```ts
-import { webView } from "../../../../community/platform/ui.webview/webview-src/packages/api/src"
+import { webView } from "../../../../community/plugins/ui.webview/webview-src/packages/api/src"
 ```
 
 Relative imports across Java module directories bake checkout layout into frontend code and do not translate to external plugin repositories.
@@ -175,10 +175,10 @@ When package-manager dependencies are not available, `compilerOptions.paths` can
   "compilerOptions": {
     "paths": {
       "@jetbrains/intellij-webview": [
-        "../../../../community/platform/ui.webview/webview-src/packages/api/src"
+        "../../../../community/plugins/ui.webview/webview-src/packages/api/src"
       ],
       "@jetbrains/intellij-webview/*": [
-        "../../../../community/platform/ui.webview/webview-src/packages/api/src/*"
+        "../../../../community/plugins/ui.webview/webview-src/packages/api/src/*"
       ]
     }
   }
@@ -207,7 +207,7 @@ flowchart TD
   View["plugin view\nwebview-src/views/settings/src/main.ts"]
   Import["@jetbrains/intellij-webview"]
   Alias["package dependency\nVite helper"]
-  Source["community/platform/ui.webview\nwebview-src/packages/api/src"]
+  Source["community/plugins/ui.webview\nwebview-src/packages/api/src"]
   Bridge["/__webview/wvi-bridge.js\nplatform runtime asset"]
   Output["resources/webview/views/settings\nindex.html, view.js, css"]
 
@@ -229,7 +229,7 @@ Example `package.json` for a monorepo module view package:
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "@jetbrains/intellij-webview": "file:<relative-path-to-community/platform/ui.webview/webview-src>"
+    "@jetbrains/intellij-webview": "file:<relative-path-to-community/plugins/ui.webview/webview-src>"
   },
   "devDependencies": {
     "typescript": "^5.6.0",
@@ -272,7 +272,7 @@ The helper owns the default layout: `webview-src/views/<view-id>` -> `resources/
 
 ## Bazel Integration Modes
 
-The current integration mode is manual/semi-manual. Each module with frontend sources can expose a local Bazel trigger target named `build_web_assets`, backed by the shared `community/platform/ui.webview/build-web-assets` script. Running this target executes the module package-manager build and materializes static output under the module-local `resources/webview/...` tree:
+The current integration mode is manual/semi-manual. Each module with frontend sources can expose a local Bazel trigger target named `build_web_assets`, backed by the shared `community/plugins/ui.webview/build-web-assets` script. Running this target executes the module package-manager build and materializes static output under the module-local `resources/webview/...` tree:
 
 ```text
 bazel run <module-label>:build_web_assets
@@ -326,7 +326,7 @@ flowchart TD
 
 This gives one source-level contract:
 
-- inside the monorepo, package dependencies can point to `community/platform/ui.webview/webview-src`, whose exports point to shared source;
+- inside the monorepo, package dependencies can point to `community/plugins/ui.webview/webview-src`, whose exports point to shared source;
 - outside the monorepo, `node_modules` points to published packages;
 - the application code does not change.
 

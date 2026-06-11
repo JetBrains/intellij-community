@@ -10,7 +10,7 @@ native_binary(
   name = "build_web_assets",
   src = "build-web-assets",
   env = {
-    "WEBVIEW_SRC_DIR": "community/platform/ui.webview/webview-src",
+    "WEBVIEW_SRC_DIR": "community/plugins/ui.webview/webview-src",
   },
   tags = ["manual", "local"],
 )
@@ -19,7 +19,7 @@ webview_plugin_zip(
     name = "webview_plugin_zip",
     files = {
         ":ui.webview.jar": "lib/com.intellij.platform.ui.webview.jar",
-        "//platform/ui.webview/jcef:jcef.jar": "lib/modules/intellij.platform.ui.webview.jcef.jar",
+        "//plugins/ui.webview/jcef:jcef.jar": "lib/modules/intellij.platform.ui.webview.jcef.jar",
     },
     native_files = glob(["lib/webview-native/win/**"]),
     out = "webview.zip",

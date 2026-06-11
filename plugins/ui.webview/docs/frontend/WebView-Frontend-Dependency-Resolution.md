@@ -20,7 +20,7 @@ The source code should still use package-style imports. It should not contain ch
 import { webView } from "@jetbrains/intellij-webview"
 
 // Bad: binds source code to the current monorepo layout.
-import { webView } from "../../../../community/platform/ui.webview/webview-src/packages/api/src"
+import { webView } from "../../../../community/plugins/ui.webview/webview-src/packages/api/src"
 ```
 
 ## Three Resolvers
@@ -51,7 +51,7 @@ flowchart TD
   View["plugin view\nwebview-src/views/settings/src/main.ts"]
   Import["@jetbrains/intellij-webview"]
   Alias["package dependency\nVite helper"]
-  Source["community/platform/ui.webview\nwebview-src/packages/api/src"]
+  Source["community/plugins/ui.webview\nwebview-src/packages/api/src"]
   Output["resources/webview/views/settings\nindex.html, view.js, css"]
 
   View --> Import
@@ -65,7 +65,7 @@ Example `package.json` + `tsconfig.json`:
 ```json
 {
   "dependencies": {
-    "@jetbrains/intellij-webview": "file:<relative-path-to-community/platform/ui.webview/webview-src>"
+    "@jetbrains/intellij-webview": "file:<relative-path-to-community/plugins/ui.webview/webview-src>"
   },
   "devDependencies": {
     "typescript": "^5.6.0",

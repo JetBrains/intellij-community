@@ -10,7 +10,7 @@ This plan applies only to the Windows system WebView backend. It does not change
 
 ## Native Defaults
 
-Configure these defaults in `community/platform/ui.webview/native/WinWebView2Bridge/src/lib.rs` before the page is reported as created to Kotlin:
+Configure these defaults in `community/plugins/ui.webview/native/WinWebView2Bridge/src/lib.rs` before the page is reported as created to Kotlin:
 
 - Set WebView2 environment browser arguments to `--disable-features=ElasticOverscroll` before `CreateCoreWebView2EnvironmentWithOptions`.
 - After `controller.CoreWebView2()` succeeds, call a dedicated helper such as `configure_webview_application_settings(...)` before attaching readiness-sensitive state.
@@ -41,7 +41,7 @@ If a whole WebView page later needs browser/page zoom as an intentional feature,
 
 ## Verification
 
-- `cargo check --manifest-path community/platform/ui.webview/native/WinWebView2Bridge/Cargo.toml`
+- `cargo check --manifest-path community/plugins/ui.webview/native/WinWebView2Bridge/Cargo.toml`
 - `./tests.cmd --module intellij.platform.ui.webview.tests --test com.intellij.ui.webview.impl.windows.WinWebViewEngineTest`
 - Manual Windows smoke test in a WebView demo page:
   - no elastic stretch at scroll boundaries;

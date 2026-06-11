@@ -13,9 +13,9 @@ internal val linuxWebKitGtkBridgeLibrary = NativeBridgeLibrary(
     "lib/webview-native/linux/${webViewNativeArchDirectory()}/libLinuxWebKitGtkBridge.so",
     "lib/webview-native/linux/${webViewNativeArchDirectory()}/liblinux_webkitgtk_bridge.so",
   ),
-  rebuildHint = "Rebuild community/platform/ui.webview/native/LinuxWebKitGtkBridge.",
+  rebuildHint = "Rebuild community/plugins/ui.webview/native/LinuxWebKitGtkBridge.",
   loadFailureHint = "The Linux WebView backend requires GTK3 and WebKitGTK 4.1 runtime libraries. " +
-                    "Rebuild community/platform/ui.webview/native/LinuxWebKitGtkBridge.",
+                    "Rebuild community/plugins/ui.webview/native/LinuxWebKitGtkBridge.",
   pluginAnchorClass = LinuxWebKitGtkBridgePluginAnchor::class.java,
 )
 

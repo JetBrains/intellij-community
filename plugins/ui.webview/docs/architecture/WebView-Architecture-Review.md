@@ -1,6 +1,6 @@
 # WebView Architecture Review
 
-Status: review of the current type surface in `community/platform/ui.webview/`. No code changes were performed; this document records findings and the target shape.
+Status: review of the current type surface in `community/plugins/ui.webview/`. No code changes were performed; this document records findings and the target shape.
 
 ## Scope
 

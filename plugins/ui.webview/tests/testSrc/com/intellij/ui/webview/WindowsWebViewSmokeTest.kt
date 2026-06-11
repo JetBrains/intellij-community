@@ -47,7 +47,7 @@ class WindowsWebViewSmokeTest {
 
   @BeforeEach
   fun setUp() {
-    assumeTrue(nativeBridgeAvailable(), "WinWebView2Bridge DLL is not built; run community/platform/ui.webview/native/WinWebView2Bridge/build.ps1")
+    assumeTrue(nativeBridgeAvailable(), "WinWebView2Bridge DLL is not built; run community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1")
 
     @Suppress("RAW_SCOPE_CREATION") // Test: no parent scope available without IJ platform
     scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)

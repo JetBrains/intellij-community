@@ -11,9 +11,9 @@ internal val winWebView2BridgeLibrary = NativeBridgeLibrary(
   displayName = "Windows WebView2 bridge DLL",
   logEvent = "win-webview2-load",
   relativePaths = listOf("lib/webview-native/win/${webViewNativeArchDirectory()}/win_webview2_bridge.dll"),
-  rebuildHint = "Rebuild community/platform/ui.webview/native/WinWebView2Bridge.",
+  rebuildHint = "Rebuild community/plugins/ui.webview/native/WinWebView2Bridge.",
   loadFailureHint = "Ensure the DLL matches the current JVM architecture and WebView2 runtime dependencies are installed. " +
-                    "Rebuild community/platform/ui.webview/native/WinWebView2Bridge.",
+                    "Rebuild community/plugins/ui.webview/native/WinWebView2Bridge.",
   pluginAnchorClass = WinWebView2BridgePluginAnchor::class.java,
 )
 

@@ -2,7 +2,7 @@
 
 Status: 📊 **FEASIBILITY ANALYSIS ONLY** (2026-04-30 snapshot). No extraction work has started. Current runtime API is summarized in [WebView Runtime Architecture](../architecture/WebView-Runtime-Architecture.md). Use this doc to understand what would block plugin-ization, not as a current-state snapshot.
 
-Branch/context: `n500/262/light-webview-poc`, `community/platform/ui.webview`, and adjacent integration changes at the time of the snapshot.
+Branch/context: `n500/262/light-webview-poc`, `community/plugins/ui.webview`, and adjacent integration changes at the time of the snapshot.
 
 ## Executive Summary
 
@@ -18,7 +18,7 @@ The recommended extraction strategy is to treat WebView as a plugin-owned rich-U
 
 ## What The Branch Changes
 
-### 1. `community/platform/ui.webview`
+### 1. `community/plugins/ui.webview`
 
 This is the core mechanism and the only part that should be considered the primary extraction candidate.
 
@@ -133,7 +133,7 @@ There are two separate JCEF surfaces in the current work, and they have differen
 
 ### `ui.webview` JCEF Backend
 
-The new backend under `community/platform/ui.webview/src/com/intellij/ui/webview/internal/jcef` is plugin-extractable in principle because it lives in the WebView module rather than patching `platform/ui.jcef`.
+The new backend under `community/plugins/ui.webview/src/com/intellij/ui/webview/internal/jcef` is plugin-extractable in principle because it lives in the WebView module rather than patching `platform/ui.jcef`.
 
 It adds:
 
@@ -186,11 +186,11 @@ If any of these fail on `261`, the backport plugin should either use the public 
 
 ## Alternative: Keep It In Platform And Backport To 261
 
-Keeping WebView in the platform makes the packaging model simpler than external plugin extraction, but it does not make the current branch safe to backport as-is. The feature delta outside `community/platform/ui.webview` is concentrated in product/dev wiring, native bridge crates, JCEF startup changes, Markdown integration, and the ACP demo consumer.
+Keeping WebView in the platform makes the packaging model simpler than external plugin extraction, but it does not make the current branch safe to backport as-is. The feature delta outside `community/plugins/ui.webview` is concentrated in product/dev wiring, native bridge crates, JCEF startup changes, Markdown integration, and the ACP demo consumer.
 
 For a `261` platform backport, do not use a raw `origin/261...HEAD` branch diff as the feature scope. That diff includes unrelated `262` platform drift. The safer process is to backport the WebView feature delta from the current branch, then manually re-check only the touched platform files against `origin/261`.
 
-### Risk Of Changes Outside `platform/ui.webview`
+### Risk Of Changes Outside `plugins/ui.webview`
 
 | Area | Needed for a `261` platform backport? | Risk | Assessment |
 |---|---|---|---|
@@ -205,7 +205,7 @@ For a `261` platform backport, do not use a raw `origin/261...HEAD` branch diff 
 
 The least risky `261` platform backport is therefore smaller than the current branch:
 
-1. Backport `community/platform/ui.webview` core API and macOS `WKWebView` backend.
+1. Backport `community/plugins/ui.webview` core API and macOS `WKWebView` backend.
 2. Add only the minimal platform module/product registration required to compile and bundle it.
 3. Keep JCEF OSR fallback behind capability checks, and do not require the `JBCefApp` in-process patch.
 4. Exclude Markdown, ACP demo, Windows system backend, and Linux system backend from the first backport unless their packaging/runtime gaps are closed.

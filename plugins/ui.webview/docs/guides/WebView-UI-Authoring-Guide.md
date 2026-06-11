@@ -46,7 +46,7 @@ Use typed WebView APIs directly from the shared package. The Vite helpers inject
 import { apiId, webView, type WebViewCallable, type WebViewImplementable } from "@jetbrains/intellij-webview"
 ```
 
-Do not add raw `/__webview/*.js` script tags to HTML, and do not import shared WebView runtime code through checkout-relative paths such as `../../../../community/platform/ui.webview/...`. Configure `package.json`, `tsconfig.json`, and the bundler so the same package import works for typechecking and bundling.
+Do not add raw `/__webview/*.js` script tags to HTML, and do not import shared WebView runtime code through checkout-relative paths such as `../../../../community/plugins/ui.webview/...`. Configure `package.json`, `tsconfig.json`, and the bundler so the same package import works for typechecking and bundling.
 
 For Vite-based views, prefer the shared helpers from `@jetbrains/intellij-webview/vite`:
 

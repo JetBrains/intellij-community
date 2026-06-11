@@ -6,8 +6,8 @@ Status: ⬜ **planned**. This document records the intended release-build wiring
 
 Both plugins already have Bazel ZIP targets that can be built manually:
 
-- `@community//platform/ui.webview:webview_plugin_zip`
-- `@community//platform/ui.webview/markdown-preview:markdown_webview_preview_plugin_zip`
+- `@community//plugins/ui.webview:webview_plugin_zip`
+- `@community//plugins/ui.webview/markdown-preview:markdown_webview_preview_plugin_zip`
 
 The runtime ZIP is shaped as `webview/` and includes the WebView runtime jar, the JCEF content-module jar under `lib/modules/`, and Windows native bridge files under `lib/webview-native/win/`. The Markdown preview ZIP is shaped as `markdown-webview-preview/` and includes its plugin jar.
 
@@ -37,7 +37,7 @@ Add an explicit `PluginLayout` entry for `intellij.platform.ui.webview` in `Comm
 
 - directory name: `webview`
 - main jar: `com.intellij.platform.ui.webview.jar`
-- Windows native bridge files copied from `platform/ui.webview/lib/webview-native/win` to `lib/webview-native/win`
+- Windows native bridge files copied from `plugins/ui.webview/lib/webview-native/win` to `lib/webview-native/win`
 - JCEF content module left to the existing `<content>` auto-layout so `intellij.platform.ui.webview.jcef` is packaged under `lib/modules/`
 
 Add an explicit layout for `intellij.markdown.webview.preview` so its Marketplace ZIP keeps the current artifact names:
@@ -68,7 +68,7 @@ org.intellij.plugins.markdown.webview.preview
 For the existing manual Bazel ZIPs:
 
 ```shell
-./bazel.cmd build @community//platform/ui.webview:webview_plugin_zip @community//platform/ui.webview/markdown-preview:markdown_webview_preview_plugin_zip
+./bazel.cmd build @community//plugins/ui.webview:webview_plugin_zip @community//plugins/ui.webview/markdown-preview:markdown_webview_preview_plugin_zip
 ```
 
 For the standard auto-upload allowlist and build-script path:

@@ -4,9 +4,9 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 native_binary(
   name = "build_web_assets",
-  src = "//platform/ui.webview:build-web-assets",
+  src = "//plugins/ui.webview:build-web-assets",
   env = {
-    "WEBVIEW_SRC_DIR": "community/platform/ui.webview/demo/webview-src",
+    "WEBVIEW_SRC_DIR": "community/plugins/ui.webview/demo/webview-src",
   },
   tags = ["manual", "local"],
 )
@@ -50,7 +50,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/indexing-api:indexing",
         "//platform/lang-api:lang",
-        "//platform/ui.webview",
+        "//plugins/ui.webview",
         "//platform/platform-api:ide",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
@@ -86,7 +86,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/indexing-api:indexing_test_lib",
         "//platform/lang-api:lang_test_lib",
-        "//platform/ui.webview:ui.webview_test_lib",
+        "//plugins/ui.webview:ui.webview_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",

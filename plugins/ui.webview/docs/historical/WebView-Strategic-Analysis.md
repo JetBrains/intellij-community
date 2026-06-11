@@ -1,7 +1,7 @@
 # WebView-as-Tauri-for-IntelliJ: стратегический отчёт
 
 > Анализ: выдержит ли WebView-подход аргументы, которыми зарубили Compose for Desktop в IJ Platform.
-> Источники: cancellation-letter по Compose, 6-month retro AI Chat-команды, POC `n500/262/light-webview-poc`, исходники `community/platform/ui.jcef/` и `community/platform/ui.webview/`, YouTrack (IJPL-184288, JBR-2751), публичные release notes, GitHub-issues и форумы по Tauri/WKWebView/WebView2/WebKitGTK.
+> Источники: cancellation-letter по Compose, 6-month retro AI Chat-команды, POC `n500/262/light-webview-poc`, исходники `community/platform/ui.jcef/` и `community/plugins/ui.webview/`, YouTrack (IJPL-184288, JBR-2751), публичные release notes, GitHub-issues и форумы по Tauri/WKWebView/WebView2/WebKitGTK.
 
 ---
 
@@ -732,7 +732,7 @@ private fun loadContent() {
 Для переиспользования одних компонент в нескольких модулях/плагинах — отдельный platform-модуль:
 
 ```
-community/platform/ui.webview.components/
+community/plugins/ui.webview.components/
 ├── intellij.platform.ui.webview.components.iml
 ├── src/
 │   └── com/intellij/ui/webview/components/
@@ -866,20 +866,20 @@ rpc.on('theme/snapshot', (tokens: Record<string, string>) => {
 
 | Файл | Что показывает |
 |---|---|
-| `community/platform/ui.webview/README.md` | Обзор POC |
-| `community/platform/ui.webview/docs/Lightweight-System-WebView-React-Integration.md` | Архитектура и hypothesis |
-| `community/platform/ui.webview/docs/Platform-Wide-Viability-Report.md` | Аргументы про web как рендерер |
-| `community/platform/ui.webview/docs/WebView-Kotlin-JSON-RPC-Spec.md` | POC-1 IPC-спецификация |
-| `community/platform/ui.webview/docs/poc-0-decisions/01-awt-nsview-embedding.md` | Native child view vs OSR |
-| `community/platform/ui.webview/docs/poc-0-decisions/02-edt-main-thread-marshalling.md` | Threading model |
-| `community/platform/ui.webview/docs/poc-0-decisions/03-minimal-js-jvm-bridge.md` | JSON-RPC bridge |
-| `community/platform/ui.webview/docs/poc-0-decisions/05-focus-keyboard-ime.md` | Focus boundary — open questions |
-| `community/platform/ui.webview/docs/poc-0-decisions/07-lifecycle-and-cancellation.md` | CoroutineScope-first |
-| `community/platform/ui.webview/docs/poc-0-decisions/09-crash-leak-diagnostics.md` | Crash observer plan (pending) |
-| `community/platform/ui.webview/src/com/intellij/ui/webview/internal/mac/MacWebViewFacade.kt` | macOS backend |
-| `community/platform/ui.webview/src/com/intellij/ui/webview/internal/mac/WKWebViewBridge.kt` | ObjC/JNA bridge |
-| `community/platform/ui.webview/src/com/intellij/ui/webview/interop/WebViewMessageBus.kt` | Message bus |
-| `community/platform/ui.webview/demo/` | Kanban + mermaid демо |
+| `community/plugins/ui.webview/README.md` | Обзор POC |
+| `community/plugins/ui.webview/docs/Lightweight-System-WebView-React-Integration.md` | Архитектура и hypothesis |
+| `community/plugins/ui.webview/docs/Platform-Wide-Viability-Report.md` | Аргументы про web как рендерер |
+| `community/plugins/ui.webview/docs/WebView-Kotlin-JSON-RPC-Spec.md` | POC-1 IPC-спецификация |
+| `community/plugins/ui.webview/docs/poc-0-decisions/01-awt-nsview-embedding.md` | Native child view vs OSR |
+| `community/plugins/ui.webview/docs/poc-0-decisions/02-edt-main-thread-marshalling.md` | Threading model |
+| `community/plugins/ui.webview/docs/poc-0-decisions/03-minimal-js-jvm-bridge.md` | JSON-RPC bridge |
+| `community/plugins/ui.webview/docs/poc-0-decisions/05-focus-keyboard-ime.md` | Focus boundary — open questions |
+| `community/plugins/ui.webview/docs/poc-0-decisions/07-lifecycle-and-cancellation.md` | CoroutineScope-first |
+| `community/plugins/ui.webview/docs/poc-0-decisions/09-crash-leak-diagnostics.md` | Crash observer plan (pending) |
+| `community/plugins/ui.webview/src/com/intellij/ui/webview/internal/mac/MacWebViewFacade.kt` | macOS backend |
+| `community/plugins/ui.webview/src/com/intellij/ui/webview/internal/mac/WKWebViewBridge.kt` | ObjC/JNA bridge |
+| `community/plugins/ui.webview/src/com/intellij/ui/webview/interop/WebViewMessageBus.kt` | Message bus |
+| `community/plugins/ui.webview/demo/` | Kanban + mermaid демо |
 | `community/plugins/markdown/core/src/org/intellij/plugins/markdown/ui/preview/webview/MarkdownWebViewHtmlPanel.kt` | Параллельная WebView markdown preview — точка JCEF-консолидации |
 
 ### JCEF (для консолидации и compare)

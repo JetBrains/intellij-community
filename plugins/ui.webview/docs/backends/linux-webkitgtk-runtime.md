@@ -36,10 +36,10 @@ The backend is intentionally unsupported in the MVP on X11/XToolkit sessions, he
 Build the native bridge locally with:
 
 ```shell
-cargo build --manifest-path community/platform/ui.webview/native/LinuxWebKitGtkBridge/Cargo.toml
+cargo build --manifest-path community/plugins/ui.webview/native/LinuxWebKitGtkBridge/Cargo.toml
 ```
 
-The Kotlin loader resolves the bridge from WebView plugin-local native resources. Until product/build wiring copies Cargo output into that layout, place local builds under `community/platform/ui.webview/lib/webview-native/linux/<plugin-arch>/`. It validates the bridge ABI after loading so stale local builds fail with a rebuild hint.
+The Kotlin loader resolves the bridge from WebView plugin-local native resources. Until product/build wiring copies Cargo output into that layout, place local builds under `community/plugins/ui.webview/lib/webview-native/linux/<plugin-arch>/`. It validates the bridge ABI after loading so stale local builds fail with a rebuild hint.
 
 ## Failure Mode
 

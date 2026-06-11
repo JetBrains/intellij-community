@@ -24,7 +24,7 @@ internal class NativeBridgeLibraryTest {
   @Test
   fun availability_resolvesDevProjectRootSourceTreeFile(@TempDir root: Path) {
     val relativePath = "lib/webview-native/win/x86_64/test_bridge.dll"
-    val libraryPath = root.resolve("community/platform/ui.webview").resolve(relativePath)
+    val libraryPath = root.resolve("community/plugins/ui.webview").resolve(relativePath)
     Files.createDirectories(libraryPath.parent)
     Files.createFile(libraryPath)
     withSystemProperty("idea.dev.project.root", root.toString()) {
@@ -32,7 +32,7 @@ internal class NativeBridgeLibraryTest {
         displayName = "Test bridge library",
         logEvent = "test-bridge-load",
         relativePaths = listOf(relativePath),
-        rebuildHint = "Rebuild community/platform/ui.webview/native/TestBridge.",
+        rebuildHint = "Rebuild community/plugins/ui.webview/native/TestBridge.",
         loadFailureHint = "Rebuild the test bridge.",
         pluginAnchorClass = NativeBridgeLibraryTest::class.java,
         pluginResourceLookup = { _, _ -> null },
@@ -101,7 +101,7 @@ internal class NativeBridgeLibraryTest {
     }
 
     assertTrue(error.message!!.contains("Expected ABI 'expected-abi'"), error.message)
-    assertTrue(error.message!!.contains("Rebuild community/platform/ui.webview/native/TestBridge."), error.message)
+    assertTrue(error.message!!.contains("Rebuild community/plugins/ui.webview/native/TestBridge."), error.message)
   }
 
   private fun testLibrary(
@@ -116,7 +116,7 @@ internal class NativeBridgeLibraryTest {
         "lib/webview-native/linux/x86_64/test_bridge.so",
         "lib/webview-native/linux/x86_64/libtest_bridge.so",
       ),
-      rebuildHint = "Rebuild community/platform/ui.webview/native/TestBridge.",
+      rebuildHint = "Rebuild community/plugins/ui.webview/native/TestBridge.",
       loadFailureHint = "Rebuild the test bridge.",
       pluginAnchorClass = NativeBridgeLibraryTest::class.java,
       sourceFileLookup = sourceFileLookup,

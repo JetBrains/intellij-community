@@ -158,7 +158,7 @@ class WebViewFocusInteropRobotTest {
         createMacWebViewEngine(scope)
       }
       osName.startsWith("Windows", ignoreCase = true) -> {
-        assumeTrue(nativeBridgeAvailable(), "WinWebView2Bridge DLL is not built; run community/platform/ui.webview/native/WinWebView2Bridge/build.ps1")
+        assumeTrue(nativeBridgeAvailable(), "WinWebView2Bridge DLL is not built; run community/plugins/ui.webview/native/WinWebView2Bridge/build.ps1")
         createWinWebViewEngine(scope)
       }
       else -> error("Unsupported OS for WebView focus interop Robot test: $osName")

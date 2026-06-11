@@ -114,7 +114,7 @@ Suggested verification:
 ./tests.cmd --module intellij.platform.ui.webview.tests --test com.intellij.ui.webview.impl.rpc.WebViewMessageBusTest
 ```
 
-Also run the TypeScript build or typecheck for `community/platform/ui.webview/webview-src`, and lint changed Kotlin and TypeScript files with `mcp__ijproxy__lint_files` after implementation.
+Also run the TypeScript build or typecheck for `community/plugins/ui.webview/webview-src`, and lint changed Kotlin and TypeScript files with `mcp__ijproxy__lint_files` after implementation.
 
 ## Assumptions
 

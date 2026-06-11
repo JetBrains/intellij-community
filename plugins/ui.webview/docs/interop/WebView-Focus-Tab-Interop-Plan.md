@@ -364,7 +364,7 @@ Suggested commands after implementation:
 For frontend package changes:
 
 ```shell
-cd community/platform/ui.webview/webview-src
+cd community/plugins/ui.webview/webview-src
 bun run typecheck
 bun run build
 ```
