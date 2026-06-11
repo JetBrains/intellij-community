@@ -26,6 +26,7 @@ import com.intellij.util.Url;
 import com.intellij.util.Urls;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import com.intellij.util.system.CpuArch;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.ApiStatus;
@@ -48,6 +49,7 @@ import java.util.Set;
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 import static com.intellij.ide.plugins.PluginManagerCore.MARKETPLACE_PLUGIN_ID;
 import static com.intellij.ide.plugins.PluginManagerCore.ULTIMATE_PLUGIN_ID;
+import static com.intellij.ide.plugins.marketplace.utils.MarketplaceUrlsKt.buildOsParameter;
 
 public final class RepositoryHelper {
   private static final Logger LOG = Logger.getInstance(RepositoryHelper.class);
@@ -154,15 +156,23 @@ public final class RepositoryHelper {
     }
 
     if (!URLUtil.FILE_PROTOCOL.equals(url.getScheme())) {
-      url = url.addParameters(Map.of("build", ApplicationInfoImpl.orFromPluginCompatibleBuild(build)));
+      url = url
+        .addParameters(Map.of(
+          "build", ApplicationInfoImpl.orFromPluginCompatibleBuild(build),
+          "os", buildOsParameter(),
+          "arch", CpuArch.CURRENT.name()
+        ));
     }
 
     if (indicator != null) {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", url.getAuthority()));
     }
 
+    String urlTarget = url.toExternalForm();
+    LOG.debug("Downloading list of plugins from " + urlTarget);
+
     var message = IdeBundle.message("progress.downloading.list.of.plugins", url.getAuthority());
-    var descriptors = MarketplaceRequests.readOrUpdateFile(pluginListFile, url.toExternalForm(), indicator, message,
+    var descriptors = MarketplaceRequests.readOrUpdateFile(pluginListFile, urlTarget, indicator, message,
                                                            input -> MarketplaceRequests.parsePluginList(input, factory));
     return process(descriptors, build != null ? build : PluginManagerCore.getBuildNumber(), repositoryUrl);
   }
