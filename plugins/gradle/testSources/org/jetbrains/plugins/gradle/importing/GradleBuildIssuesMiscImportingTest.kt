@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -12,6 +11,7 @@ import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.buildViewFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildFile
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildScriptName
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.file
@@ -27,15 +27,13 @@ import java.util.function.Consumer
 @AllGradleVersionsSource
 class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersion) {
 
-  private val gradleFixture = gradleFixture(gradleVersion)
-  private val gradle by gradleFixture
-
   private val testRootFixture = tempPathFixture()
   private val testRoot by testRootFixture
 
-  private val projectFixture = projectFixture(testRootFixture, openAfterCreation = true)
-    // BUG! IJPL-239938 GlobalWorkspaceModel: externally-added entities (e.g. SDKs) get wiped when a new project opens
-    .dependsOn(gradleFixture)
+  private val gradleFixture = gradleFixture(gradleVersion)
+  private val gradle by gradleFixture
+
+  private val projectFixture = gradleFixture.projectFixture(testRootFixture, numProjectSyncs = 0)
   private val project by projectFixture
 
   private val buildView by buildViewFixture(projectFixture)

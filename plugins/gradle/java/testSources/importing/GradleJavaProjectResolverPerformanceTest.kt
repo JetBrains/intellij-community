@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.common.mock.notImplemented
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import org.gradle.tooling.model.idea.IdeaModule
 import org.gradle.tooling.model.idea.IdeaProject
@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
+import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestExternalProject.Companion.externalProjects
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestIdeaProject.Companion.ideaProject
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestProjectNode.Companion.projectNode
@@ -39,12 +40,12 @@ import org.junit.jupiter.params.provider.CsvSource
 @BaseGradleVersionSource
 class GradleJavaProjectResolverPerformanceTest(gradleVersion: GradleVersion) {
 
+  private val testRootFixture = tempPathFixture()
+
   private val gradleFixture = gradleFixture(gradleVersion)
   private val gradle by gradleFixture
 
-  private val project by projectFixture()
-    // BUG! IJPL-239938 GlobalWorkspaceModel: externally-added entities (e.g. SDKs) get wiped when a new project opens
-    .dependsOn(gradleFixture)
+  private val project by gradleFixture.projectFixture(testRootFixture, numProjectSyncs = 0)
 
   @Nested
   @PerformanceUnitTest
