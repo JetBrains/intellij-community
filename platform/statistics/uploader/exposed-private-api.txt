@@ -1,2 +1,0 @@
-com/intellij/internal/statistic/eventLog/DataCollectorDebugLogger
-com/intellij/internal/statistic/eventLog/filters/LogEventFilter

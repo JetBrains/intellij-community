@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.eventLog
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
+import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JacksonException
 import tools.jackson.core.JsonParser
 import tools.jackson.core.StreamReadFeature
@@ -26,6 +27,7 @@ import tools.jackson.module.kotlin.kotlinModule
 import java.io.OutputStreamWriter
 import kotlin.math.roundToLong
 
+@ApiStatus.Internal
 object LogEventSerializer {
   fun toString(session: LogEventRecordRequest, writer: OutputStreamWriter) {
     writer.write(toString(session))
@@ -97,7 +99,7 @@ object LogEventSerializer {
   }
 }
 
-class LogEventRecordRequestJsonDeserializer : ValueDeserializer<LogEventRecordRequest>() {
+internal class LogEventRecordRequestJsonDeserializer : ValueDeserializer<LogEventRecordRequest>() {
   @Throws(JacksonException::class)
   override fun deserialize(jsonParser: JsonParser, context: DeserializationContext): LogEventRecordRequest {
     val node: JsonNode = jsonParser.readValueAsTree()
@@ -130,6 +132,7 @@ class LogEventRecordRequestJsonDeserializer : ValueDeserializer<LogEventRecordRe
   }
 }
 
+@ApiStatus.Internal
 object SerializationHelper {
 
   private val LOG_EVENT_MAPPER: JsonMapper by lazy {
@@ -188,6 +191,7 @@ object SerializationHelper {
   }
 }
 
+@ApiStatus.Internal
 class LogEventDeserializer(val logger: DataCollectorDebugLogger) {
   fun fromString(line: String): LogEvent? {
     return try {
@@ -203,6 +207,7 @@ class LogEventDeserializer(val logger: DataCollectorDebugLogger) {
 /**
  * Deserialize events manually, so they won't be changed by scrambling
  */
+@ApiStatus.Internal
 class LogEventJsonDeserializer : ValueDeserializer<LogEvent>() {
   @Throws(JacksonException::class)
   override fun deserialize(jsonParser: JsonParser, context: DeserializationContext): LogEvent {
