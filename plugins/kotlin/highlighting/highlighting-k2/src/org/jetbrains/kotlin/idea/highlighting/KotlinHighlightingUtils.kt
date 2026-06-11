@@ -2,7 +2,7 @@
 
 @file:JvmName("KotlinHighlightingUtils")
 
-package org.jetbrains.kotlin.idea.base.highlighting
+package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.SyntheticPsiFileSupport
 import com.intellij.openapi.application.runReadAction

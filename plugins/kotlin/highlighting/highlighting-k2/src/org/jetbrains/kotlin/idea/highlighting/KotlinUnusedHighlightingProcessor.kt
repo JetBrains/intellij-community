@@ -42,7 +42,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
-import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExplicitlyIgnoredByName
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isCalleeExpression
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isConstructorCallReference
@@ -252,7 +251,7 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         if (problemPsiElement == null) return
         if (isEntryPoint(declaration)) return
         val description = declaration.describe() ?: return
-        val message = KotlinBaseHighlightingBundle.message("inspection.message.never.used", description)
+        val message = K2HighlightingBundle.message("inspection.message.never.used", description)
         val builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsiElement, message, deadCodeInfoType, null)
         val fixes = K2UnusedSymbolUtil.createQuickFixes(declaration)
         fixes.forEach { builder.registerFix(it, null, null, null, deadCodeKey) }
@@ -296,7 +295,7 @@ class KotlinRefsHolder(val containingFile: KtFile) {
 internal class SafeDeleteFix(declaration: KtNamedDeclaration) : LocalQuickFixAndIntentionActionOnPsiElement(declaration) {
     @Nls
     private val name: String =
-        KotlinBaseHighlightingBundle.message(declaration.toNameKey(), declaration.name ?: declaration.text)
+        K2HighlightingBundle.message(declaration.toNameKey(), declaration.name ?: declaration.text)
 
     private fun KtNamedDeclaration.toNameKey(): String =
         when (this) {
@@ -310,7 +309,7 @@ internal class SafeDeleteFix(declaration: KtNamedDeclaration) : LocalQuickFixAnd
        return name
     }
 
-    override fun getFamilyName(): String = KotlinBaseHighlightingBundle.message("safe.delete.family")
+    override fun getFamilyName(): String = K2HighlightingBundle.message("safe.delete.family")
 
     override fun startInWriteAction(): Boolean = false
 

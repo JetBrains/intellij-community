@@ -1,6 +1,6 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.kdoc
+package org.jetbrains.kotlin.idea.highlighting.kdoc
 
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil
 import com.intellij.codeInsight.javadoc.JavaDocInfoGeneratorFactory
@@ -38,11 +38,11 @@ import org.intellij.markdown.flavours.gfm.GFMTokenTypes
 import org.intellij.markdown.parser.MarkdownParser
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.base.highlighting.textAttributesKeyForKtElement
+import org.jetbrains.kotlin.idea.highlighting.textAttributesKeyForKtElement
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
-import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager
-import org.jetbrains.kotlin.idea.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager.Companion.eraseTypeParameter
+import org.jetbrains.kotlin.idea.highlighting.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager
+import org.jetbrains.kotlin.idea.highlighting.parameterInfo.KotlinIdeDescriptorRendererHighlightingManager.Companion.eraseTypeParameter
 import org.jetbrains.kotlin.idea.references.KDocReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocLink
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName

@@ -25,7 +25,7 @@ jvm_library(
         "@lib//:kotlinc-kotlin-jps-common",
         "//plugins/kotlin/base/plugin",
         "//plugins/gradle/java",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
     ],
 )
 
@@ -43,7 +43,7 @@ jvm_library(
         ":kotlin-gradle-java",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/gradle/java:java_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
+        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.java` end
@@ -130,8 +130,8 @@ jvm_library(
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
+        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
+        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
         "@lib//:kotlinc-kotlin-compiler-common",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",

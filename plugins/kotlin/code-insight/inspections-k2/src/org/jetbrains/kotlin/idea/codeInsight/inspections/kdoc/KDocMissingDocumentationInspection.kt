@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinMo
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
 import org.jetbrains.kotlin.idea.inspections.describe
 import org.jetbrains.kotlin.idea.kdoc.KDocElementFactory
-import org.jetbrains.kotlin.idea.kdoc.findKDocByPsi
+import org.jetbrains.kotlin.idea.highlighting.kdoc.findKDocByPsi
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedDeclaration

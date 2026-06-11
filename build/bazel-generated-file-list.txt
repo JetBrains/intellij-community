@@ -1332,8 +1332,6 @@ plugins/kotlin/grazie
 plugins/kotlin/grazie/intellij.kotlin.grazie.tests
 plugins/kotlin/highlighting/highlighting-k2
 plugins/kotlin/highlighting/highlighting-minimal
-plugins/kotlin/highlighting/highlighting-shared
-plugins/kotlin/highlighting/highlighting-shared/tests
 plugins/kotlin/i18n
 plugins/kotlin/i18n/tests
 plugins/kotlin/idea/tests

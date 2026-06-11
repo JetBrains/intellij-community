@@ -14,7 +14,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.renderKDoc
+import org.jetbrains.kotlin.idea.highlighting.kdoc.KDocRenderer.renderKDoc
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile

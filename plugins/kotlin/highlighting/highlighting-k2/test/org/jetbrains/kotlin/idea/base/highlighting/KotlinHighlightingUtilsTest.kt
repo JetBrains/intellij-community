@@ -3,13 +3,14 @@ package org.jetbrains.kotlin.idea.base.highlighting
 
 import com.intellij.codeInsight.daemon.SyntheticPsiFileSupport
 import com.intellij.openapi.application.WriteAction
-import com.intellij.openapi.project.modules
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.highlighting.shouldHighlightFile
 import org.jetbrains.kotlin.psi.KtExpressionCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -43,7 +44,7 @@ class KotlinHighlightingUtilsTest : LightPlatformTestCase() {
         val file = createKotlinFileAtPath("src/main/kotlin/Main.kt")
         val containingFolder = file.virtualFile.parent
         WriteAction.run<Throwable> {
-            ModuleRootManager.getInstance(project.modules.first()).modifiableModel.apply {
+            ModuleRootManager.getInstance(ModuleManager.getInstance(project).modules.first()).modifiableModel.apply {
                 addContentEntry(containingFolder).addSourceFolder(containingFolder, false)
             }.commit()
         }

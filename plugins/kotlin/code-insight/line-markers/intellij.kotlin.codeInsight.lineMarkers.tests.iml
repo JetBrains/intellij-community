@@ -51,7 +51,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.searching" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.highlighting.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="TEST" />

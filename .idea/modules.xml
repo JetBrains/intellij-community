@@ -2092,8 +2092,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-java/kotlin.gradle.gradle-java.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-java/kotlin.gradle.gradle-java.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-java/tests.shared/kotlin.gradle.gradle-java.tests.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-java/tests.shared/kotlin.gradle.gradle-java.tests.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared/kotlin.gradle.scripting.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/scripting/kotlin.gradle.scripting.shared/kotlin.gradle.scripting.shared.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-shared/kotlin.highlighting.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-shared/kotlin.highlighting.shared.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-shared/tests/kotlin.highlighting.shared.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-shared/tests/kotlin.highlighting.shared.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/idea/tests/kotlin.idea.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/idea/tests/kotlin.idea.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/inspections/kotlin.inspections.iml" filepath="$PROJECT_DIR$/plugins/kotlin/inspections/kotlin.inspections.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/shared/kotlin.j2k.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/shared/kotlin.j2k.shared.iml" />

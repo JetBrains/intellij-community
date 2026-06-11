@@ -52,7 +52,6 @@ jvm_library(
         "//plugins/kotlin/kotlin.searching",
         "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight",
         "//platform/core-ui",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
         "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
@@ -64,6 +63,7 @@ jvm_library(
         "//platform/execution-impl",
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/base/facet",
+        "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
     ],
 )
 
@@ -99,7 +99,6 @@ jvm_library(
         "//plugins/kotlin/kotlin.searching:kotlin.searching_test_lib",
         "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight_test_lib",
         "//platform/core-ui:core-ui_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
         "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/ide-core:ide-core_test_lib",
@@ -111,6 +110,7 @@ jvm_library(
         "//platform/execution-impl:execution-impl_test_lib",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
         "//plugins/kotlin/base/facet:facet_test_lib",
+        "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.lineMarkers` end
@@ -217,8 +217,6 @@ jvm_library(
         "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight_test_lib",
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
         "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
         "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
         "//platform/platform-impl:ide-impl",

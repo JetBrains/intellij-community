@@ -149,7 +149,6 @@
   - name: intellij.kotlin.codeInsight.overrideImplement
   - name: kotlin.fir
   - name: intellij.kotlin.searching.base
-  - name: kotlin.highlighting.shared
   - name: intellij.kotlin.uast
   - name: intellij.kotlin.uast.idea
   - name: kotlin.refactorings.common

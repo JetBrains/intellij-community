@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.analysis.api.components.implicitReceiverSmartCasts
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.components.smartCastInfo
-import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
+import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
@@ -30,14 +30,14 @@ internal class KotlinExpressionsSmartcastSemanticAnalyzer(holder: HighlightInfoH
     private fun highlightExpression(expression: KtExpression): Unit = context(session) {
         expression.implicitReceiverSmartCasts.forEach {
             val receiverName = when (it.kind) {
-                KaImplicitReceiverSmartCastKind.EXTENSION -> KotlinBaseHighlightingBundle.message("extension.implicit.receiver")
-                KaImplicitReceiverSmartCastKind.DISPATCH -> KotlinBaseHighlightingBundle.message("implicit.receiver")
+                KaImplicitReceiverSmartCastKind.EXTENSION -> K2HighlightingBundle.message("extension.implicit.receiver")
+                KaImplicitReceiverSmartCastKind.DISPATCH -> K2HighlightingBundle.message("implicit.receiver")
             }
 
             highlightName(
                 expression,
                 KotlinHighlightInfoTypeSemanticNames.SMART_CAST_RECEIVER,
-                KotlinBaseHighlightingBundle.message(
+                K2HighlightingBundle.message(
                     "0.smart.cast.to.1",
                     receiverName,
                     it.type.render(position = Variance.INVARIANT)
@@ -56,7 +56,7 @@ internal class KotlinExpressionsSmartcastSemanticAnalyzer(holder: HighlightInfoH
             highlightName(
                 getSmartCastTarget(expression),
                 KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
-                KotlinBaseHighlightingBundle.message(
+                K2HighlightingBundle.message(
                     "smart.cast.to.0",
                     info.smartCastType.render(position = Variance.INVARIANT)
                 )

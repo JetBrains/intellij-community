@@ -1,14 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.base.highlighting.beforeResolve
+package org.jetbrains.kotlin.idea.highlighting.beforeResolve
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
-import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForClass
-import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtParameterDeclaration
-import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForKtPropertyDeclaration
+import org.jetbrains.kotlin.idea.highlighting.textAttributesForClass
+import org.jetbrains.kotlin.idea.highlighting.textAttributesForKtParameterDeclaration
+import org.jetbrains.kotlin.idea.highlighting.textAttributesForKtPropertyDeclaration
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.lexer.KtTokens

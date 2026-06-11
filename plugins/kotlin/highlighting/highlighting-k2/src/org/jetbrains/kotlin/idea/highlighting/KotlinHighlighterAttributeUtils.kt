@@ -2,7 +2,7 @@
 
 @file:JvmName("KotlinHighlighterAttributeUtils")
 
-package org.jetbrains.kotlin.idea.base.highlighting
+package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.lang.jvm.JvmModifier

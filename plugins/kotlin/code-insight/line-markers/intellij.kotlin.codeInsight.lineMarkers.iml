@@ -47,7 +47,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.searching" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="kotlin.highlighting.shared" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
@@ -59,5 +58,6 @@
     <orderEntry type="module" module-name="intellij.platform.execution.impl" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" />
   </component>
 </module>

@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.training.ift.lesson.basic
 
-import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.training.ift.KotlinLessonsBundle
 import training.dsl.LessonSample
 import training.dsl.parseLessonSample
 import training.learn.lesson.general.ContextActionsLesson
@@ -25,7 +25,7 @@ class KotlinContextActionsLesson : ContextActionsLesson() {
         """.trimIndent()
     )
 
-    override val warningQuickFix: String = KotlinBaseHighlightingBundle.message("safe.delete.parameter.text.0", "redundant")
+    override val warningQuickFix: String = KotlinLessonsBundle.message("safe.delete.text.0", "redundant")
     override val warningPossibleArea: String = "redundant"
 
     override val intentionText: String = KotlinBundle.message("convert.to.expression.body.fix.text")

@@ -5,6 +5,7 @@
     <plugin id="com.intellij.modules.kotlin.k2"/>
     <module name="kotlin.gradle.gradle-java"/>
     <module name="intellij.gradle.java"/>
+    <module name="intellij.kotlin.highlighting"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

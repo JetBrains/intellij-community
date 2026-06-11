@@ -42,7 +42,7 @@
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
     <orderEntry type="library" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.highlighting.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" scope="TEST" />
@@ -87,5 +87,6 @@
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.highlighting.minimal" scope="TEST" />
   </component>
 </module>

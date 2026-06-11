@@ -19,7 +19,6 @@
   <xi:include href="kotlin-core.xml"/>
   <xi:include href="searching-base.xml"/>
   <xi:include href="statistics.xml"/>
-  <xi:include href="highlighting-shared.xml"/>
   <xi:include href="light-classes.xml"/>
   <xi:include href="parcelize.k2.xml"/>
   <xi:include href="jvm-debugger.xml"/>
@@ -254,6 +253,7 @@
     <module name="intellij.kotlin.codeInsight.lineMarkers"/>
 
     <module name="intellij.kotlin.highlighting"/>
+    <module name="intellij.kotlin.highlighting.minimal" loading="embedded"/>
 
     <module name="intellij.kotlin.compilerReferenceIndex"/>
 

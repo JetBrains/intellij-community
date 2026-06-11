@@ -110,8 +110,8 @@ jvm_library(
         "@lib//:kotlin-test",
         "//plugins/kotlin/base/project-model",
         "//plugins/kotlin/base/project-model:project-model_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
+        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting",
+        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting_test_lib",
         "//platform/external-system-impl:externalSystem-tests",
         "//platform/external-system-impl:externalSystem-tests_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
@@ -197,6 +197,8 @@ jvm_library(
         "//plugins/junit:junit_test_lib",
         "//plugins/groovy:groovy-tests",
         "//plugins/groovy:groovy-tests_test_lib",
+        "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
+        "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.gradle.gradle-java.tests.shared` end

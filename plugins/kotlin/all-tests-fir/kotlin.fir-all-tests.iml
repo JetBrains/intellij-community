@@ -50,7 +50,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.injection.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.liveTemplates" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.highlighting.shared.tests" />
     <orderEntry type="module" module-name="intellij.kotlin.j2k.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.fixes.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.java" />

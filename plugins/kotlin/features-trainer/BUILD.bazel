@@ -46,7 +46,6 @@ jvm_library(
         "//platform/core-ui",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
     ],
 )
 
@@ -86,7 +85,6 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.featuresTrainer` end

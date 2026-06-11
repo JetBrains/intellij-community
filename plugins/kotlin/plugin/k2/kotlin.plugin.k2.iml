@@ -23,7 +23,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration.ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.externalSystem" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.highlighting.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.jps" scope="RUNTIME" />

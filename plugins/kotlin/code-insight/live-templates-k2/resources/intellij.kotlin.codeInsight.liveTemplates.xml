@@ -4,7 +4,7 @@
     <module name="intellij.java.impl"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.kotlin.completion.impl"/>
-    <module name="intellij.kotlin.highlighting"/>
+    <module name="intellij.kotlin.highlighting.minimal"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">

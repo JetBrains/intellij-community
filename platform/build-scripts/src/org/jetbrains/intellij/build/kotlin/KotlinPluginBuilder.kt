@@ -149,7 +149,6 @@ abstract class KotlinPluginBuilder(val kind : KotlinPluginKind = System.getPrope
       "kotlin.fir",
       "intellij.kotlin.searching",
       "intellij.kotlin.searching.base",
-      "kotlin.highlighting.shared",
       "intellij.kotlin.highlighting",
       "intellij.kotlin.uast",
       "intellij.kotlin.uast.idea",

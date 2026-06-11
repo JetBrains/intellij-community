@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.kdoc
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.highlighting.kdoc
 
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.kdoc.parser.KDocKnownTag
@@ -56,7 +56,7 @@ private fun KtElement.lookupOwnedKDoc(): KDocContent? {
 
 /**
  * Looks for sections that have a deeply nested [tag],
- * as opposed to [KDoc.findSectionByTag], which only looks among the top level
+ * as opposed to [findSectionByTag], which only looks among the top level
  */
 private fun KDoc.findSectionsContainingTag(tag: KDocKnownTag): List<KDocSection> {
     return getChildrenOfType<KDocSection>()

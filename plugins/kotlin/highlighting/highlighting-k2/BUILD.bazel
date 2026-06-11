@@ -31,7 +31,6 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared"],
     deps = [
         # do not sort,
         "//java/java-indexing-api:indexing",
@@ -41,7 +40,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/analysis-api:analysis",
         "@lib//:kotlinc-kotlin-compiler-common",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
+        "//libraries/markdown",
         "//platform/core-api:core",
         "@lib//:kotlinc-analysis-api",
         "//plugins/kotlin/base/util",
@@ -68,6 +67,10 @@ jvm_library(
         "//platform/util/coroutines",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared",
         "//platform/platform-api:ide",
+        "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
+        "//platform/lang-api:lang",
+        "//plugins/kotlin/base/resources:kotlin-base-resources",
+        "//java/java-impl:impl",
     ],
 )
 
@@ -81,11 +84,6 @@ jvm_library(
     kotlinc_opts = ":custom_kotlin-highlighting",
     module_name = "intellij.kotlin.highlighting",
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
-    ],
     runtime_deps = [
         # do not sort,
         ":kotlin-highlighting",
@@ -94,7 +92,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/refactoring:refactoring_test_lib",
         "//platform/analysis-api:analysis_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
+        "//libraries/markdown:markdown_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
         "//platform/diff-api:diff_test_lib",
@@ -119,6 +117,10 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//plugins/kotlin/code-insight/impl-base:kotlin-codeInsight-shared_test_lib",
         "//platform/platform-api:ide_test_lib",
+        "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
+        "//platform/lang-api:lang_test_lib",
+        "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
+        "//java/java-impl:impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.highlighting` end
@@ -190,8 +192,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",
         "@lib//:kotlinc-kotlin-compiler-common",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared",
-        "//plugins/kotlin/highlighting/highlighting-shared:kotlin-highlighting-shared_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "@lib//:kotlinc-analysis-api",
@@ -203,6 +203,8 @@ jvm_library(
         "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
         "//java/java-psi-api:psi",
         "//java/java-psi-api:psi_test_lib",
         "//platform/core-impl",
@@ -269,6 +271,8 @@ jvm_library(
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
+        "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
+        "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.highlighting.tests` end

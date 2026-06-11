@@ -8,7 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
+import org.jetbrains.kotlin.idea.highlighting.K2HighlightingBundle
 import org.jetbrains.kotlin.idea.highlighting.K2UnusedSymbolUtil
 import org.jetbrains.kotlin.idea.inspections.describe
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -27,7 +27,7 @@ class UnusedSymbolInspection : LocalInspectionTool() {
         return object: KtVisitorVoid() {
             override fun visitNamedDeclaration(element: KtNamedDeclaration) {
                 if (!K2UnusedSymbolUtil.isApplicableByPsi(element) || K2UnusedSymbolUtil.isLocalDeclaration(element)) return
-                val message = element.describe()?.let { KotlinBaseHighlightingBundle.message("inspection.message.never.used", it) } ?: return
+                val message = element.describe()?.let { K2HighlightingBundle.message("inspection.message.never.used", it) } ?: return
                 val psiToReportProblem = analyze(element) { K2UnusedSymbolUtil.getPsiToReportProblem(element, javaInspection) } ?: return
                 val quickFixes = analyze(element) {
                     K2UnusedSymbolUtil.createQuickFixes(element).map { IntentionWrapper.wrapToQuickFix(it, holder.file) } 
