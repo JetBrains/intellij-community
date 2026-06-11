@@ -130,7 +130,7 @@ public final class PyAbstractClassInspection extends PyInspection {
 
     private boolean isAbstract(@NotNull PyClass pyClass) {
       final PyClassLikeType metaClass = pyClass.getMetaClassType(false, myTypeEvalContext);
-      if (metaClass != null && PyNames.ABC_META_CLASS.equals(metaClass.getName())) {
+      if (metaClass != null && PyNames.ABC_META.equals(metaClass.getClassQName())) {
         return true;
       }
       for (PyClassLikeType superClassType : pyClass.getSuperClassTypes(myTypeEvalContext)) {

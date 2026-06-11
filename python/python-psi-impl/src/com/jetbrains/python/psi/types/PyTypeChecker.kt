@@ -45,7 +45,6 @@ import com.jetbrains.python.psi.types.PyLiteralType.Companion.match
 import com.jetbrains.python.psi.types.PyRecursiveTypeVisitor.PyTypeTraverser
 import com.jetbrains.python.psi.types.PyTypeChecker.convertToType
 import com.jetbrains.python.psi.types.PyTypeChecker.match
-import com.jetbrains.python.psi.types.PyTypeChecker.substituteSelfInProtocolMember
 import com.jetbrains.python.psi.types.PyTypeParameterMapping.Option.USE_DEFAULTS
 import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
@@ -1352,14 +1351,14 @@ object PyTypeChecker {
       val subIsBool = "bool" == subName
       val subIsInt = PyNames.TYPE_INT == subName
       val subIsLong = PyNames.TYPE_LONG == subName
-      val subIsFloat = "float" == subName
-      val subIsComplex = "complex" == subName
+      val subIsFloat = PyNames.TYPE_FLOAT == subName
+      val subIsComplex = PyNames.TYPE_COMPLEX == subName
       if (superName == null || subName == null ||
           superName == subName ||
           (PyNames.TYPE_INT == superName && subIsBool) ||
           ((PyNames.TYPE_LONG == superName || PyNames.ABC_INTEGRAL == superName) && (subIsBool || subIsInt)) ||
-          (("float" == superName || PyNames.ABC_REAL == superName) && (subIsBool || subIsInt || subIsLong)) ||
-          (("complex" == superName || PyNames.ABC_COMPLEX == superName) && (subIsBool || subIsInt || subIsLong || subIsFloat)) ||
+          ((PyNames.TYPE_FLOAT == superName || PyNames.ABC_REAL == superName) && (subIsBool || subIsInt || subIsLong)) ||
+          ((PyNames.TYPE_COMPLEX == superName || PyNames.ABC_COMPLEX == superName) && (subIsBool || subIsInt || subIsLong || subIsFloat)) ||
           (PyNames.ABC_NUMBER == superName && (subIsBool || subIsInt || subIsLong || subIsFloat || subIsComplex))
       ) {
         return true

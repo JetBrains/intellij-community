@@ -831,7 +831,7 @@ public final class PyDocumentationBuilder {
   }
 
   private @Nullable HtmlChunk getLinkToClass(@NotNull PyClass pyClass, boolean preferQualifiedName) {
-    final String qualifiedName = pyClass.getQualifiedName();
+    final String qualifiedName = PyNames.FQN.unqualifyBuiltinName(pyClass.getQualifiedName());
     final String shortName = pyClass.getName();
 
     final String linkText = preferQualifiedName && qualifiedName != null ? qualifiedName : shortName;

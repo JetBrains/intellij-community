@@ -595,7 +595,7 @@ class PyStringFormatInspection : PyInspection() {
         val actual = PyUnionType.toNonWeakType(myTypeEvalContext.getType(typedElement)) ?: return
         val expected = PyTypeParser.getTypeByName(anchor, type) ?: return
         if (
-          actual.asUnionSequence().all { it != null && it.name in CHECKED_TYPES }
+          actual.asUnionSequence().all { (it as? PyClassType)?.classQName in CHECKED_TYPES }
           && !match(expected, actual, myTypeEvalContext)
         ) {
           registerProblem(typedElement, PyPsiBundle.message("INSP.str.format.unexpected.argument.type", actual.name))
@@ -789,7 +789,7 @@ class PyStringFormatInspection : PyInspection() {
       }
 
       private fun PyClassType.countElements(evalContext: TypeEvalContext) = when {
-        !pyClass.isSubclass(PyNames.TUPLE, evalContext) -> 1
+        !pyClass.isSubclass(PyNames.FQN.TUPLE, evalContext) -> 1
         this is PyTupleType -> elementCount
         else -> -1
       }
@@ -801,18 +801,18 @@ private val VALID_NON_TYPE_FORMAT_SPEC_ENDINGS = ('0'..'9').toSet() +
                                                  setOf('<', '>', '^', '=', '+', '-', ' ', '_', ',', '#', 'z')
 
 private val INT_TYPES = setOf(
-  PyNames.TYPE_INT,
+  PyNames.FQN.INT,
   "numpy.int8", "numpy.int16", "numpy.int32", "numpy.int64",
 )
 
 private val FLOAT_INT_TYPES = INT_TYPES + setOf(
-  PyNames.TYPE_LONG, PyNames.TYPE_FLOAT,
+  PyNames.FQN.LONG, PyNames.FQN.FLOAT,
   "decimal.Decimal", "fractions.Fraction",
   "numpy.float16", "numpy.float32", "numpy.float64",
 )
 
 private val NUMERIC_TYPES = FLOAT_INT_TYPES + setOf(
-  PyNames.TYPE_COMPLEX, "numpy.complex64", "numpy.complex128",
+  PyNames.FQN.COMPLEX, "numpy.complex64", "numpy.complex128",
 )
 
 // Builtin numeric type names that [PyTypeParser.getTypeByName] can resolve. Used by the `str.format()` path,
@@ -838,7 +838,7 @@ private val NEW_STYLE_FORMAT_CONVERSIONS = mapOf(
   '%' to setOf("int", "float"),
 )
 
-private val CHECKED_TYPES = NUMERIC_TYPES + setOf(PyNames.TYPE_STR)
+private val CHECKED_TYPES = NUMERIC_TYPES + setOf(PyNames.FQN.STR)
 
 /**
  * Fully qualified names of types whose `__format__` override is trusted to accept the given presentation [typeChar],
@@ -848,7 +848,7 @@ private fun allowedFormatOverrideQNames(typeChar: Char): Set<String> = when (typ
   'b', 'c', 'd', 'o', 'x', 'X' -> INT_TYPES
   'e', 'E', 'f', 'F', 'g', 'G', 'n' -> NUMERIC_TYPES
   '%' -> FLOAT_INT_TYPES
-  's' -> setOf(PyNames.TYPE_STR)
+  's' -> setOf(PyNames.FQN.STR)
   else -> emptySet()
 }
 

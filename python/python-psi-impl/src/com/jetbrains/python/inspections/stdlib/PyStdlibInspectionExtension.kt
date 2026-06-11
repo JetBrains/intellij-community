@@ -18,7 +18,7 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
 
   override fun ignoreInitNewSignatures(original: PyFunction, complementary: PyFunction): Boolean {
     val qName = complementary.containingClass?.qualifiedName
-    return PyNames.TYPE_ENUM == qName || PyNames.TYPE == qName
+    return PyNames.TYPE_ENUM == qName || PyNames.FQN.TYPE == qName
   }
 
   override fun ignoreUnresolvedMember(type: PyType, name: String, context: TypeEvalContext): Boolean {

@@ -69,7 +69,7 @@ object PyCollectionTypeUtil {
       val elementType = context.getType(element)
       val (keyType, valueType) = getKeyValueType(elementType)
 
-      if (!(keyType is PyClassType && PyNames.TYPE_STR == keyType.classQName)) {
+      if (!(keyType is PyClassType && PyNames.FQN.STR == keyType.classQName)) {
         return null
       }
       val keyString: String? = if (keyType is PyLiteralType) {

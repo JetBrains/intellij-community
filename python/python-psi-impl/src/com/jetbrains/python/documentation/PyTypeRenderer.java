@@ -334,7 +334,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
 
   protected @NotNull HtmlChunk wrapInTypingType(@NotNull HtmlChunk instanceTypeRender) {
     return new HtmlBuilder()
-      .append(isGenericBuiltinsAvailable() ? styled("type", PyHighlighter.PY_BUILTIN_NAME) : //NON-NLS
+      .append(isGenericBuiltinsAvailable() ? styled(isRenderingFqn() ? PyNames.FQN.TYPE : PyNames.TYPE, PyHighlighter.PY_BUILTIN_NAME) : //NON-NLS
               escaped(isRenderingFqn() ? "typing.Type" : "Type")) //NON-NLS
       .append(styled("[", PyHighlighter.PY_BRACKETS))
       .append(instanceTypeRender)
@@ -501,7 +501,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   public HtmlChunk visitPyTupleType(@NotNull PyTupleType tupleType) {
     HtmlBuilder result = new HtmlBuilder();
     if (isGenericBuiltinsAvailable()) {
-      result.append(styled("tuple", PyHighlighter.PY_BUILTIN_NAME)); //NON-NLS
+      result.append(styled(isRenderingFqn() ? PyNames.FQN.TUPLE : PyNames.TUPLE, PyHighlighter.PY_BUILTIN_NAME)); //NON-NLS
     }
     else {
       result.append(escaped(isRenderingFqn() ? "typing.Tuple" : "Tuple")); //NON-NLS

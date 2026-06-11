@@ -66,7 +66,8 @@ object PyKnownDecoratorUtil {
       return resolved
         .filterIsInstance<PyQualifiedNameOwner>()
         .mapNotNull { it.qualifiedName }
-        .map { QualifiedName.fromDottedString(it) }
+        .map(PyNames.FQN::unqualifyBuiltinName)
+        .map { QualifiedName.fromDottedString(it!!) }
         .mapNotNull { findByQualifiedName(it) }
     }
     else {

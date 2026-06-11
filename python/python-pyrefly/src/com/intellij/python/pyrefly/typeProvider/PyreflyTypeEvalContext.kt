@@ -1,51 +1,51 @@
 package com.intellij.python.pyrefly.typeProvider
 
 import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.impl.LspClientImpl
-import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.platform.lsp.util.getLsp4jPosition
-import com.intellij.psi.PsiFile
+import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.python.lsp.core.type.LspTypeEvalContext
 import com.intellij.python.lsp.core.type.PyStringTypeResolver
-import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.intellij.python.pyrefly.PyreflyUsageCollector
 import com.intellij.python.pyrefly.lsp.PyreflyLsp4jServer
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.PyTypedElement
-import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.impl.ParamHelper
 import com.jetbrains.python.psi.impl.PyBuiltinCache
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
+import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
-import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyFunctionType
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyModuleType
+import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.PyOverloadType
+import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.PyTypeVarTypeImpl
-import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyUnionType
-import com.jetbrains.python.psi.types.PyAnyType
-import com.jetbrains.python.psi.types.PyNeverType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
@@ -198,7 +198,7 @@ open class PyreflyTypeEvalContext internal constructor(val lspClient: LspClient,
       val typeArgs = tspType.typeArgs
       val classType: PyType = if (!typeArgs.isNullOrEmpty()) {
         val elementTypes = typeArgs.map { buildPyType(pyElement, it)?.get() }
-        if (pyClass.qualifiedName == PyNames.TUPLE) {
+        if (pyClass.qualifiedName == PyNames.FQN.TUPLE) {
           PyTupleType.create(pyElement, elementTypes) ?: PyClassTypeImpl(pyClass, false)
         }
         else {

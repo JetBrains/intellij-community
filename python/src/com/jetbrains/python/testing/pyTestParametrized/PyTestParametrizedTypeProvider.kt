@@ -24,7 +24,7 @@ class PyTestParametrizedTypeProvider : PyTypeProviderBase() {
     var retval = super.getCallType(function, callSite, context)
     if (retval == null && function.qualifiedName == "_pytest.mark.param") {
       // Infer the types of positional arguments from the param() call and return them as a tuple
-      val tupleClass = PyBuiltinCache.getInstance(callSite).getClass(PyNames.TUPLE)?: return null
+      val tupleClass = PyBuiltinCache.getInstance(callSite).getClass(PyNames.TUPLE) ?: return null
       val args = callSite.getArguments(function)
       val argTypes = args.filter { it !is PyKeywordArgument }.map { context.getType(it) }
       val tupleType = PyTupleType(tupleClass, argTypes, false)

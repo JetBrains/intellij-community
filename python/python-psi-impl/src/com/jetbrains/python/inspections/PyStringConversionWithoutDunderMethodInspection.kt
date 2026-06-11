@@ -82,7 +82,7 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
         PyResolveUtil.resolveDeclaration(callee.reference, PyResolveContext.defaultContext(myTypeEvalContext))
         ?: return
 
-      val qualifiedCalleeName = (resolvedCallee as? PyQualifiedNameOwner)?.qualifiedName
+      val qualifiedCalleeName = PyNames.FQN.unqualifyBuiltinName((resolvedCallee as? PyQualifiedNameOwner)?.qualifiedName)
 
       when (qualifiedCalleeName) {
         "${PyNames.TYPE_STR}.__new__" -> node.arguments.firstOrNull()?.checkStringConversion(DUNDER_STR)
@@ -151,8 +151,8 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
                           RemoveFromReportedTypesQuickFix("types.FunctionType", "FunctionType"))
         }
         type !is PyClassType -> return
-        type.classQName in inspection.reportedTypes -> {
-          val classQName = type.classQName ?: return
+        PyNames.FQN.unqualifyBuiltinName(type.classQName) in inspection.reportedTypes -> {
+          val classQName = PyNames.FQN.unqualifyBuiltinName(type.classQName) ?: return
           val typeName = type.name ?: return
           registerProblem(this, PyPsiBundle.message("INSP.string.not.helpful", typeName),
                           RemoveFromReportedTypesQuickFix(classQName, typeName))
@@ -174,7 +174,7 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
         else -> return
       }
       if (type is PyClassType) {
-        val classQName = type.classQName ?: return
+        val classQName = PyNames.FQN.unqualifyBuiltinName(type.classQName) ?: return
         registerProblem(this, message,
                         AddToIgnoredTypesQuickFix(classQName, classQName.split(".").last()))
       }
@@ -182,12 +182,12 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
     }
 
     private fun PyClassType.shouldWarnForType(requiredMethod: String): Boolean {
-      if (classQName in inspection.ignoredTypes) return false
+      if (PyNames.FQN.unqualifyBuiltinName(classQName) in inspection.ignoredTypes) return false
 
       // Check if any ancestor is in ignored types (e.g., class A(int) should be ignored
       // because int defines __str__ even though it's not in stubs)
       val pyClass = pyClass
-      if (pyClass.getAncestorTypes(myTypeEvalContext).any { it?.classQName in inspection.ignoredTypes }) {
+      if (pyClass.getAncestorTypes(myTypeEvalContext).any { PyNames.FQN.unqualifyBuiltinName(it?.classQName) in inspection.ignoredTypes }) {
         return false
       }
 
@@ -212,7 +212,7 @@ class PyStringConversionWithoutDunderMethodInspection : PyInspection() {
                .firstOrNull()
                ?.element
                ?.let {
-                 (it as? PyFunction)?.qualifiedName != "${PyNames.OBJECT}.$methodName"
+                 (it as? PyFunction)?.qualifiedName != "${PyNames.FQN.OBJECT}.$methodName"
                }
              ?: false
     }

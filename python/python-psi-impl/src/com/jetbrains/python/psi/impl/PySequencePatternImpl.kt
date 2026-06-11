@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiListLikeElement
 import com.intellij.psi.util.findParentInFile
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyPattern
 import com.jetbrains.python.psi.PyPsiFacade
@@ -103,7 +104,7 @@ class PySequencePatternImpl(astNode: ASTNode?) : PyElementImpl(astNode), PySeque
     val captureTypes: PyType? = PyCaptureContext.getCaptureType(this, context)
 
     val potentialMatchingTypes = captureTypes.components
-      .filter { it !is PyClassType || it.classQName !in listOf("str", "bytes", "bytearray") }
+      .filter { it !is PyClassType || it.classQName !in listOf(PyNames.FQN.STR, PyNames.FQN.BYTES, PyNames.FQN.BYTEARRAY) }
       .filter { it.convertToType("typing.Sequence", this, context) != null }
 
     val hasStar = elements.any { it is PySingleStarPattern }

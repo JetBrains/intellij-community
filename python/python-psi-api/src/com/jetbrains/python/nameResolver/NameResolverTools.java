@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiCacheKey;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Function;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
@@ -98,7 +99,10 @@ public final class NameResolverTools {
 
     for (final FQNamesProvider provider : namesProviders) {
       final List<String> names = Arrays.asList(provider.getNames());
-      if (qualifiedName != null && names.contains(qualifiedName)) {
+      if (qualifiedName != null &&
+          (names.contains(qualifiedName) || names.contains(PyNames.FQN.unqualifyBuiltinName(qualifiedName)))) {
+        // The second check lets providers that list a builtin by its short name (e.g. "super") keep matching,
+        // since QualifiedNameFinder now qualifies builtins as "builtins.<name>".
         return true;
       }
       if (className != null && provider.isClass() && names.contains(className)) {

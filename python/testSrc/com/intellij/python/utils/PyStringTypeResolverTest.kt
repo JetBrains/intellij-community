@@ -146,7 +146,7 @@ class PyStringTypeResolverTest : PyTestCase() {
   fun `test parse type int`() {
     val type = parse<PyClassType>("builtins.type[builtins.int]")
     assertTrue(type.isDefinition)
-    assertEquals("int", type.classQName)
+    assertEquals(PyNames.FQN.INT, type.classQName)
   }
 
   fun `test parse tuple variadic`() {

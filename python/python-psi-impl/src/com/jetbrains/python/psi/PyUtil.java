@@ -1472,7 +1472,8 @@ public final class PyUtil {
 
   public static boolean isObjectClass(@NotNull PyClass cls) {
     String qualifiedName = cls.getQualifiedName();
-    return PyNames.OBJECT.equals(qualifiedName) || (qualifiedName == null && PyNames.OBJECT.equals(cls.getName()));
+    return PyNames.FQN.OBJECT.equals(qualifiedName) ||
+           (qualifiedName == null && PyNames.OBJECT.equals(cls.getName()));
   }
 
   public static @Nullable PyType getReturnTypeOfMember(@NotNull PyType type,
