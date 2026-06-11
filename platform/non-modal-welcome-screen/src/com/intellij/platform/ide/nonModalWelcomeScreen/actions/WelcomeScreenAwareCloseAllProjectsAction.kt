@@ -7,7 +7,7 @@ import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.ex.findProjectCloseHandler
+import com.intellij.openapi.wm.ex.findProjectClosingTransitionHandler
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.nonModalWelcomeScreen.isWelcomeExperienceProjectSync
 import kotlinx.coroutines.launch
@@ -23,7 +23,7 @@ internal class WelcomeScreenAwareCloseAllProjectsAction : CloseAllProjectsAction
     val projectManager = ProjectManager.getInstance()
     val otherOpenProjects = projectManager.openProjects.filter { it != currentProject }
 
-    val closeHandler = findProjectCloseHandler(currentProject) ?: return super.actionPerformed(e)
+    val closeHandler = findProjectClosingTransitionHandler(currentProject) ?: return super.actionPerformed(e)
 
     otherOpenProjects.forEach {
       WindowManager.getInstance().updateDefaultFrameInfoOnProjectClose(it)

@@ -4,7 +4,7 @@ import com.intellij.ide.actions.CloseProjectAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.wm.ex.findProjectCloseHandler
+import com.intellij.openapi.wm.ex.findProjectClosingTransitionHandler
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.nonModalWelcomeScreen.isWelcomeExperienceProjectSync
 import kotlinx.coroutines.launch
@@ -21,7 +21,7 @@ internal class WelcomeScreenAwareCloseProjectAction : CloseProjectAction() {
       return super.actionPerformed(e)
     }
 
-    val transitionHandler = findProjectCloseHandler(currentProject)
+    val transitionHandler = findProjectClosingTransitionHandler(currentProject)
     if (transitionHandler == null) {
       return super.actionPerformed(e)
     }

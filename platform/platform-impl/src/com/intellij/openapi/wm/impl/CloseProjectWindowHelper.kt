@@ -15,7 +15,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.ex.findProjectCloseHandler
+import com.intellij.openapi.wm.ex.findProjectClosingTransitionHandler
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.mac.MacMenuSettings
@@ -95,7 +95,7 @@ open class CloseProjectWindowHelper {
   @RequiresEdt
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {
     if (project != null && project.isOpen && getNumberOfOpenedProjects() == 1) {
-      val transitionHandler = findProjectCloseHandler(project)
+      val transitionHandler = findProjectClosingTransitionHandler(project)
       if (transitionHandler != null) {
         // The handler closes [project] as part of opening the welcome project so the frame is reused.
         service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
