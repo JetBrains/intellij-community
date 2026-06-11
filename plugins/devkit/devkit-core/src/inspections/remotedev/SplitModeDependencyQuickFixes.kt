@@ -31,6 +31,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.dom.Dependency
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeAnalysisFlags
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.getExplicitPlatformDependencyName
@@ -336,7 +337,7 @@ private suspend fun applyDependencyFix(
         PsiDocumentManager.getInstance(project).commitAllDocuments()
       }
 
-    runJpsToBazelConverter(project)
+    runJpsToBazelConverterIfNeeded(project)
   }
 }
 
@@ -580,8 +581,8 @@ private fun addModuleDependency(module: Module?, dependencyName: String) {
   }
 }
 
-private fun runJpsToBazelConverter(project: Project) {
-  if (ApplicationManager.getApplication().isUnitTestMode) {
+private fun runJpsToBazelConverterIfNeeded(project: Project) {
+  if (ApplicationManager.getApplication().isUnitTestMode || !SplitModeAnalysisFlags.isRunJpsToBazelInQuickFixEnabled()) {
     return
   }
 

@@ -23,6 +23,10 @@ internal object SplitModeAnalysisFlags {
     return RegistryManager.getInstance().`is`("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
   }
 
+  fun isRunJpsToBazelInQuickFixEnabled(): Boolean {
+    return Registry.`is`("devkit.split.mode.run.jps.to.bazel.in.quick.fix", false)
+  }
+
   fun isQodanaAnalysisScopeLimiterEnabled(): Boolean {
     return Registry.`is`("devkit.split.mode.qodana.analysis.scope.limiter.enabled", false)
   }
