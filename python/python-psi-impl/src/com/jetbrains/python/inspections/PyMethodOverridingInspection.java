@@ -82,13 +82,8 @@ public final class PyMethodOverridingInspection extends PyInspection {
       if (!PyTypeChecker.match(baseMethodInputSignature, functionInputSignature, myTypeEvalContext)) {
         ProblemMessage msg = PyPsiBundle.problemMessage("INSP.signature.mismatch", methodSignatureParam, baseClassParam);
 
-        LocalQuickFix fix = PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(function, baseMethod);
-        if (fix != null) {
-          registerProblem(function.getParameterList(), msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
-        }
-        else {
-          registerProblem(function.getParameterList(), msg);
-        }
+        registerOverrideMismatch(function.getParameterList(), baseMethodInputSignature, functionInputSignature, msg,
+                                 PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(function, baseMethod));
       }
 
       PyAnnotation annotation = function.getAnnotation();
@@ -102,8 +97,23 @@ public final class PyMethodOverridingInspection extends PyInspection {
 
       if (!PyTypeChecker.match(baseMethodReturnType, overriddenReturnType, myTypeEvalContext)) {
         ProblemMessage msg = PyPsiBundle.problemMessage("INSP.overridden.method.return.type.mismatch", methodSignatureParam, baseClassParam);
-        registerProblem(returnExpression, msg);
+        registerOverrideMismatch(returnExpression, baseMethodReturnType, overriddenReturnType, msg);
       }
+    }
+
+    /**
+     * Registers an override-incompatibility problem, attaching the breakdown ({@link PyTypeChecker#explainMismatch})
+     * as a separate on-the-fly HTML tooltip while keeping the one-line {@code message} as the flat description.
+     * Falls back to a plain problem when not on-the-fly or when the failure category is not instrumented.
+     */
+    private void registerOverrideMismatch(@Nullable PsiElement element,
+                                          @Nullable PyType expected,
+                                          @Nullable PyType actual,
+                                          @NotNull ProblemMessage message,
+                                          LocalQuickFix @NotNull ... fixes) {
+      registerProblemWithTooltip(element, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                 fixes,
+                                 () -> PyTypeCheckerInspectionProblemRegistrar.breakdownTooltip(message, expected, actual, myTypeEvalContext, element));
     }
   }
 }

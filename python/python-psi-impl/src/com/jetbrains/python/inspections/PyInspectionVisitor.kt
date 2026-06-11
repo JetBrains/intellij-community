@@ -26,6 +26,7 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.diagnostic.PluginException
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
@@ -263,6 +264,86 @@ abstract class PyInspectionVisitor(
       if (fix != null) builder.fix(fix)
     }
     builder.register()
+  }
+
+  /**
+   * Registers a problem whose one-line [message] is the plain-text description, but whose editor hover shows a
+   * richer [tooltip] (HTML). Keeping the description and tooltip separate means batch results and golden tests
+   * still see only the plain message. Honors the type-engine downgrade like the other registration helpers; any
+   * quick [fixes] are attached (nulls are ignored).
+   */
+  @ApiStatus.Internal
+  protected fun registerProblemWithTooltip(
+    element: PsiElement?,
+    @InspectionMessage message: String,
+    type: ProblemHighlightType,
+    @NlsContexts.Tooltip tooltip: String,
+    vararg fixes: LocalQuickFix?,
+  ) {
+    if (holder == null || element == null || !element.canRegisterProblem) {
+      return
+    }
+    val effectiveType = if (downgradeHighlightForTypeEngine) ProblemHighlightType.INFORMATION else type
+    val builder = holder!!.problem(element, message).highlight(effectiveType).tooltip(tooltip)
+    for (fix in fixes) {
+      if (fix != null) builder.fix(fix)
+    }
+    builder.register()
+  }
+
+  /**
+   * Registers [message] as the flat description and, **only** in on-the-fly mode, attaches the hover tooltip
+   * produced by [tooltip]. The supplier is invoked lazily and exclusively for on-the-fly highlighting, so any
+   * expensive work behind it (e.g. re-running a type match to build a breakdown) is skipped in batch mode; when
+   * it yields `null` — or in batch mode — only the plain [message] is registered. This folds the
+   * `if (isOnTheFly) registerProblemWithTooltip(...) else registerProblem(...)` branch into a single call.
+   */
+  @ApiStatus.Internal
+  fun registerProblemWithTooltip(
+    element: PsiElement?,
+    @InspectionMessage message: String,
+    type: ProblemHighlightType,
+    vararg fixes: LocalQuickFix,
+    tooltip: () -> @NlsContexts.Tooltip String?,
+  ) {
+    if (!element.canRegisterProblem) {
+      return
+    }
+    val onTheFlyTooltip = if (holder?.isOnTheFly == true) tooltip() else null
+    if (onTheFlyTooltip != null) {
+      registerProblemWithTooltip(element, message, type, onTheFlyTooltip, *fixes)
+    }
+    else if (fixes.isEmpty()) {
+      registerProblem(element, message, type)
+    }
+    else {
+      registerProblem(element, message, type, null as HintAction?, *fixes)
+    }
+  }
+
+  /**
+   * [ProblemMessage] variant of the supplier-based [registerProblemWithTooltip]: on-the-fly the [tooltip] supplier
+   * (when it yields non-null) replaces the message's own tooltip; otherwise the message is registered with its
+   * plain [ProblemMessage.description] and [ProblemMessage.tooltip].
+   */
+  @ApiStatus.Internal
+  fun registerProblemWithTooltip(
+    element: PsiElement?,
+    message: ProblemMessage,
+    type: ProblemHighlightType,
+    vararg fixes: LocalQuickFix,
+    tooltip: () -> @NlsContexts.Tooltip String?,
+  ) {
+    if (!element.canRegisterProblem) {
+      return
+    }
+    val onTheFlyTooltip = if (holder?.isOnTheFly == true) tooltip() else null
+    if (onTheFlyTooltip != null) {
+      registerProblemWithTooltip(element, message.description, type, onTheFlyTooltip, *fixes)
+    }
+    else {
+      registerProblem(element, message, type, *fixes)
+    }
   }
 
   companion object {

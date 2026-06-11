@@ -120,6 +120,54 @@ class PyInspectionTooltipLinkTest : PyCodeInsightTestCase() {
     assertTrue("<code>foo</code>" in info.toolTip!!, info.toolTip!!)
   }
 
+  // PY-80221: the type-mismatch breakdown shown below the headline in the tooltip renders its type references
+  // as navigable links too, not just the headline. Here `int`/`str` appear only in the nested breakdown
+  // ("`str` is not assignable to `int`"), so finding and resolving their links proves the breakdown is enriched.
+  @Test
+  @TestFor(issues = ["PY-80221"])
+  fun `type mismatch breakdown renders clickable type links`() {
+    val info = highlight<PyTypeCheckerInspection>(
+      """
+      from typing import Protocol
+      class A(Protocol):
+          a: int
+      class C:
+          a: str
+      x: A = C()
+      """.trimIndent(),
+      "Expected type"
+    )
+    assertTrue("incompatible with protocol" in info.toolTip!!, info.toolTip!!)
+    assertLink(info, "builtins.int")
+    assertLink(info, "builtins.str")
+    assertResolves("builtins.int")
+    assertResolves("builtins.str")
+  }
+
+  // PY-80221: the invariance breakdown links the owner class (e.g. `Box`), which resolves. The type variable
+  // itself stays a plain <code> span, since the tooltip link handler resolves only classes and functions.
+  @Test
+  @TestFor(issues = ["PY-80221"])
+  fun `invariant type parameter breakdown links the owner class`() {
+    val info = highlight<PyTypeCheckerInspection>(
+      """
+      from typing import Generic, TypeVar
+      T = TypeVar("T")
+      class Box(Generic[T]):
+          def __init__(self, x: T) -> None:
+              self.x = x
+      bad = Box(True)
+      b: Box[int] = bad
+      """.trimIndent(),
+      "Expected type"
+    )
+    val tooltip = info.toolTip!!
+    assertTrue("invariant" in tooltip, tooltip)
+    assertTrue("<code>T</code>" in tooltip, tooltip)
+    val linkTargets = Regex("""#element/([\w.]+)""").findAll(tooltip).map { it.groupValues[1] }.toList()
+    assertInstanceOf<PyClass>(runReadActionBlocking { QualifiedNameProviderUtil.qualifiedNameToElement(linkTargets.first { it.endsWith(".Box") }, myFixture.project) })
+  }
+
   private fun assertLink(info: HighlightInfo, name: String) {
     assertTrue("""href="#element/$name"""" in info.toolTip!!, info.toolTip!!)
   }
