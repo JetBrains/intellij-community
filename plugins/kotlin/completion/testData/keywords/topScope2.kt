@@ -35,5 +35,6 @@
 // EXIST:  expect
 // EXIST:  actual
 // EXIST:  lateinit var
-// EXIST: data object
+// EXIST:  data object
+// EXIST:  context
 // NOTHING_ELSE

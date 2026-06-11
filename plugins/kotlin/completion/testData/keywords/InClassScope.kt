@@ -25,7 +25,7 @@ class TestClass {
 // EXIST:  constructor
 // EXIST:  init
 // EXIST:  companion object
-// EXIST: companion
+// EXIST:  companion
 // EXIST:  operator
 // EXIST:  infix
 // EXIST:  sealed class
@@ -41,5 +41,6 @@ class TestClass {
 // EXIST:  typealias
 // EXIST:  expect
 // EXIST:  actual
-// EXIST: data object
+// EXIST:  data object
+// EXIST:  context
 // NOTHING_ELSE

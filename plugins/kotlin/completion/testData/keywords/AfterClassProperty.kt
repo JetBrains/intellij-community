@@ -35,7 +35,7 @@ class MouseMovedEventArgs
 // EXIST:  constructor
 // EXIST:  init
 // EXIST:  companion object
-// EXIST: companion
+// EXIST:  companion
 // EXIST:  operator
 // EXIST:  infix
 // EXIST:  sealed class
@@ -51,5 +51,7 @@ class MouseMovedEventArgs
 // EXIST:  typealias
 // EXIST:  expect
 // EXIST:  actual
-// EXIST: data object
+// EXIST:  data object
+// EXIST:  context
+// EXIST:  field
 // NOTHING_ELSE

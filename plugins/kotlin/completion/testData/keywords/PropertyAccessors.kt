@@ -8,7 +8,7 @@ class Some {
 }
 
 // EXIST:  abstract
-// EXIST: by
+// EXIST:  by
 // EXIST:  class
 // EXIST:  enum class
 // EXIST:  final
@@ -48,5 +48,7 @@ class Some {
 // EXIST:  typealias
 // EXIST:  expect
 // EXIST:  actual
-// EXIST: data object
+// EXIST:  data object
+// EXIST:  context
+// EXIST:  field
 // NOTHING_ELSE

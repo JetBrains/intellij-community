@@ -48,5 +48,6 @@ class A {
 // EXIST:  typealias
 // EXIST:  expect
 // EXIST:  actual
-// EXIST: data object
+// EXIST:  data object
+// EXIST:  context
 // NOTHING_ELSE

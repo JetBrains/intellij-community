@@ -14,7 +14,7 @@ var a : Int
   <caret>
 
 // EXIST:  abstract
-// EXIST: by
+// EXIST:  by
 // EXIST:  class
 // EXIST:  class GlobalPropertyAccessors
 // EXIST:  enum class
@@ -57,6 +57,10 @@ var a : Int
 // EXIST:  expect
 // EXIST:  actual
 // EXIST:  lateinit var
-// EXIST: data object
-// EXIST: { "lookupString":"data object GlobalPropertyAccessors", "itemText":"data object GlobalPropertyAccessors"}
+// EXIST:  data object
+// EXIST:  { "lookupString":"data object GlobalPropertyAccessors", "itemText":"data object GlobalPropertyAccessors"}
+// EXIST:  context
+// EXIST:  {"lookupString":"context","tailText":"(...)","attributes":"bold","allLookupStrings":"context","itemText":"context"}
+// EXIST:  field
+// EXIST:  {"lookupString":"field","attributes":"bold","allLookupStrings":"field","itemText":"field"}
 // NOTHING_ELSE
