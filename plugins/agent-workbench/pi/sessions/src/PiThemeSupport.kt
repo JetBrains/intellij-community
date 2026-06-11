@@ -7,7 +7,6 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.fs.EelFiles
 import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.sha256Hex
 import java.nio.charset.StandardCharsets
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
@@ -18,18 +17,18 @@ private val THEME_LOG = logger<PiThemeSupport>()
 
 internal class PiThemeSupport(
   private val rootDirectoryProvider: () -> Path = ::defaultPiThemeRootDirectory,
-  private val extensionResourceProvider: () -> PiBundledThemeExtensionResource = ::loadBundledPiThemeExtensionResource,
+  private val extensionResourceProvider: () -> PiBundledExtensionResource = ::loadBundledPiExtensionResource,
   private val themeSnapshotProvider: () -> PiThemeSnapshot = PiThemeSnapshotBuilder()::buildSnapshot,
 ) {
   @Volatile
   private var materializationAttempted: Boolean = false
 
   @Volatile
-  private var cachedLaunchResources: PiThemeLaunchResources? = null
+  private var cachedMaterialization: PiExtensionMaterialization? = null
 
   private val lock = Any()
 
-  fun launchResourcesOrNull(): PiThemeLaunchResources? {
+  fun launchResourcesOrNull(): PiExtensionLaunchResources? {
     val resources = materializedLaunchResourcesOrNull() ?: return null
     return try {
       writeCurrentThemeState(resources.stateFilePath)
@@ -42,7 +41,7 @@ internal class PiThemeSupport(
   }
 
   fun syncCurrentThemeState() {
-    val resources = cachedLaunchResources ?: return
+    val resources = cachedMaterialization?.launchResources ?: return
     try {
       writeCurrentThemeState(resources.stateFilePath)
     }
@@ -51,27 +50,31 @@ internal class PiThemeSupport(
     }
   }
 
-  private fun materializedLaunchResourcesOrNull(): PiThemeLaunchResources? {
-    if (materializationAttempted) return cachedLaunchResources
+  private fun materializedLaunchResourcesOrNull(): PiExtensionLaunchResources? {
+    if (materializationAttempted) return cachedMaterialization?.let(::revalidateMaterializationOrNull)
 
     synchronized(lock) {
-      if (materializationAttempted) return cachedLaunchResources
-      cachedLaunchResources = try {
+      if (materializationAttempted) return cachedMaterialization?.let(::revalidateMaterializationOrNull)
+      cachedMaterialization = try {
         materializeLaunchResources()
       }
       catch (e: Exception) {
-        THEME_LOG.warn("Failed to materialize Pi theme extension", e)
+        THEME_LOG.warn("Failed to materialize Pi extension", e)
         null
       }
       materializationAttempted = true
-      return cachedLaunchResources
+      return cachedMaterialization?.launchResources
     }
   }
 
-  private fun materializeLaunchResources(): PiThemeLaunchResources {
+  private fun materializeLaunchResources(): PiExtensionMaterialization {
     val extension = extensionResourceProvider()
+    validateMaterializedExtensionFileName(extension.fileName)
+    val extensionBytes = extension.bytes.copyOf()
+    val hash = DigestUtil.sha256Hex(extensionBytes)
+    val materializedFileName = buildContentAddressedExtensionFileName(extension.fileName, hash)
     val rootDirectory = rootDirectoryProvider()
-    val extensionDirectory = rootDirectory.resolve(PI_THEME_EXTENSION_DIRECTORY_NAME)
+    val extensionDirectory = rootDirectory.resolve(PI_EXTENSION_DIRECTORY_NAME)
     val stateDirectory = rootDirectory.resolve(PI_THEME_STATE_DIRECTORY_NAME)
     val manifestPath = rootDirectory.resolve(PI_THEME_MANIFEST_FILE_NAME)
 
@@ -84,12 +87,10 @@ internal class PiThemeSupport(
     }
 
     val hashes = LinkedHashMap<String, String>()
-    validateMaterializedFileName(extension.fileName)
-    val hash = DigestUtil.sha256Hex(extension.bytes)
-    hashes[extension.fileName] = hash
-    val extensionPath = extensionDirectory.resolve(extension.fileName)
+    hashes[materializedFileName] = hash
+    val extensionPath = extensionDirectory.resolve(materializedFileName)
     if (sha256HexOrNull(extensionPath) != hash) {
-      writeAtomically(extensionPath, extension.bytes)
+      writeAtomically(extensionPath, extensionBytes)
     }
 
     deleteUnexpectedRegularFiles(extensionDirectory, hashes.keys)
@@ -99,10 +100,35 @@ internal class PiThemeSupport(
       writeAtomically(manifestPath, expectedManifest.toByteArray(StandardCharsets.UTF_8))
     }
 
-    return PiThemeLaunchResources(
-      extensionPath = extensionPath,
-      stateFilePath = stateDirectory.resolve(PI_THEME_STATE_FILE_NAME),
+    return PiExtensionMaterialization(
+      launchResources = PiExtensionLaunchResources(
+        extensionPath = extensionPath,
+        stateFilePath = stateDirectory.resolve(PI_THEME_STATE_FILE_NAME),
+      ),
+      extensionBytes = extensionBytes,
+      extensionHash = hash,
+      extensionFileName = materializedFileName,
+      manifestPath = manifestPath,
+      expectedManifest = expectedManifest,
     )
+  }
+
+  private fun revalidateMaterializationOrNull(materialization: PiExtensionMaterialization): PiExtensionLaunchResources? {
+    return try {
+      val extensionPath = materialization.launchResources.extensionPath
+      if (sha256HexOrNull(extensionPath) != materialization.extensionHash) {
+        writeAtomically(extensionPath, materialization.extensionBytes)
+      }
+      deleteUnexpectedRegularFiles(extensionPath.parent, setOf(materialization.extensionFileName))
+      if (readStringOrNull(materialization.manifestPath) != materialization.expectedManifest) {
+        writeAtomically(materialization.manifestPath, materialization.expectedManifest.toByteArray(StandardCharsets.UTF_8))
+      }
+      materialization.launchResources
+    }
+    catch (e: Exception) {
+      THEME_LOG.warn("Failed to revalidate Pi extension", e)
+      null
+    }
   }
 
   private fun writeCurrentThemeState(stateFilePath: Path) {
@@ -114,12 +140,21 @@ internal class PiThemeSupport(
   }
 }
 
-internal data class PiThemeLaunchResources(
+internal data class PiExtensionLaunchResources(
   val extensionPath: Path,
   val stateFilePath: Path,
 )
 
-internal class PiBundledThemeExtensionResource(
+private class PiExtensionMaterialization(
+  val launchResources: PiExtensionLaunchResources,
+  val extensionBytes: ByteArray,
+  val extensionHash: String,
+  val extensionFileName: String,
+  val manifestPath: Path,
+  val expectedManifest: String,
+)
+
+internal class PiBundledExtensionResource(
   val fileName: String,
   val bytes: ByteArray,
 )
@@ -128,17 +163,28 @@ private fun defaultPiThemeRootDirectory(): Path {
   return PathManager.getSystemDir().resolve("agent-workbench").resolve("pi-themes")
 }
 
-private fun loadBundledPiThemeExtensionResource(): PiBundledThemeExtensionResource {
-  val resourcePath = "$PI_THEME_EXTENSION_RESOURCE_DIRECTORY/$PI_THEME_EXTENSION_FILE_NAME"
+private fun loadBundledPiExtensionResource(): PiBundledExtensionResource {
+  val resourcePath = "$PI_EXTENSION_RESOURCE_DIRECTORY/$PI_EXTENSION_FILE_NAME"
   val bytes = PiThemeSupport::class.java.classLoader.getResourceAsStream(resourcePath)
                 ?.use { input -> input.readBytes() }
-              ?: error("Missing bundled Pi theme extension resource: $resourcePath")
-  return PiBundledThemeExtensionResource(PI_THEME_EXTENSION_FILE_NAME, bytes)
+              ?: error("Missing bundled Pi extension resource: $resourcePath")
+  return PiBundledExtensionResource(PI_EXTENSION_FILE_NAME, bytes)
 }
 
-private fun validateMaterializedFileName(fileName: String) {
-  require(fileName.isNotBlank()) { "Pi theme extension file name must not be blank" }
-  require(Path.of(fileName).fileName.toString() == fileName) { "Pi theme extension file name must not contain path separators: $fileName" }
+private fun validateMaterializedExtensionFileName(fileName: String) {
+  require(fileName.isNotBlank()) { "Pi extension file name must not be blank" }
+  require(Path.of(fileName).fileName.toString() == fileName) { "Pi extension file name must not contain path separators: $fileName" }
+}
+
+private fun buildContentAddressedExtensionFileName(fileName: String, hash: String): String {
+  val hashPrefix = hash.take(PI_EXTENSION_FILE_NAME_HASH_PREFIX_LENGTH)
+  val extensionSeparatorIndex = fileName.lastIndexOf('.')
+  return if (extensionSeparatorIndex > 0) {
+    fileName.substring(0, extensionSeparatorIndex) + "-$hashPrefix" + fileName.substring(extensionSeparatorIndex)
+  }
+  else {
+    "$fileName-$hashPrefix"
+  }
 }
 
 private fun buildManifest(hashes: Map<String, String>): String {
@@ -157,7 +203,11 @@ private fun buildManifest(hashes: Map<String, String>): String {
 
 private fun sha256HexOrNull(path: Path): String? {
   if (!Files.isRegularFile(path)) return null
-  return runCatching { sha256Hex(path) }.getOrNull()
+  return runCatching {
+    val digest = DigestUtil.sha256()
+    DigestUtil.updateContentHash(digest, path)
+    DigestUtil.digestToHash(digest)
+  }.getOrNull()
 }
 
 private fun readStringOrNull(path: Path): String? {
@@ -216,11 +266,12 @@ private fun writeAtomically(path: Path, bytes: ByteArray) {
 
 internal const val PI_THEME_STATE_ENVIRONMENT_VARIABLE: String = "AGENT_WORKBENCH_PI_THEME_STATE"
 
-private const val PI_THEME_EXTENSION_RESOURCE_DIRECTORY: String = "pi-extension"
-private const val PI_THEME_EXTENSION_FILE_NAME: String = "agent-workbench-theme.ts"
-private const val PI_THEME_EXTENSION_DIRECTORY_NAME: String = "extension"
+private const val PI_EXTENSION_RESOURCE_DIRECTORY: String = "pi-extension"
+private const val PI_EXTENSION_FILE_NAME: String = "agent-workbench-extension.ts"
+private const val PI_EXTENSION_FILE_NAME_HASH_PREFIX_LENGTH: Int = 16
+private const val PI_EXTENSION_DIRECTORY_NAME: String = "extension"
 private const val PI_THEME_STATE_DIRECTORY_NAME: String = "state"
 private const val PI_THEME_STATE_FILE_NAME: String = "current-theme.txt"
 private const val PI_LEGACY_THEME_DIRECTORY_NAME: String = "themes"
 private const val PI_THEME_MANIFEST_FILE_NAME: String = ".awb-theme-manifest"
-private const val PI_THEME_MATERIALIZATION_FORMAT_VERSION: Int = 3
+private const val PI_THEME_MATERIALIZATION_FORMAT_VERSION: Int = 4

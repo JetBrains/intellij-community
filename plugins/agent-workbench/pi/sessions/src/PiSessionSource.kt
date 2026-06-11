@@ -11,29 +11,18 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
-import com.intellij.agent.workbench.filewatch.AgentWorkbenchDirectoryWatcher
-import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEvent
-import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEventType
 import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
 import com.intellij.agent.workbench.json.forEachJsonObjectField
 import com.intellij.agent.workbench.json.readJsonLongOrNull
 import com.intellij.agent.workbench.json.readJsonStringOrNull
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.resolveReadTrackedActivity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import java.io.StringWriter
 import java.nio.charset.StandardCharsets
@@ -244,8 +233,11 @@ internal class PiSessionStore(
 
 internal class PiSessionSource(
   internal val sessionStore: PiSessionStore = PiSessionStore(),
-  sessionWatchEventsFactory: ((Set<Path>) -> Flow<AgentWorkbenchWatchEvent>)? = null,
+  extensionStatusEvents: Flow<AgentSessionSourceUpdateEvent> = PiExtensionStatusBridge.updateEvents,
+  fileWatchFallbackEnabledProvider: () -> Boolean = ::isPiFileWatchFallbackEnabled,
+  sessionUpdateEventsContributorProvider: () -> List<PiSessionUpdateEventsContributor> = ::piSessionUpdateEventsContributors,
 ) : BaseAgentSessionSource(AgentSessionProvider.PI) {
+  private val fileWatchFallbackEnabled = fileWatchFallbackEnabledProvider()
   private val watchedSessionDirectoriesLock = Any()
   private val watchedProjectPathsBySessionDir = MutableStateFlow<Map<Path, Set<String>>>(emptyMap())
   private val observedUpdatedAtByThreadId = ConcurrentHashMap<String, Long>()
@@ -257,7 +249,12 @@ internal class PiSessionSource(
 
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent> = merge(
     readStateUpdateEvents,
-    watchPiSessionUpdates(watchedProjectPathsBySessionDir, sessionWatchEventsFactory ?: ::createPiSessionWatchEvents),
+    extensionStatusEvents,
+    createPiSessionUpdateEvents(
+      watchedProjectPathsBySessionDir = watchedProjectPathsBySessionDir,
+      fileWatchFallbackEnabledProvider = { fileWatchFallbackEnabled },
+      sessionUpdateEventsContributorProvider = sessionUpdateEventsContributorProvider,
+    ),
   )
 
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
@@ -301,8 +298,9 @@ internal class PiSessionSource(
   }
 
   private fun rememberSessionDirectory(path: String) {
+    if (!fileWatchFallbackEnabled) return
     val normalizedProjectPath = normalizePiProjectPath(path) ?: return
-    val sessionDir = normalizePiWatchPath(sessionStore.sessionDir(path))
+    val sessionDir = normalizePiSessionDirectoryPath(sessionStore.sessionDir(path))
 
     synchronized(watchedSessionDirectoriesLock) {
       val current = watchedProjectPathsBySessionDir.value
@@ -321,104 +319,7 @@ internal class PiSessionSource(
   }
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
-private fun watchPiSessionUpdates(
-  watchedProjectPathsBySessionDir: StateFlow<Map<Path, Set<String>>>,
-  sessionWatchEventsFactory: (Set<Path>) -> Flow<AgentWorkbenchWatchEvent>,
-): Flow<AgentSessionSourceUpdateEvent> {
-  return watchedProjectPathsBySessionDir.flatMapLatest { projectPathsBySessionDir ->
-    if (projectPathsBySessionDir.isEmpty()) {
-      emptyFlow()
-    }
-    else {
-      sessionWatchEventsFactory(createPiSessionWatchRoots(projectPathsBySessionDir.keys))
-        .mapNotNull { event -> createPiSessionSourceUpdateEventForWatchEvent(event, projectPathsBySessionDir) }
-    }
-  }
-}
-
-private fun createPiSessionWatchRoots(sessionDirs: Collection<Path>): Set<Path> {
-  val roots = LinkedHashSet<Path>()
-  for (sessionDir in sessionDirs) {
-    roots.add(sessionDir)
-    sessionDir.parent?.let(roots::add)
-  }
-  return roots
-}
-
-private fun createPiSessionWatchEvents(sessionDirs: Set<Path>): Flow<AgentWorkbenchWatchEvent> {
-  if (sessionDirs.isEmpty()) return emptyFlow()
-  return callbackFlow {
-    val watcher = AgentWorkbenchDirectoryWatcher(
-      roots = sessionDirs,
-      scope = this,
-      onWatchEvent = { event -> trySend(event).isSuccess },
-      onFailure = { t -> LOG.warn("Pi session directory watcher failed", t) },
-    )
-    awaitClose { watcher.close() }
-  }
-}
-
-internal fun createPiSessionSourceUpdateEventForWatchEvent(
-  event: AgentWorkbenchWatchEvent,
-  projectPathsBySessionDir: Map<Path, Set<String>>,
-): AgentSessionSourceUpdateEvent? {
-  val rootPath = event.rootPath?.let(::normalizePiWatchPath) ?: return null
-  val eventPath = event.path?.let(::normalizePiWatchPath)
-  val scopedPaths = collectScopedPathsForPiWatchEvent(
-    rootPath = rootPath,
-    eventPath = eventPath,
-    isOverflow = event.eventType == AgentWorkbenchWatchEventType.OVERFLOW,
-    projectPathsBySessionDir = projectPathsBySessionDir,
-  ).takeIf { it.isNotEmpty() } ?: return null
-  if (event.eventType == AgentWorkbenchWatchEventType.OVERFLOW) {
-    return AgentSessionSourceUpdateEvent(
-      type = AgentSessionSourceUpdate.THREADS_CHANGED,
-      scopedPaths = scopedPaths,
-    )
-  }
-  if (!isRelevantPiSessionWatchEvent(event, eventPath, projectPathsBySessionDir.keys)) return null
-  return AgentSessionSourceUpdateEvent(
-    type = AgentSessionSourceUpdate.THREADS_CHANGED,
-    scopedPaths = scopedPaths,
-  )
-}
-
-private fun collectScopedPathsForPiWatchEvent(
-  rootPath: Path,
-  eventPath: Path?,
-  isOverflow: Boolean,
-  projectPathsBySessionDir: Map<Path, Set<String>>,
-): Set<String> {
-  val scopedPaths = LinkedHashSet<String>()
-  for ((sessionDir, paths) in projectPathsBySessionDir) {
-    val matches = if (isOverflow) {
-      rootPath == sessionDir || sessionDir.startsWith(rootPath)
-    }
-    else {
-      eventPath != null && (eventPath == sessionDir || eventPath.startsWith(sessionDir))
-    }
-    if (matches) {
-      scopedPaths.addAll(paths)
-    }
-  }
-  return scopedPaths
-}
-
-private fun isRelevantPiSessionWatchEvent(event: AgentWorkbenchWatchEvent, eventPath: Path?, sessionDirs: Set<Path>): Boolean {
-  if (eventPath == null) return false
-  if (event.isDirectory) {
-    return eventPath in sessionDirs
-  }
-  return isPiSessionWatchFile(eventPath)
-}
-
-private fun isPiSessionWatchFile(path: Path?): Boolean {
-  val fileName = path?.fileName?.toString() ?: return false
-  return fileName.endsWith(".jsonl")
-}
-
-private fun normalizePiWatchPath(path: Path): Path {
+private fun normalizePiSessionDirectoryPath(path: Path): Path {
   return runCatching {
     path.toAbsolutePath().normalize()
   }.getOrElse {
@@ -756,7 +657,7 @@ private fun PiSessionIndexEntry.resolveCompletedPiActivity(
   }
 }
 
-private fun normalizePiProjectPath(path: String): String? {
+internal fun normalizePiProjectPath(path: String): String? {
   val trimmedPath = path.trim().takeIf { it.isNotEmpty() } ?: return null
   val normalizedPath = normalizeAgentWorkbenchPathOrNull(trimmedPath) ?: return null
   return normalizedPath.trimEnd('/').ifEmpty { "/" }

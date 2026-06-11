@@ -62,6 +62,9 @@
 - name: lib/modules/intellij.agent.workbench.junie.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.junie.sessions
+- name: lib/modules/intellij.agent.workbench.pi.sessions.filewatch.jar
+  contentModules:
+  - name: intellij.agent.workbench.pi.sessions.filewatch
 - name: lib/modules/intellij.agent.workbench.pi.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.pi.sessions

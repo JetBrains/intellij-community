@@ -5,13 +5,20 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.buildAgentThreadIdentity
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditor
@@ -29,6 +36,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.TerminalTitle
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
+import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -57,6 +65,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.Icon
 import javax.swing.JPanel
 import kotlin.coroutines.CoroutineContext
 
@@ -815,6 +824,22 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun fileClosedRecordsProviderTerminalSessionCloseWhenNoCopiesRemain() {
+    val project = testProject()
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val file = claudeLifecycleTestFile()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
+    val descriptor = RecordingTerminalSessionClosedProvider(AgentSessionProvider.CLAUDE)
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      liveTerminalStore.acquireOrCreate(project = project, file = file, terminalTabs = terminalTabs)
+      liveTerminalStore.handleFileClosed(project, testFileEditorManager(isFileOpen = false), file)
+    }
+
+    assertThat(descriptor.closedSessions).containsExactly(ClosedTerminalSession(file.projectPath, file.threadId))
+  }
+
+  @Test
   fun fileClosedKeepsInitializedTerminalTabWhenFileIsStillReportedOpen() {
     val project = testProject()
     val terminalTabs = FakeAgentChatTerminalTabs()
@@ -834,6 +859,24 @@ class AgentChatFileEditorLifecycleTest {
     assertThat(terminalTabs.createCalls).isEqualTo(1)
     assertThat(terminalTabs.closeCalls).isEqualTo(0)
     assertThat(liveTerminalStore.isTracked(file.tabKey)).isTrue()
+
+    liveTerminalStore.dispose(project)
+  }
+
+  @Test
+  fun fileClosedDoesNotRecordProviderTerminalSessionCloseWhenFileIsStillOpen() {
+    val project = testProject()
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val file = claudeLifecycleTestFile()
+    val liveTerminalStore = AgentChatLiveTerminalStore()
+    val descriptor = RecordingTerminalSessionClosedProvider(AgentSessionProvider.CLAUDE)
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      liveTerminalStore.acquireOrCreate(project = project, file = file, terminalTabs = terminalTabs)
+      liveTerminalStore.handleFileClosed(project, testFileEditorManager(isFileOpen = true), file)
+    }
+
+    assertThat(descriptor.closedSessions).isEmpty()
 
     liveTerminalStore.dispose(project)
   }
@@ -2545,6 +2588,44 @@ private class CodexScopedRefreshSignalCollector {
 
   fun dispose() {
     job.cancel()
+  }
+}
+
+private data class ClosedTerminalSession(
+  @JvmField val path: String,
+  @JvmField val threadId: String,
+)
+
+private class RecordingTerminalSessionClosedProvider(
+  override val provider: AgentSessionProvider,
+) : AgentSessionProviderDescriptor {
+  val closedSessions: CopyOnWriteArrayList<ClosedTerminalSession> = CopyOnWriteArrayList()
+
+  override val displayNameKey: String = "test.provider"
+  override val newSessionLabelKey: String = "test.new.session"
+  override val icon: Icon = EmptyIcon.ICON_0
+  override val sessionSource: AgentSessionSource = object : AgentSessionSource {
+    override val provider: AgentSessionProvider
+      get() = this@RecordingTerminalSessionClosedProvider.provider
+
+    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+
+    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
+  }
+  override val cliMissingMessageKey: String = "test.cli.missing"
+
+  override suspend fun isCliAvailable(): Boolean = true
+
+  override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec =
+    AgentSessionTerminalLaunchSpec(emptyList())
+
+  override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec =
+    AgentSessionTerminalLaunchSpec(emptyList())
+
+  override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan = AgentInitialMessagePlan.EMPTY
+
+  override fun recordTerminalSessionClosed(path: String, threadId: String) {
+    closedSessions += ClosedTerminalSession(path, threadId)
   }
 }
 

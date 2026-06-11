@@ -307,8 +307,9 @@ internal class AgentChatLiveTerminalStore(
     val entriesToClose = entries.values.toList()
     entries.clear()
     pendingCloseTabKeys.clear()
-    for (entry in entriesToClose) {
-      entry.terminalTabs.closeTab(entry.project, entry.tab)
+    for ((entryProject, file, tab, terminalTabs) in entriesToClose) {
+      terminalTabs.closeTab(entryProject, tab)
+      recordTerminalSessionClosed(file)
     }
   }
 
@@ -330,8 +331,9 @@ internal class AgentChatLiveTerminalStore(
         entriesToClose.add(entry)
       }
     }
-    for (entry in entriesToClose) {
-      entry.terminalTabs.closeTab(entry.project, entry.tab)
+    for ((entryProject, file, tab, terminalTabs) in entriesToClose) {
+      terminalTabs.closeTab(entryProject, tab)
+      recordTerminalSessionClosed(file)
     }
   }
 
@@ -350,7 +352,21 @@ internal class AgentChatLiveTerminalStore(
   private fun closeAndRemove(tabKey: String): AgentChatLiveTerminalCloseResult {
     val entry = entries.remove(tabKey) ?: return AgentChatLiveTerminalCloseResult.KEPT_OPEN
     entry.terminalTabs.closeTab(entry.project, entry.tab)
+    recordTerminalSessionClosed(entry.file)
     return AgentChatLiveTerminalCloseResult.CLOSED
+  }
+
+  private fun recordTerminalSessionClosed(file: AgentChatVirtualFile) {
+    val provider = file.provider ?: return
+    val projectPath = file.projectPath.takeIf { it.isNotBlank() } ?: return
+    val threadId = file.threadId.takeIf { it.isNotBlank() } ?: return
+    val descriptor = AgentSessionProviders.find(provider) ?: return
+    try {
+      descriptor.recordTerminalSessionClosed(path = projectPath, threadId = threadId)
+    }
+    catch (t: Throwable) {
+      LOG.warn("Failed to record closed terminal session ${file.threadId}", t)
+    }
   }
 
   private fun retainOpenEntry(tabKey: String, project: Project) {

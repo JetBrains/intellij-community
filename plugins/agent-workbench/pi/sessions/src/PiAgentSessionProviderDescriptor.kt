@@ -26,7 +26,8 @@ internal class PiAgentSessionProviderDescriptor(
   private val executableResolver: suspend () -> String = PiCliSupport::resolveExecutableOrDefaultViaTerminalResolver,
   private val cliAvailableProbe: suspend () -> Boolean = { PiCliSupport.findExecutableViaTerminalResolver() != null },
   private val sessionIdGenerator: () -> String = { UUID.randomUUID().toString() },
-  private val themeLaunchResourcesResolver: () -> PiThemeLaunchResources? = PiThemeSupport.DEFAULT::launchResourcesOrNull,
+  private val extensionLaunchResourcesResolver: () -> PiExtensionLaunchResources? = PiThemeSupport.DEFAULT::launchResourcesOrNull,
+  private val statusLaunchEnvironmentResolver: (String) -> Map<String, String> = PiExtensionStatusBridge::createLaunchEnvironment,
 ) : AgentSessionProviderDescriptor {
   override val provider: AgentSessionProvider
     get() = AgentSessionProvider.PI
@@ -50,6 +51,9 @@ internal class PiAgentSessionProviderDescriptor(
     get() = AgentSessionProviderCliVisibilityPolicy.DISCOVER_WHEN_AVAILABLE
 
   override val supportsNewThreadRebind: Boolean
+    get() = true
+
+  override val emitsScopedRefreshSignals: Boolean
     get() = true
 
   override val refreshPathAfterCreateNewSession: Boolean
@@ -77,33 +81,35 @@ internal class PiAgentSessionProviderDescriptor(
   override suspend fun isCliAvailable(): Boolean = cliAvailableProbe()
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
-    return buildPiLaunchSpec(PI_SESSION_FLAG, sessionId)
+    return buildPiLaunchSpec(sessionFlag = PI_SESSION_FLAG, sessionId = sessionId)
   }
 
   override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
     val sessionId = sessionIdGenerator()
-    return buildPiLaunchSpec(PI_SESSION_ID_FLAG, sessionId).copy(preallocatedSessionId = sessionId)
+    return buildPiLaunchSpec(sessionFlag = PI_SESSION_ID_FLAG, sessionId = sessionId).copy(preallocatedSessionId = sessionId)
   }
 
-  private suspend fun buildPiLaunchSpec(vararg args: String): AgentSessionTerminalLaunchSpec {
-    val command = ArrayList<String>(args.size + 3)
+  private suspend fun buildPiLaunchSpec(sessionFlag: String, sessionId: String): AgentSessionTerminalLaunchSpec {
+    val command = ArrayList<String>(4)
     val envVariables = LinkedHashMap<String, String>()
     command.add(executableResolver())
-    resolveThemeLaunchResources()?.let { resources ->
+    resolveExtensionLaunchResources()?.let { resources ->
       command.add(PI_EXTENSION_FLAG)
       command.add(resources.extensionPath.toString())
       envVariables[PI_THEME_STATE_ENVIRONMENT_VARIABLE] = resources.stateFilePath.toString()
+      envVariables.putAll(statusLaunchEnvironmentResolver(sessionId))
     }
-    command.addAll(args)
+    command.add(sessionFlag)
+    command.add(sessionId)
     return AgentSessionTerminalLaunchSpec(command = command, envVariables = envVariables)
   }
 
-  private fun resolveThemeLaunchResources(): PiThemeLaunchResources? {
+  private fun resolveExtensionLaunchResources(): PiExtensionLaunchResources? {
     return try {
-      themeLaunchResourcesResolver()
+      extensionLaunchResourcesResolver()
     }
     catch (e: Exception) {
-      LOG.warn("Failed to resolve Pi theme extension", e)
+      LOG.warn("Failed to resolve Pi extension", e)
       null
     }
   }
@@ -126,6 +132,10 @@ internal class PiAgentSessionProviderDescriptor(
 
   override suspend fun unarchiveThread(path: String, threadId: String): Boolean {
     return threadMutationBackend.unarchiveThread(path, threadId)
+  }
+
+  override fun recordTerminalSessionClosed(path: String, threadId: String) {
+    PiExtensionStatusBridge.invalidateSession(threadId)
   }
 }
 

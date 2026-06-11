@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -48,7 +48,7 @@ internal class AgentChatPendingThreadRefreshController(
           return@collectLatest
         }
         tabSnapshotWriter.upsert(file.toSnapshot())
-        service<AgentChatOpenPendingTabsStateService>().refreshOpenTabs()
+        serviceOrNull<AgentChatOpenPendingTabsStateService>()?.refreshOpenTabs()
         notifyAgentChatScopedRefresh(provider = provider, projectPath = file.projectPath)
         ensurePendingScopedRefreshRetries(tab, emitImmediately = false)
       }

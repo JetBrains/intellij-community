@@ -29,10 +29,16 @@ class PiAgentSessionProviderDescriptorTest {
     executableResolver = { "pi" },
     sessionIdGenerator = { "pi-session-1" },
     cliAvailableProbe = { true },
-    themeLaunchResourcesResolver = {
-      PiThemeLaunchResources(
-        extensionPath = Path.of("/tmp/pi-theme-extension/agent-workbench-theme.ts"),
-        stateFilePath = Path.of("/tmp/pi-theme-extension/state/current-theme.txt"),
+    extensionLaunchResourcesResolver = {
+      PiExtensionLaunchResources(
+        extensionPath = Path.of("/tmp/pi-extension/agent-workbench-extension.ts"),
+        stateFilePath = Path.of("/tmp/pi-extension/state/current-theme.txt"),
+      )
+    },
+    statusLaunchEnvironmentResolver = { sessionId ->
+      mapOf(
+        PI_STATUS_ENDPOINT_ENVIRONMENT_VARIABLE to "http://localhost:63342/agent-workbench/pi/status",
+        PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE to "status-token-$sessionId",
       )
     },
   )
@@ -51,6 +57,7 @@ class PiAgentSessionProviderDescriptorTest {
     assertThat(descriptor.supportsArchiveThread).isTrue()
     assertThat(descriptor.supportsUnarchiveThread).isTrue()
     assertThat(descriptor.supportsNewThreadRebind).isTrue()
+    assertThat(descriptor.emitsScopedRefreshSignals).isTrue()
     assertThat(descriptor.refreshPathAfterCreateNewSession).isTrue()
   }
 
@@ -59,12 +66,17 @@ class PiAgentSessionProviderDescriptorTest {
     val launchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
 
     assertThat(launchSpec.command).containsExactly(
-      "pi", "--extension", "/tmp/pi-theme-extension/agent-workbench-theme.ts", "--session-id", "pi-session-1"
+      "pi", "--extension", "/tmp/pi-extension/agent-workbench-extension.ts", "--session-id", "pi-session-1"
     )
     assertThat(launchSpec.envVariables).containsEntry(
       PI_THEME_STATE_ENVIRONMENT_VARIABLE,
-      "/tmp/pi-theme-extension/state/current-theme.txt",
+      "/tmp/pi-extension/state/current-theme.txt",
     )
+    assertThat(launchSpec.envVariables).containsEntry(
+      PI_STATUS_ENDPOINT_ENVIRONMENT_VARIABLE,
+      "http://localhost:63342/agent-workbench/pi/status",
+    )
+    assertThat(launchSpec.envVariables).containsEntry(PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE, "status-token-pi-session-1")
     assertThat(launchSpec.preallocatedSessionId).isEqualTo("pi-session-1")
   }
 
@@ -73,21 +85,26 @@ class PiAgentSessionProviderDescriptorTest {
     val launchSpec = descriptor.buildResumeLaunchSpec("thread-1")
 
     assertThat(launchSpec.command).containsExactly(
-      "pi", "--extension", "/tmp/pi-theme-extension/agent-workbench-theme.ts", "--session", "thread-1"
+      "pi", "--extension", "/tmp/pi-extension/agent-workbench-extension.ts", "--session", "thread-1"
     )
     assertThat(launchSpec.envVariables).containsEntry(
       PI_THEME_STATE_ENVIRONMENT_VARIABLE,
-      "/tmp/pi-theme-extension/state/current-theme.txt",
+      "/tmp/pi-extension/state/current-theme.txt",
     )
+    assertThat(launchSpec.envVariables).containsEntry(
+      PI_STATUS_ENDPOINT_ENVIRONMENT_VARIABLE,
+      "http://localhost:63342/agent-workbench/pi/status",
+    )
+    assertThat(launchSpec.envVariables).containsEntry(PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE, "status-token-thread-1")
   }
 
   @Test
-  fun buildLaunchSpecOmitsThemeExtensionWhenThemeSupportUnavailable(): Unit = runBlocking(Dispatchers.Default) {
+  fun buildLaunchSpecOmitsExtensionWhenExtensionSupportUnavailable(): Unit = runBlocking(Dispatchers.Default) {
     val descriptor = PiAgentSessionProviderDescriptor(
       executableResolver = { "pi" },
       sessionIdGenerator = { "pi-session-1" },
       cliAvailableProbe = { true },
-      themeLaunchResourcesResolver = { null },
+      extensionLaunchResourcesResolver = { null },
     )
 
     val launchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
@@ -104,11 +121,11 @@ class PiAgentSessionProviderDescriptorTest {
     )
 
     assertThat(launchSpec.command).containsExactly(
-      "pi", "--extension", "/tmp/pi-theme-extension/agent-workbench-theme.ts", "--session", "thread-1", "Summarize changes"
+      "pi", "--extension", "/tmp/pi-extension/agent-workbench-extension.ts", "--session", "thread-1", "Summarize changes"
     )
     assertThat(launchSpec.envVariables).containsEntry(
       PI_THEME_STATE_ENVIRONMENT_VARIABLE,
-      "/tmp/pi-theme-extension/state/current-theme.txt",
+      "/tmp/pi-extension/state/current-theme.txt",
     )
   }
 

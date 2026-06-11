@@ -204,6 +204,8 @@ jvm_library(
         "//plugins/agent-workbench/junie/sessions:agent-workbench-junie-sessions-tests_test_lib",
         "//plugins/agent-workbench/pi/sessions:agent-workbench-pi-sessions-tests",
         "//plugins/agent-workbench/pi/sessions:agent-workbench-pi-sessions-tests_test_lib",
+        "//plugins/agent-workbench/pi/sessions-filewatch:agent-workbench-pi-sessions-filewatch-tests",
+        "//plugins/agent-workbench/pi/sessions-filewatch:agent-workbench-pi-sessions-filewatch-tests_test_lib",
         "//plugins/agent-workbench/terminal/sessions:agent-workbench-terminal-sessions-tests",
         "//plugins/agent-workbench/terminal/sessions:agent-workbench-terminal-sessions-tests_test_lib",
         "//plugins/agent-workbench/prompt/core:agent-workbench-prompt-core-tests",

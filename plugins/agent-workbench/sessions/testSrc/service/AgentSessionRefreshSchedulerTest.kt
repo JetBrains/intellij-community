@@ -226,6 +226,36 @@ class AgentSessionRefreshSchedulerTest {
   }
 
   @Test
+  fun threadScopedActivityHintRefreshesProviderHintsWithoutProjectFileRefresh() = runBlocking(Dispatchers.Default) {
+    val projectPath = "/work/project"
+    val scopedEvents = flow {
+      emit(
+        scopedEvent(
+          path = projectPath,
+          threadId = "thread-a",
+          activityUpdatesByThreadId = mapOf("thread-a" to activityUpdate(AgentThreadActivity.UNREAD)),
+        )
+      )
+    }
+
+    withScheduler(scopedEvents) {
+      waitForCondition { providerHintRefreshes.size == 1 }
+      delay(500.milliseconds)
+
+      assertThat(providerRefreshes).isEmpty()
+      assertThat(providerHintRefreshes).hasSize(1)
+      assertThat(vfsRefreshes).isEmpty()
+      val event = providerHintRefreshes.single()
+      assertThat(event.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
+      assertThat(event.scopedPaths).containsExactly(projectPath)
+      assertThat(event.threadIds).containsExactly("thread-a")
+      assertThat(event.activityUpdatesByThreadId["thread-a"]).isEqualTo(activityUpdate(AgentThreadActivity.UNREAD))
+      assertThat(event.mayHaveChangedProjectFiles).isFalse()
+      assertThat(event.changedProjectFilePaths).isNull()
+    }
+  }
+
+  @Test
   fun scopedRefreshSignalsKeepNewestActivityUpdateBeforeRefresh() = runBlocking(Dispatchers.Default) {
     val projectPath = "/work/project"
     val scopedEvents = flow {

@@ -984,6 +984,7 @@ plugins/agent-workbench/json
 plugins/agent-workbench/junie/common
 plugins/agent-workbench/junie/sessions
 plugins/agent-workbench/pi/sessions
+plugins/agent-workbench/pi/sessions-filewatch
 plugins/agent-workbench/plugin
 plugins/agent-workbench/prompt/context
 plugins/agent-workbench/prompt/core

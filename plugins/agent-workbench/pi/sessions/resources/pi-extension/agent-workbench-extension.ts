@@ -6,6 +6,11 @@ import {getCapabilities} from "@earendil-works/pi-tui";
 
 const THEME_STATE_ENV = "AGENT_WORKBENCH_PI_THEME_STATE";
 const THEME_STATE_FILE = process.env[THEME_STATE_ENV];
+const STATUS_ENDPOINT_ENV = "AGENT_WORKBENCH_PI_STATUS_ENDPOINT";
+const STATUS_TOKEN_ENV = "AGENT_WORKBENCH_PI_STATUS_TOKEN";
+const STATUS_ENDPOINT = process.env[STATUS_ENDPOINT_ENV];
+const STATUS_TOKEN = process.env[STATUS_TOKEN_ENV];
+const DONE_STATUS_IDLE_RECHECK_MS = 150;
 const THEME_COLOR_KEYS: ThemeColor[] = [
   "accent",
   "border",
@@ -136,6 +141,39 @@ type PiThemeSnapshot = {
 export default function agentWorkbenchTheme(pi: ExtensionAPI) {
   let watcher: FSWatcher | undefined;
   let scheduledApply: ReturnType<typeof setTimeout> | undefined;
+  let scheduledDoneStatus: ReturnType<typeof setTimeout> | undefined;
+  let lastStatusSignature: string | undefined;
+
+  const updateLastStatusSignature = (signature: string) => {
+    lastStatusSignature = signature;
+  };
+
+  const clearScheduledDoneStatus = () => {
+    if (scheduledDoneStatus !== undefined) {
+      clearTimeout(scheduledDoneStatus);
+      scheduledDoneStatus = undefined;
+    }
+  };
+
+  const postProcessingStatus = (ctx: ExtensionContext) => {
+    clearScheduledDoneStatus();
+    postStatusIfChanged(ctx, "processing", updateLastStatusSignature, lastStatusSignature);
+  };
+
+  const postDoneStatus = (ctx: ExtensionContext) => {
+    clearScheduledDoneStatus();
+    postStatusIfChanged(ctx, "done", updateLastStatusSignature, lastStatusSignature);
+  };
+
+  const scheduleDoneStatus = (ctx: ExtensionContext) => {
+    clearScheduledDoneStatus();
+    scheduledDoneStatus = setTimeout(() => {
+      scheduledDoneStatus = undefined;
+      if (ctx.isIdle()) {
+        postStatusIfChanged(ctx, "done", updateLastStatusSignature, lastStatusSignature);
+      }
+    }, DONE_STATUS_IDLE_RECHECK_MS);
+  };
 
   const scheduleApply = (ctx: ExtensionContext) => {
     if (scheduledApply !== undefined) {
@@ -149,9 +187,35 @@ export default function agentWorkbenchTheme(pi: ExtensionAPI) {
 
   pi.on("session_start", async (_event, ctx) => {
     await applyCurrentTheme(ctx);
+    clearScheduledDoneStatus();
+    postStatusIfChanged(ctx, resolveStartupActivity(ctx), updateLastStatusSignature, lastStatusSignature);
     if (watcher === undefined) {
       watcher = startStateWatcher(scheduleApply, ctx);
     }
+  });
+
+  pi.on("agent_start", (_event, ctx) => {
+    postProcessingStatus(ctx);
+  });
+
+  pi.on("turn_start", (_event, ctx) => {
+    postProcessingStatus(ctx);
+  });
+
+  pi.on("message_start", (_event, ctx) => {
+    postProcessingStatus(ctx);
+  });
+
+  pi.on("message_end", (_event, ctx) => {
+    scheduleDoneStatus(ctx);
+  });
+
+  pi.on("turn_end", (_event, ctx) => {
+    scheduleDoneStatus(ctx);
+  });
+
+  pi.on("agent_end", (_event, ctx) => {
+    postDoneStatus(ctx);
   });
 
   pi.on("session_shutdown", () => {
@@ -159,9 +223,61 @@ export default function agentWorkbenchTheme(pi: ExtensionAPI) {
       clearTimeout(scheduledApply);
       scheduledApply = undefined;
     }
+    clearScheduledDoneStatus();
     watcher?.close();
     watcher = undefined;
   });
+}
+
+type AgentWorkbenchStatusActivity = "ready" | "processing" | "done";
+
+function resolveStartupActivity(ctx: ExtensionContext): AgentWorkbenchStatusActivity {
+  return ctx.isIdle() ? "ready" : "processing";
+}
+
+function postStatusIfChanged(
+  ctx: ExtensionContext,
+  activity: AgentWorkbenchStatusActivity,
+  updateLastStatusSignature: (signature: string) => void,
+  lastStatusSignature: string | undefined,
+): void {
+  const sessionId = ctx.sessionManager.getSessionId();
+  const cwd = ctx.cwd;
+  if (STATUS_ENDPOINT === undefined || STATUS_TOKEN === undefined || sessionId === undefined || cwd === undefined) {
+    return;
+  }
+
+  const signature = `${sessionId}\u0000${cwd}\u0000${activity}`;
+  if (signature === lastStatusSignature) {
+    return;
+  }
+  void postStatus({sessionId, cwd, activity, updatedAt: Date.now()}).then((posted) => {
+    if (posted) {
+      updateLastStatusSignature(signature);
+    }
+  });
+}
+
+async function postStatus(payload: {
+  sessionId: string;
+  cwd: string;
+  activity: AgentWorkbenchStatusActivity;
+  updatedAt: number;
+}): Promise<boolean> {
+  try {
+    const response = await fetch(STATUS_ENDPOINT!, {
+      method: "POST",
+      headers: {
+        "authorization": `Bearer ${STATUS_TOKEN}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    return response.ok;
+  }
+  catch {
+    return false;
+  }
 }
 
 async function applyCurrentTheme(ctx: ExtensionContext): Promise<void> {

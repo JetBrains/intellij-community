@@ -127,6 +127,7 @@ interface AgentSessionProviderDescriptor {
   val yoloSessionLabelKey: String?
     get() = null
   val icon: Icon
+
   /** Desaturated variant for persistent surfaces (tree, toolbar button, tabs, status bar); menus keep [icon]. */
   val monochromeIcon: Icon
     get() = icon
@@ -293,6 +294,9 @@ interface AgentSessionProviderDescriptor {
   fun readTerminalRestoreContext(path: String, threadId: String): AgentSessionTerminalRestoreContext? = null
 
   fun recordTerminalWorkingDirectory(path: String, threadId: String, workingDirectory: String) {
+  }
+
+  fun recordTerminalSessionClosed(path: String, threadId: String) {
   }
 
   /**

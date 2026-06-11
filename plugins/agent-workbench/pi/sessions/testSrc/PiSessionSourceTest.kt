@@ -1,18 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.pi.sessions
 
-import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEvent
-import com.intellij.agent.workbench.filewatch.AgentWorkbenchWatchEventType
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
-import kotlinx.coroutines.CompletableDeferred
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -21,8 +22,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.seconds
 
+@TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class PiSessionSourceTest {
   @TempDir
@@ -90,85 +91,98 @@ class PiSessionSourceTest {
   }
 
   @Test
-  fun `session jsonl changes emit scoped thread update`() {
+  @RegistryKey(key = PI_FILE_WATCH_FALLBACK_REGISTRY_KEY, value = "false")
+  fun `pi file watch fallback registry flag is disabled`() {
+    assertThat(isPiFileWatchFallbackEnabled()).isFalse()
+  }
+
+  @Test
+  @RegistryKey(key = PI_FILE_WATCH_FALLBACK_REGISTRY_KEY, value = "true")
+  fun `pi file watch fallback registry flag can be enabled`() {
+    assertThat(isPiFileWatchFallbackEnabled()).isTrue()
+  }
+
+  @Test
+  fun `disabled file watch fallback does not resolve contributors`() {
+    var contributorProviderCallCount = 0
+
+    val source = PiSessionSource(
+      sessionStore = PiSessionStore(sessionDirResolver = { tempDir.resolve("unused-sessions") }),
+      extensionStatusEvents = emptyFlow(),
+      fileWatchFallbackEnabledProvider = { false },
+      sessionUpdateEventsContributorProvider = {
+        contributorProviderCallCount++
+        listOf(object : PiSessionUpdateEventsContributor {
+          override fun createUpdateEvents(watchedProjectPathsBySessionDir: StateFlow<Map<Path, Set<String>>>) =
+            error("Disabled file watch fallback must not create contributor flows")
+        })
+      },
+    )
+
+    assertThat(source.supportsUpdates).isTrue()
+    assertThat(contributorProviderCallCount).isZero()
+  }
+
+  @Test
+  fun `enabled file watch fallback merges contributor updates`() {
     runBlocking(Dispatchers.Default) {
-      val projectDir = tempDir.resolve("project-watch")
-      val sessionDir = tempDir.resolve("watch-sessions")
-      val sessionFile = writePiSession(
-        sessionDir = sessionDir,
-        sessionId = "session-watch",
-        cwd = projectDir,
-        piUserMessageEntry(id = "user-watch", content = "Watch title", timestamp = 3_000L),
+      val updateEvent = AgentSessionSourceUpdateEvent(
+        type = AgentSessionSourceUpdate.THREADS_CHANGED,
+        scopedPaths = setOf(tempDir.resolve("project-contributor").toString()),
       )
-      val watchEvents = MutableSharedFlow<AgentWorkbenchWatchEvent>(replay = 1)
-      val watchedRoots = CompletableDeferred<Set<Path>>()
       val source = PiSessionSource(
-        sessionStore = PiSessionStore(sessionDirResolver = { sessionDir }),
-        sessionWatchEventsFactory = { roots ->
-          watchedRoots.complete(roots)
-          watchEvents
+        sessionStore = PiSessionStore(sessionDirResolver = { tempDir.resolve("unused-sessions") }),
+        extensionStatusEvents = emptyFlow(),
+        fileWatchFallbackEnabledProvider = { true },
+        sessionUpdateEventsContributorProvider = {
+          listOf(object : PiSessionUpdateEventsContributor {
+            override fun createUpdateEvents(watchedProjectPathsBySessionDir: StateFlow<Map<Path, Set<String>>>) =
+              flowOf(updateEvent)
+          })
         },
       )
-      val update = async {
-        withTimeout(5.seconds) {
-          source.updateEvents.first { event -> event.type == AgentSessionSourceUpdate.THREADS_CHANGED }
-        }
-      }
 
-      source.listThreadsFromClosedProject(projectDir.toString())
-      assertThat(watchedRoots.await()).containsExactlyInAnyOrder(
-        sessionDir.toAbsolutePath().normalize(),
-        checkNotNull(sessionDir.parent).toAbsolutePath().normalize(),
-      )
-      watchEvents.emit(
-        AgentWorkbenchWatchEvent(
-          eventType = AgentWorkbenchWatchEventType.MODIFY,
-          path = sessionFile.toAbsolutePath().normalize(),
-          rootPath = sessionDir.toAbsolutePath().normalize(),
-          isDirectory = false,
-          count = 1,
-        )
-      )
-
-      assertThat(update.await().scopedPaths).containsExactly(projectDir.toString())
+      assertThat(source.updateEvents.first { event -> event.type == AgentSessionSourceUpdate.THREADS_CHANGED }).isEqualTo(updateEvent)
     }
   }
 
   @Test
-  fun `session directory creation emits scoped thread update`() {
-    val sessionDir = tempDir.resolve("created-sessions")
-    val projectDir = tempDir.resolve("project-created")
-    val updateEvent = createPiSessionSourceUpdateEventForWatchEvent(
-      event = AgentWorkbenchWatchEvent(
-        eventType = AgentWorkbenchWatchEventType.CREATE,
-        path = sessionDir,
-        rootPath = checkNotNull(sessionDir.parent),
-        isDirectory = true,
-        count = 1,
-      ),
-      projectPathsBySessionDir = mapOf(sessionDir.toAbsolutePath().normalize() to setOf(projectDir.toString())),
+  fun `pi extension status update creates scoped activity hint`() {
+    val projectStatusDir = tempDir.resolve("project-status")
+    val updateEvent = PiExtensionStatusBridge.parseStatusUpdate(
+      content = """
+        {"sessionId":"session-status","cwd":"${projectStatusDir.toString().jsonEscape()}","activity":"processing","updatedAt":5000}
+      """.trimIndent(),
+      receivedAtMs = 6_000L,
     )
 
-    assertThat(updateEvent?.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
-    assertThat(updateEvent?.scopedPaths).containsExactly(projectDir.toString())
+    assertThat(updateEvent?.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
+    assertThat(updateEvent?.scopedPaths).containsExactly(projectStatusDir.toString())
+    assertThat(updateEvent?.activityUpdatesByThreadId).containsOnlyKeys("session-status")
+    assertThat(updateEvent?.activityUpdatesByThreadId?.get("session-status")?.activityReport).isEqualTo(
+      AgentThreadActivityReport(AgentThreadActivity.PROCESSING)
+    )
+    assertThat(updateEvent?.activityUpdatesByThreadId?.get("session-status")?.updatedAt).isEqualTo(5_000L)
+    assertThat(updateEvent?.threadIds).containsExactly("session-status")
   }
 
   @Test
-  fun `session watcher ignores non jsonl files`() {
-    val sessionDir = tempDir.resolve("ignore-sessions")
-    val projectDir = tempDir.resolve("project-ignore")
-    val updateEvent = createPiSessionSourceUpdateEventForWatchEvent(
-      event = AgentWorkbenchWatchEvent(
-        eventType = AgentWorkbenchWatchEventType.MODIFY,
-        path = sessionDir.resolve("notes.txt"),
-        rootPath = sessionDir,
-        isDirectory = false,
-        count = 1,
-      ),
-      projectPathsBySessionDir = mapOf(sessionDir.toAbsolutePath().normalize() to setOf(projectDir.toString())),
+  fun `pi extension done status update uses shared unread activity`() {
+    val projectStatusDir = tempDir.resolve("project-status-done")
+    val updateEvent = PiExtensionStatusBridge.parseStatusUpdate(
+      content = """
+        {"sessionId":"session-status-done","cwd":"${projectStatusDir.toString().jsonEscape()}","activity":"done","updatedAt":5000}
+      """.trimIndent(),
+      receivedAtMs = 6_000L,
     )
 
-    assertThat(updateEvent).isNull()
+    assertThat(updateEvent?.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
+    assertThat(updateEvent?.scopedPaths).containsExactly(projectStatusDir.toString())
+    assertThat(updateEvent?.threadIds).containsExactly("session-status-done")
+    assertThat(updateEvent?.activityUpdatesByThreadId?.get("session-status-done")?.activityReport).isEqualTo(
+      AgentThreadActivityReport(AgentThreadActivity.UNREAD)
+    )
+    assertThat(updateEvent?.activityUpdatesByThreadId?.get("session-status-done")?.updatedAt).isEqualTo(5_000L)
   }
 
   @Test

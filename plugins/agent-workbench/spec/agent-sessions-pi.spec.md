@@ -4,9 +4,12 @@ description: Requirements for first-class pi.dev session support in Agent Workbe
 targets:
   - ../common/src/session/AgentSessionModels.kt
   - ../pi/sessions/resources/intellij.agent.workbench.pi.sessions.xml
-  - ../pi/sessions/resources/pi-extension/agent-workbench-theme.ts
+  - ../pi/sessions-filewatch/resources/intellij.agent.workbench.pi.sessions.filewatch.xml
+  - ../pi/sessions/resources/pi-extension/agent-workbench-extension.ts
   - ../pi/sessions/src/**/*.kt
   - ../pi/sessions/testSrc/*.kt
+  - ../pi/sessions-filewatch/src/**/*.kt
+  - ../pi/sessions-filewatch/testSrc/*.kt
   - ../plugin/resources/META-INF/plugin.xml
   - ../sessions/resources/messages/AgentSessionsBundle.properties
 ---
@@ -24,10 +27,10 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
   [@test] ../pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
   [@test] ../plugin/testSrc/AgentWorkbenchProviderRegistrationTest.kt
 
-- Pi launch support must use the shared Terminal agent resolver for the `pi` executable without registering Pi as a built-in Terminal agent. New Agent Workbench sessions must launch `pi --extension <themeExtension> --session-id <uuid>` with a provider-allocated session id, while resumed sessions must launch `pi --extension <themeExtension> --session <threadId>`. The launch environment must pass `AGENT_WORKBENCH_PI_THEME_STATE=<stateFile>` so the extension can read the current IDE-compatible Pi theme snapshot without modifying Pi settings. If the Agent Workbench-managed Pi theme extension cannot be materialized, launch must continue without `--extension`.
+- Pi launch support must use the shared Terminal agent resolver for the `pi` executable without registering Pi as a built-in Terminal agent. New Agent Workbench sessions must launch `pi --extension <agentWorkbenchExtension> --session-id <uuid>` with a provider-allocated session id, while resumed sessions must launch `pi --extension <agentWorkbenchExtension> --session <threadId>`. The launch environment must pass `AGENT_WORKBENCH_PI_THEME_STATE=<stateFile>`, `AGENT_WORKBENCH_PI_STATUS_ENDPOINT=<url>`, and a launch-scoped `AGENT_WORKBENCH_PI_STATUS_TOKEN=<token>` when the Agent Workbench-managed Pi extension is available; the token must be retained only in memory by the IDE bridge, must not be persisted in tab state, and must be invalidated when the live terminal session closes. If the extension cannot be materialized, launch must continue without `--extension`.
   [@test] ../pi/sessions/testSrc/PiAgentSessionProviderDescriptorTest.kt
 
-- Agent Workbench must provide a Pi extension that reads a managed JSON theme snapshot, validates all required Pi foreground/background theme keys, applies a full Pi `Theme`, and watches the managed theme-state file for IDE theme changes. The snapshot must be built from the active IDE look-and-feel, Swing UI defaults, and editor color scheme so Islands Dark, Islands Light, Islands Darcula, High Contrast, and customized user colors are reflected at runtime. Theme state must be refreshed on both IDE look-and-feel and editor color scheme changes. The extension resource is materialized into a managed IDE system-cache directory with a non-JSON sidecar manifest containing a format version and SHA-256 hash.
+- Agent Workbench must provide one bundled Pi extension for IDE integration. It reads a managed JSON theme snapshot, validates all required Pi foreground/background theme keys, applies a full Pi `Theme`, and watches the managed theme-state file for IDE theme changes. The snapshot must be built from the active IDE look-and-feel, Swing UI defaults, and editor color scheme so Islands Dark, Islands Light, Islands Darcula, High Contrast, and customized user colors are reflected at runtime. Theme state must be refreshed on both IDE look-and-feel and editor color scheme changes. The extension resource is materialized into a managed IDE system-cache directory with a non-JSON sidecar manifest containing a format version and SHA-256 hash.
   [@test] ../pi/sessions/testSrc/PiThemeSupportTest.kt
   [@test] ../pi/sessions/testSrc/PiThemeSnapshotBuilderTest.kt
 
@@ -45,12 +48,17 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
   `NEEDS_INPUT` from session JSONL until an explicit persisted status signal exists.
   [@test] ../pi/sessions/testSrc/PiSessionSourceTest.kt
 
+- The bundled Pi extension must also post fast activity hints on Pi lifecycle events to the IDE-local status endpoint. Requests must be `POST` calls from an accessible local origin, authenticated with `Authorization: Bearer <token>`, and accepted only when the token is bound to the posted Pi `sessionId`. Accepted requests emit scoped, thread-scoped `HINTS_CHANGED` activity updates; `done` updates use the shared Done/read semantics. Malformed, oversized, unauthorized, or cross-session requests must not emit updates. JSONL file watching is an opt-in durable fallback for persisted session and archive-state changes, isolated in a separate content module and disabled by default behind `agent.workbench.pi.file.watch.fallback`.
+  [@test] ../pi/sessions/testSrc/PiExtensionStatusHttpRequestHandlerTest.kt
+  [@test] ../pi/sessions-filewatch/testSrc/PiSessionFileWatchUpdateEventsContributorTest.kt
+
 - Rename must append a Pi-compatible `session_info` entry to the session JSONL file. Archive and unarchive must persist Agent Workbench sidecar state keyed by normalized project path and session id.
   [@test] ../pi/sessions/testSrc/PiSessionSourceTest.kt
 
 ## Theme Mapping Notes
 - Runtime IDE/editor colors are the preferred source for every Pi theme key. Fallback palettes are allowed only when a corresponding UI default or editor color is unavailable, when the IDE theme cannot be resolved, or when the Pi extension starts without a readable state file.
 - Semantic foregrounds come from `Label.successForeground`/`Label.errorForeground`/`Label.warningForeground`; secondary/tertiary text from `Component.infoForeground` (muted) and `Label.disabledForeground` (dim); feedback backgrounds from `Banner.successBackground`/`Banner.errorBackground`/`Banner.aiBackground`.
+- Pi colors every completed tool block with `toolSuccessBg` (and failed ones with `toolErrorBg`); this is Pi's native success semantics, not an IDE banner. The `toolSuccessBg ← Banner.successBackground` mapping is intentional: in Islands themes it resolves to the theme's own subtle success surface (e.g. `green-160` `#F5FAF3` in Islands Light), which is less saturated than Pi's built-in light theme (`#E8F0E8`), so completed blocks stay theme-conformant.
 - Pi renders inside the IDE terminal, so the terminal default colors (console scheme `NORMAL_OUTPUT`/`CONSOLE_BACKGROUND_KEY`, falling back to editor defaults) are the base for default text, alpha blending, and darkness detection. The editor caret-row color backs user messages so they stay distinguishable from the terminal background; the Pi extension delegates theme tokens unknown to the snapshot to the built-in Pi theme for forward compatibility.
 - The maintained fallback variants are Islands Dark, Islands Light, Islands Darcula, and High Contrast. Unknown custom themes fall back by darkness while still using the runtime colors that are available.
 - When syncing with Pi theme API changes, update the Kotlin snapshot builder, TypeScript snapshot validation, extension fallback snapshot, and tests in the same change. The required key lists in the Pi extension and `PiThemeSnapshotBuilderTest` must stay aligned with Pi `ThemeColor` and `ThemeBg` definitions.
@@ -58,6 +66,7 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.pi.sessions.tests --test 'com.intellij.agent.workbench.pi.sessions.*Test'`
+- `./tests.cmd --module intellij.agent.workbench.pi.sessions.filewatch.tests --test 'com.intellij.agent.workbench.pi.sessions.*Test'`
 - `./tests.cmd --module intellij.agent.workbench.plugin.tests --test com.intellij.agent.workbench.plugin.AgentWorkbenchProviderRegistrationTest`
 
 ## References
