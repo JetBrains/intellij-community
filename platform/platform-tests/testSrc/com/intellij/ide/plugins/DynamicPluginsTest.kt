@@ -894,7 +894,7 @@ class DynamicPluginsTest {
       loadPluginInTest(quux) {
         if (isNewSupportEnabled()) {
           assertThat(DynamicPlugins.validateCanLoadWithoutRestart(main)).isEqualTo(
-            "<depends> config 'quux.xml' of plugin main cannot be loaded/unloaded dynamically because it uses non-dynamic extension point 'foo.barExtension' from plugin 'bar' (bar, 262.SNAPSHOT)."
+            "<depends> config 'quux.xml' of plugin main cannot be loaded/unloaded dynamically because it uses non-dynamic extension point 'foo.barExtension' from ${bar.shortLogDescription}."
           )
         } else {
           setPluginClassLoaderForMainAndSubPlugins(main, DynamicPluginsTest::class.java.classLoader)
@@ -918,7 +918,7 @@ class DynamicPluginsTest {
     val plugin = pluginSet.getPlugin("nonDynamic")
     if (isNewSupportEnabled()) {
       assertThat(DynamicPlugins.validateCanLoadWithoutRestart(plugin))
-        .isEqualTo("plugin 'nonDynamic' (nonDynamic, 262.SNAPSHOT) cannot be loaded/unloaded dynamically because it uses non-dynamic extension point 'one.foo' from plugin 'nonDynamic' (nonDynamic, 262.SNAPSHOT).")
+        .isEqualTo("${plugin.shortLogDescription} cannot be loaded/unloaded dynamically because it uses non-dynamic extension point 'one.foo' from ${plugin.shortLogDescription}.")
     } else {
       assertThat(DynamicPlugins.validateCanLoadWithoutRestart(plugin))
         .isEqualTo("Plugin '${plugin.pluginId}' is not unload-safe because of extension to non-dynamic EP '$epName'")
