@@ -3,7 +3,9 @@ package com.intellij.internal.ml.catboost
 
 import com.intellij.internal.ml.InconsistentMetadataException
 import com.intellij.internal.ml.ResourcesModelMetadataReader
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class CatBoostResourcesModelMetadataReader(metadataHolder: Class<*>,
                                            featuresDirectory: String,
                                            private val modelDirectory: String) : ResourcesModelMetadataReader(metadataHolder, featuresDirectory), CatBoostModelMetadataReader {
