@@ -101,7 +101,7 @@ interface LspClientProvider {
   fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspClientStarter)
 
   fun createWidgetItems(project: Project, currentFile: VirtualFile?): List<LanguageServiceWidgetItem> =
-    LspClientManager.getInstance(project).getClientsForProvider(javaClass).mapNotNull { createWidgetItem(it, currentFile) }
+    LspClientManager.getInstance(project).getClients(javaClass).mapNotNull { createWidgetItem(it, currentFile) }
 
   /**
    * Creates an LSP server-specific item in the 'Language Services' status bar widget.

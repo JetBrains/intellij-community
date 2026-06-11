@@ -67,7 +67,7 @@ internal class LspOpenedFilesService(private val project: Project) {
 
       for (provider in LspClientProvider.getAllExtensions()) {
         val providerClass: Class<out LspClientProvider> = provider.javaClass
-        val clientsForProvider = lspServerManager.getClientsForProvider(providerClass)
+        val clientsForProvider = lspServerManager.getClients(providerClass)
         var fileWithinServerRootsAndSupported = false
 
         for (openedFile in data.handledFiles) {

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.TestOnly
 @Deprecated("Use LspClientManager", ReplaceWith("LspClientManager", "com.intellij.platform.lsp.api.LspClientManager"))
 @Suppress("DEPRECATION")
 interface LspServerManager : LspClientManager {
-  @Deprecated("Use getClientsForProvider", ReplaceWith("getClientsForProvider(providerClass)"))
+  @Deprecated("Use getClients", ReplaceWith("getClients(providerClass)"))
   fun getServersForProvider(providerClass: Class<out LspServerSupportProvider>): Collection<LspServer>
 
   @Deprecated("Use startClientsIfNeeded", ReplaceWith("startClientsIfNeeded(providerClass)"))
@@ -53,7 +53,7 @@ fun interface Lsp4jServerWrapper {
   fun wrapLsp4jServer(lspServer: LspServer, lsp4jServer: Lsp4jServer): Lsp4jServer
 }
 
-@Deprecated("Use getClientsForProvider", ReplaceWith("getClientsForProvider<Provider>()", "com.intellij.platform.lsp.api.getClientsForProvider"))
+@Deprecated("Use getClients", ReplaceWith("getClients<Provider>()", "com.intellij.platform.lsp.api.getClients"))
 @Suppress("DEPRECATION")
 inline fun <reified Provider : LspServerSupportProvider> LspServerManager.getServersForProvider(): Collection<LspServer> =
   getServersForProvider(Provider::class.java)

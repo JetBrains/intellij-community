@@ -77,7 +77,7 @@ open class LspClientWidgetItem(
   protected open val rootPostfix: @NlsSafe String
     get() {
       val roots = lspClient.descriptor.roots
-      val lspClients = LspClientManager.getInstance(lspClient.project).getClientsForProvider(lspClient.providerClass)
+      val lspClients = LspClientManager.getInstance(lspClient.project).getClients(lspClient.providerClass)
       return if (lspClients.size >= 2 && roots.size == 1) " …/${roots[0].name}" else ""
     }
 
