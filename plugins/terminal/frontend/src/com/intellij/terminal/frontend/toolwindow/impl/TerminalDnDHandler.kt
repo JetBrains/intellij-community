@@ -9,12 +9,12 @@ import com.intellij.ide.dnd.TransferableWrapper
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.openapi.wm.ex.ToolWindowEx
-import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.terminal.frontend.toolwindow.impl.TerminalFilePathHandler.getPathAsText
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.util.asDisposable
 import com.intellij.util.ui.UIUtil
@@ -25,6 +25,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 
 /**
  * Handles terminal drag-and-drop behavior
@@ -62,12 +63,11 @@ internal object TerminalDnDHandler {
     val context = getTerminalContext(terminalView) ?: return
 
     terminalView.coroutineScope.launch {
-      val droppedFiles = data.virtualFiles ?: TerminalFilePathHandler.resolveVirtualFiles(data.paths)
-      val textToInsert = TerminalFilePathHandler.getFilesAsText(droppedFiles, context).ifEmpty { return@launch }
+      val text = data.virtualFiles?.let { handleVirtualFiles(it, context) } ?: getPathAsText(data.paths, context)
 
       terminalView.createSendTextBuilder()
         .useBracketedPasteMode()
-        .send(textToInsert)
+        .send(text)
     }
   }
 
@@ -76,15 +76,14 @@ internal object TerminalDnDHandler {
     val data = TerminalDropData(event)
 
     coroutineScope.launch {
-      val project = window.project
-      val droppedFiles = data.virtualFiles ?: TerminalFilePathHandler.resolveVirtualFiles(data.paths)
-      val dir = getDirectory(droppedFiles.firstOrNull(), project) ?: return@launch
+      val droppedFiles = data.virtualFiles?.mapNotNull { it.toNioPathOrNull() } ?: data.paths
+      val dir = getDirectory(droppedFiles.firstOrNull()) ?: return@launch
 
       val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.DND_FILE_TO_TOOLWINDOW)
       withContext(Dispatchers.EDT) {
         createTerminalTab(
-          project,
-          workingDirectory = dir.path,
+          window.project,
+          workingDirectory = dir.toString(),
           contentManager = contentManager,
           startupFusInfo = fusInfo
         )
@@ -101,14 +100,25 @@ internal object TerminalDnDHandler {
     return DataManager.getInstance().getDataContext(deepestComponent)
   }
 
-  private fun getDirectory(file: VirtualFile?, project: Project): VirtualFile? {
-    if (file == null) return null
+  private fun handleVirtualFiles(files: List<VirtualFile>, terminalContext: TerminalProcessContext): String {
+    // In RemDev frontend, only paths from the remote machine should be inserted.
+    // This proxy is intentionally conservative: it is not a perfect remote-file check,
+    // but it accepts files dropped from the remote Project View.
+    val isRemDev = IdeProductMode.isFrontend
 
-    val filePath = file.toNioPathOrNull() ?: return null
-    if (!TerminalFilePathHandler.isSameEnvironment(filePath, project.getEelDescriptor()))
-      return null
+    val paths = files.mapNotNull {
+      val nioPath = it.toNioPathOrNull()
+      if (nioPath != null)
+        TerminalFilePathHandler.formatPath(nioPath, terminalContext)
+      else
+        if (isRemDev) it.path else null
+    }
+    return paths.joinToString(separator = " ")
+  }
 
-    return if (file.isDirectory) file else file.parent
+  private fun getDirectory(filePath: Path?): Path? {
+    if (filePath == null) return null
+    return if (filePath.isDirectory()) filePath else filePath.parent
   }
 }
 

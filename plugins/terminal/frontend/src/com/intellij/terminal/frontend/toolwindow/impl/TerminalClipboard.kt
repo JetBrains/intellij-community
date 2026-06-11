@@ -68,13 +68,14 @@ internal object TerminalClipboard {
     }
   }
 
-  private suspend fun getFilePathsAsText(content: Transferable, terminalContext: TerminalProcessContext): String? =
-    withContext(Dispatchers.IO) {
+  private suspend fun getFilePathsAsText(
+    content: Transferable,
+    terminalContext: TerminalProcessContext,
+  ): String? = withContext(Dispatchers.IO) {
     val files = content.getTransferData(DataFlavor.javaFileListFlavor) as? List<*> ?: return@withContext null
     val paths = files.filterIsInstance<File>().map { it.toPath() }
-      val copiedFiles = TerminalFilePathHandler.resolveVirtualFiles(paths)
 
-      TerminalFilePathHandler.getFilesAsText(copiedFiles, terminalContext)
+    TerminalFilePathHandler.getPathAsText(paths, terminalContext)
   }
 
   private suspend fun extractImageAsTempFilePath(
