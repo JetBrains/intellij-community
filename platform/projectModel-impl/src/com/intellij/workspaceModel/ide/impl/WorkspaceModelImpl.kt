@@ -500,10 +500,12 @@ open class WorkspaceModelImpl : WorkspaceModelInternal {
       }
 
       if (!deferred.isCompleted && ApplicationManager.getApplication().isUnitTestMode) {
+        // Startup activities including DelayedProjectSynchronizer are skipped in unit tests unless it's explicitly specified
+        // that they have to be run. So we need to trigger synchronization manually.
         ProjectSynchronizerUtil.getInstance(project).applyJpsModelToProjectModel()
+        deferred.complete(Unit)
       }
-
-      if (waitingTimedOut.get()) {
+      else if (waitingTimedOut.get()) {
         deferred.complete(Unit) // don't wait again
       }
       else {
