@@ -1,10 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEventDispatcher;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.TextRange;
@@ -28,6 +30,10 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   public RangeMarkerTree(@NotNull Document document) {
     //noinspection deprecation: no need to unregister because RMT life cycle is the same as document's
     document.addDocumentListener(this);
+  }
+
+  RangeMarkerTree(@NotNull DocumentEventDispatcher dispatcher) {
+    dispatcher.addDocumentListener(this);
   }
 
   protected RangeMarkerTree() {
@@ -418,7 +424,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     ((RangeMarkerImpl)markerEx).storeOffsetsBeforeDying(node);
   }
 
-  void copyRangeMarkersTo(@NotNull DocumentImpl document, int tabSize) {
+  void copyRangeMarkersTo(@NotNull DocumentEx document, int tabSize) {
     List<RangeMarkerEx> oldMarkers = new ArrayList<>(size());
     processAll(r -> oldMarkers.add(r));
     for (RangeMarkerEx r : oldMarkers) {

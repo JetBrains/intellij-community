@@ -766,7 +766,6 @@ f:com.intellij.openapi.editor.impl.DocumentImpl
 - addDocumentListener(com.intellij.openapi.editor.event.DocumentListener,com.intellij.openapi.Disposable):V
 - addEditReadOnlyListener(com.intellij.openapi.editor.ex.EditReadOnlyListener):V
 - addPropertyChangeListener(java.beans.PropertyChangeListener):V
-- s:areRangeMarkersRetainedFor(com.intellij.openapi.vfs.VirtualFile):Z
 - assertNotInBulkUpdate():V
 - clearLineModificationFlags():V
 - clearLineModificationFlags(I,I):V
@@ -804,8 +803,6 @@ f:com.intellij.openapi.editor.impl.DocumentImpl
 - setStripTrailingSpacesEnabled(Z):V
 - startGuardedBlockChecking():V
 - stopGuardedBlockChecking():V
-- suppressGuardedExceptions():V
-- unSuppressGuardedExceptions():V
 c:com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument
 - createGuardedBlock(I,I):com.intellij.openapi.editor.RangeMarker
 - createLineIterator():com.intellij.openapi.editor.ex.LineIterator

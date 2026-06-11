@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.CommonBundle;
@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.RMTreeReference;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
@@ -162,7 +163,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        DocumentImpl.processQueue();
+        RMTreeReference.processQueue();
       }
     });
   }
@@ -735,7 +736,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     private void prepareForRangeMarkerUpdate(@NotNull Map<? super VirtualFile, ? super Document> strongRefsToDocuments,
                                              @NotNull VirtualFile virtualFile) {
       Document document = myFileDocumentManager.getCachedDocument(virtualFile);
-      if (document == null && DocumentImpl.areRangeMarkersRetainedFor(virtualFile)) {
+      if (document == null && RMTreeReference.areRangeMarkersRetainedFor(virtualFile)) {
         // re-create document with the old contents prior to this event
         // then contentChanged() will diff the document with the new contents and update the markers
         document = myFileDocumentManager.getDocument(virtualFile);
@@ -918,8 +919,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       bridge.myTrailingSpacesStripper.documentDeleted(doc);
       unbindFileFromDocument(virtualFile, doc);
       if (doc instanceof DocumentImpl docImpl) {
-        docImpl.incrementModificationSequence(); // make clients listening for the document change notice this event
-        docImpl.setModificationStamp(LocalTimeCounter.currentTime());
+        docImpl.setModificationStamp(LocalTimeCounter.currentTime(), true); // make clients listening for the document change notice this event
       }
     }
   }

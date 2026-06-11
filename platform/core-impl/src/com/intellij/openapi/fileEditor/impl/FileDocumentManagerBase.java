@@ -6,8 +6,8 @@ import com.intellij.openapi.application.EditorLockFreeTyping;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.FrozenDocument;
+import com.intellij.openapi.editor.impl.RMTreeReference;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
@@ -193,7 +193,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
     nonPhysicalFilesDocumentsCache.remove(document);
     file.putUserData(HARD_REF_TO_DOCUMENT_KEY, null);
     document.putUserData(FILE_KEY, null);
-    DocumentImpl.processQueue(); // document maybe stuck in RangeMarkerTree queue
+    RMTreeReference.processQueue(); // document maybe stuck in RangeMarkerTree queue
     fireFileBindingChanged(document, file, null);
   }
 

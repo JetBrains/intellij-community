@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.daemon.impl.TestDaemonCodeAnalyzerImpl;
@@ -1591,7 +1591,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     // need to be physical file
     VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah\nblah2\nblah3");
     //RangeMarker marker = LazyRangeMarkerFactory.getInstance(getProject()).createRangeMarker(vf, 1, 2, true);
-    RangeMarker marker = DocumentImpl.createRangeMarkerForVirtualFile(vf, 0, 1, 2, 1, 2, true);
+    RangeMarker marker = RMTreeReference.createRangeMarkerForVirtualFile(vf, 0, 1, 2, 1, 2, true);
     assertNull(FileDocumentManager.getInstance().getCachedDocument(vf));
 
     document = FileDocumentManager.getInstance().getDocument(vf);
@@ -1626,12 +1626,11 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       UIUtil.dispatchAllInvocationEvents();
     }
 
-    DocumentImpl.processQueue();
+    RMTreeReference.processQueue();
 
     UIUtil.dispatchAllInvocationEvents();
 
-    assertNull(vf.getUserData(DocumentImpl.RANGE_MARKERS_KEY));
-    assertNull(vf.getUserData(DocumentImpl.PERSISTENT_RANGE_MARKERS_KEY));
+    assertFalse(RMTreeReference.areRangeMarkersRetainedFor0(vf));
   }
 
   public void testDocumentGcedThenRecreatedThenNewRangeMarkerCreatedThenDocumentGcedThenRecreated_NoCommand() {

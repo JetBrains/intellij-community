@@ -90,6 +90,8 @@ internal class UsageInfoModel private constructor(val project: Project, val mode
   }
 
   private val fullUpdateListener = object : DocumentFullUpdateListener {
+    // TODO: replace with simple DocumentListener,
+    //  see DocumentEventImpl.getInitialStartOffset, getInitialOldLength
     override fun onFullUpdateDocument(document: Document) {
       PsiDocumentManager.getInstance(project).performForCommittedDocument(document) {
         initialize()
