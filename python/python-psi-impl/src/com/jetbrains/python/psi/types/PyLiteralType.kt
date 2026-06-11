@@ -292,7 +292,7 @@ class PyLiteralType private constructor(
         anchor: PyElement,
         elements: Collection<PyKeyValueExpression>,
       ): PyType? {
-        val (expectedKeyType, expectedValueType) = if (expectedType is PyCollectionType && expectedType.classQName == PyNames.DICT) {
+        val (expectedKeyType, expectedValueType) = if (expectedType is PyCollectionType && PyNames.FQN.unqualifyBuiltinName(expectedType.classQName) == PyNames.DICT) {
           expectedType.elementTypes[0] to expectedType.elementTypes[1]
         }
         else {
@@ -321,7 +321,7 @@ class PyLiteralType private constructor(
         elements: Collection<PyExpression>,
         className: String,
       ): PyType? {
-        val expectedElementType = if (expectedType is PyCollectionType && expectedType.classQName == className) {
+        val expectedElementType = if (expectedType is PyCollectionType && PyNames.FQN.unqualifyBuiltinName(expectedType.classQName) == className) {
           expectedType.elementTypes.firstOrNull()
         }
         else {

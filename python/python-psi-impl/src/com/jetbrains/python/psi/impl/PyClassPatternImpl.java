@@ -73,7 +73,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
 
     final List<PyPattern> arguments = getArgumentList().getPatterns();
     final @Nullable String classQName = classType.getClassQName();
-    if (classQName != null && SPECIAL_BUILTINS.contains(classQName)) {
+    if (classQName != null && SPECIAL_BUILTINS.contains(PyNames.FQN.unqualifyBuiltinName(classQName))) {
       if (arguments.isEmpty()) return true;
       if (arguments.size() > 1) return false;
       return isExhaustive(arguments.getFirst(), context);
@@ -124,7 +124,7 @@ public class PyClassPatternImpl extends PyElementImpl implements PyClassPattern,
     return PyTypeUtil.toStream(context.getType(this)).map(type -> {
       if (type instanceof PyClassType classType) {
         final @Nullable String classQName = classType.getClassQName();
-        if (classQName != null && SPECIAL_BUILTINS.contains(classQName)) {
+        if (classQName != null && SPECIAL_BUILTINS.contains(PyNames.FQN.unqualifyBuiltinName(classQName))) {
           if (index == 0) {
             return classType;
           }

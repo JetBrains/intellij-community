@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 object PyNumericTowerUtil {
 
-  private val ALLOWED_CLASSES: List<String> = listOf(PyNames.TYPE_FLOAT, PyNames.TYPE_COMPLEX)
+  private val ALLOWED_CLASSES: List<String> = listOf(PyNames.FQN.FLOAT, PyNames.FQN.COMPLEX)
 
   @JvmStatic
   val isEnabled: Boolean get() = Registry.`is`("python.numeric.tower.type")
@@ -33,8 +33,8 @@ object PyNumericTowerUtil {
     val intType = PyBuiltinCache.getInstance(source).intType
 
     val members = when (classQName) {
-      PyNames.TYPE_FLOAT -> listOf(floatType, intType)
-      PyNames.TYPE_COMPLEX -> listOf(PyBuiltinCache.getInstance(source).complexType, floatType, intType)
+      PyNames.FQN.FLOAT -> listOf(floatType, intType)
+      PyNames.FQN.COMPLEX -> listOf(PyBuiltinCache.getInstance(source).complexType, floatType, intType)
       else -> throw IllegalStateException("Not a numeric tower type: $classQName")
     }
     return PyUnionType.union(members)

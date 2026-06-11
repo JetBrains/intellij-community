@@ -296,7 +296,7 @@ class PyTypedDictType(
       if (expression is PyCallExpression) {
         val callee = expression.callee
         if (callee != null) {
-          return PyTypingTypeProvider.resolveToQualifiedNames(callee, context).any { it == PyNames.DICT }
+          return PyTypingTypeProvider.resolveToQualifiedNames(callee, context).any { it == PyNames.FQN.DICT }
         }
       }
       return false
@@ -320,7 +320,7 @@ class PyTypedDictType(
       context: TypeEvalContext,
     ): Map<String, Pair<PyExpression?, PyType?>>? {
       val callee = callExpression.callee ?: return null
-      if (PyTypingTypeProvider.resolveToQualifiedNames(callee, context).any { it == PyNames.DICT }) {
+      if (PyTypingTypeProvider.resolveToQualifiedNames(callee, context).any { it == PyNames.FQN.DICT }) {
         val arguments = callExpression.arguments
         if (arguments.size > 1) {
           val fields = LinkedHashMap<String, Pair<PyExpression?, PyType?>>()
@@ -338,7 +338,7 @@ class PyTypedDictType(
 
     private fun matchTypedDictWithCollection(expected: PyCollectionType, actual: PyTypedDictType, context: TypeEvalContext): Boolean? {
       val expectedClassQName = expected.classQName
-      if (expectedClassQName != PyTypingTypeProvider.MAPPING && expectedClassQName != PyNames.DICT) return null
+      if (expectedClassQName != PyTypingTypeProvider.MAPPING && expectedClassQName != PyNames.FQN.DICT) return null
 
       val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
       val elementTypes = expected.elementTypes

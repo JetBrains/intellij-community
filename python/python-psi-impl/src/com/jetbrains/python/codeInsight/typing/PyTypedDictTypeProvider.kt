@@ -79,7 +79,7 @@ class PyTypedDictTypeProvider : PyTypeProviderBase() {
     fun isGetMethodToOverride(call: PyCallExpression, context: TypeEvalContext): Boolean {
       val callee = call.callee
       return callee != null && PyTypingTypeProvider.resolveToQualifiedNames(callee, context)
-        .any { it == "dict.get" /* py3 */ || it == PyTypingTypeProvider.MAPPING_GET /* py2 */ }
+        .any { PyNames.FQN.unqualifyBuiltinName(it) == "dict.get" /* py3 */ || it == PyTypingTypeProvider.MAPPING_GET /* py2 */ }
     }
 
     fun isTypedDict(expression: PyExpression, context: TypeEvalContext): Boolean {

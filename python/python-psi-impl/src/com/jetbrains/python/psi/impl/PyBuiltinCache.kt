@@ -74,18 +74,19 @@ class PyBuiltinCache private constructor(
    * @param name to look for
    * @return found element, or null.
    */
-  @Suppress("KotlinUnreachableCode")
-  fun getByName(name: @NonNls String?): PsiElement? =
-    builtinsFile?.getElementNamed(name)?.let { return it }
-    ?: myExceptionsFile?.file?.getElementNamed(name)
-
+  fun getByName(name: @NonNls String?): PsiElement? {
+    // Accept both the short name ("int") and the canonical builtin qualified name ("builtins.int")
+    val shortName = PyNames.FQN.unqualifyBuiltinName(name)
+    return builtinsFile?.getElementNamed(shortName)?.let { return it }
+           ?: myExceptionsFile?.file?.getElementNamed(shortName)
+  }
 
   fun getClass(name: @NonNls String): PyClass? {
-    return builtinsFile?.findTopLevelClass(name)
+    return builtinsFile?.findTopLevelClass(PyNames.FQN.unqualifyBuiltinName(name) ?: name)
   }
 
   fun getObjectType(name: @NonNls String): PyClassType? {
-    return myBuiltinsFile?.getClassType(name)
+    return myBuiltinsFile?.getClassType(PyNames.FQN.unqualifyBuiltinName(name) ?: name)
   }
 
   val objectType: PyClassType?

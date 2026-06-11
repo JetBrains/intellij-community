@@ -174,7 +174,7 @@ object PyExpectedVarianceJudgment {
 
   private fun getTypeParameterVarianceAtIndex(qualifierType: PyClassType, index: Int, context: TypeEvalContext): Variance? {
     if (qualifierType is PyCollectionType) {
-      if (qualifierType.classQName == PyNames.TUPLE) {
+      if (qualifierType.classQName == PyNames.FQN.TUPLE) {
         return COVARIANT
       }
       // check definition type since generic type aliases are parameterized, i.e.: `A_Alias_1 = ClassA[T_co]` will be ClassA[Any]

@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.highlighting.PyHighlighter
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
@@ -71,7 +72,8 @@ object PyDocumentationLink {
 
   @JvmStatic
   fun toClass(qualifiedName: String, linkText: @Nls String): HtmlChunk {
-    return HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_TYPENAME$qualifiedName", linkText)
+    val linkTarget = PyNames.FQN.unqualifyBuiltinName(qualifiedName)!!
+    return HtmlChunk.link("${DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL}$LINK_TYPE_TYPENAME$linkTarget", linkText)
   }
 
   @JvmStatic

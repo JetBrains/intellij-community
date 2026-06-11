@@ -4,6 +4,7 @@ package com.jetbrains.python.validation
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.highlighting.PyHighlighter
 import com.jetbrains.python.psi.PyElementVisitor
@@ -229,7 +230,7 @@ private class PyFStringFormatSpecVisitor(private val holder: PyAnnotationHolder)
 
   companion object {
     private val NUMERIC_OR_STR_TYPE_NAMES = setOf(
-      "str", "int", "float", "complex",
+      PyNames.FQN.STR, PyNames.FQN.INT, PyNames.FQN.FLOAT, PyNames.FQN.COMPLEX,
       "decimal.Decimal", "fractions.Fraction",
       "numpy.int8", "numpy.int16", "numpy.int32", "numpy.int64",
       "numpy.float16", "numpy.float32", "numpy.float64",
@@ -237,7 +238,7 @@ private class PyFStringFormatSpecVisitor(private val holder: PyAnnotationHolder)
     )
 
     private val DATETIME_TYPE_NAMES = setOf(
-      "datetime.datetime", "datetime.date", "datetime.time"
+      PyNames.FQN.DATETIME, PyNames.FQN.DATE, PyNames.FQN.TIME
     )
 
     private val NUMERIC_FORMAT_TYPES = setOf(

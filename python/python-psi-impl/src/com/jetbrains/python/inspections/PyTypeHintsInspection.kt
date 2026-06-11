@@ -1390,7 +1390,7 @@ class PyTypeHintsInspection : PyInspection() {
 
       val typeArguments = checkGenericTypeArguments(node) ?: return
 
-      if (genericDefinitionType.pyClass.qualifiedName == PyNames.TUPLE) {
+      if (genericDefinitionType.pyClass.qualifiedName == PyNames.FQN.TUPLE) {
         checkTupleTypeForm(node)
         return
       }
@@ -2038,7 +2038,7 @@ private val PySubscriptionExpression.arguments: Array<PyExpression>?
 
 private fun PySubscriptionExpression.isBuiltinTupleTypeForm(context: TypeEvalContext): Boolean {
   val operandType = context.getType(operand)
-  return operandType is PyClassType && operandType !is PyTupleType && operandType.classQName == PyNames.TUPLE
+  return operandType is PyClassType && operandType !is PyTupleType && operandType.classQName == PyNames.FQN.TUPLE
 }
 
 private fun PySubscriptionExpression.isParamSpecArgument(argIndex: Int, context: TypeEvalContext): Boolean {

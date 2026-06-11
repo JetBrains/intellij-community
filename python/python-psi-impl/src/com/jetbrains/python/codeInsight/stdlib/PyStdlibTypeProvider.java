@@ -422,16 +422,16 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       return cache.getStrType();
     }
 
-    if (enumClass.isSubclass("str", context)) {
+    if (enumClass.isSubclass(PyNames.FQN.STR, context)) {
       return cache.getStrType();
     }
-    if (enumClass.isSubclass("int", context)) {
+    if (enumClass.isSubclass(PyNames.FQN.INT, context)) {
       return cache.getIntType();
     }
-    if (enumClass.isSubclass("bytes", context)) {
+    if (enumClass.isSubclass(PyNames.FQN.BYTES, context)) {
       return cache.getBytesType(LanguageLevel.forElement(enumClass));
     }
-    if (enumClass.isSubclass("float", context)) {
+    if (enumClass.isSubclass(PyNames.FQN.FLOAT, context)) {
       return cache.getFloatType();
     }
 
@@ -509,7 +509,7 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
   public @Nullable Ref<PyType> getCallType(@NotNull PyFunction function,
                                            @NotNull PyCallSiteExpression callSite,
                                            @NotNull TypeEvalContext context) {
-    final String qname = function.getQualifiedName();
+    final String qname = PyNames.FQN.unqualifyBuiltinName(function.getQualifiedName());
     if (qname != null) {
       if ("tuple.__new__".equals(qname) && callSite instanceof PyCallExpression) {
         return getTupleInitializationType((PyCallExpression)callSite, context);
