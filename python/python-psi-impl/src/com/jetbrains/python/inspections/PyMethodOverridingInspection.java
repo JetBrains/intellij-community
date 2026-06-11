@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
@@ -21,20 +22,26 @@ import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableParameterListType;
 import com.jetbrains.python.psi.types.PyCallableParameterListTypeImpl;
+import com.jetbrains.python.psi.types.PyCallableType;
+import com.jetbrains.python.psi.types.PyCallableTypeImpl;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyOverloadType;
 import com.jetbrains.python.psi.types.PyParamSpecType;
 import com.jetbrains.python.psi.types.PySelfType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -66,24 +73,110 @@ public final class PyMethodOverridingInspection extends PyInspection {
       Collection<PsiElement> superMethods = PySuperMethodsSearch.search(function, myTypeEvalContext).findAll();
       if (superMethods.isEmpty()) return;
 
+      boolean functionOverloaded = isOverloaded(function);
+
       PyTypeChecker.GenericSubstitutions substitutions = collectAncestorSubstitutions(containingClass);
       for (PsiElement psiElement : superMethods) {
         if (psiElement instanceof PyFunction baseMethod) {
-          validateOverriddenFunction(function, baseMethod, containingClass, substitutions);
+          if (functionOverloaded || isOverloaded(baseMethod)) {
+            validateOverriddenOverloadGroup(function, baseMethod, containingClass, substitutions);
+          }
+          else {
+            validateOverriddenFunction(function, baseMethod, containingClass, substitutions);
+          }
         }
       }
+    }
+
+    /**
+     * An {@code @overload} declaration is not a method on its own. It is a part of the signature that callers see.
+     * The check validates the whole group once, at the implementation.
+     * When the group has no implementation, the first {@code @overload} declaration anchors it.
+     * This is the case in a stub file, and in a group with no implementation in a {@code .py} file.
+     */
+    private boolean anchorsOverloadGroup(@NotNull PyFunction overloadDeclaration) {
+      return PyiUtil.getImplementation(overloadDeclaration, myTypeEvalContext) == null &&
+             ContainerUtil.getFirstItem(PyiUtil.getOverloads(overloadDeclaration, myTypeEvalContext)) == overloadDeclaration;
     }
 
     private boolean skipFunctionValidation(@NotNull PyFunction function) {
       // Constructors are not subject to the Liskov substitution principle, so they are normally exempt from override
       // compatibility checks. An explicit `@override` decorator opts them in, see https://github.com/python/typing/issues/2222.
       return (PyUtil.isConstructorLikeMethod(function) && !PyKnownDecoratorUtil.hasOverrideDecorator(function, myTypeEvalContext)) ||
-             // Only the implementation of an overloaded method is compared with the base method: an individual @overload
-             // declaration is not required to be assignable to the whole signature of the overridden method.
-             PyKnownDecoratorUtil.hasRedeclarationDecorator(function, myTypeEvalContext) ||
-             PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, myTypeEvalContext) ||
+             // An individual @overload declaration is not required to be assignable to the whole signature of the overridden method.
+             // The whole overload group is compared once, see anchorsOverloadGroup().
+             (PyKnownDecoratorUtil.hasRedeclarationDecorator(function, myTypeEvalContext) && !anchorsOverloadGroup(function)) ||
+             hasIgnoredSignature(function);
+    }
+
+    private boolean hasIgnoredSignature(@NotNull PyFunction function) {
+      return PyKnownDecoratorUtil.hasUnknownOrChangingSignatureDecorator(function, myTypeEvalContext) ||
              ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensionList(),
                                   e -> e.ignoreMethodParameters(function, myTypeEvalContext));
+    }
+
+    /**
+     * Validates an override when the base method, the overriding method, or both are overloaded.
+     * The type of an overloaded method is its {@link PyOverloadType}.
+     * Thus the override is compatible when the type of the override matches the type of the base method.
+     * When a decorator or an extension makes the signature of one {@code @overload} declaration unknown, the check skips the group.
+     */
+    private void validateOverriddenOverloadGroup(@NotNull PyFunction override,
+                                                 @NotNull PyFunction baseMethod,
+                                                 @NotNull PyClass containingClass,
+                                                 @Nullable PyTypeChecker.GenericSubstitutions substitutions) {
+      if (ContainerUtil.exists(PyiUtil.getOverloads(override, myTypeEvalContext), this::hasIgnoredSignature) ||
+          ContainerUtil.exists(PyiUtil.getOverloads(baseMethod, myTypeEvalContext), this::hasIgnoredSignature)) {
+        return;
+      }
+
+      PyType baseMethodType = substitute(methodType(baseMethod), substitutions);
+      PyType overrideType = methodType(override);
+      if (PyTypeChecker.match(baseMethodType, overrideType, myTypeEvalContext)) return;
+
+      PyClass baseClass = baseMethod.getContainingClass();
+      String methodSignature = containingClass.getName() + "." + override.getName() + "()";
+      String baseClassName = baseClass != null ? baseClass.getName() : "";
+      CodifiedParam methodSignatureParam = CodifiedParam.ofReference(override, methodSignature);
+      Object baseClassParam = baseClass != null ? CodifiedParam.ofReference(baseClass, baseClassName) : baseClassName;
+      ProblemMessage msg = PyPsiBundle.problemMessage("INSP.signature.mismatch", methodSignatureParam, baseClassParam);
+      registerOverrideMismatch(override.getParameterList(), baseMethodType, overrideType, msg);
+    }
+
+    private boolean isOverloaded(@NotNull PyFunction method) {
+      return !PyiUtil.getOverloads(method, myTypeEvalContext).isEmpty();
+    }
+
+    /**
+     * Returns the type of {@code method} that callers see.
+     * This is a {@link PyOverloadType} for an overloaded method, and the callable type for other methods.
+     */
+    private @Nullable PyType methodType(@NotNull PyFunction method) {
+      List<PyFunction> overloads = PyiUtil.getOverloads(method, myTypeEvalContext);
+      if (overloads.isEmpty()) {
+        return declaredType(method);
+      }
+      List<PyCallableType> signatures = new ArrayList<>();
+      for (PyFunction overload : overloads) {
+        if (declaredType(overload) instanceof PyCallableType signature) {
+          signatures.add(signature);
+        }
+      }
+      Ref<PyType> implementation = PyiUtil.isOverload(method, myTypeEvalContext) ? null : Ref.create(myTypeEvalContext.getType(method));
+      return new PyOverloadType(signatures, implementation);
+    }
+
+    /**
+     * Returns the type of {@code function} with an unknown return type when {@code function} has no return annotation.
+     * {@link #validateOverriddenFunction} compares the return types only when both methods declare them, and this check does the same.
+     */
+    private @Nullable PyType declaredType(@NotNull PyFunction function) {
+      PyType type = myTypeEvalContext.getType(function);
+      if (function.getAnnotationValue() != null || !(type instanceof PyCallableType callableType)) return type;
+      List<PyCallableParameter> parameters = callableType.getParameters(myTypeEvalContext);
+      if (parameters == null) return type;
+      return new PyCallableTypeImpl(callableType.getTypeParameters(myTypeEvalContext), new PyCallableParameterListTypeImpl(parameters),
+                                    PyAnyType.getUnknown(), callableType.getCallable(), callableType.getModifier());
     }
 
     private void validateOverriddenFunction(@NotNull PyFunction function,
