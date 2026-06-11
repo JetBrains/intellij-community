@@ -68,14 +68,9 @@ class RemoteDevBackgroundRun(
   private interface LuxClientServiceFallback: LuxClientService
 
   fun Driver.awaitLuxInitialized() {
-    val primary = utility(LuxClientService::class)
-    val fallback by lazy { utility(LuxClientServiceFallback::class) }
-    waitFor("Lux is initialized", timeout = 30.seconds) {
-      val instance = runCatching { primary.getMaybeInstance() }
-        .recoverCatching { fallback.getMaybeInstance() }
-        .getOrNull()
-      instance != null
-    }
+    val luxClientServiceUtility = runCatching { utility(LuxClientService::class).also { it.getMaybeInstance() } }
+      .getOrElse { utility(LuxClientServiceFallback::class).also { it.getMaybeInstance() } }
+    waitFor("Lux is initialized", timeout = 30.seconds) { luxClientServiceUtility.getMaybeInstance() != null }
   }
 
   override fun closeIdeAndWait(closeIdeTimeout: Duration, takeScreenshot: Boolean) {
