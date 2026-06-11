@@ -3,21 +3,40 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
 
-class MavenSplitRepositoryTest : MavenMultiVersionImportingTestCase() {
-  override fun skipPluginResolution() = false
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenSplitRepositoryTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
 
   @Test
   fun testSplitRepositoryProjectSync() = runBlocking {
     // configure split repository
     val splitRepositoryOptions = "-Daether.enhancedLocalRepository.split=true -Daether.enhancedLocalRepository.splitLocal=true -Daether.enhancedLocalRepository.splitRemote=true"
-    val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(project)
+    val settingsComponent = MavenWorkspaceSettingsComponent.getInstance(maven.project)
     settingsComponent.settings.importingSettings.vmOptionsForImporter = splitRepositoryOptions
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -30,7 +49,7 @@ class MavenSplitRepositoryTest : MavenMultiVersionImportingTestCase() {
     assertEquals(splitRepositoryOptions, mavenServerConnector.vmOptions)
 
     // check there were no errors
-    val projects = projectsManager.projects
+    val projects = maven.projectsManager.projects
     assertEquals(1, projects.size)
     val project = projects[0]
     val problems = project.problems
