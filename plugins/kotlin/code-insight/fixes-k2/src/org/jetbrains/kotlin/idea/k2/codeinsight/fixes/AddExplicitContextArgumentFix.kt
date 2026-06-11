@@ -5,8 +5,9 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
-import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumentName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -14,31 +15,51 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class AddExplicitContextArgumentFix(
     element: KtCallElement,
-    private val contextParameters: List<ContextParameterInfo>
-) : PsiUpdateModCommandAction<KtCallElement>(element) {
+    private val contextParameters: List<ContextParameterFix>
+) : KotlinPsiUpdateModCommandAction.ElementContextless<KtCallElement>(element) {
 
-    data class ContextParameterInfo(val name: String, val type: String)
+    sealed interface ContextParameterFix {
+        val name: Name
+        data class Rename(override val name: Name, val argumentIndex: Int) : ContextParameterFix
+        data class Insert(override val name: Name, val type: String) : ContextParameterFix
+    }
 
     override fun invoke(
         context: ActionContext,
         element: KtCallElement,
-        updater: ModPsiUpdater
+        updater: ModPsiUpdater,
     ) {
         val psiFactory = KtPsiFactory(context.project)
-        val argList = element.valueArgumentList ?: createEmptyArgumentList(element, psiFactory) ?: return
-        val firstExistingArg = argList.arguments.firstOrNull()
+        val argList = element.valueArgumentList
+            ?: (element.lambdaArguments.firstOrNull()?.let {
+                element.addBefore(psiFactory.createCallArguments("()"), it) as KtCallElement
+            })?.valueArgumentList
+            ?: return
 
-        for (param in contextParameters) {
-            val newArgument = psiFactory.createArgument(
-                expression = psiFactory.createExpression("TODO(\"Provide ${param.type}\")"),
-                name = Name.identifier(param.name),
+        // 1. Rename existing positional arguments (indices are stable: no nodes are added yet).
+        for ((name, argumentIndex) in contextParameters.filterIsInstance<ContextParameterFix.Rename>()) {
+            argList.arguments.getOrNull(argumentIndex)
+                ?.takeIf { it.getArgumentName() == null }
+                ?.let { addArgumentName(it, name) }
+        }
+
+        // 2. Prepend new explicit arguments.
+        val insertActions = contextParameters.filterIsInstance<ContextParameterFix.Insert>()
+        for ((name, type) in insertActions) {
+            val newArg = psiFactory.createArgument(
+                expression = psiFactory.createExpression("TODO(\"Provide $type\")"),
+                name = name,
             )
-            if (firstExistingArg != null) {
-                argList.addArgumentBefore(newArgument, firstExistingArg)
+            val anchor = argList.arguments.firstOrNull() ?: argList.rightParenthesis
+            if (anchor == argList.rightParenthesis) {
+                // Empty arg list: just add the argument; no comma needed.
+                argList.addBefore(newArg, anchor)
             } else {
-                argList.addArgument(newArgument)
+                argList.addBefore(newArg, anchor)
+                argList.addBefore(psiFactory.createComma(), anchor)
             }
         }
+
         argList.arguments.firstOrNull()?.getArgumentExpression()?.let { updater.select(it) }
     }
 
@@ -47,9 +68,14 @@ internal class AddExplicitContextArgumentFix(
         return element.addBefore(psiFactory.createCallArguments("()"), anchor) as? KtValueArgumentList
     }
 
-    override fun getPresentation(context: ActionContext, element: KtCallElement): Presentation {
-        val paramDescriptions = contextParameters.joinToString { "${it.name}: ${it.type}" }
-        return Presentation.of(KotlinBundle.message("fix.add.explicit.context.argument.detailed", paramDescriptions))
+    override fun getActionPresentation(context: ActionContext, element: KtCallElement): Presentation {
+        val description = contextParameters.joinToString { action ->
+            when (action) {
+                is ContextParameterFix.Rename -> "${action.name.asString()} = …"
+                is ContextParameterFix.Insert -> "${action.name.asString()}: ${action.type}"
+            }
+        }
+        return Presentation.of(KotlinBundle.message("fix.add.explicit.context.argument.detailed", description))
     }
 
     override fun getFamilyName(): @IntentionFamilyName String =

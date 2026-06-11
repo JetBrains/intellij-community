@@ -1,4 +1,4 @@
-// "Add name to argument: 's = "hi"'" "true"
+// "Add explicit context argument (s = …)" "true"
 // COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters -XXLanguage:+ExplicitContextArguments
 // IGNORE_K1
 // DISABLE_K2_ERRORS
@@ -9,4 +9,4 @@ fun foo() {
     <caret>bar("hi", a = 1)
 }
 
-// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddNameToArgumentFixFactory$AddNameToArgumentFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitContextArgumentFix
