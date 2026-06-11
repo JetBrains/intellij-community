@@ -528,5 +528,11 @@ internal fun XStackFrame.computeTextPresentation(): XStackFramePresentation {
 
 private suspend fun <T> Promise<T>.awaitOrNullIfRejected(): T? {
   if (this === rejectedPromise<T>()) return null
-  return await()
+  try {
+    return await()
+  }
+  catch (e: RuntimeException) {
+    if (e.message == "rejected") return null
+    throw e
+  }
 }
