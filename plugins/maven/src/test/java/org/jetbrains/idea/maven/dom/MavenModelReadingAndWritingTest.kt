@@ -12,13 +12,32 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.IncorrectOperationException
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.BeforeEach
 
-class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() = runBlocking {
-    super.setUp()
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenModelReadingAndWritingTest(mavenVersion: String, modelVersion: String) {
 
-    importProjectAsync("""
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
+  @BeforeEach
+  fun setUp(): Unit = runBlocking {
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -38,7 +57,7 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testWriting() = runBlocking {
-    writeCommandAction(project, "") {
+    writeCommandAction(maven.project, "") {
       val model = domModel
       model!!.getGroupId().setStringValue("foo")
       model.getArtifactId().setStringValue("bar")
@@ -48,21 +67,21 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
 
     UsefulTestCase.assertSameLines("""
                       <?xml version="1.0"?>${'\r'}
-                      <project xmlns="http://maven.apache.org/POM/$modelVersion"${'\r'}
+                      <project xmlns="http://maven.apache.org/POM/${maven.modelVersion}"${'\r'}
                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"${'\r'}
-                               xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">${'\r'}
-                          <modelVersion>$modelVersion</modelVersion>${'\r'}
+                               xsi:schemaLocation="http://maven.apache.org/POM/${maven.modelVersion} http://maven.apache.org/xsd/maven-${maven.modelVersion}.xsd">${'\r'}
+                          <modelVersion>${maven.modelVersion}</modelVersion>${'\r'}
                           <groupId>foo</groupId>${'\r'}
                           <artifactId>bar</artifactId>${'\r'}
                           <version>baz</version>${'\r'}
                       </project>
                       """.trimIndent(),
-                                   VfsUtil.loadText(projectPom))
+                                   VfsUtil.loadText(maven.projectPom))
   }
 
   @Test
   fun testAddingADependency() = runBlocking {
-    writeCommandAction(project, "") {
+    writeCommandAction(maven.project, "") {
       val model = domModel
       val d = model!!.getDependencies().addDependency()
       d.getGroupId().setStringValue("group")
@@ -73,10 +92,10 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
 
     UsefulTestCase.assertSameLines("""
                       <?xml version="1.0"?>${'\r'}
-                      <project xmlns="http://maven.apache.org/POM/$modelVersion"${'\r'}
+                      <project xmlns="http://maven.apache.org/POM/${maven.modelVersion}"${'\r'}
                                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"${'\r'}
-                               xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">${'\r'}
-                          <modelVersion>$modelVersion</modelVersion>${'\r'}
+                               xsi:schemaLocation="http://maven.apache.org/POM/${maven.modelVersion} http://maven.apache.org/xsd/maven-${maven.modelVersion}.xsd">${'\r'}
+                          <modelVersion>${maven.modelVersion}</modelVersion>${'\r'}
                           <groupId>test</groupId>${'\r'}
                           <artifactId>project</artifactId>${'\r'}
                           <version>1</version>${'\r'}
@@ -88,17 +107,17 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
                               </dependency>${'\r'}
                           </dependencies>${'\r'}
                       </project>
-                      """.trimIndent(), VfsUtil.loadText(projectPom))
+                      """.trimIndent(), VfsUtil.loadText(maven.projectPom))
   }
 
   private val domModel: MavenDomProjectModel?
-    get() = MavenDomUtil.getMavenDomProjectModel(project, projectPom)
+    get() = MavenDomUtil.getMavenDomProjectModel(maven.project, maven.projectPom)
 
   private fun formatAndSaveProjectPomDocument() {
     try {
-      val psiFile = PsiManager.getInstance(project).findFile(projectPom)
-      CodeStyleManager.getInstance(project).reformat(psiFile!!)
-      val d = FileDocumentManager.getInstance().getDocument(projectPom)
+      val psiFile = PsiManager.getInstance(maven.project).findFile(maven.projectPom)
+      CodeStyleManager.getInstance(maven.project).reformat(psiFile!!)
+      val d = FileDocumentManager.getInstance().getDocument(maven.projectPom)
       FileDocumentManager.getInstance().saveDocument(d!!)
     }
     catch (e: IncorrectOperationException) {
