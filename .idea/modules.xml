@@ -981,6 +981,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.searching/kotlin.searching.test.k2/intellij.kotlin.searching.test.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.searching/kotlin.searching.test.k2/intellij.kotlin.searching.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/spellchecker/intellij.kotlin.spellchecker.iml" filepath="$PROJECT_DIR$/plugins/kotlin/spellchecker/intellij.kotlin.spellchecker.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/test-framework/intellij.kotlin.testFramework.iml" filepath="$PROJECT_DIR$/plugins/kotlin/test-framework/intellij.kotlin.testFramework.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/all-tests/intellij.kotlin.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/all-tests/intellij.kotlin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/uast/uast-kotlin-fir/intellij.kotlin.uast.iml" filepath="$PROJECT_DIR$/plugins/kotlin/uast/uast-kotlin-fir/intellij.kotlin.uast.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/uast/uast-kotlin-base/intellij.kotlin.uast.base.iml" filepath="$PROJECT_DIR$/plugins/kotlin/uast/uast-kotlin-base/intellij.kotlin.uast.base.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/uast/uast-kotlin-base/tests/intellij.kotlin.uast.base.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/uast/uast-kotlin-base/tests/intellij.kotlin.uast.base.tests.iml" />
