@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
@@ -302,6 +303,7 @@ internal class IterativeMergeFlowDelegate(
     resolveActionControllers.forEach { it.update() }
   }
 
+  private val animatedIcon = AnimatedIcon.Default()
   private fun updateButtonsState() {
     val autoResolvableFiles =
       files.any { iterativeDataHolder.getMergeConflictModel(it)?.getAutoResolvableChanges()?.isNotEmpty() == true }
@@ -316,7 +318,8 @@ internal class IterativeMergeFlowDelegate(
         isResolvingConflicts -> false
         else -> true
       }
-      icon = if (isResolvingConflicts) AnimatedIcon.Default() else AllIcons.Diff.MagicResolve
+      icon = if (isResolvingConflicts) animatedIcon else AllIcons.Diff.MagicResolve
+      disabledIcon = if (isResolvingConflicts) animatedIcon else IconLoader.getDisabledIcon(AllIcons.Diff.MagicResolve)
       text = if (isResolvingConflicts) VcsBundle.message("multiple.file.merge.dialog.progress.title.resolving.conflicts")
       else VcsBundle.message("multiple.file.iterative.merge.resolve.automatically")
 
