@@ -71,7 +71,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
       val paramSpecTypeName = unexpectedArgumentForParamSpec.paramSpecType.variableName
       registerWithOverride(
         visitor, argument,
-        PyPsiBundle.message("INSP.type.checker.unexpected.argument.from.paramspec", paramSpecTypeName),
+        PyPsiBundle.problemMessage("INSP.type.checker.unexpected.argument.from.paramspec", paramSpecTypeName),
         highlightOverride
       )
     }
@@ -86,7 +86,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
             val paramSpecTypeName = unfilledParameterFromParamSpec.paramSpecType.variableName
             if (parameterName != null) {
               registerWithOverride(
-                visitor, rpar, PyPsiBundle.message(
+                visitor, rpar, PyPsiBundle.problemMessage(
                   "INSP.type.checker.unfilled.parameter.for.paramspec", parameterName,
                   paramSpecTypeName
                 ), highlightOverride
@@ -98,7 +98,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
             val varargName = unfilledParameterFromParamSpec.varargName
             val expectedTypes = unfilledParameterFromParamSpec.expectedTypes
             registerWithOverride(
-              visitor, rpar, PyPsiBundle.message("INSP.type.checker.unfilled.vararg", varargName, expectedTypes),
+              visitor, rpar, PyPsiBundle.problemMessage("INSP.type.checker.unfilled.vararg", varargName, expectedTypes),
               highlightOverride
             )
           }
@@ -119,6 +119,16 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     else {
       visitor.registerProblem(element, message)
     }
+  }
+
+  private fun registerWithOverride(
+    visitor: PyInspectionVisitor,
+    element: PsiElement,
+    message: PyInspectionMessages.ProblemMessage,
+    highlightOverride: ProblemHighlightType?,
+  ) {
+    val type = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+    visitor.registerProblem(element, message, type)
   }
 
   private fun registerMultiCalleeProblem(
@@ -143,11 +153,10 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     }
   }
 
-  @InspectionMessage
   private fun getSingleCalleeProblemMessage(
     argumentResult: AnalyzeArgumentResult,
     context: TypeEvalContext,
-  ): @InspectionMessage String {
+  ): PyInspectionMessages.ProblemMessage {
     val actualType = argumentResult.actualType
     val expectedType = argumentResult.expectedType
 
@@ -162,11 +171,10 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
 
       if (actualAttributes != null) {
         val missingAttributes = Sets.difference<String?>(expectedAttributes, actualAttributes)
-        val missingAttributeList =
-          missingAttributes.joinToString { "'$it'" }
-        return PyPsiBundle.message(
+        return PyPsiBundle.problemMessage(
           "INSP.type.checker.type.does.not.have.expected.attribute",
-          actualTypeName, missingAttributes.size, missingAttributeList
+          actualTypeName, missingAttributes.size,
+          PyInspectionMessages.CodifiedParam.joinNames(missingAttributes.filterNotNull())
         )
       }
     }
@@ -180,24 +188,24 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
 
     if (matchingProtocolDefinitions(expectedType, actualType, context)) {
       if (expectedSubstitutedName != null) {
-        return PyPsiBundle.message(
+        return PyPsiBundle.problemMessage(
           "INSP.type.checker.only.concrete.class.can.be.used.where.matched.protocol.expected",
           expectedSubstitutedName, expectedTypeName
         )
       }
       else {
-        return PyPsiBundle.message("INSP.type.checker.only.concrete.class.can.be.used.where.protocol.expected", expectedTypeName)
+        return PyPsiBundle.problemMessage("INSP.type.checker.only.concrete.class.can.be.used.where.protocol.expected", expectedTypeName)
       }
     }
 
     if (expectedSubstitutedName != null) {
-      return PyPsiBundle.message(
+      return PyPsiBundle.problemMessage(
         "INSP.type.checker.expected.matched.type.got.type.instead", expectedSubstitutedName, expectedTypeName,
         actualTypeName
       )
     }
     else {
-      return PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName)
+      return PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName)
     }
   }
 

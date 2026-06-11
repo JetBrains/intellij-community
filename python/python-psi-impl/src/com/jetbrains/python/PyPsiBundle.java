@@ -16,6 +16,8 @@
 package com.jetbrains.python;
 
 import com.intellij.DynamicBundle;
+import com.jetbrains.python.inspections.PyInspectionMessages;
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,5 +38,15 @@ public final class PyPsiBundle extends DynamicBundle {
   public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
                                                               Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
+  }
+
+  /**
+   * Builds a {@link ProblemMessage} from a bundle entry whose template wraps code-like spans with
+   * backticks (see {@link PyInspectionMessages}). Description goes to the Problems view; tooltip goes
+   * to the editor hover.
+   */
+  public static @NotNull ProblemMessage problemMessage(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                        Object @NotNull ... params) {
+    return PyInspectionMessages.bundleMessage(INSTANCE, key, params);
   }
 }

@@ -128,8 +128,8 @@ class PyClassVarInspection : PyInspection() {
             val expectedName = PythonDocumentationProvider.getTypeName(expectedType, myTypeEvalContext)
             val actualName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
             registerProblem(node.findAssignedValue(),
-                            PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead",
-                                                expectedName, actualName))
+                            PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead",
+                                                       expectedName, actualName))
           }
         }
       }

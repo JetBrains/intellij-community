@@ -131,11 +131,12 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
     val goodTuple = PyTupleType.createHomogeneous(matchArgs, strType) ?: return
     if (PyTypeChecker.match(goodTuple, matchArgsType, myTypeEvalContext)) return
     // __match_args__ must be a tuple[str, ...]
-    holder.problem(matchArgs, PyPsiBundle.message(
-      "INSP.type.checker.expected.type.got.type.instead",
-      PythonDocumentationProvider.getTypeName(goodTuple, myTypeEvalContext),
-      PythonDocumentationProvider.getTypeName(matchArgsType, myTypeEvalContext)))
-      .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING).register()
+    registerProblem(matchArgs,
+                    PyPsiBundle.problemMessage(
+                      "INSP.type.checker.expected.type.got.type.instead",
+                      PythonDocumentationProvider.getTypeName(goodTuple, myTypeEvalContext),
+                      PythonDocumentationProvider.getTypeName(matchArgsType, myTypeEvalContext)),
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
   }
 }
 

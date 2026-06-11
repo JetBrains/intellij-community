@@ -311,7 +311,7 @@ class PyTypedDictInspection : PyInspection() {
               if (!PyTypeChecker.match(extraItemsAncestor.extraItemsType, fieldType, myTypeEvalContext)) {
                 registerProblem(
                   element,
-                  PyPsiBundle.message("INSP.type.checker.type.not.assignable", actualTypeName, expectedTypeName)
+                  PyPsiBundle.problemMessage("INSP.type.checker.type.not.assignable", actualTypeName, expectedTypeName)
                 )
               }
             }
@@ -325,7 +325,8 @@ class PyTypedDictInspection : PyInspection() {
               else if (!PyTypeChecker.match(extraItemsAncestor.extraItemsType, fieldType, myTypeEvalContext) ||
                        !PyTypeChecker.match(fieldType, extraItemsAncestor.extraItemsType, myTypeEvalContext)) {
                 registerProblem(element,
-                                PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName))
+                                PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead",
+                                                           expectedTypeName, actualTypeName))
               }
             }
           }
@@ -423,7 +424,8 @@ class PyTypedDictInspection : PyInspection() {
                                                                              myTypeEvalContext)
               val actualTypeName = PythonDocumentationProvider.getTypeName(valueType, myTypeEvalContext)
               registerProblem(arguments[1],
-                              PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName))
+                              PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead",
+                                                         expectedTypeName, actualTypeName))
             }
           }
         }
@@ -463,7 +465,8 @@ class PyTypedDictInspection : PyInspection() {
               val expectedTypeName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext)
               val actualTypeName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
               registerProblem(actual,
-                              PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName))
+                              PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead",
+                                                         expectedTypeName, actualTypeName))
             }
           }
         }
@@ -533,7 +536,7 @@ class PyTypedDictInspection : PyInspection() {
                 !PyTypeChecker.match(newFieldType, expectedExtraItemsType, myTypeEvalContext)) {
               registerProblem(
                 target,
-                PyPsiBundle.message(
+                PyPsiBundle.problemMessage(
                   "INSP.type.checker.expected.type.got.type.instead",
                   expectedTypeName,
                   actualTypeName
@@ -545,7 +548,7 @@ class PyTypedDictInspection : PyInspection() {
             if (!PyTypeChecker.match(expectedExtraItemsType, newFieldType, myTypeEvalContext)) {
               registerProblem(
                 target,
-                PyPsiBundle.message("INSP.type.checker.type.not.assignable", actualTypeName, expectedTypeName))
+                PyPsiBundle.problemMessage("INSP.type.checker.type.not.assignable", actualTypeName, expectedTypeName))
             }
           }
         }
@@ -842,7 +845,8 @@ class PyTypedDictInspection : PyInspection() {
         if (!PyTypeChecker.match(fields[keyAsString]?.type, valueType, myTypeEvalContext)) {
           val expectedTypeName = PythonDocumentationProvider.getTypeName(fields[keyAsString]!!.type, myTypeEvalContext)
           val actualTypeName = PythonDocumentationProvider.getTypeName(valueType, myTypeEvalContext)
-          registerProblem(value, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName))
+          registerProblem(value, PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead",
+                                                            expectedTypeName, actualTypeName))
           return@forEach
         }
       }

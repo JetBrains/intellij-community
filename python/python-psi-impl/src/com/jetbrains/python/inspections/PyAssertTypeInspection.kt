@@ -34,7 +34,7 @@ class PyAssertTypeInspection : PyInspection() {
               val expectedName = PythonDocumentationProvider.getVerboseTypeName(expectedType, myTypeEvalContext)
               val actualName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
               registerProblem(arguments[0],
-                              PyPsiBundle.message("INSP.assert.type.expected.type.got.type.instead", expectedName, actualName))
+                              PyPsiBundle.problemMessage("INSP.assert.type.expected.type.got.type.instead", expectedName, actualName))
             }
           }
         }

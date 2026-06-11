@@ -690,7 +690,8 @@ class PyDataclassInspection : PyInspection() {
             val initVarTypeName = PythonDocumentationProvider.getTypeName(initVarType, myTypeEvalContext)
             val parameterTypeName = PythonDocumentationProvider.getVerboseTypeName(typeFromAnnotation.get(), myTypeEvalContext)
             registerProblem(annotation,
-                            PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", initVarTypeName, parameterTypeName))
+                            PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead",
+                                                       initVarTypeName, parameterTypeName))
           }
         }
       }

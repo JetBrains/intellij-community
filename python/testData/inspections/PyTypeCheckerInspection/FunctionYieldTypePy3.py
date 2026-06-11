@@ -66,7 +66,7 @@ async def r() -> AsyncGenerator[int]:
     yield 42
     
 def s() -> Generator[int]:
-    yield from <warning descr="Cannot yield from 'AsyncGenerator[int, None]', use async for instead">r()</warning>
+    yield from <warning descr="Cannot yield from 'AsyncGenerator[int, None]', use 'async for' instead">r()</warning>
     
 def t() -> object: # no error here
     yield None # no error here

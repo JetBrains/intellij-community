@@ -1938,7 +1938,7 @@ class PyTypeHintsInspection : PyInspection() {
             val expectedName = PythonDocumentationProvider.getVerboseTypeName(pair.getFirst(), myTypeEvalContext)
             val actualName = PythonDocumentationProvider.getTypeName(pair.getSecond(), myTypeEvalContext)
             registerProblem(flatIndexExpr,
-                            PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName),
+                            PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName),
                             ProblemHighlightType.WARNING)
             return
           }
