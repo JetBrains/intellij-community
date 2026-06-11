@@ -471,7 +471,8 @@ object Switcher : BaseSwitcherAction(null), ActionRemoteBehaviorSpecification.Fr
       }
 
       if (alreadyReleasedKeys?.isNotEmpty() == true) {
-        uiUpdateScope.launch(Dispatchers.UI) {
+        // todo: revise after IJPL-247077 is fixed
+        uiUpdateScope.launch(Dispatchers.EDT) {
           for (event in alreadyReleasedKeys) {
             onKeyRelease.keyReleased(event)
           }
