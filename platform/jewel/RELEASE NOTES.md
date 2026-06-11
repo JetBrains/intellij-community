@@ -1,5 +1,31 @@
 # Jewel Release Notes
 
+## v0.38 (2026-06-30)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.2 beta 1              | 1.11.0                        |
+
+### ⚠️ Important Changes
+
+* **[JEWEL-1225](https://youtrack.jetbrains.com/issue/JEWEL-1225)** Jewel now targets CMP `1.11.0`, which comes with
+  its [own set of breaking changes](https://github.com/JetBrains/compose-multiplatform/releases/tag/v1.11.0). This
+  means that from Jewel `0.38+`, it'll be transitively binary-incompatible with artifacts compiled against CMP `1.10.x`
+  and lower ([#3496](https://github.com/JetBrains/intellij-community/pull/3496))
+* **[JEWEL-1332](https://youtrack.jetbrains.com/issue/JEWEL-1332)** Jewel now targets IntelliJ Platform `2026.1.2`,
+  Kotlin `2.3.20`, and JDK `25`
+
+### Bug fixes
+
+* **[JEWEL-1225](https://youtrack.jetbrains.com/issue/JEWEL-1225)** Updated several components for CMP `1.11.0`
+  behaviour changes ([#3496](https://github.com/JetBrains/intellij-community/pull/3496))
+  * `SelectableLazyColumn` and `ListComboBox` now use `Key.MoveHome` in line with the updated CMP API
+  * `EditableComboBox` focus handling now matches CMP `1.11.0`'s default focus clearing behaviour
+  * Text context menu actions now respect the actual `enabled` state exposed by CMP
+* **[IJPL-176416](https://youtrack.jetbrains.com/issue/IJPL-176416)** Fixed standalone icon rendering so icons react
+  correctly to theme, scaling, and update events after the new Icons API changes
+  ([`e6b2fee0`](https://github.com/JetBrains/intellij-community/commit/e6b2fee02b46c6d0cf6a6d1e0bc952240b977775))
+
 ## v0.37 (2026-06-02)
 
 | Min supported IJP versions | Compose Multiplatform version |
