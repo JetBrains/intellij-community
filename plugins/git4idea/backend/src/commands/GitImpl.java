@@ -881,7 +881,10 @@ public class GitImpl extends GitImplBase {
 
     GitCommandResult result = Git.getInstance().runCommand(handler);
     result.throwOnError();
-    return new GitWorktreeListParser(handler.getExecutable(), repository.getRoot().toNioPath()).parseOrEmpty(result.getOutput());
+    return new GitWorktreeListParser(handler.getExecutable(),
+                                     repository.getRoot().toNioPath(),
+                                     repository.getRepositoryFiles().getWorktreeGitDir().toNioPath())
+      .parseOrEmpty(result.getOutput());
   }
 
   @Override

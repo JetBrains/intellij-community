@@ -9,7 +9,11 @@ import git4idea.util.StringScanner
 import kotlinx.collections.immutable.toImmutableList
 import java.nio.file.Path
 
-internal class GitWorktreeListParser(private val executable: GitExecutable, private val currentRoot: Path) {
+internal class GitWorktreeListParser(
+  private val executable: GitExecutable,
+  private val currentRoot: Path,
+  private val currentGitDir: Path? = null,
+) {
   private var badLineReported = 0
   private var currentWorktreePath: String? = null
   private var branchFullName: String? = null
@@ -84,9 +88,11 @@ internal class GitWorktreeListParser(private val executable: GitExecutable, priv
     }
     else {
       val convertedPath = executable.convertFilePathBack(path, currentRoot)
+      val isCurrent = convertedPath == currentRoot || (currentGitDir != null && convertedPath == currentGitDir)
+      // For a submodule, git reports the git-dir as the worktree path; expose the real working-tree root instead.
+      val effectivePath = if (isCurrent) currentRoot else convertedPath
       val hash = if (detached) headHash else null
-      _trees.add(GitWorkingTree(convertedPath.toString(), branch, main,
-                                convertedPath == currentRoot, locked, prunable, hash))
+      _trees.add(GitWorkingTree(effectivePath.toString(), branch, main, isCurrent, locked, prunable, hash))
     }
     currentWorktreePath = null
     branchFullName = null

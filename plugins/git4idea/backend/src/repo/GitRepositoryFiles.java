@@ -174,6 +174,18 @@ public final class GitRepositoryFiles {
   }
 
   /**
+   * The administrative '.git' directory of this particular worktree:
+   * <ul>
+   *   <li>a regular repository: {@code <root>/.git};</li>
+   *   <li>a linked worktree: {@code <main>/.git/worktrees/<name>};</li>
+   *   <li>a submodule: {@code <parent>/.git/modules/<submodule>}.</li>
+   * </ul>
+   */
+  public @NotNull VirtualFile getWorktreeGitDir() {
+    return myWorktreeDir;
+  }
+
+  /**
    * Returns subdirectories and paths of .git which we are interested in - they should be watched by VFS.
    */
   @NotNull

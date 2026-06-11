@@ -4282,6 +4282,7 @@ f:git4idea.repo.GitRepositoryFiles
 - getShallowFile():java.io.File
 - getSquashMessageFile():java.io.File
 - getStashReflogFile():java.io.File
+- getWorktreeGitDir():com.intellij.openapi.vfs.VirtualFile
 - getWorktreesDirFile():java.io.File
 - isBranchFile(java.lang.String):Z
 - isBranchFile(java.lang.String,java.lang.String):Z
