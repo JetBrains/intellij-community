@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
 import com.intellij.testFramework.rules.TempDirectory
-import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNotSame
@@ -11,8 +10,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Path
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
-@OptIn(ExperimentalBuildToolsApi::class)
 class BtaKotlinCompilerReferenceIndexStorageRefreshTest {
     @Rule
     @JvmField
@@ -134,6 +135,58 @@ class BtaKotlinCompilerReferenceIndexStorageRefreshTest {
 
         assertEquals(1, refreshedLookupStorages.size)
         assertEquals(1, refreshedSubtypeStorages.size)
+    }
+
+    @Test
+    fun `test refresh does not reload unchanged root`() {
+        val root = createCriRoot("root")
+        val lookupStorage = createLookupStorage(root)
+        val loadCount = AtomicInteger()
+
+        val refreshedLookupStorages = refreshBtaStorageMap(
+            currentCriRoots = listOf(root),
+            updatedCriRoots = emptyList(),
+            storagesByRoot = mapOf(root to lookupStorage),
+            createStorage = {
+                loadCount.incrementAndGet()
+                createLookupStorage(it)
+            },
+        )
+
+        assertEquals(0, loadCount.get())
+        assertSame(lookupStorage, refreshedLookupStorages[root])
+    }
+
+    @Test
+    fun `test create storage map overlaps root deserialization when parallelism is enabled`() {
+        val rootA = createCriRoot("rootA")
+        val rootB = createCriRoot("rootB")
+        val startedDeserializations = CountDownLatch(2)
+        val activeDeserializations = AtomicInteger()
+        val maxActiveDeserializations = AtomicInteger()
+        val createStorage: (Path) -> BtaLookupInMemoryStorage = { criRoot ->
+            val currentlyActive = activeDeserializations.incrementAndGet()
+            maxActiveDeserializations.updateAndGet { maxOf(it, currentlyActive) }
+            startedDeserializations.countDown()
+            try {
+                assertTrue(
+                    "Expected both CRI roots to start deserialization concurrently",
+                    startedDeserializations.await(1, TimeUnit.SECONDS)
+                )
+                createLookupStorage(criRoot)
+            } finally {
+                activeDeserializations.decrementAndGet()
+            }
+        }
+
+        val createdLookupStorages = createBtaStorageMap(
+            criRoots = listOf(rootA, rootB),
+            createStorage = createStorage,
+            parallelism = 2,
+        )
+
+        assertEquals(setOf(rootA, rootB), createdLookupStorages.keys)
+        assertTrue(maxActiveDeserializations.get() > 1)
     }
 
     private fun createCriRoot(name: String): Path = tempDir.newDirectoryPath(name)

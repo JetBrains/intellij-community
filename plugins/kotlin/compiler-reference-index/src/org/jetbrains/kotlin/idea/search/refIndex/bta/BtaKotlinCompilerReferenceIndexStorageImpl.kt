@@ -1,16 +1,23 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.search.refIndex.bta
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.util.coroutines.forEachConcurrent
+import com.intellij.util.indexing.UnindexedFilesUpdater
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.kotlin.idea.search.refIndex.IncrementalKotlinCompilerReferenceIndexStorage
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorage
 import org.jetbrains.kotlin.name.FqName
 import java.nio.file.Path
+import java.util.concurrent.ConcurrentHashMap
 
 internal class BtaKotlinCompilerReferenceIndexStorageImpl(
     private val project: Project,
@@ -62,21 +69,56 @@ internal class BtaKotlinCompilerReferenceIndexStorageImpl(
 
 @VisibleForTesting
 @ApiStatus.Internal
-fun <T> refreshBtaStorageMap(
+@Suppress("RAW_RUN_BLOCKING")
+fun <T : BtaInMemoryStorage> refreshBtaStorageMap(
     currentCriRoots: Collection<Path>,
     updatedCriRoots: Collection<Path>,
     storagesByRoot: Map<Path, T>,
     createStorage: (Path) -> T?,
-): Map<Path, T> = buildMap {
-    for (criRoot in currentCriRoots) {
-        val storage = if (criRoot in updatedCriRoots || criRoot !in storagesByRoot) {
-            createStorage(criRoot)
-        }
-        else {
-            storagesByRoot[criRoot]
-        }
-        if (storage != null) {
-            put(criRoot, storage)
+    parallelism: Int = getDefaultDeserializationParallelism(),
+): Map<Path, T> {
+    val updatedRootSet = updatedCriRoots.toSet()
+    val refreshedStorages = ConcurrentHashMap<Path, T>()
+
+    // TODO: remove once the whole storage API is async
+    runBlocking {
+        withContext(Dispatchers.IO.limitedParallelism(parallelism)) {
+            currentCriRoots.forEachConcurrent(parallelism) { criRoot ->
+                val storage = if (criRoot in updatedRootSet || criRoot !in storagesByRoot) {
+                    createStorage(criRoot)
+                } else {
+                    storagesByRoot[criRoot]
+                }
+                if (storage != null) {
+                    refreshedStorages[criRoot] = storage
+                }
+            }
         }
     }
+
+    return buildMap(currentCriRoots.size) {
+        for (criRoot in currentCriRoots) {
+            refreshedStorages[criRoot]?.let { put(criRoot, it) }
+        }
+    }
+}
+
+@ApiStatus.Internal
+fun <T : BtaInMemoryStorage> createBtaStorageMap(
+    criRoots: Collection<Path>,
+    createStorage: (Path) -> T?,
+    parallelism: Int = getDefaultDeserializationParallelism(),
+): Map<Path, T> = refreshBtaStorageMap(
+    currentCriRoots = criRoots,
+    updatedCriRoots = emptySet(),
+    storagesByRoot = emptyMap(),
+    createStorage = createStorage,
+    parallelism = parallelism,
+)
+
+private fun getDefaultDeserializationParallelism(): Int {
+    if (ApplicationManager.getApplication() == null) {
+        return Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
+    }
+    return UnindexedFilesUpdater.getNumberOfIndexingThreads()
 }

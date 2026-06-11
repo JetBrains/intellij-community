@@ -24,20 +24,15 @@ internal class BtaKotlinCompilerReferenceIndexStorageProvider : KotlinCompilerRe
         val criRoots = project.getCriPaths()
         if (criRoots.isEmpty()) return null
 
-        val lookupStoragesByRoot = buildMap {
-            for (root in criRoots) {
-                val storage = BtaLookupInMemoryStorage.create(root, projectPath) ?: continue
-                put(root, storage)
-            }
-        }
+        val lookupStoragesByRoot = createBtaStorageMap(
+            criRoots = criRoots,
+            createStorage = { BtaLookupInMemoryStorage.create(it, projectPath) },
+        )
+        val subtypeStoragesByRoot = createBtaStorageMap(
+            criRoots = criRoots,
+            createStorage = BtaSubtypeInMemoryStorage::create,
+        )
         if (lookupStoragesByRoot.isEmpty()) return null
-
-        val subtypeStoragesByRoot = buildMap {
-            for (root in criRoots) {
-                val storage = BtaSubtypeInMemoryStorage.create(root) ?: continue
-                put(root, storage)
-            }
-        }
 
         return BtaKotlinCompilerReferenceIndexStorageImpl(project, projectPath, lookupStoragesByRoot, subtypeStoragesByRoot)
     }
