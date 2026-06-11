@@ -1,0 +1,7 @@
+{
+  "extends": "@jetbrains/intellij-webview/tsconfig.view.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["build.ts", "vite.config.ts", "views/**/*.ts", "views/**/*.d.ts"]
+}

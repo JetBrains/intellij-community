@@ -1,0 +1,25 @@
+<idea-plugin>
+  <id>com.intellij.platform.ui.webview.demo</id>
+  <name>WebView Demo</name>
+  <vendor>JetBrains</vendor>
+  <description>Provides internal WebView demo tools for platform development.</description>
+  <resource-bundle>messages.WebViewDemoBundle</resource-bundle>
+
+  <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <plugin id="com.intellij.platform.ui.webview"/>
+    <module name="intellij.markdown"/>
+    <!-- endregion -->
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <fileBasedIndex implementation="com.intellij.ui.webview.markdown.linkgraph.MarkdownLinkDestinationIndex"/>
+
+    <toolWindow id="WebView Demo"
+                factoryClass="com.intellij.ui.webview.demo.WebViewDemoToolWindowFactory"
+                anchor="bottom"
+                secondary="true"
+                doNotActivateOnStart="false"
+                icon="AllIcons.Toolwindows.Documentation"/>
+  </extensions>
+</idea-plugin>
