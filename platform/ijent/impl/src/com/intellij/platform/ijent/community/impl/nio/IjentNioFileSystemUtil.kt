@@ -13,13 +13,9 @@ import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFsError
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.TaskCancellation
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ijent.IjentCalledContextElement
 import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.allowCancellableNio
-import com.intellij.platform.ijent.community.impl.IjentCommunityImplBundle
 import com.intellij.platform.ijent.unavailableDialogTimeout
 import com.intellij.util.IntelliJCoroutinesFacade
 import kotlinx.coroutines.runBlocking
@@ -61,7 +57,8 @@ fun <T, E : EelFsError, O : EelOwnedBuilder<EelResult<T, E>>> O.getOrThrowFileSy
  * - The coroutine is processed in-place in a caller thread.
  * - Creates a fresh isolated event loop instead of reusing the caller's thread-local one
  *    (avoids stealing tasks from an outer event loop in case of nested runBlocking).
- * - Shows a modal dialog if ijent is not responding long.
+ * - Shows a modal dialog if ijent is not responding long, but only when the EDT is free to display it;
+ *   when fsBlocking blocks the EDT itself no dialog is shown and the thread just waits (see IJPL-245001).
  * - Is ready for being called in all reasonable contexts:
  *   - blocking context or coroutine context,
  *   - read actions, write actions,
@@ -81,28 +78,18 @@ fun <T, E : EelFsError, O : EelOwnedBuilder<EelResult<T, E>>> O.getOrThrowFileSy
  */
 @ApiStatus.Internal
 fun <T> EelDescriptor.fsBlocking(body: suspend () -> T): T {
-  val application = ApplicationManager.getApplication()
-  return if (
-    application?.isDispatchThread == true
-    && !application.isWriteAccessAllowed
-  ) {
-    // Unfortunately, it happens. And it's important to free the EDT because file systems like SSH may show dialog windows.
-    // It's still not a panacea. The current implementation can deadlock if it's called inside a write action on EDT and decides to show UI.
-    // TODO IJPL-245001
-    runWithModalProgressBlocking(
-      ModalTaskOwner.guess(),
-      IjentCommunityImplBundle.message("modal.progress.title.remote.file.system.access"),
-      TaskCancellation.cancellable(),
-    ) {
-      this@fsBlocking.fsBlocking(body)
-    }
-  }
-  else {
-    IntelliJCoroutinesFacade.runAndCompensateParallelism(500.milliseconds) {
-      fsBlockingWithoutParallelismCompensation {
-        showModalDialogOnTimeout(this, IjentCallerContext.computeCallerContext().unavailableDialogTimeout()) {
-          body()
-        }
+  // Block the calling thread directly; intentionally do NOT pump the event queue while waiting for Eel.
+  //
+  // IJPL-246172 tried to free the EDT here via runWithModalProgressBlocking so that remote file systems (e.g. SSH) could show dialogs.
+  // Pumping the event queue on the EDT is re-entrant, though: a queued Settings-tree repaint instantiates a Configurable whose blocking
+  // service initialization parks the EDT, freezing the IDE (IJPL-247000). Reverted until a non-re-entrant way to free the EDT exists.
+  //
+  // Trade-off: while a remote FS is slow or wants to show UI the EDT stays blocked (the original IJPL-245001 problem).
+  // That is preferable to the hard freeze and is tracked in IJPL-245001.
+  return IntelliJCoroutinesFacade.runAndCompensateParallelism(500.milliseconds) {
+    fsBlockingWithoutParallelismCompensation {
+      showModalDialogOnTimeout(this, IjentCallerContext.computeCallerContext().unavailableDialogTimeout()) {
+        body()
       }
     }
   }
