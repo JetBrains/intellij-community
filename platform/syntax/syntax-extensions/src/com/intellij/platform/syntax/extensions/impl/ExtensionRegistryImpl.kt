@@ -21,8 +21,9 @@ internal class ExtensionRegistryImpl : ExtensionRegistry {
     ourExtensions.remove(extensionPoint, extension)
   }
 
-  override fun <T : Any> getExtensions(extensionPoint: ExtensionPointKey<T>): List<T> {
-    return ourExtensions.get(extensionPoint).toList() as List<T>
+  override fun <T : Any> getExtensions(extensionPoint: ExtensionPointKey<T>): Sequence<T> {
+    @Suppress("UNCHECKED_CAST")
+    return ourExtensions.get(extensionPoint).asSequence() as Sequence<T>
   }
 
   override fun <T : Any> registerLanguageExtension(extensionPoint: ExtensionPointKey<T>, extension: T, language: SyntaxLanguage) {
@@ -35,9 +36,9 @@ internal class ExtensionRegistryImpl : ExtensionRegistry {
     extensions?.remove(language)
   }
 
-  override fun <T : Any> getLanguageExtensions(extensionPoint: ExtensionPointKey<T>, language: SyntaxLanguage): List<T> {
-    val extensionMap = ourLanguageExtensions.get(extensionPoint) ?: return emptyList()
-    val extensions = extensionMap.get(language) as Set<T>
-    return extensions.toList()
+  override fun <T : Any> getLanguageExtensions(extensionPoint: ExtensionPointKey<T>, language: SyntaxLanguage): Sequence<T> {
+    val extensionMap = ourLanguageExtensions.get(extensionPoint) ?: return emptySequence()
+    @Suppress("UNCHECKED_CAST")
+    return extensionMap.get(language).asSequence() as Sequence<T>
   }
 }

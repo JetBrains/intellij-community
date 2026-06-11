@@ -37,15 +37,10 @@ fun SyntaxElementLanguageProvider.getLanguage(elementType: SyntaxElementType): S
  * Returns a [SyntaxElementLanguageProvider] from the current [ExtensionSupport].
  * Note that if several language providers are registered, the result provider combines them all.
  */
-fun syntaxElementLanguageProvider(): SyntaxElementLanguageProvider? {
-  val languageProviders = currentExtensionSupport().getExtensions(syntaxElementLanguageProviderEP)
-  if (languageProviders.isEmpty()) return null
-
-  if (languageProviders.size == 1) return languageProviders[0]
-
-  // todo implement a more efficient way to combine FiniteSyntaxElementLanguageProviders
+fun syntaxElementLanguageProvider(): SyntaxElementLanguageProvider {
   return SyntaxElementLanguageProvider { elementType ->
-    languageProviders.asSequence().flatMap { languageProvider ->
+    val languageProviders = currentExtensionSupport().getExtensions(syntaxElementLanguageProviderEP)
+    languageProviders.flatMap { languageProvider ->
       languageProvider.getLanguages(elementType)
     }
   }
