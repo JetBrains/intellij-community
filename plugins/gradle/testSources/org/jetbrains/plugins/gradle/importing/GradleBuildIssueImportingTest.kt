@@ -38,6 +38,7 @@ import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ArgumentsProvider
 import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.params.provider.EnumSource
 import org.junit.jupiter.params.support.ParameterDeclarations
 import java.util.function.Consumer
 
@@ -93,6 +94,37 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
     }
   }
 
+  @ParameterizedTest
+  @EnumSource(GradleDsl::class)
+  fun `test build issue checker reports all issues for script exception`(gradleDsl: GradleDsl): Unit = runBlocking {
+    registerIssueChecker(TestBuildOutputFailureMessageSuppressor(), asDisposable())
+    registerIssueChecker(TestBuildIssueChecker(TEST_BUILD_ISSUE_TITLE, TEST_BUILD_ISSUE_DESCRIPTION), asDisposable())
+    registerIssueChecker(TestBuildIssueChecker(TEST_BUILD_ISSUE_TITLE_2, TEST_BUILD_ISSUE_DESCRIPTION_2), asDisposable())
+
+    val projectInfo = simpleJavaProjectInfoWithBrokenScript(gradleVersion, gradleDsl, BrokenFile.BUILD_SCRIPT)
+
+    val projectRoot = projectInfo.initProject(testRoot)
+
+    gradle.linkProject(project, projectRoot)
+
+    buildView.assertSyncViewTree {
+      assertNode("(failed|finished)".toRegex()) {
+        assertNodeWithDeprecatedGradleWarning(gradleVersion)
+        assertFilePositionNode(gradleVersion, gradleDsl, BrokenFile.BUILD_SCRIPT) {
+          assertNode(TEST_BUILD_ISSUE_TITLE)
+          assertNode(TEST_BUILD_ISSUE_TITLE_2)
+        }
+      }
+    }
+
+    buildView.assertSyncViewSelectedNode(TEST_BUILD_ISSUE_TITLE) { text ->
+      assertEquals(TEST_BUILD_ISSUE_DESCRIPTION + "\n\n", text)
+    }
+    buildView.assertSyncViewNode(TEST_BUILD_ISSUE_TITLE_2) { text ->
+      assertEquals(TEST_BUILD_ISSUE_DESCRIPTION_2 + "\n\n", text)
+    }
+  }
+
   private class TestBuildOutputFailureMessageSuppressor : GradleIssueChecker {
 
     override fun check(issueData: GradleIssueData): BuildIssue? = null
@@ -130,6 +162,8 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
     private const val TEST_BUILD_SCRIPT_EXCEPTION_MESSAGE = "IDEA test build issue marker"
     private const val TEST_BUILD_ISSUE_TITLE = "IDEA-side test build issue"
     private const val TEST_BUILD_ISSUE_DESCRIPTION = "Build issue description from the IDEA-side test checker"
+    private const val TEST_BUILD_ISSUE_TITLE_2 = "$TEST_BUILD_ISSUE_TITLE (2)"
+    private const val TEST_BUILD_ISSUE_DESCRIPTION_2 = "$TEST_BUILD_ISSUE_DESCRIPTION (2)"
 
     private fun registerIssueChecker(checker: GradleIssueChecker, disposable: Disposable) {
       GradleIssueChecker.EP_NAME.point.registerExtension(checker, disposable)

@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import org.gradle.cli.CommandLineArgumentException;
 import org.gradle.tooling.UnsupportedVersionException;
 import org.gradle.tooling.model.build.BuildEnvironment;
@@ -28,6 +29,7 @@ import java.io.StringWriter;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Locale;
 
 import static com.intellij.util.ObjectUtils.notNull;
@@ -75,9 +77,9 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     LOG.debug(String.format("Failed to run Gradle project at '%1$s'", projectPath), error);
 
     String location = getErrorLocation(executionErrorHandler, buildFilePath);
-    BuildIssue buildIssue = getBuildIssue(buildEnvironment, error, projectPath, location);
-    if (buildIssue != null) {
-      return new BuildIssueException(buildIssue);
+    List<BuildIssue> buildIssues = getBuildIssues(buildEnvironment, error, projectPath, location);
+    if (!buildIssues.isEmpty()) {
+      return new BuildIssueException(buildIssues);
     }
 
     Throwable rootCause = executionErrorHandler.getRootCause();
@@ -170,7 +172,7 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     return createUserFriendlyError(errMessage, location);
   }
 
-  private static @Nullable BuildIssue getBuildIssue(
+  private static @NotNull List<BuildIssue> getBuildIssues(
     @Nullable BuildEnvironment buildEnvironment,
     @NotNull Throwable error,
     @NotNull String projectPath,
@@ -179,10 +181,7 @@ public class BaseProjectImportErrorHandler extends AbstractProjectImportErrorHan
     FilePosition filePosition = getErrorFilePosition(location);
     GradleIssueFailure issueFailure = GradleIssueFailure.createIssueFailure(error);
     GradleIssueData issueData = GradleIssueData.createIssueData(Path.of(projectPath), issueFailure, buildEnvironment, filePosition);
-    return GradleIssueChecker.getKnownIssuesCheckList().stream()
-      .map(it -> it.check(issueData))
-      .filter(it -> it != null)
-      .findFirst().orElse(null);
+    return ContainerUtil.mapNotNull(GradleIssueChecker.getKnownIssuesCheckList(), it -> it.check(issueData));
   }
 
   public static @Nullable FilePosition getErrorFilePosition(

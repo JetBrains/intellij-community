@@ -164,14 +164,15 @@ public final class ExternalSystemNotificationManager implements Disposable {
         title, message, notificationCategory, NotificationSource.PROJECT_SYNC,
         filePath, ObjectUtils.notNull(line, -1), ObjectUtils.notNull(column, -1), false);
 
-    if (unwrapped instanceof BuildIssueException) {
-      BuildIssue buildIssue = ((BuildIssueException)unwrapped).getBuildIssue();
-      for (BuildIssueQuickFix quickFix : buildIssue.getQuickFixes()) {
-        notificationData.setListener(quickFix.getId(), (notification, event) -> {
-          quickFix.runQuickFix(project, dataContext);
-        });
+    if (unwrapped instanceof BuildIssueException buildIssueException) {
+      for (BuildIssue buildIssue : buildIssueException.getBuildIssues()) {
+        for (BuildIssueQuickFix quickFix : buildIssue.getQuickFixes()) {
+          notificationData.setListener(quickFix.getId(), (_, _) -> {
+            quickFix.runQuickFix(project, dataContext);
+          });
+        }
       }
-      notificationData.setNavigatable(buildIssue.getNavigatable(project));
+      notificationData.setNavigatable(buildIssueException.getBuildIssue().getNavigatable(project));
       return notificationData;
     }
 

@@ -175,12 +175,14 @@ private class GradleSyncFailureHandler {
         val issueFailure = failure.toIssueFailure()
         val filePosition = getErrorFilePosition(issueFailure, projectRoot)
         val issueData = GradleIssueData.createIssueData(projectRoot, issueFailure, context.buildEnvironment, filePosition)
-        val issue = GradleIssueChecker.getKnownIssuesCheckList().firstNotNullOfOrNull { it.check(issueData) } ?: continue
-        val issueEvent = when (filePosition) {
-          null -> BuildIssueEventImpl(context.taskId, issue, MessageEvent.Kind.ERROR)
-          else -> FileBuildIssueEventImpl(context.taskId, issue, MessageEvent.Kind.ERROR, filePosition)
+        val issues = GradleIssueChecker.getKnownIssuesCheckList().mapNotNull { it.check(issueData) }
+        for (issue in issues) {
+          val issueEvent = when (filePosition) {
+            null -> BuildIssueEventImpl(context.taskId, issue, MessageEvent.Kind.ERROR)
+            else -> FileBuildIssueEventImpl(context.taskId, issue, MessageEvent.Kind.ERROR, filePosition)
+          }
+          context.listener.onStatusChange(ExternalSystemBuildEvent(context.taskId, issueEvent))
         }
-        context.listener.onStatusChange(ExternalSystemBuildEvent(context.taskId, issueEvent))
       }
     }
   }
