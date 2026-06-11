@@ -40,6 +40,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteIntentReadAction;
@@ -161,8 +162,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   @Override
   protected @NotNull List<AnAction> createRightToolbarActions() {
     List<AnAction> diffActions = new ArrayList<>();
-    ContainerUtil.addIfNotNull(diffActions, ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
-    diffActions.add(new MyToggleAutoScrollAction());
+    addTwoSideSettingsActions(diffActions);
     myEditorSettingsAction.setSettingsActions(diffActions, myTextDiffProvider.getDiffSettingsActions());
 
     return List.of(myEditorSettingsAction);
@@ -176,7 +176,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     group.addAll(super.createPopupActions());
     group.add(Separator.getInstance());
     group.add(new MyToggleExpandByDefaultAction());
-    group.add(new MyToggleAutoScrollAction());
+    addTwoSideSettingsActions(group);
 
     return group;
   }
@@ -185,8 +185,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected @NotNull List<@NotNull AnAction> createAdditionalEditorGutterActions() {
     List<AnAction> actions = new ArrayList<>();
     actions.add(new MyToggleExpandByDefaultAction());
-    ContainerUtil.addIfNotNull(actions, ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
-    actions.add(new MyToggleAutoScrollAction());
+    addTwoSideSettingsActions(actions);
     return actions;
   }
 
@@ -203,13 +202,18 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   protected @NotNull List<AnAction> createEditorPopupActions() {
     List<AnAction> group = new ArrayList<>(createEditorPopupChangesActions());
     group.add(Separator.getInstance());
-    group.addAll(super.createEditorPopupActions());
+    group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_POPUP));
 
     group.add(Separator.getInstance());
     group.add(new MyToggleExpandByDefaultAction());
-    group.add(new MyToggleAutoScrollAction());
+    addTwoSideSettingsActions(group);
 
     return group;
+  }
+
+  private void addTwoSideSettingsActions(@NotNull List<AnAction> actions) {
+    ContainerUtil.addIfNotNull(actions, ActionManager.getInstance().getAction("Vcs.Diff.ToggleDiffAligningMode"));
+    actions.add(new MyToggleAutoScrollAction());
   }
 
   @Override
