@@ -151,6 +151,9 @@ abstract class McpClient(
     return candidates.isEmpty() || candidates.any { serverConfig -> isPortMatching(serverConfig, expectedPort) }
   }
 
+  fun hasAnyMcpServerNamed(names: Set<String>): Boolean =
+    readMcpServers()?.keys?.any { it in names } == true
+
   fun getConfiguredTransportTypes(): Set<TransportType> {
     val mcpServers = readMcpServers() ?: return emptySet()
     if (mcpServers.isEmpty()) return emptySet()

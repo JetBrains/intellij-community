@@ -9,7 +9,10 @@ import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
+import kotlin.io.path.writeText
 
 @TestApplication
 internal class McpServerTerminalPromotionNotifierTest {
@@ -264,6 +267,47 @@ internal class McpServerTerminalPromotionNotifierTest {
     assertThat(descriptor)
       .contains("McpServerTerminalPromotionNotifier")
       .contains("com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener")
+  }
+
+  @Test
+  fun `skips promotion when project mcp json contains ij-proxy entry`(@TempDir projectDir: Path) {
+    projectDir.resolve(".mcp.json").writeText(
+      """{"mcpServers": {"ij-proxy": {"command": "/bin/ij-proxy"}}}"""
+    )
+    assertThat(projectBaseDirHasIjProxyMcpServer(projectDir)).isTrue()
+  }
+
+  @Test
+  fun `skips promotion when project mcp json contains ijproxy entry without hyphen`(@TempDir projectDir: Path) {
+    projectDir.resolve(".mcp.json").writeText(
+      """{"mcpServers": {"ijproxy": {"command": "/bin/ij-proxy"}}}"""
+    )
+    assertThat(projectBaseDirHasIjProxyMcpServer(projectDir)).isTrue()
+  }
+
+  @Test
+  fun `skips promotion when project codex config contains ij-proxy entry`(@TempDir projectDir: Path) {
+    projectDir.resolve(".codex").createDirectories()
+    projectDir.resolve(".codex").resolve("config.toml").writeText(
+      """
+      [mcp_servers.ij-proxy]
+      command = "/bin/ij-proxy"
+      """.trimIndent()
+    )
+    assertThat(projectBaseDirHasIjProxyMcpServer(projectDir)).isTrue()
+  }
+
+  @Test
+  fun `does not skip promotion when project mcp json contains only unrelated entries`(@TempDir projectDir: Path) {
+    projectDir.resolve(".mcp.json").writeText(
+      """{"mcpServers": {"some-other-server": {"command": "/bin/other"}}}"""
+    )
+    assertThat(projectBaseDirHasIjProxyMcpServer(projectDir)).isFalse()
+  }
+
+  @Test
+  fun `does not skip promotion when project has no mcp config files`(@TempDir projectDir: Path) {
+    assertThat(projectBaseDirHasIjProxyMcpServer(projectDir)).isFalse()
   }
 
   private class FakeClient(

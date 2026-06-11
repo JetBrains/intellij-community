@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener
-import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTab
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.impl.TerminalViewImpl
 import com.intellij.ui.EditorNotificationPanel
@@ -60,10 +59,6 @@ import com.intellij.ui.EditorNotificationPanel.Status as NotificationStatus
 private val LOG = logger<McpServerTerminalPromotionNotifier>()
 
 internal class McpServerTerminalPromotionNotifier(private val project: Project) : TerminalTabsManagerListener {
-
-  override fun tabAdded(tab: TerminalToolWindowTab) {
-    super.tabAdded(tab)
-  }
   override fun terminalViewCreated(view: TerminalView) {
     if (McpServerTerminalPromotionDismissalState.isDismissed()) {
       return
@@ -305,6 +300,7 @@ internal class McpServerTerminalPromotionActiveCommandTracker<T : Any> {
 }
 
 private fun resolveTerminalPromotion(project: Project, provider: McpServerTerminalProvider): McpServerTerminalPromotion? {
+  if (shouldSkipPromotionDueToProjectIjProxy(project)) return null
   val candidates = collectTerminalPromotionCandidates(project, provider)
   val client = candidates.preferredClient() ?: return null
   val issue = determineMcpServerTerminalPromotionIssue(
