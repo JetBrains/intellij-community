@@ -794,7 +794,7 @@ public class GitImpl extends GitImplBase {
     GitLineHandler handler = new GitLineHandler(repository.getProject(), root, GitCommand.REV_PARSE);
     handler.addParameters("--verify");
     handler.addParameters(ref + "^{commit}");
-    GitCommandResult result = Git.getInstance().runCommand(handler);
+    GitCommandResult result = runCommand(handler);
     String output = result.getOutputAsJoinedString();
     if (result.success()) {
       if (GitUtil.isHashString(output, false)) {
@@ -870,7 +870,7 @@ public class GitImpl extends GitImplBase {
     handler.addParameters("remove");
     handler.addAbsoluteFile(tree.getPath().getIOFile());
     handler.addParameters("--force");
-    return Git.getInstance().runCommand(handler);
+    return runCommand(handler);
   }
 
   @Override
@@ -879,7 +879,7 @@ public class GitImpl extends GitImplBase {
     handler.addParameters("list");
     handler.addParameters("--porcelain");
 
-    GitCommandResult result = Git.getInstance().runCommand(handler);
+    GitCommandResult result = runCommand(handler);
     result.throwOnError();
     return new GitWorktreeListParser(handler.getExecutable(),
                                      repository.getRoot().toNioPath(),
@@ -902,14 +902,14 @@ public class GitImpl extends GitImplBase {
     }
     handler.addAbsoluteFile(workingTreePath.getIOFile());
     handler.addParameters(sourceRef instanceof GitBranch ? sourceRef.getName() : sourceRef.getFullName());
-    return Git.getInstance().runCommand(handler);
+    return runCommand(handler);
   }
 
   @Override
   public @NotNull GitCommandResult pruneWorktrees(@NotNull GitRepository repository) {
     GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.WORKTREE);
     handler.addParameters("prune");
-    return Git.getInstance().runCommand(handler);
+    return runCommand(handler);
   }
 
   private static void addListeners(@NotNull GitLineHandler handler, GitLineHandlerListener @NotNull ... listeners) {
