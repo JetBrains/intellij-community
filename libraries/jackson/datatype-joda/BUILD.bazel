@@ -15,11 +15,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jackson-datatype-joda-jackson-datatype-joda"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:libraries-jackson-datatype-joda-jackson-datatype-joda",
-        "//libraries/jackson/jackson",
-    ],
+    runtime_deps = ["@lib//:libraries-jackson-datatype-joda-jackson-datatype-joda"],
 )
 
 jvm_library(
@@ -33,11 +29,7 @@ jvm_library(
     module_name = "intellij.libraries.jackson.datatype.joda",
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-jackson-datatype-joda-jackson-datatype-joda"],
-    runtime_deps = [
-        # do not sort,
-        ":libraries-jackson-datatype-joda",
-        "//libraries/jackson/jackson:jackson_test_lib",
-    ],
+    runtime_deps = [":libraries-jackson-datatype-joda"],
 )
 ### auto-generated section `build intellij.libraries.jackson.datatype.joda` end
 

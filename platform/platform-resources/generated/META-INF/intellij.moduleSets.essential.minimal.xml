@@ -17,7 +17,6 @@
     <module name="intellij.libraries.jackson.dataformat.yaml" loading="embedded"/>
     <module name="intellij.libraries.jackson.dataformat.toml"/>
     <module name="intellij.libraries.jackson.datatype.jdk8"/>
-    <module name="intellij.libraries.jackson.datatype.joda"/>
     <module name="intellij.libraries.jackson.datatype.jsr310"/>
     <module name="intellij.libraries.jackson.module.kotlin" loading="embedded"/>
     <!-- endregion -->

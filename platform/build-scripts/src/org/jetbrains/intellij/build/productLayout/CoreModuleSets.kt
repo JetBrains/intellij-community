@@ -153,7 +153,6 @@ object CoreModuleSets {
     module("intellij.libraries.jackson.dataformat.toml")
 
     module("intellij.libraries.jackson.datatype.jdk8")
-    module("intellij.libraries.jackson.datatype.joda")
     module("intellij.libraries.jackson.datatype.jsr310")
 
     embeddedModule("intellij.libraries.jackson.module.kotlin")
