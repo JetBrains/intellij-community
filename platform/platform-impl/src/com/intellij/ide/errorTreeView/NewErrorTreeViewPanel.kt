@@ -213,6 +213,7 @@ open class NewErrorTreeViewPanel @JvmOverloads constructor(
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     @JvmField
     protected val LOG: Logger = logger<NewErrorTreeViewPanel>()

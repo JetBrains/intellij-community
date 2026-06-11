@@ -16,10 +16,12 @@ import com.intellij.openapi.wm.impl.content.ContentTabLabel;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Component;
 
+@ApiStatus.Internal
 public abstract class TabbedContentAction extends AnAction implements DumbAware {
   protected final ContentManager myManager;
 
@@ -40,6 +42,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     myShadow = new ShadowAction(this, template, manager.getComponent(), parentDisposable);
   }
 
+  @ApiStatus.Internal
   public abstract static class ForContent extends TabbedContentAction {
     protected final @NotNull Content myContent;
 
@@ -85,6 +88,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
   }
 
+  @ApiStatus.Internal
   public static final class CloseAllButThisAction extends ForContent {
     public CloseAllButThisAction(@NotNull Content content) {
       super(content, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS_BUT_THIS),
@@ -120,6 +124,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
   }
 
+  @ApiStatus.Internal
   public static final class CloseAllAction extends TabbedContentAction {
     public CloseAllAction(@NotNull ContentManager manager) {
       super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE_ALL_EDITORS),
@@ -149,6 +154,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
   }
 
+  @ApiStatus.Internal
   public static final class MyNextTabAction extends TabbedContentAction {
     public MyNextTabAction(ContentManager manager) {
       super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_NEXT_TAB), manager);
@@ -171,6 +177,7 @@ public abstract class TabbedContentAction extends AnAction implements DumbAware 
     }
   }
 
+  @ApiStatus.Internal
   public static final class MyPreviousTabAction extends TabbedContentAction {
     public MyPreviousTabAction(ContentManager manager) {
       super(manager, ActionManager.getInstance().getAction(IdeActions.ACTION_PREVIOUS_TAB), manager);

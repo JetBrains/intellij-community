@@ -3,7 +3,9 @@ package com.intellij.openapi.wm.impl
 
 import java.awt.event.ActionListener
 import javax.swing.event.ChangeListener
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface ToolbarSplitButtonModel {
 
   fun isActionButtonSelected(): Boolean

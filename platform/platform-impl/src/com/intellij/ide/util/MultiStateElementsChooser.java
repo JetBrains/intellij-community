@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,6 +55,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class MultiStateElementsChooser<T, S> extends JPanel implements ComponentWithEmptyText, ComponentWithExpandableItems<TableCell> {
   private final MarkStateDescriptor<T, S> myMarkStateDescriptor;
   private final JBTable myTable;
@@ -63,10 +65,12 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
   private final Map<T, ElementProperties> myElementToPropertiesMap = new HashMap<>();
   private final Map<T, Boolean> myDisabledMap = new HashMap<>();
 
+  @ApiStatus.Internal
   public interface ElementsMarkStateListener<T, S> {
     void elementMarkChanged(T element, S markState);
   }
 
+  @ApiStatus.Internal
   public interface MarkStateDescriptor<T, S> {
     @NotNull
     S getDefaultState(@NotNull T element);

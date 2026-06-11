@@ -939,10 +939,12 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     }
   }
 
+  @ApiStatus.Internal
   public @Nullable ShadowBorderProvider getShadowBorderProvider() {
     return myShadowBorderProvider;
   }
 
+  @ApiStatus.Internal
   public void setShadowBorderProvider(@NotNull ShadowBorderProvider provider) {
     myShadowBorderProvider = provider;
   }
@@ -962,6 +964,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     return myShadowBorderProvider != null || myShadow && Registry.is("ide.balloon.shadowEnabled");
   }
 
+  @ApiStatus.Internal
   public interface ShadowBorderProvider {
     @NotNull
     Insets getInsets();
@@ -2370,6 +2373,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     }
   }
 
+  @ApiStatus.Internal
   public interface HideListenerWithMouse extends Runnable {
     void run(MouseEvent event);
   }

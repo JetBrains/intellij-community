@@ -23,6 +23,7 @@ import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.UIManager
 import javax.swing.border.Border
+import org.jetbrains.annotations.ApiStatus
 
 open class DarculaOptionButtonUI : BasicOptionButtonUI() {
   protected open val clipXOffset: Int = scale(7)
@@ -135,6 +136,7 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
     optionButton.border = if (isSimpleButton) optionButtonBorder else mainButton.border
   }
 
+  @ApiStatus.Internal
   companion object {
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic

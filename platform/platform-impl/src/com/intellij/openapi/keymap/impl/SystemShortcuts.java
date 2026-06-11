@@ -29,6 +29,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.jetbrains.JBR;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,6 +71,7 @@ public final class SystemShortcuts {
     return ApplicationManager.getApplication().getService(SystemShortcuts.class);
   }
 
+  @ApiStatus.Internal
   public static final class ConflictItem {
     final @NotNull String mySysActionDesc;
     final @NotNull KeyStroke mySysKeyStroke;

@@ -4,9 +4,11 @@ package com.intellij.remote.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.remote.ext.CredentialsEditor;
 import com.intellij.remote.ext.CredentialsLanguageContribution;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public interface CredentialsEditorProvider {
 
   boolean isAvailable(CredentialsLanguageContribution languageContribution);

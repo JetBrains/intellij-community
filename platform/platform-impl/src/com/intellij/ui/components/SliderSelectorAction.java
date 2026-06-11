@@ -15,6 +15,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,7 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class SliderSelectorAction extends DumbAwareAction {
   private final @NotNull Configuration myConfiguration;
 

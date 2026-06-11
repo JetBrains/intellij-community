@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.util.Disposer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -136,6 +137,7 @@ public final class EditorScrollingPositionKeeper implements Disposable {
   /**
    * Same as {@link EditorScrollingPositionKeeper}, but tracking all editors for a given document.
    */
+  @ApiStatus.Internal
   public static final class ForDocument implements Disposable {
     private final List<EditorScrollingPositionKeeper> myKeepers;
 

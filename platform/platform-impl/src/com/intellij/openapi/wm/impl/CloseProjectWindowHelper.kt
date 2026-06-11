@@ -23,7 +23,9 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class CloseProjectWindowHelper {
+  @ApiStatus.Internal
   companion object {
     /** This key may be used to for a specific behaviour when project is closing for particular projects */
     val SHOW_WELCOME_FRAME_FOR_PROJECT: Key<Boolean> = Key.create("Show.Welcome.Frame.For.Project")

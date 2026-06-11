@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
  * and unregisters when it is hidden, thus allowing it to be used from an action toolbar in auto-popup mode.
  * Use {@link AutoPopupSupportingListener#installOn(JBPopup)} to install the listener.
  */
+@ApiStatus.Internal
 public final class AutoPopupSupportingListener implements JBPopupListener {
   private final @NotNull JBPopup myPopup;
 

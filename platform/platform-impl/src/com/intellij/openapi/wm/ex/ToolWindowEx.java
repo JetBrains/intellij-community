@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +47,10 @@ public interface ToolWindowEx extends ToolWindow {
 
   void setTabDoubleClickActions(@NotNull List<AnAction> actions);
 
+  @ApiStatus.Internal
   default @Nullable ToolWindowDecoration getDecoration() { return null; }
 
+  @ApiStatus.Internal
   final class Border extends EmptyBorder {
     public Border() {
       this(true, true, true, true);
@@ -58,6 +61,7 @@ public interface ToolWindowEx extends ToolWindow {
     }
   }
 
+  @ApiStatus.Internal
   final class ToolWindowDecoration {
     private final ActionGroup myActionGroup;
     private final Icon myIcon;

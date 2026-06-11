@@ -13,6 +13,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.SingleRootFileViewProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -23,6 +24,7 @@ import java.beans.PropertyChangeListener;
 import static com.intellij.openapi.fileEditor.impl.text.TextEditorImplKt.createAsyncEditorLoader;
 import static com.intellij.openapi.fileEditor.impl.text.TextEditorImplKt.createEditorImpl;
 
+@ApiStatus.Internal
 public final class LargeFileEditorProvider extends TextEditorProvider {
   static final Key<Boolean> IS_LARGE = Key.create("IS_LARGE");
 

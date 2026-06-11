@@ -27,11 +27,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implements DumbAware {
   private static final String OPEN_HTML_IN_EMBEDDED_BROWSER_ACTION_ID = "OpenHtmlInEmbeddedBrowser";
 
@@ -107,12 +109,14 @@ public abstract class OpenInBrowserBaseGroupAction extends ActionGroup implement
            : null;
   }
 
+  @ApiStatus.Internal
   public static final class OpenInBrowserGroupAction extends OpenInBrowserBaseGroupAction {
     public OpenInBrowserGroupAction() {
       super(true);
     }
   }
 
+  @ApiStatus.Internal
   public static class OpenInBrowserEditorContextBarGroupAction extends OpenInBrowserBaseGroupAction {
     public OpenInBrowserEditorContextBarGroupAction() {
       super(false);

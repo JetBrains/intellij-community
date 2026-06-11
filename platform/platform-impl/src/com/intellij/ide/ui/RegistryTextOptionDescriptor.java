@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.Changeable;
 import com.intellij.ui.ColorChooserService;
 import com.intellij.ui.ColorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
@@ -19,6 +20,7 @@ import java.awt.Color;
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("HardCodedStringLiteral")
+@ApiStatus.Internal
 public final class RegistryTextOptionDescriptor extends OptionDescription implements Changeable {
   private final RegistryValue myValue;
 

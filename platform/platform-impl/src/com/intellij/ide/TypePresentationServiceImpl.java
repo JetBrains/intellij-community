@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class TypePresentationServiceImpl extends TypePresentationService {
   private static final ExtensionPointName<TypeIconEP> TYPE_ICON_EP_NAME = new ExtensionPointName<>("com.intellij.typeIcon");
 
@@ -175,6 +176,7 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
     }
   }
 
+  @ApiStatus.Internal
   public static class ProviderBasedTemplate implements PresentationTemplate {
     private final PresentationProvider myProvider;
 
@@ -206,6 +208,7 @@ public final class TypePresentationServiceImpl extends TypePresentationService {
     }
   }
 
+  @ApiStatus.Internal
   public static class PresentationTemplateImpl extends ProviderBasedTemplate {
 
     public PresentationTemplateImpl(Presentation presentation, Class<?> aClass) {

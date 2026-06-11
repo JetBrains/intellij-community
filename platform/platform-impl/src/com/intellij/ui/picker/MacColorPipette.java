@@ -14,6 +14,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Pointer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ import java.awt.image.ColorConvertOp;
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 
+@ApiStatus.Internal
 public final class MacColorPipette extends ColorPipetteBase {
   private static final Logger LOG = Logger.getInstance(MacColorPipette.class);
   private static final int PIXELS = 17;

@@ -18,11 +18,13 @@ import com.intellij.ui.BalloonImpl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.util.Alarm
+import org.jetbrains.annotations.ApiStatus
 
 private const val POPUP_TIMEOUT_MS = 5000
 
 @Service(Service.Level.PROJECT)
 class ZoomIndicatorManager(project: Project) {
+  @ApiStatus.Internal
   companion object {
     @JvmField
     val SUPPRESS_ZOOM_INDICATOR: Key<Boolean> = Key.create("SUPPRESS_ZOOM_INDICATOR")

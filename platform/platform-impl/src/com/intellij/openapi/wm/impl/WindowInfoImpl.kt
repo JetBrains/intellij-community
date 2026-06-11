@@ -21,6 +21,7 @@ import com.intellij.util.xmlb.annotations.Transient
 import java.awt.Rectangle
 import kotlin.math.max
 import kotlin.math.min
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<WindowInfoImpl>()
 
@@ -28,6 +29,7 @@ private val LOG = logger<WindowInfoImpl>()
 @Tag("window_info")
 @Property(style = Property.Style.ATTRIBUTE)
 class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
+  @ApiStatus.Internal
   companion object {
     internal const val TAG: String = "window_info"
     const val DEFAULT_WEIGHT: Float = 0.33f

@@ -5,6 +5,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBValue;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.awt.Shape;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
+@ApiStatus.Internal
 public class StickyButtonUI<B extends AbstractButton> extends BasicToggleButtonUI {
   private static final JBValue FONT_SIZE = new JBValue.Float(11.0f);
   private static final JBValue BW = new JBValue.Float(1);

@@ -15,7 +15,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.event.KeyEvent
 import javax.swing.JList
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class SearchPopupControllerBase(
   private val project: Project,
   private val coroutineScope: CoroutineScope,

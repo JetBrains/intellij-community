@@ -211,6 +211,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
              } ?: JBFont.label()
     }
 
+  @Internal
   companion object {
     private var ourTestInstance: LafManagerImpl? = null
 

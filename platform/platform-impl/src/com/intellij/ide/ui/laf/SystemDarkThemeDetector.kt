@@ -19,6 +19,7 @@ import com.sun.jna.platform.win32.WinReg
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
@@ -26,7 +27,9 @@ import java.util.Locale
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 
+@ApiStatus.Internal
 sealed class SystemDarkThemeDetector {
+  @ApiStatus.Internal
   companion object {
     fun createDetector(syncFunction: Consumer<Boolean>): SystemDarkThemeDetector {
       return createParametrizedDetector { isDark, _ -> syncFunction.accept(isDark) }

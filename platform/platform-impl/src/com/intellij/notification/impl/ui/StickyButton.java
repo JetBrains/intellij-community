@@ -21,7 +21,9 @@ import javax.swing.BorderFactory;
 import javax.swing.JToggleButton;
 import javax.swing.plaf.ButtonUI;
 import java.awt.Color;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class StickyButton extends JToggleButton {
 
   public StickyButton(final @NlsContexts.Button String text) {

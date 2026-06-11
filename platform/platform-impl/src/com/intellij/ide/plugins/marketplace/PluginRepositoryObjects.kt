@@ -26,6 +26,7 @@ import java.util.Locale
  */
 @Serializable
 @JsonIgnoreProperties(ignoreUnknown = true)
+@ApiStatus.Internal
 data class IdeCompatibleUpdate(
   @param:JsonProperty("id")
   val externalUpdateId: String = "",

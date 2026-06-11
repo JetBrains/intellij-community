@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:ApiStatus.Internal
 package org.jetbrains.io
 
+import org.jetbrains.annotations.ApiStatus
 @DslMarker
+@ApiStatus.Internal
 annotation class JsonBuilderDsl
 
 inline fun StringBuilder.json(build: JsonObjectBuilder.() -> Unit): StringBuilder {
@@ -14,6 +17,7 @@ inline fun StringBuilder.json(build: JsonObjectBuilder.() -> Unit): StringBuilde
 }
 
 @JsonBuilderDsl
+@ApiStatus.Internal
 class JsonObjectBuilder(val builder: StringBuilder, var indentLevel: Int = 0, val indent: String? = "  ") {
   inline fun StringBuilder.json(build: JsonObjectBuilder.() -> Unit): StringBuilder {
     val builder = JsonObjectBuilder(this, indentLevel = indentLevel + 1)

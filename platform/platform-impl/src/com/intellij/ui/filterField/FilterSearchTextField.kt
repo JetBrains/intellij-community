@@ -6,7 +6,9 @@ import com.intellij.ui.SearchTextField
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 import java.util.function.Consumer
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class FilterSearchTextField : SearchTextField() {
   var isSkipDocumentEvents: Boolean = false
     private set

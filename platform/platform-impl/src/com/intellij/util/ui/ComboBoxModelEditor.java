@@ -7,10 +7,12 @@ import com.intellij.openapi.ui.FixedComboBoxEditor;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.MutableCollectionComboBoxModel;
 import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.DocumentEvent;
 
+@ApiStatus.Internal
 public final class ComboBoxModelEditor<T> extends ListModelEditorBase<T> {
   private final ComboBox<T> comboBox;
 

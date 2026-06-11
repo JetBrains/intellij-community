@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.XmlStringUtil;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -195,6 +196,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   }
 
   @SuppressWarnings("unused")
+  @ApiStatus.Internal
   protected SearchAction getActionUnder(@NotNull Point p) {
     return null;
   }
@@ -285,6 +287,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     return action instanceof AbstractAction ? (AbstractAction)action : null;
   }
 
+  @ApiStatus.Internal
   public enum SearchAction {
     CLEAR, NEWLINE
   }
@@ -837,6 +840,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     }
   }
 
+  @ApiStatus.Internal
   public static class MarginAwareCaret extends BasicCaret {
     @Override
     protected void adjustVisibility(Rectangle r) {

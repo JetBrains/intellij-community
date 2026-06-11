@@ -4,6 +4,7 @@ package com.intellij.ide.wizard
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Describes fork in steps' tree in the new project wizard.
@@ -16,6 +17,7 @@ import com.intellij.util.PlatformUtils
  *   New Project Wizard API: Steps Forking the Wizard Flow (IntelliJ Platform Docs)</a>
  */
 @JvmDefaultWithCompatibility
+@ApiStatus.Internal
 interface NewProjectWizardMultiStepFactory<P : NewProjectWizardStep> {
 
   /**

@@ -4,10 +4,12 @@ package com.intellij.execution.filters
 import com.intellij.openapi.util.NlsSafe
 import java.io.File
 import java.nio.charset.Charset
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * A console filter which looks for a given path in an output and creates a link for viewing a content of that file.
  */
+@ApiStatus.Internal
 class ArgumentFileFilter() : Filter {
   @Volatile @NlsSafe private var filePath: String? = null
   @Volatile @NlsSafe private var fileText: String? = null

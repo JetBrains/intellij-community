@@ -12,6 +12,7 @@ import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.geom.RoundRectangle2D
 import javax.swing.JComponent
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Alexander Lobas
@@ -28,6 +29,7 @@ class NotificationBalloonRoundShadowBorderProvider(fillColor: Color, borderColor
   bottomLeftIcon = RoundShadow.BottomLeft,
   bottomRightIcon = RoundShadow.BottomRight,
 ) {
+  @ApiStatus.Internal
   companion object {
     @JvmField
     val CORNER_RADIUS: JBValue = UIInteger("Notification.arc", 12)

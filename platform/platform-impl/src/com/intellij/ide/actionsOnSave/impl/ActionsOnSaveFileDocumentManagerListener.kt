@@ -49,6 +49,7 @@ import kotlin.coroutines.CoroutineContext
 
 private val EP_NAME = ExtensionPointName<ActionsOnSaveFileDocumentManagerListener.ActionOnSave>("com.intellij.actionOnSave")
 
+@ApiStatus.Internal
 class ActionsOnSaveFileDocumentManagerListener private constructor(private val project: Project) : FileDocumentManagerListener {
   /**
    * **Note:** If the Action on Save is going to update file contents, for example, to format a file on save,
@@ -165,6 +166,7 @@ class ActionsOnSaveFileDocumentManagerListener private constructor(private val p
 
 @Service(Service.Level.PROJECT)
 class ActionsOnSaveManager private constructor(private val project: Project, private val coroutineScope: CoroutineScope) {
+  @ApiStatus.Internal
   companion object {
     fun getInstance(project: Project) = project.service<ActionsOnSaveManager>()
   }

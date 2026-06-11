@@ -17,12 +17,14 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+@ApiStatus.Internal
 public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChangeListener {
   private Editor myMockTextEditor;
   private Navigatable myPendingNavigatable;

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.util.Set;
 
+@ApiStatus.Internal
 public abstract class ReloadablePanel<T> {
   public interface DataProvider<T> {
 

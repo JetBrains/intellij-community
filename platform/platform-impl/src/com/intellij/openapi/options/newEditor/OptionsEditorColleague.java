@@ -2,11 +2,13 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.openapi.options.Configurable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
+@ApiStatus.Internal
 public interface OptionsEditorColleague {
   @NotNull
   Promise<? super Object> onSelected(@Nullable Configurable configurable, final Configurable oldConfigurable);
@@ -20,6 +22,7 @@ public interface OptionsEditorColleague {
   @NotNull
   Promise<? super Object> onErrorsChanged();
 
+  @ApiStatus.Internal
   class Adapter implements OptionsEditorColleague {
     @Override
     public @NotNull Promise<? super Object> onSelected(final @Nullable Configurable configurable, final Configurable oldConfigurable) {

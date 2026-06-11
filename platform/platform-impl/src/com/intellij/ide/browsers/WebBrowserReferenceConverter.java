@@ -2,9 +2,11 @@
 package com.intellij.ide.browsers;
 
 import com.intellij.util.xmlb.Converter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class WebBrowserReferenceConverter extends Converter<WebBrowser> {
   @Override
   public @Nullable WebBrowser fromString(@NotNull String value) {

@@ -58,6 +58,7 @@ import java.util.concurrent.atomic.AtomicLong
  * @author Konstantin Bulenkov
  */
 @Service(Service.Level.APP)
+@Internal
 class ModifierKeyDoubleClickHandler {
   private val dispatchers: MutableMap<DispatcherKey, Dispatcher> = ConcurrentHashMap()
   private val keymapDispatcherKeys: MutableSet<DispatcherKey> = ConcurrentHashMap.newKeySet()
@@ -77,6 +78,7 @@ class ModifierKeyDoubleClickHandler {
     registerAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END_WITH_SELECTION, modifierKeyCode, KeyEvent.VK_END)
   }
 
+  @Internal
   class MyAnActionListener : AnActionListener {
     override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
       val doubleClickHandler = getInstance()

@@ -21,6 +21,7 @@ import com.intellij.util.MathUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+@ApiStatus.Internal
 public abstract class AbstractFontOptionsPanel extends JPanel implements OptionsPanel {
 
   private final EventDispatcher<ColorAndFontSettingsListener> myDispatcher = EventDispatcher.create(ColorAndFontSettingsListener.class);

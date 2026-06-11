@@ -78,6 +78,7 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
     override fun getComponent() = panel.component
   }
 
+  @ApiStatus.Internal
   companion object {
 
     @get:ApiStatus.Internal

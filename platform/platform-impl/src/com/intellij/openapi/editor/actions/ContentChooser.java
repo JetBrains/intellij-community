@@ -39,6 +39,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -404,6 +405,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     }
   }
 
+  @ApiStatus.Internal
   public static class Item {
     final int index;
     protected final String longText;

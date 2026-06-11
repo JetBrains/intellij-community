@@ -2,6 +2,8 @@
 
 package com.intellij.openapi.editor.actions;
 
+import org.jetbrains.annotations.ApiStatus;
+@ApiStatus.Internal
 public final class PreviousWordWithSelectionAction extends TextComponentEditorAction {
   public PreviousWordWithSelectionAction() {
     super(new NextPrevWordHandler(false, true, false));

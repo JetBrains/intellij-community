@@ -12,7 +12,9 @@ import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.UIManager
 import kotlin.properties.Delegates
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class ToolbarSplitButton(val model: ToolbarSplitButtonModel) : AbstractToolbarCombo(), Accessible {
 
   var separatorMargin: Insets by Delegates.observable(JBInsets.emptyInsets(), this::fireUpdateEvents)

@@ -61,6 +61,7 @@ import com.intellij.util.applyIf
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.name
+import org.jetbrains.annotations.ApiStatus
 
 private class NewProjectWizardBaseDataImpl(propertyGraph: PropertyGraph, val context: WizardContext) :
   NewProjectWizardBaseData {
@@ -210,6 +211,7 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
     data.putUserData(KEY, wizardBaseData)
   }
 
+  @ApiStatus.Internal
   companion object {
 
     /**

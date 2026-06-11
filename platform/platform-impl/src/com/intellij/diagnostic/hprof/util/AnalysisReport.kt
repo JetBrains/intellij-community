@@ -15,4 +15,6 @@
  */
 package com.intellij.diagnostic.hprof.util
 
+import org.jetbrains.annotations.ApiStatus
+@ApiStatus.Internal
 class AnalysisReport(val mainReport: StringBuilder = StringBuilder(), val metaInfo: StringBuilder = StringBuilder())

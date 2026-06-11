@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DeprecatedCallableAddReplaceWith")
 
+@file:ApiStatus.Internal
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.ExpirableExecutor
@@ -9,6 +10,7 @@ import com.intellij.openapi.application.constraints.Expiration
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.util.concurrent.Executor
 import java.util.function.BooleanSupplier

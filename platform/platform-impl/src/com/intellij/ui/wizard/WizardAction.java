@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsActions;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import java.awt.event.ActionEvent;
+import org.jetbrains.annotations.ApiStatus;
 
 public abstract class WizardAction extends AbstractAction {
 
@@ -25,6 +26,7 @@ public abstract class WizardAction extends AbstractAction {
     putValue(Action.NAME, name);
   }
 
+  @ApiStatus.Internal
   public static final class Next extends WizardAction {
 
     public Next(WizardModel model) {
@@ -37,6 +39,7 @@ public abstract class WizardAction extends AbstractAction {
     }
   }
 
+  @ApiStatus.Internal
   public static final class Previous extends WizardAction {
 
     public Previous(WizardModel model) {
@@ -49,6 +52,7 @@ public abstract class WizardAction extends AbstractAction {
     }
   }
 
+  @ApiStatus.Internal
   public static final class Finish extends WizardAction {
 
     public Finish(WizardModel model) {
@@ -61,6 +65,7 @@ public abstract class WizardAction extends AbstractAction {
     }
   }
 
+  @ApiStatus.Internal
   public static final class Cancel extends WizardAction {
 
     public Cancel(WizardModel model) {

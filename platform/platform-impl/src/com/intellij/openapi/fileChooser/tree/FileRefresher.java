@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
 import com.intellij.util.NotNullProducer;
 import com.intellij.util.concurrency.EdtExecutorService;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,6 +23,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 /**
  * This class is intended to refresh virtual files periodically.
  */
+@ApiStatus.Internal
 public final class FileRefresher implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileRefresher.class);
   private final ScheduledExecutorService executor = EdtExecutorService.getScheduledExecutorInstance();

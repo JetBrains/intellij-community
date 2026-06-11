@@ -6,6 +6,7 @@ import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBTabbedPane;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ import java.awt.geom.RoundRectangle2D;
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class GlassPanel extends JComponent {
   private final Set<JComponent> myLightComponents = new HashSet<>();
   private final JComponent myPanel;

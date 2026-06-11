@@ -13,6 +13,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,6 +31,7 @@ import java.util.concurrent.TimeUnit;
  * {@link com.intellij.platform.ide.progress.TasksKt#withModalProgress}.
  * </p>
  */
+@ApiStatus.Internal
 public final class SmoothProgressAdapter extends AbstractProgressIndicatorExBase implements ProgressIndicatorEx, WrappedProgressIndicator,
                                                                                             StandardProgressIndicator {
   private static final int SHOW_DELAY = 500;

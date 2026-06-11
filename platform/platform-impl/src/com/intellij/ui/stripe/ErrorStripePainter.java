@@ -4,6 +4,7 @@ package com.intellij.ui.stripe;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.RegionPainter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.util.Iterator;
 import java.util.TreeSet;
 
 public class ErrorStripePainter extends RegionPainter.Image {
+  @ApiStatus.Internal
   public enum Alignment {TOP, CENTER, BOTTOM}
 
   private final boolean mySingleValue;

@@ -59,8 +59,10 @@ class ColorButton(var color: Color = Color.WHITE): JButton() {
   private val FOCUS_BORDER_WIDTH = JBUI.scale(3)
   private val ROUND_CORNER_ARC = JBUI.scale(5)
 
+  @ApiStatus.Internal
   enum class Status { NORMAL, HOVER, PRESSED }
 
+  @ApiStatus.Internal
   var status: Status = Status.NORMAL
 
   init {

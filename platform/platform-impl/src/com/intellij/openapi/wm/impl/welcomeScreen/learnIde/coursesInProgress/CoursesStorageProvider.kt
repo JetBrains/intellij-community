@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
 /**
  *  Extension point to provide custom [CourseDataStorage] to show in-progress course
@@ -12,6 +13,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 interface CoursesStorageProvider {
   fun getCoursesStorage(): CourseDataStorage
 
+  @ApiStatus.Internal
   companion object {
     val COURSE_STORAGE_PROVIDER_EP = ExtensionPointName<CoursesStorageProvider>("com.intellij.coursesStorageProvider")
 

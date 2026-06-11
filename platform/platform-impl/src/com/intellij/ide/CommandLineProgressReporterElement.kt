@@ -3,11 +3,13 @@ package com.intellij.ide
 
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * A temporary shim for logging from [com.intellij.ide.CommandLineInspectionProjectConfigurator] to [com.intellij.ide.warmup.WarmupConfigurator]
  * The logging framework for warmup is likely to be reworked later
  */
 class CommandLineProgressReporterElement(val reporter: CommandLineInspectionProgressReporter) : AbstractCoroutineContextElement(CommandLineProgressReporterElement) {
+  @ApiStatus.Internal
   companion object Key : CoroutineContext.Key<CommandLineProgressReporterElement>
 }

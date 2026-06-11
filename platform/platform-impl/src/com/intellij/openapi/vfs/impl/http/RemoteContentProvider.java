@@ -4,11 +4,13 @@ package com.intellij.openapi.vfs.impl.http;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Url;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public abstract class RemoteContentProvider {
   public abstract boolean canProvideContent(@NotNull Url url);
 

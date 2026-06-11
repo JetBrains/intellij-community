@@ -1366,7 +1366,6 @@ f:com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 e:com.intellij.codeInsight.intention.impl.IntentionGroup
 - java.lang.Enum
 f:com.intellij.codeInsight.intention.impl.IntentionHintComponent
-- com.intellij.codeInsight.hint.ScrollAwareHint
 - com.intellij.openapi.Disposable
 c:com.intellij.codeInsight.intention.impl.IntentionListStep
 - com.intellij.openapi.ui.popup.ListPopupStep
@@ -4051,7 +4050,6 @@ f:com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory
 - com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 - <init>():V
 f:com.intellij.openapi.fileTypes.impl.FileTypeConfigurable
-- com.intellij.openapi.fileTypes.impl.FileTypeSelectable
 - com.intellij.openapi.options.Configurable$NoScroll
 - com.intellij.openapi.options.SearchableConfigurable
 f:com.intellij.openapi.module.EmptyModuleType
@@ -5489,11 +5487,10 @@ c:com.intellij.ui.popup.util.DetailViewImpl
 - clearEditor():V
 - navigateInPreviewEditor(com.intellij.ui.popup.util.DetailView$PreviewEditorState):V
 a:com.intellij.ui.tabs.ColorButtonBase
-- com.intellij.notification.impl.ui.StickyButton
+- javax.swing.JToggleButton
 - setColor(java.awt.Color):V
 pc:com.intellij.ui.tabs.ColorButtonBase$ColorButtonUI
-- com.intellij.notification.impl.ui.StickyButtonUI
-- p:<init>():V
+- javax.swing.plaf.basic.BasicToggleButtonUI
 f:com.intellij.unscramble.AnalyzeStacktraceUtil
 com.intellij.unscramble.AnalyzeStacktraceUtil$ConsoleFactory
 - a:createConsoleComponent(com.intellij.execution.ui.ConsoleView,com.intellij.openapi.actionSystem.DefaultActionGroup):javax.swing.JComponent

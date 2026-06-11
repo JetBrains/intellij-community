@@ -1,4 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.icons.AllIcons
@@ -21,6 +22,7 @@ import javax.swing.SwingConstants
 import javax.swing.border.EmptyBorder
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Draws ui for failed state of editor.
@@ -51,6 +53,7 @@ fun failedEditorPane(@DialogMessage message: String,
   return builder.draw(wrapMode)
 }
 
+@ApiStatus.Internal
 enum class MultilineWrapMode {
   /**
    * Disable multiline support (use it for small texts)
@@ -68,6 +71,7 @@ enum class MultilineWrapMode {
   Auto
 }
 
+@ApiStatus.Internal
 class FailedEditorBuilder internal constructor(@DialogMessage val message: String, val icon: Icon?) {
   private val myButtons = mutableListOf<Pair<String, () -> Unit>>()
 

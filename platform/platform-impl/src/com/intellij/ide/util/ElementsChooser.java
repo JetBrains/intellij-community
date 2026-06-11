@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,6 +78,7 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
     setElementMarkState(element, getMarkState(marked));
   }
 
+  @ApiStatus.Internal
   public void addElement(T element, final boolean isMarked, ElementProperties elementProperties) {
     addElement(element, getMarkState(isMarked), elementProperties);
   }

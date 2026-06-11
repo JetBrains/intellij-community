@@ -4,6 +4,7 @@ package com.intellij.ide.ui;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
@@ -16,6 +17,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 
+@ApiStatus.Internal
 public abstract class RoundedActionButton extends JButton {
 
   private int myHGap = JBUIScale.scale(4);

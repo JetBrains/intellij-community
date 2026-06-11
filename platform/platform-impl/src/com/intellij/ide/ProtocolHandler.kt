@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
+import org.jetbrains.annotations.ApiStatus
 interface ProtocolHandler {
+  @ApiStatus.Internal
   companion object {
     /**
      * This exit code tells the platform that it shouldn't display the welcome screen,

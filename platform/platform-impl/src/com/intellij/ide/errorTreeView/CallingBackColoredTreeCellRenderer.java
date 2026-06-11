@@ -3,10 +3,12 @@ package com.intellij.ide.errorTreeView;
 
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JTree;
 
+@ApiStatus.Internal
 public final class CallingBackColoredTreeCellRenderer extends ColoredTreeCellRenderer {
   private CustomizeColoredTreeCellRenderer myCurrentCallback;
 

@@ -27,6 +27,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.Function
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Dimension
@@ -260,6 +261,7 @@ class CustomizeActionGroupPanel(
     }
   }
 
+  @ApiStatus.Internal
   enum class Direction(val sign: Int, val shortcut: ShortcutSet, val test: (index: IntArray, size: Int) -> Boolean) {
     UP(-1, CommonShortcuts.MOVE_UP, { index, _ -> index.isNotEmpty() && index.first() >= 1 }),
     DOWN(1, CommonShortcuts.MOVE_DOWN, { index, size -> index.isNotEmpty() && index.last() < size - 1 });

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.Collections
 import java.util.EventListener
@@ -91,6 +92,7 @@ class ToolboxSettingsActionRegistryActionProvider : SettingsEntryPointAction.Act
   override fun getUpdateActions(context: DataContext) = service<ToolboxSettingsActionRegistry>().getActions()
 }
 
+@ApiStatus.Internal
 class ToolboxUpdateAction(
   val actionId: String,
   val lifetime: Disposable,
@@ -137,6 +139,7 @@ class ToolboxUpdateAction(
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }
 
+@ApiStatus.Internal
 interface UpdateActionsListener: EventListener {
   companion object {
     val TOPIC = Topic(UpdateActionsListener::class.java)

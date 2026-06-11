@@ -18,6 +18,7 @@ import java.awt.event.ComponentEvent;
 import java.util.List;
 
 public abstract class WindowManagerEx extends WindowManager {
+  @ApiStatus.Internal
   public enum WindowShadowMode { NORMAL, SMALL, DISABLED }
 
   public static WindowManagerEx getInstanceEx(){
@@ -59,6 +60,7 @@ public abstract class WindowManagerEx extends WindowManager {
 
   public abstract void setWindowMask(Window window, Shape mask);
 
+  @ApiStatus.Internal
   public abstract void setWindowShadow(Window window, WindowShadowMode mode);
 
   public abstract void resetWindow(final Window window);

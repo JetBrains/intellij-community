@@ -2,7 +2,9 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class CloneCaretAbove extends EditorAction {
   public CloneCaretAbove() {
     super(new CloneCaretActionHandler(true));

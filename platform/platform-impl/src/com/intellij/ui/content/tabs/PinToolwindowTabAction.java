@@ -5,11 +5,13 @@ import com.intellij.ide.actions.PinActiveTabAction;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Toggleable;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated use {@link PinActiveTabAction}
  */
 @Deprecated
+@ApiStatus.Internal
 public class PinToolwindowTabAction extends PinActiveTabAction.TW implements Toggleable {
   public static final String ACTION_NAME = "PinToolwindowTab";
 

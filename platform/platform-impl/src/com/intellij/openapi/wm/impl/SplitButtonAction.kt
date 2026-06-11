@@ -12,7 +12,9 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.event.ActionEvent
 import javax.swing.JComponent
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class SplitButtonAction : AnAction(), CustomComponentAction {
 
   @Suppress("DuplicatedCode") // SplitButtonAction

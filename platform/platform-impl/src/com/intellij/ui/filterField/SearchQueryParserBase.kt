@@ -2,7 +2,9 @@ package com.intellij.ui.filterField
 
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.Strings
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class SearchQueryParserBase {
   private var words: Set<String> = emptySet()
 
@@ -100,12 +102,14 @@ abstract class SearchQueryParserBase {
     TEXT, EMPTY_SPACE, ESCAPED_VALUE, ATTRIBUTE_NAME
   }
 
+  @ApiStatus.Internal
   class QueryCompletionPosition(
     val attributeName: String,
     val attributeValue: String?,
     val startPosition: Int
   )
 
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun wrapAttribute(value: String): String {

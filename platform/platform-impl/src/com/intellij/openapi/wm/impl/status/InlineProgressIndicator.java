@@ -46,6 +46,7 @@ import java.util.List;
  * not with obsolete {@link com.intellij.openapi.progress.ProgressIndicator ProgressIndicator}
  */
 @ApiStatus.Obsolete
+@ApiStatus.Internal
 public class InlineProgressIndicator extends ProgressIndicatorBase implements Disposable {
   protected final TextPanel text;
   protected final TextPanel text2;

@@ -27,6 +27,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
   private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
+  @ApiStatus.Internal
   public enum Status {
     UNKNOWN, INSTALLED, DOWNLOADED, DELETED
   }
@@ -285,10 +286,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.sinceBuild = sinceBuild;
   }
 
+  @ApiStatus.Internal
   public Status getStatus() {
     return myStatus;
   }
 
+  @ApiStatus.Internal
   public void setStatus(Status status) {
     myStatus = status;
   }

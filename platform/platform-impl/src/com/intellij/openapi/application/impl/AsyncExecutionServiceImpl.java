@@ -16,6 +16,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 
+@ApiStatus.Internal
 public final class AsyncExecutionServiceImpl extends AsyncExecutionService {
   private static final AtomicLong ourWriteActionCounter = new AtomicLong();
 

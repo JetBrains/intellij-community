@@ -36,6 +36,7 @@ import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,6 +76,7 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 
+@ApiStatus.Internal
 public abstract class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> extends JPanel implements RemoteSdkEditorForm, Disposable {
   private final JPanel myMainPanel;
   private final JBLabel myInterpreterPathLabel;

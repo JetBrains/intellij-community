@@ -9,11 +9,13 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.util.ui.JdkConstants
 import java.awt.event.InputEvent
 import javax.swing.KeyStroke
+import org.jetbrains.annotations.ApiStatus
 
 class MacOSDefaultKeymap(dataHolder: SchemeDataHolder<KeymapImpl>,
                          defaultKeymapManager: DefaultKeymap,
                          plugin: PluginDescriptor)
   : DefaultKeymapImpl(dataHolder, defaultKeymapManager, plugin) {
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun convertShortcutFromParent(shortcut: Shortcut): Shortcut {

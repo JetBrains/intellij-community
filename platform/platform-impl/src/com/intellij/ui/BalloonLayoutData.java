@@ -20,6 +20,7 @@ public final class BalloonLayoutData {
   public String groupId;
   public String id;
   public @Nullable String displayId;
+  @ApiStatus.Internal
   public MergeInfo mergeData;
 
   public boolean showFullContent;
@@ -53,6 +54,7 @@ public final class BalloonLayoutData {
 
   public boolean isExpandable;
 
+  @ApiStatus.Internal
   public Type collapseType = Type.Timeline;
 
   public static @NotNull BalloonLayoutData createEmpty() {
@@ -68,6 +70,7 @@ public final class BalloonLayoutData {
     return new Ref<>(layoutData);
   }
 
+  @ApiStatus.Internal
   public @NotNull MergeInfo merge() {
     return new MergeInfo(mergeData, new ID(id, displayId));
   }
@@ -82,6 +85,7 @@ public final class BalloonLayoutData {
     return ids;
   }
 
+  @ApiStatus.Internal
   public static final class ID {
     final @NotNull String notificationId;
     final @Nullable String notificationDisplayId;
@@ -92,6 +96,7 @@ public final class BalloonLayoutData {
     }
   }
 
+  @ApiStatus.Internal
   public static final class MergeInfo {
     public List<ID> linkIds;
     public int count;
@@ -109,6 +114,7 @@ public final class BalloonLayoutData {
     }
   }
 
+  @ApiStatus.Internal
   public enum Type {
     Timeline, Suggestion, ImportantSuggestion
   }

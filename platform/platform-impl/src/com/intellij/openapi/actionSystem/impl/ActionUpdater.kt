@@ -938,6 +938,7 @@ private class AwaitSharedData(val job: Job, message: String) : RuntimeException(
   override fun fillInStackTrace(): Throwable = this
 }
 
+@ApiStatus.Internal
 class SkipOperation(operation: String) : RuntimeException(operation) {
   override fun fillInStackTrace(): Throwable = this
 }

@@ -5,6 +5,7 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -60,6 +61,7 @@ interface LanguageGeneratorNewProjectWizard {
    */
   fun createStep(parent: NewProjectWizardStep): NewProjectWizardStep
 
+  @ApiStatus.Internal
   companion object {
 
     @JvmField

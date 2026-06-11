@@ -125,6 +125,7 @@ import java.util.concurrent.CancellationException;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public class SettingsTreeView extends JComponent implements Accessible, Disposable, OptionsEditorColleague {
   private static final Logger LOG = Logger.getInstance(SettingsTreeView.class);
   private static final int ICON_GAP = 5;
@@ -1049,6 +1050,7 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
     return accessibleContext;
   }
 
+  @ApiStatus.Internal
   protected final class AccessibleSettingsTreeView extends AccessibleJComponent {
     @Override
     public AccessibleRole getAccessibleRole() {

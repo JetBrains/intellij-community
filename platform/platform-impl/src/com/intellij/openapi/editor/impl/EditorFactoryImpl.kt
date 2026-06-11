@@ -89,6 +89,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     }, ApplicationManager.getApplication())
   }
 
+  @ApiStatus.Internal
   companion object {
     fun throwNotReleasedError(editor: Editor) {
       if (editor is EditorImpl) {

@@ -559,6 +559,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     return myIdeEncodingManager.getCachedCharsetFromContent(document);
   }
 
+  @ApiStatus.Internal
   public enum BOMForNewUTF8Files {
     ALWAYS("create.new.UT8.file.option.always"),
     NEVER("create.new.UT8.file.option.never"),
@@ -592,6 +593,7 @@ public final class EncodingProjectManagerImpl extends EncodingProjectManager imp
     }
   }
 
+  @ApiStatus.Internal
   public void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {
     myBomForNewUtf8Files = option;
   }

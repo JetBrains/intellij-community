@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
 
+@ApiStatus.Internal
 public final class WhatsNewAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {

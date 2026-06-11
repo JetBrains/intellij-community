@@ -37,6 +37,7 @@ private val LOG = logger<FileDropManager>()
 private val EP_NAME: ExtensionPointName<FileDropHandler> = ExtensionPointName("com.intellij.fileDropHandler")
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 class FileDropManager(
   private val project: Project,
   private val coroutineScope: CoroutineScope,

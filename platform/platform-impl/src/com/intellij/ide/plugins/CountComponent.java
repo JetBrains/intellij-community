@@ -8,6 +8,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JLabel;
@@ -18,6 +19,7 @@ import java.awt.Graphics;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public class CountComponent extends JLabel {
   public CountComponent() {
     setBorder(null);

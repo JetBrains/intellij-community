@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.impl.softwrap;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Graphics;
@@ -31,6 +32,7 @@ import java.awt.Graphics;
  * <p/>
  * Implementations of this interface are not obliged to be thread-safe.
  */
+@ApiStatus.Internal
 public interface SoftWrapPainter {
 
   /**

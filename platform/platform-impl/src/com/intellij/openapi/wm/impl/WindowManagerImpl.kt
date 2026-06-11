@@ -187,6 +187,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
   }
 
+  @Internal
   override fun setWindowShadow(window: Window, mode: WindowShadowMode) {
     if (window is JWindow) {
       val root = window.rootPane

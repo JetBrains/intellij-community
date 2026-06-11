@@ -5,11 +5,13 @@ package com.intellij.openapi.progress.util;
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
+@ApiStatus.Internal
 public abstract class AtomicCancelableLazyValue<T> {
   private static final int TIMEOUT = 50;
 

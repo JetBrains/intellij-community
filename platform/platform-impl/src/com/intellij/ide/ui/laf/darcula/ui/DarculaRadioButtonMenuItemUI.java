@@ -14,10 +14,12 @@ import java.awt.GradientPaint;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class DarculaRadioButtonMenuItemUI extends DarculaMenuItemUIBase {
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {

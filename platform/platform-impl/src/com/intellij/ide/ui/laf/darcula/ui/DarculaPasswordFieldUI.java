@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -31,6 +32,7 @@ import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.isCompact;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
   private FocusListener focusListener;
 

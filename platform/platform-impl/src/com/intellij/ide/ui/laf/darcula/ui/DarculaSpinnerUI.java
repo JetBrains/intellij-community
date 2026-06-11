@@ -32,6 +32,7 @@ import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 
+import org.jetbrains.annotations.ApiStatus;
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW;
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.COMPONENT_ARC;
 import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.LW;
@@ -343,6 +344,7 @@ public class DarculaSpinnerUI extends BasicSpinnerUI {
     return b;
   }
 
+  @ApiStatus.Internal
   protected static class LayoutManagerDelegate implements LayoutManager {
     protected final LayoutManager myDelegate;
 

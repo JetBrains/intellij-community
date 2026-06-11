@@ -38,6 +38,7 @@ import com.intellij.ui.EditorCustomization;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class SimpleEditorPreview implements PreviewPanel {
   private final ColorSettingsPage myPage;
 

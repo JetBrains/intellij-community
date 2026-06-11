@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JScrollBar;
@@ -22,6 +23,7 @@ import java.awt.event.MouseEvent;
 /**
  * @author msk
  */
+@ApiStatus.Internal
 public final class PasteFromX11Action extends EditorAction {
   public PasteFromX11Action() {
     super(new Handler());
@@ -49,6 +51,7 @@ public final class PasteFromX11Action extends EditorAction {
     }
   }
 
+  @ApiStatus.Internal
   public static final class Handler extends BasePasteHandler {
     @Override
     protected Transferable getContentsToPaste(Editor editor, DataContext dataContext) {

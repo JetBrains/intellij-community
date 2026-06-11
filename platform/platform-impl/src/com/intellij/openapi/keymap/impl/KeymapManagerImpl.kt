@@ -47,6 +47,7 @@ class KeymapManagerImpl : KeymapManagerEx(), PersistentStateComponent<Element> {
   private val listeners = ContainerUtil.createLockFreeCopyOnWriteList<KeymapManagerListener>()
   private val schemeManager: SchemeManager<Keymap>
 
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     var isKeymapManagerInitialized: Boolean = false

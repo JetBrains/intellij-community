@@ -19,8 +19,6 @@ com/intellij/openapi/wm/WelcomeScreenLeftPanel
 com/intellij/openapi/wm/impl/DesktopLayout
 com/intellij/openapi/wm/impl/IdeFrameImpl
 com/intellij/openapi/wm/impl/ToolWindowImpl
-com/intellij/openapi/wm/impl/status/InlineProgressIndicator$ProgressButton
-com/intellij/openapi/wm/impl/welcomeScreen/WelcomeScreenComponentFactory$JActionLinkPanel
 com/intellij/toolWindow/ToolWindowToolbar
 com/intellij/ui/BalloonImpl$AbstractPosition
 com/intellij/ui/components/fields/ExpandableSupport$Content
@@ -28,4 +26,3 @@ com/intellij/ui/popup/PopupComponentFactory$PopupType
 com/intellij/ui/popup/list/PopupInlineActionsSupport
 com/intellij/ui/wizard/WizardCallback
 com/intellij/util/SVGLoader$SvgElementColorPatcherProvider
-com/intellij/xml/breadcrumbs/BreadcrumbsComponent$Crumb

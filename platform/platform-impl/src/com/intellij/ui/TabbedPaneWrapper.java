@@ -15,6 +15,7 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -552,6 +553,7 @@ public class TabbedPaneWrapper {
     }
   }
 
+  @ApiStatus.Internal
   public static class AsJTabbedPane extends TabbedPaneWrapper {
     public AsJTabbedPane(int tabPlacement) {
       super(false);

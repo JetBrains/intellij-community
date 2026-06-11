@@ -65,6 +65,7 @@ import javax.swing.SwingUtilities
 import javax.swing.SwingUtilities.replaceUIActionMap
 import javax.swing.SwingUtilities.replaceUIInputMap
 import javax.swing.event.ChangeListener
+import org.jetbrains.annotations.ApiStatus
 
 open class BasicOptionButtonUI : OptionButtonUI() {
   private var _optionButton: JBOptionButton? = null
@@ -363,6 +364,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     arrowButton.isVisible = !isSimpleButton
   }
 
+  @ApiStatus.Internal
   open inner class BaseButton : JButton() {
     override fun hasFocus(): Boolean = optionButton.hasFocus()
     override fun isDefaultButton(): Boolean = DarculaButtonUI.isDefaultButton(optionButton)
@@ -379,6 +381,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
 
   open inner class ArrowButton : BaseButton()
 
+  @ApiStatus.Internal
   open inner class OptionButtonLayout : AbstractLayoutManager() {
     override fun layoutContainer(parent: Container) {
       val mainButtonWidth = optionButton.width - if (arrowButton.isVisible) arrowButton.preferredSize.width else 0
@@ -391,6 +394,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     override fun minimumLayoutSize(parent: Container): Dimension = parent.minimumSize
   }
 
+  @ApiStatus.Internal
   inner class OptionButtonPopup(step: ActionPopupStep,
                                 dataContext: DataContext,
                                 private val ensureSelection: Boolean)
@@ -429,6 +433,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     }
   }
 
+  @ApiStatus.Internal
   open inner class OptionButtonPopupStep(actions: List<PopupFactoryImpl.ActionItem>,
                                          place: String, private val defaultSelection: Condition<in AnAction>?,
                                          dataContext: DataContext, presentationFactory: PresentationFactory)
@@ -440,6 +445,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     override fun isSpeedSearchEnabled(): Boolean = false
   }
 
+  @ApiStatus.Internal
   open inner class ActionDelegate(val action: Action) : DumbAwareAction() {
     init {
       isEnabledInModalContext = true
@@ -459,6 +465,7 @@ open class BasicOptionButtonUI : OptionButtonUI() {
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic

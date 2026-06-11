@@ -12506,6 +12506,7 @@ a:com.intellij.ui.tabs.ColorButtonBase
 - getForeground():java.awt.Color
 - setUI(javax.swing.plaf.ButtonUI):V
 pc:com.intellij.ui.tabs.ColorButtonBase$ColorButtonUI
+- p:<init>():V
 - p:getArcSize():I
 - p:getBackgroundColor(com.intellij.ui.tabs.ColorButtonBase):java.awt.Color
 - p:getFocusColor(com.intellij.ui.tabs.ColorButtonBase):java.awt.Color

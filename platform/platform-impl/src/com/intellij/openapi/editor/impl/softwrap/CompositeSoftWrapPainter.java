@@ -27,6 +27,7 @@ import static java.util.Arrays.asList;
  * <p/>
  * Not thread-safe.
  */
+@ApiStatus.Internal
 public final class CompositeSoftWrapPainter implements SoftWrapPainter {
 
   /**

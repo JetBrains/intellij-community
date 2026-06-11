@@ -3,11 +3,13 @@ package com.intellij.ui;
 
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.ComboBoxModel;
 
+@ApiStatus.Internal
 public abstract class AbstractFontCombo<E> extends ComboBox<E> {
 
   protected AbstractFontCombo(@NotNull ComboBoxModel<E> model) {

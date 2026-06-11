@@ -4,7 +4,9 @@ package com.intellij.openapi.progress
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.platform.ide.progress.TaskCancellation
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface ProgressModel {
   val title: String
 

@@ -40,6 +40,7 @@ import javax.swing.event.DocumentEvent
 import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.milliseconds
 
+@ApiStatus.Internal
 abstract class SettingsFilter @ApiStatus.Internal protected constructor(
   project: Project?,
   groups: List<ConfigurableGroup>,

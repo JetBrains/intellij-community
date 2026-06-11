@@ -20,6 +20,7 @@ import java.io.IOException
  * @author Konstantin Bulenkov
  */
 class UIThemeProvider {
+  @Internal
   companion object {
     @JvmField
     val EP_NAME: ExtensionPointName<UIThemeProvider> = ExtensionPointName("com.intellij.themeProvider")

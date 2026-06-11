@@ -7,10 +7,13 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CompletableFuture
 
+@ApiStatus.Internal
 abstract class PlaybackCommandCoroutineAdapter(protected val text: @NonNls String, protected val line: Int) : PlaybackCommand {
+  @ApiStatus.Internal
   companion object {
     const val CMD_PREFIX: @NonNls String = "%"
   }

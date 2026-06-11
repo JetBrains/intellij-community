@@ -24,6 +24,7 @@ import javax.swing.Popup
 import javax.swing.PopupFactory
 import javax.swing.RootPaneContainer
 import javax.swing.SwingUtilities
+import org.jetbrains.annotations.ApiStatus
 
 open class LocalPopupComponentFactory: PopupComponentFactory {
   override fun createPopupComponent(type: PopupComponentFactory.PopupType,
@@ -48,6 +49,7 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
     return AwtPopupWrapper(popup, jbPopup)
   }
 
+  @ApiStatus.Internal
   class DialogPopupWrapper(owner: Component, content: Component, x: Int, y: Int, jbPopup: JBPopup) : PopupComponent {
     private val myDialog: JDialog
     private var myRequestFocus = true
@@ -103,6 +105,7 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
     }
   }
 
+  @ApiStatus.Internal
   class AwtPopupWrapper(
     private val popup: Popup,
     private val myJBPopup: JBPopup
@@ -144,6 +147,7 @@ open class LocalPopupComponentFactory: PopupComponentFactory {
 
     override fun setRequestFocus(requestFocus: Boolean) {}
 
+    @ApiStatus.Internal
     companion object {
       internal fun fixFlickering(window: Window, opaque: Boolean) {
         try {

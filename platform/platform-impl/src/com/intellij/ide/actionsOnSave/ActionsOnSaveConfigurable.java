@@ -20,6 +20,7 @@ import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 public final class ActionsOnSaveConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  @ApiStatus.Internal
   public static final class ActionsOnSaveConfigurableProvider extends ConfigurableProvider {
     private final @NotNull Project myProject;
 

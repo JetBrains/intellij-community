@@ -2766,6 +2766,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
            + (myView == null ? "" : "\nview: " + myView.dumpState());
   }
 
+  @ApiStatus.Internal
   public CaretRectangle @Nullable [] getCaretLocations(boolean onlyIfShown) {
     return myCaretCursor.getCaretLocations(onlyIfShown);
   }
@@ -3618,6 +3619,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPropertyChangeSupport.firePropertyChange(PROP_ONE_LINE_MODE, oldValue, event.getNewValue());
   }
 
+  @ApiStatus.Internal
   public static final class CaretRectangle {
     public final @NotNull Point2D myPoint;
     public final float myWidth;

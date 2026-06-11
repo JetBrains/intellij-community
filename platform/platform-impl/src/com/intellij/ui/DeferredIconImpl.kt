@@ -48,6 +48,7 @@ import kotlin.coroutines.resume
 private val repaintScheduler = DeferredIconRepaintScheduler()
 
 class DeferredIconImpl<T> : JBScalableIcon, DeferredIcon, RetrievableIcon, IconWithToolTip, CopyableIcon {
+  @ApiStatus.Internal
   companion object {
     internal val EMPTY_ICON: Icon by lazy { EmptyIcon.create(16).withIconPreScaled(false) }
 

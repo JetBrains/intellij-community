@@ -20,10 +20,12 @@ import java.awt.Container
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.event.MouseEvent
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittable {
   private val mySplitter = object : OnePixelDivider(false, this) {
     override fun noDeepestComponent(e: MouseEvent, deepestComponentAt: Component?): Boolean {
@@ -199,6 +201,7 @@ class ResizeStripeManager(private val myComponent: ToolWindowToolbar) : Splittab
     myDelta = 0
   }
 
+  @ApiStatus.Internal
   companion object {
     fun enabled(): Boolean {
       return true

@@ -344,7 +344,9 @@ private class ButtonsStateService: PersistentStateComponent<Element> {
 private val buttonState get() = ApplicationManager.getApplication().service<ButtonsStateService>()
 
 
+@ApiStatus.Internal
 class EnableStripeGroup : ToggleAction(), DumbAware {
+  @ApiStatus.Internal
   companion object {
     private val customizedGroup get() = getGroupPath(GROUP_MAIN_TOOLBAR_NEW_UI, GROUP_MAIN_TOOLBAR_CENTER)
 

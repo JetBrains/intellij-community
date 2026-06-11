@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,6 +44,7 @@ public class GeneralModuleType extends ModuleType<ModuleBuilder>{
     return AllIcons.Nodes.Module;
   }
 
+  @ApiStatus.Internal
   protected static class GeneralModuleBuilder extends ModuleBuilder {
     private static final Logger LOG = Logger.getInstance(GeneralModuleBuilder.class);
 

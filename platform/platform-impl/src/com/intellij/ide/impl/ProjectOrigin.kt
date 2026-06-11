@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.Path
 
@@ -27,8 +28,10 @@ private val KNOWN_HOSTINGS = listOf(
   "bitbucket.org",
   "gitlab.com")
 
+@ApiStatus.Internal
 data class Origin(val protocol: String?, val host: String)
 
+@ApiStatus.Internal
 fun getOriginFromUrl(url: String): Origin? {
   try {
     val urlWithScheme = if (URLUtil.containsScheme(url)) url else "ssh://$url"

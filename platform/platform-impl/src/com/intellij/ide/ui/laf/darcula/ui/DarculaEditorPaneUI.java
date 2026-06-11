@@ -5,10 +5,12 @@ import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicEditorPaneUI;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class DarculaEditorPaneUI extends BasicEditorPaneUI {
   private final JEditorPane myEditorPane;
 

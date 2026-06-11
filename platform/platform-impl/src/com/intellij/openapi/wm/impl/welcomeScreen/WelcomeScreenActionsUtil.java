@@ -53,6 +53,7 @@ import java.util.List;
 
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionsButtonBackground;
 
+@ApiStatus.Internal
 public final class WelcomeScreenActionsUtil {
   @ApiStatus.Internal
   public static final DataKey<Boolean> NON_MODAL_WELCOME_SCREEN = DataKey.create("NON_MODAL_WELCOME_SCREEN");

@@ -21,6 +21,7 @@ class JBProtocolCommandResult(
 )
 
 abstract class JBProtocolCommand(private val command: String) {
+  @ApiStatus.Internal
   companion object {
     const val SCHEME: String = "jetbrains"
     const val FRAGMENT_PARAM_NAME: String = "__fragment"

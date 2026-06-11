@@ -174,6 +174,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     /**
      * @return `true` if and only if the `component` represents modal context.

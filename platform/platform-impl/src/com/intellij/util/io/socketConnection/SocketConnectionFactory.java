@@ -3,10 +3,12 @@ package com.intellij.util.io.socketConnection;
 
 import com.intellij.util.io.socketConnection.impl.ServerSocketConnectionImpl;
 import com.intellij.util.io.socketConnection.impl.SocketConnectionImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 
+@ApiStatus.Internal
 public final class SocketConnectionFactory {
   private SocketConnectionFactory() {
   }

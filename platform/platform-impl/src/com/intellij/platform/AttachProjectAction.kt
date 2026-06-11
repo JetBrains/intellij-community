@@ -35,6 +35,7 @@ import java.nio.file.Path
  * OPEN_PROJECT_SAME_WINDOW, so there is no dialog shown on open directory action, which makes attaching a new project impossible.
  * This action provides a way to do that in this case.
  */
+@ApiStatus.Internal
 open class AttachProjectAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = ProjectAttachProcessor.canAttachToProject() &&
@@ -58,6 +59,7 @@ open class AttachProjectAction : AnAction(), DumbAware {
     chooseAndAttachToProject(project, ::validateDirectory)
   }
 
+  @ApiStatus.Internal
   companion object {
     @ApiStatus.Internal
     fun chooseAndAttachToProject(project: Project, validateDirectory: (Project, VirtualFile) -> Boolean) {

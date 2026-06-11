@@ -16,6 +16,7 @@ import java.awt.Component;
  * Please use {@link TargetPopup#createTargetPresentationRenderer}
  */
 @ApiStatus.Obsolete
+@ApiStatus.Internal
 public final class FileListRenderer implements ListCellRenderer<VirtualFile> {
   private final ListCellRenderer<VirtualFile> myPresentationRenderer;
 

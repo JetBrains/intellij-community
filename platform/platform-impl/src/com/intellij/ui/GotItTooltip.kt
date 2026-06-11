@@ -626,6 +626,7 @@ class GotItTooltip @ApiStatus.Internal constructor(@NonNls val id: String,
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     const val PROPERTY_PREFIX: String = "got.it.tooltip"
 

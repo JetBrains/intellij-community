@@ -4,7 +4,9 @@ package com.intellij.remote.ui
 import com.intellij.openapi.Disposable
 import com.intellij.remote.CredentialsType
 import com.intellij.ui.StatusPanel
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface RemoteSdkEditorForm {
   val statusPanel: StatusPanel
 

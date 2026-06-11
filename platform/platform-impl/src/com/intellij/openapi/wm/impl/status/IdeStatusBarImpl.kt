@@ -212,6 +212,7 @@ open class IdeStatusBarImpl @Internal constructor(
   private val progressFlow = MutableSharedFlow<ProgressSetChangeEvent>(replay = 1, extraBufferCapacity = Int.MAX_VALUE)
   private var restoreFocusTargetRef: WeakReference<Component>? = null
 
+  @Internal
   companion object {
     internal val HOVERED_WIDGET_ID: DataKey<String> = DataKey.create("HOVERED_WIDGET_ID")
 
@@ -971,6 +972,7 @@ open class IdeStatusBarImpl @Internal constructor(
       })
   }
 
+  @Internal
   protected inner class AccessibleIdeStatusBarImpl : AccessibleJComponent() {
     override fun getAccessibleRole(): AccessibleRole = AccessibilityUtils.GROUPED_ELEMENTS
 

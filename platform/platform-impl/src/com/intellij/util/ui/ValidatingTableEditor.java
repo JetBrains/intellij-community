@@ -20,6 +20,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +57,7 @@ public abstract class ValidatingTableEditor<Item> implements ComponentWithEmptyT
     int getRowHeight();
   }
 
+  @ApiStatus.Internal
   public interface Fix extends Runnable {
     @NlsContexts.LinkLabel
     String getTitle();

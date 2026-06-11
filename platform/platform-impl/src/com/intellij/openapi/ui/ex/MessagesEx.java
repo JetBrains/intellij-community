@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.messages.ChooseDialog;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +61,7 @@ public final class MessagesEx extends Messages {
     else showInfoMessage(message, title);
   }
 
+  @ApiStatus.Internal
   public abstract static class BaseDialogInfo<ThisClass extends BaseDialogInfo> {
     private final Project myProject;
     private @DialogMessage String myMessage;
@@ -160,6 +162,7 @@ public final class MessagesEx extends Messages {
     }
   }
 
+  @ApiStatus.Internal
   public static final class ChoiceInfo extends BaseInputInfo<ChoiceInfo> {
     private String[] myChoises = ArrayUtilRt.EMPTY_STRING_ARRAY;
     private @NlsSafe String myDefaultChoice = null;
@@ -194,6 +197,7 @@ public final class MessagesEx extends Messages {
     }
   }
 
+  @ApiStatus.Internal
   public static final class UserInput {
     private final int mySelectedOption;
     private final String myInput;
@@ -212,6 +216,7 @@ public final class MessagesEx extends Messages {
     }
   }
 
+  @ApiStatus.Internal
   public static final class InputInfo extends BaseInputInfo<InputInfo> {
     private String myDefaultValue;
 
@@ -238,6 +243,7 @@ public final class MessagesEx extends Messages {
     }
   }
 
+  @ApiStatus.Internal
   public abstract static class BaseInputInfo<ThisClass extends BaseInputInfo> extends BaseDialogInfo<ThisClass> {
     public BaseInputInfo(Project project) {
       super(project);

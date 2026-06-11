@@ -30,6 +30,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
+@ApiStatus.Internal
 public final class Restarter {
   private static final String SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR = "IDEA_RESTART_VIA_EXIT_CODE";
 

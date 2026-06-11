@@ -103,6 +103,7 @@ class EditorWindow internal constructor(
   val owner: EditorsSplitters,
   @JvmField internal val coroutineScope: CoroutineScope,
 ) {
+  @Internal
   companion object {
     @JvmField
     val DATA_KEY: DataKey<EditorWindow> = DataKey.create("editorWindow")

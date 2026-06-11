@@ -8,8 +8,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class LineStartWithSelectionAction extends TextComponentEditorAction {
   public LineStartWithSelectionAction() {
     super(new Handler());

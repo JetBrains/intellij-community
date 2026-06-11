@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -512,6 +513,7 @@ public abstract class MultilineTreeCellRenderer extends JComponent implements Ac
     return accessibleContext;
   }
 
+  @ApiStatus.Internal
   protected final class AccessibleMultilineTreeCellRenderer extends AccessibleJComponent {
     @Override
     public String getAccessibleName() {

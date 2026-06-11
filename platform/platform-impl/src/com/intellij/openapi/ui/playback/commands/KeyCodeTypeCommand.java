@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -15,6 +16,7 @@ import java.awt.Robot;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class KeyCodeTypeCommand extends AlphaNumericTypeCommand {
 
   public static final String PREFIX = CMD_PREFIX + "type";

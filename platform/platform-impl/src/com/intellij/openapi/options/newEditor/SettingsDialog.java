@@ -101,6 +101,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     return editor;
   }
 
+  @ApiStatus.Internal
   protected @NotNull SettingsTreeView treeViewFactory(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
     return new SettingsTreeView(filter, groups);
   }
@@ -191,6 +192,7 @@ public class SettingsDialog extends DialogWrapper implements UiCompatibleDataPro
     return panel;
   }
 
+  @ApiStatus.Internal
   protected void tryAddOptionsListener(OptionsEditorColleague colleague) {
     if (editor instanceof SettingsEditor) {
       ((SettingsEditor)editor).addOptionsListener(colleague);

@@ -25,6 +25,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
+@ApiStatus.Internal
 object TrustedProjectsDialog {
   /**
    * Shows the "Trust project" dialog if the user wasn't asked yet if they trust this project

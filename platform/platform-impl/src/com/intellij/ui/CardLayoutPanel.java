@@ -8,6 +8,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -246,6 +247,7 @@ public abstract class CardLayoutPanel<K, UI, V extends Component> extends JCompo
     return accessibleContext;
   }
 
+  @ApiStatus.Internal
   protected final class AccessibleCardLayoutPanel extends AccessibleJComponent {
     @Override
     public AccessibleRole getAccessibleRole() {

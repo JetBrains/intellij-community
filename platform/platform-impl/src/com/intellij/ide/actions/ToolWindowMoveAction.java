@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.toolWindow.ToolWindowDragHelper;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ToolWindowMoveAction extends DumbAwareAction implements FusAwareAction, ActionRemoteBehaviorSpecification.Frontend {
   public enum Anchor {
     LeftTop, LeftBottom, BottomLeft, BottomRight, RightBottom, RightTop, TopRight, TopLeft;
@@ -183,6 +185,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     return Collections.emptyList();
   }
 
+  @ApiStatus.Internal
   public static final class Group extends DefaultActionGroup implements DumbAware {
     public Group() {
       super(UIBundle.messagePointer("tool.window.move.to.action.group.name"), true);

@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.LineNumberConverter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.IntUnaryOperator;
@@ -14,6 +15,7 @@ import java.util.function.IntUnaryOperator;
  * {@link EditorGutter#setLineNumberConverter(LineNumberConverter)} and
  * {@link EditorGutter#setLineNumberConverter(LineNumberConverter, LineNumberConverter)}
  */
+@ApiStatus.Internal
 public final class LineNumberConverterAdapter implements LineNumberConverter {
   private final IntUnaryOperator myFunction;
 

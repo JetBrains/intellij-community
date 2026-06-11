@@ -3,9 +3,11 @@
 package com.intellij.openapi.ui.playback;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public interface PlaybackCommandReporter {
   /**
    * Called by {@code PlaybackRunner} before the script command

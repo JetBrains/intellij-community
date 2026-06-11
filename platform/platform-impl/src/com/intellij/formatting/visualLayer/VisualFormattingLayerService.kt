@@ -68,6 +68,7 @@ abstract class VisualFormattingLayerService {
 
   abstract fun applyVisualFormattingLayerElementsToEditor(editor: Editor, elements: List<VisualFormattingLayerElement>)
 
+  @ApiStatus.Internal
   companion object {
     private const val removeZombieFoldingsRegistryKey = "editor.readerMode.vfmt.removeZombies"
 
