@@ -10,8 +10,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.andIndexable
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
+import com.intellij.util.indexing.unwrapCacheAvoiding
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex.Companion.getInstance
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.ModuleRelatedRootData
@@ -64,6 +67,10 @@ internal class ModuleFilesIteratorImpl(
       iterateContentUnderDirectory(root, processorEx, fileFilter, myWorkspaceFileIndex)
     }
     else {
+      val processorEx = processorEx.unwrapCacheAvoiding()
+      // do not check for indexability, because
+      // 1. The module roots are indexable
+      // 2. It causes performance degradation in Rider
       fileFilter.accept(root) && processorEx.processFileEx(root) != TreeNodeProcessingResult.STOP
     }
   }
@@ -74,7 +81,10 @@ internal class ModuleFilesIteratorImpl(
     customFilter: VirtualFileFilter,
     myWorkspaceFileIndex: WorkspaceFileIndexEx,
   ): Boolean {
-    return myWorkspaceFileIndex.processContentUnderDirectory(dir, processor, customFilter) { fileSet -> !isScopeDisposed() && isInContent(fileSet) }
+    val processor = processor.unwrapCacheAvoiding()
+    val customFilter = customFilter.andIndexable(myWorkspaceFileIndex)
+    val fileSetFilter: (WorkspaceFileSetWithCustomData<*>) -> Boolean = { fileSet -> !isScopeDisposed() && isInContent(fileSet) }
+    return myWorkspaceFileIndex.processContentUnderDirectory(dir, processor, customFilter, fileSetFilter)
   }
 
   private fun toContentIteratorEx(processor: ContentIterator): ContentIteratorEx {

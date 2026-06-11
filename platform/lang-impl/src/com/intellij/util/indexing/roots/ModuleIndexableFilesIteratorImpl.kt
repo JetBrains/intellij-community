@@ -10,8 +10,11 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
+import com.intellij.util.indexing.andIndexable
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
+import com.intellij.util.indexing.unwrapCacheAvoiding
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 
 internal class ModuleIndexableFilesIteratorImpl private constructor(private val module: Module) : ModuleIndexableFilesIterator {
 
@@ -49,6 +52,9 @@ internal class ModuleIndexableFilesIteratorImpl private constructor(private val 
     }
 
     if (index == null) return false
+
+    val fileIterator = fileIterator.unwrapCacheAvoiding()
+    val fileFilter = fileFilter.andIndexable(WorkspaceFileIndex.getInstance(project))
     return index.iterateContent(fileIterator, fileFilter)
   }
 
