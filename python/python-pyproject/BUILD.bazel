@@ -126,7 +126,6 @@ jvm_library(
     ),
     module_name = "intellij.python.pyproject.tests",
     visibility = ["//visibility:public"],
-    exports = ["//libraries/tuweni/toml"],
 )
 
 jvm_library(
@@ -149,11 +148,6 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//libraries/tuweni/toml",
-        "//libraries/tuweni/toml:toml_test_lib",
-    ],
     runtime_deps = [
         # do not sort,
         ":pyproject-tests",
@@ -180,8 +174,6 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//plugins/toml/core",
         "//plugins/toml/core:core_test_lib",
-        "//libraries/tuweni/toml",
-        "//libraries/tuweni/toml:toml_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//libraries/junit5-params",
