@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
-import com.intellij.openapi.application.Experiments;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +22,7 @@ public final class WSLCommandLineOptions {
   private double mySleepTimeoutSec = 0;
 
   public boolean isLaunchWithWslExe() {
-    return myLaunchWithWslExe && Experiments.getInstance().isFeatureEnabled("wsl.execute.with.wsl.exe");
+    return myLaunchWithWslExe;
   }
 
   public @NotNull WSLCommandLineOptions setLaunchWithWslExe(boolean launchWithWslExe) {

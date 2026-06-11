@@ -181,9 +181,6 @@
     <experimentalFeature id="wsl.p9.show.roots.in.file.chooser" percentOfUsers="100">
       <description>Show UNC roots (\\wsl$\...) of available WSL distributions in the file chooser (available since Windows 10 update 1903).</description>
     </experimentalFeature>
-    <experimentalFeature id="wsl.execute.with.wsl.exe" percentOfUsers="100">
-      <description>Run WSL commands using wsl.exe, e.g. "wsl.exe --distribution Ubuntu-20.04" (available since Windows 10 update 1903).</description>
-    </experimentalFeature>
     <registryKey defaultValue="false" description="Show unhandled exceptions that were thrown during interactive operation"
                  key="ide.exceptions.show.interactive"/>
     <registryKey key="ide.settings.external.change.conflict.show.notification" defaultValue="false" restartRequired="false"
