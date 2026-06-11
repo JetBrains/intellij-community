@@ -600,6 +600,7 @@ private fun setupLogger(scope: CoroutineScope, consoleLoggerJob: Job, checkSyste
   }
 }
 
+@ApiStatus.Internal
 fun logEssentialInfoAboutIde(log: Logger, appInfo: ApplicationInfo, args: List<String>) {
   val buildTimeString = DateTimeFormatter.RFC_1123_DATE_TIME.format(appInfo.buildTime)
   val launchDateTime = ZonedDateTime.now()
@@ -737,6 +738,7 @@ private suspend fun <T> awaitWithCheckCanceled(deferred: CompletableDeferred<T>)
 interface AppStarter {
   fun prepareStart(args: List<String>) {}
 
+  @ApiStatus.Internal
   suspend fun start(context: InitAppContext)
 
   /* called from IDE init thread */

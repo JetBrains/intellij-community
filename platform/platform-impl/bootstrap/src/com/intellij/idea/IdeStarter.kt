@@ -53,6 +53,7 @@ import java.nio.file.Path
 import javax.swing.JOptionPane
 
 open class IdeStarter : ModernApplicationStarter() {
+  @ApiStatus.Internal
   companion object {
     private var filesToLoad: List<Path> = emptyList()
     private var uriToOpen: String? = null

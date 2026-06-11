@@ -37,6 +37,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Font
 import java.awt.GraphicsEnvironment
@@ -206,6 +207,7 @@ private suspend fun replaceIdeEventQueue(isHeadless: Boolean) {
 }
 
 @VisibleForTesting
+@ApiStatus.Internal
 fun checkHiDPISettings() {
   if (!System.getProperty("hidpi", "true").toBoolean()) {
     // suppress JRE-HiDPI mode
