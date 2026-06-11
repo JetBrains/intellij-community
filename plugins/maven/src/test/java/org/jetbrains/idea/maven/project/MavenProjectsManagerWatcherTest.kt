@@ -9,58 +9,93 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertHasPendingProjectForReload
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.assertNoPendingProjectForReload
+import org.jetbrains.idea.maven.fixtures.assertRootProjects
+import org.jetbrains.idea.maven.fixtures.assumeModel_4_0_0
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createPomFile
+import org.jetbrains.idea.maven.fixtures.createPomXml
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.createProjectSubDir
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.initProjectsManager
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.scheduleProjectImportAndWait
+import org.jetbrains.idea.maven.fixtures.updateAllProjects
+import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
 import org.junit.Assert
-import org.junit.Test
 import java.io.IOException
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.BeforeEach
 
-class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenProjectsManagerWatcherTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
 
   private var myProjectsTreeTracker: MavenProjectTreeTracker? = null
 
-  override fun setUp() = runBlocking {
-    super.setUp()
+  @BeforeEach
+  fun setUp(): Unit = runBlocking {
     myProjectsTreeTracker = MavenProjectTreeTracker()
-    project.messageBus.connect(getTestRootDisposable()).subscribe(MavenProjectsTree.Listener.TOPIC, myProjectsTreeTracker!!)
-    initProjectsManager(true)
-    createProjectPom(createPomContent("test", "project"))
-    importProjectAsync()
+    maven.project.messageBus.connect(maven.disposable).subscribe(MavenProjectsTree.Listener.TOPIC, myProjectsTreeTracker!!)
+    maven.initProjectsManager(true)
+    maven.createProjectPom(createPomContent("test", "project"))
+    maven.importProjectAsync()
   }
 
   @Test
   fun testChangeConfigInAnotherProjectShouldNotUpdateOur() = runBlocking {
-    assertNoPendingProjectForReload()
-    createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"))
-    assertNoPendingProjectForReload()
-    val mavenConfig = createProjectSubFile("../another/.mvn/maven.config")
-    assertNoPendingProjectForReload()
+    maven.assertNoPendingProjectForReload()
+    maven.createPomFile(maven.createProjectSubDir("../another"), createPomContent("another", "another"))
+    maven.assertNoPendingProjectForReload()
+    val mavenConfig = maven.createProjectSubFile("../another/.mvn/maven.config")
+    maven.assertNoPendingProjectForReload()
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true")
-    assertNoPendingProjectForReload()
+    maven.assertNoPendingProjectForReload()
   }
 
   @Test
   fun testChangeConfigInOurProjectShouldCallUpdatePomFile() = runBlocking {
-    assertNoPendingProjectForReload()
-    val mavenConfig = createProjectSubFile(".mvn/maven.config")
-    updateAllProjects()
-    assertNoPendingProjectForReload()
+    maven.assertNoPendingProjectForReload()
+    val mavenConfig = maven.createProjectSubFile(".mvn/maven.config")
+    maven.updateAllProjects()
+    maven.assertNoPendingProjectForReload()
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true")
-    assertHasPendingProjectForReload()
-    scheduleProjectImportAndWait()
+    maven.assertHasPendingProjectForReload()
+    maven.scheduleProjectImportAndWait()
   }
 
   @Test
   fun testChangeConfigInAnotherProjectShouldCallItIfItWasAdded() = runBlocking {
-    assertNoPendingProjectForReload()
-    val anotherPom = createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"))
-    val mavenConfig = createProjectSubFile("../another/.mvn/maven.config")
-    assertNoPendingProjectForReload()
+    maven.assertNoPendingProjectForReload()
+    val anotherPom = maven.createPomFile(maven.createProjectSubDir("../another"), createPomContent("another", "another"))
+    val mavenConfig = maven.createProjectSubFile("../another/.mvn/maven.config")
+    maven.assertNoPendingProjectForReload()
     addManagedFiles(anotherPom)
-    assertNoPendingProjectForReload()
+    maven.assertNoPendingProjectForReload()
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true")
-    assertHasPendingProjectForReload()
-    scheduleProjectImportAndWait()
+    maven.assertHasPendingProjectForReload()
+    maven.scheduleProjectImportAndWait()
   }
   private fun printDebugMessage(message: String) {
     println("Debug: $message")
@@ -68,51 +103,51 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testSaveDocumentChangesBeforeAutoImport() = runBlocking {
-    assumeModel_4_0_0("IDEA-379195")
-    assertNoPendingProjectForReload()
-    assertModules("project")
-    replaceContent(projectPom, createPomXml(
+    maven.assumeModel_4_0_0("IDEA-379195")
+    maven.assertNoPendingProjectForReload()
+    maven.assertModules("project")
+    replaceContent(maven.projectPom, maven.createPomXml(
       """
             ${createPomContent("test", "project")}<packaging>pom</packaging>
             <modules><module>module</module></modules>
             """.trimIndent()))
-    createModulePom("module", createPomContent("test", "module"))
-    scheduleProjectImportAndWait()
-    assertModules("project", "module")
-    replaceDocumentString(projectPom, "<modules><module>module</module></modules>", "")
+    maven.createModulePom("module", createPomContent("test", "module"))
+    maven.scheduleProjectImportAndWait()
+    maven.assertModules("project", "module")
+    replaceDocumentString(maven.projectPom, "<modules><module>module</module></modules>", "")
 
-    scheduleProjectImportAndWait()
-    assertModules("project")
+    maven.scheduleProjectImportAndWait()
+    maven.assertModules("project")
   }
 
   @Test
   fun testIncrementalAutoReload() = runBlocking {
-    assertRootProjects("project")
-    assertNoPendingProjectForReload()
-    val module1 = createModulePom("module1", createPomContent("test", "module1"))
-    val module2 = createModulePom("module2", createPomContent("test", "module2"))
-    assertRootProjects("project")
-    assertNoPendingProjectForReload()
+    maven.assertRootProjects("project")
+    maven.assertNoPendingProjectForReload()
+    val module1 = maven.createModulePom("module1", createPomContent("test", "module1"))
+    val module2 = maven.createModulePom("module2", createPomContent("test", "module2"))
+    maven.assertRootProjects("project")
+    maven.assertNoPendingProjectForReload()
     addManagedFiles(module1)
     addManagedFiles(module2)
-    assertRootProjects("project", "module1", "module2")
-    assertNoPendingProjectForReload()
+    maven.assertRootProjects("project", "module1", "module2")
+    maven.assertNoPendingProjectForReload()
     replaceDocumentString(module1, "test", "group.id")
     myProjectsTreeTracker!!.reset()
-    scheduleProjectImportAndWait()
+    maven.scheduleProjectImportAndWait()
     assertEquals(0, myProjectsTreeTracker!!.getProjectStatus("project").updateCounter)
     assertEquals(1, myProjectsTreeTracker!!.getProjectStatus("module1").updateCounter)
     assertEquals(0, myProjectsTreeTracker!!.getProjectStatus("module2").updateCounter)
     replaceDocumentString(module2, "test", "group.id")
     myProjectsTreeTracker!!.reset()
-    scheduleProjectImportAndWait()
+    maven.scheduleProjectImportAndWait()
     assertEquals(0, myProjectsTreeTracker!!.getProjectStatus("project").updateCounter)
     assertEquals(0, myProjectsTreeTracker!!.getProjectStatus("module1").updateCounter)
     assertEquals(1, myProjectsTreeTracker!!.getProjectStatus("module2").updateCounter)
     replaceDocumentString(module1, "group.id", "test")
     replaceDocumentString(module2, "group.id", "test")
     myProjectsTreeTracker!!.reset()
-    scheduleProjectImportAndWait()
+    maven.scheduleProjectImportAndWait()
     assertEquals(0, myProjectsTreeTracker!!.getProjectStatus("project").updateCounter)
     assertEquals(1, myProjectsTreeTracker!!.getProjectStatus("module1").updateCounter)
     assertEquals(1, myProjectsTreeTracker!!.getProjectStatus("module2").updateCounter)
@@ -151,35 +186,35 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
                              </profile>
                          </profiles>
                        """.trimIndent()
-    replaceContent(projectPom, createPomXml(xml))
-    scheduleProjectImportAndWait()
-    assertRootProjects("project")
-    assertModules("project")
-    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("junit4"), listOf("junit5"))
-    assertHasPendingProjectForReload()
-    scheduleProjectImportAndWait()
+    replaceContent(maven.projectPom, maven.createPomXml(xml))
+    maven.scheduleProjectImportAndWait()
+    maven.assertRootProjects("project")
+    maven.assertModules("project")
+    maven.projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("junit4"), listOf("junit5"))
+    maven.assertHasPendingProjectForReload()
+    maven.scheduleProjectImportAndWait()
     assertMavenProjectDependencies("test:project:1", "junit:junit:4.12")
-    projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("junit5"), listOf("junit4"))
-    assertHasPendingProjectForReload()
-    scheduleProjectImportAndWait()
+    maven.projectsManager.explicitProfiles = MavenExplicitProfiles(listOf("junit5"), listOf("junit4"))
+    maven.assertHasPendingProjectForReload()
+    maven.scheduleProjectImportAndWait()
     assertMavenProjectDependencies("test:project:1", "org.junit.jupiter:junit-jupiter-engine:5.9.1")
   }
 
   private fun assertMavenProjectDependencies(projectMavenCoordinates: String, vararg expectedDependencies: String) {
     val mavenId = MavenId(projectMavenCoordinates)
-    val mavenProject = projectsManager.getProjectsTree().findProject(mavenId)
+    val mavenProject = maven.projectsManager.getProjectsTree().findProject(mavenId)
     val actualDependencies = mavenProject!!.dependencyTree.map { it.artifact.mavenId.getKey() }
     Assert.assertEquals(java.util.List.of(*expectedDependencies), actualDependencies)
   }
 
   private suspend fun addManagedFiles(pom: VirtualFile) {
-    waitForImportWithinTimeout {
-      projectsManager.addManagedFiles(listOf(pom))
+    maven.waitForImportWithinTimeout {
+      maven.projectsManager.addManagedFiles(listOf(pom))
     }
   }
 
   private fun replaceContent(file: VirtualFile, content: String) {
-    WriteCommandAction.runWriteCommandAction(project, ThrowableComputable<Any?, IOException?> {
+    WriteCommandAction.runWriteCommandAction(maven.project, ThrowableComputable<Any?, IOException?> {
       VfsUtil.saveText(file, content)
       null
     } as ThrowableComputable<*, IOException?>)
@@ -188,7 +223,7 @@ class MavenProjectsManagerWatcherTest : MavenMultiVersionImportingTestCase() {
 
   private fun replaceDocumentString(file: VirtualFile?, oldString: String, newString: String?) {
     val fileDocumentManager = FileDocumentManager.getInstance()
-    WriteCommandAction.runWriteCommandAction(project) {
+    WriteCommandAction.runWriteCommandAction(maven.project) {
       val document = fileDocumentManager.getDocument(file!!)
       val text = document!!.text
       val startOffset = text.indexOf(oldString)
