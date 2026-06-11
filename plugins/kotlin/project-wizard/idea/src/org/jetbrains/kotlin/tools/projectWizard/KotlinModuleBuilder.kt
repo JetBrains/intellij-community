@@ -8,17 +8,16 @@ import com.intellij.ide.util.projectWizard.JavaModuleBuilder
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
-import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
 import com.intellij.platform.workspace.jps.entities.LibraryId
@@ -132,7 +131,8 @@ internal class KotlinModuleBuilder(
         val project = rootModel.project
         val projectLibraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
         val libraryName = JavaRuntimeLibraryDescription.LIBRARY_NAME
-        val kotlinJavaRuntime = projectLibraryTable.createLibrary(libraryName) as? LibraryEx ?: return null
+        val kotlinJavaRuntime =
+            projectLibraryTable.getLibraryByName(libraryName) ?: projectLibraryTable.createLibrary(libraryName)
         val libraryId: LibraryId = (kotlinJavaRuntime as? LibraryBridge)?.libraryId
             ?: error("unable to obtain libraryId for '$libraryName'")
 
@@ -161,7 +161,8 @@ internal class KotlinModuleBuilder(
                     )
                 }
 
-            val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
+            val workspaceModel = WorkspaceModel.getInstance(project)
+            val virtualFileUrlManager = workspaceModel.getVirtualFileUrlManager()
             val libraryRoots = dependencies.map {
                 LibraryRoot(
                     it.file.toVirtualFileUrl(virtualFileUrlManager),
@@ -169,10 +170,12 @@ internal class KotlinModuleBuilder(
                 )
             }
 
-            project.workspaceModel.update("update roots of '$libraryName'") { storage: MutableEntityStorage ->
-                val libraryEntity = libraryId.resolve(storage) ?: return@update
-                storage.modifyEntity(LibraryEntityBuilder::class.java, libraryEntity) {
-                    this.roots.addAll(0, libraryRoots)
+            edtWriteAction {
+                workspaceModel.updateProjectModel("update roots of '$libraryName'") { storage: MutableEntityStorage ->
+                    val libraryEntity = libraryId.resolve(storage) ?: return@updateProjectModel
+                    storage.modifyEntity(LibraryEntityBuilder::class.java, libraryEntity) {
+                        this.roots.addAll(0, libraryRoots)
+                    }
                 }
             }
         }
