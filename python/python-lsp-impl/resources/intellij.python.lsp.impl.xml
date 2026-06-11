@@ -1,0 +1,19 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.lsp.core"/>
+    <module name="intellij.python.pyrefly"/>
+    <module name="intellij.python.pyright"/>
+    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.pytools.ui"/>
+    <module name="intellij.python.ruff"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.ty"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.python.lsp.impl.PyLspToolAdvertiserStartupActivity"/>
+  </extensions>
+</idea-plugin>

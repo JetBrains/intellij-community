@@ -69,6 +69,9 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     module("intellij.ide.startup.importSettings")
     module("intellij.platform.tips")
 
+    embeddedModule("intellij.platform.lsp")
+    embeddedModule("intellij.platform.lsp.impl")
+
     // Module sets
     moduleSet(CommunityModuleSets.ideCommon())
     moduleSet(CommunityModuleSets.rdCommon())

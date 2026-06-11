@@ -1401,6 +1401,8 @@ jvm_library(
         "//platform/testIntegration-ui:testIntegration-ui_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//python/python-lsp-core:lsp-core",
+        "//python/python-lsp-core:lsp-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.tests` end

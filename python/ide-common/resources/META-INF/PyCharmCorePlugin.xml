@@ -17,6 +17,8 @@
     <module name="intellij.platform.ide.newUiOnboarding"/>
     <module name="intellij.ide.startup.importSettings"/>
     <module name="intellij.platform.tips"/>
+    <module name="intellij.platform.lsp" loading="embedded"/>
+    <module name="intellij.platform.lsp.impl" loading="embedded"/>
     <module name="intellij.platform.remoteServers.impl" loading="embedded"/>
   </content>
   <!-- endregion -->

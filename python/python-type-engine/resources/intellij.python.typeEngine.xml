@@ -1,0 +1,54 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.python.community.core.impl"/>
+    <module name="intellij.python.community.impl"/>
+    <module name="intellij.python.lsp.core"/>
+    <module name="intellij.python.pyrefly"/>
+    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.pytools.ui"/>
+    <module name="intellij.python.sdk"/>
+    <module name="intellij.python.ty"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <projectListeners>
+    <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
+              topic="com.jetbrains.python.packaging.common.PythonPackageManagementListener"/>
+
+    <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
+              topic="com.intellij.python.lsp.core.listener.PyLspListener"/>
+    <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
+              topic="com.jetbrains.python.sdk.PySdkListener"/>
+    <listener class="com.intellij.python.typeEngine.RestartLspServersListener"
+              topic="com.intellij.openapi.project.ModuleListener"/>
+  </projectListeners>
+
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="pycharm.type.engine" defaultValue="true"
+                 description="Enable PyCharm type engine configuration"/>
+
+    <!-- Type Engine Configuration -->
+    <projectConfigurable groupId="python.group.settings"
+                         id="com.intellij.python.lsp.core.PyTypeEngineConfigurable"
+                         bundle="messages.TypeEngineBundle"
+                         key="display.name"
+                         provider="com.intellij.python.typeEngine.PyChooserTypeEngineConfigurableProvider"
+                         groupWeight="190"
+                         nonDefaultProject="true"/>
+
+    <statusBarWidgetFactory id="pythonTypeEngineWidget"
+                            implementation="com.intellij.python.typeEngine.PyTypeEngineStatusBarWidgetFactory"
+                            order="after CodeStyleStatusBarWidget, before pythonInterpreterWidget"/>
+
+    <notificationGroup id="Python Type Engine"
+                       displayType="TOOL_WINDOW"
+                       toolWindowId="Python Console"
+                       isLogByDefault="true"
+                       bundle="messages.TypeEngineBundle"
+                       key="notification.group.python.type.engine"/>
+
+  </extensions>
+</idea-plugin>
