@@ -341,3 +341,15 @@ fun MavenTestFixture.assumeOnLocalEnvironmentOnly(cause: String) {
 
 val MavenTestFixture.repositoryPathCanonical: String
   get() = FileUtil.toCanonicalPath(repositoryPath.toString())
+
+fun MavenImportingTestFixture.updateSettingsXmlFully(content: String): com.intellij.openapi.vfs.VirtualFile {
+  val ioFile = dir.resolve("settings.xml")
+  java.nio.file.Files.createDirectories(ioFile.parent)
+  if (!java.nio.file.Files.exists(ioFile)) java.nio.file.Files.createFile(ioFile)
+  com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.allowRootAccess(project, ioFile.toString())
+  java.nio.file.Files.write(ioFile, content.toByteArray(Charsets.UTF_8))
+  val f = com.intellij.openapi.vfs.LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)!!
+  refreshFiles(listOf(f))
+  mavenGeneralSettings.setUserSettingsFile(f.path)
+  return f
+}
