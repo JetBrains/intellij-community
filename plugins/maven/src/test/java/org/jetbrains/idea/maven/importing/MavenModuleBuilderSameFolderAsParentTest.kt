@@ -8,21 +8,51 @@ import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomUtil
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertDefaultResources
+import org.jetbrains.idea.maven.fixtures.assertDefaultTestResources
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.assertRelativeContentRoots
+import org.jetbrains.idea.maven.fixtures.assertSources
+import org.jetbrains.idea.maven.fixtures.assertTestSources
+import org.jetbrains.idea.maven.fixtures.createPomXml
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.getModule
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.projectPath
+import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
-import org.junit.Test
 import java.nio.file.Path
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.BeforeEach
 
-class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenModuleBuilderSameFolderAsParentTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   private var myBuilder: AbstractMavenModuleBuilder? = null
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myBuilder = MavenJavaModuleBuilder()
-    createJdk()
-    setModuleNameAndRoot("module", projectPath)
+    setModuleNameAndRoot("module", maven.projectPath)
   }
 
   private fun setModuleNameAndRoot(name: String, root: Path) {
@@ -32,14 +62,14 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
   }
 
   private fun setParentProject(pom: VirtualFile) {
-    myBuilder!!.parentProject = projectsManager.findProject(pom)
+    myBuilder!!.parentProject = maven.projectsManager.findProject(pom)
   }
 
   private suspend fun createNewModule(id: MavenId) {
     myBuilder!!.projectId = id
-    waitForImportWithinTimeout {
+    maven.waitForImportWithinTimeout {
       edtWriteAction {
-        val model = getInstance(project).getModifiableModel()
+        val model = getInstance(maven.project).getModifiableModel()
         myBuilder!!.createModule(model)
         model.commit()
       }
@@ -48,27 +78,27 @@ class MavenModuleBuilderSameFolderAsParentTest : MavenMultiVersionImportingTestC
 
   @Test
   fun testSameFolderAsParent() = runBlocking {
-    val customPomXml = createProjectSubFile("custompom.xml", createPomXml(
+    val customPomXml = maven.createProjectSubFile("custompom.xml", maven.createPomXml(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
         <version>1</version>
         """.trimIndent()))
-    importProjectAsync(customPomXml)
-    assertModules("project")
-    setModuleNameAndRoot("module", projectPath)
+    maven.importProjectAsync(customPomXml)
+    maven.assertModules("project")
+    setModuleNameAndRoot("module", maven.projectPath)
     setParentProject(customPomXml)
     createNewModule(MavenId("org.foo", "module", "1.0"))
-    assertSources("project", "src/main/java")
-    assertTestSources("project", "src/test/java")
-    assertDefaultResources("project")
-    assertDefaultTestResources("project")
+    maven.assertSources("project", "src/main/java")
+    maven.assertTestSources("project", "src/test/java")
+    maven.assertDefaultResources("project")
+    maven.assertDefaultTestResources("project")
 
-    assertRelativeContentRoots("module", "")
+    maven.assertRelativeContentRoots("module", "")
 
-    val module = MavenProjectsManager.getInstance(project).findProject(getModule("module"))
+    val module = MavenProjectsManager.getInstance(maven.project).findProject(maven.getModule("module"))
     readAction {
-      val domProjectModel = MavenDomUtil.getMavenDomProjectModel(project, module!!.file)
+      val domProjectModel = MavenDomUtil.getMavenDomProjectModel(maven.project, module!!.file)
       assertEquals("custompom.xml", domProjectModel!!.getMavenParent().getRelativePath().getRawText())
     }
   }
