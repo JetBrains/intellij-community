@@ -14,7 +14,7 @@ import java.util.concurrent.CompletableFuture
  * IntelliJ's model of a started LSP server. In [LSP terminology](https://microsoft.github.io/language-server-protocol/) the IDE is the
  * client, which is why this IDE-side model is named [LspClient] rather than after the server.
  *
- * To get an instance of [LspClient] use [LspClientManager.getClientsForProvider]
+ * To get an instance of [LspClient] use [LspClientManager.getClients]
  */
 interface LspClient {
   val providerClass: Class<out LspClientProvider>

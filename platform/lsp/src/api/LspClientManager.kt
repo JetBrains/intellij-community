@@ -25,7 +25,7 @@ interface LspClientManager {
     fun getInstance(project: Project): LspClientManager = project.service()
   }
 
-  fun getClientsForProvider(providerClass: Class<out LspClientProvider>): Collection<LspClient>
+  fun getClients(providerClass: Class<out LspClientProvider>): Collection<LspClient>
 
   /**
    * This function is designed for cases like "a user has enabled some framework support in Settings." It notifies the `providerClass`
@@ -73,8 +73,8 @@ interface LspClientManager {
   fun addListener(listener: LspClientManagerListener, parentDisposable: Disposable, sendEventsForExistingClients: Boolean = false)
 }
 
-inline fun <reified Provider : LspClientProvider> LspClientManager.getClientsForProvider(): Collection<LspClient> =
-  getClientsForProvider(Provider::class.java)
+inline fun <reified Provider : LspClientProvider> LspClientManager.getClients(): Collection<LspClient> =
+  getClients(Provider::class.java)
 
 inline fun <reified Provider : LspClientProvider> LspClientManager.startClientsIfNeeded(): Unit =
   startClientsIfNeeded(Provider::class.java)

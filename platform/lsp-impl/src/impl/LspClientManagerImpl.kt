@@ -62,10 +62,10 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
   private val eventDispatcher = EventDispatcher.create(LspClientManagerListener::class.java)
 
-  override fun getClientsForProvider(providerClass: Class<out LspClientProvider>): Collection<LspClientImpl> =
+  override fun getClients(providerClass: Class<out LspClientProvider>): Collection<LspClientImpl> =
     lspClients.filter { it.providerClass == providerClass }
 
-  @Deprecated("Use getClientsForProvider", ReplaceWith("getClientsForProvider(providerClass)"))
+  @Deprecated("Use getClients", ReplaceWith("getClients(providerClass)"))
   @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
   override fun getServersForProvider(providerClass: Class<out LspServerSupportProvider>): Collection<LspClientImpl> =
     lspClients.filter { it.providerClass == providerClass }
@@ -96,7 +96,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
     cs.launch {
       val descriptorsToStart = readAction {
-        val runningClients = getClientsForProvider(providerClass)
+        val runningClients = getClients(providerClass)
         val descriptorsToStart = mutableListOf<LspClientDescriptor>()
 
         for (file in FileEditorManager.getInstance(project).openFiles) {
@@ -172,7 +172,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
   }
 
   override fun stopClients(providerClass: Class<out LspClientProvider>): Unit =
-    getClientsForProvider(providerClass).forEach { stopRunningServer(it) }
+    getClients(providerClass).forEach { stopRunningServer(it) }
 
   @Deprecated("Use stopClients", ReplaceWith("stopClients(providerClass)"))
   @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION", "UNCHECKED_CAST")
