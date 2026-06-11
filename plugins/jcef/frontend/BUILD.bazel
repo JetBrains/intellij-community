@@ -25,6 +25,13 @@ jvm_library(
         "//platform/ui.jcef",
         "//platform/core-impl",
         "//platform/platform-impl:ide-impl",
+        "//libraries/jcef",
+        "//platform/util/concurrency",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/ide-core",
+        "//platform/util:util-ui",
     ],
 )
 
@@ -44,6 +51,13 @@ jvm_library(
         "//platform/ui.jcef:ui.jcef_test_lib",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//libraries/jcef:jcef_test_lib",
+        "//platform/util/concurrency:concurrency_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/util:util-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.jcef.frontend` end

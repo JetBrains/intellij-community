@@ -1,14 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.jcef;
+package com.intellij.jcef.frontend.internal.jcef;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.jcef.JBCefApp;
 import com.intellij.ui.jcef.JBCefBrowser;
 import com.intellij.ui.jcef.JBCefBrowserBase;
@@ -33,6 +34,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import java.awt.BorderLayout;
+import java.awt.GraphicsConfiguration;
+import java.awt.KeyboardFocusManager;
 import java.awt.Rectangle;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
@@ -44,6 +47,7 @@ import java.util.List;
 /**
  * @author tav
  */
+@SuppressWarnings("HardCodedStringLiteral")
 final class JBCefBrowserDemo extends AnAction implements DumbAware {
 
   private static final String URL = "https://maps.google.com";
@@ -56,28 +60,38 @@ final class JBCefBrowserDemo extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Window activeFrame = IdeFrameImpl.getActiveFrame();
-    if (activeFrame == null) return;
+    Window parentWindow = getParentWindow(e.getProject());
+    if (parentWindow == null) return;
 
     if (!JBCefApp.isSupported()) {
       JBPopupFactory.getInstance().createComponentPopupBuilder(
           new JTextArea("Set the reg key to enable JCEF:\n\"ide.browser.jcef.enabled=true\""), null).
         setTitle("JCEF Web Browser Is not Supported").
         createPopup().
-        showInCenterOf(activeFrame);
+        showInCenterOf(parentWindow);
       return;
     }
 
-    showBrowser(JBCefApp.isOffScreenRenderingModeEnabled());
+    showBrowser(parentWindow, JBCefApp.isOffScreenRenderingModeEnabled());
   }
 
-  private static void showBrowser(boolean isOffScreenRendering) {
-    Window activeFrame = IdeFrameImpl.getActiveFrame();
-    if (activeFrame == null) return;
+  private static @Nullable Window getParentWindow(@Nullable Project project) {
+    Window window = WindowManager.getInstance().suggestParentWindow(project);
+    if (window != null) return window;
 
-    Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
+    window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    if (window != null) return window;
 
-    final JFrame frame = new IdeFrameImpl();
+    return WindowManager.getInstance().findVisibleFrame();
+  }
+
+  private static void showBrowser(@NotNull Window parentWindow, boolean isOffScreenRendering) {
+    GraphicsConfiguration graphicsConfiguration = parentWindow.getGraphicsConfiguration();
+    if (graphicsConfiguration == null) return;
+
+    Rectangle bounds = graphicsConfiguration.getBounds();
+
+    final JFrame frame = new JFrame();
     frame.setTitle("Web Browser" + (isOffScreenRendering ? " (OSR) " : " ") + "- JCEF");
     frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     frame.setBounds(bounds.width / 4, bounds.height / 4, bounds.width / 2, bounds.height / 2);
@@ -211,7 +225,7 @@ final class JBCefBrowserDemo extends AnAction implements DumbAware {
       menuItemWindowedMode.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          showBrowser(false);
+          showBrowser(frame, false);
         }
       });
     }

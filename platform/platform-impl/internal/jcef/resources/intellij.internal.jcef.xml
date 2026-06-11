@@ -7,7 +7,6 @@
   <!-- endregion -->
 
   <actions>
-    <action id="WebBrowser" class="com.intellij.internal.jcef.JBCefBrowserDemo"/>
     <action id="JBCefTestApp" class="com.intellij.internal.jcef.test.JBCefTestApp"/>
     <action id="ShowGotItDemo" internal="true" class="com.intellij.internal.ui.ShowGotItDemoAction"/>
     <action id="JBCefOsrMeasureFps" class="com.intellij.internal.jcef.JBCefOsrBrowserMeasureFpsAction"/>

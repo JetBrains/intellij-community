@@ -1,6 +1,7 @@
 <idea-plugin>
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
+    <module name="intellij.libraries.jcef"/>
     <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ui.jcef"/>
   </dependencies>
@@ -9,4 +10,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <cefNativeBundleProvider implementation="com.intellij.jcef.frontend.PluggableCefNativeBundleProvider"/>
   </extensions>
+
+  <actions>
+    <action id="WebBrowser" class="com.intellij.jcef.frontend.internal.jcef.JBCefBrowserDemo"/>
+  </actions>
 </idea-plugin>

@@ -34,5 +34,12 @@
     <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.libraries.jcef" />
+    <orderEntry type="module" module-name="intellij.platform.concurrency" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
   </component>
 </module>
