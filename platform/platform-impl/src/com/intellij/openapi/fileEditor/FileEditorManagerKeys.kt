@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
-import com.intellij.openapi.fileEditor.FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,6 +23,15 @@ object FileEditorManagerKeys {
   @TestOnly
   @ApiStatus.Internal
   val ALLOW_IN_LIGHT_PROJECT: Key<Boolean> = Key.create("ALLOW_IN_LIGHT_PROJECT")
+
+  /**
+   * Disables automatic file opening during the project opening.
+   *
+   * Works on [Project] objects
+   */
+  @JvmField
+  @ApiStatus.Internal
+  val DO_NOT_REOPEN_FILES: Key<Boolean> = Key.create("DO_NOT_REOPEN_FILES")
 
   /**
    * Flag is temporarily set if the editor is being closed to be reopened again (in another split, for example).

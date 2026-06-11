@@ -36,6 +36,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileEditor.ClientFileEditorManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.text.FileEditorDropHandler
 import com.intellij.openapi.keymap.Keymap
@@ -376,7 +377,7 @@ open class EditorsSplitters internal constructor(
       removeAll()
     }
 
-    if (PlatformUtils.isJetBrainsClient() && !shouldReopenEditorsOnJetBrainsClient()) {
+    if (!shouldReopenEditorsOnStartup()) {
       // Don't restore editors from local files on JetBrains Client, editors are opened from the backend
       return
     }
@@ -403,7 +404,7 @@ open class EditorsSplitters internal constructor(
 
   internal suspend fun createEditors(state: EditorSplitterState) {
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
-    if (PlatformUtils.isJetBrainsClient() && !shouldReopenEditorsOnJetBrainsClient()) {
+    if (!shouldReopenEditorsOnStartup()) {
       // Don't reopen editors from local files on JetBrains Client, it is done from the backend
       return
     }
@@ -419,9 +420,15 @@ open class EditorsSplitters internal constructor(
       )
   }
 
-  private fun shouldReopenEditorsOnJetBrainsClient(): Boolean {
-    val frontendType = FrontendApplicationInfo.getFrontendType()
-    return frontendType is FrontendType.Remote && frontendType.isController() && Registry.`is`("editor.rd.reopen.editors.on.frontend")
+  private fun shouldReopenEditorsOnStartup(): Boolean {
+    if (FileEditorManagerKeys.DO_NOT_REOPEN_FILES.isIn(manager.project)) {
+      return false
+    }
+    if (PlatformUtils.isJetBrainsClient()) {
+      val frontendType = FrontendApplicationInfo.getFrontendType()
+      return frontendType is FrontendType.Remote && frontendType.isController() && Registry.`is`("editor.rd.reopen.editors.on.frontend")
+    }
+    return true
   }
 
   fun addSelectedEditorsTo(result: MutableCollection<FileEditor>) {

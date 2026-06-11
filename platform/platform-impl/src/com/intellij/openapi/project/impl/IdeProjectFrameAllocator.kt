@@ -33,6 +33,7 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
@@ -748,7 +749,8 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
 }
 
 private suspend fun findAndOpenReadmeIfNeeded(project: Project) {
-  if (!AdvancedSettings.getBoolean("ide.open.readme.md.on.startup")) {
+  if (!AdvancedSettings.getBoolean("ide.open.readme.md.on.startup") ||
+      FileEditorManagerKeys.DO_NOT_REOPEN_FILES.isIn(project)) {
     return
   }
 
