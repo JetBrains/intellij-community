@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.Configurable
@@ -83,8 +84,19 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
     var lastEditedConfigurable: String? = null
   }
 
-  val facetStructureConfigurable: FacetStructureConfigurable = FacetStructureConfigurable(this)
-  val artifactsStructureConfigurable: ArtifactsStructureConfigurable = ArtifactsStructureConfigurable(this)
+  val facetStructureConfigurable: FacetStructureConfigurable by lazy {
+    FacetStructureConfigurable(this).apply { init(this@ProjectStructureConfigurable.context) }
+  }
+  val artifactsStructureConfigurable: ArtifactsStructureConfigurable by lazy {
+    ArtifactsStructureConfigurable(this).apply {
+      if (!project.isDefault) {
+        init(context, modulesConfig, projectLibrariesConfigurable, globalLibrariesConfigurable)
+      }
+      else {
+        Disposer.register(this@ProjectStructureConfigurable, this)
+      }
+    }
+  }
 
   private var myHistory: History? = null
   private var mySidePanel: SidePanel? = null
@@ -98,50 +110,57 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
 
   var projectConfig: ProjectConfigurable? = null
     private set
-  val projectLibrariesConfigurable: ProjectLibrariesConfigurable
-  val globalLibrariesConfigurable: GlobalLibrariesConfigurable
-  val modulesConfig: ModuleStructureConfigurable
+  val projectLibrariesConfigurable: ProjectLibrariesConfigurable by lazy {
+    ProjectLibrariesConfigurable(this).apply { init(this@ProjectStructureConfigurable.context) }
+  }
+
+  val globalLibrariesConfigurable: GlobalLibrariesConfigurable by lazy {
+    GlobalLibrariesConfigurable(this).apply { init(this@ProjectStructureConfigurable.context) }
+  }
+
+  val modulesConfig: ModuleStructureConfigurable by lazy {
+    ModuleStructureConfigurable(this).apply { init(this@ProjectStructureConfigurable.context) }
+  }
 
   var isUiInitialized: Boolean = false
     private set
 
-  private val myName2Config: MutableList<Configurable> = ArrayList<Configurable>()
+  private var isInitializingUi: Boolean = false
+
+
+  private val myName2Config: MutableList<Configurable> = ArrayList()
+
+  /**
+   * [myModuleConfigurator] and [context] depends on each other. This is a hack to lazily initialize them together
+   */
+  private val myModulesConfiguratorContextPair: Pair<ModulesConfigurator, StructureConfigurableContext> by lazy {
+    if (!isUiInitialized && !isInitializingUi) {
+      LOG.warn("ModulesConfigurator is initialized before ui initialized", Throwable())
+    }
+    val modulesConfigurator = ModulesConfigurator(project, this)
+    val context = StructureConfigurableContext(project, modulesConfigurator)
+    modulesConfigurator.context = context
+    modulesConfigurator to context
+  }
+
+  private val myModuleConfigurator: ModulesConfigurator
+    get() = myModulesConfiguratorContextPair.first
+
   val context: StructureConfigurableContext
-  private val myModuleConfigurator: ModulesConfigurator = ModulesConfigurator(project, this)
-  val jdkConfig: JdkListConfigurable
+    get() = myModulesConfiguratorContextPair.second
+
+  val jdkConfig: JdkListConfigurable by lazy {
+    JdkListConfigurable(this).apply { init(context) }
+  }
 
   private var myEmptySelection: JLabel? = null
 
   private val myObsoleteLibraryFilesRemover: ObsoleteLibraryFilesRemover
 
   init {
-    this.context = StructureConfigurableContext(this.project, myModuleConfigurator)
-    myModuleConfigurator.setContext(this.context)
+    //myModuleConfigurator.setContext(this.context)
 
-    this.projectLibrariesConfigurable = ProjectLibrariesConfigurable(this)
-    this.globalLibrariesConfigurable = GlobalLibrariesConfigurable(this)
-    this.modulesConfig = ModuleStructureConfigurable(this)
-
-    this.jdkConfig = JdkListConfigurable(this)
-
-    projectLibrariesConfigurable.init(this.context)
-    globalLibrariesConfigurable.init(this.context)
-    modulesConfig.init(this.context)
-    facetStructureConfigurable.init(this.context)
-    jdkConfig.init(this.context)
-    if (!project.isDefault) {
-      artifactsStructureConfigurable.init(
-        this.context,
-        this.modulesConfig,
-        this.projectLibrariesConfigurable,
-        this.globalLibrariesConfigurable
-      )
-    }
-    else {
-      Disposer.register(this, this.artifactsStructureConfigurable)
-    }
-
-    val propertiesComponent = PropertiesComponent.getInstance(this.project)
+    val propertiesComponent = PropertiesComponent.getInstance(project)
     myUiState.lastEditedConfigurable = propertiesComponent.getValue("project.structure.last.edited")
     val proportion = propertiesComponent.getValue("project.structure.proportion")
     myUiState.proportion = proportion?.toFloat() ?: 0f
@@ -167,6 +186,8 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
   }
 
   override fun createComponent(): JComponent? {
+    isInitializingUi = true
+
     myComponent = MyPanel()
     myDetails = Wrapper()
     myHistory = History(this)
@@ -201,6 +222,7 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
     myComponent!!.add(mySplitter, BorderLayout.CENTER)
 
     this.isUiInitialized = true
+    isInitializingUi = false
 
     return myComponent
   }
@@ -602,6 +624,8 @@ class ProjectStructureConfigurable(val project: Project) : SearchableConfigurabl
   }
 
   companion object {
+    private val LOG = logger<ProjectStructureConfigurable>()
+
     @JvmField
     val KEY: DataKey<ProjectStructureConfigurable> = create("ProjectStructureConfiguration")
 
