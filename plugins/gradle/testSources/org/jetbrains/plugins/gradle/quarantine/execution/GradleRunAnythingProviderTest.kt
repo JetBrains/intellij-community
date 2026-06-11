@@ -215,12 +215,22 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
         |  :help
       """.trimMargin())
 
-    executeAndWait("--unknown-option help")
-      .assertExecutionTree("""
+    if (isGradleAtLeast("9.6.0")) {
+      executeAndWait("--unknown-option help")
+        .assertExecutionTree("""
+        |-
+        | -failed
+        |  Selection failed
+        |  Task '--unknown-option' not found in root project 'project'.
+      """.trimMargin())
+    } else {
+      executeAndWait("--unknown-option help")
+        .assertExecutionTree("""
         |-
         | -failed
         |  Task '--unknown-option' not found in root project 'project'.
       """.trimMargin())
+    }
 
     if (isGradleAtLeast("7.0")) {
       executeAndWait("taskWithArgs")
