@@ -1,0 +1,46 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.toml.lang"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.python.community.execService"/>
+    <module name="intellij.python.lsp.core"/>
+    <module name="intellij.python.pytools"/>
+    <module name="intellij.python.pytools.ui"/>
+    <module name="intellij.toml.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <platform.lsp.integrationProvider implementation="com.intellij.python.ruff.server.RuffLspIntegrationProvider"/>
+    <lang.importOptimizer language="Python" implementationClass="com.intellij.python.ruff.RuffImportOptimizer" order="first"/>
+    <codeInsight.declarativeInlayProvider group="OTHER_GROUP"
+                                          implementationClass="com.intellij.python.ruff.codeinsight.RuffSuppressionInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          bundle="messages.RuffBundle"
+                                          nameKey="ruff.suppression.inlay.hints.name"
+                                          providerId="RuffSuppressionCodes"/>
+    <codeInsight.declarativeInlayProvider group="OTHER_GROUP"
+                                          implementationClass="com.intellij.python.ruff.codeinsight.RuffTomlInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="TOML"
+                                          bundle="messages.RuffBundle"
+                                          nameKey="ruff.toml.inlay.hints.name"
+                                          providerId="RuffTomlCodes"/>
+    <completion.contributor language="TOML" implementationClass="com.intellij.python.ruff.codeinsight.RuffConfigOptionCompletionContributor"/>
+    <gotoDeclarationHandler implementation="com.intellij.python.ruff.codeinsight.RuffConfigOptionGotoDeclarationHandler"/>
+    <codeInsight.linkHandler prefix="https://docs.astral.sh/ruff/" handlerClass="com.intellij.python.ruff.codeinsight.RuffTooltipLinkHandler"/>
+    <platform.backend.documentation.lookupElementTargetProvider implementation="com.intellij.python.ruff.codeinsight.RuffErrorCodeCompletionDocumentationProvider"/>
+    <platform.backend.documentation.lookupElementTargetProvider implementation="com.intellij.python.ruff.codeinsight.RuffConfigOptionCompletionDocumentationProvider"/>
+    <platform.backend.documentation.targetProvider implementation="com.intellij.python.ruff.codeinsight.RuffErrorCodeDocumentationProvider"/>
+    <platform.backend.documentation.targetProvider implementation="com.intellij.python.ruff.codeinsight.RuffConfigOptionDocumentationProvider"/>
+    <completion.contributor language="Python" implementationClass="com.intellij.python.ruff.codeinsight.RuffErrorCodeCompletionContributor" order="before PyDocstringCompletionContributor"/>
+    <completion.contributor language="TOML" implementationClass="com.intellij.python.ruff.codeinsight.RuffErrorCodeCompletionContributor"/>
+    <psi.referenceContributor language="Python" implementation="com.intellij.python.ruff.codeinsight.RuffErrorCodeReferenceContributor"/>
+    <psi.referenceContributor language="TOML" implementation="com.intellij.python.ruff.codeinsight.RuffErrorCodeReferenceContributor"/>
+    <externalAnnotator language="TOML" implementationClass="com.intellij.python.ruff.codeinsight.RuffConfigExternalAnnotator"/>
+    <projectSettings service="com.intellij.python.ruff.RuffConfiguration"/>
+    <python.pytools.pyTool implementation="com.intellij.python.ruff.RuffPyTool"/>
+  </extensions>
+</idea-plugin>

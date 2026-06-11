@@ -116,6 +116,12 @@
 - name: lib/modules/intellij.python.langInjection.jar
   contentModules:
   - name: intellij.python.langInjection
+- name: lib/modules/intellij.python.lsp.core.jar
+  contentModules:
+  - name: intellij.python.lsp.core
+- name: lib/modules/intellij.python.lsp.impl.jar
+  contentModules:
+  - name: intellij.python.lsp.impl
 - name: lib/modules/intellij.python.markdown.jar
   contentModules:
   - name: intellij.python.markdown
@@ -161,6 +167,12 @@
 - name: lib/modules/intellij.python.pyproject.jar
   contentModules:
   - name: intellij.python.pyproject
+- name: lib/modules/intellij.python.pyrefly.jar
+  contentModules:
+  - name: intellij.python.pyrefly
+- name: lib/modules/intellij.python.pyright.jar
+  contentModules:
+  - name: intellij.python.pyright
 - name: lib/modules/intellij.python.pytools.jar
   contentModules:
   - name: intellij.python.pytools
@@ -170,6 +182,9 @@
 - name: lib/modules/intellij.python.requirements.jar
   contentModules:
   - name: intellij.python.requirements
+- name: lib/modules/intellij.python.ruff.jar
+  contentModules:
+  - name: intellij.python.ruff
 - name: lib/modules/intellij.python.sdk.jar
   contentModules:
   - name: intellij.python.sdk
@@ -200,6 +215,12 @@
 - name: lib/modules/intellij.python.terminal.shared.jar
   contentModules:
   - name: intellij.python.terminal.shared
+- name: lib/modules/intellij.python.ty.jar
+  contentModules:
+  - name: intellij.python.ty
+- name: lib/modules/intellij.python.typeEngine.jar
+  contentModules:
+  - name: intellij.python.typeEngine
 - name: lib/modules/intellij.python.uv.backend.jar
   contentModules:
   - name: intellij.python.uv.backend
