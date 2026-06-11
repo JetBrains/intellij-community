@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.collections;
 
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -70,6 +70,7 @@ public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
   public void testImmutableSetVarArgArray() { doTest("new HashSet<>()"); }
   public void testImmutableSetVarArgTernary() { doTest("new HashSet<>()"); }
   public void testInsideTernary() { doTest("new ArrayList<>()"); }
+  public void testShorten() { doTest("new ArrayList<>()"); }
 
   @Override
   protected void doTest(@NotNull String expression) {
@@ -81,9 +82,8 @@ public class ReplaceWithMutableCollectionIntentionTest extends IPPTestCase {
     return "collections/to_mutable_collection";
   }
 
-  @NotNull
   @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_15;
   }
 }

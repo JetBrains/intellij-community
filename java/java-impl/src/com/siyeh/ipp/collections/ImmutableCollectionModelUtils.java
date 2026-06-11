@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.collections;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -238,6 +238,7 @@ final class ImmutableCollectionModelUtils {
       else {
         PsiReplacementUtil.replaceExpression(call, name, new CommentTracker());
       }
+      myCodeStyleManager.shortenClassReferences(declaration);
       myUpdater.rename(declaredVariable, List.of(names));
     }
 
