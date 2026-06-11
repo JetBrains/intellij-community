@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.SweepProcessor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -85,7 +84,7 @@ public final class BackgroundUpdateHighlightersUtil {
     // ignore annotators/inspections, they are applied via HighlightInfoUpdater
     List<HighlightInfo> filteredInfos = UpdateHighlightersUtil.HighlightInfoPostFilters.applyPostAndAdditionalFilter(project, infos, info->!info.isFromAnnotator() && !info.isFromInspection());
     Document document = session.getDocument();
-    MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
+    MarkupModelEx markup = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
 
     SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);
     ContainerUtil.quickSort(filteredInfos, UpdateHighlightersUtil.BY_ACTUAL_START_OFFSET_NO_DUPS);
@@ -115,7 +114,7 @@ public final class BackgroundUpdateHighlightersUtil {
       List<HighlightInfo> fileLevelHighlights = new ArrayList<>();
       List<HighlightInfo> infosToCreateHighlightersFor = new ArrayList<>(filteredInfos.size());
 
-      DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside((MarkupModelEx)markup, priorityRange.getStartOffset(), priorityRange.getEndOffset(), session.getCodeInsightContext(), processor);
+      DaemonCodeAnalyzerEx.processHighlightsOverlappingOutside(markup, priorityRange.getStartOffset(), priorityRange.getEndOffset(), session.getCodeInsightContext(), processor);
       SweepProcessor.sweep(generator, (_, info, atStart, overlappingIntervals) -> {
         if (!atStart) return true;
         if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && !restrictedRange.contains(info)) {
@@ -139,7 +138,7 @@ public final class BackgroundUpdateHighlightersUtil {
         return true;
       });
       for (HighlightInfo info : infosToCreateHighlightersFor) {
-        createOrReuseHighlighterFor(info, document, group, psiFile, (MarkupModelEx)markup, toReuse, range2markerCache, severityRegistrar, session);
+        createOrReuseHighlighterFor(info, document, group, psiFile, markup, toReuse, range2markerCache, severityRegistrar, session);
       }
       boolean shouldClean = restrictedRange.getStartOffset() == 0 && restrictedRange.getEndOffset() == document.getTextLength();
       updateFileLevelHighlights(fileLevelHighlights, group, shouldClean, toReuse, psiFile, session);
@@ -159,9 +158,8 @@ public final class BackgroundUpdateHighlightersUtil {
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(psiFile.getProject());
     boolean shouldUpdate = !fileLevelHighlights.isEmpty() || codeAnalyzer.hasFileLevelHighlights(group, psiFile);
     if (shouldUpdate) {
-      List<RangeHighlighter> reusedHighlighters = ContainerUtil.map(fileLevelHighlights, info->recycler.pickupFileLevelRangeHighlighter(
-        psiFile.getTextLength(), info.getDescription()));
-
+      List<RangeHighlighter> reusedHighlighters = ContainerUtil.map(fileLevelHighlights, info->
+        recycler.pickupHighlighterFromGarbageBin(0, psiFile.getTextLength(), HighlightInfoUpdaterImpl.FILE_LEVEL_FAKE_LAYER, info.getDescription()));
       session.updateFileLevelHighlights(fileLevelHighlights, reusedHighlighters, group, cleanOldHighlights, psiFile);
     }
   }
@@ -249,7 +247,6 @@ public final class BackgroundUpdateHighlightersUtil {
     return TextRangeScalarUtil.toScalarRange(infoStartOffset, infoEndOffset);
   }
 
-  @Deprecated
   private static void createOrReuseHighlighterFor(@NotNull HighlightInfo info,
                                                   @NotNull Document document,
                                                   int group,
@@ -279,7 +276,7 @@ public final class BackgroundUpdateHighlightersUtil {
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
-    RangeHighlighterEx salvagedHighlighter = (RangeHighlighterEx)recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, info.getDescription());
+    RangeHighlighterEx salvagedHighlighter = recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, info.getDescription());
 
     if (info.isFileLevelAnnotation()) {
       HighlightInfo oldFileInfo = salvagedHighlighter == null ? null : HighlightInfo.fromRangeHighlighter(salvagedHighlighter);

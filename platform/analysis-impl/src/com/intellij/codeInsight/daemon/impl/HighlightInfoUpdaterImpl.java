@@ -386,7 +386,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
     }
   }
 
-  @SuppressWarnings("UsagesOfObsoleteApi")
   static @NotNull String currentProgressInfo() {
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
     ProgressIndicator original = ProgressWrapper.unwrap(indicator);

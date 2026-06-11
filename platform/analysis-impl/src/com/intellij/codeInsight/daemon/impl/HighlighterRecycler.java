@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.RangeMarkerImpl;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,7 +43,7 @@ final class HighlighterRecycler {
   }
 
   // null means no highlighter found in the cache
-  synchronized @Nullable RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer, @Nullable String preferredDescription) {
+  synchronized @Nullable RangeHighlighterEx pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer, @Nullable String preferredDescription) {
     long range = TextRangeScalarUtil.toScalarRange(startOffset, endOffset);
     List<HighlightInfo> list = incinerator.get(range);
     if (list == null) {
@@ -82,11 +81,6 @@ final class HighlighterRecycler {
   //
   private synchronized @NotNull @Unmodifiable Collection<? extends HighlightInfo> forAllInGarbageBin() {
     return ContainerUtil.flatten(incinerator.values());
-  }
-
-  @Nullable
-  RangeHighlighter pickupFileLevelRangeHighlighter(int fileTextLength, @Nullable String description) {
-    return pickupHighlighterFromGarbageBin(0, fileTextLength, HighlightInfoUpdaterImpl.FILE_LEVEL_FAKE_LAYER, description);
   }
 
   /**
