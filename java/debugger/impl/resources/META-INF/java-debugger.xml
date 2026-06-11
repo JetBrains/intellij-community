@@ -332,8 +332,8 @@
                  description="Enable async stack traces implementation via breakpoints"/>
     <registryKey key="debugger.breakpoint.instrumentation" defaultValue="true"
                  description="Use instrumentation conditional and logging breakpoints if possible"/>
-    <registryKey key="debugger.breakpoint.instrumentation.hotswap.mode" defaultValue="[NONE|PRESERVE_EXTERNAL|INSTALL_EXTERNAL|PENDING*]"
-                 description="Nested breakpoint instrumentation HotSwap mode. Each option includes previous ones"/>
+    <registryKey key="debugger.breakpoint.instrumentation.hotswap.mode" defaultValue="[NONE|SUPPORT_ONLY_EXTERNAL_HOTSWAP|INSTALL_WHEN_TARGET_METHODS_NOT_ON_STACK|WITH_INSTRUMENTATION_PENDING*]"
+                 description="Nested breakpoint instrumentation HotSwap mode. Each option includes previous ones."/>
     <registryKey key="debugger.helper.method.stack.scan.timeout.ms" defaultValue="200"
                  description="Timeout (in ms) for helper-based method stack scans"/>
     <registryKey key="debugger.breakpoint.instrumentation.suspend.context.wait.timeout.ms" defaultValue="200"
