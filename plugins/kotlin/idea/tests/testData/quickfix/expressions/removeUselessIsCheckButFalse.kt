@@ -1,4 +1,5 @@
 // "Remove redundant 'is' check" "true"
+// K2_ERROR: Check for instance is always 'false'.
 fun foo(a: String) {
     if (<caret>a is Int) {
 
