@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.registry.Registry
 import junit.framework.TestCase.assertTrue
 import org.jetbrains.idea.maven.execution.MavenRunner
@@ -31,6 +32,13 @@ fun MavenImportingTestFixture.setupJdkForModule(moduleName: String): Sdk {
 }
 
 fun MavenImportingTestFixture.executeGoal(relativePath: String?, goal: String) {
+  // Running a Maven goal requires a project JDK (legacy MavenTestCase.setUp did this via setupCustomJdk()).
+  val sdk = JavaAwareProjectJdkTableImpl.getInstanceEx().internalJdk
+  WriteAction.runAndWait<RuntimeException> {
+    val table = ProjectJdkTable.getInstance(project)
+    if (table.findJdk(sdk.name) == null) table.addJdk(sdk, disposable)
+    ProjectRootManager.getInstance(project).projectSdk = sdk
+  }
   val dir = projectRoot.findFileByRelativePath(relativePath!!)
   val rp = MavenRunnerParameters(true, dir!!.path, null as String?, listOf(goal), emptyList())
   val rs = MavenRunnerSettings()
