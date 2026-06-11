@@ -2,8 +2,6 @@
 package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.codex.common.CodexCliUtils
-import com.intellij.agent.workbench.chat.RecordingAgentChatTerminalHarness
-import com.intellij.agent.workbench.chat.RecordingTerminalSentText
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
@@ -11,32 +9,17 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.ui.captureNewTaskPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.assertNewThreadPromptLaunchOpensNewChat
-import com.intellij.agent.workbench.sessions.launchNewThreadPromptRequestWithDefaultChatOpenExecutor
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.TestDisposable
-import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
-import com.intellij.testFramework.junit5.fixture.projectFixture
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.milliseconds
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexNewThreadPromptLaunchIntegrationTest {
-  private val projectFixture = projectFixture(openAfterCreation = true)
-  private val project get() = projectFixture.get()
-  private val fileEditorManagerFixture = projectFixture.fileEditorManagerFixture()
-
   @Test
   fun globalPromptNewTaskPlanModeUsesPostStartDispatch() {
     val descriptor = descriptor()
@@ -65,61 +48,6 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("", PLAN_PROMPT)
     assertThat(observation.initialMessageToken).isNotNull()
   }
-
-  @Test
-  fun globalPromptNewTaskPlanModeStartsCodexThenDispatchesPromptInTerminal(@TestDisposable disposable: Disposable): Unit =
-    timeoutRunBlocking {
-      val descriptor = descriptor()
-      val terminalHarness = RecordingAgentChatTerminalHarness()
-      runInUi {
-        fileEditorManagerFixture.get()
-        terminalHarness.registerEditorFactory(disposable)
-      }
-
-      val projectPath = checkNotNull(project.basePath)
-      val request = captureNewTaskPromptLaunchRequest(
-        descriptor = descriptor,
-        prompt = PLAN_PROMPT,
-        workingProjectPath = projectPath,
-        project = project,
-      ).copy(preferredDedicatedFrame = false)
-
-      assertThat(request.provider).isEqualTo(AgentSessionProvider.CODEX)
-      assertThat(request.projectPath).isEqualTo(projectPath)
-      assertThat(request.initialMessageRequest.prompt).isEqualTo(PLAN_PROMPT)
-      assertThat(request.initialMessageRequest.providerOptionIds).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
-      assertThat(request.targetThreadId).isNull()
-
-      launchNewThreadPromptRequestWithDefaultChatOpenExecutor(
-        descriptor = descriptor,
-        request = request,
-        openedChatHandler = { openedProject, openedFile ->
-          terminalHarness.activateAgentChatEditor(project = openedProject, file = openedFile)
-        },
-      ) {
-        waitForCondition(timeoutMs = 10_000) {
-          terminalHarness.createCalls == 1
-        }
-
-        terminalHarness.setRunning()
-
-        waitForCondition(timeoutMs = 10_000) {
-          terminalHarness.backTabCalls == 1 && terminalHarness.sentTexts.size == 1
-        }
-        waitForCondition(timeoutMs = 10_000) {
-          terminalHarness.openedFileSnapshots().singleOrNull()?.initialMessageSent == true
-        }
-      }
-
-      val startupCommand = terminalHarness.startupLaunchSpecs.single().command
-      assertThat(startupCommand).containsExactlyElementsOf(CODEX_BASE_COMMAND)
-      assertThat(startupCommand).doesNotContain("--")
-      assertThat(startupCommand).doesNotContain(PLAN_PROMPT)
-      assertThat(terminalHarness.backTabCalls).isEqualTo(1)
-      assertThat(terminalHarness.sentTexts)
-        .containsExactly(RecordingTerminalSentText(PLAN_PROMPT, shouldExecute = true, useBracketedPasteMode = true))
-      assertThat(terminalHarness.openedFileSnapshots().single().initialMessageDispatchStepIndex).isEqualTo(2)
-    }
 
   @Test
   fun newThreadPlanModePromptUsesLocalSessionDispatch() {
@@ -174,23 +102,6 @@ class CodexNewThreadPromptLaunchIntegrationTest {
     assertThat(observation.postStartDispatchSteps.single().text).isEqualTo("Refactor selected code")
     assertThat(observation.initialMessageToken).isNotNull()
   }
-}
-
-private suspend fun <T> runInUi(action: suspend () -> T): T {
-  return withContext(Dispatchers.UiWithModelAccess) {
-    action()
-  }
-}
-
-private suspend fun waitForCondition(timeoutMs: Long = 5_000, condition: suspend () -> Boolean) {
-  val deadline = System.currentTimeMillis() + timeoutMs
-  while (System.currentTimeMillis() < deadline) {
-    if (condition()) {
-      return
-    }
-    delay(20.milliseconds)
-  }
-  throw AssertionError("Condition was not satisfied within ${timeoutMs}ms")
 }
 
 private fun descriptor(): CodexAgentSessionProviderDescriptor {

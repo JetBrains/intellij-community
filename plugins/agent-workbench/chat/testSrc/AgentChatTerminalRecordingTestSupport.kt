@@ -5,10 +5,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminal
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
@@ -21,7 +19,10 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
@@ -32,9 +33,8 @@ import kotlin.time.Duration.Companion.milliseconds
 
 class RecordingAgentChatTerminalHarness {
   private val terminalTabs = RecordingAgentChatTerminalTabs()
-
-  val createCalls: Int
-    get() = terminalTabs.createCalls.get()
+  private val openedFileSnapshotsByKey: ConcurrentHashMap<String, RecordingAgentChatOpenedFileSnapshot> = ConcurrentHashMap()
+  private val openedFileSnapshotsFlow: MutableStateFlow<List<RecordingAgentChatOpenedFileSnapshot>> = MutableStateFlow(emptyList())
 
   val startupLaunchSpecs: List<AgentSessionTerminalLaunchSpec>
     get() = terminalTabs.startupLaunchSpecs.toList()
@@ -47,7 +47,10 @@ class RecordingAgentChatTerminalHarness {
 
   fun registerEditorFactory(parentDisposable: Disposable) {
     registerAgentChatFileEditorFactoryOverrideForTests(
-      RecordingAgentChatFileEditorFactory(terminalTabs),
+      RecordingAgentChatFileEditorFactory(
+        terminalTabs = terminalTabs,
+        recordSnapshot = ::recordSnapshot,
+      ),
       parentDisposable,
     )
   }
@@ -64,12 +67,35 @@ class RecordingAgentChatTerminalHarness {
     }
   }
 
-  suspend fun openedFileSnapshots(): List<RecordingAgentChatOpenedFileSnapshot> {
-    return withContext(Dispatchers.UiWithModelAccess) {
-      ProjectManager.getInstance().openProjects.flatMap { project ->
-        openAgentChatFiles(project).map(::snapshot)
-      }
+  suspend fun awaitCreateCalls(expected: Int, timeoutMs: Long = TERMINAL_HARNESS_WAIT_TIMEOUT_MS) {
+    withTimeout(timeoutMs.milliseconds) {
+      terminalTabs.createCallsFlow.first { calls -> calls >= expected }
     }
+  }
+
+  suspend fun awaitBackTabCalls(expected: Int, timeoutMs: Long = TERMINAL_HARNESS_WAIT_TIMEOUT_MS) {
+    withTimeout(timeoutMs.milliseconds) {
+      terminalTabs.tab.backTabCallsFlow.first { calls -> calls >= expected }
+    }
+  }
+
+  suspend fun awaitSentTexts(expectedSize: Int, timeoutMs: Long = TERMINAL_HARNESS_WAIT_TIMEOUT_MS): List<RecordingTerminalSentText> {
+    return withTimeout(timeoutMs.milliseconds) {
+      terminalTabs.tab.sentTextsFlow.first { texts -> texts.size >= expectedSize }
+    }
+  }
+
+  suspend fun awaitInitialMessageSent(timeoutMs: Long = TERMINAL_HARNESS_WAIT_TIMEOUT_MS): RecordingAgentChatOpenedFileSnapshot {
+    return withTimeout(timeoutMs.milliseconds) {
+      openedFileSnapshotsFlow.first { snapshots ->
+        snapshots.any { snapshot -> snapshot.initialMessageSent }
+      }.single { snapshot -> snapshot.initialMessageSent }
+    }
+  }
+
+  private fun recordSnapshot(snapshot: AgentChatTabSnapshot) {
+    openedFileSnapshotsByKey[snapshot.tabKey.toString()] = recordingSnapshot(snapshot)
+    openedFileSnapshotsFlow.value = openedFileSnapshotsByKey.values.toList()
   }
 
   private fun activateAgentChatEditors(
@@ -109,6 +135,7 @@ data class RecordingAgentChatOpenedFileSnapshot(
 
 private class RecordingAgentChatFileEditorFactory(
   private val terminalTabs: RecordingAgentChatTerminalTabs,
+  private val recordSnapshot: (AgentChatTabSnapshot) -> Unit,
 ) : AgentChatFileEditorFactory {
   override fun create(project: Project, file: AgentChatVirtualFile, editorCoroutineScope: CoroutineScope?): AgentChatFileEditor {
     return AgentChatFileEditor(
@@ -116,6 +143,7 @@ private class RecordingAgentChatFileEditorFactory(
       file = file,
       terminalTabs = terminalTabs,
       tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot ->
+        recordSnapshot(snapshot)
         project.service<AgentChatTabsService>().upsert(snapshot)
       },
       editorCoroutineScope = editorCoroutineScope,
@@ -127,6 +155,7 @@ private class RecordingAgentChatFileEditorFactory(
 
 private class RecordingAgentChatTerminalTabs : AgentChatTerminalTabs {
   val createCalls: AtomicInteger = AtomicInteger()
+  val createCallsFlow: MutableStateFlow<Int> = MutableStateFlow(0)
   val startupLaunchSpecs: CopyOnWriteArrayList<AgentSessionTerminalLaunchSpec> = CopyOnWriteArrayList()
   val tab: RecordingAgentChatTerminalTab = RecordingAgentChatTerminalTab()
 
@@ -136,7 +165,7 @@ private class RecordingAgentChatTerminalTabs : AgentChatTerminalTabs {
     startupLaunchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentChatTerminalTab {
     startupLaunchSpecs += startupLaunchSpec
-    createCalls.incrementAndGet()
+    createCallsFlow.value = createCalls.incrementAndGet()
     return tab
   }
 
@@ -156,7 +185,9 @@ private class RecordingAgentChatTerminalTab : AgentChatTerminalTab {
   override val keyEventsFlow: Flow<TerminalKeyEvent> = emptyFlow()
 
   val sentTexts: CopyOnWriteArrayList<RecordingTerminalSentText> = CopyOnWriteArrayList()
+  val sentTextsFlow: MutableStateFlow<List<RecordingTerminalSentText>> = MutableStateFlow(emptyList())
   val backTabCalls: AtomicInteger = AtomicInteger()
+  val backTabCallsFlow: MutableStateFlow<Int> = MutableStateFlow(0)
 
   @Volatile
   private var recentOutputTail: String = ""
@@ -221,10 +252,11 @@ private class RecordingAgentChatTerminalTab : AgentChatTerminalTab {
 
   override fun sendText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean) {
     sentTexts += RecordingTerminalSentText(text, shouldExecute, useBracketedPasteMode)
+    sentTextsFlow.value = sentTexts.toList()
   }
 
   override fun sendBackTab(): Boolean {
-    backTabCalls.incrementAndGet()
+    backTabCallsFlow.value = backTabCalls.incrementAndGet()
     emitPlanModeOutput()
     return true
   }
@@ -249,17 +281,15 @@ private data class RecordingTerminalOutputChunk(
   @JvmField val text: String,
 )
 
-private fun snapshot(file: AgentChatVirtualFile): RecordingAgentChatOpenedFileSnapshot {
+private fun recordingSnapshot(snapshot: AgentChatTabSnapshot): RecordingAgentChatOpenedFileSnapshot {
   return RecordingAgentChatOpenedFileSnapshot(
-    projectPath = file.projectPath,
-    threadIdentity = file.threadIdentity,
-    threadId = file.threadId,
-    threadTitle = file.threadTitle,
-    initialMessageDispatchStepIndex = file.initialMessageDispatchStepIndex,
-    initialMessageSent = file.initialMessageSent,
+    projectPath = snapshot.identity.projectPath,
+    threadIdentity = snapshot.identity.threadIdentity,
+    threadId = snapshot.runtime.threadId,
+    threadTitle = snapshot.runtime.threadTitle,
+    initialMessageDispatchStepIndex = snapshot.runtime.initialMessageDispatchStepIndex,
+    initialMessageSent = snapshot.runtime.initialMessageSent,
   )
 }
 
-private fun openAgentChatFiles(project: Project): List<AgentChatVirtualFile> {
-  return FileEditorManager.getInstance(project).openFiles.filterIsInstance<AgentChatVirtualFile>()
-}
+private const val TERMINAL_HARNESS_WAIT_TIMEOUT_MS: Long = 30_000
