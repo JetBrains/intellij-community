@@ -1,0 +1,5 @@
+interface A {
+    val bar: Int
+}
+
+class X(override val bar: Int,): A {}

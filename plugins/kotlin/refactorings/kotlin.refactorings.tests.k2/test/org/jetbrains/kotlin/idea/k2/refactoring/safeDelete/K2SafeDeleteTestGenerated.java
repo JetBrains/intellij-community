@@ -391,6 +391,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement1.kt");
         }
 
+        @TestMetadata("implement10.kt")
+        public void testImplement10() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement10.kt");
+        }
+
         @TestMetadata("implement2.kt")
         public void testImplement2() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement2.kt");
@@ -424,6 +429,11 @@ public abstract class K2SafeDeleteTestGenerated extends AbstractK2SafeDeleteTest
         @TestMetadata("implement8.kt")
         public void testImplement8() throws Exception {
             runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement8.kt");
+        }
+
+        @TestMetadata("implement9.kt")
+        public void testImplement9() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/safeDelete/deleteProperty/kotlinProperty/implement9.kt");
         }
 
         @TestMetadata("localVar.kt")
