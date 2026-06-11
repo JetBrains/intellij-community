@@ -95,6 +95,8 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        Array<out Short>.sum(): Int
        Array<out Short>.toShortArray(): ShortArray
        Array<out T>.all(predicate: (T) -> Boolean): Boolean
+       Array<out T>.allDistinct(): Boolean
+       Array<out T>.allDistinctBy(selector: (T) -> K): Boolean
        Array<out T>.allEqual(): Boolean
        Array<out T>.allEqualBy(selector: (T) -> K): Boolean
        Array<out T>.any(): Boolean
@@ -314,6 +316,8 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        Array<T>.sortedArrayDescending(): Array<T>
        Array<T?>.requireNoNulls(): Array<T>
        BooleanArray.all(predicate: (Boolean) -> Boolean): Boolean
+       BooleanArray.allDistinct(): Boolean
+       BooleanArray.allDistinctBy(selector: (Boolean) -> K): Boolean
        BooleanArray.allEqual(): Boolean
        BooleanArray.allEqualBy(selector: (Boolean) -> K): Boolean
        BooleanArray.any(): Boolean
@@ -500,6 +504,8 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        BooleanArray?.contentHashCode(): Int
        BooleanArray?.contentToString(): String
        ByteArray.all(predicate: (Byte) -> Boolean): Boolean
+       ByteArray.allDistinct(): Boolean
+       ByteArray.allDistinctBy(selector: (Byte) -> K): Boolean
        ByteArray.allEqual(): Boolean
        ByteArray.allEqualBy(selector: (Byte) -> K): Boolean
        ByteArray.any(): Boolean
@@ -700,6 +706,8 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        ByteArray?.contentHashCode(): Int
        ByteArray?.contentToString(): String
        CharArray.all(predicate: (Char) -> Boolean): Boolean
+       CharArray.allDistinct(): Boolean
+       CharArray.allDistinctBy(selector: (Char) -> K): Boolean
        CharArray.allEqual(): Boolean
        CharArray.allEqualBy(selector: (Char) -> K): Boolean
        CharArray.any(): Boolean
@@ -898,6 +906,8 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        CharArray?.contentHashCode(): Int
        CharArray?.contentToString(): String
        DoubleArray.all(predicate: (Double) -> Boolean): Boolean
+       DoubleArray.allDistinct(): Boolean
+       DoubleArray.allDistinctBy(selector: (Double) -> K): Boolean
        DoubleArray.allEqual(): Boolean
        DoubleArray.allEqualBy(selector: (Double) -> K): Boolean
        DoubleArray.any(): Boolean
@@ -1098,6 +1108,8 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        DoubleArray?.contentHashCode(): Int
        DoubleArray?.contentToString(): String
        FloatArray.all(predicate: (Float) -> Boolean): Boolean
+       FloatArray.allDistinct(): Boolean
+       FloatArray.allDistinctBy(selector: (Float) -> K): Boolean
        FloatArray.allEqual(): Boolean
        FloatArray.allEqualBy(selector: (Float) -> K): Boolean
        FloatArray.any(): Boolean
@@ -1307,6 +1319,8 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        indices: IntRange
        indices: IntRange
        IntArray.all(predicate: (Int) -> Boolean): Boolean
+       IntArray.allDistinct(): Boolean
+       IntArray.allDistinctBy(selector: (Int) -> K): Boolean
        IntArray.allEqual(): Boolean
        IntArray.allEqualBy(selector: (Int) -> K): Boolean
        IntArray.any(): Boolean
@@ -1516,6 +1530,8 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        lastIndex: Int
        lastIndex: Int
        LongArray.all(predicate: (Long) -> Boolean): Boolean
+       LongArray.allDistinct(): Boolean
+       LongArray.allDistinctBy(selector: (Long) -> K): Boolean
        LongArray.allEqual(): Boolean
        LongArray.allEqualBy(selector: (Long) -> K): Boolean
        LongArray.any(): Boolean
@@ -1716,6 +1732,8 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
        LongArray?.contentHashCode(): Int
        LongArray?.contentToString(): String
        ShortArray.all(predicate: (Short) -> Boolean): Boolean
+       ShortArray.allDistinct(): Boolean
+       ShortArray.allDistinctBy(selector: (Short) -> K): Boolean
        ShortArray.allEqual(): Boolean
        ShortArray.allEqualBy(selector: (Short) -> K): Boolean
        ShortArray.any(): Boolean
