@@ -842,6 +842,7 @@ private fun readInclude(
       PluginXmlConst.INCLUDE_HREF_ATTR -> path = getNullifiedAttributeValue(reader, i)
       PluginXmlConst.INCLUDE_XPOINTER_ATTR -> pointer = reader.getAttributeValue(i)?.takeIf { !it.isEmpty() && it != allowedPointer }
       PluginXmlConst.INCLUDE_INCLUDE_IF_ATTR -> {
+        LOG.error("includeIf attribute support is deprecated and is planned for removal in 26.3 version IJPL-215563 (plugin id=${builder.id}, location=${reader.location})")
         checkConditionalIncludeIsSupported("includeIf", builder)
         val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
         if (value != "true") {
@@ -850,6 +851,7 @@ private fun readInclude(
         }
       }
       PluginXmlConst.INCLUDE_INCLUDE_UNLESS_ATTR -> {
+        LOG.error("includeUnless attribute support is deprecated and is planned for removal in 26.3 version IJPL-215563 (plugin id=${builder.id}, location=${reader.location})")
         checkConditionalIncludeIsSupported("includeUnless", builder)
         val value = reader.getAttributeValue(i)?.let { System.getProperty(it) }
         if (value == "true") {
