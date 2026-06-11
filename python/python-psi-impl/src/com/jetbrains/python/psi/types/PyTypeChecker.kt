@@ -550,7 +550,11 @@ object PyTypeChecker {
         val matched = withoutRecording(context) { matchOverloadWithCallable(expected, actual, context, true) }
         return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
       }
-      return Optional.of(recordOverloadLeaf(context, expected, actual, false))
+      // For assignability, an overload is the intersection of its items, so the actual type must match each expected item.
+      val matched = withoutRecording(context) {
+        expected.items.all { item -> match(item, actual, context).getOrDefault(true) }
+      }
+      return Optional.of(recordOverloadLeaf(context, expected, actual, matched))
     }
 
     if (actual is PyOverloadType) {
