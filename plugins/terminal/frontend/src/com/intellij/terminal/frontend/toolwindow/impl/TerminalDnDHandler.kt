@@ -62,8 +62,8 @@ internal object TerminalDnDHandler {
     val context = getTerminalContext(terminalView) ?: return
 
     terminalView.coroutineScope.launch {
-      val droppedFiles = data.virtualFiles ?: resolveVirtualFiles(data.paths)
-      val textToInsert = FilePathsHandler.getFilesAsText(droppedFiles, context).ifEmpty { return@launch }
+      val droppedFiles = data.virtualFiles ?: TerminalFilePathHandler.resolveVirtualFiles(data.paths)
+      val textToInsert = TerminalFilePathHandler.getFilesAsText(droppedFiles, context).ifEmpty { return@launch }
 
       terminalView.createSendTextBuilder()
         .useBracketedPasteMode()
@@ -77,7 +77,7 @@ internal object TerminalDnDHandler {
 
     coroutineScope.launch {
       val project = window.project
-      val droppedFiles = data.virtualFiles ?: resolveVirtualFiles(data.paths)
+      val droppedFiles = data.virtualFiles ?: TerminalFilePathHandler.resolveVirtualFiles(data.paths)
       val dir = getDirectory(droppedFiles.firstOrNull(), project) ?: return@launch
 
       val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.DND_FILE_TO_TOOLWINDOW)
@@ -105,7 +105,7 @@ internal object TerminalDnDHandler {
     if (file == null) return null
 
     val filePath = file.toNioPathOrNull() ?: return null
-    if (!isSameEnvironment(filePath, project.getEelDescriptor()))
+    if (!TerminalFilePathHandler.isSameEnvironment(filePath, project.getEelDescriptor()))
       return null
 
     return if (file.isDirectory) file else file.parent

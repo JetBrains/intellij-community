@@ -21,8 +21,8 @@ import org.jetbrains.plugins.terminal.startup.TerminalLocalPathTranslator
 import org.jetbrains.plugins.terminal.util.getNow
 import java.nio.file.Path
 
-internal object FilePathsHandler {
-  fun getFilesAsText(files: List<VirtualFile>, context: TerminalContext): String {
+internal object TerminalFilePathHandler {
+  fun getFilesAsText(files: List<VirtualFile>, context: TerminalProcessContext): String {
     return files.mapNotNull { file -> getPathToInsert(file, context.eelDescriptor) }
       .joinToString(" ") { path -> escapeShellArgument(path, context.shellName) }
   }
@@ -63,25 +63,25 @@ internal object FilePathsHandler {
 
     return TerminalLocalPathTranslator(eelDescriptor).translateAbsoluteLocalPathToRemote(nioPath)?.toString()
   }
+
+  internal fun isSameEnvironment(filePath: Path, eelDescriptor: EelDescriptor): Boolean {
+    val fileMachine = filePath.getEelDescriptor().getResolvedEelMachine() ?: return false
+    val eelMachine = eelDescriptor.getResolvedEelMachine() ?: return false
+    return fileMachine == eelMachine
+  }
+
+  internal suspend fun resolveVirtualFiles(paths: List<Path>): List<VirtualFile> = withContext(Dispatchers.IO) {
+    paths.mapNotNull { path -> VfsUtil.findFile(path, true) }
+  }
 }
 
-internal data class TerminalContext(
+internal data class TerminalProcessContext(
   val eelDescriptor: EelDescriptor,
   val shellName: ShellName,
 )
 
-internal fun getTerminalContext(terminalView: TerminalView): TerminalContext? {
+internal fun getTerminalContext(terminalView: TerminalView): TerminalProcessContext? {
   val eelDescriptor = terminalView.sessionDeferred.getNow()?.eelDescriptor ?: return null
   val shellName = terminalView.startupOptionsDeferred.getNow()?.guessShellName() ?: ShellName.of("unknown")
-  return TerminalContext(eelDescriptor, shellName)
-}
-
-internal fun isSameEnvironment(filePath: Path, eelDescriptor: EelDescriptor): Boolean {
-  val fileMachine = filePath.getEelDescriptor().getResolvedEelMachine() ?: return false
-  val eelMachine = eelDescriptor.getResolvedEelMachine() ?: return false
-  return fileMachine == eelMachine
-}
-
-internal suspend fun resolveVirtualFiles(paths: List<Path>): List<VirtualFile> = withContext(Dispatchers.IO) {
-  paths.mapNotNull { path -> VfsUtil.findFile(path, true) }
+  return TerminalProcessContext(eelDescriptor, shellName)
 }
