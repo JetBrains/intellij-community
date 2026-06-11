@@ -3,6 +3,10 @@
 package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.module.JavaModuleType
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TestDialogManager
@@ -10,6 +14,7 @@ import com.intellij.openapi.util.io.findOrCreateFile
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.project.MavenSettingsCache
@@ -168,4 +173,28 @@ fun MavenTestFixture.mn(parent: String, moduleName: String): String = moduleName
 
 fun MavenTestFixture.configConfirmationForYesAnswer() {
   TestDialogManager.setTestDialog { Messages.YES }
+}
+
+fun MavenTestFixture.createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): String {
+  return MavenTestCase.createPomXml(modelVersion, xml, false)
+}
+
+val MavenTestFixture.projectPath: Path
+  get() = Path.of(project.basePath!!)
+
+fun MavenTestFixture.createModule(name: String): Module {
+  return WriteCommandAction.writeCommandAction(project).compute<Module, RuntimeException> {
+    val file = createProjectSubFile("$name/$name.iml")
+    val module = ModuleManager.getInstance(project).newModule(file.path, JavaModuleType.getModuleType().id)
+    PsiTestUtil.addContentRoot(module, file.parent!!)
+    module
+  }
+}
+
+fun MavenImportingTestFixture.createSettingsXml(@Language(value = "XML", prefix = "<settings>", suffix = "</settings>") innerContent: String): VirtualFile {
+  val content = "<settings>$innerContent</settings>\r\n"
+  val path = dir.resolve("settings.xml")
+  Files.writeString(path, content)
+  projectsManager.generalSettings.setUserSettingsFile(path.toString())
+  return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
 }

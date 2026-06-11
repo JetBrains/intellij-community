@@ -5,8 +5,8 @@ import com.intellij.openapi.application.readAction
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.HighlightPointer
-import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertContain
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertContain
 import org.jetbrains.idea.maven.fixtures.assertHighlighted
 import org.jetbrains.idea.maven.fixtures.assertSearchResults
 import org.jetbrains.idea.maven.fixtures.assertSearchResultsInclude

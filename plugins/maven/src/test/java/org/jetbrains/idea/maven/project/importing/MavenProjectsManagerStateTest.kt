@@ -1,26 +1,48 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertUnorderedElementsAreEqual
+import org.jetbrains.idea.maven.fixtures.assertUnorderedPathsAreEqual
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.importProjectsAsync
+import org.jetbrains.idea.maven.fixtures.initProjectsManager
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.setIgnoredFilesPathForNextImport
+import org.jetbrains.idea.maven.fixtures.setIgnoredPathPatternsForNextImport
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() {
-    super.setUp()
-    initProjectsManager(true)
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenProjectsManagerStateTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
+  @BeforeEach
+  fun setUp() {
+    maven.initProjectsManager(true)
   }
 
   @Test
   fun testSavingAndLoadingState() = runBlocking {
-    var state = projectsManager.getState()
+    var state = maven.projectsManager.getState()
     assertTrue(state.originalFiles.isEmpty())
     assertTrue(state.enabledProfiles.isEmpty())
     assertTrue(state.ignoredFiles.isEmpty())
     assertTrue(state.ignoredPathMasks.isEmpty())
 
-    val p1 = createModulePom("project1",
+    val p1 = maven.createModulePom("project1",
                              """
                                        <groupId>test</groupId>
                                        <artifactId>project1</artifactId>
@@ -38,7 +60,7 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
                                        </profiles>
                                        """.trimIndent())
 
-    val p2 = createModulePom("project2",
+    val p2 = maven.createModulePom("project2",
                              """
                                        <groupId>test</groupId>
                                        <artifactId>project2</artifactId>
@@ -49,19 +71,19 @@ class MavenProjectsManagerStateTest : MavenMultiVersionImportingTestCase() {
                                        </modules>
                                        """.trimIndent())
 
-    val p3 = createModulePom("project3",
+    val p3 = maven.createModulePom("project3",
                              """
                                        <groupId>test</groupId>
                                        <artifactId>project3</artifactId>
                                        <version>1</version>
                                        """.trimIndent())
 
-    importProjectsAsync(p1, p2)
-    projectsManager.explicitProfiles = MavenExplicitProfiles(mutableListOf("one", "two"))
-    setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
-    setIgnoredPathPatternsForNextImport(mutableListOf<String?>("*.xxx"))
+    maven.importProjectsAsync(p1, p2)
+    maven.projectsManager.explicitProfiles = MavenExplicitProfiles(mutableListOf("one", "two"))
+    maven.setIgnoredFilesPathForNextImport(listOf(p1.getPath()))
+    maven.setIgnoredPathPatternsForNextImport(mutableListOf<String?>("*.xxx"))
 
-    state = projectsManager.getState()
+    state = maven.projectsManager.getState()
     assertUnorderedPathsAreEqual(state.originalFiles, listOf(p1.getPath(), p2.getPath()))
     assertUnorderedElementsAreEqual(state.enabledProfiles, "one", "two")
     assertUnorderedPathsAreEqual(state.ignoredFiles, listOf(p1.getPath()))

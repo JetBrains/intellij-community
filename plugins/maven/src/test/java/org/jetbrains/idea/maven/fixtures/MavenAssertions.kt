@@ -1,58 +1,66 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.fixtures
 
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.util.containers.CollectionFactory
+import junit.framework.TestCase
 import junit.framework.TestCase.assertEquals
-import junit.framework.TestCase.fail
-import junit.framework.TestCase.failNotEquals
 
-internal object MavenAssertions {
-  fun <T> assertContain(actual: Collection<T>, vararg expected: T) {
-    val expectedList = expected.toList()
-    if (actual.containsAll(expectedList)) return
-    val absent: MutableSet<T> = HashSet(expectedList)
-    absent.removeAll(actual.toSet())
-    fail("""
-  expected: $expectedList
-  actual: $actual
-  this elements not present: $absent
-  """.trimIndent())
-  }
+fun assertUnorderedPathsAreEqual(actual: Collection<String>, expected: Collection<String>) {
+  assertEquals(createFilePathSet(expected), createFilePathSet(actual))
+}
 
-  fun <T> assertUnorderedElementsAreEqual(actual: Collection<T>, vararg expected: T) {
-    assertUnorderedElementsAreEqual(actual, expected.toList())
-  }
+private fun createFilePathSet(paths: Collection<String>) =
+  CollectionFactory.createFilePathSet(paths.map { FileUtil.toSystemIndependentName(it) })
 
-  fun <T> assertUnorderedElementsAreEqual(actual: Collection<T>, expected: Collection<T>) {
-    assertSameElements(actual, expected)
-  }
+fun <T> assertContain(actual: Collection<T>, vararg expected: T) {
+  val expectedList = expected.toList()
+  if (actual.containsAll(expectedList)) return
+  val absent: MutableSet<T> = HashSet(expectedList)
+  absent.removeAll(actual.toSet())
+  TestCase.fail(
+    """
+expected: $expectedList
+actual: $actual
+this elements not present: $absent
+""".trimIndent()
+  )
+}
 
-  fun <T> assertDoNotContain(actual: List<T>, vararg expected: T) {
-    val actualCopy: MutableList<T> = ArrayList(actual)
-    actualCopy.removeAll(expected.toSet())
-    assertEquals(actual.toString(), actualCopy.size, actual.size)
-  }
+fun <T> assertUnorderedElementsAreEqual(actual: Collection<T>, vararg expected: T) {
+  assertUnorderedElementsAreEqual(actual, expected.toList())
+}
 
-  fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, vararg expected: T) {
-    assertOrderedElementsAreEqual(actual, expected.toList())
-  }
+fun <T> assertUnorderedElementsAreEqual(actual: Collection<T>, expected: Collection<T>) {
+  UsefulTestCase.assertSameElements(actual, expected)
+}
 
-  fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, expected: List<T>) {
-    val s = "\nexpected: $expected\nactual: $actual"
-    assertEquals(s, expected.size, actual.size)
+fun <T> assertDoNotContain(actual: List<T>, vararg expected: T) {
+  val actualCopy: MutableList<T> = ArrayList(actual)
+  actualCopy.removeAll(expected.toSet())
+  TestCase.assertEquals(actual.toString(), actualCopy.size, actual.size)
+}
 
-    val actualList: List<T> = ArrayList(actual)
-    for (i in expected.indices) {
-      val expectedElement = expected[i]
-      val actualElement = actualList[i]
-      if (actualElement != expectedElement) {
-        failNotEquals(
-          "collections have different elements or order",
-          expected.joinToString("\n"),
-          actual.joinToString("\n"),
-        )
-      }
-      assertEquals(s, expectedElement, actualElement)
+fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, vararg expected: T) {
+  assertOrderedElementsAreEqual(actual, expected.toList())
+}
+
+fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, expected: List<T>) {
+  val s = "\nexpected: $expected\nactual: $actual"
+  TestCase.assertEquals(s, expected.size, actual.size)
+
+  val actualList: List<T> = ArrayList(actual)
+  for (i in expected.indices) {
+    val expectedElement = expected[i]
+    val actualElement = actualList[i]
+    if (actualElement != expectedElement) {
+      TestCase.failNotEquals(
+        "collections have different elements or order",
+        expected.joinToString("\n"),
+        actual.joinToString("\n"),
+      )
     }
+    assertEquals(s, expectedElement, actualElement)
   }
 }

@@ -7,10 +7,10 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertContain
-import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertUnorderedElementsAreEqual
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertContain
 import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.assertUnorderedElementsAreEqual
 import org.jetbrains.idea.maven.fixtures.createModulePom
 import org.jetbrains.idea.maven.fixtures.createProjectPom
 import org.jetbrains.idea.maven.fixtures.getSourceLanguageLevelForModule

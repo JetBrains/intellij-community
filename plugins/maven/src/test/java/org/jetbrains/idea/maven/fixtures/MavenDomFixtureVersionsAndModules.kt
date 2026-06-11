@@ -3,17 +3,17 @@
 package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase.Companion.getActualVersion
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.roots.JavadocOrderRootType
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.util.text.VersionComparatorUtil
-import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertOrderedElementsAreEqual
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.junit.Assert.assertNotNull
 import org.junit.Assume
@@ -100,8 +100,40 @@ fun MavenTestFixture.assertModuleLibDep(moduleName: String, depName: String) {
   assertNotNull("Library dependency $depName not found in module $moduleName", entry)
 }
 
+fun MavenTestFixture.assertModuleLibDep(
+  moduleName: String,
+  depName: String,
+  classesPath: String?,
+  sourcePath: String? = null,
+  javadocPath: String? = null,
+) {
+  val lib = getModuleLibDep(moduleName, depName)
+  assertModuleLibDepPath(lib, OrderRootType.CLASSES, if (classesPath == null) null else listOf(classesPath))
+  assertModuleLibDepPath(lib, OrderRootType.SOURCES, if (sourcePath == null) null else listOf(sourcePath))
+  assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), if (javadocPath == null) null else listOf(javadocPath))
+}
+
+private fun MavenTestFixture.getModuleLibDep(moduleName: String, depName: String): LibraryOrderEntry {
+  val entry = ModuleRootManager.getInstance(getModule(moduleName)).orderEntries
+    .filterIsInstance<LibraryOrderEntry>()
+    .find { it.presentableName == depName }
+  assertNotNull("Library dependency $depName not found in module $moduleName", entry)
+  return entry!!
+}
+
+private fun assertModuleLibDepPath(lib: LibraryOrderEntry, type: OrderRootType, paths: List<String>?) {
+  if (paths == null) return
+  assertUnorderedPathsAreEqual(listOf(*lib.getRootUrls(type)), paths)
+  // also check the library because it may contain a slightly different set of urls (e.g. with duplicates)
+  assertUnorderedPathsAreEqual(listOf(*lib.library!!.getUrls(type)), paths)
+}
+
 fun MavenTestFixture.assertModuleModuleDeps(moduleName: String, vararg expectedDeps: String) {
   assertModuleDeps(moduleName, ModuleOrderEntry::class.java, *expectedDeps)
+}
+
+fun MavenTestFixture.assertModuleLibDeps(moduleName: String, vararg expectedDeps: String) {
+  assertModuleDeps(moduleName, LibraryOrderEntry::class.java, *expectedDeps)
 }
 
 private fun MavenTestFixture.assertModuleDeps(moduleName: String, clazz: Class<*>, vararg expectedDeps: String) {

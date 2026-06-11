@@ -3,6 +3,7 @@
 package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
@@ -22,6 +23,7 @@ import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
+import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -85,6 +87,21 @@ suspend fun MavenImportingTestFixture.importProjectWithProfiles(vararg profiles:
 suspend fun MavenImportingTestFixture.updateAllProjects() {
   projectsManager.updateAllMavenProjects(MavenSyncSpec.incremental("MavenDomTestFixture incremental sync"))
 }
+
+suspend fun MavenImportingTestFixture.updateAllProjectsFullSync() {
+  projectsManager.updateAllMavenProjects(MavenSyncSpec.full("MavenDomTestFixture full sync"))
+}
+
+fun MavenImportingTestFixture.setIgnoredFilesPathForNextImport(paths: List<String?>) {
+  projectsManager.setIgnoredFilesPaths(paths)
+}
+
+fun MavenImportingTestFixture.setIgnoredPathPatternsForNextImport(patterns: List<String?>) {
+  projectsManager.setIgnoredFilesPatterns(patterns)
+}
+
+val MavenImportingTestFixture.mavenGeneralSettings
+  get() = projectsManager.generalSettings
 
 suspend fun MavenDomTestFixture.configureProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
   val file = createProjectPom(xml)
@@ -167,3 +184,13 @@ suspend fun MavenImportingTestFixture.scheduleProjectImportAndWait() {
   // otherwise project settings was modified while importing
   assertNoPendingProjectForReload()
 }
+
+suspend fun MavenImportingTestFixture.importProjectAsync(file: VirtualFile) {
+  importProjectsAsync(listOf(file))
+}
+
+val MavenImportingTestFixture.projectsTree: MavenProjectsTree
+  get() = projectsManager.projectsTree
+
+val MavenImportingTestFixture.testRootDisposable: Disposable
+  get() = disposable

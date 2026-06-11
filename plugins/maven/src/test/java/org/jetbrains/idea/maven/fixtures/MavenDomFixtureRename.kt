@@ -29,7 +29,6 @@ import com.intellij.usages.UsageTargetUtil
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertUnorderedElementsAreEqual
 import org.junit.Assert.assertNotNull
 
 // Rename refactoring and find-usages helpers.

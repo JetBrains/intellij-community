@@ -11,12 +11,12 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference
-import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertContain
-import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertDoNotContain
 import org.jetbrains.idea.maven.fixtures.MavenDomTestFixture.Highlight
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsDoNotInclude
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
+import org.jetbrains.idea.maven.fixtures.assertContain
+import org.jetbrains.idea.maven.fixtures.assertDoNotContain
 import org.jetbrains.idea.maven.fixtures.assertResolved
 import org.jetbrains.idea.maven.fixtures.assertUnresolved
 import org.jetbrains.idea.maven.fixtures.assumeModel_4_1_0

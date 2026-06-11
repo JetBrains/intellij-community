@@ -40,12 +40,12 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 class MavenDomTestFixtureImpl internal constructor(
-    override val project: Project,
-    override val dir: Path,
-    override val mavenVersion: String = "bundled",
-    override val modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0,
-    private val skipPluginResolution: Boolean = true,
-    override val indices: MavenDomTestFixtureIndices? = null,
+  override val project: Project,
+  override val dir: Path,
+  override val mavenVersion: String = "bundled",
+  override val modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0,
+  private val skipPluginResolution: Boolean = true,
+  override val indices: MavenDomTestFixtureIndices? = null,
 ) : MavenDomTestFixture {
   override lateinit var disposable: Disposable
   private lateinit var jdkFixture: MavenProjectJDKTestFixture
@@ -95,9 +95,9 @@ class MavenDomTestFixtureImpl internal constructor(
     fixture = codeInsight
     // org.jetbrains.idea.maven.utils.MavenRehighlighter
     (fixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
-      edtWriteAction {
-          fixture.enableInspections(MavenModelInspection::class.java, XmlUnresolvedReferenceInspection::class.java)
-      }
+    edtWriteAction {
+      fixture.enableInspections(MavenModelInspection::class.java, XmlUnresolvedReferenceInspection::class.java)
+    }
     originalAutoCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false
   }
@@ -108,13 +108,13 @@ class MavenDomTestFixtureImpl internal constructor(
     // The Maven server process needs a real JDK to start.
     VfsRootAccess.allowRootAccess(disposable, IdeaTestUtil.requireRealJdkHome())
     jdkFixture = MavenProjectJDKTestFixture(project, JDK_NAME)
-      edtWriteAction { jdkFixture.setUp() }
+    edtWriteAction { jdkFixture.setUp() }
 
     // Register the JDK (so the Maven server can start) but do NOT leave it as the project SDK. Legacy DOM tests ran
     // without a project SDK (MavenProjectJDKTestFixture was opt-in via withRealJDK), and the "create module" quickfix
     // emits <maven.compiler.*> properties only when a Java project SDK is present. Clearing it keeps that parity so
     // golden poms match; the Maven importer then falls back to the internal (real) JDK, as it did in legacy.
-      edtWriteAction { ProjectRootManager.getInstance(project).projectSdk = null }
+    edtWriteAction { ProjectRootManager.getInstance(project).projectSdk = null }
 
     // Plugin resolution is slow and hits the network; skip it for offline sync unless a test opts in.
     if (skipPluginResolution) {
@@ -151,7 +151,7 @@ class MavenDomTestFixtureImpl internal constructor(
     }
 
     if (null != indices) {
-        withContext(Dispatchers.EDT) { indicesFixture!!.setUpAfterImport() }
+      withContext(Dispatchers.EDT) { indicesFixture!!.setUpAfterImport() }
     }
   }
 
@@ -173,11 +173,11 @@ class MavenDomTestFixtureImpl internal constructor(
 
   private object NoOpPluginResolver : MavenPluginResolver {
     override suspend fun resolvePlugins(
-        mavenProjects: Collection<MavenProject>,
-        forceUpdateSnapshots: Boolean,
-        mavenEmbedderWrappers: MavenEmbedderWrappers,
-        process: RawProgressReporter,
-        eventHandler: MavenEventHandler,
+      mavenProjects: Collection<MavenProject>,
+      forceUpdateSnapshots: Boolean,
+      mavenEmbedderWrappers: MavenEmbedderWrappers,
+      process: RawProgressReporter,
+      eventHandler: MavenEventHandler,
     ): PluginResolutionResult = PluginResolutionResult(emptySet())
   }
 

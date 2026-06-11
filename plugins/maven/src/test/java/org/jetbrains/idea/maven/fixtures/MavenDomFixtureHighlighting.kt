@@ -13,7 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlTag
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.fixtures.MavenAssertions.assertUnorderedElementsAreEqual
 import org.jetbrains.idea.maven.indices.MavenSystemIndicesManager
 import org.junit.Assert.assertNotNull
 import org.junit.ComparisonFailure
