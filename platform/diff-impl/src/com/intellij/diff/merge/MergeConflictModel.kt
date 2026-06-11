@@ -14,8 +14,8 @@ import com.intellij.diff.util.MergeConflictType
 import com.intellij.diff.util.Side
 import com.intellij.diff.util.ThreeSide
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.DiffBundle
@@ -113,7 +113,7 @@ class MergeConflictModel(
   }
 
   @RequiresEdt
-  private suspend fun setInitialOutputContent(document: Document, content: CharSequence): Boolean = edtWriteAction {
+  private suspend fun setInitialOutputContent(document: Document, content: CharSequence): Boolean = withContext(Dispatchers.EDT) {
     DiffUtil.executeWriteCommand(document, project, DiffBundle.message("message.init.merge.content.command")) {
       document.setText(content)
       DiffUtil.putNonundoableOperation(project, document)
