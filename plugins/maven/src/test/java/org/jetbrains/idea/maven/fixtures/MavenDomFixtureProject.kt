@@ -90,6 +90,20 @@ fun MavenTestFixture.createProjectSubFile(relativePath: String, content: String 
   return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(f)!!
 }
 
+// Ported from MavenTestCase.
+fun MavenTestFixture.createFile(path: Path): VirtualFile {
+  Files.createDirectories(path.parent)
+  if (!Files.exists(path)) Files.createFile(path)
+  return LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path)!!
+}
+
+fun MavenTestFixture.createFile(path: Path, content: String): VirtualFile {
+  val file = createFile(path)
+  Files.writeString(path, content)
+  refreshFiles(listOf(file))
+  return file
+}
+
 fun MavenTestFixture.createProfilesXml(@Language(value = "XML", prefix = "<profiles>", suffix = "</profiles>") xml: String): VirtualFile {
   val content = "<?xml version=\"1.0\"?><profilesXml><profiles>$xml</profiles></profilesXml>"
   val filePath = Path.of(projectRoot.path, "profiles.xml")
