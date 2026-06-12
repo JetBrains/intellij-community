@@ -9,20 +9,45 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.util.text.StringUtil
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertContain
+import org.jetbrains.idea.maven.fixtures.assertDoNotContain
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.importProjectsAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.junit.Test
 import java.util.function.Consumer
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.jetbrains.idea.maven.fixtures.arrayOfNotNull
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.BeforeEach
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
 
-class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
-  override fun skipPluginResolution() = false
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenRunAnythingProviderTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion,
+    skipPluginResolution = false,
+  )
+  
 
   private var myDataContext: DataContext? = null
   private var myProvider: MavenRunAnythingProvider? = null
 
-  override fun setUp() {
-    super.setUp()
-
-    myDataContext = SimpleDataContext.getProjectContext(project)
+  @BeforeEach
+  fun setUp() {
+    myDataContext = SimpleDataContext.getProjectContext(maven.project)
     myProvider = MavenRunAnythingProvider()
   }
 
@@ -39,7 +64,7 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testSingleMavenProject() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -84,7 +109,7 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun testMavenProjectWithModules() = runBlocking {
     val m1 =
-      createModulePom("m1", """
+      maven.createModulePom("m1", """
         <groupId>test</groupId>
         <artifactId>m1</artifactId>
         <version>1</version>
@@ -100,12 +125,12 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
         """.trimIndent())
 
     val m2 =
-      createModulePom("m2", """
+      maven.createModulePom("m2", """
         <groupId>test</groupId>
         <artifactId>m2</artifactId>
         <version>1</version>
         """.trimIndent())
-    importProjectsAsync(m1, m2)
+    maven.importProjectsAsync(m1, m2)
 
     withVariantsFor("", "m1") { it: List<String> ->
       assertContain(it, "war:help", "war:inplace", "war:exploded", "war:war")
@@ -118,13 +143,13 @@ class MavenRunAnythingProviderTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun withVariantsFor(command: String, moduleName: String, supplier: Consumer<List<String>>) {
-    val moduleManager = getInstance(project)
+    val moduleManager = getInstance(maven.project)
     val module = moduleManager.findModuleByName(moduleName)
     withVariantsFor(RunAnythingContext.ModuleContext(module!!), command, supplier)
   }
 
   private fun withVariantsFor(command: String, supplier: Consumer<List<String>>) {
-    withVariantsFor(RunAnythingContext.ProjectContext(project), command, supplier)
+    withVariantsFor(RunAnythingContext.ProjectContext(maven.project), command, supplier)
   }
 
   private fun withVariantsFor(context: RunAnythingContext, command: String, supplier: Consumer<List<String>>) {
