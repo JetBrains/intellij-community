@@ -72,7 +72,14 @@ internal object NoContextParameterFixFactory {
 
             val containingFunction = expression.getStrictParentOfType<KtNamedFunction>()
             if (containingFunction != null && !containingFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                add(AddContextParameterFix(expression, requiredTypeText))
+                add(
+                    AddContextParameterFix(
+                        element = expression,
+                        contextParameters =
+                            AddContextParameterFix.ContextParameter(name = null, type = requiredTypeText)
+                        ,
+                    )
+                )
             }
         }
     }
