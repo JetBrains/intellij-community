@@ -26,6 +26,9 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.buildPlanModeInitialMessagePlan
+import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
+import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
@@ -43,6 +46,36 @@ import javax.swing.JPanel
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentPromptPaletteSubmitControllerTest {
+  @Test
+  fun captureNewTaskPromptLaunchRequestSeedsProviderStateBeforeSubmit() {
+    val project = ProjectManager.getInstance().defaultProject
+    val providerSettings = service<AgentSessionProviderSettingsService>()
+    val availabilityService = project.service<AgentSessionProviderAvailabilityService>()
+    providerSettings.setProviderEnabled(AgentSessionProvider.CODEX, false)
+    availabilityService.setAvailabilityForTest(mapOf(AgentSessionProvider.CODEX to false))
+    try {
+      val request = captureNewTaskPromptLaunchRequest(
+        descriptor = testProviderBridge(
+          provider = AgentSessionProvider.CODEX,
+          promptOptions = listOf(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION),
+        ),
+        prompt = "Plan this refactor",
+        workingProjectPath = "/repo",
+        project = project,
+      )
+
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(request.projectPath).isEqualTo("/repo")
+      assertThat(request.initialMessageRequest.prompt).isEqualTo("Plan this refactor")
+      assertThat(request.initialMessageRequest.providerOptionIds).containsExactly(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
+      assertThat(request.targetThreadId).isNull()
+    }
+    finally {
+      providerSettings.setProviderEnabled(AgentSessionProvider.CODEX, true)
+      availabilityService.clearAvailabilityForTest()
+    }
+  }
+
   @Test
   fun resolveWorkingProjectPathPrefersUserSelectedPathOverLauncherPath() {
     runInEdtAndWait {

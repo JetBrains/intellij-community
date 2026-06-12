@@ -7,6 +7,9 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
+import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.runInEdtAndWait
@@ -26,6 +29,8 @@ fun captureNewTaskPromptLaunchRequest(
   val availableDescriptor = object : AgentSessionProviderDescriptor by descriptor {
     override suspend fun isCliAvailable(): Boolean = true
   }
+  service<AgentSessionProviderSettingsService>().setProviderEnabled(descriptor.provider, true)
+  project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(mapOf(descriptor.provider to true))
 
   runInEdtAndWait {
     val classLoader = AgentPromptPaletteSubmitController::class.java.classLoader
