@@ -131,11 +131,6 @@ public class ConfigureKotlinTest extends AbstractConfigureKotlinTest {
     //    doTestSingleJsModule();
     //}
 
-    public void testJsLibraryWrongKind() {
-        assertProperlyConfigured(getModule(), getJsConfigurator());
-        assertEquals(1, ModuleRootManager.getInstance(getModule()).orderEntries().process(new LibraryCountingRootPolicy(), 0).intValue());
-    }
-
     public void testProjectWithoutFacetWithRuntime106WithoutLanguageLevel() {
         assertEquals(LanguageVersion.KOTLIN_1_0, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(getModule()).getLanguageVersion());
         assertEquals(LanguageVersion.KOTLIN_1_0, LanguageVersionSettingsProviderUtils.getLanguageVersionSettings(myProject).getLanguageVersion());
