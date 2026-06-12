@@ -9,6 +9,7 @@ import org.jdom.Document
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jdom.input.SAXBuilder
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
@@ -22,16 +23,19 @@ fun Element.getOrCreate(@NonNls name: String): Element {
   return getOrCreateChild(name)
 }
 
+@ApiStatus.Internal
 fun Element.toBufferExposingByteArray(lineSeparator: LineSeparator = LineSeparator.LF): BufferExposingByteArrayOutputStream {
   val out = BufferExposingByteArrayOutputStream(1024)
   JDOMUtil.write(this, out, lineSeparator.separatorString)
   return out
 }
 
+@ApiStatus.Internal
 fun Element.toByteArray(): ByteArray {
   return toBufferExposingByteArray().toByteArray()
 }
 
+@ApiStatus.Internal
 @JvmOverloads
 fun Element.addOptionTag(@NonNls name: String, value: String, @NonNls elementName: String = Constants.OPTION) {
   val element = Element(elementName)
@@ -55,15 +59,18 @@ private fun getSpecialSaxBuilder(): SAXBuilder {
   return saxBuilder
 }
 
+@ApiStatus.Internal
 @Throws(IOException::class, JDOMException::class)
 fun loadDocumentAndKeepBoundaryWhitespace(stream: InputStream): Document {
   return stream.use { getSpecialSaxBuilder().build(it) }
 }
 
+@ApiStatus.Internal
 fun loadElementAndKeepBoundaryWhitespace(chars: CharSequence): Element {
   return getSpecialSaxBuilder().build(CharSequenceReader(chars)).detachRootElement()
 }
 
+@ApiStatus.Internal
 @Throws(IOException::class, JDOMException::class)
 fun loadElementAndKeepBoundaryWhitespace(stream: InputStream): Element {
   return stream.use { getSpecialSaxBuilder().build(it) }.detachRootElement()
