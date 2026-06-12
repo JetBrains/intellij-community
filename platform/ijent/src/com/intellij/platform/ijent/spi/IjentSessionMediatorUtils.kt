@@ -300,7 +300,7 @@ object IjentSessionMediatorUtils {
   @OptIn(DelicateCoroutinesApi::class)
   suspend fun ijentProcessFinalizer(
     ijentLabel: String,
-    mediatorFinalizer: () -> Unit,
+    mediatorFinalizer: suspend () -> Unit,
   ): Nothing {
     try {
       awaitCancellation()
@@ -320,8 +320,9 @@ object IjentSessionMediatorUtils {
       throw IjentUnavailableException.ClosedByApplication(message, cause)
     }
     finally {
-      mediatorFinalizer()
-
+      withContext(NonCancellable) {
+        mediatorFinalizer()
+      }
     }
   }
 }

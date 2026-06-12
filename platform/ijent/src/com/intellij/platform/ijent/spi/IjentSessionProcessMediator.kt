@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.map
 import com.intellij.platform.ijent.IjentLog
@@ -11,18 +12,18 @@ import com.intellij.platform.ijent.coroutineNameAppended
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.CHECK_CODE
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.NORMAL
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
-import kotlinx.coroutines.withTimeoutOrNull
 import java.io.InputStream
 import java.io.OutputStream
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 /**
@@ -185,30 +186,42 @@ class IjentSessionProcessMediator private constructor(
   }
 }
 
-@OptIn(DelicateCoroutinesApi::class)
-private fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSessionProcessMediator) {
+private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSessionProcessMediator) {
   mediator.myExitPolicy = NORMAL
   val process = mediator.process
 
-  GlobalScope.launch(Dispatchers.IO + CoroutineName("$ijentLabel destruction")) {
-    try {
-      val politeAnswer = withTimeoutOrNull(5.seconds) { // A random timeout.
-        process.exitCode.await()
-      }
-      if (politeAnswer == null) {
-        LOG.warn("The process $ijentLabel is still alive, it will be killed")
-        process.destroy()
-      }
+  if (!process.isAlive) return
+
+  try {
+    LOG.debug { "Closing stdin of $ijentLabel" }
+    runCatching { process.outputStream.close() }
+
+    if (SystemInfoRt.isWindows) {
+      awaitProcessExit(process, 1.5.seconds)
+      if (!process.isAlive) return
     }
-    catch (_: SafeDeferred.DeferredException) {
-      // Ignored.
+
+    process.destroy()
+
+    awaitProcessExit(process, 1.5.seconds)
+
+    if (process.isAlive) {
+      LOG.warn("The process $ijentLabel is still alive, it will be killed")
+      process.destroyForcibly()
     }
   }
-  GlobalScope.launch(Dispatchers.IO) {
-    if (process.isAlive) {
-      LOG.debug { "Closing stdin of $ijentLabel" }
-      process.outputStream.close()
-    }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (e: Throwable) {
+    LOG.warn("Failed to terminate $ijentLabel", e)
+  }
+}
+
+private suspend fun awaitProcessExit(process: IjentSessionProcessMediator.ProcessFacade, timeout: Duration) {
+  val deadline = System.nanoTime() + timeout.inWholeNanoseconds
+  while (process.isAlive && System.nanoTime() < deadline) {
+    delay(50.milliseconds)
   }
 }
 
