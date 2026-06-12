@@ -1,4 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(FlowPreview::class)
+
 package com.intellij.openapi.ui
 
 import com.intellij.icons.AllIcons
@@ -13,6 +15,10 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
@@ -25,13 +31,24 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.FullScreenSupport
 import com.intellij.ui.ToolbarService
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.launchOnShow
+import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.awt.AWTEvent
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.Frame
+import java.awt.Toolkit
 import java.awt.Window
+import java.awt.event.AWTEventListener
 import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
@@ -42,6 +59,7 @@ import javax.swing.JFrame
 import javax.swing.JRootPane
 import javax.swing.KeyStroke
 import javax.swing.RootPaneContainer
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Reusable base class for non-modal IDE windows that support two display modes,
@@ -185,6 +203,7 @@ abstract class NonModalWindowWrapper(
     activeWindow = createAwtWindow(isFloat, content, minSize, initialSize)
     loadAndRegisterWindowState(activeWindow)
     installWindowListeners()
+    installToolkitListener()
   }
 
   private fun loadAndRegisterWindowState(window: Window) {
@@ -309,11 +328,6 @@ abstract class NonModalWindowWrapper(
           rootPane.defaultButton = null
           activeWindow.repaint()
         }
-        // Don't trigger when focus moves to an owned child dialog (e.g. a file chooser opened
-        // by a configurable): changes made there are intentional and should not be rolled back.
-        if (!e.oppositeWindow.isOwnedBy(activeWindow)) {
-          onWindowDeactivated()
-        }
       }
 
       override fun windowActivated(e: WindowEvent) {
@@ -321,12 +335,6 @@ abstract class NonModalWindowWrapper(
           rootPane.defaultButton = btn
           savedDefaultButton = null
           activeWindow.repaint()
-        }
-        // Skip when returning from an owned child dialog. All other cases — including
-        // null (another OS app) and unrelated windows — are genuine app-switches.
-        val opposite = e.oppositeWindow
-        if (opposite == null || !opposite.isOwnedBy(activeWindow)) {
-          onWindowActivated()
         }
       }
 
@@ -347,6 +355,70 @@ abstract class NonModalWindowWrapper(
     ActionUtil.registerForEveryKeyboardShortcut(rootPane, closeHandler, CommonShortcuts.getCloseActiveWindow())
 
     installAdditionalShortcuts(rootPane)
+  }
+
+  private fun installToolkitListener() {
+    content.launchOnShow("Non-modal settings AWT event listener") {
+      // The default modality prevents us from processing nested modal dialogs,
+      // but we absolutely do want to process them here.
+      withContext(ModalityState.any().asContextElement()) {
+        val globallyActiveWindow = MutableStateFlow<Window?>(null)
+
+        launch {
+          val toolkit = Toolkit.getDefaultToolkit()
+          val listener = AWTEventListener { event ->
+            when (event.id) {
+              WindowEvent.WINDOW_ACTIVATED -> {
+                globallyActiveWindow.value = event.source as Window
+              }
+              WindowEvent.WINDOW_DEACTIVATED -> {
+                // Guesswork: if the app lost focus for good, this will be the last value for a while.
+                // Otherwise, a WINDOW_ACTIVATED event is expected soon enough, which will overwrite the value.
+                // That's why debouncing is absolutely needed.
+                // But it's the only way to make it work on Wayland, as it doesn't provide WindowEvent.opposite.
+                globallyActiveWindow.value = null
+              }
+            }
+          }
+          toolkit.addAWTEventListener(listener, AWTEvent.WINDOW_EVENT_MASK)
+          try {
+            // Initial value, set it now instead of the flow constructor to make sure the listener is already listening.
+            globallyActiveWindow.value = if (activeWindow.isActive) activeWindow else null
+            awaitCancellation()
+          }
+          finally {
+            toolkit.removeAWTEventListener(listener)
+          }
+        }
+
+        globallyActiveWindow
+          .debounce { globallyActiveWindow ->
+            // A "deactivate" event may be followed by an "activate" event very soon, so we need to debounce.
+            // "Activate" events don't need debouncing, and it would even be harmful,
+            // as a click inside can both activate the window and do something else immediately,
+            // and by that time we better have the correct status already.
+            if (globallyActiveWindow == null) 1.seconds else 0.seconds
+          }
+          .map { globallyActiveWindow ->
+            LOG.debug { "Active window changed: $globallyActiveWindow" }
+            // Don't trigger "deactivate" when focus moves to an owned child dialog (e.g. a file chooser opened
+            // by a configurable): changes made there are intentional and should not be rolled back.
+            // Don't trigger "activate" when returning from an owned child dialog.
+            // All other cases — including null (another OS app) and unrelated windows — are genuine app-switches.
+            globallyActiveWindow != null && globallyActiveWindow.isSameOrOwnedBy(activeWindow)
+          }
+          .distinctUntilChanged()
+          .collect { isOurWindowActive ->
+            LOG.debug { "Active status changed: $isOurWindowActive" }
+            if (isOurWindowActive) {
+              onWindowActivated()
+            }
+            else {
+              onWindowDeactivated()
+            }
+          }
+      }
+    }
   }
 
   // ── Utilities ────────────────────────────────────────────────────────────────
@@ -398,12 +470,14 @@ abstract class NonModalWindowWrapper(
   }
 }
 
-/** Returns `true` if this window's ownership chain passes through [ancestor]. */
-private fun Window?.isOwnedBy(ancestor: Window): Boolean {
-  var w = this?.owner
+/** Returns `true` if this window's ownership (including the window itself) chain passes through [ancestor]. */
+private fun Window.isSameOrOwnedBy(ancestor: Window): Boolean {
+  var w: Window? = this
   while (w != null) {
     if (w === ancestor) return true
     w = w.owner
   }
   return false
 }
+
+private val LOG = logger<NonModalWindowWrapper>()
