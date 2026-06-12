@@ -3050,10 +3050,6 @@ c:com.intellij.openapi.fileEditor.impl.EditorComposite
 - f:isModified():Z
 - f:isPinned():Z
 - isPreview():Z
-c:com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
-- <init>():V
-- p:appendDnd(com.intellij.util.ui.UIUtil$TextPainter):V
-- p:getActionShortcutText(java.lang.String):java.lang.String
 com.intellij.openapi.fileEditor.impl.EditorFileSwapper
 - s:findSinglePsiAwareEditor(java.util.List):com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
 - a:getFileToSwapTo(com.intellij.openapi.project.Project,com.intellij.openapi.fileEditor.impl.EditorComposite):kotlin.Pair

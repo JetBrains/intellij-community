@@ -18,6 +18,9 @@
     <agent.workbench.promptManualContextSource implementation="com.intellij.agent.workbench.prompt.ui.context.screenCapture.AgentPromptScreenCaptureManualContextSource"/>
     <customPasteProvider implementation="com.intellij.agent.workbench.prompt.ui.context.AgentPromptImagePasteProvider"/>
     <actionPromoter implementation="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchPromptShortcutActionPromoter" order="last"/>
+    <editorEmptyTextPromotedActionProvider
+      implementation="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchGlobalPromptEmptyTextPromotedActionProvider"
+      order="first"/>
     <projectSettings service="com.intellij.agent.workbench.prompt.ui.AgentPromptUiSessionStateService"/>
     <intentionAction>
       <className>com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchAddToAgentContextIntention</className>

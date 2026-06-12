@@ -6,6 +6,7 @@ import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.actionSystem.KeyboardModifierGestureShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -21,6 +22,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +34,11 @@ import javax.swing.SwingUtilities;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
+@Internal
 public class EditorEmptyTextPainter {
   public void paintEmptyText(@NotNull JComponent splitters, @NotNull Graphics g) {
     if (!IslandsState.Companion.isEnabled()) {
@@ -55,7 +61,7 @@ public class EditorEmptyTextPainter {
     }
   }
 
-  @ApiStatus.Internal
+  @Internal
   public void doPaintEmptyText(@NotNull JComponent splitters, @NotNull Graphics g) {
     if (!isEnabled()) {
       return;
@@ -80,12 +86,22 @@ public class EditorEmptyTextPainter {
   }
 
   protected void advertiseActions(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {
+    appendPromotedActions(splitters, painter);
     appendSearchEverywhere(painter);
     appendToolWindow(painter, IdeBundle.message("empty.text.project.view"), ToolWindowId.PROJECT_VIEW, splitters);
     appendAction(painter, IdeBundle.message("empty.text.go.to.file"), getActionShortcutText("GotoFile"));
     appendAction(painter, IdeBundle.message("empty.text.recent.files"), getActionShortcutText(IdeActions.ACTION_RECENT_FILES));
     appendAction(painter, IdeBundle.message("empty.text.navigation.bar"), getActionShortcutText("ShowNavBar"));
     appendDnd(painter);
+  }
+
+  private void appendPromotedActions(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {
+    for (EditorEmptyTextPromotedActionProvider provider : EditorEmptyTextPromotedActionProvider.EP_NAME.getExtensionList()) {
+      EditorEmptyTextPromotedActionProvider.PromotedAction action = provider.getPromotedAction(splitters);
+      if (action != null) {
+        appendAction(painter, action.getText(), getShortcutsText(action.getActionId()));
+      }
+    }
   }
 
   protected void appendDnd(@NotNull UIUtil.TextPainter painter) {
@@ -97,8 +113,19 @@ public class EditorEmptyTextPainter {
   }
 
   protected @Nullable String getSearchEverywhereShortcutText() {
-    Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
-    return shortcuts.length == 0 ? null : KeymapUtil.getShortcutsText(shortcuts);
+    return getShortcutsText(IdeActions.ACTION_SEARCH_EVERYWHERE);
+  }
+
+  private static @Nullable String getShortcutsText(@NonNls @NotNull String actionId) {
+    Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts();
+    return shortcuts.length == 0 ? null : Arrays.stream(shortcuts)
+      .sorted(Comparator.comparingInt(EditorEmptyTextPainter::getShortcutDisplayPriority))
+      .map(KeymapUtil::getShortcutText)
+      .collect(Collectors.joining(" " + IdeBundle.message("empty.text.shortcut.separator") + " "));
+  }
+
+  private static int getShortcutDisplayPriority(@NotNull Shortcut shortcut) {
+    return shortcut instanceof KeyboardModifierGestureShortcut ? 0 : 1;
   }
 
   protected void appendToolWindow(@NotNull UIUtil.TextPainter painter,
