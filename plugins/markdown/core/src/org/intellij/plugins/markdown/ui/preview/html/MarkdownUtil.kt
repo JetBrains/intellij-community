@@ -9,7 +9,6 @@ import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.LinkMap
-import org.intellij.markdown.parser.MarkdownParser
 import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager
@@ -34,7 +33,7 @@ object MarkdownUtil {
     val parent = file.parent
     val baseUri = if (parent != null) File(parent.path).toURI() else null
 
-    val parsedTree = MarkdownParser(MarkdownParserManager.FLAVOUR).buildMarkdownTreeFromString(text)
+    val parsedTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR).buildMarkdownTreeFromString(text)
     val cacheCollector = MarkdownCodeFencePluginCacheCollector(file)
 
     val linkMap = LinkMap.buildLinkMap(parsedTree, text)

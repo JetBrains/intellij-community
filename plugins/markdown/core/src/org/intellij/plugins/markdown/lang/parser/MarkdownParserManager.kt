@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil.BombedCharSequence
+import org.intellij.markdown.ExperimentalApi
 import org.intellij.markdown.MarkdownElementTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.flavours.MarkdownFlavourDescriptor
@@ -39,7 +40,7 @@ class MarkdownParserManager: Disposable {
     if (info != null && info.bufferHash == buffer.hashCode() && info.buffer == buffer) {
       return info.tree
     }
-    val parseResult = MarkdownParser(flavour).parse(
+    val parseResult = createMarkdownParser(flavour).parse(
       MarkdownElementTypes.MARKDOWN_FILE,
       buffer.toString(),
       parseInlines = false
@@ -64,6 +65,11 @@ class MarkdownParserManager: Disposable {
     fun getInstance(): MarkdownParserManager {
       return service()
     }
+
+    @JvmStatic
+    @OptIn(ExperimentalApi::class)
+    fun createMarkdownParser(flavour: MarkdownFlavourDescriptor, assertionsEnabled: Boolean = true): MarkdownParser =
+      MarkdownParser(flavour, assertionsEnabled) { ProgressManager.checkCanceled() }
 
     @JvmStatic
     @JvmOverloads

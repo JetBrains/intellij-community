@@ -12,7 +12,6 @@ import org.intellij.markdown.ast.visitors.RecursiveVisitor
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.parser.LinkMap
-import org.intellij.markdown.parser.MarkdownParser
 import org.intellij.plugins.markdown.lang.parser.MarkdownParserManager
 import org.intellij.plugins.markdown.util.isFootnoteLabelText
 import java.net.URI
@@ -63,7 +62,7 @@ internal class FootnoteMap private constructor(
 
     private fun renderBodyMarkdown(body: String, baseUri: URI?, fullMap: FootnoteMap? = null): String {
       val content = if (body.endsWith('\n')) body else "$body\n"
-      val parsedTree = MarkdownParser(MarkdownParserManager.FLAVOUR).buildMarkdownTreeFromString(content)
+      val parsedTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR).buildMarkdownTreeFromString(content)
       val linkMap = LinkMap.buildLinkMap(parsedTree, content)
       val providers = MarkdownParserManager.FLAVOUR.createHtmlGeneratingProviders(linkMap, baseUri).toMutableMap()
       if (fullMap != null) {
@@ -221,7 +220,7 @@ internal class FootnoteMap private constructor(
           processed.add(label)
           val body = definitions[label]!!
           val content = if (body.endsWith('\n')) body else "$body\n"
-          val bodyTree = MarkdownParser(MarkdownParserManager.FLAVOUR).buildMarkdownTreeFromString(content)
+          val bodyTree = MarkdownParserManager.createMarkdownParser(MarkdownParserManager.FLAVOUR).buildMarkdownTreeFromString(content)
           val nestedDefs = mutableMapOf<String, String>()
           val nestedRefs = mutableListOf<String>()
           collectFromAst(bodyTree, content, nestedDefs, mutableSetOf(), nestedRefs)
