@@ -45,6 +45,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher
 import com.intellij.openapi.keymap.impl.KeyState
+import com.intellij.openapi.keymap.impl.ui.ShortcutTextField
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
@@ -1308,6 +1309,12 @@ private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
       return false
     }
 
+    if (isShortcutTextFieldEvent(ke)) {
+      waitingForAltRelease = false
+      altPressedOnly = false
+      return false
+    }
+
     val component = ke.component
     var dispatch = true
     if (ke.id == KeyEvent.KEY_PRESSED) {
@@ -1343,6 +1350,10 @@ private class WindowsAltSuppressor : IdeEventQueue.NonLockedEventDispatcher {
     }
     return !dispatch
   }
+}
+
+private fun isShortcutTextFieldEvent(event: KeyEvent): Boolean {
+  return event.source is ShortcutTextField || KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner is ShortcutTextField
 }
 
 @Internal
