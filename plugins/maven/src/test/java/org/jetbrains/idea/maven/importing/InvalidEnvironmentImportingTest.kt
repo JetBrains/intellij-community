@@ -3,7 +3,6 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -13,8 +12,9 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.UsefulTestCase.assertNotEmpty
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
-import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
@@ -29,17 +29,12 @@ import org.jetbrains.idea.maven.fixtures.testRootDisposable
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
 import org.jetbrains.idea.maven.server.MavenServerManager
-import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.Assert.fail
-import com.intellij.testFramework.UsefulTestCase.assertNotEmpty
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.BeforeEach
 
 @TestApplication
 @ParameterizedClass
@@ -76,7 +71,7 @@ class InvalidEnvironmentImportingTest(mavenVersion: String, modelVersion: String
         createAndImportProject()
         val connectors = MavenServerManager.getInstance().getAllConnectors().filter { it.project == maven.project }
         assertNotEmpty(connectors)
-        TestCase.assertEquals(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), connectors[0].jdk)
+        assertEquals(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), connectors[0].jdk)
       }
     }
     finally {
@@ -153,14 +148,14 @@ class InvalidEnvironmentImportingTest(mavenVersion: String, modelVersion: String
 
   private fun assertEvent(description: String = "Asserted", predicate: (BuildEvent) -> Boolean) {
     if (myEvents.isEmpty()) {
-      fail("Message \"${description}\" was not found. No messages was recorded at all")
+      Assertions.fail<Any>("Message \"${description}\" was not found. No messages was recorded at all")
     }
     if (myEvents.any(predicate)) {
       return
     }
 
-    fail("Message \"${description}\" was not found. Known messages:\n" +
-         myEvents.joinToString("\n") { "${it}" })
+    Assertions.fail<Any>("Message \"${description}\" was not found. Known messages:\n" +
+                    myEvents.joinToString("\n") { "${it}" })
   }
 
   private fun createAndImportProject() {
