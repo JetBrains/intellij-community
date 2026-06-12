@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.types.PyCallableParameterImpl;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @ApiStatus.Internal
@@ -90,6 +92,9 @@ public final class PyParameterInfoUtils {
                                                                   @NotNull TypeEvalContext context) {
     final int[] currentParameterIndex = new int[]{0};
     final List<ParameterDescription> parameterDescriptions = new ArrayList<>();
+    final Map<PyParameter, PyCallableParameter> parameterMap = StreamEx.of(parameters)
+      .filter(p -> p.getParameter() != null)
+      .toMap(PyCallableParameter::getParameter, Function.identity(), (a, _) -> a);
     ParamHelper.walkDownParameters(
       parameters,
       new ParamHelper.ParamWalker() {
@@ -111,7 +116,11 @@ public final class PyParameterInfoUtils {
 
         @Override
         public void visitNamedParameter(PyNamedParameter param, boolean first, boolean last) {
-          visitNonPsiParameter(PyCallableParameterImpl.psi(param), first, last);
+          PyCallableParameter parameter = parameterMap.get(param);
+          if (parameter == null) {
+            parameter = PyCallableParameterImpl.psi(param);
+          }
+          visitNonPsiParameter(parameter, first, last);
         }
 
         @Override
