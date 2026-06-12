@@ -57,7 +57,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
     maven.assumeOnLocalEnvironmentOnly("IDEA-378277")
 
     maven.createStdProjectFolders()
-    maven.importProjectAsync("""
+    maven.importProjectAsync($$"""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -76,7 +76,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <sources>
-                                  <source>${'$'}{basedir}/..</source>
+                                  <source>${basedir}/..</source>
                                 </sources>
                               </configuration>
                             </execution>
@@ -97,7 +97,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
   fun testPluginSources() = runBlocking {
     maven.createStdProjectFolders()
     maven.createProjectSubDirs("src1", "src2")
-    maven.importProjectAsync("""
+    maven.importProjectAsync($$"""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -116,8 +116,8 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <sources>
-                                  <source>${'$'}{basedir}/src1</source>
-                                  <source>${'$'}{basedir}/src2</source>
+                                  <source>${basedir}/src1</source>
+                                  <source>${basedir}/src2</source>
                                 </sources>
                               </configuration>
                             </execution>
@@ -136,7 +136,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
   fun testPluginSourceDuringGenerateResourcesPhase() = runBlocking {
     maven.createStdProjectFolders()
     maven.createProjectSubDirs("extraResources")
-    maven.importProjectAsync("""
+    maven.importProjectAsync($$"""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -155,7 +155,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <sources>
-                                  <source>${'$'}{basedir}/extraResources</source>
+                                  <source>${basedir}/extraResources</source>
                                 </sources>
                               </configuration>
                             </execution>
@@ -175,7 +175,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
     maven.createStdProjectFolders()
     maven.createProjectSubDirs("extraTestResources")
     maven.mavenImporterSettings.updateFoldersOnImportPhase = "generate-test-resources"
-    maven.importProjectAsync("""
+    maven.importProjectAsync($$"""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -194,7 +194,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <sources>
-                                  <source>${'$'}{basedir}/extraTestResources</source>
+                                  <source>${basedir}/extraTestResources</source>
                                 </sources>
                               </configuration>
                             </execution>
@@ -251,7 +251,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
   fun testPluginSourcesWithVariables() = runBlocking {
     maven.createStdProjectFolders()
     maven.createProjectSubDirs("target/src")
-    maven.importProjectAsync("""
+    maven.importProjectAsync($$"""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -270,7 +270,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <sources>
-                                  <source>${'$'}{project.build.directory}/src</source>
+                                  <source>${project.build.directory}/src</source>
                                 </sources>
                               </configuration>
                             </execution>
@@ -355,7 +355,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
     maven.createProjectSubDirs("resources1", "resources2")
     maven.createProjectSubDirs("test1", "test2")
     maven.createProjectSubDirs("test-resources1", "test-resources2")
-    maven.importProjectAsync("""
+    maven.importProjectAsync($$"""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -374,7 +374,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <sources>
-                                  <source>${'$'}{basedir}/src1</source>
+                                  <source>${basedir}/src1</source>
                                 </sources>
                               </configuration>
                             </execution>
@@ -386,7 +386,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <sources>
-                                  <source>${'$'}{basedir}/src2</source>
+                                  <source>${basedir}/src2</source>
                                 </sources>
                               </configuration>
                             </execution>
@@ -398,7 +398,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <resources>
-                                  <resource><directory>${'$'}{basedir}/resources1</directory></resource>
+                                  <resource><directory>${basedir}/resources1</directory></resource>
                                 </resources>
                               </configuration>
                             </execution>
@@ -410,7 +410,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <resources>
-                                  <resource><directory>${'$'}{basedir}/resources2</directory></resource>
+                                  <resource><directory>${basedir}/resources2</directory></resource>
                                 </resources>
                               </configuration>
                             </execution>
@@ -422,7 +422,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <sources>
-                                  <source>${'$'}{basedir}/test1</source>
+                                  <source>${basedir}/test1</source>
                                 </sources>
                               </configuration>
                             </execution>
@@ -434,7 +434,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <sources>
-                                  <source>${'$'}{basedir}/test2</source>
+                                  <source>${basedir}/test2</source>
                                 </sources>
                               </configuration>
                             </execution>
@@ -446,7 +446,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <resources>
-                                  <resource><directory>${'$'}{basedir}/test-resources1</directory></resource>
+                                  <resource><directory>${basedir}/test-resources1</directory></resource>
                                 </resources>
                               </configuration>
                             </execution>
@@ -458,7 +458,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                               </goals>
                               <configuration>
                                 <resources>
-                                  <resource><directory>${'$'}{basedir}/test-resources2</directory></resource>
+                                  <resource><directory>${basedir}/test-resources2</directory></resource>
                                 </resources>
                               </configuration>
                             </execution>
@@ -531,7 +531,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                                  "target/generated-sources/annotations",
                                  "target/generated-sources/test-annotations",
                                  "target/generated-test-sources/foo")
-    maven.importProjectAsync("""
+    maven.importProjectAsync($$"""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -542,8 +542,8 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                        <artifactId>maven-compiler-plugin</artifactId>
                        <version>2.3.2</version>
                        <configuration>
-                         <generatedSourcesDirectory>${'$'}{basedir}/custom-annotations</generatedSourcesDirectory>
-                         <generatedTestSourcesDirectory>${'$'}{basedir}/custom-test-annotations</generatedTestSourcesDirectory>
+                         <generatedSourcesDirectory>${basedir}/custom-annotations</generatedSourcesDirectory>
+                         <generatedTestSourcesDirectory>${basedir}/custom-test-annotations</generatedTestSourcesDirectory>
                        </configuration>
                       </plugin>
                      </plugins>
@@ -572,7 +572,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                                  "target/generated-test-sources/foo",
                                  "target/generated-test-sources/test-annotations"
     )
-    maven.importProjectAsync("""
+    maven.importProjectAsync($$"""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -583,8 +583,8 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                        <artifactId>maven-compiler-plugin</artifactId>
                        <version>2.3.2</version>
                        <configuration>
-                         <generatedSourcesDirectory>${'$'}{basedir}/target/generated-sources/custom-annotations</generatedSourcesDirectory>
-                         <generatedTestSourcesDirectory>${'$'}{basedir}/target/generated-sources/custom-test-annotations</generatedTestSourcesDirectory>
+                         <generatedSourcesDirectory>${basedir}/target/generated-sources/custom-annotations</generatedSourcesDirectory>
+                         <generatedTestSourcesDirectory>${basedir}/target/generated-sources/custom-test-annotations</generatedTestSourcesDirectory>
                        </configuration>
                       </plugin>
                      </plugins>
@@ -614,7 +614,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                                  "target/generated-sources/annotations",
                                  "target/generated-sources/test-annotations",
                                  "target/generated-test-sources/foo")
-    maven.importProjectAsync("""
+    maven.importProjectAsync($$"""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -625,8 +625,8 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
                        <artifactId>maven-compiler-plugin</artifactId>
                        <version>2.3.2</version>
                        <configuration>
-                         <generatedSourcesDirectory>${'$'}{basedir}/anno</generatedSourcesDirectory>
-                         <generatedTestSourcesDirectory>${'$'}{basedir}/test-anno</generatedTestSourcesDirectory>
+                         <generatedSourcesDirectory>${basedir}/anno</generatedSourcesDirectory>
+                         <generatedTestSourcesDirectory>${basedir}/test-anno</generatedTestSourcesDirectory>
                        </configuration>
                       </plugin>
                      </plugins>
