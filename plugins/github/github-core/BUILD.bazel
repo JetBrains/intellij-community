@@ -391,6 +391,7 @@ jvm_library(
         "//platform/collaboration-tools:collaborationTools-tests_test_lib",
         "//platform/testFramework/junit5/codeInsight",
         "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
+        "@lib//:app-cash-turbine-jvm",
     ],
 )
 ### auto-generated section `build intellij.vcs.github.tests` end

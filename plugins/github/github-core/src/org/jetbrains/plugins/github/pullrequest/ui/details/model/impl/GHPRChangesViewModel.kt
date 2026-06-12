@@ -101,7 +101,7 @@ internal class GHPRChangesViewModelImpl(
   }.modelFlow(cs, thisLogger())
 
   override val selectedCommit: SharedFlow<GHCommit?> = reviewCommits.combine(selectedCommitIndex) { commits, index ->
-    index.takeIf { it >= 0 }?.let { commits[it] }
+    commits.getOrNull(index)
   }.modelFlow(cs, thisLogger())
 
   override val changeListVm: StateFlow<ComputedResult<GHPRChangeListViewModelImpl>> = delegate.changeListVm
