@@ -169,9 +169,17 @@ private fun convertFileTimeToMs(time: Long): Long {
   return time / 10_000 - 11_644_473_600_000L
 }
 
+/**
+ * Arena.ofShared closing issues a GLOBAL HANDSHAKE, which is roughly equivalent to a global safepoint, but isn't tracked by the JFR
+ * and resumes each thread after it gets its HANDSHAKE CALLBACK done, not after ALL threads are done.
+ *
+ * SO ITS LIKE CRAZY SLOW
+ *
+ * So instances of this class will have to be confined to a single thread if we should use project panama to access the Windows API from it
+ */
 @ApiStatus.Internal
 class WindowsBufferedDirectoryIterator(val directory: Path) : MutableIterator<com.intellij.openapi.util.Pair<Path, BasicFileAttributes>>, Closeable {
-  internal val api: Windows = Windows(Arena.ofShared())
+  internal val api: Windows = Windows(Arena.ofConfined())
 
   var directoryHandle: MemorySegment = Windows.NULL
 
