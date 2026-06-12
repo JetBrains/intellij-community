@@ -10,13 +10,38 @@ import com.intellij.maven.testFramework.MavenCompilingTestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.compileModules
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.createProjectSubDirs
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.updateProjectPom
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import com.intellij.testFramework.UsefulTestCase.assertSize
 
-class MavenTasksManagerTest : MavenCompilingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenTasksManagerTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun `test run execute before build tasks`() = runBlocking {
-    createProjectSubDirs(".mvn") // for Maven to detect root project
-    importProjectAsync("""
+    maven.createProjectSubDirs(".mvn") // for Maven to detect root project
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -24,13 +49,13 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
 
     val processResults = mutableListOf<ProcessResult>()
     subscribeToMavenGoalExecution("clean", processResults)
-    addCompileTask(projectPom.path, "clean")
+    addCompileTask(maven.projectPom.path, "clean")
     compileModulesAndAssertExitCode(processResults, "project")
   }
 
   @Test
   fun `test run execute before build tasks in the same module`() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                   <version>1</version>
@@ -41,7 +66,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   </modules>
                   """.trimIndent())
 
-    val m1File = createModulePom("m1", """
+    val m1File = maven.createModulePom("m1", """
                   <artifactId>m1</artifactId>
                   <version>1</version>
                   <parent>
@@ -51,7 +76,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   </parent>
                   """.trimIndent())
 
-    val m2File = createModulePom("m2", """
+    val m2File = maven.createModulePom("m2", """
                   <artifactId>m2</artifactId>
                   <version>1</version>
                   <parent>
@@ -61,7 +86,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   </parent>
                   """.trimIndent())
 
-    importProjectAsync()
+    maven.importProjectAsync()
     val processResults = mutableListOf<ProcessResult>()
     subscribeToMavenGoalExecution("generate-sources", processResults)
     addCompileTask(m1File.path, "generate-sources")
@@ -70,7 +95,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
 
   @Test
   fun `test don't run execute before build tasks in another module` () = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                   <version>1</version>
@@ -81,7 +106,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   </modules>
                   """.trimIndent())
 
-    val m1File = createModulePom("m1", """
+    val m1File = maven.createModulePom("m1", """
                   <artifactId>m1</artifactId>
                   <version>1</version>
                   <parent>
@@ -91,7 +116,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   </parent>
                   """.trimIndent())
 
-    val m2File = createModulePom("m2", """
+    val m2File = maven.createModulePom("m2", """
                   <artifactId>m2</artifactId>
                   <version>1</version>
                   <parent>
@@ -101,18 +126,18 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   </parent>
                   """.trimIndent())
 
-    importProjectAsync()
+    maven.importProjectAsync()
     val processResults = mutableListOf<ProcessResult>()
     subscribeToMavenGoalExecution("generate-sources", processResults)
     addCompileTask(m1File.path, "generate-sources")
-    compileModules("m2")
+    maven.compileModules("m2")
     assertSize(0, processResults)
   }
 
   @Test
   fun `test group tasks by goal` () = runBlocking {
-    createProjectSubDirs(".mvn") // for Maven to detect root project
-    val p = createProjectPom("""
+    maven.createProjectSubDirs(".mvn") // for Maven to detect root project
+    val p = maven.createProjectPom("""
                   <groupId>group</groupId>
                   <artifactId>parent</artifactId>
                   <version>1</version>
@@ -123,7 +148,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   </modules>
                   """.trimIndent())
 
-    val m1File = createModulePom("m1", """
+    val m1File = maven.createModulePom("m1", """
                   <artifactId>m1</artifactId>
                   <version>1</version>
                   <parent>
@@ -133,7 +158,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   </parent>
                   """.trimIndent())
 
-    val m2File = createModulePom("m2", """
+    val m2File = maven.createModulePom("m2", """
                   <artifactId>m2</artifactId>
                   <version>1</version>
                   <parent>
@@ -143,7 +168,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                   </parent>
                   """.trimIndent())
 
-    importProjectAsync()
+    maven.importProjectAsync()
     val processResults = mutableListOf<ProcessResult>()
     subscribeToMavenGoalExecution("generate-sources", processResults)
     addCompileTask(m1File.path, "generate-sources")
@@ -157,7 +182,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
 
   @Test
   fun `test task goal version is updated after plugin version change`() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -173,14 +198,14 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                     """.trimIndent())
 
     val oldGoal = "org.apache.maven.plugins:maven-compiler-plugin:3.8.1:compile"
-    addCompileTask(projectPom.path, oldGoal)
+    addCompileTask(maven.projectPom.path, oldGoal)
 
-    val tasksManager = MavenTasksManager.getInstance(project)
-    assertTrue(tasksManager.isCompileTaskOfPhase(MavenCompilerTask(projectPom.path, oldGoal),
+    val tasksManager = MavenTasksManager.getInstance(maven.project)
+    assertTrue(tasksManager.isCompileTaskOfPhase(MavenCompilerTask(maven.projectPom.path, oldGoal),
                                                  MavenTasksManager.Phase.BEFORE_COMPILE))
 
     // Update plugin version and re-sync
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -196,18 +221,18 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                     """.trimIndent())
 
     val newGoal = "org.apache.maven.plugins:maven-compiler-plugin:3.8.2:compile"
-    assertFalse("Stale task with old version should be gone",
-                tasksManager.isCompileTaskOfPhase(MavenCompilerTask(projectPom.path, oldGoal),
-                                                  MavenTasksManager.Phase.BEFORE_COMPILE))
-    assertTrue("Task with updated version should exist",
-               tasksManager.isCompileTaskOfPhase(MavenCompilerTask(projectPom.path, newGoal),
-                                                 MavenTasksManager.Phase.BEFORE_COMPILE))
+    assertFalse(tasksManager.isCompileTaskOfPhase(MavenCompilerTask(maven.projectPom.path, oldGoal),
+                                                  MavenTasksManager.Phase.BEFORE_COMPILE),
+                "Stale task with old version should be gone")
+    assertTrue(tasksManager.isCompileTaskOfPhase(MavenCompilerTask(maven.projectPom.path, newGoal),
+                                                 MavenTasksManager.Phase.BEFORE_COMPILE),
+               "Task with updated version should exist")
   }
 
   @Test
   fun `test qualified task goal is removed when plugin is removed from project`() = runBlocking {
     // maven-assembly-plugin has no default lifecycle binding, so it is truly absent when removed from the POM
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -223,35 +248,35 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                     """.trimIndent())
 
     val goal = "org.apache.maven.plugins:maven-assembly-plugin:3.3.0:single"
-    addCompileTask(projectPom.path, goal)
+    addCompileTask(maven.projectPom.path, goal)
 
-    val tasksManager = MavenTasksManager.getInstance(project)
-    assertTrue(tasksManager.isCompileTaskOfPhase(MavenCompilerTask(projectPom.path, goal),
+    val tasksManager = MavenTasksManager.getInstance(maven.project)
+    assertTrue(tasksManager.isCompileTaskOfPhase(MavenCompilerTask(maven.projectPom.path, goal),
                                                  MavenTasksManager.Phase.BEFORE_COMPILE))
 
     // Remove the plugin declaration and re-sync; the plugin has no default binding so it disappears from the model
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    assertFalse("Task for removed plugin should be dropped",
-                tasksManager.isCompileTaskOfPhase(MavenCompilerTask(projectPom.path, goal),
-                                                  MavenTasksManager.Phase.BEFORE_COMPILE))
+    assertFalse(tasksManager.isCompileTaskOfPhase(MavenCompilerTask(maven.projectPom.path, goal),
+                                                  MavenTasksManager.Phase.BEFORE_COMPILE),
+                "Task for removed plugin should be dropped")
   }
 
   @Test
   fun `test unqualified task goals are not changed after sync`() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    addCompileTask(projectPom.path, "clean")
+    addCompileTask(maven.projectPom.path, "clean")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -266,14 +291,14 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                     </build>
                     """.trimIndent())
 
-    assertTrue(MavenTasksManager.getInstance(project)
-                 .isCompileTaskOfPhase(MavenCompilerTask(projectPom.path, "clean"),
+    assertTrue(MavenTasksManager.getInstance(maven.project)
+                 .isCompileTaskOfPhase(MavenCompilerTask(maven.projectPom.path, "clean"),
                                        MavenTasksManager.Phase.BEFORE_COMPILE))
   }
 
   @Test
   fun `test tasks are dropped when maven project is removed from structure`() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
                     <version>1</version>
@@ -282,7 +307,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                       <module>m1</module>
                     </modules>
                     """.trimIndent())
-    val m1File = createModulePom("m1", """
+    val m1File = maven.createModulePom("m1", """
                     <artifactId>m1</artifactId>
                     <version>1</version>
                     <parent>
@@ -291,35 +316,35 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
                       <version>1</version>
                     </parent>
                     """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    val tasksManager = MavenTasksManager.getInstance(project)
+    val tasksManager = MavenTasksManager.getInstance(maven.project)
     addCompileTask(m1File.path, "clean")
     assertTrue(tasksManager.isCompileTaskOfPhase(MavenCompilerTask(m1File.path, "clean"),
                                                  MavenTasksManager.Phase.BEFORE_COMPILE))
 
     // Remove m1 from parent modules list, re-sync
-    updateProjectPom("""
+    maven.updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>parent</artifactId>
                     <version>1</version>
                     <packaging>pom</packaging>
                     """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    assertFalse("Task for removed project should be dropped",
-                tasksManager.isCompileTaskOfPhase(MavenCompilerTask(m1File.path, "clean"),
-                                                  MavenTasksManager.Phase.BEFORE_COMPILE))
+    assertFalse(tasksManager.isCompileTaskOfPhase(MavenCompilerTask(m1File.path, "clean"),
+                                                  MavenTasksManager.Phase.BEFORE_COMPILE),
+                "Task for removed project should be dropped")
   }
 
   private fun addCompileTask(pomPath: String, goal: String) {
-    val mavenTasksManager = MavenTasksManager.getInstance(project)
+    val mavenTasksManager = MavenTasksManager.getInstance(maven.project)
     val task = MavenCompilerTask(pomPath, goal)
     mavenTasksManager.addCompileTasks(listOf(task), MavenTasksManager.Phase.BEFORE_COMPILE)
   }
 
   private fun subscribeToMavenGoalExecution(goal: String, processResults: MutableList<ProcessResult>) {
-    val connection = project.messageBus.connect()
+    val connection = maven.project.messageBus.connect()
     connection.subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
       override fun processTerminated(executorIdLocal: String, environmentLocal: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
         val runProfile = environmentLocal.runProfile
@@ -333,7 +358,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
 
   private suspend fun compileModulesAndAssertExitCode(processResults: MutableList<ProcessResult>, vararg moduleNames: String) {
     try {
-      compileModules(*moduleNames)
+      maven.compileModules(*moduleNames)
       assertExitCode(processResults)
     } catch (e: Throwable) {
       assertExitCode(processResults)
@@ -346,7 +371,7 @@ class MavenTasksManagerTest : MavenCompilingTestCase() {
     val processResult = processResults[0]
     val exitCode = processResult.exitCode
     val commandLine = processResult.commandLine
-    assertEquals("command failed with exit code $exitCode:\n$commandLine\n", 0, exitCode)
+    assertEquals(0, exitCode, "command failed with exit code $exitCode:\n$commandLine\n")
   }
 
   private data class ProcessResult(val runnerParameters: MavenRunnerParameters, val commandLine: String, val exitCode: Int)
