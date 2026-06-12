@@ -390,6 +390,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
     return coroutineScope.coroutineContext.job.children.iterator().hasNext()
   }
 
+  /** Also consider `ActionOnSaveTestUtil.waitForActionsOnSaveToFinish` */
   @TestOnly
   @RequiresBackgroundThread(generateAssertion = true)
   fun waitForTasks() {

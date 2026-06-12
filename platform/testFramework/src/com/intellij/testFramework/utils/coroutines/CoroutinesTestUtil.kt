@@ -16,8 +16,6 @@ import kotlinx.coroutines.yield
  * The methods block execution while coroutines in the corresponding job are not done.
  * Usually it is required to get the proper result if your refactoring starts a coroutine outside the general execution e.g. adding imports
  */
-@RequiresBackgroundThread(generateAssertion = false)
-@RequiresBlockingContext
 fun waitCoroutinesBlocking(cs: CoroutineScope) {
   waitCoroutinesBlocking(cs, -1)
 }
