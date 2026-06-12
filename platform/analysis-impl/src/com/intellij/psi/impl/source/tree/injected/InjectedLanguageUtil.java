@@ -248,13 +248,14 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
       Segment nextRange = i == shreds.size() - 1 ? null : shreds.get(i + 1).getHostRangeMarker();
       if (nextRange == null || hostOffset < nextRange.getStartOffset()) {
         hostOffset = Math.min(hostOffset, currentRange.getEndOffset());
-        int inHost = hostOffset - currentRange.getStartOffset();
+        int inRange = hostOffset - currentRange.getStartOffset();
         if (escaper != null && escaper.decode(rangeInsideHost, chars)) {
+          int inHost = inRange + rangeInsideHost.getStartOffset();
           int found = ObjectUtils.binarySearch(
-            0, inHost, index -> Integer.compare(escaper.getOffsetInHost(index, TextRange.create(0, host.getTextLength())), inHost));
+            0, inHost, index -> Integer.compare(escaper.getOffsetInHost(index, rangeInsideHost), inHost));
           return unescaped + (found >= 0 ? found : -found - 1);
         }
-        return unescaped + inHost;
+        return unescaped + inRange;
       }
       if (escaper != null && escaper.decode(rangeInsideHost, chars)) {
         unescaped += chars.length();
