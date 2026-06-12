@@ -154,6 +154,7 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
             val initEvent = initEvent.withDataContext(dataContextWithRpcId)
             val providersHolder = SeProvidersHolder.initialize(initEvent, project, session, "Frontend", false)
             localProvidersHolder = providersHolder
+            project?.let { Disposer.tryRegister(it, providersHolder) }
             initializeVmAndSetToPopup(popupFuture,
                                       popup,
                                       popupContentPane,
