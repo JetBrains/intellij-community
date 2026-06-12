@@ -27,23 +27,55 @@ import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertModuleModuleDeps
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.createProjectSubDirs
+import org.jetbrains.idea.maven.fixtures.getModule
+import org.jetbrains.idea.maven.fixtures.getRelativePath
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.importProjectsAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.mn
+import org.jetbrains.idea.maven.fixtures.projectPath
+import org.jetbrains.idea.maven.fixtures.testRootDisposable
 import org.jetbrains.idea.maven.project.MavenProjectSettings
-import org.junit.Test
 import java.io.File
 import java.nio.file.Paths
 import kotlin.io.path.name
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.BeforeEach
+import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
 
-class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() = runBlocking {
-    super.setUp()
-    MavenProjectSettings.getInstance(project).testRunningSettings.isPassArgLine = true
-    MavenProjectSettings.getInstance(project).testRunningSettings.isPassEnvironmentVariables = true
-    MavenProjectSettings.getInstance(project).testRunningSettings.isPassSystemProperties = true
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenJUnitPatcherTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
+  @BeforeEach
+  fun setUp(): Unit = runBlocking {
+    MavenProjectSettings.getInstance(maven.project).testRunningSettings.isPassArgLine = true
+    MavenProjectSettings.getInstance(maven.project).testRunningSettings.isPassEnvironmentVariables = true
+    MavenProjectSettings.getInstance(maven.project).testRunningSettings.isPassSystemProperties = true
   }
 
   @Test
   fun ExcludeProjectDependencyInClassPathElement() = runBlocking {
-    val m = createModulePom("m", """
+    val m = maven.createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
@@ -75,7 +107,7 @@ class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
       </build>
       """.trimIndent())
 
-    val dep = createModulePom("dep", """
+    val dep = maven.createModulePom("dep", """
       <groupId>test</groupId>
       <artifactId>dep</artifactId>
       <version>1</version>
@@ -84,16 +116,16 @@ class MavenJUnitPatcherTest : MavenMultiVersionImportingTestCase() {
       
       """.trimIndent())
 
-    createProjectSubDirs("m/src/main/java",
+    maven.createProjectSubDirs("m/src/main/java",
                          "m/target/classes",
                          "dep/src/main/java",
                          "dep/target/classes")
 
-    importProjects(m, dep)
-    assertModules("m", "dep")
-    assertModuleModuleDeps("m", "dep")
+    maven.importProjectsAsync(m, dep)
+    maven.assertModules("m", "dep")
+    maven.assertModuleModuleDeps("m", "dep")
 
-    val module = getModule("m")
+    val module = maven.getModule("m")
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
@@ -172,26 +204,26 @@ org.jetbrains:annotations
   </plugins>
 </build>
 """
-      val m1 = createModulePom("m1", pom)
+      val m1 = maven.createModulePom("m1", pom)
 
-      importProjects(m1)
-      val module = getModule("m1")
+      maven.importProjectsAsync(m1)
+      val module = maven.getModule("m1")
 
       val mavenJUnitPatcher = MavenJUnitPatcher()
       val javaParameters = JavaParameters()
       javaParameters.configureByModule(module, JavaParameters.CLASSES_AND_TESTS, IdeaTestUtil.getMockJdk18())
-      assertEquals(excludeSpecification, mutableListOf("annotations-17.0.0.jar", "annotations-java5-17.0.0.jar"),
-                   ContainerUtil.map(javaParameters.classPath.getPathList()) { path: String? -> File(path).getName() })
+      assertEquals(mutableListOf("annotations-17.0.0.jar", "annotations-java5-17.0.0.jar"),
+                   ContainerUtil.map(javaParameters.classPath.getPathList()) { path: String? -> File(path).getName() }, excludeSpecification)
       patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
       val classPath = javaParameters.classPath.getPathList()
-      assertEquals(excludeSpecification, listOf("annotations-java5-17.0.0.jar"),
-                   ContainerUtil.map(classPath) { path: String? -> File(path).getName() })
+      assertEquals(listOf("annotations-java5-17.0.0.jar"),
+                   ContainerUtil.map(classPath) { path: String? -> File(path).getName() }, excludeSpecification)
     }
   }
 
   @Test
   fun ExcludeScope() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -222,8 +254,8 @@ org.jetbrains:annotations
       </build>
       """.trimIndent())
 
-    importProjects(m1)
-    val module = getModule("m1")
+    maven.importProjectsAsync(m1)
+    val module = maven.getModule("m1")
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
@@ -238,7 +270,7 @@ org.jetbrains:annotations
 
   @Test
   fun AddClassPath() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -260,8 +292,8 @@ org.jetbrains:annotations
       </build>
       """.trimIndent())
 
-    importProjects(m1)
-    val module = getModule("m1")
+    maven.importProjectsAsync(m1)
+    val module = maven.getModule("m1")
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
@@ -272,7 +304,7 @@ org.jetbrains:annotations
 
   @Test
   fun ArgList() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -295,8 +327,8 @@ org.jetbrains:annotations
       </plugins></build>
       """.trimIndent())
 
-    importProjects(m1)
-    val module = getModule("m1")
+    maven.importProjectsAsync(m1)
+    val module = maven.getModule("m1")
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
@@ -307,7 +339,7 @@ org.jetbrains:annotations
 
   @Test
   fun IgnoreJaCoCoOption() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><build>
         <plugins>
           <plugin>
@@ -329,8 +361,8 @@ org.jetbrains:annotations
       </build>
       """.trimIndent())
 
-    importProjects(m1)
-    val module = getModule("m1")
+    maven.importProjectsAsync(m1)
+    val module = maven.getModule("m1")
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
@@ -342,7 +374,7 @@ org.jetbrains:annotations
 
   @Test
   fun ImplicitArgLine() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
         <argLine>-Dfoo=${'$'}{version}</argLine>
       </properties>
@@ -358,8 +390,8 @@ org.jetbrains:annotations
       </build>
       """.trimIndent())
 
-    importProjects(m1)
-    val module = getModule("m1")
+    maven.importProjectsAsync(m1)
+    val module = maven.getModule("m1")
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
@@ -370,7 +402,7 @@ org.jetbrains:annotations
 
   @Test
   fun VmPropertiesResolve() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -393,8 +425,8 @@ org.jetbrains:annotations
       </plugins></build>
       """.trimIndent())
 
-    importProjects(m1)
-    val module = getModule("m1")
+    maven.importProjectsAsync(m1)
+    val module = maven.getModule("m1")
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
@@ -408,7 +440,7 @@ org.jetbrains:annotations
 
   @Test
   fun ArgLineLateReplacement() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -424,8 +456,8 @@ org.jetbrains:annotations
       </plugins></build>
       """.trimIndent())
 
-    importProjects(m1)
-    val module = getModule("m1")
+    maven.importProjectsAsync(m1)
+    val module = maven.getModule("m1")
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
@@ -437,7 +469,7 @@ org.jetbrains:annotations
 
   @Test
   fun ArgLineLateReplacementParentProperty() = runBlocking {
-    createProjectPom(
+    maven.createProjectPom(
       """
         <groupId>test</groupId>
         <artifactId>project</artifactId>
@@ -451,7 +483,7 @@ org.jetbrains:annotations
         </modules>
         """.trimIndent())
 
-    createModulePom(
+    maven.createModulePom(
       "m1",
       """
           <groupId>test</groupId>
@@ -479,8 +511,8 @@ org.jetbrains:annotations
           </build>
           """.trimIndent())
 
-    importProjectAsync()
-    val module = getModule(mn("project", "m1"))
+    maven.importProjectAsync()
+    val module = maven.getModule(maven.mn("project", "m1"))
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
@@ -493,7 +525,7 @@ org.jetbrains:annotations
 
   @Test
   fun ArgLineRefersAnotherProperty() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -513,8 +545,8 @@ org.jetbrains:annotations
       </plugins></build>
       """.trimIndent())
 
-    importProjects(m1)
-    val module = getModule("m1")
+    maven.importProjectsAsync(m1)
+    val module = maven.getModule("m1")
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
@@ -526,14 +558,14 @@ org.jetbrains:annotations
 
   @Test
   fun ArgLineProperty() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId><artifactId>m1</artifactId><version>1</version><properties>
       <argLine>-DsomeProp=Hello</argLine>
       </properties><build><plugins>  <plugin>    <groupId>org.apache.maven.plugins</groupId>    <artifactId>maven-surefire-plugin</artifactId>    <version>2.16</version>    <configuration>      <argLine>@{argLine} -Xmx2048M -XX:MaxPermSize=512M "-Dargs=can have spaces"</argLine>    </configuration>  </plugin></plugins></build>
       """.trimIndent())
 
-    importProjects(m1)
-    val module = getModule("m1")
+    maven.importProjectsAsync(m1)
+    val module = maven.getModule("m1")
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
@@ -545,7 +577,7 @@ org.jetbrains:annotations
 
   @Test
   fun ResolvePropertiesUsingAt() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -566,8 +598,8 @@ org.jetbrains:annotations
       </build>
       """.trimIndent())
 
-    importProjects(m1)
-    val module = getModule("m1")
+    maven.importProjectsAsync(m1)
+    val module = maven.getModule("m1")
 
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
@@ -579,8 +611,8 @@ org.jetbrains:annotations
 
   @Test
   fun `should replace test dependency on dependency with classifier`() = runBlocking {
-    Registry.get("maven.build.additional.jars").setValue("true", getTestRootDisposable())
-    val lib = createModulePom("library", """
+    Registry.get("maven.build.additional.jars").setValue("true", maven.testRootDisposable)
+    val lib = maven.createModulePom("library", """
       <parent>
         <groupId>test</groupId>
         <artifactId>parent</artifactId>
@@ -623,7 +655,7 @@ org.jetbrains:annotations
     </build>
 """)
 
-    val app = createModulePom("application", """
+    val app = maven.createModulePom("application", """
       <parent>
         <groupId>test</groupId>
         <artifactId>parent</artifactId>
@@ -648,7 +680,7 @@ org.jetbrains:annotations
     </dependencies>
 """)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>parent</artifactId>
       <version>1.0.0-SNAPSHOT</version>
@@ -659,7 +691,7 @@ org.jetbrains:annotations
       </modules>
 """)
 
-    val module = getModule("application")
+    val module = maven.getModule("application")
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
     javaParameters.vmParametersList.add("-ea")
@@ -670,7 +702,7 @@ org.jetbrains:annotations
     patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
 
     val pathList = javaParameters.classPath.pathList.mapNotNull {
-      getRelativePath(projectPath, it)
+      maven.getRelativePath(maven.projectPath, it)
     }
     assertOrderedEquals(
       pathList,
@@ -684,8 +716,8 @@ org.jetbrains:annotations
 
   @Test
   fun `should add classpath compile dependency on dependency with classifier if two classifiers are present`() = runBlocking {
-    Registry.get("maven.build.additional.jars").setValue("true", getTestRootDisposable())
-    val lib = createModulePom("library", """
+    Registry.get("maven.build.additional.jars").setValue("true", maven.testRootDisposable)
+    val lib = maven.createModulePom("library", """
       <parent>
         <groupId>test</groupId>
         <artifactId>parent</artifactId>
@@ -740,7 +772,7 @@ org.jetbrains:annotations
     </build>
 """)
 
-    val app = createModulePom("application", """
+    val app = maven.createModulePom("application", """
       <parent>
         <groupId>test</groupId>
         <artifactId>parent</artifactId>
@@ -769,7 +801,7 @@ org.jetbrains:annotations
     </dependencies>
 """)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>parent</artifactId>
       <version>1.0.0-SNAPSHOT</version>
@@ -780,7 +812,7 @@ org.jetbrains:annotations
       </modules>
 """)
 
-    val module = getModule("application")
+    val module = maven.getModule("application")
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
     javaParameters.vmParametersList.add("-ea")
@@ -790,7 +822,7 @@ org.jetbrains:annotations
     patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
 
     val pathList = javaParameters.classPath.pathList.mapNotNull {
-      getRelativePath(projectPath, it)
+      maven.getRelativePath(maven.projectPath, it)
     }
     assertOrderedEquals(
       pathList,
@@ -803,8 +835,8 @@ org.jetbrains:annotations
 
   @Test
   fun `should replace classpath compile dependency on dependency with classifier`() = runBlocking {
-    Registry.get("maven.build.additional.jars").setValue("true", getTestRootDisposable())
-    val lib = createModulePom("library", """
+    Registry.get("maven.build.additional.jars").setValue("true", maven.testRootDisposable)
+    val lib = maven.createModulePom("library", """
       <parent>
         <groupId>test</groupId>
         <artifactId>parent</artifactId>
@@ -859,7 +891,7 @@ org.jetbrains:annotations
     </build>
 """)
 
-    val app = createModulePom("application", """
+    val app = maven.createModulePom("application", """
       <parent>
         <groupId>test</groupId>
         <artifactId>parent</artifactId>
@@ -883,7 +915,7 @@ org.jetbrains:annotations
     </dependencies>
 """)
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>parent</artifactId>
       <version>1.0.0-SNAPSHOT</version>
@@ -894,7 +926,7 @@ org.jetbrains:annotations
       </modules>
 """)
 
-    val module = getModule("application")
+    val module = maven.getModule("application")
     val mavenJUnitPatcher = MavenJUnitPatcher()
     val javaParameters = JavaParameters()
     javaParameters.vmParametersList.add("-ea")
@@ -904,7 +936,7 @@ org.jetbrains:annotations
     patchJavaParameters(mavenJUnitPatcher, module, javaParameters)
 
     val pathList = javaParameters.classPath.pathList.mapNotNull {
-      getRelativePath(projectPath, it)
+      maven.getRelativePath(maven.projectPath, it)
     }
     assertOrderedEquals(
       pathList,
@@ -915,7 +947,7 @@ org.jetbrains:annotations
   }
 
   private fun buildDir(path: String): String {
-    return Paths.get(projectPath.toString(), path).toCanonicalPath().toString()
+    return Paths.get(maven.projectPath.toString(), path).toCanonicalPath().toString()
   }
 
   private suspend fun patchJavaParameters(mavenJUnitPatcher: MavenJUnitPatcher, module: Module, javaParameters: JavaParameters) {
