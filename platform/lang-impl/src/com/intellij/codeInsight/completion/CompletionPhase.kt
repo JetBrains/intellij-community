@@ -384,7 +384,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       @JvmStatic
       fun loadContributorsOutsideEdt(editor: Editor, file: PsiFile) {
         ThreadingAssertions.assertBackgroundThread()
-        CompletionContributor.forLanguage(PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().offset))
+        CompletionContributor.forLanguage(PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().offset), editor)
       }
 
       @ApiStatus.Internal

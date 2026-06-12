@@ -4,6 +4,7 @@ package com.intellij.codeInsight.completion.group
 import com.intellij.codeInsight.completion.NewRdCompletionSupport
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 
@@ -11,7 +12,7 @@ internal class GroupedCompletionImpl : GroupedCompletion {
   /**
    * @see com.intellij.codeInsight.completion.command.configuration.AppCommandCompletionSettings.calculateFromRegistry
    */
-  override fun isEnabled(): Boolean {
+  override fun isEnabled(editor: Editor?): Boolean {
     if (!Registry.`is`("ide.completion.group.enabled", false)) {
       return false
     }
@@ -31,7 +32,7 @@ internal class GroupedCompletionImpl : GroupedCompletion {
       return true
     }
 
-    if (NewRdCompletionSupport.isFrontendRdCompletionOn() && NewRdCompletionSupport.getInstance().isFrontendForIntelliJBackend()) {
+    if (NewRdCompletionSupport.isFrontendRdCompletionOn(editor) && NewRdCompletionSupport.getInstance().isFrontendForIntelliJBackend()) {
       return true
     }
 

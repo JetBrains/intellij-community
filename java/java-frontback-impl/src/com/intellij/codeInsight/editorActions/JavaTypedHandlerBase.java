@@ -85,7 +85,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
   }
 
   protected void autoPopupMemberLookup(@NotNull Project project, @NotNull Editor editor) {
-    if (NewRdCompletionSupport.isFrontendRdCompletionOn()) {
+    if (NewRdCompletionSupport.isFrontendRdCompletionOn(editor)) {
       AutoPopupController.getInstance(project).scheduleAutoPopup(editor, new FrontendAutoPopupMemberLookupCondition(editor));
     }
   }
@@ -552,7 +552,7 @@ public class JavaTypedHandlerBase extends TypedHandlerDelegate {
 
   @Override
   public @NotNull Result checkAutoPopup(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    if (NewRdCompletionSupport.isFrontendRdCompletionOn()) {
+    if (NewRdCompletionSupport.isFrontendRdCompletionOn(editor)) {
       return doCheckAutoPopup(charTyped, project, editor, file);
     }
     else {

@@ -94,7 +94,7 @@ public abstract class BaseCodeCompletionAction extends DumbAwareAction implement
     }
 
     if (IdeProductMode.isFrontend()) {
-      return NewRdCompletionSupport.isFrontendRdCompletionOn();
+      return NewRdCompletionSupport.isFrontendRdCompletionOn(editor);
     }
 
     if (IdeProductMode.isBackend()) {

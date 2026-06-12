@@ -265,7 +265,7 @@ internal class CommandCompletionProvider(val contributor: CommandCompletionContr
 
   private fun enableFastShown(parameters: CompletionParameters) {
     if (Registry.`is`("ide.completion.command.faster.paint")) {
-      if (!GroupedCompletionContributor.isGroupEnabledInApp()) return
+      if (!GroupedCompletionContributor.isGroupEnabled(parameters.editor)) return
       if (!contributor.groupIsEnabled(parameters)) return
       val completionProgressIndicator = parameters.process as? CompletionProgressIndicator
       val count = completionProgressIndicator?.lookup?.list?.model?.size ?: 0
