@@ -133,7 +133,7 @@ internal class DiffToolbarIslandPanelUI : DiffHeaderToolbarPanelUI() {
   override fun getPreferredSize(c: JComponent?): Dimension? {
     val layout = c?.layout ?: return super.getPreferredSize(c)
     return layout.preferredLayoutSize(c)?.apply {
-      height = fixedHeight
+      height = fixedHeight + c.insets.top + c.insets.bottom
     }
   }
 
