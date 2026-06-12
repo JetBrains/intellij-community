@@ -66,14 +66,11 @@ internal class AddExplicitContextArgumentFix(
     }
 
     override fun getActionPresentation(context: ActionContext, element: KtCallElement): Presentation {
-        val description = if (contextParameters.size == 1) {
-            "fix.add.explicit.context.argument"
-        } else {
-            "fix.add.explicit.context.arguments"
-        }
-        return Presentation.of(KotlinBundle.message(description))
+        val count = contextParameters.size
+        return Presentation.of(KotlinBundle.message("fix.add.explicit.context.argument", count))
     }
 
     override fun getFamilyName(): @IntentionFamilyName String =
-        KotlinBundle.message("fix.add.explicit.context.argument")
+        KotlinBundle.message("fix.add.explicit.context.argument", 1)
+
 }
