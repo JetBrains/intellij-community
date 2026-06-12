@@ -10,4 +10,5 @@ object MinimapLayerIds {
   val HOVER: MinimapLayerId = MinimapLayerId("hover")
   val CARET: MinimapLayerId = MinimapLayerId("caret")
   val THUMB: MinimapLayerId = MinimapLayerId("thumb")
+  val EDITOR_SEPARATOR: MinimapLayerId = MinimapLayerId("editorSeparator")
 }

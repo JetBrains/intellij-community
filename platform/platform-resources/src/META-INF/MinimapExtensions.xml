@@ -1,0 +1,22 @@
+<!--suppress PluginXmlRegistrationCheck -->
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <editorFactoryListener implementation="com.intellij.ide.minimap.MinimapEditorFactoryListener"/>
+    <applicationService serviceImplementation="com.intellij.ide.minimap.settings.MinimapSettings"/>
+    <applicationConfigurable id="com.intellij.minimap" parentId="editor"
+                             key="settings.name" bundle="messages.MinimapBundle"
+                             provider="com.intellij.ide.minimap.settings.MinimapConfigurableProvider"/>
+
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.TokenFillerLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.SelectionLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.DiagnosticsLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.FoldMarkersLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.BreakpointsLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.HoverLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.CaretLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.ThumbLayerFactory"/>
+    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.EditorSeparatorLayerFactory"/>
+
+    <applicationSettings service="com.intellij.ide.minimap.settings.MinimapSettings"/>
+  </extensions>
+</idea-plugin>

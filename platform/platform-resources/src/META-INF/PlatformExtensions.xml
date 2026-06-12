@@ -1866,20 +1866,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                        bundle="messages.IdeBundle"
                        key="presentation.assistant.notification"/>
 
-    <!-- Minimap -->
-    <editorFactoryListener implementation="com.intellij.ide.minimap.MinimapEditorFactoryListener"/>
-    <applicationService serviceImplementation="com.intellij.ide.minimap.settings.MinimapSettings"/>
-    <applicationConfigurable id="com.intellij.minimap" parentId="editor"
-                             key="settings.name" bundle="messages.MinimapBundle"
-                             provider="com.intellij.ide.minimap.settings.MinimapConfigurableProvider"/>
-    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.TokenFillerLayerFactory"/>
-    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.SelectionLayerFactory"/>
-    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.DiagnosticsLayerFactory"/>
-    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.FoldMarkersLayerFactory"/>
-    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.BreakpointsLayerFactory"/>
-    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.HoverLayerFactory"/>
-    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.CaretLayerFactory"/>
-    <minimapLayerFactory implementation="com.intellij.ide.minimap.layers.factories.ThumbLayerFactory"/>
     <registryKey key="popup.advertiser.speed.search" defaultValue="false" description="Shows speed search advertiser in popups"/>
     <registryKey key="wayland.true.popups" defaultValue="true" description="Show popups in Wayland as true popups (allows remembering the location, but limits them to the IDE window)"/>
     <registryKey key="wayland.relative.mouse.protocol" defaultValue="true" description="Use the relative mouse movement protocol to move/resize popups (known to be broken on virtual machines)"/>
@@ -2160,7 +2146,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <applicationSettings service="com.intellij.ide.lightEdit.LightEditServiceImpl"/>
     <applicationSettings service="com.intellij.diff.tools.util.base.TextDiffSettingsHolder"/>
     <applicationSettings service="com.intellij.openapi.options.advanced.AdvancedSettingsImpl"/>
-    <applicationSettings service="com.intellij.ide.minimap.settings.MinimapSettings"/>
     <projectSettings service="com.intellij.ui.docking.impl.DockManagerImpl"/>
     <applicationSettings service="com.intellij.openapi.project.impl.shared.P3DynamicPluginSynchronizer"/>
     <applicationSettings service="com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxIconThemeConfiguration"/>
