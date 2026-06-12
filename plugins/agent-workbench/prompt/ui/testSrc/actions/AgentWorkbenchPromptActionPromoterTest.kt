@@ -48,6 +48,26 @@ class AgentWorkbenchPromptActionPromoterTest {
   }
 
   @Test
+  fun promotesGlobalPromptAheadOfRunAnythingWithoutEditorContext() {
+    val promptAction = registerActionIfNeeded(AgentWorkbenchPromptShortcutActionPromoter.PROMPT_ACTION_ID)
+    val runAnythingAction = registerActionIfNeeded(AgentWorkbenchPromptShortcutActionPromoter.RUN_ANYTHING_ACTION_ID)
+
+    try {
+      val result = rearrangeByPromotersImpl(
+        listOf(runAnythingAction.action, promptAction.action),
+        DataContext.EMPTY_CONTEXT,
+        listOf(promoter),
+      )
+
+      assertThat(result).containsExactly(promptAction.action, runAnythingAction.action)
+    }
+    finally {
+      runAnythingAction.dispose()
+      promptAction.dispose()
+    }
+  }
+
+  @Test
   fun leavesOrderUnchangedWithoutEditorContext() {
     val promptAction = registerActionIfNeeded(AgentWorkbenchPromptShortcutActionPromoter.PROMPT_ACTION_ID)
     val aiAction = registerActionIfNeeded(AgentWorkbenchPromptShortcutActionPromoter.AI_ASSISTANT_EDITOR_ACTION_ID)

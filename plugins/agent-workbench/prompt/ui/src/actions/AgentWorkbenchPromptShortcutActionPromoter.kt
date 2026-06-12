@@ -12,13 +12,10 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 
 internal class AgentWorkbenchPromptShortcutActionPromoter : ActionPromoter {
   override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
-    if (CommonDataKeys.PROJECT.getData(context) == null || CommonDataKeys.EDITOR.getData(context) == null) {
-      return emptyList()
-    }
-
     val actionManager = ActionManager.getInstance()
     var promptAction: AnAction? = null
     var aiAssistantEditorActionPresent = false
+    var runAnythingActionPresent = false
 
     for (action in actions) {
       when (actionManager.getId(ActionUtil.getDelegateChainRootAction(action))) {
@@ -27,14 +24,25 @@ internal class AgentWorkbenchPromptShortcutActionPromoter : ActionPromoter {
             promptAction = action
           }
         }
+        RUN_ANYTHING_ACTION_ID -> {
+          runAnythingActionPresent = true
+        }
         AI_ASSISTANT_EDITOR_ACTION_ID -> {
           aiAssistantEditorActionPresent = true
         }
       }
 
-      if (promptAction != null && aiAssistantEditorActionPresent) {
+      if (promptAction != null && runAnythingActionPresent) {
         return listOf(promptAction)
       }
+    }
+
+    if (CommonDataKeys.PROJECT.getData(context) == null || CommonDataKeys.EDITOR.getData(context) == null) {
+      return emptyList()
+    }
+
+    if (promptAction != null && aiAssistantEditorActionPresent) {
+      return listOf(promptAction)
     }
 
     return emptyList()
@@ -43,6 +51,7 @@ internal class AgentWorkbenchPromptShortcutActionPromoter : ActionPromoter {
   internal companion object {
     const val PROMPT_ACTION_ID: String = "AgentWorkbenchPrompt.OpenGlobalPalette"
     const val AUTO_SELECT_ACTION_ID: String = "AgentWorkbenchPrompt.OpenGlobalPaletteAutoSelect"
+    const val RUN_ANYTHING_ACTION_ID: String = "RunAnything"
     const val AI_ASSISTANT_EDITOR_ACTION_ID: String = "AIAssistant.Editor.AskAiAssistantInEditor"
   }
 }
