@@ -96,6 +96,7 @@ internal class CodexRolloutParser(
       parentThreadId = state.parentThreadId,
       projectFilesChangedAt = state.projectFilesChangedAt,
       projectFileChangeEvidence = state.projectFileChangeEvidence.sortedBy { it.timestampMillis },
+      hasExplicitTitle = !usedFallbackTitle,
       thread = CodexBackendThread(
         thread = CodexThread(
           id = resolvedSessionId,
@@ -111,6 +112,7 @@ internal class CodexRolloutParser(
         requiresResponse = hasPendingUserInput || hasPendingApproval || hasPendingPlan,
         summaryActivity = summaryActivity,
         usageSnapshots = listOfNotNull(state.usageSnapshot),
+        hasExplicitTitle = !usedFallbackTitle,
       ),
     )
   }
@@ -398,6 +400,7 @@ internal data class ParsedRolloutThread(
   @JvmField val parentThreadId: String?,
   @JvmField val projectFilesChangedAt: Long,
   @JvmField val projectFileChangeEvidence: List<CodexProjectFileChangeEvidence>,
+  @JvmField val hasExplicitTitle: Boolean,
   @JvmField val thread: CodexBackendThread,
 )
 

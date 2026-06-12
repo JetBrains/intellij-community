@@ -37,7 +37,9 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRe
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.mergeAgentSessionThreadPresentationUpdates
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -598,12 +600,13 @@ internal class CodexSessionSource internal constructor(
         }
       }
 
-      if (hints.rebindCandidates.isEmpty() && filteredActivityHintsByThreadId.isEmpty()) {
+      if (hints.rebindCandidates.isEmpty() && filteredActivityHintsByThreadId.isEmpty() && hints.presentationUpdatesByThreadId.isEmpty()) {
         continue
       }
       filtered[path] = CodexRefreshHints(
         rebindCandidates = hints.rebindCandidates,
         activityHintsByThreadId = filteredActivityHintsByThreadId,
+        presentationUpdatesByThreadId = hints.presentationUpdatesByThreadId,
       )
     }
     return filtered
@@ -655,14 +658,34 @@ internal fun mergeCodexRefreshHints(
         mergedActivityHintsByThreadId[threadId] = hint
       }
     }
+    val mergedPresentationUpdatesByThreadId = mergeCodexPresentationUpdates(
+      appHints?.presentationUpdatesByThreadId.orEmpty(),
+      rolloutHints?.presentationUpdatesByThreadId.orEmpty(),
+    )
 
-    if (mergedRebindCandidates.isEmpty() && mergedActivityHintsByThreadId.isEmpty()) {
+    if (mergedRebindCandidates.isEmpty() && mergedActivityHintsByThreadId.isEmpty() && mergedPresentationUpdatesByThreadId.isEmpty()) {
       continue
     }
     merged[path] = CodexRefreshHints(
       rebindCandidates = mergedRebindCandidates,
       activityHintsByThreadId = mergedActivityHintsByThreadId,
+      presentationUpdatesByThreadId = mergedPresentationUpdatesByThreadId,
     )
+  }
+  return merged
+}
+
+private fun mergeCodexPresentationUpdates(
+  primary: Map<String, AgentSessionThreadPresentationUpdate>,
+  fallback: Map<String, AgentSessionThreadPresentationUpdate>,
+): Map<String, AgentSessionThreadPresentationUpdate> {
+  if (primary.isEmpty()) return fallback
+  if (fallback.isEmpty()) return primary
+  val merged = LinkedHashMap<String, AgentSessionThreadPresentationUpdate>(primary.size + fallback.size)
+  merged.putAll(primary)
+  for ((threadId, fallbackUpdate) in fallback) {
+    val primaryUpdate = merged[threadId]
+    merged[threadId] = if (primaryUpdate == null) fallbackUpdate else mergeAgentSessionThreadPresentationUpdates(primaryUpdate, fallbackUpdate)
   }
   return merged
 }

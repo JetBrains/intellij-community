@@ -108,7 +108,7 @@ internal class AgentSessionThreadRebindSupport(
     return hintThreadIdsByPath.mapValues { (_, ids) -> ids.toCollection(LinkedHashSet()) }
   }
 
-  fun applyActivityHints(
+  fun applyPresentationHints(
     outcomes: MutableMap<String, ProviderRefreshOutcome>,
     refreshHintsByPath: Map<String, AgentSessionRefreshHints>,
   ) {
@@ -120,8 +120,8 @@ internal class AgentSessionThreadRebindSupport(
     for ((path, outcome) in outcomes) {
       val threads = outcome.threads ?: continue
       val refreshHints = refreshHintsByPath[path] ?: continue
-      val activityUpdatesByThreadId = refreshHints.activityUpdatesByThreadId
-      if (activityUpdatesByThreadId.isEmpty()) {
+      val presentationUpdatesByThreadId = refreshHints.resolvePresentationUpdatesByThreadId()
+      if (presentationUpdatesByThreadId.isEmpty()) {
         continue
       }
 
@@ -130,16 +130,16 @@ internal class AgentSessionThreadRebindSupport(
         if (thread.provider != provider) {
           return@map thread
         }
-        val activityUpdate = activityUpdatesByThreadId[thread.id] ?: return@map thread
-        val resolvedUpdate = resolveAgentThreadActivityReportUpdate(
+        val presentationUpdate = presentationUpdatesByThreadId[thread.id] ?: return@map thread
+        val resolvedUpdate = resolveAgentThreadPresentationUpdate(
           thread = thread,
-          activityUpdate = activityUpdate,
+          presentationUpdate = presentationUpdate,
         )
-        if (resolvedUpdate.activityReport == thread.activityReport && resolvedUpdate.updatedAt == thread.updatedAt) {
+        if (resolvedUpdate.title == thread.title && resolvedUpdate.activityReport == thread.activityReport && resolvedUpdate.updatedAt == thread.updatedAt) {
           return@map thread
         }
         changed = true
-        thread.copy(activityReport = resolvedUpdate.activityReport, updatedAt = resolvedUpdate.updatedAt)
+        thread.copy(title = resolvedUpdate.title, activityReport = resolvedUpdate.activityReport, updatedAt = resolvedUpdate.updatedAt)
       }
 
       if (changed) {

@@ -24,9 +24,17 @@ data class AgentSessionThreadActivityUpdate(
   @JvmField val updatedAt: Long? = null,
 )
 
+data class AgentSessionThreadPresentationUpdate(
+  @JvmField val title: String? = null,
+  @JvmField val activityReport: AgentThreadActivityReport? = null,
+  @JvmField val updatesChromeActivity: Boolean = true,
+  @JvmField val updatedAt: Long? = null,
+)
+
 data class AgentSessionRefreshHints(
   @JvmField val rebindCandidates: List<AgentSessionRebindCandidate> = emptyList(),
   @JvmField val activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
+  @JvmField val presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate> = emptyMap(),
 )
 
 const val UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT: Long = -1L
@@ -53,9 +61,48 @@ data class AgentSessionSourceUpdateEvent(
   @JvmField val scopedPaths: Set<String>? = null,
   @JvmField val threadIds: Set<String>? = null,
   @JvmField val activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate> = emptyMap(),
+  @JvmField val presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate> = emptyMap(),
   @JvmField val mayHaveChangedProjectFiles: Boolean = false,
   @JvmField val changedProjectFilePaths: Set<String>? = null,
 )
+
+fun AgentSessionThreadActivityUpdate.toPresentationUpdate(): AgentSessionThreadPresentationUpdate {
+  return AgentSessionThreadPresentationUpdate(
+    activityReport = activityReport,
+    updatesChromeActivity = updatesChromeActivity,
+    updatedAt = updatedAt,
+  )
+}
+
+fun mergeAgentSessionThreadPresentationUpdates(
+  existing: AgentSessionThreadPresentationUpdate,
+  incoming: AgentSessionThreadPresentationUpdate,
+): AgentSessionThreadPresentationUpdate {
+  val existingUpdatedAt = existing.updatedAt
+  val incomingUpdatedAt = incoming.updatedAt
+  if (existingUpdatedAt != null && incomingUpdatedAt != null && incomingUpdatedAt < existingUpdatedAt) {
+    return existing
+  }
+  val updatedAt = when {
+    existingUpdatedAt == null -> incomingUpdatedAt
+    incomingUpdatedAt == null -> existingUpdatedAt
+    else -> maxOf(existingUpdatedAt, incomingUpdatedAt)
+  }
+  val updatesChromeActivity = incoming.updatesChromeActivity || existing.updatesChromeActivity
+  val activityReport = when {
+    incoming.activityReport == null -> existing.activityReport
+    existing.activityReport == null -> incoming.activityReport
+    else -> incoming.activityReport.copy(
+      chromeActivity = if (incoming.updatesChromeActivity) incoming.activityReport.chromeActivity else existing.activityReport.chromeActivity,
+    )
+  }
+  return AgentSessionThreadPresentationUpdate(
+    title = incoming.title ?: existing.title,
+    activityReport = activityReport,
+    updatesChromeActivity = updatesChromeActivity,
+    updatedAt = updatedAt,
+  )
+}
 
 data class AgentSessionSourceRefreshRequest(
   @JvmField val paths: List<String>,

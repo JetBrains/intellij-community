@@ -13,6 +13,7 @@ data class CodexBackendThread(
   @JvmField val requiresResponse: Boolean = false,
   @JvmField val summaryActivity: CodexSessionActivity? = activity,
   @JvmField val usageSnapshots: List<AgentSessionUsageSnapshot> = emptyList(),
+  @JvmField val hasExplicitTitle: Boolean = true,
 ) {
   val usageSnapshot: AgentSessionUsageSnapshot?
     get() = usageSnapshots.singleOrNull()

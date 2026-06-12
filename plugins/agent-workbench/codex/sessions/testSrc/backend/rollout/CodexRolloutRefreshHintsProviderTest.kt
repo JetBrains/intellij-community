@@ -169,6 +169,7 @@ class CodexRolloutRefreshHintsProviderTest {
       ).getValue(projectDir.toString())
 
       assertThat(hints.rebindCandidates.map { it.threadId }).containsExactly("cli-new")
+      assertThat(hints.presentationUpdatesByThreadId.getValue("cli-parent").title).isEqualTo("Parent thread")
     }
   }
 }

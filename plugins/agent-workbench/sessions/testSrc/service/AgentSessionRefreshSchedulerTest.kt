@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import com.intellij.agent.workbench.sessions.waitForCondition
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -226,6 +227,28 @@ class AgentSessionRefreshSchedulerTest {
   }
 
   @Test
+  fun titleOnlyScopedRefreshSignalsDoNotRefreshProvider() = runBlocking(Dispatchers.Default) {
+    val presentationUpdate = AgentSessionThreadPresentationUpdate(title = "Explicit rollout title", updatedAt = 300L)
+    val scopedEvents = flow {
+      emit(
+        titleOnlyEvent(
+          presentationUpdate = presentationUpdate,
+        )
+      )
+    }
+
+    withScheduler(scopedEvents) {
+      waitForCondition { appliedActivityUpdates.size == 1 }
+      delay(500.milliseconds)
+
+      assertThat(providerRefreshes).isEmpty()
+      assertThat(providerHintRefreshes).isEmpty()
+      assertThat(vfsRefreshes).isEmpty()
+      assertThat(appliedActivityUpdates.single().presentationUpdatesByThreadId["thread-a"]).isEqualTo(presentationUpdate)
+    }
+  }
+
+  @Test
   fun threadScopedActivityHintRefreshesProviderHintsWithoutProjectFileRefresh() = runBlocking(Dispatchers.Default) {
     val projectPath = "/work/project"
     val scopedEvents = flow {
@@ -310,7 +333,7 @@ class AgentSessionRefreshSchedulerTest {
       executeFullRefresh = {},
       executeProviderRefresh = { _, _, updateEvent -> providerRefreshes.add(updateEvent) },
       executeProviderHintRefresh = { _, _, updateEvent -> providerHintRefreshes.add(updateEvent) },
-      applySourceUpdateActivityHints = { _, updateEvent -> appliedActivityUpdates.add(updateEvent) },
+      applySourceUpdatePresentationHints = { _, updateEvent -> appliedActivityUpdates.add(updateEvent) },
       scheduleVfsRefreshForSourceUpdate = { _, updateEvent -> vfsRefreshes.add(updateEvent) },
       onFullRefreshFailure = { error -> throw AssertionError("Unexpected full refresh failure", error) },
     )
@@ -354,6 +377,16 @@ private fun activityOnlyEvent(
     type = AgentSessionSourceUpdate.HINTS_CHANGED,
     scopedPaths = setOf("/work/project"),
     activityUpdatesByThreadId = mapOf("thread-a" to activityUpdate),
+  )
+}
+
+private fun titleOnlyEvent(
+  presentationUpdate: AgentSessionThreadPresentationUpdate,
+): AgentSessionSourceUpdateEvent {
+  return AgentSessionSourceUpdateEvent(
+    type = AgentSessionSourceUpdate.HINTS_CHANGED,
+    scopedPaths = setOf("/work/project"),
+    presentationUpdatesByThreadId = mapOf("thread-a" to presentationUpdate),
   )
 }
 

@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import kotlinx.coroutines.flow.Flow
 
 internal class CodexRolloutRefreshHintsProvider(
@@ -50,6 +51,7 @@ internal class CodexRolloutRefreshHintsProvider(
 
       val rebindCandidatesById = LinkedHashMap<String, AgentSessionRebindCandidate>()
       val activityHintsByThreadId = LinkedHashMap<String, CodexRefreshActivityHint>()
+      val presentationUpdatesByThreadId = LinkedHashMap<String, AgentSessionThreadPresentationUpdate>()
       val activityUpdatedAtByThreadId = HashMap<String, Long>()
 
       for (rolloutThread in activityThreads) {
@@ -69,6 +71,12 @@ internal class CodexRolloutRefreshHintsProvider(
               responseRequired = rolloutThread.requiresResponse,
               summaryActivity = rolloutThread.summaryActivity?.toAgentThreadActivity(),
             )
+            if (rolloutThread.hasExplicitTitle) {
+              presentationUpdatesByThreadId[threadId] = AgentSessionThreadPresentationUpdate(
+                title = rolloutThread.thread.title,
+                updatedAt = rolloutUpdatedAt,
+              )
+            }
           }
         }
       }
@@ -95,12 +103,13 @@ internal class CodexRolloutRefreshHintsProvider(
         }
       }
 
-      if (rebindCandidatesById.isEmpty() && activityHintsByThreadId.isEmpty()) {
+      if (rebindCandidatesById.isEmpty() && activityHintsByThreadId.isEmpty() && presentationUpdatesByThreadId.isEmpty()) {
         continue
       }
       hintsByPath[path] = CodexRefreshHints(
         rebindCandidates = ArrayList(rebindCandidatesById.values),
         activityHintsByThreadId = activityHintsByThreadId,
+        presentationUpdatesByThreadId = presentationUpdatesByThreadId,
       )
     }
     return hintsByPath

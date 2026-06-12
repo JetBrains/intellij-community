@@ -21,6 +21,7 @@ import com.intellij.agent.workbench.json.filebacked.toFileBackedSessionPathKey
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -127,6 +128,7 @@ internal class CodexRolloutSessionBackend(
     val scopedPaths = LinkedHashSet<String>()
     val threadIds = LinkedHashSet<String>()
     val activityUpdatesByThreadId = LinkedHashMap<String, AgentSessionThreadActivityUpdate>()
+    val presentationUpdatesByThreadId = LinkedHashMap<String, AgentSessionThreadPresentationUpdate>()
     var mayHaveChangedProjectFiles = false
     var changedProjectFilePaths: LinkedHashSet<String>? = LinkedHashSet()
     var failedParses = 0
@@ -152,11 +154,18 @@ internal class CodexRolloutSessionBackend(
       parsedThread.parentThreadId?.let(threadIds::add)
       if (parsedThread.parentThreadId == null) {
         val threadId = parsedThread.thread.thread.id
+        val activityReport = AgentThreadActivityReport(
+          rowActivity = parsedThread.thread.activity.toAgentThreadActivity(),
+          chromeActivity = parsedThread.thread.summaryActivity?.toAgentThreadActivity(),
+        )
         activityUpdatesByThreadId[threadId] = AgentSessionThreadActivityUpdate(
-          activityReport = AgentThreadActivityReport(
-            rowActivity = parsedThread.thread.activity.toAgentThreadActivity(),
-            chromeActivity = parsedThread.thread.summaryActivity?.toAgentThreadActivity(),
-          ),
+          activityReport = activityReport,
+          updatedAt = parsedThread.thread.thread.updatedAt,
+        )
+        presentationUpdatesByThreadId[threadId] = AgentSessionThreadPresentationUpdate(
+          title = parsedThread.thread.thread.title.takeIf { parsedThread.hasExplicitTitle },
+          activityReport = activityReport,
+          updatedAt = parsedThread.thread.thread.updatedAt,
         )
       }
     }
@@ -180,6 +189,7 @@ internal class CodexRolloutSessionBackend(
       scopedPaths = scopedPaths,
       threadIds = threadIds.takeIf { it.isNotEmpty() },
       activityUpdatesByThreadId = activityUpdatesByThreadId,
+      presentationUpdatesByThreadId = presentationUpdatesByThreadId,
       mayHaveChangedProjectFiles = mayHaveChangedProjectFiles,
       changedProjectFilePaths = changedProjectFilePathsForUpdate(mayHaveChangedProjectFiles, changedProjectFilePaths),
     )
@@ -208,6 +218,16 @@ internal class CodexRolloutSessionBackend(
         mapOf(
           hint.threadId to AgentSessionThreadActivityUpdate(
             activityReport = AgentThreadActivityReport(rowActivity = hint.activity, chromeActivity = hint.summaryActivity),
+            updatedAt = hint.updatedAt,
+          )
+        )
+      }.orEmpty(),
+      presentationUpdatesByThreadId = activeThreadActivityHint?.let { hint ->
+        mapOf(
+          hint.threadId to AgentSessionThreadPresentationUpdate(
+            title = hint.title,
+            activityReport = AgentThreadActivityReport(rowActivity = hint.activity, chromeActivity = hint.summaryActivity),
+            updatedAt = hint.updatedAt,
           )
         )
       }.orEmpty(),
@@ -368,8 +388,10 @@ private data class ConsumedProjectFileChangeEvidence(
 
 private data class ActiveThreadActivityHint(
   @JvmField val threadId: String,
+  @JvmField val title: String?,
   @JvmField val activity: AgentThreadActivity,
   @JvmField val summaryActivity: AgentThreadActivity?,
+  @JvmField val updatedAt: Long,
 )
 
 private fun ParsedRolloutThread.toActiveThreadActivityHint(): ActiveThreadActivityHint? {
@@ -379,8 +401,10 @@ private fun ParsedRolloutThread.toActiveThreadActivityHint(): ActiveThreadActivi
   val threadId = thread.thread.id
   return ActiveThreadActivityHint(
     threadId = threadId,
+    title = thread.thread.title.takeIf { hasExplicitTitle },
     activity = thread.activity.toAgentThreadActivity(),
     summaryActivity = thread.summaryActivity?.toAgentThreadActivity(),
+    updatedAt = thread.thread.updatedAt,
   )
 }
 

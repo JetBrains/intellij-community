@@ -3,8 +3,11 @@ package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshActivityHint
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
+import com.intellij.agent.workbench.codex.sessions.backend.toAgentSessionRefreshHints
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -12,6 +15,23 @@ import java.util.concurrent.TimeUnit
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class CodexSessionSourceRefreshHintsTest {
+  @Test
+  fun conversionCombinesExplicitPresentationTitleWithActivityHint() {
+    val hints = CodexRefreshHints(
+      activityHintsByThreadId = mapOf(
+        "thread-a" to refreshHint(activity = AgentThreadActivity.PROCESSING, updatedAt = 200L)
+      ),
+      presentationUpdatesByThreadId = mapOf(
+        "thread-a" to AgentSessionThreadPresentationUpdate(title = "JSONL title", updatedAt = 200L)
+      ),
+    ).toAgentSessionRefreshHints()
+
+    val update = hints.presentationUpdatesByThreadId.getValue("thread-a")
+    assertThat(update.title).isEqualTo("JSONL title")
+    assertThat(update.activityReport).isEqualTo(AgentThreadActivityReport(AgentThreadActivity.PROCESSING))
+    assertThat(update.updatedAt).isEqualTo(200L)
+  }
+
   @Test
   fun mergePrefersAppServerRebindCandidatesButAllowsRolloutUnreadOverride() {
     val appServerHintsByPath = mapOf(

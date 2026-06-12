@@ -9,6 +9,9 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshH
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
+import com.intellij.agent.workbench.sessions.core.providers.mergeAgentSessionThreadPresentationUpdates
+import com.intellij.agent.workbench.sessions.core.providers.toPresentationUpdate
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -24,22 +27,43 @@ internal data class CodexRefreshActivityHint(
 internal data class CodexRefreshHints(
   @JvmField val rebindCandidates: List<AgentSessionRebindCandidate> = emptyList(),
   @JvmField val activityHintsByThreadId: Map<String, CodexRefreshActivityHint> = emptyMap(),
+  @JvmField val presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate> = emptyMap(),
 )
 
 internal fun CodexRefreshHints.toAgentSessionRefreshHints(): AgentSessionRefreshHints {
+  val activityUpdatesByThreadId = activityHintsByThreadId.mapValues { (_, hint) ->
+    AgentSessionThreadActivityUpdate(
+      activityReport = AgentThreadActivityReport(
+        rowActivity = hint.activity,
+        chromeActivity = if (hint.hasSummaryActivityHint) hint.summaryActivity else null,
+      ),
+      updatesChromeActivity = hint.hasSummaryActivityHint,
+      updatedAt = hint.updatedAt,
+    )
+  }
   return AgentSessionRefreshHints(
     rebindCandidates = rebindCandidates,
-    activityUpdatesByThreadId = activityHintsByThreadId.mapValues { (_, hint) ->
-      AgentSessionThreadActivityUpdate(
-        activityReport = AgentThreadActivityReport(
-          rowActivity = hint.activity,
-          chromeActivity = if (hint.hasSummaryActivityHint) hint.summaryActivity else null,
-        ),
-        updatesChromeActivity = hint.hasSummaryActivityHint,
-        updatedAt = hint.updatedAt,
-      )
-    },
+    activityUpdatesByThreadId = activityUpdatesByThreadId,
+    presentationUpdatesByThreadId = mergeCodexPresentationUpdates(
+      activityUpdatesByThreadId.mapValues { (_, update) -> update.toPresentationUpdate() },
+      presentationUpdatesByThreadId,
+    ),
   )
+}
+
+private fun mergeCodexPresentationUpdates(
+  existing: Map<String, AgentSessionThreadPresentationUpdate>,
+  incoming: Map<String, AgentSessionThreadPresentationUpdate>,
+): Map<String, AgentSessionThreadPresentationUpdate> {
+  if (existing.isEmpty()) return incoming
+  if (incoming.isEmpty()) return existing
+  val merged = LinkedHashMap<String, AgentSessionThreadPresentationUpdate>(existing.size + incoming.size)
+  merged.putAll(existing)
+  for ((threadId, incomingUpdate) in incoming) {
+    val existingUpdate = merged[threadId]
+    merged[threadId] = if (existingUpdate == null) incomingUpdate else mergeAgentSessionThreadPresentationUpdates(existingUpdate, incomingUpdate)
+  }
+  return merged
 }
 
 internal interface CodexRefreshHintsProvider {

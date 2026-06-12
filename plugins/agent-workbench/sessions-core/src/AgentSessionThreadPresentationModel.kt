@@ -118,10 +118,34 @@ class AgentSessionThreadPresentationModel {
     if (updates.isEmpty()) {
       return AgentSessionThreadPresentationChangeSet.EMPTY
     }
+    return updatePresentationHints(
+      provider = provider,
+      updates = updates.map { update ->
+        AgentSessionThreadPresentationPatchUpdate(
+          path = update.path,
+          threadId = update.threadId,
+          activityReport = update.activityReport,
+          updatedAt = update.updatedAt,
+        )
+      },
+    )
+  }
+
+  fun updatePresentationHints(
+    provider: AgentSessionProvider,
+    updates: Collection<AgentSessionThreadPresentationPatchUpdate>,
+  ): AgentSessionThreadPresentationChangeSet {
+    if (updates.isEmpty()) {
+      return AgentSessionThreadPresentationChangeSet.EMPTY
+    }
     val inputs = LinkedHashMap<AgentSessionThreadPresentationKey, AgentSessionThreadPresentationPatch>(updates.size)
-    for ((path, threadId, activityReport, updatedAt) in updates) {
+    for ((path, threadId, title, activityReport, updatedAt) in updates) {
       val key = AgentSessionThreadPresentationKey.create(projectPath = path, provider = provider, threadId = threadId) ?: continue
-      inputs[key] = AgentSessionThreadPresentationPatch(activityReport = activityReport, updatedAt = updatedAt)
+      inputs[key] = AgentSessionThreadPresentationPatch(
+        title = normalizeAgentSessionTitle(title),
+        activityReport = activityReport,
+        updatedAt = updatedAt,
+      )
     }
     return putMerged(inputs)
   }
@@ -244,6 +268,14 @@ class AgentSessionThreadPresentationModel {
     return changeSet
   }
 }
+
+data class AgentSessionThreadPresentationPatchUpdate(
+  @JvmField val path: String,
+  @JvmField val threadId: String,
+  @JvmField val title: String? = null,
+  @JvmField val activityReport: AgentThreadActivityReport? = null,
+  @JvmField val updatedAt: Long? = null,
+)
 
 private fun mergePresentation(
   existing: AgentSessionThreadPresentation?,

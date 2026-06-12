@@ -16,14 +16,14 @@ import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadActivityPresentationUpdate
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationPatchUpdate
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.agent.workbench.sessions.core.config.AgentWorkbenchProjectRuntimeConfigs
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import com.intellij.agent.workbench.sessions.core.providers.isUnscoped
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderWarning
@@ -129,7 +129,7 @@ internal class AgentSessionRefreshCoordinator(
     executeFullRefresh = ::refreshNow,
     executeProviderRefresh = providerRefreshRunner::refreshLoadedProviderThreads,
     executeProviderHintRefresh = providerRefreshRunner::refreshLoadedProviderHints,
-    applySourceUpdateActivityHints = ::applySourceUpdateActivityHints,
+    applySourceUpdatePresentationHints = ::applySourceUpdatePresentationHints,
     scheduleVfsRefreshForSourceUpdate = ::scheduleVfsRefreshForSourceUpdate,
     onFullRefreshFailure = {
       stateStore.markLoadFailure(AgentSessionsBundle.message("toolwindow.error"))
@@ -158,9 +158,9 @@ internal class AgentSessionRefreshCoordinator(
     }
   }
 
-  private fun applySourceUpdateActivityHints(provider: AgentSessionProvider, updateEvent: AgentSessionSourceUpdateEvent) {
-    val activityUpdatesByThreadId = updateEvent.activityUpdatesByThreadId
-    if (activityUpdatesByThreadId.isEmpty()) {
+  private fun applySourceUpdatePresentationHints(provider: AgentSessionProvider, updateEvent: AgentSessionSourceUpdateEvent) {
+    val presentationUpdatesByThreadId = updateEvent.presentationUpdatesByThreadId
+    if (presentationUpdatesByThreadId.isEmpty()) {
       return
     }
 
@@ -170,30 +170,30 @@ internal class AgentSessionRefreshCoordinator(
       ?.filter(String::isNotBlank)
       ?.toCollection(LinkedHashSet())
 
-    var activityUpdates: List<AgentSessionThreadActivityPresentationUpdate> = emptyList()
+    var presentationUpdates: List<AgentSessionThreadPresentationPatchUpdate> = emptyList()
     stateStore.update { state ->
-      val update = applyThreadActivityHints(
+      val update = applyThreadPresentationHints(
         state = state,
         provider = provider,
         normalizedScopedPaths = normalizedScopedPaths,
-        activityUpdatesByThreadId = activityUpdatesByThreadId,
+        presentationUpdatesByThreadId = presentationUpdatesByThreadId,
       )
-      activityUpdates = update.activityUpdates
+      presentationUpdates = update.presentationUpdates
       update.state
     }
 
     LOG.debug {
-      "Applied ${provider.value} source activity hints " +
+      "Applied ${provider.value} source presentation hints " +
       "scopedPaths=${normalizedScopedPaths.debugSizeText()} " +
-      "activityUpdates=${activityUpdatesByThreadId.size} " +
-      "updates=${activityUpdates.size}"
+      "presentationUpdates=${presentationUpdatesByThreadId.size} " +
+      "updates=${presentationUpdates.size}"
     }
 
-    if (activityUpdates.isEmpty()) {
+    if (presentationUpdates.isEmpty()) {
       return
     }
     serviceScope.launch {
-      presentationModel.updateActivityHints(provider = provider, updates = activityUpdates)
+      presentationModel.updatePresentationHints(provider = provider, updates = presentationUpdates)
     }
   }
 
@@ -570,44 +570,44 @@ private fun AgentWorktree.withLoadingProvidersFailed(): AgentWorktree {
   )
 }
 
-private data class ActivityHintStateUpdate(
+private data class PresentationHintStateUpdate(
   @JvmField val state: AgentSessionsState,
-  @JvmField val activityUpdates: List<AgentSessionThreadActivityPresentationUpdate>,
+  @JvmField val presentationUpdates: List<AgentSessionThreadPresentationPatchUpdate>,
 )
 
-private data class ActivityHintThreadUpdate(
+private data class PresentationHintThreadUpdate(
   @JvmField val threads: List<AgentSessionThread>,
-  @JvmField val activityUpdates: List<AgentSessionThreadActivityPresentationUpdate>,
+  @JvmField val presentationUpdates: List<AgentSessionThreadPresentationPatchUpdate>,
 )
 
-private fun applyThreadActivityHints(
+private fun applyThreadPresentationHints(
   state: AgentSessionsState,
   provider: AgentSessionProvider,
   normalizedScopedPaths: Set<String>?,
-  activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate>,
-): ActivityHintStateUpdate {
-  val activityUpdates = ArrayList<AgentSessionThreadActivityPresentationUpdate>()
+  presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate>,
+): PresentationHintStateUpdate {
+  val presentationUpdates = ArrayList<AgentSessionThreadPresentationPatchUpdate>()
   var changed = false
   val nextProjects = state.projects.map { project ->
-    val projectUpdate = applyThreadActivityHintsForPath(
+    val projectUpdate = applyThreadPresentationHintsForPath(
       path = project.path,
       provider = provider,
       threads = project.threads,
       normalizedScopedPaths = normalizedScopedPaths,
-      activityUpdatesByThreadId = activityUpdatesByThreadId,
+      presentationUpdatesByThreadId = presentationUpdatesByThreadId,
     )
-    activityUpdates.addAll(projectUpdate.activityUpdates)
+    presentationUpdates.addAll(projectUpdate.presentationUpdates)
 
     var worktreesChanged = false
     val nextWorktrees = project.worktrees.map { worktree ->
-      val worktreeUpdate = applyThreadActivityHintsForPath(
+      val worktreeUpdate = applyThreadPresentationHintsForPath(
         path = worktree.path,
         provider = provider,
         threads = worktree.threads,
         normalizedScopedPaths = normalizedScopedPaths,
-        activityUpdatesByThreadId = activityUpdatesByThreadId,
+        presentationUpdatesByThreadId = presentationUpdatesByThreadId,
       )
-      activityUpdates.addAll(worktreeUpdate.activityUpdates)
+      presentationUpdates.addAll(worktreeUpdate.presentationUpdates)
       if (worktreeUpdate.threads === worktree.threads) {
         worktree
       }
@@ -630,65 +630,67 @@ private fun applyThreadActivityHints(
   }
 
   if (!changed) {
-    return ActivityHintStateUpdate(state = state, activityUpdates = activityUpdates)
+    return PresentationHintStateUpdate(state = state, presentationUpdates = presentationUpdates)
   }
-  return ActivityHintStateUpdate(
+  return PresentationHintStateUpdate(
     state = state.copy(
       projects = nextProjects,
       lastUpdatedAt = System.currentTimeMillis(),
     ),
-    activityUpdates = activityUpdates,
+    presentationUpdates = presentationUpdates,
   )
 }
 
-private fun applyThreadActivityHintsForPath(
+private fun applyThreadPresentationHintsForPath(
   path: String,
   provider: AgentSessionProvider,
   threads: List<AgentSessionThread>,
   normalizedScopedPaths: Set<String>?,
-  activityUpdatesByThreadId: Map<String, AgentSessionThreadActivityUpdate>,
-): ActivityHintThreadUpdate {
+  presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate>,
+): PresentationHintThreadUpdate {
   val normalizedPath = normalizeAgentWorkbenchPath(path)
   if (normalizedScopedPaths != null && normalizedPath !in normalizedScopedPaths) {
-    return ActivityHintThreadUpdate(threads = threads, activityUpdates = emptyList())
+    return PresentationHintThreadUpdate(threads = threads, presentationUpdates = emptyList())
   }
 
-  val activityUpdates = ArrayList<AgentSessionThreadActivityPresentationUpdate>()
+  val presentationUpdates = ArrayList<AgentSessionThreadPresentationPatchUpdate>()
   var changed = false
   val nextThreads = threads.map { thread ->
     if (thread.provider != provider) {
       return@map thread
     }
-    val activityUpdate = activityUpdatesByThreadId[thread.id] ?: return@map thread
-    val resolvedUpdate = resolveAgentThreadActivityReportUpdate(
+    val presentationUpdate = presentationUpdatesByThreadId[thread.id] ?: return@map thread
+    val resolvedUpdate = resolveAgentThreadPresentationUpdate(
       thread = thread,
-      activityUpdate = activityUpdate,
+      presentationUpdate = presentationUpdate,
     )
-    if (resolvedUpdate.activityReport == thread.activityReport && resolvedUpdate.updatedAt == thread.updatedAt) {
+    if (resolvedUpdate.title == thread.title && resolvedUpdate.activityReport == thread.activityReport && resolvedUpdate.updatedAt == thread.updatedAt) {
       return@map thread
     }
     LOG.debug {
-      "Applying ${provider.value} activity hint path=$path threadId=${thread.id} " +
+      "Applying ${provider.value} presentation hint path=$path threadId=${thread.id} " +
+      "titleChanged=${resolvedUpdate.title != thread.title} " +
       "activity=${thread.activity}->${resolvedUpdate.activityReport.rowActivity} " +
       "summaryActivity=${thread.summaryActivity}->${resolvedUpdate.activityReport.chromeActivity} " +
       "updatedAt=${thread.updatedAt}->${resolvedUpdate.updatedAt}"
     }
-    activityUpdates += AgentSessionThreadActivityPresentationUpdate(
+    presentationUpdates += AgentSessionThreadPresentationPatchUpdate(
       path = path,
       threadId = thread.id,
+      title = resolvedUpdate.title,
       activityReport = resolvedUpdate.activityReport,
       updatedAt = resolvedUpdate.updatedAt,
     )
     changed = true
-    thread.copy(activityReport = resolvedUpdate.activityReport, updatedAt = resolvedUpdate.updatedAt)
+    thread.copy(title = resolvedUpdate.title, activityReport = resolvedUpdate.activityReport, updatedAt = resolvedUpdate.updatedAt)
   }
 
   if (!changed) {
-    return ActivityHintThreadUpdate(threads = threads, activityUpdates = activityUpdates)
+    return PresentationHintThreadUpdate(threads = threads, presentationUpdates = presentationUpdates)
   }
-  return ActivityHintThreadUpdate(
+  return PresentationHintThreadUpdate(
     threads = nextThreads,
-    activityUpdates = activityUpdates,
+    presentationUpdates = presentationUpdates,
   )
 }
 
