@@ -221,14 +221,14 @@ public final class DirectoryLock {
       }
 
       try {
+        LOG.debug("deleting " + myLockFile);
+        Files.deleteIfExists(myLockFile);
         LOG.debug("deleting " + myPortFile);
         Files.deleteIfExists(myPortFile);
         if (myRedirectedPortFile != null) {
           LOG.debug("deleting " + myRedirectedPortFile);
           Files.deleteIfExists(myRedirectedPortFile);
         }
-        LOG.debug("deleting " + myLockFile);
-        Files.deleteIfExists(myLockFile);
 
         return tryListen();
       }
@@ -262,16 +262,17 @@ public final class DirectoryLock {
       Suppressions.runSuppressing(
         serverChannel::close,
         () -> {
-          if (myRedirectedPortFile != null) {
-            Files.deleteIfExists(myRedirectedPortFile);
+          if (deleteLockFile) {
+            Files.deleteIfExists(myLockFile);
           }
         },
         () -> Files.deleteIfExists(myPortFile),
         () -> {
-          if (deleteLockFile) {
-            Files.deleteIfExists(myLockFile);
+          if (myRedirectedPortFile != null) {
+            Files.deleteIfExists(myRedirectedPortFile);
           }
-        });
+        }
+      );
     }
   }
 
