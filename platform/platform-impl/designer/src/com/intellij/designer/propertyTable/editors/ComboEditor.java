@@ -17,6 +17,7 @@ package com.intellij.designer.propertyTable.editors;
 
 import com.intellij.designer.propertyTable.PropertyEditor;
 import com.intellij.openapi.ui.ComboBox;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -31,6 +32,7 @@ import java.awt.event.KeyEvent;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public abstract class ComboEditor extends PropertyEditor {
   protected final ComboBox myCombo;
   protected final Border myComboBorder;

@@ -5,12 +5,14 @@ import com.intellij.designer.model.PropertiesContainer;
 import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.PropertyTable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 
+@ApiStatus.Internal
 public final class BooleanRenderer extends JCheckBox implements PropertyRenderer {
   @Override
   public @NotNull JComponent getComponent(@Nullable PropertiesContainer container,

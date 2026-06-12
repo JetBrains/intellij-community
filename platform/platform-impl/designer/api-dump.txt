@@ -5,41 +5,130 @@ com.intellij.designer.DesignerEditorPanelFacade
 f:com.intellij.designer.LightFillLayout
 - java.awt.LayoutManager2
 - <init>():V
+- <init>(Z):V
+- addLayoutComponent(java.awt.Component,java.lang.Object):V
+- addLayoutComponent(java.lang.String,java.awt.Component):V
+- getLayoutAlignmentX(java.awt.Container):F
+- getLayoutAlignmentY(java.awt.Container):F
+- invalidateLayout(java.awt.Container):V
+- layoutContainer(java.awt.Container):V
+- maximumLayoutSize(java.awt.Container):java.awt.Dimension
+- minimumLayoutSize(java.awt.Container):java.awt.Dimension
+- preferredLayoutSize(java.awt.Container):java.awt.Dimension
+- removeLayoutComponent(java.awt.Component):V
 f:com.intellij.designer.LightToolWindow
 - javax.swing.JPanel
+- <init>(com.intellij.designer.LightToolWindowContent,java.lang.String,javax.swing.Icon,javax.swing.JComponent,javax.swing.JComponent,com.intellij.openapi.ui.ThreeComponentsSplitter,com.intellij.openapi.wm.ToolWindowAnchor,com.intellij.designer.LightToolWindowManager,com.intellij.openapi.project.Project,java.lang.String,I,java.util.List):V
+- dispose():V
+- getContent():java.lang.Object
 com.intellij.designer.LightToolWindowContent
 - a:dispose():V
 a:com.intellij.designer.LightToolWindowManager
 - com.intellij.openapi.Disposable
+- sf:EDITOR_MODE:java.lang.String
+- f:myEditorModeKey:java.lang.String
+- pf:myProject:com.intellij.openapi.project.Project
+- p:myToolWindow:com.intellij.openapi.wm.ToolWindow
 - p:<init>(com.intellij.openapi.project.Project):V
 - f:bind(com.intellij.designer.DesignerEditorPanelFacade):V
+- pa:createContent(com.intellij.designer.DesignerEditorPanelFacade):com.intellij.designer.LightToolWindow
+- pf:createContent(com.intellij.designer.DesignerEditorPanelFacade,com.intellij.designer.LightToolWindowContent,java.lang.String,javax.swing.Icon,javax.swing.JComponent,javax.swing.JComponent,I,java.util.List):com.intellij.designer.LightToolWindow
+- createGearActions():com.intellij.openapi.actionSystem.AnAction
+- pa:createToggleAction(com.intellij.openapi.wm.ToolWindowAnchor):com.intellij.designer.ToggleEditorModeAction
+- dispose():V
+- f:dispose(com.intellij.designer.DesignerEditorPanelFacade):V
+- pf:disposeContent(com.intellij.designer.DesignerEditorPanelFacade):V
+- getActiveDesigner():com.intellij.designer.DesignerEditorPanelFacade
 - pa:getAnchor():com.intellij.openapi.wm.ToolWindowAnchor
+- p:getComponentName():java.lang.String
+- pf:getContent(com.intellij.designer.DesignerEditorPanelFacade):java.lang.Object
+- pa:getDesigner(com.intellij.openapi.fileEditor.FileEditor):com.intellij.designer.DesignerEditorPanelFacade
 - f:getEditorMode():com.intellij.openapi.wm.ToolWindowAnchor
 - pf:initGearActions():V
+- pa:initToolWindow():V
+- pf:isEditorMode():Z
+- pf:setEditorMode(com.intellij.openapi.wm.ToolWindowAnchor):V
+- pa:updateToolWindow(com.intellij.designer.DesignerEditorPanelFacade):V
 a:com.intellij.designer.ToggleEditorModeAction
 - com.intellij.openapi.actionSystem.ToggleAction
+- pf:myManager:com.intellij.designer.LightToolWindowManager
+- pf:myProject:com.intellij.openapi.project.Project
+- <init>(com.intellij.designer.LightToolWindowManager,com.intellij.openapi.project.Project,com.intellij.openapi.wm.ToolWindowAnchor):V
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- pa:getOppositeManager():com.intellij.designer.LightToolWindowManager
+- isSelected(com.intellij.openapi.actionSystem.AnActionEvent):Z
+- setSelected(com.intellij.openapi.actionSystem.AnActionEvent,Z):V
+f:com.intellij.designer.model.ErrorInfo
+- <init>(java.lang.String,java.lang.String,com.intellij.codeHighlighting.HighlightDisplayLevel):V
+- getLevel():com.intellij.codeHighlighting.HighlightDisplayLevel
+- getName():java.lang.String
+- getPropertyName():java.lang.String
+- getQuickFixes():java.util.List
+- s:haveFixes(java.util.List):Z
 a:com.intellij.designer.model.PropertiesContainer
 - <init>():V
+- a:getProperties():java.util.List
 a:com.intellij.designer.model.Property
+- <init>(com.intellij.designer.model.Property,java.lang.String):V
+- availableFor(java.util.List):Z
+- closeEditorDuringRefresh():Z
+- createForNewPresentation():com.intellij.designer.model.Property
+- createForNewPresentation(com.intellij.designer.model.Property,java.lang.String):com.intellij.designer.model.Property
+- doCopy(com.intellij.designer.model.PropertiesContainer,java.lang.Object):java.awt.datatransfer.Transferable
+- equals(java.lang.Object):Z
+- getChildren(com.intellij.designer.model.PropertiesContainer):java.util.List
+- a:getEditor():com.intellij.designer.propertyTable.PropertyEditor
+- getGroup():java.lang.String
+- getJavadocElement():com.intellij.psi.PsiElement
+- getJavadocText():java.lang.String
+- f:getName():java.lang.String
+- f:getParent():com.intellij.designer.model.Property
+- getPath():java.lang.String
+- a:getRenderer():com.intellij.designer.propertyTable.PropertyRenderer
+- getTooltip():java.lang.String
+- getValue(com.intellij.designer.model.PropertiesContainer):java.lang.Object
+- f:isDefaultRecursively(com.intellij.designer.model.PropertiesContainer):Z
+- isDefaultValue(com.intellij.designer.model.PropertiesContainer):Z
+- isDeprecated():Z
+- isEditable(com.intellij.designer.model.PropertiesContainer):Z
+- isExpert():Z
+- isImportant():Z
+- needRefreshPropertyList():Z
+- needRefreshPropertyList(com.intellij.designer.model.PropertiesContainer,java.lang.Object,java.lang.Object):Z
+- setDefaultValue(com.intellij.designer.model.PropertiesContainer):V
+- setDeprecated(Z):V
 - setExpert(Z):V
 - setImportant(Z):V
+- setValue(com.intellij.designer.model.PropertiesContainer,java.lang.Object):V
+- showAsDefault(com.intellij.designer.model.PropertiesContainer):Z
 com.intellij.designer.model.PropertyContext
+a:com.intellij.designer.model.QuickFix
+- java.lang.Runnable
+- <init>(java.lang.String,javax.swing.Icon):V
+- f:getIcon():javax.swing.Icon
+- f:getName():java.lang.String
+f:com.intellij.designer.propertyTable.InplaceContext
+- <init>():V
+- <init>(C):V
+- getText(java.lang.String):java.lang.String
+- isStartChar():Z
+a:com.intellij.designer.propertyTable.PropertyEditor
+- <init>():V
+- activate():V
+- f:addPropertyEditorListener(com.intellij.designer.propertyTable.PropertyEditorListener):V
+- f:fireEditingCancelled():V
+- f:fireValueCommitted(Z,Z):V
+- a:getComponent(com.intellij.designer.model.PropertiesContainer,com.intellij.designer.model.PropertyContext,java.lang.Object,com.intellij.designer.propertyTable.InplaceContext):javax.swing.JComponent
+- getPreferredFocusedComponent():javax.swing.JComponent
+- a:getValue():java.lang.Object
+- pf:preferredSizeChanged():V
+- f:removePropertyEditorListener(com.intellij.designer.propertyTable.PropertyEditorListener):V
+- a:updateUI():V
+com.intellij.designer.propertyTable.PropertyEditorListener
+- java.util.EventListener
+- a:editingCanceled(com.intellij.designer.propertyTable.PropertyEditor):V
+- a:preferredSizeChanged(com.intellij.designer.propertyTable.PropertyEditor):V
+- a:valueCommitted(com.intellij.designer.propertyTable.PropertyEditor,Z,Z):V
 com.intellij.designer.propertyTable.PropertyRenderer
 - a:getComponent(com.intellij.designer.model.PropertiesContainer,com.intellij.designer.model.PropertyContext,java.lang.Object,Z,Z):javax.swing.JComponent
 - a:updateUI():V
-a:com.intellij.designer.propertyTable.PropertyTable
-- com.intellij.ui.table.JBTable
-- <init>():V
-- getSelectionProperty():com.intellij.designer.model.Property
-- isShowExpertProperties():Z
-- showExpert(Z):V
-c:com.intellij.designer.propertyTable.editors.TextEditor
-- com.intellij.designer.propertyTable.PropertyEditor
-f:com.intellij.designer.propertyTable.renderers.BooleanRenderer
-- javax.swing.JCheckBox
-- com.intellij.designer.propertyTable.PropertyRenderer
-- <init>():V
-c:com.intellij.designer.propertyTable.renderers.LabelPropertyRenderer
-- javax.swing.JLabel
-- com.intellij.designer.propertyTable.PropertyRenderer
-- <init>(java.lang.String):V
