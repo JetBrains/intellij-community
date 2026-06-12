@@ -21,6 +21,7 @@ import git4idea.test.last
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.assertThrows
+import java.util.Collections.synchronizedList
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 
@@ -850,7 +851,7 @@ internal class GitInMemoryInteractiveRebaseProcessTest : GitInMemoryOperationTes
   }
 
   private fun capturePostRewrites(): List<PostRewriteInvocation> {
-    val captures = mutableListOf<PostRewriteInvocation>()
+    val captures = synchronizedList(mutableListOf<PostRewriteInvocation>())
     git.runHookListener = { _, hookName, _, stdinLines ->
       if (hookName == "post-rewrite") {
         captures += PostRewriteInvocation(stdinLines.map {
