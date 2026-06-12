@@ -40,7 +40,7 @@ internal suspend fun recognizeSplitModeModuleKindForPath(descriptorPath: String)
   return DevKitMcpToolset.RecognizeIjModuleKindResult(
     moduleName = recognizedKind.moduleName,
     descriptorPath = descriptorPath,
-    kindId = recognizedKind.kindId,
+    kindId = recognizedKind.kind.id,
     reasoning = recognizedKind.reasoning,
   )
 }

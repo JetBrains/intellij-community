@@ -67,11 +67,15 @@ internal class DescriptorsIncludingContentModuleLineMarkerProvider : DevkitRelat
   ): RelatedItemLineMarkerInfo<PsiElement> {
     val recognizedModuleKind = recognizeSplitModeModuleKind(leaf.containingFile)
     val moduleName = leaf.containingFile.virtualFile.nameWithoutExtension
-    val gutterIcon = SplitModeModuleKindIcons.getKindIcon(recognizedModuleKind?.kindId) ?: AllIcons.Nodes.Module
+    val gutterIcon =
+      if (recognizedModuleKind != null)
+        SplitModeModuleKindIcons.getKindIcon(recognizedModuleKind.kind, leaf.containingFile.name) ?: AllIcons.Nodes.Module
+      else
+        AllIcons.Nodes.Module
     val tooltip = if (recognizedModuleKind != null) {
       DevKitBundle.message(
         "line.marker.descriptors.including.content.module.tooltip.with.kind",
-        StringUtil.capitalize(recognizedModuleKind.kindId),
+        StringUtil.capitalize(recognizedModuleKind.kind.id),
         moduleName,
         contentEntries.size,
       )

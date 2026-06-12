@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 data class RecognizedSplitModeModuleKind(
   val moduleName: String,
-  val kindId: String,
+  val kind: SplitModeApiRestrictionsService.ModuleKind,
   val reasoning: String,
 )
 
@@ -20,7 +20,7 @@ fun recognizeSplitModeModuleKind(descriptorFile: PsiFile): RecognizedSplitModeMo
   val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, xmlFile)
   return RecognizedSplitModeModuleKind(
     moduleName = module.name,
-    kindId = moduleAnalysis.resolvedModuleKind.kind.id,
+    kind = moduleAnalysis.resolvedModuleKind.kind,
     reasoning = moduleAnalysis.resolvedModuleKind.reasoning,
   )
 }

@@ -403,7 +403,7 @@ via dependency 'unique.module.name.52.backend.support' -> descriptor 'unique.mod
     val recognizedKind = recognizeSplitModeModuleKind(pluginXml as com.intellij.psi.xml.XmlFile)
     Assert.assertNotNull("Module kind should be recognized", recognizedKind)
     Assert.assertEquals("unique.module.name.53.consumer", recognizedKind!!.moduleName)
-    Assert.assertEquals("mixed", recognizedKind.kindId)
+    Assert.assertEquals("mixed", recognizedKind.kind.id)
     Assert.assertTrue(
       "Reasoning should mention the frontend alias provider.\nReasoning: ${recognizedKind.reasoning}",
       recognizedKind.reasoning.contains("unique.module.name.53.frontend.alias.provider"),
@@ -577,7 +577,7 @@ via dependency 'unique.module.name.51.backend.support' -> descriptor 'unique.mod
     val recognizedKind = recognizeSplitModeModuleKind(contentModuleDescriptor as com.intellij.psi.xml.XmlFile)
     Assert.assertNotNull("Module kind should be recognized", recognizedKind)
     Assert.assertEquals("unique.module.name.38", recognizedKind!!.moduleName)
-    Assert.assertEquals("backend", recognizedKind.kindId)
+    Assert.assertEquals("backend", recognizedKind.kind.id)
     Assert.assertTrue(
       "Reasoning should mention the backend dependency.\nReasoning: ${recognizedKind.reasoning}",
       recognizedKind.reasoning.contains("intellij.platform.backend"),
@@ -612,7 +612,7 @@ via dependency 'unique.module.name.51.backend.support' -> descriptor 'unique.mod
     val recognizedKind = recognizeSplitModeModuleKind(contentModuleDescriptor as com.intellij.psi.xml.XmlFile)
     Assert.assertNotNull("Module kind should be recognized", recognizedKind)
     Assert.assertEquals("unique.module.name.39", recognizedKind!!.moduleName)
-    Assert.assertEquals("backend", recognizedKind.kindId)
+    Assert.assertEquals("backend", recognizedKind.kind.id)
   }
 
   fun testTransitivelyPredefinedSharedDependencyOverridesFrontendSuffix() {
@@ -654,7 +654,7 @@ via dependency 'unique.module.name.51.backend.support' -> descriptor 'unique.mod
     val recognizedKind = recognizeSplitModeModuleKind(contentModuleDescriptor as com.intellij.psi.xml.XmlFile)
     Assert.assertNotNull("Module kind should be recognized", recognizedKind)
     Assert.assertEquals("unique.module.name.41", recognizedKind!!.moduleName)
-    Assert.assertEquals("backend", recognizedKind.kindId)
+    Assert.assertEquals("backend", recognizedKind.kind.id)
   }
 
   private fun assertSharedModuleKindWithContainingPluginsOfDifferentKinds(moduleName: String) {
