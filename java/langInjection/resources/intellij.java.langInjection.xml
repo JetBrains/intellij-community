@@ -36,6 +36,7 @@
                      key="inspection.pattern.overridden.by.non.annotated.method.display.name" bundle="messages.IntelliLangBundle"/>
 
     <concatenationAwareInjector implementation="org.intellij.plugins.intelliLang.inject.java.ConcatenationInjector"/>
+    <multiHostInjector implementation="org.intellij.plugins.intelliLang.inject.java.JavaFormatInjector"/>
 
     <psi.referenceContributor language="UAST" implementation="org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider"/>
   </extensions>
