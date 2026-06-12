@@ -100,6 +100,7 @@ git4idea.commands.Git
 - a:runHook(git4idea.repo.GitRepository,java.lang.String,java.util.List,java.util.List):git4idea.commands.GitCommandResult
 f:git4idea.commands.GitCommand
 - sf:HOOK:git4idea.commands.GitCommand
+- sf:NOTES:git4idea.commands.GitCommand
 c:git4idea.commands.GitCommandResult
 - s:error(java.lang.String):git4idea.commands.GitCommandResult
 - getOutputOrThrow(I[]):java.lang.String
