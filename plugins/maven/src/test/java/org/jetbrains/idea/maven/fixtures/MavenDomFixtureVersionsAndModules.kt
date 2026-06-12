@@ -297,6 +297,13 @@ fun MavenTestFixture.assertModuleOutput(moduleName: String, output: String, test
   assertEquals(absModulePath(testOutput), absModulePath(e.compilerOutputUrlForTests))
 }
 
+fun MavenTestFixture.assertModuleOutput(moduleName: String, output: Path, testOutput: Path) {
+  assertModuleOutput(moduleName, output.toString(), testOutput.toString())
+}
+
+val MavenTestFixture.parentPath: Path
+  get() = projectPath.parent
+
 fun MavenTestFixture.assertProjectOutput(module: String) {
   assertTrue(getCompilerExtension(module)!!.isCompilerOutputPathInherited)
 }

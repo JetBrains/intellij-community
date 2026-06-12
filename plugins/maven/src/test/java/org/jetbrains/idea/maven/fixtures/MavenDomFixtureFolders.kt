@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtil
 import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.importing.MavenImportUtil
+import org.jetbrains.idea.maven.project.MavenFolderResolver
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -31,6 +32,17 @@ fun MavenTestFixture.defaultResources(): Array<String> =
 
 fun MavenTestFixture.defaultTestResources(): Array<String> =
   arrayOfNotNull("src/test/resources", withModel410Only("src/test/resources-filtered"))
+
+// Ported from FoldersImportingTestCase.
+suspend fun MavenImportingTestFixture.resolveFoldersAndImport() {
+  MavenFolderResolver(projectsManager.project).resolveFoldersAndImport(projectsManager.projects)
+}
+
+fun MavenTestFixture.createProjectSubDirsWithFile(vararg dirs: String) {
+  for (dir in dirs) {
+    createProjectSubFile("$dir/a.txt")
+  }
+}
 
 fun MavenTestFixture.allDefaultResources(): Array<String> =
   ArrayUtil.mergeArrays(defaultResources(), *defaultTestResources())
