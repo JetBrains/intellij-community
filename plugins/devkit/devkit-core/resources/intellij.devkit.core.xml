@@ -159,14 +159,14 @@
     <registryKey key="devkit.split.mode.run.jps.to.bazel.in.quick.fix" defaultValue="false"
                  description="Automatically run JPS to Bazel conversion after applying a fix that touches runtime/compile dependencies"/>
 
-    <registryKey key="devkit.split.mode.analysis.api.restrictions.source" defaultValue="bundled"
-                 description="Source of ApiRestrictions.json for DevKit split-mode inspections: bundled, project, or project-or-bundled."
+    <registryKey key="devkit.split.mode.analysis.api.restrictions.source" defaultValue="[bundled*|project|project-or-bundled]"
+                 description="Source of ApiRestrictions.json for DevKit split-mode inspections."
                  restartRequired="true"/>
-    <registryKey key="devkit.split.mode.analysis.predefined.module.kinds.source" defaultValue="bundled"
-                 description="Source of PredefinedModuleKinds.json for DevKit split-mode inspections: bundled, project, or project-or-bundled."
+    <registryKey key="devkit.split.mode.analysis.predefined.module.kinds.source" defaultValue="[bundled*|project|project-or-bundled]"
+                 description="Source of PredefinedModuleKinds.json for DevKit split-mode inspections."
                  restartRequired="true"/>
-    <registryKey key="devkit.split.mode.qodana.analysis.scope.source" defaultValue="project"
-                 description="Source of SplitModeQodanaAnalysisScope.json for DevKit split-mode inspections: bundled, project, or project-or-bundled."
+    <registryKey key="devkit.split.mode.qodana.analysis.scope.source" defaultValue="[bundled|project*|project-or-bundled]"
+                 description="Source of SplitModeQodanaAnalysisScope.json for DevKit split-mode inspections."
                  restartRequired="true"/>
 
     <registryKey key="devkit.split.mode.qodana.analysis.scope.limiter.enabled" defaultValue="false"

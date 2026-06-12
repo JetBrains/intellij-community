@@ -47,7 +47,8 @@ internal object SplitModeAnalysisFlags {
     registryKey: String,
     defaultMode: SplitModeInspectionResourceReadMode,
   ): SplitModeInspectionResourceReadMode {
-    val value = RegistryManager.getInstance().get(registryKey).asString()
+    val registryValue = RegistryManager.getInstance().get(registryKey)
+    val value = registryValue.selectedOption ?: registryValue.asString()
     return SplitModeInspectionResourceReadMode.fromRegistryValue(registryKey, value, defaultMode)
   }
 }
