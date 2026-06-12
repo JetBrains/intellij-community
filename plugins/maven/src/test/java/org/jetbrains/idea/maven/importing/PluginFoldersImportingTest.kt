@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
@@ -25,19 +26,16 @@ import org.jetbrains.idea.maven.fixtures.projectPath
 import org.jetbrains.idea.maven.fixtures.resolveFoldersAndImport
 import org.jetbrains.idea.maven.fixtures.updateAllProjectsFullSync
 import org.jetbrains.idea.maven.server.MavenServerManager
-import java.io.IOException
-import java.util.function.Consumer
-import kotlin.io.path.exists
-import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.Assert.fail
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
+import java.io.IOException
+import java.util.function.Consumer
+import kotlin.io.path.exists
 
 @TestApplication
 @ParameterizedClass
@@ -668,7 +666,7 @@ class PluginFoldersImportingTest(mavenVersion: String, modelVersion: String) {
         target.delete(this)
       }
       catch (e: IOException) {
-        fail("Unable to delete the file: " + e.message)
+        Assertions.fail("Unable to delete the file: " + e.message)
       }
     }
     testAssertions.accept(true)
