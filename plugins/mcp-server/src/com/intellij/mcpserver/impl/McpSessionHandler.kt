@@ -23,6 +23,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.diagnostic.traceThrowable
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.IJNoopTracer
 import com.intellij.platform.diagnostic.telemetry.IJTracer
@@ -31,6 +32,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.TracerLevel
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
+import com.intellij.util.asDisposable
 import io.ktor.util.toMap
 import io.modelcontextprotocol.kotlin.sdk.server.RegisteredTool
 import io.modelcontextprotocol.kotlin.sdk.server.Server
@@ -137,6 +139,7 @@ internal class McpSessionHandler(
   init {
     // Process initial tools immediately to fix race condition
     processToolsUpdate(mcpTools.value)
+    FileDocumentManager.getInstance().overrideConflictsSolverEnabled(false, sessionScope.asDisposable())
   }
 
   fun updateClientInfo(newClientInfo: Implementation) {
