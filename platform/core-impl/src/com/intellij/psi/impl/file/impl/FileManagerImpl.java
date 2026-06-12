@@ -501,7 +501,7 @@ public final class FileManagerImpl implements FileManagerEx {
   }
 
   @Override
-  public @NotNull List<@NotNull PsiFile> getCachedPsiFilesInner(@NotNull VirtualFile vFile) {
+  public @NotNull @Unmodifiable List<@NotNull PsiFile> getCachedPsiFilesInner(@NotNull VirtualFile vFile) {
     List<FileViewProvider> viewProviders = findCachedViewProviders(vFile);
     return ContainerUtil.mapNotNull(viewProviders, p -> ((AbstractFileViewProvider)p).getCachedPsi(p.getBaseLanguage()));
   }

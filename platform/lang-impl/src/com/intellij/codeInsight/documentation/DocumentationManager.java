@@ -128,6 +128,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
 import org.jsoup.nodes.Element;
@@ -1555,7 +1556,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       LOG.debug("Using provider ", provider);
 
       if (provider instanceof ExternalDocumentationProvider) {
-        List<String> urls = ReadAction.nonBlocking(
+        @Unmodifiable List<String> urls = ReadAction.nonBlocking(
           () -> {
             SmartPsiElementPointer<?> originalElementPtr = element.getUserData(ORIGINAL_ELEMENT_KEY);
             PsiElement originalElement = originalElementPtr != null ? originalElementPtr.getElement() : null;

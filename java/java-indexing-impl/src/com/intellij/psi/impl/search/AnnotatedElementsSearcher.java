@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,8 +71,8 @@ public final class AnnotatedElementsSearcher implements QueryExecutor<PsiModifie
     return true;
   }
 
-  private static @NotNull Collection<PsiAnnotation> getAnnotationCandidates(@NotNull PsiClass annClass,
-                                                                            @NotNull SearchScope useScope, @NotNull Project project) {
+  private static @NotNull @Unmodifiable Collection<PsiAnnotation> getAnnotationCandidates(@NotNull PsiClass annClass,
+                                                                                          @NotNull SearchScope useScope, @NotNull Project project) {
     return ReadAction.compute(() -> {
       if (useScope instanceof GlobalSearchScope) {
         return JavaAnnotationIndex.getInstance().getAnnotations(annClass.getName(), project, (GlobalSearchScope)useScope);

@@ -86,7 +86,7 @@ public interface CodeDocumentationAwareCommenter extends Commenter {
   /// It is assumed that [#getDocumentationLineCommentPrefixes()] does not return `null` when the documentation comment type is not `null`.
   /// Implementations are expected to have [List]s of the same length between this function and [#getDocumentationLineCommentPrefixes()]
   @Nullable
-  default List<IElementType> getDocumentationLineCommentTokenTypes() {
+  default @Unmodifiable List<IElementType> getDocumentationLineCommentTokenTypes() {
     return ContainerUtil.createMaybeSingletonList(getDocumentationLineCommentTokenType());
   }
 
@@ -102,7 +102,7 @@ public interface CodeDocumentationAwareCommenter extends Commenter {
   /// It is assumed that [#getDocumentationLineCommentTokenTypes()] does not return `null` when the documentation comment type is not `null`.
   /// Implementations are expected to have [List]s of the same length between this function and [#getDocumentationLineCommentTokenTypes()]
   @Nullable
-  default List<String> getDocumentationLineCommentPrefixes() {
+  default @Unmodifiable List<String> getDocumentationLineCommentPrefixes() {
     return ContainerUtil.createMaybeSingletonList(getDocumentationLineCommentPrefix());
   }
 

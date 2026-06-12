@@ -673,7 +673,7 @@ final class RefreshWorker {
       () -> WorkspaceFileIndexEx.getInstance(project).isUrlIndexable(url, false) == ThreeState.YES));
   }
 
-  private static List<Path> contentRootsUnderExcluded(Path directory) {
+  private static @Unmodifiable List<Path> contentRootsUnderExcluded(Path directory) {
     var roots = new LinkedHashSet<Path>();
     String url = toUrl(directory);
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {

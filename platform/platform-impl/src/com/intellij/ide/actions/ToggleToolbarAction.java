@@ -157,7 +157,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
   private ToggleToolbarAction(@NotNull PropertiesComponent propertiesComponent,
                               @NotNull String property,
-                              @NotNull Supplier<? extends Iterable<? extends JComponent>> producer) {
+                              @NotNull Supplier<? extends @Unmodifiable Iterable<? extends JComponent>> producer) {
     super(ActionsBundle.messagePointer("action.ShowToolbar.text"));
     myPropertiesComponent = propertiesComponent;
     myProperty = property;

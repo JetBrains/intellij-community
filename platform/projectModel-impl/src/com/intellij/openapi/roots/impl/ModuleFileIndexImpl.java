@@ -31,6 +31,7 @@ import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.ArrayList;
@@ -124,7 +125,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
   }
 
   @Override
-  public @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
+  public @NotNull @Unmodifiable List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir) {
     return findAllOrderEntriesWithOwnerModule(myModule, myDirectoryIndex.getOrderEntries(fileOrDir));
   }
 
@@ -163,7 +164,7 @@ public class ModuleFileIndexImpl extends FileIndexBase implements ModuleFileInde
     return index < 0 ? null : orderEntries.get(index);
   }
 
-  private static @NotNull List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule, @NotNull List<? extends OrderEntry> entries) {
+  private static @NotNull @Unmodifiable List<OrderEntry> findAllOrderEntriesWithOwnerModule(@NotNull Module ownerModule, @NotNull @Unmodifiable List<? extends OrderEntry> entries) {
     if (entries.isEmpty()) return Collections.emptyList();
 
     if (entries.size() == 1) {

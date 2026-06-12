@@ -23,6 +23,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -240,7 +241,7 @@ public class PluginUpdatesService {
   }
 
 
-  public static Collection<IdeaPluginDescriptor> getUpdates() {
+  public static @Unmodifiable Collection<IdeaPluginDescriptor> getUpdates() {
     synchronized (ourLock) {
       if (!ourPrepared || ourPreparing) {
         return List.of();

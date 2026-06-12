@@ -21,6 +21,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -58,7 +59,8 @@ public interface ModuleFileIndex extends FileIndex {
    * @return the list of order entries to which the file or directory belongs.
    */
   @RequiresReadLock
-  @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir);
+  @NotNull @Unmodifiable
+  List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile fileOrDir);
 
   /**
    * Processes all files and directories under content roots of the given module, skipping excluded and ignored files and directories.

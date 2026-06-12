@@ -25,6 +25,7 @@ import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -175,7 +176,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
     }
   }
 
-  private @NotNull List<@NotNull RunConfigurationEditorFragment<?,?>> getRunFragments() {
+  private @NotNull @Unmodifiable List<@NotNull RunConfigurationEditorFragment<?,?>> getRunFragments() {
     return ContainerUtil.mapNotNull(getFragments(),
                                     fragment -> fragment instanceof RunConfigurationEditorFragment
                                                 ? (RunConfigurationEditorFragment<?,?>)fragment

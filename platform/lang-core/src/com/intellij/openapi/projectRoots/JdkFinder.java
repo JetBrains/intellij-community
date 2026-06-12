@@ -31,7 +31,7 @@ public interface JdkFinder {
    * not where the IDE is running.
    */
   @Deprecated(forRemoval = true)
-  default @NotNull List<@NotNull String> suggestHomePaths() {
+  default @NotNull @Unmodifiable List<@NotNull String> suggestHomePaths() {
     return suggestHomePaths(null);
   }
 

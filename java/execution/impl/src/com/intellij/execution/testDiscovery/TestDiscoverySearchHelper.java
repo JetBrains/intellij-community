@@ -3,7 +3,6 @@ package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.actions.VcsFacade;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
@@ -27,6 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -104,7 +104,7 @@ public final class TestDiscoverySearchHelper {
     });
   }
 
-  private static @NotNull List<VirtualFile> getAffectedFiles(String changeListName, Project project) {
+  private static @NotNull @Unmodifiable List<VirtualFile> getAffectedFiles(String changeListName, Project project) {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if ("All".equals(changeListName)) {
       return changeListManager.getAffectedFiles();

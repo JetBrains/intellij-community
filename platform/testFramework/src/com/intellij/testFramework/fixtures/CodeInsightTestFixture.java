@@ -581,7 +581,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * For new tests, please use {@link #testFindUsagesUsingAction} instead.
    */
   @NotNull
-  Collection<UsageInfo> testFindUsages(@TestDataFile String @NotNull ... fileNames);
+  @Unmodifiable Collection<UsageInfo> testFindUsages(@TestDataFile String @NotNull ... fileNames);
 
   /**
    * Opens the specified file in the editor, places the caret and selection according to the markup,

@@ -14,6 +14,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -50,7 +51,7 @@ public abstract class FileBreadcrumbsCollector {
                                                                    @Nullable Boolean forcedShown);
 
   @ApiStatus.Internal
-  public @NotNull List<StickyLineInfo> computeStickyLineInfos(@NotNull VirtualFile file, @NotNull Document document, int offset) {
+  public @NotNull @Unmodifiable List<StickyLineInfo> computeStickyLineInfos(@NotNull VirtualFile file, @NotNull Document document, int offset) {
     return ContainerUtil.emptyList();
   }
 

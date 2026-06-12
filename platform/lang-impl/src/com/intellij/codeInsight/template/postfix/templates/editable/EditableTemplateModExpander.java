@@ -24,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -52,7 +53,7 @@ public class EditableTemplateModExpander implements PostfixModExpander {
                                     @NotNull PostfixTemplateProvider provider,
                                     @NotNull TextRange keyRange) {
     Project project = actionContext.project();
-    List<PsiElement> virtualExpressions = PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(() -> {
+    @Unmodifiable List<PsiElement> virtualExpressions = PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(() -> {
       PsiFile copyFile = (PsiFile)actionContext.file().copy();
       Document copyDocument = copyFile.getFileDocument();
       int startOffset = keyRange.getStartOffset();

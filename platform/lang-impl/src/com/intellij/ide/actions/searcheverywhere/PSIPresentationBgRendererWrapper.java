@@ -31,6 +31,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -395,7 +396,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   }
 
   @Override
-  public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
+  public @NotNull @Unmodifiable List<SearchEverywhereCommandInfo> getSupportedCommands() {
     return myDelegate.getSupportedCommands();
   }
 
@@ -418,7 +419,7 @@ public final class PSIPresentationBgRendererWrapper implements WeightedSearchEve
   }
 
   @Override
-  public @NotNull List<@NotNull BiConsumer<Object, @NotNull DataSink>> getDataProviders() {
+  public @NotNull @Unmodifiable List<@NotNull BiConsumer<Object, @NotNull DataSink>> getDataProviders() {
     List<BiConsumer<Object, DataSink>> delegateDataProviders = myDelegate.getDataProviders();
 
     return ContainerUtil.map(delegateDataProviders, dataProvider -> {

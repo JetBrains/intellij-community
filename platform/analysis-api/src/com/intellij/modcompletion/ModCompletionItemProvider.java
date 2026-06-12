@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNullByDefault;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.List;
 
@@ -69,7 +70,7 @@ public interface ModCompletionItemProvider extends PossiblyDumbAware {
    * @param language language to get providers for
    * @return language-specific completion providers
    */
-  static List<ModCompletionItemProvider> forLanguage(Language language) {
+  static @Unmodifiable List<ModCompletionItemProvider> forLanguage(Language language) {
     return EP_NAME.forKey(language);
   }
 

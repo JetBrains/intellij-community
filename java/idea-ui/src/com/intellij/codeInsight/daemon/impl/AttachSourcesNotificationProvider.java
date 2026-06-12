@@ -65,6 +65,7 @@ import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.JComponent;
@@ -277,8 +278,8 @@ public final class AttachSourcesNotificationProvider implements EditorNotificati
   }
 
   @RequiresReadLock
-  private static @NotNull Collection<LibraryEntity> findLibraryEntitiesForFile(@NotNull VirtualFile file,
-                                                                               @NotNull Project project) {
+  private static @NotNull @Unmodifiable Collection<LibraryEntity> findLibraryEntitiesForFile(@NotNull VirtualFile file,
+                                                                                             @NotNull Project project) {
 
     return ProjectFileIndex.getInstance(project).findContainingLibraries(file);
   }

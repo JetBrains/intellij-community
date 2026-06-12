@@ -6,6 +6,7 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNullByDefault;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Set;
 
@@ -23,7 +24,7 @@ public interface ModCompletionItem {
   /**
    * @return set of additional lookup strings, if necessary
    */
-  default Set<@NlsSafe String> additionalLookupStrings() {
+  default @Unmodifiable Set<@NlsSafe String> additionalLookupStrings() {
     return Set.of();
   }
 

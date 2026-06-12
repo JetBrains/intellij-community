@@ -9,6 +9,7 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.psi.stubs.StubIndexKey;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
@@ -24,13 +25,13 @@ public final class JavaImplicitClassIndex extends StringStubIndexExtension<PsiIm
     return JavaStubIndexKeys.IMPLICIT_CLASSES;
   }
 
-  public Collection<String> getAllClasses(@NotNull Project project) {
+  public @Unmodifiable Collection<String> getAllClasses(@NotNull Project project) {
     return StubIndex.getInstance().getAllKeys(getKey(), project);
   }
 
-  public @NotNull Collection<PsiImplicitClass> getElements(@NotNull String key,
-                                                           @NotNull Project project,
-                                                           @Nullable GlobalSearchScope scope) {
+  public @NotNull @Unmodifiable Collection<PsiImplicitClass> getElements(@NotNull String key,
+                                                                         @NotNull Project project,
+                                                                         @Nullable GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), key, project, scope, PsiImplicitClass.class);
   }
 }

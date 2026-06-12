@@ -88,6 +88,7 @@ import it.unimi.dsi.fastutil.ints.IntStack;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -2744,7 +2745,7 @@ public final class ControlFlowUtil {
     }
 
     @Override
-    public @NotNull Collection<VariableInfo> getResult() {
+    public @NotNull @Unmodifiable Collection<VariableInfo> getResult() {
       return ContainerUtil.map(writtenTwiceVariables[myStartOffset].entrySet(),
         entry -> new VariableInfo(entry.getKey(), entry.getValue()));
     }

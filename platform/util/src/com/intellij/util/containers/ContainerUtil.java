@@ -1690,7 +1690,7 @@ public final class ContainerUtil {
    * @return read-only list consisting of the lists (made by listGenerator) added together
    */
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T, V> List<V> concat(@NotNull Iterable<? extends T> list, @NotNull Function<? super T, ? extends Collection<? extends V>> listGenerator) {
+  public static @Unmodifiable @NotNull <T, V> List<V> concat(@NotNull Iterable<? extends T> list, @NotNull Function<? super T, ? extends @Unmodifiable Collection<? extends V>> listGenerator) {
     FreezableArrayList<V> result = new FreezableArrayList<>();
     for (T v : list) {
       result.addAll(listGenerator.fun(v));
@@ -1699,7 +1699,7 @@ public final class ContainerUtil {
   }
 
   @Contract(pure=true)
-  public static <T> boolean intersects(@NotNull Collection<? extends T> collection1, @NotNull Collection<? extends T> collection2) {
+  public static <T> boolean intersects(@NotNull @Unmodifiable Collection<? extends T> collection1, @NotNull @Unmodifiable Collection<? extends T> collection2) {
     if (collection1.size() <= collection2.size()) {
       for (T t : collection1) {
         if (collection2.contains(t)) {

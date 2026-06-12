@@ -151,6 +151,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
@@ -1866,7 +1867,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     }
 
     @Override
-    public @NotNull List<@NotNull FindPopupItem> getItems() {
+    public @NotNull @Unmodifiable List<@NotNull FindPopupItem> getItems() {
       DefaultTableModel model = (DefaultTableModel)myResultsPreviewTable.getModel();
       return ContainerUtil.mapNotNull(model.getDataVector(), row -> {
         if (row.getFirst() instanceof FindPopupItem item) return item;

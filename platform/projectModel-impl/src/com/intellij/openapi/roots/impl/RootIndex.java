@@ -338,7 +338,7 @@ public final class RootIndex {
 
     private final Project myProject;
     private final RootInfo myRootInfo;
-    private final Set<VirtualFile> myAllRoots;
+    private final @Unmodifiable Set<VirtualFile> myAllRoots;
     private final Graph myGraph;
     private final MultiMap<VirtualFile, Node> myRoots; // Map of roots to their root nodes, e.g., library jar -> library node
     private final SynchronizedSLRUCache<VirtualFile, List<OrderEntry>> myCache;
@@ -546,7 +546,7 @@ public final class RootIndex {
   }
 
   /// @return list of all super-directories that are marked as some kind of root, or `null` if `deepDir` is under the ignored folder (with no nested roots)
-  private static @Nullable("returns null only if dir is under ignored folder") List<VirtualFile> getHierarchy(VirtualFile deepDir, Set<VirtualFile> allRoots, RootInfo info) {
+  private static @Nullable("returns null only if dir is under ignored folder") List<VirtualFile> getHierarchy(VirtualFile deepDir, @Unmodifiable Set<VirtualFile> allRoots, RootInfo info) {
     var hierarchy = new ArrayList<VirtualFile>();
     var hasContentRoots = false;
     for (var dir = deepDir; dir != null; dir = dir.getParent()) {
@@ -578,7 +578,7 @@ public final class RootIndex {
     private final Map<VirtualFile, Module> excludedFromModule = new HashMap<>();
     private final Map<VirtualFile, FileTypeAssocTable<Boolean>> excludeFromContentRootTables = new HashMap<>();
 
-    private Set<VirtualFile> getAllRoots() {
+    private @Unmodifiable Set<VirtualFile> getAllRoots() {
       var result = VirtualFileSetFactory.getInstance().createCompactVirtualFileSet();
       result.addAll(classAndSourceRoots);
       result.addAll(contentRootOf.keySet());

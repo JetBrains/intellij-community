@@ -47,7 +47,7 @@ final class LightEditProjectFileIndex implements ProjectFileIndex {
   }
 
   @Override
-  public @NotNull List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
+  public @NotNull @Unmodifiable List<OrderEntry> getOrderEntriesForFile(@NotNull VirtualFile file) {
     return Collections.emptyList();
   }
 

@@ -39,6 +39,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
@@ -210,7 +211,7 @@ public final class SuperMethodWarningUtil {
     method.putUserData(SIBLINGS, pointers);
   }
   
-  public static List<PsiMethod> getSiblings(PsiMethod method) {
+  public static @Unmodifiable List<PsiMethod> getSiblings(PsiMethod method) {
     List<SmartPsiElementPointer<PsiMethod>> siblings = method.getUserData(SIBLINGS);
     if (siblings == null) return List.of(method);
     return ContainerUtil.map(siblings, p -> p.getElement());
