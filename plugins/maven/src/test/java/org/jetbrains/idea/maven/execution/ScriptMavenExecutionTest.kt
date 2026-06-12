@@ -4,11 +4,16 @@ package org.jetbrains.idea.maven.execution
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.idea.TestFor
+import com.intellij.maven.testFramework.utils.MavenProjectJDKTestFixture
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.ExtensionTestUtil.addExtensions
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.copyRecursively
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.run.MAVEN_EXECUTION_CONFIGURATOR
@@ -16,6 +21,7 @@ import org.jetbrains.idea.maven.execution.run.MavenExecutionConfigurator
 import org.jetbrains.idea.maven.execution.run.MavenExecutionConfiguratorProvider
 import org.jetbrains.idea.maven.fixtures.ExecutionInfo
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.checkUpdatingExcludedFoldersAfterExecution
 import org.jetbrains.idea.maven.fixtures.createModulePom
 import org.jetbrains.idea.maven.fixtures.createPomXml
 import org.jetbrains.idea.maven.fixtures.createProjectSubFile
@@ -31,27 +37,20 @@ import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.project.MavenInSpecificPath
 import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
-import org.junit.Assume
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.isRegularFile
-import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.maven.testFramework.utils.MavenProjectJDKTestFixture
-import com.intellij.openapi.application.WriteAction
-import com.intellij.testFramework.EdtTestUtil
-import com.intellij.util.ThrowableRunnable
-import org.junit.jupiter.api.AfterEach
-import org.jetbrains.idea.maven.fixtures.checkUpdatingExcludedFoldersAfterExecution
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedClass
-import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.BeforeEach
 
 @TestApplication
 @ParameterizedClass
@@ -163,7 +162,7 @@ class ScriptMavenExecutionTest(mavenVersion: String, modelVersion: String) {
 
   @Test
   fun testShouldExecuteBundledMavenIfThereAreNoSpacesInMavenPath() = runBlocking {
-    Assume.assumeFalse("There are spaces in path, doesnt make sence to run the test", maven.dir.toString().contains(" "))
+    Assumptions.assumeFalse(maven.dir.toString().contains(" "), "There are spaces in path, doesnt make sence to run the test")
     val target = maven.dir.resolve("maven-dist")
     createFakeMaven(target)
     maven.mavenGeneralSettings.mavenHomeType = MavenInSpecificPath(target.toString())
