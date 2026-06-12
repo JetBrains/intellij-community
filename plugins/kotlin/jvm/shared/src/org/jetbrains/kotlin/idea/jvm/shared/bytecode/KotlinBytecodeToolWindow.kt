@@ -24,19 +24,17 @@ import com.intellij.util.Alarm
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationOptionsBuilder
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationTarget
 import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
-import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
-import org.jetbrains.kotlin.cli.create
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.JVMConfigurationKeys
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaJvmTarget
 import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -116,31 +114,32 @@ class KotlinBytecodeToolWindow(
         override fun processRequest(location: Location): BytecodeGenerationResult {
             val ktFile = location.kFile!!
 
-            val configuration = CompilerConfiguration.create()
+            @OptIn(KaExperimentalApi::class, KaIdeApi::class)
+            return getBytecodeForFile(ktFile, showOffsets = showOffsets.isSelected) {
+                val containingModule = ktFile.module
+                if (containingModule != null) {
+                    moduleName(containingModule.name)
+                }
 
-            val containingModule = ktFile.module
-            if (containingModule != null) {
-                configuration.put(CommonConfigurationKeys.MODULE_NAME, containingModule.name)
+                if (!enableInline.isSelected) {
+                    disableInline(true)
+                }
+
+                if (!enableAssertions.isSelected) {
+                    disableCallAssertions(true)
+                    disableParameterAssertions(true)
+                }
+
+                if (!enableOptimization.isSelected) {
+                    disableOptimization(true)
+                }
+
+                val jvmTargetName = (jvmTargets.selectedItem as String)
+                val jvmTarget = KaJvmTarget.ALL_TARGETS.find { it.name == jvmTargetName }
+                if (jvmTarget != null) {
+                    jvmTarget(jvmTarget)
+                }
             }
-
-            if (!enableInline.isSelected) {
-                configuration.put(CommonConfigurationKeys.DISABLE_INLINE, true)
-            }
-
-            if (!enableAssertions.isSelected) {
-                configuration.put(JVMConfigurationKeys.DISABLE_CALL_ASSERTIONS, true)
-                configuration.put(JVMConfigurationKeys.DISABLE_PARAM_ASSERTIONS, true)
-            }
-
-            if (!enableOptimization.isSelected) {
-                configuration.put(JVMConfigurationKeys.DISABLE_OPTIMIZATION, true)
-            }
-
-            configuration.put(JVMConfigurationKeys.JVM_TARGET, JvmTarget.fromString(jvmTargets.selectedItem as String)!!)
-
-            configuration.languageVersionSettings = ktFile.languageVersionSettings
-
-            return getBytecodeForFile(ktFile, configuration, showOffsets.isSelected)
         }
 
         override fun onResultReady(requestInfo: Location, result: BytecodeGenerationResult?) {
@@ -300,11 +299,11 @@ class KotlinBytecodeToolWindow(
         @OptIn(KaExperimentalApi::class)
         fun getBytecodeForFile(
             ktFile: KtFile,
-            configuration: CompilerConfiguration,
-            showOffsets: Boolean
+            showOffsets: Boolean,
+            configurator: KaCompilationOptionsBuilder.() -> Unit
         ): BytecodeGenerationResult = analyze(ktFile) {
             val (result, classFileOrigins) = try {
-                compileSingleFile(ktFile, configuration)
+                compileSingleFile(ktFile, configurator)
                     ?: return BytecodeGenerationResult.Error(KotlinJvmBundle.message("cannot.compile.0.to.bytecode", ktFile.name))
             } catch (e: ProcessCanceledException) {
                 throw e
@@ -389,25 +388,29 @@ class KotlinBytecodeToolWindow(
         @ApiStatus.Internal
         fun KaSession.compileSingleFile(
             ktFile: KtFile,
-            configuration: CompilerConfiguration
+            configurator: KaCompilationOptionsBuilder.() -> Unit = {}
         ): Pair<KaCompilationResult, ClassFileOrigins>? {
-            val effectiveConfiguration = CompilationConfigurationEnricher.single?.enrich(configuration) ?: configuration
-
             val classFileOrigins = mutableMapOf<String, MutableSet<PsiFile>>()
-            val compilerTarget = KaCompilerTarget.Jvm(
-                isTestMode = true,
-                compiledClassHandler = { file, className ->
+
+            val options = createCompilationOptions {
+                target(KaCompilationTarget.JVM)
+                allowedErrorFilter(KotlinCompilerIdeAllowedErrorFilter.getInstance())
+
+                jvmCompiledClassHandler { file, className ->
                     if (file != null) {
                         classFileOrigins.computeIfAbsent("$className.class") { _ -> mutableSetOf() }.add(file)
                     }
-                },
-                debuggerExtension = null
-            )
-            val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
+                }
+
+                jvmOutputAsmListing(true)
+
+                languageVersionSettings(ktFile.languageVersionSettings)
+
+                configurator()
+            }
 
             try {
-                val result =
-                    compile(ktFile, effectiveConfiguration, compilerTarget, allowedErrorFilter)
+                val result = compile(ktFile, options)
                 return Pair(result, classFileOrigins)
             } catch (e: ProcessCanceledException) {
                 throw e

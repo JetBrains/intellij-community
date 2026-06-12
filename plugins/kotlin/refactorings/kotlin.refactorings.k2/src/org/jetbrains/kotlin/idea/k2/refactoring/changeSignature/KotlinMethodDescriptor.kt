@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
-import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.types.Variance
 
-class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDescriptor<KotlinParameterInfo, Visibility> {
+class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDescriptor<KotlinParameterInfo, KaSymbolVisibility> {
     private val callable: KtNamedDeclaration = findTargetCallable(c)
 
     private fun findTargetCallable(c: KtNamedDeclaration): KtNamedDeclaration {
@@ -149,11 +149,11 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
     @OptIn(KaAllowAnalysisOnEdt::class, KaExperimentalApi::class)
     private val _visibility = allowAnalysisOnEdt {
         analyze(callable) {
-            callable.symbol.compilerVisibility
+            callable.symbol.visibility
         }
     }
 
-    override fun getVisibility(): Visibility = _visibility
+    override fun getVisibility(): KaSymbolVisibility = _visibility
 
     override fun getMethod(): KtNamedDeclaration {
         return callable
@@ -181,7 +181,7 @@ class KotlinMethodDescriptor(c: KtNamedDeclaration) : KotlinModifiableMethodDesc
         return if (callable is KtConstructor<*> || callable is KtClass) ReadWriteOption.None else ReadWriteOption.ReadWrite
     }
 
-    override val original: KotlinModifiableMethodDescriptor<KotlinParameterInfo, Visibility>
+    override val original: KotlinModifiableMethodDescriptor<KotlinParameterInfo, KaSymbolVisibility>
         get() = this
 
     override val baseDeclaration: KtNamedDeclaration = callable

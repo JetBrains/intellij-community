@@ -8,14 +8,16 @@ import com.intellij.openapi.components.service
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationOptions
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
-import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
-import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.psi.KtFile
-import java.io.File
+import java.nio.file.Path
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.outputStream
+import kotlin.io.path.writeBytes
 
 interface KotlinCompilerIdeAllowedErrorFilter : (KaDiagnostic) -> Boolean {
     companion object {
@@ -25,18 +27,12 @@ interface KotlinCompilerIdeAllowedErrorFilter : (KaDiagnostic) -> Boolean {
 
 @KaExperimentalApi
 @ApiStatus.Internal
-fun KaSession.compileToDirectory(
-    file: KtFile,
-    configuration: CompilerConfiguration,
-    target: KaCompilerTarget,
-    allowedErrorFilter: (KaDiagnostic) -> Boolean,
-    destination: File
-): KaCompilationResult {
-    val result = compile(file, configuration, target, allowedErrorFilter)
+fun KaSession.compileToDirectory(file: KtFile, options: KaCompilationOptions, destination: Path): KaCompilationResult {
+    val result = compile(file, options)
     if (result is KaCompilationResult.Success) {
         for (outputFile in result.output) {
-            val target = File(destination, outputFile.path)
-            (target.parentFile ?: error("Can't find parent for file $target")).mkdirs()
+            val target = destination.resolve(outputFile.path)
+            target.createParentDirectories()
             target.writeBytes(outputFile.content)
         }
     }
@@ -45,14 +41,8 @@ fun KaSession.compileToDirectory(
 
 @KaExperimentalApi
 @ApiStatus.Internal
-fun KaSession.compileToJar(
-    file: KtFile,
-    configuration: CompilerConfiguration,
-    target: KaCompilerTarget,
-    allowedErrorFilter: (KaDiagnostic) -> Boolean,
-    destination: File
-): KaCompilationResult {
-    val result = compile(file, configuration, target, allowedErrorFilter)
+fun KaSession.compileToJar(file: KtFile, options: KaCompilationOptions, destination: Path): KaCompilationResult {
+    val result = compile(file, options)
     if (result is KaCompilationResult.Success) {
         destination.outputStream().buffered().use { os ->
             ZipOutputStream(os).use { zos ->

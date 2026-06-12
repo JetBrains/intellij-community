@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-compiler-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-tests-for-ide:2.4.20-dev-5797">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.4.20-dev-5797/kotlin-compiler-tests-for-ide-2.4.20-dev-5797.jar">
-          <sha256sum>42168c8a6a87f9fbb7926e7e4e947f0e3583c40a88c0f98becb8a8df24e9932d</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.kotlin-compiler-tests">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.4.20-dev-5797/kotlin-compiler-tests-for-ide-2.4.20-dev-5797.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.4.255-dev-255/kotlin-compiler-tests-for-ide-2.4.255-dev-255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.4.20-dev-5797/kotlin-compiler-tests-for-ide-2.4.20-dev-5797-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.4.255-dev-255/kotlin-compiler-tests-for-ide-2.4.255-dev-255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

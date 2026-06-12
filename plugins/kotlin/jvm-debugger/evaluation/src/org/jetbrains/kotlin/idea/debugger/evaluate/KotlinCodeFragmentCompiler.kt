@@ -15,21 +15,15 @@ import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.util.Range
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.compile.KaCodeFragmentCapturedValue
-import org.jetbrains.kotlin.analysis.api.components.CODE_FRAGMENT_CLASS_NAME
-import org.jetbrains.kotlin.analysis.api.components.CODE_FRAGMENT_METHOD_NAME
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
-import org.jetbrains.kotlin.analysis.api.components.KaCompiledFile
-import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
-import org.jetbrains.kotlin.analysis.api.components.KaDebuggerExtension
+import org.jetbrains.kotlin.analysis.api.components.KaCompilationTarget
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
 import org.jetbrains.kotlin.analysis.api.platform.restrictedAnalysis.KaRestrictedAnalysisException
-import org.jetbrains.kotlin.cli.create
 import org.jetbrains.kotlin.compiler.plugin.ExperimentalCompilerApi
-import org.jetbrains.kotlin.config.CommonConfigurationKeys
-import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.KotlinCompilerIdeAllowedErrorFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.module
@@ -173,31 +167,31 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         }
     }
 
-    @OptIn(KaExperimentalApi::class)
+    @OptIn(KaExperimentalApi::class, KaIdeApi::class)
     private fun compiledCodeFragmentDataK2Impl(context: ExecutionContext, codeFragment: KtCodeFragment): CompiledCodeFragmentData {
         val module = codeFragment.module
 
         val (generatedClassName, generatedEntryFunctionName) =
             KOTLIN_CODE_FRAGMENT_CLASS_AND_FUNCTION_NAMES.get(codeFragment) ?: (GENERATED_CLASS_NAME to GENERATED_FUNCTION_NAME)
-        val compilerConfiguration = CompilerConfiguration.create().apply {
-            if (module != null) {
-                put(CommonConfigurationKeys.MODULE_NAME, module.name)
-            }
-            put(CommonConfigurationKeys.LANGUAGE_VERSION_SETTINGS, codeFragment.languageVersionSettings)
-            put(CODE_FRAGMENT_CLASS_NAME, generatedClassName)
-            put(CODE_FRAGMENT_METHOD_NAME, generatedEntryFunctionName)
-        }
 
         return analyze(codeFragment) {
             try {
-                val compilerTarget = KaCompilerTarget.Jvm(
-                    isTestMode = false,
-                    compiledClassHandler = null,
-                    debuggerExtension = KaDebuggerExtension(ExecutionStack(context)))
-                val allowedErrorFilter = KotlinCompilerIdeAllowedErrorFilter.getInstance()
+                val options = createCompilationOptions {
+                    target(KaCompilationTarget.JVM)
+                    jvmExecutionStack(ExecutionStack(context))
 
-                when (val result =
-                    compile(codeFragment, compilerConfiguration, compilerTarget, allowedErrorFilter)) {
+                    if (module != null) {
+                        moduleName(module.name)
+                    }
+
+                    languageVersionSettings(codeFragment.languageVersionSettings)
+                    codeFragmentClassName(generatedClassName)
+                    codeFragmentMethodName(generatedEntryFunctionName)
+
+                    allowedErrorFilter(KotlinCompilerIdeAllowedErrorFilter.getInstance())
+                }
+
+                when (val result = compile(codeFragment, options)) {
                     is KaCompilationResult.Success -> {
                         reportMutedExceptions(result, context, codeFragment)
                         logCompilation(codeFragment)

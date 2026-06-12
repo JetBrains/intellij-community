@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertyAccessorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.ExplicitApiMode
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -50,7 +51,23 @@ fun Visibility.toKeywordToken(): KtModifierKeywordToken = when (val normalized =
     else -> if (Visibilities.isPrivate(normalized)) KtTokens.PRIVATE_KEYWORD else  error("Unexpected visibility '$normalized'")
 }
 
-fun KtModifierKeywordToken.toVisibility(): Visibility = when (this) {
+fun KaSymbolVisibility.toKeywordToken(): KtModifierKeywordToken = when (this) {
+    KaSymbolVisibility.PUBLIC -> KtTokens.PUBLIC_KEYWORD
+    KaSymbolVisibility.PROTECTED -> KtTokens.PROTECTED_KEYWORD
+    KaSymbolVisibility.PRIVATE -> KtTokens.PRIVATE_KEYWORD
+    KaSymbolVisibility.INTERNAL -> KtTokens.INTERNAL_KEYWORD
+    else -> error("Unexpected visibility '$this'")
+}
+
+fun KtModifierKeywordToken.toVisibility(): KaSymbolVisibility = when (this) {
+    KtTokens.PUBLIC_KEYWORD -> KaSymbolVisibility.PUBLIC
+    KtTokens.PRIVATE_KEYWORD -> KaSymbolVisibility.PRIVATE
+    KtTokens.PROTECTED_KEYWORD -> KaSymbolVisibility.PROTECTED
+    KtTokens.INTERNAL_KEYWORD -> KaSymbolVisibility.INTERNAL
+    else -> throw IllegalArgumentException("Unknown visibility modifier '$this'")
+}
+
+fun KtModifierKeywordToken.toCompilerVisibility(): Visibility = when (this) {
     KtTokens.PUBLIC_KEYWORD -> Visibilities.Public
     KtTokens.PRIVATE_KEYWORD -> Visibilities.Private
     KtTokens.PROTECTED_KEYWORD -> Visibilities.Protected
@@ -103,7 +120,7 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
                     .symbol
                     .allOverriddenSymbols
                     .forEach { overriddenSymbol ->
-                        val visibility = (overriddenSymbol as? KaPropertySymbol)?.setter?.compilerVisibility?.toKeywordToken()
+                        val visibility = (overriddenSymbol as? KaPropertySymbol)?.setter?.visibility?.toKeywordToken()
                         if (visibility != null) return visibility
                     }
             }
@@ -128,8 +145,7 @@ fun KtDeclaration.implicitVisibility(): KtModifierKeywordToken? {
             analyze(this) {
                 (symbol as KaCallableSymbol)
                     .allOverriddenSymbols
-                    .map { it.compilerVisibility }
-                    .maxWithOrNull { v1, v2 -> Visibilities.compare(v1, v2) ?: -1 }
+                    .minOfOrNull { it.visibility } // Find the most permissive visibility
                     ?.toKeywordToken()
             }
         }

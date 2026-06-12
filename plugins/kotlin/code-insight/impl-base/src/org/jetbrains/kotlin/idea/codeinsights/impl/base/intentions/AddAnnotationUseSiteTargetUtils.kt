@@ -12,7 +12,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.annotationApplicableTargets
+import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationTarget
+import org.jetbrains.kotlin.analysis.api.components.applicableAnnotationTargets
 import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.asJava.LightClassUtil
@@ -21,13 +22,13 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.ALL
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FIELD
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.FILE
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_DELEGATE_FIELD
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_GETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.PROPERTY_SETTER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.RECEIVER
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.SETTER_PARAMETER
-import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddAnnotationUseSiteTargetUtils.addUseSiteTargetInCommand
@@ -48,11 +49,12 @@ object AddAnnotationUseSiteTargetUtils {
     context(_: KaSession)
     fun KtAnnotationEntry.getApplicableUseSiteTargets(): List<AnnotationUseSiteTarget> {
         val symbol = typeReference?.type?.expandedSymbol
-        val applicableTargets = symbol?.annotationApplicableTargets?.toSet().orEmpty()
+        val applicableTargets = symbol?.applicableAnnotationTargets?.toSet().orEmpty()
         return applicableUseSiteTargets(applicableTargets)
     }
 
-    fun KtAnnotationEntry.applicableUseSiteTargets(applicableTargets: Set<KotlinTarget>): List<AnnotationUseSiteTarget> {
+    @OptIn(KaExperimentalApi::class)
+    fun KtAnnotationEntry.applicableUseSiteTargets(applicableTargets: Set<KaAnnotationTarget>): List<AnnotationUseSiteTarget> {
         if (useSiteTarget != null) return emptyList()
         val annotationShortName = this.shortName ?: return emptyList()
         val modifierList = getStrictParentOfType<KtModifierList>() ?: return emptyList()
@@ -105,7 +107,7 @@ object AddAnnotationUseSiteTargetUtils {
 
         if (applicableTargets.isNotEmpty()) {
             candidateTargets.removeIf {
-                KotlinTarget.USE_SITE_MAPPING[it] !in applicableTargets && it != ALL
+                ANNOTATION_USE_SITE_MAPPING[it] !in applicableTargets && it != ALL
             }
             if (candidateTargets.isEmpty()) return emptyList()
         }
@@ -147,6 +149,19 @@ object AddAnnotationUseSiteTargetUtils {
         replace(KtPsiFactory(project).createAnnotationEntry("@${useSiteTarget.renderName}:${text.drop(1)}"))
     }
 }
+
+@KaExperimentalApi
+private val ANNOTATION_USE_SITE_MAPPING: Map<AnnotationUseSiteTarget, KaAnnotationTarget> = mapOf(
+    CONSTRUCTOR_PARAMETER to KaAnnotationTarget.VALUE_PARAMETER,
+    FIELD to KaAnnotationTarget.FIELD,
+    PROPERTY to KaAnnotationTarget.PROPERTY,
+    FILE to KaAnnotationTarget.FILE,
+    PROPERTY_GETTER to KaAnnotationTarget.PROPERTY_GETTER,
+    PROPERTY_SETTER to KaAnnotationTarget.PROPERTY_SETTER,
+    RECEIVER to KaAnnotationTarget.VALUE_PARAMETER,
+    SETTER_PARAMETER to KaAnnotationTarget.VALUE_PARAMETER,
+    PROPERTY_DELEGATE_FIELD to KaAnnotationTarget.FIELD
+)
 
 private fun createListPopupStep(
     annotationEntry: KtAnnotationEntry, useSiteTargets: List<AnnotationUseSiteTarget>, project: Project

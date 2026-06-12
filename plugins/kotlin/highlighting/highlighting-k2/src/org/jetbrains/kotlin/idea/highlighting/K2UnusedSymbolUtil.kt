@@ -270,7 +270,7 @@ object K2UnusedSymbolUtil {
         val symbol = declaration.symbol
         if (declaration.languageVersionSettings.getFlag(
                 AnalysisFlags.explicitApiMode
-            ) != ExplicitApiMode.DISABLED && symbol.compilerVisibility.isPublicAPI
+            ) != ExplicitApiMode.DISABLED && symbol.visibility.isPublicApiVisibility
         ) {
             return null
         }
@@ -978,3 +978,9 @@ object K2UnusedSymbolUtil {
         return isJavaEntryPoint.isEntryPoint(lightElement)
     }
 }
+
+private val KaSymbolVisibility.isPublicApiVisibility: Boolean
+    get() = when (this) {
+        KaSymbolVisibility.PUBLIC, KaSymbolVisibility.PROTECTED, KaSymbolVisibility.PACKAGE_PROTECTED -> true
+        else -> false
+    }

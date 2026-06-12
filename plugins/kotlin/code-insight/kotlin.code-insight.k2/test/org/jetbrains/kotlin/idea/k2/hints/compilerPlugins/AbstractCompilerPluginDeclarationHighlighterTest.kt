@@ -5,6 +5,7 @@ import com.intellij.openapi.application.runReadAction
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.application
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.fir.extensions.KotlinK2BundledCompilerPlugins
@@ -41,6 +42,7 @@ abstract class AbstractCompilerPluginDeclarationHighlighterTest : BasePlatformTe
         KotlinTestUtils.assertEqualsToFile(testFile.resolveSibling(testFile.nameWithoutExtension + ".res"), rendered)
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun renderLines(lines: List<CompilerPluginDeclarationHighlighter.CodeLine>): String = prettyPrint {
         printCollection(lines, separator = "\n") { line ->
             printCollection(line.tokens, separator = " ") { token ->

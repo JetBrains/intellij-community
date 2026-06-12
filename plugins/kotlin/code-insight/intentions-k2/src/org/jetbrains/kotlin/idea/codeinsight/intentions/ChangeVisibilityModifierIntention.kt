@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.descriptors.Visibilities
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.idea.base.codeInsight.handlers.fixers.range
 import org.jetbrains.kotlin.idea.base.psi.relativeTo
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
@@ -142,26 +142,26 @@ sealed class ChangeVisibilityModifierIntention(
         val symbol = element.symbol
 
         val targetVisibility = modifier.toVisibility()
-        if (symbol.compilerVisibility == targetVisibility) return null
+        if (symbol.visibility == targetVisibility) return null
         val modifierList = element.modifierList
 
         if (modifierList?.hasModifier(KtTokens.OVERRIDE_KEYWORD) == true) {
             val callableDescriptor = symbol as? KaCallableSymbol ?: return null
             // cannot make visibility less than (or non-comparable with) any of the supers
             if (callableDescriptor.allOverriddenSymbols
-                    .map { it.compilerVisibility.compareTo(targetVisibility) }
+                    .map { targetVisibility.compareTo(it.visibility) }
                     .any { it == null || it > 0 }
             ) return null
         }
 
         if (element is KtPropertyAccessor) {
             if (element.isGetter) return null
-            if (targetVisibility == Visibilities.Public) {
+            if (targetVisibility == KaSymbolVisibility.PUBLIC) {
                 if (element.modifierList?.visibilityModifierType()?.value == null) return null
             } else {
-                val propVisibility = element.property.symbol.compilerVisibility
+                val propVisibility = element.property.symbol.visibility
                 if (propVisibility == targetVisibility) return null
-                val compare = targetVisibility.compareTo(propVisibility)
+                val compare = propVisibility.compareTo(targetVisibility)
                 if (compare == null || compare > 0) return null
             }
         }

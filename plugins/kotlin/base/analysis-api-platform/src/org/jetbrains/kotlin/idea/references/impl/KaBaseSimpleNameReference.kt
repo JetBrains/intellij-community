@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.psi.KtImportAlias
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.references.KotlinPsiReferenceProviderContributor
@@ -45,7 +46,10 @@ internal class KaBaseSimpleNameReference(
     override fun KaSession.resolveToSymbols(): Collection<KaSymbol> {
         // Resolved calls are preferable for navigation since they provide a more precise location.
         // For instance, it is the case for constructor calls
-        val symbolsFromCall = (element as? KtResolvableCall)?.tryResolveCall()
+        // A special handling for `KtOperationReferenceExpression` is required to preserve the legacy behavior.
+        // It could be adjusted in the future.
+        val symbolsFromCall = (element as? KtResolvableCall)?.takeUnless { it is KtOperationReferenceExpression }
+            ?.tryResolveCall()
             ?.calls
             ?.flatMap(KaSingleOrMultiCall::symbols)
             ?.takeUnless(List<KaSymbol>::isEmpty)

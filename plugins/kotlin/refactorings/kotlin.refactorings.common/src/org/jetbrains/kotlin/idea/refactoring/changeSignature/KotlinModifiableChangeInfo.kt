@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature
 
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.changeSignature.ChangeInfo
-import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 
 interface KotlinModifiableChangeInfo<P : KotlinModifiableParameterInfo> : ChangeInfo {
   fun addParameter(parameterInfo: P, atIndex: Int = -1)
@@ -11,7 +11,7 @@ interface KotlinModifiableChangeInfo<P : KotlinModifiableParameterInfo> : Change
   fun clearParameters()
   fun setNewName(value: String)
   fun setNewParameter(index: Int, parameterInfo: P)
-  fun setNewVisibility(visibility: Visibility)
+  fun setNewVisibility(visibility: KaSymbolVisibility)
 
     var receiverParameterInfo: P?
   var primaryPropagationTargets: Collection<PsiElement>

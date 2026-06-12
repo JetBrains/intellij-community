@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import org.jetbrains.kotlin.analysis.api.components.KaWhenMissingCase
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingWhenBranchesUtils
@@ -21,7 +21,7 @@ internal object AddWhenRemainingBranchFixFactories {
 
         buildList {
             val missingCases = diagnostic.missingWhenCases.takeIf {
-                it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
+                it.isNotEmpty() && it.singleOrNull() != KaWhenMissingCase.UnknownCase
             } ?: return@buildList
             add(
                 AddRemainingWhenBranchesQuickFix(

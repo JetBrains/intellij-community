@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBePrivate
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
-import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.toCompilerVisibility
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.asQuickFix
 import org.jetbrains.kotlin.idea.highlighting.K2UnusedSymbolUtil
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
@@ -160,7 +160,7 @@ class K2MemberVisibilityCanBePrivateInspection : AbstractKotlinInspection() {
     private fun isSemiEffectivePrivateOrLocal(declaration: KtNamedDeclaration): Boolean {
         var d = declaration
         while (d !is KtFile) {
-            val visibility = d.visibilityModifierTypeOrDefault().toVisibility()
+            val visibility = d.visibilityModifierTypeOrDefault().toCompilerVisibility()
             if (Visibilities.isPrivate(visibility)
                 || visibility == Visibilities.Local
                 || d is KtClass && d.isLocal

@@ -5,8 +5,8 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.containingSymbol
-import org.jetbrains.kotlin.analysis.api.components.deprecationStatus
 import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
+import org.jetbrains.kotlin.analysis.api.components.isDeprecated
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
@@ -132,8 +132,8 @@ internal val ImportCandidate.psi: PsiElement?
 
 @KaExperimentalApi
 context(_: KaSession)
-internal val ImportCandidate.deprecationStatus: DeprecationInfo?
-    get() = symbol.deprecationStatus
+internal val ImportCandidate.isDeprecated: Boolean
+    get() = symbol.isDeprecated
 
 context(_: KaSession)
 internal val CallableImportCandidate.receiverType: KaType?

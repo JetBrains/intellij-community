@@ -15,9 +15,7 @@ import com.intellij.psi.util.startOffset
 import kotlinx.serialization.Serializable
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.deprecationStatus
-import org.jetbrains.kotlin.analysis.api.components.getterDeprecationStatus
-import org.jetbrains.kotlin.analysis.api.components.setterDeprecationStatus
+import org.jetbrains.kotlin.analysis.api.components.isDeprecated
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -67,8 +65,8 @@ internal fun withCallableSignatureInfo(
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
 private fun KaDeclarationSymbol.requireStrikeoutness(): Boolean = when {
-    deprecationStatus != null -> true
-    this is KaPropertySymbol -> getterDeprecationStatus != null && (isVal || setterDeprecationStatus != null)
+    isDeprecated -> true
+    this is KaPropertySymbol -> getter?.isDeprecated == true && (isVal || setter?.isDeprecated == true)
     else -> false
 }
 

@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
 import org.jetbrains.kotlin.analysis.api.annotations.KaNamedAnnotationValue
-import org.jetbrains.kotlin.analysis.api.components.annotationApplicableTargets
+import org.jetbrains.kotlin.analysis.api.components.applicableAnnotationTargets
+import org.jetbrains.kotlin.analysis.api.components.defaultAnnotationTargets
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.fir.utils.getActualAnnotationTargets
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
@@ -69,7 +69,7 @@ internal object OptInFixFactories {
         val annotationSymbol = OptInFixUtils.findAnnotation(annotationClassId) ?: return emptyList()
         if (!OptInFixUtils.annotationIsVisible(annotationSymbol, from = element)) return emptyList()
 
-        val applicableTargets = annotationSymbol.annotationApplicableTargets
+        val applicableTargets = annotationSymbol.applicableAnnotationTargets
         val result = mutableListOf<ModCommandAction>()
 
         val candidates = if (element.containingKtFile.isScript()) collectScriptCandidates(element) else OptInGeneralUtils.collectCandidates(element)
@@ -78,7 +78,7 @@ internal object OptInFixFactories {
             if (targetElement !is KtDeclaration) return null
             if (applicableTargets == null) return null
 
-            val actualTargetList = targetElement.symbol.getActualAnnotationTargets() ?: return null
+            val actualTargetList = targetElement.symbol.defaultAnnotationTargets ?: return null
             return OptInGeneralUtils.collectPropagateOptInAnnotationFix(
                 targetElement,
                 kind,

@@ -298,7 +298,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                     shouldHighlightGreen,
                     hasTypeMismatchBeforeCurrent,
                     highlightParameterIndex,
-                    isDeprecated = candidateSignature.symbol.deprecationStatus != null,
+                    candidateSignature.symbol.isDeprecated,
                     representation,
                 )
             }

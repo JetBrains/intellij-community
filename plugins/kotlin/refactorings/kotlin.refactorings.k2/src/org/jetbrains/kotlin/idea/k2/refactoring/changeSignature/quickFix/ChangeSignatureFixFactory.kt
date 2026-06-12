@@ -20,9 +20,10 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
 import org.jetbrains.kotlin.analysis.api.components.buildSubstitutor
+import org.jetbrains.kotlin.analysis.api.components.builtinFunctionTypeFamilies
 import org.jetbrains.kotlin.analysis.api.components.containingDeclaration
 import org.jetbrains.kotlin.analysis.api.components.expressionType
-import org.jetbrains.kotlin.analysis.api.components.functionTypeKind
+import org.jetbrains.kotlin.analysis.api.components.functionTypeFamily
 import org.jetbrains.kotlin.analysis.api.components.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.components.render
 import org.jetbrains.kotlin.analysis.api.components.resolveToCall
@@ -44,8 +45,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeMappingMode
 import org.jetbrains.kotlin.builtins.StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME
-import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
-import org.jetbrains.kotlin.builtins.functions.isSuspendOrKSuspendFunction
+ import org.jetbrains.kotlin.builtins.functions.isSuspendOrKSuspendFunction
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
@@ -412,16 +412,18 @@ object ChangeSignatureFixFactory {
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     fun KaType.toFunctionType(): KaType? {
-        val typeKind = functionTypeKind
-        if (typeKind != FunctionTypeKind.KSuspendFunction && typeKind != FunctionTypeKind.KFunction) return null
+        val typeFamily = functionTypeFamily
+        if (typeFamily != builtinFunctionTypeFamilies.kFunction && typeFamily != builtinFunctionTypeFamilies.kSuspendFunction) {
+            return null
+        }
 
-        val functionalType = this as KaFunctionType
+        val functionType = this as KaFunctionType
         return typeCreator.functionType {
-            isSuspend = typeKind.isSuspendOrKSuspendFunction
-            functionalType.parameters.forEach { originalParameter ->
+            isSuspend = typeFamily.isSuspend
+            for (originalParameter in functionType.parameters) {
                 valueParameter(originalParameter.name, originalParameter.type)
             }
-            returnType = functionalType.returnType
+            returnType = functionType.returnType
         }
     }
 

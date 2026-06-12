@@ -1,18 +1,11 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-scripting-compiler-impl" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-compiler-impl:2.4.20-dev-5797">
-      <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.20-dev-5797/kotlin-scripting-compiler-impl-2.4.20-dev-5797.jar">
-          <sha256sum>0af0fa55db6dda95647d62c7dd7240c5f9b52af3f4f528b69fdd7f3796c19cb8</sha256sum>
-        </artifact>
-      </verification>
-    </properties>
+  <library name="kotlinc.kotlin-scripting-compiler-impl">
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.20-dev-5797/kotlin-scripting-compiler-impl-2.4.20-dev-5797.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.255-dev-255/kotlin-scripting-compiler-impl-2.4.255-dev-255.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.20-dev-5797/kotlin-scripting-compiler-impl-2.4.20-dev-5797-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-compiler-impl/2.4.255-dev-255/kotlin-scripting-compiler-impl-2.4.255-dev-255-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

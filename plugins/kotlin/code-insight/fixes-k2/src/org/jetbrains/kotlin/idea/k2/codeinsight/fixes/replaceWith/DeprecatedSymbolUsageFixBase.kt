@@ -91,8 +91,8 @@ internal object DeprecationFixFactory {
         kaSymbol: KaDeclarationSymbol,
         psi: PsiElement
     ): List<IntentionAction> {
-        val deprecatedSymbol = kaSymbol.takeIf { it.deprecationStatus != null }
-            ?: (kaSymbol.containingSymbol as? KaDeclarationSymbol)?.takeIf { it.deprecationStatus != null }
+        val deprecatedSymbol = kaSymbol.takeIf { it.isDeprecated }
+            ?: (kaSymbol.containingSymbol as? KaDeclarationSymbol)?.takeIf { it.isDeprecated }
             ?: return emptyList()
         val referenceExpression = when (val psiElement = psi) {
             is KtArrayAccessExpression -> psiElement
