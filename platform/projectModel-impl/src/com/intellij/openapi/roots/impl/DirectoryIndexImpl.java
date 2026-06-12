@@ -19,9 +19,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.projectModel.ModuleDependenciesGraphService;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.Query;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData;
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
@@ -137,7 +137,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   @Override
   public @NotNull Set<String> getDependentUnloadedModules(@NotNull Module module) {
     checkAvailability();
-    if (Registry.is("use.wsm.for.dependent.unloaded.modules")) {
+    if (Registry.is("use.wsm.for.dependent.unloaded.modules", true)) {
       ModuleEntity moduleEntity = ModuleBridges.findModuleEntity(module, WorkspaceModel.getInstance(myProject).getCurrentSnapshot());
       if (moduleEntity == null) return Collections.emptySet();
       return ContainerUtil.map2Set(
