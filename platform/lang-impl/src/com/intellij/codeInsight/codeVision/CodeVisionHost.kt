@@ -105,6 +105,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
 
   val codeVisionLifetime: Lifetime = project.createLifetime()
 
+  @ApiStatus.Internal
   val lifeSettingModel: CodeVisionSettingsLiveModel = CodeVisionSettingsLiveModel(codeVisionLifetime)
 
   /**

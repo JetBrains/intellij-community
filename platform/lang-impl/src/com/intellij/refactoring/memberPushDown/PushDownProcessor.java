@@ -28,6 +28,7 @@ import java.util.List;
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 
+@ApiStatus.Internal
 public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
                                Member extends PsiElement,
                                Klass extends PsiElement> extends BaseRefactoringProcessor {

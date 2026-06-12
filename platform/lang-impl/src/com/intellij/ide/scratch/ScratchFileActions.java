@@ -96,6 +96,7 @@ import java.util.Set;
 
 import static com.intellij.openapi.util.Conditions.not;
 
+@ApiStatus.Internal
 public final class ScratchFileActions {
   private static int ourCurrentBuffer = 0;
 
@@ -409,6 +410,7 @@ public final class ScratchFileActions {
     checkLanguageAndTryToFixText(project, context, dataContext);
   }
 
+  @ApiStatus.Internal
   public static class ChangeLanguageAction extends DumbAwareAction {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {

@@ -23,6 +23,7 @@ import com.intellij.util.FunctionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.ColorsIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
@@ -33,6 +34,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class ColorLineMarkerProvider extends LineMarkerProviderDescriptor {
   public static final ColorLineMarkerProvider INSTANCE = new ColorLineMarkerProvider();
 

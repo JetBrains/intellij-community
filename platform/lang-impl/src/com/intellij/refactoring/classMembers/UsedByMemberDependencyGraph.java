@@ -14,7 +14,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class UsedByMemberDependencyGraph<T extends NavigatablePsiElement, C extends PsiElement, M extends MemberInfoBase<T>> implements MemberDependencyGraph<T, M> {
   private final HashSet<T> mySelectedNormal;
   private final HashSet<T> mySelectedAbstract;

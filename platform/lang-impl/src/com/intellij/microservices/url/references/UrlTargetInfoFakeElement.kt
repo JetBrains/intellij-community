@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.semantic.SemKey
 import com.intellij.util.asSafely
 import com.intellij.util.containers.addIfNotNull
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 internal class UrlTargetInfoFakeElement(
@@ -148,6 +149,7 @@ private class QueryParameterInfoFakeElement(
   }
 }
 
+@ApiStatus.Internal
 @Presentation(provider = QueryParameterPresentationProvider::class)
 class QueryParameterNamePomTarget(
   val urlPathReferenceUnifiedPomTarget: UrlPathReferenceUnifiedPomTarget,
@@ -197,6 +199,7 @@ class QueryParameterNamePomTarget(
   }
 }
 
+@ApiStatus.Internal
 object QueryParameterSemElementSupport : RenameableSemElementSupport<QueryParameterSem> {
   private fun createQueryParameterInfoPomTargetElement(project: Project,
                                                        context: UrlPathContext,

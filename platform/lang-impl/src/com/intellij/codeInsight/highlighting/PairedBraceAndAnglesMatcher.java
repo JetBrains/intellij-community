@@ -10,8 +10,10 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class PairedBraceAndAnglesMatcher extends PairedBraceMatcherAdapter {
   private final TokenSet myTokenSetAllowedInsideAngleBrackets;
   private final ParentAwareTokenSet myBasicTokenSetAllowedInsideAngleBrackets;

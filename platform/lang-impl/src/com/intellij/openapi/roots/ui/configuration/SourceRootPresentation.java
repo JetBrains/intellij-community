@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -16,6 +17,7 @@ import javax.swing.Icon;
  * @author Eugene Zhuravlev
  * @author 2003
  */
+@ApiStatus.Internal
 public final class SourceRootPresentation {
   public static @NotNull Icon getSourceRootIcon(@NotNull SourceFolder sourceFolder) {
     return getSourceRootIcon(sourceFolder.getJpsElement().asTyped());

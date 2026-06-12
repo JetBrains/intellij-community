@@ -108,7 +108,9 @@ import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.Pair.pair;
 
+@ApiStatus.Internal
 public abstract class PerFileConfigurableBase<T> implements SearchableConfigurable, Configurable.NoScroll {
+  @ApiStatus.Internal
   public record Mapping<T>(@Nls String name, @NotNull Supplier<? extends T> getter, @NotNull Consumer<? super T> setter) {
   }
   protected static final Key<@NlsContexts.Label String> DESCRIPTION = KeyWithDefaultValue.create("DESCRIPTION", "");
@@ -136,6 +138,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   private VirtualFile myFileToSelect;
   private final Mapping<T> myProjectMapping;
 
+  @ApiStatus.Internal
   protected interface Value<T> extends Setter<T>, Supplier<T> {
     void commit();
   }
@@ -847,6 +850,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
   }
 
+  @ApiStatus.Internal
   public final class PerFileConfigurableComboBoxAction extends ComboBoxAction {
     private final @NotNull Value<T> myValue;
     private final @Nullable Object myTarget;

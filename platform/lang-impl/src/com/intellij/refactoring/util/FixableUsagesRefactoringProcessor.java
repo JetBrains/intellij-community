@@ -9,6 +9,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
+@ApiStatus.Internal
 public abstract class FixableUsagesRefactoringProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(FixableUsagesRefactoringProcessor.class);
 

@@ -16,12 +16,14 @@ import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class IncrementalFindAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public static final Key<Boolean> SEARCH_DISABLED = Key.create("EDITOR_SEARCH_DISABLED");
 
+  @ApiStatus.Internal
   public static class Handler extends EditorActionHandler {
 
     private final boolean myReplace;

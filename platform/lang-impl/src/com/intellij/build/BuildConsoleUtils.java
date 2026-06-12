@@ -37,6 +37,7 @@ import static com.intellij.openapi.util.text.StringUtil.stripHtml;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public final class BuildConsoleUtils {
   private static final Logger LOG = Logger.getInstance(BuildConsoleUtils.class);
   private static final Pattern TAG_PATTERN = Pattern.compile("<[^>]*>");

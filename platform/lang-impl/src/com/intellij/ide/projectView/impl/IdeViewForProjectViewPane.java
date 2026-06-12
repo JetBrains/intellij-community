@@ -7,6 +7,7 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
 
+@ApiStatus.Internal
 public final class IdeViewForProjectViewPane implements IdeView {
   private final Supplier<? extends AbstractProjectViewPane> supplier;
 

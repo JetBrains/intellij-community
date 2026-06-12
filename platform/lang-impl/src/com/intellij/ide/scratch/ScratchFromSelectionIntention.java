@@ -9,10 +9,12 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.ide.scratch.ScratchFileActions.doCreateNewScratch;
 
+@ApiStatus.Internal
 public final class ScratchFromSelectionIntention implements IntentionAction {
   @Override
   public @NotNull String getText() {

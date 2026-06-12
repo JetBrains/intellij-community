@@ -5,11 +5,14 @@ import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NotNullLazyValue
 import com.intellij.platform.ProjectGeneratorPeer
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface WebTemplateProjectWizardData<T> {
 
   val peer: NotNullLazyValue<ProjectGeneratorPeer<T>>
 
+  @ApiStatus.Internal
   companion object {
 
     val KEY: Key<WebTemplateProjectWizardData<*>> = Key.create(WebTemplateProjectWizardData::class.java.name)

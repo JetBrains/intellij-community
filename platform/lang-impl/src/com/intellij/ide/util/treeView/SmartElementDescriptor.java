@@ -14,12 +14,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.awt.Color;
 
+@ApiStatus.Internal
 public class SmartElementDescriptor extends NodeDescriptor{
   private final SmartPsiElementPointer mySmartPointer;
 

@@ -49,6 +49,7 @@ import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -306,6 +307,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   /**
    * Makes sense only in case of not null base class.
    */
+  @ApiStatus.Internal
   protected @Nullable BaseClassInheritorsProvider<T> getInheritorsProvider(@NotNull T baseClass) {
     return null;
   }
@@ -437,6 +439,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     myGotoByNamePanel.setInitialSelection(initialSelection);
   }
 
+  @ApiStatus.Internal
   protected static class MyGotoClassModel<T extends PsiNamedElement> extends GotoClassModel2 {
     private final AbstractTreeClassChooserDialog<T> myTreeClassChooserDialog;
 
@@ -485,6 +488,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
     }
   }
 
+  @ApiStatus.Internal
   public abstract static class BaseClassInheritorsProvider<T> {
     private final T myBaseClass;
     private final GlobalSearchScope myScope;

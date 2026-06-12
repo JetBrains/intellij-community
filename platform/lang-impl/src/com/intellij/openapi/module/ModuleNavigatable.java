@@ -3,11 +3,13 @@ package com.intellij.openapi.module;
 
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class ModuleNavigatable implements Navigatable {
   private final Module module;
 

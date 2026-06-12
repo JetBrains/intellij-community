@@ -193,6 +193,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     return showIntentionHint(project, psiFile, editor, showExpanded, icon, popup);
   }
 
+  @ApiStatus.Internal
   @RequiresEdt
   public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
                                                                   @NotNull PsiFile psiFile,

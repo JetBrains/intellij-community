@@ -2,6 +2,7 @@
 package com.intellij.formatting.alignment;
 
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Encapsulates information necessary for correct {@code 'align in columns'} processing.
@@ -13,6 +14,7 @@ import com.intellij.psi.tree.TokenSet;
  *
  * @see AlignmentInColumnsHelper
  */
+@ApiStatus.Internal
 public final class AlignmentInColumnsConfig {
   private final TokenSet myStopMultilineCheckElementTypes;
   private final TokenSet myTargetDeclarationTypes;

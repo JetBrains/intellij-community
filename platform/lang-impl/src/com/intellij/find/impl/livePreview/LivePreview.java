@@ -35,6 +35,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,6 +77,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     NotFound = true;
   }
 
+  @ApiStatus.Internal
   public interface Delegate {
     @NlsSafe @Nullable String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult)
       throws FindManager.MalformedReplacementStringException;
@@ -219,10 +221,12 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     ApplicationManager.getApplication().getMessageBus().connect(myDisposable).subscribe(EditorColorsManager.TOPIC, this);
   }
 
+  @ApiStatus.Internal
   public Delegate getDelegate() {
     return myDelegate;
   }
 
+  @ApiStatus.Internal
   public void setDelegate(Delegate delegate) {
     myDelegate = delegate;
   }

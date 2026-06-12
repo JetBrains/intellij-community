@@ -21,6 +21,7 @@ import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,6 +118,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     }
   }
 
+  @ApiStatus.Internal
   protected SettingsGroup getAssociatedSettingsGroup(String fieldName) {
     if (myFieldNameToGroup == null) {
       myFieldNameToGroup = new HashMap<>();
@@ -137,6 +139,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     return ApplicationBundle.message("settings.code.style.tab.title.wrapping.and.braces");
   }
 
+  @ApiStatus.Internal
   protected record SettingsGroup(@NotNull String title,
                          @NotNull Collection<String> commonCodeStyleSettingFieldNames) {
   }
@@ -254,6 +257,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     return MarginOptionsUtil.getDefaultVisualGuidesText(getSettings());
   }
 
+  @ApiStatus.Internal
   @Override
   protected @Nullable JComponent getCustomNodeEditor(@NotNull MyTreeNode node) {
     String optionName = node.getKey().getOptionName();

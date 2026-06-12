@@ -10,6 +10,7 @@ import com.intellij.build.events.impl.MessageEventImpl
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import java.io.File
@@ -24,8 +25,10 @@ import kotlin.io.path.toPath
 /**
  * Parses kotlinc's output.
  */
+@ApiStatus.Internal
 class KotlincOutputParser : BuildOutputParser {
 
+  @ApiStatus.Internal
   companion object {
     private val COMPILER_MESSAGES_GROUP: @BuildEventsNls.Title String
       @BuildEventsNls.Title

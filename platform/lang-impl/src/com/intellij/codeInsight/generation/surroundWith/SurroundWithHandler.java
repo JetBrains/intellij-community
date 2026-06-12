@@ -73,6 +73,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class SurroundWithHandler implements CodeInsightActionHandler {
   public static final TextRange CARET_IS_OK = new TextRange(0, 0);
 

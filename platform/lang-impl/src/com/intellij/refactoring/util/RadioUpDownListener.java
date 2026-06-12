@@ -7,7 +7,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import javax.swing.JRadioButton;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class RadioUpDownListener extends KeyAdapter {
   private final JRadioButton[] myRadioButtons;
 

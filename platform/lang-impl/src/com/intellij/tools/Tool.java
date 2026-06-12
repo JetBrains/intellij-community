@@ -36,6 +36,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.eel.provider.utils.JEelUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -204,10 +205,12 @@ public class Tool implements SchemeElement {
     myParameters = parameters;
   }
 
+  @ApiStatus.Internal
   public void addOutputFilter(FilterInfo filter) {
     myOutputFilters.add(filter);
   }
 
+  @ApiStatus.Internal
   public void setOutputFilters(FilterInfo[] filters) {
     myOutputFilters = new ArrayList<>();
     if (filters != null) {
@@ -215,6 +218,7 @@ public class Tool implements SchemeElement {
     }
   }
 
+  @ApiStatus.Internal
   public FilterInfo[] getOutputFilters() {
     return myOutputFilters.toArray(new FilterInfo[0]);
   }

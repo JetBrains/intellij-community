@@ -10,6 +10,7 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplatesFactory;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
   private static final Logger LOG = Logger.getInstance(ArchivedTemplatesFactory.class);
 

@@ -22,6 +22,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JComponent;
@@ -31,6 +32,7 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import java.io.File;
 
+@ApiStatus.Internal
 public class ExtractIncludeDialog extends DialogWrapper {
   private final PsiDirectory myCurrentDirectory;
   protected final String myExtension;

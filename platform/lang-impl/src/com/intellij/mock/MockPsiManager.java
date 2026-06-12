@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final /* not final for Android Studio tests */ class MockPsiManager extends PsiManagerEx {
   private final Project myProject;
   private final Map<VirtualFile,PsiDirectory> myDirectories = new HashMap<>();

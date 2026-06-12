@@ -2,7 +2,9 @@
 package com.intellij.codeInsight.hints.presentation
 
 import java.awt.Color
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PillWithBackgroundPresentation(
   presentation: InlayPresentation,
   color: Color? = null,

@@ -51,6 +51,7 @@ import static com.intellij.openapi.util.text.HtmlChunk.text;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
 
+@ApiStatus.Internal
 public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
 
   private static final int REFRESH_INTERVAL = 1000;
@@ -319,6 +320,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     return displayUrlRelativeToProject(f, presentablePath, project, true, true);
   }
 
+  @ApiStatus.Internal
   protected static final class TargetDirectoryListItem {
     private final TargetDirectory myTargetDirectory;
     private final Icon myIcon;

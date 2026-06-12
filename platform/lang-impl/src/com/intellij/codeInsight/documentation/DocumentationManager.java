@@ -1326,6 +1326,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return LibraryUtil.findLibraryEntry(virtualFile, project);
   }
 
+  @Internal
   protected ActionCallback cancelAndFetchDocInfoByLink(@NotNull DocumentationComponent component,
                                                        @NotNull DocumentationCollector provider) {
     return cancelAndFetchDocInfo(component, provider);
@@ -1453,6 +1454,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     myTestDocumentationComponent = documentationComponent;
   }
 
+  @Internal
   protected abstract static class DocumentationCollector {
     private final CompletableFuture<? extends PsiElement> myElementFuture;
     final String ref;

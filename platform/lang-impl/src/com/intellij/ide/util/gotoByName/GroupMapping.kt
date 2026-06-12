@@ -9,10 +9,12 @@ import com.intellij.openapi.actionSystem.UpdateSession
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.NlsActions.ActionText
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
+@ApiStatus.Internal
 class GroupMapping @JvmOverloads constructor(private val myShowNonPopupGroups: Boolean = false) : Comparable<GroupMapping?> {
   private val myPaths: MutableList<List<ActionGroup>> = ArrayList<List<ActionGroup>>()
 
@@ -117,6 +119,7 @@ class GroupMapping @JvmOverloads constructor(private val myShowNonPopupGroups: B
     return prefix
   }
 
+  @ApiStatus.Internal
   companion object {
     private val INNER_GROUP_WITH_IDS: Pattern = Pattern.compile("(.*) \\(\\d+\\)")
 

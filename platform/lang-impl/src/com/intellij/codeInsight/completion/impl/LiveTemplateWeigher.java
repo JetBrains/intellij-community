@@ -5,9 +5,11 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementWeigher;
 import com.intellij.codeInsight.template.impl.LiveTemplateLookupElement;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class LiveTemplateWeigher extends LookupElementWeigher {
   public LiveTemplateWeigher() {
     super("templates", Registry.is("ide.completion.show.live.templates.on.top"), false);

@@ -4,11 +4,13 @@ package com.intellij.build.events.impl;
 import com.intellij.build.events.DerivedResult;
 import com.intellij.build.events.EventResult;
 import com.intellij.build.events.FailureResult;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class DerivedResultImpl implements DerivedResult {
 
   private final @NotNull Supplier<? extends EventResult> myOnDefault;

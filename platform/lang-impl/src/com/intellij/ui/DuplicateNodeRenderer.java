@@ -2,6 +2,7 @@
 
 package com.intellij.ui;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +15,9 @@ import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.util.Enumeration;
 
+@ApiStatus.Internal
 public final class DuplicateNodeRenderer {
+  @ApiStatus.Internal
   public interface DuplicatableNode<T> {
     //returns first duplicate node, if any, or null if there are none
     //duplicate nodes are painted gray

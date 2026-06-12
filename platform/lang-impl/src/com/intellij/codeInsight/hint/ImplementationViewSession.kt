@@ -54,6 +54,7 @@ interface ImplementationViewSessionFactory {
     alwaysIncludeSelf: Boolean
   ): ImplementationViewSession?
 
+  @ApiStatus.Internal
   companion object {
     @JvmField val EP_NAME: ExtensionPointName<ImplementationViewSessionFactory> = ExtensionPointName.create("com.intellij.implementationViewSessionFactory")
   }

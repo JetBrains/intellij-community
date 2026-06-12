@@ -1,8 +1,10 @@
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
 interface ProblemsViewPanelProvider {
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     val EP: ExtensionPointName<ProblemsViewPanelProvider> = ExtensionPointName("com.intellij.problemsViewPanelProvider")

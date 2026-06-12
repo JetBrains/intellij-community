@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class LiveTemplateBuilder {
   private static final @NonNls String END_PREFIX = "____END";
   private static final Logger LOGGER = Logger.getInstance(LiveTemplateBuilder.class);
@@ -315,6 +317,7 @@ public final class LiveTemplateBuilder {
     return marker;
   }
 
+  @ApiStatus.Internal
   public static final class Marker {
     int myStartOffset;
     int myEndOffset;

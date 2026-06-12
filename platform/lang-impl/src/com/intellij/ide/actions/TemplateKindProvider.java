@@ -8,10 +8,12 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDirectory;
 
 import javax.swing.Icon;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public abstract class TemplateKindProvider {
 
   private static final ExtensionPointName<TemplateKindProvider> EP_NAME =
@@ -28,6 +30,7 @@ public abstract class TemplateKindProvider {
   public abstract boolean isAvailable(Class<? extends AnAction> actionClass);
   public abstract Kind[] getAdditionalKinds(PsiDirectory dir);
 
+  @ApiStatus.Internal
   public record Kind(@NlsContexts.ListItem String name, String templateName, Icon icon) {
   }
 }

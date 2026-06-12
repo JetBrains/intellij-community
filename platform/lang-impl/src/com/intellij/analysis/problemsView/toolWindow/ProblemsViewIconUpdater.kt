@@ -12,7 +12,9 @@ import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class ProblemsViewIconUpdater(project: Project, coroutineScope: CoroutineScope) {
   private val alarm = SingleAlarm.singleEdtAlarm(
     delay = 50,
@@ -32,6 +34,7 @@ open class ProblemsViewIconUpdater(project: Project, coroutineScope: CoroutineSc
     else -> Toolwindows.ToolWindowProblems
   }
 
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun update(project: Project):Unit? {

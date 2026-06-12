@@ -9,6 +9,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
 import java.awt.Color;
@@ -17,6 +18,7 @@ import java.util.Arrays;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public abstract class InspectionTreeTailRenderer<E extends Exception> {
   private static final int MAX_LEVEL_TYPES = 5;
 

@@ -231,6 +231,7 @@ data class JdkItem(
   }
 }
 
+@Internal
 enum class JdkPackageType(@NonNls val type: String) {
   ZIP("zip") {
     override fun openDecompressor(archiveFile: Path): Decompressor = Decompressor.Zip(archiveFile).withZipExtensions()
@@ -243,6 +244,7 @@ enum class JdkPackageType(@NonNls val type: String) {
 
   abstract fun openDecompressor(archiveFile: Path): Decompressor
 
+  @Internal
   companion object {
     fun findType(jsonText: String): JdkPackageType? = entries.firstOrNull { it.type.equals(jsonText, ignoreCase = true) }
   }

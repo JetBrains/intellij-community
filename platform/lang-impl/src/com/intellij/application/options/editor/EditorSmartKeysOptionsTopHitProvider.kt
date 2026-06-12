@@ -5,7 +5,9 @@ import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.options.ConfigurableWithOptionDescriptors
 import com.intellij.openapi.options.ex.ConfigurableWrapper
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class EditorSmartKeysOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
   override fun getId(): String = "editor.preferences.tabs"
 

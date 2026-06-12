@@ -57,6 +57,7 @@ import javax.swing.ListCellRenderer
 
 private val LOG = logger<ActionSearchEverywhereContributor>()
 
+@Internal
 open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContributor<MatchedValue>, LightEditCompatible, SearchEverywhereExtendedInfoProvider {
   private val myProject: Project?
   private val myContextComponent: WeakReference<Component?>
@@ -194,6 +195,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
     return !inplaceChange
   }
 
+  @Internal
   class Factory : SearchEverywhereContributorFactory<MatchedValue> {
     override fun createContributor(initEvent: AnActionEvent): SearchEverywhereContributor<MatchedValue> {
       return ActionSearchEverywhereContributor(
@@ -255,6 +257,7 @@ open class ActionSearchEverywhereContributor : WeightedSearchEverywhereContribut
     }
   }
 
+  @Internal
   companion object {
     fun showAssignShortcutDialog(myProject: Project?, value: MatchedValue) {
       val action = value.getUnwrappedAction()

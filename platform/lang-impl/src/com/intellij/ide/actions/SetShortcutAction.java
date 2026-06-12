@@ -15,11 +15,13 @@ import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.JBPopup;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Component;
 import java.util.Optional;
 
+@ApiStatus.Internal
 public final class SetShortcutAction extends AnAction implements DumbAware {
 
   public static final DataKey<AnAction> SELECTED_ACTION = DataKey.create("SelectedAction");

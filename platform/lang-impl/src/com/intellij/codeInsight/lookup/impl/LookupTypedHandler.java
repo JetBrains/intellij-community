@@ -33,6 +33,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class LookupTypedHandler extends TypedActionHandlerBase {
   @ApiStatus.Internal
   public static final Key<Character> CANCELLATION_CHAR = Key.create("CANCELLATION_CHAR");

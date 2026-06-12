@@ -9,7 +9,9 @@ import com.intellij.openapi.options.Configurable.WithEpDependencies
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class AutoImportOptionsConfigurable(private val project: Project) :
   BoundCompositeConfigurable<AutoImportOptionsProvider>(
     ApplicationBundle.message("auto.import"), "reference.settingsdialog.IDE.editor.autoimport"),

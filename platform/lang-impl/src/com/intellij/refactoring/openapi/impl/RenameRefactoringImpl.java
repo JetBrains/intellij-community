@@ -13,7 +13,9 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 
 import java.util.Collection;
 import java.util.Set;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> implements RenameRefactoring {
   public RenameRefactoringImpl(Project project,
                              PsiElement element,

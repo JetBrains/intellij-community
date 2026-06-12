@@ -46,6 +46,7 @@ import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -399,6 +400,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     }
   }
 
+  @ApiStatus.Internal
   protected void addPredefinedCodeStyleListener(@NotNull PredefinedCodeStyleListener listener) {
     myPredefinedCodeStyleEventDispatcher.addListener(listener, this);
   }
@@ -464,6 +466,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
 //========================================================================================================================================
 
+  @ApiStatus.Internal
   protected class MySpacesPanel extends CodeStyleSpacesPanel {
 
     public MySpacesPanel(CodeStyleSettings settings) {
@@ -706,11 +709,13 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   }
 
+  @ApiStatus.Internal
   @FunctionalInterface
   public interface TabChangeListener {
     void tabChanged(@NotNull TabbedLanguageCodeStylePanel source, @NotNull String tabTitle);
   }
 
+  @ApiStatus.Internal
   public void setListener(@Nullable TabChangeListener listener) {
     myListener = listener;
   }

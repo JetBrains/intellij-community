@@ -17,10 +17,12 @@ package com.intellij.application.options.codeStyle;
 
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
+@ApiStatus.Internal
 public interface CodeStyleSchemesModelListener extends EventListener {
   default void currentSchemeChanged(Object source) {
   }

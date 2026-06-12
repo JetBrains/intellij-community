@@ -19,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 
+@ApiStatus.Internal
 class RetypeOptions(val project: Project) {
   var retypeDelay: Int by propComponentProperty(project, 400)
   var threadDumpDelay: Int by propComponentProperty(project, 100)

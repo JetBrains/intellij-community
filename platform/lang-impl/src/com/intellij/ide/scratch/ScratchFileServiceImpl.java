@@ -75,6 +75,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
@@ -290,6 +291,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
     }
   }
 
+  @ApiStatus.Internal
   public static final class Detector implements FileTypeRegistry.FileTypeDetector {
     @Override
     public @Nullable FileType detect(@NotNull VirtualFile file, @NotNull ByteSequence firstBytes, @Nullable CharSequence firstCharsIfText) {
@@ -302,6 +304,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
     }
   }
 
+  @ApiStatus.Internal
   public static final class Substitutor extends LanguageSubstitutor {
     @Override
     public @Nullable Language getLanguage(@NotNull VirtualFile file, @NotNull Project project) {

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.hints.presentation
 
 import java.awt.Point
 import java.awt.event.MouseEvent
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Changes state once hovered, not switches state back
@@ -44,8 +45,10 @@ open class ChangeOnHoverPresentation(
     super.mouseExited()
   }
 
+  @ApiStatus.Internal
   data class State(val isInside: Boolean)
 
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     val STATE_MARK: StateMark<State> = StateMark("OnHover")

@@ -10,6 +10,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 interface CodeVisionGroupSettingProvider {
@@ -61,6 +62,7 @@ interface CodeVisionGroupSettingProvider {
     return CodeVisionGroupDefaultSettingModel(groupName, groupId, description, previewLanguage, isEnabled, providers)
   }
 
+  @ApiStatus.Internal
   object EP {
     val EXTENSION_POINT_NAME: ExtensionPointName<CodeVisionGroupSettingProvider> =
       ExtensionPointName.create("com.intellij.config.codeVisionGroupSettingProvider")

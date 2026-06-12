@@ -31,6 +31,7 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.impl.MessageBusImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ import javax.swing.JComponent;
 
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
+@ApiStatus.Internal
 public final class ConsoleExecutionEditor implements Disposable {
   private final @NotNull EditorEx myConsoleEditor;
   private EditorEx myCurrentEditor;

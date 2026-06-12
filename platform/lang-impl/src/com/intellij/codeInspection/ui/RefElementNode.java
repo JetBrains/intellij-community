@@ -9,11 +9,13 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 
+@ApiStatus.Internal
 public class RefElementNode extends SuppressableInspectionTreeNode {
   private final Icon myIcon;
   private final @Nullable RefEntity myRefEntity;

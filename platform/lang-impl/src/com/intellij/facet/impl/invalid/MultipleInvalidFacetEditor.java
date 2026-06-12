@@ -15,7 +15,9 @@ import javax.swing.JPanel;
 import java.awt.Insets;
 import java.lang.reflect.Method;
 import java.util.ResourceBundle;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class MultipleInvalidFacetEditor extends MultipleFacetSettingsEditor {
   private final MultipleFacetEditorHelperImpl myHelper;
   private final JPanel myMainPanel;

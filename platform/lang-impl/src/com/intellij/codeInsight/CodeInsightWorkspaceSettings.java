@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -82,6 +83,7 @@ public final class CodeInsightWorkspaceSettings extends SimpleModificationTracke
   /**
    * Provides bindId = "CodeInsightWorkspaceSettings.optimizeImportsOnTheFly" to control whether imports are optimized on the fly
    */
+  @ApiStatus.Internal
   public static final class Provider implements OptionControllerProvider {
     @Override
     public @NotNull OptionController forContext(@NotNull PsiElement context) {

@@ -30,6 +30,7 @@ import com.intellij.refactoring.suggested.REFACTORING_DATA_KEY
 import com.intellij.refactoring.suggested.SuggestedRenameData
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.event.MouseEvent
 
@@ -39,6 +40,7 @@ import java.awt.event.MouseEvent
  * This [CodeVisionProvider] skips PSI elements concerned by [SuggestedRenameData]
  * (stored in the file user data, see [REFACTORING_DATA_KEY]).
  */
+@ApiStatus.Internal
 abstract class RenameAwareReferencesCodeVisionProvider : CodeVisionProvider<Nothing?> {
 
   override fun precomputeOnUiThread(editor: Editor): Nothing? = null

@@ -3,7 +3,9 @@ package com.intellij.codeInsight.hints.presentation
 
 import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Graphics2D
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 data class SpacePresentation(override var width: Int, override var height: Int) : BasePresentation() {
   override fun paint(g: Graphics2D, attributes: TextAttributes) {
   }

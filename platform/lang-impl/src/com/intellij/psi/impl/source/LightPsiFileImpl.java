@@ -29,9 +29,11 @@ import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class LightPsiFileImpl extends PsiElementBase implements PsiFileEx {
 
   private static final Logger LOG = Logger.getInstance(LightPsiFileImpl.class);

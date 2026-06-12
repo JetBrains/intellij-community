@@ -29,6 +29,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar, DumbAware {
   @Suppress("CompanionObjectInExtension") // used in third party
   companion object {
+    @Internal
     @RequiresReadLock
     fun createPassForPreview(
       file: PsiFile,
@@ -75,6 +76,7 @@ class DeclarativeInlayHintsPassFactory : TextEditorHighlightingPassFactory, Text
     }
   }
 
+  @Internal
   override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): DeclarativeInlayHintsPass? {
     if (!Registry.`is`("inlays.declarative.hints")) return null
     if (editor.isOneLineMode || DiffUtil.isDiffEditor(editor)) return null

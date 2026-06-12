@@ -4,9 +4,11 @@ package com.intellij.util.textCompletion;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class TextCompletionCharFilter extends CharFilter {
   @Override
   public @Nullable Result acceptChar(char c, int prefixLength, @NotNull Lookup lookup) {

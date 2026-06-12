@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.Point;
 import java.awt.Rectangle;
 
+@ApiStatus.Internal
 public class IntentionsUIImpl extends IntentionsUI {
   @ApiStatus.Internal
   public static final Key<Integer> SHOW_INTENTION_BULB_ON_ANOTHER_LINE = Key.create("IntentionsUIImpl.SHOW_INTENTION_BULB_ON_ANOTHER_LINE");

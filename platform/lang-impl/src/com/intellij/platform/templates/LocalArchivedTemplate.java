@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,6 +34,7 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class LocalArchivedTemplate extends ArchivedProjectTemplate {
   private static final Logger LOG = Logger.getInstance(LocalArchivedTemplate.class);
   public static final @NonNls String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";

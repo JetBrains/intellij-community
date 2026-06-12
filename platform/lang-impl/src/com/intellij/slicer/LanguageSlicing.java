@@ -3,8 +3,10 @@ package com.intellij.slicer;
 
 import com.intellij.lang.LanguageExtension;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class LanguageSlicing extends LanguageExtension<SliceLanguageSupportProvider> {
   public static final LanguageSlicing INSTANCE = new LanguageSlicing();
 

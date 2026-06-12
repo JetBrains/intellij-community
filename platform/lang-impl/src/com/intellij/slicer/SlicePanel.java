@@ -76,6 +76,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public abstract class SlicePanel extends JPanel implements UiDataProvider, Disposable {
   private final SliceTreeBuilder myBuilder;
   private final JTree myTree;

@@ -11,6 +11,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBHtmlPane
 import com.intellij.ui.components.JBHtmlPaneConfiguration
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jsoup.Jsoup
 import java.awt.Color
@@ -35,6 +36,7 @@ open class DescriptionEditorPane : JBHtmlPane(
 
   override fun getBackground(): Color = JBColor.PanelBackground
 
+  @ApiStatus.Internal
   companion object {
     const val EMPTY_HTML: String = "<html><body></body></html>"
   }

@@ -19,12 +19,14 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public final class CustomFileTypeFoldingBuilder extends CustomFoldingBuilder {
 
   @Override

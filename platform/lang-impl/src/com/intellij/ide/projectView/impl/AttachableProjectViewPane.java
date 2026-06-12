@@ -24,6 +24,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -45,6 +46,7 @@ import java.util.Set;
 
 import static com.intellij.ide.dnd.FileCopyPasteUtil.getVirtualFileListFromAttachedObject;
 
+@ApiStatus.Internal
 public abstract class AttachableProjectViewPane extends ProjectViewPane {
   private final DropAreaDecorator myDecorator = new DropAreaDecorator();
 

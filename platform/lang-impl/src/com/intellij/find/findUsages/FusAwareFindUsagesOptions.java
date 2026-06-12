@@ -2,10 +2,12 @@
 package com.intellij.find.findUsages;
 
 import com.intellij.internal.statistic.eventLog.events.EventPair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public interface FusAwareFindUsagesOptions {
   @NotNull List<EventPair<?>> getAdditionalUsageData();
 }

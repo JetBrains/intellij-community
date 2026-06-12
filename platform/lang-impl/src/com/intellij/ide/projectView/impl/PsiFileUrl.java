@@ -3,12 +3,14 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 /**
  * @author anna
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class PsiFileUrl extends AbstractUrl {
   private static final @NonNls String ELEMENT_TYPE = TYPE_PSI_FILE;
 

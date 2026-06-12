@@ -192,6 +192,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     private val LOG = logger<BuildOutputInstantReader>()
     private enum class State { Idle, Running, Closed }

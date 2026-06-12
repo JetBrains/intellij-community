@@ -11,9 +11,6 @@ a:com.intellij.build.AbstractViewManager
 - com.intellij.build.ViewManager
 - com.intellij.openapi.Disposable
 - *:addListener(com.intellij.build.BuildProgressListener,com.intellij.openapi.Disposable):V
-f:com.intellij.build.BuildConsoleUtils
-- *s:getDataContext(java.lang.Object,com.intellij.build.AbstractViewManager):com.intellij.openapi.actionSystem.DataContext
-- *s:getDataContext(java.lang.Object,com.intellij.build.BuildProgressListener,com.intellij.openapi.ui.ComponentContainer):com.intellij.openapi.actionSystem.DataContext
 *:com.intellij.build.BuildEventDispatcher
 - com.intellij.build.BuildProgressListener
 - java.io.Closeable
@@ -836,9 +833,6 @@ c:com.intellij.ide.util.scopeChooser.ScopeDescriptor
 *f:com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder$Companion
 - f:create(javax.swing.Icon,com.intellij.util.NotNullFunction):com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder
 - f:create(javax.swing.Icon,com.intellij.util.NotNullFunction,com.intellij.util.NotNullFunction):com.intellij.microservices.utils.UsagesNavigationGutterIconBuilder
-f:com.intellij.mock.MockPsiManager
-- com.intellij.psi.impl.PsiManagerEx
-- *:addPsiTreeChangeListenerBackgroundable(com.intellij.psi.PsiTreeChangeListener,com.intellij.openapi.Disposable):V
 *:com.intellij.openapi.editor.actions.lists.ListSplitJoinContext
 - *sf:Companion:com.intellij.openapi.editor.actions.lists.ListSplitJoinContext$Companion
 - a:extractData(com.intellij.psi.PsiElement):com.intellij.openapi.editor.actions.lists.ListWithElements
@@ -956,9 +950,6 @@ f:com.intellij.platform.ide.documentation.ActionsKt
 *f:com.intellij.psi.impl.source.resolve.reference.PsiReferenceUtil
 - s:findReferenceOfClass(com.intellij.psi.PsiReference,java.lang.Class):com.intellij.psi.PsiReference
 - s:unwrapMultiReference(com.intellij.psi.PsiReference):java.util.List
-c:com.intellij.refactoring.memberPushDown.PushDownProcessor
-- com.intellij.refactoring.BaseRefactoringProcessor
-- *:<init>(com.intellij.psi.PsiElement,java.util.List,com.intellij.refactoring.util.DocCommentPolicy,Z):V
 *a:com.intellij.refactoring.rename.api.FileOperation
 - *sf:Companion:com.intellij.refactoring.rename.api.FileOperation$Companion
 - *sf:addFile(java.nio.file.Path,java.lang.CharSequence):com.intellij.refactoring.rename.api.FileOperation

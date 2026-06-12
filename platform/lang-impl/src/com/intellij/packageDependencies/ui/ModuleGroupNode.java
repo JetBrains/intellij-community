@@ -8,11 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class ModuleGroupNode extends PackageDependenciesNode {
   private final ModuleGroup myModuleGroup;
 

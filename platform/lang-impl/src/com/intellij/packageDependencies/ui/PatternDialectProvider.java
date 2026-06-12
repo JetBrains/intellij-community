@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -61,6 +62,7 @@ public abstract class PatternDialectProvider {
     return "";
   }
 
+  @ApiStatus.Internal
   protected static @NotNull String getGroupModulePattern(ModuleGroupNode node) {
     if (ModuleGrouperKt.isQualifiedModuleNamesEnabled(node.getProject())) {
       return node.getModuleGroup().getQualifiedName() + "*";

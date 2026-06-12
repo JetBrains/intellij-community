@@ -16,7 +16,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.pom.PomTargetPsiElement
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Presentation(provider = UrlPathSegmentPresentationProvider::class)
 class UrlPathReferenceUnifiedPomTarget internal constructor(
   override val context: UrlPathContext,
@@ -109,6 +111,7 @@ class UrlPathReferenceUnifiedPomTarget internal constructor(
     return UrlTargetInfoFakeElement(this.project, this, reference, context.isDeclaration)
   }
 
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun getFromPomTargetPsiElement(psiElement: PsiElement): UrlPathReferenceUnifiedPomTarget? =

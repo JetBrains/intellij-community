@@ -2,8 +2,10 @@
 package com.intellij.ide.fileTemplates.actions;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public interface CreateFromBundledTemplateAction {
   @NotNull FileTemplate getTemplate();
 }

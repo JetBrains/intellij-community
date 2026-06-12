@@ -3,10 +3,12 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public final class TailTypeEx {
   public static final TailType SMART_LPARENTH = new TailType() {
     @Override

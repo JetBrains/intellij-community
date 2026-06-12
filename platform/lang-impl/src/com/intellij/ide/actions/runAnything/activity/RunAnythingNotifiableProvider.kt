@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.util.NlsActions
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Implement notifiable provider if you desire to run an arbitrary activity in the IDE, that may hasn't provide visual effects,
@@ -55,10 +56,12 @@ abstract class RunAnythingNotifiableProvider<V : Any> : RunAnythingProviderBase<
     notification.notify(project)
   }
 
+  @ApiStatus.Internal
   protected fun notification(after: ExecutionStatus = SUCCESS, configure: NotificationBuilder.() -> Unit) {
     notificationConfigurators[after] = configure
   }
 
+  @ApiStatus.Internal
   protected inner class NotificationBuilder(val dataContext: DataContext, val value: V) {
     private val actions = ArrayList<ActionData>()
 
@@ -85,6 +88,7 @@ abstract class RunAnythingNotifiableProvider<V : Any> : RunAnythingProviderBase<
     }
   }
 
+  @ApiStatus.Internal
   protected enum class ExecutionStatus { SUCCESS, ERROR }
 
   private data class ActionData(@NlsActions.ActionText val name: String, val perform: () -> Unit)

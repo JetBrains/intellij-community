@@ -17,6 +17,7 @@ import com.intellij.ui.ToolbarDecorator;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
   enum Direction {
     UP {
@@ -208,6 +210,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     return new MyCheckboxTreeCellRenderer();
   }
 
+  @ApiStatus.Internal
   protected static class MyCheckboxTreeCellRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
     @Override
     public void customizeRenderer(final JTree tree,

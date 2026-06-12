@@ -71,6 +71,7 @@ import javax.swing.event.ListSelectionListener
  *
  * UI for installing python packages
  */
+@ApiStatus.Internal
 open class ManagePackagesDialog @JvmOverloads constructor(
   private val myProject: Project,
   private val myController: PackageManagementService,
@@ -583,6 +584,7 @@ open class ManagePackagesDialog @JvmOverloads constructor(
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     /** Number of characters used to calculate the fixed width of package entry in the list.*/
     private const val CHARACTERS_PER_CELL = 10

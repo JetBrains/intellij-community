@@ -23,6 +23,7 @@ import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import java.util.Random
+import org.jetbrains.annotations.ApiStatus
 
 
 internal class RetypeFileAction : AnAction() {
@@ -103,6 +104,7 @@ interface RetypeFileAssistant {
   fun retypeDone(editor: Editor) {
   }
 
+  @ApiStatus.Internal
   companion object {
     val EP_NAME: ExtensionPointName<RetypeFileAssistant> = ExtensionPointName.create("com.intellij.retypeFileAssistant")
   }

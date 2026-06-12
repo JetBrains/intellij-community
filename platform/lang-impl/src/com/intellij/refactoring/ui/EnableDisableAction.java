@@ -3,6 +3,7 @@
 package com.intellij.refactoring.ui;
 
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.AbstractAction;
@@ -13,6 +14,7 @@ import javax.swing.KeyStroke;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
+@ApiStatus.Internal
 public abstract class EnableDisableAction extends AbstractAction {
   @Override
   public void actionPerformed(ActionEvent e) {

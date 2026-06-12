@@ -30,6 +30,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,6 +45,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Callable;
 
+@ApiStatus.Internal
 public final class ShowExpressionTypeHandler implements CodeInsightActionHandler {
   private final boolean myRequestFocus;
 

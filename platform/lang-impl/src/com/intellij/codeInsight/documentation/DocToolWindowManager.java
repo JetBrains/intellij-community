@@ -7,6 +7,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.Content;
 import com.intellij.util.KeyedLazyInstance;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @Deprecated(forRemoval = true)
 public interface DocToolWindowManager {
-
+  @ApiStatus.Internal
   DocToolWindowLanguageManager LANGUAGE_MANAGER = new DocToolWindowLanguageManager();
 
   @NotNull
@@ -41,6 +42,7 @@ public interface DocToolWindowManager {
 
   boolean isAutoUpdateAvailable();
 
+  @ApiStatus.Internal
   final class DocToolWindowLanguageManager extends LanguageExtension<DocToolWindowManager> {
     public static final ExtensionPointName<KeyedLazyInstance<DocToolWindowManager>> EP_NAME =
       new ExtensionPointName<>("com.intellij.lang.documentationToolWindowManager");

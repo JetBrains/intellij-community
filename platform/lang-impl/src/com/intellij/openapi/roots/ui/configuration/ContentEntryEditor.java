@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
@@ -31,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallback {
   private boolean myIsSelected;
   private ContentRootPanel myContentRootPanel;
@@ -39,6 +41,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   private final String myContentEntryUrl;
   private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
 
+  @ApiStatus.Internal
   public interface ContentEntryEditorListener extends EventListener{
 
     void editingStarted(@NotNull ContentEntryEditor editor);

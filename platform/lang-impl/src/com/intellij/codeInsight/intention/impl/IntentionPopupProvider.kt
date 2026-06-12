@@ -5,12 +5,14 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Defines a provider for creating instances of {@link AbstractIntentionPopup}.
  * This interface is intended to provide a customized intention popup that can include intention from different backends.
  */
 public interface IntentionPopupProvider {
+  @ApiStatus.Internal
   companion object {
     val EP_NAME = ExtensionPointName.create<IntentionPopupProvider>("com.intellij.intentionPopupProvider")
 

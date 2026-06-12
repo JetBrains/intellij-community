@@ -3,11 +3,13 @@ package com.intellij.psi.filters;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class FilterPositionUtil {
   public static @Nullable PsiElement searchNonSpaceNonCommentBack(PsiElement element) {
     return element == null ? null : PsiTreeUtil.prevCodeLeaf(element);

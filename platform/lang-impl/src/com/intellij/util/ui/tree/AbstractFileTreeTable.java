@@ -24,6 +24,7 @@ import com.intellij.ui.treeStructure.treetable.TreeTableModel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -312,6 +313,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
+  @ApiStatus.Internal
   public static final class ProjectRootNode extends ConvenientNode<Project> {
     private final VirtualFileFilter myFilter;
 
@@ -337,6 +339,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
+  @ApiStatus.Internal
   public abstract static class ConvenientNode<T> extends DefaultMutableTreeNode {
     private final T myObject;
 
@@ -405,6 +408,7 @@ public class AbstractFileTreeTable<T> extends TreeTable {
     }
   }
 
+  @ApiStatus.Internal
   public static final class FileNode extends ConvenientNode<VirtualFile> {
     private final Project myProject;
     private final VirtualFileFilter myFilter;

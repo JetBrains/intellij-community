@@ -122,6 +122,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@ApiStatus.Internal
 public final class ScopeEditorPanel implements Disposable {
   private static final @NotNull Logger LOG = Logger.getInstance(ScopeEditorPanel.class);
   private final JPanel myButtonsPanel;

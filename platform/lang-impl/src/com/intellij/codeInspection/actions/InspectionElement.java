@@ -8,11 +8,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.FakePsiElement;
 import com.intellij.psi.impl.source.DummyHolder;
 import com.intellij.psi.impl.source.DummyHolderFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 
+@ApiStatus.Internal
 public final class InspectionElement extends FakePsiElement {
   public static final InspectionElement[] EMPTY_ARRAY = new InspectionElement[0];
   private final @NotNull InspectionToolWrapper myWrapper;

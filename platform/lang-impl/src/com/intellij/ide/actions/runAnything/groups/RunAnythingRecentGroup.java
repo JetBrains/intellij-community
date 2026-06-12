@@ -9,11 +9,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public class RunAnythingRecentGroup extends RunAnythingGroupBase {
   @Override
   public @NotNull String getTitle() {

@@ -18,6 +18,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.OrderedSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -227,6 +228,7 @@ public abstract class SmartEnterProcessorWithFixers extends SmartEnterProcessor 
   protected void moveCaretInsideBracesIfAny(@NotNull Editor editor, @NotNull PsiFile file) throws IncorrectOperationException {
   }
 
+  @ApiStatus.Internal
   public static class TooManyAttemptsException extends Exception {
   }
 

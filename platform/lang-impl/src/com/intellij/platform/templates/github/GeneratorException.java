@@ -2,7 +2,9 @@
 package com.intellij.platform.templates.github;
 
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class GeneratorException extends Exception {
   public GeneratorException(@DialogMessage String message) {
     super(message);

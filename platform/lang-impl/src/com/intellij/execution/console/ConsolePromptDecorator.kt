@@ -127,6 +127,7 @@ class ConsolePromptDecorator(private val myEditorEx: EditorEx) : EditorLinePaint
     }
   }
 
+  @Internal
   companion object {
     private val promptColor = ColorKey.createColorKey("CONSOLE_PROMPT_COLOR")
     private val LOG = Logger.getInstance(ConsolePromptDecorator::class.java)

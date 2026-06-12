@@ -16,6 +16,8 @@
 package com.intellij.framework.library;
 
 import com.intellij.util.download.DownloadableFileSetVersions;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public interface DownloadableLibraryDescription extends DownloadableFileSetVersions<FrameworkLibraryVersion> {
 }

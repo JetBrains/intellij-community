@@ -13,6 +13,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.io.DataExternalizer
 import java.io.DataInput
 import java.io.DataOutput
+import org.jetbrains.annotations.ApiStatus
 
 private typealias GistMarkerData = Result<Boolean>
 
@@ -25,6 +26,7 @@ private val ACCEPTS_NO: GistMarkerData = GistMarkerData.success(false)
  *
  * @see GistManager
  */
+@ApiStatus.Internal
 class GistAstMarker(private val fileType: FileType,
                     private val gistId: String,
                     function: (LighterAST) -> Boolean) {

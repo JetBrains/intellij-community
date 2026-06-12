@@ -3,6 +3,7 @@ package com.intellij.ide.projectView;
 
 import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ public interface ProjectViewSettings extends ViewSettings {
     return true;
   }
 
+  @ApiStatus.Internal
   final class Immutable extends ViewSettings.Immutable implements ProjectViewSettings {
     public static final ProjectViewSettings DEFAULT = new ProjectViewSettings.Immutable(null);
 

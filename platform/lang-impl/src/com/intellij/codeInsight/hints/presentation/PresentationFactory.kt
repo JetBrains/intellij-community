@@ -528,6 +528,7 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     var customToStringProvider: ((PsiElement) -> String)? = null
 

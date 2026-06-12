@@ -37,6 +37,7 @@ interface SdkLookup {
   }
 }
 
+@ApiStatus.Internal
 enum class SdkLookupDownloadDecision {
   /** ignore this SDK and continue lookup, it may end with the same SDK Download suggestiom **/
   SKIP,
@@ -48,6 +49,7 @@ enum class SdkLookupDownloadDecision {
   WAIT
 }
 
+@ApiStatus.Internal
 enum class SdkLookupDecision {
   STOP,
   CONTINUE

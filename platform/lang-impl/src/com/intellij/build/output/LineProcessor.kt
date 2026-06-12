@@ -2,7 +2,9 @@
 package com.intellij.build.output
 
 import java.io.Closeable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class LineProcessor : Appendable, Closeable {
   private var lineBuilder: StringBuilder? = StringBuilder()
 

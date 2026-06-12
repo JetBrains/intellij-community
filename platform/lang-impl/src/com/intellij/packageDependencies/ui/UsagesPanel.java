@@ -23,6 +23,7 @@ import com.intellij.usages.UsageViewManager;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +33,7 @@ import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 import java.awt.BorderLayout;
 
+@ApiStatus.Internal
 public abstract class UsagesPanel extends JPanel implements Disposable, UiDataProvider {
   protected static final Logger LOG = Logger.getInstance(UsagesPanel.class);
 

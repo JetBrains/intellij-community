@@ -30,6 +30,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.model.serialization.JpsGlobalSettingsLoading.SDK_TABLE_COMPONENT_NAME
 
 // This annotation is needed only for support of the "export settings" action
+@ApiStatus.Internal
 @State(name = SDK_TABLE_COMPONENT_NAME, storages = [Storage(value = JpsGlobalEntitiesSerializers.SDK_FILE_NAME + DEFAULT_EXT)], presentableName = ProjectJdkTableImpl.PresentableNameGetter::class)
 open class ProjectJdkTableImpl: ProjectJdkTable(), EnvironmentScopedSdkTableOps {
 
@@ -178,6 +179,7 @@ open class ProjectJdkTableImpl: ProjectJdkTable(), EnvironmentScopedSdkTableOps 
     override fun get(): String = ProjectBundle.message("sdk.table.settings")
   }
 
+  @ApiStatus.Internal
   companion object {
     @NonNls
     private const val ELEMENT_ADDITIONAL: String = "additional"

@@ -54,6 +54,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +72,7 @@ import java.util.List;
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public class ContentEntryTreeEditor {
   private final Project myProject;
   private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;

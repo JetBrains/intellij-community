@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class PushDownData<MemberInfo extends MemberInfoBase<Member>,
                           Member extends PsiElement> {
   private PsiElement mySourceClass;

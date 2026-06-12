@@ -7,10 +7,12 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+@ApiStatus.Internal
 public abstract class AbstractNamingConventionMerger<T extends PsiNameIdentifierOwner> extends InspectionElementsMergerBase {
   private final AbstractNamingConventionInspection<T> myNewInspection;
 

@@ -21,11 +21,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class DescriptorComposer extends HTMLComposerImpl {
   private static final Logger LOG = Logger.getInstance(DescriptorComposer.class);
   private final InspectionToolPresentation myTool;

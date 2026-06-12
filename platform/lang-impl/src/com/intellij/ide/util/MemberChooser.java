@@ -52,6 +52,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -279,6 +280,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return new DefaultTreeModel(rootNode);
   }
 
+  @ApiStatus.Internal
   protected MemberNode createMemberNode(Ref<Integer> count, @NotNull T object, ParentNode parentNode) {
     return new MemberNodeImpl(parentNode, object, count);
   }
@@ -777,6 +779,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   protected interface MemberNode extends ElementNode {}
 
+  @ApiStatus.Internal
   protected abstract static class ElementNodeImpl extends DefaultMutableTreeNode implements ElementNode {
     private final int myOrder;
     private final @NotNull MemberChooserObject myDelegate;
@@ -801,18 +804,21 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
+  @ApiStatus.Internal
   protected static final class MemberNodeImpl extends ElementNodeImpl implements MemberNode {
     public MemberNodeImpl(ParentNode parent, @NotNull ClassMember delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
   }
 
+  @ApiStatus.Internal
   protected static class ParentNode extends ElementNodeImpl {
     public ParentNode(@Nullable DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       super(parent, delegate, order);
     }
   }
 
+  @ApiStatus.Internal
   protected static final class ContainerNode extends ParentNode {
     public ContainerNode(DefaultMutableTreeNode parent, MemberChooserObject delegate, Ref<Integer> order) {
       super(parent, delegate, order);
@@ -950,6 +956,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     }
   }
 
+  @ApiStatus.Internal
   protected static final class OrderComparator implements Comparator<ElementNode> {
     public OrderComparator() {
     } // To make this class instantiable from the subclasses

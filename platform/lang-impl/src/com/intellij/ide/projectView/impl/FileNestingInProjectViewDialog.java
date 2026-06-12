@@ -20,6 +20,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.util.SortedSet;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+@ApiStatus.Internal
 public final class FileNestingInProjectViewDialog extends DialogWrapper {
   private static final Comparator<NestingRule> RULE_COMPARATOR =
     Comparator.comparing(o -> o.getParentFileSuffix() + " " + o.getChildFileSuffix());

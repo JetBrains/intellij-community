@@ -6,8 +6,10 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.lexer.Lexer;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class FilePackageSetParserExtension implements PackageSetParserExtension {
 
   @Override

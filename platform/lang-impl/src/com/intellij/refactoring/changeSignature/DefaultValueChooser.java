@@ -27,7 +27,9 @@ import java.awt.event.ActionListener;
 import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class DefaultValueChooser extends DialogWrapper {
   private final JRadioButton myLeaveBlankRadioButton;
   private final JRadioButton myFeelLuckyRadioButton;

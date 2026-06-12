@@ -3,7 +3,9 @@ package com.intellij.refactoring;
 
 import com.intellij.openapi.util.Ref;
 import com.intellij.usageView.UsageInfo;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public abstract class RefactoringImpl<T extends BaseRefactoringProcessor> implements Refactoring {
   protected final T myProcessor;
 

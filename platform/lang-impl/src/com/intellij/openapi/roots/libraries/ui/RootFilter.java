@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.libraries.ui;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -12,6 +13,7 @@ import java.util.Collections;
 /**
  * Base class for {@link RootDetector}'s implementations which can accept only file selected by user but not its descendants
  */
+@ApiStatus.Internal
 public abstract class RootFilter extends RootDetector {
   public RootFilter(OrderRootType rootType, boolean jarDirectory, final String presentableRootTypeName) {
     super(rootType, jarDirectory, presentableRootTypeName);

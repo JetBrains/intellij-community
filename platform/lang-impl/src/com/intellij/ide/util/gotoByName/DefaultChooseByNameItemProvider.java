@@ -314,6 +314,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return true;
   }
 
+  @ApiStatus.Internal
   protected @NotNull PathProximityComparator getPathProximityComparator() {
     return new PathProximityComparator(myContext == null ? null : myContext.getElement());
   }
@@ -513,6 +514,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
     return builder.build();
   }
 
+  @ApiStatus.Internal
   protected static final class PathProximityComparator implements Comparator<Object> {
     private final @NotNull PsiProximityComparator myProximityComparator;
 

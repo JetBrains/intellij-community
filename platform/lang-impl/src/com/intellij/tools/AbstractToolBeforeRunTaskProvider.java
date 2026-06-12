@@ -8,10 +8,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
 
+@ApiStatus.Internal
 public abstract class AbstractToolBeforeRunTaskProvider<T extends AbstractToolBeforeRunTask<?, ?>> extends BeforeRunTaskProvider<T> {
   protected static final Logger LOG = Logger.getInstance(ToolBeforeRunTaskProvider.class);
 

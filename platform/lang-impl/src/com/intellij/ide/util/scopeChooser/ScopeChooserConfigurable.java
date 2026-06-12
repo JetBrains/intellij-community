@@ -45,6 +45,7 @@ import com.intellij.ui.treeStructure.ProjectViewUpdateCause;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -169,6 +170,7 @@ public final class ScopeChooserConfigurable extends MasterDetailsComponent imple
     }
   }
 
+  @ApiStatus.Internal
   public ScopeChooserConfigurableState getScopesState() {
     return (ScopeChooserConfigurableState)myState;
   }
@@ -519,6 +521,7 @@ public final class ScopeChooserConfigurable extends MasterDetailsComponent imple
     }
   }
 
+  @ApiStatus.Internal
   public static final class ScopeChooserConfigurableState extends MasterDetailsState {
     @XCollection(propertyElementName = "order", elementName = "scope", valueAttributeName = "name")
     public List<String> myOrder = new ArrayList<>();

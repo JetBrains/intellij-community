@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk
 import java.util.Objects
 import java.util.TreeSet
+import org.jetbrains.annotations.ApiStatus
 
 private val EP_NAME = ExtensionPointName.create<UnknownSdkContributor>("com.intellij.unknownSdkContributor")
 
@@ -74,6 +75,7 @@ private data class MissingSdkInfo(
   override fun getSdkType() = mySdkType
 }
 
+@ApiStatus.Internal
 interface UnknownSdkBlockingCollector {
   /**
    * Starts collection of SDKs blocking inside one read action.

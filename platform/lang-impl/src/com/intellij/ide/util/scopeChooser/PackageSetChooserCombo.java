@@ -11,6 +11,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.components.editors.JBComboBoxTableCellEditorComponent;
 import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.DefaultComboBoxModel;
@@ -23,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
+@ApiStatus.Internal
 public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent> {
   private static final Logger LOG = Logger.getInstance(PackageSetChooserCombo.class);
 

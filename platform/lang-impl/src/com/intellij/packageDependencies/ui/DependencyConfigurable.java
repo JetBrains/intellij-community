@@ -24,6 +24,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JCheckBox;
@@ -42,6 +43,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class DependencyConfigurable implements Configurable, Configurable.NoScroll {
   private final Project myProject;
   private MyTableModel myDenyRulesModel;
@@ -194,6 +196,7 @@ public final class DependencyConfigurable implements Configurable, Configurable.
       }
     };
 
+  @ApiStatus.Internal
   public abstract class MyColumnInfo extends ColumnInfo<DependencyRule, NamedScope> {
     protected MyColumnInfo(@NlsContexts.ColumnName String name) {
       super(name);

@@ -3,7 +3,9 @@
 package com.intellij.packageDependencies.ui;
 
 import java.util.Comparator;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class DependencyNodeComparator implements Comparator<PackageDependenciesNode>{
   private final boolean mySortByType;
 

@@ -33,7 +33,9 @@ import com.intellij.usageView.UsageInfo;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class DependenciesUsagesPanel extends UsagesPanel {
   private final List<DependenciesBuilder> myBuilders;
 

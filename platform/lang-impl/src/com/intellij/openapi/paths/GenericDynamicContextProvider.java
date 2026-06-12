@@ -18,10 +18,12 @@ package com.intellij.openapi.paths;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public class GenericDynamicContextProvider implements DynamicContextProvider {
 
   @Override

@@ -16,6 +16,7 @@ import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,6 +90,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     return mySelectedScheme;
   }
 
+  @ApiStatus.Internal
   public void addListener(CodeStyleSchemesModelListener listener) {
     myDispatcher.addListener(listener);
   }
@@ -343,6 +345,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     });
   }
 
+  @ApiStatus.Internal
   public @Nullable OverridingStatus getOverridingStatus() {
     if (myOverridingStatus.getLock().tryLock()) {
       try {
@@ -380,6 +383,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     return myUiEventsEnabled;
   }
 
+  @ApiStatus.Internal
   public static final class ModelSettings extends CodeStyleSettings {
     private volatile boolean myLocked;
 
@@ -404,6 +408,7 @@ public final class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme
     }
   }
 
+  @ApiStatus.Internal
   public static final class OverridingStatus {
     private final Lock myLock = new ReentrantLock();
 

@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.ThreeStateCheckBox;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.ButtonModel;
@@ -22,6 +23,7 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper {
   private static final Logger LOG = Logger.getInstance(MultipleFacetSettingsEditor.class);
   private final List<AbstractBinding> myBindings = new ArrayList<>();

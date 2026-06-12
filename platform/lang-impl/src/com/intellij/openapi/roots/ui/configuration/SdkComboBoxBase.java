@@ -6,11 +6,13 @@ import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED;
 
+@ApiStatus.Internal
 public abstract class SdkComboBoxBase<T> extends ComboBox<T> {
   private final Logger LOG = Logger.getInstance(getClass());
   protected final @NotNull SdkListModelBuilder myModel;

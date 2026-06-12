@@ -25,6 +25,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ import static com.intellij.psi.impl.cache.impl.BaseFilterLexer.createTodoScannin
 /**
  * Author: dmitrylomov
  */
+@ApiStatus.Internal
 public final class PlatformIdTableBuilding {
   public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<>("Editor");
   private static final TokenSet ABSTRACT_FILE_COMMENT_TOKENS = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);

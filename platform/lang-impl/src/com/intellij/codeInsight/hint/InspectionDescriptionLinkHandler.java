@@ -11,12 +11,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Handles tooltip links in format {@code #inspection/inspection_short_name}.
  * On a click or expend acton returns more detailed description for given inspection.
  */
+@ApiStatus.Internal
 public final class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
   private static final Logger LOG = Logger.getInstance(InspectionDescriptionLinkHandler.class);
 

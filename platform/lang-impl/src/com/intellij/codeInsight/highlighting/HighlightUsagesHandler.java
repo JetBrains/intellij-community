@@ -160,6 +160,7 @@ public final class HighlightUsagesHandler extends HighlightHandlerBase {
     EditorSearchSession.start(editor, project).getFindModel().setRegularExpressions(false);
   }
 
+  @ApiStatus.Internal
   public static final class DoHighlightRunnable implements Runnable {
     private final List<? extends PsiReference> myRefs;
     private final @NotNull Project myProject;

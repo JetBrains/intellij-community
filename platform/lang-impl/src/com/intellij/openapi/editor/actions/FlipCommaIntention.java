@@ -23,12 +23,14 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.editor.actions.lists.DefaultListSplitJoinContextKt.isComma;
 
 
+@ApiStatus.Internal
 public final class FlipCommaIntention extends PsiUpdateModCommandAction<PsiElement> implements DumbAware {
   public FlipCommaIntention() {
     super(PsiElement.class);

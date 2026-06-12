@@ -2,10 +2,12 @@
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Bean to store new class data if no inheritors were found: {@link PushDownDelegate#preprocessNoInheritorsFound(PsiElement, String)}
  */
+@ApiStatus.Internal
 public final class NewSubClassData {
   public static final NewSubClassData ABORT_REFACTORING = new NewSubClassData(null, null);
 

@@ -47,6 +47,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class TopHitSEContributor implements SearchEverywhereContributor<Object> {
 
   public static final int TOP_HIT_ELEMENT_PRIORITY = 15000;
@@ -295,6 +296,7 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     return text;
   }
 
+  @ApiStatus.Internal
   public static final class Factory implements SearchEverywhereContributorFactory<Object> {
     @Override
     public @NotNull SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {

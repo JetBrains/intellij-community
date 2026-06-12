@@ -4,6 +4,7 @@ package com.intellij.profile.codeInspection.ui;
 import com.intellij.openapi.extensions.ExtensionPointName;
 
 import java.util.List;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * An extension point to customize the inspection configuration settings page (Preferences | Editor | Inspections).
@@ -12,6 +13,7 @@ public abstract class InspectionTreeAdvertiser {
   public static final ExtensionPointName<InspectionTreeAdvertiser> EP_NAME =
     ExtensionPointName.create("com.intellij.inspectionTreeAdvertiser");
 
+  @ApiStatus.Internal
   public record CustomGroup(String[] path, String description) {}
 
   /**

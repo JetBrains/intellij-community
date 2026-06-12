@@ -6,7 +6,9 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class CodeVisionStringPainter(val text: String, val theme: CodeVisionTheme? = null) : ICodeVisionGraphicPainter {
   private val painter = CodeVisionVisionTextPainter<String>(theme = theme)
 

@@ -27,6 +27,7 @@ public class CodeStyleConfigurableWrapper
   private @Nullable CodeStyleMainPanel myPanel;
   private boolean myInitialResetInvoked = false;
 
+  @ApiStatus.Internal
   public CodeStyleConfigurableWrapper(@NotNull CodeStyleSettingsProvider provider,
                                       @NotNull CodeStyleSettingsPanelFactory factory,
                                       @NotNull CodeStyleSchemesConfigurable owner) {

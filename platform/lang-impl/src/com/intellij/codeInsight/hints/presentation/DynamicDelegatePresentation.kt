@@ -10,10 +10,12 @@ import java.awt.Graphics2D
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Stateless presentation, that delegates to [delegate], which can be dynamically changed.
  */
+@ApiStatus.Internal
 open class DynamicDelegatePresentation(delegate: InlayPresentation) : BasePresentation() {
   private var listener: DelegateListener
   init {

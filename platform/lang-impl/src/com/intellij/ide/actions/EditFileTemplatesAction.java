@@ -6,8 +6,10 @@ import com.intellij.ide.fileTemplates.ui.ConfigureTemplatesDialog;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsActions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class EditFileTemplatesAction extends DumbAwareAction {
   public EditFileTemplatesAction(@NlsActions.ActionText String text) {
     super(text);

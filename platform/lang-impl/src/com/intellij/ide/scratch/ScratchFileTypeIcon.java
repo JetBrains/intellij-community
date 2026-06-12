@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.icons.IconReplacer;
 import com.intellij.ui.icons.IconWithOverlay;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import java.awt.geom.Ellipse2D;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class ScratchFileTypeIcon extends IconWithOverlay {
   public ScratchFileTypeIcon(Icon fileTypeIcon) {
     this(fileTypeIcon, AllIcons.Actions.Scratch);

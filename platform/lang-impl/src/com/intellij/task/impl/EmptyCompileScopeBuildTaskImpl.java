@@ -3,6 +3,7 @@ package com.intellij.task.impl;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.task.EmptyCompileScopeBuildTask;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * The task can be used to invoke 'empty' compilation that will by default trigger all configured before- and after- compilation tasks.
  * The interpretation of the 'isIncremental' flag is up to the runner that will actually execute this task.
  */
+@ApiStatus.Internal
 public final class EmptyCompileScopeBuildTaskImpl extends AbstractBuildTask implements EmptyCompileScopeBuildTask {
 
   public EmptyCompileScopeBuildTaskImpl(boolean isIncrementalBuild) {

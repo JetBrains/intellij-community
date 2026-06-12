@@ -15,6 +15,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +32,7 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 @Tag("template")
 public abstract class ArchivedProjectTemplate implements ProjectTemplate {
   public static final @NonNls String INPUT_FIELD = "input-field";
@@ -99,6 +101,7 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
     filesToRefresh.add(dir);
   }
 
+  @ApiStatus.Internal
   public abstract static class StreamProcessor<T> {
     public abstract T consume(@NotNull ZipInputStream stream) throws IOException;
   }

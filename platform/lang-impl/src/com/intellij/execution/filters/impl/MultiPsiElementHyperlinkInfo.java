@@ -23,6 +23,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.util.Map;
 
 import static com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress;
 
+@ApiStatus.Internal
 public final class MultiPsiElementHyperlinkInfo extends HyperlinkInfoBase {
   private final Map<VirtualFile, SmartPsiElementPointer<?>> myMap;
 

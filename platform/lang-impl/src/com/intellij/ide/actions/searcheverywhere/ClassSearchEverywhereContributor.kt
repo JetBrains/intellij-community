@@ -57,6 +57,7 @@ open class ClassSearchEverywhereContributor @Internal constructor(event: AnActio
 
   constructor(event: AnActionEvent) : this(event, null)
 
+  @Internal
   companion object {
     @JvmStatic
     fun createLanguageFilter(project: Project): PersistentSearchEverywhereContributorFilter<LanguageRef> {

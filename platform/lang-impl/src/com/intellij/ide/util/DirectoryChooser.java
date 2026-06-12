@@ -376,8 +376,10 @@ public class DirectoryChooser extends DialogWrapper {
       myModule = virtualFile != null ? ProjectRootManager.getInstance(project).getFileIndex().getModuleForFile(virtualFile) : null;
     }
 
+    @ApiStatus.Internal
     public PathFragment[] getFragments() { return myFragments; }
 
+    @ApiStatus.Internal
     public void setFragments(PathFragment @Nullable [] fragments) {
       myFragments = fragments;
     }
@@ -605,6 +607,7 @@ public class DirectoryChooser extends DialogWrapper {
   }
 
 
+  @ApiStatus.Internal
   public static final class PathFragment {
     private final String myText;
     private final boolean myCommon;

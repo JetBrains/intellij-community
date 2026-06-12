@@ -648,7 +648,6 @@ c:com.intellij.structuralsearch.inspection.SSBasedInspection
 - addConfigurations(java.util.Collection):Z
 - buildVisitor(com.intellij.codeInspection.ProblemsHolder,Z,com.intellij.codeInspection.LocalInspectionToolSession):com.intellij.psi.PsiElementVisitor
 - cleanup(com.intellij.openapi.project.Project):V
-- createMetaDataDialog(com.intellij.openapi.project.Project,java.lang.String,com.intellij.structuralsearch.plugin.ui.Configuration):com.intellij.profile.codeInspection.ui.InspectionMetaDataDialog
 - getChildren():java.util.List
 - getConfigurationsWithUuid(java.lang.String):java.util.List
 - getGroupDisplayName():java.lang.String

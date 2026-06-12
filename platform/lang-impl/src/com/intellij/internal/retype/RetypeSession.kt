@@ -120,6 +120,7 @@ class RetypeLog {
 
 private val LOG: Logger = Logger.getInstance(RetypeLog::class.java)
 
+@ApiStatus.Internal
 class RetypeSession(
   private val project: Project,
   private val editor: EditorImpl,
@@ -590,6 +591,7 @@ class RetypeSession(
     }
   """.trimIndent()
 
+  @ApiStatus.Internal
   companion object {
     val LOG: Logger = Logger.getInstance(RetypeSession::class.java)
     const val INTERFERE_FILE_NAME: String = "IdeaRetypeBackgroundChanges.java"

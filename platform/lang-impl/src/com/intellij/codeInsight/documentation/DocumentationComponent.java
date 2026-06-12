@@ -81,6 +81,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -705,6 +706,7 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
     }
   }
 
+  @ApiStatus.Internal
   protected final class BackAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     BackAction() {
       super(CodeInsightBundle.messagePointer("javadoc.action.back"), AllIcons.Actions.Back);
@@ -730,6 +732,7 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
     }
   }
 
+  @ApiStatus.Internal
   protected final class ForwardAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ForwardAction() {
       super(CodeInsightBundle.messagePointer("javadoc.action.forward"), AllIcons.Actions.Forward);
@@ -755,6 +758,7 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
     }
   }
 
+  @ApiStatus.Internal
   protected final class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
 
     private EditDocumentationSourceAction() {
@@ -873,6 +877,7 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
     }
   }
 
+  @ApiStatus.Internal
   protected final class ShowToolbarAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowToolbarAction() {
       super(CodeInsightBundle.messagePointer("javadoc.show.toolbar"));
@@ -896,6 +901,7 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
     }
   }
 
+  @ApiStatus.Internal
   protected static final class ShowPopupAutomaticallyAction extends ToggleAction implements HintManagerImpl.ActionToIgnore {
     ShowPopupAutomaticallyAction() {
       super(CodeInsightBundle.messagePointer("javadoc.show.popup.automatically"));
@@ -924,6 +930,7 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
     }
   }
 
+  @ApiStatus.Internal
   protected final class ShowAsToolwindowAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     ShowAsToolwindowAction() {
       super(CodeInsightBundle.messagePointer("javadoc.open.as.tool.window"));
@@ -952,6 +959,7 @@ public class DocumentationComponent extends JPanel implements Disposable, UiComp
     }
   }
 
+  @ApiStatus.Internal
   protected final class RestoreDefaultSizeAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     RestoreDefaultSizeAction() {
       super(CodeInsightBundle.messagePointer("javadoc.restore.size"));

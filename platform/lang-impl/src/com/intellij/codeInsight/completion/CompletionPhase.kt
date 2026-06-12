@@ -424,6 +424,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   }
 
   /** see doc of [CompletionPhase] */
+  @ApiStatus.Internal
   class Synchronous internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
     override fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int {
       assertPhase(NoCompletion.javaClass) // will fail and log valuable info
@@ -433,6 +434,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   }
 
   /** see doc of [CompletionPhase] */
+  @ApiStatus.Internal
   class BgCalculation internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
     @JvmField
     internal var modifiersChanged: Boolean = false
@@ -494,6 +496,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   }
 
   /** see doc of [CompletionPhase] */
+  @ApiStatus.Internal
   class ItemsCalculated internal constructor(indicator: CompletionProgressIndicator) : CompletionPhase(indicator) {
     override fun newCompletionStarted(invocationCount: Int, repeated: Boolean): Int {
       requireNotNull(indicator) { "`ItemsCalculated#indicator` is not-null as its constructor accepts not-null `indicator`" }.closeAndFinish(false)
@@ -522,6 +525,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   }
 
   /** see doc of [CompletionPhase] */
+  @ApiStatus.Internal
   class InsertedSingleItem internal constructor(
     indicator: CompletionProgressIndicator,
     @JvmField
@@ -541,6 +545,7 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
   }
 
   /** see doc of [CompletionPhase] */
+  @ApiStatus.Internal
   class NoSuggestionsHint internal constructor(hint: LightweightHint?, indicator: CompletionProgressIndicator) : ZombiePhase(indicator) {
     init {
       expireOnAnyEditorChange(indicator.editor)

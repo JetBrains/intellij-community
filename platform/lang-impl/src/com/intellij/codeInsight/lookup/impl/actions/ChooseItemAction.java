@@ -25,16 +25,19 @@ import com.intellij.openapi.editor.actionSystem.LatencyAwareEditorAction;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 public abstract class ChooseItemAction extends EditorAction implements HintManagerImpl.ActionToIgnore, LatencyAwareEditorAction {
+  @ApiStatus.Internal
   public ChooseItemAction(Handler handler) {
     super(handler);
   }
 
+  @ApiStatus.Internal
   public static class Handler extends EditorActionHandler {
     final boolean focusedOnly;
     final char finishingChar;
@@ -126,18 +129,21 @@ public abstract class ChooseItemAction extends EditorAction implements HintManag
     }
   }
 
+  @ApiStatus.Internal
   public static final class Replacing extends ChooseItemAction {
     public Replacing() {
       super(new Handler(false, Lookup.REPLACE_SELECT_CHAR));
     }
   }
 
+  @ApiStatus.Internal
   public static final class CompletingStatement extends ChooseItemAction {
     public CompletingStatement() {
       super(new Handler(true, Lookup.COMPLETE_STATEMENT_SELECT_CHAR));
     }
   }
 
+  @ApiStatus.Internal
   public static final class ChooseWithDot extends ChooseItemAction {
     public ChooseWithDot() {
       super(new Handler(false, '.'));

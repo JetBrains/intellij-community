@@ -4,6 +4,7 @@ package com.intellij.refactoring.classMembers;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashMap;
 
@@ -15,6 +16,7 @@ public final class MemberInfoTooltipManager<T extends PsiElement, M extends Memb
     @NlsContexts.Tooltip String getTooltip(M memberInfo);
   }
 
+  @ApiStatus.Internal
   public MemberInfoTooltipManager(TooltipProvider<T, M> provider) {
     myProvider = provider;
   }

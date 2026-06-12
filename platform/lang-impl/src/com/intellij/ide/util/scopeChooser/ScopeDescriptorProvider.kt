@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 interface ScopeDescriptorProvider {
   fun getScopeDescriptors(project: Project, dataContext: DataContext): Array<ScopeDescriptor>
@@ -27,6 +28,7 @@ interface ScopeDescriptorProvider {
     @JvmField
     val EMPTY: Array<ScopeDescriptor> = emptyArray()
 
+    @ApiStatus.Internal
     @JvmField
     val EP_NAME: ExtensionPointName<ScopeDescriptorProvider> = create("com.intellij.scopeDescriptorProvider")
   }

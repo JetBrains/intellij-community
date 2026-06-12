@@ -1,3 +1,5 @@
+@file:ApiStatus.Internal
+
 package com.intellij.microservices.utils
 
 import com.intellij.find.actions.ShowUsagesAction

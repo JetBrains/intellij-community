@@ -9,6 +9,7 @@ import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.Point
 
+@ApiStatus.Internal
 interface ICodeVisionEntryBasePainter<T> : ICodeVisionPainter {
   fun paint(
     editor: Editor,
@@ -25,6 +26,5 @@ interface ICodeVisionEntryBasePainter<T> : ICodeVisionPainter {
     value: T
   ): Dimension
 
-  @ApiStatus.Internal
   fun shouldBeDelimited(entry: T): Boolean = true
 }

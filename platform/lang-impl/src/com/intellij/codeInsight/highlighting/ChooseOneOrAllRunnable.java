@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.ListSelectionModel;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Runnable {
   private final T[] myClasses;
   private final Editor myEditor;

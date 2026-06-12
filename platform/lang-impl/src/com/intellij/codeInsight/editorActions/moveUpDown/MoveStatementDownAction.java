@@ -3,7 +3,9 @@
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class MoveStatementDownAction extends EditorAction {
   public MoveStatementDownAction() {
     super(new MoveStatementHandler(true));

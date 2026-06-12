@@ -388,12 +388,12 @@ public class ConsoleHistoryController implements Disposable {
     }
   }
 
-
-
+  @ApiStatus.Internal
   protected BrowseAction createBrowseAction() {
     return new BrowseAction();
   }
 
+  @ApiStatus.Internal
   protected class BrowseAction extends DumbAwareAction {
 
     @Override
@@ -480,6 +480,7 @@ public class ConsoleHistoryController implements Disposable {
     }
   }
 
+  @ApiStatus.Internal
   public static final class ModelHelper implements SafeWriteRequestor {
     private final ConsoleRootType myRootType;
     private final String myFileExtension;

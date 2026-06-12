@@ -24,12 +24,14 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author oleg
  */
+@ApiStatus.Internal
 public class BaseIndentEnterHandler implements EnterHandlerDelegate {
   private final Language myLanguage;
   private final TokenSet myIndentTokens;

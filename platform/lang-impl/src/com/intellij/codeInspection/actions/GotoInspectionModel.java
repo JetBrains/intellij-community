@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.ListCellRenderer;
@@ -21,6 +22,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class GotoInspectionModel extends SimpleChooseByNameModel {
   private final Map<String, InspectionToolWrapper> myToolNames = new HashMap<>();
   private final String[] myNames;

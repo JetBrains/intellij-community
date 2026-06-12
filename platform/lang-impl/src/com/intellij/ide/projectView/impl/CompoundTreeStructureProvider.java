@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.Objects;
 /**
  * This class is intended to combine all providers for batch usages.
  */
+@ApiStatus.Internal
 public final class CompoundTreeStructureProvider implements TreeStructureProvider {
   private static final Key<TreeStructureProvider> KEY = Key.create("TreeStructureProvider");
   private static final Logger LOG = Logger.getInstance(CompoundTreeStructureProvider.class);

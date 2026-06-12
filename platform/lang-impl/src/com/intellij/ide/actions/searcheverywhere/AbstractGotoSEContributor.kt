@@ -122,6 +122,7 @@ abstract class AbstractGotoSEContributor @ApiStatus.Internal protected construct
   protected val project: Project
     get() = myProject
 
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun createContext(project: Project?, psiContext: SmartPsiElementPointer<PsiElement?>?): DataContext {

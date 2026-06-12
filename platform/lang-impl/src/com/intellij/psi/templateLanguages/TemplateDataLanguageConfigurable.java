@@ -12,11 +12,13 @@ import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.tree.PerFileConfigurableBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class TemplateDataLanguageConfigurable extends PerFileConfigurableBase<Language> {
   public TemplateDataLanguageConfigurable(@NotNull Project project) {
     super(project, TemplateDataLanguageMappings.getInstance(project));

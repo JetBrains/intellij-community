@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.text.StringsKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import java.util.function.Supplier;
 /**
  * Parses javac's output.
  */
+@ApiStatus.Internal
 public final class JavacOutputParser implements BuildOutputParser {
   private static final @NotNull Supplier<@BuildEventsNls.Title String> COMPILER_MESSAGES_GROUP =
     LangBundle.messagePointer("build.event.title.compiler");

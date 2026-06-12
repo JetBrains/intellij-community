@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,6 +98,7 @@ public abstract class TextCompletionProviderBase<T> implements TextCompletionPro
                                                                 @NotNull String prefix,
                                                                 @NotNull CompletionResultSet result);
 
+  @ApiStatus.Internal
   public final class CompletionCharInsertHandler implements InsertHandler<LookupElement> {
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {

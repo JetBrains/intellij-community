@@ -1,5 +1,7 @@
 package com.intellij.ide.actions.searcheverywhere
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PsiItemWithSimilarity<T : Any>(val value: T, var similarityScore: Double? = null) : MergeableElement {
   val isPureSemantic: Boolean = similarityScore != null
 

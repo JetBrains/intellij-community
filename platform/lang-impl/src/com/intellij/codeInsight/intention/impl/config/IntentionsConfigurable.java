@@ -16,8 +16,10 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.options.Configurable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public interface IntentionsConfigurable extends Configurable {
   void selectIntention(@NotNull String familyName);
 }

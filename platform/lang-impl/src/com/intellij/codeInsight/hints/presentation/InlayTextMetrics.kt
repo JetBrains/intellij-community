@@ -144,6 +144,7 @@ class InlayTextMetrics(
   val fontType: Int,
   val ideScale: Float,
 ) {
+  @ApiStatus.Internal
   companion object {
     @ApiStatus.Internal
     fun create(editor: Editor, size: Float, fontType: Int, context: FontRenderContext, isUseEditorFontInInlays: Boolean) : InlayTextMetrics {

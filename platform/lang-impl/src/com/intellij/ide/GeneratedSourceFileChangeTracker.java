@@ -3,8 +3,10 @@ package com.intellij.ide;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class GeneratedSourceFileChangeTracker {
   public static @NotNull GeneratedSourceFileChangeTracker getInstance(@NotNull Project project) {
     return project.getService(GeneratedSourceFileChangeTracker.class);

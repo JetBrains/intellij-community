@@ -44,7 +44,9 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class RunAnythingChooseContextAction(private val containingPanel: JPanel) : CustomComponentAction, DumbAware, ActionGroup() {
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> = EMPTY_ARRAY
@@ -115,6 +117,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
     }
   }
 
+  @ApiStatus.Internal
   inner class ProjectItem(context: ProjectContext) : ContextItem(context) {
     override fun update(e: AnActionEvent) {
       super.update(e)
@@ -122,8 +125,10 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
     }
   }
 
+  @ApiStatus.Internal
   inner class ModuleItem(context: ModuleContext) : ContextItem(context)
 
+  @ApiStatus.Internal
   inner class BrowseDirectoryItem(context: BrowseRecentDirectoryContext) : ContextItem(context) {
     override fun actionPerformed(e: AnActionEvent) {
       ApplicationManager.getApplication().invokeLater {
@@ -144,8 +149,10 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
     }
   }
 
+  @ApiStatus.Internal
   inner class RecentDirectoryItem(context: RecentDirectoryContext) : ContextItem(context)
 
+  @ApiStatus.Internal
   abstract inner class ContextItem(val context: RunAnythingContext) : AnAction() {
     override fun update(e: AnActionEvent) {
       e.presentation.text = context.label
@@ -160,6 +167,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
     }
   }
 
+  @ApiStatus.Internal
   open inner class ChooseContextPopup(step: ActionPopupStep, dataContext: DataContext)
     : PopupFactoryImpl.ActionGroupPopup(null, step, null, dataContext, -1) {
     override fun getListElementRenderer(): PopupListElementRenderer<PopupFactoryImpl.ActionItem> =
@@ -201,6 +209,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
       }
   }
 
+  @ApiStatus.Internal
   class ChooseContextPopupStep(val actions: List<PopupFactoryImpl.ActionItem>, dataContext: DataContext, presentationFactory: PresentationFactory, val updateToolbar: () -> Unit)
     : ActionPopupStep(actions, IdeBundle.message("run.anything.context.title.working.directory"), Supplier { dataContext },
                       ActionPlaces.getPopupPlace("RunAnythingChooseContext"), presentationFactory,
@@ -221,6 +230,7 @@ abstract class RunAnythingChooseContextAction(private val containingPanel: JPane
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     fun allContexts(project: Project): List<RunAnythingContext> {
       return projectAndModulesContexts(project)

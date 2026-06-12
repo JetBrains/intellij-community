@@ -530,6 +530,7 @@ public final class FindUtil {
     return replace(project, editor, offset, model, (range, replace) -> true);
   }
 
+  @ApiStatus.Internal
   public static boolean replace(@NotNull Project project, @NotNull Editor editor, int offset, @NotNull FindModel model, ReplaceDelegate delegate) {
     Document document = editor.getDocument();
 
@@ -940,6 +941,7 @@ public final class FindUtil {
     editor.getScrollingModel().scrollToCaret(scrollType);
   }
 
+  @ApiStatus.Internal
   @FunctionalInterface
   public interface ReplaceDelegate {
     boolean shouldReplace(TextRange range, String replace);

@@ -5,10 +5,12 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public class CleanupIntentionMenuContributor implements IntentionMenuContributor {
   @Override
   public void collectActions(@NotNull Editor hostEditor,

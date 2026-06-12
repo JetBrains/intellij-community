@@ -30,6 +30,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -372,12 +373,14 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
     myTestDate = testDate;
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull State getState() {
     state.SCHEME = scheme.getName();
     return state;
   }
 
+  @ApiStatus.Internal
   @Override
   public void loadState(@NotNull State state) {
     XmlSerializerUtil.copyBean(state, this.state);
@@ -434,6 +437,7 @@ public final class FileTemplateManagerImpl extends FileTemplateManager implement
     Disposer.register(parentDisposable, () -> templates.put(qName, oldTemplate));
   }
 
+  @ApiStatus.Internal
   public static final class State {
     @OptionTag("RECENT_TEMPLATES")
     public final List<String> recentTemplates = new ArrayList<>();

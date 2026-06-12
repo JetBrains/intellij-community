@@ -270,14 +270,17 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
 
   public enum ViewType {FULL, SHORT}
 
+  @ApiStatus.Internal
   public interface ViewTypeListener {
     void suggestionsShown(@NotNull ViewType viewType);
   }
 
+  @ApiStatus.Internal
   public void addViewTypeListener(ViewTypeListener listener) {
     myViewTypeListeners.add(listener);
   }
 
+  @ApiStatus.Internal
   public void removeViewTypeListener(ViewTypeListener listener) {
     myViewTypeListeners.remove(listener);
   }

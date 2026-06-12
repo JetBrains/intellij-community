@@ -30,6 +30,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class AttachDirectoryUtils {
   public static void chooseAndAddDirectoriesWithUndo(@NotNull Project project, @Nullable Consumer<? super List<VirtualFile>> callback) {
     Module module = getAttachTargetModule(project);

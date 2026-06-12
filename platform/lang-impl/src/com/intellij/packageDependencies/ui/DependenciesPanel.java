@@ -83,6 +83,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,10 +137,12 @@ public final class DependenciesPanel extends JPanel implements Disposable, UiDat
   private final AnalysisScope myScopeOfInterest;
   private final int myTransitiveBorder;
 
+  @ApiStatus.Internal
   public DependenciesPanel(Project project, final DependenciesBuilder builder){
     this(project, Collections.singletonList(builder), new HashSet<>());
   }
 
+  @ApiStatus.Internal
   public DependenciesPanel(Project project, final List<DependenciesBuilder> builders, final Set<PsiFile> excluded) {
     super(new BorderLayout());
     myBuilders = builders;

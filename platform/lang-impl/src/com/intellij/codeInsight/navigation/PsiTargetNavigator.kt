@@ -57,6 +57,7 @@ class PsiTargetNavigator<T: PsiElement>(val supplier: Supplier<Collection<T>>) {
   fun builderConsumer(consumer: Consumer<IPopupChooserBuilder<ItemWithPresentation>>): PsiTargetNavigator<T> = apply { builderConsumer = consumer }
   fun title(title: @PopupTitle String?): PsiTargetNavigator<T> = apply { this.title = title }
   fun tabTitle(title: @TabTitle String?): PsiTargetNavigator<T> = apply { this.tabTitle = title }
+  @Internal
   fun updater(updater: TargetUpdaterTask): PsiTargetNavigator<T> = apply { this.updater = updater }
 
   fun createPopup(project: Project, @PopupTitle title: String?): JBPopup {
@@ -186,6 +187,7 @@ fun interface TargetPresentationProvider<T: PsiElement> {
   fun getPresentation(element: T): TargetPresentation
 }
 
+@Internal
 abstract class TargetUpdaterTask(project: Project, @NlsContexts.ProgressTitle title: String, comparator: Comparator<ItemWithPresentation>?):
   BackgroundUpdaterTaskBase<ItemWithPresentation>(project, title, comparator) {
 

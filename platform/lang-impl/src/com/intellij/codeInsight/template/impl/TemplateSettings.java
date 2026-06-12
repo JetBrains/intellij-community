@@ -147,6 +147,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     public final List<TemplateSettings.TemplateKey> deletedKeys = new SmartList<>();
   }
 
+  @ApiStatus.Internal
   public static final class TemplateKey {
     private String groupName;
     private String key;

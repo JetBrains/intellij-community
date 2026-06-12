@@ -479,6 +479,7 @@ open class TrafficLightRenderer private constructor(
     return if (editor.getEditorKind() == EditorKind.DIFF && !mergeEditor) AbstractUIController() else DefaultUIController()
   }
 
+  @ApiStatus.Internal
   protected open inner class AbstractUIController internal constructor() : UIController {
     private var additionalPanels = mutableListOf<HectorComponentPanel>()
 
@@ -630,6 +631,7 @@ open class TrafficLightRenderer private constructor(
     highlightingSettingsModificationCount = -1
   }
 
+  @ApiStatus.Internal
   companion object {
     internal suspend fun createTrafficLightRenderer(editor: Editor, file: PsiFile, project: Project): TrafficLightRenderer {
       val fileIndex = project.serviceAsync<ProjectFileIndex>()

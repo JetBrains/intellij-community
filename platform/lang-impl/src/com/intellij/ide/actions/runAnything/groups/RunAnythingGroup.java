@@ -10,6 +10,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.Optional;
 /**
  * Represents 'run anything' list group.
  */
+@ApiStatus.Internal
 public abstract class RunAnythingGroup {
   public static final Function<String, NameUtil.MatcherBuilder> RUN_ANYTHING_MATCHER_BUILDER = pattern -> {
     return NameUtil.buildMatcher("*" + pattern);
@@ -219,6 +221,7 @@ public abstract class RunAnythingGroup {
   /**
    * Represents collection of the group items with {@code myNeedMore} flag is set to true when limit is exceeded
    */
+  @ApiStatus.Internal
   public static final class SearchResult extends ArrayList<RunAnythingItem> {
     boolean myNeedMore;
 

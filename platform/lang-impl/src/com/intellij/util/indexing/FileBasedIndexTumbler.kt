@@ -159,6 +159,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     private val LOG = logger<FileBasedIndexTumbler>()
 

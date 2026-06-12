@@ -14,8 +14,10 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class InvertBooleanHandler implements RefactoringActionHandler {
   public static final String INVERT_BOOLEAN_HELP_ID = "refactoring.invertBoolean";
   private static final Logger LOG = Logger.getInstance(InvertBooleanHandler.class);

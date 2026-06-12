@@ -9,10 +9,12 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class PushDownUsageViewDescriptor<MemberInfo extends MemberInfoBase<Member>,
                                         Member extends PsiElement,
                                         Klass extends PsiElement> implements UsageViewDescriptor {

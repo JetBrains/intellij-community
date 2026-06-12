@@ -11,7 +11,9 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.ViewableMap
 import com.jetbrains.rd.util.reactive.ViewableSet
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class CodeVisionSettingsLiveModel(lifetime: Lifetime) {
 
   val isRegistryEnabled: Property<Boolean> = Property(Registry.`is`("editor.codeVision.new")).also {

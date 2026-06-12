@@ -4,6 +4,7 @@ package com.intellij.execution.console;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JScrollBar;
@@ -12,6 +13,7 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Point;
 
+@ApiStatus.Internal
 public class EditorMergedHorizontalScrollBarLayout extends AbstractLayoutManager {
   private final JScrollBar myScrollBar;
   private final EditorEx myFirst;
@@ -130,6 +132,7 @@ public class EditorMergedHorizontalScrollBarLayout extends AbstractLayoutManager
     return new HeightOfComponents(newHistoryHeight - delta, newInputHeight + delta);
   }
 
+  @ApiStatus.Internal
   protected static final class HeightOfComponents {
     public int historyConsoleHeight, inputConsoleHeight;
 

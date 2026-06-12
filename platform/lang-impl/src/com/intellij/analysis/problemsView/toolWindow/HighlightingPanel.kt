@@ -37,6 +37,7 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState) // open
   : ProblemsViewPanel(project, ID, state, ProblemsViewBundle.messagePointer("problems.view.highlighting")),
     FileEditorManagerListener, PowerSaveMode.Listener {
 
+  @ApiStatus.Internal
   companion object {
     const val ID: String = "CurrentFile"
   }

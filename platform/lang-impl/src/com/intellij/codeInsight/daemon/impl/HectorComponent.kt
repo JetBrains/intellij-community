@@ -5,7 +5,9 @@ import com.intellij.ui.awt.RelativePoint
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.Point
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface HectorComponent {
     fun showComponent(point: RelativePoint)
     fun showComponent(component: Component, offset : (Dimension) -> Point)

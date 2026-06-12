@@ -12,8 +12,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
 interface LanguageConsoleView : ConsoleView, Disposable {
+  @ApiStatus.Internal
   companion object {
     @JvmField
     val EXECUTION_EDITOR_KEY: Key<ConsoleExecutionEditor> = Key("EXECUTION_EDITOR_KEY")

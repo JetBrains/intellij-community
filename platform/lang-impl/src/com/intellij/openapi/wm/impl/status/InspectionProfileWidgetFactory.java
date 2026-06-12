@@ -5,8 +5,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class InspectionProfileWidgetFactory extends StatusBarEditorBasedWidgetFactory {
   @Override
   public boolean isAvailable(@NotNull Project project) {

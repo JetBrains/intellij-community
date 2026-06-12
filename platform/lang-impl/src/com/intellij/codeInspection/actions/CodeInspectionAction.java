@@ -27,6 +27,7 @@ import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.profile.codeInspection.ui.header.InspectionProfileSchemesModel;
 import com.intellij.profile.codeInspection.ui.header.InspectionToolsConfigurable;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -155,12 +156,14 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     }
     return false;
   }
-  
+
+  @ApiStatus.Internal
   protected ExternalProfilesComboboxAwareInspectionToolsConfigurable createConfigurable(ProjectInspectionProfileManager projectProfileManager,
                                                                                         SchemesCombo<InspectionProfileImpl> profilesCombo) {
     return new ExternalProfilesComboboxAwareInspectionToolsConfigurable(projectProfileManager, profilesCombo);
   }
 
+  @ApiStatus.Internal
   protected static class ExternalProfilesComboboxAwareInspectionToolsConfigurable extends InspectionToolsConfigurable {
     private final SchemesCombo<InspectionProfileImpl> myProfilesCombo;
     private String mySelectedName;

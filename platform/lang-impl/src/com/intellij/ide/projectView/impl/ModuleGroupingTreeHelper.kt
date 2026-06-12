@@ -35,6 +35,7 @@ import com.intellij.openapi.module.ModuleGrouper
 import com.intellij.openapi.util.Pair
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.Collections
 import javax.swing.JTree
@@ -47,6 +48,7 @@ import javax.swing.tree.TreeNode
  * Provides methods to build trees where nodes are grouped by modules (and optionally by module groups). Type parameter M specified class
  * of modules (may be [Module] if real modules are shown, or [com.intellij.openapi.module.ModuleDescription] if loaded and unloaded modules are shown.
  */
+@ApiStatus.Internal
 class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
   private val groupingEnabled: Boolean,
   private val grouping: ModuleGroupingImplementation<M>,
@@ -63,6 +65,7 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
   private val virtualGroupToChildNode = BidirectionalMap<ModuleGroup, N>()
   private val nodeData = HashMap<N, ModuleTreeNodeData<M>>()
 
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun <M: Any, N : MutableTreeNode> forEmptyTree(groupingEnabled: Boolean, grouping: ModuleGroupingImplementation<M>,
@@ -379,6 +382,7 @@ class ModuleGroupingTreeHelper<M: Any, N: MutableTreeNode> private constructor(
 
 private class ModuleTreeNodeData<M>(val module: M?, val group: ModuleGroup?)
 
+@ApiStatus.Internal
 interface ModuleGroupingImplementation<M: Any> {
   fun getGroupPath(m: M): List<String>
   fun getModuleAsGroupPath(m: M): List<String>?

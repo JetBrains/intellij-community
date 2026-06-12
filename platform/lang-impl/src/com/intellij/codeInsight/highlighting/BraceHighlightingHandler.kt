@@ -71,6 +71,7 @@ class BraceHighlightingHandler internal constructor(
 ) {
   private val document = editor.document
 
+  @ApiStatus.Internal
   companion object {
     const val LAYER: Int = HighlighterLayer.LAST + 1
 

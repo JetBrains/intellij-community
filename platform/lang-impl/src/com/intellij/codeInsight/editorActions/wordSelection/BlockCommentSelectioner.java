@@ -9,11 +9,13 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class BlockCommentSelectioner implements ExtendWordSelectionHandler {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

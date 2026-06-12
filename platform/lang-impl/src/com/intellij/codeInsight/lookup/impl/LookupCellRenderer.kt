@@ -179,6 +179,7 @@ class LookupCellRenderer(
     }
   }
 
+  @ApiStatus.Internal
   companion object {
     private val CUSTOM_NAME_FONT = Key.create<Font>("CustomLookupElementNameFont")
     private val CUSTOM_TAIL_FONT = Key.create<Font>("CustomLookupElementTailFont")

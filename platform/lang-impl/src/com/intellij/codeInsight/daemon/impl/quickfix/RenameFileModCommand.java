@@ -11,12 +11,14 @@ import com.intellij.modcommand.ModMoveFile;
 import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A command to rename file; available only if target file does not exist
  */
+@ApiStatus.Internal
 public class RenameFileModCommand implements ModCommandAction {
   private final String myNewFileName;
 

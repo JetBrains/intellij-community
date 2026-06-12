@@ -28,6 +28,7 @@ interface EditorTracker {
 }
 
 interface EditorTrackerListener : EventListener {
+  @Internal
   companion object {
     @Topic.ProjectLevel
     @JvmField

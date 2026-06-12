@@ -2,7 +2,9 @@
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface HectorComponentFactory {
     fun create(file: PsiFile) : HectorComponent
 }

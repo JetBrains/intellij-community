@@ -47,6 +47,7 @@ internal class CalculatorSEContributorFactory : SearchEverywhereContributorFacto
  * @param value The resulting value of the given [expression]
  * @param expression The query typed by the user, for example, 2+2
  */
+@ApiStatus.Internal
 data class EvaluationResult(val value: String, val expression: String)
 
 internal class CalculatorSEContributor : WeightedSearchEverywhereContributor<EvaluationResult> {

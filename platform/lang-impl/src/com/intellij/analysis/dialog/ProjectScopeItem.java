@@ -3,7 +3,9 @@ package com.intellij.analysis.dialog;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class ProjectScopeItem implements ModelScopeItem {
   public final Project project;
 

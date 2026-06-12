@@ -20,8 +20,10 @@ import com.intellij.lang.Language;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.LightPsiFileImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class LightPsiFileBase extends LightPsiFileImpl {
   public LightPsiFileBase(final FileViewProvider provider, final Language language) {
     super(provider, language);

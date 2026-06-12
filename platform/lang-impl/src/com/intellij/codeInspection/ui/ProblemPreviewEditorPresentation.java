@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Container;
@@ -30,6 +31,7 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class ProblemPreviewEditorPresentation {
   private static final int VIEW_ADDITIONAL_OFFSET = 4;
   private static final int SHOWN_LINES_COUNT = 2;

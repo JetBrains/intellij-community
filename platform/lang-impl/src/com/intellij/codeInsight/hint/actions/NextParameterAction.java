@@ -5,7 +5,9 @@ package com.intellij.codeInsight.hint.actions;
 import com.intellij.codeInsight.hint.PrevNextParameterHandler;
 import com.intellij.openapi.actionSystem.PerformWithDocumentsCommitted;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class NextParameterAction extends EditorAction implements PerformWithDocumentsCommitted {
   public NextParameterAction() {
     super(new PrevNextParameterHandler(true));

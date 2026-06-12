@@ -80,6 +80,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public class CreateDirectoryOrPackageAction extends AnAction implements DumbAware {
   public static final ExtensionPointName<CreateDirectoryCompletionContributor> EP = new ExtensionPointName<>("com.intellij.createDirectoryCompletionContributor");
 
@@ -362,6 +363,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     return createdDirectories;
   }
 
+  @ApiStatus.Internal
   protected static final class CompletionItem {
     final @NotNull CreateDirectoryCompletionContributor contributor;
 

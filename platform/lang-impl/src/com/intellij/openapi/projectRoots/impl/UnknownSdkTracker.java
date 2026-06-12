@@ -22,6 +22,7 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdk
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TripleFunction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +41,7 @@ import java.util.function.Predicate;
 import static com.intellij.openapi.progress.PerformInBackgroundOption.ALWAYS_BACKGROUND;
 
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 public final class UnknownSdkTracker {
   private static final Logger LOG = Logger.getInstance(UnknownSdkTracker.class);
 
@@ -251,6 +253,7 @@ public final class UnknownSdkTracker {
     };
   }
 
+  @ApiStatus.Internal
   public interface ShowStatusCallback {
     void showStatus(@NotNull List<? extends UnknownSdkFix> fixes, @NotNull ProgressIndicator indicator);
 

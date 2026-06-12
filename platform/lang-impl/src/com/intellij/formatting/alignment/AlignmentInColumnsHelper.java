@@ -8,6 +8,7 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -28,6 +29,7 @@ import java.util.List;
  * <p/>
  * Thread-safe.
  */
+@ApiStatus.Internal
 public final class AlignmentInColumnsHelper {
 
   /**

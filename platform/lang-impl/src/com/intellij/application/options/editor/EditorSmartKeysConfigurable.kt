@@ -28,6 +28,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
 
@@ -112,6 +113,7 @@ private val EP_NAME = ExtensionPointName<EditorSmartKeysConfigurableEP>("com.int
  * <p>
  * A new instance of the specified class will be created each time then the Settings dialog is opened
  */
+@ApiStatus.Internal
 class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("group.smart.keys"),
   "reference.settingsdialog.IDE.editor.smartkey",

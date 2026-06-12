@@ -29,11 +29,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 
+@ApiStatus.Internal
 class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: GotoDeclarationReporter?) : CodeInsightActionHandler {
 
+  @ApiStatus.Internal
   companion object {
 
     private fun gotoDeclarationOrUsages(project: Project, editor: Editor, file: PsiFile, offset: Int): GTDUActionData? {
@@ -132,6 +135,7 @@ class GotoDeclarationOrUsageHandler2 internal constructor(private val reporter: 
     }
   }
 
+  @ApiStatus.Internal
   @TestOnly
   enum class GTDUOutcome {
     GTD,

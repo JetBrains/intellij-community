@@ -34,10 +34,12 @@ import kotlinx.coroutines.withContext
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<ModuleAttachProcessor>()
 
 class ModuleAttachProcessor : ProjectAttachProcessor() {
+  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun getPrimaryModule(project: Project): Module? {

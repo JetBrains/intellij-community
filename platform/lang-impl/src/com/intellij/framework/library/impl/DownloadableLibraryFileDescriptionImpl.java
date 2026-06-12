@@ -3,9 +3,11 @@ package com.intellij.framework.library.impl;
 
 import com.intellij.framework.library.DownloadableLibraryFileDescription;
 import com.intellij.util.download.impl.DownloadableFileDescriptionImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class DownloadableLibraryFileDescriptionImpl extends DownloadableFileDescriptionImpl implements DownloadableLibraryFileDescription {
   private final DownloadableFileDescriptionImpl mySourceDownloadUrl;
   private final DownloadableFileDescriptionImpl myDocumentationDownloadUrl;

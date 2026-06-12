@@ -22,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.JComponent;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 @SuppressWarnings("WeakerAccess")
 public final class FindUIHelper implements Disposable {
   private final @NotNull Project myProject;

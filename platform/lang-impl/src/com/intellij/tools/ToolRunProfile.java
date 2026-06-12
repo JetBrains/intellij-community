@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.Icon;
@@ -36,6 +37,7 @@ import javax.swing.Icon;
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public class ToolRunProfile implements ModuleRunProfile{
   private static final Logger LOG = Logger.getInstance(ToolRunProfile.class);
   private final Tool myTool;

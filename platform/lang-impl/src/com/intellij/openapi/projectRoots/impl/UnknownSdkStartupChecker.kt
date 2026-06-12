@@ -15,6 +15,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.platform.workspace.jps.entities.SdkEntity
+import org.jetbrains.annotations.ApiStatus
 
 internal class UnknownSdkStartupChecker : ProjectActivity {
   init {
@@ -58,6 +59,7 @@ internal class UnknownSdkStartupChecker : ProjectActivity {
  * This service is automatically triggered during project startup and monitors SDK changes.
  * It coordinates with [UnknownSdkTracker] to detect and handle unresolved or missing SDK configurations.
  */
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class UnknownSdkCheckerService(private val project: Project) {
   fun checkUnknownSdks() {
