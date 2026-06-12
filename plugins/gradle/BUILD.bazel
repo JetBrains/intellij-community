@@ -68,6 +68,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/lang-core",
         "//platform/lang-impl",
+        "//platform/refactoring",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-impl",
         "//platform/smRunner",
