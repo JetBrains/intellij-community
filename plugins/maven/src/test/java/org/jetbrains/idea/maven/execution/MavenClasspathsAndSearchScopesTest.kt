@@ -57,7 +57,7 @@ import org.jetbrains.idea.maven.fixtures.projectPath
 import org.jetbrains.idea.maven.fixtures.repositoryPathCanonical
 import org.jetbrains.idea.maven.fixtures.setupJdkForModules
 import org.jetbrains.idea.maven.importing.ArtifactsDownloadingTestCase.Companion.createEmptyJar
-import org.junit.Assert.fail
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
@@ -1545,7 +1545,7 @@ $scope</scope>
     if (file.exists()) return
 
     if (!file.mkdirs()) {
-      fail("Cannot create directory $file")
+      Assertions.fail<Any>("Cannot create directory $file")
     }
     VirtualFileManager.getInstance().refreshAndFindFileByUrl(url!!)
   }
