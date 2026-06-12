@@ -14,6 +14,7 @@ class JsonSchemaCatalogConfigurable(private val project: Project) : BoundConfigu
 
   private lateinit var remoteCheckBox: JBCheckBox
   private lateinit var catalogCheckBox: JBCheckBox
+  private lateinit var implicitSchemasCheckBox: JBCheckBox
   private lateinit var preferRemoteCheckBox: JBCheckBox
 
   override fun createPanel(): DialogPanel {
@@ -23,6 +24,7 @@ class JsonSchemaCatalogConfigurable(private val project: Project) : BoundConfigu
           .onChanged {
             if (!it.isSelected) {
               catalogCheckBox.isSelected = false
+              implicitSchemasCheckBox.isSelected = false
               preferRemoteCheckBox.isSelected = false
             }
           }.focused()
@@ -32,6 +34,12 @@ class JsonSchemaCatalogConfigurable(private val project: Project) : BoundConfigu
         row {
           catalogCheckBox = checkBox(JsonBundle.message("checkbox.use.schemastore.org.json.schema.catalog"))
             .comment(JsonBundle.message("schema.catalog.hint"))
+            .component
+        }
+
+        row {
+          implicitSchemasCheckBox = checkBox(JsonBundle.message("checkbox.automatically.apply.schemas.for.known.file.names"))
+            .comment(JsonBundle.message("schema.catalog.implicit.hint"))
             .component
         }
 
@@ -48,6 +56,7 @@ class JsonSchemaCatalogConfigurable(private val project: Project) : BoundConfigu
     val state = JsonSchemaCatalogProjectConfiguration.getInstance(project).state
     return super.isModified() || state == null
            || state.myIsCatalogEnabled != catalogCheckBox.isSelected
+           || state.myIsImplicitSchemasEnabled != implicitSchemasCheckBox.isSelected
            || state.myIsPreferRemoteSchemas != preferRemoteCheckBox.isSelected
            || state.myIsRemoteActivityEnabled != remoteCheckBox.isSelected
 
@@ -59,6 +68,7 @@ class JsonSchemaCatalogConfigurable(private val project: Project) : BoundConfigu
     val state = JsonSchemaCatalogProjectConfiguration.getInstance(project).state
     remoteCheckBox.isSelected = state == null || state.myIsRemoteActivityEnabled
     catalogCheckBox.isSelected = state == null || state.myIsCatalogEnabled
+    implicitSchemasCheckBox.isSelected = state == null || state.myIsImplicitSchemasEnabled
     preferRemoteCheckBox.isSelected = state == null || state.myIsPreferRemoteSchemas
   }
 
@@ -67,6 +77,7 @@ class JsonSchemaCatalogConfigurable(private val project: Project) : BoundConfigu
 
     JsonSchemaCatalogProjectConfiguration.getInstance(project).setState(catalogCheckBox.isSelected,
                                                                         remoteCheckBox.isSelected,
-                                                                        preferRemoteCheckBox.isSelected)
+                                                                        preferRemoteCheckBox.isSelected,
+                                                                        implicitSchemasCheckBox.isSelected)
   }
 }

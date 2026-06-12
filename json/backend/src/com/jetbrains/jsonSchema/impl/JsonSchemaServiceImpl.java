@@ -49,6 +49,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -173,12 +174,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       .orElse(null);
   }
 
-  private static boolean shouldIgnoreFile(@NotNull VirtualFile file, @NotNull Project project) {
-    return JsonSchemaMappingsProjectConfiguration.getInstance(project).isIgnoredFile(file);
-  }
-
   public @NotNull Collection<VirtualFile> getSchemasForFile(@NotNull VirtualFile file, boolean single, boolean onlyUserSchemas) {
-    if (shouldIgnoreFile(file, myProject)) return Collections.emptyList();
+    if (JsonSchemaMappingsProjectConfiguration.getInstance(myProject).isIgnoredFile(file)) return Collections.emptyList();
     String schemaUrl = null;
     if (!onlyUserSchemas) {
       // prefer schema-schema if it is specified in "$schema" property
@@ -221,15 +218,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     }
     else if (!providers.isEmpty()) {
       final JsonSchemaFileProvider selected;
-      if (providers.size() > 2) return ContainerUtil.emptyList();
       if (providers.size() > 1) {
         final Optional<JsonSchemaFileProvider> userSchema =
           providers.stream().filter(provider -> SchemaType.userSchema.equals(provider.getSchemaType())).findFirst();
-        if (userSchema.isEmpty()) return ContainerUtil.emptyList();
-        selected = userSchema.get();
+        selected = userSchema.orElse(providers.getFirst());
       }
       else {
-        selected = providers.get(0);
+        selected = providers.getFirst();
       }
       VirtualFile schemaFile = getSchemaForProvider(myProject, selected);
       return ContainerUtil.createMaybeSingletonList(schemaFile);
@@ -563,7 +558,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
                                                                                                  @NotNull Project project) {
       // if there are different providers with the same schema files,
       // stream API does not allow to collect same keys with Collectors.toMap(): throws duplicate key
-      Map<VirtualFile, List<JsonSchemaFileProvider>> map = new HashMap<>();
+      Map<VirtualFile, List<JsonSchemaFileProvider>> map = new LinkedHashMap<>();
       for (JsonSchemaFileProvider provider : list) {
         VirtualFile schemaFile;
         try {

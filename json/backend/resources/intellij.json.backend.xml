@@ -132,6 +132,7 @@
   <extensions defaultExtensionNs="JavaScript">
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaUserDefinedProviderFactory"/>
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
+    <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaCatalogImplicitProviderFactory" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">

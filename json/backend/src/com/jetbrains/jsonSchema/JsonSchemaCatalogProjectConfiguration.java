@@ -31,6 +31,11 @@ public final class JsonSchemaCatalogProjectConfiguration implements PersistentSt
     return state != null && state.myIsPreferRemoteSchemas;
   }
 
+  public boolean isImplicitSchemasEnabled() {
+    MyState state = getState();
+    return state == null || state.myIsImplicitSchemasEnabled;
+  }
+
   public void addChangeHandler(Runnable runnable, @NotNull Disposable parentDisposable) {
     myChangeHandlers.add(runnable);
     Disposer.register(parentDisposable, () -> myChangeHandlers.remove(runnable));
@@ -44,7 +49,18 @@ public final class JsonSchemaCatalogProjectConfiguration implements PersistentSt
   }
 
   public void setState(boolean isEnabled, boolean isRemoteActivityEnabled, boolean isPreferRemoteSchemas) {
-    myState = new MyState(isEnabled, isRemoteActivityEnabled, isPreferRemoteSchemas);
+    MyState state = getState();
+    setState(isEnabled,
+             isRemoteActivityEnabled,
+             isPreferRemoteSchemas,
+             state == null || state.myIsImplicitSchemasEnabled);
+  }
+
+  public void setState(boolean isEnabled,
+                       boolean isRemoteActivityEnabled,
+                       boolean isPreferRemoteSchemas,
+                       boolean isImplicitSchemasEnabled) {
+    myState = new MyState(isEnabled, isRemoteActivityEnabled, isPreferRemoteSchemas, isImplicitSchemasEnabled);
     for (Runnable handler : myChangeHandlers) {
       handler.run();
     }
@@ -54,7 +70,8 @@ public final class JsonSchemaCatalogProjectConfiguration implements PersistentSt
     MyState state = getState();
     setState(isEnabled,
              state == null || state.myIsRemoteActivityEnabled,
-             state != null && state.myIsPreferRemoteSchemas);
+             state != null && state.myIsPreferRemoteSchemas,
+             state == null || state.myIsImplicitSchemasEnabled);
   }
 
   @Override
@@ -85,13 +102,20 @@ public final class JsonSchemaCatalogProjectConfiguration implements PersistentSt
     @Tag("preferRemoteSchemas")
     public boolean myIsPreferRemoteSchemas = false;
 
+    @Tag("implicitSchemasEnabled")
+    public boolean myIsImplicitSchemasEnabled = true;
+
     MyState() {
     }
 
-    MyState(boolean isCatalogEnabled, boolean isRemoteActivityEnabled, boolean isPreferRemoteSchemas) {
+    MyState(boolean isCatalogEnabled,
+            boolean isRemoteActivityEnabled,
+            boolean isPreferRemoteSchemas,
+            boolean isImplicitSchemasEnabled) {
       myIsCatalogEnabled = isCatalogEnabled;
       myIsRemoteActivityEnabled = isRemoteActivityEnabled;
       myIsPreferRemoteSchemas = isPreferRemoteSchemas;
+      myIsImplicitSchemasEnabled = isImplicitSchemasEnabled;
     }
   }
 }
