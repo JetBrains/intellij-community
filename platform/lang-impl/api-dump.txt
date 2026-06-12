@@ -3211,6 +3211,7 @@ f:com.intellij.ide.projectView.ProjectViewSettings$Delegate
 c:com.intellij.ide.projectView.actions.MarkExcludeRootAction
 - com.intellij.ide.projectView.actions.MarkRootActionBase
 - <init>():V
+- p:acceptsFiles():Z
 - actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.ide.projectView.actions.MarkJavaSourceRootAction
 - com.intellij.ide.projectView.actions.MarkSourceRootAction
@@ -3218,7 +3219,10 @@ c:com.intellij.ide.projectView.actions.MarkJavaSourceRootAction
 a:com.intellij.ide.projectView.actions.MarkRootActionBase
 - com.intellij.openapi.project.DumbAwareAction
 - <init>():V
+- p:acceptsFiles():Z
 - ps:getSelection(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.ide.projectView.actions.MarkRootActionBase$RootsSelection
+f:com.intellij.ide.projectView.actions.MarkRootActionBase$RootsSelection
+- mySelectedFiles:java.util.List
 c:com.intellij.ide.projectView.actions.MarkSourceRootAction
 - com.intellij.ide.projectView.actions.MarkRootActionBase
 - <init>(org.jetbrains.jps.model.module.JpsModuleSourceRootType):V
@@ -3228,6 +3232,7 @@ c:com.intellij.ide.projectView.actions.MarkTestSourceRootAction
 c:com.intellij.ide.projectView.actions.UnmarkRootAction
 - com.intellij.ide.projectView.actions.MarkRootActionBase
 - <init>():V
+- p:acceptsFiles():Z
 a:com.intellij.ide.projectView.impl.AbstractProjectTreeStructure
 - com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase
 - com.intellij.ide.projectView.ViewSettings

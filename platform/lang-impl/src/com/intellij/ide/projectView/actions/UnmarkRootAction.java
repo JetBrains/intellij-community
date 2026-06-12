@@ -23,6 +23,11 @@ import java.util.Set;
 
 public class UnmarkRootAction extends MarkRootActionBase {
   @Override
+  protected boolean acceptsFiles() {
+    return true;
+  }
+
+  @Override
   protected void doUpdate(@NotNull AnActionEvent e, @Nullable Module module, @NotNull RootsSelection selection) {
     if (!Registry.is("ide.hide.excluded.files") && module != null && canCancelExclusion(selection, module)) {
       e.getPresentation().setEnabledAndVisible(true);
@@ -38,9 +43,12 @@ public class UnmarkRootAction extends MarkRootActionBase {
 
   private static boolean canCancelExclusion(@NotNull RootsSelection selection, @NotNull Module module) {
     return selection.mySelectedRoots.isEmpty() &&
-           selection.mySelectedExcludeRoots.size() + selection.mySelectedDirectories.size() > 0 &&
+           selection.mySelectedExcludeRoots.size() + selection.mySelectedDirectories.size() + selection.mySelectedFiles.size() > 0 &&
            ContainerUtil.all(selection.mySelectedDirectories, dir -> {
              return OptionalExclusionUtil.canCancelExclusion(module.getProject(), dir);
+           }) &&
+           ContainerUtil.all(selection.mySelectedFiles, file -> {
+             return OptionalExclusionUtil.canCancelExclusion(module.getProject(), file);
            });
   }
 
@@ -70,7 +78,8 @@ public class UnmarkRootAction extends MarkRootActionBase {
 
   @Override
   protected boolean isEnabled(@NotNull RootsSelection selection, @NotNull Module module) {
-    return selection.mySelectedDirectories.isEmpty() && !getHandlersForSelectedRoots(selection).isEmpty();
+    return selection.mySelectedDirectories.isEmpty() && selection.mySelectedFiles.isEmpty()
+           && !getHandlersForSelectedRoots(selection).isEmpty();
   }
 
   @Override
