@@ -12,6 +12,7 @@ import com.jediterm.terminal.ui.AwtTransformers
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
+import org.jetbrains.plugins.terminal.progress.TerminalProgressState
 
 /**
  * Headless [TerminalDisplay] implementation which serves the following purpose:
@@ -35,6 +36,8 @@ class TerminalDisplayImpl(private val settings: DefaultSettingsProvider) : Termi
   var isBracketedPasteMode: Boolean = false
     private set
   var windowTitleText: String = ""
+    private set
+  var terminalProgressState: TerminalProgressState = TerminalProgressState.NONE
     private set
 
   private val dispatcher = EventDispatcher.create(TerminalDisplayListener::class.java)
@@ -79,6 +82,13 @@ class TerminalDisplayImpl(private val settings: DefaultSettingsProvider) : Termi
     if (this.windowTitleText != windowTitle) {
       this.windowTitleText = windowTitle
       dispatcher.multicaster.windowTitleChanged(windowTitle)
+    }
+  }
+
+  fun setTerminalProgressState(terminalProgressState: TerminalProgressState) {
+    if (this.terminalProgressState != terminalProgressState) {
+      this.terminalProgressState = terminalProgressState
+      dispatcher.multicaster.terminalProgressChanged(terminalProgressState)
     }
   }
 
