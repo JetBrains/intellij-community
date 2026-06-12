@@ -65,6 +65,7 @@ import com.intellij.openapi.wm.WidgetPresentationFactory
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.openapi.wm.impl.status.widget.WidgetPresentationWrapper
@@ -81,6 +82,7 @@ import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.GuiUtils
+import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
@@ -154,6 +156,7 @@ import javax.swing.JPanel
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 import javax.swing.ToolTipManager
+import javax.swing.TransferHandler
 import javax.swing.UIManager
 import javax.swing.border.Border
 import javax.swing.border.CompoundBorder
@@ -219,6 +222,143 @@ open class IdeStatusBarImpl @Internal constructor(
     const val NAVBAR_WIDGET_KEY: String = "NavBar"
   }
 
+  /**
+   * Traverse the components in case the drop was somehow not on the widget itself.
+   *
+   * Most likely not needed.
+   */
+  private fun findWidgetComponent(component: Component): JComponent? {
+    var current: Component? = component
+    while (current != null) {
+      (current as? JComponent)
+        ?.let { ClientProperty.get(current, WIDGET_ID) }
+        ?.let { return current }
+
+      if (current === rightPanel) break
+      current = current.parent
+    }
+    return null
+  }
+
+  @ApiStatus.Internal
+  class WidgetSorter(
+    initialOrder: Map<String, Int> = StatusBarWidgetSettings.getInstance().getWidgetOrder(),
+    private val persist: (Map<String, Int>) -> Unit = StatusBarWidgetSettings.getInstance()::setWidgetOrder,
+  ) {
+    private val order: MutableMap<String, Int> = initialOrder.toMutableMap()
+
+    fun reorder(sourceWidgetId: String, targetWidgetId: String, currentVisibleOrder: List<String>) {
+      if (sourceWidgetId == targetWidgetId) {
+        currentVisibleOrder.forEachIndexed { i, id ->
+          if (order.containsKey(id)) {
+            order[id] = i
+          }
+        }
+        persist(order.toMap())
+        return
+      }
+
+      val finalVisible = currentVisibleOrder.toMutableList()
+      val sourceIdx = finalVisible.indexOf(sourceWidgetId)
+      if (sourceIdx == -1) return
+
+      finalVisible.removeAt(sourceIdx)
+      val targetIdx = finalVisible.indexOf(targetWidgetId)
+      if (targetIdx == -1) return
+
+      finalVisible.add(targetIdx, sourceWidgetId)
+
+      finalVisible.forEachIndexed { i, id ->
+        if (id == sourceWidgetId || order.containsKey(id)) {
+          order[id] = i
+        }
+      }
+      persist(order.toMap())
+    }
+
+    fun sortWidgets(sorted: MutableList<Orderable>) {
+      LoadingOrder.sortByLoadingOrder(sorted)
+
+      val customMoves = order.entries.sortedBy { it.value }
+      for (entry in customMoves) {
+        val widgetId = entry.key
+        val targetIdx = entry.value
+
+        val itemIdx = sorted.indexOfFirst { it.orderId == widgetId }
+        if (itemIdx != -1) {
+          val item = sorted.removeAt(itemIdx)
+          val safeIdx = targetIdx.coerceIn(0, sorted.size)
+          sorted.add(safeIdx, item)
+        }
+      }
+    }
+  }
+
+  private val widgetSorter = WidgetSorter()
+
+  private fun reorderWidgets(sourceWidgetId: String, targetWidgetId: String) {
+    val sourceBean = widgetRegistry.get(sourceWidgetId) ?: return
+    val targetBean = widgetRegistry.get(targetWidgetId) ?: return
+
+    if (sourceBean.position != Position.RIGHT) return
+    if (targetBean.position != Position.RIGHT) return
+
+    // Build the same sorted list that sortRightWidgets renders, then filter virtuals.
+    // This guarantees the drag insert positions match the on-screen widget order
+    // even when disabled-but-anchor-referenced extensions are injected as virtuals.
+    val sortedWithVirtuals = buildSortedRightWidgets()
+    val visibleOrder = sortedWithVirtuals.filterIsInstance<WidgetBean>().mapNotNull { it.orderId }
+
+    widgetSorter.reorder(sourceWidgetId, targetWidgetId, visibleOrder)
+
+    sortRightWidgets()
+    rightPanel.revalidate()
+    rightPanel.repaint()
+  }
+
+  /**
+   * Detects drag-to-reorder of right-side widgets at the status bar glass-pane level.
+   * Reordering is committed on drop to prevent layout flickering on dynamic-width widgets.
+   */
+  private inner class WidgetDragHelper(parent: Disposable) : MouseDragHelper<JPanel>(parent, rightPanel) {
+    private var pressedWidgetId: String? = null
+
+    override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean =
+      widgetIdAt(dragComponentPoint) != null
+
+    override fun processMousePressed(event: MouseEvent) {
+      val pointInRightPanel = SwingUtilities.convertPoint(event.component, event.point, rightPanel)
+      pressedWidgetId = widgetIdAt(pointInRightPanel)
+    }
+
+    override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
+      // Do nothing during live drag to prevent dynamic-width layouts from flickering
+    }
+
+    override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
+      val sourceId = pressedWidgetId
+      pressedWidgetId = null // Clear state immediately
+
+      if (sourceId == null || willDragOutStart) return
+
+      val pointInRightPanel = SwingUtilities.convertPoint(event.component, event.point, rightPanel)
+      val targetId = widgetIdAt(pointInRightPanel)
+
+      if (targetId != null && sourceId != targetId) {
+        reorderWidgets(sourceId, targetId)
+      }
+    }
+
+    private fun widgetIdAt(point: Point): String? {
+      if (point.x < 0 || point.y < 0 || point.x >= rightPanel.width || point.y >= rightPanel.height) {
+        return null
+      }
+      return SwingUtilities.getDeepestComponentAt(rightPanel, point.x, point.y)
+        ?.let { findWidgetComponent(it) }
+        ?.let { ClientProperty.get(it, WIDGET_ID) }
+    }
+  }
+
   override fun findChild(c: Component): StatusBar {
     var parent: Component? = c
     while (parent != null) {
@@ -281,6 +421,7 @@ open class IdeStatusBarImpl @Internal constructor(
     rightPanel.isOpaque = false
     rightPanel.border = JBUI.Borders.emptyLeft(1)
     add(rightPanel, BorderLayout.EAST)
+    WidgetDragHelper(disposable).start()
 
     if (addToolWindowWidget) {
       val disposable = Disposer.newDisposable()
@@ -484,12 +625,11 @@ open class IdeStatusBarImpl @Internal constructor(
     }
   }
 
-  private fun sortRightWidgets() {
+  // Builds a sorted list of right-position widgets with virtual placeholders injected
+  // for disabled-but-EP-registered factories. Virtuals exist solely to anchor `after X` /
+  // `before X` chains during LoadingOrder topological sort and are skipped during rendering.
+  private fun buildSortedRightWidgets(): MutableList<Orderable> {
     val sorted = widgetRegistry.filterByPosition(Position.RIGHT)
-
-    // inject not available extension to make sort correct —
-    // e.g. `after PowerSaveMode` must work even if `PowerSaveMode` widget is disabled,
-    // because `PowerSaveMode` can specify something like `after Encoding`
     StatusBarWidgetFactory.EP_NAME.filterableLazySequence()
       .filter { it.id != null && !widgetRegistry.containsKey(it.id!!) }
       .mapTo(sorted) {
@@ -498,10 +638,18 @@ open class IdeStatusBarImpl @Internal constructor(
             get() = it.id
           override val order: LoadingOrder
             get() = it.order
+          override fun toString(): String {
+            return "Virtual(id=${it.id}, order=${it.order})"
+          }
         }
       }
+    widgetSorter.sortWidgets(sorted)
+    return sorted
+  }
 
-    LoadingOrder.sortByLoadingOrder(sorted)
+  private fun sortRightWidgets() {
+    val sorted = buildSortedRightWidgets()
+
     for ((index, item) in sorted.withIndex()) {
       rightPanelLayout.setConstraints((item as? WidgetBean ?: continue).component, GridBagConstraints().apply {
         gridx = index
@@ -530,6 +678,7 @@ open class IdeStatusBarImpl @Internal constructor(
     if (bean.position == Position.LEFT && panel.componentCount == 0) {
       bean.component.border = if (SystemInfoRt.isMac) JBUI.Borders.empty(2, 0, 2, 4) else JBUI.Borders.empty()
     }
+
     panel.add(bean.component)
     panel.revalidate()
   }
@@ -1047,6 +1196,7 @@ private fun configurePresentationComponent(presentation: WidgetPresentation, pan
 internal fun wrap(widget: StatusBarWidget): JComponent {
   val result = if (widget is CustomStatusBarWidget) {
     return wrapCustomStatusBarWidget(widget)
+      .also { ClientProperty.put(it, WIDGET_ID, widget.ID()) }
   }
   else {
     createComponentByWidgetPresentation(widget)
