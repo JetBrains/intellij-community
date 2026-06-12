@@ -8,6 +8,11 @@
   files:
   - name: $PROJECT_DIR$/community/lib/ecj-4.jar
   reason: withProjectLibrary
+- name: lib/intellij-test-discovery-agent.jar
+  library: intellij-test-discovery
+  module: intellij.libraries.test.discovery
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1/intellij-test-discovery-agent-1.jar
 - name: lib/intellij.java.compiler.antTasks.jar
   contentModules:
   - name: intellij.java.compiler.antTasks
@@ -44,6 +49,9 @@
 - name: lib/intellij.java.syntax.jar
   contentModules:
   - name: intellij.java.syntax
+- name: lib/intellij.libraries.test.discovery.jar
+  contentModules:
+  - name: intellij.libraries.test.discovery
 - name: lib/intellij.platform.jps.build.javac.rt.jar
   contentModules:
   - name: intellij.platform.jps.build.javac.rt

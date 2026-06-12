@@ -4,6 +4,14 @@
   files:
   - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1/coverage-report-1.jar
   - name: $MAVEN_REPOSITORY$/org/freemarker/freemarker/2/freemarker-2.jar
+- name: lib/intellij-test-discovery-agent.jar
+  library: intellij-test-discovery
+  module: intellij.libraries.test.discovery
+  files:
+  - name: $MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1/intellij-test-discovery-agent-1.jar
+- name: lib/intellij.libraries.test.discovery.jar
+  contentModules:
+  - name: intellij.libraries.test.discovery
 - name: lib/jacoco.jar
   library: JaCoCo
   module: intellij.java.coverage

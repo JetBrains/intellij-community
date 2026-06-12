@@ -1,0 +1,43 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.test.discovery` start
+
+jvm_library(
+    name = "test-discovery",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.test.discovery",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-test-discovery-intellij-test-discovery"],
+    runtime_deps = ["@lib//:libraries-test-discovery-intellij-test-discovery"],
+)
+
+jvm_library(
+    name = "test-discovery_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.libraries.test.discovery",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-test-discovery-intellij-test-discovery"],
+    runtime_deps = [":test-discovery"],
+)
+### auto-generated section `build intellij.libraries.test.discovery` end
+
+### auto-generated section `iml intellij.libraries.test.discovery` start
+exports_files(
+    [
+        "intellij.libraries.test.discovery.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.test.discovery` end

@@ -18,6 +18,10 @@
     <!-- endregion -->
   </dependencies>
 
+  <content>
+    <module name="intellij.libraries.test.discovery" loading="embedded"/>
+  </content>
+
   <description>
       <![CDATA[
 Collects and displays coverage information for Java.

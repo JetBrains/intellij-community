@@ -545,6 +545,7 @@ libraries/stream
 libraries/swingx
 libraries/system-stubs-jupiter
 libraries/teamcity/service-messages
+libraries/test-discovery
 libraries/testcontainers
 libraries/testng
 libraries/tuweni/toml

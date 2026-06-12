@@ -4894,20 +4894,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776_http",
-    downloaded_file_path = "intellij-test-discovery-agent-1.0.776.jar",
-    sha256 = "b01cd2cebb3473a3559de471286517dee92c3ec850b96b9c03ce81dc1226623c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.776/intellij-test-discovery-agent-1.0.776.jar",
-)
-
-http_file(
-    name = "org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776-sources_http",
-    downloaded_file_path = "intellij-test-discovery-agent-1.0.776-sources.jar",
-    sha256 = "7089ed25f22538cd79ff2b6ea40084bca50397fb320130b64fc4acb88e7acfa5",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.776/intellij-test-discovery-agent-1.0.776-sources.jar",
-)
-
-http_file(
     name = "io_github_oshai-kotlin-logging-jvm-7_0_3_http",
     downloaded_file_path = "kotlin-logging-jvm-7.0.3.jar",
     sha256 = "241daa21665dd0ca55576a4bc4d8e9ace8891ae3c698cc77f13bb4bdac372e94",
@@ -10827,6 +10813,20 @@ http_file(
     downloaded_file_path = "serviceMessages-2024.07-sources.jar",
     sha256 = "38f4ec9c53269331a3e0c399b0cc8d74f75087cae6c998f15634da0fbf9be591",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/teamcity/serviceMessages/2024.07/serviceMessages-2024.07-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776_http",
+    downloaded_file_path = "intellij-test-discovery-agent-1.0.776.jar",
+    sha256 = "b01cd2cebb3473a3559de471286517dee92c3ec850b96b9c03ce81dc1226623c",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.776/intellij-test-discovery-agent-1.0.776.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776-sources_http",
+    downloaded_file_path = "intellij-test-discovery-agent-1.0.776-sources.jar",
+    sha256 = "7089ed25f22538cd79ff2b6ea40084bca50397fb320130b64fc4acb88e7acfa5",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/intellij/deps/intellij-test-discovery-agent/1.0.776/intellij-test-discovery-agent-1.0.776-sources.jar",
 )
 
 http_file(

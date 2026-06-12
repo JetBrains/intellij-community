@@ -6141,21 +6141,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/intellij-test-discovery-agent-1.0.776.jar_copy",
-    src = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776_http//file",
-    out = "org.jetbrains.intellij.deps/intellij-test-discovery-agent-1.0.776.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "intellij-test-discovery",
-    jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "io.github.oshai/kotlin-logging-jvm-7.0.3.jar_copy",
     src = "@io_github_oshai-kotlin-logging-jvm-7_0_3_http//file",
     out = "io.github.oshai/kotlin-logging-jvm-7.0.3.jar",
@@ -13769,6 +13754,21 @@ jvm_import(
     name = "libraries-teamcity-service-messages-tc_service_messages",
     jar = "@org_jetbrains_teamcity-serviceMessages-2024_07_http//file",
     source_jar = "@org_jetbrains_teamcity-serviceMessages-2024_07-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.intellij.deps/intellij-test-discovery-agent-1.0.776.jar_copy",
+    src = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776_http//file",
+    out = "org.jetbrains.intellij.deps/intellij-test-discovery-agent-1.0.776.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-test-discovery-intellij-test-discovery",
+    jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-intellij-test-discovery-agent-1_0_776-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
