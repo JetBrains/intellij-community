@@ -54,20 +54,28 @@ suspend fun TerminalStarter.closeConnectorAndStopEmulation() {
   withContext(Dispatchers.IO + NonCancellable) {
     // No exception is expected there, but let's use `try` for extra safety to ensure that `requestEmulatorStop` is called in any case.
     try {
-      val localTtyConnector = ttyConnector.original as? LocalTerminalTtyConnector
-      if (localTtyConnector != null) {
-        localTtyConnector.closeSafely()
-      }
-      else ttyConnector.close()
-
-      // `ttyConnector.close()` case above might schedule the termination as a background task.
-      // Let's await the connector closing here for some meaningful time.
-      ttyConnector.waitFor(CONNECTOR_CLOSING_TIMEOUT)
+      ttyConnector.closeAndWaitFor(CONNECTOR_CLOSING_TIMEOUT)
     }
     finally {
       // Stop reading from the connector
       requestEmulatorStop()
     }
+  }
+}
+
+/**
+ * @return the exit code of the process if it was closed successfully, null otherwise.
+ */
+@ApiStatus.Internal
+suspend fun TtyConnector.closeAndWaitFor(timeout: Duration): Int? {
+  return withContext(Dispatchers.IO) {
+    val localTtyConnector = original as? LocalTerminalTtyConnector
+    if (localTtyConnector != null) {
+      localTtyConnector.closeSafely()
+    }
+    else close()
+
+    waitFor(timeout)
   }
 }
 
