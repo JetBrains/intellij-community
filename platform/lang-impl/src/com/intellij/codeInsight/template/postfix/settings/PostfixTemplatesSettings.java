@@ -72,7 +72,7 @@ public final class PostfixTemplatesSettings implements PersistentStateComponent<
   }
 
   public boolean isShowAsSeparateGroup() {
-    return showAsSeparateGroup && GroupedCompletionContributor.isGroupEnabledInApp();
+    return showAsSeparateGroup && GroupedCompletionContributor.isGroupEnabled(null);
   }
 
   public void setShowAsSeparateGroup(boolean showAsSeparateGroup) {

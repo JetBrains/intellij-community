@@ -73,7 +73,7 @@ final class TypedAutoPopupImpl {
       }
       language = element.getLanguage();
     }
-    List<CompletionContributor> contributors = CompletionContributor.forLanguageHonorDumbness(language, file.getProject());
+    List<CompletionContributor> contributors = CompletionContributor.forLanguageHonorDumbness(language, file.getProject(), editor);
     if (contributors.isEmpty()) {
       return false;
     }
