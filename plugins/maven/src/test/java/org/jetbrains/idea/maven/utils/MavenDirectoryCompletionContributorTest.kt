@@ -8,16 +8,39 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.defaultResources
+import org.jetbrains.idea.maven.fixtures.defaultTestResources
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.project.MavenDirectoryCompletionContributor
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenDirectoryCompletionContributorTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenDirectoryCompletionContributorTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   @Test
   fun testVariants() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                       <groupId>test</groupId>
                       <artifactId>project</artifactId>
                       <packaging>pom</packaging>
@@ -29,26 +52,26 @@ class MavenDirectoryCompletionContributorTest : MavenMultiVersionImportingTestCa
                         <sourceDirectory>customSrc</sourceDirectory>
                       </build>""")
 
-    val module = createModulePom("module",
+    val module = maven.createModulePom("module",
                                  """
                                   <groupId>test</groupId>
                                   <artifactId>module</artifactId>
                                   <version>1</version>""")
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
     suspend fun check(dir: VirtualFile, vararg expected: Pair<String, JpsModuleSourceRootType<*>>) {
       readAction {
-        val psiDir = PsiManager.getInstance(project).findDirectory(dir)!!
+        val psiDir = PsiManager.getInstance(maven.project).findDirectory(dir)!!
         Assertions.assertThat(MavenDirectoryCompletionContributor().getVariants(psiDir).map {
           FileUtil.getRelativePath(dir.path, FileUtil.toSystemIndependentName(it.path), '/') to it.rootType
         }).containsExactlyInAnyOrder(*expected)
       }
     }
 
-    val resources = defaultResources().map { it to JavaResourceRootType.RESOURCE } + defaultTestResources().map { it to JavaResourceRootType.TEST_RESOURCE }
+    val resources = maven.defaultResources().map { it to JavaResourceRootType.RESOURCE } + maven.defaultTestResources().map { it to JavaResourceRootType.TEST_RESOURCE }
 
-    check(projectRoot,
+    check(maven.projectRoot,
           "customSrc" to JavaSourceRootType.SOURCE,
           "src/test/java" to JavaSourceRootType.TEST_SOURCE,
           *resources.toTypedArray())
