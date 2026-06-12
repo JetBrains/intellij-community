@@ -1,5 +1,8 @@
 <idea-plugin visibility="public">
   <resource-bundle>messages.ActionsBundle</resource-bundle>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
   <actions>
     <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirAction"
             icon="AllIcons.Actions.ModuleDirectory">

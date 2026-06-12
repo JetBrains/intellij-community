@@ -1,4 +1,7 @@
 <idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <globalInspection groupPath="Java" shortName="UnnecessaryModuleDependencyInspection" bundle="messages.JavaAnalysisBundle"
                       key="unnecessary.module.dependency.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.declaration.redundancy" enabledByDefault="true"
