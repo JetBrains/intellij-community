@@ -1,4 +1,2 @@
 Indirect outer instances won't be extracted: Test2()
 Indirect outer instances won't be extracted: a
-Indirect outer instances won't be extracted: this
-Indirect outer instances won't be extracted: this

@@ -88,6 +88,11 @@ public class K2MoveToClassWithConversionTestGenerated extends AbstractK2MoveToCl
         runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/callWithExplicitReceiver/callWithExplicitReceiver.test");
     }
 
+    @TestMetadata("useSite/companionCallWithImport/companionCallWithImport.test")
+    public void testUseSite_companionCallWithImport_CompanionCallWithImport() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/companionCallWithImport/companionCallWithImport.test");
+    }
+
     @TestMetadata("useSite/companionCall/companionCall.test")
     public void testUseSite_companionCall_CompanionCall() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveToClassWithConversion/useSite/companionCall/companionCall.test");
