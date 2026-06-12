@@ -23,14 +23,11 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.keymap.MacKeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.util.FontUtil
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.BigPopup.searchFieldBackground
@@ -118,7 +115,7 @@ internal class SearchEverywhereRiderMainToolbarAction : SearchEverywhereAction()
       }
 
       override fun updateToolTipText() {
-        val shortcutText = "Double" + if (SystemInfo.isMac) FontUtil.thinSpace() + MacKeymapUtil.SHIFT else " Shift"
+        val shortcutText = getShortcut()
 
         val classesTabName = java.lang.String.join("/", getActionTitlePluralized())
         if (UISettings.isIdeHelpTooltipEnabled()) {
@@ -133,7 +130,12 @@ internal class SearchEverywhereRiderMainToolbarAction : SearchEverywhereAction()
         }
         else {
           toolTipText = if (presentation.isEnabledAndVisible) {
-            IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName)
+            if (shortcutText == null) {
+              IdeBundle.message("search.everywhere.action.tooltip.description.text", classesTabName)
+            }
+            else {
+              IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName)
+            }
           }
           else {
             ""

@@ -77,6 +77,14 @@ internal class SearchEverywhereShortcutTrackerTest {
     assertThat(getShortcutText()).isEqualTo(KeymapUtil.getShortcutText(altDoubleShiftShortcut))
   }
 
+  @Test
+  fun getShortcutTextIsNullWithoutKeymapGesture() {
+    resetShortcuts(emptyList())
+    syncKeymapShortcuts()
+
+    assertThat(getShortcutText()).isNull()
+  }
+
   private fun resetShortcuts(shortcuts: List<Shortcut>) {
     val keymap = activeKeymap()
     runWriteAction {
@@ -97,9 +105,9 @@ internal class SearchEverywhereShortcutTrackerTest {
     method.invoke(ModifierKeyDoubleClickHandler.getInstance())
   }
 
-  private fun getShortcutText(): String {
+  private fun getShortcutText(): String? {
     val method = SearchEverywhereAction::class.java.getDeclaredMethod("getShortcut")
     method.isAccessible = true
-    return method.invoke(null) as String
+    return method.invoke(null) as String?
   }
 }

@@ -3783,16 +3783,6 @@ c:com.intellij.openapi.fileEditor.impl.EditorComposite
 - f:setSelectedEditor(com.intellij.openapi.fileEditor.FileEditor):V
 - f:setSelectedEditor(com.intellij.openapi.fileEditor.ex.FileEditorWithProvider):V
 - f:setSelectedEditor(java.lang.String):V
-c:com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter
-- p:advertiseActions(javax.swing.JComponent,com.intellij.util.ui.UIUtil$TextPainter):V
-- p:appendAction(com.intellij.util.ui.UIUtil$TextPainter,java.lang.String,java.lang.String):V
-- p:appendLine(com.intellij.util.ui.UIUtil$TextPainter,java.lang.String):V
-- p:appendSearchEverywhere(com.intellij.util.ui.UIUtil$TextPainter):V
-- p:appendToolWindow(com.intellij.util.ui.UIUtil$TextPainter,java.lang.String,java.lang.String,javax.swing.JComponent):V
-- s:createTextPainter():com.intellij.util.ui.UIUtil$TextPainter
-- p:heightRatio():D
-- ps:isToolwindowVisible(javax.swing.JComponent,java.lang.String):Z
-- paintEmptyText(javax.swing.JComponent,java.awt.Graphics):V
 f:com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 - sf:Companion:com.intellij.openapi.fileEditor.impl.EditorHistoryManager$Companion
 - dispose():V

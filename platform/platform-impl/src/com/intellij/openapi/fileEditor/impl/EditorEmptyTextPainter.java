@@ -8,10 +8,8 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.ToolWindow;
@@ -95,9 +93,12 @@ public class EditorEmptyTextPainter {
   }
 
   protected void appendSearchEverywhere(@NotNull UIUtil.TextPainter painter) {
+    appendAction(painter, IdeBundle.message("empty.text.search.everywhere"), getSearchEverywhereShortcutText());
+  }
+
+  protected @Nullable String getSearchEverywhereShortcutText() {
     Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).getShortcuts();
-    String message = IdeBundle.message("double.ctrl.or.shift.shortcut", SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
-    appendAction(painter, IdeBundle.message("empty.text.search.everywhere"), shortcuts.length == 0 ? message : KeymapUtil.getShortcutsText(shortcuts));
+    return shortcuts.length == 0 ? null : KeymapUtil.getShortcutsText(shortcuts);
   }
 
   protected void appendToolWindow(@NotNull UIUtil.TextPainter painter,
