@@ -1,7 +1,9 @@
 <idea-plugin>
   <dependencies>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.php.backend"/>
     <module name="intellij.dev.psiViewer"/>
-    <plugin id="com.jetbrains.php"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.dev">
