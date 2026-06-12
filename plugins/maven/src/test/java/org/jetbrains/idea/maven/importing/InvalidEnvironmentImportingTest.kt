@@ -17,43 +17,71 @@ import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.assumeMaven4
+import org.jetbrains.idea.maven.fixtures.assumeVersionMoreThan
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.doImportProjectsAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.testRootDisposable
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.Assert.fail
+import com.intellij.testFramework.UsefulTestCase.assertNotEmpty
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.BeforeEach
 
-class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class InvalidEnvironmentImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   private lateinit var myTestSyncViewManager: SyncViewManager
   private val myEvents: MutableList<BuildEvent> = ArrayList()
 
-  public override fun setUp() {
-    super.setUp()
-    myTestSyncViewManager = object : SyncViewManager(project) {
+  public @BeforeEach
+  fun setUp() {
+    myTestSyncViewManager = object : SyncViewManager(maven.project) {
       override fun onEvent(buildId: Any, event: BuildEvent) {
         myEvents.add(event)
       }
     }
-    project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, testRootDisposable)
+    maven.project.replaceService(SyncViewManager::class.java, myTestSyncViewManager, maven.testRootDisposable)
   }
 
   @Test
   fun testShouldShowWarningIfProjectJDKIsNullAndRollbackToInternal() = runBlocking {
-    val projectSdk = ProjectRootManager.getInstance(project).projectSdk
-    val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(project).settings.importingSettings.jdkForImporter
+    val projectSdk = ProjectRootManager.getInstance(maven.project).projectSdk
+    val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(maven.project).settings.importingSettings.jdkForImporter
     try {
       LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("Project JDK is not specifie")) {
-        MavenWorkspaceSettingsComponent.getInstance(project)
+        MavenWorkspaceSettingsComponent.getInstance(maven.project)
           .settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK
-        WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(project).projectSdk = null }
+        WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(maven.project).projectSdk = null }
         createAndImportProject()
-        val connectors = MavenServerManager.getInstance().getAllConnectors().filter { it.project == project }
+        val connectors = MavenServerManager.getInstance().getAllConnectors().filter { it.project == maven.project }
         assertNotEmpty(connectors)
         TestCase.assertEquals(JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk(), connectors[0].jdk)
       }
     }
     finally {
-      WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(project).projectSdk = projectSdk }
-      MavenWorkspaceSettingsComponent.getInstance(project).settings.importingSettings.jdkForImporter = jdkForImporter
+      WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(maven.project).projectSdk = projectSdk }
+      MavenWorkspaceSettingsComponent.getInstance(maven.project).settings.importingSettings.jdkForImporter = jdkForImporter
     }
   }
 
@@ -70,7 +98,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   @Test
   fun `test maven server not started - bad vm config`() = runBlocking {
     LoggedErrorProcessor.executeWith<RuntimeException>(loggedErrorProcessor("java.util.concurrent.ExecutionException:")) {
-      createProjectSubFile(".mvn/jvm.config", "-Xms100m -Xmx10m")
+      maven.createProjectSubFile(".mvn/jvm.config", "-Xms100m -Xmx10m")
       createAndImportProject()
       assertEvent { it.message.contains("Error occurred during initialization of VM") }
     }
@@ -78,38 +106,38 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun `test maven import - bad maven config`() = runBlocking {
-    assumeVersionMoreThan("3.3.1")
-    createProjectSubFile(".mvn/maven.config", "-aaaaT1")
+    maven.assumeVersionMoreThan("3.3.1")
+    maven.createProjectSubFile(".mvn/maven.config", "-aaaaT1")
     createAndImportProject()
-    assertModules("test")
+    maven.assertModules("test")
     assertEvent { it.message.contains("Unrecognized option: -aaaaT1") || it.message.contains("Unable to parse maven.config") }
   }
 
   @Test
   fun `test maven sync with old JDK`() = runBlocking {
-    assumeMaven4()
+    maven.assumeMaven4()
     val sdk = createTestSdk11()
     edtWriteAction {
-      ProjectJdkTable.getInstance(project).addJdk(sdk, testRootDisposable)
-      ProjectRootManager.getInstance(project).setProjectSdk(sdk);
+      ProjectJdkTable.getInstance(maven.project).addJdk(sdk, maven.testRootDisposable)
+      ProjectRootManager.getInstance(maven.project).setProjectSdk(sdk);
     }
     try {
       // If you want to set it as the project SDK
       createAndImportProject()
-      assertModules("test")
+      maven.assertModules("test")
       assertEvent { it.message.contains("Maven JDK Version for Importer Is Too Low") }
     }
     finally {
       edtWriteAction {
-        ProjectJdkTable.getInstance(project).removeJdk(sdk)
-        ProjectRootManager.getInstance(project).setProjectSdk(null)
+        ProjectJdkTable.getInstance(maven.project).removeJdk(sdk)
+        ProjectRootManager.getInstance(maven.project).setProjectSdk(null)
       }
     }
 
   }
 
   private suspend fun createTestSdk11(): Sdk {
-    val sdk: Sdk = ProjectJdkTable.getInstance(project).createSdk(getTestName(true) + "-jdk11", JavaSdk.getInstance())
+    val sdk: Sdk = ProjectJdkTable.getInstance(maven.project).createSdk("test-jdk11", JavaSdk.getInstance())
     val sdkModificator = sdk.sdkModificator
     sdkModificator.homePath = "jdk11-home-path"
     sdkModificator.versionString = "11"
@@ -136,11 +164,11 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun createAndImportProject() {
-    createProjectPom("<groupId>test</groupId>" +
+    maven.createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>test</artifactId>" +
                      "<version>1.0</version>")
     runBlockingMaybeCancellable {
-      doImportProjectsAsync(listOf(projectPom), false)
+      maven.doImportProjectsAsync(listOf(maven.projectPom), false)
     }
   }
 }
