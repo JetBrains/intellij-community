@@ -70,6 +70,16 @@ public abstract class K2CustomConditionPostfixTemplateTestGenerated extends Abst
 
     @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/customConditions/nonTopmost")
+    public static class NonTopmost extends AbstractK2CustomConditionPostfixTemplateTest {
+        @TestMetadata("ifElse.kt")
+        public void testIfElse() throws Exception {
+            performTest();
+        }
+    }
+
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/customConditions/nonUnitCondition")
     public static class NonUnitCondition extends AbstractK2CustomConditionPostfixTemplateTest {
         @TestMetadata("match.kt")
@@ -139,6 +149,41 @@ public abstract class K2CustomConditionPostfixTemplateTestGenerated extends Abst
 
         @TestMetadata("nonMatch.kt")
         public void testNonMatch() throws Exception {
+            performTest();
+        }
+    }
+
+    @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/customConditions/topmost")
+    public static class Topmost extends AbstractK2CustomConditionPostfixTemplateTest {
+        @TestMetadata("binary.kt")
+        public void testBinary() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("ifCondition.kt")
+        public void testIfCondition() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("ifElse.kt")
+        public void testIfElse() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("ifThenBranch.kt")
+        public void testIfThenBranch() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("whenEntry.kt")
+        public void testWhenEntry() throws Exception {
             performTest();
         }
     }
