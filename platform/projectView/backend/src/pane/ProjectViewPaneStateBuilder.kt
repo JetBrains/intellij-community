@@ -23,18 +23,17 @@ import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-fun projectViewPaneStateBuilder() : ProjectViewPaneStateBuilder = ProjectViewPaneStateBuilderImpl()
-
-@ApiStatus.Internal
 interface ProjectViewPaneStateBuilder {
-  fun getStateFlow(): Flow<ProjectViewPaneStateEvent>
-  suspend fun updateState(update: ProjectViewPaneStateEvent)
-  suspend fun clear() {
-    updateState(ProjectViewClearStateEvent)
-  }
+  suspend fun setNodeChildren(parentId: Long, children: List<ProjectViewNodeModel>)
+  suspend fun addNode(parentId: Long, index: Int, nodeModel: ProjectViewNodeModel)
+  suspend fun updateNode(nodeModel: ProjectViewNodeModel)
+  suspend fun removeNodeChildren(parentId: Long)
+  suspend fun removeNodeChild(parentId: Long, index: Int)
+  suspend fun updateActionState(actionState: ProjectViewActionState)
+  suspend fun clear()
 }
 
-private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
+internal class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
   private val state = object : MutableStateWithIncrementalUpdates<ProjectViewPaneStateEvent> {
     private var actionState: ProjectViewActionState? = null
     private val superRoot = Node(SuperRootModel)
@@ -143,9 +142,43 @@ private class ProjectViewPaneStateBuilderImpl : ProjectViewPaneStateBuilder {
 
   private val flowProducer = IncrementalUpdateFlowProducer(state)
 
-  override fun getStateFlow(): Flow<ProjectViewPaneStateEvent> = flowProducer.getIncrementalUpdateFlow()
+  fun getStateFlow(): Flow<ProjectViewPaneStateEvent> = flowProducer.getIncrementalUpdateFlow()
+  override suspend fun setNodeChildren(
+    parentId: Long,
+    children: List<ProjectViewNodeModel>,
+  ) {
+    updateState(ProjectViewChildrenLoaded(parentId, children))
+  }
 
-  override suspend fun updateState(update: ProjectViewPaneStateEvent) {
+  override suspend fun addNode(
+    parentId: Long,
+    index: Int,
+    nodeModel: ProjectViewNodeModel,
+  ) {
+    updateState(ProjectViewNodeAdded(parentId, index, nodeModel))
+  }
+
+  override suspend fun updateNode(nodeModel: ProjectViewNodeModel) {
+    updateState(ProjectViewNodeUpdated(nodeModel))
+  }
+
+  override suspend fun removeNodeChildren(parentId: Long) {
+    updateState(ProjectViewChildrenRemoved(parentId))
+  }
+
+  override suspend fun removeNodeChild(parentId: Long, index: Int) {
+    updateState(ProjectViewChildRemoved(parentId, index))
+  }
+
+  override suspend fun updateActionState(actionState: ProjectViewActionState) {
+    updateState(ProjectViewActionStateEvent(actionState))
+  }
+
+  override suspend fun clear() {
+    updateState(ProjectViewClearStateEvent)
+  }
+
+  private suspend fun updateState(update: ProjectViewPaneStateEvent) {
     flowProducer.handleUpdate(update)
   }
 }

@@ -45,14 +45,8 @@ import com.intellij.platform.projectView.backend.pane.BackendProjectViewPane
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneProvider
 import com.intellij.platform.projectView.backend.pane.ProjectViewPaneStateBuilder
 import com.intellij.platform.projectView.pane.PROJECT_VIEW_SELECTED_NODE_IDS_KEY
-import com.intellij.platform.projectView.pane.ProjectViewActionStateEvent
-import com.intellij.platform.projectView.pane.ProjectViewChildRemoved
-import com.intellij.platform.projectView.pane.ProjectViewChildrenLoaded
-import com.intellij.platform.projectView.pane.ProjectViewChildrenRemoved
-import com.intellij.platform.projectView.pane.ProjectViewNodeAdded
 import com.intellij.platform.projectView.pane.ProjectViewNodeModel
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
-import com.intellij.platform.projectView.pane.ProjectViewNodeUpdated
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeFileNestingRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeOptionValueRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneChangeSortKeyRequest
@@ -63,7 +57,6 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
-import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
 import com.intellij.platform.projectView.pane.SelectInContextDescriptor
 import com.intellij.platform.projectView.pane.SelectInRequest
@@ -371,9 +364,8 @@ private class AbstractProjectViewPaneStateManager(
         sendCurrentState()
         try {
           for (request in modelUpdateChannel) {
-            val event = buildStateUpdateEvent(request)
-            LOG.trace { "Applying state update for pane $id: $event" }
-            builder.updateState(event)
+            LOG.trace { "Applying state update for pane $id: $request" }
+            updateState(builder, request)
             updateEpochFlow.update { it + 1 }
           }
         }
@@ -415,25 +407,25 @@ private class AbstractProjectViewPaneStateManager(
     }
   }
 
-  private suspend fun buildStateUpdateEvent(request: ModelUpdateRequest): ProjectViewPaneStateEvent {
-    return when (request) {
+  private suspend fun updateState(builder: ProjectViewPaneStateBuilder, request: ModelUpdateRequest) {
+    when (request) {
       is ModelChildrenLoaded -> {
-        ProjectViewChildrenLoaded(request.parentId, request.children.map { createNodeModel(it.id, it.modelNode) })
+        builder.setNodeChildren(request.parentId, request.children.map { createNodeModel(it.id, it.modelNode) })
       }
       is ModelNodeAdded -> {
-        ProjectViewNodeAdded(request.parentId, request.index, createNodeModel(request.nodeId, request.modelNode))
+        builder.addNode(request.parentId, request.index, createNodeModel(request.nodeId, request.modelNode))
       }
       is ModelNodeUpdated -> {
-        ProjectViewNodeUpdated(createNodeModel(request.nodeId, request.modelNode))
+        builder.updateNode(createNodeModel(request.nodeId, request.modelNode))
       }
       is ModelChildrenRemoved -> {
-        ProjectViewChildrenRemoved(request.parentId)
+        builder.removeNodeChildren(request.parentId)
       }
       is ModelChildRemoved -> {
-        ProjectViewChildRemoved(request.parentId, request.index)
+        builder.removeNodeChild(request.parentId, request.index)
       }
       is ModelActionStatesUpdated -> {
-        ProjectViewActionStateEvent(request.actionState)
+        builder.updateActionState(request.actionState)
       }
     }
   }
