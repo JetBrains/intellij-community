@@ -34,6 +34,7 @@ import com.intellij.util.PlatformUtils
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.RequestBuilder
 import com.intellij.util.io.computeDetached
@@ -76,6 +77,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.exists
 import kotlin.time.Duration.Companion.seconds
 
@@ -96,6 +98,9 @@ private val objectMapper: ObjectMapper by lazy {
 @ApiStatus.Internal
 class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginInfoProvider {
   companion object {
+    private val cacheFilesLocks = ContainerUtil.createConcurrentWeakValueMap<String, Any>()
+      .takeIf { System.getProperty("revert.IJPL244583") == null }
+
     @JvmStatic
     fun getInstance(): MarketplaceRequests = PluginInfoProvider.getInstance() as MarketplaceRequests
 
@@ -463,67 +468,77 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
       @Nls indicatorMessage: String,
       parser: (InputStream) -> T,
     ): T {
-      val eTag = if (file == null) null else loadETagForFile(file)
-      LOG.debug { "Cached response $file for $url has eTag=$eTag" }
-      return HttpRequests.request(url)
-        .tuner { connection ->
-          if (eTag != null) {
-            connection.setRequestProperty("If-None-Match", eTag)
+      // FIXME this is a quick fix for concurrent access of the same files IJPL-244583,
+      //  reimplement this later properly when this class will be refactored to coroutines
+      val lock = if (file == null || cacheFilesLocks == null) {
+        Any()
+      }
+      else {
+        cacheFilesLocks.getOrPut(file.absolutePathString()) { Any() }
+      }
+      synchronized(lock) {
+        val eTag = if (file == null) null else loadETagForFile(file)
+        LOG.debug { "Cached response $file for $url has eTag=$eTag" }
+        return HttpRequests.request(url)
+          .tuner { connection ->
+            if (eTag != null) {
+              connection.setRequestProperty("If-None-Match", eTag)
+            }
+            if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
+              serviceOrNull<PluginRepositoryAuthService>()
+                ?.connectionTuner
+                ?.tune(connection)
+            }
           }
-          if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
-            serviceOrNull<PluginRepositoryAuthService>()
-              ?.connectionTuner
-              ?.tune(connection)
-          }
-        }
-        .productNameAsUserAgent()
-        .connect { request ->
-          try {
-            indicator?.checkCanceled()
-            val connection = request.connection
-            if (file != null && isNotModified(connection, file)) {
-              LOG.debug { "Response $file from Marketplace is not modified" }
+          .productNameAsUserAgent()
+          .connect { request ->
+            try {
+              indicator?.checkCanceled()
+              val connection = request.connection
+              if (file != null && isNotModified(connection, file)) {
+                LOG.debug { "Response $file from Marketplace is not modified" }
+                return@connect Files.newInputStream(file).use(parser)
+              }
+
+              if (indicator != null) {
+                indicator.checkCanceled()
+                indicator.text2 = indicatorMessage
+              }
+              if (file == null) {
+                return@connect request.inputStream.use(parser)
+              }
+
+              synchronized(this) {
+                LOG.debug { "Downloading new $file from Marketplace for $url" }
+                request.saveToFile(file, indicator)
+                val newEtag = connection.getHeaderField("ETag")
+                LOG.debug { "Downloaded new $file from Marketplace for $url, new etag=$newEtag" }
+                if (newEtag != null) {
+                  saveETagForFile(file, newEtag)
+                }
+              }
               return@connect Files.newInputStream(file).use(parser)
             }
-
-            if (indicator != null) {
-              indicator.checkCanceled()
-              indicator.text2 = indicatorMessage
+            catch (pce: ProcessCanceledException) {
+              throw pce
             }
-            if (file == null) {
-              return@connect request.inputStream.use(parser)
+            catch (te: InterruptedIOException) {
+              LOG.infoWithDebug("Cannot load data from ${url}, interrupted", te)
+              throw te
             }
-
-            synchronized(this) {
-              LOG.debug { "Downloading new $file from Marketplace for $url" }
-              request.saveToFile(file, indicator)
-              val newEtag = connection.getHeaderField("ETag")
-              LOG.debug { "Downloaded new $file from Marketplace for $url, new etag=$newEtag" }
-              if (newEtag != null) {
-                saveETagForFile(file, newEtag)
+            catch (e: HttpRequests.HttpStatusException) {
+              LOG.infoWithDebug("Cannot load data from ${url} (statusCode=${e.statusCode})", e)
+              throw e
+            }
+            catch (e: Exception) {
+              LOG.infoWithDebug("Error reading Marketplace file: ${e} (file=${file} URL=${url})", e)
+              if (file != null && LOG.isDebugEnabled) {
+                LOG.debug("File content:\n${runCatching { Files.readString(file) }.getOrElse { IoErrorText.message(e) }}")
               }
+              throw e
             }
-            return@connect Files.newInputStream(file).use(parser)
           }
-          catch (pce: ProcessCanceledException) {
-            throw pce
-          }
-          catch (te: InterruptedIOException) {
-            LOG.infoWithDebug("Cannot load data from ${url}, interrupted", te)
-            throw te
-          }
-          catch (e: HttpRequests.HttpStatusException) {
-            LOG.infoWithDebug("Cannot load data from ${url} (statusCode=${e.statusCode})", e)
-            throw e
-          }
-          catch (e: Exception) {
-            LOG.infoWithDebug("Error reading Marketplace file: ${e} (file=${file} URL=${url})", e)
-            if (file != null && LOG.isDebugEnabled) {
-              LOG.debug("File content:\n${runCatching { Files.readString(file) }.getOrElse { IoErrorText.message(e) }}")
-            }
-            throw e
-          }
-        }
+      }
     }
   }
 
