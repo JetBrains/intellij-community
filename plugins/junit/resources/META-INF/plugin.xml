@@ -39,6 +39,7 @@
   </dependencies>
   <resource-bundle>messages.JUnitBundle</resource-bundle>
   <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="com.intellij.execution.junit.report.JUnitReportFileEditorNotificationProvider"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.AbstractAllInDirectoryConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.AllInPackageConfigurationProducer"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.PatternConfigurationProducer"/>
@@ -185,12 +186,21 @@
                  description="Scope used to detect the JUnit version in a module."/>
   </extensions>
 
+  <projectListeners>
+    <listener class="com.intellij.execution.junit.report.JUnitXmlFileEditorNotificationRefresher"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"/>
+  </projectListeners>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.junitListener" interface="com.intellij.rt.execution.junit.IDEAJUnitListener" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.testDiscoveryProducer" interface="com.intellij.execution.testDiscovery.TestDiscoveryProducer" dynamic="true"/>
   </extensionPoints>
 
   <actions>
+    <action id="JUnit.ViewReportAsTestResults"
+            class="com.intellij.execution.junit.report.JUnitViewReportAsTestResultsAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRunGroup"/>
+    </action>
     <group id="junit.exclude.group">
       <action class="com.intellij.execution.junit.JUnitExcludeFromRunAction" id="excludeFromSuite"/>
       <separator/>
