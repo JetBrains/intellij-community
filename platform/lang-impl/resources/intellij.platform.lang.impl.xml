@@ -90,6 +90,9 @@
     <extensionPoint qualifiedName="com.intellij.runInspectionDialogExtension"
                     interface="com.intellij.codeInspection.actions.RunInspectionDialogExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.problemsViewBridge"
+                    interface="com.intellij.codeInsight.daemon.impl.ProblemsViewBridge"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -141,7 +144,6 @@
     <applicationSettings service="com.intellij.refactoring.rename.impl.TextOptionsService"/>
     <applicationSettings service="com.intellij.ide.actions.searcheverywhere.footer.ActionHistoryManager"/>
     <applicationSettings service="com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerStore"/>
-    <projectSettings service="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStateManager"/>
     <projectSettings service="com.intellij.ui.tabs.PerUserFileColorModelStorageManager"/>
     <projectSettings service="com.intellij.ui.tabs.PerTeamFileColorModelStorageManager"/>
     <applicationSettings service="com.intellij.codeInsight.hints.chain.DeclarativeCallChainInlaySettings"/>

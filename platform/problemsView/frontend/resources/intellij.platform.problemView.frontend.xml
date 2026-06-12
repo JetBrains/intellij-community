@@ -1,0 +1,111 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="fleet.rpc"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.frontend"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.problemView.shared"/>
+    <module name="intellij.platform.problemView.ui"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.frontendProblemsViewContentProvider"
+                    interface="com.intellij.platform.problemsView.frontend.FrontendProblemsViewContentProvider"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlRegistrationCheck -->
+    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowProblemsEmpty" canCloseContents="true"
+                factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
+    <projectService serviceInterface="com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemsCollectorProvider"
+                    serviceImplementation="com.intellij.platform.problemsView.frontend.FrontendProjectErrorsRootProvider"/>
+    <ui.content.impl.toolWindowContentPostprocessor implementation="com.intellij.platform.problemsView.frontend.ProblemsViewToolWindowContentReplacer"/>
+    <frontendProblemsViewContentProvider implementation="com.intellij.platform.problemsView.frontend.FrontendHighlightingProblemsContentProvider"/>
+    <frontendProblemsViewContentProvider implementation="com.intellij.platform.problemsView.frontend.FrontendProjectErrorsProblemsContentProvider"/>
+  </extensions>
+
+  <actions>
+    <group id="ProblemsView.Frontend.SecondaryActions">
+      <action id="ProblemsView.Frontend.AutoscrollToSource"
+              icon="AllIcons.General.AutoscrollToSource"
+              class="com.intellij.platform.problemsView.frontend.actions.FrontendAutoscrollToSource"/>
+      <action id="ProblemsView.Frontend.OpenInPreviewTab"
+              class="com.intellij.platform.problemsView.frontend.actions.FrontendOpenInPreviewTab"/>
+      <action id="ProblemsView.Frontend.ShowPreview"
+              icon="AllIcons.Actions.PreviewDetails"
+              class="com.intellij.platform.problemsView.frontend.actions.FrontendShowPreview"/>
+    </group>
+
+    <group id="ProblemsView.Frontend.Options" icon="AllIcons.Actions.GroupBy" popup="true">
+      <separator key="group.ProblemsView.Show.text"/>
+      <group id="ProblemsView.Frontend.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
+      <separator key="group.ProblemsView.SortBy.text"/>
+      <action id="ProblemsView.Frontend.SortFoldersFirst"
+              icon="AllIcons.ObjectBrowser.SortByType"
+              class="com.intellij.platform.problemsView.frontend.actions.FrontendSortFoldersFirst"/>
+      <action id="ProblemsView.Frontend.SortBySeverity"
+              icon="AllIcons.Nodes.SortBySeverity"
+              class="com.intellij.platform.problemsView.frontend.actions.FrontendSortBySeverity"/>
+      <action id="ProblemsView.Frontend.SortByName"
+              icon="AllIcons.ObjectBrowser.Sorted"
+              class="com.intellij.platform.problemsView.frontend.actions.FrontendSortByName"/>
+      <separator/>
+      <action id="ProblemsView.Frontend.GroupByToolId"
+              icon="AllIcons.ObjectBrowser.SortByType"
+              class="com.intellij.platform.problemsView.frontend.actions.FrontendGroupByToolId"/>
+    </group>
+
+    <group id="ProblemsView.Frontend.TreePopup" popup="true"/>
+
+    <group id="ProblemsView.Frontend.Toolbar">
+      <reference ref="ProblemsView.Frontend.Options"/>
+      <reference ref="ProblemsView.Frontend.ShowPreview"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
+    </group>
+
+    <action id="ProblemsView.Frontend.QuickFixes"
+            icon="AllIcons.Actions.IntentionBulb"
+            use-shortcut-of="ShowIntentionActions"
+            class="com.intellij.platform.problemsView.frontend.actions.FrontendShowProblemsViewQuickFixesAction">
+      <add-to-group group-id="ProblemsView.Frontend.TreePopup" anchor="first"/>
+      <add-to-group group-id="ProblemsView.Frontend.Toolbar" relative-to-action="ProblemsView.Frontend.ShowPreview" anchor="before"/>
+    </action>
+
+    <action id="ProblemsView.Frontend.CopyProblemDescription"
+            icon="AllIcons.Actions.Copy"
+            use-shortcut-of="$Copy"
+            class="com.intellij.platform.problemsView.frontend.actions.FrontendCopyProblemDescriptionAction">
+      <add-to-group group-id="ProblemsView.Frontend.TreePopup" anchor="after" relative-to-action="ProblemsView.Frontend.QuickFixes"/>
+    </action>
+
+    <action id="ProblemsView.Frontend.EditSource"
+            icon="AllIcons.Actions.EditSource"
+            use-shortcut-of="EditSource"
+            class="com.intellij.platform.problemsView.frontend.actions.FrontendProblemsViewEditSourceAction">
+      <add-to-group group-id="ProblemsView.Frontend.TreePopup" anchor="after" relative-to-action="ProblemsView.Frontend.CopyProblemDescription"/>
+    </action>
+
+    <action class="com.intellij.platform.problemsView.frontend.actions.SwitchProblemsViewImplementationAction"
+            id="ProblemsView.Frontend.SwitchImplementation"
+            icon="AllIcons.Toolwindows.Problems"/>
+  </actions>
+
+</idea-plugin>

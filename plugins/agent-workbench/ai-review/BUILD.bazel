@@ -19,6 +19,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/problemsView/plugin"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -30,6 +31,8 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/projectModel-api:projectModel",
         "//platform/lang-impl",
+        "//platform/problemsView/shared",
+        "//platform/problemsView/ui",
         "//platform/analysis-api:analysis",
         "//platform/util",
         "//platform/util:util-ui",
@@ -63,6 +66,8 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/problemsView/shared:shared_test_lib",
+        "//platform/problemsView/ui:ui_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util:util_test_lib",
         "//platform/util:util-ui_test_lib",
@@ -73,6 +78,7 @@ jvm_library(
         "//platform/markdown-utils:markdown-utils_test_lib",
         "//libraries/markdown:markdown_test_lib",
         "//plugins/agent-workbench/prompt/core:core_test_lib",
+        "//platform/problemsView/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.ai.review` end

@@ -13,6 +13,7 @@ private val HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES: Set<String> = setOf(
   "intellij.platform.bookmarks.plugin",
   "intellij.platform.execution.serviceView.plugin",
   "intellij.platform.navbar.plugin",
+  "intellij.platform.problemView.plugin",
   "intellij.platform.recentFiles.plugin",
   "intellij.platform.structuralSearch.plugin",
   "intellij.platform.structureView.plugin",

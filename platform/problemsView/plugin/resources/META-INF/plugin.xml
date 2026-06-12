@@ -1,0 +1,17 @@
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.problemView.plugin</id>
+  <name>Problems View</name>
+  <description>Provides Problems View platform modules for the IDE.</description>
+  <vendor>JetBrains</vendor>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.problemView.core" loading="required"/>
+    <module name="intellij.platform.problemView.collector"/>
+    <module name="intellij.platform.problemView.shared"/>
+    <module name="intellij.platform.problemView.ui"/>
+    <module name="intellij.platform.problemView.backend"/>
+    <module name="intellij.platform.problemView.buildView"/>
+    <module name="intellij.platform.problemView.frontend"/>
+  </content>
+</idea-plugin>

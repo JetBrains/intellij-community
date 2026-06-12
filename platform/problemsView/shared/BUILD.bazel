@@ -1,6 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
-### auto-generated section `build intellij.platform.problemsView.shared` start
+### auto-generated section `build intellij.platform.problemView.shared` start
 
 jvm_library(
     name = "shared",
@@ -12,7 +12,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.problemsView.shared",
+    module_name = "intellij.platform.problemView.shared",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -21,6 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/kernel/shared:kernel",
+        "@lib//:jetbrains-annotations",
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/core-ui",
@@ -49,7 +50,7 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    module_name = "intellij.platform.problemsView.shared",
+    module_name = "intellij.platform.problemView.shared",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -74,13 +75,13 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
     ],
 )
-### auto-generated section `build intellij.platform.problemsView.shared` end
+### auto-generated section `build intellij.platform.problemView.shared` end
 
-### auto-generated section `iml intellij.platform.problemsView.shared` start
+### auto-generated section `iml intellij.platform.problemView.shared` start
 exports_files(
     [
-        "intellij.platform.problemsView.shared.iml",
+        "intellij.platform.problemView.shared.iml",
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `iml intellij.platform.problemsView.shared` end
+### auto-generated section `iml intellij.platform.problemView.shared` end

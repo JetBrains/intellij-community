@@ -3,7 +3,7 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
-import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
+import com.intellij.codeInsight.daemon.impl.ProblemsViewBridge;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -412,7 +412,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     //noinspection removal
     return myGlobalInspectionContext.getUIOptions().AUTOSCROLL_TO_SOURCE &&
            (activeToolWindowId == null
-            || activeToolWindowId.equals(ProblemsView.ID)
+            || activeToolWindowId.equals(ProblemsViewBridge.getToolWindowId())
             // TODO: compatibility mode for Rider where there's no problems view; remove in 2021.2
             // see RIDER-59000
             || activeToolWindowId.equals(ToolWindowId.INSPECTION));

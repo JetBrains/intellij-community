@@ -122,8 +122,6 @@ object CommunityModuleSets {
     // TODO: may be debugger shouldn't be essential? E.g. gateway doesn't need it.
     moduleSet(debugger())
 
-    moduleSet(problemsView())
-
     // The loading="embedded" attribute is required here because the intellij.platform.find module (which is loaded
     // in embedded mode) has a compile dependency on intellij.platform.scopes. Without marking scopes as embedded,
     // this would cause NoClassDefFoundError at runtime when classes from find try to use classes from scopes.
@@ -175,15 +173,6 @@ object CommunityModuleSets {
     embeddedModule("intellij.platform.debugger.impl.ui")
     embeddedModule("intellij.platform.debugger")
     embeddedModule("intellij.platform.debugger.impl")
-  }
-
-  /**
-   * Provides the platform for Problems View ToolWindow.
-   */
-  fun problemsView(): ModuleSet = moduleSet("problemsView", includeDependencies = true) {
-    module("intellij.platform.problemsView.frontend")
-    module("intellij.platform.problemsView.backend")
-    module("intellij.platform.problemsView.shared")
   }
 
   // endregion

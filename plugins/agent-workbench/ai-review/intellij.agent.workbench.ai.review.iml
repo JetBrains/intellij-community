@@ -17,6 +17,8 @@
     <orderEntry type="module" module-name="intellij.platform.editor.ui" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.problemView.shared" />
+    <orderEntry type="module" module-name="intellij.platform.problemView.ui" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
@@ -27,5 +29,6 @@
     <orderEntry type="module" module-name="intellij.platform.markdown.utils" />
     <orderEntry type="module" module-name="intellij.libraries.markdown" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
+    <orderEntry type="module" module-name="intellij.platform.problemView.plugin" scope="RUNTIME" />
   </component>
 </module>

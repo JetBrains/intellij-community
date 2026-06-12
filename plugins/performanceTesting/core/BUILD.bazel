@@ -61,6 +61,8 @@ jvm_library(
         "//platform/platform-impl/codeinsight-inline:ide-codeinsight-inline",
         "//platform/platform-impl/concurrency",
         "//platform/platform-impl/internal",
+        "//platform/problemsView/shared",
+        "//platform/problemsView/ui",
         "//platform/progress/shared:ide-progress",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-impl",

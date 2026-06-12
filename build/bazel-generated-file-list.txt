@@ -806,8 +806,13 @@ platform/polySymbols
 platform/polySymbols/backend
 platform/pratt
 platform/problemsView/backend
+platform/problemsView/buildView
+platform/problemsView/collector
+platform/problemsView/core
 platform/problemsView/frontend
+platform/problemsView/plugin
 platform/problemsView/shared
+platform/problemsView/ui
 platform/progress/backend
 platform/progress/shared
 platform/project-frame

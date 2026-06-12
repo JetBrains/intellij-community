@@ -6,7 +6,7 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
+import com.intellij.codeInsight.daemon.impl.ProblemsViewBridge;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.codeInspection.InspectionManagerBase;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -41,7 +41,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myContentManager = NotNullLazyValue.createValue(() -> {
         ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-        toolWindowManager.registerToolWindow(ProblemsView.ID, true, ToolWindowAnchor.BOTTOM, project);
+        toolWindowManager.registerToolWindow(ProblemsViewBridge.getToolWindowId(), true, ToolWindowAnchor.BOTTOM, project);
         return ContentFactory.getInstance().createContentManager(new TabbedPaneContentUI(), true, project);
       });
     }
@@ -51,7 +51,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
   }
 
   protected @NotNull ContentManager getProblemsViewContentManager(@NotNull Project project) {
-    ToolWindow toolWindow = Objects.requireNonNull(ProblemsView.getToolWindow(project));
+    ToolWindow toolWindow = Objects.requireNonNull(ProblemsViewBridge.getToolWindow(project));
     ContentManager contentManager = toolWindow.getContentManager();
     ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
     return contentManager;

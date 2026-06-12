@@ -1,0 +1,74 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.problemView.collector` start
+
+jvm_library(
+    name = "collector",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.problemView.collector",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/kernel/shared:kernel",
+        "//platform/problemsView/shared",
+        "//libraries/kotlinx/coroutines/core",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/projectModel-api:projectModel",
+        "//platform/util",
+        "//platform/util/coroutines",
+    ],
+)
+
+jvm_library(
+    name = "collector_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.problemView.collector",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":collector",
+        "//platform/kernel/shared:kernel_test_lib",
+        "//platform/problemsView/shared:shared_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/projectModel-api:projectModel_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util/coroutines:coroutines_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.problemView.collector` end
+
+### auto-generated section `iml intellij.platform.problemView.collector` start
+exports_files(
+    [
+        "intellij.platform.problemView.collector.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.problemView.collector` end

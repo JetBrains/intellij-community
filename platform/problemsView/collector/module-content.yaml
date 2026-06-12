@@ -1,0 +1,3 @@
+- name: lib/modules/intellij.platform.problemView.collector.jar
+  contentModules:
+  - name: intellij.platform.problemView.collector

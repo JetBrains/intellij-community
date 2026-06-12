@@ -9,6 +9,8 @@
     <module name="intellij.java.aetherDependencyResolver"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.ui"/>
+    <module name="intellij.platform.problemView.shared"/>
+    <module name="intellij.platform.problemView.ui"/>
   </dependencies>
   <!-- endregion -->
 

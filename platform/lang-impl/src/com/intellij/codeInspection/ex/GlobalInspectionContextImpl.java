@@ -4,7 +4,7 @@ package com.intellij.codeInspection.ex;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
-import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
+import com.intellij.codeInsight.daemon.impl.ProblemsViewBridge;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
@@ -231,7 +231,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     contentManager.setSelectedContent(myContent);
 
     ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(getProject());
-    ToolWindow toolWindow = toolWindowManager.getToolWindow(ProblemsView.ID);
+    ToolWindow toolWindow = toolWindowManager.getToolWindow(ProblemsViewBridge.getToolWindowId());
     if (toolWindow != null) {
       view.initAdditionalGearActions(toolWindow);
       toolWindow.activate(null);

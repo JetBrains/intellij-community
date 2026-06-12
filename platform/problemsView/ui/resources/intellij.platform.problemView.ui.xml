@@ -1,0 +1,110 @@
+<idea-plugin visibility="public">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.libraries.kotlinx.serialization.core"/>
+    <module name="intellij.platform.analysis"/>
+    <module name="intellij.platform.analysis.impl"/>
+    <module name="intellij.platform.codeStyle"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor"/>
+    <module name="intellij.platform.editor.ex"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.concurrency"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.indexing"/>
+    <module name="intellij.platform.kernel"/>
+    <module name="intellij.platform.lang"/>
+    <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.problemView.collector"/>
+    <module name="intellij.platform.problemView.shared"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.usageView"/>
+    <module name="intellij.platform.usageView.impl"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.problemsViewPanelProvider"
+                    interface="com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider"
+                    area="IDEA_PROJECT"
+                    dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.problemsViewHighlightingProblemFactory"
+                    interface="com.intellij.analysis.problemsView.toolWindow.HighlightingProblemFactory"
+                    dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <problemsViewPanelProvider implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewHighlightingPanelProvider"/>
+    <problemsViewHighlightingProblemFactory id="default" implementation="com.intellij.analysis.problemsView.toolWindow.DefaultHighlightingProblemFactory"/>
+    <problemsViewPanelProvider implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewProjectErrorsPanelProvider"/>
+    <problemsViewBridge implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewBridgeImpl"/>
+    <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewIconUpdater" open="true"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStatsCollector"/>
+    <projectSettings service="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStateManager"/>
+  </extensions>
+
+  <actions>
+    <group id="ProblemsView.ToolWindow.SecondaryActions">
+      <action id="ProblemsView.AutoscrollToSource"
+              icon="AllIcons.General.AutoscrollToSource"
+              class="com.intellij.analysis.problemsView.toolWindow.AutoscrollToSource"/>
+      <action id="ProblemsView.OpenInPreviewTab"
+              class="com.intellij.analysis.problemsView.toolWindow.OpenInPreviewTab"/>
+      <action id="ProblemsView.ShowPreview"
+              icon="AllIcons.Actions.PreviewDetails"
+              class="com.intellij.analysis.problemsView.toolWindow.ShowPreview"/>
+    </group>
+
+    <group id="ProblemsView.ToolWindow.Toolbar">
+      <group id="ProblemsView.Options" icon="AllIcons.Actions.GroupBy" popup="true">
+        <separator key="group.ProblemsView.Show.text"/>
+        <group id="ProblemsView.SeverityFilters" class="com.intellij.analysis.problemsView.toolWindow.SeverityFiltersActionGroup"/>
+        <separator key="group.ProblemsView.SortBy.text"/>
+        <action id="ProblemsView.SortFoldersFirst"
+                icon="AllIcons.ObjectBrowser.SortByType"
+                class="com.intellij.analysis.problemsView.toolWindow.SortFoldersFirst"/>
+        <action id="ProblemsView.SortBySeverity"
+                icon="AllIcons.Nodes.SortBySeverity"
+                class="com.intellij.analysis.problemsView.toolWindow.SortBySeverity"/>
+        <action id="ProblemsView.SortByName"
+                icon="AllIcons.ObjectBrowser.Sorted"
+                class="com.intellij.analysis.problemsView.toolWindow.SortByName"/>
+        <separator/>
+        <action id="ProblemsView.GroupByToolId"
+                icon="AllIcons.ObjectBrowser.SortByType"
+                class="com.intellij.analysis.problemsView.toolWindow.GroupByToolId"/>
+      </group>
+      <action id="ProblemsView.QuickFixes"
+              icon="AllIcons.Actions.IntentionBulb"
+              use-shortcut-of="ShowIntentionActions"
+              class="com.intellij.analysis.problemsView.toolWindow.ShowProblemsViewQuickFixesAction"/>
+      <reference ref="ProblemsView.ShowPreview"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
+    </group>
+
+    <group id="ProblemsView.ToolWindow.TreePopup">
+      <reference ref="ProblemsView.QuickFixes"/>
+      <action id="ProblemsView.CopyProblemDescription"
+              icon="AllIcons.Actions.Copy"
+              use-shortcut-of="$Copy"
+              class="com.intellij.analysis.problemsView.toolWindow.CopyProblemDescriptionAction"/>
+      <reference ref="EditSource"/>
+    </group>
+  </actions>
+</idea-plugin>

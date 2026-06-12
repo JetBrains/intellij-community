@@ -3,7 +3,6 @@
 
 package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.analysis.problemsView.toolWindow.ProblemsView
 import com.intellij.codeInsight.daemon.DaemonBundle
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter
@@ -583,7 +582,7 @@ open class TrafficLightRenderer private constructor(
       val file = getPsiFile()
       val virtualFile = file?.getVirtualFile()
       val document = file?.getViewProvider()?.getDocument()
-      ProblemsView.toggleCurrentFileProblems(project, virtualFile, document)
+      ProblemsViewBridge.toggleCurrentFileProblemsIfAvailable(project, virtualFile, document)
     }
   }
 

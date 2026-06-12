@@ -67,6 +67,7 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.gradle.java.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/problemsView/collector"],
 )
 
 jvm_library(
@@ -89,6 +90,7 @@ jvm_library(
         # do not sort,
         ":kotlin-gradle-java-tests",
         "//platform/ide-core:ide-core_test_lib",
+        "//platform/problemsView/collector:collector_test_lib",
     ],
     deps = [
         # do not sort,
