@@ -16,15 +16,19 @@ import java.util.concurrent.TimeoutException
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration
 
+@ApiStatus.Internal
 fun ObservableOperationTrace.getOperationSchedulePromise(parentDisposable: Disposable): Promise<Nothing?> =
   scheduleObservable.getPromise(parentDisposable)
 
+@ApiStatus.Internal
 fun ObservableOperationTrace.getOperationStartPromise(parentDisposable: Disposable): Promise<Nothing?> =
   startObservable.getPromise(parentDisposable)
 
+@ApiStatus.Internal
 fun ObservableOperationTrace.getOperationFinishPromise(parentDisposable: Disposable): Promise<Nothing?> =
   finishObservable.getPromise(parentDisposable)
 
+@ApiStatus.Internal
 fun ObservableOperationTrace.getOperationCompletionPromise(parentDisposable: Disposable): Promise<Nothing?> =
   getPromise(parentDisposable) { disposable, listener ->
     withCompletedOperation(disposable) {
