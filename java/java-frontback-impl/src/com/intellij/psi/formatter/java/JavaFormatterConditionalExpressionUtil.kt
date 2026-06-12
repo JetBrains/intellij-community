@@ -42,8 +42,6 @@ internal object JavaFormatterConditionalExpressionUtil {
     }
     if (child == null) return false
     val parent = child.parent
-    if (parent !is PsiPolyadicExpression) return false
-    if (parent !is CompositeElement) return false
-    return true
+    return parent is PsiPolyadicExpression
   }
 }
