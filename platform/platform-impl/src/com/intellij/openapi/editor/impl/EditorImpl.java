@@ -182,6 +182,7 @@ import com.intellij.ui.codeFloatingToolbar.CodeFloatingToolbar;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.ScrollBarPainter;
 import com.intellij.ui.dsl.builder.DslComponentProperty;
 import com.intellij.ui.dsl.builder.VerticalComponentGap;
 import com.intellij.ui.mac.MacGestureSupportInstaller;
@@ -3885,7 +3886,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     private OpaqueAwareScrollBar(@JdkConstants.AdjustableOrientation int orientation) {
       super(orientation);
-      putClientProperty(ColorKey.FUNCTION_KEY, (Function<ColorKey, Color>)key -> getColorsScheme().getColor(key));
+      putClientProperty(ColorKey.FUNCTION_KEY, (Function<ColorKey, Color>)key -> {
+        if (key == ScrollBarPainter.BACKGROUND) {
+          return getBackgroundColor();
+        }
+        return getColorsScheme().getColor(key);
+      });
       addPropertyChangeListener("opaque", event -> {
         revalidate();
         repaint();
