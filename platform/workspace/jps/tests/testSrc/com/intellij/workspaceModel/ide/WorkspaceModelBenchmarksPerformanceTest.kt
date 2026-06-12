@@ -91,7 +91,6 @@ import kotlin.time.measureTime
 
 @StressTestApplication
 @PerformanceUnitTest
-@Suppress("KotlinPrintToLogpoint")
 class WorkspaceModelBenchmarksPerformanceTest {
   @JvmField
   @RegisterExtension
@@ -106,7 +105,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
   @BeforeEach
   fun beforeTest() {
-    Assumptions.assumeTrue(UsefulTestCase.IS_UNDER_TEAMCITY, "Skip slow test on local run")
+    Assumptions.assumeTrue(UsefulTestCase.IS_UNDER_TEAMCITY, "Skip slow test on a local run")
     println("> Benchmark test started")
   }
 
@@ -658,7 +657,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }.warmupIterations(0).attempts(1).startAsSubtest()
 
-    println("Modify after second read")
+    println("Modify after the second read")
     // Modify snapshots
     val newSnapshots = snapshots.map { snapshot ->
       val builder = snapshot.toBuilder()
@@ -682,10 +681,10 @@ class WorkspaceModelBenchmarksPerformanceTest {
       builder.toSnapshot()
     }
 
-    println("Finish second modification")
+    println("Finish the second modification")
     Assertions.assertFalse(CacheResetTracker.cacheReset)
 
-    println("Start third read...")
+    println("Start the third read...")
     // Do request after modifications
     Benchmark.newBenchmark("${testInfo.displayName} - Third Access - After Modification") {
       newSnapshots.forEach { snapshot ->
@@ -695,7 +694,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }.warmupIterations(0).attempts(1).startAsSubtest()
 
-    println("Modify snapshots second time")
+    println("Modify snapshots the second time")
     val snapshotsWithLotOfUpdates = newSnapshots.map { snapshot ->
       var currentSnapshot = snapshot
       repeat(smallBaseSize) { outerLoop ->
@@ -733,7 +732,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       }
     }.warmupIterations(0).attempts(1).startAsSubtest()
 
-    println("Modify snapshots third time")
+    println("Modify snapshots the third time")
     val snapshotsWithTonsOfUpdates = snapshotsWithLotOfUpdates.map { snapshot ->
       var currentSnapshot = snapshot
       repeat(smallBaseSize + 1) { outerLoop ->
@@ -750,7 +749,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
 
     Assertions.assertTrue(CacheResetTracker.cacheReset)
 
-    println("Read fourth time")
+    println("Read the fourth time")
     Benchmark.newBenchmark("${testInfo.displayName} - Fifth Access - After a Lot of Modifications") {
       snapshotsWithTonsOfUpdates.forEach { snapshot ->
         snapshot.cached(namesOfNamedEntities)
@@ -843,7 +842,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       val time2 = measureTime {
         snapshot.cached(q)
       }
-      println("First recalculate. size: $size, time: $time2.")
+      println("First recalculate: size: $size, time: $time2.")
     }.warmupIterations(0).attempts(1).start()
 
     println()
@@ -921,7 +920,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
           .map { it + "XXXX" }
           .toList()
       }
-      println("Raw recalculate. size: $size, time: $time.")
+      println("Raw recalculate: size: $size, time: $time.")
     }.warmupIterations(0).attempts(1).start()
 
     println()
@@ -930,7 +929,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
       val time2 = measureTime {
         snapshot.cached(q)
       }
-      println("First recalculate. size: $size, time: $time2.")
+      println("First recalculate: size: $size, time: $time2.")
     }.warmupIterations(0).attempts(1).start()
 
     println()
@@ -1228,7 +1227,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     var cache = cache()
     cache.cached(q, snapshot, null)
 
-    Benchmark.newBenchmark("Cache - unrelated modifications 1000 times") {
+    Benchmark.newBenchmark(@Suppress("GrazieInspection") "Cache - unrelated modifications 1000 times") {
       repeat(1000) { count ->
         val newBuilder = snapshot.toBuilder().also { builder ->
           if (count % 2 == 0) {
@@ -1261,7 +1260,7 @@ class WorkspaceModelBenchmarksPerformanceTest {
     var cache = cache()
     cache.cached(q, snapshot, null)
 
-    Benchmark.newBenchmark("Cache - related modifications 1000 times") {
+    Benchmark.newBenchmark(@Suppress("GrazieInspection") "Cache - related modifications 1000 times") {
       repeat(1000) { count ->
         val newBuilder = snapshot.toBuilder().also { builder ->
           if (count % 2 == 0) {

@@ -2,7 +2,6 @@
 @file:ApiStatus.Internal
 @file:JvmName("Main")
 @file:OptIn(LowLevelLocalMachineAccess::class)
-@file:Suppress("KotlinPrintToLogpoint")
 package com.intellij.idea
 
 import com.intellij.DynamicBundle
@@ -178,14 +177,8 @@ private suspend fun startApp(args: List<String>, mainScope: CoroutineScope, busy
     }
 
     startApplication(
-      scope = this,
-      args = args,
-      configImportNeededDeferred = configImportNeededDeferred,
-      customTargetDirectoryToImportConfig = customTargetDirectoryToImportConfig,
-      mainClassLoaderDeferred = mainClassLoaderDeferred,
-      appStarterDeferred = appStarterDeferred,
-      mainScope = mainScope,
-      busyThread = busyThread,
+      scope = this, args, configImportNeededDeferred, customTargetDirectoryToImportConfig, mainClassLoaderDeferred,
+      appStarterDeferred, mainScope, busyThread
     )
   }
 }
@@ -359,14 +352,10 @@ private fun printCommands() {
   pluginSet.enabledPlugins.forEach { plugin ->
     val startersWithOwners = (sequenceOf(plugin) + plugin.contentModules.asSequence())
       .flatMap { owningModule ->
-        owningModule.extensions["com.intellij.appStarter"]
-          .orEmpty()
-          .asSequence()
-          .map { it to owningModule }
+        owningModule.extensions["com.intellij.appStarter"].orEmpty().map { it to owningModule }
       }
       .filter { (starter, _) -> isInternal || !starter.element?.attributes?.get("internal").toBoolean() }
       .toList()
-
     if (startersWithOwners.isNotEmpty()) {
       println("=== ${if (plugin.pluginId == PluginManagerCore.CORE_ID) "Built-in" else plugin.name} commands")
       startersWithOwners.forEach { (starter, owningModule) ->

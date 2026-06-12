@@ -166,7 +166,10 @@ private suspend fun initAwtToolkit(busyThread: Thread) {
       sun.awt.AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread)
     }
     catch (e: IllegalAccessError) {
-      throw RuntimeException("Required '--add-opens' option wasn't added to JVM arguments. If you're running the IDE from sources, most probably it means that 'DevKit' plugin isn't enabled", e)
+      throw RuntimeException(
+        "Required '--add-opens' options weren't added to JVM arguments." +
+        " If you're running the IDE from sources, most probably it means that the 'DevKit' plugin isn't enabled",
+      e)
     }
   }
 

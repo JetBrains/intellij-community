@@ -17,7 +17,7 @@ import java.util.Collection;
 public final class DevMainKt {
   private DevMainKt() { }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "JavaPrintToLogpoint"})
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   static void main(String[] rawArgs) throws Throwable {
     var start = System.currentTimeMillis();
 

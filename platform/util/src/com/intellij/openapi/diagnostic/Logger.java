@@ -89,7 +89,7 @@ public abstract class Logger {
     ourFactory = factory;
   }
 
-  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "JavaPrintToLogpoint"})
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void logFactoryChanged(Class<? extends Factory> factory) {
     if (Boolean.getBoolean("idea.log.logger.factory.changed")) {
       System.out.println(
@@ -517,7 +517,7 @@ public abstract class Logger {
   @Contract("null -> null; !null -> !null")
   protected static @Nullable Throwable ensureNotControlFlow(@Nullable Throwable t) {
     return t != null && shouldRethrow(t) ?
-           new Throwable("Control-flow exceptions (e.g. this " + t.getClass() + ") should never be logged. " +
+           new Throwable("Control-flow exceptions (e.g., this " + t.getClass() + ") should never be logged. " +
                          "Instead, these should have been rethrown if caught.", t) :
            t;
   }

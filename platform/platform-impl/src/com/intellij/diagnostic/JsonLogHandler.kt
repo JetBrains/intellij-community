@@ -14,7 +14,6 @@ internal class JsonLogHandler : StreamHandler() {
     override fun format(record: LogRecord): String = formatMessage(record)
   }
 
-  @Suppress("KotlinPrintToLogpoint")
   override fun publish(record: LogRecord) {
     println(objectMapper.writeValueAsString(mapOf(
       "time" to record.millis,
