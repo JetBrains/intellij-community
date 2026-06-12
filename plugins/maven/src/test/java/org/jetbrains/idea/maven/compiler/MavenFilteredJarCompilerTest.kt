@@ -3,13 +3,37 @@ package org.jetbrains.idea.maven.compiler
 
 import com.intellij.maven.testFramework.MavenCompilingTestCase
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.maven.fixtures.MAVEN_COMPILER_PROPERTIES
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertDoesNotExist
+import org.jetbrains.idea.maven.fixtures.assertExists
+import org.jetbrains.idea.maven.fixtures.compileModules
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class MavenFilteredJarCompilerTest : MavenCompilingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenFilteredJarCompilerTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
 
   @Test
   fun shouldCompileAdditionalJar() = runBlocking() {
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -42,7 +66,7 @@ class MavenFilteredJarCompilerTest : MavenCompilingTestCase() {
     </build>
     """.trimIndent())
 
-    createProjectSubFile("src/main/java/org/service/MyService.java", """
+    maven.createProjectSubFile("src/main/java/org/service/MyService.java", """
       package org.service;
 
       public interface MyService {
@@ -50,7 +74,7 @@ class MavenFilteredJarCompilerTest : MavenCompilingTestCase() {
       }
     """.trimIndent())
 
-    createProjectSubFile("src/main/java/org/service/impl/MyServiceImpl.java", """
+    maven.createProjectSubFile("src/main/java/org/service/impl/MyServiceImpl.java", """
       package org.service.impl;
       import org.service.MyService;
       
@@ -63,18 +87,18 @@ class MavenFilteredJarCompilerTest : MavenCompilingTestCase() {
     """.trimIndent())
 
 
-    compileModules("project")
+    maven.compileModules("project")
 
-    assertExists("target/classes/org/service/MyService.class")
-    assertExists("target/classes/org/service/impl/MyServiceImpl.class")
+    maven.assertExists("target/classes/org/service/MyService.class")
+    maven.assertExists("target/classes/org/service/impl/MyServiceImpl.class")
 
-    assertExists("target/classes-jar-only-interfaces/org/service/MyService.class")
-    assertDoesNotExist("target/classes-jar-only-interfaces/org/service/impl/MyServiceImpl.class")
+    maven.assertExists("target/classes-jar-only-interfaces/org/service/MyService.class")
+    maven.assertDoesNotExist("target/classes-jar-only-interfaces/org/service/impl/MyServiceImpl.class")
   }
 
   @Test
   fun shouldProcessResourcesForAdditionalResourceDirectories() = runBlocking() {
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -127,22 +151,22 @@ class MavenFilteredJarCompilerTest : MavenCompilingTestCase() {
         </plugins>
     </build>
     """.trimIndent())
-    createProjectSubFile("src/testFixtures/java/org/service/MyTestFixture.java", """
+    maven.createProjectSubFile("src/testFixtures/java/org/service/MyTestFixture.java", """
       package org.service;
         public class MyTestFixture {
       }
     """.trimIndent())
 
-    createProjectSubFile("src/testFixtures/resources/docker/mongo.properties", "mongo=mongo:6.0.6\n")
+    maven.createProjectSubFile("src/testFixtures/resources/docker/mongo.properties", "mongo=mongo:6.0.6\n")
 
 
-    compileModules("project")
+    maven.compileModules("project")
 
-    assertExists("target/test-classes/org/service/MyTestFixture.class")
-    assertExists("target/test-classes/docker/mongo.properties")
+    maven.assertExists("target/test-classes/org/service/MyTestFixture.class")
+    maven.assertExists("target/test-classes/docker/mongo.properties")
 
-    assertExists("target/test-classes-jar-tests/org/service/MyTestFixture.class")
-    assertExists("target/test-classes-jar-tests/docker/mongo.properties")
+    maven.assertExists("target/test-classes-jar-tests/org/service/MyTestFixture.class")
+    maven.assertExists("target/test-classes-jar-tests/docker/mongo.properties")
   }
 
 }
