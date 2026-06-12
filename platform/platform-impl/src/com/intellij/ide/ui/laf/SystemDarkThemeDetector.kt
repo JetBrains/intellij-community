@@ -25,17 +25,15 @@ import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
 import java.util.Locale
 import java.util.function.BiConsumer
-import java.util.function.Consumer
+
+@ApiStatus.Internal
+fun isSystemThemeDark(): Boolean? = SystemDarkThemeDetector.createParametrizedDetector(null).isDark()
 
 @ApiStatus.Internal
 sealed class SystemDarkThemeDetector {
   @ApiStatus.Internal
   companion object {
-    fun createDetector(syncFunction: Consumer<Boolean>): SystemDarkThemeDetector {
-      return createParametrizedDetector { isDark, _ -> syncFunction.accept(isDark) }
-    }
-
-    fun createParametrizedDetector(syncFunction: BiConsumer<Boolean, Boolean?>): SystemDarkThemeDetector {
+    fun createParametrizedDetector(syncFunction: BiConsumer<Boolean, Boolean?>?): SystemDarkThemeDetector {
       return when {
         SystemInfoRt.isMac -> MacOSDetector(syncFunction)
         SystemInfo.isWin10OrNewer -> WindowsDetector(syncFunction)
@@ -60,20 +58,20 @@ sealed class SystemDarkThemeDetector {
 }
 
 private abstract class AsyncDetector : SystemDarkThemeDetector() {
-  abstract val syncFunction: BiConsumer<Boolean, Boolean?>
+  abstract val syncFunction: BiConsumer<Boolean, Boolean?>?
 
   override fun check(parameter: Boolean?) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       RegistryManager.getInstance()
       val isDark = isDark() ?: return@launch
       withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
-        syncFunction.accept(isDark, parameter)
+        syncFunction?.accept(isDark, parameter)
       }
     }
   }
 }
 
-private class MacOSDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>) : AsyncDetector() {
+private class MacOSDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>?) : AsyncDetector() {
   override val detectionSupported: Boolean
     get() = SystemInfoRt.isMac && JnaLoader.isLoaded()
 
@@ -142,7 +140,7 @@ private class MacOSDetector(override val syncFunction: BiConsumer<Boolean, Boole
   private fun useAppearanceApi() = SystemInfo.isMacOSCatalina && "system".equals(System.getProperty("apple.awt.application.appearance"), true)
 }
 
-private class WindowsDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>) : AsyncDetector() {
+private class WindowsDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>?) : AsyncDetector() {
   override val detectionSupported: Boolean
     get() = SystemInfo.isWin10OrNewer && JnaLoader.isLoaded()
 
@@ -153,7 +151,7 @@ private class WindowsDetector(override val syncFunction: BiConsumer<Boolean, Boo
 
   init {
     Toolkit.getDefaultToolkit().addPropertyChangeListener("win.lightTheme.on") { e: PropertyChangeEvent ->
-      ApplicationManager.getApplication().invokeLater({ syncFunction.accept(e.newValue != true, null) }, ModalityState.any())
+      ApplicationManager.getApplication().invokeLater({ syncFunction?.accept(e.newValue != true, null) }, ModalityState.any())
     }
   }
 
@@ -167,7 +165,7 @@ private class WindowsDetector(override val syncFunction: BiConsumer<Boolean, Boo
   }
 }
 
-private class LinuxThemeDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>) : AsyncDetector() {
+private class LinuxThemeDetector(override val syncFunction: BiConsumer<Boolean, Boolean?>?) : AsyncDetector() {
 
   private val service: DBusSettingsMonitorService
     get() = service()
@@ -179,7 +177,7 @@ private class LinuxThemeDetector(override val syncFunction: BiConsumer<Boolean, 
 
   init {
     service.setDarkSchemeListener {
-      syncFunction.accept(it, null)
+      syncFunction?.accept(it, null)
     }
   }
 
