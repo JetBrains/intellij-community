@@ -13,9 +13,6 @@
     <languageInjectionPerformer language="kotlin"
                                 implementationClass="org.jetbrains.kotlin.idea.k2.injection.K2KotlinLanguageInjectionPerformer"/>
     <multiHostInjector implementation="org.jetbrains.kotlin.idea.k2.injection.K2KDocCodeBlockLanguageInjector"/>
-    <lang.elementManipulator
-            forClass="org.jetbrains.kotlin.kdoc.psi.impl.KDocSection"
-            implementationClass="org.jetbrains.kotlin.idea.k2.injection.KDocSectionManipulator"/>
     <regExpLanguageHost forClass="org.jetbrains.kotlin.psi.KtStringTemplateExpression"
                         implementationClass="com.intellij.psi.impl.JavaRegExpHost"/>
 
