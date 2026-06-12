@@ -211,3 +211,26 @@ suspend fun MavenImportingTestFixture.downloadArtifacts(): ArtifactDownloadResul
       .build()
   )
 }
+
+suspend fun MavenImportingTestFixture.doImportProjectsAsync(files: List<VirtualFile>, failOnReadingError: Boolean, vararg profiles: String) {
+  doImportProjectsAsync(files, failOnReadingError, emptyList(), *profiles)
+}
+
+suspend fun MavenImportingTestFixture.doImportProjectsAsync(
+  files: List<VirtualFile>, failOnReadingError: Boolean,
+  disabledProfiles: List<String>, vararg profiles: String,
+) {
+  org.junit.jupiter.api.Assertions.assertFalse(com.intellij.openapi.application.ApplicationManager.getApplication().isWriteAccessAllowed)
+  initProjectsManager(false)
+  projectsManager.state.originalFiles = files.map { it.path }
+  projectsManager.explicitProfiles = org.jetbrains.idea.maven.model.MavenExplicitProfiles(profiles.toList(), disabledProfiles)
+  updateAllProjects()
+  if (failOnReadingError) {
+    for (each in projectsManager.projectsTree.projects) {
+      org.junit.jupiter.api.Assertions.assertFalse(each.hasReadingErrors(), "Failed to import Maven project: " + each.problems)
+    }
+  }
+}
+
+fun MavenTestFixture.getRelativePath(base: java.nio.file.Path, path: String): String =
+  com.intellij.openapi.util.io.FileUtil.toCanonicalPath(base.relativize(java.nio.file.Path.of(path)).toString())

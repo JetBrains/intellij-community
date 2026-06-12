@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.fixtures
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
@@ -13,8 +13,8 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.fixtures.impl.TempDirTestFixtureImpl
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.testFramework.junit5.fixture.testFixture
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.model.MavenConstants
 import java.nio.file.Path
@@ -69,17 +69,17 @@ private fun mavenFixtureImpl(
   useCodeInsight: Boolean = false,
   indices: MavenDomTestFixtureIndices? = null,
 ): TestFixture<MavenDomTestFixture> {
-  val dirFixture = tempPathFixture()
+  val dirFixture = tempPathFixture(subdirName = "project")
   // The project must be opened so that the hosted CodeInsightTestFixture can commit documents and run
   // completion / highlighting against it.
   // Put the project base in its own per-run sub-directory so the directory ABOVE the project pom is a fresh, per-run
   // temp dir rather than the shared system temp root. Some tests legitimately write a pom OUTSIDE the project (e.g.
   // `createPomFile(projectRoot.parent, ...)` to test parent resolution by relativePath); without this, that write
   // lands in the shared temp root and leaks across runs (poisoning Maven 4's default `../pom.xml` parent inheritance).
-  val projectFixture = projectFixture(pathFixture = tempPathFixture(subdirName = "project"), openAfterCreation = true)
+  val projectFixture = projectFixture(pathFixture = dirFixture, openAfterCreation = true)
   return testFixture {
-    val dir = dirFixture.init()
     val project = projectFixture.init()
+    val dir = dirFixture.get().parent
     val fixture = MavenDomTestFixtureImpl(
       project,
       dir,
