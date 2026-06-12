@@ -18,7 +18,6 @@ private val HAND_WRITTEN_MODULE_SET_PLUGIN_MODULES: Set<String> = setOf(
   "intellij.platform.structureView.plugin",
   "intellij.platform.ssh.plugin",
   "intellij.platform.todo.plugin",
-  "intellij.platform.vcs.frontend.plugin",
   "intellij.platform.vcs.split.plugin",
 )
 

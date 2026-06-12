@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="intellij.platform.structuralSearch.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.vcs.frontend.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.clouds" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard.backend" scope="RUNTIME" />
