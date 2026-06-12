@@ -2,6 +2,9 @@
 
   <resource-bundle>messages.ActionsBundle</resource-bundle>
 
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
   <projectListeners>
     <listener class="com.intellij.debugger.impl.DebuggerManagerImpl$DebuggerRunContentWithExecutorListener" topic="com.intellij.xdebugger.XDebuggerManagerListener"/>
     <listener class="com.intellij.debugger.impl.HotSwapManager$HotSwapDebuggerManagerListener"
