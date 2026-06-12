@@ -190,7 +190,7 @@ Backend dependency 'intellij.platform.backend' from containing plugin descriptor
             <module name="intellij.platform.frontend"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.localInspection' can only be used in 'backend' module type. Actual module type is 'frontend'.
+            <<warning descr="'com.intellij.localInspection' should be used in 'backend' module type. Actual module type is 'frontend'.
 
 Computed module kind reasoning:
 
@@ -214,7 +214,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
             <module name="intellij.platform.backend"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
-            <<warning descr="'com.intellij.typedHandler' can only be used in 'shared' module type. Actual module type is 'backend'.
+            <<warning descr="'com.intellij.typedHandler' should be used in 'shared' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 

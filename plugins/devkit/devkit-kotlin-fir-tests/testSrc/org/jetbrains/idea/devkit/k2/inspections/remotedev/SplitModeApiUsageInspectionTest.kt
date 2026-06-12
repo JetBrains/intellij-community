@@ -237,7 +237,7 @@ class SplitModeApiUsageInspectionTest : LightJavaCodeInsightFixtureTestCase() {
       import com.intellij.openapi.vfs.VirtualFileManager
       import com.intellij.openapi.fileEditor.FileEditorManager;
       
-      class CustomToolWindowFactory: <weak_warning descr="'com.intellij.openapi.wm.ToolWindowFactory' can only be used in 'frontend' module type. Actual module type is 'backend'.
+      class CustomToolWindowFactory: <weak_warning descr="'com.intellij.openapi.wm.ToolWindowFactory' should be used in 'frontend' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -248,7 +248,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
           // no warning here expected
           VirtualFileManager.getInstance()
           
-          <weak_warning descr="'com.intellij.openapi.fileEditor.FileEditorManager.getFocusedEditor' can only be used in 'frontend' module type. Actual module type is 'backend'.
+          <weak_warning descr="'com.intellij.openapi.fileEditor.FileEditorManager.getFocusedEditor' should be used in 'frontend' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -306,7 +306,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
 
       class SharedLangModule {
         fun test() {
-          <weak_warning descr="'com.intellij.openapi.vfs.VirtualFileManager' can only be used in 'backend' module type. Actual module type is 'shared'.
+          <weak_warning descr="'com.intellij.openapi.vfs.VirtualFileManager' should be used in 'backend' module type. Actual module type is 'shared'.
 
 Computed module kind reasoning:
 
@@ -344,7 +344,7 @@ Predefined module kind for plugin/module id 'com.intellij.modules.lang'">Virtual
 
       class FrontendService {
         fun doStuff() {
-          <weak_warning descr="'com.intellij.openapi.vfs.VirtualFileManager' can only be used in 'backend' module type. Actual module type is 'frontend'.
+          <weak_warning descr="'com.intellij.openapi.vfs.VirtualFileManager' should be used in 'backend' module type. Actual module type is 'frontend'.
 
 Computed module kind reasoning:
 
@@ -398,7 +398,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
 
       import com.intellij.openapi.fileEditor.FileEditorManagerListener
 
-      class BackendFileEditorListener : <weak_warning descr="'com.intellij.openapi.fileEditor.FileEditorManagerListener' can only be used in 'frontend' module type. Actual module type is 'backend'.
+      class BackendFileEditorListener : <weak_warning descr="'com.intellij.openapi.fileEditor.FileEditorManagerListener' should be used in 'frontend' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -426,7 +426,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
 
       import com.intellij.lang.ParserDefinition
 
-      class FrontendParserDefinition : <weak_warning descr="'com.intellij.lang.ParserDefinition' can only be used in 'shared' module type. Actual module type is 'frontend'.
+      class FrontendParserDefinition : <weak_warning descr="'com.intellij.lang.ParserDefinition' should be used in 'shared' module type. Actual module type is 'frontend'.
 
 Computed module kind reasoning:
 
@@ -454,7 +454,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
 
       import com.intellij.openapi.project.ProjectManagerListener
 
-      class FrontendProjectManagerListener : <weak_warning descr="'com.intellij.openapi.project.ProjectManagerListener' can only be used in 'backend' module type. Actual module type is 'frontend'.
+      class FrontendProjectManagerListener : <weak_warning descr="'com.intellij.openapi.project.ProjectManagerListener' should be used in 'backend' module type. Actual module type is 'frontend'.
 
 Computed module kind reasoning:
 
@@ -490,7 +490,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
 
       class FrontendService {
         fun doStuff() {
-          <weak_warning descr="'com.intellij.openapi.vfs.VirtualFileManager' can only be used in 'backend' module type. Actual module type is 'frontend'.
+          <weak_warning descr="'com.intellij.openapi.vfs.VirtualFileManager' should be used in 'backend' module type. Actual module type is 'frontend'.
 
 Computed module kind reasoning:
 
@@ -522,7 +522,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'light_idea_tes
       
       class FrontendService {
         fun doStuff() {
-          <weak_warning descr="'com.example.annotated.AnnotatedBackendApi' can only be used in 'backend' module type. Actual module type is 'frontend'.
+          <weak_warning descr="'com.example.annotated.AnnotatedBackendApi' should be used in 'backend' module type. Actual module type is 'frontend'.
 
 Computed module kind reasoning:
 
@@ -554,7 +554,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
       
       class BackendService {
         fun doStuff() {
-          <weak_warning descr="'com.example.annotated.AnnotatedFrontendApi' can only be used in 'frontend' module type. Actual module type is 'backend'.
+          <weak_warning descr="'com.example.annotated.AnnotatedFrontendApi' should be used in 'frontend' module type. Actual module type is 'backend'.
 
 Computed module kind reasoning:
 
@@ -589,7 +589,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
       // both warnings are expected in a shared module
       class SharedService {
         fun testFrontendApi() {
-          class MyToolWindow: <weak_warning descr="'com.intellij.openapi.wm.ToolWindowFactory' can only be used in 'frontend' module type. Actual module type is 'shared'.
+          class MyToolWindow: <weak_warning descr="'com.intellij.openapi.wm.ToolWindowFactory' should be used in 'frontend' module type. Actual module type is 'shared'.
 
 Computed module kind reasoning:
 
@@ -597,7 +597,7 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
         }
         
         fun testBackendApi() {
-          <weak_warning descr="'com.intellij.openapi.vfs.VirtualFileManager' can only be used in 'backend' module type. Actual module type is 'shared'.
+          <weak_warning descr="'com.intellij.openapi.vfs.VirtualFileManager' should be used in 'backend' module type. Actual module type is 'shared'.
 
 Computed module kind reasoning:
 
@@ -627,7 +627,7 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
 
       import com.intellij.ide.plugins.DynamicPluginListener
 
-      class SharedDynamicPluginListener : <weak_warning descr="'com.intellij.ide.plugins.DynamicPluginListener' can only be used in 'frontend or backend' module type. Actual module type is 'shared'.
+      class SharedDynamicPluginListener : <weak_warning descr="'com.intellij.ide.plugins.DynamicPluginListener' should be used in 'frontend or backend' module type. Actual module type is 'shared'.
 
 Plugin lists are different on frontend and backend, prefer listening to them explicitly in desired IDE part
 
