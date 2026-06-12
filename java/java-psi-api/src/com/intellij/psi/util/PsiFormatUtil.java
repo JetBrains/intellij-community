@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
@@ -24,6 +24,7 @@ import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
@@ -471,6 +472,9 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
     }
     else if (owner instanceof PsiField) {
       builder.append(' ').append(((PsiField)owner).getName());
+    }
+    else if (owner instanceof PsiRecordComponent) {
+      builder.append(' ').append(((PsiRecordComponent)owner).getName());
     }
     else if (owner instanceof PsiParameter) {
       PsiElement declarationScope = ((PsiParameter)owner).getDeclarationScope();

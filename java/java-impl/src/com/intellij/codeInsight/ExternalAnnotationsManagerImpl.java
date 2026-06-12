@@ -86,7 +86,6 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -753,7 +752,6 @@ public class ExternalAnnotationsManagerImpl extends ModCommandAwareExternalAnnot
       PsiElement parent = owner.getParent();
       if (parent == null || !(parent.getParent() instanceof PsiMethod)) return false;
     }
-    if (owner instanceof PsiRecordComponent) return false;
     if (!owner.getManager().isInProject(owner)) return true;
     return JavaCodeStyleSettings.getInstance(owner.getContainingFile()).USE_EXTERNAL_ANNOTATIONS;
   }

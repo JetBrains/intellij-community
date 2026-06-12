@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExternalAnnotationsManagerImpl;
@@ -29,8 +29,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiRecordComponent;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiLiteralUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -52,7 +52,7 @@ public final class EditRangeIntention implements ModCommandAction {
     LongRangeSet rangeFromType = rangeFromType(owner);
     if (rangeFromType == null || !ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(owner)) return null;
     PsiElement original = owner.getOriginalElement();
-    return original instanceof PsiModifierListOwner ? (PsiModifierListOwner)original : owner;
+    return original instanceof PsiModifierListOwner o ? o : owner;
   }
 
   @Override
@@ -69,14 +69,13 @@ public final class EditRangeIntention implements ModCommandAction {
 
   @Contract("null -> null")
   private static LongRangeSet rangeFromType(PsiModifierListOwner owner) {
-    PsiType type;
-    if (owner instanceof PsiMethod method) {
-      type = method.getReturnType();
-    } else if (owner instanceof PsiField || owner instanceof PsiParameter) {
-      type = ((PsiVariable)owner).getType();
-    } else {
-      type = null;
-    }
+    PsiType type = switch (owner) {
+      case PsiMethod method -> method.getReturnType();
+      case PsiField field -> field.getType();
+      case PsiParameter param -> param.getType();
+      case PsiRecordComponent comp -> comp.getType();
+      case null, default -> null;
+    };
     return JvmPsiRangeSetUtil.typeRange(type);
   }
 
@@ -98,7 +97,7 @@ public final class EditRangeIntention implements ModCommandAction {
     if (owner instanceof PsiMethod) name += "()";
     return name;
   }
-  
+
   private static class RangeData implements OptionContainer {
     private final LongRangeSet myType;
     String min;
@@ -179,12 +178,12 @@ public final class EditRangeIntention implements ModCommandAction {
     Long minValue = parseValue(minText, fromType, true);
     Long maxValue = parseValue(maxText, fromType, false);
     String minError = null;
-    String maxError = null;
     if (minValue == null) {
       minError = JavaBundle.message("edit.range.error.invalid.value");
     } else if (minValue < fromType.min()) {
       minError = JavaBundle.message("edit.range.value.should.be.less.than", fromType.min());
     }
+    String maxError = null;
     if (maxValue == null) {
       maxError = JavaBundle.message("edit.range.error.invalid.value");
     } else if (maxValue > fromType.max()) {
