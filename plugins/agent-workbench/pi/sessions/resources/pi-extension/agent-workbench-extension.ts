@@ -40,6 +40,8 @@ const JBCENTRAL_PROXY_START_ARGS = ["proxy", "start", "--ensure-updated", "--ret
 const execFileAsync = promisify(execFile);
 const DONE_STATUS_IDLE_RECHECK_MS = 150;
 const SESSION_INFO_LEAF_POLL_MS = 1000;
+const WORKBENCH_SHIFT_ENTER_SEQUENCE = "\x1b\r";
+const KITTY_SHIFT_ENTER_SEQUENCE = "\x1b[13;2u";
 const THEME_COLOR_KEYS: ThemeColor[] = [
   "accent",
   "border",
@@ -196,6 +198,7 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
   let sessionInfoPoll: ReturnType<typeof setInterval> | undefined;
   let scheduledApply: ReturnType<typeof setTimeout> | undefined;
   let scheduledDoneStatus: ReturnType<typeof setTimeout> | undefined;
+  let terminalInputUnsubscribe: (() => void) | undefined;
   let lastStatusSignature: string | undefined;
   let lastSessionInfoSignature: string | undefined;
   let lastSessionInfoLeafId: string | null | undefined;
@@ -265,7 +268,20 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
     lastSessionInfoLeafId = ctx.sessionManager.getLeafId();
   };
 
+  const ensureTerminalInputMapping = (ctx: ExtensionContext) => {
+    if (terminalInputUnsubscribe !== undefined) {
+      return;
+    }
+    terminalInputUnsubscribe = ctx.ui.onTerminalInput((data) => {
+      if (data === WORKBENCH_SHIFT_ENTER_SEQUENCE) {
+        return {data: KITTY_SHIFT_ENTER_SEQUENCE};
+      }
+      return undefined;
+    });
+  };
+
   pi.on("session_start", async (_event, ctx) => {
+    ensureTerminalInputMapping(ctx);
     await applyCurrentTheme(ctx);
     clearScheduledDoneStatus();
     postStatusIfChanged(ctx, resolveStartupActivity(ctx), updateLastStatusSignature, lastStatusSignature);
@@ -306,6 +322,8 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
   });
 
   pi.on("session_shutdown", () => {
+    terminalInputUnsubscribe?.();
+    terminalInputUnsubscribe = undefined;
     if (scheduledApply !== undefined) {
       clearTimeout(scheduledApply);
       scheduledApply = undefined;
