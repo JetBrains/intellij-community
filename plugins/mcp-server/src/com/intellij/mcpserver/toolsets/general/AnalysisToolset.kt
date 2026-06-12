@@ -27,6 +27,7 @@ import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
+import com.intellij.mcpserver.util.checkIndexingInProgress
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
@@ -162,16 +163,23 @@ class AnalysisToolset : McpToolset {
     timeout: Int = Constants.MEDIUM_TIMEOUT_MILLISECONDS_VALUE,
   ): String {
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.analyzing.calls", symbolFqn))
-    return analyzeCalls(
-      symbolFqn = symbolFqn,
-      analysisKind = analysisKind,
-      depth = depth,
-      maxChildren = maxChildren,
-      maxNodes = maxNodes,
-      treePath = treePath,
-      childOffset = childOffset,
-      timeout = timeout,
-    )
+    val project = currentCoroutineContext().project
+    val (callHierarchy, partialResultReason) = checkIndexingInProgress(project) {
+      analyzeCalls(
+        symbolFqn = symbolFqn,
+        analysisKind = analysisKind,
+        depth = depth,
+        maxChildren = maxChildren,
+        maxNodes = maxNodes,
+        treePath = treePath,
+        childOffset = childOffset,
+        timeout = timeout,
+      )
+    }
+    if (partialResultReason != null) {
+      return "> Note: $partialResultReason\n\n$callHierarchy"
+    }
+    return callHierarchy
   }
 
   @McpTool

@@ -10,10 +10,13 @@ import com.intellij.mcpserver.toolsets.general.prepareLintFiles
 import com.intellij.mcpserver.toolsets.general.prepareRequestedLintFiles
 import com.intellij.mcpserver.toolsets.general.withLintFilesCollectorOverride
 import com.intellij.mcpserver.util.attachJarLibrary
+import com.intellij.mcpserver.util.INDEXING_PARTIAL_RESULT_REASON
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.project.DumbService
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.junit5.fixture.fileOrDirInProjectFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
@@ -128,6 +131,31 @@ class AnalysisToolsetTest : GeneralMcpToolsetTestBase() {
       assertThat(result.isError).isFalse()
       assertThat(text).contains("… and 1 more")
       assertThat(text).contains("childOffset=1")
+    }
+  }
+
+  @Test
+  fun analyze_calls_prepends_partial_result_note_during_indexing() = runBlocking(Dispatchers.Default) {
+    assumeTrue(isJavaPluginInstalled(), "Java plugin is required for this test")
+    DumbService.getInstance(project).waitForSmartMode()
+
+    val token = DumbModeTestUtils.startEternalDumbModeTask(project)
+    try {
+      testMcpTool(
+        AnalysisToolset::analyze_calls.name,
+        buildJsonObject {
+          put("symbolFqn", JsonPrimitive("calls.CallGraph.root"))
+          put("analysisKind", JsonPrimitive(AnalysisToolset.AnalysisKind.OUTGOING_CALLS.name))
+          put("depth", JsonPrimitive(1))
+        },
+      ) { result ->
+        val text = result.textContent.text
+        assertThat(result.isError).isFalse()
+        assertThat(text).startsWith("> Note: $INDEXING_PARTIAL_RESULT_REASON")
+      }
+    }
+    finally {
+      DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(project, token)
     }
   }
 

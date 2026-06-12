@@ -18,6 +18,7 @@ import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.projectDirectory
 import com.intellij.mcpserver.util.relativizeIfPossible
+import com.intellij.mcpserver.util.checkIndexingInProgress
 import com.intellij.mcpserver.util.resolveInProject
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceAsync
@@ -143,12 +144,16 @@ internal class SearchToolset : McpToolset {
   ): SearchResult {
     if (q.isBlank()) mcpFail("Search query is empty")
     currentCoroutineContext().reportToolActivity(McpServerBundle.message("tool.activity.searching.files.for.text", q))
-    return try {
-      searchSymbols(q, paths, include_external, limit)
+    val project = currentCoroutineContext().project
+    val (result, partialResultReason) = checkIndexingInProgress(project) {
+      try {
+        searchSymbols(q, paths, include_external, limit)
+      }
+      catch (_: LinkageError) {
+        mcpFail("search_symbol is not supported by this IDE version")
+      }
     }
-    catch (_: LinkageError) {
-      mcpFail("search_symbol is not supported by this IDE version")
-    }
+    return result.copy(partialResultReason = partialResultReason)
   }
 
   @McpToolHints(readOnlyHint = TRUE, openWorldHint = FALSE)
@@ -758,6 +763,7 @@ data class SearchItem(
 data class SearchResult(
   @JvmField @EncodeDefault(mode = EncodeDefault.Mode.ALWAYS) val items: List<SearchItem> = emptyList(),
   @JvmField @EncodeDefault(mode = EncodeDefault.Mode.NEVER) val more: Boolean = false,
+  @JvmField @EncodeDefault(mode = EncodeDefault.Mode.NEVER) val partialResultReason: String? = null,
 )
 
 @Internal

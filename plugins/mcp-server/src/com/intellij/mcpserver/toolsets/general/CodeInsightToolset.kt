@@ -13,6 +13,7 @@ import com.intellij.mcpserver.project
 import com.intellij.mcpserver.reportToolActivity
 import com.intellij.mcpserver.toolsets.Constants
 import com.intellij.mcpserver.util.SymbolInfo
+import com.intellij.mcpserver.util.checkIndexingInProgress
 import com.intellij.mcpserver.util.convertHtmlToMarkdown
 import com.intellij.mcpserver.util.getElementSymbolInfo
 import com.intellij.mcpserver.util.resolveInProject
@@ -58,29 +59,32 @@ class CodeInsightToolset : McpToolset {
     val virtualFile = (LocalFileSystem.getInstance().findFileByNioFile(resolvedPath)
                        ?: LocalFileSystem.getInstance().refreshAndFindFileByNioFile(resolvedPath))
                       ?: mcpFail("File not found: $filePath")
-    val (documentationTargets, symbolInfo) = readAction {
-      val document = FileDocumentManager.getInstance().getDocument(virtualFile)
-                     ?: mcpFail("Cannot read file: $filePath")
-      val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
-                    ?: mcpFail("Cannot get symbol information for file '$filePath'")
-      if (!DocumentUtil.isValidLine(line - 1, document)) mcpFail("Line number is out of bounds of the document")
-      val lineStartOffset = document.getLineStartOffset(line - 1)
-      val offset = lineStartOffset + column - 1
-      if (!DocumentUtil.isValidOffset(offset, document)) mcpFail("Line and column $line:$column(offset=$offset) is out of bounds (file has ${document.textLength} characters)")
-      val psiReference = psiFile.findReferenceAt(offset)
-      val resolvedReference = psiReference?.resolve()
+    val (markdownsWithSymbol, partialResultReason) = checkIndexingInProgress(project) {
+      val (documentationTargets, symbolInfo) = readAction {
+        val document = FileDocumentManager.getInstance().getDocument(virtualFile)
+                       ?: mcpFail("Cannot read file: $filePath")
+        val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
+                      ?: mcpFail("Cannot get symbol information for file '$filePath'")
+        if (!DocumentUtil.isValidLine(line - 1, document)) mcpFail("Line number is out of bounds of the document")
+        val lineStartOffset = document.getLineStartOffset(line - 1)
+        val offset = lineStartOffset + column - 1
+        if (!DocumentUtil.isValidOffset(offset, document)) mcpFail("Line and column $line:$column(offset=$offset) is out of bounds (file has ${document.textLength} characters)")
+        val psiReference = psiFile.findReferenceAt(offset)
+        val resolvedReference = psiReference?.resolve()
 
-      documentationTargets(psiFile, offset).map { it.createPointer() } to resolvedReference?.let { getElementSymbolInfo(it, extraLines = 1) }
+        documentationTargets(psiFile, offset).map { it.createPointer() } to resolvedReference?.let { getElementSymbolInfo(it, extraLines = 1) }
+      }
+
+      val results = coroutineScope {
+        documentationTargets.map { pointer -> computeDocumentationAsync(pointer) }.awaitAll().filterNotNull()
+      }
+      results.joinToString("\n") { convertHtmlToMarkdown(it.html) } to symbolInfo
     }
-
-    val results = coroutineScope {
-      documentationTargets.map { pointer -> computeDocumentationAsync(pointer) }.awaitAll().filterNotNull()
-    }
-
-    val markdowns = results.joinToString("\n") { convertHtmlToMarkdown(it.html) }
+    val (markdowns, symbolInfo) = markdownsWithSymbol
     return SymbolInfoResult(
       symbolInfo = symbolInfo,
-      documentation = markdowns
+      documentation = markdowns,
+      partialResultReason = partialResultReason,
     )
   }
 
@@ -89,6 +93,8 @@ class CodeInsightToolset : McpToolset {
   data class SymbolInfoResult(
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val symbolInfo: SymbolInfo? = null,
-    val documentation: String
+    val documentation: String,
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val partialResultReason: String? = null,
   )
 }
