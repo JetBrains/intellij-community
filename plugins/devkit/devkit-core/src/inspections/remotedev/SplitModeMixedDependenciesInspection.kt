@@ -36,6 +36,24 @@ internal class SplitModeMixedDependenciesInspection : DevKitPluginXmlInspectionB
     }
 
     val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, currentXmlFile)
+    if (moduleAnalysis.resolvedModuleKind.kind == SplitModeApiRestrictionsService.ModuleKind.MIXED) {
+      val regularFixes = SplitModeDependencyQuickFixes.createMixedModuleFixes(module, element)
+      val suppressionFix = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createSuppressionFixIfApplicable(
+        xmlElement,
+        SPLIT_MODE_MIXED_DEPENDENCIES_SHORT_NAME,
+      )
+      val quickFixes = if (suppressionFix != null) regularFixes + suppressionFix else regularFixes
+      val mixedDependenciesMessage = buildMixedModuleDependenciesMessage(moduleAnalysis.resolvedModuleKind.reasoning)
+      holder.createProblem(
+        element,
+        ProblemHighlightType.GENERIC_ERROR,
+        mixedDependenciesMessage,
+        null,
+        *quickFixes
+      )
+      return
+    }
+
     if (SplitModeInspectionUtil.shouldReportSinglePluginLevelErrorInsteadOfManyNestedErrors(currentXmlFile, moduleAnalysis)
         && SplitModeAnalysisFlags.isReportImplicitModuleKindEnabled()) {
       val regularFixes =
@@ -54,21 +72,5 @@ internal class SplitModeMixedDependenciesInspection : DevKitPluginXmlInspectionB
       )
       return
     }
-    if (moduleAnalysis.resolvedModuleKind.kind != SplitModeApiRestrictionsService.ModuleKind.MIXED) return
-
-    val regularFixes = SplitModeDependencyQuickFixes.createMixedModuleFixes(module, element)
-    val suppressionFix = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createSuppressionFixIfApplicable(
-      xmlElement,
-      SPLIT_MODE_MIXED_DEPENDENCIES_SHORT_NAME,
-    )
-    val quickFixes = if (suppressionFix != null) regularFixes + suppressionFix else regularFixes
-    val mixedDependenciesMessage = buildMixedModuleDependenciesMessage(moduleAnalysis.resolvedModuleKind.reasoning)
-    holder.createProblem(
-      element,
-      ProblemHighlightType.GENERIC_ERROR,
-      mixedDependenciesMessage,
-      null,
-      *quickFixes
-    )
   }
 }

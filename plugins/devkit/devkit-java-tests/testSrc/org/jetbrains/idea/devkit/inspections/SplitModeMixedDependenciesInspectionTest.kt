@@ -444,7 +444,7 @@ via dependency 'unique.module.name.52.backend.support' -> descriptor 'unique.mod
       moduleName = "unique.module.name.51",
       descriptorRelativePathToResourcesDirectory = "META-INF/plugin.xml",
       pluginXmlContent = """
-        <<weak_warning descr="This plugin effectively depends on frontend-only and backend-only modules simultaneously. It may not get loaded in Split Mode.
+        <<error descr="This module effectively depends on frontend-only and backend-only modules simultaneously. It will not get loaded in Split Mode.
 
 Computed module kind reasoning:
 
@@ -452,7 +452,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
 via dependency 'unique.module.name.51.frontend.support' -> descriptor 'unique.module.name.51.frontend.support.xml' in module 'unique.module.name.51.frontend.support'.
 
 Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in module 'unique.module.name.51'
-via dependency 'unique.module.name.51.backend.support' -> descriptor 'unique.module.name.51.backend.support.xml' in module 'unique.module.name.51.backend.support'.">idea-plugin</weak_warning>>
+via dependency 'unique.module.name.51.backend.support' -> descriptor 'unique.module.name.51.backend.support.xml' in module 'unique.module.name.51.backend.support'.">idea-plugin</error>>
           <dependencies>
             <module name="unique.module.name.51.frontend.support"/>
             <module name="unique.module.name.51.backend.support"/>

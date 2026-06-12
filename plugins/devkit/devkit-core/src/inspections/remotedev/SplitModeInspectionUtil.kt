@@ -42,9 +42,7 @@ internal object SplitModeInspectionUtil {
         DevKitBundle.message("inspection.remote.dev.plugin.indirect.frontend.dependencies.message")
       SplitModeApiRestrictionsService.ModuleKind.BACKEND ->
         DevKitBundle.message("inspection.remote.dev.plugin.indirect.backend.dependencies.message")
-      SplitModeApiRestrictionsService.ModuleKind.MIXED ->
-        DevKitBundle.message("inspection.remote.dev.plugin.mixed.dependencies.message")
-      else -> error("Unsupported plugin kind for non-native plugin message: ${actualModuleKind.kind}")
+      else -> error("Unsupported implicit plugin kind message: ${actualModuleKind.kind}")
     }
     return buildDetailedPlainTextMessage(shortMessage, null, actualModuleKind.reasoning)
   }
@@ -269,6 +267,5 @@ internal object SplitModeInspectionUtil {
   private val IMPLICIT_PLUGIN_XML_KINDS = setOf(
     SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
     SplitModeApiRestrictionsService.ModuleKind.BACKEND,
-    SplitModeApiRestrictionsService.ModuleKind.MIXED,
   )
 }
