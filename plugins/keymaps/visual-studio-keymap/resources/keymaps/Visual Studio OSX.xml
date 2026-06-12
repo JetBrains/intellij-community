@@ -63,6 +63,7 @@
   </action>
   <action id="GotoClass"/>
   <action id="SearchEverywhere">
+    <keyboard-gesture-shortcut keystroke="shift SHIFT" modifier="dblClick"/>
     <keyboard-shortcut first-keystroke="meta T"/>
   </action>
   <action id="GotoChangedFile"/>
