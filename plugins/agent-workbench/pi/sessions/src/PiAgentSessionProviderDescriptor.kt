@@ -12,6 +12,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
@@ -281,7 +282,17 @@ internal class PiAgentSessionProviderDescriptor(
                               (modelId != null && supportsPiReasoningEffort(modelId, effort))
                             }
                           ?: AgentPromptReasoningEffort.AUTO
-    return AgentPromptGenerationSettings(modelId = modelId, reasoningEffort = reasoningEffort)
+    val planReasoningEffort = generationSettings.planReasoningEffort
+      ?.takeIf { effort ->
+        effort == AgentPromptReasoningEffort.AUTO ||
+        (modelId != null && supportsPiReasoningEffort(modelId, effort))
+      }
+      ?: generationSettings.planReasoningEffort?.let { AgentPromptReasoningEffort.AUTO }
+    return AgentPromptGenerationSettings(
+      modelId = modelId,
+      reasoningEffort = reasoningEffort,
+      planReasoningEffort = planReasoningEffort,
+    )
   }
 
   private fun isEnabledPiGenerationModelId(modelId: String): Boolean {
@@ -306,10 +317,17 @@ internal class PiAgentSessionProviderDescriptor(
   override fun applyGenerationSettings(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     generationSettings: AgentPromptGenerationSettings,
+    initialMessagePlan: AgentInitialMessagePlan,
   ): AgentSessionTerminalLaunchSpec {
     val settings = sanitizeGenerationSettings(generationSettings)
     val sanitizedModelId = settings.modelId ?: return baseLaunchSpec
-    val reasoningArgs = buildPiReasoningArgs(settings.reasoningEffort)
+    val reasoningEffort = if (initialMessagePlan.mode == AgentInitialMessageMode.PLAN) {
+      settings.planReasoningEffort ?: settings.reasoningEffort
+    }
+    else {
+      settings.reasoningEffort
+    }
+    val reasoningArgs = buildPiReasoningArgs(reasoningEffort)
     PiOmlxModelCatalog.decodeGenerationModelId(sanitizedModelId)?.let { modelSelection ->
       return baseLaunchSpec.copy(
         command = insertPiGenerationArgs(

@@ -1,0 +1,88 @@
+---
+name: Global Prompt Task-Cost Profiles
+description: Requirements for choosing task-cost launch profiles in the global prompt and main toolbar.
+targets:
+  - ../../prompt/ui/src/AgentPromptGenerationSettingsController.kt
+  - ../../prompt/ui/src/AgentPromptPaletteView.kt
+  - ../../prompt/ui/resources/messages/AgentPromptBundle.properties
+  - ../../sessions-actions/src/actions/AgentSessionsMainToolbarNewThreadActions.kt
+  - ../../sessions/resources/messages/AgentSessionsBundle.properties
+  - ../../sessions/src/state/AgentSessionLaunchProfileStateService.kt
+  - ../../sessions/src/state/AgentSessionUiPreferencesStateService.kt
+  - ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
+  - ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
+  - ../../prompt/ui/testSrc/AgentPromptPaletteViewLayoutTest.kt
+  - ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
+  - ../../sessions/testSrc/AgentSessionUiPreferencesStateServiceTest.kt
+---
+
+# Global Prompt Task-Cost Profiles
+
+Status: Draft
+Date: 2026-06-13
+
+## Summary
+Task-cost profiles make the global prompt ready to send while still letting users choose a cheaper, faster, or more careful agent setup per task. Profiles are the primary user-facing abstraction for provider, launch mode, model, and reasoning effort. Plan mode remains a separate prompt option; changing profiles must not silently change it.
+
+## Goals
+- Make the first prompt screen ready to send with the user's explicit default profile.
+- Let users choose a profile for one task without accidental persistence.
+- Keep persistent profile/default changes behind explicit actions.
+
+## Non-goals
+- This spec does not define provider setup, CLI availability checks, pricing display, or session-cost accounting.
+- This spec does not require renaming the existing persisted `activeLaunchProfileId` field; it may remain the stored default profile id for compatibility.
+
+## Requirements
+- The prompt header must expose a single task-cost profile control in the same top-right header location as the previous provider selector. The control must show the selected provider icon, including the red YOLO/Brave badge for YOLO profiles, and open the profile chooser on click. Built-in provider-backed profiles use the neutral `Default Profile` label in the header to avoid repeating provider names such as `Pi`; user profiles show their saved profile name.
+  [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
+
+- The prompt must restore the stored default profile on open when that profile is still applicable. If the default is unavailable, the prompt may fall back to the provider-list default without writing a replacement default.
+  [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
+
+- Choosing a built-in or user profile in the prompt profile popup must apply that profile to the current task only. It must not update the stored default profile id.
+  [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
+
+- The prompt profile popup must list profiles only, split into normal profiles and YOLO/Brave profiles with a separator. Raw model, reasoning-effort, Plan-effort, rename, delete, update, and duplicate controls must not appear in this quick popup.
+  [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
+
+- The prompt Plan checkbox must remain a separate header option. Selecting or restoring a profile must not change the current Plan checkbox state, and saving/updating user profiles must not store Plan state.
+  [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
+
+- `Manage Launch Profiles` must open a persistent profile editor with a profile list and a details pane for name, provider, launch mode, model, and effort. The editor must show built-in profiles as read-only presets and user profiles as editable entries. Quick profile selection may omit unavailable profiles, but the management editor must still show stored unavailable user profiles so they can be deleted or switched to an available provider. `Set as Default` must be the explicit action that stores the selected profile as the default for future prompts.
+  [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionUiPreferencesStateServiceTest.kt
+
+- `New from Current`/`Create Profile` must persist the current provider, launch mode, model, and effort as a reusable user profile without also making it the default. User profile detail edits must be saved only through explicit editor actions such as `Save Changes`; those actions persist immediately. Built-in profiles may be duplicated to a user profile, but must not be edited in place.
+  [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
+
+- The main toolbar primary click must launch with the stored default profile when one is applicable, falling back to the first available built-in profile. Launching from the primary click must not rewrite the default id.
+  [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
+
+- Choosing a profile from the main toolbar dropdown must launch once with that profile and must not rewrite the stored default id.
+  [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
+
+- The main toolbar profile dropdown must split normal and YOLO/Brave profiles with a separator instead of grouping by built-in versus user profile storage.
+  [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
+
+## User Experience
+- Profile labels should read as task presets, for example `Default Profile`, `Careful`, or `Fast`, not as a raw settings list. The header should not duplicate the provider name as both icon identity and adjacent text.
+- Built-in and user profiles should appear together in the quick chooser. The built-in/user distinction matters in the manage dialog, where built-ins are read-only.
+- The profile popup should show profiles and one `Manage Launch Profiles` action.
+- Existing-task mode and extension tabs should hide task-cost controls because they do not launch a new task with generation settings.
+
+## Data & Backend
+- The persisted `activeLaunchProfileId` value represents the explicit default profile id.
+- User launch profiles and the explicit default profile id must be stored in the app-level roamable `AgentSessionLaunchProfileState`, not in the non-roamable UI preferences state.
+- Per-task prompt changes live in the prompt controller state and are sent with the launch request; they are not persisted unless the user chooses `Set as Default` or `Save Current` in profile management.
+- Existing serialized `startInPlanMode` and `planEffort` fields may remain for compatibility, but new profile UI must not create or rely on Plan-bearing profiles.
+
+## Testing / Local Run
+- `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test com.intellij.agent.workbench.prompt.ui.AgentPromptProviderSelectorTest`
+- `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewStructureTest`
+- `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test com.intellij.agent.workbench.prompt.ui.AgentPromptPaletteViewLayoutTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsMainToolbarNewThreadActionsTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionUiPreferencesStateServiceTest`
+
+## References
+- `global-prompt-entry.spec.md`

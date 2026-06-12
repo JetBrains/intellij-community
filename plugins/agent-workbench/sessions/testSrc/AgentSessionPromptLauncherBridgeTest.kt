@@ -1010,6 +1010,8 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(providerBridge.createCalls.get()).isEqualTo(1)
           assertThat(providerBridge.lastCreateMode.get()).isEqualTo(AgentSessionLaunchMode.STANDARD)
           assertThat(providerBridge.lastComposeRequest.get()).isEqualTo(request.initialMessageRequest)
+          assertThat(providerBridge.generationSettingsApplyCalls.get()).isEqualTo(1)
+          assertThat(providerBridge.lastGenerationSettingsInitialMessagePlan.get()?.mode).isEqualTo(AgentInitialMessageMode.PLAN)
           assertThat(providerBridge.startupCommandCalls.get()).isZero()
           assertThat(providerBridge.lastStartupBaseLaunchSpec.get()).isNull()
           assertThat(providerBridge.lastStartupPrompt.get()).isNull()
@@ -2367,6 +2369,7 @@ private class RecordingPromptLaunchProviderBridge(
   val lastStartupBaseLaunchSpec: AtomicReference<AgentSessionTerminalLaunchSpec?> = AtomicReference(null)
   val lastStartupPrompt: AtomicReference<String?> = AtomicReference(null)
   val lastShouldUseStartupPromptCommandRequest: AtomicReference<AgentPromptInitialMessageRequest?> = AtomicReference(null)
+  val lastGenerationSettingsInitialMessagePlan: AtomicReference<AgentInitialMessagePlan?> = AtomicReference(null)
   val generationSettingsApplyCalls: AtomicInteger = AtomicInteger(0)
 
   override val displayNameKey: String
@@ -2411,8 +2414,10 @@ private class RecordingPromptLaunchProviderBridge(
   override fun applyGenerationSettings(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     generationSettings: AgentPromptGenerationSettings,
+    initialMessagePlan: AgentInitialMessagePlan,
   ): AgentSessionTerminalLaunchSpec {
     generationSettingsApplyCalls.incrementAndGet()
+    lastGenerationSettingsInitialMessagePlan.set(initialMessagePlan)
     return generationSettingsApplier(baseLaunchSpec, sanitizeGenerationSettings(generationSettings))
   }
 

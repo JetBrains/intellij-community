@@ -554,7 +554,6 @@ class AgentPromptPaletteSubmitControllerTest {
     val view = createAgentPromptPaletteView(
       promptArea = EditorTextField(),
       contextChipsPanel = JPanel(),
-      onProviderIconClicked = {},
       onExistingTaskSelected = {},
     )
     val providerSelector = AgentPromptProviderSelector(
@@ -565,7 +564,6 @@ class AgentPromptPaletteSubmitControllerTest {
         actionPlace = "MainMenu",
         invokedAtMs = 0L,
       ),
-      providerIconLabel = view.providerIconLabel,
       headerControls = view.headerControls,
       providersProvider = providersProvider,
       sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptPaletteSubmitControllerTest::class.java.classLoader),

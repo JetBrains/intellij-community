@@ -367,6 +367,7 @@ class PiAgentSessionProviderDescriptorTest {
         modelId = modelId,
         reasoningEffort = AgentPromptReasoningEffort.HIGH,
       ),
+      STANDARD_INITIAL_MESSAGE_PLAN,
     )
 
     assertThat(launchSpec.command).containsExactly(
@@ -412,6 +413,7 @@ class PiAgentSessionProviderDescriptorTest {
     val baseLaunchSpec = descriptor.applyGenerationSettings(
       descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD),
       generationSettings,
+      STANDARD_INITIAL_MESSAGE_PLAN,
     )
 
     val launchSpec = descriptor.applyGenerationModelCatalog(
@@ -539,6 +541,7 @@ class PiAgentSessionProviderDescriptorTest {
         modelId = modelId,
         reasoningEffort = AgentPromptReasoningEffort.HIGH,
       ),
+      STANDARD_INITIAL_MESSAGE_PLAN,
     )
 
     assertThat(launchSpec.command).containsExactly(
@@ -582,6 +585,7 @@ class PiAgentSessionProviderDescriptorTest {
         modelId = modelId,
         reasoningEffort = AgentPromptReasoningEffort.HIGH,
       ),
+      STANDARD_INITIAL_MESSAGE_PLAN,
     )
 
     assertThat(
@@ -667,6 +671,7 @@ class PiAgentSessionProviderDescriptorTest {
         modelId = modelId,
         reasoningEffort = AgentPromptReasoningEffort.LOW,
       ),
+      STANDARD_INITIAL_MESSAGE_PLAN,
     )
 
     assertThat(launchSpec.command).containsExactly(
@@ -688,7 +693,8 @@ class PiAgentSessionProviderDescriptorTest {
   fun applyGenerationSettingsLeavesAutoAndUnknownModelsUnchanged(): Unit = runBlocking(Dispatchers.Default) {
     val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
 
-    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, AgentPromptGenerationSettings.AUTO)).isEqualTo(baseLaunchSpec)
+    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, AgentPromptGenerationSettings.AUTO, STANDARD_INITIAL_MESSAGE_PLAN))
+      .isEqualTo(baseLaunchSpec)
 
     val sanitized = descriptor.sanitizeGenerationSettings(
       AgentPromptGenerationSettings(
@@ -698,7 +704,7 @@ class PiAgentSessionProviderDescriptorTest {
     )
     assertThat(sanitized.modelId).isNull()
     assertThat(sanitized.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.AUTO)
-    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, sanitized)).isEqualTo(baseLaunchSpec)
+    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, sanitized, STANDARD_INITIAL_MESSAGE_PLAN)).isEqualTo(baseLaunchSpec)
 
     val validModelId = PiOmlxModelCatalog.encodeGenerationModelId(omlxSelection())
     assertThat(
@@ -727,7 +733,8 @@ class PiAgentSessionProviderDescriptorTest {
     val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
 
     assertThat(descriptor.sanitizeGenerationSettings(generationSettings)).isEqualTo(AgentPromptGenerationSettings.AUTO)
-    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, generationSettings)).isEqualTo(baseLaunchSpec)
+    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, generationSettings, STANDARD_INITIAL_MESSAGE_PLAN)).isEqualTo(
+      baseLaunchSpec)
   }
 
   @Test
@@ -746,7 +753,8 @@ class PiAgentSessionProviderDescriptorTest {
     val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
 
     assertThat(descriptor.sanitizeGenerationSettings(generationSettings)).isEqualTo(AgentPromptGenerationSettings.AUTO)
-    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, generationSettings)).isEqualTo(baseLaunchSpec)
+    assertThat(descriptor.applyGenerationSettings(baseLaunchSpec, generationSettings, STANDARD_INITIAL_MESSAGE_PLAN)).isEqualTo(
+      baseLaunchSpec)
   }
 
   @Test
@@ -846,6 +854,8 @@ class PiAgentSessionProviderDescriptorTest {
     assertThat(renamedName).isEqualTo("Renamed thread")
   }
 }
+
+private val STANDARD_INITIAL_MESSAGE_PLAN: AgentInitialMessagePlan = AgentInitialMessagePlan(message = "Refactor this")
 
 private fun omlxSelection(reasoning: Boolean = true): PiOmlxModelSelection {
   return PiOmlxModelSelection(

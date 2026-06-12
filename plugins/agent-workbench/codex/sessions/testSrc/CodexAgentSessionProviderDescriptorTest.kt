@@ -69,7 +69,7 @@ class CodexAgentSessionProviderDescriptorTest {
   fun applyGenerationSettingsLeavesAutoLaunchSpecUnchanged(): Unit = runBlocking(Dispatchers.Default) {
     val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
 
-    assertThat(bridge.applyGenerationSettings(baseLaunchSpec, AgentPromptGenerationSettings.AUTO).command)
+    assertThat(bridge.applyGenerationSettings(baseLaunchSpec, AgentPromptGenerationSettings.AUTO, STANDARD_INITIAL_MESSAGE_PLAN).command)
       .containsExactlyElementsOf(CODEX_BASE_COMMAND)
   }
 
@@ -81,6 +81,7 @@ class CodexAgentSessionProviderDescriptorTest {
       bridge.applyGenerationSettings(
         baseLaunchSpec,
         AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH),
+        STANDARD_INITIAL_MESSAGE_PLAN,
       ).command
     )
       .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("-c", "model_reasoning_effort=\"xhigh\""))
@@ -94,6 +95,7 @@ class CodexAgentSessionProviderDescriptorTest {
       bridge.applyGenerationSettings(
         baseLaunchSpec,
         AgentPromptGenerationSettings(modelId = "gpt-5.1-codex"),
+        STANDARD_INITIAL_MESSAGE_PLAN,
       ).command
     )
       .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--model", "gpt-5.1-codex"))
@@ -110,10 +112,81 @@ class CodexAgentSessionProviderDescriptorTest {
           modelId = "gpt-5.1-codex",
           reasoningEffort = AgentPromptReasoningEffort.HIGH,
         ),
+        STANDARD_INITIAL_MESSAGE_PLAN,
       ).command
     )
       .containsExactlyElementsOf(
         CODEX_BASE_COMMAND + listOf("--model", "gpt-5.1-codex", "-c", "model_reasoning_effort=\"high\"")
+      )
+  }
+
+  @Test
+  fun applyGenerationSettingsAddsPlanModeReasoningEffortConfig(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(
+      bridge.applyGenerationSettings(
+        baseLaunchSpec,
+        AgentPromptGenerationSettings(
+          modelId = "gpt-5.1-codex",
+          reasoningEffort = AgentPromptReasoningEffort.HIGH,
+        ),
+        PLAN_INITIAL_MESSAGE_PLAN,
+      ).command
+    )
+      .containsExactlyElementsOf(
+        CODEX_BASE_COMMAND + listOf(
+          "--model",
+          "gpt-5.1-codex",
+          "-c",
+          "model_reasoning_effort=\"high\"",
+          "-c",
+          "plan_mode_reasoning_effort=\"high\"",
+        )
+      )
+  }
+
+  @Test
+  fun applyGenerationSettingsKeepsPlanModeAutoReasoningAsProviderDefault(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(
+      bridge.applyGenerationSettings(
+        baseLaunchSpec,
+        AgentPromptGenerationSettings(modelId = "gpt-5.1-codex"),
+        PLAN_INITIAL_MESSAGE_PLAN,
+      ).command
+    )
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--model", "gpt-5.1-codex"))
+  }
+
+  @Test
+  fun applyGenerationSettingsInsertsPlanModeArgsBeforePromptSeparator(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD).copy(
+      command = CODEX_BASE_COMMAND + listOf("--", "Refactor this"),
+    )
+
+    assertThat(
+      bridge.applyGenerationSettings(
+        baseLaunchSpec,
+        AgentPromptGenerationSettings(
+          modelId = "gpt-5.1-codex",
+          reasoningEffort = AgentPromptReasoningEffort.HIGH,
+        ),
+        PLAN_INITIAL_MESSAGE_PLAN,
+      ).command
+    )
+      .containsExactlyElementsOf(
+        CODEX_BASE_COMMAND + listOf(
+          "--model",
+          "gpt-5.1-codex",
+          "-c",
+          "model_reasoning_effort=\"high\"",
+          "-c",
+          "plan_mode_reasoning_effort=\"high\"",
+          "--",
+          "Refactor this",
+        )
       )
   }
 
@@ -125,6 +198,7 @@ class CodexAgentSessionProviderDescriptorTest {
       bridge.applyGenerationSettings(
         baseLaunchSpec,
         AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.MAX),
+        STANDARD_INITIAL_MESSAGE_PLAN,
       ).command
     )
       .containsExactlyElementsOf(CODEX_BASE_COMMAND)
@@ -141,6 +215,24 @@ class CodexAgentSessionProviderDescriptorTest {
           modelId = "gpt-5.1-codex",
           reasoningEffort = AgentPromptReasoningEffort.MAX,
         ),
+        STANDARD_INITIAL_MESSAGE_PLAN,
+      ).command
+    )
+      .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--model", "gpt-5.1-codex"))
+  }
+
+  @Test
+  fun applyGenerationSettingsIgnoresUnsupportedPlanModeReasoningEffortButKeepsModel(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    assertThat(
+      bridge.applyGenerationSettings(
+        baseLaunchSpec,
+        AgentPromptGenerationSettings(
+          modelId = "gpt-5.1-codex",
+          reasoningEffort = AgentPromptReasoningEffort.MAX,
+        ),
+        PLAN_INITIAL_MESSAGE_PLAN,
       ).command
     )
       .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--model", "gpt-5.1-codex"))
@@ -263,6 +355,21 @@ class CodexAgentSessionProviderDescriptorTest {
 
     assertThat(plan.message).isEqualTo("Refactor this")
     assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.PLAN)
+  }
+
+  @Test
+  fun emptyInitialMessageCanRequestPlanMode() {
+    val plan = bridge.buildInitialMessagePlan(
+      AgentPromptInitialMessageRequest(
+        prompt = "",
+        providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
+      )
+    )
+
+    assertThat(plan.message).isNull()
+    assertThat(plan.mode).isEqualTo(AgentInitialMessageMode.PLAN)
+    assertThat(plan.startupPolicy).isEqualTo(AgentInitialMessageStartupPolicy.POST_START_ONLY)
+    assertThat(plan.timeoutPolicy).isEqualTo(AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS)
   }
 
   @Test
@@ -519,6 +626,13 @@ class CodexAgentSessionProviderDescriptorTest {
 private fun messageFor(bridge: CodexAgentSessionProviderDescriptor, request: AgentPromptInitialMessageRequest): String {
   return checkNotNull(bridge.buildInitialMessagePlan(request).message)
 }
+
+private val STANDARD_INITIAL_MESSAGE_PLAN: AgentInitialMessagePlan = AgentInitialMessagePlan(message = "Refactor this")
+
+private val PLAN_INITIAL_MESSAGE_PLAN: AgentInitialMessagePlan = AgentInitialMessagePlan(
+  message = "Refactor this",
+  mode = AgentInitialMessageMode.PLAN,
+)
 
 private fun emptySource(): AgentSessionSource {
   return object : AgentSessionSource {

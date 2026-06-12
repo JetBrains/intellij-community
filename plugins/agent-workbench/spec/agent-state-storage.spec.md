@@ -20,8 +20,8 @@ Status: Draft Date: 2026-05-09
 ## Summary
 
 Agent Workbench state is intentionally split by lifetime and scope. Editor-provider state restores open chat tabs after restart,
-cache-backed state restores session UI and legacy chat metadata, non-roamable app state stores shared preferences, and project workspace
-state stores the prompt draft only.
+cache-backed state restores session UI and legacy chat metadata, roamable app state stores launch profiles, non-roamable app state stores
+machine-local preferences, and project workspace state stores the prompt draft only.
 
 ## Requirements
 
@@ -30,7 +30,8 @@ state stores the prompt draft only.
   - `AgentChatTabsState`, app-level cache file, keyed by chat `tabKey`, retained for legacy restore migration and cleanup only.
   - `AgentSessionWarmState`, app-level cache file, for warm-start session rows for open paths.
   - `AgentSessionTreeUiState`, app-level cache file, for collapsed project paths.
-  - `AgentSessionUiPreferencesState`, app-level non-roamable file, for shared provider/mode preferences and Claude quota hint state.
+  - `AgentSessionLaunchProfileState`, app-level roaming file, for user launch profiles and the explicit default profile id.
+  - `AgentSessionUiPreferencesState`, app-level non-roamable file, for machine-local provider/mode preferences and Claude quota hint state.
   - `AgentWorkbenchTerminalSessions`, app-level non-roamable file, for user-created terminal session rows and bounded terminal restore
     context.
   - `AgentPromptUiState`, project-level workspace file, for prompt draft fields.

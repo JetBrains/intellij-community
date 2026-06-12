@@ -185,9 +185,13 @@ internal class CodexAgentSessionProviderDescriptor(
   override fun applyGenerationSettings(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     generationSettings: AgentPromptGenerationSettings,
+    initialMessagePlan: AgentInitialMessagePlan,
   ): AgentSessionTerminalLaunchSpec {
     val settings = sanitizeGenerationSettings(generationSettings)
-    val generationArgs = buildCodexGenerationArgs(settings)
+    val generationArgs = buildCodexGenerationArgs(
+      settings = settings,
+      planMode = initialMessagePlan.mode == AgentInitialMessageMode.PLAN,
+    )
     if (generationArgs.isEmpty()) {
       return baseLaunchSpec
     }
@@ -293,12 +297,20 @@ private fun buildCodexBaseCommand(executable: String): List<String> {
   )
 }
 
-private fun buildCodexGenerationArgs(settings: AgentPromptGenerationSettings): List<String> {
+private fun buildCodexGenerationArgs(
+  settings: AgentPromptGenerationSettings,
+  planMode: Boolean,
+): List<String> {
   val args = mutableListOf<String>()
   settings.modelId?.let { modelId -> args.addAll(listOf("--model", modelId)) }
   val effort = settings.reasoningEffort
   if (effort != AgentPromptReasoningEffort.AUTO) {
-    args.addAll(listOf("-c", "model_reasoning_effort=\"${effort.codexConfigValue()}\""))
+    val effortValue = effort.codexConfigValue()
+    args.addAll(listOf("-c", "model_reasoning_effort=\"$effortValue\""))
+  }
+  val planEffort = settings.planReasoningEffort ?: effort
+  if (planMode && planEffort != AgentPromptReasoningEffort.AUTO) {
+    args.addAll(listOf("-c", "plan_mode_reasoning_effort=\"${planEffort.codexConfigValue()}\""))
   }
   return args
 }

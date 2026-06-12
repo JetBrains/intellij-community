@@ -658,7 +658,11 @@ class AgentSessionLaunchService internal constructor(
                                    ?.let(descriptor::buildInitialMessagePlan)
                                  ?: AgentInitialMessagePlan.EMPTY
         val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(mode)
-        val generationLaunchSpec = descriptor.applyGenerationSettings(baseLaunchSpec, generationSettings)
+        val generationLaunchSpec = descriptor.applyGenerationSettings(
+          baseLaunchSpec = baseLaunchSpec,
+          generationSettings = generationSettings,
+          initialMessagePlan = initialMessagePlan,
+        )
         val generationCatalogLaunchSpec = descriptor.applyGenerationModelCatalog(
           baseLaunchSpec = generationLaunchSpec,
           generationSettings = generationSettings,
@@ -1080,18 +1084,21 @@ private fun buildInitialMessageDispatchPlan(
   allowStartupPromptOverride: Boolean,
 ): AgentInitialMessageDispatchPlan {
   val postStartDispatchSteps = descriptor.buildPostStartDispatchSteps(initialMessagePlan)
-  if (postStartDispatchSteps.isEmpty()) {
+  val startupLaunchSpecOverride = buildStartupLaunchSpecOverride(
+    descriptor = descriptor,
+    baseLaunchSpec = baseLaunchSpec,
+    initialMessagePlan = initialMessagePlan,
+    allowStartupPromptOverride = allowStartupPromptOverride,
+  )
+  if (postStartDispatchSteps.isEmpty() && startupLaunchSpecOverride == null) {
     return AgentInitialMessageDispatchPlan.EMPTY
   }
   return AgentInitialMessageDispatchPlan(
-    startupLaunchSpecOverride = buildStartupLaunchSpecOverride(
-      descriptor = descriptor,
-      baseLaunchSpec = baseLaunchSpec,
-      initialMessagePlan = initialMessagePlan,
-      allowStartupPromptOverride = allowStartupPromptOverride,
-    ),
+    startupLaunchSpecOverride = startupLaunchSpecOverride,
     postStartDispatchSteps = postStartDispatchSteps,
-    initialMessageToken = buildInitialMessageToken(identity = identity, steps = postStartDispatchSteps),
+    initialMessageToken = postStartDispatchSteps
+      .takeIf { steps -> steps.isNotEmpty() }
+      ?.let { steps -> buildInitialMessageToken(identity = identity, steps = steps) },
   )
 }
 
@@ -1113,6 +1120,9 @@ private fun buildStartupLaunchSpecOverride(
     return null
   }
   if (initialMessagePlan.startupPolicy != AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND) {
+    return null
+  }
+  if (initialMessagePlan.message == null && initialMessagePlan.mode == AgentInitialMessageMode.STANDARD) {
     return null
   }
   val startupLaunchSpec = descriptor.buildLaunchSpecWithInitialMessage(
@@ -1195,7 +1205,11 @@ private suspend fun resolvePromptInitialMessageDispatchPlan(
   val allowStartupPromptOverride = initialMessagePlan.mode == AgentInitialMessageMode.PLAN
   val resumeLaunchSpec =
     if (allowStartupPromptOverride && initialMessagePlan.startupPolicy == AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND) {
-      descriptor.applyGenerationSettings(baseResumeLaunchSpec, generationSettings)
+      descriptor.applyGenerationSettings(
+        baseLaunchSpec = baseResumeLaunchSpec,
+        generationSettings = generationSettings,
+        initialMessagePlan = initialMessagePlan,
+      )
     }
     else {
       baseResumeLaunchSpec

@@ -34,6 +34,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -134,11 +135,15 @@ internal class AgentPromptPaletteSessionController(
       invocationData = invocationData,
       providerSelector = providerSelector,
       generationSettingsPanel = view.generationSettingsPanel,
+      profileAction = view.profileAction,
+      launchProfileLink = view.launchProfileLink,
       modelSelectorLink = view.modelSelectorLink,
       reasoningEffortLink = view.reasoningEffortLink,
+      planReasoningEffortLink = view.planReasoningEffortLink,
       modelCatalogScope = popupScope,
       launcherProvider = launcherProvider,
-      onDefaultSaved = { showInfo(AgentPromptBundle.message("popup.generation.default.saved")) },
+      onDefaultSaved = ::showInfo,
+      manageProfilesDialogRunner = ::runManageProfilesDialog,
     )
     submitController = AgentPromptPaletteSubmitController(
       project = project,
@@ -156,7 +161,7 @@ internal class AgentPromptPaletteSessionController(
       onSubmitBlocked = ::showError,
       onSubmitSucceeded = ::closeAfterSuccessfulSubmit,
       onPromptSubmitted = uiStateService::saveSubmittedPromptHistoryEntry,
-      generationSettingsProvider = generationSettingsController::currentSettings,
+      generationSettingsProvider = generationSettingsController::currentLaunchSettings,
       generationModelCatalogProvider = generationSettingsController::currentGenerationModelCatalog,
       isContainerModeSelected = { view.containerModeAction.selected },
       isContainerModeSupported = ::isContainerModeSupported,
@@ -167,15 +172,15 @@ internal class AgentPromptPaletteSessionController(
 
   fun initialize(initialAddContextRequest: AgentPromptAddContextRequest? = null) {
     contextController.configureAddContextButton()
-    generationSettingsController.restoreDefaultSettings(
-      launcherProvider()?.loadProviderPreferences()?.generationSettingsByProviderId.orEmpty()
-    )
     refreshProviders()
     contextController.loadInitialContext(initialAddContextRequest?.contextItems)
     contextController.resolveExtensionTabs()
 
     val draft = draftController.restoreDraft(restoreContextSnapshot = initialAddContextRequest == null)
     draftController.restoreTaskDrafts(draft)
+    generationSettingsController.restoreLaunchProfiles(
+      launcherProvider()?.loadProviderPreferences() ?: AgentPromptLauncherBridge.ProviderPreferences()
+    )
     generationSettingsController.refreshSelectedProviderModels()
     refreshExtensionTaskDraftsFromContext()
 
@@ -247,19 +252,6 @@ internal class AgentPromptPaletteSessionController(
     }
   }
 
-  fun showProviderChooser() {
-    providerSelector.showChooser(onUnavailable = ::showError) {
-      if (currentTargetMode() == PromptTargetMode.EXISTING_TASK) {
-        existingTaskController.clearSelection()
-        reloadExistingTasks()
-      }
-      updateProviderOptionsVisibility()
-      generationSettingsController.refreshSelectedProviderModels()
-      updateSendAvailability()
-      refreshFooterHintForCurrentState()
-    }
-  }
-
   fun showPromptLibraryChooser() {
     popupScope.launch {
       val sourceEntries = collectReusablePromptSourceEntries(
@@ -284,6 +276,11 @@ internal class AgentPromptPaletteSessionController(
   fun onExistingTaskStateChanged() {
     updateSendAvailability()
     refreshFooterHintForCurrentState()
+  }
+
+  fun onProviderOptionsChanged() {
+    generationSettingsController.refreshPresentation()
+    updateSendAvailability()
   }
 
   fun removeContextEntry(entry: ContextEntry) {
@@ -815,6 +812,17 @@ internal class AgentPromptPaletteSessionController(
 
   private fun closeAfterSuccessfulSubmit() {
     closePopup()
+  }
+
+  private fun runManageProfilesDialog(showDialog: () -> Unit) {
+    closePopup()
+    ApplicationManager.getApplication().invokeLater {
+      if (project.isDisposed) return@invokeLater
+      showDialog()
+      if (!project.isDisposed) {
+        project.service<AgentPromptPalettePopupService>().show(invocationData)
+      }
+    }
   }
 
   private fun showError(message: @Nls String) {

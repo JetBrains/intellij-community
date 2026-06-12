@@ -5,25 +5,34 @@ import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsDirectPathNewThreadAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadContext
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadTarget
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsMainToolbarNewThreadAction
 import com.intellij.agent.workbench.sessions.actions.PickerActionGroup
-import com.intellij.agent.workbench.sessions.actions.QuickStartAction
+import com.intellij.agent.workbench.sessions.actions.ProfileQuickStartAction
 import com.intellij.agent.workbench.sessions.actions.resolveAgentSessionsMainToolbarNewThreadContext
+import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfileId
+import com.intellij.agent.workbench.sessions.core.providers.initialMessageRequestForLaunchProfile
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -35,6 +44,7 @@ import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.BadgeIcon
+import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
@@ -63,9 +73,8 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _, _ -> },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.YOLO },
+      createNewSession = { _, _, _, _ -> },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO) },
     )
     val event = TestActionEvent.createTestEvent(action)
 
@@ -93,9 +102,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _, _ -> },
-      lastUsedProvider = { null },
-      lastUsedLaunchMode = { null },
+      createNewSession = { _, _, _, _ -> },
     )
     val event = TestActionEvent.createTestEvent(action)
 
@@ -124,9 +131,8 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _, _ -> },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      createNewSession = { _, _, _, _ -> },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
     )
     val event = TestActionEvent.createTestEvent(action)
     context.project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(
@@ -158,9 +164,8 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(terminalBridge) },
-      createNewSession = { _, _, _, _, _ -> },
-      lastUsedProvider = { AgentSessionProvider.TERMINAL },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      createNewSession = { _, _, _, _ -> },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.TERMINAL, AgentSessionLaunchMode.STANDARD) },
     )
     val event = TestActionEvent.createTestEvent(action)
 
@@ -170,9 +175,12 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     assertThat(event.presentation.text)
       .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.NewTerminalSessionQuick.text"))
     assertThat(event.presentation.description)
-      .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.NewTerminalSessionQuick.target.description",
-                                             "Terminal Session",
-                                             "toolbar-project"))
+      .isEqualTo(AgentSessionsBundle.message(
+        "action.AgentWorkbenchSessions.MainToolbar.NewThread.profile.description",
+        "Terminal Session",
+        "Terminal Session",
+        "toolbar-project",
+      ))
   }
 
   @Test
@@ -186,9 +194,8 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _, _ -> },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      createNewSession = { _, _, _, _ -> },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
     )
     val firstMainAction = action.getMainAction(TestActionEvent.createTestEvent(action))
     val rootGroup = DefaultActionGroup(action)
@@ -215,10 +222,10 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val path = "/tmp/toolbar-project"
     val context = newThreadContext(path = path)
     var launchedPath: String? = null
-    var launchedProvider: AgentSessionProvider? = null
-    var launchedMode: AgentSessionLaunchMode? = null
+    var launchedProfile: AgentPromptLaunchProfile? = null
     var launchedProjectName: String? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
+    val activeProfileId = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO)
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
@@ -228,37 +235,35 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { capturedPath, provider, mode, project, capturedEntryPoint ->
+      createNewSession = { capturedPath, profile, project, capturedEntryPoint ->
         launchedPath = capturedPath
-        launchedProvider = provider
-        launchedMode = mode
+        launchedProfile = profile
         launchedProjectName = project.name
         entryPoint = capturedEntryPoint
       },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.YOLO },
+      activeLaunchProfileId = { activeProfileId },
     )
     val event = TestActionEvent.createTestEvent(action)
 
     val mainAction = action.getMainAction(event)
 
-    assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
-    val quickAction = mainAction as QuickStartAction
+    assertThat(mainAction).isInstanceOf(ProfileQuickStartAction::class.java)
+    val quickAction = mainAction as ProfileQuickStartAction
     assertThat(action.getMainAction(event)).isSameAs(quickAction)
     quickAction.actionPerformed(TestActionEvent.createTestEvent(quickAction))
 
     assertThat(launchedPath).isEqualTo(normalizeAgentWorkbenchPath(path))
-    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.YOLO)
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
     assertThat(launchedProjectName).isEqualTo(context.project.name)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TOOLBAR)
+    assertThat(activeProfileId).isEqualTo(builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO))
   }
 
   @Test
   fun getMainActionUsesDefaultProviderWhenNoLastUsedProvider() {
     val context = newThreadContext()
-    var launchedProvider: AgentSessionProvider? = null
-    var launchedMode: AgentSessionLaunchMode? = null
+    var launchedProfile: AgentPromptLaunchProfile? = null
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -267,19 +272,16 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { _, provider, mode, _, _ ->
-        launchedProvider = provider
-        launchedMode = mode
+      createNewSession = { _, profile, _, _ ->
+        launchedProfile = profile
       },
-      lastUsedProvider = { null },
-      lastUsedLaunchMode = { null },
     )
     val mainAction = checkNotNull(action.getMainAction(TestActionEvent.createTestEvent(action)))
 
     mainAction.actionPerformed(TestActionEvent.createTestEvent(mainAction))
 
-    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
   }
 
   @Test
@@ -464,24 +466,23 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _, _ -> launched = true },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      createNewSession = { _, _, _, _ -> launched = true },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
       showPicker = { _, _ -> pickerShown++ },
     )
     val mainAction = action.getMainAction(TestActionEvent.createTestEvent(action))
 
-    assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
+    assertThat(mainAction).isInstanceOf(ProfileQuickStartAction::class.java)
     checkNotNull(mainAction).actionPerformed(TestActionEvent.createTestEvent(mainAction))
     assertThat(launched).isFalse()
     assertThat(pickerShown).isEqualTo(1)
   }
 
   @Test
-  fun primaryClickUsesCachedProviderAvailabilityBeforeQuickLaunchAndFallsBackToPicker() {
+  fun primaryClickUsesCachedProviderAvailabilityBeforeQuickLaunchAndFallsBackToAvailableProfile() {
     val context = newThreadContext(path = "/tmp/toolbar-project")
     var cliChecks = 0
-    var launched = false
+    var launchedProfile: AgentPromptLaunchProfile? = null
     var pickerShown = 0
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
@@ -489,25 +490,158 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       cliAvailable = false,
       onCliAvailable = { cliChecks++ },
     )
+    val claudeBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CLAUDE,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    )
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
-      allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _, _ -> launched = true },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      allBridges = { listOf(codexBridge, claudeBridge) },
+      createNewSession = { _, profile, _, _ -> launchedProfile = profile },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
       showPicker = { _, _ -> pickerShown++ },
     )
     context.project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(
-      mapOf(AgentSessionProvider.CODEX to false),
+      mapOf(
+        AgentSessionProvider.CODEX to false,
+        AgentSessionProvider.CLAUDE to true,
+      ),
     )
     val mainAction = action.getMainAction(TestActionEvent.createTestEvent(action))
 
-    assertThat(mainAction).isInstanceOf(QuickStartAction::class.java)
+    assertThat(mainAction).isInstanceOf(ProfileQuickStartAction::class.java)
     checkNotNull(mainAction).actionPerformed(TestActionEvent.createTestEvent(mainAction))
 
     assertThat(cliChecks).isZero()
-    assertThat(launched).isFalse()
-    assertThat(pickerShown).isEqualTo(1)
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.CLAUDE.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(pickerShown).isZero()
+  }
+
+  @Test
+  fun mainToolbarPickerShowsBuiltInAndUserLaunchProfiles() {
+    val context = newThreadContext(path = "/tmp/repo-direct")
+    val activeProfileId = "user:careful"
+    var launchedPath: String? = null
+    var launchedProfile: AgentPromptLaunchProfile? = null
+    val providerIcon = EmptyIcon.create(17)
+    val customProfile = AgentPromptLaunchProfile(
+      id = "user:careful",
+      name = "Careful Codex",
+      providerId = AgentSessionProvider.CODEX.value,
+      launchMode = AgentSessionLaunchMode.STANDARD,
+      generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
+    )
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+      cliAvailable = true,
+      iconOverride = providerIcon,
+      yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge) },
+      createNewSession = { path, profile, _, _ ->
+        launchedPath = path
+        launchedProfile = profile
+      },
+      userLaunchProfiles = { listOf(customProfile) },
+      activeLaunchProfileId = { activeProfileId },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    val children = action.actionGroup.getChildren(event)
+
+    assertThat(children.filterIsInstance<Separator>()).hasSize(2)
+    assertThat(children.filterNot { child -> child is Separator }.map { child -> child.templatePresentation.text }).containsExactly(
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex"),
+      "Careful Codex",
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
+    )
+    val selectedAction = children.single { child -> child.templatePresentation.text == "Careful Codex" }
+    val unselectedAction =
+      children.single { child -> child.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex") }
+    val selectedPopupEvent = popupEvent(selectedAction)
+    val unselectedPopupEvent = popupEvent(unselectedAction)
+
+    assertThat(selectedAction.templatePresentation.icon).isSameAs(providerIcon)
+    assertThat(selectedAction.templatePresentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNotNull()
+    assertThat(unselectedAction.templatePresentation.icon).isSameAs(providerIcon)
+    assertThat(unselectedAction.templatePresentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNull()
+
+    selectedAction.update(selectedPopupEvent)
+    unselectedAction.update(unselectedPopupEvent)
+
+    assertThat(Toggleable.isSelected(selectedPopupEvent.presentation)).isTrue()
+    assertThat(selectedPopupEvent.presentation.icon).isSameAs(providerIcon)
+    assertThat(selectedPopupEvent.presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNotNull()
+    assertThat(Toggleable.isSelected(unselectedPopupEvent.presentation)).isFalse()
+    assertThat(unselectedPopupEvent.presentation.icon).isSameAs(providerIcon)
+    assertThat(unselectedPopupEvent.presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNull()
+
+    children.single { child -> child.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex") }
+      .actionPerformed(TestActionEvent.createTestEvent())
+
+    assertThat(activeProfileId).isEqualTo(customProfile.id)
+    assertThat(launchedPath).isEqualTo("/tmp/repo-direct")
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(launchedProfile?.kind).isEqualTo(AgentPromptLaunchProfileKind.BUILT_IN)
+  }
+
+  @Test
+  fun mainToolbarPickerShowsImplicitDefaultBadgeWhenNoDefaultProfileStored() {
+    val context = newThreadContext(path = "/tmp/repo-direct")
+    val providerIcon = EmptyIcon.create(17)
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      iconOverride = providerIcon,
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge) },
+      createNewSession = { _, _, _, _ -> },
+      activeLaunchProfileId = { null },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    val children = action.actionGroup.getChildren(event)
+    val selectedAction = children.single { child ->
+      child.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex")
+    }
+    val selectedPopupEvent = popupEvent(selectedAction)
+
+    assertThat(selectedAction.templatePresentation.icon).isSameAs(providerIcon)
+    assertThat(selectedAction.templatePresentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNotNull()
+
+    selectedAction.update(selectedPopupEvent)
+
+    assertThat(Toggleable.isSelected(selectedPopupEvent.presentation)).isTrue()
+    assertThat(selectedPopupEvent.presentation.icon).isSameAs(providerIcon)
+    assertThat(selectedPopupEvent.presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNotNull()
+  }
+
+  @Test
+  fun launchProfileInitialMessageRequestReflectsPlanModeSelection() {
+    val planProfile = AgentPromptLaunchProfile(
+      id = "user:plan",
+      name = "Plan Codex",
+      providerId = AgentSessionProvider.CODEX.value,
+      startInPlanMode = true,
+    )
+    val standardProfile = planProfile.copy(id = "user:standard", startInPlanMode = false)
+
+    val planRequest = initialMessageRequestForLaunchProfile(planProfile)
+    val standardRequest = initialMessageRequestForLaunchProfile(standardProfile)
+
+    assertThat(planRequest.prompt).isEmpty()
+    assertThat(planRequest.providerOptionIds).containsExactly("plan_mode")
+    assertThat(standardRequest.prompt).isEmpty()
+    assertThat(standardRequest.providerOptionIds).isEmpty()
   }
 
   @Test
@@ -593,7 +727,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { emptyList() },
-      createNewSession = { _, _, _, _, _ -> },
+      createNewSession = { _, _, _, _ -> },
     )
     val event = TestActionEvent.createTestEvent(action)
 
@@ -612,8 +746,8 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { null },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _, _ -> },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
+      createNewSession = { _, _, _, _ -> },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
     )
     val event = TestActionEvent.createTestEvent(action)
 
@@ -633,16 +767,16 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _, _ -> },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      createNewSession = { _, _, _, _ -> },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
     )
     val event = TestActionEvent.createTestEvent(action)
 
     action.update(event)
 
     val expected = AgentSessionsBundle.message(
-      "action.AgentWorkbenchSessions.MainToolbar.NewThread.description",
+      "action.AgentWorkbenchSessions.MainToolbar.NewThread.profile.description",
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex"),
       AgentSessionsBundle.message("toolwindow.action.new.session.codex"),
       "my-repo",
     )
@@ -665,9 +799,8 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _, _ -> },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      createNewSession = { _, _, _, _ -> },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
     )
     val event = TestActionEvent.createTestEvent(action)
 
@@ -699,9 +832,8 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { _, _, _, _, _ -> },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      createNewSession = { _, _, _, _ -> },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
     )
     val event = TestActionEvent.createTestEvent(action)
 
@@ -779,6 +911,17 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     assertThat(openProjectPathsResolved).isTrue()
     assertThat(candidates.map(AgentPromptProjectPathCandidate::path))
       .containsExactly("/work/repo-a", "/tmp/repo-a")
+  }
+
+  private fun popupEvent(action: AnAction): AnActionEvent {
+    return AnActionEvent.createEvent(
+      action,
+      DataContext.EMPTY_CONTEXT,
+      null,
+      "",
+      ActionUiKind.POPUP,
+      null,
+    )
   }
 }
 

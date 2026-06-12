@@ -329,7 +329,8 @@ class JunieAgentSessionProviderDescriptorTest {
     val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
     val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
 
-    val updatedLaunchSpec = descriptor.applyGenerationSettings(baseLaunchSpec, AgentPromptGenerationSettings.AUTO)
+    val updatedLaunchSpec =
+      descriptor.applyGenerationSettings(baseLaunchSpec, AgentPromptGenerationSettings.AUTO, STANDARD_INITIAL_MESSAGE_PLAN)
 
     assertThat(updatedLaunchSpec.command).containsExactly("junie-test", "--skip-update-check")
   }
@@ -342,6 +343,7 @@ class JunieAgentSessionProviderDescriptorTest {
     val updatedLaunchSpec = descriptor.applyGenerationSettings(
       baseLaunchSpec,
       AgentPromptGenerationSettings(modelId = "chatgpt-5.5"),
+      STANDARD_INITIAL_MESSAGE_PLAN,
     )
 
     assertThat(updatedLaunchSpec.command).containsExactly("junie-test", "--skip-update-check", "--model", "chatgpt-5.5")
@@ -355,6 +357,7 @@ class JunieAgentSessionProviderDescriptorTest {
     val updatedLaunchSpec = descriptor.applyGenerationSettings(
       baseLaunchSpec,
       AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH),
+      STANDARD_INITIAL_MESSAGE_PLAN,
     )
 
     assertThat(updatedLaunchSpec.command).containsExactly("junie-test", "--skip-update-check", "--effort", "xhigh")
@@ -371,6 +374,7 @@ class JunieAgentSessionProviderDescriptorTest {
         modelId = "chatgpt-5.5",
         reasoningEffort = AgentPromptReasoningEffort.HIGH,
       ),
+      STANDARD_INITIAL_MESSAGE_PLAN,
     )
 
     assertThat(updatedLaunchSpec.command).containsExactly(
@@ -396,6 +400,7 @@ class JunieAgentSessionProviderDescriptorTest {
         modelId = "chatgpt-5.5",
         reasoningEffort = AgentPromptReasoningEffort.XHIGH,
       ),
+      STANDARD_INITIAL_MESSAGE_PLAN,
     )
 
     assertThat(updatedLaunchSpec.command).containsExactly(
@@ -416,6 +421,7 @@ class JunieAgentSessionProviderDescriptorTest {
     val updatedLaunchSpec = descriptor.applyGenerationSettings(
       baseLaunchSpec,
       AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.MAX),
+      STANDARD_INITIAL_MESSAGE_PLAN,
     )
 
     assertThat(updatedLaunchSpec.command).containsExactly("junie-test", "--skip-update-check")
@@ -434,6 +440,7 @@ class JunieAgentSessionProviderDescriptorTest {
         modelId = "chatgpt-5.5",
         reasoningEffort = AgentPromptReasoningEffort.LOW,
       ),
+      STANDARD_INITIAL_MESSAGE_PLAN,
     )
 
     assertThat(updatedLaunchSpec.command).containsExactly(
@@ -683,6 +690,8 @@ class JunieAgentSessionProviderDescriptorTest {
     assertThat(descriptor.resolvePendingSessionMetadata("Junie:new-123", launchSpec)).isNull()
   }
 }
+
+private val STANDARD_INITIAL_MESSAGE_PLAN: AgentInitialMessagePlan = AgentInitialMessagePlan(message = "Implement the feature")
 
 private fun descriptorWithCliVersion(version: JunieCliVersion?): JunieAgentSessionProviderDescriptor {
   return JunieAgentSessionProviderDescriptor(

@@ -29,8 +29,11 @@ fun buildPlanModeInitialMessagePlan(
   startupPolicyWhenPlanModeDisabled: AgentInitialMessageStartupPolicy = AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND,
 ): AgentInitialMessagePlan {
   val basePlan = AgentInitialMessagePlan.composeDefault(request)
-  val normalizedMessage = basePlan.message ?: return basePlan
   val planMode = request.isPlanModeRequested()
+  val normalizedMessage = basePlan.message
+  if (!planMode && normalizedMessage == null) {
+    return basePlan
+  }
   return AgentInitialMessagePlan(
     message = normalizedMessage,
     mode = if (planMode) AgentInitialMessageMode.PLAN else AgentInitialMessageMode.STANDARD,

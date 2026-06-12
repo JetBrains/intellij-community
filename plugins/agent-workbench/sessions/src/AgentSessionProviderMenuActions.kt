@@ -10,9 +10,13 @@ import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.Separator
+import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ui.LafIconLookup
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
@@ -51,6 +55,25 @@ fun providerItemMonochromeIconWithMode(item: AgentSessionProviderMenuItem): Icon
     return withYoloModeBadge(icon)
   }
   return icon
+}
+
+fun setProviderItemLaunchProfileIcon(presentation: Presentation, item: AgentSessionProviderMenuItem, selected: Boolean) {
+  setLaunchProfileIcon(presentation, providerItemMonochromeIconWithMode(item), selected)
+}
+
+fun setLaunchProfileIcon(presentation: Presentation, baseIcon: Icon, selected: Boolean) {
+  Toggleable.setSelected(presentation, selected)
+  presentation.icon = baseIcon
+  presentation.selectedIcon = null
+  presentation.disabledIcon = null
+  presentation.putClientProperty(
+    ActionUtil.SECONDARY_ICON,
+    when {
+      !selected -> null
+      presentation.isEnabled -> LafIconLookup.getIcon("checkmark")
+      else -> LafIconLookup.getDisabledIcon("checkmark")
+    },
+  )
 }
 
 private class AgentSessionProviderMenuItemAction(

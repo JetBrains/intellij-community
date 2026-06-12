@@ -246,12 +246,20 @@ interface AgentSessionProviderDescriptor {
     val reasoningEffort = generationSettings.reasoningEffort
                             .takeIf { effort -> effort == AgentPromptReasoningEffort.AUTO || effort in supportedReasoningEfforts }
                           ?: AgentPromptReasoningEffort.AUTO
-    return generationSettings.copy(modelId = modelId, reasoningEffort = reasoningEffort)
+    val planReasoningEffort = generationSettings.planReasoningEffort
+      ?.takeIf { effort -> effort == AgentPromptReasoningEffort.AUTO || effort in supportedReasoningEfforts }
+      ?: generationSettings.planReasoningEffort?.let { AgentPromptReasoningEffort.AUTO }
+    return generationSettings.copy(
+      modelId = modelId,
+      reasoningEffort = reasoningEffort,
+      planReasoningEffort = planReasoningEffort,
+    )
   }
 
   fun applyGenerationSettings(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     generationSettings: AgentPromptGenerationSettings,
+    initialMessagePlan: AgentInitialMessagePlan,
   ): AgentSessionTerminalLaunchSpec = baseLaunchSpec
 
   fun applyGenerationModelCatalog(

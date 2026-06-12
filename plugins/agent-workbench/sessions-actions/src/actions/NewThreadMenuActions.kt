@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.buildAgentSessionProviderMenuActions
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderActionModel
@@ -13,7 +14,9 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderActionModel
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
+import com.intellij.agent.workbench.sessions.core.providers.generationSettingsForPlanEffort
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
+import com.intellij.agent.workbench.sessions.core.providers.initialMessageRequestForLaunchProfile
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
@@ -31,6 +34,28 @@ fun createNewThreadViaService(
   entryPoint: AgentWorkbenchEntryPoint,
 ) {
   service<AgentSessionLaunchService>().createNewSession(path, provider, mode, entryPoint, currentProject)
+}
+
+fun createNewThreadViaService(
+  path: String,
+  profile: AgentPromptLaunchProfile,
+  currentProject: Project,
+  entryPoint: AgentWorkbenchEntryPoint,
+) {
+  val provider = AgentSessionProvider.fromOrNull(profile.providerId) ?: return
+  service<AgentSessionLaunchService>().createNewSession(
+    path = path,
+    provider = provider,
+    mode = profile.launchMode,
+    entryPoint = entryPoint,
+    currentProject = currentProject,
+    initialMessageRequest = initialMessageRequestForLaunchProfile(profile),
+    generationSettings = generationSettingsForPlanEffort(
+      generationSettings = profile.generationSettings,
+      planEffort = profile.planEffort,
+      startInPlanMode = profile.startInPlanMode,
+    ),
+  )
 }
 
 fun buildNewThreadMenuModel(

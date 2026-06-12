@@ -3,20 +3,19 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
-import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
+import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
+import com.intellij.agent.workbench.sessions.core.providers.buildBuiltInLaunchProfiles
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
-import com.intellij.agent.workbench.sessions.core.providers.withYoloModeBadge
+import com.intellij.agent.workbench.sessions.providerItemIconWithMode
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
-import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
-import com.intellij.ide.setToolTipText
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -27,20 +26,14 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.components.JBLabel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import javax.swing.Icon
 
 internal class AgentPromptProviderSelector(
-  private val invocationData: AgentPromptInvocationData,
-  private val providerIconLabel: JBLabel,
+  invocationData: AgentPromptInvocationData,
   private val headerControls: AgentPromptHeaderControls,
   private val providersProvider: () -> List<AgentSessionProviderDescriptor>,
   private val sessionsMessageResolver: AgentPromptSessionsMessageResolver,
@@ -50,6 +43,7 @@ internal class AgentPromptProviderSelector(
    * directly.
    */
   private val asyncRefreshScope: CoroutineScope? = null,
+  private val onProviderOptionsChanged: () -> Unit = {},
 ) {
   private val providerAvailabilityService = invocationData.project.service<AgentSessionProviderAvailabilityService>()
   private val providerSettingsService = service<AgentSessionProviderSettingsService>()
@@ -65,6 +59,10 @@ internal class AgentPromptProviderSelector(
 
   val availableProviders: List<AgentSessionProvider>
     get() = providerEntries.map { entry -> entry.bridge.provider }
+
+  fun providerEntries(): List<ProviderEntry> {
+    return providerEntries
+  }
 
   fun refresh() {
     val bridges = providerSettingsService.enabledProviders(providersProvider().filter { provider -> provider.supportsPromptLaunch })
@@ -121,6 +119,7 @@ internal class AgentPromptProviderSelector(
     }
     val currentProviderId = selectedProvider?.bridge?.provider
     selectedProvider = findProviderEntry(currentProviderId) ?: providerEntries.firstOrNull()
+    selectedLaunchMode = normalizeLaunchMode(selectedProvider?.bridge, selectedLaunchMode)
     updatePresentation()
   }
 
@@ -145,14 +144,18 @@ internal class AgentPromptProviderSelector(
       .associate { entry -> entry.bridge.provider.value to selectedOptionIds(entry.bridge.provider) }
   }
 
+  fun builtInLaunchProfiles(): List<AgentPromptLaunchProfile> {
+    return buildBuiltInLaunchProfiles(providerMenuModel) { item ->
+      sessionsMessageResolver.resolve(item.labelKey, item.bridge) ?: item.displayNameFallback()
+    }
+  }
+
   fun selectProvider(provider: AgentSessionProvider?, launchMode: AgentSessionLaunchMode? = null) {
     if (provider == null) {
       return
     }
     selectedProvider = findProviderEntry(provider) ?: selectedProvider
-    if (launchMode != null) {
-      selectedLaunchMode = launchMode
-    }
+    selectedLaunchMode = normalizeLaunchMode(selectedProvider?.bridge, launchMode ?: selectedLaunchMode)
     updatePresentation()
   }
 
@@ -163,30 +166,43 @@ internal class AgentPromptProviderSelector(
     return providerEntries.firstOrNull { entry -> entry.bridge.provider == provider }
   }
 
+  fun findMenuItem(provider: AgentSessionProvider?, launchMode: AgentSessionLaunchMode): AgentSessionProviderMenuItem? {
+    if (provider == null) {
+      return null
+    }
+    return providerMenuItemsForMode(launchMode).firstOrNull { item -> item.bridge.provider == provider }
+  }
+
+  fun selectedMenuItem(): AgentSessionProviderMenuItem? {
+    return findMenuItem(selectedProvider?.bridge?.provider, selectedLaunchMode)
+  }
+
   fun selectedOptionIds(provider: AgentSessionProvider): Set<String> {
     val entry = findProviderEntry(provider) ?: return emptySet()
     return optionSelectionState(entry.bridge).toSet()
   }
 
-  fun showChooser(onUnavailable: (@Nls String) -> Unit, onSelected: (ProviderEntry) -> Unit) {
-    val group = buildChooserActionGroup(onSelected)
-    if (group == null) {
-      onUnavailable(AgentPromptBundle.message("popup.error.no.providers"))
+  fun isPlanModeSelected(): Boolean {
+    val provider = selectedProvider?.bridge?.provider ?: return false
+    return AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE in selectedOptionIds(provider)
+  }
+
+  fun setPlanModeSelected(selected: Boolean) {
+    val bridge = selectedProvider?.bridge ?: return
+    if (bridge.promptOptions.none { option -> option.id == AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE }) {
       return
     }
-
-    val chooserDataContext = invocationData.dataContextOrNull() ?: DataManager.getInstance().getDataContext(providerIconLabel)
-    JBPopupFactory.getInstance()
-      .createActionGroupPopup(
-        null,
-        group,
-        chooserDataContext,
-        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-        true,
-        null,
-        Int.MAX_VALUE,
-      )
-      .showUnderneathOf(providerIconLabel)
+    val selectedOptionIds = optionSelectionState(bridge)
+    val changed = if (selected) {
+      selectedOptionIds.add(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
+    }
+    else {
+      selectedOptionIds.remove(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
+    }
+    if (changed) {
+      updateProviderOptionsPresentation()
+      onProviderOptionsChanged()
+    }
   }
 
   internal fun buildChooserActionGroup(onSelected: (ProviderEntry) -> Unit): ActionGroup? {
@@ -213,22 +229,6 @@ internal class AgentPromptProviderSelector(
   }
 
   private fun updatePresentation() {
-    val provider = selectedProvider
-    if (provider == null) {
-      providerIconLabel.icon = AllIcons.Toolwindows.ToolWindowMessages
-      providerIconLabel.setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.provider.selector.tooltip")))
-      providerIconLabel.accessibleContext.accessibleName = AgentPromptBundle.message("popup.provider.selector.label")
-      providerIconLabel.accessibleContext.accessibleDescription = AgentPromptBundle.message("popup.provider.selector.tooltip")
-      updateProviderOptionsPresentation()
-      return
-    }
-
-    val useMonochrome = Registry.`is`("agent.workbench.use.monochrome.icons", true)
-    val baseIcon = if (useMonochrome) provider.bridge.monochromeIcon else provider.bridge.icon
-    providerIconLabel.icon = getIcon(baseIcon, selectedLaunchMode)
-    providerIconLabel.setToolTipText(HtmlChunk.text(provider.displayName))
-    providerIconLabel.accessibleContext.accessibleName = provider.displayName
-    providerIconLabel.accessibleContext.accessibleDescription = AgentPromptBundle.message("popup.provider.selector.tooltip")
     updateProviderOptionsPresentation()
   }
 
@@ -246,7 +246,7 @@ internal class AgentPromptProviderSelector(
 
   private fun createProviderSelectionAction(item: AgentSessionProviderMenuItem, onSelected: (ProviderEntry) -> Unit): AnAction {
     val text = sessionsMessageResolver.resolve(item.labelKey, item.bridge) ?: item.displayNameFallback()
-    val icon = getIcon(item)
+    val icon = providerItemIconWithMode(item)
     return object : DumbAwareAction(text, null, icon) {
       override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = item.isEnabled
@@ -269,17 +269,28 @@ internal class AgentPromptProviderSelector(
     }
   }
 
-  private fun getIcon(item: AgentSessionProviderMenuItem): Icon = getIcon(item.bridge.icon, item.mode)
-
-  private fun getIcon(baseIcon: Icon, mode: AgentSessionLaunchMode): Icon {
-    if (mode == AgentSessionLaunchMode.YOLO) {
-      return withYoloModeBadge(baseIcon)
+  private fun normalizeLaunchMode(
+    bridge: AgentSessionProviderDescriptor?,
+    mode: AgentSessionLaunchMode,
+  ): AgentSessionLaunchMode {
+    if (bridge == null || mode in bridge.supportedLaunchModes) {
+      return mode
     }
-    return baseIcon
+    if (AgentSessionLaunchMode.STANDARD in bridge.supportedLaunchModes) {
+      return AgentSessionLaunchMode.STANDARD
+    }
+    return bridge.supportedLaunchModes.firstOrNull() ?: AgentSessionLaunchMode.STANDARD
   }
 
   private fun AgentSessionProviderMenuItem.displayNameFallback(): @Nls String {
     return findProviderEntry(bridge.provider)?.displayName ?: bridge.displayNameFallback
+  }
+
+  private fun providerMenuItemsForMode(launchMode: AgentSessionLaunchMode): List<AgentSessionProviderMenuItem> {
+    return when (launchMode) {
+      AgentSessionLaunchMode.STANDARD -> providerMenuModel.standardItems
+      AgentSessionLaunchMode.YOLO -> providerMenuModel.yoloItems
+    }
   }
 
   private fun disabledProviderReason(item: AgentSessionProviderMenuItem): @Nls String {
@@ -299,11 +310,14 @@ internal class AgentPromptProviderSelector(
   ): AgentPromptHeaderCheckBoxAction {
     val label = sessionsMessageResolver.resolve(option.labelKey, bridge) ?: option.labelFallback
     return AgentPromptHeaderCheckBoxAction(label, option.id in selectedOptionIds) { selected ->
-      if (selected) {
+      val changed = if (selected) {
         selectedOptionIds.add(option.id)
       }
       else {
         selectedOptionIds.remove(option.id)
+      }
+      if (changed) {
+        onProviderOptionsChanged()
       }
     }
   }

@@ -3,14 +3,15 @@ package com.intellij.agent.workbench.sessions.state
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,7 +19,9 @@ import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
 @State(name = "AgentSessionUiPreferencesState", storages = [Storage(StoragePathMacros.NON_ROAMABLE_FILE)])
-class AgentSessionUiPreferencesStateService
+class AgentSessionUiPreferencesStateService(
+  private val launchProfileStateService: AgentSessionLaunchProfileStateService = service(),
+)
   : SerializablePersistentStateComponent<AgentSessionUiPreferencesStateService.UiPreferencesState>(UiPreferencesState()) {
 
   private val _lastUsedProviderFlow = MutableStateFlow(getLastUsedProvider())
@@ -31,6 +34,14 @@ class AgentSessionUiPreferencesStateService
 
   fun getLastUsedLaunchMode(): AgentSessionLaunchMode? {
     return state.launchMode
+  }
+
+  fun getUserLaunchProfiles(): List<AgentPromptLaunchProfile> {
+    return launchProfileStateService.getUserLaunchProfiles()
+  }
+
+  fun getActiveLaunchProfileId(): String? {
+    return launchProfileStateService.getActiveLaunchProfileId()
   }
 
   fun getLastUsedVcsMergeProvider(): AgentSessionProvider? {
@@ -56,8 +67,9 @@ class AgentSessionUiPreferencesStateService
       providerId = state.lastUsedProvider,
       launchMode = state.launchMode,
       providerOptionsByProviderId = state.providerOptionsByProviderId,
-      generationSettingsByProviderId = state.generationSettingsByProviderId,
       containerModeEnabled = state.containerModeEnabled,
+      launchProfiles = getUserLaunchProfiles(),
+      activeLaunchProfileId = getActiveLaunchProfileId(),
     )
   }
 
@@ -67,10 +79,13 @@ class AgentSessionUiPreferencesStateService
         lastUsedProvider = preferences.providerId ?: current.lastUsedProvider,
         launchMode = preferences.launchMode,
         providerOptionsByProviderId = preferences.providerOptionsByProviderId,
-        generationSettingsByProviderId = preferences.generationSettingsByProviderId,
         containerModeEnabled = preferences.containerModeEnabled,
       )
     }
+    launchProfileStateService.setLaunchProfiles(
+      profiles = preferences.launchProfiles,
+      activeProfileId = preferences.activeLaunchProfileId,
+    )
     val provider = preferences.providerId?.let(AgentSessionProvider::fromOrNull)
     if (provider != null) {
       _lastUsedProviderFlow.value = provider
@@ -93,8 +108,9 @@ class AgentSessionUiPreferencesStateService
       providerId = provider.value,
       launchMode = launchMode,
       providerOptionsByProviderId = updatedOptions,
-      generationSettingsByProviderId = state.generationSettingsByProviderId,
       containerModeEnabled = state.containerModeEnabled,
+      launchProfiles = getUserLaunchProfiles(),
+      activeLaunchProfileId = getActiveLaunchProfileId(),
     ))
   }
 
@@ -120,7 +136,6 @@ class AgentSessionUiPreferencesStateService
     @JvmField val lastUsedProvider: String? = null,
     @JvmField val launchMode: AgentSessionLaunchMode? = null,
     @JvmField val providerOptionsByProviderId: Map<String, Set<String>> = emptyMap(),
-    @JvmField val generationSettingsByProviderId: Map<String, AgentPromptGenerationSettings> = emptyMap(),
     @JvmField val lastUsedVcsMergeProvider: String? = null,
     @JvmField val lastUsedVcsMergeLaunchMode: AgentSessionLaunchMode? = null,
     @JvmField val containerModeEnabled: Boolean = false,

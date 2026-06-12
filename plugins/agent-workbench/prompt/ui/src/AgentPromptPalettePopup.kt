@@ -177,16 +177,15 @@ internal class AgentPromptPalettePopup(
       suggestionsPanel = suggestions.component,
       contextChipsPanel = contextChips.component,
       onPromptLibraryClicked = { controllerRef.showPromptLibraryChooser() },
-      onProviderIconClicked = { controllerRef.showProviderChooser() },
       onExistingTaskSelected = { selected -> controllerRef.onExistingTaskSelected(selected) },
     )
     providerSelector = AgentPromptProviderSelector(
       invocationData = invocationData,
-      providerIconLabel = view.providerIconLabel,
       headerControls = view.headerControls,
       providersProvider = providersProvider,
       sessionsMessageResolver = sessionsMessageResolver,
       asyncRefreshScope = popupScope,
+      onProviderOptionsChanged = { controllerRef.onProviderOptionsChanged() },
     )
     val existingTaskController = AgentPromptExistingTaskController(
       existingTaskListModel = view.existingTaskListModel,

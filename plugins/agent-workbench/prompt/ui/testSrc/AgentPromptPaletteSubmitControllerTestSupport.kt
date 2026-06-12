@@ -38,12 +38,10 @@ fun captureNewTaskPromptLaunchRequest(
     val view = createAgentPromptPaletteView(
       promptArea = EditorTextField(),
       contextChipsPanel = JPanel(),
-      onProviderIconClicked = {},
       onExistingTaskSelected = {},
     )
     val providerSelector = AgentPromptProviderSelector(
       invocationData = testInvocationData(project),
-      providerIconLabel = view.providerIconLabel,
       headerControls = view.headerControls,
       providersProvider = { listOf(availableDescriptor) },
       sessionsMessageResolver = AgentPromptSessionsMessageResolver(classLoader),

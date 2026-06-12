@@ -3,20 +3,24 @@ package com.intellij.agent.workbench.prompt.ui
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
+// @spec community/plugins/agent-workbench/spec/actions/global-prompt-task-cost-profiles.spec.md
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.ide.setToolTipText
 import com.intellij.markdown.utils.convertMarkdownToHtml
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CheckboxAction
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -51,6 +55,7 @@ import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import javax.accessibility.AccessibleContext
 import javax.swing.DefaultListModel
 import javax.swing.JEditorPane
 import javax.swing.JComponent
@@ -86,11 +91,13 @@ internal data class AgentPromptPaletteView(
   @JvmField val composerContextPanel: JPanel,
   @JvmField val bottomPanel: JPanel,
   @JvmField val tabbedPane: JBTabbedPane,
-  @JvmField val providerIconLabel: JBLabel,
+  @JvmField val profileAction: AgentPromptToolbarProfileAction,
   @JvmField val promptLibraryIconLabel: JLabel,
   @JvmField val generationSettingsPanel: JPanel,
+  @JvmField val launchProfileLink: ActionLink,
   @JvmField val modelSelectorLink: ActionLink,
   @JvmField val reasoningEffortLink: ActionLink,
+  @JvmField val planReasoningEffortLink: ActionLink,
   @JvmField val addContextButton: ActionLink,
   @JvmField val existingTaskListModel: DefaultListModel<ThreadEntry>,
   @JvmField val existingTaskList: JBList<ThreadEntry>,
@@ -156,10 +163,15 @@ internal class AgentPromptStatusStrip(initialText: @Nls String) {
   }
 
   private fun show(message: @Nls String, foreground: Color) {
+    val previousText = text
     text = message
     advertiser.clearAdvertisements()
     advertiser.setForeground(foreground)
     advertiser.addAdvertisement(message, null)
+    component.accessibleContext?.let { accessibleContext ->
+      accessibleContext.accessibleName = message
+      accessibleContext.firePropertyChange(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, previousText, message)
+    }
   }
 }
 
@@ -170,7 +182,7 @@ internal class AgentPromptHeaderControls(
   @JvmField val containerModeAction: AgentPromptHeaderCheckBoxAction,
   private val previewAction: AgentPromptToolbarIconAction,
   private val promptLibraryAction: AgentPromptToolbarIconAction,
-  private val providerAction: AgentPromptToolbarIconAction,
+  private val profileAction: AgentPromptToolbarProfileAction,
 ) {
   private var providerOptionsVisible = true
 
@@ -220,9 +232,129 @@ internal class AgentPromptHeaderControls(
     providerOptionActions.forEach(rootGroup::add)
     rootGroup.add(previewAction)
     rootGroup.add(promptLibraryAction)
-    rootGroup.add(providerAction)
+    rootGroup.add(profileAction)
     updateActions()
   }
+}
+
+internal class HeaderActionLink(text: @Nls String) : ActionLink(text) {
+  var onVisibilityChanged: (() -> Unit)? = null
+
+  override fun setVisible(aFlag: Boolean) {
+    val visibilityChanged = isVisible != aFlag
+    super.setVisible(aFlag)
+    if (visibilityChanged) {
+      onVisibilityChanged?.invoke()
+    }
+  }
+}
+
+internal class AgentPromptToolbarProfileAction(
+  initialText: @Nls String,
+  initialDescription: @Nls String,
+  initialIcon: Icon,
+) : DumbAwareAction(initialText, initialDescription, initialIcon), CustomComponentAction {
+  private val actionGroupProvider: () -> DefaultActionGroup
+    get() = currentActionGroupProvider
+
+  private var visible: Boolean = true
+  private var enabled: Boolean = true
+  private var profileText: @Nls String = initialText
+  private var profileDescription: @Nls String = initialDescription
+  private var profileIcon: Icon = initialIcon
+  private var currentActionGroupProvider: () -> DefaultActionGroup = { DefaultActionGroup() }
+
+  var onPresentationChanged: (() -> Unit)? = null
+
+  @JvmField
+  val link: HeaderActionLink = HeaderActionLink(initialText).apply {
+    autoHideOnDisable = false
+    withFont(JBUI.Fonts.smallFont())
+    foreground = UIUtil.getContextHelpForeground()
+    border = JBUI.Borders.empty()
+    setIcon(initialIcon, false)
+    setToolTipText(HtmlChunk.text(initialDescription))
+    accessibleContext.accessibleName = initialText
+    accessibleContext.accessibleDescription = initialDescription
+    addActionListener {
+      showProfilePopup(DataManager.getInstance().getDataContext(this), this)
+    }
+  }
+
+  val customComponent: JComponent
+    get() = link
+
+  val textForTest: @Nls String
+    get() = profileText
+
+  init {
+    templatePresentation.text = initialText
+    templatePresentation.description = initialDescription
+    templatePresentation.icon = initialIcon
+  }
+
+  fun setActionGroupProvider(provider: () -> DefaultActionGroup) {
+    currentActionGroupProvider = provider
+  }
+
+  fun setPresentation(
+    text: @Nls String,
+    description: @Nls String,
+    icon: Icon,
+    visible: Boolean,
+    enabled: Boolean,
+  ) {
+    this.profileText = text
+    this.profileDescription = description
+    this.profileIcon = icon
+    this.visible = visible
+    this.enabled = enabled
+    templatePresentation.text = text
+    templatePresentation.description = description
+    templatePresentation.icon = icon
+    link.text = text
+    link.isVisible = visible
+    link.isEnabled = enabled
+    link.setIcon(icon, false)
+    link.setToolTipText(HtmlChunk.text(description))
+    link.accessibleContext.accessibleName = text
+    link.accessibleContext.accessibleDescription = description
+    link.revalidate()
+    link.repaint()
+    onPresentationChanged?.invoke()
+  }
+
+  override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
+    return link
+  }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.text = profileText
+    e.presentation.description = profileDescription
+    e.presentation.icon = profileIcon
+    e.presentation.isVisible = visible
+    e.presentation.isEnabled = enabled
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    showProfilePopup(e.dataContext, link)
+  }
+
+  private fun showProfilePopup(dataContext: DataContext, anchor: JComponent) {
+    val popup = JBPopupFactory.getInstance()
+      .createActionGroupPopup(
+        null,
+        actionGroupProvider(),
+        dataContext,
+        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
+        true,
+        null,
+        Int.MAX_VALUE,
+      )
+    popup.showUnderneathOf(anchor)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }
 
 internal class AgentPromptToolbarIconAction(
@@ -280,15 +412,14 @@ internal fun createAgentPromptPaletteView(
   suggestionsPanel: JPanel = JPanel(),
   contextChipsPanel: JPanel,
   onPromptLibraryClicked: () -> Unit = {},
-  onProviderIconClicked: () -> Unit,
   onExistingTaskSelected: (ThreadEntry) -> Unit,
 ): AgentPromptPaletteView {
-  val providerSelectorAction = AgentPromptToolbarIconAction(
-    text = AgentPromptBundle.message("popup.provider.selector.tooltip"),
+  val profileSelectorAction = AgentPromptToolbarProfileAction(
+    initialText = AgentPromptBundle.message("popup.profile.default"),
+    initialDescription = AgentPromptBundle.message("popup.profile.tooltip"),
     initialIcon = AllIcons.Toolwindows.ToolWindowMessages,
-    onClick = onProviderIconClicked,
   )
-  val providerIconLabel = providerSelectorAction.label
+  val launchProfileLink = profileSelectorAction.link
 
   val promptLibraryAction = AgentPromptToolbarIconAction(
     text = AgentPromptBundle.message("popup.prompt.library.tooltip"),
@@ -359,8 +490,10 @@ internal fun createAgentPromptPaletteView(
     containerModeAction = containerModeAction,
     previewAction = previewToggleAction,
     promptLibraryAction = promptLibraryAction,
-    providerAction = providerSelectorAction,
+    profileAction = profileSelectorAction,
   )
+  launchProfileLink.onVisibilityChanged = headerControls::updateActions
+  profileSelectorAction.onPresentationChanged = headerControls::updateActions
 
   lateinit var tabbedPane: JBTabbedPane
   val rightHeaderPanel = JPanel(BorderLayout()).apply {
@@ -450,6 +583,16 @@ internal fun createAgentPromptPaletteView(
     accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.reasoning.accessible.name")
   }
 
+  val planReasoningEffortLink = ActionLink(AgentPromptBundle.message("popup.generation.plan.reasoning.same")).apply {
+    autoHideOnDisable = false
+    setDropDownLinkIcon()
+    withFont(JBUI.Fonts.smallFont())
+    foreground = UIUtil.getContextHelpForeground()
+    border = JBUI.Borders.empty()
+    setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.plan.reasoning.tooltip")))
+    accessibleContext.accessibleName = AgentPromptBundle.message("popup.generation.plan.reasoning.accessible.name")
+  }
+
   val contextChipsContainer = JPanel(BorderLayout()).apply {
     isOpaque = false
     add(contextChipsPanel, BorderLayout.CENTER)
@@ -471,6 +614,7 @@ internal fun createAgentPromptPaletteView(
     border = JBUI.Borders.empty(0, 6, 6, 6)
     add(modelSelectorLink)
     add(reasoningEffortLink)
+    add(planReasoningEffortLink)
   }
 
   val promptEditorPanel = BorderLayoutPanel().apply {
@@ -525,11 +669,13 @@ internal fun createAgentPromptPaletteView(
     composerContextPanel = composerContextPanel,
     bottomPanel = bottomPanel,
     tabbedPane = tabbedPane,
-    providerIconLabel = providerIconLabel,
+    profileAction = profileSelectorAction,
     promptLibraryIconLabel = promptLibraryIconLabel,
     generationSettingsPanel = generationSettingsPanel,
+    launchProfileLink = launchProfileLink,
     modelSelectorLink = modelSelectorLink,
     reasoningEffortLink = reasoningEffortLink,
+    planReasoningEffortLink = planReasoningEffortLink,
     addContextButton = addContextButton,
     existingTaskListModel = existingTaskListModel,
     existingTaskList = existingTaskList,

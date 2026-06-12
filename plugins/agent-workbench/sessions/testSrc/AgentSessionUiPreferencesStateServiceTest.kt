@@ -4,8 +4,10 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
+import com.intellij.agent.workbench.sessions.state.AgentSessionLaunchProfileStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -16,14 +18,14 @@ import java.util.concurrent.TimeUnit
 class AgentSessionUiPreferencesStateServiceTest {
   @Test
   fun lastUsedProviderDefaultsToNull() {
-    val preferences = AgentSessionUiPreferencesStateService()
+    val preferences = uiPreferencesService()
     assertThat(preferences.getLastUsedProvider()).isNull()
     assertThat(preferences.lastUsedProviderFlow.value).isNull()
   }
 
   @Test
   fun setAndGetLastUsedProvider() {
-    val preferences = AgentSessionUiPreferencesStateService()
+    val preferences = uiPreferencesService()
 
     preferences.setLastUsedProvider(AgentSessionProvider.CLAUDE)
     assertThat(preferences.getLastUsedProvider()).isEqualTo(AgentSessionProvider.CLAUDE)
@@ -36,15 +38,14 @@ class AgentSessionUiPreferencesStateServiceTest {
 
   @Test
   fun getAndSetProviderPreferencesRoundTrip() {
-    val service = AgentSessionUiPreferencesStateService()
+    val service = uiPreferencesService()
 
     val prefs = AgentPromptLauncherBridge.ProviderPreferences(
       providerId = AgentSessionProvider.CLAUDE.value,
       launchMode = AgentSessionLaunchMode.STANDARD,
       providerOptionsByProviderId = mapOf("claude" to setOf("plan_mode")),
-      generationSettingsByProviderId = mapOf(
-        "claude" to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH)
-      ),
+      launchProfiles = listOf(launchProfile("user:careful", "Careful", AgentSessionProvider.CLAUDE.value)),
+      activeLaunchProfileId = "user:careful",
     )
     service.setProviderPreferences(prefs)
 
@@ -52,13 +53,13 @@ class AgentSessionUiPreferencesStateServiceTest {
     assertThat(loaded.providerId).isEqualTo(AgentSessionProvider.CLAUDE.value)
     assertThat(loaded.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
     assertThat(loaded.providerOptionsByProviderId).isEqualTo(mapOf("claude" to setOf("plan_mode")))
-    assertThat(loaded.generationSettingsByProviderId)
-      .isEqualTo(mapOf("claude" to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH)))
+    assertThat(loaded.launchProfiles.map(AgentPromptLaunchProfile::id)).containsExactly("user:careful")
+    assertThat(loaded.activeLaunchProfileId).isEqualTo("user:careful")
   }
 
   @Test
   fun setProviderPreferencesUpdatesLastUsedProviderFlow() {
-    val service = AgentSessionUiPreferencesStateService()
+    val service = uiPreferencesService()
 
     service.setProviderPreferences(
       AgentPromptLauncherBridge.ProviderPreferences(
@@ -73,13 +74,13 @@ class AgentSessionUiPreferencesStateServiceTest {
 
   @Test
   fun lastUsedLaunchModeDefaultsToNull() {
-    val service = AgentSessionUiPreferencesStateService()
+    val service = uiPreferencesService()
     assertThat(service.getLastUsedLaunchMode()).isNull()
   }
 
   @Test
   fun getLastUsedLaunchModeReturnsYoloAfterSettingYoloPreference() {
-    val service = AgentSessionUiPreferencesStateService()
+    val service = uiPreferencesService()
     service.setProviderPreferences(
       AgentPromptLauncherBridge.ProviderPreferences(
         providerId = AgentSessionProvider.CODEX.value,
@@ -91,7 +92,7 @@ class AgentSessionUiPreferencesStateServiceTest {
 
   @Test
   fun getLastUsedLaunchModeReturnsNullForUnknownModeName() {
-    val service = AgentSessionUiPreferencesStateService()
+    val service = uiPreferencesService()
     // Default state has no launch mode
     service.loadState(AgentSessionUiPreferencesStateService.UiPreferencesState())
     assertThat(service.getLastUsedLaunchMode()).isNull()
@@ -99,7 +100,7 @@ class AgentSessionUiPreferencesStateServiceTest {
 
   @Test
   fun lastUsedVcsMergePreferencesDefaultToNull() {
-    val service = AgentSessionUiPreferencesStateService()
+    val service = uiPreferencesService()
 
     assertThat(service.getLastUsedVcsMergeProvider()).isNull()
     assertThat(service.getLastUsedVcsMergeLaunchMode()).isNull()
@@ -107,7 +108,7 @@ class AgentSessionUiPreferencesStateServiceTest {
 
   @Test
   fun updateProviderPreferencesOnLaunchPersistsAllFields() {
-    val service = AgentSessionUiPreferencesStateService()
+    val service = uiPreferencesService()
     val request = AgentPromptInitialMessageRequest(
       prompt = "fix bug",
       providerOptionIds = setOf("plan_mode"),
@@ -124,15 +125,14 @@ class AgentSessionUiPreferencesStateServiceTest {
 
   @Test
   fun updateProviderPreferencesOnLaunchMergesProviderOptions() {
-    val service = AgentSessionUiPreferencesStateService()
+    val service = uiPreferencesService()
     // Pre-populate options for claude
     service.setProviderPreferences(AgentPromptLauncherBridge.ProviderPreferences(
       providerId = AgentSessionProvider.CLAUDE.value,
       launchMode = AgentSessionLaunchMode.STANDARD,
       providerOptionsByProviderId = mapOf("claude" to setOf("plan_mode")),
-      generationSettingsByProviderId = mapOf(
-        "claude" to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH)
-      ),
+      launchProfiles = listOf(launchProfile("user:claude", "Claude Custom", AgentSessionProvider.CLAUDE.value)),
+      activeLaunchProfileId = "user:claude",
     ))
 
     // Launch with codex — should merge, not replace
@@ -145,13 +145,35 @@ class AgentSessionUiPreferencesStateServiceTest {
     val loaded = service.getProviderPreferences()
     assertThat(loaded.providerOptionsByProviderId).containsEntry("claude", setOf("plan_mode"))
     assertThat(loaded.providerOptionsByProviderId).containsEntry("codex", setOf("fast"))
-    assertThat(loaded.generationSettingsByProviderId)
-      .isEqualTo(mapOf("claude" to AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.XHIGH)))
+    assertThat(loaded.launchProfiles.map(AgentPromptLaunchProfile::id)).containsExactly("user:claude")
+    assertThat(loaded.activeLaunchProfileId).isEqualTo("user:claude")
+  }
+
+  @Test
+  fun loadStateKeepsProviderOptionsSeparateFromLaunchProfiles() {
+    val service = uiPreferencesService()
+
+    service.loadState(AgentSessionUiPreferencesStateService.UiPreferencesState(
+      lastUsedProvider = AgentSessionProvider.CODEX.value,
+      launchMode = AgentSessionLaunchMode.STANDARD,
+      providerOptionsByProviderId = mapOf(
+        AgentSessionProvider.CODEX.value to emptySet(),
+        AgentSessionProvider.CLAUDE.value to setOf("plan_mode"),
+      ),
+    ))
+
+    val loaded = service.getProviderPreferences()
+    assertThat(loaded.providerOptionsByProviderId).isEqualTo(mapOf(
+      AgentSessionProvider.CODEX.value to emptySet(),
+      AgentSessionProvider.CLAUDE.value to setOf("plan_mode"),
+    ))
+    assertThat(loaded.launchProfiles).isEmpty()
+    assertThat(loaded.activeLaunchProfileId).isNull()
   }
 
   @Test
   fun updateProviderPreferencesOnLaunchWithNullRequestPreservesExistingOptions() {
-    val service = AgentSessionUiPreferencesStateService()
+    val service = uiPreferencesService()
     service.setProviderPreferences(AgentPromptLauncherBridge.ProviderPreferences(
       providerOptionsByProviderId = mapOf("claude" to setOf("plan_mode")),
     ))
@@ -166,7 +188,7 @@ class AgentSessionUiPreferencesStateServiceTest {
 
   @Test
   fun updateVcsMergeProviderPreferencesOnLaunchDoesNotOverwriteGeneralDefaults() {
-    val service = AgentSessionUiPreferencesStateService()
+    val service = uiPreferencesService()
     service.setProviderPreferences(
       AgentPromptLauncherBridge.ProviderPreferences(
         providerId = AgentSessionProvider.CLAUDE.value,
@@ -183,5 +205,48 @@ class AgentSessionUiPreferencesStateServiceTest {
     assertThat(generalPreferences.providerOptionsByProviderId).isEqualTo(mapOf("claude" to setOf("plan_mode")))
     assertThat(service.getLastUsedVcsMergeProvider()).isEqualTo(AgentSessionProvider.CODEX)
     assertThat(service.getLastUsedVcsMergeLaunchMode()).isEqualTo(AgentSessionLaunchMode.STANDARD)
+  }
+
+  @Test
+  fun launchProfilesAreStoredInDedicatedStateService() {
+    val launchProfileStateService = AgentSessionLaunchProfileStateService()
+    val uiPreferencesService = AgentSessionUiPreferencesStateService(launchProfileStateService)
+
+    uiPreferencesService.setProviderPreferences(AgentPromptLauncherBridge.ProviderPreferences(
+      launchProfiles = listOf(launchProfile("user:fast", "Fast", AgentSessionProvider.CODEX.value)),
+      activeLaunchProfileId = "user:fast",
+    ))
+
+    assertThat(uiPreferencesService.state).isEqualTo(AgentSessionUiPreferencesStateService.UiPreferencesState())
+    assertThat(launchProfileStateService.state.launchProfiles.map(AgentPromptLaunchProfile::id))
+      .containsExactly("user:fast")
+    assertThat(launchProfileStateService.state.activeLaunchProfileId).isEqualTo("user:fast")
+  }
+
+  @Test
+  fun launchProfileStateServiceRoundTrip() {
+    val service = AgentSessionLaunchProfileStateService()
+
+    service.setLaunchProfiles(
+      profiles = listOf(launchProfile("user:careful", "Careful", AgentSessionProvider.CLAUDE.value)),
+      activeProfileId = "user:careful",
+    )
+
+    assertThat(service.getUserLaunchProfiles().map(AgentPromptLaunchProfile::id))
+      .containsExactly("user:careful")
+    assertThat(service.getActiveLaunchProfileId()).isEqualTo("user:careful")
+  }
+
+  private fun uiPreferencesService(): AgentSessionUiPreferencesStateService {
+    return AgentSessionUiPreferencesStateService(AgentSessionLaunchProfileStateService())
+  }
+
+  private fun launchProfile(id: String, name: String, providerId: String): AgentPromptLaunchProfile {
+    return AgentPromptLaunchProfile(
+      id = id,
+      name = name,
+      providerId = providerId,
+      generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
+    )
   }
 }

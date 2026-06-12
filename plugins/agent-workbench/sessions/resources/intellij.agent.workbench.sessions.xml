@@ -61,6 +61,7 @@
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="BuildSolutionBar"/>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="ActiveDeviceGroup"/>
     <applicationSettings service="com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService"/>
+    <applicationSettings service="com.intellij.agent.workbench.sessions.state.AgentSessionLaunchProfileStateService"/>
     <applicationSettings service="com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService"/>
     <applicationSettings service="com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService"/>
     <applicationSettings service="com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService"/>

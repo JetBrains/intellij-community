@@ -16,7 +16,9 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.prompt.ui.context.buildExtensionActionDataContext
 import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
+import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOptionTarget
 import com.intellij.agent.workbench.sessions.core.providers.isPlanModeBlockedForExistingThread
+import com.intellij.agent.workbench.sessions.core.providers.resolveEffectiveProviderOptionIds
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -166,7 +168,10 @@ internal class AgentPromptPaletteSubmitController(
     val effectiveProviderOptionIds = resolveEffectiveProviderOptionIds(
       selectedProvider = providerEntry.bridge,
       selectedOptionIds = providerSelector.selectedOptionIds(providerEntry.bridge.provider),
-      targetMode = targetMode,
+      target = when (targetMode) {
+        PromptTargetMode.NEW_TASK -> AgentPromptProviderOptionTarget.NEW_TASK
+        PromptTargetMode.EXISTING_TASK -> AgentPromptProviderOptionTarget.EXISTING_TASK
+      },
     )
     val initialMessageRequest = AgentPromptInitialMessageRequest(
       prompt = prompt,

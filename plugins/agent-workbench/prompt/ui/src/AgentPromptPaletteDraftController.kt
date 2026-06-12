@@ -152,8 +152,9 @@ internal class AgentPromptPaletteDraftController(
         providerId = providerSelector.selectedProvider?.bridge?.provider?.value,
         launchMode = providerSelector.selectedLaunchMode,
         providerOptionsByProviderId = providerSelector.providerOptionSelections(),
-        generationSettingsByProviderId = currentPreferences?.generationSettingsByProviderId.orEmpty(),
         containerModeEnabled = getContainerModeSelected(),
+        launchProfiles = currentPreferences?.launchProfiles.orEmpty(),
+        activeLaunchProfileId = currentPreferences?.activeLaunchProfileId,
       )
     )
   }

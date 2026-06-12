@@ -150,8 +150,15 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override fun applyGenerationSettings(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     generationSettings: AgentPromptGenerationSettings,
+    initialMessagePlan: AgentInitialMessagePlan,
   ): AgentSessionTerminalLaunchSpec {
-    val effort = sanitizeGenerationSettings(generationSettings).reasoningEffort
+    val settings = sanitizeGenerationSettings(generationSettings)
+    val effort = if (initialMessagePlan.mode == AgentInitialMessageMode.PLAN) {
+      settings.planReasoningEffort ?: settings.reasoningEffort
+    }
+    else {
+      settings.reasoningEffort
+    }
     if (effort == AgentPromptReasoningEffort.AUTO) {
       return baseLaunchSpec
     }
@@ -260,13 +267,13 @@ internal fun buildClaudeLaunchSpecWithInitialMessage(
   baseLaunchSpec: AgentSessionTerminalLaunchSpec,
   initialMessagePlan: AgentInitialMessagePlan,
 ): AgentSessionTerminalLaunchSpec {
-  val effectivePrompt = initialMessagePlan.message ?: return baseLaunchSpec
   val command = if (initialMessagePlan.mode == AgentInitialMessageMode.PLAN) {
     replaceOrAddPermissionMode(baseLaunchSpec.command, PERMISSION_MODE_PLAN)
   }
   else {
     baseLaunchSpec.command
   }
+  val effectivePrompt = initialMessagePlan.message ?: return baseLaunchSpec.copy(command = command)
   return baseLaunchSpec.copy(command = command + listOf("--", effectivePrompt))
 }
 

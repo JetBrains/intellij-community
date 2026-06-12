@@ -143,9 +143,13 @@ internal class JunieAgentSessionProviderDescriptor(
   override fun applyGenerationSettings(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     generationSettings: AgentPromptGenerationSettings,
+    initialMessagePlan: AgentInitialMessagePlan,
   ): AgentSessionTerminalLaunchSpec {
     val settings = sanitizeGenerationSettings(generationSettings)
-    val generationArgs = buildJunieGenerationArgs(settings)
+    val generationArgs = buildJunieGenerationArgs(
+      settings = settings,
+      planMode = initialMessagePlan.mode == AgentInitialMessageMode.PLAN,
+    )
     if (generationArgs.isEmpty()) {
       return baseLaunchSpec
     }
@@ -207,10 +211,13 @@ internal class JunieAgentSessionProviderDescriptor(
 private val JUNIE_PROMPT_PROVIDER_PLAN_MODE_OPTION: AgentPromptProviderOption =
   AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION.copy(defaultSelected = false)
 
-private fun buildJunieGenerationArgs(settings: AgentPromptGenerationSettings): List<String> {
+private fun buildJunieGenerationArgs(
+  settings: AgentPromptGenerationSettings,
+  planMode: Boolean,
+): List<String> {
   val args = mutableListOf<String>()
   settings.modelId?.let { modelId -> args.addAll(listOf(MODEL_FLAG, modelId)) }
-  val effort = settings.reasoningEffort
+  val effort = if (planMode) settings.planReasoningEffort ?: settings.reasoningEffort else settings.reasoningEffort
   if (effort != AgentPromptReasoningEffort.AUTO) {
     args.addAll(listOf(EFFORT_FLAG, effort.junieCliValue()))
   }

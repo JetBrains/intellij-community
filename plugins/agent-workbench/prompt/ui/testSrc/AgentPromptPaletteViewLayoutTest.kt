@@ -271,6 +271,7 @@ class AgentPromptPaletteViewLayoutTest {
       assertThat(suggestionsLocation.y + view.suggestionsPanel.height).isLessThanOrEqualTo(promptAreaLocation.y)
       assertThat(promptAreaLocation.y + promptArea.height).isLessThanOrEqualTo(generationSettingsLocation.y)
       assertThat(generationSettingsLocation.y + view.generationSettingsPanel.height).isLessThanOrEqualTo(composerContextLocation.y)
+      assertThat(view.generationSettingsPanel.parent).isNotNull()
     }
   }
 
@@ -294,7 +295,6 @@ class AgentPromptPaletteViewLayoutTest {
       promptArea = promptArea,
       suggestionsPanel = suggestionsPanel,
       contextChipsPanel = contextChipsPanel,
-      onProviderIconClicked = {},
       onExistingTaskSelected = {},
     ).apply {
       addContextButton.isVisible = addContextVisible

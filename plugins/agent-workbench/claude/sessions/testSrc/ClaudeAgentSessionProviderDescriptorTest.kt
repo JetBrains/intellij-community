@@ -82,7 +82,7 @@ class ClaudeAgentSessionProviderDescriptorTest {
     val launchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
     val sessionId = assertValidUuid(launchSpec.preallocatedSessionId)
 
-    val updatedLaunchSpec = bridge.applyGenerationSettings(launchSpec, AgentPromptGenerationSettings.AUTO)
+    val updatedLaunchSpec = bridge.applyGenerationSettings(launchSpec, AgentPromptGenerationSettings.AUTO, STANDARD_INITIAL_MESSAGE_PLAN)
 
     assertThat(updatedLaunchSpec.command)
       .containsExactly("claude", "--session-id", sessionId)
@@ -97,6 +97,7 @@ class ClaudeAgentSessionProviderDescriptorTest {
     val updatedLaunchSpec = bridge.applyGenerationSettings(
       launchSpec,
       AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.MAX),
+      STANDARD_INITIAL_MESSAGE_PLAN,
     )
 
     assertThat(updatedLaunchSpec.command)
@@ -166,6 +167,21 @@ class ClaudeAgentSessionProviderDescriptorTest {
 
     assertThat(launchSpec.command)
       .containsExactly("claude", "--session-id", sessionId, "--permission-mode", "plan", "--", "Refactor this")
+    assertThat(launchSpec.preallocatedSessionId).isEqualTo(sessionId)
+  }
+
+  @Test
+  fun buildLaunchSpecWithEmptyPlanModeSwitchesToPlanMode(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    val launchSpec = bridge.buildLaunchSpecWithInitialMessage(
+      baseLaunchSpec = baseLaunchSpec,
+      initialMessagePlan = AgentInitialMessagePlan(message = null, mode = AgentInitialMessageMode.PLAN),
+    )
+    val sessionId = checkNotNull(baseLaunchSpec.preallocatedSessionId)
+
+    assertThat(launchSpec.command)
+      .containsExactly("claude", "--session-id", sessionId, "--permission-mode", "plan")
     assertThat(launchSpec.preallocatedSessionId).isEqualTo(sessionId)
   }
 
@@ -358,6 +374,8 @@ class ClaudeAgentSessionProviderDescriptorTest {
     }
   }
 }
+
+private val STANDARD_INITIAL_MESSAGE_PLAN: AgentInitialMessagePlan = AgentInitialMessagePlan(message = "Refactor this")
 
 private fun emptyBackend(): ClaudeSessionBackend {
   return object : ClaudeSessionBackend {
