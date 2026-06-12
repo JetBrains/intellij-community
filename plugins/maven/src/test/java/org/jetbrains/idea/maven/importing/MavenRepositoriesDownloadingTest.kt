@@ -1,12 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.io.createDirectories
-import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
@@ -32,6 +31,15 @@ import org.jetbrains.idea.maven.project.MavenSyncListener
 import org.jetbrains.idea.maven.project.source.MavenDownloadLibrarySourcesSyncListener
 import org.jetbrains.idea.maven.server.MisconfiguredPlexusDummyEmbedder
 import org.jetbrains.idea.maven.utils.MavenLog
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.BufferedReader
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
@@ -42,16 +50,6 @@ import java.util.stream.Collectors
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.writeText
-import com.intellij.testFramework.junit5.TestApplication
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.params.ParameterizedClass
-import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.AfterEach
 
 @TestApplication
 @ParameterizedClass
@@ -68,7 +66,7 @@ class MavenRepositoriesDownloadingTest(mavenVersion: String, modelVersion: Strin
   private val httpServerFixture = MavenHttpRepositoryServerFixture()
   private lateinit var myUrl: String
 
-  public @BeforeEach
+  @BeforeEach
   fun setUp() {
     httpServerFixture.setUp()
     myUrl = httpServerFixture.url()
@@ -98,7 +96,7 @@ class MavenRepositoriesDownloadingTest(mavenVersion: String, modelVersion: Strin
     return br.lines().collect(Collectors.joining())
   }
 
-  public @AfterEach
+  @AfterEach
   fun tearDown() {
     try {
       httpServerFixture.tearDown()
@@ -257,18 +255,18 @@ class MavenRepositoriesDownloadingTest(mavenVersion: String, modelVersion: Strin
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isRegularFile())
     maven.createProjectPom(pom())
     maven.doImportProjectsAsync(listOf(maven.projectPom), false)
-    TestCase.assertEquals(1, maven.projectsManager.rootProjects.size)
+    Assertions.assertEquals(1, maven.projectsManager.rootProjects.size)
     val problemDescription = maven.projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.REPOSITORY }.description!!
     maven.forMaven3 {
       if (maven.mavenVersionIsOrMoreThan("3.9.1")) {
-        TestCase.assertEquals("status code: 401, reason phrase: Unauthorized (401)", problemDescription)
+        assertEquals("status code: 401, reason phrase: Unauthorized (401)", problemDescription)
       }
       else {
         assertTrue(problemDescription.contains("Unauthorized"), problemDescription)
       }
     }
     maven.forMaven4 {
-      TestCase.assertEquals("too many authentication attempts. Limit: 3", problemDescription)
+      assertEquals("too many authentication attempts. Limit: 3", problemDescription)
     }
 
   }
@@ -347,18 +345,18 @@ class MavenRepositoriesDownloadingTest(mavenVersion: String, modelVersion: Strin
   @Test
   fun testWithDependencyLastUpdatedWithErrorNoForce() = runBlocking {
     doLastUpdatedTest(false, pom()) {
-      TestCase.assertEquals(1, maven.projectsManager.rootProjects.size)
-      TestCase.assertEquals("Unresolved dependency: 'org.mytest:myartifact:jar:1.0'",
-                            maven.projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.DEPENDENCY }.description)
+      Assertions.assertEquals(1, maven.projectsManager.rootProjects.size)
+      assertEquals("Unresolved dependency: 'org.mytest:myartifact:jar:1.0'",
+                   maven.projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.DEPENDENCY }.description)
     }
   }
 
   @Test
   fun testWithPluginLastUpdatedWithErrorNoForce() = runBlocking {
     doLastUpdatedTest(false, pomPlugins()) {
-      TestCase.assertEquals(1, maven.projectsManager.rootProjects.size)
-      TestCase.assertEquals("Unresolved plugin: 'org.mytest:myartifact:1.0'",
-                            maven.projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.DEPENDENCY }.description)
+      Assertions.assertEquals(1, maven.projectsManager.rootProjects.size)
+      assertEquals("Unresolved plugin: 'org.mytest:myartifact:1.0'",
+                   maven.projectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.DEPENDENCY }.description)
 
     }
   }
@@ -367,16 +365,20 @@ class MavenRepositoriesDownloadingTest(mavenVersion: String, modelVersion: Strin
   @Test
   fun testWithDependencyLastUpdatedWithErrorForceUpdate() = runBlocking {
     doLastUpdatedTest(true, pom()) {
-      TestCase.assertEquals(1, maven.projectsManager.rootProjects.size)
-      TestCase.assertEquals(maven.projectsManager.rootProjects[0].problems.joinToString { it.toString() }, 0, maven.projectsManager.rootProjects[0].problems.size)
+      Assertions.assertEquals(1, maven.projectsManager.rootProjects.size)
+      Assertions.assertEquals(0,
+                              maven.projectsManager.rootProjects[0].problems.size,
+                              maven.projectsManager.rootProjects[0].problems.joinToString { it.toString() })
     }
   }
 
   @Test
   fun testWithPluginLastUpdatedWithErrorForceUpdate() = runBlocking {
     doLastUpdatedTest(true, pomPlugins()) {
-      TestCase.assertEquals(1, maven.projectsManager.rootProjects.size)
-      TestCase.assertEquals(maven.projectsManager.rootProjects[0].problems.joinToString { it.toString() }, 0, maven.projectsManager.rootProjects[0].problems.size)
+      Assertions.assertEquals(1, maven.projectsManager.rootProjects.size)
+      Assertions.assertEquals(0,
+                              maven.projectsManager.rootProjects[0].problems.size,
+                              maven.projectsManager.rootProjects[0].problems.joinToString { it.toString() })
     }
     val helper = MavenCustomRepositoryHelper(maven.dir, "local1", "remote")
     maven.removeFromLocalRepository("org/mytest/myartifact/")
