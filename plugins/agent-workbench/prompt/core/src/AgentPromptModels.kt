@@ -122,6 +122,7 @@ data class AgentPromptLaunchRequest(
     @JvmField val targetThreadId: String? = null,
     @JvmField val preferredDedicatedFrame: Boolean? = null,
     @JvmField val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
+    @JvmField val generationModelCatalog: List<AgentPromptGenerationModel> = emptyList(),
     @JvmField val containerMode: Boolean = false,
     /**
      * Extra environment variables to inject into the terminal launch spec.

@@ -39,12 +39,17 @@ internal class PiOmlxModelCatalog(
       return emptyList()
     }
 
-    val discoveredModels = connections.flatMap { connection ->
-      queryModels(connection)
+    val connectionsByBaseUrl = LinkedHashMap<String, MutableList<PiOmlxConnection>>()
+    for (connection in connections) {
+      connectionsByBaseUrl.getOrPut(connection.baseUrl) { mutableListOf() }.add(connection)
+    }
+
+    val multipleConnections = connectionsByBaseUrl.size > 1
+    val discoveredModels = connectionsByBaseUrl.values.flatMap { fallbackConnections ->
+      queryModelsFromFirstAvailableConnection(fallbackConnections, fallbackConnections.first().toProviderName(multipleConnections))
     }
       .sortedWith(compareBy<PiOmlxModelCandidate> { it.selection.displayName.lowercase() }.thenBy { it.selection.baseUrl })
     val defaultSelection = discoveredModels.firstOrNull { model -> model.loaded }?.selection
-    val multipleConnections = connections.size > 1
     return discoveredModels.map { model ->
       AgentPromptGenerationModel(
         id = encodeGenerationModelId(model.selection),
@@ -58,25 +63,38 @@ internal class PiOmlxModelCatalog(
   private fun discoverConnections(): List<PiOmlxConnection> {
     val environment = environmentProvider()
     val userHome = userHomeProvider()
-    val connectionsByBaseUrl = LinkedHashMap<String, PiOmlxConnection>()
+    val connections = mutableListOf<PiOmlxConnection>()
 
     resolvePiAgentDirectory(environment, userHome)
       ?.resolve(PI_AUTH_FILE_NAME)
       ?.let { path -> readPiAuthConnections(path, environment) }
-      ?.forEach { connection -> connectionsByBaseUrl[connection.baseUrl] = connection }
+      ?.let(connections::addAll)
 
     userHome
       ?.resolve(OMLX_SETTINGS_RELATIVE_PATH)
       ?.let(::readOmlxSettingsConnection)
-      ?.let { connection -> connectionsByBaseUrl.putIfAbsent(connection.baseUrl, connection) }
+      ?.let(connections::add)
 
-    return connectionsByBaseUrl.values.toList()
+    return connections
   }
 
-  private suspend fun queryModels(connection: PiOmlxConnection): List<PiOmlxModelCandidate> {
+  private suspend fun queryModelsFromFirstAvailableConnection(
+    connections: List<PiOmlxConnection>,
+    provider: String,
+  ): List<PiOmlxModelCandidate> {
+    for (connection in connections) {
+      val models = queryModels(connection, provider)
+      if (models.isNotEmpty()) {
+        return models
+      }
+    }
+    return emptyList()
+  }
+
+  private suspend fun queryModels(connection: PiOmlxConnection, provider: String): List<PiOmlxModelCandidate> {
     try {
       val response = modelsStatusFetcher(connection) ?: return emptyList()
-      return parseOmlxModelsStatus(response, connection.baseUrl, connection.tokenSource)
+      return parseOmlxModelsStatus(response, provider, connection.baseUrl, connection.tokenSource)
     }
     catch (e: CancellationException) {
       throw e
@@ -151,10 +169,12 @@ internal class PiOmlxModelCatalog(
           return null
         }
         val baseUrl = normalizeBaseUrl(node.stringValue("baseUrl").orEmpty()) ?: return null
+        val provider = node.stringValue("provider")?.takeIf { it.isNotBlank() } ?: PI_OMLX_PROVIDER_NAME
         val modelIdValue = node.stringValue("modelId")?.takeIf { it.isNotBlank() } ?: return null
         val displayName = node.stringValue("displayName")?.takeIf { it.isNotBlank() } ?: modelIdValue
         val tokenSource = PiOmlxTokenSource.fromJsonValue(node.stringValue("tokenSource")) ?: return null
         PiOmlxModelSelection(
+          provider = provider,
           baseUrl = baseUrl,
           modelId = modelIdValue,
           displayName = displayName,
@@ -183,6 +203,7 @@ internal data class PiOmlxConnection(
 )
 
 internal data class PiOmlxModelSelection(
+  val provider: String = PI_OMLX_PROVIDER_NAME,
   val baseUrl: String,
   val modelId: String,
   val displayName: String,
@@ -214,6 +235,7 @@ internal data class PiOmlxModelCandidate(
 
 internal fun parseOmlxModelsStatus(
   responseJson: String,
+  provider: String = PI_OMLX_PROVIDER_NAME,
   baseUrl: String,
   tokenSource: PiOmlxTokenSource,
 ): List<PiOmlxModelCandidate> {
@@ -235,6 +257,7 @@ internal fun parseOmlxModelsStatus(
       val modelType = if (configModelType != null && configModelType != rawModelType) "$rawModelType/$configModelType" else rawModelType
       PiOmlxModelCandidate(
         selection = PiOmlxModelSelection(
+          provider = provider,
           baseUrl = baseUrl,
           modelId = modelId,
           displayName = displayName,
@@ -251,8 +274,12 @@ internal fun parseOmlxModelsStatus(
 }
 
 private fun PiOmlxModelCandidate.toPromptDisplayName(multipleConnections: Boolean): String {
-  val suffix = if (multipleConnections) "oMLX ${selection.baseUrl}" else "oMLX"
+  val suffix = if (multipleConnections) selection.provider else PI_OMLX_PROVIDER_NAME
   return "${selection.displayName} ($suffix)"
+}
+
+private fun PiOmlxConnection.toProviderName(multipleConnections: Boolean): String {
+  return if (multipleConnections) "$PI_OMLX_PROVIDER_NAME $baseUrl" else PI_OMLX_PROVIDER_NAME
 }
 
 private fun PiOmlxModelSelection.toJsonString(): String {
@@ -261,6 +288,8 @@ private fun PiOmlxModelSelection.toJsonString(): String {
     generator.writeStartObject()
     generator.writeName("formatVersion")
     generator.writeNumber(PI_OMLX_GENERATION_MODEL_FORMAT_VERSION)
+    generator.writeName("provider")
+    generator.writeString(provider)
     generator.writeName("baseUrl")
     generator.writeString(baseUrl)
     generator.writeName("modelId")
@@ -362,9 +391,14 @@ private fun fetchModelsStatus(connection: PiOmlxConnection): String? {
       requestBuilder.header("authorization", "Bearer ${connection.apiKey}")
     }
     val response = OMLX_HTTP_CLIENT.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8))
-    response.body().takeIf { response.statusCode() in 200..299 }
+    if (response.statusCode() !in 200..299) {
+      OMLX_LOG.info("oMLX model status request to ${connection.baseUrl} returned HTTP ${response.statusCode()}")
+      return null
+    }
+    response.body()
   }
-  catch (_: Exception) {
+  catch (e: Exception) {
+    OMLX_LOG.info("Failed to query oMLX model status from ${connection.baseUrl}: ${e.message}")
     null
   }
 }
@@ -480,6 +514,7 @@ private fun String.padBase64Url(): String {
 private const val PI_CODING_AGENT_DIR_ENVIRONMENT_VARIABLE: String = "PI_CODING_AGENT_DIR"
 private const val PI_AGENT_RELATIVE_PATH: String = ".pi/agent"
 private const val PI_AUTH_FILE_NAME: String = "auth.json"
+private const val PI_OMLX_PROVIDER_NAME: String = "oMLX"
 private val PI_AUTH_ENV_BRACED_PREFIX: String = '$'.toString() + "{"
 private const val PI_AUTH_ENV_BRACED_SUFFIX: String = "}"
 private const val OMLX_SETTINGS_RELATIVE_PATH: String = ".omlx/settings.json"

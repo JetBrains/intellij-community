@@ -25,6 +25,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
@@ -603,6 +604,7 @@ class AgentSessionLaunchService internal constructor(
     launchModalityState: ModalityState? = null,
     threadTitle: String? = null,
     generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
+    generationModelCatalog: List<AgentPromptGenerationModel> = emptyList(),
     extraEnvVariables: Map<String, String> = emptyMap(),
     extraCommandArgs: List<String> = emptyList(),
   ) {
@@ -657,10 +659,15 @@ class AgentSessionLaunchService internal constructor(
                                  ?: AgentInitialMessagePlan.EMPTY
         val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(mode)
         val generationLaunchSpec = descriptor.applyGenerationSettings(baseLaunchSpec, generationSettings)
+        val generationCatalogLaunchSpec = descriptor.applyGenerationModelCatalog(
+          baseLaunchSpec = generationLaunchSpec,
+          generationSettings = generationSettings,
+          generationModelCatalog = generationModelCatalog,
+        )
         val augmentedSpec = AgentSessionLaunchSpecs.augment(
           projectPath = normalizedPath,
           provider = provider,
-          launchSpec = generationLaunchSpec,
+          launchSpec = generationCatalogLaunchSpec,
         )
         // Apply launch contributors (e.g. AwbMcpConfigContributor writing the merged
         // `.awb/awb-mcp.json` and adding `--mcp-config`). sessionId is null for new
@@ -890,6 +897,7 @@ class AgentSessionLaunchService internal constructor(
             preferredDedicatedFrame = request.preferredDedicatedFrame,
             promptLaunchResolved = ::reportPromptLaunchResolved,
             generationSettings = request.generationSettings,
+            generationModelCatalog = request.generationModelCatalog,
             extraEnvVariables = request.containerSessionEnvVariables,
             extraCommandArgs = request.containerSessionExtraArgs,
           )

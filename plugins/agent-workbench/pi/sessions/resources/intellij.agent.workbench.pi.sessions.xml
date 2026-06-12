@@ -16,6 +16,10 @@
       qualifiedName="com.intellij.agent.workbench.pi.sessionUpdateEventsContributor"
       interface="com.intellij.agent.workbench.pi.sessions.PiSessionUpdateEventsContributor"
       dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.pi.jbCentralModelContributor"
+      interface="com.intellij.agent.workbench.pi.sessions.PiJbCentralModelContributor"
+      dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

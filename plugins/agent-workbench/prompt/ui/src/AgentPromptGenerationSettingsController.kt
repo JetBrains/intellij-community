@@ -87,6 +87,11 @@ internal class AgentPromptGenerationSettingsController(
     return sanitizeSettingsForLoadedModelCatalog(providerId, sanitizedSettings)
   }
 
+  fun currentGenerationModelCatalog(): List<AgentPromptGenerationModel> {
+    val provider = providerSelector.selectedProvider ?: return emptyList()
+    return loadedModelCatalog(provider.bridge.provider.value).orEmpty()
+  }
+
   fun refreshPresentation() {
     val selectedProvider = providerSelector.selectedProvider
     val showGenerationControls = generationControlsVisible

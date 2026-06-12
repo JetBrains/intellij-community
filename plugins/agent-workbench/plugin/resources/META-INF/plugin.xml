@@ -27,6 +27,7 @@
     <module name="intellij.agent.workbench.junie.common"/>
     <module name="intellij.agent.workbench.junie.sessions"/>
     <module name="intellij.agent.workbench.pi.sessions"/>
+    <module name="intellij.agent.workbench.pi.jbcentral.aia.profiles.integration" loading="optional"/>
     <module name="intellij.agent.workbench.pi.sessions.filewatch"/>
     <module name="intellij.agent.workbench.terminal.sessions"/>
     <module name="intellij.agent.workbench.sessions.core"/>

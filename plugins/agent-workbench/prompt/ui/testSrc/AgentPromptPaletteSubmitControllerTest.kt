@@ -9,6 +9,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeSummar
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptExistingThreadsSnapshot
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
@@ -228,6 +229,12 @@ class AgentPromptPaletteSubmitControllerTest {
         generationSettingsProvider = {
           AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.MEDIUM)
         },
+        generationModelCatalogProvider = {
+          listOf(
+            AgentPromptGenerationModel(id = "gpt-5", displayName = "GPT-5"),
+            AgentPromptGenerationModel(id = "claude-sonnet-4-5", displayName = "Claude Sonnet 4.5"),
+          )
+        },
       )
       fixture.providerSelector.refresh()
       fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
@@ -238,6 +245,7 @@ class AgentPromptPaletteSubmitControllerTest {
 
       val request = checkNotNull(capturedRequest)
       assertThat(request.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.MEDIUM)
+      assertThat(request.generationModelCatalog.map { model -> model.id }).containsExactly("gpt-5", "claude-sonnet-4-5")
       assertThat(request.targetThreadId).isNull()
     }
   }
@@ -264,6 +272,9 @@ class AgentPromptPaletteSubmitControllerTest {
         generationSettingsProvider = {
           AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH)
         },
+        generationModelCatalogProvider = {
+          listOf(AgentPromptGenerationModel(id = "gpt-5", displayName = "GPT-5"))
+        },
       )
       fixture.providerSelector.refresh()
       fixture.providerSelector.selectProvider(AgentSessionProvider.CODEX)
@@ -275,6 +286,7 @@ class AgentPromptPaletteSubmitControllerTest {
 
       val request = checkNotNull(capturedRequest)
       assertThat(request.generationSettings).isEqualTo(AgentPromptGenerationSettings.AUTO)
+      assertThat(request.generationModelCatalog).isEmpty()
       assertThat(request.targetThreadId).isEqualTo("thread-1")
     }
   }
@@ -533,6 +545,7 @@ class AgentPromptPaletteSubmitControllerTest {
     onSubmitSucceeded: () -> Unit = {},
     onPromptSubmitted: (AgentPromptHistoryEntry) -> Unit = {},
     generationSettingsProvider: () -> AgentPromptGenerationSettings = { AgentPromptGenerationSettings.AUTO },
+    generationModelCatalogProvider: () -> List<AgentPromptGenerationModel> = { emptyList() },
     isContainerModeSelected: () -> Boolean = { false },
     isContainerModeSupported: (AgentSessionProvider) -> Boolean = { false },
     isContainerModeRuntimeAvailable: (AgentSessionProvider) -> Boolean = { false },
@@ -588,6 +601,7 @@ class AgentPromptPaletteSubmitControllerTest {
       onSubmitSucceeded = onSubmitSucceeded,
       onPromptSubmitted = onPromptSubmitted,
       generationSettingsProvider = generationSettingsProvider,
+      generationModelCatalogProvider = generationModelCatalogProvider,
       isContainerModeSelected = isContainerModeSelected,
       isContainerModeSupported = isContainerModeSupported,
       isContainerModeRuntimeAvailable = isContainerModeRuntimeAvailable,

@@ -254,6 +254,12 @@ interface AgentSessionProviderDescriptor {
     generationSettings: AgentPromptGenerationSettings,
   ): AgentSessionTerminalLaunchSpec = baseLaunchSpec
 
+  fun applyGenerationModelCatalog(
+    baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+    generationSettings: AgentPromptGenerationSettings,
+    generationModelCatalog: List<AgentPromptGenerationModel>,
+  ): AgentSessionTerminalLaunchSpec = baseLaunchSpec
+
   fun buildLaunchSpecWithInitialMessage(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     initialMessagePlan: AgentInitialMessagePlan,
