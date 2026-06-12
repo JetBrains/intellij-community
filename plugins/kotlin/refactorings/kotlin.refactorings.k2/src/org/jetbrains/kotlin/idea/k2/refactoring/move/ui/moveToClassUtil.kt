@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDesc
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtThisExpression
@@ -33,7 +32,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
  *
  * Sub-refactorings inside are undo-transparent.
  * In case the operations don't finish completely, the partially applied actions are undone.
- * Undo checks that the operation in the stack is the unfinished move command.
+ * The undo checks that the operation on the stack is the unfinished move command.
  */
 internal fun runMoveToClassWithConversionCommand(
     project: Project,
