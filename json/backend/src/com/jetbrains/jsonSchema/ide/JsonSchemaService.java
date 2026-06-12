@@ -11,6 +11,7 @@ import com.jetbrains.jsonSchema.impl.JsonSchemaObject;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import com.jetbrains.jsonSchema.impl.light.legacy.JsonSchemaObjectReadingUtils;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,6 +66,15 @@ public interface JsonSchemaService {
 
   @Nullable
   VirtualFile findSchemaFileByReference(@NotNull String reference, @Nullable VirtualFile referent);
+
+  /**
+   * Finds a locally registered schema by its {@code $id} without going to the network.
+   * Checks only schemas registered via providers (catalog, user mappings, bundled).
+   */
+  @ApiStatus.Internal
+  default @Nullable VirtualFile findBuiltInSchemaByReference(@NotNull String reference) {
+    return null;
+  }
 
   @Nullable
   JsonSchemaFileProvider getSchemaProvider(final @NotNull VirtualFile schemaFile);

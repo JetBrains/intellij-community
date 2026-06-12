@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -20,6 +21,12 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    Registry.get("json.schema.use.networknt.validation").setValue(false, getTestRootDisposable());
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {
@@ -692,35 +699,35 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   }
 
   public void testExclusiveMinMaxV6_1() {
-    @Language("JSON") String exclusiveMinSchema = "{\"properties\": {\"prop\": {\"exclusiveMinimum\": 3}}}";
+    @Language("JSON") String exclusiveMinSchema = "{\"$schema\": \"http://json-schema.org/draft-06/schema#\", \"properties\": {\"prop\": {\"exclusiveMinimum\": 3}}}";
     doTest(exclusiveMinSchema, "{\"prop\": <warning>2</warning>}");
     doTest(exclusiveMinSchema, "{\"prop\": <warning>3</warning>}");
     doTest(exclusiveMinSchema, "{\"prop\": 4}");
   }
 
   public void testExclusiveMinMaxV6_2() {
-    @Language("JSON") String exclusiveMaxSchema = "{\"properties\": {\"prop\": {\"exclusiveMaximum\": 3}}}";
+    @Language("JSON") String exclusiveMaxSchema = "{\"$schema\": \"http://json-schema.org/draft-06/schema#\", \"properties\": {\"prop\": {\"exclusiveMaximum\": 3}}}";
     doTest(exclusiveMaxSchema, "{\"prop\": 2}");
     doTest(exclusiveMaxSchema, "{\"prop\": <warning>3</warning>}");
     doTest(exclusiveMaxSchema, "{\"prop\": <warning>4</warning>}");
   }
 
   public void testPropertyNamesV6_1() {
-    doTest("{\"propertyNames\": {\"minLength\": 7}}", "{<warning>\"prop\"</warning>: 2}");
+    doTest("{\"$schema\": \"http://json-schema.org/draft-06/schema#\", \"propertyNames\": {\"minLength\": 7}}", "{<warning>\"prop\"</warning>: 2}");
   }
 
   public void testPropertyNamesV6_2() {
-    doTest("{\"properties\": {\"prop\": {\"propertyNames\": {\"minLength\": 7}}}}", "{\"prop\": {<warning>\"qq\"</warning>: 7}}");
+    doTest("{\"$schema\": \"http://json-schema.org/draft-06/schema#\", \"properties\": {\"prop\": {\"propertyNames\": {\"minLength\": 7}}}}", "{\"prop\": {<warning>\"qq\"</warning>: 7}}");
   }
 
   public void testContainsV6() {
-    @Language("JSON") String schema = "{\"properties\": {\"prop\": {\"type\": \"array\", \"contains\": {\"type\": \"number\"}}}}";
+    @Language("JSON") String schema = "{\"$schema\": \"http://json-schema.org/draft-06/schema#\", \"properties\": {\"prop\": {\"type\": \"array\", \"contains\": {\"type\": \"number\"}}}}";
     doTest(schema, "{\"prop\": <warning>[{}, \"a\", true]</warning>}");
     doTest(schema, "{\"prop\": [{}, \"a\", 1, true]}");
   }
 
   public void testConstV6() {
-    @Language("JSON") String schema = "{\"properties\": {\"prop\": {\"type\": \"string\", \"const\": \"foo\"}}}";
+    @Language("JSON") String schema = "{\"$schema\": \"http://json-schema.org/draft-06/schema#\", \"properties\": {\"prop\": {\"type\": \"string\", \"const\": \"foo\"}}}";
     doTest(schema, "{\"prop\": <warning>\"a\"</warning>}");
     doTest(schema, "{\"prop\": <warning>5</warning>}");
     doTest(schema, "{\"prop\": \"foo\"}");
@@ -729,6 +736,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   public void testIfThenElseV7() {
     @Language("JSON") String schema = """
       {
+        "$schema": "http://json-schema.org/draft-07/schema#",
         "if": {
           "properties": {
             "a": {
@@ -1295,5 +1303,60 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   public void testTopLevelRangeHighlighting() {
     doTest("{ \"required\": [\"test3\"]}",
            "<warning descr=\"Missing required property 'test3'\">{}</warning>");
+  }
+
+  // IJ validator silently ignores unresolvable $ref (broken branch dropped, no error on "name")
+  public void testBrokenRefAcceptsAnyValue() {
+    @Language("JSON") String schema = """
+      {
+        "properties": {
+          "name": { "$ref": "#/definitions/nonExistent" },
+          "age": { "type": "number" }
+        }
+      }""";
+    // "name" uses broken $ref → IJ drops it → any value accepted (no error)
+    // "age" still validated → type error reported
+    doTest(schema, "{\"name\": {\"garbage\": true}, \"age\": <warning descr=\"Incompatible types.\n Required: number. Actual: string.\">\"not a number\"</warning>}");
+  }
+
+  // IJ validator silently ignores unresolvable $ref inside allOf — allOf branch is dropped
+  public void testBrokenRefInAllOfAcceptsAnyValue() {
+    @Language("JSON") String schema = """
+      {
+        "properties": {
+          "data": {
+            "allOf": [
+              { "$ref": "#/definitions/nonExistent" },
+              { "type": "object" }
+            ]
+          },
+          "count": { "type": "integer" }
+        }
+      }""";
+    // "data" uses broken $ref in allOf — IJ drops broken branch → still validates remaining allOf
+    // constraints (type: object passes for {}) → no error on "data"
+    // "count" still validated → type error reported
+    doTest(schema, "{\"data\": {}, \"count\": <warning descr=\"Incompatible types.\n Required: integer. Actual: string.\">\"not a number\"</warning>}");
+  }
+
+  // IJ validator drops broken $ref branches in oneOf, affecting the error message
+  public void testOneOfWithBrokenRefBranch() {
+    @Language("JSON") String schema = """
+      {
+        "properties": {
+          "value": {
+            "oneOf": [
+              { "type": "string" },
+              { "$ref": "#/definitions/nonExistent" },
+              { "type": "number" }
+            ]
+          }
+        }
+      }""";
+    // "hello" matches the string branch → oneOf passes (broken branch dropped silently) → no error
+    doTest(schema, "{\"value\": \"hello\"}");
+    // true matches no valid branch (string fails, broken branch dropped, number fails) →
+    // IJ reports 2-type oneOf error (broken branch not counted)
+    doTest(schema, "{\"value\": <warning descr=\"Incompatible types.\n Required one of: number, string. Actual: boolean.\">true</warning>}");
   }
 }

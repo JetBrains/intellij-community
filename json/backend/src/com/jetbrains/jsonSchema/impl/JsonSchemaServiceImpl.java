@@ -149,7 +149,8 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     return JsonFileResolver.resolveSchemaByReference(referent, JsonPointerUtil.normalizeId(reference));
   }
 
-  private @Nullable VirtualFile findBuiltInSchemaByReference(@NotNull String reference) {
+  @Override
+  public @Nullable VirtualFile findBuiltInSchemaByReference(@NotNull String reference) {
     String id = JsonPointerUtil.normalizeId(reference);
     if (!myBuiltInSchemaIds.getValue().contains(id)) return null;
     for (VirtualFile file : myState.getFiles()) {
@@ -332,7 +333,14 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     if (schemas.isEmpty()) return null;
     assert schemas.size() == 1;
     VirtualFile schemaFile = schemas.iterator().next();
-    return JsonCachedValues.getSchemaObject(replaceHttpFileWithBuiltinIfNeeded(schemaFile), myProject);
+    VirtualFile resolvedSchemaFile = replaceHttpFileWithBuiltinIfNeeded(schemaFile);
+    JsonSchemaObject result = JsonCachedValues.getSchemaObject(resolvedSchemaFile, myProject);
+    if (result == null) {
+      LOG.warn("JSON Schema mapped to '" + file.getName() + "' could not be loaded from '" + schemaFile.getUrl() +
+               "' (resolved: " + resolvedSchemaFile.getUrl() + ", valid=" + resolvedSchemaFile.isValid() +
+               ", length=" + resolvedSchemaFile.getLength() + ")");
+    }
+    return result;
   }
 
 

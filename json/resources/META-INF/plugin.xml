@@ -18,7 +18,8 @@
   <content namespace="jetbrains">
     <module name="intellij.json.frontend.split"/>
     <module name="intellij.json" loading="embedded"/>
-    <module name="intellij.json.backend"/>
+    <module name="intellij.json.backend" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.json.networknt.wrapper" required-if-available="intellij.platform.backend"/>
     <module name="intellij.json.backend.regexp" loading="optional"/>
     <module name="intellij.json.structureView" loading="optional"/>
     <module name="intellij.json.syntax" loading="embedded"/>

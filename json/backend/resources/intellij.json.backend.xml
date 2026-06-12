@@ -27,6 +27,15 @@
 
     <registryKey key="json.schema.object.v2.enable.nested.remote.schema.resolve" defaultValue="false" description="Try loading remote schema parts on the fly"/>
     <registryKey key="json.schema.object.v2" defaultValue="true" description="Use lightweight implementation of JsonSchemaObject"/>
+    <registryKey key="json.schema.use.networknt.validation" defaultValue="true" description="Use networknt validator as primary JSON Schema validation engine"/>
+
+    <registryKey key="json.schema.networknt.remote.allow.in.tests" defaultValue="false" description="Allow remote schema downloads in unit test mode (blocked by default to prevent accidental HTTP traffic)"/>
+    <registryKey key="json.schema.networknt.show.source.prefix" defaultValue="false" description="Prepend '[networknt] ' prefix to all validation errors produced by the networknt library (demo/diagnostic aid)"/>
+    <registryKey key="json.schema.networknt.resolve.remote.refs" defaultValue="true" description="Resolve remote HTTP $ref URLs during networknt validation. When false, all remote $refs return null immediately (no cache lookup, no async fetch). Useful for benchmarking local-only validation overhead."/>
+    <registryKey key="json.schema.networknt.raw.error.cap" defaultValue="500"
+                 description="Threshold for raw networknt errors before composition branch pruning kicks in. Not a cap on final displayed errors — all errors below this threshold are fully mapped."/>
+    <registryKey key="json.schema.networknt.max.branch.subvalidations" defaultValue="32"
+                 description="Cap on per-slot branch sub-validations performed by the multi-value JsonPropertyAdapter pass (e.g. JS ternaries). Coverage is per-slot, not Cartesian; raise if real configurations exhaust the cap."/>
     <registryKey key="remote.schema.cache.validity.duration" defaultValue="1"
                  description="The time period (in minutes) a file is being kept in cache for. Applicable to references that contain remote URLs."/>
 

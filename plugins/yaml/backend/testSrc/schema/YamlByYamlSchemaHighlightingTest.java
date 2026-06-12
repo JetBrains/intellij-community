@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase;
@@ -18,6 +19,12 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    Registry.get("json.schema.use.networknt.validation").setValue(false, getTestRootDisposable());
+  }
+
   @NotNull
   @Override
   public String getTestDataPath() {
@@ -41,7 +48,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
       YAMLLanguage.INSTANCE);
   }
 
-  private void doTestYaml(@Language("YAML") @NotNull final String schema, @NotNull final String text) {
+  protected void doTestYaml(@Language("YAML") @NotNull final String schema, @NotNull final String text) {
     configureInitially(schema, text, "yaml");
     myFixture.checkHighlighting(true, false, false);
   }

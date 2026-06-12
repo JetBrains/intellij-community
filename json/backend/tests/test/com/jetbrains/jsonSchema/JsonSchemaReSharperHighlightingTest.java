@@ -5,6 +5,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
@@ -15,6 +16,12 @@ import java.io.File;
 import java.util.function.Predicate;
 
 public class JsonSchemaReSharperHighlightingTest extends JsonSchemaHighlightingTestBase {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    Registry.get("json.schema.use.networknt.validation").setValue(false, getTestRootDisposable());
+  }
+
   @NotNull
   @Override
   protected String getTestDataPath() {

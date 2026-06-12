@@ -116,6 +116,8 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
+        "//json/networknt.wrapper",
+        "//json/networknt.wrapper:networknt.wrapper_test_lib",
     ],
 )
 ### auto-generated section `build intellij.json.tests` end

@@ -1,0 +1,9 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.json.backend"/>
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.jetbrains.jsonSchema.impl.NetworkntValidationBridge"
+                    serviceImplementation="com.intellij.json.networknt.wrapper.NetworkntValidationBridgeImpl"/>
+  </extensions>
+</idea-plugin>

@@ -1,4 +1,5 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.json.backend` start
 
@@ -68,6 +69,8 @@ jvm_library(
         "//jps/model-api:model",
         "//platform/util:util-ui",
         "//platform/util/coroutines",
+        "//platform/diagnostic/telemetry",
+        "//libraries/opentelemetry",
     ],
 )
 
@@ -136,6 +139,8 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
     ],
 )
 ### auto-generated section `build intellij.json.backend` end

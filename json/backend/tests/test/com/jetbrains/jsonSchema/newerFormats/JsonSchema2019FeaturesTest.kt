@@ -1,14 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.newerFormats
 
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightVirtualFile
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.light.nodes.JsonSchemaObjectStorage
 import org.junit.Assert
 
-internal class JsonSchema2019FeaturesTest : JsonSchemaVersionTestBase() {
+internal open class JsonSchema2019FeaturesTest : JsonSchemaVersionTestBase() {
   override val testDataLanguage: TestDataLanguage
     get() = TestDataLanguage.JSON
+
+  override fun setUp() {
+    super.setUp()
+    Registry.get("json.schema.use.networknt.validation").setValue(false, testRootDisposable)
+  }
 
   fun `test schema dependencies`() {
     doTestSchemaValidation(
@@ -150,7 +156,7 @@ internal class JsonSchema2019FeaturesTest : JsonSchemaVersionTestBase() {
     )
   }
 
-  fun `test remote recursive ref based object validation`() {
+  open fun `test remote recursive ref based object validation`() {
     val baseSchema = """
       {
         "${dollar}schema": "https://json-schema.org/draft/2019-09/schema",
@@ -176,7 +182,7 @@ internal class JsonSchema2019FeaturesTest : JsonSchemaVersionTestBase() {
         "${dollar}recursiveAnchor": "branch",
 
         "${dollar}ref": "https://example.com/schemas/base-schema",
-        
+
         "type": "object",
         "properties": {
           "test2": {

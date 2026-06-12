@@ -7531,6 +7531,51 @@ jvm_import(
 )
 
 copy_file(
+    name = "tools.jackson.core/jackson-core-3.0.3.jar_copy",
+    src = "@tools_jackson_core-jackson-core-3_0_3_http//file",
+    out = "tools.jackson.core/jackson-core-3.0.3.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "json-networknt-wrapper-jackson-core-3",
+    jar = "@tools_jackson_core-jackson-core-3_0_3_http//file",
+    source_jar = "@tools_jackson_core-jackson-core-3_0_3-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "tools.jackson.core/jackson-databind-3.0.3.jar_copy",
+    src = "@tools_jackson_core-jackson-databind-3_0_3_http//file",
+    out = "tools.jackson.core/jackson-databind-3.0.3.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "json-networknt-wrapper-jackson-databind-3",
+    jar = "@tools_jackson_core-jackson-databind-3_0_3_http//file",
+    source_jar = "@tools_jackson_core-jackson-databind-3_0_3-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.networknt/json-schema-validator-3.0.0-jetbrains.10.jar_copy",
+    src = "@com_networknt-json-schema-validator-3_0_0-jetbrains_10_http//file",
+    out = "com.networknt/json-schema-validator-3.0.0-jetbrains.10.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "json-networknt-wrapper-json-schema-validator-jetbrains",
+    jar = "@com_networknt-json-schema-validator-3_0_0-jetbrains_10_http//file",
+    source_jar = "@com_networknt-json-schema-validator-3_0_0-jetbrains_10-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "com.networknt/json-schema-validator-1.3.1.jar_copy",
     src = "@com_networknt-json-schema-validator-1_3_1_http//file",
     out = "com.networknt/json-schema-validator-1.3.1.jar",

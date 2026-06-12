@@ -1,0 +1,85 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.json.networknt.wrapper` start
+
+jvm_library(
+    name = "networknt.wrapper",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.json.networknt.wrapper",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:json-networknt-wrapper-json-schema-validator-jetbrains",
+        "@lib//:json-networknt-wrapper-jackson-databind-3",
+        "@lib//:json-networknt-wrapper-jackson-core-3",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:json-networknt-wrapper-json-schema-validator-jetbrains",
+        "@lib//:json-networknt-wrapper-jackson-databind-3",
+        "@lib//:json-networknt-wrapper-jackson-core-3",
+        "@lib//:kotlin-stdlib",
+        "@lib//:slf4j-api",
+        "@lib//:joni",
+        "//json/backend",
+        "//libraries/jackson/annotations",
+        "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml",
+        "//platform/core-api:core",
+        "//platform/platform-api:ide",
+        "//platform/ide-core-impl",
+        "//libraries/caffeine",
+        "//platform/diagnostic/telemetry",
+        "//libraries/opentelemetry",
+    ],
+)
+
+jvm_library(
+    name = "networknt.wrapper_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.json.networknt.wrapper",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        "@lib//:json-networknt-wrapper-json-schema-validator-jetbrains",
+        "@lib//:json-networknt-wrapper-jackson-databind-3",
+        "@lib//:json-networknt-wrapper-jackson-core-3",
+    ],
+    runtime_deps = [
+        # do not sort,
+        ":networknt.wrapper",
+        "//json/backend:backend_test_lib",
+        "//libraries/jackson/annotations:annotations_test_lib",
+        "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core-impl:ide-core-impl_test_lib",
+        "//libraries/caffeine:caffeine_test_lib",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
+        "//libraries/opentelemetry:opentelemetry_test_lib",
+    ],
+)
+### auto-generated section `build intellij.json.networknt.wrapper` end
+
+### auto-generated section `iml intellij.json.networknt.wrapper` start
+exports_files(
+    [
+        "intellij.json.networknt.wrapper.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.json.networknt.wrapper` end

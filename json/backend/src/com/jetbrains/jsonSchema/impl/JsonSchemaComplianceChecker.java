@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -6,10 +6,14 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.json.pointer.JsonPointerPosition;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ConcurrencyUtil;
@@ -18,6 +22,7 @@ import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import com.jetbrains.jsonSchema.fus.JsonSchemaHighlightingSessionStatisticsCollector;
+import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class JsonSchemaComplianceChecker {
+  private static final Logger LOG = Logger.getInstance(JsonSchemaComplianceChecker.class);
   private static final Key<Set<PsiElement>> ANNOTATED_PROPERTIES = Key.create("JsonSchema.Properties.Annotated");
 
   private final @NotNull JsonSchemaObject myRootSchema;
@@ -37,6 +43,8 @@ public class JsonSchemaComplianceChecker {
   private final LocalInspectionToolSession mySession;
   private final @NotNull JsonComplianceCheckerOptions myOptions;
   private final @Nullable @Nls String myMessagePrefix;
+
+  private int myErrorCount;
 
   public JsonSchemaComplianceChecker(@NotNull JsonSchemaObject rootSchema,
                                      @NotNull ProblemsHolder holder,
@@ -61,7 +69,40 @@ public class JsonSchemaComplianceChecker {
   }
 
   public void annotate(final @NotNull PsiElement element) {
+    boolean useNetworknt = Registry.is("json.schema.use.networknt.validation", false);
+    withAnnotateTrace(element, useNetworknt, () -> {
+      if (useNetworknt) {
+        doAnnotateWithNetworknt(element);
+      }
+      else {
+        doAnnotateWithOldEngine(element);
+      }
+    });
+  }
+
+  private void doAnnotateWithOldEngine(@NotNull PsiElement element) {
     JsonSchemaHighlightingSessionStatisticsCollector.getInstance().recordSchemaFeaturesUsage(myRootSchema, () -> doAnnotate(element));
+  }
+
+  private void doAnnotateWithNetworknt(@NotNull PsiElement element) {
+    Project project = element.getProject();
+    VirtualFile schemaFile = myRootSchema.getRawFile();
+    if (schemaFile == null) {
+      LOG.error("networknt validation skipped: schema has no raw file, class=" + myRootSchema.getClass().getSimpleName());
+      return;
+    }
+
+    NetworkntValidationBridge validator = NetworkntValidationBridge.getInstance(project);
+
+    JsonSchemaService schemaService = JsonSchemaService.Impl.get(project);
+    JsonSchemaVersion schemaVersion = schemaService.getSchemaVersion(schemaFile);
+    if (schemaVersion == null) {
+      schemaVersion = JsonSchemaVersion.SCHEMA_7;
+    }
+
+    Map<PsiElement, JsonValidationError> errors = validator.validate(schemaFile, myWalker, element, schemaVersion);
+
+    createWarnings(new JsonSchemaAnnotatorChecker(project, myOptions, errors));
   }
 
   private void doAnnotate(@NotNull PsiElement element) {
@@ -69,7 +110,9 @@ public class JsonSchemaComplianceChecker {
     final JsonPropertyAdapter firstProp = myWalker.getParentPropertyAdapter(element);
     if (firstProp != null) {
       final JsonPointerPosition position = myWalker.findPosition(firstProp.getDelegate(), true);
-      if (position == null || position.isEmpty()) return;
+      if (position == null || position.isEmpty()) {
+        return;
+      }
       final MatchResult result = new JsonSchemaResolver(project, myRootSchema, position, firstProp.getNameValueAdapter()).detailedResolve();
       for (JsonValueAdapter value : firstProp.getValues()) {
         createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(project, value, result, myOptions));
@@ -82,7 +125,8 @@ public class JsonSchemaComplianceChecker {
     JsonValueAdapter rootToCheck;
     if (firstProp == null) {
       rootToCheck = findTopLevelElement(myWalker, element);
-    } else {
+    }
+    else {
       rootToCheck = firstProp.getParentObject();
       if (rootToCheck == null || !myWalker.isTopJsonElement(rootToCheck.getDelegate().getParent())) {
         return;
@@ -90,7 +134,8 @@ public class JsonSchemaComplianceChecker {
     }
     if (rootToCheck != null) {
       Project project = element.getProject();
-      final MatchResult matchResult = new JsonSchemaResolver(project, myRootSchema, new JsonPointerPosition(), rootToCheck).detailedResolve();
+      final MatchResult matchResult =
+        new JsonSchemaResolver(project, myRootSchema, new JsonPointerPosition(), rootToCheck).detailedResolve();
       createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(project, rootToCheck, matchResult, myOptions));
     }
   }
@@ -98,6 +143,7 @@ public class JsonSchemaComplianceChecker {
   @ApiStatus.Internal
   protected void createWarnings(@Nullable JsonSchemaAnnotatorChecker checker) {
     if (checker == null || checker.isCorrect()) return;
+    myErrorCount += checker.getErrors().size();
     // compute intersecting ranges - we'll solve warning priorities based on this information
     List<TextRange> ranges = new ArrayList<>();
     List<List<Map.Entry<PsiElement, JsonValidationError>>> entries = new ArrayList<>();
@@ -107,7 +153,8 @@ public class JsonSchemaComplianceChecker {
       for (int i = 0; i < ranges.size(); i++) {
         TextRange currRange = ranges.get(i);
         if (currRange.intersects(range)) {
-          ranges.set(i, new TextRange(Math.min(currRange.getStartOffset(), range.getStartOffset()), Math.max(currRange.getEndOffset(), range.getEndOffset())));
+          ranges.set(i, new TextRange(Math.min(currRange.getStartOffset(), range.getStartOffset()),
+                                      Math.max(currRange.getEndOffset(), range.getEndOffset())));
           entries.get(i).add(entry);
           processed = true;
           break;
@@ -160,7 +207,23 @@ public class JsonSchemaComplianceChecker {
   }
 
   private boolean checkIfAlreadyProcessed(@NotNull PsiElement property) {
-    Set<PsiElement> data = ConcurrencyUtil.computeIfAbsent(mySession, ANNOTATED_PROPERTIES, () -> ConcurrentCollectionFactory.createConcurrentSet());
+    Set<PsiElement> data =
+      ConcurrencyUtil.computeIfAbsent(mySession, ANNOTATED_PROPERTIES, () -> ConcurrentCollectionFactory.createConcurrentSet());
     return !data.add(property);
+  }
+
+  // Trace helper method for annotation processing
+  private void withAnnotateTrace(@NotNull PsiElement element, boolean useNetworknt, @NotNull Runnable doAnnotate) {
+    TraceKt.use(
+      JsonSchemaTracingKt.getJsonSchemaTracer().spanBuilder("ij.annotate")
+        .setAttribute("file", element.getContainingFile().getName())
+        .setAttribute("useNetworknt", String.valueOf(useNetworknt))
+        .setAttribute("schemaFile", myRootSchema.getRawFile() != null ? myRootSchema.getRawFile().getName() : "null")
+        .setAttribute("schemaClass", myRootSchema.getClass().getSimpleName()),
+      span -> {
+        doAnnotate.run();
+        span.setAttribute("error_count", myErrorCount);
+        return null;
+      });
   }
 }

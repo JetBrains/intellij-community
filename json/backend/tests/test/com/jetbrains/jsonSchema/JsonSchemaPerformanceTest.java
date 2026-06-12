@@ -35,6 +35,12 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
     return BASE_PATH;
   }
 
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    Registry.get("json.schema.use.networknt.validation").setValue(false, getTestRootDisposable());
+  }
+
   public void testAzureHighlightingAgainstNewSchemaImplementation() throws IOException {
     doTestAzurePerformance(true);
   }
@@ -44,7 +50,7 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
   }
 
   private void doTestAzurePerformance(boolean useNewImplementation) throws IOException {
-    Registry.get("json.schema.object.v2").setValue(useNewImplementation);
+    Registry.get("json.schema.object.v2").setValue(useNewImplementation, getTestRootDisposable());
 
     Benchmark.newBenchmark("Highlight azure json by schema", () -> {
       myFixture.enableInspections(JsonSchemaComplianceInspection.class);
@@ -57,6 +63,71 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
     }).attempts(5).start();
   }
 
+  public void testAzureRehighlightAfterTyping() throws IOException {
+    doTestAzureRehighlight();
+  }
+
+  protected void doTestAzureRehighlight() throws IOException {
+    myFixture.enableInspections(JsonSchemaComplianceInspection.class);
+    String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/azure-schema.json"));
+    registerJsonSchema(myFixture, schemaText, "json", it -> true);
+    myFixture.configureByFile("/azure-file.json");
+
+    // warmup — initial highlighting
+    myFixture.doHighlighting();
+
+    Benchmark.newBenchmark("Azure rehighlight after typing", () -> {
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        myFixture.getEditor().getDocument().insertString(1, "x");
+      });
+      myFixture.doHighlighting();
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        myFixture.getEditor().getDocument().deleteString(1, 2);
+      });
+      myFixture.doHighlighting();
+    }).warmupIterations(10).attempts(100).start();
+  }
+
+  public void testSwaggerRehighlightAfterTyping() throws Exception {
+    doTestSwaggerRehighlight();
+  }
+
+  protected void doTestSwaggerRehighlight() throws Exception {
+    skeleton(new Callback() {
+      @Override
+      public void registerSchemes() {
+        final String moduleDir = getUrlUnderTestRoot("testSwaggerHighlighting");
+        addSchema(new UserDefinedJsonSchemaConfiguration("swagger", JsonSchemaVersion.SCHEMA_4,
+                                                         moduleDir + "/swagger.json", false,
+                                                         Collections.emptyList()));
+        myDoCompletion = false;
+      }
+
+      @Override
+      public void configureFiles() {
+        myFixture.enableInspections(JsonSchemaComplianceInspection.class);
+        myFixture.configureByFiles("/swagger.json");
+      }
+
+      @Override
+      public void doCheck() {
+        // warmup
+        myFixture.doHighlighting();
+
+        Benchmark.newBenchmark("Swagger rehighlight after typing", () -> {
+          WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+            myFixture.getEditor().getDocument().insertString(1, "x");
+          });
+          myFixture.doHighlighting();
+          WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+            myFixture.getEditor().getDocument().deleteString(1, 2);
+          });
+          myFixture.doHighlighting();
+        }).warmupIterations(10).attempts(50).start();
+      }
+    });
+  }
+
   public void testSwaggerHighlighting() {
     doPerformanceTest("swagger");
   }
@@ -65,7 +136,7 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
     doPerformanceTest("tslint-schema");
   }
 
-  private void doPerformanceTest(String jsonFileNameWithoutExtension) {
+  protected void doPerformanceTest(String jsonFileNameWithoutExtension) {
     final ThrowableRunnable<Exception> test = () -> skeleton(new Callback() {
       @Override
       public void registerSchemes() {

@@ -638,6 +638,8 @@ jvm_library(
         "//platform/structuralsearch:structuralSearch-tests_test_lib",
         "//json/backend/tests",
         "//json/backend/tests:tests_test_lib",
+        "//json/networknt.wrapper/tests",
+        "//json/networknt.wrapper/tests:tests_test_lib",
         "//platform/platform-tests:tests",
         "//platform/platform-tests:tests_test_lib",
         "//jps/model-impl:model-tests",

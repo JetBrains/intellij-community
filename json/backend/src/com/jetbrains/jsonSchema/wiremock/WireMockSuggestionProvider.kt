@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(IntellijInternalApi::class)
+
 package com.jetbrains.jsonSchema.wiremock
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.json.JsonFileType
