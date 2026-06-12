@@ -737,6 +737,7 @@ open class JBTabsImpl internal constructor(
     for (tab in visibleInfos) {
       tab.revalidate()
       tab.tabLabel?.setTabActions(tab.tabLabelActions)
+      tab.tabLabel?.updateTabActions()
     }
     updateRowLayout()
   }
