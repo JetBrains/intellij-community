@@ -21,6 +21,7 @@ import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.project.Project
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ArrayUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
@@ -67,19 +68,16 @@ import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import java.io.File
-import java.io.IOException
-import kotlin.io.path.createTempDirectory
-import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.Assert.fail
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
+import java.io.File
+import java.io.IOException
+import kotlin.io.path.createTempDirectory
 
 @TestApplication
 @ParameterizedClass
@@ -1091,7 +1089,7 @@ class FoldersImportingTest(mavenVersion: String, modelVersion: String) {
         subDir.delete(this)
       }
       catch (e: IOException) {
-        fail("Unable to delete the file: " + e.message)
+        Assertions.fail("Unable to delete the file: " + e.message)
       }
     }
     maven.importProjectAsync()
