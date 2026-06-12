@@ -731,7 +731,6 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx
             }
 
             int visualLine = visLinesIterator.getVisualLine();
-            y += getInterLineShiftForVisualLine(visualLine);
 
             if (paintText || logicalLine == -1) {
               logicalLine = visLinesIterator.getDisplayedLogicalLine();
