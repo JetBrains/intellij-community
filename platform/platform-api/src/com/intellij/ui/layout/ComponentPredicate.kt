@@ -194,7 +194,7 @@ class ValueComponentPredicate(initialValue: Boolean) : ComponentPredicate() {
 
   fun set(value: Boolean) {
     this.value = value
-    listeners.forEach { it(value) }
+    listeners.toList().forEach { it(value) }
   }
 
   override fun addListener(listener: (Boolean) -> Unit) {
