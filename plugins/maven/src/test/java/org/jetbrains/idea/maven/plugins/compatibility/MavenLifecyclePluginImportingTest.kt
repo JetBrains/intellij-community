@@ -51,7 +51,8 @@ class MavenLifecyclePluginImportingTest(mavenVersion: String, modelVersion: Stri
 
   private val maven by mavenImportingFixture(
     mavenVersion = mavenVersion,
-    modelVersion = modelVersion
+    modelVersion = modelVersion,
+    skipPluginResolution = false,
   )
   
 
