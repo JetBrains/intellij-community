@@ -91,6 +91,24 @@ object EventFields {
                                                                             @NonNls description: String? = null): StringEventField =
     StringValidatedByCustomRule(name, T::class.java, description)
 
+  /**
+   * Creates a field validated by a custom validation rule, with optional required and default value rules.
+   * @param name name of the field
+   * @param customValidationRule class of the custom validation rule
+   * @param description optional description of the field
+   * @param required whether the field is required
+   * @param defaultValue optional default value applied when the field is missing or invalid
+   */
+  @JvmStatic
+  fun StringValidatedByCustomRule(
+    @NonNls @EventFieldName name: String,
+    customValidationRule: Class<out CustomValidationRule>,
+    @NonNls description: String? = null,
+    required: Boolean? = null,
+    @NonNls defaultValue: String? = null,
+  ): StringEventField =
+    StringEventField.ValidatedByCustomValidationRuleExtended(name, customValidationRule, description, required, defaultValue)
+
   @JvmStatic
   @JvmOverloads
   fun StringValidatedByDictionary(name: String,
@@ -377,6 +395,24 @@ object EventFields {
     StringListValidatedByCustomRule(name, T::class.java, description)
 
   /**
+   * Creates a list field validated by a custom validation rule, with optional required and default value rules.
+   * @param name name of the field
+   * @param customValidationRule class of the custom validation rule
+   * @param description optional description of the field
+   * @param required whether the field is required
+   * @param defaultValue optional default value applied when the field is missing or invalid
+   */
+  @JvmStatic
+  fun StringListValidatedByCustomRule(
+    @NonNls @EventFieldName name: String,
+    customValidationRule: Class<out CustomValidationRule>,
+    @NonNls description: String? = null,
+    required: Boolean? = null,
+    @NonNls defaultValue: String? = null,
+  ): StringListEventField =
+    StringListEventField.ValidatedByCustomValidationRuleExtended(name, customValidationRule, description, required, defaultValue)
+
+  /**
    * Creates a field for a list, each element of which will be validated by global enum rule
    * @param name  name of the field
    * @param enumRef reference to global enum, e.g "os" for "{enum#os}"
@@ -409,6 +445,24 @@ object EventFields {
   fun StringList(@NonNls @EventFieldName name: String, allowedValues: List<String>): StringListEventField =
     StringList(name, allowedValues, null)
 
+  /**
+   * Creates a list field that allows only a specific list of values,
+   * with optional required and default value rules.
+   * @param name name of the field
+   * @param allowedValues list of allowed values, e.g [ "bool", "int", "float"]
+   * @param description optional description of the field
+   * @param required whether the field is required
+   * @param defaultValue optional default value applied when the field is missing or invalid
+   */
+  @JvmStatic
+  fun StringList(
+    @NonNls @EventFieldName name: String,
+    allowedValues: List<String>,
+    @NonNls description: String? = null,
+    required: Boolean? = null,
+    defaultValue: String? = null,
+  ): StringListEventField =
+    StringListEventField.ValidatedByAllowedValuesExtended(name, allowedValues, description, required, defaultValue)
 
   @JvmStatic
   @JvmOverloads
