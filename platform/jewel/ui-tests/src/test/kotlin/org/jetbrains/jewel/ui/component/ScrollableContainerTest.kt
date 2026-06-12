@@ -2,14 +2,20 @@
 package org.jetbrains.jewel.ui.component
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -17,6 +23,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -31,6 +39,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.time.Duration
@@ -1477,6 +1486,215 @@ class ScrollableContainerTest {
         }
 
         rule.waitForIdle()
+    }
+
+    @Test
+    fun `vertical container inside column with IntrinsicSize Max does not crash`() {
+        rule.setContent {
+            IntUiTheme {
+                Column(Modifier.width(IntrinsicSize.Max).height(300.dp)) {
+                    VerticallyScrollableContainer { Column { repeat(50) { Text("Item $it") } } }
+                }
+            }
+        }
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `horizontal container inside row with IntrinsicSize Max does not crash`() {
+        rule.setContent {
+            IntUiTheme {
+                Row(Modifier.height(IntrinsicSize.Max).width(300.dp)) {
+                    HorizontallyScrollableContainer(scrollState = rememberScrollState()) {
+                        Row { repeat(50) { Text("Item $it") } }
+                    }
+                }
+            }
+        }
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun `vertical container reports content intrinsic width inside IntrinsicSize Max column`() {
+        rule.setContent {
+            IntUiTheme {
+                val style by rememberScrollbarStyle(alwaysVisible = false)
+                Column(Modifier.width(IntrinsicSize.Max)) {
+                    VerticallyScrollableContainer(
+                        modifier = Modifier.height(300.dp).testTag("container"),
+                        style = style,
+                    ) {
+                        Spacer(Modifier.requiredWidth(100.dp).height(1.dp))
+                    }
+                }
+            }
+        }
+        rule.onNodeWithTag("container").assertWidthIsEqualTo(100.dp)
+    }
+
+    @Test
+    fun `IntrinsicSize Max column is wide enough to fit vertical container with AlwaysVisible scrollbar(macOs only)`() {
+        if (hostOs != OS.MacOS) return
+
+        rule.setContent {
+            IntUiTheme {
+                val style = alwaysVisibleScrollbarStyle()
+                // Tag the Column: its width is what IntrinsicSize.Max resolves to. The container's
+                // own layout width may be smaller (content only) when canScroll = false, but the
+                // column must still reserve space for the scrollbar track.
+                Column(Modifier.width(IntrinsicSize.Max).testTag("column")) {
+                    VerticallyScrollableContainer(modifier = Modifier.height(300.dp), style = style) {
+                        Spacer(Modifier.requiredWidth(100.dp).height(1.dp))
+                    }
+                }
+            }
+        }
+        val scrollbarWidth = ScrollbarVisibility.AlwaysVisible.default().trackThicknessExpanded
+        rule.onNodeWithTag("column").assertWidthIsEqualTo(100.dp + scrollbarWidth)
+    }
+
+    @Test
+    fun `horizontal container reports content intrinsic height inside IntrinsicSize Max row`() {
+        rule.setContent {
+            IntUiTheme {
+                val style by rememberScrollbarStyle(alwaysVisible = false)
+                Row(Modifier.height(IntrinsicSize.Max)) {
+                    HorizontallyScrollableContainer(
+                        scrollState = rememberScrollState(),
+                        modifier = Modifier.width(300.dp).testTag("container"),
+                        style = style,
+                    ) {
+                        Spacer(Modifier.width(1.dp).height(100.dp))
+                    }
+                }
+            }
+        }
+        rule.onNodeWithTag("container").assertHeightIsEqualTo(100.dp)
+    }
+
+    @Test
+    fun `vertical container inside IntrinsicSize Max column with bounded height still allows scrolling`() {
+        val scrollState = ScrollState(0)
+        rule.setContent {
+            IntUiTheme {
+                Column(Modifier.width(IntrinsicSize.Max).height(300.dp)) {
+                    VerticallyScrollableContainer(scrollState = scrollState) {
+                        Column { repeat(100) { Text("Item $it") } }
+                    }
+                }
+            }
+        }
+        assertTrue(scrollState.canScrollForward)
+    }
+
+    @Test
+    fun `horizontal container inside IntrinsicSize Max row with bounded width still allows scrolling`() {
+        rule.setContent {
+            val scrollState = rememberScrollState()
+            IntUiTheme {
+                Row(Modifier.height(IntrinsicSize.Max).width(300.dp)) {
+                    HorizontallyScrollableContainer(scrollState = scrollState) {
+                        Row { repeat(100) { Text("Item $it") } }
+                    }
+                }
+            }
+            assertTrue(scrollState.canScrollForward)
+        }
+    }
+
+    @Test
+    fun `vertical container throws when nested inside vertically scrollable parent`() {
+        assertFailsWith<IllegalStateException> {
+            rule.setContent {
+                IntUiTheme {
+                    Box(Modifier.verticalScroll(rememberScrollState())) {
+                        VerticallyScrollableContainer(modifier = Modifier.fillMaxWidth()) { Text("content") }
+                    }
+                }
+            }
+            rule.waitForIdle()
+        }
+    }
+
+    @Test
+    fun `horizontal container throws when nested inside horizontally scrollable parent`() {
+        assertFailsWith<IllegalStateException> {
+            rule.setContent {
+                IntUiTheme {
+                    Box(Modifier.horizontalScroll(rememberScrollState())) {
+                        HorizontallyScrollableContainer(
+                            scrollState = rememberScrollState(),
+                            modifier = Modifier.fillMaxHeight(),
+                        ) {
+                            Text("content")
+                        }
+                    }
+                }
+            }
+            rule.waitForIdle()
+        }
+    }
+
+    @Test
+    fun `vertical container throws when height is unbounded via ForceConstraints`() {
+        assertFailsWith<IllegalStateException> {
+            rule.setContent {
+                IntUiTheme {
+                    ForceConstraints(Constraints(maxWidth = 400, maxHeight = Constraints.Infinity)) {
+                        VerticallyScrollableContainer { Text("content") }
+                    }
+                }
+            }
+            rule.waitForIdle()
+        }
+    }
+
+    @Test
+    fun `horizontal container throws when width is unbounded via ForceConstraints`() {
+        assertFailsWith<IllegalStateException> {
+            rule.setContent {
+                IntUiTheme {
+                    ForceConstraints(Constraints(maxWidth = Constraints.Infinity, maxHeight = 400)) {
+                        HorizontallyScrollableContainer(scrollState = rememberScrollState()) { Text("content") }
+                    }
+                }
+            }
+            rule.waitForIdle()
+        }
+    }
+
+    @Test
+    fun `vertical container exception message mentions component name and cause`() {
+        val exception =
+            assertFailsWith<IllegalStateException> {
+                rule.setContent {
+                    IntUiTheme {
+                        ForceConstraints(Constraints(maxWidth = 400, maxHeight = Constraints.Infinity)) {
+                            VerticallyScrollableContainer { Text("content") }
+                        }
+                    }
+                }
+                rule.waitForIdle()
+            }
+        assertTrue(exception.message!!.contains("VerticallyScrollableContainer"))
+        assertTrue(exception.message!!.contains("unbounded"))
+    }
+
+    @Test
+    fun `horizontal container exception message mentions component name and cause`() {
+        val exception =
+            assertFailsWith<IllegalStateException> {
+                rule.setContent {
+                    IntUiTheme {
+                        ForceConstraints(Constraints(maxWidth = Constraints.Infinity, maxHeight = 400)) {
+                            HorizontallyScrollableContainer(scrollState = rememberScrollState()) { Text("content") }
+                        }
+                    }
+                }
+                rule.waitForIdle()
+            }
+        assertTrue(exception.message!!.contains("HorizontallyScrollableContainer"))
+        assertTrue(exception.message!!.contains("unbounded"))
     }
 
     @Composable
