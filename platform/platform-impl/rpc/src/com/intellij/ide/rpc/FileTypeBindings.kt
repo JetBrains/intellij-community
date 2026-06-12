@@ -18,11 +18,19 @@ internal fun Document.bindEditorsToBackend() {
 }
 
 /**
+ * @return true if the [Document] was explicitly marked for backend editor binding, false otherwise
+ */
+@ApiStatus.Internal
+fun Document.shouldBindToBackend(): Boolean {
+  return getUserData(BIND_DOCUMENT_EDITORS) == true
+}
+
+/**
  * @return true if the [Editor] should be bind with the backend editor, false otherwise
  */
 @ApiStatus.Internal
 fun Editor.shouldBindToBackend(): Boolean {
-  return document.getUserData(BIND_DOCUMENT_EDITORS) == true
+  return document.shouldBindToBackend()
 }
 
 @ApiStatus.Internal
