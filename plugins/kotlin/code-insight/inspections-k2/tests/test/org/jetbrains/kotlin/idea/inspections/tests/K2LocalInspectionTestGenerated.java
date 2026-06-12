@@ -29310,6 +29310,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryFunctionResult.kt");
         }
 
+        @TestMetadata("nesessaryOnClassOfCompanionObject.kt")
+        public void testNesessaryOnClassOfCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryOnClassOfCompanionObject.kt");
+        }
+
+        @TestMetadata("nesessaryReceiverParameter.kt")
+        public void testNesessaryReceiverParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryReceiverParameter.kt");
+        }
+
         @TestMetadata("nesessaryTemplateParameter1.kt")
         public void testNesessaryTemplateParameter1() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/nesessaryTemplateParameter1.kt");
@@ -29343,6 +29353,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("redundantImportAlias.kt")
         public void testRedundantImportAlias() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantImportAlias.kt");
+        }
+
+        @TestMetadata("redundantOnClass.kt")
+        public void testRedundantOnClass() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unnecessaryOptInAnnotation/redundantOnClass.kt");
         }
 
         @TestMetadata("redundantOptInWithSubclassOptInRequired1.kt")

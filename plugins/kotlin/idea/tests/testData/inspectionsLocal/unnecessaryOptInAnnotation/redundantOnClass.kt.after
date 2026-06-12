@@ -1,0 +1,16 @@
+// WITH_STDLIB
+// COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
+@RequiresOptIn
+annotation class Anno1
+
+@Anno1
+interface Foo3 {
+    fun foo() {}
+}
+
+@OptIn(Anno1::class)
+interface Foo4: Foo3 {}
+
+fun check(b: Foo4) {
+    b.foo()
+}
