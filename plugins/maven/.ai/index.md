@@ -61,6 +61,7 @@ The plugin is split across many JPS modules. Know which one you are touching bef
 - Preserve `*.iml` files in canonical form — no reformatting, comment additions, attribute reordering, or trailing-newline edits (see top-level `CLAUDE.md`).
 - Code ownership: `Java Build tools` (see `OWNERSHIP`).
 - When in doubt about the dynamic-sync module split (in progress), check the current memory entry before relocating files in `importing.workspaceModel/` or `importing.tree/`.
+- Avoid using String class to represent paths. When refactoring try to use java.nio.Path for paths in Intellij code, do not use java.io.File. java.io.File can be used in server code (see server-process.md)
 
 ## Routing
 
