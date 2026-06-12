@@ -238,6 +238,11 @@ public class K2MoveNestedTestGenerated extends AbstractK2MoveNestedTest {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToObject/moveToObject.test");
     }
 
+    @TestMetadata("kotlin/moveMethod/moveToTopLevel/deepInnerToTopLevelWithLocalThisTargets/deepInnerToTopLevelWithLocalThisTargets.test")
+    public void testKotlin_moveMethod_moveToTopLevel_deepInnerToTopLevelWithLocalThisTargets_DeepInnerToTopLevelWithLocalThisTargets() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/deepInnerToTopLevelWithLocalThisTargets/deepInnerToTopLevelWithLocalThisTargets.test");
+    }
+
     @TestMetadata("kotlin/moveMethod/moveToTopLevel/deepInnerToTopLevel/deepInnerToTopLevel.test")
     public void testKotlin_moveMethod_moveToTopLevel_deepInnerToTopLevel_DeepInnerToTopLevel() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveNested/kotlin/moveMethod/moveToTopLevel/deepInnerToTopLevel/deepInnerToTopLevel.test");
