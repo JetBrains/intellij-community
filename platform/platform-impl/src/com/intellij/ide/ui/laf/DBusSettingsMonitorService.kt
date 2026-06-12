@@ -119,8 +119,10 @@ internal class DBusSettingsMonitorService(private val scope: CoroutineScope) {
     }
 
     scope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      darkScheme.collect {
-        listener?.invoke(it ?: false)
+      darkScheme.collect { isDark ->
+        if (isDark != null) {
+          listener?.invoke(isDark)
+        }
       }
     }
   }

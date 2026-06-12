@@ -51,8 +51,10 @@ sealed class SystemDarkThemeDetector {
 
   /**
    * The following method is executed on a polled thread. Maybe computationally intense.
+   *
+   * @return the detected state, or `null` if it can't be detected (because of an error or lack of environment support)
    */
-  abstract fun isDark(): Boolean
+  abstract fun isDark(): Boolean?
 
   abstract val detectionSupported: Boolean
 }
@@ -63,7 +65,7 @@ private abstract class AsyncDetector : SystemDarkThemeDetector() {
   override fun check(parameter: Boolean?) {
     service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
       RegistryManager.getInstance()
-      val isDark = isDark()
+      val isDark = isDark() ?: return@launch
       withContext(Dispatchers.UiWithModelAccess + ModalityState.any().asContextElement()) {
         syncFunction.accept(isDark, parameter)
       }
@@ -172,7 +174,7 @@ private class LinuxThemeDetector(override val syncFunction: BiConsumer<Boolean, 
 
   override val detectionSupported: Boolean
     get() {
-      return service.isServiceAllowed && isDarkScheme() != null
+      return service.isServiceAllowed && isDark() != null
     }
 
   init {
@@ -181,13 +183,10 @@ private class LinuxThemeDetector(override val syncFunction: BiConsumer<Boolean, 
     }
   }
 
-  override fun isDark(): Boolean {
-    return isDarkScheme() == true
-  }
-
-  private fun isDarkScheme(): Boolean? {
+  override fun isDark(): Boolean? {
     return service.darkScheme.value
   }
+
 }
 
 private object EmptyDetector : SystemDarkThemeDetector() {
