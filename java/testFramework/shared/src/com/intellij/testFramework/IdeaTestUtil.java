@@ -3,9 +3,11 @@ package com.intellij.testFramework;
 
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
+import com.intellij.jarRepository.RepositoryLibraryDefinition;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -182,6 +184,13 @@ public final class IdeaTestUtil {
     List<RemoteRepositoryDescription> repos = MavenDependencyUtil.getRemoteRepositoryDescriptions();
     String coordinates = "org.jetbrains.mockjdk:" + MOCK_JDK_GROUP_ID + ":" + version + ".0.0";
     RepositoryLibraryProperties libraryProperties = new RepositoryLibraryProperties(coordinates, false);
+    // If the repositoryLibrary EP is missing (e.g. in a lightweight test application), register an empty one so that
+    // mock JDK resolution does not fail with "Missing extension point".
+    if (!ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(RepositoryLibraryDefinition.EP_NAME)) {
+      ApplicationManager.getApplication().getExtensionArea()
+        .registerExtensionPoint(RepositoryLibraryDefinition.EP_NAME.getName(), RepositoryLibraryDefinition.class.getName(),
+                                ExtensionPoint.Kind.BEAN_CLASS, false);
+    }
     Collection<OrderRoot> roots =
       JarRepositoryManager.loadDependenciesModal(ProjectManager.getInstance().getDefaultProject(), libraryProperties, false, false, null,
                                                  repos);
