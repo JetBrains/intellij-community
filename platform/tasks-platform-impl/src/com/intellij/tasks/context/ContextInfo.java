@@ -2,11 +2,13 @@
 
 package com.intellij.tasks.context;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public class ContextInfo {
 
   public final String name;

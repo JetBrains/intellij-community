@@ -179,6 +179,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     });
   }
 
+  @ApiStatus.Internal
   @TestOnly
   public void prepareForNextTest() {
     myTasks.clear();
@@ -357,6 +358,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     return activateTask(origin, clearContext, false);
   }
 
+  @ApiStatus.Internal
   public LocalTask activateTask(final @NotNull Task origin, boolean clearContext, boolean newTask) {
     LocalTask activeTask = getActiveTask();
     if (origin.equals(activeTask)) return activeTask;
@@ -435,6 +437,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     return switched;
   }
 
+  @ApiStatus.Internal
   public void shelveChanges(LocalTask task, @NotNull String shelfName) {
     Project project = myProject;
     Collection<Change> changes = ChangeListManager.getInstance(project).getDefaultChangeList().getChanges();
@@ -488,6 +491,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     return new VcsTaskHandler.TaskInfo(next.getKey(), next.getValue());
   }
 
+  @ApiStatus.Internal
   public void createBranch(LocalTask task, LocalTask previousActive, String name, @Nullable VcsTaskHandler.TaskInfo branchFrom) {
     VcsTaskHandler[] handlers = VcsTaskHandler.getAllHandlers(myProject);
     for (VcsTaskHandler handler : handlers) {
@@ -503,6 +507,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     }
   }
 
+  @ApiStatus.Internal
   public void mergeBranch(LocalTask task) {
     VcsTaskHandler.TaskInfo original = fromBranches(task.getBranches(true));
     VcsTaskHandler.TaskInfo feature = fromBranches(task.getBranches(false));
