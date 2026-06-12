@@ -207,6 +207,12 @@
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.remotedev.SplitModeMixedDependenciesInspection"
                      key="inspection.split.mode.mixed.dependencies.display.name"/>
+    <localInspection language="XML" shortName="SplitModeImplicitModuleKind" applyToDialects="false"
+                     projectType="INTELLIJ_PLUGIN"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
+                     enabledByDefault="true" level="WEAK WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.remotedev.SplitModeImplicitModuleKindInspection"
+                     key="inspection.split.mode.implicit.module.kind.display.name"/>
     <localInspection language="XML" applyToDialects="false"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"

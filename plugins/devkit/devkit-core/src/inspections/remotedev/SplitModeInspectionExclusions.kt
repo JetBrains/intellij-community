@@ -39,6 +39,7 @@ internal const val EXCLUSIONS_RELATIVE_PATH: String =
 internal const val SPLIT_MODE_API_USAGE_SHORT_NAME: String = "SplitModeApiUsage"
 internal const val SPLIT_MODE_XML_API_USAGE_SHORT_NAME: String = "SplitModeXmlApiUsage"
 internal const val SPLIT_MODE_MIXED_DEPENDENCIES_SHORT_NAME: String = "SplitModeMixedDependencies"
+internal const val SPLIT_MODE_IMPLICIT_MODULE_KIND_SHORT_NAME: String = "SplitModeImplicitModuleKind"
 internal const val MISSING_RUNTIME_DEPENDENCY_SHORT_NAME: String = "MissingFrontendOrBackendRuntimeDependency"
 
 @SafeTypeForPreview

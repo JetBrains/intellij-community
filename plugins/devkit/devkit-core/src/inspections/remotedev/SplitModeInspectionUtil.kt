@@ -153,28 +153,21 @@ internal object SplitModeInspectionUtil {
   }
 
   /**
-   * When a main plugin.xml becomes frontend-only, backend-only, or mixed because of its dependencies implicitly
+   * When a main plugin.xml becomes frontend-only or backend-only because of its dependencies implicitly
    * (and not because the author explicitly declared platform.frontend/platform.backend/platform.monolith),
-   * the UI should show a single root-level plugin state error instead of many XML-specific warnings.
+   * the UI should show a single root-level plugin state warning instead of many XML-specific warnings.
    */
   fun shouldReportSinglePluginLevelErrorInsteadOfManyNestedErrors(file: PsiFile, moduleAnalysis: ModuleAnalysis): Boolean {
-    if (SplitModeAnalysisFlags.isShowAllErrorsInModulesWithImplicitKind()) {
-      return false
-    }
+    return !SplitModeAnalysisFlags.isShowAllErrorsInModulesWithImplicitKind()
+           && isImplicitFrontendOrBackendMainPluginXml(file, moduleAnalysis)
+  }
 
+  fun isImplicitFrontendOrBackendMainPluginXml(file: PsiFile, moduleAnalysis: ModuleAnalysis): Boolean {
     val currentXmlFile = file as? XmlFile ?: return false
     val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return false
-    if (!isMainPluginXml(currentXmlFile, module)) {
-      return false
-    }
-
-    if (moduleAnalysis.resolvedModuleKind.kind !in IMPLICIT_PLUGIN_XML_KINDS) {
-      return false
-    }
-    if (moduleAnalysis.evidence.hasOwnExplicitPlatformDependency) {
-      return false
-    }
-    return true
+    return isMainPluginXml(currentXmlFile, module)
+           && moduleAnalysis.resolvedModuleKind.kind in IMPLICIT_PLUGIN_XML_KINDS
+           && !moduleAnalysis.evidence.hasOwnExplicitPlatformDependency
   }
 
   fun shouldSuppressForPredefinedModuleKind(file: PsiFile, restrictionsService: SplitModeApiRestrictionsService): Boolean {

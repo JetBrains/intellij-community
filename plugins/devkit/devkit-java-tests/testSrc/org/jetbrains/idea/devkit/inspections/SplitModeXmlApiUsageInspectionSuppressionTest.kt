@@ -10,6 +10,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration
+import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeImplicitModuleKindInspection
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeMixedDependenciesInspection
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeXmlApiUsageInspection
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
@@ -33,7 +34,11 @@ internal class SplitModeXmlApiUsageInspectionSuppressionTest : JavaCodeInsightFi
       waitUntil("API restrictions failed to load", 2.seconds) { service.isLoaded() }
     }
 
-    myFixture.enableInspections(SplitModeXmlApiUsageInspection(), SplitModeMixedDependenciesInspection())
+    myFixture.enableInspections(
+      SplitModeXmlApiUsageInspection(),
+      SplitModeMixedDependenciesInspection(),
+      SplitModeImplicitModuleKindInspection(),
+    )
   }
 
   fun testPluginXmlWithIndirectFrontendOnlyDependenciesShowsSingleRootError() {
