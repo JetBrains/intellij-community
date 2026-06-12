@@ -699,6 +699,114 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/testData/basic/common/companionBlock")
+    public static class CompanionBlock extends AbstractKotlinKmpCompletionTest {
+        @java.lang.Override
+        public KMPTestPlatform getTestPlatform() {
+            return KMPTestPlatform.NativeLinux;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("BlockMembers.kt")
+        public void testBlockMembers() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/BlockMembers.kt");
+        }
+
+        @TestMetadata("BlockMembersWithCompanionObject.kt")
+        public void testBlockMembersWithCompanionObject() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/BlockMembersWithCompanionObject.kt");
+        }
+
+        @TestMetadata("Extensions.kt")
+        public void testExtensions() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/Extensions.kt");
+        }
+
+        @TestMetadata("ExtensionsWithCompanionObject.kt")
+        public void testExtensionsWithCompanionObject() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/ExtensionsWithCompanionObject.kt");
+        }
+
+        @TestMetadata("GenericClassExtensions.kt")
+        public void testGenericClassExtensions() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/GenericClassExtensions.kt");
+        }
+
+        @TestMetadata("GenericClassExtensionsWithCompanionObject.kt")
+        public void testGenericClassExtensionsWithCompanionObject() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/GenericClassExtensionsWithCompanionObject.kt");
+        }
+
+        @TestMetadata("GenericClassMembers.kt")
+        public void testGenericClassMembers() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/GenericClassMembers.kt");
+        }
+
+        @TestMetadata("GenericClassMembersWithCompanionObject.kt")
+        public void testGenericClassMembersWithCompanionObject() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/GenericClassMembersWithCompanionObject.kt");
+        }
+
+        @TestMetadata("InstanceNotBroken.kt")
+        public void testInstanceNotBroken() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/InstanceNotBroken.kt");
+        }
+
+        @TestMetadata("InstanceNotBrokenWithCompanionObject.kt")
+        public void testInstanceNotBrokenWithCompanionObject() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/InstanceNotBrokenWithCompanionObject.kt");
+        }
+
+        @TestMetadata("NestedClassExtensions.kt")
+        public void testNestedClassExtensions() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/NestedClassExtensions.kt");
+        }
+
+        @TestMetadata("NestedClassExtensionsWithCompanionObject.kt")
+        public void testNestedClassExtensionsWithCompanionObject() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/NestedClassExtensionsWithCompanionObject.kt");
+        }
+
+        @TestMetadata("NestedClassMembers.kt")
+        public void testNestedClassMembers() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/NestedClassMembers.kt");
+        }
+
+        @TestMetadata("NestedClassMembersWithCompanionObject.kt")
+        public void testNestedClassMembersWithCompanionObject() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/NestedClassMembersWithCompanionObject.kt");
+        }
+
+        @TestMetadata("ObjectReceiverDoesNotBreak.kt")
+        public void testObjectReceiverDoesNotBreak() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/ObjectReceiverDoesNotBreak.kt");
+        }
+
+        @TestMetadata("Sorting.kt")
+        public void testSorting() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/Sorting.kt");
+        }
+
+        @TestMetadata("ThisReceiverDoesNotBreak.kt")
+        public void testThisReceiverDoesNotBreak() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/ThisReceiverDoesNotBreak.kt");
+        }
+
+        @TestMetadata("ValueReceiverDoesNotBreak.kt")
+        public void testValueReceiverDoesNotBreak() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/ValueReceiverDoesNotBreak.kt");
+        }
+
+        @TestMetadata("ValueReceiverWithCompanionObjectDoesNotBreak.kt")
+        public void testValueReceiverWithCompanionObjectDoesNotBreak() throws Exception {
+            runTest("../../completion/testData/basic/common/companionBlock/ValueReceiverWithCompanionObjectDoesNotBreak.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/testData/basic/common/companionObject")
     public static class CompanionObject extends AbstractKotlinKmpCompletionTest {
         @java.lang.Override

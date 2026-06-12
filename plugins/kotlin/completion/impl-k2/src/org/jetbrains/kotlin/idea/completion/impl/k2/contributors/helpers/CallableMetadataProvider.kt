@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.analysis.api.components.semanticallyEquals
 import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
@@ -33,6 +34,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolOrigin
 import org.jetbrains.kotlin.analysis.api.symbols.KaSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.isLocal
@@ -43,6 +45,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.buildClassTypeWithStarProjections
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.isExtensionCall
@@ -307,6 +310,26 @@ internal object CallableMetadataProvider {
     private fun KaType.replaceTypeArgumentsWithStarProjections(): KaType? =
         expandedSymbol?.let { buildClassTypeWithStarProjections(it) }?.withNullability(isMarkedNullable)
 
+    /**
+     * For receivers that are companion objects and the [callableSymbol] is marked as `companion` (but not from the companion object),
+     * we want to use the companion object's containing class for weighing purposes.
+     * This is required because the type of the explicit receiver might actually refer to the companion object in some cases,
+     * for example `SomeClass.foo<caret>`, the `SomeClass` receiver will resolve to the companion object rather than the
+     * `SomeClass` class.
+     */
+    @OptIn(KaExperimentalApi::class)
+    context(_: KaSession)
+    private fun KaType.containingClassTypeIfCompanionCallable(callableSymbol: KaCallableSymbol): KaType {
+        if (!callableSymbol.isCompanion) return this
+        // Kotlin generates methods like `valueOf` on enum classes that are marked as `isCompanion`
+        // These should not be considered for this use case though.
+        if (callableSymbol.origin == KaSymbolOrigin.SOURCE_MEMBER_GENERATED) return this
+        val classSymbol = symbol as? KaNamedClassSymbol ?: return this
+        if (classSymbol.classKind != KaClassKind.COMPANION_OBJECT) return this
+
+        return (classSymbol.containingSymbol as? KaNamedClassSymbol)?.defaultType ?: this
+    }
+
     context(_: KaSession)
     private fun callableWeightByReceiver(
         symbol: KaCallableSymbol,
@@ -320,7 +343,13 @@ internal object CallableMetadataProvider {
         // minimal level corresponds to receivers with the closest scopes
         for ((level, actualReceiverTypeConjuncts) in actualReceiverTypes.withIndex()) {
             val weightKindsByMatchingReceiversFromLevel = actualReceiverTypeConjuncts
-                .mapNotNull { callableWeightKindByReceiverType(symbol, it, expectedReceiverType) }
+                .mapNotNull { actualReceiverType ->
+                    callableWeightKindByReceiverType(
+                        symbol = symbol,
+                        actualReceiverType = actualReceiverType.containingClassTypeIfCompanionCallable(symbol),
+                        expectedReceiverType = expectedReceiverType
+                    )
+                }
 
             val bestMatchWeightKindFromLevel = weightKindsByMatchingReceiversFromLevel.minOrNull()
 

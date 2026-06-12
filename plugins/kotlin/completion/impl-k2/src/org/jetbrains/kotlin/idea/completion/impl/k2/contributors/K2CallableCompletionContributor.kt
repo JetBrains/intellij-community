@@ -54,6 +54,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaBackingFieldSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaJavaFieldSymbol
@@ -83,6 +84,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSectionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2CompletionSetupScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2ContributorSectionPriority
 import org.jetbrains.kotlin.idea.completion.impl.k2.K2SimpleCompletionContributor
+import org.jetbrains.kotlin.idea.completion.impl.k2.LazyCompletionSessionProperty
 import org.jetbrains.kotlin.idea.completion.impl.k2.allowsOnlyNamedArguments
 import org.jetbrains.kotlin.idea.completion.impl.k2.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
@@ -122,6 +124,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtEnumEntry
+import org.jetbrains.kotlin.psi.KtExperimentalApi
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
@@ -129,6 +132,7 @@ import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.utils.addToStdlib.plusIfNotNull
 import kotlin.reflect.KClass
 
 private val NOT_PROPERTIES = NotPropertiesService.DEFAULT.toSet()
@@ -331,7 +335,6 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         }
 
         val extensionDescriptors = collectExtensionsFromIndexAndResolveExtensionScope(
-            context = context,
             receiverTypes = scopeContext.implicitReceivers.map { it.type },
             forRuntimeType = false
         )
@@ -387,6 +390,18 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         }
     }
 
+    /**
+     * Collects all the receiver types at the position with the given [explicitReceiver],
+     * see [collectReceiverTypesForExplicitReceiverExpression].
+     * Additionally, if the receiver is a classifier and [receiverClass] is not null, the
+     * type of the [receiverClass] is added too.
+     */
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
+    protected fun collectReceiverTypesIncludingClassQualifier(explicitReceiver: KtExpression): List<KaType> {
+        return collectReceiverTypesForExplicitReceiverExpression(explicitReceiver)
+            .plusIfNotNull(context.receiverClass?.defaultType)
+    }
+
     context(_: KaSession, context: K2CompletionSectionContext<P>)
     protected open fun collectDotCompletionFromIndex(
         explicitReceiver: KtElement,
@@ -400,10 +415,9 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
 
             else -> sequence {
                 if (symbol !is KaNamedClassSymbol || symbol.canBeUsedAsReceiver) {
-                    val types = collectReceiverTypesForExplicitReceiverExpression(explicitReceiver)
+                    val types = collectReceiverTypesIncludingClassQualifier(explicitReceiver)
                     yieldAll(
                         collectDotCompletionForCallableReceiverFromIndex(
-                            context = context,
                             typesOfPossibleReceiver = if (forRuntimeType) listOfNotNull(context.runtimeType) else types,
                             forRuntimeType = forRuntimeType
                         )
@@ -413,12 +427,15 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         }
     }
 
+    @OptIn(KtExperimentalApi::class)
     protected val KaNamedClassSymbol.hasImportantStaticMemberScope: Boolean
         get() = classKind == KaClassKind.ENUM_CLASS ||
-                origin.isJavaSourceOrLibrary()
+                origin.isJavaSourceOrLibrary() ||
+                (psi as? KtClassOrObject)?.companionBlocks?.isNotEmpty() == true
 
+    @OptIn(KtExperimentalApi::class)
     private val KaNamedClassSymbol.canBeUsedAsReceiver: Boolean
-        get() = classKind.isObject || companionObject != null
+        get() = classKind.isObject || companionObject != null || (psi as? KtClassOrObject)?.companionBlocks?.isNotEmpty() == true
 
     context(_: KaSession)
     private fun collectDotCompletionForPackageReceiver(
@@ -465,7 +482,6 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
             typesOfPossibleReceiver = listOf(smartCastType),
             forRuntimeType = false
         ) + collectDotCompletionForCallableReceiverFromIndex(
-            context = context,
             typesOfPossibleReceiver = listOf(smartCastType),
             forRuntimeType = false
         )
@@ -509,14 +525,12 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         yieldAll(extensionNonMembers)
     }
 
-    context(_: KaSession)
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
     protected fun collectDotCompletionForCallableReceiverFromIndex(
-        context: K2CompletionSectionContext<P>,
         typesOfPossibleReceiver: List<KaType>,
         forRuntimeType: Boolean,
     ): Sequence<CallableWithMetadataForCompletion> {
         return collectExtensionsFromIndexAndResolveExtensionScope(
-            context = context,
             receiverTypes = typesOfPossibleReceiver,
             forRuntimeType = forRuntimeType
         ).filter { filter(it.signature.symbol) }.asSequence()
@@ -551,9 +565,19 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         }
     }
 
-    context(_: KaSession)
+    /**
+     * If the position has an explicit receiver that is a reference to a class, returns the symbol of that class.
+     * For example: `SomeClass.<caret>` will return the symbol of `SomeClass`.
+     * However, if the call is a value rather than a reference to a classifier, returns null.
+     */
+    private val K2CompletionSectionContext<P>.receiverClass: KaClassifierSymbol? by LazyCompletionSessionProperty {
+        val context = contextOf<K2CompletionSectionContext<P>>()
+        val explicitReceiver = context.positionContext.explicitReceiver
+        explicitReceiver?.reference()?.resolveToExpandedSymbol() as? KaClassifierSymbol
+    }
+
+    context(_: KaSession, context: K2CompletionSectionContext<P>)
     private fun collectExtensionsFromIndexAndResolveExtensionScope(
-        context: K2CompletionSectionContext<P>,
         receiverTypes: List<KaType>,
         forRuntimeType: Boolean
     ): Collection<CallableWithMetadataForCompletion> {
@@ -645,6 +669,12 @@ internal abstract class K2AbstractCallableCompletionContributor<P : KotlinNameRe
         forRuntimeType: Boolean
     ): ApplicableExtension? {
         val explicitReceiver = context.positionContext.explicitReceiver
+        if (candidate.isCompanion && context.receiverClass == null) {
+            // Companion extensions can only be called on qualifiers, never on values or calls.
+            // Passing them to the extension checker would cause an exception.
+            return null
+        }
+
         if (explicitReceiver is KtConstantExpression && explicitReceiver.iElementType == KtNodeTypes.NULL) {
             // Technically, we can call extension functions on `null` but the use case for this is basically non-existent.
             // It is much more likely the user wants to complete something else (commands, postfix), so we hide the extension results.
@@ -1183,7 +1213,7 @@ internal class K2CallableReferenceCompletionContributor : K2AbstractCallableComp
             is KaNamedClassSymbol -> sequence {
                 yieldAll(collectDotCompletionFromStaticScope(context, symbol, showReceiver))
 
-                val types = collectReceiverTypesForExplicitReceiverExpression(explicitReceiver)
+                val types = collectReceiverTypesIncludingClassQualifier(explicitReceiver)
                 yieldAll(
                     collectDotCompletionForCallableReceiver(
                         typesOfPossibleReceiver = types,
