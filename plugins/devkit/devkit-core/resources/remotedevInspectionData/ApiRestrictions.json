@@ -258,7 +258,6 @@
   {"apiName": "com.intellij.psi.codeStyle.LanguageCodeStyleSettingsContributor", "extensionPointNames": ["com.intellij.langCodeStyleSettingsContributor"], "targetModules": ["shared"]},
   {"apiName": "com.intellij.psi.codeStyle.PredefinedCodeStyle", "extensionPointNames": ["com.intellij.predefinedCodeStyle"], "targetModules": ["shared"]},
   {"apiName": "com.intellij.psi.templateLanguages.MultipleLangCommentProvider", "extensionPointNames": ["com.intellij.multiLangCommenter"], "targetModules": ["shared"]},
-  {"apiName": "com.intellij.codeInsight.highlighting.HighlightErrorFilter", "extensionPointNames": ["com.intellij.highlightErrorFilter"], "targetModules": ["shared"]},
   {"apiName": "com.intellij.psi.codeStyle.arrangement.Rearranger", "extensionPointNames": ["com.intellij.lang.rearranger"], "targetModules": ["shared"]},
   {"apiName": "com.intellij.codeInsight.editorActions.SelectionQuotingTypedHandler.UnquotingFilter", "extensionPointNames": ["com.intellij.selectionUnquotingFilter"], "targetModules": ["shared"]},
   {"apiName": "com.intellij.openapi.editor.actions.FlipCommaIntention.Flipper", "extensionPointNames": ["com.intellij.flipCommaIntention.flipper"], "targetModules": ["shared"]},
