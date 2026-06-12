@@ -39,7 +39,6 @@ import java.util.EnumSet
 import java.util.concurrent.ConcurrentHashMap
 
 internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
-  private val modelIdToModel = ConcurrentHashMap<String, AbstractScopeModel>()
   /**
    * Tracks newly created scope names by model ID for deferred selection.
    *
@@ -64,7 +63,6 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
         ScopeOption.LIBRARIES,
         ScopeOption.SEARCH_RESULTS
       ))
-    modelIdToModel[modelId] = model
     val flow = subscribeToModelUpdates(model, modelId, project)
     val dataContext = withContext(Dispatchers.EDT) { dataContextId?.dataContext() }
     model.refreshScopes(dataContext)
@@ -126,9 +124,7 @@ internal class ScopesModelRemoteApiImpl : ScopeModelRemoteApi {
       })
 
       awaitClose {
-        val model = modelIdToModel[modelId]
-        model?.let { Disposer.dispose(it) }
-        modelIdToModel.remove(modelId)
+        Disposer.dispose(model)
         modelIdToSelectedScopeName.remove(modelId)
       }
     }
