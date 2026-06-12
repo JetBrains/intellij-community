@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.createProjectPom
@@ -12,16 +13,13 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.withCompatibleConnector
 import org.jetbrains.idea.maven.server.withStoppedConnector
 import org.jetbrains.idea.maven.server.withStoppedConnectorOnce
-import java.rmi.ConnectException
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
+import java.rmi.ConnectException
 
 @TestApplication
 @ParameterizedClass
@@ -34,7 +32,7 @@ class MavenProjectReaderConnectorsTest(mavenVersion: String, modelVersion: Strin
   )
   
   @Test
-  fun `test when using stopped connector always then get exception`() = runBlocking {
+  fun `test when using stopped connector always then get exception`(): Unit = runBlocking {
     maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
