@@ -16,6 +16,7 @@ import com.intellij.driver.sdk.ui.components.common.IdeaFrameUI
 import com.intellij.driver.sdk.ui.components.common.WelcomeScreenUI
 import com.intellij.driver.sdk.ui.components.common.tabbedPane
 import com.intellij.driver.sdk.ui.components.elements.DialogUiComponent
+import com.intellij.driver.sdk.ui.components.elements.PopupUiComponent
 import com.intellij.driver.sdk.ui.components.elements.accessibleList
 import com.intellij.driver.sdk.ui.components.elements.button
 import com.intellij.driver.sdk.ui.components.elements.checkBox
@@ -23,6 +24,7 @@ import com.intellij.driver.sdk.ui.components.elements.dialog
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.elements.textField
 import com.intellij.driver.sdk.ui.components.elements.waitSelected
+import com.intellij.driver.sdk.ui.components.plugins.DependenciesLoadingDialogUI
 import com.intellij.driver.sdk.ui.ui
 import com.intellij.driver.sdk.ui.xQuery
 import com.intellij.openapi.util.SystemInfo
@@ -103,6 +105,13 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
     return this
   }
 
+  fun openGearSettings(): PopupUiComponent {
+    step("Click on Gear icon and open settings popup") {
+      gearButton.click()
+    }
+    return driver.ui.popup()
+  }
+
   fun searchForPlugin(pluginName: String): PluginsSettingsPageUiComponent {
     step("Search for '$pluginName'") {
       searchPluginTextField.text = pluginName
@@ -118,12 +127,6 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : UiComponent(data) {
       }
     }
     return this
-  }
-
-  fun PluginsSettingsPageUiComponent.waitForPluginInList(pluginName: String, timeout: Duration = 10.seconds): ListPluginComponent {
-    return step("Wait for plugin '$pluginName' to appear in the list") {
-      listPluginComponent(pluginName).waitFound(timeout)
-    }
   }
 
   fun getPluginsList(): List<ListPluginComponent> =
@@ -322,3 +325,5 @@ class RestartDialog(data: ComponentData) : DialogUiComponent(data) {
     }
   }
 }
+
+

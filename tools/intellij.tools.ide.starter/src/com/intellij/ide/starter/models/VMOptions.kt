@@ -468,4 +468,8 @@ data class VMOptions(
     addSystemProperty("ide.mac.file.chooser.native", false)
     addSystemProperty("ide.win.file.chooser.native", false)
   }
+
+  fun disableUniversalFileChooser() {
+    addSystemProperty("universal.file.chooser.is.enabled", false)
+  }
 }
