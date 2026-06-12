@@ -133,6 +133,14 @@ package org.jetbrains.jewel.bridge.code.highlighting {
 
 }
 
+package org.jetbrains.jewel.bridge.component {
+
+  public final class HostPopupResizeKt {
+    method @SuppressCompatibility @androidx.compose.runtime.Composable @org.jetbrains.annotations.ApiStatus.Experimental @org.jetbrains.jewel.foundation.ExperimentalJewelApi public static androidx.compose.ui.Modifier resizeHostOnContentSizeChange(androidx.compose.ui.Modifier, kotlin.jvm.functions.Function0<? extends com.intellij.openapi.ui.popup.JBPopup?> popup, optional kotlin.jvm.functions.Function1<? super java.awt.Dimension,kotlin.Unit> onResize);
+  }
+
+}
+
 package org.jetbrains.jewel.bridge.icon {
 
   public final class IntelliJIconKeyKt {
