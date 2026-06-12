@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlinx-serialization-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:2.4.20-dev-5797">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:2.4.20-dev-6475">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.4.20-dev-5797/kotlinx-serialization-compiler-plugin-for-ide-2.4.20-dev-5797.jar">
-          <sha256sum>72846b28618a653a41b3f588249508dd2c7c666c12a3271d5ecb4fb5c78c7f4e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.4.20-dev-6475/kotlinx-serialization-compiler-plugin-for-ide-2.4.20-dev-6475.jar">
+          <sha256sum>fbab65198879534894adfdc4d7fe120902439418a039c3acebd9ffe4810e7719</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.4.20-dev-5797/kotlinx-serialization-compiler-plugin-for-ide-2.4.20-dev-5797.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.4.20-dev-6475/kotlinx-serialization-compiler-plugin-for-ide-2.4.20-dev-6475.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.4.20-dev-5797/kotlinx-serialization-compiler-plugin-for-ide-2.4.20-dev-5797-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.4.20-dev-6475/kotlinx-serialization-compiler-plugin-for-ide-2.4.20-dev-6475-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

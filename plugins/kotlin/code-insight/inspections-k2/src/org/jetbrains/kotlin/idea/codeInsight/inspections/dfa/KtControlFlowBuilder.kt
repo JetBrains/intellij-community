@@ -119,6 +119,7 @@ import org.jetbrains.kotlin.analysis.api.components.targetSymbol
 import org.jetbrains.kotlin.analysis.api.components.type
 import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractCallsInPlaceContractEffectDeclaration
+import org.jetbrains.kotlin.analysis.api.contracts.description.KaContractInvocationKind
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaSuccessCallInfo
@@ -137,7 +138,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinExpressionAnchor
 import org.jetbrains.kotlin.idea.inspections.dfa.KotlinAnchor.KotlinForVisitedAnchor
@@ -1560,6 +1560,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return true
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
     private fun processCallExpression(expr: KtCallExpression, qualifierOnStack: Boolean = false) {
         val call: KaSuccessCallInfo? = expr.resolveToCall() as? KaSuccessCallInfo
@@ -1606,20 +1607,21 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
-    private fun getLambdaOccurrenceRange(expr: KtCallExpression, parameter: KaValueParameterSymbol): EventOccurrencesRange {
-        val functionCall = expr.resolveToCall()?.singleFunctionCallOrNull() ?: return EventOccurrencesRange.UNKNOWN
-        val functionSymbol = functionCall.symbol as? KaNamedFunctionSymbol ?: return EventOccurrencesRange.UNKNOWN
+    private fun getLambdaOccurrenceRange(expr: KtCallExpression, parameter: KaValueParameterSymbol): KaContractInvocationKind {
+        val functionCall = expr.resolveToCall()?.singleFunctionCallOrNull() ?: return KaContractInvocationKind.UNKNOWN
+        val functionSymbol = functionCall.symbol as? KaNamedFunctionSymbol ?: return KaContractInvocationKind.UNKNOWN
         val callEffect = functionSymbol.contractEffects
             .singleOrNull { e -> e is KaContractCallsInPlaceContractEffectDeclaration && e.valueParameterReference.symbol == parameter }
                 as? KaContractCallsInPlaceContractEffectDeclaration
         if (callEffect != null) {
-            return callEffect.occurrencesRange
+            return callEffect.invocationKind
         }
-        return EventOccurrencesRange.UNKNOWN
+        return KaContractInvocationKind.UNKNOWN
     }
 
+    @OptIn(KaExperimentalApi::class)
     context(_: KaSession)
-    private fun inlineLambda(lambda: KtLambdaExpression, kind: EventOccurrencesRange) {
+    private fun inlineLambda(lambda: KtLambdaExpression, kind: KaContractInvocationKind) {
         /*
             We encode unknown call with inlineable lambda as
             unknownCode()
@@ -1633,8 +1635,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(FlushFieldsInstruction())
         val offset = ControlFlow.FixedOffset(flow.instructionCount)
         val endOffset = DeferredOffset()
-        if (kind != EventOccurrencesRange.EXACTLY_ONCE && kind != EventOccurrencesRange.MORE_THAN_ONCE &&
-            kind != EventOccurrencesRange.AT_LEAST_ONCE
+        if (kind != KaContractInvocationKind.EXACTLY_ONCE && kind != KaContractInvocationKind.MORE_THAN_ONCE &&
+            kind != KaContractInvocationKind.AT_LEAST_ONCE
         ) {
             pushUnknown()
             addInstruction(ConditionalGotoInstruction(endOffset, DfTypes.TRUE))
@@ -1664,7 +1666,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
         setOffset(endOffset)
         addInstruction(FlushFieldsInstruction())
-        if (kind != EventOccurrencesRange.AT_MOST_ONCE && kind != EventOccurrencesRange.EXACTLY_ONCE) {
+        if (kind != KaContractInvocationKind.AT_MOST_ONCE && kind != KaContractInvocationKind.EXACTLY_ONCE) {
             pushUnknown()
             addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
         }

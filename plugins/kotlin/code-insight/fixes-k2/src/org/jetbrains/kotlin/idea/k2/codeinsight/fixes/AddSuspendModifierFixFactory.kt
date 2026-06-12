@@ -12,8 +12,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -79,13 +78,13 @@ private fun KaDeclarationSymbol?.isInlineOrInsideInline(): Boolean = getInlineCa
 
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
-private fun KaDeclarationSymbol?.getInlineCallSiteVisibility(): Visibility? {
+private fun KaDeclarationSymbol?.getInlineCallSiteVisibility(): KaSymbolVisibility? {
     var declaration: KaDeclarationSymbol? = this
-    var result: Visibility? = null
+    var result: KaSymbolVisibility? = null
     while (declaration != null) {
         if (declaration is KaNamedFunctionSymbol && declaration.isInline) {
-            val visibility = declaration.compilerVisibility
-            if (Visibilities.isPrivate(visibility)) {
+            val visibility = declaration.visibility
+            if (visibility == KaSymbolVisibility.PRIVATE) {
                 return visibility
             }
             result = visibility

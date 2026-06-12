@@ -15,10 +15,6 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.isClassFile
-import org.jetbrains.kotlin.cli.create
-import org.jetbrains.kotlin.config.CompilerConfiguration
-import org.jetbrains.kotlin.config.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.jvm.shared.bytecode.KotlinBytecodeToolWindow
 import org.jetbrains.kotlin.idea.jvm.shared.internal.DecompileFailedException
 import org.jetbrains.kotlin.psi.KtFile
@@ -73,13 +69,9 @@ object KotlinBytecodeDecompiler {
 
     @OptIn(KaExperimentalApi::class)
     private fun bytecodeMapForSourceFile(file: KtFile): Map<File, () -> ByteArray> {
-        val configuration = CompilerConfiguration.create().apply {
-            languageVersionSettings = file.languageVersionSettings
-        }
-
         analyze(file) {
             with(KotlinBytecodeToolWindow.Companion) {
-                val result = compileSingleFile(file, configuration)?.first ?: return emptyMap()
+                val (result, _) = compileSingleFile(file) ?: return emptyMap()
 
                 return when (result) {
                     is KaCompilationResult.Success -> buildMap {

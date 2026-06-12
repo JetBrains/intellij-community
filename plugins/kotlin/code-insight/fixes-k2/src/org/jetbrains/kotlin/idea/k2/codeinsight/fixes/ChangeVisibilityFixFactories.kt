@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.canBeProtected
 import org.jetbrains.kotlin.idea.codeinsight.utils.canBePublic
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.toCompilerVisibility
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
@@ -258,9 +258,9 @@ internal object ChangeVisibilityFixFactories {
                 addIfNotNull(createFixToTargetVisibility(referencedSymbol, referencedDeclaration, Visibilities.Internal))
                 val visibilityModifierType = referencedDeclaration.visibilityModifierType() ?: KtTokens.PUBLIC_KEYWORD
                 if (inlineDeclaration is KtPropertyAccessor) {
-                    addIfNotNull(createFixToTargetVisibility(inlineSymbol, inlineDeclaration.property, visibilityModifierType.toVisibility()))
+                    addIfNotNull(createFixToTargetVisibility(inlineSymbol, inlineDeclaration.property, visibilityModifierType.toCompilerVisibility()))
                 } else {
-                    addIfNotNull(createFixToTargetVisibility(inlineSymbol, inlineDeclaration, visibilityModifierType.toVisibility()))
+                    addIfNotNull(createFixToTargetVisibility(inlineSymbol, inlineDeclaration, visibilityModifierType.toCompilerVisibility()))
                 }
                 if (visibilityModifierType != KtTokens.PUBLIC_KEYWORD) {
                     addIfNotNull(createFixToTargetVisibility(referencedSymbol, referencedDeclaration, Visibilities.Public))

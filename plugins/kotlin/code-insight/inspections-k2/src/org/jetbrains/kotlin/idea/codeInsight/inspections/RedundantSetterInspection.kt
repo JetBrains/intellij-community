@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.canBeCompletelyDeleted
 import org.jetbrains.kotlin.idea.codeinsight.utils.getOverriddenProperty
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.toCompilerVisibility
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.propertyAccessorVisitor
@@ -49,7 +49,7 @@ internal class RedundantSetterInspection : AbstractKotlinInspection(), CleanupLo
         val overriddenProperty = property.getOverriddenProperty() ?: return false
         val overriddenPropertyVisibility =
             overriddenProperty.setter?.visibilityModifierTypeOrDefault() ?: overriddenProperty.visibilityModifierTypeOrDefault()
-        overriddenPropertyVisibility.toVisibility().compareTo(visibilityModifierTypeOrDefault().toVisibility())
+        overriddenPropertyVisibility.toCompilerVisibility().compareTo(visibilityModifierTypeOrDefault().toCompilerVisibility())
             ?.let { return it < 0 }
         return false
     }

@@ -28,12 +28,9 @@ import com.intellij.refactoring.util.CanonicalTypes
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.VisibilityUtil
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
-import org.jetbrains.kotlin.descriptors.Visibilities.Internal
-import org.jetbrains.kotlin.descriptors.Visibilities.Private
-import org.jetbrains.kotlin.descriptors.Visibilities.Protected
-import org.jetbrains.kotlin.descriptors.Visibilities.Public
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.util.allScope
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
@@ -534,7 +531,7 @@ public @interface NotNull {
     }
 
     //todo private property should java usages and usage in another file must raise a conflict
-    fun testTopLevelPropertyVisibility() = doTest { setNewVisibility(Private) }
+    fun testTopLevelPropertyVisibility() = doTest { setNewVisibility(KaSymbolVisibility.PRIVATE) }
 
     //todo extension properties can't have initializers
     fun testAddTopLevelPropertyReceiverWithInitializer() = doTest {
@@ -1136,9 +1133,9 @@ public @interface NotNull {
         newParameters[0].setType("Int")
     }
 
-    fun testMakePrimaryConstructorPrivateNoParams() = doTest { setNewVisibility(Private) }
+    fun testMakePrimaryConstructorPrivateNoParams() = doTest { setNewVisibility(KaSymbolVisibility.PRIVATE) }
 
-    fun testMakePrimaryConstructorPublic() = doTest { setNewVisibility(Public) }
+    fun testMakePrimaryConstructorPublic() = doTest { setNewVisibility(KaSymbolVisibility.PUBLIC) }
 
     fun testVisibilityFromJavaSuper() {
         withIgnoredConflicts<Throwable> {
@@ -1150,7 +1147,7 @@ public @interface NotNull {
 
 
     fun testFunctionsAddRemoveArgumentsConflict() = doTestConflict {
-        setNewVisibility(Internal)
+        setNewVisibility(KaSymbolVisibility.INTERNAL)
 
         val defaultValueForCall = KtPsiFactory(project).createExpression("null")
         val newParameters = newParameters
@@ -1163,7 +1160,7 @@ public @interface NotNull {
     }
 
     fun testFunctionsAddRemoveArgumentsConflict2() = doTestConflict {
-        setNewVisibility(Internal)
+        setNewVisibility(KaSymbolVisibility.INTERNAL)
 
         val defaultValueForCall = KtPsiFactory(project).createExpression("null")
         val newParameters = newParameters
@@ -1196,7 +1193,7 @@ public @interface NotNull {
     }
 
     fun testFunctions() = doTest {
-        setNewVisibility(Public)
+        setNewVisibility(KaSymbolVisibility.PUBLIC)
 
         newParameters[0].name = "_x1"
         newParameters[1].name = "_x2"
@@ -1206,7 +1203,7 @@ public @interface NotNull {
     }
 
     fun testGenericFunctions() = doTest {
-        setNewVisibility(Public)
+        setNewVisibility(KaSymbolVisibility.PUBLIC)
 
         newParameters[0].name = "_x1"
         newParameters[1].name = "_x2"
@@ -1316,7 +1313,7 @@ public @interface NotNull {
     fun testRemoveAllEnumConstructorParameters() = doTest { clearParameters() }
 
     fun testConstructor() = doTest {
-        setNewVisibility(Public)
+        setNewVisibility(KaSymbolVisibility.PUBLIC)
 
         newParameters[0].valOrVar = KotlinValVar.Var
         newParameters[1].valOrVar = KotlinValVar.None
@@ -1348,7 +1345,7 @@ public @interface NotNull {
     }
 
     fun testGenericConstructor() = doTest {
-        setNewVisibility(Public)
+        setNewVisibility(KaSymbolVisibility.PUBLIC)
 
         newParameters[0].valOrVar = KotlinValVar.Var
         newParameters[1].valOrVar = KotlinValVar.None
@@ -1362,7 +1359,7 @@ public @interface NotNull {
     }
 
     fun testAddConstructorVisibility() = doTest {
-        setNewVisibility(Protected)
+        setNewVisibility(KaSymbolVisibility.PROTECTED)
 
         val newParameter = createKotlinParameter("x", "Any", KtPsiFactory(project).createExpression("12")).apply {
             valOrVar = KotlinValVar.Val
@@ -1392,7 +1389,7 @@ public @interface NotNull {
         addParameter(createKotlinIntParameter(name = "n", defaultValueForCall = defaultValueForCall))
     }
 
-    fun testChangeConstructorVisibility() = doTest { setNewVisibility(Protected) }
+    fun testChangeConstructorVisibility() = doTest { setNewVisibility(KaSymbolVisibility.PROTECTED) }
 
     fun testDoNotApplyPrimarySignatureToSecondaryCalls() = doTest {
         val newParameters = newParameters

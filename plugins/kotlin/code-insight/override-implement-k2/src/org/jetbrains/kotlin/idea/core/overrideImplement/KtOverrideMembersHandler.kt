@@ -7,10 +7,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaCallableImplementationState
 import org.jetbrains.kotlin.analysis.api.components.containingSymbol
 import org.jetbrains.kotlin.analysis.api.components.directlyOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.components.fakeOverrideOriginal
-import org.jetbrains.kotlin.analysis.api.components.getImplementationStatus
+import org.jetbrains.kotlin.analysis.api.components.implementationState
 import org.jetbrains.kotlin.analysis.api.components.intersectionOverriddenSymbols
 import org.jetbrains.kotlin.analysis.api.components.isAnyType
 import org.jetbrains.kotlin.analysis.api.components.isVisibleInClass
@@ -87,8 +88,15 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
         return buildList {
             classOrObjectSymbol.memberScope.callables.forEach { symbol ->
                 if (!symbol.isVisibleInClass(classOrObjectSymbol)) return@forEach
-                val implementationStatus = symbol.getImplementationStatus(classOrObjectSymbol) ?: return@forEach
-                if (!implementationStatus.isOverridable) return@forEach
+
+                val isImplementable = when (val implementationState = symbol.implementationState(classOrObjectSymbol)) {
+                    null -> false
+                    is KaCallableImplementationState.Explicit -> !implementationState.isComplete
+                    is KaCallableImplementationState.Inherited -> implementationState.isOverridable
+                    else -> true
+                }
+
+                if (!isImplementable) return@forEach
 
                 val intersectionSymbols = symbol.intersectionOverriddenSymbols
                 val symbolsToProcess = if (intersectionSymbols.size <= 1) {

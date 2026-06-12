@@ -5,7 +5,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.refactoring.changeSignature.ChangeInfo
-import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -19,7 +19,7 @@ interface KotlinChangeInfoBase: ChangeInfo {
 
     val aNewReturnType: String?
 
-    val aNewVisibility: Visibility
+    val aNewVisibility: KaSymbolVisibility
     val oldReceiverInfo: KotlinParameterInfo?
 
     var receiverParameterInfo: KotlinParameterInfo?

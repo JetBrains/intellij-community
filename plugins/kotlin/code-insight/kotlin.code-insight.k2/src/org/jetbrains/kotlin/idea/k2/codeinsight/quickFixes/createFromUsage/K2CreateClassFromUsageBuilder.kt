@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.containsStarProjections
 import org.jetbrains.kotlin.idea.codeinsight.utils.isEnum
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInheritable
 import org.jetbrains.kotlin.idea.codeinsight.utils.resolveExpression
-import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.toCompilerVisibility
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.CreateKotlinCallableActionTextBuilder.renderCandidatesOfParameterTypes
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.computeExpectedParams
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.convertToClass
@@ -179,7 +179,7 @@ object K2CreateClassFromUsageBuilder {
                     KtTokens.PRIVATE_KEYWORD.value
                 } else if (curVisibility == KtTokens.INTERNAL_KEYWORD.value || param.expectedTypes.any {
                         it.toKtTypeWithNullability(refExpr)?.convertToClass()?.visibilityModifierTypeOrDefault()
-                            ?.toVisibility() == Visibilities.Internal
+                            ?.toCompilerVisibility() == Visibilities.Internal
                     }) {
                     KtTokens.INTERNAL_KEYWORD.value
                 } else {

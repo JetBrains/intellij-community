@@ -107,7 +107,7 @@ jvm_library(
         "//java/testFramework:testFramework_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
-        "@lib//:kotlinc-analysis-api-impl-base",
+        "@lib//:kotlinc-analysis-api",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
         "//libraries/fastutil",

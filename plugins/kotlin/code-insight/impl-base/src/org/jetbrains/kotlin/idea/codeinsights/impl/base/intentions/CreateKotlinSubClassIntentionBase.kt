@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
-import org.jetbrains.kotlin.idea.codeinsight.utils.toVisibility
+import org.jetbrains.kotlin.idea.codeinsight.utils.toCompilerVisibility
 import org.jetbrains.kotlin.idea.refactoring.ui.CreateKotlinClassDialog
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -129,7 +129,7 @@ abstract class CreateKotlinSubClassIntentionBase : SelfTargetingRangeIntention<K
     private fun createExternalSubclass(baseClass: KtClass, baseName: String, editor: Editor) {
         var container: KtClassOrObject = baseClass
         var name = baseName
-        var visibility = baseClass.visibilityModifierTypeOrDefault().toVisibility()
+        var visibility = baseClass.visibilityModifierTypeOrDefault().toCompilerVisibility()
         while (!container.isPrivate() && !container.isProtected() && !(container is KtClass && container.isInner())) {
             val parent = container.containingClassOrObject
             if (parent != null) {
@@ -137,7 +137,7 @@ abstract class CreateKotlinSubClassIntentionBase : SelfTargetingRangeIntention<K
                 if (parentName != null) {
                     container = parent
                     name = "$parentName.$name"
-                    val parentVisibility = parent.visibilityModifierTypeOrDefault().toVisibility()
+                    val parentVisibility = parent.visibilityModifierTypeOrDefault().toCompilerVisibility()
                     if (parentVisibility.compareTo(visibility)!! < 0) {
                         visibility = parentVisibility
                     }
@@ -201,10 +201,10 @@ abstract class CreateKotlinSubClassIntentionBase : SelfTargetingRangeIntention<K
     }
 
     private fun buildClassHeader(
-      targetName: String,
-      baseClass: KtClass,
-      baseName: String,
-      defaultVisibility: Visibility = baseClass.visibilityModifierTypeOrDefault().toVisibility(),
+        targetName: String,
+        baseClass: KtClass,
+        baseName: String,
+        defaultVisibility: Visibility = baseClass.visibilityModifierTypeOrDefault().toCompilerVisibility(),
     ): KtPsiFactory.ClassHeaderBuilder {
         return KtPsiFactory.ClassHeaderBuilder().apply {
             if (!baseClass.isInterface()) {
