@@ -58,6 +58,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -133,7 +134,11 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     }
     if (referenceTarget instanceof PyQualifiedNameOwner qualifiedNameOwner) {
       final String name = qualifiedNameOwner.getQualifiedName();
-      if ((PyNames.TYPE_ENUM + ".name").equals(name) || (PyNames.TYPE_ENUM_FLAG + ".name").equals(name)) {
+      if ((PyNames.TYPE_ENUM + ".name").equals(name)) {
+        var nameType = getEnumNameType(referenceTarget, context, anchor);
+        return Ref.create(nameType != null ? nameType : PyBuiltinCache.getInstance(referenceTarget).getStrType());
+      }
+      else if ((PyNames.TYPE_ENUM_FLAG + ".name").equals(name)) {
         return Ref.create(PyBuiltinCache.getInstance(referenceTarget).getStrType());
       }
       else if ("enum.IntEnum.value".equals(name) && anchor instanceof PyReferenceExpression) {
@@ -434,6 +439,57 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
     // The union collapses to the common type for homogeneous enums (e.g. 'int') and widens to e.g. 'int | str' for
     // heterogeneous ones, instead of incorrectly reporting just the first member's type.
     return PyUnionType.union(memberValueTypes);
+  }
+
+  private static @Nullable PyType getEnumNameType(@NotNull PsiElement referenceTarget,
+                                                  @NotNull TypeEvalContext context,
+                                                  @Nullable PsiElement anchor) {
+    if (!(anchor instanceof PyReferenceExpression anchorExpr) || !context.maySwitchToAST(anchor)) {
+      return null;
+    }
+    final PyExpression qualifier = anchorExpr.getQualifier();
+    if (qualifier == null) {
+      return null;
+    }
+    return getEnumNameType(context.getType(qualifier), referenceTarget, context);
+  }
+
+  private static @Nullable PyType getEnumNameType(@Nullable PyType qualifierType,
+                                                  @NotNull PsiElement anchor,
+                                                  @NotNull TypeEvalContext context) {
+    // E.g. Literal[MyEnum.A, MyEnum.B].name -> Literal["A", "B"]
+    if (qualifierType instanceof PyUnionType unionType) {
+      List<PyType> memberNameTypes = new ArrayList<>();
+      for (PyType member : unionType.getMembers()) {
+        PyType memberNameType = getEnumNameType(member, anchor, context);
+        if (memberNameType == null) {
+          return null;
+        }
+        memberNameTypes.add(memberNameType);
+      }
+      return PyUnionType.union(memberNameTypes);
+    }
+    // A specific enum member (e.g. MyEnum.A) carries its name as a literal value -> Literal["A"]
+    if (qualifierType instanceof PyLiteralType literalType && literalType.getEnumMemberName() != null) {
+      return PyLiteralType.stringLiteral(anchor, literalType.getEnumMemberName());
+    }
+    // A plain enum-typed value (e.g. a parameter of type MyEnum) -> the union of all member names.
+    // Flag enums are excluded because their composite members have a 'None' name.
+    if (qualifierType instanceof PyClassType enumType) {
+      PyClass enumClass = enumType.getPyClass();
+      if (isCustomEnum(enumClass, context) && !enumClass.isSubclass(PyNames.TYPE_ENUM_FLAG, context)) {
+        List<PyType> memberNameTypes = getEnumMembers(enumClass, context)
+          .map(PyLiteralType::getEnumMemberName)
+          .filter(Objects::nonNull)
+          .map(memberName -> (PyType)PyLiteralType.stringLiteral(anchor, memberName))
+          .filter(Objects::nonNull)
+          .collect(Collectors.toList());
+        if (!memberNameTypes.isEmpty()) {
+          return PyUnionType.union(memberNameTypes);
+        }
+      }
+    }
+    return null;
   }
 
   @Override

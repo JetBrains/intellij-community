@@ -2719,6 +2719,27 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  @TestFor(issues = "PY-79198")
+  public void testEnumNameLiteralValues() {
+    runWithAdditionalFileInLibDir("mod.py", """
+      from enum import Enum
+      
+      class E(Enum):
+          a = 1
+          b = 2
+          c = 3
+      """, (_) -> doTest(
+      """
+        tuple[Literal["a", "b", "c"], Literal["a", "b"], Literal["a"]]""",
+      """
+        from mod import E
+        from typing import Literal
+        
+        def f(e1: E, e2: Literal[E.a, E.b]):
+            expr = e1.name, e2.name, E.a.name
+        """));
+  }
+
   // PY-79330
   public void testEnumAutoValueType() {
     doTest("int",
