@@ -84,8 +84,8 @@ internal object TerminalSessionTestUtil {
       TestTerminalSessionResult(session, ttyConnector)
     }
     else {
-      val manager = TerminalSessionsManager.getInstance()
-      val sessionStartResult = manager.startSession(allOptions, project, coroutineScope)
+      val manager = TerminalSessionsManager.getInstance(project)
+      val sessionStartResult = manager.startSession(allOptions, coroutineScope)
       val session = manager.getSession(sessionStartResult.sessionId)!!
       TestTerminalSessionResult(session, sessionStartResult.ttyConnector)
     }

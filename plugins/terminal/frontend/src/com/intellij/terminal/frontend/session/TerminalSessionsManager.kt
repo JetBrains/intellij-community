@@ -22,8 +22,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 @ApiStatus.Internal
 @OptIn(AwaitCancellationAndInvoke::class)
-@Service(Service.Level.APP)
-class TerminalSessionsManager {
+@Service(Service.Level.PROJECT)
+class TerminalSessionsManager(private val project: Project) {
   private val sessionsMap = ConcurrentHashMap<TerminalSessionId, TerminalSession>()
 
   /**
@@ -34,11 +34,7 @@ class TerminalSessionsManager {
    * And if the process is terminated on its own, for example, if user executes `exit` or press Ctrl+D,
    * then the [scope] will be canceled as well.
    */
-  fun startSession(
-    options: ShellStartupOptions,
-    project: Project,
-    scope: CoroutineScope,
-  ): TerminalSessionStartResult {
+  fun startSession(options: ShellStartupOptions, scope: CoroutineScope): TerminalSessionStartResult {
     val termSize = options.initialTermSize ?: run {
       LOG.warn("No initial terminal size provided, using default 80x24. $options")
       TermSize(80, 24)
@@ -114,7 +110,7 @@ class TerminalSessionsManager {
     private val LOG = logger<TerminalSessionsManager>()
 
     @JvmStatic
-    fun getInstance(): TerminalSessionsManager = service()
+    fun getInstance(project: Project): TerminalSessionsManager = project.service()
   }
 }
 

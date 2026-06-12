@@ -89,7 +89,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       val clientId = ClientId.localId
       val scope = coroutineScope.childScope("TerminalSession#${tabId}", ClientIdContextElement(clientId))
       val result = withContext(ClientIdContextElement(clientId)) {
-        TerminalSessionsManager.getInstance().startSession(options, project, scope)
+        TerminalSessionsManager.getInstance(project).startSession(options, scope)
       }
 
       val updatedTab = tab.copy(
@@ -121,7 +121,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
       val tab = tabs[tabId] ?: return@updateTabsAndStore  // Already removed or never existed
       val sessionId = tab.sessionId
       if (sessionId != null) {
-        val session = TerminalSessionsManager.getInstance().getSession(sessionId)
+        val session = TerminalSessionsManager.getInstance(project).getSession(sessionId)
         if (session == null) {
           // If the session is already removed, it means that close event was already sent to the session.
           // It's coroutine scope cancellation is in progress: we already removed the entity, but still not removed the tab.
@@ -161,7 +161,7 @@ internal class TerminalTabsManager(private val project: Project, private val cor
    */
   private fun trackWorkingDirectory(tab: TerminalSessionTab, eelDescriptor: EelDescriptor?, coroutineScope: CoroutineScope) {
     val sessionId = tab.sessionId ?: error("This method should be called only for tabs with started sessions: $tab")
-    val session = TerminalSessionsManager.getInstance().getSession(sessionId) ?: error("No session for tab $tab")
+    val session = TerminalSessionsManager.getInstance(project).getSession(sessionId) ?: error("No session for tab $tab")
 
     coroutineScope.launch {
       val outputFlow = session.getOutputFlow()

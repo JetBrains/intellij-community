@@ -366,7 +366,7 @@ internal class TerminalToolWindowTabsManagerImpl(
     terminal: TerminalViewImpl,
     sessionId: TerminalSessionId,
   ) = withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
-    val session = TerminalSessionsManager.getInstance().getSession(sessionId)
+    val session = TerminalSessionsManager.getInstance(project).getSession(sessionId)
                   ?: error("Failed to find TerminalSession with ID: $sessionId")
     terminal.connectToSession(session)
 
