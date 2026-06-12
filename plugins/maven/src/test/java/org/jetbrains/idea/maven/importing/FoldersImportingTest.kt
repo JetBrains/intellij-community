@@ -23,59 +23,121 @@ import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.project.Project
 import com.intellij.util.ArrayUtil
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.arrayOfNotNull
+import org.jetbrains.idea.maven.fixtures.assertContentRootResources
+import org.jetbrains.idea.maven.fixtures.assertContentRootSources
+import org.jetbrains.idea.maven.fixtures.assertContentRootTestResources
+import org.jetbrains.idea.maven.fixtures.assertContentRootTestSources
+import org.jetbrains.idea.maven.fixtures.assertContentRoots
+import org.jetbrains.idea.maven.fixtures.assertDefaultResources
+import org.jetbrains.idea.maven.fixtures.assertDefaultTestResources
+import org.jetbrains.idea.maven.fixtures.assertExcludes
+import org.jetbrains.idea.maven.fixtures.assertModuleOutput
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.assertProjectOutput
+import org.jetbrains.idea.maven.fixtures.assertResources
+import org.jetbrains.idea.maven.fixtures.assertSources
+import org.jetbrains.idea.maven.fixtures.assertTestResources
+import org.jetbrains.idea.maven.fixtures.assertTestSources
+import org.jetbrains.idea.maven.fixtures.assumeMaven4
+import org.jetbrains.idea.maven.fixtures.assumeModel_4_1_0
+import org.jetbrains.idea.maven.fixtures.assumeOnLocalEnvironmentOnly
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createPomXml
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.createProjectSubDir
+import org.jetbrains.idea.maven.fixtures.createProjectSubDirs
+import org.jetbrains.idea.maven.fixtures.createProjectSubDirsWithFile
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.createStdProjectFolders
+import org.jetbrains.idea.maven.fixtures.getModule
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.isModel410
+import org.jetbrains.idea.maven.fixtures.mavenImporterSettings
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.mn
+import org.jetbrains.idea.maven.fixtures.parentPath
+import org.jetbrains.idea.maven.fixtures.projectPath
+import org.jetbrains.idea.maven.fixtures.projectsTree
+import org.jetbrains.idea.maven.fixtures.resolveFoldersAndImport
+import org.jetbrains.idea.maven.fixtures.updateAllProjects
+import org.jetbrains.idea.maven.fixtures.updateAllProjectsFullSync
 import org.jetbrains.idea.maven.project.MavenImportingSettings
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenPathWrapper
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.junit.Test
 import java.io.File
 import java.io.IOException
 import kotlin.io.path.createTempDirectory
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.Assert.fail
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-class FoldersImportingTest : FoldersImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class FoldersImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+
+  @BeforeEach
+  fun setUpExternalChanges() {
+    maven.projectsManager.listenForExternalChanges()
+  }
 
   @Test
   fun testSimpleProjectStructure() = runBlocking {
-    createStdProjectFolders()
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertModules("project")
-    assertContentRoots("project", projectPath)
-    assertSources("project", "src/main/java")
-    assertDefaultResources("project")
-    assertTestSources("project", "src/test/java")
-    assertDefaultTestResources("project")
+    maven.assertModules("project")
+    maven.assertContentRoots("project", maven.projectPath)
+    maven.assertSources("project", "src/main/java")
+    maven.assertDefaultResources("project")
+    maven.assertTestSources("project", "src/test/java")
+    maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testInvalidProjectHasContentRoot() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1
                        """.trimIndent())
-    importProjectAsync()
-    assertModules("project")
-    assertContentRoots("project", projectPath)
+    maven.importProjectAsync()
+    maven.assertModules("project")
+    maven.assertContentRoots("project", maven.projectPath)
   }
 
   @Test
   fun testDoNotResetFoldersAfterResolveIfProjectIsInvalid() = runBlocking {
-    createStdProjectFolders()
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    maven.importProjectAsync("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>""")
-    assertModules("project")
-    assertSources("project", "src/main/java")
-    assertDefaultResources("project")
-    assertTestSources("project", "src/test/java")
-    assertDefaultTestResources("project")
+    maven.assertModules("project")
+    maven.assertSources("project", "src/main/java")
+    maven.assertDefaultResources("project")
+    maven.assertTestSources("project", "src/test/java")
+    maven.assertDefaultTestResources("project")
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -89,57 +151,57 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                          </extensions>
                        </build>
                        """.trimIndent())
-    importProjectAsync()
-    assertModules("project")
-    assertSources("project", "src/main/java")
-    assertDefaultResources("project")
-    assertTestSources("project", "src/test/java")
-    assertDefaultTestResources("project")
+    maven.importProjectAsync()
+    maven.assertModules("project")
+    maven.assertSources("project", "src/main/java")
+    maven.assertDefaultResources("project")
+    maven.assertTestSources("project", "src/test/java")
+    maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testDoesNotResetUserFolders() = runBlocking {
-    val dir1 = createProjectSubDir("userSourceFolder")
-    val dir2 = createProjectSubDir("userExcludedFolder")
-    importProjectAsync("""
+    val dir1 = maven.createProjectSubDir("userSourceFolder")
+    val dir2 = maven.createProjectSubDir("userExcludedFolder")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
     edtWriteAction {
       val adapter = MavenRootModelAdapter(MavenRootModelAdapterLegacyImpl(
-        projectsTree.findProject(projectPom)!!,
-        getModule("project"),
-        ProjectDataManager.getInstance().createModifiableModelsProvider(project)))
+        maven.projectsTree.findProject(maven.projectPom)!!,
+        maven.getModule("project"),
+        ProjectDataManager.getInstance().createModifiableModelsProvider(maven.project)))
       adapter.addSourceFolder(dir1.getPath(), JavaSourceRootType.SOURCE)
       adapter.addExcludedFolder(dir2.getPath())
       adapter.rootModel.commit()
     }
-    assertSources("project", "userSourceFolder", "src/main/java")
-    assertExcludes("project", "target", "userExcludedFolder")
+    maven.assertSources("project", "userSourceFolder", "src/main/java")
+    maven.assertExcludes("project", "target", "userExcludedFolder")
 
     // incremental sync doesn't support updating source folders if effective pom dependencies haven't changed
-    updateAllProjectsFullSync()
-    assertSources("project", "src/main/java")
-    assertExcludes("project", "target", "userExcludedFolder")
-    resolveFoldersAndImport()
-    assertSources("project", "src/main/java")
-    assertExcludes("project", "target", "userExcludedFolder")
+    maven.updateAllProjectsFullSync()
+    maven.assertSources("project", "src/main/java")
+    maven.assertExcludes("project", "target", "userExcludedFolder")
+    maven.resolveFoldersAndImport()
+    maven.assertSources("project", "src/main/java")
+    maven.assertExcludes("project", "target", "userExcludedFolder")
   }
 
   @Test
   fun testClearParentAndSubFoldersOfNewlyImportedFolders() = runBlocking {
-    assumeOnLocalEnvironmentOnly("IDEA-378277")
+    maven.assumeOnLocalEnvironmentOnly("IDEA-378277")
 
-    createStdProjectFolders()
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertSources("project", "src/main/java")
-    assertDefaultResources("project")
-    createProjectPom("""
+    maven.assertSources("project", "src/main/java")
+    maven.assertDefaultResources("project")
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -147,24 +209,24 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                          <sourceDirectory>src</sourceDirectory>
                        </build>
                        """.trimIndent())
-    resolveFoldersAndImport()
-    assertSources("project", "src")
-    createProjectPom("""
+    maven.resolveFoldersAndImport()
+    maven.assertSources("project", "src")
+    maven.createProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    updateAllProjects()
-    assertSources("project", "src/main/java")
-    assertDefaultResources("project")
+    maven.updateAllProjects()
+    maven.assertSources("project", "src/main/java")
+    maven.assertDefaultResources("project")
   }
 
   @Test
   fun testSourceFoldersOnReimport() = runBlocking {
-    assumeOnLocalEnvironmentOnly("IDEA-378277")
+    maven.assumeOnLocalEnvironmentOnly("IDEA-378277")
 
-    createProjectSubDirs("src1", "src2")
-    importProjectAsync("""
+    maven.createProjectSubDirs("src1", "src2")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -172,8 +234,8 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <sourceDirectory>src1</sourceDirectory>
                     </build>
                     """.trimIndent())
-    assertSources("project", "src1")
-    createProjectPom("""
+    maven.assertSources("project", "src1")
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -181,9 +243,9 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                          <sourceDirectory>src2</sourceDirectory>
                        </build>
                        """.trimIndent())
-    resolveFoldersAndImport()
-    assertSources("project", "src2")
-    createProjectPom("""
+    maven.resolveFoldersAndImport()
+    maven.assertSources("project", "src2")
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -191,15 +253,15 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                          <sourceDirectory>src1</sourceDirectory>
                        </build>
                        """.trimIndent())
-    resolveFoldersAndImport()
-    assertSources("project", "src1")
+    maven.resolveFoldersAndImport()
+    maven.assertSources("project", "src1")
   }
 
   @Test
   fun testCustomSourceFolders() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirs("src", "test", "res1", "res2", "testRes1", "testRes2")
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    maven.createProjectSubDirs("src", "test", "res1", "res2", "testRes1", "testRes2")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -216,23 +278,23 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       </testResources>
                     </build>
                     """.trimIndent())
-    assertModules("project")
-    assertContentRoots("project", projectPath)
-    assertSources("project", "src")
-    assertResources("project", "res1", "res2")
-    assertTestSources("project", "test")
-    assertTestResources("project", "testRes1", "testRes2")
+    maven.assertModules("project")
+    maven.assertContentRoots("project", maven.projectPath)
+    maven.assertSources("project", "src")
+    maven.assertResources("project", "res1", "res2")
+    maven.assertTestSources("project", "test")
+    maven.assertTestResources("project", "testRes1", "testRes2")
   }
 
   @Test
   fun testCustomSourceFoldersOutsideOfContentRoot() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirs("m",
+    maven.createStdProjectFolders()
+    maven.createProjectSubDirs("m",
                          "src",
                          "test",
                          "res",
                          "testRes")
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -241,7 +303,7 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                          <module>m</module>
                        </modules>
                        """.trimIndent())
-    createModulePom("m", """
+    maven.createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
@@ -256,22 +318,22 @@ class FoldersImportingTest : FoldersImportingTestCase() {
         </testResources>
       </build>
       """.trimIndent())
-    importProjectAsync()
-    assertModules("project", "m")
-    assertContentRoots("project",
-                       projectPath)
-    assertContentRoots("m",
-                       "$projectPath/m",
-                       "$projectPath/src",
-                       "$projectPath/test",
-                       "$projectPath/res",
-                       "$projectPath/testRes")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m")
+    maven.assertContentRoots("project",
+                       maven.projectPath)
+    maven.assertContentRoots("m",
+                       "${maven.projectPath}/m",
+                       "${maven.projectPath}/src",
+                       "${maven.projectPath}/test",
+                       "${maven.projectPath}/res",
+                       "${maven.projectPath}/testRes")
   }
 
   @Test
   fun testSourceFolderPointsToProjectRoot() = runBlocking {
-    createStdProjectFolders()
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -279,18 +341,18 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <sourceDirectory>${'$'}{basedir}</sourceDirectory>
                     </build>
                     """.trimIndent())
-    assertModules("project")
-    assertContentRoots("project", projectPath)
-    assertSources("project", "")
-    assertTestSources("project")
-    assertResources("project")
-    assertTestResources("project")
+    maven.assertModules("project")
+    maven.assertContentRoots("project", maven.projectPath)
+    maven.assertSources("project", "")
+    maven.assertTestSources("project")
+    maven.assertResources("project")
+    maven.assertTestResources("project")
   }
 
   @Test
   fun testResourceFolderPointsToProjectRoot() = runBlocking {
-    createStdProjectFolders()
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -300,18 +362,18 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       </resources>
                     </build>
                     """.trimIndent())
-    assertModules("project")
-    assertContentRoots("project", projectPath)
-    assertSources("project", "src/main/java")
-    assertTestSources("project", "src/test/java")
-    assertResources("project")
-    assertDefaultTestResources("project")
+    maven.assertModules("project")
+    maven.assertContentRoots("project", maven.projectPath)
+    maven.assertSources("project", "src/main/java")
+    maven.assertTestSources("project", "src/test/java")
+    maven.assertResources("project")
+    maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testResourceFolderPointsToProjectRootParent() = runBlocking {
-    createStdProjectFolders()
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -321,46 +383,46 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       </resources>
                     </build>
                     """.trimIndent())
-    assertModules("project")
-    assertContentRoots("project", projectPath)
-    assertSources("project", "src/main/java")
-    assertTestSources("project", "src/test/java")
-    assertResources("project")
-    assertDefaultTestResources("project")
+    maven.assertModules("project")
+    maven.assertContentRoots("project", maven.projectPath)
+    maven.assertSources("project", "src/main/java")
+    maven.assertTestSources("project", "src/test/java")
+    maven.assertResources("project")
+    maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testAddingExistingGeneratedSources() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubFile("target/generated-sources/src1/com/A.java", "package com; class A {}")
-    createProjectSubFile("target/generated-sources/src2/com/B.java", "package com; class B {}")
-    createProjectSubFile("target/generated-test-sources/test1/com/test/A.java", "package com.test; class A {}")
-    createProjectSubFile("target/generated-test-sources/test2/com/test/B.java", "package com.test; class B {}")
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    maven.createProjectSubFile("target/generated-sources/src1/com/A.java", "package com; class A {}")
+    maven.createProjectSubFile("target/generated-sources/src2/com/B.java", "package com; class B {}")
+    maven.createProjectSubFile("target/generated-test-sources/test1/com/test/A.java", "package com.test; class A {}")
+    maven.createProjectSubFile("target/generated-test-sources/test2/com/test/B.java", "package com.test; class B {}")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertSources("project",
+    maven.assertSources("project",
                   "src/main/java",
                   "target/generated-sources/src1",
                   "target/generated-sources/src2")
-    assertDefaultResources("project")
-    assertTestSources("project",
+    maven.assertDefaultResources("project")
+    maven.assertTestSources("project",
                       "src/test/java",
                       "target/generated-test-sources/test1",
                       "target/generated-test-sources/test2")
-    assertDefaultTestResources("project")
+    maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testAddingExistingGeneratedSourcesInPerSourceTypeModules() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubFile("target/generated-sources/src1/com/A.java", "package com; class A {}")
-    createProjectSubFile("target/generated-sources/src2/com/B.java", "package com; class B {}")
-    createProjectSubFile("target/generated-test-sources/test1/com/test/A.java", "package com.test; class A {}")
-    createProjectSubFile("target/generated-test-sources/test2/com/test/B.java", "package com.test; class B {}")
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    maven.createProjectSubFile("target/generated-sources/src1/com/A.java", "package com; class A {}")
+    maven.createProjectSubFile("target/generated-sources/src2/com/B.java", "package com; class B {}")
+    maven.createProjectSubFile("target/generated-test-sources/test1/com/test/A.java", "package com.test; class A {}")
+    maven.createProjectSubFile("target/generated-test-sources/test2/com/test/B.java", "package com.test; class B {}")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -371,41 +433,41 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <maven.compiler.testTarget>11</maven.compiler.testTarget>
                     </properties>
                     """.trimIndent())
-    assertModules("project", "project.main", "project.test")
-    assertContentRoots("project", projectPath)
-    assertSources("project")
-    assertResources("project")
-    assertTestSources("project")
-    assertTestResources("project")
-    assertExcludes("project", "target")
+    maven.assertModules("project", "project.main", "project.test")
+    maven.assertContentRoots("project", maven.projectPath)
+    maven.assertSources("project")
+    maven.assertResources("project")
+    maven.assertTestSources("project")
+    maven.assertTestResources("project")
+    maven.assertExcludes("project", "target")
 
     val mainSources = arrayOfNotNull(
-      "$projectPath/src/main/java",
-      "$projectPath/target/generated-sources/src1",
-      "$projectPath/target/generated-sources/src2"
+      "${maven.projectPath}/src/main/java",
+      "${maven.projectPath}/target/generated-sources/src1",
+      "${maven.projectPath}/target/generated-sources/src2"
     )
     val testSources = arrayOfNotNull(
-      "$projectPath/src/test/java",
-      "$projectPath/target/generated-test-sources/test1",
-      "$projectPath/target/generated-test-sources/test2"
+      "${maven.projectPath}/src/test/java",
+      "${maven.projectPath}/target/generated-test-sources/test1",
+      "${maven.projectPath}/target/generated-test-sources/test2"
     )
 
-    assertSources("project.main", *mainSources)
-    assertDefaultResources("project.main")
-    assertTestSources("project.main")
-    assertTestResources("project.main")
+    maven.assertSources("project.main", *mainSources)
+    maven.assertDefaultResources("project.main")
+    maven.assertTestSources("project.main")
+    maven.assertTestResources("project.main")
 
-    assertSources("project.test")
-    assertResources("project.test")
-    assertTestSources("project.test", *testSources)
-    assertDefaultTestResources("project.test")
+    maven.assertSources("project.test")
+    maven.assertResources("project.test")
+    maven.assertTestSources("project.test", *testSources)
+    maven.assertDefaultTestResources("project.test")
   }
 
   @Test
   fun testContentRootOutsideOfModuleDirInPerSourceTypeImport() = runBlocking {
-    assumeOnLocalEnvironmentOnly("IDEA-378277")
+    maven.assumeOnLocalEnvironmentOnly("IDEA-378277")
 
-    createModulePom("m1",
+    maven.createModulePom("m1",
                     """
                       <groupId>test</groupId>
                       <artifactId>m1</artifactId>
@@ -419,9 +481,9 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                         <sourceDirectory>../custom-sources</sourceDirectory>
                       </build>
                       """.trimIndent())
-    createProjectSubFile("custom-sources/com/CustomSource.java", "package com; class CustomSource {}")
-    createProjectSubFile("m1/src/main/resources/test.txt", "resource")
-    importProjectAsync("""
+    maven.createProjectSubFile("custom-sources/com/CustomSource.java", "package com; class CustomSource {}")
+    maven.createProjectSubFile("m1/src/main/resources/test.txt", "resource")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -436,168 +498,168 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <module>m1</module>
                     </modules>
                     """.trimIndent())
-    assertModules("project",
-                  mn("project", "m1"),
-                  mn("project", "m1.main"),
-                  mn("project", "m1.test"))
-    assertSources("m1.main", "../custom-sources")
-    assertDefaultResources("m1.main")
+    maven.assertModules("project",
+                  maven.mn("project", "m1"),
+                  maven.mn("project", "m1.main"),
+                  maven.mn("project", "m1.test"))
+    maven.assertSources("m1.main", "../custom-sources")
+    maven.assertDefaultResources("m1.main")
   }
 
   @Test
   fun testAddingExistingGeneratedSources2() = runBlocking {
-    assumeOnLocalEnvironmentOnly("IDEA-378277")
+    maven.assumeOnLocalEnvironmentOnly("IDEA-378277")
 
-    createStdProjectFolders()
-    createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    maven.createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertSources("project",
+    maven.assertSources("project",
                   "src/main/java",
                   "target/generated-sources")
-    assertDefaultResources("project")
+    maven.assertDefaultResources("project")
   }
 
   @Test
   fun testAddingExistingGeneratedSources3() = runBlocking {
-    createStdProjectFolders()
-    MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
+    maven.createStdProjectFolders()
+    MavenProjectsManager.getInstance(maven.project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.SUBFOLDER)
-    createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
-    importProjectAsync("""
+    maven.createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertSources("project",
+    maven.assertSources("project",
                   "src/main/java",
                   "target/generated-sources/com")
-    assertDefaultResources("project")
+    maven.assertDefaultResources("project")
   }
 
   @Test
   fun testOverrideAnnotationSources() = runBlocking {
-    createStdProjectFolders()
-    MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
+    maven.createStdProjectFolders()
+    MavenProjectsManager.getInstance(maven.project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.GENERATED_SOURCE_FOLDER)
-    createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
-    createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}")
-    importProjectAsync("""
+    maven.createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
+    maven.createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertSources("project",
+    maven.assertSources("project",
                   "src/main/java",
                   "target/generated-sources")
-    assertDefaultResources("project")
+    maven.assertDefaultResources("project")
   }
 
   @Test
   fun testOverrideAnnotationSourcesWhenAutodetect() = runBlocking {
-    assumeOnLocalEnvironmentOnly("IDEA-378277")
+    maven.assumeOnLocalEnvironmentOnly("IDEA-378277")
 
-    createStdProjectFolders()
-    MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
+    maven.createStdProjectFolders()
+    MavenProjectsManager.getInstance(maven.project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT)
-    createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
-    createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}")
-    importProjectAsync("""
+    maven.createProjectSubFile("target/generated-sources/com/A.java", "package com; class A {}")
+    maven.createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertSources("project",
+    maven.assertSources("project",
                   "src/main/java",
                   "target/generated-sources")
-    assertDefaultResources("project")
+    maven.assertDefaultResources("project")
   }
 
   @Test
   fun testOverrideTestAnnotationSourcesWhenAutodetect() = runBlocking {
-    assumeOnLocalEnvironmentOnly("IDEA-378277")
+    maven.assumeOnLocalEnvironmentOnly("IDEA-378277")
 
-    createStdProjectFolders()
-    MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
+    maven.createStdProjectFolders()
+    MavenProjectsManager.getInstance(maven.project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.AUTODETECT)
-    createProjectSubFile("target/generated-test-sources/com/A.java", "package com; class A {}")
-    createProjectSubFile("target/generated-test-sources/test-annotations/com/B.java", "package com; class B {}")
-    importProjectAsync("""
+    maven.createProjectSubFile("target/generated-test-sources/com/A.java", "package com; class A {}")
+    maven.createProjectSubFile("target/generated-test-sources/test-annotations/com/B.java", "package com; class B {}")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertSources("project", "src/main/java")
-    assertTestSources("project",
+    maven.assertSources("project", "src/main/java")
+    maven.assertTestSources("project",
                       "src/test/java",
                       "target/generated-test-sources")
-    assertDefaultResources("project")
+    maven.assertDefaultResources("project")
   }
 
   @Test
   fun testIgnoreGeneratedSources() = runBlocking {
-    createStdProjectFolders()
-    MavenProjectsManager.getInstance(project).importingSettings.setGeneratedSourcesFolder(
+    maven.createStdProjectFolders()
+    MavenProjectsManager.getInstance(maven.project).importingSettings.setGeneratedSourcesFolder(
       MavenImportingSettings.GeneratedSourcesFolder.IGNORE)
-    createProjectSubFile("target/generated-sources/annotations/A.java", "package com; class A {}")
-    createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}")
-    importProjectAsync("""
+    maven.createProjectSubFile("target/generated-sources/annotations/A.java", "package com; class A {}")
+    maven.createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertSources("project", "src/main/java")
-    assertDefaultResources("project")
+    maven.assertSources("project", "src/main/java")
+    maven.assertDefaultResources("project")
   }
 
   @Test
   fun testAddingExistingGeneratedSources4() = runBlocking {
-    assumeOnLocalEnvironmentOnly("IDEA-378277")
+    maven.assumeOnLocalEnvironmentOnly("IDEA-378277")
 
-    createStdProjectFolders()
-    createProjectSubFile("target/generated-sources/A1/B1/com/A1.java", "package com; class A1 {}")
-    createProjectSubFile("target/generated-sources/A1/B2/com/A2.java", "package com; class A2 {}")
-    createProjectSubFile("target/generated-sources/A2/com/A3.java", "package com; class A3 {}")
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    maven.createProjectSubFile("target/generated-sources/A1/B1/com/A1.java", "package com; class A1 {}")
+    maven.createProjectSubFile("target/generated-sources/A1/B2/com/A2.java", "package com; class A2 {}")
+    maven.createProjectSubFile("target/generated-sources/A2/com/A3.java", "package com; class A3 {}")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertSources("project",
+    maven.assertSources("project",
                   "src/main/java",
                   "target/generated-sources/A1/B1",
                   "target/generated-sources/A1/B2",
                   "target/generated-sources/A2")
-    assertDefaultResources("project")
+    maven.assertDefaultResources("project")
   }
 
   @Test
   fun testAddingExistingGeneratedSources5() = runBlocking {
-    assumeOnLocalEnvironmentOnly("IDEA-378277")
+    maven.assumeOnLocalEnvironmentOnly("IDEA-378277")
 
-    createStdProjectFolders()
-    createProjectSubFile("target/generated-sources/A1/B1/com/A1.java", "package com; class A1 {}")
-    createProjectSubFile("target/generated-sources/A2.java", "class A2 {}")
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    maven.createProjectSubFile("target/generated-sources/A1/B1/com/A1.java", "package com; class A1 {}")
+    maven.createProjectSubFile("target/generated-sources/A2.java", "class A2 {}")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertSources("project",
+    maven.assertSources("project",
                   "src/main/java",
                   "target/generated-sources")
-    assertDefaultResources("project")
+    maven.assertDefaultResources("project")
   }
 
   @Test
   fun testAddingExistingGeneratedSourcesWithCustomTargetDir() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirsWithFile("targetCustom/generated-sources/src",
+    maven.createStdProjectFolders()
+    maven.createProjectSubDirsWithFile("targetCustom/generated-sources/src",
                                  "targetCustom/generated-test-sources/test")
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -605,50 +667,50 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <directory>targetCustom</directory>
                     </build>
                     """.trimIndent())
-    assertSources("project",
+    maven.assertSources("project",
                   "src/main/java",
                   "targetCustom/generated-sources/src")
-    assertDefaultResources("project")
-    assertTestSources("project",
+    maven.assertDefaultResources("project")
+    maven.assertTestSources("project",
                       "src/test/java",
                       "targetCustom/generated-test-sources/test")
-    assertDefaultTestResources("project")
+    maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testIgnoringFilesRightUnderGeneratedSources() = runBlocking {
-    createProjectSubFile("target/generated-sources/f.txt")
-    createProjectSubFile("target/generated-test-sources/f.txt")
-    importProjectAsync("""
+    maven.createProjectSubFile("target/generated-sources/f.txt")
+    maven.createProjectSubFile("target/generated-test-sources/f.txt")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertSources("project", "src/main/java")
-    assertDefaultResources("project")
-    assertTestSources("project", "src/test/java")
-    assertDefaultTestResources("project")
-    assertExcludes("project", "target")
+    maven.assertSources("project", "src/main/java")
+    maven.assertDefaultResources("project")
+    maven.assertTestSources("project", "src/test/java")
+    maven.assertDefaultTestResources("project")
+    maven.assertExcludes("project", "target")
   }
 
   @Test
   fun testExcludingOutputDirectories() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertModules("project")
-    assertExcludes("project", "target")
-    assertModuleOutput("project",
-                       "$projectPath/target/classes",
-                       "$projectPath/target/test-classes")
+    maven.assertModules("project")
+    maven.assertExcludes("project", "target")
+    maven.assertModuleOutput("project",
+                       "${maven.projectPath}/target/classes",
+                       "${maven.projectPath}/target/test-classes")
   }
 
   @Test
   fun testExcludingOutputDirectoriesIfProjectOutputIsUsed() = runBlocking {
-    mavenImporterSettings.isUseMavenOutput = false
-    importProjectAsync("""
+    maven.mavenImporterSettings.isUseMavenOutput = false
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -656,14 +718,14 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <directory>foo</directory>
                     </build>
                     """.trimIndent())
-    assertModules("project")
-    assertExcludes("project", "foo")
-    assertProjectOutput("project")
+    maven.assertModules("project")
+    maven.assertExcludes("project", "foo")
+    maven.assertProjectOutput("project")
   }
 
   @Test
   fun testUnloadedModules() = runBlocking {
-    createProjectPom("<groupId>test</groupId>" +
+    maven.createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
                      "<packaging>pom</packaging>" +
@@ -671,28 +733,28 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                      "  <module>m1</module>" +
                      "  <module>m2</module>" +
                      "</modules>")
-    createModulePom("m1",
+    maven.createModulePom("m1",
                     "<groupId>test</groupId>" +
                     "<artifactId>m1</artifactId>" +
                     "<version>1</version>")
-    createModulePom("m2",
+    maven.createModulePom("m2",
                     "<groupId>test</groupId>" +
                     "<artifactId>m2</artifactId>" +
                     "<version>1</version>")
-    importProjectAsync()
-    assertModules("project", "m1", "m2")
-    getInstance(project).setUnloadedModulesSync(listOf("m2"))
-    assertModules("project", "m1")
-    importProjectAsync()
-    assertModules("project", "m1")
-    val m2 = getInstance(project).getUnloadedModuleDescription("m2")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1", "m2")
+    getInstance(maven.project).setUnloadedModulesSync(listOf("m2"))
+    maven.assertModules("project", "m1")
+    maven.importProjectAsync()
+    maven.assertModules("project", "m1")
+    val m2 = getInstance(maven.project).getUnloadedModuleDescription("m2")
     assertNotNull(m2)
     assertEquals("m2", m2!!.getName())
   }
 
   @Test
   fun testExcludingCustomOutputDirectories() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -702,19 +764,19 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <testOutputDirectory>testCustom</testOutputDirectory>
                     </build>
                     """.trimIndent())
-    assertModules("project")
-    assertExcludes("project",
+    maven.assertModules("project")
+    maven.assertExcludes("project",
                    "outputCustom",
                    "targetCustom",
                    "testCustom")
-    assertModuleOutput("project",
-                       "$projectPath/outputCustom",
-                       "$projectPath/testCustom")
+    maven.assertModuleOutput("project",
+                       "${maven.projectPath}/outputCustom",
+                       "${maven.projectPath}/testCustom")
   }
 
   @Test
   fun testExcludingCustomOutputUnderTargetUsingStandardVariable() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -723,16 +785,16 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <testOutputDirectory>${'$'}{project.build.directory}/testCustom</testOutputDirectory>
                     </build>
                     """.trimIndent())
-    assertModules("project")
-    assertExcludes("project", "target")
-    assertModuleOutput("project",
-                       "$projectPath/target/outputCustom",
-                       "$projectPath/target/testCustom")
+    maven.assertModules("project")
+    maven.assertExcludes("project", "target")
+    maven.assertModuleOutput("project",
+                       "${maven.projectPath}/target/outputCustom",
+                       "${maven.projectPath}/target/testCustom")
   }
 
   @Test
   fun testDoNotExcludeExcludeOutputDirectoryWhenItPointstoRoot() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -741,17 +803,17 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <testOutputDirectory>.</testOutputDirectory>
                     </build>
                     """.trimIndent())
-    assertModules("project")
-    assertExcludes("project",
+    maven.assertModules("project")
+    maven.assertExcludes("project",
                    "target")
-    assertModuleOutput("project",
-                       projectPath,
-                       projectPath)
+    maven.assertModuleOutput("project",
+                       maven.projectPath,
+                       maven.projectPath)
   }
 
   @Test
   fun testOutputDirsOutsideOfContentRoot() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -761,17 +823,17 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <testOutputDirectory>../target/test-classes</testOutputDirectory>
                     </build>
                     """.trimIndent())
-    val targetPath = "$parentPath/target"
+    val targetPath = "${maven.parentPath}/target"
     val targetUrl = MavenPathWrapper(targetPath).toUrl().url
-    assertContentRoots("project", projectPath)
-    assertModuleOutput("project",
-                       "$parentPath/target/classes",
-                       "$parentPath/target/test-classes")
+    maven.assertContentRoots("project", maven.projectPath)
+    maven.assertModuleOutput("project",
+                       "${maven.parentPath}/target/classes",
+                       "${maven.parentPath}/target/test-classes")
   }
 
   @Test
   fun testCustomPomFileNameDefaultContentRoots() = runBlocking {
-    createProjectSubFile("m1/customName.xml", createPomXml(
+    maven.createProjectSubFile("m1/customName.xml", maven.createPomXml(
       """
         <artifactId>m1</artifactId>
         <version>1</version>
@@ -785,9 +847,9 @@ class FoldersImportingTest : FoldersImportingTestCase() {
           <testSourceDirectory>tests</testSourceDirectory>
         </build>
         """.trimIndent()))
-    File(projectRoot.getPath(), "m1/sources").mkdirs()
-    File(projectRoot.getPath(), "m1/tests").mkdirs()
-    importProjectAsync("""
+    File(maven.projectRoot.getPath(), "m1/sources").mkdirs()
+    File(maven.projectRoot.getPath(), "m1/tests").mkdirs()
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <packaging>pom</packaging>
@@ -796,12 +858,12 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <module>m1/customName.xml</module>
                     </modules>
                     """.trimIndent())
-    assertContentRoots(mn("project", "m1"), "$projectPath/m1")
+    maven.assertContentRoots(maven.mn("project", "m1"), "${maven.projectPath}/m1")
   }
 
   @Test
   fun testCustomPomFileNameCustomContentRoots() = runBlocking {
-    createProjectSubFile("m1/pom.xml", createPomXml(
+    maven.createProjectSubFile("m1/pom.xml", maven.createPomXml(
       """
         <artifactId>m1-pom</artifactId>
         <version>1</version>
@@ -811,7 +873,7 @@ class FoldersImportingTest : FoldersImportingTestCase() {
           <version>1</version>
         </parent>
         """.trimIndent()))
-    createProjectSubFile("m1/custom.xml", createPomXml(
+    maven.createProjectSubFile("m1/custom.xml", maven.createPomXml(
       """
         <artifactId>m1-custom</artifactId>
         <version>1</version>
@@ -826,10 +888,10 @@ class FoldersImportingTest : FoldersImportingTestCase() {
           <testSourceDirectory>tests</testSourceDirectory>
         </build>
         """.trimIndent()))
-    createStdProjectFolders("m1")
-    createProjectSubDirs("m1/sources/resources",
+    maven.createStdProjectFolders("m1")
+    maven.createProjectSubDirs("m1/sources/resources",
                          "m1/tests")
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <packaging>pom</packaging>
@@ -839,45 +901,45 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <module>m1/custom.xml</module>
                     </modules>
                     """.trimIndent())
-    val m1_pom_module = mn("project", "m1-pom")
-    val m1_custom_module = mn("project", "m1-custom")
-    assertModules("project", m1_pom_module, m1_custom_module)
-    val m1_pom_root = "$projectPath/m1"
-    assertContentRoots(m1_pom_module, m1_pom_root)
-    assertContentRootSources(m1_pom_module, m1_pom_root, "src/main/java")
+    val m1_pom_module = maven.mn("project", "m1-pom")
+    val m1_custom_module = maven.mn("project", "m1-custom")
+    maven.assertModules("project", m1_pom_module, m1_custom_module)
+    val m1_pom_root = "${maven.projectPath}/m1"
+    maven.assertContentRoots(m1_pom_module, m1_pom_root)
+    maven.assertContentRootSources(m1_pom_module, m1_pom_root, "src/main/java")
     val expectedResources = ArrayList<String>()
     expectedResources.add("src/main/resources")
-    if (isModel410()) {
+    if (maven.isModel410()) {
       expectedResources.add("src/main/resources-filtered")
     }
-    assertContentRootResources(m1_pom_module, m1_pom_root, *ArrayUtil.toStringArray(expectedResources))
-    assertContentRootTestSources(m1_pom_module, m1_pom_root, "src/test/java")
+    maven.assertContentRootResources(m1_pom_module, m1_pom_root, *ArrayUtil.toStringArray(expectedResources))
+    maven.assertContentRootTestSources(m1_pom_module, m1_pom_root, "src/test/java")
     val expectedTestResources = ArrayList<String>()
     expectedTestResources.add("src/test/resources")
-    if (isModel410()) {
+    if (maven.isModel410()) {
       expectedTestResources.add("src/test/resources-filtered")
     }
-    assertContentRootTestResources(m1_pom_module, m1_pom_root, *ArrayUtil.toStringArray(expectedTestResources))
-    val m1_custom_sources_root = "$projectPath/m1/sources"
-    val m1_custom_tests_root = "$projectPath/m1/tests"
-    val m1_standard_test_resources = "$projectPath/m1/src/test/resources"
+    maven.assertContentRootTestResources(m1_pom_module, m1_pom_root, *ArrayUtil.toStringArray(expectedTestResources))
+    val m1_custom_sources_root = "${maven.projectPath}/m1/sources"
+    val m1_custom_tests_root = "${maven.projectPath}/m1/tests"
+    val m1_standard_test_resources = "${maven.projectPath}/m1/src/test/resources"
     val m1_standard_test_resources_list = ArrayList<String>()
 
     // [anton] The next folder doesn't look correct, as it intersects with 'pom.xml' module folders,
     // but I'm testing the behavior as is in order to preserve it in the new Workspace import
     m1_standard_test_resources_list.add(m1_standard_test_resources)
-    if (isModel410()) {
+    if (maven.isModel410()) {
       m1_standard_test_resources_list.add("$m1_standard_test_resources-filtered")
     }
-    assertSources(m1_custom_module, m1_custom_sources_root)
-    assertResources(m1_custom_module)
-    assertTestSources(m1_custom_module, m1_custom_tests_root)
-    assertTestResources(m1_custom_module, *m1_standard_test_resources_list.toTypedArray())
+    maven.assertSources(m1_custom_module, m1_custom_sources_root)
+    maven.assertResources(m1_custom_module)
+    maven.assertTestSources(m1_custom_module, m1_custom_tests_root)
+    maven.assertTestResources(m1_custom_module, *m1_standard_test_resources_list.toTypedArray())
   }
 
   @Test
   fun testContentRootOutsideOfModuleDir() = runBlocking {
-    createProjectSubFile("m1/pom.xml", createPomXml(
+    maven.createProjectSubFile("m1/pom.xml", maven.createPomXml(
       """
         <artifactId>m1-pom</artifactId>
         <version>1</version>
@@ -890,7 +952,7 @@ class FoldersImportingTest : FoldersImportingTestCase() {
           <sourceDirectory>../pom-sources</sourceDirectory>
         </build>
         """.trimIndent()))
-    createProjectSubFile("m1/custom.xml", createPomXml(
+    maven.createProjectSubFile("m1/custom.xml", maven.createPomXml(
       """
         <artifactId>m1-custom</artifactId>
         <version>1</version>
@@ -903,9 +965,9 @@ class FoldersImportingTest : FoldersImportingTestCase() {
           <sourceDirectory>../custom-sources</sourceDirectory>
         </build>
         """.trimIndent()))
-    File(projectRoot.getPath(), "pom-sources").mkdirs()
-    File(projectRoot.getPath(), "custom-sources").mkdirs()
-    importProjectAsync("""
+    File(maven.projectRoot.getPath(), "pom-sources").mkdirs()
+    File(maven.projectRoot.getPath(), "custom-sources").mkdirs()
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <packaging>pom</packaging>
@@ -915,53 +977,53 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <module>m1/custom.xml</module>
                     </modules>
                     """.trimIndent())
-    assertModules("project", mn("project", "m1-pom"), mn("project", "m1-custom"))
-    assertContentRoots(mn("project", "m1-pom"),
-                       "$projectPath/m1", "$projectPath/pom-sources")
-    assertContentRootSources(mn("project", "m1-pom"), "$projectPath/m1")
-    assertContentRootTestSources(mn("project", "m1-pom"), "$projectPath/m1", "src/test/java")
-    assertContentRootSources(mn("project", "m1-pom"), "$projectPath/pom-sources", "")
-    assertContentRootTestSources(mn("project", "m1-pom"), "$projectPath/pom-sources")
+    maven.assertModules("project", maven.mn("project", "m1-pom"), maven.mn("project", "m1-custom"))
+    maven.assertContentRoots(maven.mn("project", "m1-pom"),
+                       "${maven.projectPath}/m1", "${maven.projectPath}/pom-sources")
+    maven.assertContentRootSources(maven.mn("project", "m1-pom"), "${maven.projectPath}/m1")
+    maven.assertContentRootTestSources(maven.mn("project", "m1-pom"), "${maven.projectPath}/m1", "src/test/java")
+    maven.assertContentRootSources(maven.mn("project", "m1-pom"), "${maven.projectPath}/pom-sources", "")
+    maven.assertContentRootTestSources(maven.mn("project", "m1-pom"), "${maven.projectPath}/pom-sources")
 
     // this is not quite correct behavior, since we have both modules (m1-pom and m2-custom) pointing at the same folders
     // (Though, it somehow works in IJ, and it's a rare case anyway).
     // The assertions are only to make sure the behavior is 'stable'. Should be updates once the behavior changes intentionally
-    assertSources("m1-custom", "$projectPath/custom-sources")
-    assertTestSources("m1-custom", "$projectPath/m1/src/test/java")
-    assertDefaultResources("m1-custom")
-    assertDefaultTestResources("m1-custom")
+    maven.assertSources("m1-custom", "${maven.projectPath}/custom-sources")
+    maven.assertTestSources("m1-custom", "${maven.projectPath}/m1/src/test/java")
+    maven.assertDefaultResources("m1-custom")
+    maven.assertDefaultTestResources("m1-custom")
   }
 
   @Test
   fun testDoesNotExcludeGeneratedSourcesUnderTargetDir() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirsWithFile("target/foo",
+    maven.createStdProjectFolders()
+    maven.createProjectSubDirsWithFile("target/foo",
                                  "target/bar",
                                  "target/generated-sources/baz",
                                  "target/generated-test-sources/bazz")
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertExcludes("project", "target")
-    assertSources("project",
+    maven.assertExcludes("project", "target")
+    maven.assertSources("project",
                   "src/main/java",
                   "target/generated-sources/baz")
-    assertDefaultResources("project")
-    assertTestSources("project",
+    maven.assertDefaultResources("project")
+    maven.assertTestSources("project",
                       "src/test/java",
                       "target/generated-test-sources/bazz")
-    assertDefaultTestResources("project")
+    maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testDoesNotExcludeSourcesUnderTargetDir() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirs("target/src",
+    maven.createStdProjectFolders()
+    maven.createProjectSubDirs("target/src",
                          "target/test",
                          "target/xxx")
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -970,14 +1032,14 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <testSourceDirectory>target/test</testSourceDirectory>
                     </build>
                     """.trimIndent())
-    assertModules("project")
-    assertExcludes("project", "target")
+    maven.assertModules("project")
+    maven.assertExcludes("project", "target")
   }
 
   @Test
   fun testDoesNotExcludeSourcesUnderTargetDirWithProperties() = runBlocking {
-    createProjectSubDirs("target/src", "target/xxx")
-    importProjectAsync("""
+    maven.createProjectSubDirs("target/src", "target/xxx")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -985,17 +1047,17 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <sourceDirectory>${'$'}{project.build.directory}/src</sourceDirectory>
                     </build>
                     """.trimIndent())
-    assertModules("project")
-    assertSources("project", "target/src")
-    assertExcludes("project", "target")
+    maven.assertModules("project")
+    maven.assertSources("project", "target/src")
+    maven.assertExcludes("project", "target")
   }
 
   @Test
   fun testDoesNotExcludeFoldersWithSourcesUnderTargetDir() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirs("target/src/main",
+    maven.createStdProjectFolders()
+    maven.createProjectSubDirs("target/src/main",
                          "target/foo")
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -1003,27 +1065,27 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                       <sourceDirectory>target/src/main</sourceDirectory>
                     </build>
                     """.trimIndent())
-    assertModules("project")
-    assertExcludes("project", "target")
-    assertSources("project", "target/src/main")
-    assertDefaultResources("project")
+    maven.assertModules("project")
+    maven.assertExcludes("project", "target")
+    maven.assertSources("project", "target/src/main")
+    maven.assertDefaultResources("project")
   }
 
   @Test
   fun testDoesNotUnExcludeFoldersOnRemoval() = runBlocking {
-    createStdProjectFolders()
-    val subDir = createProjectSubDir("target/foo")
-    createProjectSubDirsWithFile("target/generated-sources/baz")
-    importProjectAsync("""
+    maven.createStdProjectFolders()
+    val subDir = maven.createProjectSubDir("target/foo")
+    maven.createProjectSubDirsWithFile("target/generated-sources/baz")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertExcludes("project", "target")
-    assertSources("project",
+    maven.assertExcludes("project", "target")
+    maven.assertSources("project",
                   "src/main/java",
                   "target/generated-sources/baz")
-    assertDefaultResources("project")
+    maven.assertDefaultResources("project")
     edtWriteAction {
       try {
         subDir.delete(this)
@@ -1032,22 +1094,22 @@ class FoldersImportingTest : FoldersImportingTestCase() {
         fail("Unable to delete the file: " + e.message)
       }
     }
-    importProjectAsync()
-    assertExcludes("project", "target")
+    maven.importProjectAsync()
+    maven.assertExcludes("project", "target")
   }
 
   @Test
   fun testUnexcludeNewSources() = runBlocking {
-    createProjectSubDirs("target/foo")
-    createProjectSubDirs("target/src")
-    createProjectSubDirs("target/test/subFolder")
-    importProjectAsync("""
+    maven.createProjectSubDirs("target/foo")
+    maven.createProjectSubDirs("target/src")
+    maven.createProjectSubDirs("target/test/subFolder")
+    maven.importProjectAsync("""
                    <groupId>test</groupId>
                    <artifactId>project</artifactId>
                    <version>1</version>
                    """.trimIndent())
-    assertExcludes("project", "target")
-    createProjectPom("""
+    maven.assertExcludes("project", "target")
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1056,26 +1118,26 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                          <testSourceDirectory>target/test/subFolder</testSourceDirectory>
                        </build>
                        """.trimIndent())
-    importProjectAsync()
+    maven.importProjectAsync()
     //resolveFoldersAndImport();
-    assertSources("project", "target/src")
-    assertTestSources("project", "target/test/subFolder")
-    assertExcludes("project", "target")
+    maven.assertSources("project", "target/src")
+    maven.assertTestSources("project", "target/test/subFolder")
+    maven.assertExcludes("project", "target")
   }
 
   @Test
   fun testUnexcludeNewSourcesUnderCompilerOutputDir() = runBlocking {
-    assumeOnLocalEnvironmentOnly("IDEA-378277")
+    maven.assumeOnLocalEnvironmentOnly("IDEA-378277")
 
-    createProjectSubDirs("target/classes/src")
-    importProjectAsync("""
+    maven.createProjectSubDirs("target/classes/src")
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertExcludes("project", "target")
+    maven.assertExcludes("project", "target")
     //assertTrue(getCompilerExtension("project").isExcludeOutput());
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -1083,40 +1145,40 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                          <sourceDirectory>target/classes/src</sourceDirectory>
                        </build>
                        """.trimIndent())
-    resolveFoldersAndImport()
-    assertSources("project", "target/classes/src")
-    assertExcludes("project", "target")
+    maven.resolveFoldersAndImport()
+    maven.assertSources("project", "target/classes/src")
+    maven.assertExcludes("project", "target")
 
     //assertFalse(getCompilerExtension("project").isExcludeOutput());
   }
 
   @Test
   fun testAnnotationProcessorSources() = runBlocking {
-    createStdProjectFolders()
-    createProjectSubDirsWithFile("target/generated-sources/foo",
+    maven.createStdProjectFolders()
+    maven.createProjectSubDirsWithFile("target/generated-sources/foo",
                                  "target/generated-sources/annotations",
                                  "target/generated-test-sources/test-annotations",
                                  "target/generated-test-sources/foo")
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
-    assertSources("project",
+    maven.assertSources("project",
                   "src/main/java",
                   "target/generated-sources/annotations",
                   "target/generated-sources/foo")
-    assertDefaultResources("project")
-    assertTestSources("project",
+    maven.assertDefaultResources("project")
+    maven.assertTestSources("project",
                       "src/test/java",
                       "target/generated-test-sources/foo",
                       "target/generated-test-sources/test-annotations")
-    assertDefaultTestResources("project")
+    maven.assertDefaultTestResources("project")
   }
 
   @Test
   fun testModuleWorkingDirWithMultiplyContentRoots() = runBlocking {
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -1126,7 +1188,7 @@ class FoldersImportingTest : FoldersImportingTestCase() {
                          <module>BB</module>
                        </modules>
                        """.trimIndent())
-    createModulePom("AA", """
+    maven.createModulePom("AA", """
       <parent>
               <artifactId>project</artifactId>
               <groupId>test</groupId>
@@ -1134,7 +1196,7 @@ class FoldersImportingTest : FoldersImportingTestCase() {
           </parent>
       <artifactId>AA</artifactId>
       """.trimIndent())
-    val pomBB = createModulePom("BB", """
+    val pomBB = maven.createModulePom("BB", """
       <parent>
               <artifactId>project</artifactId>
               <groupId>test</groupId>
@@ -1158,9 +1220,9 @@ class FoldersImportingTest : FoldersImportingTestCase() {
           """
       .trimIndent()
     )
-    createProjectSubDirs("AA/src/test/resources")
-    createProjectSubDirs("BB/src/test/resources")
-    importProjectAsync()
+    maven.createProjectSubDirs("AA/src/test/resources")
+    maven.createProjectSubDirs("BB/src/test/resources")
+    maven.importProjectAsync()
     val parameters: CommonProgramRunConfigurationParameters = object : CommonProgramRunConfigurationParameters {
       override fun getProject(): Project {
         return project
@@ -1186,30 +1248,30 @@ class FoldersImportingTest : FoldersImportingTestCase() {
         return false
       }
     }
-    assertModules("project", mn("project", "AA"), mn("project", "BB"))
-    val workingDir = ProgramParametersUtil.getWorkingDir(parameters, project, getModule(mn("project", "BB")))
+    maven.assertModules("project", maven.mn("project", "AA"), maven.mn("project", "BB"))
+    val workingDir = ProgramParametersUtil.getWorkingDir(parameters, maven.project, maven.getModule(maven.mn("project", "BB")))
     assertEquals(pomBB.canonicalFile!!.getParent().getPath(), workingDir)
   }
 
   @Test
   fun testExcludeTargetForAggregator() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
                        <packaging>pom</packaging>
                        """.trimIndent())
-    assertModules("project")
-    assertExcludes("project", "target")
+    maven.assertModules("project")
+    maven.assertExcludes("project", "target")
   }
 
 
   @Test
   fun testImportingSourcesTag() = runBlocking {
-    assumeMaven4()
-    useModel410()
-    createProjectSubDirs("my/src", "my/res", "my/testsrc", "my/testres")
-    importProjectAsync("""
+    maven.assumeMaven4()
+    maven.assumeModel_4_1_0("test requires model 4.1.0")
+    maven.createProjectSubDirs("my/src", "my/res", "my/testsrc", "my/testres")
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -1238,18 +1300,18 @@ class FoldersImportingTest : FoldersImportingTestCase() {
         </sources>
       </build>
       """);
-    assertModules("project")
-    assertSources("project", "my/src")
-    assertTestSources("project", "my/testsrc")
-    assertResources("project", "my/res")
-    assertTestResources("project", "my/testres")
+    maven.assertModules("project")
+    maven.assertSources("project", "my/src")
+    maven.assertTestSources("project", "my/testsrc")
+    maven.assertResources("project", "my/res")
+    maven.assertTestResources("project", "my/testres")
   }
 
   @Test
   fun testImportingSourcesTagWithoutDirectory() = runBlocking {
-    assumeMaven4()
-    useModel410()
-    importProjectAsync("""
+    maven.assumeMaven4()
+    maven.assumeModel_4_1_0("test requires model 4.1.0")
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -1265,18 +1327,18 @@ class FoldersImportingTest : FoldersImportingTestCase() {
         </sources>
       </build>
       """);
-    assertModules("project")
-    assertSources("project", "src/main/java")
-    assertTestSources("project", "src/test/java")
+    maven.assertModules("project")
+    maven.assertSources("project", "src/main/java")
+    maven.assertTestSources("project", "src/test/java")
   }
 
   @Test
   fun testImportingSourcesTagWithAbsoluteDirectory() = runBlocking {
-    assumeMaven4()
-    useModel410()
-    createProjectSubDirs("my/src", "my/res", "my/testsrc", "my/testres")
+    maven.assumeMaven4()
+    maven.assumeModel_4_1_0("test requires model 4.1.0")
+    maven.createProjectSubDirs("my/src", "my/res", "my/testsrc", "my/testres")
     val dir = createTempDirectory()
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -1288,15 +1350,15 @@ class FoldersImportingTest : FoldersImportingTestCase() {
         </sources>
       </build>
       """);
-    assertModules("project")
-    assertSources("project", projectRoot.toNioPath().relativize(dir).toString())
+    maven.assertModules("project")
+    maven.assertSources("project", maven.projectRoot.toNioPath().relativize(maven.dir).toString())
   }
 
   @Test
   fun testImportingSourcesTagWithModule() = runBlocking {
-    assumeMaven4()
-    useModel410()
-    importProjectAsync("""
+    maven.assumeMaven4()
+    maven.assumeModel_4_1_0("test requires model 4.1.0")
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -1308,8 +1370,8 @@ class FoldersImportingTest : FoldersImportingTestCase() {
         </sources>
       </build>
       """);
-    assertModules("project")
-    assertSources("project", "src/org.example.data/main/java")
+    maven.assertModules("project")
+    maven.assertSources("project", "src/org.example.data/main/java")
 
   }
 }
