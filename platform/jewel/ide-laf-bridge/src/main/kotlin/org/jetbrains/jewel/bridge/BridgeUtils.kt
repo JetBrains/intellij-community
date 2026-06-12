@@ -42,6 +42,7 @@ import com.intellij.ui.scale.JBUIScale.scale
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import java.awt.Dimension
 import java.awt.Insets
@@ -520,3 +521,58 @@ public fun retrieveEditorColorScheme(): EditorColorsScheme {
     val manager = EditorColorsManager.getInstance() as EditorColorsManagerImpl
     return manager.schemeManager.activeScheme ?: DefaultColorSchemesManager.getInstance().firstScheme
 }
+
+/**
+ * Retrieves a pre-scaled integer value from the current LaF as a non-negative [Dp], or returns [Dp.Unspecified] if the
+ * key is not found.
+ *
+ * Any negative values read from the LaF will be coerced to `0.dp`.
+ *
+ * Use this instead of [retrieveIntAsNonNegativeDpOrUnspecified] for keys whose values are explicitly rescaled by
+ * `patchHiDPI` in `LafManagerImpl`. See [unscaledDp] for the full list of affected keys and an explanation of why
+ * unscaling is needed.
+ *
+ * @param key The key to look up the integer with.
+ * @return The unscaled integer value from the LaF as a [Dp], or [Dp.Unspecified] if the key is not found.
+ * @see unscaledDp
+ */
+public fun retrieveUnscaledIntAsNonNegativeDpOrUnspecified(key: String): Dp =
+    retrieveUnscaledIntAsDpOrUnspecified(key).takeIf { it.isSpecified }?.safeValue() ?: Dp.Unspecified
+
+/**
+ * Retrieves a pre-scaled integer value from the current LaF as a [Dp], or returns [Dp.Unspecified] if the key is not
+ * found.
+ *
+ * Use this instead of [retrieveIntAsDpOrUnspecified] for keys whose values are explicitly rescaled by `patchHiDPI` in
+ * `LafManagerImpl`. See [unscaledDp] for the full list of affected keys and an explanation of why unscaling is needed.
+ *
+ * @param key The key to look up the integer with.
+ * @return The unscaled integer value from the LaF as a [Dp], or [Dp.Unspecified] if the key is not found.
+ * @see unscaledDp
+ */
+public fun retrieveUnscaledIntAsDpOrUnspecified(key: String): Dp {
+    val rawValue = UIManager.get(key)
+    if (rawValue is Int) return rawValue.unscaledDp
+    return Dp.Unspecified
+}
+
+/**
+ * Converts a pre-scaled JBUI value into a Compose [Dp].
+ *
+ * Certain integer values in UIDefaults are explicitly rescaled by `patchHiDPI` in `LafManagerImpl` after the theme JSON
+ * is applied. This means they already reflect the current JBUI scale factor. For example, `List.rowHeight` is stored as
+ * `24` in the theme JSON, but `patchHiDPI` overwrites it with `scale(24)`. So in Presentation Mode (scale=1.75),
+ * [com.intellij.util.ui.JBUI.CurrentTheme.List.rowHeight] returns `42`, not `24`.
+ *
+ * Passing such a pre-scaled value directly to `.dp` causes double-scaling:
+ * 1. `patchHiDPI` scales the stored value (e.g. 24 → 42 in Presentation Mode)
+ * 2. Compose scales it again via `LocalDensity` (e.g. `42.dp` → way too big)
+ *
+ * The keys currently explicitly rescaled by `patchHiDPI` are: `List.rowHeight`, `Table.rowHeight`, `Tree.rowHeight`,
+ * VCS log row height, `Tree.leftChildIndent`, `Tree.rightChildIndent`, and `SettingsTree.rowHeight`.
+ *
+ * For all other keys — those NOT rescaled by `patchHiDPI` — the value in UIDefaults is the raw logical integer from the
+ * theme JSON, and `.dp` is correct. Do NOT use this extension for those (e.g. via [retrieveIntAsDp] or similar).
+ */
+public val Int.unscaledDp: Dp
+    get() = JBUI.unscale(this).dp
