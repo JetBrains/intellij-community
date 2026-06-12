@@ -56,8 +56,7 @@ import kotlin.io.path.ExperimentalPathApi
  * Nevertheless, in case when this filesystem should be accessed directly,
  * an instance of [IjentWslNioFileSystem] can be obtained with a URL like "ijent://wsl/distribution-name".
  */
-@ApiStatus.Internal
-class IjentWslNioFileSystemProvider(
+internal class IjentWslNioFileSystemProvider(
   val wslId: @NlsSafe String,
   private val ijentFsProvider: FileSystemProvider,
   internal val originalFsProvider: FileSystemProvider,

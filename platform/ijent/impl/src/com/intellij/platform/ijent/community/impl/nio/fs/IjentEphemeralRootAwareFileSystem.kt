@@ -62,8 +62,7 @@ class IjentEphemeralRootAwarePath(
   val rootPath: Path,
   val originalPath: IjentNioPath,
 ) : Path, BasicFileAttributesHolder2.Impl(originalPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded()) {
-  override fun getFileSystem(): FileSystem =
-    fileSystem
+  override fun getFileSystem(): FileSystem = fileSystem
 
   val actualPath: Path = EelPathUtils.getActualPath(originalPath)
 
@@ -237,13 +236,11 @@ class IjentEphemeralRootAwareFileSystemProvider(
   private val originalFs = originalFsProvider.getFileSystem(URI("file:/"))
 
   override fun wrapDelegateFileSystem(delegateFs: FileSystem): IjentEphemeralRootAwareFileSystem {
-    return IjentEphemeralRootAwareFileSystem(
-      rootAwareFileSystemProvider = this,
-      ijentFs = delegateFs,
-      originalFs = originalFs,
-      useRootDirectoriesFromOriginalFs = useRootDirectoriesFromOriginalFs,
-      eelDescriptor = eelDescriptor
-    )
+    return IjentEphemeralRootAwareFileSystem(rootAwareFileSystemProvider = this,
+                                             ijentFs = delegateFs,
+                                             originalFs = originalFs,
+                                             useRootDirectoriesFromOriginalFs = useRootDirectoriesFromOriginalFs,
+                                             eelDescriptor = eelDescriptor)
   }
 
   override fun getScheme(): String? {
@@ -304,18 +301,14 @@ class IjentEphemeralRootAwareFileSystemProvider(
   override fun isSameFile(path: Path, path2: Path): Boolean {
     if (path !is IjentEphemeralRootAwarePath) {
       if (path2 !is IjentEphemeralRootAwarePath) {
-        throw ProviderMismatchException(
-          "Neither $path (${path::class}) nor $path2 (${path2::class}) are ${IjentEphemeralRootAwarePath::class.java.name}"
-        )
+        throw ProviderMismatchException("Neither $path (${path::class}) nor $path2 (${path2::class}) are ${IjentEphemeralRootAwarePath::class.java.name}")
       }
       return isSameFile(path2, path)
     }
 
     if (path2 !is IjentEphemeralRootAwarePath) {
-      return if (path.actualPath.fileSystem.provider() == path2.fileSystem.provider())
-        Files.isSameFile(path.actualPath, path2)
-      else
-        false
+      return if (path.actualPath.fileSystem.provider() == path2.fileSystem.provider()) Files.isSameFile(path.actualPath, path2)
+      else false
     }
 
     if (path.actualPath == path.originalPath && path2.actualPath == path2.originalPath) {
@@ -415,10 +408,7 @@ class IjentEphemeralRootAwareFileSystem(
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is IjentEphemeralRootAwareFileSystem) return false
-    return eelDescriptor == other.eelDescriptor
-           && ijentFs == other.ijentFs
-           && originalFs == other.originalFs
-           && useRootDirectoriesFromOriginalFs == other.useRootDirectoriesFromOriginalFs
+    return eelDescriptor == other.eelDescriptor && ijentFs == other.ijentFs && originalFs == other.originalFs && useRootDirectoriesFromOriginalFs == other.useRootDirectoriesFromOriginalFs
   }
 
   private fun isPathUnderRoot(path: String): Boolean {

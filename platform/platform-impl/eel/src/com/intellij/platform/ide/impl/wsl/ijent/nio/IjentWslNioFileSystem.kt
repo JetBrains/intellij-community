@@ -14,8 +14,7 @@ import java.nio.file.attribute.UserPrincipalLookupService
 /**
  * See [IjentWslNioFileSystemProvider].
  */
-@ApiStatus.Internal
-class IjentWslNioFileSystem internal constructor(
+internal class IjentWslNioFileSystem internal constructor(
   private val provider: IjentWslNioFileSystemProvider,
   internal val wslId: String,
   private val ijentFs: FileSystem,

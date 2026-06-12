@@ -12,8 +12,7 @@ import java.nio.file.WatchEvent
 import java.nio.file.WatchKey
 import java.nio.file.WatchService
 
-@ApiStatus.Internal
-class IjentWslNioPath(
+internal class IjentWslNioPath(
   private val fileSystem: IjentWslNioFileSystem,
 
   /**
