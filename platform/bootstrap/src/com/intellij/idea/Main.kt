@@ -10,8 +10,8 @@ import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.BootstrapBundle
-import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginModuleDescriptor
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.InitialConfigImportState
@@ -300,29 +300,27 @@ private fun preprocessArgs(rawArgs: Array<String>): List<String> {
   }
 
   val filteredArgs = ApplicationStartArguments.stripKnownArguments(args)
-  val firstArg = @Suppress("ReplaceSizeCheckWithIsNotEmpty") when {
-    filteredArgs.size > 1 && (filteredArgs[0] == "-e" || filteredArgs[0] == "--edit") -> filteredArgs[1]
-    filteredArgs.size > 0 -> filteredArgs[0]
-    else -> null
+  val firstArg = when (filteredArgs.firstOrNull()) {
+    "-e", "--edit" -> filteredArgs.getOrNull(1)
+    else -> filteredArgs.firstOrNull()
   }
-  when (firstArg) {
-    "--help", "-h", "-?" -> {
+  when {
+    firstArg == "--help" || firstArg == "-h" || firstArg == "-?" -> {
       printBasicHelp()
       exitProcess(0)
     }
-    "--list-commands" -> {
+    firstArg == "--list-commands" -> {
       printCommands()
       exitProcess(0)
     }
-    "--version", "-version", "-v" -> {
+    firstArg == "--version" || firstArg == "-version" || firstArg == "-v" -> {
       printVersion()
       exitProcess(0)
     }
-  }
-
-  if (firstArg != null && firstArg.startsWith('-')) {
-    println("unrecognized option: ${firstArg}")
-    exitProcess(1)
+    firstArg != null && firstArg.startsWith('-') -> {
+      println("unrecognized option: ${firstArg}")
+      exitProcess(1)
+    }
   }
 
   return args
