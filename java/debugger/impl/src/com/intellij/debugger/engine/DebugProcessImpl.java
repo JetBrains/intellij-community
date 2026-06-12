@@ -241,6 +241,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Semaphore myWaitFor = new Semaphore();
   private final AtomicBoolean myIsFailed = new AtomicBoolean(false);
   private final AtomicBoolean myIsStopped = new AtomicBoolean(false);
+  private final AtomicBoolean myRootProcessClosed = new AtomicBoolean(false);
   protected volatile DebuggerSession mySession;
   protected @Nullable MethodReturnValueWatcher myReturnValueWatcher;
   private final CoroutineScope myCoroutineScope;
@@ -1130,7 +1131,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       DebuggerManagerThreadImpl managerThread = myDebuggerManagerThread;
       try {
         if (!keepManagerThread) {
-          managerThread.close();
+          managerThread.closeAndCancel();
         }
       }
       finally {
@@ -1172,15 +1173,17 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
       var attachedNewThread = unstashAndReattach();
       if (!attachedNewThread) {
-        onRootProcessClosed();
+        closeRootProcess();
       }
     });
   }
 
-  private void onRootProcessClosed() {
-    myDebuggerManagerThread.cancelScope();
-    myWaitFor.up();
-    myPositionManager = CompoundPositionManager.DISABLED;
+  private void closeRootProcess() {
+    if (myRootProcessClosed.compareAndSet(false, true)) {
+      myDebuggerManagerThread.closeAndCancel();
+      myWaitFor.up();
+      myPositionManager = CompoundPositionManager.DISABLED;
+    }
   }
 
   @Contract(pure = true)
@@ -1261,6 +1264,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public void dispose() {
     CoroutineScopeKt.cancel(myCoroutineScope, null);
     LOG.debug("Debug has been finished");
+    closeRootProcess();
     Disposer.dispose(disposable);
     requestManager.setThreadFilter(null);
   }
@@ -2751,6 +2755,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         private void doReattach() {
           DebuggerInvocationUtil.invokeLaterAnyModality(project, () -> {
             ((XDebugSessionImpl)getXdebugProcess().getSession()).reset();
+            myRootProcessClosed.set(false);
             myState.set(State.INITIAL);
             myConnection = connection;
             getManagerThread().restartIfNeeded();
