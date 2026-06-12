@@ -36,7 +36,7 @@ internal object SplitModeInspectionUtil {
   }
 
   @Nls
-  fun buildNonNativePluginMessage(actualModuleKind: ResolvedModuleKind): String {
+  fun buildImplicitModuleKindMessage(actualModuleKind: ResolvedModuleKind): String {
     val shortMessage = when (actualModuleKind.kind) {
       SplitModeApiRestrictionsService.ModuleKind.FRONTEND ->
         DevKitBundle.message("inspection.remote.dev.plugin.indirect.frontend.dependencies.message")
@@ -155,12 +155,12 @@ internal object SplitModeInspectionUtil {
   }
 
   /**
-   * When a main plugin.xml becomes frontend-only, backend-only, or mixed because of its dependencies
+   * When a main plugin.xml becomes frontend-only, backend-only, or mixed because of its dependencies implicitly
    * (and not because the author explicitly declared platform.frontend/platform.backend/platform.monolith),
    * the UI should show a single root-level plugin state error instead of many XML-specific warnings.
    */
   fun shouldReportSinglePluginLevelErrorInsteadOfManyNestedErrors(file: PsiFile, moduleAnalysis: ModuleAnalysis): Boolean {
-    if (SplitModeAnalysisFlags.isXmlInspectionsForNonNativePluginEnabled()) {
+    if (SplitModeAnalysisFlags.isShowAllErrorsInModulesWithImplicitKind()) {
       return false
     }
 
@@ -170,7 +170,7 @@ internal object SplitModeInspectionUtil {
       return false
     }
 
-    if (moduleAnalysis.resolvedModuleKind.kind !in NON_NATIVE_PLUGIN_XML_KINDS) {
+    if (moduleAnalysis.resolvedModuleKind.kind !in IMPLICIT_PLUGIN_XML_KINDS) {
       return false
     }
     if (moduleAnalysis.evidence.hasOwnExplicitPlatformDependency) {
@@ -266,7 +266,7 @@ internal object SplitModeInspectionUtil {
     return contentModuleDescriptor?.virtualFile != currentXmlFile.virtualFile
   }
 
-  private val NON_NATIVE_PLUGIN_XML_KINDS = setOf(
+  private val IMPLICIT_PLUGIN_XML_KINDS = setOf(
     SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
     SplitModeApiRestrictionsService.ModuleKind.BACKEND,
     SplitModeApiRestrictionsService.ModuleKind.MIXED,

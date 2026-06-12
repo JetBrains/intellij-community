@@ -8,7 +8,8 @@ import com.intellij.util.xml.highlighting.DomHighlightingHelper
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.buildMixedModuleDependenciesMessage
-import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.buildNonNativePluginMessage
+import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.buildImplicitModuleKindMessage
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeAnalysisFlags
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeQodanaInspectionScopeLimiter
@@ -18,7 +19,8 @@ internal class SplitModeMixedDependenciesInspection : DevKitPluginXmlInspectionB
   override fun isAllowed(holder: DomElementAnnotationHolder): Boolean {
     return super.isAllowed(holder)
            && SplitModeInspectionUtil.isAllowedForSplitModeInspection(holder.fileElement.file)
-           && SplitModeQodanaInspectionScopeLimiter.getInstance(holder.fileElement.file.project).shouldInspectFileInQodanaMode(holder.fileElement.file)
+           && SplitModeQodanaInspectionScopeLimiter.getInstance(holder.fileElement.file.project)
+             .shouldInspectFileInQodanaMode(holder.fileElement.file)
   }
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {
@@ -28,13 +30,16 @@ internal class SplitModeMixedDependenciesInspection : DevKitPluginXmlInspectionB
     val module = element.module ?: return
     val currentXmlFile = holder.fileElement.file
     val xmlElement = element.xmlElement ?: return
-    if (SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).isExcluded(xmlElement, SPLIT_MODE_MIXED_DEPENDENCIES_SHORT_NAME)) {
+    if (SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project)
+        .isExcluded(xmlElement, SPLIT_MODE_MIXED_DEPENDENCIES_SHORT_NAME)) {
       return
     }
 
     val moduleAnalysis = SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module, currentXmlFile)
-    if (SplitModeInspectionUtil.shouldReportSinglePluginLevelErrorInsteadOfManyNestedErrors(currentXmlFile, moduleAnalysis)) {
-      val regularFixes = SplitModeDependencyQuickFixes.createAddExplicitDependenciesFixes(module, element, moduleAnalysis.resolvedModuleKind.kind)
+    if (SplitModeInspectionUtil.shouldReportSinglePluginLevelErrorInsteadOfManyNestedErrors(currentXmlFile, moduleAnalysis)
+        && SplitModeAnalysisFlags.isReportImplicitModuleKindEnabled()) {
+      val regularFixes =
+        SplitModeDependencyQuickFixes.createAddExplicitDependenciesFixes(module, element, moduleAnalysis.resolvedModuleKind.kind)
       val suppressionFix = SplitModeInspectionExclusionsService.getInstance(currentXmlFile.project).createSuppressionFixIfApplicable(
         xmlElement,
         SPLIT_MODE_MIXED_DEPENDENCIES_SHORT_NAME,
@@ -43,7 +48,7 @@ internal class SplitModeMixedDependenciesInspection : DevKitPluginXmlInspectionB
       holder.createProblem(
         element,
         ProblemHighlightType.WEAK_WARNING,
-        buildNonNativePluginMessage(moduleAnalysis.resolvedModuleKind),
+        buildImplicitModuleKindMessage(moduleAnalysis.resolvedModuleKind),
         null,
         *quickFixes,
       )

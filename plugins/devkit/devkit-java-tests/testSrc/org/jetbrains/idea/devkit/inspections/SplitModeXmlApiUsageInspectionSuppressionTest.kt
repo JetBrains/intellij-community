@@ -24,7 +24,7 @@ internal class SplitModeXmlApiUsageInspectionSuppressionTest : JavaCodeInsightFi
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
     RegistryManager.getInstance().get("devkit.split.mode.analysis.containing.plugins")
       .setValue(true, testRootDisposable)
-    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.in.implicit.module.kind")
       .setValue(false, testRootDisposable)
 
     val service = SplitModeApiRestrictionsService.getInstance(project)

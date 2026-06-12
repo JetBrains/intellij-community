@@ -154,8 +154,10 @@
                  description="Enables containing plugin descriptor analysis for DevKit split-mode inspections."/>
     <registryKey key="devkit.split.mode.inspections.skip.predefined" defaultValue="true"
                  description="Skips DevKit Split Mode inspections in modules and XML descriptors with predefined module kinds."/>
-    <registryKey key="devkit.split.mode.inspections.enable.xml.for.non.native.plugin" defaultValue="false"
+    <registryKey key="devkit.split.mode.inspections.enable.in.implicit.module.kind" defaultValue="false"
                  description="Keeps XML split-mode inspections enabled in plugin.xml files that are indirectly frontend-only, backend-only, or mixed."/>
+    <registryKey key="devkit.split.mode.report.implicit.module.kind" defaultValue="true"
+                 description="Enables reporting errors about modules that effectively work only on frontend or backend, but do not explicitly state that fact via platform dependency"/>
     <registryKey key="devkit.split.mode.run.jps.to.bazel.in.quick.fix" defaultValue="false"
                  description="Automatically run JPS to Bazel conversion after applying a fix that touches runtime/compile dependencies"/>
 

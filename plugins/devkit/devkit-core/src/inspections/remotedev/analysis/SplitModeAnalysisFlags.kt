@@ -19,8 +19,12 @@ internal object SplitModeAnalysisFlags {
     return RegistryManager.getInstance().`is`("devkit.split.mode.inspections.skip.predefined")
   }
 
-  fun isXmlInspectionsForNonNativePluginEnabled(): Boolean {
-    return RegistryManager.getInstance().`is`("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
+  fun isShowAllErrorsInModulesWithImplicitKind(): Boolean {
+    return RegistryManager.getInstance().`is`("devkit.split.mode.inspections.enable.in.implicit.module.kind")
+  }
+
+  fun isReportImplicitModuleKindEnabled(): Boolean {
+    return RegistryManager.getInstance().`is`("devkit.split.mode.report.implicit.module.kind")
   }
 
   fun isRunJpsToBazelInQuickFixEnabled(): Boolean {

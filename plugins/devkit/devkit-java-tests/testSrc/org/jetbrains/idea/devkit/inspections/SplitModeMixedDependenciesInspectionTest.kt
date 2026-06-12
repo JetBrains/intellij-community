@@ -25,7 +25,7 @@ internal class SplitModeMixedDependenciesInspectionTest : JavaCodeInsightFixture
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
     RegistryManager.getInstance().get("devkit.split.mode.analysis.containing.plugins")
       .setValue(true, testRootDisposable)
-    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.in.implicit.module.kind")
       .setValue(true, testRootDisposable)
 
     val service = SplitModeApiRestrictionsService.getInstance(project)
@@ -284,7 +284,7 @@ Backend dependency 'intellij.platform.kernel.backend' from descriptor 'unique.mo
   }
 
   fun testPluginXmlWithIndirectFrontendOnlyDependenciesGetsSingleRootErrorWhenXmlInspectionsAreDisabled() {
-    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.in.implicit.module.kind")
       .setValue(false, testRootDisposable)
 
     addModuleWithXmlDescriptor(
@@ -324,7 +324,7 @@ via dependency 'unique.module.name.50.frontend.support' -> descriptor 'unique.mo
   }
 
   fun testPluginXmlWithIndirectBackendOnlyDependenciesGetsSingleRootErrorWhenXmlInspectionsAreDisabled() {
-    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.in.implicit.module.kind")
       .setValue(false, testRootDisposable)
 
     addModuleWithXmlDescriptor(
@@ -415,7 +415,7 @@ via dependency 'unique.module.name.52.backend.support' -> descriptor 'unique.mod
   }
 
   fun testMixedPluginXmlGetsSingleRootErrorWhenXmlInspectionsAreDisabled() {
-    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.xml.for.non.native.plugin")
+    RegistryManager.getInstance().get("devkit.split.mode.inspections.enable.in.implicit.module.kind")
       .setValue(false, testRootDisposable)
 
     addModuleWithXmlDescriptor(
