@@ -3516,118 +3516,150 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument")
-        public static class AddNameToExplicitContextArgument extends AbstractHighLevelQuickFixTest {
+        @TestMetadata("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments")
+        public static class AddExplicitContextArguments extends AbstractHighLevelQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("allNamed.kt")
             public void testAllNamed() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/allNamed.kt");
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/allNamed.kt");
             }
 
             @TestMetadata("ambiguity.kt")
             public void testAmbiguity() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/ambiguity.kt");
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/ambiguity.kt");
             }
 
-            @TestMetadata("mixedArguments.kt")
-            public void testMixedArguments() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/mixedArguments.kt");
-            }
-
-            @TestMetadata("mixedNameAndPosition.kt")
-            public void testMixedNameAndPosition() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/mixedNameAndPosition.kt");
-            }
-
-            @TestMetadata("noMatch.kt")
-            public void testNoMatch() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/noMatch.kt");
-            }
-
-            @TestMetadata("noSurrounding.kt")
-            public void testNoSurrounding() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/noSurrounding.kt");
-            }
-
-            @TestMetadata("nullableContext.kt")
-            public void testNullableContext() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/nullableContext.kt");
-            }
-
-            @TestMetadata("oneContextMissing.kt")
-            public void testOneContextMissing() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/oneContextMissing.kt");
-            }
-
-            @TestMetadata("requiredParameterUnmapped.kt")
-            public void testRequiredParameterUnmapped() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/requiredParameterUnmapped.kt");
-            }
-
-            @TestMetadata("singleOverload.kt")
-            public void testSingleOverload() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/addNameToExplicitContextArgument/singleOverload.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments")
-        public static class ExplicitContextArguments extends AbstractHighLevelQuickFixTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            @TestMetadata("exhaustion.kt")
+            public void testExhaustion() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/exhaustion.kt");
             }
 
             @TestMetadata("existingArguments.kt")
             public void testExistingArguments() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/existingArguments.kt");
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/existingArguments.kt");
             }
 
             @TestMetadata("function.kt")
             public void testFunction() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/function.kt");
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/function.kt");
+            }
+
+            @TestMetadata("genericType.kt")
+            public void testGenericType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/genericType.kt");
             }
 
             @TestMetadata("initBlock.kt")
             public void testInitBlock() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/initBlock.kt");
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/initBlock.kt");
             }
 
             @TestMetadata("lambda.kt")
             public void testLambda() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/lambda.kt");
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/lambda.kt");
             }
 
             @TestMetadata("lambdaInLambda.kt")
             public void testLambdaInLambda() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/lambdaInLambda.kt");
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/lambdaInLambda.kt");
+            }
+
+            @TestMetadata("mixedArguments.kt")
+            public void testMixedArguments() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/mixedArguments.kt");
+            }
+
+            @TestMetadata("mixedNameAndPosition.kt")
+            public void testMixedNameAndPosition() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/mixedNameAndPosition.kt");
             }
 
             @TestMetadata("multipleContextParameters.kt")
             public void testMultipleContextParameters() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/multipleContextParameters.kt");
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/multipleContextParameters.kt");
+            }
+
+            @TestMetadata("noMatch.kt")
+            public void testNoMatch() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/noMatch.kt");
+            }
+
+            @TestMetadata("noSurrounding.kt")
+            public void testNoSurrounding() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/noSurrounding.kt");
+            }
+
+            @TestMetadata("nullableContext.kt")
+            public void testNullableContext() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/nullableContext.kt");
+            }
+
+            @TestMetadata("oneContextMissing.kt")
+            public void testOneContextMissing() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/oneContextMissing.kt");
             }
 
             @TestMetadata("overloadAmbiguity.kt")
             public void testOverloadAmbiguity() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/overloadAmbiguity.kt");
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/overloadAmbiguity.kt");
             }
 
             @TestMetadata("overloadAmbiguityWithContext.kt")
             public void testOverloadAmbiguityWithContext() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/overloadAmbiguityWithContext.kt");
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/overloadAmbiguityWithContext.kt");
             }
 
             @TestMetadata("overrideFunction.kt")
             public void testOverrideFunction() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/overrideFunction.kt");
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/overrideFunction.kt");
             }
 
             @TestMetadata("property.kt")
             public void testProperty() throws Exception {
-                runTest("../../../idea/tests/testData/quickfix/contextParameter/explicitContextArguments/property.kt");
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/property.kt");
+            }
+
+            @TestMetadata("requiredParameterUnmapped.kt")
+            public void testRequiredParameterUnmapped() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/requiredParameterUnmapped.kt");
+            }
+
+            @TestMetadata("singleOverload.kt")
+            public void testSingleOverload() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/singleOverload.kt");
+            }
+
+            @TestMetadata("subtype.kt")
+            public void testSubtype() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/subtype.kt");
+            }
+
+            @TestMetadata("trailingLambda.kt")
+            public void testTrailingLambda() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/trailingLambda.kt");
+            }
+
+            @TestMetadata("twoContextMissing.kt")
+            public void testTwoContextMissing() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/twoContextMissing.kt");
+            }
+
+            @TestMetadata("twoMissingMix.kt")
+            public void testTwoMissingMix() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/twoMissingMix.kt");
+            }
+
+            @TestMetadata("twoMissingSameType.kt")
+            public void testTwoMissingSameType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/twoMissingSameType.kt");
+            }
+
+            @TestMetadata("twoNamesMissing.kt")
+            public void testTwoNamesMissing() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/twoNamesMissing.kt");
             }
         }
 

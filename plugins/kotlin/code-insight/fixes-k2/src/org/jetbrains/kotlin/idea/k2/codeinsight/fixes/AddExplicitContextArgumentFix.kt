@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils.addArgumen
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class AddExplicitContextArgumentFix(
     element: KtCallElement,
@@ -20,7 +19,8 @@ internal class AddExplicitContextArgumentFix(
 
     sealed interface ContextParameterFix {
         val name: Name
-        data class Rename(override val name: Name, val argumentIndex: Int) : ContextParameterFix
+
+        data class AddArgumentName(override val name: Name, val argumentIndex: Int) : ContextParameterFix
         data class Insert(override val name: Name, val type: String) : ContextParameterFix
     }
 
@@ -30,52 +30,48 @@ internal class AddExplicitContextArgumentFix(
         updater: ModPsiUpdater,
     ) {
         val psiFactory = KtPsiFactory(context.project)
-        val argList = element.valueArgumentList
-            ?: (element.lambdaArguments.firstOrNull()?.let {
-                element.addBefore(psiFactory.createCallArguments("()"), it) as KtCallElement
-            })?.valueArgumentList
-            ?: return
-
-        // 1. Rename existing positional arguments (indices are stable: no nodes are added yet).
-        for ((name, argumentIndex) in contextParameters.filterIsInstance<ContextParameterFix.Rename>()) {
-            argList.arguments.getOrNull(argumentIndex)
-                ?.takeIf { it.getArgumentName() == null }
-                ?.let { addArgumentName(it, name) }
+        // Get (or create) the argument list. If there's only a trailing lambda, insert an empty `()` before it.
+        val argumentList = element.valueArgumentList ?: run {
+            val trailingLambda = element.lambdaArguments.firstOrNull() ?: return
+            val emptyArgumentList = psiFactory.createCallArguments("()")
+            element.addBefore(emptyArgumentList, trailingLambda)
+            element.valueArgumentList ?: return
         }
 
-        // 2. Prepend new explicit arguments.
+        // 1. Name existing positional arguments (indices are stable: no nodes are added yet).
+        val names = contextParameters.filterIsInstance<ContextParameterFix.AddArgumentName>()
+        for ((name, argumentIndex) in names) {
+            val argument = argumentList.arguments.getOrNull(argumentIndex) ?: continue
+            if (argument.getArgumentName() != null) continue
+            addArgumentName(argument, name)
+        }
+
         val insertActions = contextParameters.filterIsInstance<ContextParameterFix.Insert>()
-        for ((name, type) in insertActions) {
+        val originalFirstArgument = argumentList.arguments.firstOrNull()
+        val anchor = originalFirstArgument ?: argumentList.rightParenthesis
+        insertActions.forEachIndexed { index, (name, type) ->
             val newArg = psiFactory.createArgument(
                 expression = psiFactory.createExpression("TODO(\"Provide $type\")"),
                 name = name,
             )
-            val anchor = argList.arguments.firstOrNull() ?: argList.rightParenthesis
-            if (anchor == argList.rightParenthesis) {
-                // Empty arg list: just add the argument; no comma needed.
-                argList.addBefore(newArg, anchor)
-            } else {
-                argList.addBefore(newArg, anchor)
-                argList.addBefore(psiFactory.createComma(), anchor)
+            argumentList.addBefore(newArg, anchor)
+
+            val isLastInsert = index == insertActions.lastIndex
+            if (!isLastInsert || originalFirstArgument != null) {
+                argumentList.addBefore(psiFactory.createComma(), anchor)
             }
         }
 
-        argList.arguments.firstOrNull()?.getArgumentExpression()?.let { updater.select(it) }
-    }
-
-    private fun createEmptyArgumentList(element: KtCallElement, psiFactory: KtPsiFactory): KtValueArgumentList? {
-        val anchor = element.lambdaArguments.firstOrNull() ?: return null
-        return element.addBefore(psiFactory.createCallArguments("()"), anchor) as? KtValueArgumentList
+        argumentList.arguments.firstOrNull()?.getArgumentExpression()?.let { updater.select(it) }
     }
 
     override fun getActionPresentation(context: ActionContext, element: KtCallElement): Presentation {
-        val description = contextParameters.joinToString { action ->
-            when (action) {
-                is ContextParameterFix.Rename -> "${action.name.asString()} = …"
-                is ContextParameterFix.Insert -> "${action.name.asString()}: ${action.type}"
-            }
+        val description = if (contextParameters.size == 1) {
+            "fix.add.explicit.context.argument"
+        } else {
+            "fix.add.explicit.context.arguments"
         }
-        return Presentation.of(KotlinBundle.message("fix.add.explicit.context.argument.detailed", description))
+        return Presentation.of(KotlinBundle.message(description))
     }
 
     override fun getFamilyName(): @IntentionFamilyName String =

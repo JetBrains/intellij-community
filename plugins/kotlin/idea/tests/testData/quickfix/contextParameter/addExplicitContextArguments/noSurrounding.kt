@@ -1,0 +1,12 @@
+// "Add explicit context argument" "true"
+// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters -XXLanguage:+ExplicitContextArguments
+// IGNORE_K1
+// DISABLE_K2_ERRORS
+context(x: String)
+fun foo3(): String = x
+
+fun main() {
+    <caret>foo3("Hello")
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddExplicitContextArgumentFix

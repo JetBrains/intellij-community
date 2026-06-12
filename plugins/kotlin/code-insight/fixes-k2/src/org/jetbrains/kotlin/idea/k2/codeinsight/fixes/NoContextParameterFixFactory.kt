@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
+import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.expressionType
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSo
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
@@ -23,6 +25,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.types.Variance
 import kotlin.collections.any
@@ -51,7 +54,7 @@ internal object NoContextParameterFixFactory {
                     SurroundCallWithContextFix.Wrapper.WITH
                 }
                 add(SurroundCallWithContextFix(expression, wrapper))
-                buildExplicitContextArgumentFix(expression, symbol)?.let { add(it) }
+                addIfNotNull(buildExplicitContextArgumentFix(expression, symbol))
             }
             val containingFunction = expression.getStrictParentOfType<KtNamedFunction>()
             if (containingFunction != null && !containingFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
@@ -96,18 +99,22 @@ internal object NoContextParameterFixFactory {
             .filter { (_, arg) -> arg.getArgumentName() == null }
             .toMutableList()
 
+        fun pickRenameTarget(paramReturnType: KaType): IndexedValue<KtValueArgument>? {
+            val canSpareOne = renamableArguments.size > requiredPositionalCount
+            if (!canSpareOne) return null
+
+            val matchIndex = renamableArguments.indexOfFirst { (_, argument) ->
+                argument.getArgumentExpression()?.expressionType?.isSubtypeOf(paramReturnType) == true
+            }
+            return if (matchIndex >= 0) renamableArguments.removeAt(matchIndex) else null
+        }
+
         val contextParameterFixes = missingContextParams.map { paramSignature ->
             val name = paramSignature.symbol.name
-            val budget = renamableArguments.size - requiredPositionalCount
-            val matchIndex = if (budget > 0) {
-                renamableArguments.indexOfFirst { (_, arg) ->
-                    arg.getArgumentExpression()?.expressionType?.isSubtypeOf(paramSignature.returnType) == true
-                }.takeIf { it >= 0 }
-            } else null
+            val renameTarget = pickRenameTarget(paramSignature.returnType)
 
-            if (matchIndex != null) {
-                val (argumentIndex, _) = renamableArguments.removeAt(matchIndex)
-                AddExplicitContextArgumentFix.ContextParameterFix.Rename(name, argumentIndex)
+            if (renameTarget != null) {
+                AddExplicitContextArgumentFix.ContextParameterFix.AddArgumentName(name, renameTarget.index)
             } else {
                 val type = paramSignature.returnType.render(
                     renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
