@@ -232,6 +232,30 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   }
 
   @Test
+  fun `test configuration with one of multiple test tasks keeps chosen existing configuration name`() {
+    currentExternalProjectSettings.isResolveModulePerSourceSet = false
+    val projectData = generateAndImportTemplateProject()
+    val testClass = projectData["project"]["AutomationTestCase"].element
+    val existingTaskConfiguration = createAndAddRunConfiguration(""":automationTest --tests "AutomationTestCase"""")
+    existingTaskConfiguration.name = "AutomationTestCase.automationTest"
+    val runConfiguration = createAndAddRunConfiguration(""":test --tests "AutomationTestCase"""")
+    runConfiguration.name = "AutomationTestCase"
+
+    runReadActionAndWait {
+      val context = getContextByLocation(testClass)
+      val producer = getConfigurationProducer<TestClassGradleConfigurationProducer>()
+      assertFalse(producer.isConfigurationFromContext(runConfiguration, context))
+      producer.setTestTasksChooser { it == "automationTest" }
+
+      val configurationFromContext = getConfigurationFromContext(context)
+      val configuration = configurationFromContext.configuration as GradleRunConfiguration
+      assertEquals("AutomationTestCase", configuration.name)
+      producer.onFirstRun(configurationFromContext, context, Runnable {})
+      assertEquals("AutomationTestCase.automationTest", configuration.name)
+    }
+  }
+
+  @Test
   fun `test multiple selected abstract tests`() {
     val projectData = generateAndImportTemplateProject()
     runReadActionAndWait {
