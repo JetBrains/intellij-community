@@ -143,6 +143,11 @@ public class FirGotoDeclarationTestGenerated extends AbstractFirGotoDeclarationT
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/destructuringDeclarationInitializer.test");
     }
 
+    @TestMetadata("destructuringDeclarationInitializerShortForm.test")
+    public void testDestructuringDeclarationInitializerShortForm() throws Exception {
+        runTest("../../idea/tests/testData/navigation/gotoDeclaration/destructuringDeclarationInitializerShortForm.test");
+    }
+
     @TestMetadata("enumEntries.test")
     public void testEnumEntries() throws Exception {
         runTest("../../idea/tests/testData/navigation/gotoDeclaration/enumEntries.test");
