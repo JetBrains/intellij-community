@@ -10,10 +10,12 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.ui.InputValidatorEx
@@ -33,6 +35,8 @@ import com.jetbrains.python.sdk.customizeWithSdkValue
 import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.noInterpreterMarker
+import com.jetbrains.python.sdk.renameSdk
+import com.jetbrains.python.onFailure
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -101,10 +105,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
     ) {
       val configurable = (value as? DefaultMutableTreeNode)?.userObject as? PythonInterpreterDetailsConfigurable
       val sdk = configurable?.sdk
-      // The name might have been changed with "Rename" action and stored in `displayName`, while the change not being reflected in `sdk`
-      // instance yet
-      val currentSdkName = configurable?.displayName
-      customizeWithSdkValue(sdk, noInterpreterMarker, nullSdkValue = null, actualSdkName = currentSdkName)
+      customizeWithSdkValue(sdk, noInterpreterMarker, nullSdkValue = null)
     }
   }
 
@@ -207,7 +208,8 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
     override fun actionPerformed(e: AnActionEvent) {
       val selectedSdk = getSelectedSdk() ?: return
       val initialName = selectedSdk.name
-      val allNames: List<String> = myRoot.children().asSequence().mapNotNull { (it as? MyNode)?.displayName }.toList()
+      // SDK names must be unique across the whole project JDK table (all SDK types), not only among the interpreters shown here.
+      val allNames: List<String> = ProjectJdkTable.getInstance().allJdks.map { it.name }
       val name = Messages.showInputDialog(
         myTree,
         PyBundle.message("python.interpreters.rename.interpreter.dialog.message"),
@@ -234,8 +236,23 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
       )
       // Skip changing the name if either the dialog is cancelled or the name is not changed
       if (name == null || name == initialName) return
-      // Delegate changing the name to the configurable
-      selectedConfigurable?.displayName = name
+      ApplicationManager.getApplication().runWriteAction {
+        // Rename the registered SDK in the project JDK table and re-point the project/module references to it.
+        project.renameSdk(initialName, name).onFailure {
+          // The rename dialog already rejects duplicate names, so this is only a defensive fallback.
+          thisLogger().warn("Cannot rename interpreter '$initialName' to '$name': $it")
+          return@runWriteAction
+        }
+
+        // `renameSdk` renamed the registered SDK. For an existing interpreter the tree shows a separate editable copy from
+        // `ProjectSdksModel`; rename it too so that `ProjectSdksModel.apply()` does not revert the change.
+        if (selectedSdk.name == initialName) {
+          selectedSdk.sdkModificator.let {
+            it.name = name
+            it.commitChanges()
+          }
+        }
+      }
       (myTree.model as? DefaultTreeModel)?.nodeChanged(selectedNode)
       myTree.revalidate()
     }
