@@ -415,6 +415,54 @@ private class AbstractProjectViewPaneStateManager(
     }
   }
 
+  private suspend fun buildStateUpdateEvent(request: ModelUpdateRequest): ProjectViewPaneStateEvent {
+    return when (request) {
+      is ModelChildrenLoaded -> {
+        ProjectViewChildrenLoaded(request.parentId, request.children.map { createNodeModel(it.id, it.modelNode) })
+      }
+      is ModelNodeAdded -> {
+        ProjectViewNodeAdded(request.parentId, request.index, createNodeModel(request.nodeId, request.modelNode))
+      }
+      is ModelNodeUpdated -> {
+        ProjectViewNodeUpdated(createNodeModel(request.nodeId, request.modelNode))
+      }
+      is ModelChildrenRemoved -> {
+        ProjectViewChildrenRemoved(request.parentId)
+      }
+      is ModelChildRemoved -> {
+        ProjectViewChildRemoved(request.parentId, request.index)
+      }
+      is ModelActionStatesUpdated -> {
+        ProjectViewActionStateEvent(request.actionState)
+      }
+    }
+  }
+
+  private suspend fun createNodeModel(id: Long, node: Any): ProjectViewNodeModel {
+    val presentation = getNodePresentation(node)
+    return readAction {
+      val canNavigate = canNavigate(node)
+      val canNavigateToSource = canNavigateToSource(node)
+      val isIncludedInExpandAll = isIncludedInExpandAll(node)
+      val isDirectory = isDirectory(node)
+      ProjectViewNodeModel(id, presentation, canNavigate, canNavigateToSource, isIncludedInExpandAll, isDirectory)
+    }
+  }
+
+  private fun getNodePresentation(node: Any): TreeNodePresentationImpl {
+    val builder = TreeNodePresentationBuilderImpl(treeModel.isLeaf(node))
+    return when (val userObject = TreeUtil.getUserObject(node)) {
+      is PresentableNodeDescriptor<*> -> {
+        buildPresentation(userObject, builder)
+      }
+      else -> {
+        builder.apply {
+          setMainText(userObject.toString())
+        }.build()
+      }
+    }
+  }
+
   private suspend fun manageLegacyBackend() {
     coroutineScope {
       withContext(Dispatchers.UI) {
@@ -466,54 +514,6 @@ private class AbstractProjectViewPaneStateManager(
       val impl = ProjectViewImpl.getInstance(project) as ProjectViewImpl
       impl.changeView(id)
       updateActionStates()
-    }
-  }
-
-  private suspend fun buildStateUpdateEvent(request: ModelUpdateRequest): ProjectViewPaneStateEvent {
-    return when (request) {
-      is ModelChildrenLoaded -> {
-        ProjectViewChildrenLoaded(request.parentId, request.children.map { createNodeModel(it.id, it.modelNode) })
-      }
-      is ModelNodeAdded -> {
-        ProjectViewNodeAdded(request.parentId, request.index, createNodeModel(request.nodeId, request.modelNode))
-      }
-      is ModelNodeUpdated -> {
-        ProjectViewNodeUpdated(createNodeModel(request.nodeId, request.modelNode))
-      }
-      is ModelChildrenRemoved -> {
-        ProjectViewChildrenRemoved(request.parentId)
-      }
-      is ModelChildRemoved -> {
-        ProjectViewChildRemoved(request.parentId, request.index)
-      }
-      is ModelActionStatesUpdated -> {
-        ProjectViewActionStateEvent(request.actionState)
-      }
-    }
-  }
-
-  private suspend fun createNodeModel(id: Long, node: Any): ProjectViewNodeModel {
-    val presentation = getNodePresentation(node)
-    return readAction {
-      val canNavigate = canNavigate(node)
-      val canNavigateToSource = canNavigateToSource(node)
-      val isIncludedInExpandAll = isIncludedInExpandAll(node)
-      val isDirectory = isDirectory(node)
-      ProjectViewNodeModel(id, presentation, canNavigate, canNavigateToSource, isIncludedInExpandAll, isDirectory)
-    }
-  }
-
-  private fun getNodePresentation(node: Any): TreeNodePresentationImpl {
-    val builder = TreeNodePresentationBuilderImpl(treeModel.isLeaf(node))
-    return when (val userObject = TreeUtil.getUserObject(node)) {
-      is PresentableNodeDescriptor<*> -> {
-        buildPresentation(userObject, builder)
-      }
-      else -> {
-        builder.apply {
-          setMainText(userObject.toString())
-        }.build()
-      }
     }
   }
 
