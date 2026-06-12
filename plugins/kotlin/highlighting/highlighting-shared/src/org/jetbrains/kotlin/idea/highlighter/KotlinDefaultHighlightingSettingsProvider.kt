@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting.FORCE_HIGHLIGHTING
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting.SKIP_HIGHLIGHTING
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting.SKIP_INSPECTION
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -25,22 +28,21 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
         }
 
         val psiFile = file.toPsiFile(project) ?: return null
-        val injectedLanguageManager = InjectedLanguageManager.getInstance(project)
-        if (injectedLanguageManager.isInjectedFragment(psiFile)) {
-            val inspectionsBeLenient = injectedLanguageManager.shouldInspectionsBeLenient(psiFile)
-            if (inspectionsBeLenient) FileHighlightingSetting.SKIP_INSPECTION
-        }
+
         return when {
             psiFile is KtFile ->
                 when {
-                    psiFile.isScript() -> FileHighlightingSetting.FORCE_HIGHLIGHTING
-                    psiFile.isCompiled -> FileHighlightingSetting.SKIP_INSPECTION
-                    !KotlinSupportAvailability.isSupported(psiFile) -> FileHighlightingSetting.SKIP_HIGHLIGHTING
-                    RootKindFilter.libraryFiles.matches(project, file) -> FileHighlightingSetting.SKIP_INSPECTION
-                    else -> null
+                    psiFile.isScript() -> FORCE_HIGHLIGHTING
+                    psiFile.isCompiled -> SKIP_INSPECTION
+                    !KotlinSupportAvailability.isSupported(psiFile) -> SKIP_HIGHLIGHTING
+                    RootKindFilter.libraryFiles.matches(project, file) -> SKIP_INSPECTION
+                    InjectedLanguageManager.getInstance(project).shouldInspectionsBeLenient(psiFile) -> SKIP_INSPECTION
+                    else -> {
+                        null
+                    }
                 }
 
-            file.isKotlinDecompiledFile -> FileHighlightingSetting.SKIP_HIGHLIGHTING
+            file.isKotlinDecompiledFile -> SKIP_HIGHLIGHTING
             else -> null
         }
     }
