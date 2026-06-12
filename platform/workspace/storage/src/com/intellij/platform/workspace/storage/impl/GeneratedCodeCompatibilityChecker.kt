@@ -20,14 +20,14 @@ internal object GeneratedCodeCompatibilityChecker {
   @Volatile
   private var checkedSettings: CheckSettings? = null
 
-  fun checkCode(implBuilderClass: Class<*>) {
+  fun checkCode(implBuilderClass: Class<*>, implClass: Class<*>) {
     val settings = currentSettings()
     if (settings != checkedSettings) {
       checkedBuilderClasses.clear()
       checkedSettings = settings
     }
     if (implBuilderClass in checkedBuilderClasses) return
-    doCheckCode(implBuilderClass, settings)
+    doCheckCode(implBuilderClass, implClass, settings)
     checkedBuilderClasses.add(implBuilderClass)
   }
 
@@ -39,7 +39,7 @@ internal object GeneratedCodeCompatibilityChecker {
     checkImplInImpl = CodeGeneratorVersions.checkImplInImpl,
   )
 
-  private fun doCheckCode(implBuilderClass: Class<*>, settings: CheckSettings) {
+  private fun doCheckCode(implBuilderClass: Class<*>, implClass: Class<*>, settings: CheckSettings) {
     if (settings.checkApiInInterface) { // Check that builder interface has the correct api version
       val builderClass = implBuilderClass.toBuilderInterface()
       val entityApiVersion = builderClass.getAnnotation(GeneratedCodeApiVersion::class.java)?.version
@@ -56,7 +56,6 @@ internal object GeneratedCodeCompatibilityChecker {
       }
     }
 
-    val implClass = implBuilderClass.toImplClass()
     if (settings.checkApiInImpl) { // Check that impl class has the correct api version
       val entityImplApiVersion = implClass.getAnnotation(GeneratedCodeApiVersion::class.java)?.version
                                  ?: error("Generated class '$implClass' doesn't have an api version marker. " +
@@ -97,11 +96,5 @@ internal object GeneratedCodeCompatibilityChecker {
       candidate = candidate.interfaces.singleOrNull() ?: break
     }
     return candidate
-  }
-
-  private fun Class<*>.toImplClass(): Class<*> {
-    return declaringClass
-           ?: error("Generated builder '$this' is not a member of an entity implementation class. " +
-                    "You should regenerate the code of your entities")
   }
 }

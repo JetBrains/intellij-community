@@ -54,7 +54,7 @@ fun ObjClass<*>.generateEntityTypeObject(): String = lines {
   val builderGeneric = if (openness.extendable) "<$javaFullName>" else ""
   val mandatoryFields = allFields.mandatoryFields()
   section("internal object ${javaFullName}Type : ${EntityType}<$javaFullName, $defaultJavaBuilderName$builderGeneric>()") {
-    line("override val entityClass: Class<$javaFullName> get() = $javaFullName::class.java")
+    line("override val entityImplClass: Class<*> get() = $javaImplName::class.java")
     line("override val entityImplBuilderClass: Class<*> get() = $javaImplBuilderName::class.java")
     if (mandatoryFields.isNotEmpty()) {
       line("operator fun invoke(")

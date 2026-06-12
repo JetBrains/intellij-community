@@ -11,15 +11,21 @@ public abstract class EntityType<T : WorkspaceEntity, B : WorkspaceEntity.Builde
   @Deprecated("Has no use, to be removed")
   private val base: EntityType<*, *>? = null
 ) {
+    @Deprecated("Replaced by `entityImplClass`")
     protected open val entityClass: Class<T>? = null
+    protected open val entityImplClass: Class<*>? = null
     protected open val entityImplBuilderClass: Class<*>? = null
-  
-    @Suppress("UNCHECKED_CAST")
-    private val ival: Class<T> get() = entityClass ?: javaClass.enclosingClass as Class<T>
+
+    private fun implClass(): Class<*> {
+      return entityImplClass
+             ?: implBuilderClass().declaringClass // entities generated before `entityImplClass` was introduced
+             ?: throw RuntimeException("Entity implementation class not found for ${javaClass.name}. " +
+                                       "You should regenerate the code of your entities")
+    }
 
     private fun implBuilderClass(): Class<*> {
       return entityImplBuilderClass
-             ?: throw RuntimeException("Entity implementation builder class not found for ${ival.simpleName}. " +
+             ?: throw RuntimeException("Entity implementation builder class not found for ${javaClass.name}. " +
                                        "You should regenerate the code of your entities")
     }
 
@@ -36,7 +42,7 @@ public abstract class EntityType<T : WorkspaceEntity, B : WorkspaceEntity.Builde
     }
 
     protected fun builder(): B {
-      GeneratedCodeCompatibilityChecker.checkCode(implBuilderClass())
+      GeneratedCodeCompatibilityChecker.checkCode(implBuilderClass(), implClass())
       return _builder()
     }
 }
