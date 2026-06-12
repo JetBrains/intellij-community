@@ -165,6 +165,7 @@ object PyDataclassNames {
 
     const val DATACLASS_DECORATOR: String = "pydantic.dataclasses.dataclass"
 
+    const val ALIAS: String = "alias"
     const val VALIDATION_ALIAS: String= "validation_alias"
 
     const val ALIAS_CHOICES: String = "pydantic.AliasChoices"

@@ -278,6 +278,10 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.class.structure"
                      key="INSP.NAME.dataclass.definition.and.usages" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.inspections.PyDataclassInspection"/>
+    <localInspection language="Python" shortName="PyPydanticFieldConstraintInspection" suppressId="PyPydanticFieldConstraint" bundle="messages.PyPsiBundle"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.general"
+                     key="INSP.NAME.pydantic.field.constraint.violation" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyPydanticFieldConstraintInspection"/>
     <localInspection language="Python" shortName="PyDictCreationInspection" suppressId="PyDictCreation" bundle="messages.PyPsiBundle"
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.code.style.issues"
                      key="INSP.NAME.dict.creation" enabledByDefault="true" level="WEAK WARNING"

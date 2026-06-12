@@ -12,6 +12,12 @@ def Field(
     title: Optional[str] = None,
     description: Optional[str] = None,
     frozen: bool | None = ...,
+    gt: Any = None,
+    ge: Any = None,
+    lt: Any = None,
+    le: Any = None,
+    min_length: Optional[int] = None,
+    max_length: Optional[int] = None,
     **extra: Any
 ) -> Any:
     ...

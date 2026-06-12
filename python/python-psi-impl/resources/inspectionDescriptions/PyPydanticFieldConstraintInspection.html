@@ -1,0 +1,14 @@
+<html>
+<body>
+<p>Reports arguments passed to a Pydantic model constructor that violate <code>Field</code> constraints.</p>
+<p><b>Example:</b></p>
+<pre><code>
+from pydantic import BaseModel, Field
+
+class User(BaseModel):
+    age: int = Field(gt=0)
+
+User(age=-1)  # violates gt=0
+</code></pre>
+</body>
+</html>

@@ -179,6 +179,7 @@ abstract class PyCodeInsightTestCase {
     val enablePyAnyType: Boolean = true,
     val enableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
     val disableInspections: Set<Class<out LocalInspectionTool>> = emptySet(),
+    val copyDirectoryToProject: List<Pair<String, String>> = emptyList(),
   )
 
 
@@ -325,6 +326,9 @@ abstract class PyCodeInsightTestCase {
   }
 
   private fun doTest(options: TestOptions, fileName: String, fileContent: String, otherFiles: Array<out Pair<String, String>>) {
+    for ((from, to) in options.copyDirectoryToProject) {
+      myFixture.copyDirectoryToProject(from, to)
+    }
     for ((filename, content) in otherFiles) {
       myFixture.createFile(filename, content.trimIndent())
     }
