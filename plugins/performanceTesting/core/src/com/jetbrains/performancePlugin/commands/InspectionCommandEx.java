@@ -117,7 +117,7 @@ public class InspectionCommandEx extends AbstractCommand {
     }
     else {
       if (StringUtil.isNotEmpty(myOptions.directory)) {
-        VirtualFile directory = VfsUtil.findRelativeFile(ProjectUtil.guessProjectDir(project), myOptions.directory);
+        VirtualFile directory = VfsUtil.findRelativeFile(ProjectUtil.guessProjectDir(project), myOptions.directory.split("/"));
         if (directory != null) {
           PsiDirectory psiDirectory = ReadAction.compute(() -> PsiManager.getInstance(project).findDirectory(directory));
           if (psiDirectory != null) {
