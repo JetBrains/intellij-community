@@ -4,17 +4,43 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.testFramework.utils.io.deleteRecursively
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
 import kotlin.io.path.exists
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.assumeModel_4_1_0
+import org.jetbrains.idea.maven.fixtures.createProjectSubDir
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.projectPath
+import org.jetbrains.idea.maven.fixtures.projectsTree
+import org.jetbrains.idea.maven.fixtures.setRawPomFile
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 
-internal class MavenSubprojectImportingTest : MavenMultiVersionImportingTestCase() {
+internal @TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenSubprojectImportingTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
 
 
   @Test
   fun testImportSubprojectWithSetRoot() = runBlocking {
-    assumeModel_4_1_0("only for 4.1.0")
+    maven.assumeModel_4_1_0("only for 4.1.0")
     ensureNoDotMvn()
-    setRawPomFile("""<?xml version="1.0"?>
+    maven.setRawPomFile("""<?xml version="1.0"?>
       <project xmlns="http://maven.apache.org/POM/4.1.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd" root="true">
@@ -25,7 +51,7 @@ internal class MavenSubprojectImportingTest : MavenMultiVersionImportingTestCase
         </project>
     """.trimIndent())
 
-    createProjectSubFile("../pom.xml",
+    maven.createProjectSubFile("../pom.xml",
                          """
         <project xmlns="http://maven.apache.org/POM/4.1.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -36,18 +62,18 @@ internal class MavenSubprojectImportingTest : MavenMultiVersionImportingTestCase
         <version>1.0</version>
         </project>
       """.trimIndent())
-    createProjectSubDir("../.mvn")
-    importProjectAsync()
-    assertModules("artifact")
-    assertEquals("should be exactly 1 project", 1, projectsTree.projects.size)
-    assertEquals("group:artifact:1.0", projectsTree.projects[0].mavenId.toString())
+    maven.createProjectSubDir("../.mvn")
+    maven.importProjectAsync()
+    maven.assertModules("artifact")
+    assertEquals(1, maven.projectsTree.projects.size, "should be exactly 1 project")
+    assertEquals("group:artifact:1.0", maven.projectsTree.projects[0].mavenId.toString())
   }
 
   @Test
   fun testImportSubprojectWithOldModelAndMisconfiguredRoot() = runBlocking {
     ensureNoDotMvn()
 
-    createProjectSubFile("../pom.xml",
+    maven.createProjectSubFile("../pom.xml",
                          """
         <project xmlns="http://maven.apache.org/POM/4.1.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -58,18 +84,18 @@ internal class MavenSubprojectImportingTest : MavenMultiVersionImportingTestCase
         <version>1.0</version>
         </project>
       """.trimIndent())
-    createProjectSubDir("../.mvn")
-    importProjectAsync("""
+    maven.createProjectSubDir("../.mvn")
+    maven.importProjectAsync("""
        <groupId>group</groupId>
         <artifactId>artifact</artifactId>
         <version>1.0</version>""")
-    assertModules("artifact")
-    assertEquals("should be exactly 1 project", 1, projectsTree.projects.size)
-    assertEquals("group:artifact:1.0", projectsTree.projects[0].mavenId.toString())
+    maven.assertModules("artifact")
+    assertEquals(1, maven.projectsTree.projects.size, "should be exactly 1 project")
+    assertEquals("group:artifact:1.0", maven.projectsTree.projects[0].mavenId.toString())
   }
 
   private fun ensureNoDotMvn() {
-    projectPath.resolve(".mvn").deleteRecursively()
-    assertFalse("There should not be .mvn dir", projectPath.resolve(".mvn").exists())
+    maven.projectPath.resolve(".mvn").deleteRecursively()
+    assertFalse(maven.projectPath.resolve(".mvn").exists(), "There should not be .mvn dir")
   }
 }
