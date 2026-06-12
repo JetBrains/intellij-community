@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.idea.codeInsight.postfix.KotlinPostfixTemplatesBundle
@@ -37,7 +38,13 @@ interface KotlinPostfixTemplateExpressionCondition : PostfixTemplateExpressionCo
         @OptIn(KaIdeApi::class)
         override fun value(expr: KtExpression): Boolean {
             return analyze(expr) {
-                expr.expressionType?.symbol?.importableFqName?.asString() == fqn
+                val classType = (expr.expressionType?.symbol as? KaClassifierSymbol)?.defaultType ?: return false
+                val allSupertypesWithSelf = buildList {
+                    add(classType)
+                    addAll(classType.allSupertypes)
+                }
+
+                allSupertypesWithSelf.any { it.symbol?.importableFqName?.asString() == fqn }
             }
         }
     }

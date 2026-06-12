@@ -51,6 +51,21 @@ public abstract class K2CustomConditionPostfixTemplateTestGenerated extends Abst
         public void testNonMatch() throws Exception {
             performTest();
         }
+
+        @TestMetadata("subtype.kt")
+        public void testSubtype() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("subtypeNonMatch.kt")
+        public void testSubtypeNonMatch() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("transitiveSubtype.kt")
+        public void testTransitiveSubtype() throws Exception {
+            performTest();
+        }
     }
 
     @TestIndexingMode({DUMB_EMPTY_INDEX, SMART})
