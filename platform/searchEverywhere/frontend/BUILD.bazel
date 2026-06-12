@@ -148,6 +148,8 @@ jvm_library(
         "//libraries/mockito:mockito_test_lib",
         "//platform/platform-api:ide",
         "//platform/platform-api:ide_test_lib",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend.tests` end

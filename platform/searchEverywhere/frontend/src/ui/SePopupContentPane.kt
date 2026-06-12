@@ -288,7 +288,7 @@ class SePopupContentPane(
 
     launch {
       vm.tabsModelFlow.map {
-        SePopupHeaderPane.Configuration(it.sortedTabVms.map { tabVm -> SePopupHeaderPane.Tab(tabVm) }, it.selectedTabIndexFlow)
+        SePopupHeaderPane.Configuration(it.sortedTabVms.map { tabVm -> SePopupHeaderPane.Tab(tabVm) }, it.selectedTabIdFlow)
       }.collectLatest {
         tabConfigurationState.value = it
       }

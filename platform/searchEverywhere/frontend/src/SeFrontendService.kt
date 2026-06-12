@@ -246,6 +246,11 @@ class SeFrontendService(val project: Project?, private val coroutineScope: Corou
       }
     }.awaitAll()
 
+    if (!orderedTabFactoryIds.contains(tabId)) {
+      SeLog.log(LIFE_CYCLE) { "Tab to open $tabId is in the adapted tabs. Waiting for it's initialization." }
+      adaptedTabs.getValue()
+    }
+
     val tabs = tabsOrDeferredTabs.filterIsInstance<SeTab>().sortedWith { tab1, tab2 ->
       val order1 = orderedTabFactoryIds.indexOf(tab1.id).let { if (it == -1) orderedTabFactoryIds.size + 1 else it }
       val order2 = orderedTabFactoryIds.indexOf(tab2.id).let { if (it == -1) orderedTabFactoryIds.size + 1 else it }

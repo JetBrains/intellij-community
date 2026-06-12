@@ -57,10 +57,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
@@ -370,26 +370,32 @@ class SePreviewConfiguration(
 @ApiStatus.Internal
 class SeTabsModel(tabVms: List<SeTabVm>, selectedTabId: String) {
   val sortedTabVms: List<SeTabVm> = tabVms.sortedBy { -it.priority }
+  private val size get() = sortedTabVms.size
 
-  val selectedTabIndexFlow: MutableStateFlow<Int> = MutableStateFlow(sortedTabVms.indexOfFirst { it.tabId == selectedTabId })
-  val selectedTabFlow: Flow<SeTabVm> = selectedTabIndexFlow.filter { it in sortedTabVms.indices }.map { sortedTabVms[it] }
-  val selectedTab: SeTabVm get() = sortedTabVms[selectedTabIndexFlow.value]
+  val selectedTabIdFlow: MutableStateFlow<String> = MutableStateFlow(
+    if (sortedTabVms.any { it.tabId == selectedTabId }) selectedTabId
+    else sortedTabVms.first().tabId
+  )
+  val selectedTabFlow: Flow<SeTabVm> = selectedTabIdFlow.mapNotNull { id -> sortedTabVms.firstOrNull { it.tabId == id } }
+  val selectedTab: SeTabVm get() = sortedTabVms.firstOrNull { it.tabId == selectedTabIdFlow.value } ?: sortedTabVms.first()
 
   init {
     require(sortedTabVms.isNotEmpty()) { "Search Everywhere tabs must not be empty" }
-    require(selectedTabIndexFlow.value != -1) { "Selected tab ID must be present in the list of tabs" }
+    SeLog.log(SeLog.LIFE_CYCLE) { "SeTabsModel built: tabs=[${sortedTabVms.joinToString { it.tabId }}], selected=${selectedTabIdFlow.value}" }
   }
 
+  private fun indexOf(tabId: String): Int = sortedTabVms.indexOfFirst { it.tabId == tabId }.coerceAtLeast(0)
+
   fun selectNextTab() {
-    selectedTabIndexFlow.update { (it + 1) % sortedTabVms.size }
+    selectedTabIdFlow.update { sortedTabVms[(indexOf(it) + 1) % size].tabId }
   }
 
   fun selectPreviousTab() {
-    selectedTabIndexFlow.update { (it - 1 + sortedTabVms.size) % sortedTabVms.size }
+    selectedTabIdFlow.update { sortedTabVms[(indexOf(it) - 1 + size) % size].tabId }
   }
 
   fun showTab(tabId: String) {
-    sortedTabVms.indexOfFirst { it.tabId == tabId }.takeIf { it != -1 }?.let { selectedTabIndexFlow.value = it }
+    if (contains(tabId)) selectedTabIdFlow.value = tabId
   }
 
   fun contains(tabId: String): Boolean = sortedTabVms.any { it.tabId == tabId }
