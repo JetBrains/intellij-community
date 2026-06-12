@@ -37,9 +37,7 @@ internal class KotlinTextExtractor : TextExtractor() {
     .removingIndents(" \t").removingLineSuffixes(" \t")
 
   public override fun buildTextContents(root: PsiElement, allowedDomains: Set<TextContent.TextDomain>): List<TextContent> {
-      val viewProvider = root.containingFile.viewProvider
-      val injectedLanguageManager = InjectedLanguageManager.getInstance(root.project)
-      if (injectedLanguageManager.isInjectedViewProvider(viewProvider) && injectedLanguageManager.shouldInspectionsBeLenient(root)) {
+      if (InjectedLanguageManager.getInstance(root.project).shouldInspectionsBeLenient(root)) {
           return emptyList()
       }
 
