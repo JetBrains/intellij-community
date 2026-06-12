@@ -12,6 +12,7 @@ import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
 import java.util.concurrent.RejectedExecutionException
@@ -19,6 +20,7 @@ import java.util.concurrent.RejectedExecutionException
 /**
  * Event logger that only notifies subscribers listed in [com.intellij.internal.statistic.eventLog.EventLogListenersManager.isLocalAllowed]
  */
+@ApiStatus.Internal
 class LocalStatisticsFileEventLogger internal constructor(
   private val recorderId: String,
   private val build: String,

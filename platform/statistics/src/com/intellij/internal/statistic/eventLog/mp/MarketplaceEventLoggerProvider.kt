@@ -1,4 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 package com.intellij.internal.statistic.eventLog.mp
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
@@ -6,11 +7,13 @@ import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.TimeUnit
 
 
 const val MP_RECORDER_ID = "MP"
 
+@ApiStatus.Internal
 class MarketplaceEventLoggerProvider : StatisticsEventLoggerProvider(
   recorderId = MP_RECORDER_ID,
   version = 1,

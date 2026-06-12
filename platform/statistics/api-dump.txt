@@ -1,7 +1,11 @@
+f:com.intellij.internal.statistic.beans.MetricEventFactoryKt
+- sf:newMetric(java.lang.String,com.intellij.internal.statistic.eventLog.FeatureUsageData):com.intellij.internal.statistic.beans.MetricEvent
+- sf:newMetric(java.lang.String,java.lang.String):com.intellij.internal.statistic.beans.MetricEvent
 f:com.intellij.internal.statistic.eventLog.EmptyEventLogFilesProvider
 - com.intellij.internal.statistic.eventLog.EventLogFilesProvider
-c:com.intellij.internal.statistic.eventLog.EventLogFileWriter
-- b:<init>(java.nio.file.Path,I,kotlin.jvm.functions.Function1,J,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- sf:INSTANCE:com.intellij.internal.statistic.eventLog.EmptyEventLogFilesProvider
+- getLogFiles():java.util.List
+- getLogFilesExceptActive():java.util.List
 c:com.intellij.internal.statistic.eventLog.EventLogGroup
 - <init>(java.lang.String,I):V
 - <init>(java.lang.String,I,java.lang.String):V
@@ -37,13 +41,28 @@ c:com.intellij.internal.statistic.eventLog.EventLogGroup
 f:com.intellij.internal.statistic.eventLog.EventLogGroupKt
 - sf:FUS_RECORDER:java.lang.String
 f:com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration
+- sf:Companion:com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration$Companion
+- sf:TOTAL_NUMBER_OF_BUCKETS:I
 - f:anonymize(java.lang.String):java.lang.String
-f:com.intellij.internal.statistic.eventLog.StatisticsEventLogFileWriter
-- <init>(com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider,I,Z,java.lang.String):V
+- f:anonymize(java.lang.String,Z):java.lang.String
+- bs:anonymize$default(com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration,java.lang.String,Z,I,java.lang.Object):java.lang.String
+- f:anonymizeSkipCache(java.lang.String,Z):java.lang.String
+- bs:anonymizeSkipCache$default(com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration,java.lang.String,Z,I,java.lang.Object):java.lang.String
+- f:getAlternativeRecorderId():java.lang.String
+- f:getBucket():I
+- f:getDeviceId():java.lang.String
+- f:getMachineId():com.intellij.internal.statistic.eventLog.MachineId
+- f:getMaxFilesToSend():I
+- f:getSessionId():java.lang.String
+f:com.intellij.internal.statistic.eventLog.EventLogRecorderConfiguration$Companion
 com.intellij.internal.statistic.eventLog.StatisticsEventLogListener
 - a:onLogEvent(com.jetbrains.fus.reporting.model.lion3.LogEvent,java.lang.String,java.util.Map):V
 f:com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
+- sf:INSTANCE:com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
+- sf:forceLoggingAlwaysEnabled():Z
 - sf:getEventLogProvider(java.lang.String):com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
+- sf:getEventLogProviders():java.util.List
+- sf:getExternalEventLogSettings():com.intellij.internal.statistic.eventLog.ExternalEventLogSettings
 com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 - a:cleanup():V
 - a:computeAsync(kotlin.jvm.functions.Function1):V
@@ -54,14 +73,35 @@ com.intellij.internal.statistic.eventLog.StatisticsEventLogger
 - logAsync(com.intellij.internal.statistic.eventLog.EventLogGroup,java.lang.String,Z):java.util.concurrent.CompletableFuture
 - a:rollOver():V
 a:com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
+- sf:Companion:com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider$Companion
+- sf:DEFAULT_MAX_FILE_SIZE_BYTES:I
+- <init>(java.lang.String,I,J,I):V
+- <init>(java.lang.String,I,J,I,Z,Z,Z):V
+- b:<init>(java.lang.String,I,J,I,Z,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getActiveLogFile():com.intellij.internal.statistic.eventLog.EventLogFile
+- getCoroutineScope():kotlinx.coroutines.CoroutineScope
+- sf:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:getLogFilesProvider():com.intellij.internal.statistic.eventLog.EventLogFilesProvider
 - getLogger():com.intellij.internal.statistic.eventLog.StatisticsEventLogger
+- f:getRecorderId():java.lang.String
 - f:getSendFrequencyMs():J
+- f:getSendLogsOnIdeClose():Z
+- f:getUseDefaultRecorderId():Z
 - f:getVersion():I
+- f:isCharsEscapingRequired():Z
+- isLoggingAlwaysActive():Z
+- f:isLoggingEnabled():Z
+- a:isRecordEnabled():Z
 - a:isSendEnabled():Z
 f:com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider$Companion
 - f:getDEFAULT_SEND_FREQUENCY_MS():J
+- f:getEP_NAME():com.intellij.openapi.extensions.ExtensionPointName
+- f:parseFileSize(java.lang.String):I
 a:com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProviderExt
 - com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
+- <init>(java.lang.String,I,J,I,Z):V
+- b:<init>(java.lang.String,I,J,I,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- isLoggingAlwaysActive():Z
 com.intellij.internal.statistic.extensibility.StatisticsEventLogToolWindowEPLogProvider
 - sf:Companion:com.intellij.internal.statistic.extensibility.StatisticsEventLogToolWindowEPLogProvider$Companion
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName

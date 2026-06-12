@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit
 @ApiStatus.Internal
 val LICENSE_CODE_KEY: Key<Char> = Key("LICENSE_CODE")
 
+@ApiStatus.Internal
 open class StatisticsFileEventLogger(
   private val recorderId: String,
   private val sessionId: String,

@@ -3,11 +3,14 @@ package com.intellij.internal.statistic.eventLog
 
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface StatisticsEventMergeStrategy {
   fun shouldMerge(lastEvent: LogEvent, newEvent: LogEvent): Boolean
 }
 
+@ApiStatus.Internal
 class FilteredEventMergeStrategy(private val ignoredFields: Set<String>) : StatisticsEventMergeStrategy {
   override fun shouldMerge(lastEvent: LogEvent, newEvent: LogEvent): Boolean {
     if (lastEvent.session != newEvent.session) return false

@@ -22,6 +22,7 @@ import kotlin.time.Duration.Companion.days
  * @param maxFileAge How long file should be stored since last modification.
  * @param logFilePathProvider Function to build new log file path.
  */
+@ApiStatus.Internal
 open class EventLogFileWriter(
   private val dir: Path,
   private val maxFileSizeInBytes: Int,

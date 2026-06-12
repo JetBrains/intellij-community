@@ -158,6 +158,7 @@ abstract class StatisticsEventLoggerProvider(
    *
    * By default, only events with the same values in group id, event id and all event data fields are merged.
    */
+  @Internal
   open fun createEventsMergeStrategy(): StatisticsEventMergeStrategy {
     return FilteredEventMergeStrategy(emptySet())
   }

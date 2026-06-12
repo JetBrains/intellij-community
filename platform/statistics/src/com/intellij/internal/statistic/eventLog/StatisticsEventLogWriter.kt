@@ -7,12 +7,14 @@ import com.intellij.openapi.Disposable
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.seconds
 
+@ApiStatus.Internal
 interface StatisticsEventLogWriter : Disposable {
   fun log(logEvent: LogEvent)
 
@@ -25,6 +27,7 @@ interface StatisticsEventLogWriter : Disposable {
   fun rollOver()
 }
 
+@ApiStatus.Internal
 class StatisticsEventLogFileWriter(private val loggerProvider: StatisticsEventLoggerProvider,
                                    maxFileSizeInBytes: Int,
                                    isEap: Boolean,
