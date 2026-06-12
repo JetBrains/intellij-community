@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.fir.testGenerator.codeinsight
 
 import com.intellij.testFramework.TestIndexingModeSupporter.IndexingMode
+import org.jetbrains.kotlin.idea.k2.codeInsight.postfix.test.AbstractK2CustomConditionPostfixTemplateTest
 import org.jetbrains.kotlin.idea.k2.codeInsight.postfix.test.AbstractK2PostfixTemplateTest
 import org.jetbrains.kotlin.idea.liveTemplates.k2.macro.AbstractK2LiveTemplateTest
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.CODE_INSIGHT
@@ -15,6 +16,9 @@ internal fun MutableTWorkspace.generateK2PostfixTemplateTests() {
     testGroup("code-insight/postfix-templates", category = CODE_INSIGHT) {
         testClass<AbstractK2PostfixTemplateTest>(indexingMode = listOf(IndexingMode.DUMB_EMPTY_INDEX, IndexingMode.SMART)) {
             model("expansion", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
+        }
+        testClass<AbstractK2CustomConditionPostfixTemplateTest>(indexingMode = listOf(IndexingMode.DUMB_EMPTY_INDEX, IndexingMode.SMART)) {
+            model("customConditions", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
         }
     }
 }

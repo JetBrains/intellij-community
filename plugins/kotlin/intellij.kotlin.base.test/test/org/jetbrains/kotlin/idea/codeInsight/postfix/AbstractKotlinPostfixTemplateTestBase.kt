@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTemplate
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider
+import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
@@ -35,6 +37,7 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
     protected fun performTest() {
         val disableDirective = IgnoreTests.DIRECTIVES.IGNORE_K2
         myFixture.configureByDefaultFile()
+        registerAdditionalTemplates(file.text)
         templateName?.let { myFixture.type(".$it") }
 
         val fileText = file.text
@@ -46,8 +49,8 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
         }
         val projectInDumbMode = project.isInDumbMode
         val postfixTemplate: PostfixTemplate? =
-            LanguagePostfixTemplate.LANG_EP.forLanguage(KotlinLanguage.INSTANCE)
-                .templates.firstOrNull { it.key == ".$templateKey" }
+            PostfixTemplatesUtils.getAvailableTemplates(kotlinPostfixTemplateProvider)
+                .firstOrNull { it.key == ".$templateKey" }
         val postfixTemplateDumbAware = DumbService.Companion.isDumbAware(postfixTemplate)
         try {
             IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), disableDirective, "after") {
@@ -94,6 +97,15 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
 
     private val templateName: String?
         get() = if (!isOldTestData) Paths.get(testDataPath).name else null
+
+    protected val kotlinPostfixTemplateProvider: PostfixTemplateProvider
+        get() = LanguagePostfixTemplate.LANG_EP.forLanguage(KotlinLanguage.INSTANCE)
+
+    /**
+     * Hook for subclasses to register additional (e.g. custom/editable) postfix templates before the
+     * template under test is looked up and expanded. Called after the file is configured. Default: no-op.
+     */
+    protected open fun registerAdditionalTemplates(fileText: String) {}
 
     private val isOldTestData: Boolean
         get() = Paths.get(testDataPath)
