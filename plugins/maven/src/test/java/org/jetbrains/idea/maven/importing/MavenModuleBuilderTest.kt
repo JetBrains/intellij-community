@@ -16,57 +16,90 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.EdtTestUtil
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.assertSources
+import org.jetbrains.idea.maven.fixtures.assertTestSources
+import org.jetbrains.idea.maven.fixtures.assumeMaven3
+import org.jetbrains.idea.maven.fixtures.getModule
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.moduleTag
+import org.jetbrains.idea.maven.fixtures.modulesTag
+import org.jetbrains.idea.maven.fixtures.projectPath
+import org.jetbrains.idea.maven.fixtures.updateAllProjects
+import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.wizards.MavenJavaModuleBuilder
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.AfterEach
 
 
-class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenModuleBuilderTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   private lateinit var myFixture: MavenProjectJDKTestFixture
   private lateinit var myBuilder: MavenJavaModuleBuilder
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     myBuilder = MavenJavaModuleBuilder()
 
-    myFixture = MavenProjectJDKTestFixture(project, "MAVEN_TEST_JDK")
-    edt<RuntimeException?>(ThrowableRunnable {
+    myFixture = MavenProjectJDKTestFixture(maven.project, "MAVEN_TEST_JDK")
+    EdtTestUtil.runInEdtAndWait<RuntimeException?>(ThrowableRunnable {
       WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable { myFixture.setUp() })
     })
 
-    setModuleNameAndRoot("module", projectPath.toString())
+    setModuleNameAndRoot("module", maven.projectPath.toString())
   }
 
-  public override fun tearDown() {
+  public @AfterEach
+  fun tearDown() {
     RunAll.runAll(
       {
-        edt<RuntimeException?>(ThrowableRunnable {
+        EdtTestUtil.runInEdtAndWait<RuntimeException?>(ThrowableRunnable {
           WriteAction.runAndWait<RuntimeException?>(ThrowableRunnable { myFixture.tearDown() })
 
         })
       },
-      { super.tearDown() }
     )
   }
 
   @Test
   fun testModuleRecreation() = runBlocking {
-    assumeMaven3()
+    maven.assumeMaven3()
     val id = MavenId("org.foo", "module", "1.0")
 
     createNewModule(id)
-    assertModules(id.artifactId!!)
+    maven.assertModules(id.artifactId!!)
     deleteModule(id.artifactId)
     createNewModule(id)
-    assertModules(id.artifactId!!)
+    maven.assertModules(id.artifactId!!)
 
-    updateAllProjects()
+    maven.updateAllProjects()
     withContext(Dispatchers.EDT){
       writeIntentReadAction {
         FileDocumentManager.getInstance().saveAllDocuments()
@@ -79,27 +112,27 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     val id = MavenId("org.foo", "module", "1.0")
     createNewModule(id)
 
-    val projects = MavenProjectsManager.getInstance(project).getProjects()
+    val projects = MavenProjectsManager.getInstance(maven.project).getProjects()
     assertEquals(1, projects.size)
 
     val mavenProject = projects[0]
     assertEquals(id, mavenProject.mavenId)
 
-    assertModules("module")
-    MavenProjectsManager.getInstance(project).isMavenizedModule(getModule("module"))
-    assertSame(mavenProject, MavenProjectsManager.getInstance(project).findProject(getModule("module")))
+    maven.assertModules("module")
+    MavenProjectsManager.getInstance(maven.project).isMavenizedModule(maven.getModule("module"))
+    assertSame(mavenProject, MavenProjectsManager.getInstance(maven.project).findProject(maven.getModule("module")))
 
-    assertNotNull(projectRoot.findFileByRelativePath("src/main/java"))
-    assertNotNull(projectRoot.findFileByRelativePath("src/test/java"))
+    assertNotNull(maven.projectRoot.findFileByRelativePath("src/main/java"))
+    assertNotNull(maven.projectRoot.findFileByRelativePath("src/test/java"))
 
-    assertSources("module", "src/main/java")
-    assertTestSources("module", "src/test/java")
+    maven.assertSources("module", "src/main/java")
+    maven.assertTestSources("module", "src/test/java")
   }
 
   @Test
   fun testInheritJdkFromProject() = runBlocking {
     createNewModule(MavenId("org.foo", "module", "1.0"))
-    val manager = ModuleRootManager.getInstance(getModule("module"))
+    val manager = ModuleRootManager.getInstance(maven.getModule("module"))
     assertTrue(manager.isSdkInherited())
   }
 
@@ -109,99 +142,99 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
     val id = MavenId("org.foo", "module", "1.0")
     createNewModule(id)
 
-    val projects = MavenProjectsManager.getInstance(project).projects
+    val projects = MavenProjectsManager.getInstance(maven.project).projects
     assertEquals(1, projects.size)
     val project = projects[0]
     assertEquals(id, project.mavenId)
-    assertTrue(java.nio.file.Files.exists(projectRoot.toNioPath().resolve("src/main/java/org/foo/App.java")))
-    assertTrue(java.nio.file.Files.exists(projectRoot.toNioPath().resolve("src/test/java/org/foo/AppTest.java")))
+    assertTrue(java.nio.file.Files.exists(maven.projectRoot.toNioPath().resolve("src/main/java/org/foo/App.java")))
+    assertTrue(java.nio.file.Files.exists(maven.projectRoot.toNioPath().resolve("src/test/java/org/foo/AppTest.java")))
 
-    assertSources("module", "src/main/java")
-    assertTestSources("module", "src/test/java")
+    maven.assertSources("module", "src/main/java")
+    maven.assertTestSources("module", "src/test/java")
   }
 
   @Test
   fun testAddingNewlyCreatedModuleToTheAggregator() = runBlocking {
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    setModuleNameAndRoot("module", "$projectPath/module")
-    setAggregatorProject(projectPom)
+    setModuleNameAndRoot("module", "${maven.projectPath}/module")
+    setAggregatorProject(maven.projectPom)
     createNewModule(MavenId("org.foo", "module", "1.0"))
 
     assertEquals("""
       <?xml version="1.0"?>
-      <project xmlns="http://maven.apache.org/POM/$modelVersion"
+      <project xmlns="http://maven.apache.org/POM/${maven.modelVersion}"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-               xsi:schemaLocation="http://maven.apache.org/POM/$modelVersion http://maven.apache.org/xsd/maven-$modelVersion.xsd">
-        <modelVersion>$modelVersion</modelVersion>
+               xsi:schemaLocation="http://maven.apache.org/POM/${maven.modelVersion} http://maven.apache.org/xsd/maven-${maven.modelVersion}.xsd">
+        <modelVersion>${maven.modelVersion}</modelVersion>
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
           <packaging>pom</packaging>
-          <$modulesTag>
-              <$moduleTag>module</$moduleTag>
-          </$modulesTag>
+          <${maven.modulesTag}>
+              <${maven.moduleTag}>module</${maven.moduleTag}>
+          </${maven.modulesTag}>
       </project>
     """.trimIndent(),
-                 StringUtil.convertLineSeparators(VfsUtil.loadText(projectPom)))
+                 StringUtil.convertLineSeparators(VfsUtil.loadText(maven.projectPom)))
   }
 
   @Test
   fun testAddingManagedProjectIfNoArrgerator() = runBlocking {
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals(1, projectsManager.state.originalFiles.size)
+    assertEquals(1, maven.projectsManager.state.originalFiles.size)
 
-    setModuleNameAndRoot("module", "$projectPath/module")
+    setModuleNameAndRoot("module", "${maven.projectPath}/module")
     setAggregatorProject(null)
     createNewModule(MavenId("org.foo", "module", "1.0"))
-    projectRoot.findFileByRelativePath("module/pom.xml")
+    maven.projectRoot.findFileByRelativePath("module/pom.xml")
 
-    assertEquals(2, projectsManager.state.originalFiles.size)
+    assertEquals(2, maven.projectsManager.state.originalFiles.size)
   }
 
   @Test
   fun testDoNotAddManagedProjectIfAddingAsModuleToAggregator() = runBlocking {
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    assertEquals(1, projectsManager.state.originalFiles.size)
+    assertEquals(1, maven.projectsManager.state.originalFiles.size)
 
-    setModuleNameAndRoot("module", "$projectPath/module")
-    setAggregatorProject(projectPom)
+    setModuleNameAndRoot("module", "${maven.projectPath}/module")
+    setAggregatorProject(maven.projectPom)
     createNewModule(MavenId("org.foo", "module", "1.0"))
-    projectRoot.findFileByRelativePath("module/pom.xml")
+    maven.projectRoot.findFileByRelativePath("module/pom.xml")
 
-    assertEquals(1, projectsManager.state.originalFiles.size)
+    assertEquals(1, maven.projectsManager.state.originalFiles.size)
   }
 
   @Test
   fun testAddingParent() = runBlocking {
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    setModuleNameAndRoot("module", "$projectPath/module")
-    setParentProject(projectPom)
+    setModuleNameAndRoot("module", "${maven.projectPath}/module")
+    setParentProject(maven.projectPom)
     createNewModule(MavenId("org.foo", "module", "1.0"))
-    val sdk = ProjectRootManager.getInstance(project).projectSdk
+    val sdk = ProjectRootManager.getInstance(maven.project).projectSdk
     val version = JavaSdk.getInstance().getVersion(sdk!!)!!.maxLanguageLevel.feature()
 
     assertEquals("""
@@ -228,23 +261,23 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
       </project>
     """.trimIndent(),
-                 VfsUtil.loadText(projectRoot.findFileByRelativePath("module/pom.xml")!!))
+                 VfsUtil.loadText(maven.projectRoot.findFileByRelativePath("module/pom.xml")!!))
   }
 
   @Test
   fun testAddingParentWithInheritedProperties() = runBlocking {
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    setModuleNameAndRoot("module", "$projectPath/module")
-    setParentProject(projectPom)
+    setModuleNameAndRoot("module", "${maven.projectPath}/module")
+    setParentProject(maven.projectPom)
     setInheritedOptions(true, true)
     createNewModule(MavenId("org.foo", "module", "1.0"))
-    val sdk = ProjectRootManager.getInstance(project).projectSdk
+    val sdk = ProjectRootManager.getInstance(maven.project).projectSdk
     val version = JavaSdk.getInstance().getVersion(sdk!!)!!.maxLanguageLevel.feature()
 
     assertEquals("""
@@ -269,19 +302,19 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
       </project>
     """.trimIndent(),
-                 VfsUtil.loadText(projectRoot.findFileByRelativePath("module/pom.xml")!!))
+                 VfsUtil.loadText(maven.projectRoot.findFileByRelativePath("module/pom.xml")!!))
   }
 
   @Test
   fun testAddingParentAndInheritWhenGeneratingFromArchetype() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
-    setModuleNameAndRoot("module", "$projectPath/module")
-    setParentProject(projectPom)
+    setModuleNameAndRoot("module", "${maven.projectPath}/module")
+    setParentProject(maven.projectPom)
     setInheritedOptions(true, true)
     setArchetype(MavenArchetype("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null))
     createNewModule(MavenId("org.foo", "module", "1.0"))
@@ -311,7 +344,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
 
 """.trimIndent()
 
-    val actualModulePom = VfsUtil.loadText(projectRoot.findFileByRelativePath("module/pom.xml")!!)
+    val actualModulePom = VfsUtil.loadText(maven.projectRoot.findFileByRelativePath("module/pom.xml")!!)
 
     assertEquals(expectedModulePom.normalizeLineEndings(), actualModulePom.normalizeLineEndings())
   }
@@ -321,7 +354,7 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun deleteModule(name: String?) {
-    val moduleManger = ModuleManager.getInstance(project)
+    val moduleManger = ModuleManager.getInstance(maven.project)
     val module = moduleManger.findModuleByName(name!!)
     val modifiableModuleModel = moduleManger.getModifiableModel()
     WriteAction.runAndWait<RuntimeException> {
@@ -341,11 +374,11 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun setAggregatorProject(pom: VirtualFile?) {
-    myBuilder.aggregatorProject = if (pom == null) null else projectsManager.findProject(pom)
+    myBuilder.aggregatorProject = if (pom == null) null else maven.projectsManager.findProject(pom)
   }
 
   private fun setParentProject(pom: VirtualFile) {
-    myBuilder.parentProject = projectsManager.findProject(pom)
+    myBuilder.parentProject = maven.projectsManager.findProject(pom)
   }
 
   private fun setInheritedOptions(groupId: Boolean, version: Boolean) {
@@ -373,8 +406,8 @@ class MavenModuleBuilderTest : MavenMultiVersionImportingTestCase() {
       }
     }
 
-    waitForImportWithinTimeout {
-      val model = ModuleManager.getInstance(project).getModifiableModel()
+    maven.waitForImportWithinTimeout {
+      val model = ModuleManager.getInstance(maven.project).getModifiableModel()
       myBuilder.createModule(model)
       backgroundWriteAction {
         model.commit()
