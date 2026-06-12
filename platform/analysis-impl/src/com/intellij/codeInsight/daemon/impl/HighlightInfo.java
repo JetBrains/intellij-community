@@ -285,6 +285,7 @@ public class HighlightInfo implements Segment {
       if (future != null && future.isDone()) {
         try {
           List<IntentionActionDescriptor> coll = future.get();
+          //noinspection ConstantValue
           assert coll != null : future +"; "+future.getClass()+"; desc="+desc;
           return List.copyOf(coll);
         }
@@ -520,13 +521,10 @@ public class HighlightInfo implements Segment {
     if (forcedTextAttributes != null) {
       return forcedTextAttributes;
     }
-
-    EditorColorsScheme colorsScheme = getColorsScheme(editorColorsScheme);
-
+    EditorColorsScheme colorsScheme = notNullScheme(editorColorsScheme);
     if (forcedTextAttributesKey != null) {
       return colorsScheme.getAttributes(forcedTextAttributesKey);
     }
-
     return getAttributesByType(element, type, colorsScheme);
   }
 
@@ -544,12 +542,11 @@ public class HighlightInfo implements Segment {
 
   @Nullable
   final Color getErrorStripeMarkColor(@NotNull PsiElement element,
-                                @Nullable("when null, the global scheme will be used") EditorColorsScheme colorsScheme) {
+                                      @Nullable("when null, the global scheme will be used") EditorColorsScheme colorsScheme) {
     if (forcedTextAttributes != null) {
       return forcedTextAttributes.getErrorStripeColor();
     }
-
-    EditorColorsScheme scheme = getColorsScheme(colorsScheme);
+    EditorColorsScheme scheme = notNullScheme(colorsScheme);
     if (forcedTextAttributesKey != null) {
       TextAttributes forcedTextAttributes = scheme.getAttributes(forcedTextAttributesKey);
       if (forcedTextAttributes != null) {
@@ -583,7 +580,7 @@ public class HighlightInfo implements Segment {
     return attributes == null ? null : attributes.getErrorStripeColor();
   }
 
-  private static @NotNull EditorColorsScheme getColorsScheme(@Nullable EditorColorsScheme customScheme) {
+  private static @NotNull EditorColorsScheme notNullScheme(@Nullable EditorColorsScheme customScheme) {
     return customScheme != null ? customScheme : EditorColorsManager.getInstance().getGlobalScheme();
   }
 
@@ -1473,7 +1470,6 @@ public class HighlightInfo implements Segment {
         // recompute only if necessary
         List<IntentionActionDescriptor> result =
           computerToResult.computeIfAbsent(computer, _ -> doComputeLazyQuickFixes(document, project, desc.psiModificationStamp(), computer));
-        assert result != null;
         future = CompletableFuture.completedFuture(result);
         return new LazyFixDescription(desc.fixesComputer(), desc.psiModificationStamp(), future);
       });

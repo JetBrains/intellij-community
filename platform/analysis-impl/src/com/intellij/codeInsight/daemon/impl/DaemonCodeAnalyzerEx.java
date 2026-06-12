@@ -94,7 +94,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   /**
    * Do not perform any meaningful work inside the processor because iteration is performed under MarkupModel lock
    */
-  static boolean processHighlightsOverlappingOutside(MarkupModelEx model,
+  static boolean processHighlightsOverlappingOutside(@NotNull MarkupModelEx model,
                                                      int startOffset,
                                                      int endOffset,
                                                      @NotNull CodeInsightContext context,
@@ -113,9 +113,9 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
 
   @ApiStatus.Internal
   @RequiresBackgroundThread
-  public abstract @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
-                                                             @NotNull Document document,
-                                                             @NotNull ProgressIndicator progress);
+  public abstract @NotNull List<@NotNull HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
+                                                                      @NotNull Document document,
+                                                                      @NotNull ProgressIndicator progress);
 
   public abstract boolean isErrorAnalyzingFinished(@NotNull PsiFile psiFile);
 
@@ -184,7 +184,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   @ApiStatus.Internal
   public abstract boolean isEscapeJustPressed();
 
-  protected abstract void progressIsAdvanced(@NotNull HighlightingSession session, Editor editor, double progress);
+  protected abstract void progressIsAdvanced(@NotNull HighlightingSession session, @Nullable Editor editor, double progress);
   @ApiStatus.Internal
   protected static final int ANY_GROUP = -409423948;
 
@@ -198,7 +198,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   protected abstract void rescheduleShowIntentionsPass(@NotNull PsiFile psiFile, @NotNull TextRange visibleRange);
 
   @ApiStatus.Internal
-  public abstract HighlightingSession getHighlightSessionFromCurrentIndicator(@NotNull PsiFile psiFile);
+  public abstract @NotNull HighlightingSession getHighlightSessionFromCurrentIndicator(@NotNull PsiFile psiFile);
   @ApiStatus.Internal
   public abstract void runInsideAdditionalHighlightingSession(@NotNull PsiFile psiFile,
                                                               @Nullable EditorColorsScheme editorColorsScheme,

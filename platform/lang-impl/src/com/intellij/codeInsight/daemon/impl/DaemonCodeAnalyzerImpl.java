@@ -1715,7 +1715,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   @Override
-  public HighlightingSession getHighlightSessionFromCurrentIndicator(@NotNull PsiFile psiFile) {
+  public @NotNull HighlightingSession getHighlightSessionFromCurrentIndicator(@NotNull PsiFile psiFile) {
     return HighlightingSessionImpl.getFromCurrentIndicator(psiFile);
   }
 
