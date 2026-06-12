@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -34,6 +33,7 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.CommonProcessors.CollectProcessor
@@ -41,13 +41,43 @@ import com.intellij.util.PathsList
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertModuleLibDeps
+import org.jetbrains.idea.maven.fixtures.assertModuleModuleDeps
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.assertOrderedElementsAreEqual
+import org.jetbrains.idea.maven.fixtures.createModule
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectSubDir
+import org.jetbrains.idea.maven.fixtures.createProjectSubDirs
+import org.jetbrains.idea.maven.fixtures.getModule
+import org.jetbrains.idea.maven.fixtures.importProjectsAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.projectPath
+import org.jetbrains.idea.maven.fixtures.repositoryPathCanonical
+import org.jetbrains.idea.maven.fixtures.setupJdkForModules
 import org.jetbrains.idea.maven.importing.ArtifactsDownloadingTestCase.Companion.createEmptyJar
-import org.junit.Test
+import org.junit.Assert.fail
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
 
-class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenClasspathsAndSearchScopesTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion,
+  )
+  
   private enum class Type {
     PRODUCTION, TESTS
   }
@@ -56,9 +86,9 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
     COMPILE, RUNTIME, MODULE
   }
 
-  override fun setUpInWriteAction() {
-    super.setUpInWriteAction()
-    createProjectSubDirs("m1/src/main/java",
+  @BeforeEach
+  fun setUp() {
+    maven.createProjectSubDirs("m1/src/main/java",
                          "m1/src/test/java",
 
                          "m2/src/main/java",
@@ -73,7 +103,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   fun testConfiguringModuleDependencies() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -87,7 +117,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -107,74 +137,74 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m3 = createModulePom("m3", """
+    val m3 = maven.createModulePom("m3", """
       <groupId>test</groupId>
       <artifactId>m3</artifactId>
       <version>1</version>
       
       """.trimIndent())
 
-    val m4 = createModulePom("m4", """
+    val m4 = maven.createModulePom("m4", """
       <groupId>test</groupId>
       <artifactId>m4</artifactId>
       <version>1</version>
       
       """.trimIndent())
 
-    importProjects(m1, m2, m3, m4)
-    assertModules("m1", "m2", "m3", "m4")
+    maven.importProjectsAsync(m1, m2, m3, m4)
+    maven.assertModules("m1", "m2", "m3", "m4")
 
-    assertModuleModuleDeps("m1", "m2", "m3")
-    assertModuleModuleDeps("m2", "m3", "m4")
+    maven.assertModuleModuleDeps("m1", "m2", "m3")
+    maven.assertModuleModuleDeps("m2", "m3", "m4")
 
-    setupJdkForModules("m1", "m2", "m3", "m4")
+    maven.setupJdkForModules("m1", "m2", "m3", "m4")
 
     assertModuleScopes("m1", "m2", "m3", "m4")
 
     assertAllProductionSearchScope("m1",
-                                   "$projectPath/m1/src/main/java",
-                                   "$projectPath/m2/src/main/java",
-                                   "$projectPath/m3/src/main/java")
+                                   "${maven.projectPath}/m1/src/main/java",
+                                   "${maven.projectPath}/m2/src/main/java",
+                                   "${maven.projectPath}/m3/src/main/java")
     assertAllTestsSearchScope("m1",
-                              "$projectPath/m1/src/main/java",
-                              "$projectPath/m1/src/test/java",
-                              "$projectPath/m2/src/main/java",
-                              "$projectPath/m3/src/main/java")
+                              "${maven.projectPath}/m1/src/main/java",
+                              "${maven.projectPath}/m1/src/test/java",
+                              "${maven.projectPath}/m2/src/main/java",
+                              "${maven.projectPath}/m3/src/main/java")
 
     assertAllProductionClasspath("m1",
-                                 "$projectPath/m1/target/classes",
-                                 "$projectPath/m2/target/classes",
-                                 "$projectPath/m3/target/classes")
+                                 "${maven.projectPath}/m1/target/classes",
+                                 "${maven.projectPath}/m2/target/classes",
+                                 "${maven.projectPath}/m3/target/classes")
     assertAllTestsClasspath("m1",
-                            "$projectPath/m1/target/test-classes",
-                            "$projectPath/m1/target/classes",
-                            "$projectPath/m2/target/classes",
-                            "$projectPath/m3/target/classes")
+                            "${maven.projectPath}/m1/target/test-classes",
+                            "${maven.projectPath}/m1/target/classes",
+                            "${maven.projectPath}/m2/target/classes",
+                            "${maven.projectPath}/m3/target/classes")
 
     assertAllProductionSearchScope("m2",
-                                   "$projectPath/m2/src/main/java",
-                                   "$projectPath/m3/src/main/java",
-                                   "$projectPath/m4/src/main/java")
+                                   "${maven.projectPath}/m2/src/main/java",
+                                   "${maven.projectPath}/m3/src/main/java",
+                                   "${maven.projectPath}/m4/src/main/java")
     assertAllTestsSearchScope("m2",
-                              "$projectPath/m2/src/main/java",
-                              "$projectPath/m2/src/test/java",
-                              "$projectPath/m3/src/main/java",
-                              "$projectPath/m4/src/main/java")
+                              "${maven.projectPath}/m2/src/main/java",
+                              "${maven.projectPath}/m2/src/test/java",
+                              "${maven.projectPath}/m3/src/main/java",
+                              "${maven.projectPath}/m4/src/main/java")
 
     assertAllProductionClasspath("m2",
-                                 "$projectPath/m2/target/classes",
-                                 "$projectPath/m3/target/classes",
-                                 "$projectPath/m4/target/classes")
+                                 "${maven.projectPath}/m2/target/classes",
+                                 "${maven.projectPath}/m3/target/classes",
+                                 "${maven.projectPath}/m4/target/classes")
     assertAllTestsClasspath("m2",
-                            "$projectPath/m2/target/test-classes",
-                            "$projectPath/m2/target/classes",
-                            "$projectPath/m3/target/classes",
-                            "$projectPath/m4/target/classes")
+                            "${maven.projectPath}/m2/target/test-classes",
+                            "${maven.projectPath}/m2/target/classes",
+                            "${maven.projectPath}/m3/target/classes",
+                            "${maven.projectPath}/m4/target/classes")
   }
 
   @Test
   fun testDoNotIncludeTargetDirectoriesOfModuleDependenciesToLibraryClassesRoots() = runBlocking {
-    val m = createModulePom("m", """
+    val m = maven.createModulePom("m", """
       <groupId>test</groupId>
       <artifactId>m</artifactId>
       <version>1</version>
@@ -188,7 +218,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val dep = createModulePom("dep", """
+    val dep = maven.createModulePom("dep", """
       <groupId>test</groupId>
       <artifactId>dep</artifactId>
       <version>1</version>
@@ -202,24 +232,24 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    importProjects(m, dep)
-    assertModules("m", "dep")
+    maven.importProjectsAsync(m, dep)
+    maven.assertModules("m", "dep")
 
-    assertModuleModuleDeps("m", "dep")
+    maven.assertModuleModuleDeps("m", "dep")
 
-    setupJdkForModules("m", "dep")
+    maven.setupJdkForModules("m", "dep")
 
     createOutputDirectories()
-    val module = getModule("m")
+    val module = maven.getModule("m")
     val jdkRoots = ModuleRootManager.getInstance(module).sdk!!.rootProvider.getFiles(OrderRootType.CLASSES)
-    val junitRoots = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName("Maven: junit:junit:4.0")!!.getFiles(OrderRootType.CLASSES)
+    val junitRoots = LibraryTablesRegistrar.getInstance().getLibraryTable(maven.project).getLibraryByName("Maven: junit:junit:4.0")!!.getFiles(OrderRootType.CLASSES)
     UsefulTestCase.assertOrderedEquals(OrderEnumerator.orderEntries(module).allLibrariesAndSdkClassesRoots,
                                        *ArrayUtil.mergeArrays(jdkRoots, junitRoots))
   }
 
   @Test
   fun testDoNotIncludeTestClassesWhenConfiguringModuleDependenciesForProductionCode() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -233,37 +263,37 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       
       """.trimIndent())
 
-    importProjects(m1, m2)
-    assertModules("m1", "m2")
-    assertModuleModuleDeps("m1", "m2")
+    maven.importProjectsAsync(m1, m2)
+    maven.assertModules("m1", "m2")
+    maven.assertModuleModuleDeps("m1", "m2")
 
-    setupJdkForModules("m1", "m2")
+    maven.setupJdkForModules("m1", "m2")
 
     assertModuleScopes("m1", "m2")
 
     assertAllProductionSearchScope("m1",
-                                   "$projectPath/m1/src/main/java",
-                                   "$projectPath/m2/src/main/java")
+                                   "${maven.projectPath}/m1/src/main/java",
+                                   "${maven.projectPath}/m2/src/main/java")
     assertAllProductionClasspath("m1",
-                                 "$projectPath/m1/target/classes",
-                                 "$projectPath/m2/target/classes")
+                                 "${maven.projectPath}/m1/target/classes",
+                                 "${maven.projectPath}/m2/target/classes")
 
     assertAllProductionSearchScope("m2",
-                                   "$projectPath/m2/src/main/java")
+                                   "${maven.projectPath}/m2/src/main/java")
     assertAllProductionClasspath("m2",
-                                 "$projectPath/m2/target/classes")
+                                 "${maven.projectPath}/m2/target/classes")
   }
 
   @Test
   fun testConfiguringModuleDependenciesOnTestJar() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -284,50 +314,50 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       
       """.trimIndent())
-    val m3 = createModulePom("m3", """
+    val m3 = maven.createModulePom("m3", """
       <groupId>test</groupId>
       <artifactId>m3</artifactId>
       <version>1</version>
       
       """.trimIndent())
 
-    importProjects(m1, m2, m3)
-    assertModules("m1", "m2", "m3")
+    maven.importProjectsAsync(m1, m2, m3)
+    maven.assertModules("m1", "m2", "m3")
 
-    setupJdkForModules("m1", "m2", "m3")
+    maven.setupJdkForModules("m1", "m2", "m3")
 
     assertModuleScopes("m1", "m2", "m3")
 
     assertAllProductionSearchScope("m1",
-                                   "$projectPath/m1/src/main/java",
-                                   "$projectPath/m2/src/test/java",
-                                   "$projectPath/m3/src/test/java")
+                                   "${maven.projectPath}/m1/src/main/java",
+                                   "${maven.projectPath}/m2/src/test/java",
+                                   "${maven.projectPath}/m3/src/test/java")
     assertAllTestsSearchScope("m1",
-                              "$projectPath/m1/src/main/java",
-                              "$projectPath/m1/src/test/java",
-                              "$projectPath/m2/src/test/java",
-                              "$projectPath/m3/src/test/java")
+                              "${maven.projectPath}/m1/src/main/java",
+                              "${maven.projectPath}/m1/src/test/java",
+                              "${maven.projectPath}/m2/src/test/java",
+                              "${maven.projectPath}/m3/src/test/java")
 
     assertAllProductionClasspath("m1",
-                                 "$projectPath/m1/target/classes",
-                                 "$projectPath/m2/target/test-classes",
-                                 "$projectPath/m3/target/test-classes")
+                                 "${maven.projectPath}/m1/target/classes",
+                                 "${maven.projectPath}/m2/target/test-classes",
+                                 "${maven.projectPath}/m3/target/test-classes")
     assertAllTestsClasspath("m1",
-                            "$projectPath/m1/target/test-classes",
-                            "$projectPath/m1/target/classes",
-                            "$projectPath/m2/target/test-classes",
-                            "$projectPath/m3/target/test-classes")
+                            "${maven.projectPath}/m1/target/test-classes",
+                            "${maven.projectPath}/m1/target/classes",
+                            "${maven.projectPath}/m2/target/test-classes",
+                            "${maven.projectPath}/m3/target/test-classes")
   }
 
   @Test
   fun testConfiguringModuleDependenciesOnTestJarWithTestScope() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -350,46 +380,46 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       
       """.trimIndent())
-    val m3 = createModulePom("m3", """
+    val m3 = maven.createModulePom("m3", """
       <groupId>test</groupId>
       <artifactId>m3</artifactId>
       <version>1</version>
       
       """.trimIndent())
 
-    importProjects(m1, m2, m3)
-    assertModules("m1", "m2", "m3")
+    maven.importProjectsAsync(m1, m2, m3)
+    maven.assertModules("m1", "m2", "m3")
 
-    setupJdkForModules("m1", "m2", "m3")
+    maven.setupJdkForModules("m1", "m2", "m3")
 
     assertModuleScopes("m1", "m2", "m3")
 
     assertAllProductionSearchScope("m1",
-                                   "$projectPath/m1/src/main/java")
+                                   "${maven.projectPath}/m1/src/main/java")
     assertAllTestsSearchScope("m1",
-                              "$projectPath/m1/src/main/java",
-                              "$projectPath/m1/src/test/java",
-                              "$projectPath/m2/src/test/java",
-                              "$projectPath/m3/src/test/java")
+                              "${maven.projectPath}/m1/src/main/java",
+                              "${maven.projectPath}/m1/src/test/java",
+                              "${maven.projectPath}/m2/src/test/java",
+                              "${maven.projectPath}/m3/src/test/java")
 
     assertAllProductionClasspath("m1",
-                                 "$projectPath/m1/target/classes")
+                                 "${maven.projectPath}/m1/target/classes")
     assertAllTestsClasspath("m1",
-                            "$projectPath/m1/target/test-classes",
-                            "$projectPath/m1/target/classes",
-                            "$projectPath/m2/target/test-classes",
-                            "$projectPath/m3/target/test-classes")
+                            "${maven.projectPath}/m1/target/test-classes",
+                            "${maven.projectPath}/m1/target/classes",
+                            "${maven.projectPath}/m2/target/test-classes",
+                            "${maven.projectPath}/m3/target/test-classes")
   }
 
   @Test
   fun testConfiguringModuleDependenciesOnBothNormalAndTestJar() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -409,46 +439,46 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       
       """.trimIndent())
 
-    importProjects(m1, m2)
-    assertModules("m1", "m2")
+    maven.importProjectsAsync(m1, m2)
+    maven.assertModules("m1", "m2")
 
-    setupJdkForModules("m1", "m2")
+    maven.setupJdkForModules("m1", "m2")
 
     assertModuleScopes("m1", "m2")
 
     assertAllProductionSearchScope("m1",
-                                   "$projectPath/m1/src/main/java",
-                                   "$projectPath/m2/src/main/java",
-                                   "$projectPath/m2/src/test/java")
+                                   "${maven.projectPath}/m1/src/main/java",
+                                   "${maven.projectPath}/m2/src/main/java",
+                                   "${maven.projectPath}/m2/src/test/java")
     assertAllTestsSearchScope("m1",
-                              "$projectPath/m1/src/main/java",
-                              "$projectPath/m1/src/test/java",
-                              "$projectPath/m2/src/main/java",
-                              "$projectPath/m2/src/test/java")
+                              "${maven.projectPath}/m1/src/main/java",
+                              "${maven.projectPath}/m1/src/test/java",
+                              "${maven.projectPath}/m2/src/main/java",
+                              "${maven.projectPath}/m2/src/test/java")
 
 
     assertAllProductionClasspath("m1",
-                                 "$projectPath/m1/target/classes",
-                                 "$projectPath/m2/target/classes",
-                                 "$projectPath/m2/target/test-classes")
+                                 "${maven.projectPath}/m1/target/classes",
+                                 "${maven.projectPath}/m2/target/classes",
+                                 "${maven.projectPath}/m2/target/test-classes")
 
     assertAllTestsClasspath("m1",
-                            "$projectPath/m1/target/test-classes",
-                            "$projectPath/m1/target/classes",
-                            "$projectPath/m2/target/classes",
-                            "$projectPath/m2/target/test-classes")
+                            "${maven.projectPath}/m1/target/test-classes",
+                            "${maven.projectPath}/m1/target/classes",
+                            "${maven.projectPath}/m2/target/classes",
+                            "${maven.projectPath}/m2/target/test-classes")
   }
 
   @Test
   fun testConfiguringModuleDependenciesOnNormalAndTestJarWithTestScope() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -469,44 +499,44 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       
       """.trimIndent())
 
-    importProjects(m1, m2)
-    assertModules("m1", "m2")
+    maven.importProjectsAsync(m1, m2)
+    maven.assertModules("m1", "m2")
 
-    setupJdkForModules("m1", "m2")
+    maven.setupJdkForModules("m1", "m2")
 
     assertModuleScopes("m1", "m2")
 
     assertAllProductionSearchScope("m1",
-                                   "$projectPath/m1/src/main/java",
-                                   "$projectPath/m2/src/main/java")
+                                   "${maven.projectPath}/m1/src/main/java",
+                                   "${maven.projectPath}/m2/src/main/java")
     assertAllTestsSearchScope("m1",
-                              "$projectPath/m1/src/main/java",
-                              "$projectPath/m1/src/test/java",
-                              "$projectPath/m2/src/main/java",
-                              "$projectPath/m2/src/test/java")
+                              "${maven.projectPath}/m1/src/main/java",
+                              "${maven.projectPath}/m1/src/test/java",
+                              "${maven.projectPath}/m2/src/main/java",
+                              "${maven.projectPath}/m2/src/test/java")
 
     assertAllProductionClasspath("m1",
-                                 "$projectPath/m1/target/classes",
-                                 "$projectPath/m2/target/classes")
+                                 "${maven.projectPath}/m1/target/classes",
+                                 "${maven.projectPath}/m2/target/classes")
 
     assertAllTestsClasspath("m1",
-                            "$projectPath/m1/target/test-classes",
-                            "$projectPath/m1/target/classes",
-                            "$projectPath/m2/target/classes",
-                            "$projectPath/m2/target/test-classes")
+                            "${maven.projectPath}/m1/target/test-classes",
+                            "${maven.projectPath}/m1/target/classes",
+                            "${maven.projectPath}/m2/target/classes",
+                            "${maven.projectPath}/m2/target/test-classes")
   }
 
   @Test
   fun testOptionalLibraryDependencies() = runBlocking {
     createRepositoryFile("jmock/jmock/1.0/jmock-1.0.jar")
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -520,7 +550,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -540,62 +570,62 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    importProjects(m1, m2)
-    assertModules("m1", "m2")
+    maven.importProjectsAsync(m1, m2)
+    maven.assertModules("m1", "m2")
 
     assertModuleScopes("m1", "m2")
 
-    assertModuleModuleDeps("m1", "m2")
-    assertModuleLibDeps("m1", "Maven: jmock:jmock:1.0")
-    assertModuleLibDeps("m2", "Maven: jmock:jmock:1.0", "Maven: junit:junit:4.0")
+    maven.assertModuleModuleDeps("m1", "m2")
+    maven.assertModuleLibDeps("m1", "Maven: jmock:jmock:1.0")
+    maven.assertModuleLibDeps("m2", "Maven: jmock:jmock:1.0", "Maven: junit:junit:4.0")
 
-    setupJdkForModules("m1", "m2")
+    maven.setupJdkForModules("m1", "m2")
 
     assertAllProductionSearchScope("m1",
-                                   "$projectPath/m1/src/main/java",
-                                   "$projectPath/m2/src/main/java",
-                                   "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar")
+                                   "${maven.projectPath}/m1/src/main/java",
+                                   "${maven.projectPath}/m2/src/main/java",
+                                   "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar")
     assertAllTestsSearchScope("m1",
-                              "$projectPath/m1/src/main/java",
-                              "$projectPath/m1/src/test/java",
-                              "$projectPath/m2/src/main/java",
-                              "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar")
+                              "${maven.projectPath}/m1/src/main/java",
+                              "${maven.projectPath}/m1/src/test/java",
+                              "${maven.projectPath}/m2/src/main/java",
+                              "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar")
 
     assertAllProductionClasspath("m1",
-                                 "$projectPath/m1/target/classes",
-                                 "$projectPath/m2/target/classes",
-                                 "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar")
+                                 "${maven.projectPath}/m1/target/classes",
+                                 "${maven.projectPath}/m2/target/classes",
+                                 "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar")
     assertAllTestsClasspath("m1",
-                            "$projectPath/m1/target/test-classes",
-                            "$projectPath/m1/target/classes",
-                            "$projectPath/m2/target/classes",
-                            "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar")
+                            "${maven.projectPath}/m1/target/test-classes",
+                            "${maven.projectPath}/m1/target/classes",
+                            "${maven.projectPath}/m2/target/classes",
+                            "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar")
 
     assertAllProductionSearchScope("m2",
-                                   "$projectPath/m2/src/main/java",
-                                   "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar",
-                                   "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                                   "${maven.projectPath}/m2/src/main/java",
+                                   "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar",
+                                   "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
     assertAllTestsSearchScope("m2",
-                              "$projectPath/m2/src/main/java",
-                              "$projectPath/m2/src/test/java",
-                              "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar",
-                              "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                              "${maven.projectPath}/m2/src/main/java",
+                              "${maven.projectPath}/m2/src/test/java",
+                              "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar",
+                              "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
 
     assertAllProductionClasspath("m2",
-                                 "$projectPath/m2/target/classes",
-                                 "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar",
-                                 "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                                 "${maven.projectPath}/m2/target/classes",
+                                 "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar",
+                                 "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
     assertAllTestsClasspath("m2",
-                            "$projectPath/m2/target/test-classes",
-                            "$projectPath/m2/target/classes",
-                            "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar",
-                            "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                            "${maven.projectPath}/m2/target/test-classes",
+                            "${maven.projectPath}/m2/target/classes",
+                            "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar",
+                            "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
   }
 
   @Test
   fun testProvidedAndTestDependencies() = runBlocking {
     createRepositoryFile("jmock/jmock/4.0/jmock-4.0.jar")
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -628,62 +658,62 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       
       """.trimIndent())
 
-    val m3 = createModulePom("m3", """
+    val m3 = maven.createModulePom("m3", """
       <groupId>test</groupId>
       <artifactId>m3</artifactId>
       <version>1</version>
       
       """.trimIndent())
 
-    importProjects(m1, m2, m3)
-    assertModules("m1", "m2", "m3")
+    maven.importProjectsAsync(m1, m2, m3)
+    maven.assertModules("m1", "m2", "m3")
 
-    setupJdkForModules("m1", "m2", "m3")
+    maven.setupJdkForModules("m1", "m2", "m3")
 
     assertModuleScopes("m1", "m2", "m3")
 
     assertCompileProductionSearchScope("m1",
-                                       "$projectPath/m1/src/main/java",
-                                       "$projectPath/m2/src/main/java",
-                                       "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                                       "${maven.projectPath}/m1/src/main/java",
+                                       "${maven.projectPath}/m2/src/main/java",
+                                       "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
     assertRuntimeProductionSearchScope("m1",
-                                       "$projectPath/m1/src/main/java",
-                                       "$projectPath/m2/src/main/java",
-                                       "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                                       "${maven.projectPath}/m1/src/main/java",
+                                       "${maven.projectPath}/m2/src/main/java",
+                                       "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
     assertAllTestsSearchScope("m1",
-                              "$projectPath/m1/src/main/java",
-                              "$projectPath/m1/src/test/java",
-                              "$projectPath/m2/src/main/java",
-                              "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar",
-                              "$projectPath/m3/src/main/java",
-                              "$repositoryPathCanonical/jmock/jmock/4.0/jmock-4.0.jar")
+                              "${maven.projectPath}/m1/src/main/java",
+                              "${maven.projectPath}/m1/src/test/java",
+                              "${maven.projectPath}/m2/src/main/java",
+                              "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar",
+                              "${maven.projectPath}/m3/src/main/java",
+                              "${maven.repositoryPathCanonical}/jmock/jmock/4.0/jmock-4.0.jar")
 
     assertCompileProductionClasspath("m1",
-                                     "$projectPath/m1/target/classes",
-                                     "$projectPath/m2/target/classes",
-                                     "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                                     "${maven.projectPath}/m1/target/classes",
+                                     "${maven.projectPath}/m2/target/classes",
+                                     "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
     assertRuntimeProductionClasspath("m1",
-                                     "$projectPath/m1/target/classes")
+                                     "${maven.projectPath}/m1/target/classes")
     assertAllTestsClasspath("m1",
-                            "$projectPath/m1/target/test-classes",
-                            "$projectPath/m1/target/classes",
-                            "$projectPath/m2/target/classes",
-                            "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar",
-                            "$projectPath/m3/target/classes",
-                            "$repositoryPathCanonical/jmock/jmock/4.0/jmock-4.0.jar")
+                            "${maven.projectPath}/m1/target/test-classes",
+                            "${maven.projectPath}/m1/target/classes",
+                            "${maven.projectPath}/m2/target/classes",
+                            "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar",
+                            "${maven.projectPath}/m3/target/classes",
+                            "${maven.repositoryPathCanonical}/jmock/jmock/4.0/jmock-4.0.jar")
   }
 
   @Test
   fun testRuntimeDependency() = runBlocking {
     createRepositoryFile("jmock/jmock/4.0/jmock-4.0.jar")
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -704,51 +734,51 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       
       """.trimIndent())
 
-    importProjects(m1, m2)
-    assertModules("m1", "m2")
+    maven.importProjectsAsync(m1, m2)
+    maven.assertModules("m1", "m2")
 
-    setupJdkForModules("m1", "m2")
+    maven.setupJdkForModules("m1", "m2")
 
     assertModuleScopes("m1", "m2")
 
     assertCompileProductionSearchScope("m1",
-                                       "$projectPath/m1/src/main/java")
+                                       "${maven.projectPath}/m1/src/main/java")
     assertRuntimeProductionSearchScope("m1",
-                                       "$projectPath/m1/src/main/java",
-                                       "$projectPath/m2/src/main/java",
-                                       "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                                       "${maven.projectPath}/m1/src/main/java",
+                                       "${maven.projectPath}/m2/src/main/java",
+                                       "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
     assertAllTestsSearchScope("m1",
-                              "$projectPath/m1/src/main/java",
-                              "$projectPath/m1/src/test/java",
-                              "$projectPath/m2/src/main/java",
-                              "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                              "${maven.projectPath}/m1/src/main/java",
+                              "${maven.projectPath}/m1/src/test/java",
+                              "${maven.projectPath}/m2/src/main/java",
+                              "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
 
     assertCompileProductionClasspath("m1",
-                                     "$projectPath/m1/target/classes")
+                                     "${maven.projectPath}/m1/target/classes")
 
     assertRuntimeProductionClasspath("m1",
-                                     "$projectPath/m1/target/classes",
-                                     "$projectPath/m2/target/classes",
-                                     "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                                     "${maven.projectPath}/m1/target/classes",
+                                     "${maven.projectPath}/m2/target/classes",
+                                     "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
 
     assertAllTestsClasspath("m1",
-                            "$projectPath/m1/target/test-classes",
-                            "$projectPath/m1/target/classes",
-                            "$projectPath/m2/target/classes",
-                            "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                            "${maven.projectPath}/m1/target/test-classes",
+                            "${maven.projectPath}/m1/target/classes",
+                            "${maven.projectPath}/m2/target/classes",
+                            "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
   }
 
   @Test
   fun testDoNotIncludeProvidedAndTestTransitiveDependencies() = runBlocking {
     createRepositoryFile("jmock/jmock/1.0/jmock-1.0.jar")
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -762,7 +792,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -783,61 +813,61 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    importProjects(m1, m2)
-    assertModules("m1", "m2")
+    maven.importProjectsAsync(m1, m2)
+    maven.assertModules("m1", "m2")
 
-    assertModuleModuleDeps("m1", "m2")
-    assertModuleLibDeps("m1")
-    assertModuleLibDeps("m2", "Maven: jmock:jmock:1.0", "Maven: junit:junit:4.0")
+    maven.assertModuleModuleDeps("m1", "m2")
+    maven.assertModuleLibDeps("m1")
+    maven.assertModuleLibDeps("m2", "Maven: jmock:jmock:1.0", "Maven: junit:junit:4.0")
 
-    setupJdkForModules("m1", "m2")
+    maven.setupJdkForModules("m1", "m2")
 
     assertModuleScopes("m1", "m2")
 
     assertAllProductionSearchScope("m1",
-                                   "$projectPath/m1/src/main/java",
-                                   "$projectPath/m2/src/main/java")
+                                   "${maven.projectPath}/m1/src/main/java",
+                                   "${maven.projectPath}/m2/src/main/java")
     assertAllTestsSearchScope("m1",
-                              "$projectPath/m1/src/main/java",
-                              "$projectPath/m1/src/test/java",
-                              "$projectPath/m2/src/main/java")
+                              "${maven.projectPath}/m1/src/main/java",
+                              "${maven.projectPath}/m1/src/test/java",
+                              "${maven.projectPath}/m2/src/main/java")
 
     assertAllProductionClasspath("m1",
-                                 "$projectPath/m1/target/classes",
-                                 "$projectPath/m2/target/classes")
+                                 "${maven.projectPath}/m1/target/classes",
+                                 "${maven.projectPath}/m2/target/classes")
     assertAllTestsClasspath("m1",
-                            "$projectPath/m1/target/test-classes",
-                            "$projectPath/m1/target/classes",
-                            "$projectPath/m2/target/classes")
+                            "${maven.projectPath}/m1/target/test-classes",
+                            "${maven.projectPath}/m1/target/classes",
+                            "${maven.projectPath}/m2/target/classes")
 
 
     assertCompileProductionSearchScope("m2",
-                                       "$projectPath/m2/src/main/java",
-                                       "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar")
+                                       "${maven.projectPath}/m2/src/main/java",
+                                       "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar")
     assertRuntimeProductionSearchScope("m2",
-                                       "$projectPath/m2/src/main/java",
-                                       "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar")
+                                       "${maven.projectPath}/m2/src/main/java",
+                                       "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar")
     assertAllTestsSearchScope("m2",
-                              "$projectPath/m2/src/main/java",
-                              "$projectPath/m2/src/test/java",
-                              "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar",
-                              "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                              "${maven.projectPath}/m2/src/main/java",
+                              "${maven.projectPath}/m2/src/test/java",
+                              "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar",
+                              "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
 
     assertCompileProductionClasspath("m2",
-                                     "$projectPath/m2/target/classes",
-                                     "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar")
+                                     "${maven.projectPath}/m2/target/classes",
+                                     "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar")
     assertRuntimeProductionClasspath("m2",
-                                     "$projectPath/m2/target/classes")
+                                     "${maven.projectPath}/m2/target/classes")
     assertAllTestsClasspath("m2",
-                            "$projectPath/m2/target/test-classes",
-                            "$projectPath/m2/target/classes",
-                            "$repositoryPathCanonical/jmock/jmock/1.0/jmock-1.0.jar",
-                            "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                            "${maven.projectPath}/m2/target/test-classes",
+                            "${maven.projectPath}/m2/target/classes",
+                            "${maven.repositoryPathCanonical}/jmock/jmock/1.0/jmock-1.0.jar",
+                            "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
   }
 
   @Test
   fun testLibraryScopeForTwoDependentModules() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -851,7 +881,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -865,31 +895,31 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
           </dependencies>
       
       """.trimIndent())
-    importProjects(m1, m2)
-    assertModules("m1", "m2")
+    maven.importProjectsAsync(m1, m2)
+    maven.assertModules("m1", "m2")
 
-    val m1m = getInstance(project).findModuleByName("m1")
+    val m1m = getInstance(maven.project).findModuleByName("m1")
     val modules1: List<OrderEntry> = ArrayList()
     ModuleRootManager.getInstance(m1m!!).orderEntries().withoutSdk().withoutModuleSourceEntries().forEach(
       CollectProcessor(modules1))
-    val scope1 = LibraryScopeCache.getInstance(project).getLibraryScope(modules1)
+    val scope1 = LibraryScopeCache.getInstance(maven.project).getLibraryScope(modules1)
     assertSearchScope(scope1,
-                      "$projectPath/m1/src/main/java",
-                      "$projectPath/m1/src/test/java",
-                      "$projectPath/m2/src/main/java",
-                      "$projectPath/m2/src/test/java"
+                      "${maven.projectPath}/m1/src/main/java",
+                      "${maven.projectPath}/m1/src/test/java",
+                      "${maven.projectPath}/m2/src/main/java",
+                      "${maven.projectPath}/m2/src/test/java"
     )
 
-    val libraryPath = "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar"
-    val librarySrcPath = "$repositoryPathCanonical/junit/junit/4.0/junit-4.0-sources.jar"
-    val m2m = getInstance(project).findModuleByName("m2")
+    val libraryPath = "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar"
+    val librarySrcPath = "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0-sources.jar"
+    val m2m = getInstance(maven.project).findModuleByName("m2")
     val modules2: List<OrderEntry> = ArrayList()
     ModuleRootManager.getInstance(m2m!!).orderEntries().withoutSdk().withoutModuleSourceEntries().forEach(
       CollectProcessor(modules2))
-    val scope2 = LibraryScopeCache.getInstance(project).getLibraryScope(modules2)
+    val scope2 = LibraryScopeCache.getInstance(maven.project).getLibraryScope(modules2)
 
     val expectedPaths: MutableList<String> =
-      ArrayList(listOf("$projectPath/m2/src/main/java", "$projectPath/m2/src/test/java", libraryPath))
+      ArrayList(listOf("${maven.projectPath}/m2/src/main/java", "${maven.projectPath}/m2/src/test/java", libraryPath))
     if (File(librarySrcPath).exists()) {
       expectedPaths.add(librarySrcPath)
     }
@@ -898,7 +928,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
 
   @Test
   fun testDoNotIncludeConflictingTransitiveDependenciesInTheClasspath() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -917,7 +947,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -931,7 +961,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m3 = createModulePom("m3", """
+    val m3 = maven.createModulePom("m3", """
       <groupId>test</groupId>
       <artifactId>m3</artifactId>
       <version>1</version>
@@ -945,34 +975,34 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    importProjects(m1, m2, m3)
-    assertModules("m1", "m2", "m3")
+    maven.importProjectsAsync(m1, m2, m3)
+    maven.assertModules("m1", "m2", "m3")
 
-    assertModuleModuleDeps("m1", "m2", "m3")
-    assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
+    maven.assertModuleModuleDeps("m1", "m2", "m3")
+    maven.assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
 
-    setupJdkForModules("m1", "m2", "m3")
+    maven.setupJdkForModules("m1", "m2", "m3")
 
     assertModuleScopes("m1", "m2", "m3")
 
     assertAllTestsSearchScope("m1",
-                              "$projectPath/m1/src/main/java",
-                              "$projectPath/m1/src/test/java",
-                              "$projectPath/m2/src/main/java",
-                              "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar",
-                              "$projectPath/m3/src/main/java")
+                              "${maven.projectPath}/m1/src/main/java",
+                              "${maven.projectPath}/m1/src/test/java",
+                              "${maven.projectPath}/m2/src/main/java",
+                              "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar",
+                              "${maven.projectPath}/m3/src/main/java")
 
     assertAllTestsClasspath("m1",
-                            "$projectPath/m1/target/test-classes",
-                            "$projectPath/m1/target/classes",
-                            "$projectPath/m2/target/classes",
-                            "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar",
-                            "$projectPath/m3/target/classes")
+                            "${maven.projectPath}/m1/target/test-classes",
+                            "${maven.projectPath}/m1/target/classes",
+                            "${maven.projectPath}/m2/target/classes",
+                            "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar",
+                            "${maven.projectPath}/m3/target/classes")
   }
 
   @Test
   fun testDoNotChangeClasspathForRegularModules() = runBlocking {
-    val m1 = createModulePom("m1", """
+    val m1 = maven.createModulePom("m1", """
       <groupId>test</groupId>
       <artifactId>m1</artifactId>
       <version>1</version>
@@ -995,20 +1025,20 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
       
       """.trimIndent())
 
-    val m2 = createModulePom("m2", """
+    val m2 = maven.createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
       
       """.trimIndent())
 
-    importProjects(m1, m2)
-    assertModules("m1", "m2")
+    maven.importProjectsAsync(m1, m2)
+    maven.assertModules("m1", "m2")
 
-    val user = createModule("user")
+    val user = maven.createModule("user")
 
-    WriteCommandAction.writeCommandAction(project).run<IOException> {
-      ModuleRootModificationUtil.addDependency(user, getModule("m1"))
+    WriteCommandAction.writeCommandAction(maven.project).run<IOException> {
+      ModuleRootModificationUtil.addDependency(user, maven.getModule("m1"))
       val out = user.moduleFile!!.parent.createChildDirectory(this, "output")
       val testOut = user.moduleFile!!.parent.createChildDirectory(this, "test-output")
       PsiTestUtil.setCompilerOutputPath(user, out.url, false)
@@ -1016,54 +1046,54 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
     }
 
 
-    assertModuleModuleDeps("m1", "m2")
-    assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
+    maven.assertModuleModuleDeps("m1", "m2")
+    maven.assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
 
-    assertModuleModuleDeps("user", "m1")
-    assertModuleLibDeps("user")
+    maven.assertModuleModuleDeps("user", "m1")
+    maven.assertModuleLibDeps("user")
 
-    setupJdkForModules("m1", "m2", "user")
+    maven.setupJdkForModules("m1", "m2", "user")
 
     // todo check search scopes
     assertModuleScopes("m1", "m2")
 
     assertCompileProductionClasspath("user",
-                                     "$projectPath/user/output",
-                                     "$projectPath/m1/target/classes",
-                                     "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                                     "${maven.projectPath}/user/output",
+                                     "${maven.projectPath}/m1/target/classes",
+                                     "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
 
     assertRuntimeProductionClasspath("user",
-                                     "$projectPath/user/output",
-                                     "$projectPath/m1/target/classes",
-                                     "$projectPath/m2/target/classes")
+                                     "${maven.projectPath}/user/output",
+                                     "${maven.projectPath}/m1/target/classes",
+                                     "${maven.projectPath}/m2/target/classes")
 
     assertCompileTestsClasspath("user",
-                                "$projectPath/user/test-output",
-                                "$projectPath/user/output",
-                                "$projectPath/m1/target/test-classes",
-                                "$projectPath/m1/target/classes",
-                                "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                                "${maven.projectPath}/user/test-output",
+                                "${maven.projectPath}/user/output",
+                                "${maven.projectPath}/m1/target/test-classes",
+                                "${maven.projectPath}/m1/target/classes",
+                                "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
 
     assertRuntimeTestsClasspath("user",
-                                "$projectPath/user/test-output",
-                                "$projectPath/user/output",
-                                "$projectPath/m1/target/test-classes",
-                                "$projectPath/m1/target/classes",
-                                "$projectPath/m2/target/test-classes",
-                                "$projectPath/m2/target/classes",
-                                "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                                "${maven.projectPath}/user/test-output",
+                                "${maven.projectPath}/user/output",
+                                "${maven.projectPath}/m1/target/test-classes",
+                                "${maven.projectPath}/m1/target/classes",
+                                "${maven.projectPath}/m2/target/test-classes",
+                                "${maven.projectPath}/m2/target/classes",
+                                "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
 
     assertCompileProductionClasspath("m1",
-                                     "$projectPath/m1/target/classes",
-                                     "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                                     "${maven.projectPath}/m1/target/classes",
+                                     "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
     assertRuntimeProductionClasspath("m1",
-                                     "$projectPath/m1/target/classes",
-                                     "$projectPath/m2/target/classes")
+                                     "${maven.projectPath}/m1/target/classes",
+                                     "${maven.projectPath}/m2/target/classes")
     assertAllTestsClasspath("m1",
-                            "$projectPath/m1/target/test-classes",
-                            "$projectPath/m1/target/classes",
-                            "$projectPath/m2/target/classes",
-                            "$repositoryPathCanonical/junit/junit/4.0/junit-4.0.jar")
+                            "${maven.projectPath}/m1/target/test-classes",
+                            "${maven.projectPath}/m1/target/classes",
+                            "${maven.projectPath}/m2/target/classes",
+                            "${maven.repositoryPathCanonical}/junit/junit/4.0/junit-4.0.jar")
   }
 
   @Test
@@ -1079,7 +1109,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
   }
 
   // Creates a Maven dependency graph for testing DirectoryIndex#getOrderEntries.
-  private fun setupDirIndexTestModulesWithScope(scope: String): List<Module> {
+  private suspend fun setupDirIndexTestModulesWithScope(scope: String): List<Module> {
     createRepositoryFile("jmock/jmock/1.0/jmock-1.0.jar")
     // Dependency graph:
     //               m4
@@ -1091,7 +1121,7 @@ class MavenClasspathsAndSearchScopesTest : MavenMultiVersionImportingTestCase() 
     //         m5 -> m6
     // Dependencies are set up to be under the given scope, except that jmock is under a test scope,
     // and the m5 -> m6 dep is always under a compile scope.
-    val m1 = createModulePom("m1", """<groupId>test</groupId>
+    val m1 = maven.createModulePom("m1", """<groupId>test</groupId>
 <artifactId>m1</artifactId>
 <version>1</version>
 <dependencies>
@@ -1104,7 +1134,7 @@ $scope</scope>
   </dependency>
 </dependencies>
 """)
-    val m2 = createModulePom("m2", """<groupId>test</groupId>
+    val m2 = maven.createModulePom("m2", """<groupId>test</groupId>
 <artifactId>m2</artifactId>
 <version>1</version>
 <dependencies>
@@ -1130,7 +1160,7 @@ $scope</scope>
   </dependency>
 </dependencies>
 """)
-    val m3 = createModulePom("m3", """
+    val m3 = maven.createModulePom("m3", """
       <groupId>test</groupId>
       <artifactId>m3</artifactId>
       <version>1</version>
@@ -1144,7 +1174,7 @@ $scope</scope>
       </dependencies>
       
       """.trimIndent())
-    val m4 = createModulePom("m4", """<groupId>test</groupId>
+    val m4 = maven.createModulePom("m4", """<groupId>test</groupId>
 <artifactId>m4</artifactId>
 <version>1</version>
 <dependencies>
@@ -1159,14 +1189,14 @@ $scope</scope>
 """)
     // The default setupInWriteAction only creates directories up to m4.
     // Create directories for m5 and m6 which we will use for this test.
-    WriteCommandAction.writeCommandAction(project).run<RuntimeException> {
-      createProjectSubDirs("m5/src/main/java",
+    WriteCommandAction.writeCommandAction(maven.project).run<RuntimeException> {
+      maven.createProjectSubDirs("m5/src/main/java",
                            "m5/src/test/java",
 
                            "m6/src/main/java",
                            "m6/src/test/java")
     }
-    val m5 = createModulePom("m5", """
+    val m5 = maven.createModulePom("m5", """
       <groupId>test</groupId>
       <artifactId>m5</artifactId>
       <version>1</version>
@@ -1180,18 +1210,18 @@ $scope</scope>
       </dependencies>
       
       """.trimIndent())
-    val m6 = createModulePom("m6", """
+    val m6 = maven.createModulePom("m6", """
       <groupId>test</groupId>
       <artifactId>m6</artifactId>
       <version>1</version>
       
       """.trimIndent())
-    importProjects(m1, m2, m3, m4, m5, m6)
-    assertModules("m1", "m2", "m3", "m4", "m5", "m6")
+    maven.importProjectsAsync(m1, m2, m3, m4, m5, m6)
+    maven.assertModules("m1", "m2", "m3", "m4", "m5", "m6")
     createOutputDirectories()
 
-    return listOf(getModule("m1"), getModule("m2"), getModule("m3"), getModule("m4"),
-                  getModule("m5"), getModule("m6"))
+    return listOf(maven.getModule("m1"), maven.getModule("m2"), maven.getModule("m3"), maven.getModule("m4"),
+                  maven.getModule("m5"), maven.getModule("m6"))
   }
 
   // Checks that the DirectoryIndex#getOrderEntries() returns the expected values
@@ -1199,8 +1229,8 @@ $scope</scope>
   // The result is the same for "compile" and "runtime" scopes.
   private suspend fun checkDirIndexTestModulesWithCompileOrRuntimeScope(modules: List<Module>) {
     assertEquals(6, modules.size)
-    val index = ProjectFileIndex.getInstance(project)
-    val m3JavaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "m3/src/main/java"), true)
+    val index = ProjectFileIndex.getInstance(maven.project)
+    val m3JavaDir = VfsUtil.findFile(Paths.get(maven.projectPath.toString(), "m3/src/main/java"), true)
     assertNotNull(m3JavaDir)
     // Should be: m1 -> m3, m2 -> m3, m3 -> source, and m4 -> m3
     val orderEntries = readAction { index.getOrderEntriesForFile(m3JavaDir!!) }
@@ -1213,7 +1243,7 @@ $scope</scope>
     val m3E2 = orderEntries[2]
     UsefulTestCase.assertInstanceOf(m3E2, ModuleSourceOrderEntry::class.java)
 
-    val m6javaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "m6/src/main/java"), true)
+    val m6javaDir = VfsUtil.findFile(Paths.get(maven.projectPath.toString(), "m6/src/main/java"), true)
     assertNotNull(m6javaDir)
     // Should be m1 -> m6, m2 -> m6, m5 -> m6, m6 -> source
     val m6OrderEntries = readAction { index.getOrderEntriesForFile(m6javaDir!!) }
@@ -1226,7 +1256,7 @@ $scope</scope>
     val m6E3 = m6OrderEntries[3]
     UsefulTestCase.assertInstanceOf(m6E3, ModuleSourceOrderEntry::class.java)
 
-    val jmockDir = VfsUtil.findFile(repositoryPath.resolve("jmock/jmock/1.0/jmock-1.0.jar"), true)
+    val jmockDir = VfsUtil.findFile(maven.repositoryPath.resolve("jmock/jmock/1.0/jmock-1.0.jar"), true)
     assertNotNull(jmockDir)
     val jmockJar = JarFileSystem.getInstance().getJarRootForLocalFile(jmockDir!!)
     assertNotNull(jmockJar)
@@ -1247,8 +1277,8 @@ $scope</scope>
     // because test scope does not propagate transitive dependencies.
     val modules = setupDirIndexTestModulesWithScope("test")
     assertEquals(6, modules.size)
-    val index = ProjectFileIndex.getInstance(project)
-    val m3JavaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "m3/src/main/java"), true)
+    val index = ProjectFileIndex.getInstance(maven.project)
+    val m3JavaDir = VfsUtil.findFile(Paths.get(maven.projectPath.toString(), "m3/src/main/java"), true)
     assertNotNull(m3JavaDir)
     // Should be no transitive deps: m2 -> m3, m3 -> source, and m4 -> m3
     val orderEntries = readAction { index.getOrderEntriesForFile(m3JavaDir!!) }
@@ -1261,7 +1291,7 @@ $scope</scope>
     val m3E1 = orderEntries[1]
     UsefulTestCase.assertInstanceOf(m3E1, ModuleSourceOrderEntry::class.java)
 
-    val m6javaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "m6/src/main/java"), true)
+    val m6javaDir = VfsUtil.findFile(Paths.get(maven.projectPath.toString(), "m6/src/main/java"), true)
     assertNotNull(m6javaDir)
     // Still has some transitive deps because m5 -> m6 is hardcoded to be compile scope
     // m2 -> m6, m5 -> m6, m6 -> source
@@ -1275,7 +1305,7 @@ $scope</scope>
     val m6E2 = m6OrderEntries[2]
     UsefulTestCase.assertInstanceOf(m6E2, ModuleSourceOrderEntry::class.java)
 
-    val jmockDir = VfsUtil.findFile(repositoryPath.resolve("jmock/jmock/1.0/jmock-1.0.jar"), true)
+    val jmockDir = VfsUtil.findFile(maven.repositoryPath.resolve("jmock/jmock/1.0/jmock-1.0.jar"), true)
     assertNotNull(jmockDir)
     val jmockJar = JarFileSystem.getInstance().getJarRootForLocalFile(jmockDir!!)
     assertNotNull(jmockJar)
@@ -1296,28 +1326,28 @@ $scope</scope>
   fun testDirIndexOrderEntriesStartingFromRegularModule() = runBlocking {
     val modules = setupDirIndexTestModulesWithScope("compile")
     assertEquals(6, modules.size)
-    val nonMavenM1 = createModule("nonMavenM1")
-    val nonMavenM2 = createModule("nonMavenM2")
+    val nonMavenM1 = maven.createModule("nonMavenM1")
+    val nonMavenM2 = maven.createModule("nonMavenM2")
 
     edtWriteAction {
       ModuleRootModificationUtil.addDependency(nonMavenM1, nonMavenM2, DependencyScope.COMPILE, true)
       ModuleRootModificationUtil.addDependency(nonMavenM2, modules[0], DependencyScope.COMPILE, true)
-      createProjectSubDirs("nonMavenM1/src/main/java", "nonMavenM1/src/test/java",
+      maven.createProjectSubDirs("nonMavenM1/src/main/java", "nonMavenM1/src/test/java",
                            "nonMavenM2/src/main/java", "nonMavenM2/src/test/java")
-      val nonMavenM1JavaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "nonMavenM1/src/main/java"), true)
+      val nonMavenM1JavaDir = VfsUtil.findFile(Paths.get(maven.projectPath.toString(), "nonMavenM1/src/main/java"), true)
       assertNotNull(nonMavenM1JavaDir)
       PsiTestUtil.addSourceContentToRoots(nonMavenM1, nonMavenM1JavaDir!!)
-      val nonMavenM2JavaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "nonMavenM2/src/main/java"), true)
+      val nonMavenM2JavaDir = VfsUtil.findFile(Paths.get(maven.projectPath.toString(), "nonMavenM2/src/main/java"), true)
       assertNotNull(nonMavenM2JavaDir)
       PsiTestUtil.addSourceContentToRoots(nonMavenM2, nonMavenM2JavaDir!!)
     }
 
-    assertModuleModuleDeps("nonMavenM1", "nonMavenM2")
-    assertModuleModuleDeps("nonMavenM2", "m1")
-    assertModuleModuleDeps("m1", "m2", "m3", "m5", "m6")
+    maven.assertModuleModuleDeps("nonMavenM1", "nonMavenM2")
+    maven.assertModuleModuleDeps("nonMavenM2", "m1")
+    maven.assertModuleModuleDeps("m1", "m2", "m3", "m5", "m6")
 
-    val index = ProjectFileIndex.getInstance(project)
-    val m3JavaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "m3/src/main/java"), true)
+    val index = ProjectFileIndex.getInstance(maven.project)
+    val m3JavaDir = VfsUtil.findFile(Paths.get(maven.projectPath.toString(), "m3/src/main/java"), true)
     assertNotNull(m3JavaDir)
     // Should be: m1 -> m3, m2 -> m3, m3 -> source, and m4 -> m3
     // It doesn't trace back to nonMavenM1 and nonMavenM2.
@@ -1327,7 +1357,7 @@ $scope</scope>
     assertOrderedElementsAreEqual(ownerModules, listOf(modules[0], modules[1], modules[2], modules[3]))
     assertOrderedElementsAreEqual(depModules, listOf(modules[2], modules[2], null, modules[2]))
 
-    val m6javaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "m6/src/main/java"), true)
+    val m6javaDir = VfsUtil.findFile(Paths.get(maven.projectPath.toString(), "m6/src/main/java"), true)
     assertNotNull(m6javaDir)
     // Should be m1 -> m6, m2 -> m6, m5 -> m6, m6 -> source
     val m6OrderEntries = readAction { index.getOrderEntriesForFile(m6javaDir!!) }
@@ -1336,7 +1366,7 @@ $scope</scope>
     assertOrderedElementsAreEqual(m6OwnerModules, listOf(modules[0], modules[1], modules[4], modules[5]))
     assertOrderedElementsAreEqual(m6DepModules, listOf(modules[5], modules[5], modules[5], null))
 
-    val nonMavenM2JavaDir = VfsUtil.findFile(Paths.get(projectPath.toString(), "nonMavenM2/src/main/java"), true)
+    val nonMavenM2JavaDir = VfsUtil.findFile(Paths.get(maven.projectPath.toString(), "nonMavenM2/src/main/java"), true)
     assertNotNull(nonMavenM2JavaDir)
     // Should be nonMavenM1 -> nonMavenM2, nonMavenM2 -> source
     val nonMavenM2JavaOrderEntries = readAction { index.getOrderEntriesForFile(nonMavenM2JavaDir!!) }
@@ -1376,7 +1406,7 @@ $scope</scope>
     createOutputDirectories()
 
     val actualPathsList: PathsList
-    val module = getModule(moduleName)
+    val module = maven.getModule(moduleName)
 
     actualPathsList = readAction {
       if (scope == Scope.RUNTIME) {
@@ -1397,8 +1427,8 @@ $scope</scope>
   private fun assertModuleScopes(vararg modules: String) {
     for (each in modules) {
       assertModuleSearchScope(each,
-                              "$projectPath/$each/src/main/java",
-                              "$projectPath/$each/src/test/java")
+                              "${maven.projectPath}/$each/src/main/java",
+                              "${maven.projectPath}/$each/src/test/java")
     }
   }
 
@@ -1434,7 +1464,7 @@ $scope</scope>
 
   private fun assertSearchScope(moduleName: String, scope: Scope, type: Type?, vararg expectedPaths: String) {
     createOutputDirectories()
-    val module = getModule(moduleName)
+    val module = maven.getModule(moduleName)
 
     val searchScope = when (scope) {
       Scope.MODULE -> module.moduleScope
@@ -1458,7 +1488,7 @@ $scope</scope>
       (searchScope as LibraryRuntimeClasspathScope).roots
     }
     val entries: MutableList<VirtualFile> = ArrayList(roots)
-    entries.removeAll(listOf(*ProjectRootManager.getInstance(project).orderEntries().sdkOnly().classes().roots))
+    entries.removeAll(listOf(*ProjectRootManager.getInstance(maven.project).orderEntries().sdkOnly().classes().roots))
 
     val actualPaths: MutableList<String> = ArrayList()
     for (each in entries) {
@@ -1483,15 +1513,15 @@ $scope</scope>
   }
 
   private fun createRepositoryFile(filePath: String) {
-    val f = Paths.get(projectPath.toString(), "repo/$filePath")
+    val f = Paths.get(maven.projectPath.toString(), "repo/$filePath")
     f.parent.createDirectories()
 
     createEmptyJar(f.parent.toString(), f.fileName.toString())
-    repositoryPath = createProjectSubDir("repo").toNioPath()
+    maven.repositoryPath = maven.createProjectSubDir("repo").toNioPath()
   }
 
   private fun createOutputDirectories() {
-    for (module in getInstance(project).modules) {
+    for (module in getInstance(maven.project).modules) {
       val extension = CompilerModuleExtension.getInstance(module)
       if (extension != null) {
         createDirectoryIfDoesntExist(extension.compilerOutputUrl)
