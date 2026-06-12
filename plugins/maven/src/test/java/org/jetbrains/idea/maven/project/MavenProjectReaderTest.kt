@@ -3,6 +3,9 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase.assertEmpty
+import com.intellij.testFramework.UsefulTestCase.assertSize
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
@@ -43,21 +46,15 @@ import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenModel
 import org.jetbrains.idea.maven.model.MavenProfile
 import org.jetbrains.idea.maven.model.MavenResource
-import org.junit.Assume
-import java.nio.charset.StandardCharsets
-import java.nio.file.Path
-import kotlin.io.path.pathString
-import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.Assertions.assertNull
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.testFramework.UsefulTestCase.assertSize
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
+import kotlin.io.path.pathString
 
 @TestApplication
 @ParameterizedClass
@@ -215,7 +212,7 @@ class MavenProjectReaderTest(mavenVersion: String, modelVersion: String) {
   @Test
   fun testInvalidXmlWithWrongClosingTag() = runBlocking {
     //waiting for IDEA-272809
-    Assume.assumeTrue(false)
+    Assumptions.assumeTrue(false)
     maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
