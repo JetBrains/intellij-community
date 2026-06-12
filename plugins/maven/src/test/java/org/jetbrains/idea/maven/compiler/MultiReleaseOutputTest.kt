@@ -5,21 +5,49 @@ import com.intellij.maven.testFramework.MavenCompilingTestCase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.pom.java.LanguageLevel
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertExists
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.assumeVersionAtLeast
+import org.jetbrains.idea.maven.fixtures.compileModules
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.getSourceLanguageLevelForModule
+import org.jetbrains.idea.maven.fixtures.getTargetLanguageLevelForModule
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.testRootDisposable
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.BeforeEach
 
-class MultiReleaseOutputTest : MavenCompilingTestCase() {
-  override fun setUp() {
-    assumeVersionAtLeast("3.9.0")
-    super.setUp()
-    Registry.get("maven.import.separate.main.and.test.modules.when.multiReleaseOutput").setValue("true", testRootDisposable)
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MultiReleaseOutputTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
+  @BeforeEach
+  fun setUp() {
+    maven.assumeVersionAtLeast("3.9.0")
+    Registry.get("maven.import.separate.main.and.test.modules.when.multiReleaseOutput").setValue("true", maven.testRootDisposable)
   }
 
   @Test
   fun `test basic`() = runBlocking {
-    createProjectSubFile("src/main/java/A.java", "class A {}")
-    createProjectSubFile("src/main/java-additional/B.java", "class B extends A {}")
+    maven.createProjectSubFile("src/main/java/A.java", "class A {}")
+    maven.createProjectSubFile("src/main/java-additional/B.java", "class B extends A {}")
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -45,16 +73,16 @@ class MultiReleaseOutputTest : MavenCompilingTestCase() {
       """.trimIndent()
     )
 
-    assertModules("project", "project.main", "project.additionalSourceRoot", "project.test")
-    compileModules("project", "project.main", "project.additionalSourceRoot", "project.test")
+    maven.assertModules("project", "project.main", "project.additionalSourceRoot", "project.test")
+    maven.compileModules("project", "project.main", "project.additionalSourceRoot", "project.test")
 
-    assertExists("target/classes/A.class")
-    assertExists("target/classes/B.class")
+    maven.assertExists("target/classes/A.class")
+    maven.assertExists("target/classes/B.class")
   }
 
   @Test
   fun `test language level`() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
       <groupId>test</groupId>
       <artifactId>project</artifactId>
       <version>1</version>
@@ -84,13 +112,13 @@ class MultiReleaseOutputTest : MavenCompilingTestCase() {
       """.trimIndent()
     )
 
-    assertModules("project", "project.main", "project.additionalSourceRoot", "project.test")
+    maven.assertModules("project", "project.main", "project.additionalSourceRoot", "project.test")
 
-    assertEquals(LanguageLevel.JDK_1_8, getSourceLanguageLevelForModule("project.main"))
-    assertEquals(LanguageLevel.JDK_1_8, getTargetLanguageLevelForModule("project.main"))
+    assertEquals(LanguageLevel.JDK_1_8, maven.getSourceLanguageLevelForModule("project.main"))
+    assertEquals(LanguageLevel.JDK_1_8, maven.getTargetLanguageLevelForModule("project.main"))
 
-    assertEquals(LanguageLevel.JDK_1_9, getSourceLanguageLevelForModule("project.additionalSourceRoot"))
-    assertEquals(LanguageLevel.JDK_1_9, getTargetLanguageLevelForModule("project.additionalSourceRoot"))
+    assertEquals(LanguageLevel.JDK_1_9, maven.getSourceLanguageLevelForModule("project.additionalSourceRoot"))
+    assertEquals(LanguageLevel.JDK_1_9, maven.getTargetLanguageLevelForModule("project.additionalSourceRoot"))
   }
 
 
