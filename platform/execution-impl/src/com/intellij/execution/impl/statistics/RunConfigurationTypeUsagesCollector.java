@@ -57,7 +57,7 @@ import java.util.Set;
 @ApiStatus.Internal
 public final class RunConfigurationTypeUsagesCollector extends ProjectUsagesCollector {
   public static final String CONFIGURED_IN_PROJECT = "configured.in.project";
-  private static final EventLogGroup GROUP = new EventLogGroup(RunConfigurationTypeDefs.TYPE_USAGES_GROUP_ID, 17);
+  private static final EventLogGroup GROUP = new EventLogGroup(RunConfigurationTypeDefs.TYPE_USAGES_GROUP_ID, 18);
   public static final StringEventField ID_FIELD = EventFields.StringValidatedByCustomRule("id", RunConfigurationUtilValidator.class);
   public static final StringEventField FACTORY_FIELD = EventFields.StringValidatedByCustomRule("factory",
                                                                                                RunConfigurationUtilValidator.class);
