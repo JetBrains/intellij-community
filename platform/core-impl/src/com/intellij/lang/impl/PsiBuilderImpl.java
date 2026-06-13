@@ -976,9 +976,12 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       DIAGNOSTICS.registerRollback(myCurrentLexeme - marker.myLexemeIndex);
     }
 
-    NavigableMap<Integer, IElementType> remapped = myTokenTypesToRestoreOnRollback.tailMap(marker.myLexemeIndex, true);
-    remapped.forEach((index, type) -> myLexTypes[index] = type);
-    remapped.clear();
+    // Empty unless remapCurrentTokenAndRestoreOnRollback was used; skip the tail-submap allocation on the common path.
+    if (!myTokenTypesToRestoreOnRollback.isEmpty()) {
+      NavigableMap<Integer, IElementType> remapped = myTokenTypesToRestoreOnRollback.tailMap(marker.myLexemeIndex, true);
+      remapped.forEach((index, type) -> myLexTypes[index] = type);
+      remapped.clear();
+    }
 
     myCurrentLexeme = marker.myLexemeIndex;
     myTokenTypeChecked = true;
