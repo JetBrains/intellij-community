@@ -90,9 +90,8 @@ class PyTypeAliasRedeclarationInspection : PyInspection() {
       }
       val identifier = element.getNameIdentifier()
       registerProblem(identifier ?: element,
-                      PyPsiBundle.message("INSP.redeclared.type.alias", name),
+                      PyPsiBundle.problemMessage("INSP.redeclared.type.alias", name),
                       ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                      null,
                       *quickFixes.toTypedArray())
     }
   }

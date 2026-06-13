@@ -47,7 +47,7 @@ public final class PyMethodFirstArgAssignmentInspection extends PyInspection {
     }
 
     private void complain(PsiElement element, String name) {
-      registerProblem(element, PyPsiBundle.message("INSP.first.arg.assign.method.parameter.reassigned", name));
+      registerProblem(element, PyPsiBundle.problemMessage("INSP.first.arg.assign.method.parameter.reassigned", name));
     }
 
     private void handleTarget(PyQualifiedExpression target, String name) {

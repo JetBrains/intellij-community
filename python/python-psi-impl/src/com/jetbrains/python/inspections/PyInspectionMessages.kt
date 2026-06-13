@@ -4,8 +4,16 @@ package com.jetbrains.python.inspections
 import com.intellij.AbstractBundle
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil
+import com.jetbrains.python.documentation.PyDocumentationLink
+import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.inspections.PyInspectionMessages.bundleMessage
+import com.jetbrains.python.psi.PyQualifiedNameOwner
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.TypeEvalContext
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
 import java.text.MessageFormat
 
@@ -36,7 +44,7 @@ object PyInspectionMessages {
   /** A localized inspection message paired with its editor-hover tooltip. */
   @JvmRecord
   data class ProblemMessage(
-    @InspectionMessage val description: String,
+    @InspectionMessage @Nls val description: String,
     @NlsContexts.Tooltip val tooltip: String,
   )
 
@@ -60,6 +68,48 @@ object PyInspectionMessages {
       fun joinNames(names: Iterable<String>): CodifiedParam = CodifiedParam(
         description = names.joinToString(", ") { "'$it'" },
         tooltip = names.joinToString(", ") { "<code>${XmlStringUtil.escapeString(it)}</code>" },
+      )
+
+      /**
+       * Renders [type] as a code-like span: the description is the plain type name shown in the Problems view
+       * (identical to [PythonDocumentationProvider.getTypeName]), and the tooltip is the same type rendered as
+       * HTML with highlighted, clickable class links, exactly as Quick Documentation shows it.
+       *
+       * Set [verbose] to mirror [PythonDocumentationProvider.getVerboseTypeName] (e.g. inline TypeVar bounds);
+       * use it for the *expected* side of a type-mismatch message.
+       *
+       * [anchor] is the element the type belongs to; it is used to resolve class names to their declarations.
+       */
+      @JvmStatic
+      @JvmOverloads
+      fun ofType(
+        type: PyType?,
+        anchor: PsiElement,
+        context: TypeEvalContext,
+        verbose: Boolean = false,
+      ): CodifiedParam = CodifiedParam(
+        description = if (verbose) PythonDocumentationProvider.getVerboseTypeName(type, context)
+        else PythonDocumentationProvider.getTypeName(type, context),
+        tooltip = if (verbose) PythonDocumentationProvider.getVerboseTypeNameWithLinks(type, context, anchor)
+        else PythonDocumentationProvider.getTypeNameWithLinks(type, context, anchor),
+      )
+
+      /**
+       * Renders a named symbol ([target]) as a code-like span: the description is [text] (plain, shown in the
+       * Problems view), and the tooltip is [text] wrapped in a navigable `#element/<fqn>` link pointing at
+       * [target] — so e.g. a class or method name in an inspection message becomes clickable on hover.
+       *
+       * [text] defaults to the symbol's own name; pass it explicitly when the message shows a different form,
+       * such as a qualified `B.f()` signature.
+       */
+      @JvmStatic
+      @JvmOverloads
+      fun ofReference(
+        target: PyQualifiedNameOwner,
+        text: @NlsSafe String = target.name.orEmpty(),
+      ): CodifiedParam = CodifiedParam(
+        description = text,
+        tooltip = PyDocumentationLink.toElementTooltipLink(target, text).toString(),
       )
     }
   }

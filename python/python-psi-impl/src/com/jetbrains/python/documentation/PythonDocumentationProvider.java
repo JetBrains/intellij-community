@@ -478,6 +478,37 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   }
 
   /**
+   * Render a type as HTML the same way as {@link #getTypeName(PyType, TypeEvalContext)}, but with class names
+   * turned into highlighted links that are clickable from an editor tooltip (e.g. an inspection hover).
+   * <p>
+   * The resulting markup matches Quick Documentation styling (builtins are highlighted, etc.), but the links use
+   * the {@code #element/<fqn>} format navigable from tooltips rather than the {@code psi_element://} protocol.
+   *
+   * @param type     the type to render
+   * @param context  TypeEvalContext instance to infer extra types with
+   * @param anchor   element the type belongs to, used to resolve class names to their declarations
+   * @param features additional rendering features to enable
+   * @return HTML representation of the type with navigable, highlighted class links
+   */
+  public static @NotNull @NlsSafe String getTypeNameWithLinks(@Nullable PyType type,
+                                                              @NotNull TypeEvalContext context,
+                                                              @NotNull PsiElement anchor,
+                                                              Feature @NotNull ... features) {
+    EnumSet<Feature> featureSet = features.length == 0 ? EnumSet.noneOf(Feature.class) : EnumSet.copyOf(Arrays.asList(features));
+    return PyTypeVisitor.visit(type, new PyTypeRenderer.TooltipDocumentation(context, anchor, featureSet)).toString();
+  }
+
+  /**
+   * Same as {@link #getTypeNameWithLinks(PyType, TypeEvalContext, PsiElement, Feature...)} with the verbose
+   * features enabled (see {@link #getVerboseTypeName(PyType, TypeEvalContext)}).
+   */
+  public static @NotNull @NlsSafe String getVerboseTypeNameWithLinks(@Nullable PyType type,
+                                                                     @NotNull TypeEvalContext context,
+                                                                     @NotNull PsiElement anchor) {
+    return getTypeNameWithLinks(type, context, anchor, Feature.TYPE_VAR_BOUNDS);
+  }
+
+  /**
    * @param type      type which description will be calculated.
    *                  Description is the same as {@link PythonDocumentationProvider#getTypeName(PyType, TypeEvalContext)} gives but
    *                  types are converted to links.

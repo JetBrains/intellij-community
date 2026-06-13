@@ -7,7 +7,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -30,6 +29,8 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.PyConstructorSignatureUtil;
 import com.jetbrains.python.inspections.PyInspectionExtension;
+import com.jetbrains.python.inspections.PyInspectionMessages;
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
 import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRemoveAssignmentStatementTargetQuickFix;
@@ -469,25 +470,26 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         // Local function
         final PsiElement nameIdentifier = ((PyFunction)element).getNameIdentifier();
         registerWarning(nameIdentifier == null ? element : nameIdentifier,
-                        PyPsiBundle.message("INSP.unused.locals.local.function.isnot.used",
-                                            ((PyFunction)element).getName()), new PyRemoveStatementQuickFix());
+                        PyPsiBundle.problemMessage("INSP.unused.locals.local.function.isnot.used",
+                                                   CodifiedParam.ofReference((PyFunction)element)), new PyRemoveStatementQuickFix());
       }
       else if (element instanceof PyClass cls) {
         // Local class
         final PsiElement name = cls.getNameIdentifier();
         registerWarning(name != null ? name : element,
-                        PyPsiBundle.message("INSP.unused.locals.local.class.isnot.used", cls.getName()), new PyRemoveStatementQuickFix());
+                        PyPsiBundle.problemMessage("INSP.unused.locals.local.class.isnot.used", CodifiedParam.ofReference(cls)),
+                        new PyRemoveStatementQuickFix());
       }
       else if (element instanceof PyTypeAliasStatement typeAlias) {
         final PsiElement name = typeAlias.getNameIdentifier();
         registerWarning(name != null ? name : element,
-                        PyPsiBundle.message("INSP.unused.locals.type.alias.isnot.used", typeAlias.getName()),
+                        PyPsiBundle.problemMessage("INSP.unused.locals.type.alias.isnot.used", CodifiedParam.ofReference(typeAlias)),
                         new PyRemoveStatementQuickFix());
       }
       else if (element instanceof PyTypeParameter typeParameter) {
         final PsiElement name = typeParameter.getNameIdentifier();
         registerWarning(name != null ? name : element,
-                        PyPsiBundle.message("INSP.unused.locals.type.parameter.isnot.used", typeParameter.getName()),
+                        PyPsiBundle.problemMessage("INSP.unused.locals.type.parameter.isnot.used", CodifiedParam.ofReference(typeParameter)),
                         new PyRemoveTypeParameterQuickFix());
       }
       else {
@@ -547,14 +549,15 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
           if (canRemove) {
             fixes.add(new PyRemoveParameterQuickFix());
           }
-          registerWarning(element, PyPsiBundle.message("INSP.unused.locals.parameter.isnot.used", name),
+          registerWarning(element, PyPsiBundle.problemMessage("INSP.unused.locals.parameter.isnot.used", name),
                           fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
         else {
           if (myIgnoreVariablesStartingWithUnderscore && element.getText().startsWith(PyNames.UNDERSCORE)) continue;
           if (myIgnoreTupleUnpacking && isTupleUnpacking(element, unusedElements)) continue;
 
-          final String warningMsg = PyPsiBundle.message("INSP.unused.locals.local.variable.isnot.used", name);
+          final PyInspectionMessages.ProblemMessage warningMsg =
+            PyPsiBundle.problemMessage("INSP.unused.locals.local.variable.isnot.used", name);
 
           final PyForStatement forStatement = PyForStatementNavigator.getPyForStatementByIterable(element);
           if (forStatement != null) {
@@ -675,8 +678,10 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
-  private void registerWarning(@NotNull PsiElement element, @InspectionMessage String msg, @NotNull LocalQuickFix @NotNull ... quickfixes) {
-    registerProblem(element, msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, quickfixes);
+  private void registerWarning(@NotNull PsiElement element,
+                               @NotNull PyInspectionMessages.ProblemMessage msg,
+                               @NotNull LocalQuickFix @NotNull ... quickfixes) {
+    registerProblem(element, msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL, quickfixes);
   }
 
   private static class ReplaceWithWildCard extends PsiUpdateModCommandQuickFix {

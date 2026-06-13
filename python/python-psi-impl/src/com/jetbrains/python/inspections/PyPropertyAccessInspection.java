@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -99,17 +100,17 @@ public final class PyPropertyAccessInspection extends PyInspection {
                                @NotNull Property property) {
       final Maybe<PyCallable> accessor = property.getByDirection(dir);
       if (accessor.isDefined() && accessor.value() == null) {
-        final String message;
+        final PyInspectionMessages.ProblemMessage message;
         if (dir == AccessDirection.WRITE) {
-          message = PyPsiBundle.message("INSP.property.cannot.be.set", name);
+          message = PyPsiBundle.problemMessage("INSP.property.cannot.be.set", name);
         }
         else if (dir == AccessDirection.DELETE) {
-          message = PyPsiBundle.message("INSP.property.cannot.be.deleted", name);
+          message = PyPsiBundle.problemMessage("INSP.property.cannot.be.deleted", name);
         }
         else {
-          message = PyPsiBundle.message("INSP.property.cannot.be.read", name);
+          message = PyPsiBundle.problemMessage("INSP.property.cannot.be.read", name);
         }
-        registerProblem(node, message, new PyCreatePropertyQuickFix(dir));
+        registerProblem(node, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new PyCreatePropertyQuickFix(dir));
       }
     }
   }

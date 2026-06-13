@@ -17,6 +17,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Helper.Ty
 import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyAnnotation
 import com.jetbrains.python.psi.PyArgumentList
@@ -104,10 +105,10 @@ class PyTypedDictInspection : PyInspection() {
       val nonMatchingFields = indexExpressionValueOptions.filterNot { it in operandType.fields }
       if (nonMatchingFields.isNotEmpty() && operandType.extraItemsType == null) {
         registerProblem(indexExpression, if (nonMatchingFields.size == 1)
-          PyPsiBundle.message("INSP.typeddict.typeddict.has.no.key", operandType.name, nonMatchingFields[0])
+          PyPsiBundle.problemMessage("INSP.typeddict.typeddict.has.no.key", operandType.name, nonMatchingFields[0])
         else {
           val nonMatchingFieldList = nonMatchingFields.joinToString(transform = { "'$it'" })
-          PyPsiBundle.message("INSP.typeddict.typeddict.has.no.keys", operandType.name, nonMatchingFieldList)
+          PyPsiBundle.problemMessage("INSP.typeddict.typeddict.has.no.keys", operandType.name, nonMatchingFieldList)
         })
       }
     }
@@ -153,7 +154,7 @@ class PyTypedDictInspection : PyInspection() {
             }
             else if (keyword != PyNames.METACLASS) {
               registerProblem(argument,
-                              PyPsiBundle.message("INSP.typeddict.unexpected.argument.for.__init_subclass__.of.TypedDict", keyword))
+                              PyPsiBundle.problemMessage("INSP.typeddict.unexpected.argument.for.__init_subclass__.of.TypedDict", keyword))
             }
           }
         }
@@ -318,9 +319,9 @@ class PyTypedDictInspection : PyInspection() {
             else {
               if (fieldInfo?.qualifiers?.isRequired == true) {
                 registerProblem(element,
-                                PyPsiBundle.message("INSP.typeddict.required.key.unknown.to.superclass",
-                                                    element.name,
-                                                    extraItemsAncestor.name))
+                                PyPsiBundle.problemMessage("INSP.typeddict.required.key.unknown.to.superclass",
+                                                           element.name,
+                                                           extraItemsAncestor.name))
               }
               else if (!PyTypeChecker.match(extraItemsAncestor.extraItemsType, fieldType, myTypeEvalContext) ||
                        !PyTypeChecker.match(fieldType, extraItemsAncestor.extraItemsType, myTypeEvalContext)) {
@@ -346,7 +347,7 @@ class PyTypedDictInspection : PyInspection() {
                                                                                         myTypeEvalContext,
                                                                                         String::class.java)) {
               if (type.fields[index]?.qualifiers?.isRequired == true) {
-                registerProblem(expr.indexExpression, PyPsiBundle.message("INSP.typeddict.key.cannot.be.deleted", index, type.name))
+                registerProblem(expr.indexExpression, PyPsiBundle.problemMessage("INSP.typeddict.key.cannot.be.deleted", index, type.name))
               }
             }
           }
@@ -367,7 +368,7 @@ class PyTypedDictInspection : PyInspection() {
         parameters
           .mapNotNull { it.asNamed }
           .filter { !it.isPositionalOnly && it.name in fieldNames }
-          .forEach { registerProblem(it, PyPsiBundle.message("INSP.typeddict.parameter.overlaps.with.typed.dict", it.name, typedDictName)) }
+          .forEach { registerProblem(it, PyPsiBundle.problemMessage("INSP.typeddict.parameter.overlaps.with.typed.dict", it.name, typedDictName)) }
       }
     }
 
@@ -410,7 +411,7 @@ class PyTypedDictInspection : PyInspection() {
       if (PyNames.POP == callee.name) {
         val key = if (arguments.isNotEmpty()) PyEvaluator.evaluate(arguments[0], String::class.java) else null
         if (key != null && key in nodeType.fields && nodeType.fields[key]!!.qualifiers.isRequired == true) {
-          registerProblem(callee.nameElement?.psi, PyPsiBundle.message("INSP.typeddict.key.cannot.be.deleted", key, nodeType.name))
+          registerProblem(callee.nameElement?.psi, PyPsiBundle.problemMessage("INSP.typeddict.key.cannot.be.deleted", key, nodeType.name))
         }
       }
 
@@ -439,7 +440,7 @@ class PyTypedDictInspection : PyInspection() {
           return
         }
         if (!nodeType.fields.containsKey(key) && nodeType.extraItemsType == null) {
-          registerProblem(keyArgument, PyPsiBundle.message("INSP.typeddict.typeddict.has.no.key", nodeType.name, key))
+          registerProblem(keyArgument, PyPsiBundle.problemMessage("INSP.typeddict.typeddict.has.no.key", nodeType.name, key))
         }
       }
     }
@@ -483,15 +484,13 @@ class PyTypedDictInspection : PyInspection() {
         if (expectedExtraItemsType == null) return@forEach
 
         if (assignedType.extraItemsType != null) {
-          val expectedTypeName = PythonDocumentationProvider.getTypeName(expectedExtraItemsType, myTypeEvalContext)
-          val actualTypeName = PythonDocumentationProvider.getTypeName(assignedType.extraItemsType, myTypeEvalContext)
           if (!PyTypeChecker.match(expectedExtraItemsType, assignedType.extraItemsType, myTypeEvalContext)) {
             registerProblem(
               target,
-              PyPsiBundle.message(
+              PyPsiBundle.problemMessage(
                 "INSP.typeddict.type.not.assignable.to.extra.items",
-                actualTypeName,
-                expectedTypeName
+                CodifiedParam.ofType(assignedType.extraItemsType, target, myTypeEvalContext),
+                CodifiedParam.ofType(expectedExtraItemsType, target, myTypeEvalContext)
               )
             )
           }
@@ -499,13 +498,12 @@ class PyTypedDictInspection : PyInspection() {
         else {
           val expectedIsReadOnly = targetType.extraItemsQualifiers.isReadOnly
           if (!expectedIsReadOnly) {
-            val targetExtraItemsTypeName = PythonDocumentationProvider.getTypeName(targetType.extraItemsType, myTypeEvalContext)
             registerProblem(
               target,
-              PyPsiBundle.message(
+              PyPsiBundle.problemMessage(
                 "INSP.typeddict.implicit.readonly.extra.items.incompatible",
                 assignedType.name,
-                targetExtraItemsTypeName
+                CodifiedParam.ofType(targetType.extraItemsType, target, myTypeEvalContext)
               )
             )
           }
@@ -519,7 +517,7 @@ class PyTypedDictInspection : PyInspection() {
           if (!targetType.extraItemsQualifiers.isReadOnly && newFieldQualifiers?.isRequired == true) {
             registerProblem(
               target,
-              PyPsiBundle.message(
+              PyPsiBundle.problemMessage(
                 "INSP.typeddict.field.not.required.in.target.but.required.in.source",
                 key,
                 targetType.name,
@@ -568,7 +566,7 @@ class PyTypedDictInspection : PyInspection() {
           val callParent = PsiTreeUtil.getParentOfType(node, PyCallExpression::class.java)
           if (classParent == null) {
             if (callParent == null) {
-              registerProblem(node, PyPsiBundle.message("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
+              registerProblem(node, PyPsiBundle.problemMessage("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
                                                         qualifierName))
             }
             else {
@@ -576,21 +574,21 @@ class PyTypedDictInspection : PyInspection() {
                   PyTypingTypeProvider.resolveToQualifiedNames(callParent.callee!!, myTypeEvalContext).none { qualifiedName ->
                     PyTypingTypeProvider.TYPED_DICT == qualifiedName || PyTypingTypeProvider.TYPED_DICT_EXT == qualifiedName
                   }) {
-                registerProblem(node, PyPsiBundle.message("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
+                registerProblem(node, PyPsiBundle.problemMessage("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
                                                           qualifierName))
               }
             }
           }
           else {
             if (!classParent.isTypingTypedDictInheritor(myTypeEvalContext)) {
-              registerProblem(node, PyPsiBundle.message("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
+              registerProblem(node, PyPsiBundle.problemMessage("INSP.typeddict.qualifiers.cannot.be.used.outside.typeddict.definition",
                                                         qualifierName))
             }
           }
 
           if (node.parent is PySubscriptionExpression && (node.parent as PySubscriptionExpression).indexExpression is PyTupleExpression) {
             registerProblem((node.parent as PySubscriptionExpression).indexExpression,
-                            PyPsiBundle.message("INSP.typeddict.required.notrequired.must.have.exactly.one.type.argument",
+                            PyPsiBundle.problemMessage("INSP.typeddict.required.notrequired.must.have.exactly.one.type.argument",
                                                 qualifierName))
           }
         }
@@ -633,7 +631,7 @@ class PyTypedDictInspection : PyInspection() {
           !listOf(PyNames.TRUE, PyNames.FALSE).contains(parameterValue.text)) {
         registerProblem(
           parameterValue,
-          PyPsiBundle.message("INSP.typeddict.parameter.must.be.boolean", parameterName)
+          PyPsiBundle.problemMessage("INSP.typeddict.parameter.must.be.boolean", parameterName)
         )
       }
     }
@@ -649,7 +647,7 @@ class PyTypedDictInspection : PyInspection() {
         errorElement?.let {
           registerProblem(
             it,
-            PyPsiBundle.message(
+            PyPsiBundle.problemMessage(
               "INSP.typeddict.base.classes.define.field.incompatibly",
               fieldName
             )
@@ -702,7 +700,7 @@ class PyTypedDictInspection : PyInspection() {
         fieldElement?.let {
           registerProblem(
             it,
-            PyPsiBundle.message("INSP.typeddict.field.cannot.override.mutable.required.as.readonly", it.name)
+            PyPsiBundle.problemMessage("INSP.typeddict.field.cannot.override.mutable.required.as.readonly", it.name)
           )
         }
         return false
@@ -712,7 +710,7 @@ class PyTypedDictInspection : PyInspection() {
         fieldElement?.let {
           registerProblem(
             it,
-            PyPsiBundle.message("INSP.typeddict.field.cannot.override.mutable.required.as.notrequired", it.name)
+            PyPsiBundle.problemMessage("INSP.typeddict.field.cannot.override.mutable.required.as.notrequired", it.name)
           )
         }
         return false
@@ -722,7 +720,7 @@ class PyTypedDictInspection : PyInspection() {
         fieldElement?.let {
           registerProblem(
             it,
-            PyPsiBundle.message("INSP.typeddict.field.cannot.override.readonly.required.as.notrequired", it.name)
+            PyPsiBundle.problemMessage("INSP.typeddict.field.cannot.override.readonly.required.as.notrequired", it.name)
           )
         }
         return false
@@ -730,11 +728,11 @@ class PyTypedDictInspection : PyInspection() {
 
       if (!areTypedDictFieldTypesCompatible(expected, actual)) {
         fieldElement?.let {
-          val expectedTypeName = PythonDocumentationProvider.getTypeName(expected.type, myTypeEvalContext)
-          val actualTypeName = PythonDocumentationProvider.getTypeName(actual.type, myTypeEvalContext)
           registerProblem(
             it,
-            PyPsiBundle.message("INSP.typeddict.field.type.mismatch", actualTypeName, expectedTypeName)
+            PyPsiBundle.problemMessage("INSP.typeddict.field.type.mismatch",
+                                       CodifiedParam.ofType(actual.type, it, myTypeEvalContext),
+                                       CodifiedParam.ofType(expected.type, it, myTypeEvalContext))
           )
         }
         return false
@@ -834,7 +832,7 @@ class PyTypedDictInspection : PyInspection() {
           return@forEach
         }
         if (!fields.containsKey(keyAsString)) {
-          registerProblem(key, PyPsiBundle.message("INSP.typeddict.typeddict.cannot.have.key", typedDictType.name, keyAsString))
+          registerProblem(key, PyPsiBundle.problemMessage("INSP.typeddict.typeddict.cannot.have.key", typedDictType.name, keyAsString))
           return@forEach
         }
         if (fields.get(keyAsString)!!.qualifiers.isReadOnly) {

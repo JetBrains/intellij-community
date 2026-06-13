@@ -267,8 +267,7 @@ public final class PyPropertyDefinitionInspection extends PyInspection {
       }
       if (parameters.length > 0 && !PyNames.CANONICAL_SELF.equals(parameters[0].getName())) {
         registerProblem(
-          parameters[0], PyPsiBundle.message("INSP.property.cannot.be.deleted", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING,
-          null,
+          parameters[0], PyPsiBundle.problemMessage("INSP.property.cannot.be.deleted", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING,
           new RenameParameterQuickFix(PyNames.CANONICAL_SELF));
       }
     }

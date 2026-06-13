@@ -83,8 +83,8 @@ public final class PyMethodParametersInspection extends PyInspection {
                 paramName = PyNames.CANONICAL_SELF;
               }
               registerProblem(
-                plist, PyPsiBundle.message("INSP.must.have.first.parameter", paramName),
-                ProblemHighlightType.GENERIC_ERROR, null, new AddSelfQuickFix(paramName)
+                plist, PyPsiBundle.problemMessage("INSP.must.have.first.parameter", paramName),
+                ProblemHighlightType.GENERIC_ERROR, new AddSelfQuickFix(paramName)
               );
             }
           }
@@ -127,7 +127,8 @@ public final class PyMethodParametersInspection extends PyInspection {
               if (!expectedName.equals(pname) && !alternativeNames.contains(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyPsiBundle.message("INSP.usually.named", expectedName),
+                  PyPsiBundle.problemMessage("INSP.usually.named", expectedName),
+                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                   new RenameParameterQuickFix(expectedName)
                 );
               }
@@ -136,7 +137,8 @@ public final class PyMethodParametersInspection extends PyInspection {
               if (!PyNames.CANONICAL_CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyPsiBundle.message("INSP.usually.named", PyNames.CANONICAL_CLS),
+                  PyPsiBundle.problemMessage("INSP.usually.named", PyNames.CANONICAL_CLS),
+                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                   new RenameParameterQuickFix(PyNames.CANONICAL_CLS)
                 );
               }

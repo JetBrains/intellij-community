@@ -116,6 +116,10 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
       myAnchor = anchor;
     }
 
+    protected final @NotNull PsiElement getAnchor() {
+      return myAnchor;
+    }
+
     @Override
     protected @NotNull HtmlChunk styled(@Nls String text, @NotNull TextAttributesKey style) {
       return styledSpan(text, style);
@@ -145,6 +149,23 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
   static final class RichDocumentation extends HtmlRenderer {
     RichDocumentation(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor) {
       super(typeEvalContext, anchor, EnumSet.noneOf(Feature.class));
+    }
+  }
+
+  /**
+   * Renders types as HTML the same way as {@link RichDocumentation}, but emits class links in the
+   * {@code #element/<fqn>} format navigable from editor tooltips (see
+   * {@code com.intellij.codeInsight.hint.ElementLinkHandler}) instead of the {@code psi_element://}
+   * protocol used by Quick Documentation. Intended for rich inspection tooltips.
+   */
+  static final class TooltipDocumentation extends HtmlRenderer {
+    TooltipDocumentation(@NotNull TypeEvalContext typeEvalContext, @NotNull PsiElement anchor, @NotNull EnumSet<Feature> features) {
+      super(typeEvalContext, anchor, features);
+    }
+
+    @Override
+    protected @NotNull HtmlChunk className(@Nls String name) {
+      return PyDocumentationLink.toPossibleClassTooltipLink(name, getAnchor(), myTypeEvalContext);
     }
   }
 

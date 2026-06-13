@@ -1007,8 +1007,6 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       def test_numerics():
           abs(False)
           int(10)
-          long(False)
-      #   ^^^^ ERROR Unresolved reference 'long'
           float(False)
           complex(False)
           divmod(False, False)

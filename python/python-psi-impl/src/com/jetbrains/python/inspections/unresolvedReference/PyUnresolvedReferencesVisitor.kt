@@ -5,7 +5,6 @@ import com.google.common.collect.ImmutableSet
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -28,6 +27,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.documentation.docstrings.DocStringTypeReference
 import com.jetbrains.python.inspections.PyInspectionExtension
+import com.jetbrains.python.inspections.PyInspectionMessages
 import com.jetbrains.python.inspections.PyInspectionVisitor
 import com.jetbrains.python.inspections.quickfix.PyRenameUnresolvedRefQuickFix
 import com.jetbrains.python.psi.AccessDirection
@@ -101,7 +101,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
   override fun visitPyTargetExpression(node: PyTargetExpression) {
     // Augmented assignments (e.g., `x += 1`) do have a target expression,
     // but for historical reasons it is not represented in the PSI, so delegate to the base visitor for general reference checks
-    if (node.getParent() is PyAugAssignmentStatement) {
+    if (node.parent is PyAugAssignmentStatement) {
       super.visitPyTargetExpression(node)
     }
 
@@ -116,14 +116,14 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
 
     if (type is PyClassLikeType && !type.isAttributeWritable(attrName, myTypeEvalContext)) {
       registerProblem(anchor,
-                      PyPsiBundle.message("INSP.unresolved.refs.class.object.has.no.attribute", type.name, attrName))
+                      PyPsiBundle.problemMessage("INSP.unresolved.refs.class.object.has.no.attribute", type.name, attrName))
       return
     }
 
     if (type !is PyClassType) return
-    if (PyUtil.isObjectClass(type.getPyClass())) return
+    if (PyUtil.isObjectClass(type.pyClass)) return
 
-    val isDefinition = type.isDefinition()
+    val isDefinition = type.isDefinition
     val strictCheckEnabled = if (isDefinition) myStrictClassAttributes else myStrictInstanceAttributes
     if (!strictCheckEnabled) return
 
@@ -131,12 +131,12 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
                                                   AccessDirection.READ, resolveContext))) return
     if (isDeclaredInSlots(type, attrName)) return
     // Instance-side: user-defined `__setattr__` accepts any name.
-    if (!isDefinition && overridesSetAttr(type.getPyClass())) return
-    val reference = node.getReference()
+    if (!isDefinition && overridesSetAttr(type.pyClass)) return
+    val reference = node.reference
     if (reference != null && ignoreUnresolvedMemberForType(type, reference, attrName)) return
 
     registerProblem(anchor,
-                    PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.for.class", attrName, type.name),
+                    PyPsiBundle.problemMessage("INSP.unresolved.refs.unresolved.attribute.for.class", attrName, type.name),
                     ProblemHighlightType.WARNING)
   }
 
@@ -152,14 +152,14 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       processReference(node, node.getReference(resolveContext))
     }
     else {
-      for (reference in node.getReferences()) {
+      for (reference in node.references) {
         processReference(node, reference)
       }
     }
   }
 
   private fun processReference(node: PyElement, reference: PsiReference?) {
-    if (!isEnabled(node) || reference == null || reference.isSoft()) {
+    if (!isEnabled(node) || reference == null || reference.isSoft) {
       return
     }
     val guard: PyExceptPart? = getImportErrorGuard(node)
@@ -167,8 +167,8 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       return
     }
     if (node is PyQualifiedExpression) {
-      val qualifier = node.getQualifier()
-      val name = node.getName()
+      val qualifier = node.qualifier
+      val name = node.name
       if (qualifier != null && name != null && PyHasAttrHelper.getNamesFromHasAttrs(node, qualifier).contains(name)) {
         return
       }
@@ -179,8 +179,8 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       val resolveResults = reference.multiResolve(false)
       unresolved = (resolveResults.size == 0)
       for (resolveResult in resolveResults) {
-        if (target == null && resolveResult.isValidResult()) {
-          target = resolveResult.getElement()
+        if (target == null && resolveResult.isValidResult) {
+          target = resolveResult.element
         }
       }
     }
@@ -228,13 +228,13 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
             val unionMemberRender = PythonDocumentationProvider.getTypeName(unionMemberMissingAttr, myTypeEvalContext)
             registerProblem(
               node,
-              PyPsiBundle.message(
+              PyPsiBundle.problemMessage(
                 "INSP.unresolved.refs.unresolved.attribute.in.union.type", unionMemberRender, unionTypeRender,
                 referencedName
               ),
               ProblemHighlightType.WEAK_WARNING,
               null,
-              reference.getRangeInElement()
+              rangeInElement = reference.rangeInElement,
             )
           }
         }
@@ -284,7 +284,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
 
     var node: PyElement = initialNode
     var severity = initialSeverity
-    var description: String? = null
+    var message: PyInspectionMessages.ProblemMessage? = null
     var resolvedRange = rangeInElement
 
     if (element is PyReferenceExpression) {
@@ -296,20 +296,20 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
         PsiTreeUtil.getParentOfType(PsiTreeUtil.getParentOfType(node, PyImportElement::class.java),
                                     PyTryExceptStatement::class.java, PyIfStatement::class.java) != null -> {
           severity = HighlightSeverity.WEAK_WARNING
-          description = PyPsiBundle.message("INSP.unresolved.refs.module.not.found", refText)
+          message = PyPsiBundle.problemMessage("INSP.unresolved.refs.module.not.found", refText)
           // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
         }
       }
     }
 
-    if (reference is PsiReferenceEx && description == null) {
-      description = reference.unresolvedDescription
+    if (reference is PsiReferenceEx && message == null) {
+      reference.unresolvedDescription?.let { message = PyInspectionMessages.ProblemMessage(it, it) }
     }
 
     var qualifierType: PyType? = null
     var fallbackToUnqualifiedFix = false
 
-    if (description == null) {
+    if (message == null) {
       if (element is PyQualifiedExpression) {
         // TODO: Add __qualname__ for Python 3.3 to the skeleton of <class 'object'>, introduce a pseudo-class skeleton for
         // <class 'function'>
@@ -327,15 +327,15 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
           if (type is PyClassLikeType) {
             if (reference is PyOperatorReference) {
               var className = type.name
-              if (type.isDefinition()) {
+              if (type.isDefinition) {
                 className = type.getMetaClassType(myTypeEvalContext, true)?.name ?: className
               }
-              description = PyPsiBundle.message("INSP.unresolved.refs.class.does.not.define.operator",
-                                                className, refName, reference.readableOperatorName)
+              message = PyPsiBundle.problemMessage("INSP.unresolved.refs.class.does.not.define.operator",
+                                                   className, refName, reference.readableOperatorName)
             }
             else {
               // TODO use proper type rendering here
-              description = PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.for.class", refText, type.name)
+              message = PyPsiBundle.problemMessage("INSP.unresolved.refs.unresolved.attribute.for.class", refText, type.name)
             }
           }
           else {
@@ -343,19 +343,19 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
             if (unionMemberWithoutAttr != null) {
               val unionTypeRender = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext)
               val unionMemberRender = PythonDocumentationProvider.getTypeName(unionMemberWithoutAttr, myTypeEvalContext)
-              description = PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.in.union.type",
-                                                unionMemberRender, unionTypeRender, refName)
+              message = PyPsiBundle.problemMessage("INSP.unresolved.refs.unresolved.attribute.in.union.type",
+                                                   unionMemberRender, unionTypeRender, refName)
               severity = HighlightSeverity.WEAK_WARNING
             }
             else {
-              description = PyPsiBundle.message("INSP.unresolved.refs.cannot.find.reference.in.type", refText, type.name)
+              message = PyPsiBundle.problemMessage("INSP.unresolved.refs.cannot.find.reference.in.type", refText, type.name)
             }
           }
           markedQualified = true
         }
         else {
           if (isAwaitCallToImportedNonAsyncFunction(reference)) {
-            description = PyPsiBundle.message("INSP.await.call.on.imported.untyped.function", qualifier.text)
+            message = PyPsiBundle.problemMessage("INSP.await.call.on.imported.untyped.function", qualifier.text)
             node = qualifier // show warning on the function call
             resolvedRange = TextRange.create(0, qualifier.textRange.length)
             markedQualified = true
@@ -367,14 +367,14 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
       }
 
       if (!markedQualified) {
-        description = PyPsiBundle.message("INSP.unresolved.refs.unresolved.reference", refText)
+        message = PyPsiBundle.problemMessage("INSP.unresolved.refs.unresolved.reference", refText)
         fallbackToUnqualifiedFix = true
       }
     }
 
-    val finalDescription = description ?: return null
+    val finalMessage = message ?: return null
     return ProblemSpec(node, element, reference, resolvedRange, refName, refText,
-                       finalDescription, severity, qualifiedNames, qualifierType, fallbackToUnqualifiedFix)
+                       finalMessage, severity, qualifiedNames, qualifierType, fallbackToUnqualifiedFix)
   }
 
   private fun isIgnoredIdentifier(qualifiedNames: List<QualifiedName>, refName: String): Boolean {
@@ -427,7 +427,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
     val installAll = installPackageQuickFixes.isNotEmpty()
     if (installAll) {
       ContainerUtil.addAll(fixes, installPackageQuickFixes)
-      myUnresolvedRefs.add(PyPackageInstallAllProblemInfo(spec.node, spec.description, hlType, spec.refName, fixes))
+      myUnresolvedRefs.add(PyPackageInstallAllProblemInfo(spec.node, spec.message, hlType, spec.refName, fixes))
     }
 
     ContainerUtil.addIfNotNull(fixes, getAddSourceRootQuickFix(spec.node))
@@ -437,7 +437,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
 
     getPluginQuickFixes(fixes, spec.reference)
     if (!installAll) {
-      registerProblem(spec.node, spec.description, hlType, null, spec.rangeInElement, *fixes.toTypedArray())
+      registerProblem(spec.node, spec.message, hlType, *fixes.toTypedArray(), rangeInElement = spec.rangeInElement)
     }
   }
 
@@ -559,9 +559,9 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
   private fun isAwaitOnGeneratorBasedCoroutine(name: String, reference: PsiReference, cls: PyClass): Boolean {
     if (PyNames.DUNDER_AWAIT == name &&
         reference is PyOperatorReference &&
-        PyTypingTypeProvider.GENERATOR == cls.getQualifiedName()
+        PyTypingTypeProvider.GENERATOR == cls.qualifiedName
     ) {
-      val receiver = reference.getReceiver()
+      val receiver = reference.receiver
 
       if (receiver is PyCallExpression) {
         return PyKnownDecoratorUtil.isResolvedToGeneratorBasedCoroutine(receiver, resolveContext, myTypeEvalContext)
@@ -591,7 +591,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
         ContainerUtil.addIfNotNull(quickFixes, installAllPackageQuickFixes)
       }
       registerProblem(
-        unresolved.psiElement, unresolved.descriptionTemplate, unresolved.highlightType, null,
+        unresolved.psiElement, unresolved.message, unresolved.highlightType,
         *quickFixes.toTypedArray()
       )
     }
@@ -638,7 +638,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
     val rangeInElement: TextRange,
     val refName: String,
     val refText: String,
-    @InspectionMessage val description: String,
+    val message: PyInspectionMessages.ProblemMessage,
     val severity: HighlightSeverity,
     val qualifiedNames: List<QualifiedName>,
     val qualifierType: PyType?,
@@ -662,9 +662,9 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
         if (tryPart != null) {
           val tryExceptStatement = PsiTreeUtil.getParentOfType(tryPart, PyTryExceptStatement::class.java)
           if (tryExceptStatement != null) {
-            for (exceptPart in tryExceptStatement.getExceptParts()) {
+            for (exceptPart in tryExceptStatement.exceptParts) {
               val expr = exceptPart.exceptClass
-              if (expr != null && "ImportError" == expr.getName()) {
+              if (expr != null && "ImportError" == expr.name) {
                 return exceptPart
               }
             }
@@ -698,7 +698,7 @@ abstract class PyUnresolvedReferencesVisitor @JvmOverloads protected constructor
 
       for (typeToCheck in types) {
         for (provider in PyClassMembersProvider.EP_NAME.extensionList) {
-          val resolveResult = provider.getMembers(typeToCheck, reference.getElement(), typeEvalContext)
+          val resolveResult = provider.getMembers(typeToCheck, reference.element, typeEvalContext)
           for (member in resolveResult) {
             if (member.name == name) return true
           }
