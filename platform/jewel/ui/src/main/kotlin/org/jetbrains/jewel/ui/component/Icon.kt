@@ -35,10 +35,6 @@ import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.rendering.createRenderer
 import com.intellij.platform.icons.scale.IconScale
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.decodeToImageBitmap
-import org.jetbrains.compose.resources.decodeToImageVector
-import org.jetbrains.compose.resources.decodeToSvgPainter
 import org.jetbrains.jewel.foundation.modifier.thenIf
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.ui.icon.IconKey
@@ -323,38 +319,6 @@ public fun Icon(
             .then(semantics)
     )
 }
-
-@Deprecated(
-    "Please use iconKeys with the Icon or Image components instead. " +
-        "This will prevent issues when running in the IntelliJ Platform."
-)
-@Composable
-public fun painterResource(resourcePath: String): Painter =
-    when (resourcePath.substringAfterLast(".").lowercase()) {
-        "svg" -> rememberSvgResource(resourcePath)
-        "xml" -> rememberVectorXmlResource(resourcePath)
-        else -> rememberBitmapResource(resourcePath)
-    }
-
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-private fun rememberSvgResource(path: String): Painter {
-    val density = LocalDensity.current
-    return remember(density, path) { readResourceBytes(path).decodeToSvgPainter(density) }
-}
-
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-private fun rememberVectorXmlResource(path: String): Painter {
-    val density = LocalDensity.current
-    val imageVector = remember(density, path) { readResourceBytes(path).decodeToImageVector(density) }
-    return rememberVectorPainter(imageVector)
-}
-
-@OptIn(ExperimentalResourceApi::class)
-@Composable
-private fun rememberBitmapResource(path: String): Painter =
-    remember(path) { BitmapPainter(readResourceBytes(path).decodeToImageBitmap()) }
 
 private object ResourceLoader
 

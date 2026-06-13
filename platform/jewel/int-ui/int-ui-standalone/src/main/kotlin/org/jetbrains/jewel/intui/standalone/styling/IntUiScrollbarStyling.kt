@@ -410,41 +410,6 @@ public fun AlwaysVisible.Companion.windowsAndLinux(
     )
 
 /**
- * Creates a [WhenScrolling] scrollbar visibility configuration with custom parameters.
- *
- * @param trackThickness The thickness of the scrollbar track when not expanded.
- * @param trackThicknessExpanded The thickness of the scrollbar track when expanded.
- * @param trackPadding The padding around the scrollbar track.
- * @param trackPaddingWithBorder The padding around the scrollbar track when it has a border.
- * @param trackColorAnimationDuration The duration of track color animations.
- * @param expandAnimationDuration The duration of track expansion animations.
- * @param thumbColorAnimationDuration The duration of thumb color animations.
- * @param lingerDuration The duration the scrollbar remains visible after scrolling stops.
- * @return A [WhenScrolling] configuration with the specified parameters.
- */
-@Deprecated("Use the variant without parameters to get the defaults", ReplaceWith("WhenScrolling.Companion.default()"))
-public fun WhenScrolling.Companion.default(
-    trackThickness: Dp = 11.dp,
-    trackThicknessExpanded: Dp = 14.dp,
-    trackPadding: PaddingValues = PaddingValues(2.dp),
-    trackPaddingWithBorder: PaddingValues = PaddingValues(1.dp),
-    trackColorAnimationDuration: Duration = 125.milliseconds,
-    expandAnimationDuration: Duration = trackColorAnimationDuration,
-    thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
-    lingerDuration: Duration = 700.milliseconds,
-): WhenScrolling =
-    WhenScrolling(
-        trackThickness = trackThickness,
-        trackThicknessExpanded = trackThicknessExpanded,
-        trackPadding = trackPadding,
-        trackPaddingWithBorder = trackPaddingWithBorder,
-        trackColorAnimationDuration = trackColorAnimationDuration,
-        expandAnimationDuration = expandAnimationDuration,
-        thumbColorAnimationDuration = thumbColorAnimationDuration,
-        lingerDuration = lingerDuration,
-    )
-
-/**
  * Creates a [WhenScrolling] scrollbar visibility configuration appropriate for the current operating system.
  *
  * On macOS, this returns [macOs]. On Windows and Linux, this returns [windowsAndLinux].

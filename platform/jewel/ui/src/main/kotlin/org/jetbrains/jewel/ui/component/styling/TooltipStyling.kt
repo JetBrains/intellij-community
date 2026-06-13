@@ -12,8 +12,6 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.jewel.foundation.ExperimentalJewelApi
 import org.jetbrains.jewel.foundation.GenerateDataFunctions
 import org.jetbrains.jewel.ui.component.FixedCursorPoint
 
@@ -109,27 +107,6 @@ public class TooltipMetrics(
     public val regularDisappearDelay: Duration,
     public val fullDisappearDelay: Duration,
 ) {
-    @Deprecated("Use the constructor with regularDisappearDelay and fullDisappearDelay parameters.")
-    @ApiStatus.Experimental
-    @ExperimentalJewelApi
-    public constructor(
-        contentPadding: PaddingValues,
-        showDelay: Duration,
-        cornerSize: CornerSize,
-        borderWidth: Dp,
-        shadowSize: Dp,
-        placement: TooltipPlacement,
-    ) : this(
-        contentPadding,
-        showDelay,
-        cornerSize,
-        borderWidth,
-        shadowSize,
-        placement,
-        10000.milliseconds,
-        30000.milliseconds,
-    )
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -174,26 +151,6 @@ public class TooltipMetrics(
     }
 
     public companion object {
-        @Deprecated("Use the version with `regularDisappearDelay` and `fullDisappearDelay` parameters.")
-        public fun defaults(
-            contentPadding: PaddingValues = PaddingValues(vertical = 9.dp, horizontal = 12.dp),
-            showDelay: Duration = 500.milliseconds, // ide.tooltip.initialReshowDelay
-            cornerSize: CornerSize = CornerSize(4.dp),
-            borderWidth: Dp = 1.dp,
-            shadowSize: Dp = 12.dp,
-            placement: TooltipPlacement = FixedCursorPoint(DpOffset(4.dp, 24.dp)),
-        ): TooltipMetrics =
-            TooltipMetrics(
-                contentPadding,
-                showDelay,
-                cornerSize,
-                borderWidth,
-                shadowSize,
-                placement,
-                10000.milliseconds,
-                30000.milliseconds,
-            )
-
         public fun defaults(
             contentPadding: PaddingValues = PaddingValues(vertical = 9.dp, horizontal = 12.dp),
             showDelay: Duration = 500.milliseconds, // ide.tooltip.initialReshowDelay
