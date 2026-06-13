@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.Divider;
 import com.intellij.codeInsight.daemon.impl.InspectionVisitorOptimizer;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.codeInsight.util.InspectionScopeKt;
 import com.intellij.codeInspection.ex.DynamicGroupTool;
 import com.intellij.codeInspection.ex.GlobalInspectionContextEx;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
@@ -32,6 +33,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Predicates;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TracerLevel;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -348,7 +352,17 @@ public final class InspectionEngine {
           else {
             inspectionWasRun = true;
             tool.inspectionStarted(session, isOnTheFly);
-            inspectionVisitorsOptimizer.acceptElements(elements, visitor);
+            TraceKt.use(InspectionScopeKt.InspectionTracer.spanBuilder("inspectionRun", TracerLevel.DETAILED), span -> {
+              if (span.isRecording()) {
+                span.setAttribute("inspectionId", toolWrapper.getShortName());
+                VirtualFile file = psiFile.getVirtualFile();
+                if (file != null) {
+                  span.setAttribute("file", file.getPath());
+                }
+              }
+              inspectionVisitorsOptimizer.acceptElements(elements, visitor);
+              return null;
+            });
             tool.inspectionFinished(session, holder);
           }
 
