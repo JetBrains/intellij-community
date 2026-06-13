@@ -1,9 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.MavenDomTestFixtureIndices
@@ -26,6 +28,7 @@ import org.jetbrains.idea.maven.fixtures.updateProjectPom
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -39,6 +42,11 @@ class MavenModuleCompletionAndResolutionTest(mavenVersion: String, modelVersion:
     mavenVersion = mavenVersion, modelVersion = modelVersion,
     indices = MavenDomTestFixtureIndices("local1", listOf("local2")),
   )
+
+  @BeforeEach
+  fun setUp() = runBlocking {
+    edtWriteAction { ProjectRootManager.getInstance(maven.project).projectSdk = null }
+  }
 
   @Test
   fun testCompleteFromAllAvailableModules() = runBlocking {
