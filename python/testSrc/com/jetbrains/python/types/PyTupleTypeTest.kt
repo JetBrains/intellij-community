@@ -763,6 +763,57 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           for first, second in rows:
               pass
       """)
+
+    @Test
+    @TestFor(issues = ["PY-90173"])
+    fun `annotated target unpacked from list assignment is type checked`() = test(noAny, """
+      x: int
+      x, _ = ["foo", "bar"] # WARNING Expected type 'int', got 'str' instead
+
+      y: str
+      y, _ = ["foo", "bar"]
+
+      def f(items: list[int]):
+          z: str
+          z, _ = items # WARNING Expected type 'str', got 'int' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-90173"])
+    fun `annotated target unpacked in for loop is type checked`() = test("""
+      x: int
+      for x, _ in [("a", "b")]: # WARNING Expected type 'int', got 'str' instead
+          pass
+
+      y: int
+      for y, _ in [(1, 2)]:
+          pass
+
+      def f(matrix: list[list[int]]):
+          a: str
+          for a, b in matrix: # WARNING Expected type 'str', got 'int' instead
+              pass
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-39258"])
+    fun `nested tuple unpacking balance in for loop`() = test("""
+      def func(rows: list[tuple[str, tuple[int, int, int]]]):
+          for s, (x, y) in rows: # WARNING Too many values to unpack from 'tuple[int, int, int]': expected 2, got 3
+              pass
+
+      def func2(rows: list[tuple[str, tuple[int, int]]]):
+          for s, (x, y, z) in rows: # WARNING Not enough values to unpack from 'tuple[int, int]': expected 3, got 2
+              pass
+
+      def func3(rows: list[tuple[str, tuple[int, int]]]):
+          for s, (x, y) in rows:
+              pass
+
+      def func4(rows: list[tuple[str, tuple[int, ...]]]):
+          for s, (x, y) in rows:
+              pass
+      """)
   }
 
   @Nested
