@@ -708,6 +708,22 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           expr = test_seq(p)
       #   └ TYPE Sequence[int | complex | float | str]
       """)
+
+    @Test
+    @TestFor(issues = ["PY-43585"])
+    fun `tuple literal splicing a list`() = test(noAny, """
+      def f(first: int, rest: list[int]):
+          expr = (first, *rest)
+      #   └ TYPE tuple[int, *tuple[int, ...]]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-43585"])
+    fun `tuple literal splicing a homogeneous tuple`() = test("""
+      def f(first: int, rest: tuple[str, ...]):
+          expr = (first, *rest)
+      #   └ TYPE tuple[int, *tuple[str, ...]]
+      """)
   }
 
   @Nested
