@@ -244,6 +244,27 @@ abstract class PyInspectionVisitor(
     }
   }
 
+  private fun registerProblemMessage(
+    element: PsiElement?,
+    message: ProblemMessage,
+    type: ProblemHighlightType,
+    rangeInElement: TextRange?,
+    vararg fixes: LocalQuickFix?,
+  ) {
+    if (holder == null || element == null || !element.canRegisterProblem) {
+      return
+    }
+    val effectiveType = if (downgradeHighlightForTypeEngine) ProblemHighlightType.INFORMATION else type
+    val builder = holder!!.problem(element, message.description).highlight(effectiveType).tooltip(message.tooltip)
+    if (rangeInElement != null) {
+      builder.range(rangeInElement)
+    }
+    for (fix in fixes) {
+      if (fix != null) builder.fix(fix)
+    }
+    builder.register()
+  }
+
   companion object {
     const val POPULATE_TYPE_EVAL_CONTEXT_ON_CREATION_PROPERTY: String = "python.populate.type.eval.context.on.creation"
 

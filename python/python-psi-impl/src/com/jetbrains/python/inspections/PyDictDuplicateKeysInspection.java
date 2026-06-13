@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NlsSafe;
@@ -142,7 +143,8 @@ public final class PyDictDuplicateKeysInspection extends PyInspection {
         if (keys.size() > 1) {
           for (PsiElement key : keys) {
             String unquotedKey = unwrapStringKey(keyValue);
-            registerProblem(key, PyPsiBundle.message("INSP.duplicate.keys.dictionary.contains.duplicate.keys", unquotedKey), quickFixes);
+            registerProblem(key, PyPsiBundle.problemMessage("INSP.duplicate.keys.dictionary.contains.duplicate.keys", unquotedKey),
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, quickFixes);
           }
         }
       }

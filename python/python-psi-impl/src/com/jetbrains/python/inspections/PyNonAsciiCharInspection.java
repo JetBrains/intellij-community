@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.util.NlsSafe;
@@ -84,7 +85,8 @@ public final class PyNonAsciiCharInspection extends PyInspection {
 
         if (hasNonAscii) {
           if (charsetString == null) {
-            registerProblem(node, PyPsiBundle.message("INSP.non.ascii.char.non.ascii.character.in.file.but.no.encoding.declared", c),
+            registerProblem(node, PyPsiBundle.problemMessage("INSP.non.ascii.char.non.ascii.character.in.file.but.no.encoding.declared", c),
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                             new AddEncodingQuickFix(myDefaultEncoding, myEncodingFormatIndex));
           }
         }

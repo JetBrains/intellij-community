@@ -151,7 +151,7 @@ public class DocStringParameterReference extends PsiReferenceBase<PyStringLitera
   public @Nullable String getUnresolvedDescription() {
     PyDocStringOwner owner = PsiTreeUtil.getParentOfType(getElement(), PyDocStringOwner.class);
     if (owner instanceof PyFunction function) {
-      return PyPsiBundle.message("unresolved.docstring.param.reference", function.getName(), getCanonicalText());
+      return PyPsiBundle.problemMessage("unresolved.docstring.param.reference", function.getName(), getCanonicalText()).description();
     }
     return null;
   }

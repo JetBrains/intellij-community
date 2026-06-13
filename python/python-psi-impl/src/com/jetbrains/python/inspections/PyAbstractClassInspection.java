@@ -17,6 +17,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
@@ -66,11 +67,13 @@ public final class PyAbstractClassInspection extends PyInspection {
             boolean hasAbstractMethod =
               ContainerUtil.exists(pyClass.getMethods(), method -> PyKnownDecoratorUtil.hasAbstractDecorator(method, myTypeEvalContext));
             if (hasAbstractMethod || !getAllSuperAbstractMethods(pyClass).isEmpty()) {
-              registerProblem(node, PyPsiBundle.message("INSP.abstract.class.cannot.instantiate.abstract.class", pyClass.getName()),
+              registerProblem(node, PyPsiBundle.problemMessage("INSP.abstract.class.cannot.instantiate.abstract.class",
+                                                               CodifiedParam.ofReference(pyClass)),
                               effectiveHighlightType(ProblemHighlightType.WARNING));
             }
             else if (isAbstract(pyClass)) {
-              registerProblem(node, PyPsiBundle.message("INSP.abstract.class.cannot.instantiate.abstract.class", pyClass.getName()),
+              registerProblem(node, PyPsiBundle.problemMessage("INSP.abstract.class.cannot.instantiate.abstract.class",
+                                                               CodifiedParam.ofReference(pyClass)),
                               effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING));
             }
           }
@@ -122,7 +125,9 @@ public final class PyAbstractClassInspection extends PyInspection {
           addMakeClassAbstractFixes(pyClass, quickFixes);
 
           registerProblem(nameNode.getPsi(),
-                          PyPsiBundle.message("INSP.abstract.class.class.must.implement.all.abstract.methods", pyClass.getName()),
+                          PyPsiBundle.problemMessage("INSP.abstract.class.class.must.implement.all.abstract.methods",
+                                                     CodifiedParam.ofReference(pyClass)),
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                           quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
       }

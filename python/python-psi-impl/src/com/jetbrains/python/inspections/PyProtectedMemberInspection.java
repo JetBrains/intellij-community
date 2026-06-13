@@ -212,7 +212,7 @@ public final class PyProtectedMemberInspection extends PyInspection {
         )
         .forEach(
           referenceExpression -> {
-            final String message = PyPsiBundle.message("INSP.protected.member.name.not.declared.in.all", referenceExpression.getName());
+            final var message = PyPsiBundle.problemMessage("INSP.protected.member.name.not.declared.in.all", referenceExpression.getName());
             registerProblem(referenceExpression, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         );

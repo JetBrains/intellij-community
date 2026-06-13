@@ -17,6 +17,7 @@ import com.jetbrains.python.PyStringFormatParser.NewStyleSubstitutionChunk
 import com.jetbrains.python.PyStringFormatParser.PercentSubstitutionChunk
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.inspections.quickfix.PyAddSpecifierToFormatQuickFix
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.LanguageLevel
@@ -275,7 +276,7 @@ class PyStringFormatInspection : PyInspection() {
           if (!myUsedMappingKeys[key]!!) {
             unresolved++
             if (unresolved > referenceKeyNumber) {
-              registerProblem(problemTarget, PyPsiBundle.message("INSP.str.format.key.has.no.argument", key))
+              registerProblem(problemTarget, PyPsiBundle.problemMessage("INSP.str.format.key.has.no.argument", key))
               break
             }
           }
@@ -303,6 +304,11 @@ class PyStringFormatInspection : PyInspection() {
       }
 
       fun registerProblem(problemTarget: PsiElement, @InspectionMessage message: @InspectionMessage String) {
+        isProblem = true
+        myVisitor.registerProblem(problemTarget, message)
+      }
+
+      fun registerProblem(problemTarget: PsiElement, message: ProblemMessage) {
         isProblem = true
         myVisitor.registerProblem(problemTarget, message)
       }
@@ -544,7 +550,7 @@ class PyStringFormatInspection : PyInspection() {
           NEW_STYLE_FORMAT_CONVERSIONS[conversionType]?.let {
             specifyTypes(supportedTypes, it)
             hasTypeOptions = true
-          } ?: registerProblem(myProblemTarget, PyPsiBundle.message("INSP.unsupported.format.character", conversionType))
+          } ?: registerProblem(myProblemTarget, PyPsiBundle.problemMessage("INSP.unsupported.format.character", conversionType))
         }
 
         if (supportedTypes.isNotEmpty()) {
@@ -564,8 +570,8 @@ class PyStringFormatInspection : PyInspection() {
           if (chunkMapping != null) {
             registerProblem(
               myProblemTarget,
-              if (hasElementIndex) PyPsiBundle.message("INSP.too.few.args.for.fmt.string")
-              else PyPsiBundle.message(
+              if (hasElementIndex) PyPsiBundle.problemMessage("INSP.too.few.args.for.fmt.string")
+              else PyPsiBundle.problemMessage(
                 "INSP.str.format.key.has.no.argument",
                 chunkMapping
               )
@@ -581,6 +587,11 @@ class PyStringFormatInspection : PyInspection() {
       }
 
       fun registerProblem(problemTarget: PsiElement, @InspectionMessage message: @InspectionMessage String) {
+        isProblem = true
+        myVisitor.registerProblem(problemTarget, message)
+      }
+
+      fun registerProblem(problemTarget: PsiElement, message: ProblemMessage) {
         isProblem = true
         myVisitor.registerProblem(problemTarget, message)
       }
@@ -664,7 +675,7 @@ class PyStringFormatInspection : PyInspection() {
 
       if (typeChar !in VALID_NON_TYPE_FORMAT_SPEC_ENDINGS) {
         val typeCharElement = formatPart.findElementAt(trimmedSpec.length - 1) ?: formatPart
-        registerProblem(typeCharElement, PyPsiBundle.message("INSP.str.format.invalid.format.spec", typeChar))
+        registerProblem(typeCharElement, PyPsiBundle.problemMessage("INSP.str.format.invalid.format.spec", typeChar))
         return
       }
 
@@ -715,7 +726,7 @@ class PyStringFormatInspection : PyInspection() {
       val reportElement = formatPart.findElementAt(reportOffset) ?: formatPart
       val incompatibleTypeName =
         incompatibleTypes.joinToString(" | ") { PythonDocumentationProvider.getTypeName(PyLiteralType.upcastLiteralToClass(it), myTypeEvalContext) }
-      registerProblem(reportElement, PyPsiBundle.message("INSP.str.format.code.not.supported", reportChar, incompatibleTypeName))
+      registerProblem(reportElement, PyPsiBundle.problemMessage("INSP.str.format.code.not.supported", reportChar, incompatibleTypeName))
     }
 
     /**

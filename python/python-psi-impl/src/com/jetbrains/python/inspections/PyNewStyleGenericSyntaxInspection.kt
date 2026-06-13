@@ -16,7 +16,6 @@ import com.jetbrains.python.psi.PyAssignmentExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyListLiteralExpression
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyRecursiveElementVisitor
@@ -77,7 +76,7 @@ class PyNewStyleGenericSyntaxInspection : PyInspection() {
             node.getTypeParameterType()?.let {
               if (scopeOwner != it.scopeOwner || it.declarationElement is PyTargetExpression) {
                 registerProblem(node,
-                                PyPsiBundle.message("INSP.new.style.type.parameter.out.of.scope", node.name),
+                                PyPsiBundle.problemMessage("INSP.new.style.type.parameter.out.of.scope", node.name),
                                 ProblemHighlightType.WARNING)
               }
             }

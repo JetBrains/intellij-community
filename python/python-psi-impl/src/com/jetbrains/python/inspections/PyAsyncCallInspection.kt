@@ -2,6 +2,7 @@
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
@@ -49,8 +50,8 @@ class PyAsyncCallInspection : PyInspection() {
         }
         // no need to check whether await or yield from is missed, because it's PyCallExpression already, not PyPrefixExpression
         val functionName = getCalledCoroutineName(expr, resolveContext) ?: return
-        registerProblem(node, PyPsiBundle.message("INSP.NAME.coroutine.is.not.awaited", functionName),
-                        PyAddAwaitCallForCoroutineFix(awaitableType))
+        registerProblem(node, PyPsiBundle.problemMessage("INSP.NAME.coroutine.is.not.awaited", functionName),
+                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING, PyAddAwaitCallForCoroutineFix(awaitableType))
       }
     }
 

@@ -97,7 +97,7 @@ public final class PyArgumentListInspection extends PyInspection {
         final PyCallableParameter allegedFirstParam = ContainerUtil.getOrElse(params, firstParamOffset - 1, null);
         if (allegedFirstParam == null || allegedFirstParam.isKeywordContainer()) {
           // no parameters left to pass function implicitly, or wrong param type
-          registerProblem(deco, PyPsiBundle.message("INSP.function.lacks.positional.argument",
+          registerProblem(deco, PyPsiBundle.problemMessage("INSP.function.lacks.positional.argument",
                                                     callable.getName())); // TODO: better names for anon lambdas
         }
         else { // possible unfilled params
@@ -109,7 +109,7 @@ public final class PyArgumentListInspection extends PyInspection {
             // param tuples, non-starred or non-default won't do
             if (!parameter.isKeywordContainer() && !parameter.isPositionalContainer() && !parameter.hasDefaultValue()) {
               final String parameterName = parameter.getName();
-              registerProblem(deco, PyPsiBundle.message("INSP.parameter.unfilled", parameterName == null ? "(...)" : parameterName));
+              registerProblem(deco, PyPsiBundle.problemMessage("INSP.parameter.unfilled", parameterName == null ? "(...)" : parameterName));
             }
           }
         }
@@ -232,7 +232,7 @@ public final class PyArgumentListInspection extends PyInspection {
       if (!param.hasDefaultValue()) {
         String name = param.getName();
         if (name != null) {
-          registerProblem(holder, rpar, PyPsiBundle.message("INSP.parameter.unfilled", name), highlightOverride);
+          registerProblem(holder, rpar, PyPsiBundle.problemMessage("INSP.parameter.unfilled", name), highlightOverride);
         }
       }
     }
@@ -249,6 +249,17 @@ public final class PyArgumentListInspection extends PyInspection {
     else {
       holder.registerProblem(element, message, fixes);
     }
+  }
+
+  private static void registerProblem(@NotNull ProblemsHolder holder,
+                                      @NotNull PsiElement element,
+                                      @NotNull PyInspectionMessages.ProblemMessage message,
+                                      @Nullable ProblemHighlightType highlightOverride) {
+    ProblemsHolder.ProblemBuilder builder = holder.problem(element, message.description()).tooltip(message.tooltip());
+    if (highlightOverride != null) {
+      builder = builder.highlight(highlightOverride);
+    }
+    builder.register();
   }
 
   private static boolean objectMethodCallViaSuper(@NotNull PyCallExpression call, @NotNull PyFunction function) {
@@ -367,7 +378,7 @@ public final class PyArgumentListInspection extends PyInspection {
               .of(mappings.get(0).getUnmappedParameters())
               .map(PyCallableParameter::getName)
               .filter(Objects::nonNull)
-              .forEach(name -> registerProblem(holder, psi, PyPsiBundle.message("INSP.parameter.unfilled", name), highlightOverride));
+              .forEach(name -> registerProblem(holder, psi, PyPsiBundle.problemMessage("INSP.parameter.unfilled", name), highlightOverride));
           }
         }
       );

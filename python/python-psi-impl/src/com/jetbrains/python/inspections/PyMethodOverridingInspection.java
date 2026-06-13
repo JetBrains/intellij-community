@@ -2,12 +2,16 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam;
+import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -66,16 +70,25 @@ public final class PyMethodOverridingInspection extends PyInspection {
       String methodSignature = containingClass.getName() + "." + function.getName() + "()";
       String baseClassName = baseClass != null ? baseClass.getName() : "";
 
+      // The method signature names `function`; the base class name names `baseClass` (when present).
+      CodifiedParam methodSignatureParam = CodifiedParam.ofReference(function, methodSignature);
+      Object baseClassParam = baseClass != null ? CodifiedParam.ofReference(baseClass, baseClassName) : baseClassName;
+
       PyCallableParameterListTypeImpl baseMethodInputSignature =
         new PyCallableParameterListTypeImpl(baseMethod.getParameters(myTypeEvalContext));
       PyCallableParameterListTypeImpl functionInputSignature =
         new PyCallableParameterListTypeImpl(function.getParameters(myTypeEvalContext));
 
       if (!PyTypeChecker.match(baseMethodInputSignature, functionInputSignature, myTypeEvalContext)) {
-        String msg = PyPsiBundle.message("INSP.signature.mismatch", methodSignature, baseClassName);
+        ProblemMessage msg = PyPsiBundle.problemMessage("INSP.signature.mismatch", methodSignatureParam, baseClassParam);
 
-        registerProblem(function.getParameterList(), msg,
-                        PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(function, baseMethod));
+        LocalQuickFix fix = PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(function, baseMethod);
+        if (fix != null) {
+          registerProblem(function.getParameterList(), msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
+        }
+        else {
+          registerProblem(function.getParameterList(), msg);
+        }
       }
 
       PyAnnotation annotation = function.getAnnotation();
@@ -88,7 +101,7 @@ public final class PyMethodOverridingInspection extends PyInspection {
       PyType overriddenReturnType = myTypeEvalContext.getReturnType(function);
 
       if (!PyTypeChecker.match(baseMethodReturnType, overriddenReturnType, myTypeEvalContext)) {
-        String msg = PyPsiBundle.message("INSP.overridden.method.return.type.mismatch", methodSignature, baseClassName);
+        ProblemMessage msg = PyPsiBundle.problemMessage("INSP.overridden.method.return.type.mismatch", methodSignatureParam, baseClassParam);
         registerProblem(returnExpression, msg);
       }
     }

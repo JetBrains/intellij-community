@@ -38,6 +38,7 @@ import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority
 import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
 import com.jetbrains.python.inspections.PyTypeHintsInspection.Helper.isValidTypeHint
 import com.jetbrains.python.inspections.quickfix.PyUnpackTypeVarTupleQuickFix
 import com.jetbrains.python.psi.FutureFeature
@@ -272,8 +273,8 @@ class PyTypeHintsInspection : PyInspection() {
         val hasImportFromFuture = (node.containingFile as? PyFile)?.hasImportFromFuture(FutureFeature.ANNOTATIONS) ?: false
         if (PyBuiltinCache.isInBuiltins(qualifier) && qualifier.name in PyTypingTypeProvider.TYPING_BUILTINS_GENERIC_ALIASES &&
             !hasImportFromFuture) {
-          registerProblem(node, PyPsiBundle.message("INSP.type.hints.builtin.cannot.be.parameterized.directly", qualifier.name),
-                          ReplaceWithTypingGenericAliasQuickFix())
+          registerProblem(node, PyPsiBundle.problemMessage("INSP.type.hints.builtin.cannot.be.parameterized.directly", qualifier.name),
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, ReplaceWithTypingGenericAliasQuickFix())
         }
       }
     }
@@ -521,11 +522,11 @@ class PyTypeHintsInspection : PyInspection() {
           val parameter = parameters[parameterIndex]
           val parameterType = parameter.getType(myTypeEvalContext)
           if (!PyTypeChecker.match(parameterType, returnType.narrowedType, myTypeEvalContext)) {
-            registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.type.hints.typeIs.does.not.match",
-                                                                     PythonDocumentationProvider.getTypeName(returnType.narrowedType,
-                                                                                                             myTypeEvalContext),
-                                                                     PythonDocumentationProvider.getTypeName(parameterType,
-                                                                                                             myTypeEvalContext)))
+            registerProblem(node.nameIdentifier, PyPsiBundle.problemMessage("INSP.type.hints.typeIs.does.not.match",
+                                                                            PythonDocumentationProvider.getTypeName(returnType.narrowedType,
+                                                                                                                    myTypeEvalContext),
+                                                                            PythonDocumentationProvider.getTypeName(parameterType,
+                                                                                                                    myTypeEvalContext)))
           }
         }
       }
@@ -705,12 +706,12 @@ class PyTypeHintsInspection : PyInspection() {
       val defaultType = typeRef.get()
       when (defaultType) {
         is PyParamSpecType -> registerProblem(defaultExpression,
-                                              PyPsiBundle.message("INSP.type.hints.cannot.be.used.in.default.type.of.type.var",
-                                                                  "ParamSpec"),
+                                              PyPsiBundle.problemMessage("INSP.type.hints.cannot.be.used.in.default.type.of.type.var",
+                                                                         "ParamSpec"),
                                               effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
         is PyTypeVarTupleType -> registerProblem(defaultExpression,
-                                                 PyPsiBundle.message("INSP.type.hints.cannot.be.used.in.default.type.of.type.var",
-                                                                     "TypeVarTuple"),
+                                                 PyPsiBundle.problemMessage("INSP.type.hints.cannot.be.used.in.default.type.of.type.var",
+                                                                            "TypeVarTuple"),
                                                  effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
         else -> validateTypeVarDefaultType(typeVarType, defaultType, defaultExpression)
       }
@@ -865,7 +866,7 @@ class PyTypeHintsInspection : PyInspection() {
               PyTypingTypeProvider.SELF_EXT,
                 -> {
                 val shortName = it.substringAfterLast('.')
-                registerProblem(base, PyPsiBundle.message("INSP.type.hints.type.cannot.be.used.with.instance.class.checks", shortName),
+                registerProblem(base, PyPsiBundle.problemMessage("INSP.type.hints.type.cannot.be.used.with.instance.class.checks", shortName),
                                 ProblemHighlightType.GENERIC_ERROR)
               }
             }
@@ -950,7 +951,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun registerParametrizedGenericsProblem(qName: String, base: PsiElement) {
       val shortName = qName.substringAfterLast('.')
-      registerProblem(base, PyPsiBundle.message("INSP.type.hints.type.cannot.be.used.with.instance.class.checks", shortName),
+      registerProblem(base, PyPsiBundle.problemMessage("INSP.type.hints.type.cannot.be.used.with.instance.class.checks", shortName),
                       ProblemHighlightType.GENERIC_ERROR)
     }
 
@@ -1056,8 +1057,8 @@ class PyTypeHintsInspection : PyInspection() {
           .joinToString(", ")
 
         registerProblem(cls.superClassExpressionList,
-                        PyPsiBundle.message("INSP.type.hints.generic.or.protocol.should.list.all.type.variables",
-                                            nonGenericTypeVarsNames),
+                        PyPsiBundle.problemMessage("INSP.type.hints.generic.or.protocol.should.list.all.type.variables",
+                                                   nonGenericTypeVarsNames),
                         ProblemHighlightType.GENERIC_ERROR)
       }
     }
@@ -1123,11 +1124,11 @@ class PyTypeHintsInspection : PyInspection() {
 
           val previous = seenSubstitutions.putIfAbsent(pyClass, concreteType)
           if (previous != null && !sameTypeArguments(previous.elementTypes, concreteType.elementTypes)) {
-            val msg = PyPsiBundle.message(
+            val msg = PyPsiBundle.problemMessage(
               "INSP.type.hints.inconsistent.type.var.order",
               pyClass.name ?: "<unknown>",
-              PythonDocumentationProvider.getTypeName(previous, myTypeEvalContext),
-              PythonDocumentationProvider.getTypeName(concreteType, myTypeEvalContext),
+              CodifiedParam.ofType(previous, superClassExpression, myTypeEvalContext),
+              CodifiedParam.ofType(concreteType, superClassExpression, myTypeEvalContext),
             )
             registerProblem(superClassExpression, msg, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
             return
@@ -1204,8 +1205,8 @@ class PyTypeHintsInspection : PyInspection() {
         val typeParamsUsedByOuterScopes = getTypeParametersUsedByOuterScope(typeParameterListOwner).toSet()
         for (typeParameter in typeParameterList.typeParameters) {
           if (typeParameter.name in typeParamsUsedByOuterScopes) {
-            registerProblem(typeParameter, PyPsiBundle.message("INSP.type.hints.type.parameter.is.already.in.use.by.outer.scope",
-                                                               typeParameter.name))
+            registerProblem(typeParameter, PyPsiBundle.problemMessage("INSP.type.hints.type.parameter.is.already.in.use.by.outer.scope",
+                                                                      typeParameter.name))
           }
         }
       }
@@ -1382,8 +1383,8 @@ class PyTypeHintsInspection : PyInspection() {
         if (PyTypingTypeProvider.isGeneric(declaration, myTypeEvalContext) &&
             declaration.findMethodByName(PyNames.CLASS_GETITEM, false, myTypeEvalContext) == null) {
           registerProblem(node.indexExpression,
-                          PyPsiBundle.message("INSP.type.hints.type.arguments.class.is.already.parameterized",
-                                              declaration.name))
+                          PyPsiBundle.problemMessage("INSP.type.hints.type.arguments.class.is.already.parameterized",
+                                                     CodifiedParam.ofReference(declaration)))
         }
         return
       }
@@ -1399,9 +1400,9 @@ class PyTypeHintsInspection : PyInspection() {
 
       val typeParameterListRepresentation = typeParameters.joinToString(prefix = "[", postfix = "]") { it.name!! }
 
-      val message = PyPsiBundle.message("INSP.type.hints.type.arguments.do.not.match.type.parameters.of.class",
-                                        typeParameterListRepresentation,
-                                        genericDefinitionType.pyClass.name)
+      val message = PyPsiBundle.problemMessage("INSP.type.hints.type.arguments.do.not.match.type.parameters.of.class",
+                                               typeParameterListRepresentation,
+                                               genericDefinitionType.pyClass.name)
 
       checkTypeArgumentsMatchTypeParameters(node, typeParameters, typeArguments, message)
     }
@@ -1421,7 +1422,7 @@ class PyTypeHintsInspection : PyInspection() {
       val typeArguments = checkGenericTypeArguments(node)
       val typeParameters = generics.allTypeParameters.distinct()
       if (typeArguments != null) {
-        val message = PyPsiBundle.message("INSP.type.hints.type.arguments.do.not.match.type.parameters.of.alias", declaration.name)
+        val message = PyPsiBundle.problemMessage("INSP.type.hints.type.arguments.do.not.match.type.parameters.of.alias", declaration.name)
         checkTypeArgumentsMatchTypeParameters(node, typeParameters, typeArguments, message)
       }
     }
@@ -1440,7 +1441,7 @@ class PyTypeHintsInspection : PyInspection() {
       }
       val typeArguments = checkGenericTypeArguments(node)
       if (typeArguments != null) {
-        val message = PyPsiBundle.message("INSP.type.hints.type.arguments.do.not.match.type.parameters.of.alias", declaration.name)
+        val message = PyPsiBundle.problemMessage("INSP.type.hints.type.arguments.do.not.match.type.parameters.of.alias", declaration.name)
         checkTypeArgumentsMatchTypeParameters(node, generics, typeArguments, message)
       }
     }
@@ -1568,16 +1569,16 @@ class PyTypeHintsInspection : PyInspection() {
       for (typeExpr in typeExpressions) {
         if (typeExpr !is PyReferenceExpression && typeExpr !is PyStarExpression && typeExpr !is PySubscriptionExpression) {
           registerProblem(typeExpr,
-                          PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables",
-                                              if (isProtocol) 1 else 0),
+                          PyPsiBundle.problemMessage("INSP.type.hints.parameters.to.generic.must.all.be.type.variables",
+                                                     if (isProtocol) 1 else 0),
                           ProblemHighlightType.GENERIC_ERROR)
           continue
         }
         val typeParameterType = Ref.deref(PyTypingTypeProvider.getType(typeExpr, myTypeEvalContext))
         if (typeParameterType !is PyTypeParameterType) {
           registerProblem(typeExpr,
-                          PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables",
-                                              if (isProtocol) 1 else 0),
+                          PyPsiBundle.problemMessage("INSP.type.hints.parameters.to.generic.must.all.be.type.variables",
+                                                     if (isProtocol) 1 else 0),
                           ProblemHighlightType.GENERIC_ERROR)
           continue
         }
@@ -1785,8 +1786,8 @@ class PyTypeHintsInspection : PyInspection() {
           val actualSelfTypeDescription = PythonDocumentationProvider.getTypeName(actualSelfType, myTypeEvalContext)
           val commentSelfTypeDescription = PythonDocumentationProvider.getTypeName(commentSelfType, myTypeEvalContext)
 
-          registerProblem(node.typeComment, PyPsiBundle.message("INSP.type.hints.type.self.not.supertype.its.class",
-                                                                commentSelfTypeDescription, actualSelfTypeDescription))
+          registerProblem(node.typeComment, PyPsiBundle.problemMessage("INSP.type.hints.type.self.not.supertype.its.class",
+                                                                       commentSelfTypeDescription, actualSelfTypeDescription))
         }
       }
     }
@@ -1860,7 +1861,7 @@ class PyTypeHintsInspection : PyInspection() {
           else -> {
             if (index == argsIdx + 1 && paramSpecArgs != null) {
               registerProblem(param,
-                              PyPsiBundle.message("INSP.type.hints.paramspec.no.params.allowed.between.components", paramSpecArgs.refName),
+                              PyPsiBundle.problemMessage("INSP.type.hints.paramspec.no.params.allowed.between.components", paramSpecArgs.refName),
                               effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
             }
             if (component != null) {
@@ -1887,20 +1888,20 @@ class PyTypeHintsInspection : PyInspection() {
       if (first != null) {
         if (second == null) {
           registerProblem(first.annotationValue,
-                          PyPsiBundle.message("INSP.type.hints.paramspec.components.must.be.paired", first.refName),
+                          PyPsiBundle.problemMessage("INSP.type.hints.paramspec.components.must.be.paired", first.refName),
                           effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
         }
         val isWrongComponent = if (firstShouldBeArgs) first.isKwargs() else first.isArgs()
         if (isWrongComponent) {
           val msg = if (firstShouldBeArgs)
-            PyPsiBundle.message("INSP.type.hints.paramspec.kwargs.must.annotate.star.kwargs", first.refName)
+            PyPsiBundle.problemMessage("INSP.type.hints.paramspec.kwargs.must.annotate.star.kwargs", first.refName)
           else
-            PyPsiBundle.message("INSP.type.hints.paramspec.args.must.annotate.star.args", first.refName)
+            PyPsiBundle.problemMessage("INSP.type.hints.paramspec.args.must.annotate.star.args", first.refName)
 
           registerProblem(first.annotationValue, msg, effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
         }
         if (!isParamSpecInScope(first.refName, function)) {
-          registerProblem(first.qualifier, PyPsiBundle.message("INSP.type.hints.paramspec.not.in.scope", first.refName),
+          registerProblem(first.qualifier, PyPsiBundle.problemMessage("INSP.type.hints.paramspec.not.in.scope", first.refName),
                           effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
         }
       }
@@ -1921,7 +1922,7 @@ class PyTypeHintsInspection : PyInspection() {
       node: PySubscriptionExpression,
       typeParameters: List<PyType>,
       typeArguments: List<PyType?>,
-      @InspectionMessage message: String,
+      message: PyInspectionMessages.ProblemMessage,
     ) {
       val flatIndexExpr = PyPsiUtils.flattenParens(node.indexExpression)
       val mapping = PyTypeParameterMapping.mapByShape(typeParameters,

@@ -82,7 +82,8 @@ public class PyImportReference extends PyReferenceImpl {
   public String getUnresolvedDescription() {
     final PyImportStatement importStatement = PsiTreeUtil.getParentOfType(myElement, PyImportStatement.class);
     if (importStatement != null) {
-      return PyPsiBundle.message("unresolved.import.reference", myElement.getReferencedName());
+      // The template marks the module name with backticks; render them to plain quotes for the description.
+      return PyPsiBundle.problemMessage("unresolved.import.reference", myElement.getReferencedName()).description();
     }
     return super.getUnresolvedDescription();
   }

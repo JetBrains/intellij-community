@@ -169,7 +169,8 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     checkNotNull(actualType) // see PyTypeCheckerInspection.Visitor.analyzeArgument()
     checkNotNull(expectedType) // see PyTypeCheckerInspection.Visitor.analyzeArgument()
 
-    val actualTypeName = PythonDocumentationProvider.getTypeName(actualType, context)
+    val anchor = argumentResult.argument
+    val actualTypeParam = PyInspectionMessages.CodifiedParam.ofType(actualType, anchor, context)
 
     if (expectedType is PyStructuralType) {
       val expectedAttributes = expectedType.attributeNames
@@ -179,39 +180,39 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
         val missingAttributes = Sets.difference<String?>(expectedAttributes, actualAttributes)
         return PyPsiBundle.problemMessage(
           "INSP.type.checker.type.does.not.have.expected.attribute",
-          actualTypeName, missingAttributes.size,
+          actualTypeParam, missingAttributes.size,
           PyInspectionMessages.CodifiedParam.joinNames(missingAttributes.filterNotNull())
         )
       }
     }
 
     val expectedTypeAfterSubstitution = argumentResult.expectedTypeAfterSubstitution
-    val expectedTypeName = PythonDocumentationProvider.getVerboseTypeName(expectedType, context)
-    val expectedSubstitutedName = if (expectedTypeAfterSubstitution != null && expectedTypeAfterSubstitution != expectedType)
-      PythonDocumentationProvider.getTypeName(expectedTypeAfterSubstitution, context)
+    val expectedTypeParam = PyInspectionMessages.CodifiedParam.ofType(expectedType, anchor, context, true)
+    val expectedSubstitutedParam = if (expectedTypeAfterSubstitution != null && expectedTypeAfterSubstitution != expectedType)
+      PyInspectionMessages.CodifiedParam.ofType(expectedTypeAfterSubstitution, anchor, context)
     else
       null
 
     if (matchingProtocolDefinitions(expectedType, actualType, context)) {
-      if (expectedSubstitutedName != null) {
+      if (expectedSubstitutedParam != null) {
         return PyPsiBundle.problemMessage(
           "INSP.type.checker.only.concrete.class.can.be.used.where.matched.protocol.expected",
-          expectedSubstitutedName, expectedTypeName
+          expectedSubstitutedParam, expectedTypeParam
         )
       }
       else {
-        return PyPsiBundle.problemMessage("INSP.type.checker.only.concrete.class.can.be.used.where.protocol.expected", expectedTypeName)
+        return PyPsiBundle.problemMessage("INSP.type.checker.only.concrete.class.can.be.used.where.protocol.expected", expectedTypeParam)
       }
     }
 
-    if (expectedSubstitutedName != null) {
+    if (expectedSubstitutedParam != null) {
       return PyPsiBundle.problemMessage(
-        "INSP.type.checker.expected.matched.type.got.type.instead", expectedSubstitutedName, expectedTypeName,
-        actualTypeName
+        "INSP.type.checker.expected.matched.type.got.type.instead", expectedSubstitutedParam, expectedTypeParam,
+        actualTypeParam
       )
     }
     else {
-      return PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead", expectedTypeName, actualTypeName)
+      return PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead", expectedTypeParam, actualTypeParam)
     }
   }
 
