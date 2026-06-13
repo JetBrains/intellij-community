@@ -55,6 +55,8 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.Collections
 import java.util.Optional
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 import kotlin.jvm.optionals.getOrElse
 
 object PyTypeChecker {
@@ -1413,13 +1415,21 @@ object PyTypeChecker {
     }
   }
 
+  @OptIn(ExperimentalContracts::class)
   @JvmStatic
   fun isUnknown(type: PyType?, context: TypeEvalContext): Boolean {
+    contract {
+      returns(false) implies (type != null)
+    }
     return isUnknown(type, true, context)
   }
 
+  @OptIn(ExperimentalContracts::class)
   @JvmStatic
   fun isUnknown(type: PyType?, genericsAreUnknown: Boolean, context: TypeEvalContext): Boolean {
+    contract {
+      returns(false) implies (type != null)
+    }
     // TODO Don't consider other type parameters unknown (PY-85653)
     // Since Self is always bound, don't consider it unknown, e.g. in Py3TypeCheckerInspectionTest.testSelfAssignedToOtherTypeBad
     if (type == null || (genericsAreUnknown && type is PyTypeParameterType && (type !is PySelfType))) {
