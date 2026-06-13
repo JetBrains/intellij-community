@@ -8,8 +8,14 @@ class ForDsl
 
 fun foo(f: (@Dsl4 ForDsl).() -> Unit) {}
 
+fun withString(f: @Dsl4 String.() -> Unit) {}
+
+fun withString2(f: (@Dsl4 String).() -> Unit) {}
+
 fun test() {
     foo {
 
     }
+    withString {}
+    withString2 {}
 }

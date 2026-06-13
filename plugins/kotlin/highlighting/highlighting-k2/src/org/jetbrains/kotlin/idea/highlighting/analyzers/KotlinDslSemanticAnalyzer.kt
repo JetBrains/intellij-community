@@ -12,11 +12,13 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.successfulFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
+import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -28,7 +30,8 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtExpression
 
-internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) : KotlinFunctionCallSemanticAnalyzer(holder, session) {
+internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: KaSession) :
+    KotlinFunctionCallSemanticAnalyzer(holder, session) {
     override fun visitBinaryExpression(expression: KtBinaryExpression) {
         val referenceExpression = expression.operationReference
         val dslExpressionHighlightType = expressionHighlightType(referenceExpression)
@@ -50,34 +53,39 @@ internal class KotlinDslSemanticAnalyzer(holder: HighlightInfoHolder, session: K
     }
 
     /**
-     * Highlights the expression in case it's a DSL function (it has a single lambda argument),
-     * and its receiver is a DSL class. The receiver is considered to be a DSL class if:
+     * Highlights the expression in case it belongs to a DSL scope. The receiver is considered to be a DSL receiver if:
      * 1) Its type specifier is marked with an annotation, that is marked by a dsl annotation
      * 2) The class or its superclasses' definition is marked by a dsl annotation
      */
     private fun expressionHighlightType(expression: KtExpression): HighlightInfoType? {
         val dslAnnotation = context(session) {
             val functionCall = expression.resolveToCall()?.successfulFunctionCallOrNull() ?: return null
-            // function declaration argument has a dsl marker
+            // function declaration lambda receiver has a dsl marker
 
             // to check function declaration arguments type, rather call site
             // to avoid cases with generics like `apply` those have no dsl markers
             functionCall.symbol.valueParameters.forEach { parameterSymbol ->
-                val receiverType = (parameterSymbol.returnType as? KaFunctionType)?.receiverType
+                val functionType = parameterSymbol.returnType as? KaFunctionType ?: return@forEach
+                val receiverType = functionType.receiverType
                 receiverType?.let { type ->
                     getDslAnnotation(type)?.let { return@context it }
+                    getDslAnnotation(functionType)?.let { return@context it }
                 }
             }
 
-            // function has a dsl marker
             val symbol = functionCall.symbol
+
+            // extension function declaration receiver has a dsl marker
+            (symbol as? KaCallableSymbol)?.receiverType?.let { type ->
+                getDslAnnotation(type)?.let { return@context it }
+            }
 
             // in context of implicit receiver
             val dispatchReceiver = functionCall.dispatchReceiver
             val dispatchReceiverType = (dispatchReceiver as? KaImplicitReceiverValue)?.type as? KaClassType
             dispatchReceiverType?.symbol?.let { firstDslAnnotationOrNull(it) }?.let { return@context it }
 
-            // in case of ext function
+            // function has a dsl marker
             firstDslAnnotationOrNull(symbol)
         } ?: return null
 
