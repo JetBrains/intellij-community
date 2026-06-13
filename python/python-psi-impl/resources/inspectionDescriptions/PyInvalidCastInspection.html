@@ -25,13 +25,17 @@ cast(int, <b>cast(object, "a")</b>)  # ok
 cast(int, object())    # a valid down cast
 cast(object, 1)        # a valid up cast
 
-# While the following is an invalid cast, as <code>list</code> is invariant. It's not currently supported by this inspection
+# By default, the variance of generic type arguments is ignored, so the following is not reported,
+# even though <code>list</code> is invariant
 int_list = [1, 2, 3]
-cast(list[object], int_list)
+cast(list[object], int_list)  # ok
 </code></pre>
 <!-- tooltip end -->
-<p>The inspection relies on static type information; when a type is unknown, no warning is reported.
+<p>The inspection relies on static type information; when a type is unknown, no warning is reported.</p>
 
-  Variance of generic types is not yet considered.</p>
+<p>Use the <b>Ignore variance of generic type arguments</b> option to control whether generic type arguments are taken
+  into account. When enabled (the default), parameterized types are compared by their base class only, so a cast such as
+  <code>cast(list[object], int_list)</code> is allowed. Disable it to also report casts that differ only in their
+  (invariant) type arguments.</p>
 </body>
 </html>

@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.options.OptPane
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix
 import com.intellij.openapi.project.Project
@@ -17,16 +18,26 @@ import com.jetbrains.python.psi.PyElementGenerator
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyClassTypeImpl
+import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeUtil.isOverlappingWith
+import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyInvalidCastInspection : PyInspection() {
+  @JvmField
+  var ignoreGenericVariance: Boolean = true
+
+  override fun getOptionsPane(): OptPane {
+    return OptPane.pane(
+      OptPane.checkbox("ignoreGenericVariance", PyPsiBundle.message("INSP.invalid.cast.ignore.generic.variance"))
+    )
+  }
+
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val context = PyInspectionVisitor.getContext(session)
-    if (context.usesExternalTypeEngine) {
-      return PsiElementVisitor.EMPTY_VISITOR
-    }
+    val ignoreGenericVariance = ignoreGenericVariance
     return object : PyInspectionVisitor(holder, context) {
       override fun visitPyCallExpression(callExpression: PyCallExpression) {
         val callees = callExpression.multiResolveCalleeFunction(resolveContext)
@@ -43,6 +54,12 @@ class PyInvalidCastInspection : PyInspection() {
         val actualType = myTypeEvalContext.getType(args[1])
 
         if (targetType.isOverlappingWith(actualType, myTypeEvalContext)) return
+        // When variance is ignored, generic type arguments are erased before the overlap check,
+        // so e.g. casting 'list[int]' to 'list[object]' is treated as overlapping.
+        if (ignoreGenericVariance &&
+            targetType.eraseGenericParameters().isOverlappingWith(actualType.eraseGenericParameters(), myTypeEvalContext)) {
+          return
+        }
         val fromName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
         val toName = PythonDocumentationProvider.getVerboseTypeName(targetType, myTypeEvalContext)
 
@@ -79,6 +96,17 @@ private class AddIntermediateCastQuickFix(private val typeText: String) : PsiUpd
     val newExpr = generator.createExpressionFromText(langLevel, castExprText)
     expr.replace(newExpr)
   }
+}
+
+/**
+ * Erases generic type arguments so that parameterized types are compared by their base class only,
+ * making the overlap check insensitive to the variance of generic parameters
+ * (e.g. `list[int]` becomes plain `list`). Union members are erased element-wise.
+ */
+private fun PyType?.eraseGenericParameters(): PyType? = when (this) {
+  is PyUnionType -> this.map { it.eraseGenericParameters() }
+  is PyCollectionType -> PyClassTypeImpl(this.pyClass, this.isDefinition)
+  else -> this
 }
 
 private fun computeSuggestedIntermediateTypeName(targetType: PyType?, actualType: PyType?, context: TypeEvalContext): String {

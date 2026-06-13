@@ -14,11 +14,12 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
         from typing import cast
 
         <warning descr="Cast of type 'Literal[\"a\"]' to type 'int' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(int, "a")</warning>
-        <warning descr="Cast of type 'list[str]' to type 'list[int]' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(list[int], ["a"])</warning>
 
         cast(int, object())  # ok
         cast(object, 1)  # ok
-        
+
+        # variance of generic type arguments is ignored by default
+        cast(list[int], ["a"])  # ok
         lint = [1, 2, 3]
         cast(list[object], lint)  # ok
       """.trimIndent()
@@ -56,19 +57,40 @@ class PyInvalidCastInspectionTest : PyInspectionTestCase() {
   }
 
   /**
-   * test that normally castable generics will report an error if they are invariant
+   * test that the variance of invariant generics is ignored by default
    */
-  fun `test generic variance`() {
+  fun `test generic variance ignored by default`() {
     doTestByText(
       """
         from typing import cast, Sequence
 
         lint = [1, 2, 3]
-        cast(list[object], lint)
+        cast(list[object], lint)  # ok
 
         cast(Sequence[object], lint)  # ok
       """.trimIndent()
     )
+  }
+
+  /**
+   * test that invariant generics are reported when the "ignore variance" option is disabled
+   */
+  fun `test generic variance reported when option disabled`() {
+    val inspection = PyInvalidCastInspection()
+    inspection.ignoreGenericVariance = false
+    myFixture.configureByText(
+      PythonFileType.INSTANCE,
+      """
+        from typing import cast, Sequence
+
+        lint = [1, 2, 3]
+        <warning descr="Cast of type 'list[int]' to type 'list[object]' may be a mistake because they are not in the same inheritance hierarchy. If this was intentional, cast the expression to 'object' first.">cast(list[object], lint)</warning>
+
+        cast(Sequence[object], lint)  # ok
+      """.trimIndent()
+    )
+    myFixture.enableInspections(inspection)
+    myFixture.checkHighlighting(isWarning, isInfo, isWeakWarning)
   }
 
   fun `test quickfix add intermediate cast`() {
