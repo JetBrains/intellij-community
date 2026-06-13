@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.PyPrefixExpression
 import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySetCompExpression
 import com.jetbrains.python.psi.PySetLiteralExpression
+import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleExpression
@@ -304,7 +305,12 @@ class PyLiteralType private constructor(
         return PyCollectionTypeImpl.createTypeByQName(anchor, PyNames.DICT, false, listOf(keyType, valueType))
       }
 
-      private fun promoteTuple(tupleExpression: PyTupleExpression): PyTupleType? {
+      private fun promoteTuple(tupleExpression: PyTupleExpression): PyType? {
+        // Per-element promotion would collapse a starred element to a single `Any` slot, so defer to regular
+        // inference, which expands the star while still inferring literals for the fixed elements.
+        if (tupleExpression.elements.any { it is PyStarExpression }) {
+          return context.getType(tupleExpression)
+        }
         val elementTypes = tupleExpression.elements.map { promoteToType(/*TODO*/null, it) }
         return PyTupleType.create(tupleExpression, elementTypes)
       }
