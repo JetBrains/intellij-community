@@ -38,6 +38,8 @@ interface NewRdCompletionSupport {
    */
   fun noPsiAvailable(editor: Editor)
 
+  fun isBackendCompletionActionAvailableImpl(editor: Editor): Boolean
+
   companion object {
     /**
      * @return true if `remdev.completion.on.frontend` registry flag is enabled AND this is a host or a client of a remoteDev session.
@@ -59,6 +61,9 @@ interface NewRdCompletionSupport {
     fun getInstance(): NewRdCompletionSupport {
       return serviceOrNull<NewRdCompletionSupport>() ?: NoOpNewCompletionSupport
     }
+
+    @JvmStatic
+    fun isBackendCompletionActionAvailableInEditor(editor: Editor): Boolean = getInstance().isBackendCompletionActionAvailableImpl(editor)
   }
 }
 
@@ -72,4 +77,6 @@ private object NoOpNewCompletionSupport : NewRdCompletionSupport {
   override fun isNewFrontendLookup(lookup: Lookup): Boolean = false
 
   override fun noPsiAvailable(editor: Editor) {}
+
+  override fun isBackendCompletionActionAvailableImpl(editor: Editor): Boolean = false
 }
