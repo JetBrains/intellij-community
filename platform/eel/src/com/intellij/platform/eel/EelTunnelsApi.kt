@@ -15,7 +15,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * API for sockets. Use [hostAddressBuilder] to create arguments.
+ * API for sockets. Use [HostAddress.Builder] to create arguments.
  */
 @ApiStatus.Experimental
 sealed interface EelTunnelsApi {
@@ -25,7 +25,7 @@ sealed interface EelTunnelsApi {
    * is accepted, the IDE communicates to the remote client via a pair of Kotlin channels.
    *
    * Packets sent to the channel and received from the channel may be split and/or concatenated.
-   * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+   * The packets may be split only if their size exceeds `RECOMMENDED_MAX_PACKET_SIZE`.
    *
    * Local implementation should work for **nix and all modern Windows.
    *
@@ -76,7 +76,7 @@ sealed interface EelTunnelsApi {
   /**
    * **For applied usages, consider using [withConnectionToRemotePort]**.
    *
-   * Creates a connection to a TCP socket to a named host specified by [address].
+   * Creates a connection to a TCP socket to a named host specified by the [HostAddress].
    *
    * If an error occurs during establishment of the connection, an [EelConnectionError] will be thrown.
    * Otherwise, a [Connection] object is returned, which means that the connection is ready to use.
@@ -85,7 +85,7 @@ sealed interface EelTunnelsApi {
    * which allow communicating to a remote server from the IDE side.
    *
    * Packets sent to the channel and received from the channel may be split and/or concatenated.
-   * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+   * The packets may be split only if their size exceeds `RECOMMENDED_MAX_PACKET_SIZE`.
    *
    * If the connection gets closed from the server, then the channels also get closed in the sense of [SendChannel.close].
    *
@@ -96,7 +96,7 @@ sealed interface EelTunnelsApi {
    *
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    *
-   * To configure a socket before connection use [configureSocketBeforeConnection]. After that, use [Connection.configureSocket]
+   * To configure a socket before connection use [GetConnectionToRemotePortArgs.configureSocketBeforeConnection]. After that, use [Connection.configureSocket]
    */
   @Throws(EelConnectionError::class)
   @ThrowsChecked(EelConnectionError::class)
@@ -180,7 +180,7 @@ sealed interface EelTunnelsApi {
 
       /**
        * Sets timeout for connecting to remote host.
-       * If the connection could not be established before [timeout], then [EelConnectionError.ConnectionTimeout] would be thrown
+       * If the connection could not be established before [timeout], then an [EelConnectionError] would be thrown
        * by [EelTunnelsApi.getConnectionToRemotePort].
        *
        * Default value: 10 seconds.
@@ -253,7 +253,7 @@ sealed interface EelTunnelsApi {
   /**
    * **For applied usages, please consider [withConnectionToRemotePort]**.
    *
-   * Accepts remote connections to a named host specified by [address].
+   * Accepts remote connections to a named host specified by the [HostAddress].
    *
    * If an error occurs during creation of the server, an [EelConnectionError] will be thrown.
    * Otherwise, a [ConnectionAcceptor] object is returned, which means that the server was created successfully.
@@ -261,7 +261,7 @@ sealed interface EelTunnelsApi {
    * Locally, the server exists as a channel of [Connection]s, which allows imitating a server on the IDE side.
    *
    * Packets sent to the channels and received from the channel may be split and/or concatenated.
-   * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+   * The packets may be split only if their size exceeds `RECOMMENDED_MAX_PACKET_SIZE`.
    *
    * If the connections get closed, then the channels also get closed in the sense of [SendChannel.close].
    *

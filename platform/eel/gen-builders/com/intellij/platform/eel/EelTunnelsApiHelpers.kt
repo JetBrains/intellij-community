@@ -6,6 +6,8 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelTunnelsApi.Connection
 import com.intellij.platform.eel.EelTunnelsApi.ConnectionAcceptor
+import com.intellij.platform.eel.EelTunnelsApi.GetConnectionToRemotePortArgs
+import com.intellij.platform.eel.EelTunnelsApi.HostAddress
 import com.intellij.platform.eel.EelTunnelsApi.RemoteNetworkException
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.channels.SendChannel
@@ -17,7 +19,7 @@ import kotlin.time.Duration.Companion.seconds
 /**
  * **For applied usages, please consider [withConnectionToRemotePort]**.
  * 
- * Accepts remote connections to a named host specified by [address].
+ * Accepts remote connections to a named host specified by the [HostAddress].
  * 
  * If an error occurs during creation of the server, an [EelConnectionError] will be thrown.
  * Otherwise, a [ConnectionAcceptor] object is returned, which means that the server was created successfully.
@@ -25,7 +27,7 @@ import kotlin.time.Duration.Companion.seconds
  * Locally, the server exists as a channel of [Connection]s, which allows imitating a server on the IDE side.
  * 
  * Packets sent to the channels and received from the channel may be split and/or concatenated.
- * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+ * The packets may be split only if their size exceeds `RECOMMENDED_MAX_PACKET_SIZE`.
  * 
  * If the connections get closed, then the channels also get closed in the sense of [SendChannel.close].
  * 
@@ -46,7 +48,7 @@ fun EelTunnelsApi.getAcceptorForRemotePort(): EelTunnelsApiHelpers.GetAcceptorFo
 /**
  * **For applied usages, consider using [withConnectionToRemotePort]**.
  * 
- * Creates a connection to a TCP socket to a named host specified by [address].
+ * Creates a connection to a TCP socket to a named host specified by the [HostAddress].
  * 
  * If an error occurs during establishment of the connection, an [EelConnectionError] will be thrown.
  * Otherwise, a [Connection] object is returned, which means that the connection is ready to use.
@@ -55,7 +57,7 @@ fun EelTunnelsApi.getAcceptorForRemotePort(): EelTunnelsApiHelpers.GetAcceptorFo
  * which allow communicating to a remote server from the IDE side.
  * 
  * Packets sent to the channel and received from the channel may be split and/or concatenated.
- * The packets may be split only if their size exceeds [com.intellij.platform.ijent.spi.RECOMMENDED_MAX_PACKET_SIZE].
+ * The packets may be split only if their size exceeds `RECOMMENDED_MAX_PACKET_SIZE`.
  * 
  * If the connection gets closed from the server, then the channels also get closed in the sense of [SendChannel.close].
  * 
@@ -66,7 +68,7 @@ fun EelTunnelsApi.getAcceptorForRemotePort(): EelTunnelsApiHelpers.GetAcceptorFo
  * 
  * One should not forget to invoke [Connection.close] when the connection is not needed.
  * 
- * To configure a socket before connection use [configureSocketBeforeConnection]. After that, use [Connection.configureSocket]
+ * To configure a socket before connection use [GetConnectionToRemotePortArgs.configureSocketBeforeConnection]. After that, use [Connection.configureSocket]
  */
 @GeneratedBuilder.Result
 @ApiStatus.Experimental
