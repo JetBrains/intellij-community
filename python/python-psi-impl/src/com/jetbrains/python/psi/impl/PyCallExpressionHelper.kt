@@ -15,6 +15,7 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.ast.PyAstFunction
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyArgumentList
@@ -46,8 +47,6 @@ import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleParameter
 import com.jetbrains.python.psi.PyTypedElement
 import com.jetbrains.python.psi.PyUtil
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.getCalleeType
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -929,6 +928,9 @@ object PyCallExpressionHelper {
       is PySubscriptionExpression -> {
         return multipleResolveCallee(expression as PyReferenceOwner, resolveContext)
       }
+      is PyClass -> {
+        return expression.resolveInitSubclassCallee(resolveContext)
+      }
       else -> {
         val results = mutableListOf<PyCallableType>()
 
@@ -946,6 +948,56 @@ object PyCallExpressionHelper {
         return results
       }
     }
+  }
+
+  /**
+   * Resolves the implicit `__init_subclass__` invoked when [this] is defined.
+   *
+   * Per PEP 487 the keyword arguments of a class definition (other than `metaclass`) are passed to the
+   * `__init_subclass__` of the *parent* classes, so the class's own definition (which targets *its* subclasses)
+   * is excluded and the lookup walks the ancestors' MRO, stopping at the first defining class.
+   * `object.__init_subclass__`, which accepts no arguments, is the implicit fallback.
+   *
+   * The check is skipped when a custom metaclass is involved, since its `__new__`/`__init__` may legitimately
+   * consume the keyword arguments before they reach `__init_subclass__`.
+   */
+  private fun PyClass.resolveInitSubclassCallee(resolveContext: PyResolveContext): List<PyCallableType> {
+    val context = resolveContext.typeEvalContext
+    if (this.hasCustomMetaClass(context)) return emptyList()
+    // TypedDict class-definition keyword arguments (total, closed, ...) are validated by PyTypedDictInspection.
+    if (isTypingTypedDictInheritor(context)) return emptyList()
+
+    for (ancestor in getAncestorTypes(context)) {
+      if (ancestor !is PyClassType) continue
+      val resolved = ancestor.resolveMember(PyNames.INIT_SUBCLASS, null, AccessDirection.READ, resolveContext, false)
+      if (resolved.isNullOrEmpty()) continue
+      return resolved
+        .mapNotNull { it.element as? PyTypedElement }
+        .mapNotNull { context.getType(it) as? PyCallableType }
+        .map { it.withImplicitClassParameter(context) }
+    }
+    return emptyList()
+  }
+
+  private fun PyClass.hasCustomMetaClass(context: TypeEvalContext): Boolean {
+    val classType = context.getType(this) as? PyClassType ?: return false
+    val metaClassType = classType.getMetaClassType(context, true) ?: return false
+    return metaClassType !== PyBuiltinCache.getInstance(this).typeType
+  }
+
+  /**
+   * `__init_subclass__` is an implicit classmethod, so its first parameter (`cls`) is bound to the new subclass
+   * and must not be matched against the class-definition keyword arguments.
+   */
+  private fun PyCallableType.withImplicitClassParameter(context: TypeEvalContext): PyCallableType {
+    val parameters = getParameters(context)
+    val firstParameter = parameters?.firstOrNull()
+    val implicitOffset = if (firstParameter != null && firstParameter.isSimple) 1 else 0
+    return PyCallableTypeImpl(parameters,
+                              getReturnType(context),
+                              callable,
+                              modifier,
+                              implicitOffset)
   }
 
   /**
