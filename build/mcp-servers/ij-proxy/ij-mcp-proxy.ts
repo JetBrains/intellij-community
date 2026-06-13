@@ -10,6 +10,7 @@ import {
   LATEST_PROTOCOL_VERSION,
   ListToolsRequestSchema,
   ResultSchema,
+  SUPPORTED_PROTOCOL_VERSIONS,
   ToolListChangedNotificationSchema
 } from '@modelcontextprotocol/sdk/types.js'
 import {clearLogFile, logProgress, logToFile} from '../shared/mcp-rpc.mjs'
@@ -559,16 +560,25 @@ const serverCapabilities = {
 
 const proxyServer = new Server(serverInfo, {capabilities: serverCapabilities})
 
-proxyServer.setRequestHandler(InitializeRequestSchema, async () => {
+proxyServer.setRequestHandler(InitializeRequestSchema, async (request) => {
   // Discover IDEs eagerly — no IDE means no reason to run
   await performDiscovery()
+
+  // Negotiate the protocol version instead of forcing LATEST_PROTOCOL_VERSION:
+  // echo the client's requested version when we support it, otherwise fall back
+  // to our latest. Older MCP clients (e.g. the Air hub's Kotlin SDK) reject an
+  // unknown newer version outright and drop the connection.
+  const requestedVersion = request.params.protocolVersion
+  const protocolVersion = SUPPORTED_PROTOCOL_VERSIONS.includes(requestedVersion)
+    ? requestedVersion
+    : LATEST_PROTOCOL_VERSION
 
   const instructions = buildInstructions()
   const effectiveServerInfo = containerSession
     ? {name: `ij-mcp-proxy [container:${containerSession.sessionId}]`, version: '1.0.0'}
     : serverInfo
   return {
-    protocolVersion: LATEST_PROTOCOL_VERSION,
+    protocolVersion,
     capabilities: serverCapabilities,
     serverInfo: effectiveServerInfo,
     ...(instructions && {instructions})

@@ -26743,11 +26743,11 @@ var serverInfo = { name: "ij-mcp-proxy", version: "1.0.0" }, serverCapabilities 
   prompts: { listChanged: !0 },
   logging: {}
 }, proxyServer = new Server(serverInfo, { capabilities: serverCapabilities });
-proxyServer.setRequestHandler(InitializeRequestSchema, async () => {
+proxyServer.setRequestHandler(InitializeRequestSchema, async (request) => {
   await performDiscovery();
-  let instructions = buildInstructions(), effectiveServerInfo = containerSession ? { name: `ij-mcp-proxy [container:${containerSession.sessionId}]`, version: "1.0.0" } : serverInfo;
+  let requestedVersion = request.params.protocolVersion, protocolVersion = SUPPORTED_PROTOCOL_VERSIONS.includes(requestedVersion) ? requestedVersion : LATEST_PROTOCOL_VERSION, instructions = buildInstructions(), effectiveServerInfo = containerSession ? { name: `ij-mcp-proxy [container:${containerSession.sessionId}]`, version: "1.0.0" } : serverInfo;
   return {
-    protocolVersion: LATEST_PROTOCOL_VERSION,
+    protocolVersion,
     capabilities: serverCapabilities,
     serverInfo: effectiveServerInfo,
     ...instructions && { instructions }
