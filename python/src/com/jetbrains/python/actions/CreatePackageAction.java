@@ -31,11 +31,13 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesStatisticsCollector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class CreatePackageAction extends DumbAwareAction implements NewFileActionWithCategory {
   private static final Logger LOG = Logger.getInstance(CreatePackageAction.class);
 

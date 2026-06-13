@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,8 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
-public class CleanPycAction extends AnAction {
+@ApiStatus.Internal
+final class CleanPycAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     var elements = e.getData(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY);
