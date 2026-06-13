@@ -211,6 +211,38 @@ open class PyTypeCheckerInspection : PyInspection() {
                         PyPsiBundle.message("INSP.type.checker.unpack.expected.iterable",
                                             PythonDocumentationProvider.getTypeName(itemType, myTypeEvalContext)),
                         effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
+        return
+      }
+      if (itemType is PyTupleType && !itemType.isHomogeneous) {
+        checkNestedUnpackingBalance(target.elements, itemType)
+      }
+      if (itemType != null) checkUnpackedTargetTypes(target, itemType, target)
+    }
+
+    private fun checkUnpackedTargetTypes(targetSeq: PySequenceExpression, valueType: PyType, highlight: PsiElement) {
+      if (valueType.containsAny(context = myTypeEvalContext)) return
+      for (target in targetSeq.elements) {
+        val leaf = flattenParens(target)
+        if (leaf !is PyTargetExpression) continue
+        val annotatedType = resolvedDeclaredType(leaf) ?: continue
+        if (annotatedType.containsAny(context = myTypeEvalContext)) continue
+        val received = if (valueType is PyTupleType && !valueType.isHomogeneous) {
+          getTargetTypeFromTupleAssignment(leaf, targetSeq, valueType)
+        }
+        else {
+          (valueType as? PyCollectionType)?.iteratedItemType
+        } ?: continue
+        if (received.containsAny(context = myTypeEvalContext)) continue
+        val actual = upcastLiteralToClass(received)
+        if (!match(annotatedType, actual, myTypeEvalContext)) {
+          registerProblem(highlight,
+                          PyPsiBundle.problemMessage("INSP.type.checker.expected.type.got.type.instead",
+                                                     PythonDocumentationProvider.getVerboseTypeName(annotatedType, myTypeEvalContext),
+                                                     PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext)),
+                          effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
+          // report only the first mismatch per value
+          return
+        }
       }
     }
 
@@ -346,7 +378,11 @@ open class PyTypeCheckerInspection : PyInspection() {
       if (checkUnpackIterableValue(rhs)) return
 
       val rhsType = myTypeEvalContext.getType(rhs)
-      if (rhsType !is PyTupleType || rhsType.isHomogeneous) return
+      if (rhsType !is PyTupleType || rhsType.isHomogeneous) {
+        // Non-tuple/homogeneous iterable: the balance is unknown, so only validate the annotated targets' types.
+        if (rhsType != null) checkUnpackedTargetTypes(lhsSeq, rhsType, rhs)
+        return
+      }
 
       val targets = lhsSeq.elements
       val lhsStarCount = targets.filterIsInstance<PyStarExpression>().size
@@ -894,6 +930,25 @@ open class PyTypeCheckerInspection : PyInspection() {
         current = resolved
       }
       return false
+    }
+
+    /**
+     * The declared type of [target] from its annotation. Unlike `getType(target)`, this is not narrowed by the value
+     * of the current unpacking, so it is safe to compare an unpacked value against the declared annotation.
+     */
+    private fun resolvedDeclaredType(target: PyTargetExpression): PyType? {
+      var current: PsiElement = target
+      while (current is PyTargetExpression) {
+        val annotationValue = current.annotation?.value
+        if (annotationValue != null) {
+          return Ref.deref(PyTypingTypeProvider.getType(annotationValue, myTypeEvalContext))
+        }
+        if (current.typeCommentAnnotation != null) return myTypeEvalContext.getType(current)
+        val resolved = current.getReference(PyResolveContext.defaultContext(myTypeEvalContext)).resolve()
+        if (resolved === current || resolved == null) break
+        current = resolved
+      }
+      return null
     }
 
     /**
