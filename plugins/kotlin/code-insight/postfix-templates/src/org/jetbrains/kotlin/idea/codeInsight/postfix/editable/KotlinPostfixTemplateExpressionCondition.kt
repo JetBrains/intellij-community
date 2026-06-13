@@ -6,14 +6,24 @@ import com.intellij.openapi.util.NlsSafe
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.analysis.api.KaContextParameterApi
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
+import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.expandedSymbol
+import org.jetbrains.kotlin.analysis.api.components.importableFqName
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.symbol
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
+import org.jetbrains.kotlin.config.ApiVersion
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.codeInsight.postfix.KotlinPostfixTemplatesBundle
+import org.jetbrains.kotlin.idea.imports.ImportMapper
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 @ApiStatus.Internal
 interface KotlinPostfixTemplateExpressionCondition : PostfixTemplateExpressionCondition<KtExpression> {
@@ -35,16 +45,47 @@ interface KotlinPostfixTemplateExpressionCondition : PostfixTemplateExpressionCo
             element.setAttribute(FQN_ATTR, fqn)
         }
 
-        @OptIn(KaIdeApi::class)
+        /**
+         * Returns the fully qualified names of the symbol and its expanded symbol as well
+         * as any alias used for Kotlin <-> Java interop(example `java.lang.Exception` <-> `kotlin.Exception`).
+         */
+        @OptIn(KaContextParameterApi::class, KaIdeApi::class)
+        context(_: KaSession)
+        private fun KaType.getFqNamesWithJavaImportAlias(apiVersion: ApiVersion): Set<String> = buildSet {
+            val ownSymbol = symbol
+            // Add the FQN of the symbol itself
+            val ownFqName = ownSymbol?.importableFqName
+            addIfNotNull(ownFqName?.asString())
+
+            // If the symbol is a typealias, also add the FQN of the expanded symbol
+            val expandedSymbol = expandedSymbol
+            addIfNotNull(expandedSymbol?.importableFqName?.asString())
+            if (ownFqName == null) return@buildSet
+
+            // In case the symbol is a Kotlin type alias of some Java class (or vice versa),
+            // we want to match it both ways using the `ImportMapper` and `JavaToKotlinClassMap`
+
+            // Java alias -> Kotlin
+            val mappedFqName = ImportMapper.findCorrespondingKotlinFqName(ownFqName, apiVersion)
+            addIfNotNull(mappedFqName?.asString())
+
+            // Kotlin alias -> Java
+            val mappedJavaFqName = JavaToKotlinClassMap.mapKotlinToJava(ownFqName.toUnsafe())
+            addIfNotNull(mappedJavaFqName?.asFqNameString())
+        }
+
         override fun value(expr: KtExpression): Boolean {
             return analyze(expr) {
                 val classType = (expr.expressionType?.symbol as? KaClassifierSymbol)?.defaultType ?: return false
-                val allSupertypesWithSelf = buildList {
-                    add(classType)
-                    addAll(classType.allSupertypes)
+                val allSupertypesWithSelf = sequence {
+                    yield(classType)
+                    yieldAll(classType.allSupertypes)
                 }
 
-                allSupertypesWithSelf.any { it.symbol?.importableFqName?.asString() == fqn }
+                val apiVersion = expr.containingFile.languageVersionSettings.apiVersion
+                allSupertypesWithSelf
+                    .flatMap { it.getFqNamesWithJavaImportAlias(apiVersion) }
+                    .any { it == fqn }
             }
         }
     }
