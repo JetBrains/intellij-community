@@ -7,6 +7,7 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDirectory;
@@ -102,6 +103,11 @@ import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 public class PyReferenceExpressionImpl extends PyElementImpl implements PyReferenceExpression {
 
   private static final Logger LOG = Logger.getInstance(PyReferenceExpressionImpl.class);
+
+  // PY-89956: guards against re-entrant def-use chain warming (see warmEarlierDefinitionTypes).
+  private static final ThreadLocal<Boolean> ourWarmingDefUseChain = ThreadLocal.withInitial(() -> Boolean.FALSE);
+  // Minimum number of earlier same-name definitions before we pre-warm their types; short chains are left untouched.
+  private static final int WARM_DEF_USE_THRESHOLD = 64;
 
   private record ControlFlowTypeResult(@Nullable PyType type, boolean foundPrefixCall) {
     private ControlFlowTypeResult {
@@ -632,6 +638,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     final PyDefUseUtil.LatestDefsResult defsResult = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false, context);
     final List<Instruction> defs = defsResult.defs();
 
+    // Pre-warm the types of earlier definitions so the recursive evaluation below stays shallow (PY-89956).
+    warmEarlierDefinitionTypes(context, anchor, flow, name, thisInstruction.num());
+
     // null means empty set of possible types, Ref(null) means Any
     final @Nullable Ref<PyType> typeOfEarlierDefinitions = StreamEx.of(defs)
       .filter(def -> def.num() < thisInstruction.num())
@@ -688,6 +697,42 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     }
 
     return new ControlFlowTypeResult(deducedType, foundPrefixCall);
+  }
+
+  /**
+   * Pre-computes, in ascending control-flow order, the types of all earlier definitions of {@code name}
+   * in the scope, so they are memoized in {@code context} before the recursive def-use evaluation in
+   * {@link #getTypeByControlFlow} needs them.
+   * <p>
+   * Without this, a long linear chain of definitions where each depends on the previous one (e.g. repeated
+   * {@code x = x}) is walked one definition per stack frame and overflows the stack (PY-89956): the
+   * per-element {@link com.intellij.openapi.util.RecursionManager} key differs on every lap, and the lazy
+   * type cache only fills on unwind -- after the descent has already reached full depth. Evaluating
+   * earliest-first makes every later step hit the cache, which bounds the recursion depth. This only
+   * reorders evaluation; it never changes the computed types, and short chains are left untouched.
+   */
+  private static void warmEarlierDefinitionTypes(@NotNull TypeEvalContext context,
+                                                 @NotNull PyExpression anchor,
+                                                 Instruction @NotNull [] flow,
+                                                 @NotNull String name,
+                                                 int thisInstructionNum) {
+    if (Boolean.TRUE.equals(ourWarmingDefUseChain.get())) return;
+    final List<ReadWriteInstruction> earlierWrites = StreamEx.of(flow)
+      .select(ReadWriteInstruction.class)
+      .filter(rw -> rw.num() < thisInstructionNum && rw.getAccess().isWriteAccess() && name.equals(rw.getName()))
+      .sortedByInt(Instruction::num)
+      .toList();
+    if (earlierWrites.size() < WARM_DEF_USE_THRESHOLD) return;
+    ourWarmingDefUseChain.set(Boolean.TRUE);
+    try {
+      for (ReadWriteInstruction def : earlierWrites) {
+        ProgressManager.checkCanceled();
+        getTypeFromInstruction(context, anchor, def);
+      }
+    }
+    finally {
+      ourWarmingDefUseChain.set(Boolean.FALSE);
+    }
   }
 
   private static @Nullable Ref<PyType> getTypeFromInstruction(@NotNull TypeEvalContext context,

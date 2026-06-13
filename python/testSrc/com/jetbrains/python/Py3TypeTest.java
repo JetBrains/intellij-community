@@ -3899,6 +3899,16 @@ public class Py3TypeTest extends PyTestCase {
                     """);
   }
 
+  // PY-89956
+  public void testLongDefUseChainStackOverflow() {
+    String code = """
+                  x = 0
+                  """ + "x = x\n".repeat(3000) + """
+                  expr = x
+                  """;
+    doTest("int", code);
+  }
+
   // PY-26184
   public void testGenericTypeFromDescriptor() {
     doTest("list", """
