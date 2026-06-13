@@ -22,6 +22,7 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.sun.jdi.ArrayReference
 import com.sun.jdi.Location
 import com.sun.jdi.LongValue
+import com.sun.jdi.ObjectCollectedException
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionContext
@@ -271,6 +272,9 @@ internal fun callMethodFromHelper(
     } catch (e: MethodNotFoundException) {
         fileLogger().warn(e)
     } catch (e: Exception) {
+        if (e is ObjectCollectedException || e.cause is ObjectCollectedException) {
+            return null
+        }
         val helperExceptionStackTrace = MethodInvokeUtils.getHelperExceptionStackTrace(context.evaluationContext, e)
         DebuggerUtilsImpl.logError("Exception from helper: ${e.message}", e,
                                    *listOfNotNull(helperExceptionStackTrace).toTypedArray()) // log helper exception if available
