@@ -149,12 +149,6 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, UiDataPro
     for (PushDialogActionsProvider actionProvider : ContainerUtil.reverse(actionProviders)) {
       pushActions.addAll(0, actionProvider.getCustomActionsAboveDefault(myProject));
     }
-    int firstEnabledActionPosition = ContainerUtil.indexOf(pushActions, it -> it.isEnabled(this));
-    if (firstEnabledActionPosition >= 0) {
-      PushActionBase firstEnabledAction = pushActions.remove(firstEnabledActionPosition);
-      pushActions.add(0, firstEnabledAction);
-    }
-
     return ContainerUtil.map(pushActions, action -> new ActionWrapper(myProject, this, action));
   }
 
