@@ -1419,6 +1419,246 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues=["PY-87917"])
+    fun justInt() = test("""
+      from typing import Protocol
+
+      class JustInt(Protocol):
+          @property
+          def __class__(self) -> type[int]: ...
+      #                          ^^^^^^^^^ WARNING Return type of method 'JustInt.__class__()' does not match return type the base method in class 'object'
+          @__class__.setter
+          def __class__(self, t: type[int]) -> None: ...
+
+      def assert_int(x: JustInt) -> int:
+          assert isinstance(x, int)  # should not be needed
+          return x
+
+      assert_int(42)
+      assert_int(False)
+      #          ^^^^^ WARNING Expected type 'JustInt', got 'Literal[False]' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `asymmetric property getter and setter types match structurally`() = test("""
+      from typing import Protocol
+
+      class B(Protocol):
+          @property
+          def p(self) -> int: ...
+          @p.setter
+          def p(self, value: str | int): ...
+
+      class C:
+          @property
+          def p(self) -> bool:
+              return True
+          @p.setter
+          def p(self, value: object):
+              pass
+
+      class D:
+          @property
+          def p(self) -> object:
+              return True
+          @p.setter
+          def p(self, value: str):
+              pass
+
+      ok: B = C()
+      bad: B = D()
+      #        ^^^ WARNING Expected type 'B', got 'D' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `literal setter write type is invariant not widened to its class`() = test("""
+      from typing import Protocol, Literal
+
+      class B(Protocol):
+          @property
+          def p(self) -> object: ...
+          @p.setter
+          def p(self, value: int): ...
+
+      class C:
+          @property
+          def p(self) -> object:
+              return True
+          @p.setter
+          def p(self, value: Literal[32]):
+              pass
+
+      class D:
+          @property
+          def p(self) -> object:
+              return True
+          @p.setter
+          def p(self, value: object):
+              pass
+
+      ok: B = D()
+      bad: B = C()
+      #        ^^^ WARNING Expected type 'B', got 'C' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `mutable attribute is invariant and matches exact type`() = test("""
+      from typing import Protocol
+
+      class B(Protocol):
+          x: int
+
+      class C:
+          x: int
+
+      b: B = C()
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `mutable attribute is invariant and rejects a subtype value`() = test("""
+      from typing import Protocol
+
+      class B(Protocol):
+          x: int
+
+      class C:
+          x: bool
+
+      b: B = C()
+      #      ^^^ WARNING Expected type 'B', got 'C' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `mutable attribute is invariant and rejects a supertype value`() = test("""
+      from typing import Protocol
+
+      class B(Protocol):
+          x: int
+
+      class C:
+          x: object
+
+      b: B = C()
+      #      ^^^ WARNING Expected type 'B', got 'C' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `read only property is covariant and allows a subtype`() = test("""
+      from typing import Protocol
+
+      class B(Protocol):
+          @property
+          def p(self) -> int: ...
+
+      class C:
+          @property
+          def p(self) -> bool:
+              return True
+
+      b: B = C()
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `symmetric property is invariant and matches exact type`() = test("""
+      from typing import Protocol
+
+      class B(Protocol):
+          @property
+          def p(self) -> int: ...
+          @p.setter
+          def p(self, value: int): ...
+
+      class C:
+          @property
+          def p(self) -> int:
+              return 1
+          @p.setter
+          def p(self, value: int):
+              pass
+
+      b: B = C()
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `symmetric property is invariant and rejects a subtype`() = test("""
+      from typing import Protocol
+
+      class B(Protocol):
+          @property
+          def p(self) -> int: ...
+          @p.setter
+          def p(self, value: int): ...
+
+      class C:
+          @property
+          def p(self) -> bool:
+              return True
+          @p.setter
+          def p(self, value: bool):
+              pass
+
+      b: B = C()
+      #      ^^^ WARNING Expected type 'B', got 'C' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `read only property does not match a mutable attribute`() = test("""
+      from typing import Protocol
+
+      class B(Protocol):
+          x: int
+
+      class C:
+          @property
+          def x(self) -> int:
+              return 1
+
+      b: B = C()
+      #      ^^^ WARNING Expected type 'B', got 'C' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `frozen dataclass field does not match a mutable attribute`() = test("""
+      from dataclasses import dataclass
+      from typing import Protocol
+
+      class B(Protocol):
+          x: int
+
+      @dataclass(frozen=True)
+      class C:
+          x: int
+
+      b: B = C(1)
+      #      ^^^^ WARNING Expected type 'B', got 'C' instead
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87917"])
+    fun `mutable attribute matches a read only property`() = test("""
+      from typing import Protocol
+
+      class B(Protocol):
+          @property
+          def x(self) -> int: ...
+
+      class C:
+          x: int
+
+      b: B = C()
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-76822"])
     fun `protocol property with setter rejects concrete with deleter`() = test("""
       from typing import Protocol
@@ -1442,7 +1682,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           def val1(self, val: int) -> None:
               ...
 
-      var: Template = Concrete() # WARNING FIXME Expected type 'Template', got 'Concrete' instead # PY-91385
+      var: Template = Concrete() # WARNING Expected type 'Template', got 'Concrete' instead
       """.trimIndent())
 
     @Test
@@ -1465,7 +1705,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       class Concrete:
           val: int = 0
 
-      var: Template = Concrete() # WARNING FIXME Expected type 'Template', got 'Concrete' instead # PY-91385
+      var: Template = Concrete() # WARNING Expected type 'Template', got 'Concrete' instead
       """.trimIndent())
 
     @Test
@@ -1681,7 +1921,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       class FinalX:
           x: Final[int] = 1
 
-      val: HasX = FinalX() # WARNING FIXME Expected type 'HasX', got 'FinalX' instead
+      val: HasX = FinalX() # WARNING Expected type 'HasX', got 'FinalX' instead
       """.trimIndent())
 
     @Test
@@ -1755,11 +1995,11 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       class Narrower:
           val: list[int] = []
 
-      res: Proto = Narrower() # WARNING FIXME Expected type 'Proto', got 'Narrower' instead
+      res: Proto = Narrower() # WARNING Expected type 'Proto', got 'Narrower' instead
       """.trimIndent())
 
     @Test
-    @TestFor(classes = [PyTypeChecker::class])
+    @TestFor(classes = [PyTypeChecker::class], issues = ["PY-91385"])
     fun `protocol property with a setter rejects a getter only class`() = test("""
       from typing import Protocol
 
@@ -1773,7 +2013,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           @property
           def v(self) -> int: return 1
 
-      res: RW = OnlyGetter() # WARNING FIXME Expected type 'RW', got 'OnlyGetter' instead # PY-91385
+      res: RW = OnlyGetter() # WARNING Expected type 'RW', got 'OnlyGetter' instead
       """.trimIndent())
 
     @Test

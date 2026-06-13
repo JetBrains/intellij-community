@@ -34,6 +34,7 @@ import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyTargetExpression
@@ -1347,10 +1348,10 @@ object PyTypeChecker {
           // mismatch is buried inside a parameterized type (`list[set[int]]` vs `list[set[None]]`).
           { protocolMember.name?.let {
               PyMismatchStep.Attribute(it,
-                                       subclassElementType(expected, actual, subclassElementMember, actualSubstitutions, protocolContext)
+                                       subclassElementType(expected, actual, subclassElementMember.type, actualSubstitutions, protocolContext)
                                          ?.let { t -> codifiedType(protocolContext, t) },
                                        codifiedType(protocolContext, protocolElementType)) } },
-          { isMatchingProtocolMember(expected, actual, protocolMember, subclassElementMember, protocolElementType, actualSubstitutions, protocolContext) }
+          { isMatchingProtocolMember(expected, actual, protocolMember, subclassElementMember, protocolElementType, expectedSubstitutions, actualSubstitutions, protocolContext) }
         )
         if (isMatchingProtocolMember) {
           matchingMembers.add(subclassElementMember)
@@ -1361,12 +1362,10 @@ object PyTypeChecker {
     return result
   }
 
-  private fun isMatchingProtocolMember(expected: PyClassType, actual: PyClassType, protocolMember: PyTypeMember, subclassElementMember: PyTypeMember, protocolElementType: PyType?, actualSubstitutions: GenericSubstitutions, protocolContext: MatchContext): Boolean  {
-    val protocolMemberElement = protocolMember.element
-    val subclassMemberElement = subclassElementMember.element
-    val isWritableProtocolMember = protocolMemberElement is PyTargetExpression && PyExpectedVarianceJudgment.isEffectivelyReadOnly(protocolMemberElement, protocolContext.context)
-    val isWritableSubclassMember = subclassMemberElement is PyTargetExpression && PyExpectedVarianceJudgment.isEffectivelyReadOnly(subclassMemberElement, protocolContext.context)
-    if (isWritableProtocolMember && !isWritableSubclassMember) {
+  private fun isMatchingProtocolMember(expected: PyClassType, actual: PyClassType, protocolMember: PyTypeMember, subclassElementMember: PyTypeMember, protocolElementType: PyType?, expectedSubstitutions: GenericSubstitutions, actualSubstitutions: GenericSubstitutions, protocolContext: MatchContext): Boolean  {
+    val context = protocolContext.context
+    val isSettableProtocolMember = protocolMember.isSettable(context)
+    if (isSettableProtocolMember && !subclassElementMember.isSettable(context)) {
       return false
     }
     if (protocolMember.isDeletable && !subclassElementMember.isDeletable) {
@@ -1378,20 +1377,31 @@ object PyTypeChecker {
       return false
     }
 
-    val subclassElementType = subclassElementType(expected, actual, subclassElementMember, actualSubstitutions, protocolContext)
-    return match(protocolElementType, subclassElementType, protocolContext).getOrDefault(true)
+    val subclassElementType = subclassElementType(expected, actual, subclassElementMember.type, actualSubstitutions, protocolContext)
+    if (!match(protocolElementType, subclassElementType, protocolContext).getOrDefault(true)) {
+      return false
+    }
+    if (isSettableProtocolMember) {
+      // The write type is contravariant. For a plain attribute, it is the member type, so the member is invariant.
+      val protocolWriteType = substitute(dropSelfInProtocolMember(expected, protocolMember.writeType(context), context),
+                                         expectedSubstitutions, context)
+      val subclassWriteType = subclassElementType(expected, actual, subclassElementMember.writeType(context), actualSubstitutions, protocolContext)
+        .widenClassObjectLiteral(context)
+      return match(subclassWriteType, protocolWriteType, protocolContext).getOrDefault(true)
+    }
+    return true
   }
 
   /** The subclass member's element type as compared against the protocol: `self` bound to [actual] and dropped, then
    *  the subclass's own type substitutions applied. */
   private fun subclassElementType(
-    expected: PyClassType, actual: PyClassType, subclassElementMember: PyTypeMember,
+    expected: PyClassType, actual: PyClassType, subclassElementType: PyType?,
     actualSubstitutions: GenericSubstitutions, protocolContext: MatchContext,
   ): PyType? {
     val context = protocolContext.context
-    var subclassElementType = substituteSelfInProtocolMember(actual, subclassElementMember.type, context)
-    subclassElementType = dropSelfInProtocolMember(expected, subclassElementType, context)
-    return substitute(subclassElementType, actualSubstitutions, context)
+    var result = substituteSelfInProtocolMember(actual, subclassElementType, context)
+    result = dropSelfInProtocolMember(expected, result, context)
+    return substitute(result, actualSubstitutions, context)
   }
 
   private fun match(expectedProtocol: PyClassType, actualModule: PyModuleType, matchContext: MatchContext): Boolean {
@@ -1433,6 +1443,43 @@ object PyTypeChecker {
     return true
   }
 
+  /**
+   * Returns true when the member has a setter and is not effectively read-only.
+   * A `Final` or `ReadOnly` attribute and a field of a frozen dataclass are read-only.
+   */
+  private fun PyTypeMember.isSettable(context: TypeEvalContext): Boolean {
+    if (!isWritable) return false
+    val element = element
+    return element !is PyTargetExpression || !PyExpectedVarianceJudgment.isEffectivelyReadOnly(element, context)
+  }
+
+  /**
+   * Returns the type that the member accepts on a write.
+   * For a property with a setter, it is the type of the value parameter of the setter.
+   * For a plain attribute, it is the member type.
+   */
+  private fun PyTypeMember.writeType(context: TypeEvalContext): PyType? {
+    val setter = setter
+    if (setter is PyFunction && setter !== getter) {
+      val valueParam = setter.parameterList.parameters
+        .filterIsInstance<PyNamedParameter>()
+        .lastOrNull { !it.isSelf }
+      if (valueParam != null) return context.getType(valueParam)
+    }
+    return type
+  }
+
+  /**
+   * Widens a class object of a literal type to a class object of the literal class, for example `type[Literal[1]]` to `type[int]`.
+   */
+  private fun PyType?.widenClassObjectLiteral(context: TypeEvalContext): PyType? {
+    if (this is PyInstantiableType<*> && this.isDefinition) {
+      val widenedInstance = PyLiteralType.upcastLiteralToClassDeep(this.toInstance(), context)
+      return (widenedInstance as? PyInstantiableType<*>)?.toClass() ?: widenedInstance
+    }
+    return this
+  }
+
   private fun dropSelfInProtocolMember(classType: PyClassType, elementType: PyType?, context: TypeEvalContext): PyType? {
     if (elementType is PyCallableType) {
       if (PyUtil.isInitOrNewMethod(elementType.callable) || !classType.isDefinition) {
@@ -1447,6 +1494,12 @@ object PyTypeChecker {
    * For an instance, it also replaces `Self` in the member with [classType].
    */
   private fun substituteSelfInProtocolMember(classType: PyClassType, elementType: PyType?, context: TypeEvalContext): PyType? {
+    // A member of type `Self` has no self parameter to bind, for example `object.__class__`. Bind `Self` directly.
+    if (elementType is PySelfType) {
+      val selfSubstitutions = GenericSubstitutions()
+      selfSubstitutions.selfType = classType.toInstance()
+      return substitute(elementType, selfSubstitutions, context)
+    }
     if (elementType !is PyCallableType) return elementType
     val parameters = elementType.getParameters(context)
     if (parameters.isNullOrEmpty() || !parameters.first().isSelf) return elementType
