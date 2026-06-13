@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.pi.sessions
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -36,6 +37,30 @@ class PiKnownModelCatalogTest {
       "Qwen3.6-27B-MLX-8bit",
     )
     assertThat(models.map { it.selection.reasoning }).containsExactly(true, false, true, false)
+  }
+
+  @Test
+  fun hidesOldAndDatedClaudeRowsFromPiKnownCatalog() {
+    val models = parsePiKnownListModels(
+      """
+        provider                model                              context  max-out  thinking  images
+        anthropic               claude-3-5-haiku-20241022          200K     64K      no        true
+        anthropic               claude-opus-4                      200K     64K      no        true
+        anthropic               claude-opus-4-5                    200K     64K      no        true
+        anthropic               claude-sonnet-4-6-20250929         200K     64K      no        true
+        anthropic               claude-sonnet-4-6                  200K     64K      no        true
+        anthropic               claude-opus-4-8                    200K     64K      no        true
+        anthropic               claude-latest                      200K     64K      no        true
+        openai                  gpt-5.4                            400K     128K     yes       true
+      """.trimIndent()
+    )
+
+    assertThat(models.map { it.selection.modelId }).containsExactly(
+      "claude-sonnet-4-6",
+      "claude-opus-4-8",
+      "claude-latest",
+      "gpt-5.4",
+    )
   }
 
   @Test
@@ -157,6 +182,8 @@ class PiKnownModelCatalogTest {
             openai-codex            gpt-5.4                       400K     128K     yes       true
             openai                  gpt-5.4                       400K     128K     yes       true
             openai-codex            gpt-5.5                       400K     128K     yes       true
+            JetBrains Central       claude-sonnet-4-5              200K     64K      no        true
+            JetBrains Central       claude-sonnet-4-6-20250929     200K     64K      no        true
             JetBrains Central       claude-opus-4-8               200K     64K      no        true
           """.trimIndent(),
         )
@@ -184,6 +211,12 @@ class PiKnownModelCatalogTest {
       "gpt-5.4 (openai)",
       "gpt-5.5 (JetBrains Central)",
       "claude-opus-4-8 (JetBrains Central)",
+    )
+    assertThat(models.map { it.group }).containsExactly(
+      AgentPromptGenerationModelGroup.OPENAI,
+      AgentPromptGenerationModelGroup.OPENAI,
+      AgentPromptGenerationModelGroup.OPENAI,
+      AgentPromptGenerationModelGroup.CLAUDE_CODE,
     )
     assertThat(PiJbCentralModelCatalog.decodeGenerationModelId(models[0].id)?.modelId).isEqualTo("gpt-5.4")
     assertThat(PiKnownModelCatalog.decodeGenerationModelId(models[1].id)?.modelId).isEqualTo("gpt-5.4")

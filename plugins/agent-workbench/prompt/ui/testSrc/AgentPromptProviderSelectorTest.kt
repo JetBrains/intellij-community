@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
@@ -13,6 +14,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
+import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOption
@@ -782,21 +784,112 @@ class AgentPromptProviderSelectorTest {
   @Test
   fun launchProfileEditorListKeepsDefaultMarkerOutOfRowText() {
     runInEdtAndWait {
-      val profile = AgentPromptLaunchProfile(
+      val defaultProfile = AgentPromptLaunchProfile(
         id = "user:brave",
         name = "Junie (Brave Mode) 124323",
         providerId = AgentSessionProvider.CODEX.value,
         launchMode = AgentSessionLaunchMode.YOLO,
       )
+      val otherProfile = AgentPromptLaunchProfile(
+        id = "user:standard",
+        name = "Codex Standard",
+        providerId = AgentSessionProvider.CODEX.value,
+      )
       val editor = createLaunchProfileEditorForTest(
-        profiles = listOf(profile),
-        activeProfileId = profile.id,
-        defaultProfileId = profile.id,
+        profiles = listOf(defaultProfile, otherProfile),
+        activeProfileId = defaultProfile.id,
+        defaultProfileId = defaultProfile.id,
         supportedLaunchModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       )
       try {
         assertThat(editor.profileListFixedCellWidthForTest()).isEqualTo(JBUI.scale(320))
-        assertThat(editor.profileListRendererTextForTest(profile.id)).isEqualTo(profile.name)
+        assertThat(editor.profileListRendererTextForTest(defaultProfile.id)).isEqualTo(defaultProfile.name)
+        assertThat(editor.profileListRendererTextForTest(otherProfile.id)).isEqualTo(otherProfile.name)
+        assertThat(editor.isProfileListDefaultMarkerVisibleForTest(defaultProfile.id)).isTrue()
+        assertThat(editor.isProfileListDefaultMarkerVisibleForTest(otherProfile.id)).isFalse()
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorModelComboGroupsModelsBySource() {
+    runInEdtAndWait {
+      val profile = AgentPromptLaunchProfile(
+        id = "user:grouped",
+        name = "Grouped",
+        providerId = AgentSessionProvider.CODEX.value,
+        generationSettings = AgentPromptGenerationSettings(modelId = "gpt-5.5"),
+      )
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(profile),
+        activeProfileId = profile.id,
+        modelCatalog = listOf(
+          AgentPromptGenerationModel(id = "claude-opus-4-8", displayName = "Claude Opus")
+            .withGroup(AgentPromptGenerationModelGroup.CLAUDE_CODE),
+          AgentPromptGenerationModel(id = "custom-model", displayName = "Custom Model"),
+          AgentPromptGenerationModel(id = "qwen-local", displayName = "Qwen Local").withGroup(AgentPromptGenerationModelGroup.LOCAL),
+          AgentPromptGenerationModel(id = "gpt-5.5", displayName = "GPT-5.5").withGroup(AgentPromptGenerationModelGroup.OPENAI),
+        ),
+      )
+      try {
+        editor.selectProfileForTest(profile.id)
+
+        assertThat(editor.modelOptionTextsForTest()).containsExactly(
+          "Default",
+          "Qwen Local",
+          "GPT-5.5",
+          "Claude Opus",
+          "Custom Model",
+        )
+        assertThat(editor.modelOptionSeparatorTextsForTest()).containsExactly(
+          null,
+          "Local",
+          "OpenAI",
+          "Claude Code",
+          "Other",
+        )
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorModelComboGroupsUnknownSelectedModelAsOther() {
+    runInEdtAndWait {
+      val profile = AgentPromptLaunchProfile(
+        id = "user:unknown-model",
+        name = "Unknown Model",
+        providerId = AgentSessionProvider.CODEX.value,
+        generationSettings = AgentPromptGenerationSettings(modelId = "saved-custom-model"),
+      )
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(profile),
+        activeProfileId = profile.id,
+        modelCatalog = listOf(
+          AgentPromptGenerationModel(id = "qwen-local", displayName = "Qwen Local").withGroup(AgentPromptGenerationModelGroup.LOCAL),
+          AgentPromptGenerationModel(id = "gpt-5.5", displayName = "GPT-5.5").withGroup(AgentPromptGenerationModelGroup.OPENAI),
+        ),
+      )
+      try {
+        editor.selectProfileForTest(profile.id)
+
+        assertThat(editor.modelOptionTextsForTest()).containsExactly(
+          "Default",
+          "Qwen Local",
+          "GPT-5.5",
+          "saved-custom-model",
+        )
+        assertThat(editor.modelOptionSeparatorTextsForTest()).containsExactly(
+          null,
+          "Local",
+          "OpenAI",
+          "Other",
+        )
       }
       finally {
         editor.closeForTest()
@@ -982,7 +1075,7 @@ class AgentPromptProviderSelectorTest {
         provider = AgentSessionProvider.CODEX,
         promptOptions = emptyList(),
         availableGenerationModels = listOf(
-          AgentPromptGenerationModel(id = "gpt-5.1-codex", displayName = "GPT-5.1 Codex"),
+          AgentPromptGenerationModel(id = "gpt-5.1-codex", displayName = "GPT-5.1 Codex").withGroup(AgentPromptGenerationModelGroup.OPENAI),
         ),
       )
       val fixture = withContext(Dispatchers.EDT) {
@@ -1016,10 +1109,71 @@ class AgentPromptProviderSelectorTest {
         val actionGroup = checkNotNull(controller.createModelActionGroupForTest())
         val actions = actionGroup.getChildren(TestActionEvent.createTestEvent())
 
-        assertThat(actions.mapNotNull { action -> action.templatePresentation.text })
-          .containsExactly("Default", "GPT-5.1 Codex")
-        assertThat(actions.map { action -> action.templatePresentation.keepPopupOnPerform })
+        assertThat(modelActionEntries(actions))
+          .containsExactly("model:Default", "separator:OpenAI", "model:GPT-5.1 Codex")
+        assertThat(actions.filterNot { action -> action is Separator }.map { action -> action.templatePresentation.keepPopupOnPerform })
           .containsOnly(KeepPopupOnPerform.Never)
+      }
+    }
+    finally {
+      modelCatalogScope.cancel()
+    }
+  }
+
+  @Test
+  @Suppress("RAW_SCOPE_CREATION")
+  fun generationSettingsModelPopupGroupsModelsBySource(): Unit = timeoutRunBlocking {
+    val modelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
+    try {
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        availableGenerationModels = listOf(
+          AgentPromptGenerationModel(id = "claude-opus-4-8", displayName = "Claude Opus")
+            .withGroup(AgentPromptGenerationModelGroup.CLAUDE_CODE),
+          AgentPromptGenerationModel(id = "custom-model", displayName = "Custom Model"),
+          AgentPromptGenerationModel(id = "qwen-local", displayName = "Qwen Local").withGroup(AgentPromptGenerationModelGroup.LOCAL),
+          AgentPromptGenerationModel(id = "gpt-5.5", displayName = "GPT-5.5").withGroup(AgentPromptGenerationModelGroup.OPENAI),
+        ),
+      )
+      val fixture = withContext(Dispatchers.EDT) {
+        createSelectorFixture(listOf(provider)).also { fixture -> fixture.selector.refresh() }
+      }
+      val controller = withContext(Dispatchers.EDT) {
+        AgentPromptGenerationSettingsController(
+          invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+          providerSelector = fixture.selector,
+          generationSettingsPanel = fixture.view.generationSettingsPanel,
+          modelSelectorLink = fixture.view.modelSelectorLink,
+          reasoningEffortLink = fixture.view.reasoningEffortLink,
+          modelCatalogScope = modelCatalogScope,
+          launcherProvider = { null },
+          onDefaultSaved = { _ -> },
+        )
+      }
+
+      withContext(Dispatchers.EDT) {
+        controller.createModelActionGroupForTest(loadIfNeeded = true)
+      }
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          modelActionTexts(controller)?.contains("Qwen Local") == true
+        }
+      }
+      withContext(Dispatchers.EDT) {
+        val actions = checkNotNull(controller.createModelActionGroupForTest())
+          .getChildren(TestActionEvent.createTestEvent())
+        assertThat(modelActionEntries(actions)).containsExactly(
+          "model:Default",
+          "separator:Local",
+          "model:Qwen Local",
+          "separator:OpenAI",
+          "model:GPT-5.5",
+          "separator:Claude Code",
+          "model:Claude Opus",
+          "separator:Other",
+          "model:Custom Model",
+        )
       }
     }
     finally {
@@ -1790,6 +1944,7 @@ class AgentPromptProviderSelectorTest {
     activeProfileId: String? = null,
     defaultProfileId: String? = null,
     supportedLaunchModes: Set<AgentSessionLaunchMode> = setOf(AgentSessionLaunchMode.STANDARD),
+    modelCatalog: List<AgentPromptGenerationModel> = emptyList(),
     onDeleteProfile: (AgentPromptLaunchProfile) -> Unit = {},
   ): AgentPromptLaunchProfileEditorDialog {
     val provider = testProviderBridge(
@@ -1804,7 +1959,7 @@ class AgentPromptProviderSelectorTest {
       defaultProfileId = defaultProfileId,
       providerEntries = listOf(ProviderEntry(provider, "Codex", true, EmptyIcon.ICON_16)),
       currentDraftProfile = null,
-      modelCatalogProvider = { emptyList() },
+      modelCatalogProvider = { modelCatalog },
       newUserProfileId = { "user:new" },
       onCreateProfile = {},
       onUpdateProfile = {},
@@ -1830,7 +1985,14 @@ class AgentPromptProviderSelectorTest {
   private fun modelActionTexts(controller: AgentPromptGenerationSettingsController, loadIfNeeded: Boolean = false): List<String>? {
     return controller.createModelActionGroupForTest(loadIfNeeded = loadIfNeeded)
       ?.getChildren(TestActionEvent.createTestEvent())
+      ?.filterNot { action -> action is Separator }
       ?.mapNotNull { action -> action.templatePresentation.text }
+  }
+
+  private fun modelActionEntries(actions: Array<AnAction>): List<String> {
+    return actions.map { action ->
+      if (action is Separator) "separator:${action.text.orEmpty()}" else "model:${action.templatePresentation.text.orEmpty()}"
+    }
   }
 
   private fun popupEvent(action: AnAction): AnActionEvent {

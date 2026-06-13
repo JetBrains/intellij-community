@@ -8,12 +8,14 @@ import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceKind
+import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
@@ -177,7 +179,7 @@ internal class CodexAgentSessionProviderDescriptor(
           supportedReasoningEfforts = model.supportedReasoningEfforts.mapNotNullTo(LinkedHashSet(), ::toPromptReasoningEffort),
           defaultReasoningEffort = toPromptReasoningEffort(model.defaultReasoningEffort),
           isDefault = model.isDefault,
-        )
+        ).withGroup(AgentPromptGenerationModelGroup.OPENAI)
       }
       .toList()
   }

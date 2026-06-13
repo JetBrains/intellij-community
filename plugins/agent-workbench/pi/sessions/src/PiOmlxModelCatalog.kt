@@ -4,6 +4,8 @@ package com.intellij.agent.workbench.pi.sessions
 import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
+import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.openapi.diagnostic.logger
 import tools.jackson.core.JsonGenerator
 import tools.jackson.core.JsonParser
@@ -56,7 +58,7 @@ internal class PiOmlxModelCatalog(
         displayName = model.toPromptDisplayName(multipleConnections),
         supportedReasoningEfforts = if (model.selection.reasoning) PI_SUPPORTED_REASONING_EFFORTS else emptySet(),
         isDefault = model.selection == defaultSelection,
-      )
+      ).withGroup(AgentPromptGenerationModelGroup.LOCAL)
     }
   }
 

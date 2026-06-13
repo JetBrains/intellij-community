@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.pi.sessions
 
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -133,6 +134,7 @@ class PiOmlxModelCatalogTest {
       )
     )
     assertThat(models.map { it.displayName }).containsExactly("Qwen 27B (oMLX)")
+    assertThat(models.single().group).isEqualTo(AgentPromptGenerationModelGroup.LOCAL)
     assertThat(models.single().isDefault).isTrue()
     assertThat(models.single().supportedReasoningEfforts).isEqualTo(PI_SUPPORTED_REASONING_EFFORTS)
     assertThat(PiOmlxModelCatalog.decodeGenerationModelId(models.single().id)?.tokenSource).isEqualTo(PiOmlxTokenSource.PI_AUTH)

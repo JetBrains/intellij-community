@@ -4,6 +4,8 @@ package com.intellij.agent.workbench.pi.sessions
 import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
+import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.agent.workbench.sessions.util.JbCentralCliSupport
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelExecApi
@@ -42,8 +44,9 @@ internal class PiJbCentralModelCatalog(
   private val jbCentralExecutableResolver: () -> String? = JbCentralCliSupport::findExecutable,
   private val statusRunner: suspend (String) -> PiJbCentralCommandResult? = ::runJbCentralStatus,
   private val proxyConfigReader: suspend () -> PiJbCentralProxyConfig? = ::readJbCentralProxyConfig,
+  private val directProfileProbeEnabled: () -> Boolean = ::isJbCentralDirectProfileProbeEnabled,
   private val profileCatalogRunner: suspend (PiJbCentralLaunchMetadata) -> List<PiJbCentralModelCandidate> = { metadata ->
-    listJbCentralProfileModels(metadata, proxyConfigReader)
+    if (directProfileProbeEnabled()) listJbCentralProfileModels(metadata, proxyConfigReader) else emptyList()
   },
   private val piListModelsRunner: suspend (String, String, PiJbCentralLaunchMetadata) -> PiJbCentralCommandResult? = ::runPiListModels,
 ) {
@@ -256,6 +259,10 @@ internal fun parseJbCentralStatus(output: String): PiJbCentralStatus {
   )
 }
 
+internal fun isJbCentralDirectProfileProbeEnabled(): Boolean {
+  return java.lang.Boolean.getBoolean(PI_JBCENTRAL_DIRECT_PROFILES_PROPERTY)
+}
+
 private fun parseJbCentralStatusAgents(output: String): Set<PiJbCentralAgent> {
   return PiJbCentralAgent.entries
     .filterTo(LinkedHashSet()) { agent -> agent.isPresentInStatus(output) }
@@ -267,6 +274,7 @@ private fun stripAnsiControlSequences(text: String): String {
 
 internal fun parsePiListModels(output: String, launchMetadata: PiJbCentralLaunchMetadata): List<PiJbCentralModelCandidate> {
   return parsePiListModelsRows(output)
+    .filterNot { row -> row.isHiddenPiReportedClaudeModel() }
     .mapNotNull { row ->
       if (!row.provider.isJbCentralListModelsProvider(launchMetadata)) {
         return@mapNotNull null
@@ -319,7 +327,14 @@ internal fun buildJbCentralGenerationModels(candidates: List<PiJbCentralModelCan
       displayName = "${candidate.selection.displayName} (JetBrains Central)",
       supportedReasoningEfforts = if (candidate.selection.reasoning) PI_SUPPORTED_REASONING_EFFORTS else emptySet(),
       isDefault = candidate.selection == defaultSelection,
-    )
+    ).withGroup(candidate.selection.agent.toPromptGenerationModelGroup())
+  }
+}
+
+private fun PiJbCentralAgent.toPromptGenerationModelGroup(): AgentPromptGenerationModelGroup {
+  return when (this) {
+    PiJbCentralAgent.CODEX -> AgentPromptGenerationModelGroup.OPENAI
+    PiJbCentralAgent.CLAUDE_CODE -> AgentPromptGenerationModelGroup.CLAUDE_CODE
   }
 }
 
@@ -784,6 +799,7 @@ private val JBCENTRAL_PROFILE_PATHS: List<String> = listOf(
 )
 private const val PI_EXTENSION_FLAG: String = "--extension"
 private const val PI_LIST_MODELS_FLAG: String = "--list-models"
+internal const val PI_JBCENTRAL_DIRECT_PROFILES_PROPERTY: String = "agent.workbench.pi.jbcentral.direct.profiles.enabled"
 internal const val PI_JBCENTRAL_PROVIDER_NAME: String = "JetBrains Central"
 private const val PI_JBCENTRAL_DEFAULT_MODEL_ID: String = "gpt-5.5"
 private const val PI_JBCENTRAL_DEFAULT_PROXY_PORT: Int = 19516

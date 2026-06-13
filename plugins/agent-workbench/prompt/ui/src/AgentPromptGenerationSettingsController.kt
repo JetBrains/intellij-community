@@ -521,7 +521,10 @@ internal class AgentPromptGenerationSettingsController(
       group.add(ModelCatalogStatusAction(AgentPromptBundle.message("popup.generation.model.empty")))
     }
     else {
-      models.forEach { model -> group.add(ModelAction(modelId = model.id, text = model.displayName)) }
+      models.groupedForModelSelector().forEach { section ->
+        group.add(Separator.create(section.group.modelSelectorText()))
+        section.models.forEach { model -> group.add(ModelAction(modelId = model.id, text = model.displayName)) }
+      }
     }
   }
 

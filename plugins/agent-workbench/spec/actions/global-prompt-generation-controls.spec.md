@@ -49,6 +49,9 @@ Ask Agent launch controls let users choose a provider, launch mode, model, and n
 - Provider model catalogs load on demand when the model selector is opened. After a catalog has loaded once, reopening the selector within 30 seconds must show the cached catalog immediately without provider I/O. Older cached catalogs must still render immediately and refresh in the background. The background refresh status appears after 3 seconds to avoid flicker for fast refreshes; if refresh fails after cached data exists, keep the cached choices visible and show the refresh failure inline.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
+- Model selector rows must keep `Default` first, then group explicit models with separators in this order: local models, OpenAI/Codex models, Claude Code models, and other models. The same ordering and separators apply in the launch profile editor's model combo.
+  [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
+
 - Quick profile selection is transient for the current launch. It must not be saved on submit or popup close. The active profile label shows a modified state when the draft differs from the selected profile's provider, launch mode, model, or effort.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt

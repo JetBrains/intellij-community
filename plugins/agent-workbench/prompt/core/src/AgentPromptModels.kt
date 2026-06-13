@@ -153,7 +153,21 @@ data class AgentPromptGenerationModel(
   @JvmField val supportedReasoningEfforts: Set<AgentPromptReasoningEffort> = emptySet(),
   @JvmField val defaultReasoningEffort: AgentPromptReasoningEffort? = null,
   @JvmField val isDefault: Boolean = false,
-)
+) {
+  @JvmField
+  var group: AgentPromptGenerationModelGroup = AgentPromptGenerationModelGroup.OTHER
+}
+
+fun AgentPromptGenerationModel.withGroup(group: AgentPromptGenerationModelGroup): AgentPromptGenerationModel {
+  return copy().also { model -> model.group = group }
+}
+
+enum class AgentPromptGenerationModelGroup {
+  LOCAL,
+  OPENAI,
+  CLAUDE_CODE,
+  OTHER,
+}
 
 data class AgentPromptContextEnvelopeSummary(
   @JvmField val softCapChars: Int = 12_000,

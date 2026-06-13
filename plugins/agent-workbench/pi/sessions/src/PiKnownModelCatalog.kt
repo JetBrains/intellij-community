@@ -4,6 +4,8 @@ package com.intellij.agent.workbench.pi.sessions
 import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
+import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
@@ -125,6 +127,7 @@ internal data class PiListModelsRow(
 
 internal fun parsePiKnownListModels(output: String): List<PiKnownModelCandidate> {
   return parsePiListModelsRows(output)
+    .filterNot { row -> row.isHiddenPiReportedClaudeModel() }
     .map { row ->
       PiKnownModelCandidate(
         PiKnownModelSelection(
@@ -135,6 +138,23 @@ internal fun parsePiKnownListModels(output: String): List<PiKnownModelCandidate>
         )
       )
     }
+}
+
+internal fun PiListModelsRow.isHiddenPiReportedClaudeModel(): Boolean {
+  val modelId = modelId.trim().lowercase()
+  if (!modelId.startsWith("claude")) {
+    return false
+  }
+  if (CLAUDE_DATED_MODEL_REGEX.containsMatchIn(modelId)) {
+    return true
+  }
+  val versionNumbers = CLAUDE_VERSION_NUMBER_REGEX.findAll(modelId)
+    .mapNotNull { match -> match.value.toIntOrNull() }
+    .filter { number -> number < 100 }
+    .toList()
+  val major = versionNumbers.getOrNull(0) ?: return false
+  val minor = versionNumbers.getOrNull(1) ?: 0
+  return major < 4 || major == 4 && minor < 6
 }
 
 internal fun parsePiListModelsRows(output: String): List<PiListModelsRow> {
@@ -164,8 +184,8 @@ internal fun mergePiKnownModels(
 ): List<AgentPromptGenerationModel> {
   val profileBackedJbCentralModelsAvailable = extensionModels.any { model -> model.isProfileBackedJbCentralModel() }
   val candidatesToMerge = if (profileBackedJbCentralModelsAvailable && jbCentralLaunchMetadata != null) {
-    // The optional AIA bridge reads Central profilesV8, which is the authoritative availability list.
-    // Keep PI's static Central-like rows only as the fallback for products where that bridge is absent.
+    // Profile-backed Central rows are the authoritative availability list.
+    // Keep PI's static Central-like rows only as the fallback when no profile-backed rows are available.
     candidates.filterNot { candidate -> candidate.selection.isJbCentralFallbackModel(jbCentralLaunchMetadata) }
   }
   else {
@@ -256,7 +276,16 @@ private fun PiKnownModelCandidate.toGenerationModel(): AgentPromptGenerationMode
     id = PiKnownModelCatalog.encodeGenerationModelId(selection),
     displayName = selection.displayName,
     supportedReasoningEfforts = if (selection.reasoning) PI_SUPPORTED_REASONING_EFFORTS else emptySet(),
-  )
+  ).withGroup(selection.toPromptGenerationModelGroup())
+}
+
+private fun PiKnownModelSelection.toPromptGenerationModelGroup(): AgentPromptGenerationModelGroup {
+  return when (provider.lowercase()) {
+    "ollama", "omlx", "lmstudio", "lm-studio", "local" -> AgentPromptGenerationModelGroup.LOCAL
+    "openai", PI_OPENAI_CODEX_PROVIDER -> AgentPromptGenerationModelGroup.OPENAI
+    PI_ANTHROPIC_PROVIDER -> AgentPromptGenerationModelGroup.CLAUDE_CODE
+    else -> AgentPromptGenerationModelGroup.OTHER
+  }
 }
 
 private fun PiKnownModelSelection.identity(launchMetadata: PiJbCentralLaunchMetadata? = null): PiKnownModelIdentity {
@@ -536,6 +565,8 @@ private fun stripAnsiControlSequences(text: String): String {
 }
 
 private val ANSI_CONTROL_SEQUENCE_REGEX = Regex("${'\u001B'}\\[[0-?]*[ -/]*[@-~]")
+private val CLAUDE_DATED_MODEL_REGEX = Regex("""(?:^|[^0-9])20\d{6}(?:$|[^0-9])""")
+private val CLAUDE_VERSION_NUMBER_REGEX = Regex("""\d+""")
 private val PI_LIST_MODELS_COLUMNS_REGEX = Regex("\\s+")
 private const val PI_OPENAI_CODEX_PROVIDER: String = "openai-codex"
 private const val PI_ANTHROPIC_PROVIDER: String = "anthropic"

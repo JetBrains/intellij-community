@@ -4,21 +4,27 @@ package com.intellij.agent.workbench.prompt.ui
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
+import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.icons.AllIcons
+import com.intellij.ide.setToolTipText
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.DoubleClickListener
-import com.intellij.ui.RowIcon
-import com.intellij.ui.ToolbarDecorator
+import com.intellij.openapi.ui.popup.ListSeparator
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.ui.CellRendererPanel
 import com.intellij.ui.ColoredListCellRenderer
+import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.GroupedComboBoxRenderer
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBRadioButton
@@ -45,6 +51,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.Icon
 import javax.swing.KeyStroke
+import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
 import javax.swing.event.DocumentEvent
 
@@ -228,13 +235,53 @@ internal class AgentPromptLaunchProfileEditorDialog(
 
   fun profileListRendererTextForTest(profileId: String): String {
     val component = profileListRendererComponentForTest(profileId) ?: return ""
-    return (component as SimpleColoredComponent).getCharSequence(false).toString()
+    return findRendererComponent(component, SimpleColoredComponent::class.java)
+      ?.getCharSequence(false)
+      ?.toString()
+      .orEmpty()
+  }
+
+  fun isProfileListDefaultMarkerVisibleForTest(profileId: String): Boolean {
+    val component = profileListRendererComponentForTest(profileId) ?: return false
+    return hasDefaultMarker(component)
+  }
+
+  fun modelOptionTextsForTest(): List<String> {
+    return (0 until modelCombo.model.size).map { index -> modelCombo.model.getElementAt(index).displayName }
+  }
+
+  fun modelOptionSeparatorTextsForTest(): List<String?> {
+    return (0 until modelCombo.model.size).map { index ->
+      modelCombo.model.getElementAt(index).separatorGroup?.modelSelectorText()
+    }
   }
 
   private fun profileListRendererComponentForTest(profileId: String): Component? {
     val index = managedProfiles.indexOfFirst { profile -> profile.id == profileId }
     val profile = managedProfiles.getOrNull(index) ?: return null
     return profileList.cellRenderer.getListCellRendererComponent(profileList, profile, index, false, false)
+  }
+
+  private fun <T : Component> findRendererComponent(component: Component, componentClass: Class<T>): T? {
+    if (componentClass.isInstance(component)) {
+      return componentClass.cast(component)
+    }
+    if (component is java.awt.Container) {
+      for (child in component.components) {
+        findRendererComponent(child, componentClass)?.let { return it }
+      }
+    }
+    return null
+  }
+
+  private fun hasDefaultMarker(component: Component): Boolean {
+    if (component is JLabel && component.icon == AllIcons.Actions.SetDefault && component.isVisible) {
+      return true
+    }
+    if (component is java.awt.Container) {
+      return component.components.any(::hasDefaultMarker)
+    }
+    return false
   }
 
   private fun createProfileListPanel(): JComponent {
@@ -318,7 +365,8 @@ internal class AgentPromptLaunchProfileEditorDialog(
   private fun initModels() {
     reloadList()
     providerCombo.renderer = ProviderOptionRenderer()
-    modelCombo.renderer = ModelOptionRenderer()
+    modelCombo.isSwingPopup = false
+    modelCombo.renderer = ModelOptionRenderer(modelCombo)
     effortCombo.renderer = ReasoningEffortOptionRenderer()
   }
 
@@ -396,10 +444,22 @@ internal class AgentPromptLaunchProfileEditorDialog(
     val models = providerId?.let(modelCatalogProvider).orEmpty()
     val options = ArrayList<ModelOption>()
     options += ModelOption(null, AgentPromptBundle.message("popup.generation.model.popup.auto"))
+    val explicitModels = ArrayList<AgentPromptGenerationModel>()
     selectedModelId
       ?.takeIf { modelId -> models.none { model -> model.id == modelId } }
-      ?.let { modelId -> options += ModelOption(modelId, modelId) }
-    models.forEach { model -> options += ModelOption(model.id, model.displayName) }
+      ?.let { modelId ->
+        explicitModels += AgentPromptGenerationModel(modelId, modelId).withGroup(AgentPromptGenerationModelGroup.OTHER)
+      }
+    explicitModels += models
+    explicitModels.groupedForModelSelector().forEach { section ->
+      section.models.forEachIndexed { index, model ->
+        options += ModelOption(
+          modelId = model.id,
+          displayName = model.displayName,
+          separatorGroup = section.group.takeIf { index == 0 },
+        )
+      }
+    }
     modelCombo.model = DefaultComboBoxModel(options.toTypedArray())
     modelCombo.selectedItem = options.firstOrNull { option -> option.modelId == selectedModelId } ?: options.first()
   }
@@ -601,7 +661,30 @@ internal class AgentPromptLaunchProfileEditorDialog(
 
   private fun selectedReasoningEffortOption(): ReasoningEffortOption? = effortCombo.selectedItem as? ReasoningEffortOption
 
-  private inner class ProfileListCellRenderer : ColoredListCellRenderer<AgentPromptLaunchProfile>() {
+  private inner class ProfileListCellRenderer : ListCellRenderer<AgentPromptLaunchProfile> {
+    private val mainRenderer = ProfileListMainRenderer()
+    private val defaultMarkerRenderer = ProfileDefaultMarkerRenderer()
+    private val panel = CellRendererPanel(BorderLayout())
+
+    override fun getListCellRendererComponent(
+      list: javax.swing.JList<out AgentPromptLaunchProfile>,
+      value: AgentPromptLaunchProfile,
+      index: Int,
+      isSelected: Boolean,
+      cellHasFocus: Boolean,
+    ): Component {
+      val mainComponent = mainRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+      val markerComponent = defaultMarkerRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+      panel.removeAll()
+      panel.background = mainComponent.background
+      panel.add(mainComponent, BorderLayout.CENTER)
+      panel.add(markerComponent, BorderLayout.EAST)
+      panel.accessibleContext.accessibleName = profileListAccessibleName(value)
+      return panel
+    }
+  }
+
+  private inner class ProfileListMainRenderer : ColoredListCellRenderer<AgentPromptLaunchProfile>() {
     override fun customizeCellRenderer(
       list: javax.swing.JList<out AgentPromptLaunchProfile>,
       value: AgentPromptLaunchProfile?,
@@ -618,10 +701,42 @@ internal class AgentPromptLaunchProfileEditorDialog(
     }
   }
 
+  private inner class ProfileDefaultMarkerRenderer : ListCellRenderer<AgentPromptLaunchProfile> {
+    private val label = JBLabel()
+
+    override fun getListCellRendererComponent(
+      list: javax.swing.JList<out AgentPromptLaunchProfile>,
+      value: AgentPromptLaunchProfile,
+      index: Int,
+      isSelected: Boolean,
+      cellHasFocus: Boolean,
+    ): Component {
+      val isDefault = value.id == currentDefaultProfileId
+      val defaultText = if (isDefault) AgentPromptBundle.message("popup.profile.editor.status.default") else null
+      label.icon = if (isDefault) AllIcons.Actions.SetDefault else null
+      label.isVisible = isDefault
+      label.border = if (isDefault) JBUI.Borders.emptyLeft(4) else JBUI.Borders.empty()
+      label.setToolTipText(defaultText?.let(HtmlChunk::text))
+      label.accessibleContext.accessibleName = defaultText
+      return label
+    }
+  }
+
   private fun profileIcon(profile: AgentPromptLaunchProfile?): Icon {
     val provider = profile?.providerId?.let(AgentSessionProvider::fromOrNull)
-    val providerIcon = providerEntries.firstOrNull { entry -> entry.bridge.provider == provider }?.icon ?: AllIcons.Nodes.Plugin
-    return if (profile?.id == currentDefaultProfileId) RowIcon(providerIcon, AllIcons.Actions.SetDefault) else providerIcon
+    return providerEntries.firstOrNull { entry -> entry.bridge.provider == provider }?.icon ?: AllIcons.Nodes.Plugin
+  }
+
+  private fun profileListAccessibleName(profile: AgentPromptLaunchProfile): @Nls String {
+    return buildList {
+      add(profile.name)
+      if (providerOption(profile.providerId)?.isAvailable != true) {
+        add(AgentPromptBundle.message("popup.profile.editor.unavailable.marker"))
+      }
+      if (profile.id == currentDefaultProfileId) {
+        add(AgentPromptBundle.message("popup.profile.editor.status.default"))
+      }
+    }.joinToString(separator = ", ")
   }
 
   private companion object {
@@ -662,6 +777,7 @@ private data class ProviderOption(
 private data class ModelOption(
   @JvmField val modelId: String?,
   @JvmField val displayName: @NlsSafe String,
+  @JvmField val separatorGroup: AgentPromptGenerationModelGroup? = null,
 ) {
   override fun toString(): String = displayName
 }
@@ -683,8 +799,12 @@ private class ProviderOptionRenderer : PromptProfileComboRenderer<ProviderOption
   override fun icon(value: ProviderOption): Icon = value.icon
 }
 
-private class ModelOptionRenderer : PromptProfileComboRenderer<ModelOption>() {
-  override fun text(value: ModelOption): @NlsSafe String = value.displayName
+private class ModelOptionRenderer(component: JComponent) : GroupedComboBoxRenderer<ModelOption>(component) {
+  override fun getText(item: ModelOption): @NlsSafe String = item.displayName
+
+  override fun separatorFor(value: ModelOption): ListSeparator? {
+    return value.separatorGroup?.let { group -> ListSeparator(group.modelSelectorText()) }
+  }
 }
 
 private class ReasoningEffortOptionRenderer : PromptProfileComboRenderer<ReasoningEffortOption>() {

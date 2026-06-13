@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
@@ -123,7 +124,7 @@ private fun List<AgentPromptGenerationModel>.normalizedModelCatalog(): List<Agen
       model.copy(
         id = trimmedId,
         displayName = model.displayName.trim().takeIf { it.isNotEmpty() } ?: trimmedId,
-      )
+      ).withGroup(model.group)
     }
     .toList()
 }

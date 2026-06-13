@@ -83,6 +83,38 @@ class PiJbCentralModelCatalogTest {
   }
 
   @Test
+  fun directProfilesProbeIsDisabledByDefault(): Unit = runBlocking(Dispatchers.Default) {
+    var proxyConfigQueried = false
+    val catalog = PiJbCentralModelCatalog(
+      proxyConfigReader = {
+        proxyConfigQueried = true
+        PiJbCentralProxyConfig(proxyPort = 19517, proxySecret = "config-secret")
+      },
+    )
+
+    withDirectProfilesProperty(null) {
+      val models = catalog.listProfileGenerationModels(
+        PiJbCentralLaunchMetadata(jbCentralExecutable = "/usr/local/bin/jbcentral")
+      )
+      assertThat(models).isEmpty()
+    }
+    assertThat(proxyConfigQueried).isFalse()
+  }
+
+  @Test
+  fun readsDirectProfilesProbeSystemProperty() {
+    withDirectProfilesProperty(null) {
+      assertThat(isJbCentralDirectProfileProbeEnabled()).isFalse()
+    }
+    withDirectProfilesProperty("false") {
+      assertThat(isJbCentralDirectProfileProbeEnabled()).isFalse()
+    }
+    withDirectProfilesProperty("true") {
+      assertThat(isJbCentralDirectProfileProbeEnabled()).isTrue()
+    }
+  }
+
+  @Test
   fun parsesPiListModelsAndFiltersJetBrainsCentralRows() {
     val metadata = PiJbCentralLaunchMetadata(
       jbCentralExecutable = "/usr/local/bin/jbcentral",
@@ -98,18 +130,26 @@ class PiJbCentralModelCatalogTest {
         anthropic               claude-fable-5                200000   64000    false     true
         openai                  gpt-4.1                       128000   16384    false     true
         JetBrains Central       gpt-5.5                       400000   128000   true      true
+        JetBrains Central       claude-3-5-haiku-20241022     200000   64000    false     true
+        JetBrains Central       claude-sonnet-4-5             200000   64000    false     true
+        JetBrains Central       claude-sonnet-4-6-20250929    200000   64000    false     true
+        JetBrains Central       claude-sonnet-4-6             200000   64000    false     true
         JetBrains Central       claude-opus-4-8               200000   64000    false     true
       """.trimIndent(),
       metadata,
     )
 
-    assertThat(models.map { it.selection.modelId }).containsExactly("gpt-5.5", "claude-opus-4-8")
+    assertThat(models.map { it.selection.modelId }).containsExactly("gpt-5.5", "claude-sonnet-4-6", "claude-opus-4-8")
     assertThat(models.map { it.selection.provider }).containsOnly("JetBrains Central")
     assertThat(models.map { it.selection.jbCentralExecutable }).containsOnly("/usr/local/bin/jbcentral")
     assertThat(models.map { it.selection.proxyPort }).containsOnly(19516)
-    assertThat(models.map { it.selection.agent }).containsExactly(PiJbCentralAgent.CODEX, PiJbCentralAgent.CLAUDE_CODE)
-    assertThat(models.map { it.selection.reasoning }).containsExactly(true, false)
-    assertThat(models.map { it.selection.supportsImages }).containsExactly(true, true)
+    assertThat(models.map { it.selection.agent }).containsExactly(
+      PiJbCentralAgent.CODEX,
+      PiJbCentralAgent.CLAUDE_CODE,
+      PiJbCentralAgent.CLAUDE_CODE,
+    )
+    assertThat(models.map { it.selection.reasoning }).containsExactly(true, false, false)
+    assertThat(models.map { it.selection.supportsImages }).containsExactly(true, true, true)
   }
 
   @Test
@@ -416,3 +456,24 @@ private data class PiListModelsRequest(
   val extensionPath: String,
   val metadata: PiJbCentralLaunchMetadata,
 )
+
+private inline fun withDirectProfilesProperty(value: String?, action: () -> Unit) {
+  val oldValue = System.getProperty(PI_JBCENTRAL_DIRECT_PROFILES_PROPERTY)
+  try {
+    if (value == null) {
+      System.clearProperty(PI_JBCENTRAL_DIRECT_PROFILES_PROPERTY)
+    }
+    else {
+      System.setProperty(PI_JBCENTRAL_DIRECT_PROFILES_PROPERTY, value)
+    }
+    action()
+  }
+  finally {
+    if (oldValue == null) {
+      System.clearProperty(PI_JBCENTRAL_DIRECT_PROFILES_PROPERTY)
+    }
+    else {
+      System.setProperty(PI_JBCENTRAL_DIRECT_PROFILES_PROPERTY, oldValue)
+    }
+  }
+}
