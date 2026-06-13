@@ -2,17 +2,22 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.PairConsumer
-import junit.framework.TestCase
 import kotlinx.coroutines.runBlocking
 import org.jdom.Element
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.importProjectStaticSync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.testRootDisposable
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges
@@ -20,26 +25,47 @@ import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.jetbrains.idea.maven.project.SupportedRequestType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
-import org.junit.Test
-import java.util.Properties
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
 import java.util.stream.Stream
 
-class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenStaticSyncImportersTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
 
   private lateinit var myLegacyImporter: MyTestLegacyImporter
   private lateinit var myImporter: MyMavenPluginImporter
+  private lateinit var noRealMaven: RealMavenPreventionFixture
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
+    noRealMaven = RealMavenPreventionFixture(maven.project)
+    noRealMaven.setUp()
     myImporter = MyMavenPluginImporter()
     myLegacyImporter = MyTestLegacyImporter()
-    ExtensionTestUtil.addExtensions(MavenWorkspaceConfigurator.EXTENSION_POINT_NAME, listOf(myImporter, MyAlwaysFailConfigurerDoNotImplementingStaticSyncAware()), testRootDisposable)
-    ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, listOf(MyTestAlwaysFailLegacyImporter(), myLegacyImporter), testRootDisposable)
+    ExtensionTestUtil.addExtensions(MavenWorkspaceConfigurator.EXTENSION_POINT_NAME, listOf(myImporter, MyAlwaysFailConfigurerDoNotImplementingStaticSyncAware()), maven.testRootDisposable)
+    ExtensionTestUtil.addExtensions(MavenImporter.EXTENSION_POINT_NAME, listOf(MyTestAlwaysFailLegacyImporter(), myLegacyImporter), maven.testRootDisposable)
+  }
+
+  @AfterEach
+  fun tearDown() {
+    noRealMaven.tearDown()
   }
 
   @Test
   fun `test plugin configuration is properly interpolated`() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -65,19 +91,19 @@ class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
                     """.trimIndent())
 
 
-    assertModules("project")
-    UsefulTestCase.assertEquals(1, myImporter.mavenProjects.size)
-    UsefulTestCase.assertEquals(1, myLegacyImporter.mavenProjects.size)
+    maven.assertModules("project")
+    Assertions.assertEquals(1, myImporter.mavenProjects.size)
+    Assertions.assertEquals(1, myLegacyImporter.mavenProjects.size)
     val mavenProject = myImporter.mavenProjects[0]
     val plugin = mavenProject.findPlugin("myplugin", "myartifact")
-    TestCase.assertNotNull(plugin)
-    UsefulTestCase.assertEquals("1", plugin!!.configurationElement!!.getChild("configProperty").textTrim)
-    UsefulTestCase.assertEquals("qwerty", plugin.configurationElement!!.getChild("nestedProperty").getChild("nestedValue").textTrim)
+    Assertions.assertNotNull(plugin)
+    Assertions.assertEquals("1", plugin!!.configurationElement!!.getChild("configProperty").textTrim)
+    Assertions.assertEquals("qwerty", plugin.configurationElement!!.getChild("nestedProperty").getChild("nestedValue").textTrim)
   }
 
   @Test
   fun `test plugin execution configuration is properly interpolated`() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectStaticSync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -113,12 +139,12 @@ class MavenStaticSyncImportersTest : AbstractMavenStaticSyncTest() {
                     """.trimIndent())
 
 
-    assertModules("project")
-    UsefulTestCase.assertEquals(1, myImporter.mavenProjects.size)
-    UsefulTestCase.assertEquals(1, myLegacyImporter.mavenProjects.size)
+    maven.assertModules("project")
+    Assertions.assertEquals(1, myImporter.mavenProjects.size)
+    Assertions.assertEquals(1, myLegacyImporter.mavenProjects.size)
     val mavenProject = myImporter.mavenProjects[0]
     val plugin = mavenProject.findPlugin("myplugin", "myartifact")
-    TestCase.assertNotNull(plugin)
+    Assertions.assertNotNull(plugin)
     UsefulTestCase.assertContainsOrdered(plugin!!
                                            .executions
                                            .single { it.executionId == "some-exec" }
@@ -197,7 +223,7 @@ private class MyTestAlwaysFailLegacyImporter : MavenImporter("", "") {
     throw IllegalStateException("Should never be called in static import")
   }
 
-  override fun getExtraArtifactClassifierAndExtension(artifact: MavenArtifact?, type: MavenExtraArtifactType?): Pair<String, String>? {
+  override fun getExtraArtifactClassifierAndExtension(artifact: MavenArtifact?, type: MavenExtraArtifactType?): Pair<String?, String?>? {
     throw IllegalStateException("Should never be called in static import")
   }
 
