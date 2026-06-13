@@ -69,10 +69,10 @@ interface EelFileSystemApi {
 
   /**
    * Returns names of files in a directory and the attributes of the corresponding files.
-   * If [path] is a symlink, it will be resolved regardless of [symlinkPolicy].
+   * If `path` is a symlink, it will be resolved regardless of `symlinkPolicy`.
    *  TODO Is it an expected behaviour?
    *
-   * [symlinkPolicy] controls resolution of symlinks among children.
+   * `symlinkPolicy` controls resolution of symlinks among children.
    *  TODO The behaviour is different from resolveSymlinks in [stat]. To be fixed.
    */
   @CheckReturnValue
@@ -86,10 +86,10 @@ interface EelFileSystemApi {
 
   /**
    * Returns names of files in a directory and the attributes of the corresponding files.
-   * If [path] is a symlink, it will be resolved regardless of [symlinkPolicy].
+   * If `path` is a symlink, it will be resolved regardless of `symlinkPolicy`.
    *  TODO Is it an expected behaviour?
    *
-   * [symlinkPolicy] controls resolution of symlinks among children.
+   * `symlinkPolicy` controls resolution of symlinks among children.
    *  TODO The behaviour is different from resolveSymlinks in [stat]. To be fixed.
    */
   @CheckReturnValue
@@ -136,14 +136,14 @@ interface EelFileSystemApi {
   }
 
   /**
-   * Similar to stat(2) and lstat(2). [symlinkPolicy] has an impact only on [EelFileInfo.type] if [path] points on a symlink.
+   * Similar to stat(2) and lstat(2). `symlinkPolicy` has an impact only on [EelFileInfo.type] if `path` points on a symlink.
    */
   @CheckReturnValue
   @Deprecated("Use the method with the builder")
   suspend fun stat(path: EelPath, symlinkPolicy: SymlinkPolicy): EelResult<EelFileInfo, StatError>
 
   /**
-   * Similar to stat(2) and lstat(2). [symlinkPolicy] has an impact only on [EelFileInfo.type] if [path] points on a symlink.
+   * Similar to stat(2) and lstat(2). `symlinkPolicy` has an impact only on [EelFileInfo.type] if `path` points on a symlink.
    */
   @CheckReturnValue
   suspend fun stat(@GeneratedBuilder args: StatArgs): EelResult<EelFileInfo, StatError> =
