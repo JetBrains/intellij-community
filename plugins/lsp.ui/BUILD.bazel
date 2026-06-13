@@ -36,6 +36,7 @@ jvm_library(
         "//jps/model-impl",
         "//jps/model-api:model",
         "//platform/util:util-ui",
+        "//platform/platform-frontend:frontend",
     ],
 )
 
@@ -66,6 +67,7 @@ jvm_library(
         "//jps/model-impl:model-impl_test_lib",
         "//jps/model-api:model_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/platform-frontend:frontend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.lsp.ui` end
