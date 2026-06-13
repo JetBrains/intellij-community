@@ -28,13 +28,14 @@ public final class Cancellation {
   }
 
   public static void checkCancelled() {
-    if (isInNonCancelableSection()) {
+    Job job = currentJob();
+    if (isInNonCancelableSection(job)) {
       JfrCancellationEventsCallbackHolder.nonCancellableSectionInvoked();
       return;
     }
 
     try {
-      ensureActive();
+      ensureActive(job);
       JfrCancellationEventsCallbackHolder.cancellableSectionInvoked(false);
     }
     catch (ProcessCanceledException e) {

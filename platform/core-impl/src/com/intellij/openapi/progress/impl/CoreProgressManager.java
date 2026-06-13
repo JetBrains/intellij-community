@@ -43,6 +43,7 @@ import com.intellij.util.containers.ConcurrentLongObjectMap;
 import com.intellij.util.containers.Java11Shim;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
@@ -182,7 +183,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   @Override
   protected void doCheckCanceled() throws ProcessCanceledException {
-    if (isInNonCancelableSection()) {
+    Job job = Cancellation.currentJob();
+    if (Cancellation.isInNonCancelableSection(job)) {
       try {
         CheckCanceledBehavior behavior = ourCheckCanceledBehavior;
         if (behavior != CheckCanceledBehavior.NONE) {
@@ -197,7 +199,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
 
     try {
-      Cancellation.ensureActive();
+      Cancellation.ensureActive(job);
     }
     catch (ProcessCanceledException e) {
       fireCanceledByJobEvent();
