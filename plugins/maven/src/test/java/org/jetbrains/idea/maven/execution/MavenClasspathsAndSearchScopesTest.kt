@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.LibraryScopeCache
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -39,6 +40,7 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.CommonProcessors.CollectProcessor
 import com.intellij.util.PathsList
 import com.intellij.util.ReflectionUtil
+import com.intellij.util.io.DigestUtil.sha1
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
@@ -56,7 +58,6 @@ import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.fixtures.projectPath
 import org.jetbrains.idea.maven.fixtures.repositoryPathCanonical
 import org.jetbrains.idea.maven.fixtures.setupJdkForModules
-import org.jetbrains.idea.maven.importing.ArtifactsDownloadingTestCase.Companion.createEmptyJar
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -66,6 +67,8 @@ import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
 import java.io.File
 import java.io.IOException
+import java.io.PrintWriter
+import java.nio.charset.StandardCharsets
 import java.nio.file.Paths
 
 @TestApplication
@@ -1548,5 +1551,23 @@ $scope</scope>
       Assertions.fail<Any>("Cannot create directory $file")
     }
     VirtualFileManager.getInstance().refreshAndFindFileByUrl(url!!)
+  }
+
+  companion object {
+    @JvmStatic
+    fun createEmptyJar(dir: String, name: String) {
+      val jar = File(dir, name)
+      FileUtil.ensureExists(jar.getParentFile())
+      IoTestUtil.createTestJar(jar)
+
+      val digest = sha1()
+      digest.update(FileUtil.loadFileBytes(jar))
+      val sha1 = digest.digest()
+
+      PrintWriter(File(dir, "$name.sha1"), StandardCharsets.UTF_8).use { out ->
+        for (b in sha1) out.printf("%02x", b)
+        out.println("  $name")
+      }
+    }
   }
 }
