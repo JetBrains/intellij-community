@@ -727,6 +727,25 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
   }
 
   @Nested
+  inner class UnpackingDiagnostics {
+    @Test
+    @TestFor(issues = ["PY-39258"])
+    fun `nested tuple unpacking balance`() = test("""
+      def func(args: tuple[str, tuple[int, int, int]]):
+          s, (x, y) = args # WARNING Too many values to unpack from 'tuple[int, int, int]': expected 2, got 3
+
+      def func2(args: tuple[str, tuple[int, int]]):
+          s, (x, y, z) = args # WARNING Not enough values to unpack from 'tuple[int, int]': expected 3, got 2
+
+      def func3(args: tuple[str, tuple[int, int]]):
+          s, (x, y) = args
+
+      def func4(args: tuple[str, tuple[int, ...]]):
+          s, (x, y) = args
+      """)
+  }
+
+  @Nested
   inner class PyAnyMigrationMirrors {
     //
     // These mirror representative cases above but run with `enablePyAnyType = true`, asserting the
