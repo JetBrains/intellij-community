@@ -128,11 +128,9 @@ private class NewIjModulePopupPanel(private val popupContext: NewIjModuleCreatio
   private var editableSegment = ""
   private var selectedKind = IjModuleKind.ROOT_PLUGIN_MODULE
 
-  private val descriptionPurposeLabel = JBLabel().apply {
-    isOpaque = false
-    font = JBUI.Fonts.smallFont()
-    foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
-    alignmentY = CENTER_ALIGNMENT
+  private val descriptionPurposeLabel = createDescriptionLabel()
+  private val descriptionTargetPluginLabel = createDescriptionLabel().apply {
+    border = JBUI.Borders.emptyTop(2)
   }
 
   private val descriptionPanel = JPanel().apply {
@@ -141,6 +139,7 @@ private class NewIjModulePopupPanel(private val popupContext: NewIjModuleCreatio
     border = JBUI.Borders.empty(6, 12)
     add(Box.createVerticalGlue())
     add(descriptionPurposeLabel)
+    add(descriptionTargetPluginLabel)
   }
 
   init {
@@ -211,8 +210,18 @@ private class NewIjModulePopupPanel(private val popupContext: NewIjModuleCreatio
     nameField.caretPosition = caretOffset.coerceIn(0, nameField.text.length)
   }
 
+  private fun createDescriptionLabel(): JBLabel {
+    return JBLabel().apply {
+      isOpaque = false
+      font = JBUI.Fonts.smallFont()
+      foreground = SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor
+      alignmentY = CENTER_ALIGNMENT
+    }
+  }
+
   private fun updateDescription(kind: IjModuleKind?) {
     descriptionPurposeLabel.text = kind?.purpose() ?: ""
+    descriptionTargetPluginLabel.text = kind?.targetPluginLine(popupContext) ?: " "
   }
 }
 
@@ -296,6 +305,7 @@ internal suspend fun createIjModule(
   if (request.kind.isContentModule && targetPlugin != null) {
     addModuleToEnclosingPluginIfPresent(project, targetPlugin, createdModule)
   }
+  addModuleToCommunityProjectStructureIfNeeded(project, createdModule)
   project.scheduleSave() // to write changes in modules.xml to the disk
   return createdModule
 }
@@ -342,6 +352,19 @@ suspend fun addModuleToEnclosingPluginIfPresentForTests(
   addModuleToEnclosingPluginIfPresent(
     project,
     targetPlugin,
+    CreatedIjModule(moduleName, root.toNioPath(), IjModuleKind.fromTemplateName(kindTemplateName), existedBefore = false),
+  )
+}
+
+@TestOnly
+suspend fun addModuleToCommunityProjectStructureIfNeededForTests(
+  project: Project,
+  root: VirtualFile,
+  moduleName: String,
+  kindTemplateName: String,
+) {
+  addModuleToCommunityProjectStructureIfNeeded(
+    project,
     CreatedIjModule(moduleName, root.toNioPath(), IjModuleKind.fromTemplateName(kindTemplateName), existedBefore = false),
   )
 }
@@ -443,6 +466,59 @@ internal data class CreatedIjModule(
   val existedBefore: Boolean,
 )
 
+private suspend fun addModuleToCommunityProjectStructureIfNeeded(project: Project, createdModule: CreatedIjModule) {
+  if (createdModule.existedBefore) return
+
+  val projectBasePath = project.basePath ?: return
+  val communityProjectHome = Path.of(projectBasePath).resolve("community")
+  val communityModulesXml = communityProjectHome.resolve(".idea/modules.xml")
+  if (!communityModulesXml.exists()) return
+
+  val moduleImlFile = createdModule.moduleRoot.resolve("${createdModule.moduleName}.iml")
+  if (!moduleImlFile.exists() || !moduleImlFile.startsWith(communityProjectHome)) return
+
+  withContext(Dispatchers.IO) {
+    addModuleToProjectStructure(communityProjectHome, communityModulesXml, moduleImlFile)
+  }
+}
+
+private fun addModuleToProjectStructure(projectHome: Path, modulesXmlPath: Path, moduleImlFile: Path) {
+  val modulesXmlText = runCatching { modulesXmlPath.readText() }
+    .getOrElse {
+      LOG.warn("Failed to read modules.xml at '$modulesXmlPath'", it)
+      return
+    }
+  if (!modulesXmlText.contains("<component name=\"ProjectModuleManager\">") || !modulesXmlText.contains("<modules>")) {
+    LOG.warn("Unexpected modules.xml format at '$modulesXmlPath'")
+    return
+  }
+
+  val moduleFilePath = '$' + "PROJECT_DIR$/${projectHome.relativize(moduleImlFile).toSystemIndependentString()}"
+  val existingModuleFilePaths = COMMUNITY_PROJECT_MODULE_ENTRY_REGEX.findAll(modulesXmlText)
+    .mapTo(ArrayList()) { it.groupValues[1] }
+  if (moduleFilePath in existingModuleFilePaths) return
+
+  val updatedModuleFilePaths = (existingModuleFilePaths + moduleFilePath)
+    .sortedBy { it.substringAfterLast('/').removeSuffix(".iml") }
+
+  modulesXmlPath.writeText(renderProjectStructureModulesXml(updatedModuleFilePaths))
+}
+
+private fun renderProjectStructureModulesXml(moduleFilePaths: List<String>): String {
+  return buildString {
+    appendLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+    appendLine("<project version=\"4\">")
+    appendLine("  <component name=\"ProjectModuleManager\">")
+    appendLine("    <modules>")
+    for (moduleFilePath in moduleFilePaths) {
+      appendLine("      <module fileurl=\"file://$moduleFilePath\" filepath=\"$moduleFilePath\" />")
+    }
+    appendLine("    </modules>")
+    appendLine("  </component>")
+    append("</project>")
+  }
+}
+
 internal suspend fun openXmlDescriptorIfPresent(project: Project, createdModule: CreatedIjModule) {
   val descriptor = readAction {
     findXmlDescriptor(project, createdModule.moduleName)
@@ -513,7 +589,7 @@ internal enum class IjModuleKind(
     titleKey = "scaffolding.new.ij.module.kind.frontend",
     moduleSuffix = "frontend",
     isContentModule = true,
-    icon = DevkitCoreIcons.PluginModule,
+    icon = DevkitCoreIcons.FrontendModule,
     templateDirectoryName = "$TEMPLATE_MODULE_IN_MONOREPO_NAME.frontend",
   ),
   BACKEND(
@@ -521,7 +597,7 @@ internal enum class IjModuleKind(
     titleKey = "scaffolding.new.ij.module.kind.backend",
     moduleSuffix = "backend",
     isContentModule = true,
-    icon = DevkitCoreIcons.PluginModule,
+    icon = DevkitCoreIcons.BackendModule,
     templateDirectoryName = "$TEMPLATE_MODULE_IN_MONOREPO_NAME.backend",
   ),
   SHARED(
@@ -529,7 +605,7 @@ internal enum class IjModuleKind(
     titleKey = "scaffolding.new.ij.module.kind.shared",
     moduleSuffix = "shared",
     isContentModule = true,
-    icon = DevkitCoreIcons.PluginModule,
+    icon = DevkitCoreIcons.SharedModule,
     templateDirectoryName = "$TEMPLATE_MODULE_IN_MONOREPO_NAME.shared",
   );
 
@@ -819,6 +895,8 @@ internal data class ContentModuleRegistrationTarget(
 )
 
 private val LOG = logger<NewIjModuleAction>()
+
+private val COMMUNITY_PROJECT_MODULE_ENTRY_REGEX = Regex("""<module\s+fileurl="[^"]+"\s+filepath="([^"]+)"\s*/>""")
 
 private const val TEMPLATE_MODULE_IN_MONOREPO_NAME = "remDevFeatureSample"
 private const val TEMPLATE_MODULES_ROOT = "plugins/.remdev"
