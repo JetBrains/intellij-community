@@ -21,6 +21,9 @@ import org.junit.rules.TestRule;
 import org.junit.rules.Timeout;
 
 import java.io.IOException;
+import java.net.StandardProtocolFamily;
+import java.net.UnixDomainSocketAddress;
+import java.nio.channels.ServerSocketChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -214,6 +217,22 @@ public abstract sealed class DirectoryLockTest {
   }
 
   @Test
+  public void deletingRealStalePortFile() throws Exception {
+    assumeTrue(this instanceof StandardModeTest);
+    var systemDir = Files.createDirectories(testDir.resolve("s"));
+    var lock = createLock(testDir.resolve("c"), systemDir);
+    var portFile = systemDir.resolve(SpecialConfigFiles.PORT_FILE);
+    var process = DummyProcess.start(portFile.toString());
+    while (process.isAlive()) {
+      if ("accepting connections".equals(process.inputReader().readLine())) break;
+    }
+    assumeTrue(process.isAlive());
+    process.destroyForcibly();
+    assertThat(portFile).exists();
+    assertNull(lock.lockOrActivate(currentDir, List.of()));
+  }
+
+  @Test
   public void deletingStaleLockFile() throws Exception {
     var configDir = Files.createDirectories(testDir.resolve("c"));
     Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), "---");
@@ -276,13 +295,27 @@ public abstract sealed class DirectoryLockTest {
 
   static final class DummyProcess {
     private static Process start(int timeout) throws IOException {
+      return start(String.valueOf(timeout));
+    }
+
+    private static Process start(String arg) throws IOException {
       var javaExe = System.getProperty("java.home") + "/bin/java" + (OS.CURRENT == OS.Windows ? ".exe" : "");
       var classpath = PathManager.getJarForClass(DummyProcess.class).toString();
-      return new ProcessBuilder(javaExe, "-cp", classpath, DummyProcess.class.getName(), String.valueOf(timeout)).start();
+      return new ProcessBuilder(javaExe, "-cp", classpath, DummyProcess.class.getName(), arg).start();
     }
 
     static void main(String[] args) throws Exception {
-      Thread.sleep(Long.parseLong(args[0]));
+      var arg = args[0];
+      if (Character.isDigit(arg.charAt(0))) {
+        Thread.sleep(Long.parseLong(arg));
+      }
+      else {
+        var address = UnixDomainSocketAddress.of(Path.of(arg));
+        var serverChannel = ServerSocketChannel.open(StandardProtocolFamily.UNIX);
+        serverChannel.bind(address);
+        System.out.println("accepting connections");
+        serverChannel.accept();
+      }
     }
   }
 }
