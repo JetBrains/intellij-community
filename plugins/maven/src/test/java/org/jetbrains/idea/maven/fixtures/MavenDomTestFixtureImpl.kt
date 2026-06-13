@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Disposer
@@ -109,12 +108,6 @@ class MavenDomTestFixtureImpl internal constructor(
     VfsRootAccess.allowRootAccess(disposable, IdeaTestUtil.requireRealJdkHome())
     jdkFixture = MavenProjectJDKTestFixture(project, JDK_NAME)
     edtWriteAction { jdkFixture.setUp() }
-
-    // Register the JDK (so the Maven server can start) but do NOT leave it as the project SDK. Legacy DOM tests ran
-    // without a project SDK (MavenProjectJDKTestFixture was opt-in via withRealJDK), and the "create module" quickfix
-    // emits <maven.compiler.*> properties only when a Java project SDK is present. Clearing it keeps that parity so
-    // golden poms match; the Maven importer then falls back to the internal (real) JDK, as it did in legacy.
-    edtWriteAction { ProjectRootManager.getInstance(project).projectSdk = null }
 
     // Plugin resolution is slow and hits the network; skip it for offline sync unless a test opts in.
     if (skipPluginResolution) {
