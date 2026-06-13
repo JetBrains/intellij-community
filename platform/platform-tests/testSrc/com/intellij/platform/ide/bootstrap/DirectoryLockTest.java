@@ -3,12 +3,11 @@ package com.intellij.platform.ide.bootstrap;
 
 import com.intellij.ide.CliResult;
 import com.intellij.ide.SpecialConfigFiles;
-import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.platform.ide.bootstrap.DirectoryLock.CannotActivateException;
-import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.rules.InMemoryFsRule;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -75,7 +74,6 @@ public abstract sealed class DirectoryLockTest {
   @Rule public final TestRule watcher = TestLoggerFactory.createTestWatcher();
   @Rule public final Timeout timeout = Timeout.seconds(30);
   @Rule public final TempDirectory tempDir = new TempDirectory();
-  @Rule public final ApplicationRule app = new ApplicationRule();
 
   private Path testDir;
   private final List<DirectoryLock> activeLocks = new ArrayList<>();
@@ -225,9 +223,10 @@ public abstract sealed class DirectoryLockTest {
 
   @Test
   public void deletingStaleLockFileWithRecycledPid() throws Exception {
-    var scriptName = ApplicationNamesInfo.getInstance().getScriptName();
+    @SuppressWarnings("OptionalGetWithoutIsPresent")
+    var command = ProcessHandle.current().info().command().get();
     var nonIdeProcess = ProcessHandle.allProcesses()
-      .filter(h -> { var command = h.info().command().orElse(""); return !(command.contains("java") || command.contains(scriptName)); })
+      .filter(h -> { var other = h.info().command().orElse(null); return other != null && !other.endsWith(command); })
       .findFirst().orElse(null);
     assumeTrue("Cannot find a non-IDE process among running", nonIdeProcess != null);
     var configDir = Files.createDirectories(testDir.resolve("c"));
@@ -242,5 +241,48 @@ public abstract sealed class DirectoryLockTest {
     Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), Long.toString(ProcessHandle.current().pid()));
     var lock = createLock(configDir, testDir.resolve("s"));
     assertThatThrownBy(() -> lock.lockOrActivate(currentDir, List.of())).isInstanceOf(CannotActivateException.class);
+  }
+
+  @Test
+  public void activatingWithDelayedExitingProcess() throws Exception {
+    var configDir = Files.createDirectories(testDir.resolve("c"));
+    var systemDir = Files.createDirectories(testDir.resolve("s"));
+    var process = DummyProcess.start(500);
+    try {
+      Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), Long.toString(process.pid()));
+      var lock = createLock(configDir, systemDir);
+      assertNull(lock.lockOrActivate(currentDir, List.of()));
+    }
+    finally {
+      process.destroyForcibly();
+    }
+  }
+
+  @Test
+  public void activatingWithHungProcessTimesOut() throws Exception {
+    var configDir = Files.createDirectories(testDir.resolve("c"));
+    var systemDir = Files.createDirectories(testDir.resolve("s"));
+    var process = DummyProcess.start(5000);
+    try {
+      Files.writeString(configDir.resolve(SpecialConfigFiles.LOCK_FILE), Long.toString(process.pid()));
+      var lock = createLock(configDir, systemDir);
+      assertThatThrownBy(() -> lock.lockOrActivate(currentDir, List.of()))
+        .isInstanceOf(CannotActivateException.class);
+    }
+    finally {
+      process.destroyForcibly();
+    }
+  }
+
+  static final class DummyProcess {
+    private static Process start(int timeout) throws IOException {
+      var javaExe = System.getProperty("java.home") + "/bin/java" + (OS.CURRENT == OS.Windows ? ".exe" : "");
+      var classpath = PathManager.getJarForClass(DummyProcess.class).toString();
+      return new ProcessBuilder(javaExe, "-cp", classpath, DummyProcess.class.getName(), String.valueOf(timeout)).start();
+    }
+
+    static void main(String[] args) throws Exception {
+      Thread.sleep(Long.parseLong(args[0]));
+    }
   }
 }

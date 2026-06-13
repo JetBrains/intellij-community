@@ -51,10 +51,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.logging.LogRecord;
-import java.util.stream.Collectors;
 
 import static java.util.Objects.requireNonNullElse;
 
@@ -99,7 +99,8 @@ public final class DirectoryLock {
   private static final String SERVER_THREAD_NAME = "External Command Listener";
 
   private static final AtomicInteger COUNT = new AtomicInteger();  // to ensure redirected port file uniqueness in tests
-  private static final long TIMEOUT_MS = Integer.getInteger("ij.dir.lock.timeout", 5_000);
+  private static final long CONNECT_TIMEOUT_MS = Integer.getInteger("ij.dir.lock.timeout", 5_000);
+  private static final long WAIT_TIMEOUT_MS = Integer.getInteger("ij.dir.lock.wait", 1_000);
   private static final List<String> ACK_PACKET = List.of("<<ACK>>");
 
   private final long myPid = ProcessHandle.current().pid();
@@ -173,7 +174,7 @@ public final class DirectoryLock {
       }
 
       var suppressed = new ArrayList<Exception>();
-      var command = ProcessHandle.current().info().command().orElse("???");
+      var command = ProcessHandle.current().info().command().orElse("<unknown>");
       LOG.debug("current command: " + command);
 
       try {
@@ -194,30 +195,27 @@ public final class DirectoryLock {
 
       try {
         var otherPid = remotePID();
-        var otherCommand = ProcessHandle.of(otherPid).map(ProcessHandle::info).flatMap(ProcessHandle.Info::command).orElse("-"); // not "???"
-        LOG.debug("competing process (by PID): PID=" + otherPid + ' ' + otherCommand);
-        if (command.equals(otherCommand)) {
-          throw cannotActivate(command, otherPid, suppressed);
+        LOG.debug("locked by the process " + otherPid);
+        var otherProcess = ProcessHandle.of(otherPid).orElse(null);
+        if (otherProcess != null) {
+          var otherCommand = otherProcess.info().command().orElse(null);
+          LOG.debug("still running, command: " + requireNonNullElse(otherCommand, "<unknown>"));
+          if (otherCommand == null || command.equals(otherCommand)) {
+            LOG.debug("waiting ...");
+            try {
+              otherProcess.onExit().get(WAIT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+            }
+            catch (Exception e) {
+              suppressed.add(e);
+              throw cannotActivate(command, otherPid, suppressed);
+            }
+            LOG.debug("... done waiting");
+          }
         }
       }
       catch (IOException | NumberFormatException e) {
         LOG.debug(e);
         suppressed.add(e);
-      }
-
-      if (!Path.of(command).endsWith(OS.CURRENT == OS.Windows ? "java.exe" : "java")) {
-        var user = ProcessHandle.current().info().user().orElse("");
-        LOG.debug("current user: " + user);
-        var competition = ProcessHandle.allProcesses()
-          .filter(ph -> command.equals(ph.info().command().orElse("")) && user.equals(ph.info().user().orElse("")) && ph.pid() != myPid)
-          .toList();
-        if (!competition.isEmpty()) {
-          LOG.debug(
-            "competing processes:\n" +
-            competition.stream().map(ph -> "  PID=" + ph.pid() + " (" + ph.info().user() + ") " + ph.info().command()).collect(Collectors.joining())
-          );
-          throw cannotActivate(command, competition.getFirst().pid(), suppressed);
-        }
       }
 
       try {
@@ -336,7 +334,7 @@ public final class DirectoryLock {
       LOG.debug("connecting to " + address);
       socketChannel.register(selector, SelectionKey.OP_CONNECT);
       if (!socketChannel.connect(address)) {
-        if (selector.select(TIMEOUT_MS) == 0) throw new SocketTimeoutException("Timeout: connect");
+        if (selector.select(CONNECT_TIMEOUT_MS) == 0) throw new SocketTimeoutException("Timeout: connect");
         socketChannel.finishConnect();
       }
       LOG.debug("... connected");
@@ -350,7 +348,7 @@ public final class DirectoryLock {
       sendLines(socketChannel, request);
 
       try {
-        if (selector.select(TIMEOUT_MS) == 0) throw new SocketTimeoutException("Timeout: ACK");
+        if (selector.select(CONNECT_TIMEOUT_MS) == 0) throw new SocketTimeoutException("Timeout: ACK");
         var ack = receiveLines(socketChannel);
         if (!ack.equals(ACK_PACKET)) throw new IOException("Malformed ACK: " + ack);
 
