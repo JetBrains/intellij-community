@@ -201,6 +201,10 @@ jvm_library(
         "//plugins/kotlin/inspections:inspections_test_lib",
         "//plugins/kotlin/gradle/gradle",
         "//plugins/kotlin/gradle/gradle:gradle_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.java.tests` end

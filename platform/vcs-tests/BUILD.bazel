@@ -1,7 +1,12 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.platform.vcs.testFramework` start
+
+jvm_provided_library(
+    name = "libraries_junit5_provided",
+    lib = "//libraries/junit5",
+)
 
 jvm_library(
     name = "vcs-testFramework",
@@ -38,6 +43,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/lang-core",
         "//platform/util-ex",
+        ":libraries_junit5_provided",
     ],
 )
 
@@ -72,6 +78,8 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/lang-core:lang-core_test_lib",
         "//platform/util-ex:util-ex_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.testFramework` end

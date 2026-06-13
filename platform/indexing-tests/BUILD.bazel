@@ -46,6 +46,8 @@ jvm_library(
         "//platform/indexing-impl:indexing-impl_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.indexing.tests` end

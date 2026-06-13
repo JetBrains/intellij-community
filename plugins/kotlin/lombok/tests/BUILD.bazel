@@ -75,6 +75,8 @@ jvm_library(
         "//plugins/kotlin/base/util:util_test_lib",
         "//plugins/kotlin/lombok",
         "//plugins/kotlin/lombok:lombok_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.lombok.tests` end

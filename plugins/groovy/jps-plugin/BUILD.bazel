@@ -124,6 +124,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.groovy.jps.tests` end

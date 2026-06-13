@@ -47,6 +47,8 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/external-system-impl:externalSystem-tests",
         "//platform/external-system-impl:externalSystem-tests_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.java.toml.tests` end

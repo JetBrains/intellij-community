@@ -110,6 +110,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//plugins/grazie/src/test:grazie-tests",
         "//plugins/grazie/src/test:grazie-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.proofreading.tests` end

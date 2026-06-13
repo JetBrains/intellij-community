@@ -66,6 +66,8 @@ jvm_library(
         "//plugins/kotlin/base/indices:indices_test_lib",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.indices.tests` end

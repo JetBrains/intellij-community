@@ -82,6 +82,8 @@ jvm_library(
         "//plugins/textmate/core/tests",
         "//plugins/textmate/core/tests:tests_test_lib",
         "@lib//:kotlin-test-junit5",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.textmate.tests` end

@@ -207,6 +207,8 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//jupyter:notebooks-jupyter-core",
         "//jupyter:notebooks-jupyter-core_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.notebooks.visualization.tests` end

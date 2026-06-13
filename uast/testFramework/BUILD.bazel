@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.platform.uast.testFramework` start
+
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
 
 jvm_library(
     name = "testFramework",
@@ -34,6 +39,7 @@ jvm_library(
         "//platform/vcs-api:vcs",
         "//java/testFramework",
         "//platform/vcs-impl",
+        ":libraries_junit4_provided",
     ],
 )
 
@@ -70,6 +76,8 @@ jvm_library(
         "//platform/vcs-api:vcs_test_lib",
         "//java/testFramework:testFramework_test_lib",
         "//platform/vcs-impl:vcs-impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.uast.testFramework` end

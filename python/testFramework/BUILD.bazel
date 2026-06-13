@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.python.community.testFramework` start
+
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
 
 jvm_library(
     name = "testFramework",
@@ -37,6 +42,7 @@ jvm_library(
         "//platform/ide-core",
         "//platform/util:util-ui",
         "//python:python-community-impl",
+        ":libraries_junit4_provided",
     ],
 )
 
@@ -69,6 +75,8 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//platform/util:util-ui_test_lib",
         "//python:python-community-impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.testFramework` end

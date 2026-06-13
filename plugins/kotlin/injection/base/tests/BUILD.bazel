@@ -76,6 +76,8 @@ jvm_library(
         "//platform/ide-core",
         "//xml/xml-parser:parser",
         "//xml/xml-parser:parser_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.base.injection.tests` end

@@ -148,6 +148,8 @@ jvm_library(
         "//plugins/kotlin/jvm/k2:kotlin-jvm_test_lib",
         "//plugins/kotlin/jvm/k2:kotlin-jvm-tests",
         "//plugins/kotlin/jvm/k2:kotlin-jvm-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.util.test-generator-fir` end

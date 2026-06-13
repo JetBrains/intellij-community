@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.platform.lsp.testFramework` start
+
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
 
 jvm_library(
     name = "testFramework",
@@ -21,6 +26,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//platform/lsp",
         "//platform/testFramework",
+        ":libraries_junit4_provided",
     ],
 )
 
@@ -40,6 +46,8 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/lsp:lsp_test_lib",
         "//platform/testFramework:testFramework_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lsp.testFramework` end

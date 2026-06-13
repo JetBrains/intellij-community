@@ -144,6 +144,10 @@ jvm_library(
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
         "//platform/ide-core",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.statsCollector.tests` end

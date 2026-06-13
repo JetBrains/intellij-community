@@ -55,6 +55,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.onboarding.gradle" />
 </module>

@@ -178,6 +178,8 @@ jvm_library(
         "//platform/platform-impl/internal",
         "//platform/ml-api:ml",
         "//platform/ml-api:ml_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.completionMlRanking.tests` end

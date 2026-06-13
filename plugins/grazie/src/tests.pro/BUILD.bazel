@@ -131,6 +131,10 @@ jvm_library(
         "//python/python-pyproject:pyproject-tests_test_lib",
         "//python/services/internal-impl:python-community-services-internal-impl-tests",
         "//python/services/internal-impl:python-community-services-internal-impl-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grazie.tests.pro` end

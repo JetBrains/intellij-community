@@ -1,7 +1,17 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.java.testFramework` start
+
+jvm_provided_library(
+    name = "libraries_junit5_provided",
+    lib = "//libraries/junit5",
+)
+
+jvm_provided_library(
+    name = "libraries_junit5-params_provided",
+    lib = "//libraries/junit5-params",
+)
 
 jvm_library(
     name = "testFramework",
@@ -95,6 +105,8 @@ jvm_library(
         "//java/testFramework/backend",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//platform/util/concurrency",
+        ":libraries_junit5_provided",
+        ":libraries_junit5-params_provided",
     ],
 )
 
@@ -187,6 +199,10 @@ jvm_library(
         "//java/testFramework/backend:backend_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.testFramework` end

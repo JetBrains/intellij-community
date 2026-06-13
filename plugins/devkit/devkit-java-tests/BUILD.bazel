@@ -169,6 +169,12 @@ jvm_library(
         "//platform/util/concurrency:concurrency_test_lib",
         "//plugins/devkit/intellij.devkit.themes:themes-tests",
         "//plugins/devkit/intellij.devkit.themes:themes-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.java.tests` end

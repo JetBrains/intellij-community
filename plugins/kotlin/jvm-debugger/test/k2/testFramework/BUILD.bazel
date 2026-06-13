@@ -52,6 +52,8 @@ jvm_library(
         "//plugins/kotlin/jvm-debugger/testFramework",
         "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
         "@lib//:kotlinc-analysis-api",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.testFramework` end

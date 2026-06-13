@@ -1,5 +1,5 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.platform.polySymbols` start
 
@@ -103,6 +103,16 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.polySymbols.testFramework` start
 
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
+
+jvm_provided_library(
+    name = "libraries_junit5_provided",
+    lib = "//libraries/junit5",
+)
+
 jvm_library(
     name = "polySymbols-testFramework",
     srcs = glob(
@@ -150,6 +160,8 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/util/jdom",
         "//jps/model-api:model",
+        ":libraries_junit4_provided",
+        ":libraries_junit5_provided",
     ],
 )
 
@@ -192,6 +204,10 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//platform/util/jdom:jdom_test_lib",
         "//jps/model-api:model_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.polySymbols.testFramework` end
@@ -311,6 +327,8 @@ jvm_library(
         "//platform/polySymbols:polySymbols-testFramework_test_lib",
         "//java/java-runtime:rt",
         "//java/java-runtime:rt_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.polySymbols.tests` end

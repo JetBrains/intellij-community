@@ -154,6 +154,8 @@ jvm_library(
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//plugins/evaluation-plugin:evaluationPlugin-tests",
         "//plugins/evaluation-plugin:evaluationPlugin-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.evaluationPlugin.languages.kotlin.tests` end

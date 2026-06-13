@@ -312,6 +312,8 @@ jvm_library(
         "//platform/collaboration-tools:collaborationTools-tests_test_lib",
         "//platform/testFramework/junit5/codeInsight",
         "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.gitlab.tests` end

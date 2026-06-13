@@ -71,6 +71,9 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.teamCity" scope="TEST" />
     <orderEntry type="module" module-name="intellij.performanceTesting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.performanceTesting.freezes" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.performanceTesting" />
 </module>

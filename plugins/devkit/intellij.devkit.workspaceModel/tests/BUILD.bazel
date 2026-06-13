@@ -116,6 +116,10 @@ jvm_library(
         "@lib//:studio-platform",
         "//plugins/copyright",
         "//plugins/copyright:copyright_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.tests` end

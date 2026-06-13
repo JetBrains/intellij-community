@@ -64,6 +64,8 @@ jvm_library(
         "@lib//:jet_check",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.jvm.analysis.java.tests` end

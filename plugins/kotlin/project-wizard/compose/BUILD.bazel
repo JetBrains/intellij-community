@@ -157,6 +157,8 @@ jvm_library(
         "//java/java-tests:tests_test_lib",
         "//plugins/kotlin/project-wizard/core",
         "//plugins/kotlin/project-wizard/core:core_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.projectWizard.compose.tests` end

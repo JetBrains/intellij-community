@@ -54,6 +54,8 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.junit.kotlin.tests.k2` end

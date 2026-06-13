@@ -66,6 +66,8 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.codeInsight.groovy" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.inspections" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.kotlin.gradle.java" />
 </module>

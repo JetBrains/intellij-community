@@ -309,6 +309,8 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.i18n.tests` end

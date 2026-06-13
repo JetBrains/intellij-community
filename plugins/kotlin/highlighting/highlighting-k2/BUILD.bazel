@@ -275,6 +275,10 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal",
         "//plugins/kotlin/highlighting/highlighting-minimal:kotlin-highlighting-minimal_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.highlighting.tests` end

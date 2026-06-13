@@ -20,5 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.jps.model.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.multiplatform" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.base" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
 </module>
