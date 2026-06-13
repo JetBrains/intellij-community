@@ -23196,17 +23196,29 @@ function createProjectPathManager({
   function normalizeProjectPathArgs(args, desiredKey) {
     if (!desiredKey)
       return;
-    let hasSnake = Object.prototype.hasOwnProperty.call(args, "project_path"), hasCamel = Object.prototype.hasOwnProperty.call(args, "projectPath");
+    let hasSnake = Object.prototype.hasOwnProperty.call(args, "project_path"), hasCamel = Object.prototype.hasOwnProperty.call(args, "projectPath"), hasRoot = Object.prototype.hasOwnProperty.call(args, "rootFolder");
     if (desiredKey === "projectPath") {
       if (hasSnake)
         delete args.project_path;
+      if (hasRoot)
+        delete args.rootFolder;
       args.projectPath = projectPath;
       return;
     }
     if (desiredKey === "project_path") {
       if (hasCamel)
         delete args.projectPath;
+      if (hasRoot)
+        delete args.rootFolder;
       args.project_path = projectPath;
+      return;
+    }
+    if (desiredKey === "rootFolder") {
+      if (hasSnake)
+        delete args.project_path;
+      if (hasCamel)
+        delete args.projectPath;
+      args.rootFolder = projectPath;
     }
   }
   function shouldInjectProjectPath(toolName) {
@@ -23237,7 +23249,7 @@ function createProjectPathManager({
   function updateProjectPathKeys(tools) {
     if (!Array.isArray(tools))
       return;
-    let hasSnake = !1, hasCamel = !1;
+    let hasSnake = !1, hasCamel = !1, hasRoot = !1;
     toolProjectPathKeyByName.clear();
     for (let tool of tools) {
       let props = tool?.inputSchema?.properties;
@@ -23251,12 +23263,19 @@ function createProjectPathManager({
       if (Object.prototype.hasOwnProperty.call(props, "projectPath")) {
         if (hasCamel = !0, typeof tool.name === "string")
           toolProjectPathKeyByName.set(tool.name, "projectPath");
+        continue;
+      }
+      if (Object.prototype.hasOwnProperty.call(props, "rootFolder")) {
+        if (hasRoot = !0, typeof tool.name === "string")
+          toolProjectPathKeyByName.set(tool.name, "rootFolder");
       }
     }
     if (hasSeenToolsList = !0, hasProjectPathTools = toolProjectPathKeyByName.size > 0, hasSnake)
       projectPathKey = "project_path";
     else if (hasCamel)
       projectPathKey = "projectPath";
+    else if (hasRoot)
+      projectPathKey = "rootFolder";
     else
       projectPathKey = null;
   }
@@ -23275,6 +23294,8 @@ function createProjectPathManager({
         delete props.project_path, removedKeys.push("project_path");
       if (Object.prototype.hasOwnProperty.call(props, "projectPath"))
         delete props.projectPath, removedKeys.push("projectPath");
+      if (Object.prototype.hasOwnProperty.call(props, "rootFolder"))
+        delete props.rootFolder, removedKeys.push("rootFolder");
       if (removedKeys.length > 0 && Array.isArray(schema.required))
         schema.required = schema.required.filter((name) => !removedKeys.includes(name));
     }

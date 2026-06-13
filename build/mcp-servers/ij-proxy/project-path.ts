@@ -2,7 +2,7 @@
 
 import type {ToolSpecLike} from './proxy-tools/types'
 
-type ProjectPathKey = 'project_path' | 'projectPath'
+type ProjectPathKey = 'project_path' | 'projectPath' | 'rootFolder'
 
 interface ProjectPathManager {
   injectProjectPathArgs: (toolName: string | undefined, args: Record<string, unknown>) => void
@@ -18,7 +18,7 @@ export function createProjectPathManager({
   projectPath: string
   defaultProjectPathKey?: ProjectPathKey
   /**
-   * When `true`, `project_path` / `projectPath` is injected into every upstream tool call
+   * When `true`, `project_path` / `projectPath` / `rootFolder` is injected into every upstream tool call
    * regardless of whether the tool declared it in its schema. Used when a container
    * session is active: the host IDE uses the configured project path to disambiguate
    * between multiple open projects, and tools that don't declare the parameter would
@@ -36,16 +36,26 @@ export function createProjectPathManager({
 
     const hasSnake = Object.prototype.hasOwnProperty.call(args, 'project_path')
     const hasCamel = Object.prototype.hasOwnProperty.call(args, 'projectPath')
+    const hasRoot = Object.prototype.hasOwnProperty.call(args, 'rootFolder')
 
     if (desiredKey === 'projectPath') {
       if (hasSnake) delete args.project_path
+      if (hasRoot) delete args.rootFolder
       args.projectPath = projectPath
       return
     }
 
     if (desiredKey === 'project_path') {
       if (hasCamel) delete args.projectPath
+      if (hasRoot) delete args.rootFolder
       args.project_path = projectPath
+      return
+    }
+
+    if (desiredKey === 'rootFolder') {
+      if (hasSnake) delete args.project_path
+      if (hasCamel) delete args.projectPath
+      args.rootFolder = projectPath
     }
   }
 
@@ -77,6 +87,7 @@ export function createProjectPathManager({
 
     let hasSnake = false
     let hasCamel = false
+    let hasRoot = false
     toolProjectPathKeyByName.clear()
 
     for (const tool of tools) {
@@ -96,6 +107,14 @@ export function createProjectPathManager({
         if (typeof tool.name === 'string') {
           toolProjectPathKeyByName.set(tool.name, 'projectPath')
         }
+        continue
+      }
+
+      if (Object.prototype.hasOwnProperty.call(props, 'rootFolder')) {
+        hasRoot = true
+        if (typeof tool.name === 'string') {
+          toolProjectPathKeyByName.set(tool.name, 'rootFolder')
+        }
       }
     }
 
@@ -104,6 +123,7 @@ export function createProjectPathManager({
 
     if (hasSnake) projectPathKey = 'project_path'
     else if (hasCamel) projectPathKey = 'projectPath'
+    else if (hasRoot) projectPathKey = 'rootFolder'
     else projectPathKey = null
   }
 
@@ -125,6 +145,10 @@ export function createProjectPathManager({
       if (Object.prototype.hasOwnProperty.call(props, 'projectPath')) {
         delete props.projectPath
         removedKeys.push('projectPath')
+      }
+      if (Object.prototype.hasOwnProperty.call(props, 'rootFolder')) {
+        delete props.rootFolder
+        removedKeys.push('rootFolder')
       }
 
       if (removedKeys.length > 0 && Array.isArray(schema.required)) {
