@@ -814,6 +814,54 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
           for s, (x, y) in rows:
               pass
       """)
+
+    @Test
+    @TestFor(issues = ["PY-27205"])
+    fun `tuple literal splicing a fixed tuple matches its target type`() = test("""
+      def f(t: tuple[int, int]):
+          expr = (1, *t)
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-40735"])
+    fun `unpacked tuple argument fills parameters`() = test("""
+      def foo(a: str, b: int): ...
+
+      a = "1",
+      foo(*("1",), 1)
+      foo(*a, 1)
+      foo(*("1", 2))
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-40735"])
+    fun `unpacked tuple variable argument overfills parameters`() = test("""
+      def foo(a: str, b: int): ...
+
+      xe = "1", 2
+      foo(*xe, 3) # WARNING Unexpected argument
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-40735"])
+    fun `unpacked tuple literal argument is type checked`() = test("""
+      def foo(a: str, b: int): ...
+
+      foo(*("1",), 1)
+      foo(*("1", 2))
+      foo(*("1",), "2") # WARNING Expected type 'int', got 'Literal["2"]' instead
+      foo(*("1", "2")) # WARNING Expected type 'int', got 'Literal["2"]' instead
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-40735"])
+    fun `unpacked tuple variable argument is type checked`() = test("""
+      def foo(a: str, b: int): ...
+
+      xe = "1",
+      foo(*xe, 2)
+      foo(*xe, "2") # WARNING Expected type 'int', got 'Literal["2"]' instead
+      """)
   }
 
   @Nested
