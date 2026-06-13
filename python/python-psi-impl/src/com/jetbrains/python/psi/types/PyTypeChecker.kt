@@ -900,6 +900,12 @@ object PyTypeChecker {
     actual: PyTupleType,
     context: MatchContext,
   ): Optional<Boolean> {
+    // A NamedTuple is a nominal type: a value is assignable to it only if it is an instance of the same
+    // NamedTuple (or a subclass), not an arbitrary structurally-matching tuple such as `(1,)`.
+    if (expected is PyNamedTupleType &&
+        (actual !is PyNamedTupleType || !actual.pyClass.isSubclass(expected.pyClass, context.context))) {
+      return Optional.of(false)
+    }
     if (actual.isHomogeneous) {
       // The type tuple[Any, ...] is consistent with any tuple
       val elementType = actual.iteratedItemType

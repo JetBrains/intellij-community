@@ -3149,6 +3149,30 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  @TestFor(issues = "PY-90219")
+  public void testTupleNotCompatibleWithNamedTuple() {
+    doTestByText(
+      """
+        from typing import NamedTuple
+        
+        class N(NamedTuple):
+            a: int
+        
+        n1: N = N(1)
+        n2: N = <warning descr="Expected type 'N', got 'tuple[int]' instead">(1,)</warning>
+
+        class M(NamedTuple):
+            a: int
+        
+        n3: N = <warning descr="Expected type 'N', got 'M' instead">M(1)</warning>
+        
+        class N2(N): ...
+        
+        def f(n2: N2):
+          n4: N = n2
+        """);
+  }
+
   // PY-74277
   public void testPassingTypeIsCallable() {
     runWithLanguageLevel(
