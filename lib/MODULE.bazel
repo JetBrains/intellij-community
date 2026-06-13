@@ -7057,17 +7057,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1_http",
-    downloaded_file_path = "kotlinx-datetime-jvm-0.7.1.jar",
-    sha256 = "3b8b98657c9aff3be7f6b4b575e9f3fb9a3a1f452a801da0f438901734acdade",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.7.1/kotlinx-datetime-jvm-0.7.1.jar",
+    name = "org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-0_6_x-compat_http",
+    downloaded_file_path = "kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar",
+    sha256 = "cf9cdf7b3074044657a1a80bc1bb5280b58545a967ac7fe42b1aa3cf93305714",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.7.1-0.6.x-compat/kotlinx-datetime-jvm-0.7.1-0.6.x-compat.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-sources_http",
-    downloaded_file_path = "kotlinx-datetime-jvm-0.7.1-sources.jar",
-    sha256 = "7252432e626821da49ae6ba9bf6880988ee9e9977ba6fdcd4e225c57cd387f2f",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.7.1/kotlinx-datetime-jvm-0.7.1-sources.jar",
+    name = "org_jetbrains_kotlinx-kotlinx-datetime-jvm-0_7_1-0_6_x-compat-sources_http",
+    downloaded_file_path = "kotlinx-datetime-jvm-0.7.1-0.6.x-compat-sources.jar",
+    sha256 = "c9b064d79c497897174feb81252d048063c038a363dcdc8559a397c1ddc693f3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-datetime-jvm/0.7.1-0.6.x-compat/kotlinx-datetime-jvm-0.7.1-0.6.x-compat-sources.jar",
 )
 
 http_file(
