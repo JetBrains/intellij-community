@@ -28,6 +28,7 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyKeywordArgument;
 import com.jetbrains.python.psi.PyStarArgument;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
@@ -115,13 +116,25 @@ public final class PyArgumentListInspection extends PyInspection {
       }
       // else: this case is handled by arglist visitor
     }
+
+    @Override
+    public void visitPyClass(@NotNull PyClass node) {
+      // A class definition implicitly calls `__init_subclass__` of its base classes with the
+      // class-definition keyword arguments (e.g. `z="a"` in `class B(A, z="a")`).
+      if (node.getArguments(null).isEmpty()) return;
+      final PyArgumentList argumentList = node.getSuperClassExpressionList();
+      if (argumentList == null) return;
+      final List<PyCallExpression.PyArgumentsMapping> mappings = PyCallExpressionHelper.mapArguments(node, getResolveContext());
+      final ProblemHighlightType override = downgradeHighlightForTypeEngine ? ProblemHighlightType.INFORMATION : null;
+      highlightMappingProblems(argumentList, getHolder(), mappings, myTypeEvalContext, override);
+    }
   }
 
   private static void inspectPyArgumentList(@NotNull PyArgumentList node,
                                             @NotNull ProblemsHolder holder,
                                             @NotNull PyResolveContext resolveContext,
                                             @Nullable ProblemHighlightType highlightOverride) {
-    if (node.getParent() instanceof PyClass) return; // `(object)` in `class Foo(object)` is also an arg list
+    if (node.getParent() instanceof PyClass) return; // `(object)` in `class Foo(object)` is also an arg list, handled in `visitPyClass`
     final PyCallExpression call = node.getCallExpression();
     if (call == null) return;
 
@@ -138,6 +151,18 @@ public final class PyArgumentListInspection extends PyInspection {
       }
     }
 
+    highlightMappingProblems(node, holder, mappings, context, highlightOverride);
+  }
+
+  /**
+   * Highlights unexpected arguments, unfilled parameters or otherwise incorrect arguments described by {@code mappings}
+   * on the given argument list {@code node} (a call's argument list or a class' base classes list).
+   */
+  private static void highlightMappingProblems(@NotNull PyArgumentList node,
+                                               @NotNull ProblemsHolder holder,
+                                               @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                               @NotNull TypeEvalContext context,
+                                               @Nullable ProblemHighlightType highlightOverride) {
     if (!mappings.isEmpty()) {
       boolean specificMismatchKindReported = false;
       if (ContainerUtil.all(mappings, mapping -> !mapping.getUnmappedArguments().isEmpty())) {
