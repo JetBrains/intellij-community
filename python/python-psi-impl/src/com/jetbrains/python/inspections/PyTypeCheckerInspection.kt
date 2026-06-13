@@ -72,6 +72,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper.analyzeArguments
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper.mapArguments
 import com.jetbrains.python.psi.impl.PyPsiUtils.flattenParens
 import com.jetbrains.python.psi.impl.PySubscriptionExpressionImpl
+import com.jetbrains.python.psi.impl.PyTargetExpressionImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyABCUtil.isSubtype
 import com.jetbrains.python.psi.types.PyAnyType.Companion.unknown
@@ -117,6 +118,7 @@ import com.jetbrains.python.psi.types.PyUnpackedTupleType
 import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl
 import com.jetbrains.python.psi.types.PyUnpackedTypedDictType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isNoneType
 import com.jetbrains.python.psi.types.isObject
 import com.jetbrains.python.pyi.PyiUtil.isOverload
@@ -190,7 +192,25 @@ open class PyTypeCheckerInspection : PyInspection() {
     }
 
     override fun visitPyForStatement(node: PyForStatement) {
-      checkIteratedValue(node.forPart.source, node.isAsync)
+      if (checkIteratedValue(node.forPart.source, node.isAsync)) return
+      checkForTargetUnpacking(node)
+    }
+
+    private fun checkForTargetUnpacking(node: PyForStatement) {
+      val forPart = node.forPart
+      val target = flattenParens(forPart.target)
+      if (target !is PyTupleExpression && target !is PyListLiteralExpression) return
+      val source = forPart.source ?: return
+      val sourceType = myTypeEvalContext.getType(source) ?: return
+      if (isUnknown(sourceType, myTypeEvalContext)) return
+      val itemType = PyTargetExpressionImpl.getIterationType(sourceType, source, source, node.isAsync, myTypeEvalContext)
+      if (!itemType.isAnyOrUnknown && !isUnknown(itemType, myTypeEvalContext) &&
+          !isSubtype(itemType, PyNames.ITERABLE, myTypeEvalContext)) {
+        registerProblem(target,
+                        PyPsiBundle.message("INSP.type.checker.unpack.expected.iterable",
+                                            PythonDocumentationProvider.getTypeName(itemType, myTypeEvalContext)),
+                        effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
+      }
     }
 
     override fun visitPyWithStatement(node: PyWithStatement) {

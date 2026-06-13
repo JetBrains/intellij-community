@@ -743,6 +743,26 @@ class PyTupleTypeTest : PyCodeInsightTestCase() {
       def func4(args: tuple[str, tuple[int, ...]]):
           s, (x, y) = args
       """)
+
+    @Test
+    @TestFor(issues = ["PY-85232"])
+    fun `for loop unpacking a non iterable item`() = test("""
+      for a, b in [1]: # WARNING Expected an iterable, got 'int'
+          pass
+
+      for c in [1]:
+          pass
+
+      for x, y in [(1, 2)]:
+          pass
+
+      for k, v in [[1, 2]]:
+          pass
+
+      def f(rows: list[str]):
+          for first, second in rows:
+              pass
+      """)
   }
 
   @Nested
