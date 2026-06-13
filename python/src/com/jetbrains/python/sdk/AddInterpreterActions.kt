@@ -43,7 +43,7 @@ import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterDialog
 import com.jetbrains.python.sdk.add.v2.PythonAddLocalInterpreterPresenter
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithTool
 import com.jetbrains.python.target.PythonLanguageRuntimeType
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -121,7 +121,7 @@ internal class AddLocalInterpreterAction(
 ), DumbAware {
   override fun createDialog(): PythonAddLocalInterpreterDialog {
     val dialogPresenter = PythonAddLocalInterpreterPresenter(
-      moduleOrProject, errorSink = ShowingMessageErrorSync, bestGuessCreateSdkInfo = bestGuessCreateSdkInfo
+      moduleOrProject, errorSink = ErrorSink(), bestGuessCreateSdkInfo = bestGuessCreateSdkInfo
     ).apply {
       // Model provides flow, but we need to call Consumer
       sdkCreatedFlow.oneShotConsumer(onSdkCreated)

@@ -20,7 +20,8 @@ import com.jetbrains.python.sdk.setAssociationToModule
 import com.jetbrains.python.sdk.uv.impl.getUvExecutableLocal
 import com.jetbrains.python.sdk.uv.setupExistingEnvAndSdk
 import com.jetbrains.python.sdk.uv.setupNewUvSdkAndEnv
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.withProject
 import com.jetbrains.python.venvReader.tryResolvePath
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -46,7 +47,7 @@ internal suspend fun createUvSdk(module: Module, toolId: ToolId, venvsInModule: 
     throw IllegalStateException("Can't determine working dir for the module")
   }
 
-  val errorSink = ShowingMessageErrorSync.withProject(sdkAssociatedModule.project)
+  val errorSink = ErrorSink().withProject(sdkAssociatedModule.project)
   val sdkSetupResult = if (envExists) {
     getUvEnv(venvsInModule)?.let {
       setupExistingEnvAndSdk(it, uv, workingDir, false)

@@ -35,7 +35,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ui.JBUI
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyBundle.message
-import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.errorProcessing.emit
 import com.jetbrains.python.onFailure
@@ -47,7 +46,7 @@ import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUA
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -316,7 +315,7 @@ internal fun <P : PathHolder> Panel.pythonInterpreterComboBox(
   onPathSelected: suspend (P) -> PyResult<PythonSelectableInterpreter<P>>,
   customizer: RowsRange.() -> Unit = {},
 ): PythonInterpreterComboBox<P> {
-  val comboBox = PythonInterpreterComboBox(onPathSelected, fileSystem, ShowingMessageErrorSync)
+  val comboBox = PythonInterpreterComboBox(onPathSelected, fileSystem, ErrorSink())
     .apply {
       setBusy(true)
     }

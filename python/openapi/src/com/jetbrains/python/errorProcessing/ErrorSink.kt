@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.errorProcessing
 
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.FlowCollector
 
@@ -11,11 +13,17 @@ import kotlinx.coroutines.flow.FlowCollector
  * For the most business-logic and backend functions please return [PyResult] or [PyError].
  *
  * There will be a unified sink soon to show and log errors.
- * Currently, only [com.jetbrains.python.util.ShowingMessageErrorSync] is a well-known implementation.
+ * Use function of the same name to get an instance, or accept it as an argument as it can be mocked in tests.
  *
  * See [PyError]
  */
-typealias ErrorSink = FlowCollector<PyErrorDetail>
+fun interface ErrorSink : FlowCollector<PyErrorDetail>
+
+/**
+ * Default implementation of [ErrorSink] that shows message to user, but try to accept [ErrorSink] as an argument, use
+ * this function as a default value as a last resort only.
+ */
+fun ErrorSink(): ErrorSink = ApplicationManager.getApplication().service<ErrorSink>()
 
 data class PyErrorDetail(
   val error: PyError,
@@ -24,4 +32,8 @@ data class PyErrorDetail(
 
 suspend fun ErrorSink.emit(error: PyError, project: Project? = null) {
   emit(PyErrorDetail(error, project))
+}
+
+fun ErrorSink.withProject(project: Project): ErrorSink = ErrorSink {
+  emit(PyErrorDetail(it.error, project))
 }

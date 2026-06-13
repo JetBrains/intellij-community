@@ -33,7 +33,8 @@ import com.jetbrains.python.sdk.add.v2.venv.setupVirtualenv
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.withProject
 import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -108,7 +109,7 @@ internal class PythonSdkPanelBuilderAndSdkCreator(
     custom = PythonAddCustomInterpreter(
       model = model,
       module = module,
-      errorSink = module?.project?.let { ShowingMessageErrorSync.withProject(it) } ?: ShowingMessageErrorSync,
+      errorSink = module?.project?.let { ErrorSink().withProject(it) } ?: ErrorSink(),
       limitExistingEnvironments = limitExistingEnvironments,
       bestGuessCreateSdkInfo = CompletableDeferred(value = null)
     )

@@ -17,7 +17,7 @@ import com.jetbrains.python.sdk.configuration.suppressors.PyPackageRequirementsI
 import com.jetbrains.python.sdk.configuration.suppressors.TipOfTheDaySuppressor
 import com.jetbrains.python.sdk.configurePythonSdk
 import com.jetbrains.python.sdk.installExecutableViaPythonScript
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -25,7 +25,7 @@ import java.nio.file.Path
 object PyProjectSdkConfiguration {
   internal suspend fun installToolAndShowErrorIfNeeded(module: Module, pathPersister: (Path) -> Unit, toolToInstall: String) {
     performToolInstallation(pathPersister, toolToInstall).errorOrNull?.also {
-      ShowingMessageErrorSync.emit(it, module.project)
+      ErrorSink().emit(it, module.project)
     }
   }
 
@@ -41,7 +41,7 @@ object PyProjectSdkConfiguration {
     thisLogger().debug("Configuring sdk using ${createSdkInfoWithTool.toolId}")
 
     val sdk = createSdkInfoWithTool.createSdkInfo.getSdkCreator(module).createSdk().getOr {
-      ShowingMessageErrorSync.emit(it.error, module.project)
+      ErrorSink().emit(it.error, module.project)
       return@withContext true
     }
 

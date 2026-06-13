@@ -16,7 +16,6 @@ import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.flow.FlowCollector
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -52,16 +51,16 @@ fun applicationScope(name: String = UUID.randomUUID().toString()): TestFixture<C
  * Use [errors] to inspect collected errors and [clear] to acknowledge them.
  */
 @TestOnly
-class CollectingErrorSink internal constructor() : FlowCollector<PyErrorDetail> {
-  private val _errors = mutableListOf<PyErrorDetail>()
-  val errors: List<PyErrorDetail> get() = _errors
+class CollectingErrorSink internal constructor() : ErrorSink {
+  val errors: List<PyErrorDetail>
+    field = mutableListOf()
 
   override suspend fun emit(value: PyErrorDetail) {
-    _errors.add(value)
+    errors.add(value)
   }
 
   fun clear() {
-    _errors.clear()
+    errors.clear()
   }
 }
 

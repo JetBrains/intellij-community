@@ -40,7 +40,8 @@ import com.jetbrains.python.sdk.poetry.getPoetryExecutable
 import com.jetbrains.python.sdk.poetry.runPoetry
 import com.jetbrains.python.sdk.poetry.setupPoetry
 import com.jetbrains.python.sdk.poetry.suggestedSdkName
-import com.jetbrains.python.util.ShowingMessageErrorSync
+import com.jetbrains.python.errorProcessing.ErrorSink
+import com.jetbrains.python.errorProcessing.withProject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
@@ -138,7 +139,7 @@ internal class PyPoetrySdkConfiguration : PyProjectTomlConfigurationExtension {
         basePythonBinaryPath = baseSystemPython.pythonBinary,
         installPackages = true,
         init = tomlFile == null,
-        errorSink = ShowingMessageErrorSync.withProject(module.project)
+        errorSink = ErrorSink().withProject(module.project)
       ).getOr { return@withBackgroundProgress it }
 
       val path = poetry.resolvePythonBinary()

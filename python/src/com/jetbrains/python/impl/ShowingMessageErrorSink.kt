@@ -1,8 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.jetbrains.python.util
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.impl
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -18,13 +17,11 @@ import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.showProcessExecutionErrorDialog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Displays the error with a message box and writes it to a log.
  */
-@ApiStatus.Internal
-object ShowingMessageErrorSync : ErrorSink {
+internal class ShowingMessageErrorSink : ErrorSink {
   override suspend fun emit(value: PyErrorDetail) {
     val (error, project) = value
 
@@ -37,9 +34,9 @@ object ShowingMessageErrorSync : ErrorSink {
       thisLogger().warn(error.message)
       // Platform doesn't allow dialogs without a lock for now, fix later
       writeIntentReadAction {
-        when (val e = error) {
+        when (error) {
           is ExecError -> {
-            showProcessExecutionErrorDialog(project, e)
+            showProcessExecutionErrorDialog(project, error)
           }
           is MessageError -> {
             Messages.showErrorDialog(error.message, PyBundle.message("python.error"))
@@ -47,9 +44,5 @@ object ShowingMessageErrorSync : ErrorSink {
         }
       }
     }
-  }
-
-  fun withProject(project: Project): ErrorSink = ErrorSink {
-    emit(PyErrorDetail(it.error, project))
   }
 }
