@@ -275,7 +275,8 @@ public final class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
       final Instruction instruction = instructions[i];
       if (instruction instanceof ReadWriteInstruction readWriteInstruction) {
         final ReadWriteInstruction.ACCESS access = readWriteInstruction.getAccess();
-        if (!access.isReadAccess()) {
+        // A `del name` statement is a common pattern to suppress an unused parameter PY-39449
+        if (!access.isReadAccess() && !access.isDeleteAccess()) {
           continue;
         }
         final String name = readWriteInstruction.getName();

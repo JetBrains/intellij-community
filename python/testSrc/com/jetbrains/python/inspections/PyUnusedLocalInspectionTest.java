@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -282,6 +283,25 @@ def test():
   // PY-87075
   public void testUnusedTypeParameterInClass() {
     doTest();
+  }
+
+  @TestFor(issues="PY-39449")
+  public void testDeletedParameterIsNotReportedAsUnused() {
+    doTestByText(
+      """
+        def myfunction(arg):
+            del arg
+        """);
+  }
+
+  @TestFor(issues="PY-39449")
+  public void testDeletedLocalVariableIsNotReportedAsUnused() {
+    doTestByText(
+      """
+        def myfunction():
+            value = 42
+            del value
+        """);
   }
 
   @NotNull
