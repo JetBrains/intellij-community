@@ -4,9 +4,14 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction;
+import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.vcs.log.VcsLogCommitSelection;
 import com.intellij.vcs.log.VcsLogDataKeys;
@@ -83,7 +88,11 @@ public class VcsLogCreatePatchActionProvider implements AnActionExtensionProvide
 
     selection.requestFullDetails(details -> {
       List<Change> changes = VcsLogUtil.collectChanges(details);
-      CreatePatchFromChangesAction.createPatch(e.getProject(), commitMessage, changes, mySilentClipboard);
+      CommitContext commitContext = new CommitContext();
+      commitContext.putUserData(PatchWriter.FULL_COMMIT_MESSAGE_KEY, StringUtil.join(details, it -> it.getFullMessage(), "\n\n"));
+      Project project = e.getProject();
+      if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+      CreatePatchFromChangesAction.createPatch(project, commitMessage, changes, mySilentClipboard, commitContext);
     });
   }
 }

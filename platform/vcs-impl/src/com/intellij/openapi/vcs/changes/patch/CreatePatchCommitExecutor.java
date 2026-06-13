@@ -59,6 +59,8 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
   private static final Logger LOG = Logger.getInstance(CreatePatchCommitExecutor.class);
   private static final String VCS_PATCH_PATH_KEY = "vcs.patch.path"; //NON-NLS
   private static final String VCS_PATCH_TO_CLIPBOARD = "vcs.patch.to.clipboard"; //NON-NLS
+  private static final String VCS_PATCH_STANDARD_FORMAT = "vcs.patch.standard.format"; //NON-NLS
+  private static final String VCS_PATCH_INCLUDE_FULL_COMMIT_MESSAGE = "vcs.patch.include.full.commit.message"; //NON-NLS
 
   private final Project myProject;
 
@@ -122,6 +124,8 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       myPanel.selectBasePath(PatchWriter.calculateBaseDirForWritingPatch(myProject, changes).toString());
       myPanel.setReversePatch(false);
       myPanel.setReverseEnabledAndVisible(myPatchBuilder.isReverseSupported());
+      myPanel.setStandardPatchFormat(PropertiesComponent.getInstance(myProject).getBoolean(VCS_PATCH_STANDARD_FORMAT, false));
+      myPanel.setIncludeFullCommitMessage(PropertiesComponent.getInstance(myProject).getBoolean(VCS_PATCH_INCLUDE_FULL_COMMIT_MESSAGE, false));
 
       DialogPanel panel = myPanel.getPanel();
       panel.putClientProperty(SessionDialog.VCS_CONFIGURATION_UI_TITLE, VcsBundle.message("create.patch.settings.dialog.title"));
@@ -136,6 +140,8 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     @Override
     public void execute(@NotNull Collection<? extends Change> changes, @Nullable String commitMessage) {
       PropertiesComponent.getInstance(myProject).setValue(VCS_PATCH_TO_CLIPBOARD, myPanel.isToClipboard());
+      PropertiesComponent.getInstance(myProject).setValue(VCS_PATCH_STANDARD_FORMAT, myPanel.isStandardPatchFormat(), false);
+      PropertiesComponent.getInstance(myProject).setValue(VCS_PATCH_INCLUDE_FULL_COMMIT_MESSAGE, myPanel.isIncludeFullCommitMessage(), false);
       try {
         Path baseDir = Paths.get(myPanel.getBaseDirName());
         boolean isReverse = myPanel.isReversePatch();
@@ -178,6 +184,10 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       PropertiesComponent.getInstance(project).setValue(VCS_PATCH_PATH_KEY, valueToStore);
       VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION = valueToStore;
 
+      commitContext.putUserData(PatchWriter.INCLUDE_FULL_COMMIT_MESSAGE_KEY,
+                                PropertiesComponent.getInstance(project).getBoolean(VCS_PATCH_INCLUDE_FULL_COMMIT_MESSAGE, false) ? Boolean.TRUE : null);
+      commitContext.putUserData(PatchWriter.STANDARD_PATCH_FORMAT_KEY,
+                                PropertiesComponent.getInstance(project).getBoolean(VCS_PATCH_STANDARD_FORMAT, false) ? Boolean.TRUE : null);
       List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, true);
       PatchWriter.writePatches(project, file, baseDir, patches, commitMessage, commitContext, encoding);
 
@@ -348,6 +358,10 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
                                            boolean honorExcludedFromCommit,
                                            @NotNull PatchBuilder patchBuilder,
                                            @NotNull CommitContext commitContext) throws VcsException, IOException {
+    commitContext.putUserData(PatchWriter.INCLUDE_FULL_COMMIT_MESSAGE_KEY,
+                              PropertiesComponent.getInstance(project).getBoolean(VCS_PATCH_INCLUDE_FULL_COMMIT_MESSAGE, false) ? Boolean.TRUE : null);
+    commitContext.putUserData(PatchWriter.STANDARD_PATCH_FORMAT_KEY,
+                              PropertiesComponent.getInstance(project).getBoolean(VCS_PATCH_STANDARD_FORMAT, false) ? Boolean.TRUE : null);
     List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, honorExcludedFromCommit);
     PatchWriter.writeAsPatchToClipboard(project, patches, commitMessage, baseDir, commitContext);
     VcsNotifier.getInstance(project).notifySuccess(PATCH_COPIED_TO_CLIPBOARD, "",
