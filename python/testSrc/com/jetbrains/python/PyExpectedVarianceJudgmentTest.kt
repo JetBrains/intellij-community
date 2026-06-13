@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import org.junit.jupiter.api.Test
 
@@ -292,6 +293,34 @@ class PyExpectedVarianceJudgmentTest : PyCodeInsightTestCase() {
     class A[T]:
         attr: T  # read-only
     #         └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues=["PY-90269"])
+  fun `Frozen attribute via dataclass_transform frozen_default`() = test("""
+    from typing import dataclass_transform
+    
+    @dataclass_transform(frozen_default=True)
+    def model(cls): ...
+    
+    @model
+    class A[T]:
+        attr: T  # read-only
+    #         └ EXPECTED_VARIANCE COVARIANT
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues=["PY-90269"])
+  fun `Mutable attribute via dataclass_transform frozen_default overridden`() = test("""
+    from typing import dataclass_transform, Callable
+    
+    @dataclass_transform(frozen_default=True)
+    def model(frozen: bool = True) -> Callable: ...
+    
+    @model(frozen=False)
+    class A[T]:
+        attr: T  # mutable
+    #         └ EXPECTED_VARIANCE INVARIANT
     """.trimIndent())
 
   @Test

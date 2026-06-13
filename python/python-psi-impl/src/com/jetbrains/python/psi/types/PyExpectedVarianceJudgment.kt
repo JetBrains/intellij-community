@@ -3,7 +3,7 @@ package com.jetbrains.python.psi.types
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.parseStdDataclassParameters
+import com.jetbrains.python.codeInsight.parseStdOrDataclassTransformDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.CALLABLE
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.Companion.CALLABLE_EXT
@@ -193,7 +193,7 @@ object PyExpectedVarianceJudgment {
         return true
       }
     }
-    val isFrozen = parseStdDataclassParameters(parentClass, context)?.frozen ?: false
+    val isFrozen = parseStdOrDataclassTransformDataclassParameters(parentClass, context)?.frozen ?: false
     return isFrozen
   }
 
