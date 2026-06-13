@@ -203,6 +203,8 @@ jvm_library(
         "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
         "@community//build:zip",
         "@community//build:zip_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.idea.community.build.tasks.tests` end

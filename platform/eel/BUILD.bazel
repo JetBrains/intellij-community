@@ -142,6 +142,10 @@ jvm_library(
         "//platform/execution",
         "//platform/execution:execution_test_lib",
         "//platform/ide-core",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.eel.codegen` end

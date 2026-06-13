@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.platform.debugger.testFramework` start
+
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
 
 jvm_library(
     name = "debugger-testFramework",
@@ -40,6 +45,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/progress/shared:ide-progress",
         "//platform/util:util-ui",
+        ":libraries_junit4_provided",
     ],
 )
 
@@ -74,6 +80,8 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.debugger.testFramework` end

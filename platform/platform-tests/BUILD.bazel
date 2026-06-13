@@ -382,6 +382,8 @@ jvm_library(
         "//platform/workspace/storage/testEntities:testEntities_test_lib",
         "//platform/eel-impl-base",
         "//platform/eel-impl-base:eel-impl-base_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.tests` end

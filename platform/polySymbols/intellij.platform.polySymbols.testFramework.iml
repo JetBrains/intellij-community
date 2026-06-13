@@ -39,5 +39,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="PROVIDED" />
   </component>
 </module>

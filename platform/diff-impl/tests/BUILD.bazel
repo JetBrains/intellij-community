@@ -80,6 +80,8 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.diff.tests` end

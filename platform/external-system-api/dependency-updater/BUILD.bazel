@@ -128,6 +128,10 @@ jvm_library(
         "//java/java-runtime:rt_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.externalSystem.dependencyUpdater.tests` end

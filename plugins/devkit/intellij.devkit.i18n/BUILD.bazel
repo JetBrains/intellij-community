@@ -189,6 +189,8 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//platform/editor-ui-api:editor-ui",
         "//platform/editor-ui-api:editor-ui_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.i18n.tests` end

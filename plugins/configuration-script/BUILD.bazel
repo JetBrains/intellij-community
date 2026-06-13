@@ -159,6 +159,8 @@ jvm_library(
         "//platform/ide-core",
         "//plugins/configuration-script:configurationScript-tests",
         "//plugins/configuration-script:configurationScript-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.configurationScript.test.java` end
@@ -265,6 +267,8 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.configurationScript.tests` end

@@ -47,6 +47,10 @@ jvm_library(
         "//jps/model-serialization:model-serialization-tests_test_lib",
         "//platform/util/base",
         "//platform/util/base:base_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.guiForms.jps.tests` end

@@ -192,6 +192,8 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.workspaceModel.k2.tests` end

@@ -223,6 +223,8 @@ jvm_library(
         "//platform/lang-core:lang-core_test_lib",
         "//platform/vcs-log/impl:vcs-log-impl-tests",
         "//platform/vcs-log/impl:vcs-log-impl-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.hg.tests` end

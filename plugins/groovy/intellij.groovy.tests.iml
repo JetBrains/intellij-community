@@ -93,6 +93,8 @@
     <orderEntry type="module" module-name="intellij.groovy.scripting" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.live.templates" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.groovy" />
 </module>

@@ -163,6 +163,10 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
         "@lib//:search_everywhere_ml-typos-tests-ai-grazie-spell-gec-engine-local-jvm",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.searchEverywhereMl.typos.tests` end

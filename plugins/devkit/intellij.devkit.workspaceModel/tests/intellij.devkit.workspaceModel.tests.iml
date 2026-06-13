@@ -46,5 +46,7 @@
     <orderEntry type="module" module-name="intellij.editorconfig.plugin" />
     <orderEntry type="library" scope="TEST" name="studio-platform" level="project" />
     <orderEntry type="module" module-name="intellij.copyright" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
   </component>
 </module>

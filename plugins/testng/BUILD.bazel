@@ -286,6 +286,8 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//platform/statistics",
         "//platform/statistics:statistics_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.testng.tests` end

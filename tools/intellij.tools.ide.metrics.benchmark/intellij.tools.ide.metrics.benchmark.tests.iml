@@ -27,6 +27,7 @@
     <orderEntry type="module" module-name="intellij.codeowners.runtime.resolver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.benchmark" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.tools.ide.metrics.benchmark" />
 </module>

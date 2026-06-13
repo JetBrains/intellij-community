@@ -273,6 +273,8 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/vcs-impl/shared",
         "//platform/vcs-impl/shared:shared_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.collaborationTools.tests` end

@@ -187,6 +187,8 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
         "//plugins/kotlin/gradle/gradle-tooling/impl",
         "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.onboarding.gradle.tests` end

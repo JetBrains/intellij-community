@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.junit.testFramework` start
+
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
 
 jvm_library(
     name = "testFramework",
@@ -29,6 +34,7 @@ jvm_library(
         "//jps/model-api:model",
         "//platform/testFramework",
         "//platform/projectModel-api:projectModel",
+        ":libraries_junit4_provided",
     ],
 )
 
@@ -61,6 +67,8 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.junit.testFramework` end

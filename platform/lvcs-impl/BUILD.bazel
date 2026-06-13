@@ -215,6 +215,12 @@ jvm_library(
         "//platform/lang-core",
         "//platform/lang-core:lang-core_test_lib",
         "//platform/progress/shared:ide-progress",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.lvcs.impl.tests` end

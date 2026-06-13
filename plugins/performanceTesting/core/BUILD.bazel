@@ -326,6 +326,12 @@ jvm_library(
         "//platform/testFramework/teamCity:teamCity_test_lib",
         "//plugins/performanceTesting/freezes",
         "//plugins/performanceTesting/freezes:freezes_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.performanceTesting.tests` end

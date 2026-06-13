@@ -34,5 +34,6 @@
     <orderEntry type="module" module-name="intellij.textmate.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.textmate.core.tests" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlin-test-junit5" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
 </module>

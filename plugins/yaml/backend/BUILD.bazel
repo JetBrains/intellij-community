@@ -249,6 +249,8 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
         "//json/networknt.wrapper",
         "//json/networknt.wrapper:networknt.wrapper_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.yaml.backend.tests` end

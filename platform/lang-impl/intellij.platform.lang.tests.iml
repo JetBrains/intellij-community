@@ -109,5 +109,7 @@
     <orderEntry type="module" module-name="intellij.platform.projectFrame" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.eel.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit5.params" scope="TEST" />
   </component>
 </module>

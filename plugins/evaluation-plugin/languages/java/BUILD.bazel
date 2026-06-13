@@ -186,6 +186,8 @@ jvm_library(
         "//plugins/evaluation-plugin:evaluationPlugin-tests_test_lib",
         "//platform/backend/observation",
         "//platform/backend/observation:observation_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.evaluationPlugin.languages.java.tests` end

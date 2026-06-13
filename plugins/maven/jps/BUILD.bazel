@@ -140,6 +140,8 @@ jvm_library(
         "//libraries/fastutil:fastutil_test_lib",
         "//platform/util/base",
         "//platform/util/base:base_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.jps.tests` end

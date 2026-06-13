@@ -149,6 +149,8 @@ jvm_library(
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/platform-impl:ide-impl",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.debugger.tests` end

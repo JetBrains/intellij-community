@@ -222,6 +222,8 @@ jvm_library(
         "//platform/ide-core",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm.tests` end

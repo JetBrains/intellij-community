@@ -1,6 +1,16 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.jvm.analysis.internal.testFramework` start
+
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
+
+jvm_provided_library(
+    name = "libraries_junit5_provided",
+    lib = "//libraries/junit5",
+)
 
 jvm_library(
     name = "analysis-internal-testFramework",
@@ -40,6 +50,8 @@ jvm_library(
         "//java/testFramework",
         "//java/codeserver/core",
         "//java/java-frontback-psi-api:frontback-psi",
+        ":libraries_junit4_provided",
+        ":libraries_junit5_provided",
     ],
 )
 
@@ -79,6 +91,10 @@ jvm_library(
         "//java/testFramework:testFramework_test_lib",
         "//java/codeserver/core:core_test_lib",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.jvm.analysis.internal.testFramework` end

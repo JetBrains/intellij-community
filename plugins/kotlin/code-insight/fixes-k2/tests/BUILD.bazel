@@ -72,6 +72,8 @@ jvm_library(
         "//plugins/kotlin/fir/testFramework:testFramework_test_lib",
         "//plugins/kotlin/frontend-independent",
         "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.codeInsight.fixes.tests` end

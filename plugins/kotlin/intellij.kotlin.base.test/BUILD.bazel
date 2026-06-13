@@ -211,6 +211,10 @@ jvm_library(
         "//plugins/kotlin/code-insight/line-markers:line-markers_test_lib",
         "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement",
         "//plugins/kotlin/code-insight/override-implement-k2:kotlin-codeInsight-overrideImplement_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.test` end

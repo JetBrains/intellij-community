@@ -111,6 +111,10 @@ jvm_library(
         "//platform/build-scripts/product-dsl:buildScripts-productDsl-tests_test_lib",
         "//platform/runtime/repository",
         "//platform/runtime/repository:repository_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.tests` end

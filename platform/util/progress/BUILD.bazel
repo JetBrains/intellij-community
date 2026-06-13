@@ -118,6 +118,8 @@ jvm_library(
         "@lib//:junit4",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.progress.tests` end

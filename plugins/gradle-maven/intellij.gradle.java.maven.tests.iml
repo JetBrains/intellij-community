@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="intellij.gradle.java.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.concurrency" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.java.maven" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.gradle.java.maven" />
 </module>

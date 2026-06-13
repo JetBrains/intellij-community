@@ -63,6 +63,8 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/jvm-debugger/test/k2/testFramework",
         "//plugins/kotlin/jvm-debugger/test/k2/testFramework:testFramework_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.performance.test` end

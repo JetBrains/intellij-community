@@ -215,6 +215,8 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/indexing-api:indexing",
         "//platform/indexing-api:indexing_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.pyproject.tests` end

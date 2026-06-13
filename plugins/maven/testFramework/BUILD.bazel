@@ -1,7 +1,22 @@
 load("@community//build:tests-options.bzl", "jps_test")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.maven.testFramework` start
+
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
+
+jvm_provided_library(
+    name = "libraries_junit5_provided",
+    lib = "//libraries/junit5",
+)
+
+jvm_provided_library(
+    name = "libraries_junit5-params_provided",
+    lib = "//libraries/junit5-params",
+)
 
 jvm_library(
     name = "testFramework",
@@ -58,6 +73,9 @@ jvm_library(
         "//plugins/repository-search/common",
         "//platform/util:util-ui",
         "//platform/testFramework/junit5",
+        ":libraries_junit4_provided",
+        ":libraries_junit5_provided",
+        ":libraries_junit5-params_provided",
     ],
 )
 
@@ -113,6 +131,12 @@ jvm_library(
         "//plugins/repository-search/common:common_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.testFramework` end
@@ -228,6 +252,8 @@ jvm_library(
         "//java/testFramework/backend:backend_test_lib",
         "//plugins/repository-search/common",
         "//plugins/repository-search/common:common_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.testFramework.tests` end

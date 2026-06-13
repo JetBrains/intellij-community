@@ -204,6 +204,8 @@ jvm_library(
         "//platform/external-system-api:externalSystem_test_lib",
         "//plugins/gradle/settings",
         "//plugins/gradle/settings:settings_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.compose.ide.plugin.k2.tests` end

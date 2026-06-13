@@ -56,5 +56,6 @@
     <orderEntry type="module" module-name="intellij.java.debugger.impl.backend" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
 </module>

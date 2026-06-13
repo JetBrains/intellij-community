@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="intellij.evaluationPlugin.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.evaluationPlugin.languages.kotlin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.evaluationPlugin.languages.kotlin" />
 </module>

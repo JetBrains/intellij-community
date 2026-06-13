@@ -205,6 +205,10 @@ jvm_library(
         "//platform/util/text-matching:text-matching_test_lib",
         "//plugins/repository-search/completion",
         "//plugins/repository-search/completion:completion_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.completion.tests` end

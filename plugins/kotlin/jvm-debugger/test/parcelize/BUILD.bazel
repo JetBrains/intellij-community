@@ -74,6 +74,8 @@ jvm_library(
         "@lib//:kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/jvm-debugger/test/parcelize/testFramework",
         "//plugins/kotlin/jvm-debugger/test/parcelize/testFramework:testFramework_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jvm.debugger.test.parcelize` end

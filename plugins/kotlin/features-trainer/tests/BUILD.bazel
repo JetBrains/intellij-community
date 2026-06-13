@@ -72,6 +72,8 @@ jvm_library(
         "//plugins/kotlin/features-trainer:features-trainer_test_lib",
         "//plugins/ide-features-trainer:featuresTrainer-tests",
         "//plugins/ide-features-trainer:featuresTrainer-tests_test_lib",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.featuresTrainer.tests` end
