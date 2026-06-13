@@ -145,6 +145,6 @@
     <listener class="com.intellij.history.integration.LocalHistoryEventDispatcher$LocalHistoryCommandListener"
               topic="com.intellij.openapi.command.CommandListener"/>
     <listener class="com.intellij.history.integration.LocalHistoryEventDispatcher$LocalHistoryBulkFileListener"
-              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable"/>
   </applicationListeners>
 </idea-plugin>
