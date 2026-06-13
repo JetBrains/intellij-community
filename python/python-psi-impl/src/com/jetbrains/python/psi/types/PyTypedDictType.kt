@@ -17,7 +17,6 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
 import java.util.Objects
-import kotlin.collections.emptyList
 
 class PyTypedDictType(
   override val name: String,
@@ -362,6 +361,13 @@ class PyTypedDictType(
         }
       }
       else {
+        // A TypedDict is generally not assignable to `dict[str, X]` because `dict` is mutable and
+        // invariant, so its known keys could be deleted or have their value types broken. However,
+        // `dict[str, Any]` uses `Any` as the value type, which opts out of value-type checking
+        // (the common "JSON-like" usage), so accept any TypedDict here. See PY-85704.
+        if (expectedValueType.isAnyOrUnknown) {
+          return actual.fields.values.none { it.isReadOnly }
+        }
         if (hasExtraItems && !actual.isClosed) {
           return actual.fields.values.all { field ->
             !field.isReadOnly &&

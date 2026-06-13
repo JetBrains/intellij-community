@@ -5409,6 +5409,34 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  @TestFor(issues = "PY-85704")
+  public void testTypedDictAssignableToDictStrAny() {
+    doTestByText(
+      """
+      from typing import TypedDict, Any, Mapping
+
+      class TD(TypedDict):
+          name: str
+          data: int
+
+      def accepts_json(data: dict[str, Any]): ...
+
+      td: TD = {"name": "name", "data": 1}
+
+      # `Any` as the value type opts out of value-type checking, so a TypedDict is assignable
+      # to `dict[str, Any]` even though its keys are required.
+      accepts_json(td)  # OK
+      accepts_json(TD(name="name", data=1))  # OK
+      json_dict: dict[str, Any] = td  # OK
+      any_mapping: Mapping[str, Any] = td  # OK
+
+      # A TypedDict is still not assignable to `dict[str, object]` or `dict[str, <concrete>]`.
+      object_dict: dict[str, object] = <warning descr="Expected type 'dict[str, object]', got 'TD' instead">td</warning>
+      str_dict: dict[str, int] = <warning descr="Expected type 'dict[str, int]', got 'TD' instead">td</warning>
+      """
+    );
+  }
+
   // PY-76847
   public void testDictUnpackVsTypedDictParameter() {
     doTestByText("""
