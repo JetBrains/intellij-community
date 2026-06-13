@@ -1548,14 +1548,14 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   public void testPrintFunctionWithoutFuture() {
     final List<String> suggested = doTestByText("pr<caret>");
     assertNotNull(suggested);
-    assertSameElements(suggested, "print", "property", "repr");
+    assertSameElements(suggested, "print", "property", "repr", "Protocol");
   }
 
   // PY-28103
   public void testPrintFunctionWithFuture() {
     final List<String> suggested = doTestByText("from __future__ import print_function\npr<caret>");
     assertNotNull(suggested);
-    assertSameElements(suggested, "print", "print", "print_function", "property", "repr");
+    assertSameElements(suggested, "print", "print", "print_function", "property", "repr", "Protocol");
   }
 
   // PY-27148
