@@ -18,6 +18,8 @@ class MarkdownTypingFencesTest : LightPlatformCodeInsightTestCase() {
   fun testFenceInBlockQuote() = doTest()
   fun testFenceInjectedInBlockQuote() = doTest()
 
+  fun testFenceInNestedBlockQuote() = doTest()
+
   private fun doTest(text: String = "\n") {
     val testName = getTestName(true)
     configureByFile("$testName.before.md")

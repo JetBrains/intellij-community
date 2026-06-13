@@ -14,7 +14,6 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.psi.util.siblings
-import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getContent
 import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageAliases
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
@@ -60,6 +59,12 @@ object MarkdownCodeFenceUtils {
     }
     //drop new right before code fence end
     if (elements.isNotEmpty() && MarkdownPsiUtil.WhiteSpaces.isNewLine(elements.last())) {
+      elements = elements.dropLast(1)
+    }
+    //also drop a trailing blockquote-prefix WHITE_SPACE so the range stays aligned with the decoded content
+    if (withWhitespaces && elements.isNotEmpty()
+        && MarkdownTokenTypeSets.WHITE_SPACES.contains(elements.last().elementType)
+        && !MarkdownPsiUtil.WhiteSpaces.isNewLine(elements.last())) {
       elements = elements.dropLast(1)
     }
     return elements.takeIf { it.isNotEmpty() }
