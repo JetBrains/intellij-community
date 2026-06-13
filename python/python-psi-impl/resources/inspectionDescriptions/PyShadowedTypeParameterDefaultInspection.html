@@ -1,0 +1,14 @@
+<html>
+<body>
+<p>Reports a type parameter default (<a href="https://peps.python.org/pep-0696/">PEP 696</a>) that can never be used
+  because a parameter typed with that type variable has its own default value.
+</p>
+<p>When such a parameter is omitted, its default value determines the type variable; when an argument is supplied, the
+  argument determines it. Either way the declared type parameter default is never applied.
+</p>
+<pre><code class="language-python">
+def f[T = int](a: T = None) -> T:  # 'int' is never used: f() yields None, f(x) yields the type of x
+    return a
+</code></pre>
+</body>
+</html>

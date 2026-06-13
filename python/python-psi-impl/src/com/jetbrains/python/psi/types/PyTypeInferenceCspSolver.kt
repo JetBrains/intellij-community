@@ -1572,6 +1572,15 @@ private object TypeBoundResolver {
         return infVar.typeVariable
       }
 
+      if (upperBounds.all { it is PyTypeVarType }) {
+        // The only upper bounds are (foreign) type variables, which carry no concrete subtype information to meet — e.g.
+        // a nested call in argument position whose result is coupled to the outer call's type variable through its
+        // expected return type. There is nothing to solve here (combined nested CSP solving is not yet supported), so
+        // resolve to the type variable's PEP 696 default, its bound, or `Any` instead of leaking the foreign type
+        // variable, e.g. `assert_type(f(), Any)` for `def f[T](label: T | None = None) -> T` (PY-90274).
+        return infVar.typeVariable.defaultType?.derefOrUnknown() ?: infVar.typeVariable.bound ?: PyAnyType.unknown
+      }
+
       // It is debatable whether we should just return PyIntersectionType.intersectionOrTop(*upperBounds)
       // Note, however, that intersection types are not part of Python (as of 2026).
       // Hence, the following logic makes it mandatory that the user declares a common subtype at some point.

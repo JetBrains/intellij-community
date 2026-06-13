@@ -672,6 +672,10 @@
                      groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.type.hinting"
                      key="INSP.NAME.variance.checker" enabledByDefault="true" level="WARNING"
                      implementationClass="com.jetbrains.python.inspections.PyVarianceInspection"/>
+    <localInspection language="Python" shortName="PyShadowedTypeParameterDefaultInspection" suppressId="PyShadowedTypeParameterDefault" bundle="messages.PyPsiBundle"
+                     groupPathKey="INSP.GROUP.python" groupKey="INSP.GROUP.python.type.hinting"
+                     key="INSP.NAME.shadowed.type.parameter.default" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.python.inspections.PyShadowedTypeParameterDefaultInspection"/>
     <intentionAction>
       <language>Python</language>
       <className>com.jetbrains.python.codeInsight.intentions.PyConvertMethodToPropertyIntention</className>
