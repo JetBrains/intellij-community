@@ -19,43 +19,57 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertOrderedElementsAreEqual
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.testRootDisposable
 import org.jetbrains.idea.maven.indices.searcher.MavenLuceneIndexer
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.AfterEach
 
-class MavenSearcherTest : MavenIndicesTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenSearcherTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   private lateinit var myIndicesFixture: MavenIndicesTestFixture
   private lateinit var myRepo: MavenRepositoryInfo
 
 
   @Throws(Exception::class)
-  override fun setUp()  {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     runBlocking(Dispatchers.EDT) {
       writeIntentReadAction {
-        myIndicesFixture = MavenIndicesTestFixture(dir, project, testRootDisposable)
+        myIndicesFixture = MavenIndicesTestFixture(maven.dir, maven.project, maven.testRootDisposable)
         myIndicesFixture.setUp()
       }
     }
     runBlocking {
       MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()
-      myRepo = MavenIndexUtils.getLocalRepository(project)!!
+      myRepo = MavenIndexUtils.getLocalRepository(maven.project)!!
       MavenLuceneIndexer.getInstance().update(listOf(myRepo), true)
       MavenSystemIndicesManager.getInstance().waitAllLuceneUpdatesCompleted()
     }
   }
 
-  @Throws(Exception::class)
-  override fun tearDown() = runBlocking(Dispatchers.EDT) {
-    try {
-      myIndicesFixture.tearDown()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() = runBlocking(Dispatchers.EDT) {
+    myIndicesFixture.tearDown()
   }
 
   @Test
