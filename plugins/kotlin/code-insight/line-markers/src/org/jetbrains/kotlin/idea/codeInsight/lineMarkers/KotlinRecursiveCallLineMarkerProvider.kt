@@ -1,8 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
+import com.intellij.codeInsight.daemon.GutterName
 import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.LineMarkerProvider
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -42,11 +42,15 @@ import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.parents
 
-internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
-    override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
+private val recursiveCallOptions = arrayOf(KotlinLineMarkerOptions.recursiveOption)
 
-    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
-        if (!KotlinLineMarkerOptions.recursiveOption.isEnabled) return
+internal class KotlinRecursiveCallLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
+    override fun getName(): @GutterName String=
+        KotlinLineMarkersBundle.message("line.markers.recursive.call.description")
+
+    override fun getOptions(): Array<Option> = recursiveCallOptions
+
+    override fun doCollectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
         KotlinCallProcessor.process(elements) { target ->
             val symbol = target.symbol
             val targetDeclaration = target.symbol.psi as? KtDeclaration ?: return@process
@@ -91,8 +95,8 @@ internal class KotlinRecursiveCallLineMarkerProvider : LineMarkerProvider {
         return false
     }
 
-    @OptIn(KaContextParameterApi::class)
-    context(_: KaSession)
+@OptIn(KaContextParameterApi::class)
+context(_: KaSession)
 private fun checkDispatchReceiver(target: CallTarget): Boolean {
         var dispatchReceiver = target.partiallyAppliedSymbol?.dispatchReceiver ?: return true
         while (dispatchReceiver is KaSmartCastedReceiverValue) {

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
 import com.intellij.codeInsight.daemon.DaemonBundle
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.NavigateAction
@@ -10,12 +11,17 @@ import com.intellij.codeInsight.daemon.impl.GutterTooltipBuilder
 import com.intellij.codeInsight.daemon.impl.InheritorsLineMarkerNavigator
 import com.intellij.codeInsight.navigation.GotoTargetHandler
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.markup.GutterIconRenderer
+import com.intellij.openapi.editor.markup.SeparatorPlacement
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.LambdaUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.psi.search.searches.ReferencesSearch
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Function
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
@@ -41,21 +47,59 @@ import org.jetbrains.kotlin.idea.searching.inheritors.hasAnyOverridings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassInitializer
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.hasBody
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import java.awt.event.MouseEvent
 import java.util.concurrent.atomic.AtomicReference
 
 class KotlinLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
+
+    override fun getName(): String = KotlinLineMarkersBundle.message("highlighter.name.kotlin.line.markers")
+
+    override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<PsiElement>? {
+        if (DaemonCodeAnalyzerSettings.getInstance().SHOW_METHOD_SEPARATORS) {
+            if (element.canHaveSeparator()) {
+                val prevSibling = element.getPrevSiblingIgnoringWhitespaceAndComments()
+                if (prevSibling.canHaveSeparator() &&
+                    (element.wantsSeparator() || prevSibling?.wantsSeparator() == true)
+                ) {
+                    return createLineSeparatorByElement(element)
+                }
+            }
+        }
+
+        return null
+    }
+
+    private fun PsiElement?.canHaveSeparator(): Boolean =
+        this is KtFunction
+                || this is KtClassInitializer
+                || (this is KtProperty && !isLocal)
+                || ((this is KtObjectDeclaration && this.isCompanion()))
+
+    private fun PsiElement.wantsSeparator(): Boolean = this is KtFunction || StringUtil.getLineBreakCount(text) > 0
+
+    private fun createLineSeparatorByElement(element: PsiElement): LineMarkerInfo<PsiElement> {
+        val anchor = PsiTreeUtil.getDeepestFirst(element)
+
+        val info = LineMarkerInfo(anchor, anchor.textRange)
+        info.separatorColor = EditorColorsManager.getInstance().globalScheme.getColor(CodeInsightColors.METHOD_SEPARATORS_COLOR)
+        info.separatorPlacement = SeparatorPlacement.TOP
+        return info
+    }
 
     override fun doCollectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
         for (element in elements) {

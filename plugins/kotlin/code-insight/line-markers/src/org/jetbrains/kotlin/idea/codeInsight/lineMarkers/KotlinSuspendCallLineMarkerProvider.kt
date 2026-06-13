@@ -1,8 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.lineMarkers
 
-import com.intellij.codeInsight.daemon.LineMarkerInfo
-import com.intellij.codeInsight.daemon.LineMarkerProvider
+import com.intellij.codeInsight.daemon.GutterName
 import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.NlsSafe
@@ -14,14 +13,21 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinCallProcessor
 import org.jetbrains.kotlin.idea.base.codeInsight.process
+import org.jetbrains.kotlin.idea.highlighter.markers.KotlinLineMarkerOptions
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import javax.swing.Icon
 
-internal class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
-    override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? = null
+private val suspendCallOptions = arrayOf(KotlinLineMarkerOptions.suspendCallOption)
 
-    override fun collectSlowLineMarkers(elements: List<PsiElement>, result: MutableCollection<in LineMarkerInfo<*>>) {
+internal class KotlinSuspendCallLineMarkerProvider : AbstractKotlinLineMarkerProvider() {
+    override fun getName(): @GutterName String =
+        KotlinLineMarkersBundle.message("line.markers.suspend.call.description")
+
+    override fun getOptions(): Array<Option> = suspendCallOptions
+
+    override fun doCollectSlowLineMarkers(elements: List<PsiElement>, result: LineMarkerInfos) {
         KotlinCallProcessor.process(elements) { target ->
             val symbol = target.symbol
 
@@ -58,11 +64,11 @@ internal class KotlinSuspendCallLineMarkerProvider : LineMarkerProvider {
         /* alignment = */ GutterIconRenderer.Alignment.RIGHT,
         /* accessibleNameProvider = */ { message }
     ) {
-        override fun createGutterRenderer() = LineMarkerGutterIconRenderer(this)
-        override fun getElementPresentation(element: PsiElement) = declarationName
+        override fun createGutterRenderer(): LineMarkerGutterIconRenderer<PsiElement?> = LineMarkerGutterIconRenderer(this)
+        override fun getElementPresentation(element: PsiElement): String = declarationName
 
-        override fun canMergeWith(info: MergeableLineMarkerInfo<*>) = info is SuspendCallLineMarkerInfo
-        override fun getCommonIcon(infos: List<MergeableLineMarkerInfo<*>>) = infos.firstNotNullOf { it.icon }
+        override fun canMergeWith(info: MergeableLineMarkerInfo<*>): Boolean = info is SuspendCallLineMarkerInfo
+        override fun getCommonIcon(infos: List<MergeableLineMarkerInfo<*>>): Icon = infos.firstNotNullOf { it.icon }
     }
 }
 
