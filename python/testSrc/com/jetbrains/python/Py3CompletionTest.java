@@ -1004,6 +1004,32 @@ public class Py3CompletionTest extends PyTestCase {
       mod.Outer.Inner.unique_attribute""");
   }
 
+  @TestFor(issues = "PY-90275")
+  public void testDunderCallMethod() {
+    doTestByText("""
+      class A:
+          def __call<caret>
+      """);
+    myFixture.checkResult("""
+      class A:
+          def __call__(self, *args, **kwargs):
+      """);
+  }
+
+  @TestFor(issues = "PY-90275")
+  public void testDunderOperatorMethodFromType() {
+    // `__or__` / `__ror__` are declared on `type`, but they are ordinary operator dunders and must still be suggested in
+    // ordinary classes (unlike metaclass-only dunders such as `__prepare__`).
+    doTestByText("""
+      class A:
+          def __or<caret>
+      """);
+    myFixture.checkResult("""
+      class A:
+          def __or__(self, other):
+      """);
+  }
+
   // PY-88016
   public void testQualifyClassAttributeViaExistingFromImport() {
     doMultiFileTest();

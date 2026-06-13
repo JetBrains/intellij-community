@@ -348,7 +348,7 @@ object PyNames {
     //"__all__" to _only_self_descr,
     //"__author__" to _only_self_descr,
     //"__bases__" to _only_self_descr,
-    "__call__" to BuiltinDescription("(self, *args, **kwargs)"),
+    CALL to BuiltinDescription("(self, *args, **kwargs)"),
     "__ceil__" to onlySelfDescr,
     "__class__" to onlySelfDescr,
     "__cmp__" to selfOtherDescr,
