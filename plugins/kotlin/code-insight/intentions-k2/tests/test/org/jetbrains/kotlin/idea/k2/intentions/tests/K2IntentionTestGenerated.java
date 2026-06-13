@@ -8797,6 +8797,26 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/addForLoopIndices/iterable.kt");
         }
 
+        @TestMetadata("nameBasedDestructuringComplete.kt")
+        public void testNameBasedDestructuringComplete() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/nameBasedDestructuringComplete.kt");
+        }
+
+        @TestMetadata("nameBasedDestructuringCompleteWithValue.kt")
+        public void testNameBasedDestructuringCompleteWithValue() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/nameBasedDestructuringCompleteWithValue.kt");
+        }
+
+        @TestMetadata("nameBasedDestructuringNameMismatch.kt")
+        public void testNameBasedDestructuringNameMismatch() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/nameBasedDestructuringNameMismatch.kt");
+        }
+
+        @TestMetadata("nameBasedDestructuringOnlySyntax.kt")
+        public void testNameBasedDestructuringOnlySyntax() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/addForLoopIndices/nameBasedDestructuringOnlySyntax.kt");
+        }
+
         @TestMetadata("noBody.kt")
         public void testNoBody() throws Exception {
             runTest("../../../idea/tests/testData/intentions/addForLoopIndices/noBody.kt");
