@@ -48,6 +48,26 @@ interface LocalEelFileSystemApi : EelFileSystemApi
 
 // TODO Integrate case-(in)sensitiveness into the interface.
 
+/**
+ * Low-level access to the file system of the environment this [com.intellij.platform.eel.EelApi] is bound to.
+ *
+ * It provides low-level I/O — open, read, write, stat — as well as batched operations. A batched operation lets the implementation
+ * make many system calls on its side and stream the results back as a flow. That avoids one request per file, saving round-trips to
+ * the environment. For example, [listDirectoryWithAttrs] streams a directory's entries with their attributes, [readFile] reads a whole
+ * file's content, and [DirectoryPrefetcher] streams entire directory trees — each in a single call. Against a remote IJent this can
+ * turn O(N) round-trips into one RPC, crucial for bulk traversals such as scanning and indexing projects and libraries.
+ *
+ * It is also the engine behind routed NIO `Path`s: for a non-local environment the platform's routing `FileSystemProvider` implements
+ * its operations on top of this API, so ordinary `java.nio.file.Files` calls on such a path execute here. The legacy `java.io.File`
+ * API is routed through the same NIO layer by the JetBrains Runtime, so even `File`-based code reaches this API indirectly for WSL and
+ * Dev Container paths.
+ *
+ * Because it is reached mostly through those standard Java APIs, it is currently an internal, less-polished surface rather than
+ * something to call directly.
+ *
+ * Operations report failures as typed [EelResult] errors rather than throwing, and take and return [EelPath]s within the environment.
+ * [EelFileSystemPosixApi] and [EelFileSystemWindowsApi] add the OS-family-specific surface.
+ */
 @ApiStatus.Internal
 interface EelFileSystemApi {
 
@@ -1028,6 +1048,9 @@ sealed interface EelOpenedFile {
 @ApiStatus.Internal
 interface LocalEelFileSystemPosixApi : EelFileSystemPosixApi, LocalEelFileSystemApi
 
+/**
+ * POSIX-specific surface of [EelFileSystemApi] (POSIX file info and operations).
+ */
 @ApiStatus.Internal
 interface EelFileSystemPosixApi : EelFileSystemApi {
   override val user: EelUserPosixInfo
@@ -1159,6 +1182,9 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
 @ApiStatus.Internal
 interface LocalEelFileSystemWindowsApi : EelFileSystemWindowsApi, LocalEelFileSystemApi
 
+/**
+ * Windows-specific surface of [EelFileSystemApi] (Windows file info and operations).
+ */
 @ApiStatus.Internal
 interface EelFileSystemWindowsApi : EelFileSystemApi {
   override val user: EelUserWindowsInfo
