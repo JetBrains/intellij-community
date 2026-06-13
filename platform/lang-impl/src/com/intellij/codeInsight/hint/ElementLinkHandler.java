@@ -1,11 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
-import com.intellij.psi.PsiElement;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,15 +22,18 @@ public final class ElementLinkHandler extends TooltipLinkHandler {
   @Override
   public boolean handleLink(@NotNull String name, @NotNull Editor editor) {
     Project project = editor.getProject();
-    if (project != null) {
-      PsiElement element = qualifiedNameToElement(name, project);
-      if (element instanceof Navigatable navigatable) {
-        if (navigatable.canNavigate()) {
-          navigatable.navigate(true);
-          return true;
-        }
-      }
+    if (project == null) {
+      return false;
     }
-    return false;
+    // Resolving the qualified name may hit indexes (a slow operation), so it must not run on the EDT.
+    ReadAction.nonBlocking(() -> qualifiedNameToElement(name, project))
+      .expireWith(project)
+      .finishOnUiThread(ModalityState.defaultModalityState(), element -> {
+        if (element instanceof Navigatable navigatable && navigatable.canNavigate()) {
+          navigatable.navigate(true);
+        }
+      })
+      .submit(AppExecutorUtil.getAppExecutorService());
+    return true;
   }
 }
