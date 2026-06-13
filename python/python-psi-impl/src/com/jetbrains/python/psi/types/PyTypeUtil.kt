@@ -281,7 +281,7 @@ object PyTypeUtil {
   fun toIntersection(): Collector<PyType?, *, PyType?> {
     return Collectors.collectingAndThen(
       Collectors.toList()
-    ) { PyIntersectionType.intersection() }
+    ) { members -> PyIntersectionType.intersection(members) }
   }
 
   @JvmStatic

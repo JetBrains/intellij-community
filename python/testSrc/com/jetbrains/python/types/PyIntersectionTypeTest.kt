@@ -60,6 +60,97 @@ class PyIntersectionTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
   }
 
+  @Nested
+  inner class MemberAccess {
+
+    @Test
+    @TestFor(issues = ["PY-87028"])
+    fun `attribute declared in several members intersects the declarations`() = test("""
+      class C: pass
+      class D: pass
+
+      class A:
+          cd: C
+      class B:
+          cd: D
+
+      def f(ab: A):
+          if isinstance(ab, B):
+              expr = ab.cd
+      #       └ TYPE C & D
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-87028"])
+    fun `attribute declared in one member keeps that declaration`() = test("""
+      class C: pass
+      class D: pass
+
+      class A:
+          cd: C
+      class B:
+          other: D
+
+      def f(ab: A):
+          if isinstance(ab, B):
+              expr = ab.cd
+      #       └ TYPE C
+      """.trimIndent())
+
+    /**
+     * A member without the attribute declares nothing, so it must not widen the result to Unknown.
+     */
+    @Test
+    @TestFor(issues = ["PY-87028"])
+    fun `member without the attribute drops out`() = test("""
+      class A:
+          attr: int
+      class B: pass
+
+      def f(a: A):
+          if isinstance(a, B):
+              expr = a.attr
+      #       └ TYPE int
+      """.trimIndent())
+
+    /**
+     * A member that declares the attribute with an unknown type still constrains the result,
+     * unlike a member that does not declare it at all.
+     */
+    @Test
+    @TestFor(issues = ["PY-87028"])
+    fun `attribute of an unknown type constrains the result`() = test("""
+      class A:
+          attr: int
+      class B:
+          attr: not_imported
+      #         ^^^^^^^^^^^^ ERROR Unresolved reference 'not_imported'
+
+      def f(a: A):
+          if isinstance(a, B):
+              expr = a.attr
+      #       └ TYPE int & Unknown
+      """.trimIndent())
+
+    /**
+     * `Any` declares every attribute, so every attribute of `Any & C` keeps an `Any` part.
+     */
+    @Test
+    @TestFor(issues = ["PY-87028"])
+    fun `Any member declares every attribute`() = test("""
+      from typing import Any
+
+      class Foo:
+          foo: str
+
+      def f(x: "Any & Foo"):
+          expr = x.foo
+      #   └ TYPE Any & str
+          deep = x.foo.bar
+      #   └ TYPE Any
+      """.trimIndent())
+  }
+
   companion object {
     private const val TY_EXTENSIONS_ROOT = "types/tyExtensions"
   }
