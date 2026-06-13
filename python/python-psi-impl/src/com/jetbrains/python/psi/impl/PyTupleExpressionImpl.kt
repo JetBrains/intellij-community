@@ -8,11 +8,16 @@ import com.jetbrains.python.psi.PyElementVisitor
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyTupleExpression
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.psi.types.PyABCUtil
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyUnpackedTupleTypeImpl
 import com.jetbrains.python.psi.types.getLiteralType
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 
 class PyTupleExpressionImpl(astNode: ASTNode) : PySequenceExpressionImpl(astNode), PyTupleExpression {
   override fun acceptPyVisitor(pyVisitor: PyElementVisitor) {
@@ -25,11 +30,17 @@ class PyTupleExpressionImpl(astNode: ASTNode) : PySequenceExpressionImpl(astNode
       for (element in elements) {
         val starOperand = (element as? PyStarExpression)?.expression
         if (starOperand != null) {
-          // Splice a statically known (heterogeneous) tuple operand into the surrounding tuple:
-          // `(1, *a)` with `a: tuple[int, int]` has type `tuple[int, int, int]`.
           val operandType = context.getType(starOperand)
+          // A fixed-length tuple operand splices its elements in directly: `(1, *a)` with `a: tuple[int, int]` is `tuple[int, int, int]`.
           if (operandType is PyTupleType && !operandType.isHomogeneous) {
             addAll(operandType.elementTypes)
+            continue
+          }
+          // Any other iterable contributes an unbounded `*tuple[T, ...]` portion of its item type.
+          if (!operandType.isAnyOrUnknown && !PyTypeChecker.isUnknown(operandType, context) &&
+              PyABCUtil.isSubtype(operandType, PyNames.ITERABLE, context)) {
+            val itemType = PyTargetExpressionImpl.getIterationType(operandType, starOperand, this@PyTupleExpressionImpl, false, context)
+            add(PyUnpackedTupleTypeImpl(listOf(itemType), true))
             continue
           }
         }
