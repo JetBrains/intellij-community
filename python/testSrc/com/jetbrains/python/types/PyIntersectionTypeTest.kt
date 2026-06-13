@@ -6,9 +6,6 @@ import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
-import com.jetbrains.python.fixtures.PyCodeInsightTestCase.OrderRootTypeEnum
-import com.jetbrains.python.fixtures.PyCodeInsightTestCase.SdkRoot
-import com.jetbrains.python.fixtures.PyCodeInsightTestCase.TestCaseOptions
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -178,6 +175,99 @@ class PyIntersectionTypeTest : PyCodeInsightTestCase() {
       #   └ TYPE Any & str
           deep = x.foo.bar
       #   └ TYPE Any
+      """.trimIndent())
+  }
+
+  @Nested
+  inner class MemberCalls {
+
+    /**
+     * The same method in several members forms one callee type, so the call picks the signature that
+     * matches the arguments, like an overload set does.
+     */
+    @Test
+    @TestFor(issues = ["PY-89000"])
+    fun `call matches the signature of one member`() = test("""
+      class A:
+          def f(self, a: int) -> int: ...
+      class B:
+          def f(self, a: str) -> str: ...
+
+      def g(x: A):
+          if isinstance(x, B):
+              expr = x.f(1)
+      #       │          └ WARNING Expected type 'str', got 'Literal[1]' instead FIXME # PY-90282: the argument check does not treat an intersection callee as an overload set yet
+      #       └ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89000"])
+    fun `call matches the signature of the other member`() = test("""
+      class A:
+          def f(self, a: int) -> int: ...
+      class B:
+          def f(self, a: str) -> str: ...
+
+      def g(x: A):
+          if isinstance(x, B):
+              expr = x.f("s")
+      #       │          ^^^ WARNING Expected type 'int', got 'Literal["s"]' instead FIXME # PY-90282: the argument check does not treat an intersection callee as an overload set yet
+      #       └ TYPE str
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90282"])
+    fun `overloaded method on a member`() = test("""
+      from typing import overload
+
+      class A: pass
+      class B:
+          @overload
+          def m(self, x: int) -> int: ...
+          @overload
+          def m(self, x: str) -> str: ...
+          def m(self, x): return x
+
+      def f(ab: A):
+          if isinstance(ab, B):
+              expr = ab.m(1)
+      #       └ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-90282"])
+    fun `calling an intersection uses the callable member`() = test("""
+      class A: pass
+      class B:
+          def __call__(self) -> int: return 1
+
+      def f(ab: A):
+          if isinstance(ab, B):
+              expr = ab()
+      #       └ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89000"])
+    fun `a callable member makes the intersection callable`() = test("""
+      class A: pass
+      class B:
+          def __call__(self) -> int: return 1
+
+      def f(ab: A):
+          if isinstance(ab, B):
+              ab()
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89000"])
+    fun `an intersection without a callable member is reported`() = test("""
+      class A: pass
+      class B: pass
+
+      def f(ab: A):
+          if isinstance(ab, B):
+              ab() # WARNING 'ab' is not callable
       """.trimIndent())
   }
 

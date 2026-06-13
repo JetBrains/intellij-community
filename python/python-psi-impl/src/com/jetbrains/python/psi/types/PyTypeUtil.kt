@@ -274,7 +274,7 @@ object PyTypeUtil {
   fun toUnsafeUnion(): Collector<PyType?, *, PyType?> {
     return Collectors.collectingAndThen(
       Collectors.toList()
-    ) { PyUnsafeUnionType.unsafeUnion() }
+    ) { members -> PyUnsafeUnionType.unsafeUnion(members) }
   }
 
   @ApiStatus.Experimental

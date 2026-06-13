@@ -900,6 +900,27 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
       c: C = a_and_b # WARNING Expected type 'C', got 'A & B' instead
       """.trimIndent())
 
+    /**
+     * `A & B` is assignable to a wider intersection `C & D` when each expected member is a supertype of some
+     * actual member. No single actual member must cover both expected members.
+     */
+    @Test
+    @TestFor(issues = ["PY-89000"])
+    fun `intersection to intersection assignability`() = test("""
+      class C: pass
+      class D: pass
+      class A(C): pass
+      class B(D): pass
+
+      cd: "C & D"
+      #      └ WARNING Class 'type' does not define '__and__', so the '&' operator cannot be used on its instances
+      ab: "A & B"
+      #      └ WARNING Class 'type' does not define '__and__', so the '&' operator cannot be used on its instances
+
+      cd = ab
+      ab = cd # WARNING Expected type 'A & B', got 'C & D' instead
+      """.trimIndent())
+
     @Test
     fun `intersection type parsing`() = test("""
       expr: int & str

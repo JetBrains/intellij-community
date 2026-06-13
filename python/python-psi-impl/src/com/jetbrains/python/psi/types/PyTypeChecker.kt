@@ -394,11 +394,14 @@ object PyTypeChecker {
       return Optional.of(match(expected, actual, context))
     }
 
-    if (actual is PyIntersectionType) {
+    // Expected-first, unlike unions: an intersection's `all` quantifier lives on the expected side
+    // (`actual <: A & B` iff it matches every member), so it must be the outer check for `A & B <: C & D` to
+    // distribute correctly as `(A <: C or B <: C) and (A <: D or B <: D)`.
+    if (expected is PyIntersectionType) {
       return Optional.of(match(expected, actual, context))
     }
 
-    if (expected is PyIntersectionType) {
+    if (actual is PyIntersectionType) {
       return Optional.of(match(expected, actual, context))
     }
 
@@ -2528,6 +2531,10 @@ object PyTypeChecker {
   private val PyUnsafeUnionType.isCallable: Boolean?
     get() = members.anyCallable()
 
+  /**
+   * A value typed as an intersection is callable if at least one member is.
+   * This is the same disjunctive rule as an unsafe union.
+   */
   private val PyIntersectionType.isCallable: Boolean?
     get() = members.anyCallable()
 
