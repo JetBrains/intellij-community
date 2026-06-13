@@ -22,6 +22,7 @@ import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeUtil.isOverlappingWith
+import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -29,15 +30,20 @@ class PyInvalidCastInspection : PyInspection() {
   @JvmField
   var ignoreGenericVariance: Boolean = true
 
+  @JvmField
+  var ignoreTypedDictStructure: Boolean = true
+
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(
-      OptPane.checkbox("ignoreGenericVariance", PyPsiBundle.message("INSP.invalid.cast.ignore.generic.variance"))
+      OptPane.checkbox("ignoreGenericVariance", PyPsiBundle.message("INSP.invalid.cast.ignore.generic.variance")),
+      OptPane.checkbox("ignoreTypedDictStructure", PyPsiBundle.message("INSP.invalid.cast.ignore.typed.dict.structure"))
     )
   }
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     val context = PyInspectionVisitor.getContext(session)
     val ignoreGenericVariance = ignoreGenericVariance
+    val ignoreTypedDictStructure = ignoreTypedDictStructure
     return object : PyInspectionVisitor(holder, context) {
       override fun visitPyCallExpression(callExpression: PyCallExpression) {
         val callees = callExpression.multiResolveCalleeFunction(resolveContext)
@@ -54,11 +60,24 @@ class PyInvalidCastInspection : PyInspection() {
         val actualType = myTypeEvalContext.getType(args[1])
 
         if (targetType.isOverlappingWith(actualType, myTypeEvalContext)) return
-        // When variance is ignored, generic type arguments are erased before the overlap check,
-        // so e.g. casting 'list[int]' to 'list[object]' is treated as overlapping.
-        if (ignoreGenericVariance &&
-            targetType.eraseGenericParameters().isOverlappingWith(actualType.eraseGenericParameters(), myTypeEvalContext)) {
-          return
+
+        // Relax the overlap check according to the enabled options:
+        //  - ignoring generic variance erases generic type arguments, so e.g. casting 'list[int]' to 'list[object]'
+        //    is treated as overlapping;
+        //  - ignoring TypedDict structure treats a TypedDict as a plain 'dict', so e.g. a 'dict[str, object]' may be
+        //    cast to a TypedDict.
+        if (ignoreGenericVariance || ignoreTypedDictStructure) {
+          var relaxedTarget = targetType
+          var relaxedActual = actualType
+          if (ignoreGenericVariance) {
+            relaxedTarget = relaxedTarget.eraseGenericParameters()
+            relaxedActual = relaxedActual.eraseGenericParameters()
+          }
+          if (ignoreTypedDictStructure) {
+            relaxedTarget = relaxedTarget.eraseTypedDictStructure()
+            relaxedActual = relaxedActual.eraseTypedDictStructure()
+          }
+          if (relaxedTarget.isOverlappingWith(relaxedActual, myTypeEvalContext)) return
         }
         val fromName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
         val toName = PythonDocumentationProvider.getVerboseTypeName(targetType, myTypeEvalContext)
@@ -106,6 +125,17 @@ private class AddIntermediateCastQuickFix(private val typeText: String) : PsiUpd
 private fun PyType?.eraseGenericParameters(): PyType? = when (this) {
   is PyUnionType -> this.map { it.eraseGenericParameters() }
   is PyCollectionType -> PyClassTypeImpl(this.pyClass, this.isDefinition)
+  else -> this
+}
+
+/**
+ * Replaces TypedDict types with their underlying `dict` class, so that the overlap check ignores the structural
+ * details of a TypedDict and treats it as a plain dictionary (e.g. a `dict[str, object]` may be cast to a TypedDict).
+ * Union members are erased element-wise.
+ */
+private fun PyType?.eraseTypedDictStructure(): PyType? = when (this) {
+  is PyUnionType -> this.map { it.eraseTypedDictStructure() }
+  is PyTypedDictType -> PyClassTypeImpl(this.pyClass, this.isDefinition)
   else -> this
 }
 

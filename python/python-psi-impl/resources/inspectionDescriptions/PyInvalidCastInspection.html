@@ -37,5 +37,19 @@ cast(list[object], int_list)  # ok
   into account. When enabled (the default), parameterized types are compared by their base class only, so a cast such as
   <code>cast(list[object], int_list)</code> is allowed. Disable it to also report casts that differ only in their
   (invariant) type arguments.</p>
+
+<p>Use the <b>Ignore TypedDict structure (treat a TypedDict as a dict)</b> option to control whether a <code>TypedDict</code>
+  is treated as a plain dictionary. When enabled (the default), casting a <code>dict</code> to a <code>TypedDict</code> (or
+  vice versa) is allowed, because a <code>TypedDict</code> is a <code>dict</code> at runtime:</p>
+<pre><code>
+from typing import TypedDict, cast
+
+class TD(TypedDict):
+    x: int
+
+data: dict[str, object]
+cast(TD, data)  # ok
+</code></pre>
+<p>Disable it to report such casts when the dictionary's structure does not match the <code>TypedDict</code>.</p>
 </body>
 </html>
