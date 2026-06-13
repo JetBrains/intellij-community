@@ -8,12 +8,12 @@ import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
 
-internal fun wrapTracer(scopeName: String, tracer: Tracer, verbose: Boolean, verboseMode: Boolean): IJTracer {
+internal fun wrapTracer(scopeName: String, tracer: Tracer, verbose: Boolean, verboseMode: Boolean, detailedTracers: Set<String>): IJTracer {
   if ((verbose && !verboseMode) || tracer == IJNoopTracer.noopTrace) {
     return IJNoopTracer
   }
   else {
-    return TraceWrapper(scopeName = scopeName, tracer = tracer, detailedTracers = emptySet(), verbose = verbose)
+    return TraceWrapper(scopeName = scopeName, tracer = tracer, detailedTracers = detailedTracers, verbose = verbose)
   }
 }
 

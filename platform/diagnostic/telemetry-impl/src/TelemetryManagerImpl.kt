@@ -26,6 +26,7 @@ import com.intellij.platform.diagnostic.telemetry.exporters.IdeaOtlpMeterProvide
 import com.intellij.platform.diagnostic.telemetry.exporters.JaegerJsonSpanExporter
 import com.intellij.platform.diagnostic.telemetry.exporters.OtlpSpanExporter
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.text.nullize
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
@@ -65,6 +66,9 @@ class TelemetryManagerImpl(
   private val sdk: OpenTelemetrySdk
 
   override var verboseMode: Boolean = false
+
+  private val detailedScopes: Set<String> = System.getProperty("idea.diagnostic.opentelemetry.detailed.scopes").orEmpty()
+      .split(',').mapNotNullTo(HashSet()) { it.nullize(nullizeSpaces = true) }
 
   private val aggregatedMetricExporter: AggregatedMetricExporter
   private val hasSpanExporters: Boolean
@@ -150,7 +154,7 @@ class TelemetryManagerImpl(
     }
 
     val name = scope.toString()
-    return wrapTracer(scopeName = name, tracer = sdk.getTracer(name), verbose = scope.verbose, verboseMode = verboseMode)
+    return wrapTracer(scopeName = name, tracer = sdk.getTracer(name), verbose = scope.verbose, verboseMode = verboseMode, detailedTracers = detailedScopes)
   }
 
   override fun getSimpleTracer(scope: Scope): IntelliJTracer {
