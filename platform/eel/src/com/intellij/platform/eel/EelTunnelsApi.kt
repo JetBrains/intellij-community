@@ -15,31 +15,47 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * API for sockets. Use [HostAddress.Builder] to create arguments.
+ * Lets the IDE perform socket operations inside the environment this [EelApi] is bound to, as if it were a local process there —
+ * opening outbound connections and accepting inbound ones. The currently supported transports are TCP and Unix-domain sockets.
+ *
+ * A tunnel runs in one of two directions, as seen from the environment:
+ * - **connect** — open an outbound connection from the environment to a host and port resolved there ([getConnectionToRemotePort]);
+ * - **listen** — bind a socket inside the environment and accept incoming connections ([listenOnUnixSocket]; accepting on a TCP port
+ *   is also supported).
+ *
+ * Each connection is delivered to the EelApi caller as a pair of [EelSendChannel] / [EelReceiveChannel]. The caller decides what the
+ * traffic is for: consume it directly, hand it to IDE-side code, or bridge it to another process such as a debugger. Remote addresses
+ * are built with [HostAddress.Builder]; reach this API via [EelApi.tunnels].
+ *
+ * Note that `localhost` differs across the boundary — the IDE host and a WSL distribution or container each have their own — so a port
+ * inside the environment is reached through a tunnel, not a direct socket.
  */
 @ApiStatus.Experimental
 sealed interface EelTunnelsApi {
   val descriptor: EelDescriptor
   /**
-   * Creates a remote UNIX socket forwarding. IJent listens for a connection on the remote machine, and when the connection
-   * is accepted, the IDE communicates to the remote client via a pair of Kotlin channels.
+   * Creates a Unix-domain socket in the environment and forwards it: the environment listens for a connection, and when one is
+   * accepted the IDE talks to the remote client through a pair of Kotlin channels.
    *
-   * Packets sent to the channel and received from the channel may be split and/or concatenated.
-   * The packets may be split only if their size exceeds `RECOMMENDED_MAX_PACKET_SIZE`.
+   * Packets sent to and received from the channels may be split and/or concatenated. They may be split only if their size exceeds
+   * `RECOMMENDED_MAX_PACKET_SIZE`.
    *
-   * Local implementation should work for **nix and all modern Windows.
+   * The local implementation works on *nix and on modern Windows, which both support Unix-domain sockets natively.
    *
-   * The call accepts only one connection. If multiple connections should be accepted, the function is supposed to be called in a loop:
+   * On Windows specifically, `AF_UNIX` sockets are supported since Windows 10 (version 1803) and are exposed by the JDK through
+   * `StandardProtocolFamily.UNIX`. Like on *nix they are addressed by a filesystem path, which makes them distinct from Windows named
+   * pipes (`\\.\pipe\…`) — the traditional Win32 IPC mechanism, which lives in its own namespace rather than on the filesystem and uses
+   * a different API. Only Unix-domain sockets are exposed here for now; named-pipe support may come later.
+   *
+   * A single call accepts only one connection. To accept several, call it in a loop, reusing the allocated path:
    * ```kotlin
-   * val ijent: IjentApi = ijentApiFactory()
-   *
-   * val (socketPath, tx, rx) = listenOnUnixSocket().prefix("ijent-").suffix(".sock").eelIt()
+   * val (socketPath, tx, rx) = eel.tunnels.listenOnUnixSocket().prefix("ijent-").suffix(".sock").eelIt()
    * println(socketPath) // /tmp/ijent-12345678.sock
    * launch {
    *   handleConnection(tx, rx)
    * }
    * while (true) {
-   *   val (_, tx, rx) = listenOnUnixSocket(socketPath)
+   *   val (_, tx, rx) = eel.tunnels.listenOnUnixSocket(socketPath)
    *   launch {
    *     handleConnection(tx, rx)
    *   }
@@ -345,35 +361,34 @@ operator fun Connection.component1(): EelSendChannel = sendChannel
 @ApiStatus.Internal
 operator fun Connection.component2(): EelReceiveChannel = receiveChannel
 
+/** [EelTunnelsApi] for a POSIX environment. */
 @ApiStatus.Experimental
 interface EelTunnelsPosixApi : EelTunnelsApi {
 
 }
 
+/** [EelTunnelsApi] for a Windows environment. */
 @ApiStatus.Experimental
 interface EelTunnelsWindowsApi : EelTunnelsApi
 
 /**
- * TODO: DOC
- * Convenience function for working with a connection to a remote server.
+ * Opens a connection to a remote port, runs [action] with it, and closes it afterwards — the scoped counterpart of
+ * [EelTunnelsApi.getConnectionToRemotePort].
  *
- * Example:
+ * Build the target with [EelTunnelsApi.getConnectionToRemotePort], then call this:
  * ```kotlin
- *
- * suspend fun foo() {
- *   EelTunnelsApi.withConnectionToRemotePort("localhost", 8080, {
- *     myErrorReporter.report(it)
- *   }) { (channelTo, channelFrom) ->
- *     handleConnection(channelTo, channelFrom)
+ * eel.tunnels.getConnectionToRemotePort()
+ *   .hostname("localhost")
+ *   .port(8080u)
+ *   .withConnectionToRemotePort(errorHandler = { error -> myErrorReporter.report(error) }) { connection ->
+ *     handleConnection(connection.sendChannel, connection.receiveChannel)
  *   }
- * }
- *
  * ```
  *
- * If the connection could not be established, then [errorHandler] is invoked.
- * Otherwise, [action] is invoked. The connection gets automatically closed when [action] finishes.
+ * If the connection cannot be established, [errorHandler] is invoked with the [EelConnectionError]; otherwise [action] runs and the
+ * connection is closed automatically when it finishes (normally or exceptionally).
  *
- * @see EelTunnelsApi.getConnectionToRemotePort for more details on the behavior of [Connection]
+ * @see EelTunnelsApi.getConnectionToRemotePort for the behavior of the returned [Connection].
  */
 @ApiStatus.Experimental
 suspend fun <T> EelTunnelsApiHelpers.GetConnectionToRemotePort.withConnectionToRemotePort(
