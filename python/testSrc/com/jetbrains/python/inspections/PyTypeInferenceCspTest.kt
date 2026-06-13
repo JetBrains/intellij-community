@@ -609,4 +609,18 @@ class PyTypeInferenceCspTest : PyInspectionTestCase() {
       assert_type(foo([], [1]), int)
       """)
   }
+
+  @TestFor(issues = ["PY-90270"])
+  fun `test Contravariant type argument unifies to the common subtype`() {
+    doTestByText("""
+      from typing import assert_type
+
+      class Sink[T]:
+          def put(self, t: T) -> None: ...
+
+      def f[U](a: Sink[U], b: Sink[U]) -> U: ...
+
+      assert_type(f(Sink[object](), Sink[int]()), int)
+      """)
+  }
 }

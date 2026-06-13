@@ -629,10 +629,8 @@ private object ConstraintReducer {
         val typeArg = tvMapping.value!!.get()
         val typeArgSubst = PyTypeChecker.substitute(typeArg, substitutions, cp.context)
         val typeVarSubst = PyTypeChecker.substitute(typeVar, substitutions, cp.context)
-        val defSiteVariance = if (typeVar.variance == Variance.INFER_VARIANCE)
-          Variance.COVARIANT // TODO: introduce PyVarianceJudgment
-        else
-          typeVar.variance
+        val inferredVariance = PyInferredVarianceJudgment.getDeclaredOrInferredVariance(typeVar, cp.context)
+        val defSiteVariance = if (inferredVariance == Variance.BIVARIANT) Variance.COVARIANT else inferredVariance
         reduce(typeVarSubst, typeArgSubst, defSiteVariance, cp)
       }
     }
