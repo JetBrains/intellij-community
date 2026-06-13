@@ -118,6 +118,10 @@ fun MavenTestFixture.createProfilesXml(relativePath: String, xml: String): Virtu
   return createProfilesFile(createProjectSubDir(relativePath), xml, false)
 }
 
+fun MavenTestFixture.createProfilesXmlOldStyle(@Language(value = "XML", prefix = "<profiles>", suffix = "</profiles>") xml: String): VirtualFile {
+  return createProfilesFile(projectRoot, xml, true)
+}
+
 private fun MavenTestFixture.createProfilesFile(dir: VirtualFile, xml: String, oldStyle: Boolean): VirtualFile {
   return createProfilesFile(dir, createValidProfiles(xml, oldStyle))
 }
