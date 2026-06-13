@@ -1149,7 +1149,10 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    module_name = "intellij.python.community.tests",
+    associates = [
+        "//python:python-community-impl",
+        "//python:python-community-impl_test_lib",
+    ],
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -1213,8 +1216,6 @@ jvm_library(
         "//platform/workspace/storage:storage_test_lib",
         "//python/python-psi-api:psi",
         "//python/python-psi-api:psi_test_lib",
-        "//python:python-community-impl",
-        "//python:python-community-impl_test_lib",
         "//python/python-pytools:pytools",
         "//python/python-pytools:pytools_test_lib",
         "//platform/xdebugger-api:debugger",

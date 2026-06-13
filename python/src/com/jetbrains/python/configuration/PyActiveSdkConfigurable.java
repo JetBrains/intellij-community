@@ -56,21 +56,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdk;
 import static com.jetbrains.python.configuration.SdkConfigurationProgressObserverKt.observeSdkConfigurationInProgress;
+import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdk;
 import static com.jetbrains.python.sdk.PySdkRenderingKt.groupModuleSdksByTypes;
 import static com.jetbrains.python.sdk.legacy.PythonSdkUtil.isRemote;
 
 @ApiStatus.Internal
 public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
-  protected final @NotNull Project myProject;
+  private final @NotNull Project myProject;
 
-  protected final @Nullable Module myModule;
+  private final @Nullable Module myModule;
 
   private final @NotNull PyConfigurableInterpreterList myInterpreterList;
 
-  protected final @NotNull ProjectSdksModel myProjectSdksModel;
+  private final @NotNull ProjectSdksModel myProjectSdksModel;
 
   private final @NotNull JPanel myMainPanel;
 
@@ -83,11 +83,11 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
   private final @Nullable Disposable myDisposable;
 
-  public PyActiveSdkConfigurable(@NotNull Project project) {
+  protected PyActiveSdkConfigurable(@NotNull Project project) {
     this(project, null);
   }
 
-  public PyActiveSdkConfigurable(@NotNull Module module) {
+  protected PyActiveSdkConfigurable(@NotNull Module module) {
     this(module.getProject(), module);
   }
 
@@ -110,7 +110,8 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
 
     myAddInterpreterLink = getAddInterpreterDropDownLink(project, module);
     myMainPanel =
-      buildPanel(project, mySdkCombo, myAddInterpreterLink, freeTier ? myPanelWithPromo.getPanel() : myPackagesPanel, packagesNotificationPanel,
+      buildPanel(project, mySdkCombo, myAddInterpreterLink, freeTier ? myPanelWithPromo.getPanel() : myPackagesPanel,
+                 packagesNotificationPanel,
                  customizer);
 
     myInterpreterList = PyConfigurableInterpreterList.getInstance(myProject);
@@ -153,6 +154,178 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
   private void onSdkConfigurationFinished() {
     // reset() refreshes the SDK model from the live table and reselects the now-configured interpreter.
     reset();
+  }
+
+  private void onShowAllSelected() {
+    Sdk selectedSdk = PythonInterpreterConfigurable.openInDialog(myProject, myModule, getEditableSelectedSdk());
+    onShowAllInterpretersDialogClosed(selectedSdk);
+  }
+
+  private void onSdkSelected() {
+    final Sdk sdk = getOriginalSelectedSdk();
+
+    if (sdk != null) {
+      // Non-null means we are in free tier mode, so must switch between packages and promo panel
+      if (myPanelWithPromo != null) {
+        boolean remote = isRemote(sdk);
+        myPanelWithPromo.setPromoMode(remote);
+        if (remote) {
+          return;
+        }
+      }
+    }
+
+    refreshPackages(sdk);
+  }
+
+  private void refreshPackages(@Nullable Sdk sdk) {
+    final PyPackageManagers packageManagers = PyPackageManagers.getInstance();
+    myPackagesPanel.updatePackages(sdk != null ? packageManagers.getManagementService(myProject, sdk) : null);
+    myPackagesPanel.updateNotifications(sdk);
+  }
+
+  /**
+   * @param selectedSdk the selected Python SDK before closing "Python Interpreters" dialog if the user clicked "OK" and {@code null} if the
+   *                    user clicked "Cancel" button
+   */
+  private void onShowAllInterpretersDialogClosed(@Nullable Sdk selectedSdk) {
+    if (selectedSdk != null) {
+      updateSdkListAndSelect(selectedSdk);
+    }
+    else {
+      // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to applying
+      final Sdk currentSelectedSdk = getEditableSelectedSdk();
+
+      if (currentSelectedSdk != null && myProjectSdksModel.findSdk(currentSelectedSdk.getName()) != null) {
+        // nothing has been selected but previously selected sdk still exists, stay with it
+        updateSdkListAndSelect(currentSelectedSdk);
+      }
+      else {
+        // nothing has been selected but previously selected sdk removed, switch to `No interpreter`
+        updateSdkListAndSelect(null);
+      }
+    }
+  }
+
+  @Override
+  public final JComponent createComponent() {
+    return myMainPanel;
+  }
+
+  @Override
+  public final boolean isModified() {
+    return !Comparing.equal(getSdk(), getOriginalSelectedSdk());
+  }
+
+  @Nullable
+  private Sdk getOriginalSelectedSdk() {
+    final Sdk editableSdk = getEditableSelectedSdk();
+    return editableSdk == null ? null : myProjectSdksModel.findSdk(editableSdk);
+  }
+
+  @Nullable
+  private Sdk getEditableSelectedSdk() {
+    return (Sdk)mySdkCombo.getSelectedItem();
+  }
+
+  @Nullable
+  protected Sdk getSdk() {
+    Sdk sdk;
+    if (myModule == null) {
+      sdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
+    }
+    else {
+      sdk = com.jetbrains.python.sdk.PythonSdkUtil.findPythonSdk(myModule);
+    }
+
+    if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
+      return sdk;
+    }
+
+    return null;
+  }
+
+  protected void setSdk(@Nullable Sdk item) {
+    // This function literally associates SDK with module and must be moved to the service
+    final var currentSdk = getSdk();
+
+    PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithInheritedSdk(myProject, currentSdk);
+    PySdkExtKt.setPythonSdk(myProject, item);
+    PyTransferredSdkRootsKt.transferRootsToModulesWithInheritedSdk(myProject, item);
+
+    if (myModule != null) {
+      PyTransferredSdkRootsKt.removeTransferredRoots(myModule, currentSdk);
+      setPythonSdk(myModule, item);
+      PyTransferredSdkRootsKt.transferRoots(myModule, item);
+    }
+  }
+
+  @Override
+  public final void apply() {
+    final Sdk selectedSdk = getOriginalSelectedSdk();
+    if (selectedSdk != null) {
+      ((PythonSdkType)selectedSdk.getSdkType()).setupSdkPaths(selectedSdk);
+    }
+    setSdk(selectedSdk);
+  }
+
+  @Override
+  public final void reset() {
+    // The SDK model is cached per project (see PyConfigurableInterpreterList) and may have been
+    // populated before a new interpreter was created — e.g. by the interpreter widget popup, which
+    // builds its list from the same model. Refresh it from the live SDK table so a just-created
+    // interpreter is present and selectable instead of the combo showing "<No interpreter>".
+    myProjectSdksModel.reset(myProject);
+    updateSdkListAndSelect(getSdk());
+  }
+
+  @NotNull
+  private List<Sdk> getAvailableSdks() {
+    return myInterpreterList.getAllPythonSdks(myModule);
+  }
+
+  private void updateSdkListAndSelect(@Nullable Sdk selectedSdk) {
+    final List<Sdk> allPythonSdks = getAvailableSdks();
+
+    final List<Object> items = new ArrayList<>();
+    items.add(null);
+
+    final Map<PyRenderedSdkType, List<Sdk>> moduleSdksByTypes =
+      groupModuleSdksByTypes(allPythonSdks, myModule, sdk -> !SdkExtKt.isSdkSeemsValid(sdk));
+
+    final PyRenderedSdkType[] renderedSdkTypes = PyRenderedSdkType.values();
+    for (int i = 0; i < renderedSdkTypes.length; i++) {
+      final PyRenderedSdkType currentSdkType = renderedSdkTypes[i];
+
+      if (moduleSdksByTypes.containsKey(currentSdkType)) {
+        if (i != 0) items.add(PySdkListCellRenderer.SEPARATOR);
+        items.addAll(moduleSdksByTypes.get(currentSdkType));
+      }
+    }
+
+    items.add(PySdkListCellRenderer.SEPARATOR);
+    items.add(getShowAll());
+
+    mySdkCombo.setRenderer(new PySdkListCellRenderer());
+    final Sdk selection = getEditableSdkUsingOriginal(selectedSdk);
+    mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
+    // The call of `setSelectedItem` is required to notify `PyPathMappingsUiProvider` about initial setting of `Sdk` via `setModel` above
+    // Fragile as it is vulnerable to changes of `setSelectedItem` method in respect to processing `ActionEvent`
+    mySdkCombo.setSelectedItem(selection);
+    onSdkSelected();
+  }
+
+  @Nullable
+  private Sdk getEditableSdkUsingOriginal(@Nullable Sdk sdk) {
+    return sdk == null ? null : myProjectSdksModel.findSdk(sdk.getName());
+  }
+
+  @Override
+  public final void disposeUIResources() {
+    myInterpreterList.disposeModel();
+    if (myDisposable != null) {
+      Disposer.dispose(myDisposable);
+    }
   }
 
   @ApiStatus.Internal
@@ -257,173 +430,6 @@ public class PyActiveSdkConfigurable implements UnnamedConfigurable {
     result.add(packagesNotificationPanel.getComponent(), c);
 
     return result;
-  }
-
-  private void onShowAllSelected() {
-    Sdk selectedSdk = PythonInterpreterConfigurable.openInDialog(myProject, myModule, getEditableSelectedSdk());
-    onShowAllInterpretersDialogClosed(selectedSdk);
-  }
-
-  protected void onSdkSelected() {
-    final Sdk sdk = getOriginalSelectedSdk();
-
-    if (sdk != null) {
-      // Non-null means we are in free tier mode, so must switch between packages and promo panel
-      if (myPanelWithPromo != null) {
-        boolean remote = isRemote(sdk);
-        myPanelWithPromo.setPromoMode(remote);
-        if (remote) {
-          return;
-        }
-      }
-    }
-
-    refreshPackages(sdk);
-  }
-
-  protected void refreshPackages(@Nullable Sdk sdk) {
-    final PyPackageManagers packageManagers = PyPackageManagers.getInstance();
-    myPackagesPanel.updatePackages(sdk != null ? packageManagers.getManagementService(myProject, sdk) : null);
-    myPackagesPanel.updateNotifications(sdk);
-  }
-
-  /**
-   * @param selectedSdk the selected Python SDK before closing "Python Interpreters" dialog if the user clicked "OK" and {@code null} if the
-   *                    user clicked "Cancel" button
-   */
-  private void onShowAllInterpretersDialogClosed(@Nullable Sdk selectedSdk) {
-    if (selectedSdk != null) {
-      updateSdkListAndSelect(selectedSdk);
-    }
-    else {
-      // do not use `getOriginalSelectedSdk()` here since `model` won't find original sdk for selected item due to applying
-      final Sdk currentSelectedSdk = getEditableSelectedSdk();
-
-      if (currentSelectedSdk != null && myProjectSdksModel.findSdk(currentSelectedSdk.getName()) != null) {
-        // nothing has been selected but previously selected sdk still exists, stay with it
-        updateSdkListAndSelect(currentSelectedSdk);
-      }
-      else {
-        // nothing has been selected but previously selected sdk removed, switch to `No interpreter`
-        updateSdkListAndSelect(null);
-      }
-    }
-  }
-
-  @Override
-  public JComponent createComponent() {
-    return myMainPanel;
-  }
-
-  @Override
-  public boolean isModified() {
-    return !Comparing.equal(getSdk(), getOriginalSelectedSdk());
-  }
-
-  protected @Nullable Sdk getOriginalSelectedSdk() {
-    final Sdk editableSdk = getEditableSelectedSdk();
-    return editableSdk == null ? null : myProjectSdksModel.findSdk(editableSdk);
-  }
-
-  protected @Nullable Sdk getEditableSelectedSdk() {
-    return (Sdk)mySdkCombo.getSelectedItem();
-  }
-
-  protected @Nullable Sdk getSdk() {
-    Sdk sdk;
-    if (myModule == null) {
-      sdk = ProjectRootManager.getInstance(myProject).getProjectSdk();
-    }
-    else {
-      sdk = com.jetbrains.python.sdk.PythonSdkUtil.findPythonSdk(myModule);
-    }
-
-    if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
-      return sdk;
-    }
-
-    return null;
-  }
-
-  @Override
-  public void apply() {
-    final Sdk selectedSdk = getOriginalSelectedSdk();
-    if (selectedSdk != null) {
-      ((PythonSdkType)selectedSdk.getSdkType()).setupSdkPaths(selectedSdk);
-    }
-    setSdk(selectedSdk);
-  }
-
-  protected void setSdk(@Nullable Sdk item) {
-    // This function literally associates SDK with module and must be moved to the service
-    final var currentSdk = getSdk();
-
-    PyTransferredSdkRootsKt.removeTransferredRootsFromModulesWithInheritedSdk(myProject, currentSdk);
-    PySdkExtKt.setPythonSdk(myProject, item);
-    PyTransferredSdkRootsKt.transferRootsToModulesWithInheritedSdk(myProject, item);
-
-    if (myModule != null) {
-      PyTransferredSdkRootsKt.removeTransferredRoots(myModule, currentSdk);
-      setPythonSdk(myModule, item);
-      PyTransferredSdkRootsKt.transferRoots(myModule, item);
-    }
-  }
-
-  @Override
-  public void reset() {
-    // The SDK model is cached per project (see PyConfigurableInterpreterList) and may have been
-    // populated before a new interpreter was created — e.g. by the interpreter widget popup, which
-    // builds its list from the same model. Refresh it from the live SDK table so a just-created
-    // interpreter is present and selectable instead of the combo showing "<No interpreter>".
-    myProjectSdksModel.reset(myProject);
-    updateSdkListAndSelect(getSdk());
-  }
-
-  protected @NotNull List<Sdk> getAvailableSdks() {
-    return myInterpreterList.getAllPythonSdks(myModule);
-  }
-
-  private void updateSdkListAndSelect(@Nullable Sdk selectedSdk) {
-    final List<Sdk> allPythonSdks = getAvailableSdks();
-
-    final List<Object> items = new ArrayList<>();
-    items.add(null);
-
-    final Map<PyRenderedSdkType, List<Sdk>> moduleSdksByTypes =
-      groupModuleSdksByTypes(allPythonSdks, myModule, sdk -> !SdkExtKt.isSdkSeemsValid(sdk));
-
-    final PyRenderedSdkType[] renderedSdkTypes = PyRenderedSdkType.values();
-    for (int i = 0; i < renderedSdkTypes.length; i++) {
-      final PyRenderedSdkType currentSdkType = renderedSdkTypes[i];
-
-      if (moduleSdksByTypes.containsKey(currentSdkType)) {
-        if (i != 0) items.add(PySdkListCellRenderer.SEPARATOR);
-        items.addAll(moduleSdksByTypes.get(currentSdkType));
-      }
-    }
-
-    items.add(PySdkListCellRenderer.SEPARATOR);
-    items.add(getShowAll());
-
-    mySdkCombo.setRenderer(new PySdkListCellRenderer());
-    final Sdk selection = getEditableSdkUsingOriginal(selectedSdk);
-    mySdkCombo.setModel(new CollectionComboBoxModel<>(items, selection));
-    // The call of `setSelectedItem` is required to notify `PyPathMappingsUiProvider` about initial setting of `Sdk` via `setModel` above
-    // Fragile as it is vulnerable to changes of `setSelectedItem` method in respect to processing `ActionEvent`
-    mySdkCombo.setSelectedItem(selection);
-    onSdkSelected();
-  }
-
-  protected @Nullable Sdk getEditableSdkUsingOriginal(@Nullable Sdk sdk) {
-    return sdk == null ? null : myProjectSdksModel.findSdk(sdk.getName());
-  }
-
-  @Override
-  public void disposeUIResources() {
-    myInterpreterList.disposeModel();
-    if (myDisposable != null) {
-      Disposer.dispose(myDisposable);
-    }
   }
 
   private static String getShowAll() {

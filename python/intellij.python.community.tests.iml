@@ -138,4 +138,5 @@
     <orderEntry type="module" module-name="intellij.platform.testIntegration" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testIntegration.ui" scope="TEST" />
   </component>
+  <component name="TestModuleProperties" production-module="intellij.python.community.impl" />
 </module>

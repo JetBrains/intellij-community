@@ -8,13 +8,15 @@ import com.jetbrains.python.sdk.flavors.PythonFlavorProvider
 import java.nio.file.Path
 import javax.swing.Icon
 
-object PyPipEnvSdkFlavor : CPythonSdkFlavor<PyFlavorData.Empty>() {
+
+internal object PyPipEnvSdkFlavor : CPythonSdkFlavor<PyFlavorData.Empty>() {
   override fun getIcon(): Icon = PIPENV_ICON
   override fun getFlavorDataClass(): Class<PyFlavorData.Empty> = PyFlavorData.Empty::class.java
 
   override fun isValidSdkPath(pythonBinaryPath: Path): Boolean = false
 }
 
-class PyPipEnvSdkFlavorProvider : PythonFlavorProvider {
+
+internal class PyPipEnvSdkFlavorProvider : PythonFlavorProvider {
   override fun getFlavor(): PyPipEnvSdkFlavor = PyPipEnvSdkFlavor
 }

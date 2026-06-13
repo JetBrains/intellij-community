@@ -4,7 +4,9 @@ package com.jetbrains.python.configuration
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface PyIntegratedToolsTestPanelCustomizer {
   companion object {
     private val EP_NAME: ExtensionPointName<PyIntegratedToolsTestPanelCustomizer> =

@@ -3,14 +3,11 @@ package com.jetbrains.python.sdk.flavors
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 
-@ApiStatus.Internal
-
-class MayaSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.Empty>() {
-  override fun getFlavorDataClass(): Class<PyFlavorData.Empty>  = PyFlavorData.Empty::class.java
+internal class MayaSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.Empty>() {
+  override fun getFlavorDataClass(): Class<PyFlavorData.Empty> = PyFlavorData.Empty::class.java
 
   override fun isValidSdkPath(pythonBinaryPath: Path): Boolean {
     val fileName = pythonBinaryPath.fileName?.toString() ?: return false
@@ -36,6 +33,6 @@ class MayaSdkFlavor private constructor() : CPythonSdkFlavor<PyFlavorData.Empty>
 }
 
 
-class MayaFlavorProvider: PythonFlavorProvider {
+internal class MayaFlavorProvider : PythonFlavorProvider {
   override fun getFlavor(): MayaSdkFlavor = MayaSdkFlavor.INSTANCE
 }

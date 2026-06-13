@@ -93,7 +93,7 @@ internal class UvSdkAdditionalData : PythonSdkAdditionalData {
 }
 
 // TODO PY-87712 Move to a separate storage
-data class UvSdkFlavorData(
+internal data class UvSdkFlavorData(
   val uvWorkingDirectory: Path?,
   val usePip: Boolean?,
   val venvPath: FullPathOnTarget?,
@@ -113,7 +113,8 @@ data class UvSdkFlavorData(
   }
 }
 
-object UvSdkFlavor : CPythonSdkFlavor<UvSdkFlavorData>() {
+
+internal object UvSdkFlavor : CPythonSdkFlavor<UvSdkFlavorData>() {
   override fun getIcon(): Icon = PythonUvCommonIcons.UV
   override fun getFlavorDataClass(): Class<UvSdkFlavorData> = UvSdkFlavorData::class.java
 
@@ -122,7 +123,8 @@ object UvSdkFlavor : CPythonSdkFlavor<UvSdkFlavorData>() {
   }
 }
 
-class UvSdkFlavorProvider : PythonFlavorProvider {
+
+internal class UvSdkFlavorProvider : PythonFlavorProvider {
   override fun getFlavor(): PythonSdkFlavor<*> {
     return UvSdkFlavor
   }
