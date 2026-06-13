@@ -376,7 +376,7 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
 
         t = (1, 2)
         b, c, d = 1, *t
-        b, c, d, e = <warning descr="Not enough values to unpack (expected 4, got 3)">1, *t</warning>
+        b, c, d, e = <warning descr="Not enough values to unpack from 'tuple[Literal[1], Literal[1], Literal[2]]': expected 4, got 3">1, *t</warning>
         """);
   }
 
@@ -384,17 +384,17 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testTupleUnpackCountBalance() {
     doTestByText(
       """
-        a, b, c = <warning descr="Too many values to unpack (expected 3, got 4)">1, 2, 3, 4</warning>
+        a, b, c = <warning descr="Too many values to unpack from 'tuple[Literal[1], Literal[2], Literal[3], Literal[4]]': expected 3, got 4">1, 2, 3, 4</warning>
         a, b, c, d = 1, 2, 3, 4
         a = 1, 2, 3, 4
 
         c = 1, 2, 3
-        a, b = <warning descr="Too many values to unpack (expected 2, got 3)">c</warning>
-        (a, b) = <warning descr="Too many values to unpack (expected 2, got 3)">1, 2, 3</warning>
+        a, b = <warning descr="Too many values to unpack from 'tuple[Literal[1], Literal[2], Literal[3]]': expected 2, got 3">c</warning>
+        (a, b) = <warning descr="Too many values to unpack from 'tuple[Literal[1], Literal[2], Literal[3]]': expected 2, got 3">1, 2, 3</warning>
 
         *a, b = 1, 2, 3
         *a, b, c = 1, 2
-        b, c, *a, d = <warning descr="Not enough values to unpack (expected 3, got 2)">1, 2</warning>
+        b, c, *a, d = <warning descr="Not enough values to unpack from 'tuple[Literal[1], Literal[2]]': expected 3, got 2">1, 2</warning>
         <warning descr="Only one starred expression allowed in assignment">a, *b, c, *d</warning> = 1, 2, 3, 4, 5, 6
         """);
   }
