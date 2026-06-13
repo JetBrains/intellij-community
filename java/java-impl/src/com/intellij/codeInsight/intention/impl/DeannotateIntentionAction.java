@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -28,7 +27,7 @@ import java.util.Objects;
 
 public class DeannotateIntentionAction implements ModCommandAction {
   private final @NlsSafe String myAnnotationName;
-  
+
   public DeannotateIntentionAction() {
     myAnnotationName = null;
   }
@@ -52,12 +51,9 @@ public class DeannotateIntentionAction implements ModCommandAction {
       final ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(context.project());
       final PsiAnnotation[] annotations = getAnnotations(externalAnnotationsManager, listOwner);
       if (annotations.length > 0) {
-        String message;
-        if (annotations.length == 1) {
-          message = JavaBundle.message("deannotate.intention.action.text", "@" + annotations[0].getQualifiedName());
-        } else {
-          message = JavaBundle.message("deannotate.intention.action.several.text");
-        }
+        String message = annotations.length == 1
+                         ? JavaBundle.message("deannotate.intention.action.text", "@" + annotations[0].getQualifiedName())
+                         : JavaBundle.message("deannotate.intention.action.several.text");
         final List<PsiFile> files = externalAnnotationsManager.findExternalAnnotationsFiles(listOwner);
         if (files == null || files.isEmpty()) return null;
         final VirtualFile virtualFile = files.getFirst().getVirtualFile();
@@ -93,8 +89,8 @@ public class DeannotateIntentionAction implements ModCommandAction {
     }
     final PsiAnnotation[] externalAnnotations = getAnnotations(annotationsManager, listOwner);
     if (externalAnnotations.length == 0) return ModCommand.nop();
-    return ModCommand.chooseAction(JavaBundle.message("deannotate.intention.chooser.title"),
-                                   ContainerUtil.map(externalAnnotations, anno -> new DeannotateIntentionAction(
-                                     Objects.requireNonNull(anno.getQualifiedName()))));
+    List<DeannotateIntentionAction> map =
+      ContainerUtil.map(externalAnnotations, anno -> new DeannotateIntentionAction(Objects.requireNonNull(anno.getQualifiedName())));
+    return ModCommand.chooseAction(JavaBundle.message("deannotate.intention.chooser.title"), map);
   }
 }
