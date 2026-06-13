@@ -7,29 +7,45 @@ import kotlinx.coroutines.Deferred
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Represents some process that was launched via [EelExecApi.spawnProcess].
+ * A handle to a process started with [EelExecApi.spawnProcess], running inside the environment of the [EelExecApi] that launched it.
  *
+ * A process runs in one of two I/O modes, fixed at spawn time by [EelExecApi.ExecuteProcessOptions.interactionOptions]:
+ * - **Pipe mode** (the default, or [EelExecApi.RedirectStdErr]): [stdin], [stdout], and [stderr] are independent byte streams;
+ *   [stderr] may be redirected to [stdout] or discarded, otherwise the three are separate.
+ * - **PTY mode** ([EelExecApi.Pty]): the process is attached to a pseudo-terminal. [stdout] carries the terminal output and [stderr]
+ *   is merged into it (so [stderr] stays closed); terminal line discipline and echo apply, input may need escape codes and a `TERM`
+ *   variable, and only here does [resizePty] work.
+ *
+ * [exitCode] completes when the process terminates, and [convertToJavaProcess] adapts the handle to the JVM [Process] API.
+ *
+ * The interface models both POSIX ([EelPosixProcess]) and Windows ([EelWindowsProcess]) processes. They diverge mainly in process
+ * control: the signals sent by [kill] and [interrupt] differ per OS (see each), and graceful shutdown via [EelPosixProcess.terminate]
+ * (`SIGTERM`) exists only on POSIX. Both support PTY mode.
  */
 @ApiStatus.Experimental
 sealed interface EelProcess {
+  /** The process identifier in the environment. */
   @get:ApiStatus.Experimental
   val pid: EelApi.Pid
 
   /**
-   * Although data transmission via this channel could potentially stall due to overflow of [kotlinx.coroutines.channels.Channel],
-   * this method does not allow ensuring that a data chunk was actually delivered to the remote process.
+   * The process's standard input. Each chunk is flushed toward the process immediately, with no intermediate buffer.
    *
-   * Note that each chunk of data is individually and immediately flushed into the process without any intermediate buffer storage.
+   * Writing may suspend while back-pressure is applied. A completed write means only that the data was accepted for delivery — not that
+   * the process has received or read it.
    */
   @get:ApiStatus.Experimental
   val stdin: EelSendChannel
 
+  /** The process's standard output (in PTY mode, also the merged standard error — see above). */
   @get:ApiStatus.Experimental
   val stdout: EelReceiveChannel
 
+  /** The process's standard error: an independent stream in pipe mode, closed and merged into [stdout] under a PTY (see above). */
   @get:ApiStatus.Experimental
   val stderr: EelReceiveChannel
 
+  /** Completes with the process's exit code once it terminates. See [SafeDeferred]. */
   @get:ApiStatus.Experimental
   val exitCode: SafeDeferred<Int>
 
@@ -59,10 +75,17 @@ sealed interface EelProcess {
   @ApiStatus.Experimental
   fun convertToJavaProcess(): Process
 
+  /**
+   * Resizes the pseudo-terminal to [columns] columns by [rows] rows. PTY mode only (see above).
+   *
+   * @throws ResizePtyError if there is no PTY ([ResizePtyError.NoPty]), the process already exited ([ResizePtyError.ProcessExited]),
+   *   or the OS call fails ([ResizePtyError.Errno]).
+   */
   @Throws(ResizePtyError::class)  // Can't use @CheckReturnValue: KTIJ-7061
   @ApiStatus.Experimental
   suspend fun resizePty(columns: Int, rows: Int)
 
+  /** Failure of [resizePty]. */
   @ApiStatus.Experimental
   sealed class ResizePtyError(msg: String) : Exception(msg) {
     class ProcessExited : ResizePtyError("Process exited")
@@ -71,15 +94,28 @@ sealed interface EelProcess {
   }
 }
 
+/**
+ * An [EelProcess] in a POSIX environment, returned by [EelExecPosixApi.spawnProcess].
+ *
+ * Beyond the common surface it adds [terminate] (`SIGTERM`) — graceful, cooperative shutdown that a process can handle or ignore,
+ * for which Windows has no direct equivalent.
+ */
 @ApiStatus.Experimental
 interface EelPosixProcess : EelProcess {
   /**
-   * Sends `SIGTERM` on Unix.
+   * Requests graceful shutdown by sending `SIGTERM`, which the process may handle or ignore. Use [kill] to force termination.
    */
   @ApiStatus.Experimental
   suspend fun terminate()
 }
 
+/**
+ * An [EelProcess] in a Windows environment, returned by [EelExecWindowsApi.spawnProcess].
+ *
+ * It currently adds nothing beyond [EelProcess]: Windows has no direct counterpart to POSIX's graceful `SIGTERM`, so there is no
+ * `terminate` here — use [interrupt] (CTRL+C) or [kill]. The separate type exists for symmetry with [EelPosixProcess] and to host
+ * future Windows-specific operations.
+ */
 @ApiStatus.Experimental
 interface EelWindowsProcess : EelProcess {
   // Nothing yet.
