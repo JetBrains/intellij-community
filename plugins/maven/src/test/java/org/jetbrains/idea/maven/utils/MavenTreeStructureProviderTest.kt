@@ -2,6 +2,8 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.projectView.TestProjectTreeStructure
 import com.intellij.testFramework.PlatformTestUtil
@@ -17,6 +19,7 @@ import org.jetbrains.idea.maven.fixtures.createProjectPom
 import org.jetbrains.idea.maven.fixtures.importProjectAsync
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
@@ -30,6 +33,11 @@ class MavenTreeStructureProviderTest(mavenVersion: String, modelVersion: String)
     mavenVersion = mavenVersion,
     modelVersion = modelVersion,
   )
+
+  @BeforeEach
+  fun setUp() = runBlocking {
+    edtWriteAction { ProjectRootManager.getInstance(maven.project).projectSdk = null }
+  }
 
   @Test
   fun testShouldCreateSpecialNode() = runBlocking {
