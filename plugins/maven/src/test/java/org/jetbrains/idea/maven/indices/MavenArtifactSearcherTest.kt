@@ -5,9 +5,31 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import com.intellij.testFramework.junit5.TestApplication
+import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
+import org.jetbrains.idea.maven.fixtures.assertUnorderedElementsAreEqual
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.testRootDisposable
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.AfterEach
 
-class MavenArtifactSearcherTest : MavenIndicesTestCase() {
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenVersionArguments::class)
+class MavenArtifactSearcherTest(mavenVersion: String, modelVersion: String) {
+
+  private val maven by mavenImportingFixture(
+    mavenVersion = mavenVersion,
+    modelVersion = modelVersion
+  )
+  
   private val JUNIT_VERSIONS = arrayOf("junit:junit:4.0", "junit:junit:3.8.2", "junit:junit:3.8.1")
   private val JMOCK_VERSIONS = arrayOf("jmock:jmock:1.2.0", "jmock:jmock:1.1.0", "jmock:jmock:1.0.0")
   private val COMMONS_IO_VERSIONS = arrayOf("commons-io:commons-io:2.4")
@@ -15,27 +37,19 @@ class MavenArtifactSearcherTest : MavenIndicesTestCase() {
   private lateinit var myIndicesFixture: MavenIndicesTestFixture
 
   @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     runBlocking(Dispatchers.EDT) {
       writeIntentReadAction {
-        myIndicesFixture = MavenIndicesTestFixture(dir, project, testRootDisposable)
+        myIndicesFixture = MavenIndicesTestFixture(maven.dir, maven.project, maven.testRootDisposable)
         myIndicesFixture.setUp()
       }
     }
   }
 
-  @Throws(Exception::class)
-  override fun tearDown() = runBlocking(Dispatchers.EDT) {
-    try {
-      myIndicesFixture.tearDown()
-    }
-    catch (e: Throwable) {
-      addSuppressedException(e)
-    }
-    finally {
-      super.tearDown()
-    }
+  @AfterEach
+  fun tearDown() = runBlocking(Dispatchers.EDT) {
+    myIndicesFixture.tearDown()
   }
 
   @Test
@@ -86,7 +100,7 @@ class MavenArtifactSearcherTest : MavenIndicesTestCase() {
   private fun assertArtifactSearchResults(pattern: String, vararg expected: String) {
     val actual: MutableList<String> = ArrayList()
     runBlocking {
-      for (eachResult in MavenArtifactSearcher().search(project, pattern, 100)) {
+      for (eachResult in MavenArtifactSearcher().search(maven.project, pattern, 100)) {
         for (eachVersion in eachResult.searchResults.items) {
           actual.add("${eachVersion.groupId}:${eachVersion.artifactId}:${eachVersion.version}")
         }
