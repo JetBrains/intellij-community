@@ -75,6 +75,9 @@ class AgentPromptProviderSelectorTest {
     val project = ProjectManager.getInstance().defaultProject
     project.service<AgentSessionProviderAvailabilityService>().clearAvailabilityForTest()
     project.service<AgentPromptGenerationModelCatalogService>().clearForTest()
+    runInEdtAndWait {
+      service<AgentPromptLaunchProfileEditorWindowService>().clearForTest()
+    }
   }
 
   @Test
@@ -431,7 +434,7 @@ class AgentPromptProviderSelectorTest {
       )
       val fixture = createSelectorFixture(listOf(provider))
       fixture.selector.refresh()
-      var suppliedDialog: (() -> Unit)? = null
+      var suppliedDialog: AgentPromptLaunchProfileEditorOpenDialog? = null
       val controller = AgentPromptGenerationSettingsController(
         invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
         providerSelector = fixture.selector,
@@ -442,7 +445,7 @@ class AgentPromptProviderSelectorTest {
         modelCatalogScope = testScope(),
         launcherProvider = { null },
         onDefaultSaved = { _ -> },
-        manageProfilesDialogRunner = { showDialog -> suppliedDialog = showDialog },
+        manageProfilesDialogRunner = { openDialog -> suppliedDialog = openDialog },
       )
 
       val manageAction = controller.createLaunchProfileActionGroupForTest()
@@ -452,6 +455,138 @@ class AgentPromptProviderSelectorTest {
 
       assertThat(manageAction.templatePresentation.keepPopupOnPerform).isEqualTo(KeepPopupOnPerform.Never)
       assertThat(suppliedDialog != null).isTrue()
+    }
+  }
+
+  @Test
+  fun manageLaunchProfilesActionReusesOpenNonModalDialogAcrossControllers() {
+    runInEdtAndWait {
+      val editorService = service<AgentPromptLaunchProfileEditorWindowService>()
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val firstController = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { null },
+        onDefaultSaved = { _ -> },
+        manageProfilesDialogRunner = { openDialog -> openDialog(null) },
+      )
+      val secondFixture = createSelectorFixture(listOf(provider))
+      secondFixture.selector.refresh()
+      val secondController = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = secondFixture.selector,
+        generationSettingsPanel = secondFixture.view.generationSettingsPanel,
+        launchProfileLink = secondFixture.view.launchProfileLink,
+        modelSelectorLink = secondFixture.view.modelSelectorLink,
+        reasoningEffortLink = secondFixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { null },
+        onDefaultSaved = { _ -> },
+        manageProfilesDialogRunner = { openDialog -> openDialog(null) },
+      )
+      try {
+        firstController.openManageProfilesDialogForTest()
+        val firstDialog = checkNotNull(editorService.activeDialogForTest())
+        assertThat(firstDialog.isModalForTest()).isFalse()
+
+        secondController.openManageProfilesDialogForTest()
+
+        assertThat(editorService.activeDialogForTest()).isSameAs(firstDialog)
+      }
+      finally {
+        editorService.clearForTest()
+      }
+    }
+  }
+
+  @Test
+  fun manageLaunchProfilesDialogRestoresPromptOnlyAfterClose() {
+    runInEdtAndWait {
+      val editorService = service<AgentPromptLaunchProfileEditorWindowService>()
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { null },
+        onDefaultSaved = { _ -> },
+      )
+      var restoreCount = 0
+      try {
+        controller.openManageProfilesDialogForTest { restoreCount++ }
+        val firstDialog = checkNotNull(editorService.activeDialogForTest())
+
+        assertThat(restoreCount).isZero()
+
+        firstDialog.closeForTest()
+
+        assertThat(restoreCount).isOne()
+
+        controller.openManageProfilesDialogForTest()
+        checkNotNull(editorService.activeDialogForTest()).closeForTest()
+
+        assertThat(restoreCount).isOne()
+      }
+      finally {
+        editorService.clearForTest()
+      }
+    }
+  }
+
+  @Test
+  fun manageLaunchProfilesDialogUsesLatestPromptRestoreCallback() {
+    runInEdtAndWait {
+      val editorService = service<AgentPromptLaunchProfileEditorWindowService>()
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { null },
+        onDefaultSaved = { _ -> },
+      )
+      var firstRestoreCount = 0
+      var secondRestoreCount = 0
+      try {
+        controller.openManageProfilesDialogForTest { firstRestoreCount++ }
+        controller.openManageProfilesDialogForTest { secondRestoreCount++ }
+
+        checkNotNull(editorService.activeDialogForTest()).closeForTest()
+
+        assertThat(firstRestoreCount).isZero()
+        assertThat(secondRestoreCount).isOne()
+      }
+      finally {
+        editorService.clearForTest()
+      }
     }
   }
 
@@ -610,6 +745,78 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun launchProfileApplicationRefreshesContainerModeForSelectedProvider() {
+    runInEdtAndWait {
+      val codexProfile = AgentPromptLaunchProfile(
+        id = "user:codex",
+        name = "Codex Profile",
+        providerId = AgentSessionProvider.CODEX.value,
+      )
+      val launcher = TestPromptLauncherBridge(
+        AgentPromptLauncherBridge.ProviderPreferences(
+          launchProfiles = listOf(codexProfile),
+          activeLaunchProfileId = codexProfile.id,
+        )
+      )
+      val claudeProvider = testProviderBridge(
+        provider = AgentSessionProvider.CLAUDE,
+        promptOptions = emptyList(),
+      )
+      val codexProvider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+      )
+      lateinit var fixture: ProviderSelectorFixture
+      fixture = createSelectorFixture(
+        providers = listOf(claudeProvider, codexProvider),
+        onProviderSelectionChanged = { syncContainerModeForTest(fixture) },
+      )
+      fixture.selector.refresh()
+      fixture.view.headerControls.setContainerModeState(visible = true, enabled = true, selected = true, tooltipText = null)
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { _ -> },
+      )
+
+      controller.restoreLaunchProfiles(launcher.preferences)
+
+      assertThat(fixture.selector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(fixture.view.containerModeAction.visible).isFalse()
+      assertThat(fixture.view.containerModeAction.selected).isFalse()
+    }
+  }
+
+  @Test
+  fun restoredContainerModeSelectionIsClampedForUnsupportedProvider() {
+    runInEdtAndWait {
+      val claudeProvider = testProviderBridge(
+        provider = AgentSessionProvider.CLAUDE,
+        promptOptions = emptyList(),
+      )
+      val codexProvider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+      )
+      val fixture = createSelectorFixture(listOf(claudeProvider, codexProvider))
+      fixture.selector.refresh()
+      fixture.selector.selectProvider(AgentSessionProvider.CODEX)
+
+      syncContainerModeForTest(fixture, requestedSelection = true)
+
+      assertThat(fixture.selector.selectedProvider?.bridge?.provider).isEqualTo(AgentSessionProvider.CODEX)
+      assertThat(fixture.view.containerModeAction.visible).isFalse()
+      assertThat(fixture.view.containerModeAction.selected).isFalse()
+    }
+  }
+
+  @Test
   fun launchProfilePopupOmitsUnavailableProfiles() {
     runInEdtAndWait {
       val profile = AgentPromptLaunchProfile(
@@ -716,6 +923,81 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun launchProfileEditorIsNonModal() {
+    runInEdtAndWait {
+      val profile = AgentPromptLaunchProfile(
+        id = "user:careful",
+        name = "Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+      )
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(profile),
+        activeProfileId = profile.id,
+      )
+      try {
+        assertThat(editor.isModalForTest()).isFalse()
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorSelectionDoesNotApplyProfileToCurrentTask() {
+    runInEdtAndWait {
+      val carefulProfile = AgentPromptLaunchProfile(
+        id = "user:careful",
+        name = "Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+        generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
+      )
+      val fastProfile = AgentPromptLaunchProfile(
+        id = "user:fast",
+        name = "Fast",
+        providerId = AgentSessionProvider.CODEX.value,
+        generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.LOW),
+      )
+      val launcher = TestPromptLauncherBridge(
+        AgentPromptLauncherBridge.ProviderPreferences(
+          launchProfiles = listOf(carefulProfile, fastProfile),
+          activeLaunchProfileId = carefulProfile.id,
+        )
+      )
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.LOW, AgentPromptReasoningEffort.HIGH),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { _ -> },
+      )
+      controller.restoreLaunchProfiles(launcher.preferences)
+      val editor = controller.createManageProfilesDialogForTest()
+      try {
+        editor.selectProfileForTest(fastProfile.id)
+
+        assertThat(fixture.view.launchProfileLink.text).isEqualTo("Careful")
+        assertThat(controller.currentSettings().reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
+        assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(carefulProfile.id)
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
   fun launchProfileEditorRenameActionSelectsEditableProfileName() {
     runInEdtAndWait {
       val profile = AgentPromptLaunchProfile(
@@ -802,11 +1084,11 @@ class AgentPromptProviderSelectorTest {
         supportedLaunchModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
       )
       try {
-        assertThat(editor.profileListFixedCellWidthForTest()).isEqualTo(JBUI.scale(320))
+        assertThat(editor.profileListFixedCellWidthForTest()).isEqualTo(JBUI.scale(260))
         assertThat(editor.profileListRendererTextForTest(defaultProfile.id)).isEqualTo(defaultProfile.name)
         assertThat(editor.profileListRendererTextForTest(otherProfile.id)).isEqualTo(otherProfile.name)
-        assertThat(editor.isProfileListDefaultMarkerVisibleForTest(defaultProfile.id)).isTrue()
-        assertThat(editor.isProfileListDefaultMarkerVisibleForTest(otherProfile.id)).isFalse()
+        assertThat(editor.isProfileListRendererNameBoldForTest(defaultProfile.id)).isTrue()
+        assertThat(editor.isProfileListRendererNameBoldForTest(otherProfile.id)).isFalse()
       }
       finally {
         editor.closeForTest()
@@ -1913,6 +2195,7 @@ class AgentPromptProviderSelectorTest {
     providers: List<AgentSessionProviderDescriptor>,
     availabilityByProvider: Map<AgentSessionProvider, Boolean> = emptyMap(),
     asyncRefreshScope: CoroutineScope? = null,
+    onProviderSelectionChanged: () -> Unit = {},
   ): ProviderSelectorFixture {
     val project = ProjectManager.getInstance().defaultProject
     project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(availabilityByProvider)
@@ -1934,8 +2217,28 @@ class AgentPromptProviderSelectorTest {
         providersProvider = { providers },
         sessionsMessageResolver = AgentPromptSessionsMessageResolver(AgentPromptProviderSelector::class.java.classLoader),
         asyncRefreshScope = asyncRefreshScope,
+        onProviderSelectionChanged = onProviderSelectionChanged,
       ),
       view = view,
+    )
+  }
+
+  private fun syncContainerModeForTest(
+    fixture: ProviderSelectorFixture,
+    requestedSelection: Boolean = fixture.view.containerModeAction.selected,
+  ) {
+    val state = resolveContainerModeOptionState(
+      selectedProvider = fixture.selector.selectedProvider?.bridge?.provider,
+      isExtensionTab = false,
+      requestedSelection = requestedSelection,
+      supportsContainerMode = { provider -> provider == AgentSessionProvider.CLAUDE },
+      isContainerRuntimeAvailable = { provider -> provider == AgentSessionProvider.CLAUDE },
+    )
+    fixture.view.headerControls.setContainerModeState(
+      visible = state.visible,
+      enabled = state.enabled,
+      selected = state.selected,
+      tooltipText = null,
     )
   }
 

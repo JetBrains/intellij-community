@@ -186,6 +186,7 @@ internal class AgentPromptPalettePopup(
       sessionsMessageResolver = sessionsMessageResolver,
       asyncRefreshScope = popupScope,
       onProviderOptionsChanged = { controllerRef.onProviderOptionsChanged() },
+      onProviderSelectionChanged = { controllerRef.onProviderSelectionChanged() },
     )
     val existingTaskController = AgentPromptExistingTaskController(
       existingTaskListModel = view.existingTaskListModel,

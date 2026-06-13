@@ -118,4 +118,79 @@ class AgentPromptContainerModeDecisionsTest {
       )
     ).isFalse()
   }
+
+  @Test
+  fun containerModeStateClampsRestoredSelectionToEligibility() {
+    val supportsClaude: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.CLAUDE }
+    val runtimeAvailable: (AgentSessionProvider) -> Boolean = { provider -> provider == AgentSessionProvider.CLAUDE }
+    val runtimeUnavailable: (AgentSessionProvider) -> Boolean = { false }
+
+    assertThat(
+      resolveContainerModeOptionState(
+        selectedProvider = AgentSessionProvider.CLAUDE,
+        isExtensionTab = false,
+        requestedSelection = true,
+        supportsContainerMode = supportsClaude,
+        isContainerRuntimeAvailable = runtimeAvailable,
+      )
+    ).isEqualTo(
+      ContainerModeOptionState(
+        visible = true,
+        enabled = true,
+        selected = true,
+        showUnavailableTooltip = false,
+      )
+    )
+
+    assertThat(
+      resolveContainerModeOptionState(
+        selectedProvider = AgentSessionProvider.CODEX,
+        isExtensionTab = false,
+        requestedSelection = true,
+        supportsContainerMode = supportsClaude,
+        isContainerRuntimeAvailable = runtimeAvailable,
+      )
+    ).isEqualTo(
+      ContainerModeOptionState(
+        visible = false,
+        enabled = false,
+        selected = false,
+        showUnavailableTooltip = false,
+      )
+    )
+
+    assertThat(
+      resolveContainerModeOptionState(
+        selectedProvider = AgentSessionProvider.CLAUDE,
+        isExtensionTab = false,
+        requestedSelection = true,
+        supportsContainerMode = supportsClaude,
+        isContainerRuntimeAvailable = runtimeUnavailable,
+      )
+    ).isEqualTo(
+      ContainerModeOptionState(
+        visible = true,
+        enabled = false,
+        selected = false,
+        showUnavailableTooltip = true,
+      )
+    )
+
+    assertThat(
+      resolveContainerModeOptionState(
+        selectedProvider = AgentSessionProvider.CLAUDE,
+        isExtensionTab = true,
+        requestedSelection = true,
+        supportsContainerMode = supportsClaude,
+        isContainerRuntimeAvailable = runtimeAvailable,
+      )
+    ).isEqualTo(
+      ContainerModeOptionState(
+        visible = false,
+        enabled = false,
+        selected = false,
+        showUnavailableTooltip = false,
+      )
+    )
+  }
 }

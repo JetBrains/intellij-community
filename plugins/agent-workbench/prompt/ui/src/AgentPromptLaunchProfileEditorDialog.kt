@@ -11,13 +11,10 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
 import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.icons.AllIcons
-import com.intellij.ide.setToolTipText
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.popup.ListSeparator
-import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.CellRendererPanel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.DocumentAdapter
@@ -35,6 +32,8 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.FlowLayout
+import java.awt.Font
+import java.awt.Frame
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.ActionEvent
@@ -51,7 +50,6 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.Icon
 import javax.swing.KeyStroke
-import javax.swing.ListCellRenderer
 import javax.swing.ListSelectionModel
 import javax.swing.event.DocumentEvent
 
@@ -60,8 +58,8 @@ internal class AgentPromptLaunchProfileEditorDialog(
   profiles: List<AgentPromptLaunchProfile>,
   activeProfileId: String?,
   defaultProfileId: String?,
-  private val providerEntries: List<ProviderEntry>,
-  private val currentDraftProfile: AgentPromptLaunchProfile?,
+  private var providerEntries: List<ProviderEntry>,
+  private var currentDraftProfile: AgentPromptLaunchProfile?,
   private val modelCatalogProvider: (String) -> List<AgentPromptGenerationModel>?,
   private val newUserProfileId: () -> String,
   private val onCreateProfile: (AgentPromptLaunchProfile) -> Unit,
@@ -69,6 +67,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
   private val onDeleteProfile: (AgentPromptLaunchProfile) -> Unit,
   private val onSetDefaultProfile: (AgentPromptLaunchProfile) -> Unit,
   private val onSelectProfile: (AgentPromptLaunchProfile?) -> Unit,
+  private val onDispose: () -> Unit = {},
 ) : DialogWrapper(project) {
   private var managedProfiles: List<AgentPromptLaunchProfile> = profiles
   private var selectedProfileId: String? = activeProfileId
@@ -112,6 +111,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
 
   init {
     title = AgentPromptBundle.message("popup.profile.manage.title")
+    isModal = false
     initModels()
     profileList.addListSelectionListener {
       if (!it.valueIsAdjusting) {
@@ -160,6 +160,14 @@ internal class AgentPromptLaunchProfileEditorDialog(
     renderSelectedProfile()
   }
 
+  override fun getPreferredFocusedComponent(): JComponent {
+    return profileList
+  }
+
+  override fun getDimensionServiceKey(): String {
+    return DIMENSION_SERVICE_KEY
+  }
+
   override fun createCenterPanel(): JComponent {
     return JPanel(BorderLayout(JBUI.scale(12), 0)).apply {
       border = JBUI.Borders.empty(8)
@@ -172,6 +180,53 @@ internal class AgentPromptLaunchProfileEditorDialog(
   override fun createActions(): Array<Action> {
     okAction.putValue(Action.NAME, AgentPromptBundle.message("popup.profile.editor.close"))
     return arrayOf(okAction)
+  }
+
+  override fun dispose() {
+    try {
+      super.dispose()
+    }
+    finally {
+      onDispose()
+    }
+  }
+
+  fun refreshProfilesIfUnmodified(
+    profiles: List<AgentPromptLaunchProfile>,
+    activeProfileId: String?,
+    defaultProfileId: String?,
+    providerEntries: List<ProviderEntry>,
+    currentDraftProfile: AgentPromptLaunchProfile?,
+  ) {
+    if (hasEditorChanges()) {
+      return
+    }
+    managedProfiles = profiles
+    selectedProfileId = activeProfileId
+    currentDefaultProfileId = defaultProfileId
+    this.providerEntries = providerEntries
+    this.currentDraftProfile = currentDraftProfile
+    reloadList()
+    selectProfile(selectedProfileId ?: managedProfiles.firstOrNull()?.id)
+    renderSelectedProfile()
+  }
+
+  fun showOrFocus() {
+    if (!isVisible) {
+      show()
+      return
+    }
+    val window = peer.window ?: return
+    if (window is Frame && window.extendedState and Frame.ICONIFIED != 0) {
+      window.extendedState = window.extendedState and Frame.ICONIFIED.inv()
+    }
+    window.toFront()
+    window.requestFocus()
+    preferredFocusedComponent.requestFocusInWindow()
+  }
+
+  fun isModalForTest(): Boolean {
+    return isModal
   }
 
   fun profileNamesForTest(): List<String> {
@@ -235,15 +290,13 @@ internal class AgentPromptLaunchProfileEditorDialog(
 
   fun profileListRendererTextForTest(profileId: String): String {
     val component = profileListRendererComponentForTest(profileId) ?: return ""
-    return findRendererComponent(component, SimpleColoredComponent::class.java)
-      ?.getCharSequence(false)
-      ?.toString()
-      .orEmpty()
+    return (component as SimpleColoredComponent).getCharSequence(false).toString()
   }
 
-  fun isProfileListDefaultMarkerVisibleForTest(profileId: String): Boolean {
+  fun isProfileListRendererNameBoldForTest(profileId: String): Boolean {
     val component = profileListRendererComponentForTest(profileId) ?: return false
-    return hasDefaultMarker(component)
+    val iterator = (component as SimpleColoredComponent).iterator()
+    return iterator.hasNext() && iterator.next() == profileListRendererTextForTest(profileId) && iterator.textAttributes.fontStyle == Font.BOLD
   }
 
   fun modelOptionTextsForTest(): List<String> {
@@ -260,28 +313,6 @@ internal class AgentPromptLaunchProfileEditorDialog(
     val index = managedProfiles.indexOfFirst { profile -> profile.id == profileId }
     val profile = managedProfiles.getOrNull(index) ?: return null
     return profileList.cellRenderer.getListCellRendererComponent(profileList, profile, index, false, false)
-  }
-
-  private fun <T : Component> findRendererComponent(component: Component, componentClass: Class<T>): T? {
-    if (componentClass.isInstance(component)) {
-      return componentClass.cast(component)
-    }
-    if (component is java.awt.Container) {
-      for (child in component.components) {
-        findRendererComponent(child, componentClass)?.let { return it }
-      }
-    }
-    return null
-  }
-
-  private fun hasDefaultMarker(component: Component): Boolean {
-    if (component is JLabel && component.icon == AllIcons.Actions.SetDefault && component.isVisible) {
-      return true
-    }
-    if (component is java.awt.Container) {
-      return component.components.any(::hasDefaultMarker)
-    }
-    return false
   }
 
   private fun createProfileListPanel(): JComponent {
@@ -508,6 +539,15 @@ internal class AgentPromptLaunchProfileEditorDialog(
     statusLabel.text = statusText(profile, draftValid)
   }
 
+  private fun hasEditorChanges(): Boolean {
+    val profile = selectedProfile() ?: return nameField.text.trim().isNotEmpty()
+    return nameField.text.trim() != profile.name ||
+           selectedProviderOption()?.providerId != profile.providerId ||
+           selectedLaunchMode() != profile.launchMode ||
+           selectedModelOption()?.modelId != profile.generationSettings.modelId ||
+           selectedReasoningEffortOption()?.effort != profile.generationSettings.reasoningEffort
+  }
+
   private fun updateLaunchModeControlState(enabled: Boolean) {
     launchModePanel.isEnabled = enabled
     standardModeButton.isEnabled = enabled && AgentSessionLaunchMode.STANDARD in currentLaunchModes
@@ -661,30 +701,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
 
   private fun selectedReasoningEffortOption(): ReasoningEffortOption? = effortCombo.selectedItem as? ReasoningEffortOption
 
-  private inner class ProfileListCellRenderer : ListCellRenderer<AgentPromptLaunchProfile> {
-    private val mainRenderer = ProfileListMainRenderer()
-    private val defaultMarkerRenderer = ProfileDefaultMarkerRenderer()
-    private val panel = CellRendererPanel(BorderLayout())
-
-    override fun getListCellRendererComponent(
-      list: javax.swing.JList<out AgentPromptLaunchProfile>,
-      value: AgentPromptLaunchProfile,
-      index: Int,
-      isSelected: Boolean,
-      cellHasFocus: Boolean,
-    ): Component {
-      val mainComponent = mainRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-      val markerComponent = defaultMarkerRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-      panel.removeAll()
-      panel.background = mainComponent.background
-      panel.add(mainComponent, BorderLayout.CENTER)
-      panel.add(markerComponent, BorderLayout.EAST)
-      panel.accessibleContext.accessibleName = profileListAccessibleName(value)
-      return panel
-    }
-  }
-
-  private inner class ProfileListMainRenderer : ColoredListCellRenderer<AgentPromptLaunchProfile>() {
+  private inner class ProfileListCellRenderer : ColoredListCellRenderer<AgentPromptLaunchProfile>() {
     override fun customizeCellRenderer(
       list: javax.swing.JList<out AgentPromptLaunchProfile>,
       value: AgentPromptLaunchProfile?,
@@ -694,31 +711,12 @@ internal class AgentPromptLaunchProfileEditorDialog(
     ) {
       icon = profileIcon(value)
       if (value == null) return
-      append(value.name, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      val nameAttributes = if (value.id == currentDefaultProfileId) SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+      else SimpleTextAttributes.REGULAR_ATTRIBUTES
+      append(value.name, nameAttributes)
       if (providerOption(value.providerId)?.isAvailable != true) {
         append("  " + AgentPromptBundle.message("popup.profile.editor.unavailable.marker"), SimpleTextAttributes.ERROR_ATTRIBUTES)
       }
-    }
-  }
-
-  private inner class ProfileDefaultMarkerRenderer : ListCellRenderer<AgentPromptLaunchProfile> {
-    private val label = JBLabel()
-
-    override fun getListCellRendererComponent(
-      list: javax.swing.JList<out AgentPromptLaunchProfile>,
-      value: AgentPromptLaunchProfile,
-      index: Int,
-      isSelected: Boolean,
-      cellHasFocus: Boolean,
-    ): Component {
-      val isDefault = value.id == currentDefaultProfileId
-      val defaultText = if (isDefault) AgentPromptBundle.message("popup.profile.editor.status.default") else null
-      label.icon = if (isDefault) AllIcons.Actions.SetDefault else null
-      label.isVisible = isDefault
-      label.border = if (isDefault) JBUI.Borders.emptyLeft(4) else JBUI.Borders.empty()
-      label.setToolTipText(defaultText?.let(HtmlChunk::text))
-      label.accessibleContext.accessibleName = defaultText
-      return label
     }
   }
 
@@ -727,24 +725,13 @@ internal class AgentPromptLaunchProfileEditorDialog(
     return providerEntries.firstOrNull { entry -> entry.bridge.provider == provider }?.icon ?: AllIcons.Nodes.Plugin
   }
 
-  private fun profileListAccessibleName(profile: AgentPromptLaunchProfile): @Nls String {
-    return buildList {
-      add(profile.name)
-      if (providerOption(profile.providerId)?.isAvailable != true) {
-        add(AgentPromptBundle.message("popup.profile.editor.unavailable.marker"))
-      }
-      if (profile.id == currentDefaultProfileId) {
-        add(AgentPromptBundle.message("popup.profile.editor.status.default"))
-      }
-    }.joinToString(separator = ", ")
-  }
-
   private companion object {
     const val RENAME_PROFILE_ACTION_ID: String = "renameProfile"
-    const val PROFILE_LIST_WIDTH: Int = 320
+    const val PROFILE_LIST_WIDTH: Int = 260
     const val PROFILE_LIST_HEIGHT: Int = 320
     const val DIALOG_WIDTH: Int = 840
     const val DIALOG_HEIGHT: Int = 360
+    const val DIMENSION_SERVICE_KEY: String = "AgentWorkbench.LaunchProfiles"
   }
 }
 

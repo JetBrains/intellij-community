@@ -28,7 +28,7 @@ internal class AgentPromptPaletteDraftController(
   private val setTargetMode: (PromptTargetMode) -> Unit,
   private val resolveTaskKey: (JPanel?) -> String?,
   private val getContainerModeSelected: () -> Boolean = { false },
-  private val setContainerModeSelected: (Boolean) -> Unit = {},
+  private val restoreContainerModeSelection: (Boolean) -> Unit = {},
 ) {
   fun snapshotPrompt(): AgentPromptPalettePromptSnapshot {
     return AgentPromptPalettePromptSnapshot(
@@ -75,7 +75,7 @@ internal class AgentPromptPaletteDraftController(
     providerSelector.selectProvider(persistedProvider, providerPrefs.launchMode)
     updateProviderOptionsVisibility()
 
-    setContainerModeSelected(providerPrefs.containerModeEnabled || draft.containerModeEnabled)
+    restoreContainerModeSelection(providerPrefs.containerModeEnabled || draft.containerModeEnabled)
     setTargetMode(draft.targetMode)
     draftState.existingTaskSearchQuery = draft.existingTaskSearch
     existingTaskController.selectedExistingTaskId = draft.selectedExistingTaskId

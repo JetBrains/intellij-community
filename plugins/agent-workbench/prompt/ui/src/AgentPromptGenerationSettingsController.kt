@@ -68,8 +68,9 @@ internal class AgentPromptGenerationSettingsController(
   private val modelCatalogService: AgentPromptGenerationModelCatalogService = invocationData.project.service(),
   private val launcherProvider: () -> AgentPromptLauncherBridge?,
   private val onDefaultSaved: (String) -> Unit,
-  private val manageProfilesDialogRunner: (() -> Unit) -> Unit = { showDialog ->
-    ApplicationManager.getApplication().invokeLater { showDialog() }
+  private val onLaunchProfileApplied: () -> Unit = {},
+  private val manageProfilesDialogRunner: (AgentPromptLaunchProfileEditorOpenDialog) -> Unit = { openDialog ->
+    ApplicationManager.getApplication().invokeLater { openDialog(null) }
   },
 ) {
   private val transientSettingsByProviderId = LinkedHashMap<String, AgentPromptGenerationSettings>()
@@ -580,6 +581,7 @@ internal class AgentPromptGenerationSettingsController(
     val planModeSelected = providerSelector.isPlanModeSelected()
     providerSelector.selectProvider(provider, profile.launchMode)
     providerSelector.setPlanModeSelected(planModeSelected)
+    onLaunchProfileApplied()
     transientSettingsByProviderId[profile.providerId] = profile.generationSettings
     activeProfileId = profile.id
     refreshPresentation()
@@ -657,8 +659,11 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   private fun showManageProfilesDialog() {
-    manageProfilesDialogRunner {
-      createManageProfilesDialog().show()
+    manageProfilesDialogRunner { restorePromptOnClose ->
+      ApplicationManager.getApplication().service<AgentPromptLaunchProfileEditorWindowService>().openOrFocus(
+        request = createManageProfilesDialogRequest(),
+        restorePromptOnClose = restorePromptOnClose,
+      )
     }
   }
 
@@ -667,25 +672,60 @@ internal class AgentPromptGenerationSettingsController(
     return createManageProfilesDialog()
   }
 
-  private fun createManageProfilesDialog(): AgentPromptLaunchProfileEditorDialog {
-    return AgentPromptLaunchProfileEditorDialog(
+  @TestOnly
+  internal fun openManageProfilesDialogForTest(restorePromptOnClose: (() -> Unit)? = null) {
+    ApplicationManager.getApplication().service<AgentPromptLaunchProfileEditorWindowService>().openOrFocusForTest(
+      request = createManageProfilesDialogRequest(),
+      restorePromptOnClose = restorePromptOnClose,
+    )
+  }
+
+  private fun createManageProfilesDialogRequest(): AgentPromptLaunchProfileEditorRequest {
+    return AgentPromptLaunchProfileEditorRequest(
       project = invocationData.project,
       profiles = allManagedProfiles(),
       activeProfileId = activeProfileId,
       defaultProfileId = defaultProfileId,
       providerEntries = providerSelector.providerEntries(),
-      currentDraftProfile = currentDraftProfile(
-        id = "",
-        name = AgentPromptBundle.message("popup.profile.name.default"),
-        kind = AgentPromptLaunchProfileKind.USER,
-      ),
+      currentDraftProfile = currentDefaultNamedDraftProfile(),
       modelCatalogProvider = ::loadedModelCatalog,
       newUserProfileId = ::newUserProfileId,
       onCreateProfile = ::saveNewProfile,
       onUpdateProfile = ::updateUserProfile,
       onDeleteProfile = ::deleteProfile,
       onSetDefaultProfile = ::setDefaultProfile,
-      onSelectProfile = { profile -> activeProfileId = profile?.id },
+    )
+  }
+
+  private fun createManageProfilesDialog(
+    onDispose: (AgentPromptLaunchProfileEditorDialog) -> Unit = {},
+  ): AgentPromptLaunchProfileEditorDialog {
+    val request = createManageProfilesDialogRequest()
+    lateinit var dialog: AgentPromptLaunchProfileEditorDialog
+    dialog = AgentPromptLaunchProfileEditorDialog(
+      project = request.project,
+      profiles = request.profiles,
+      activeProfileId = request.activeProfileId,
+      defaultProfileId = request.defaultProfileId,
+      providerEntries = request.providerEntries,
+      currentDraftProfile = request.currentDraftProfile,
+      modelCatalogProvider = request.modelCatalogProvider,
+      newUserProfileId = request.newUserProfileId,
+      onCreateProfile = request.onCreateProfile,
+      onUpdateProfile = request.onUpdateProfile,
+      onDeleteProfile = request.onDeleteProfile,
+      onSetDefaultProfile = request.onSetDefaultProfile,
+      onSelectProfile = {},
+      onDispose = { onDispose(dialog) },
+    )
+    return dialog
+  }
+
+  private fun currentDefaultNamedDraftProfile(): AgentPromptLaunchProfile? {
+    return currentDraftProfile(
+      id = "",
+      name = AgentPromptBundle.message("popup.profile.name.default"),
+      kind = AgentPromptLaunchProfileKind.USER,
     )
   }
 

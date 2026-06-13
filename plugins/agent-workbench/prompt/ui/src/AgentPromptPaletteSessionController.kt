@@ -128,8 +128,8 @@ internal class AgentPromptPaletteSessionController(
       updateProviderOptionsVisibility = ::updateProviderOptionsVisibility,
       setTargetMode = ::setTargetMode,
       resolveTaskKey = ::resolveTaskKey,
-      getContainerModeSelected = { view.containerModeAction.selected },
-      setContainerModeSelected = { view.headerControls.setContainerModeSelected(it) },
+      getContainerModeSelected = ::isContainerModeSelectedForCurrentState,
+      restoreContainerModeSelection = ::syncContainerModeState,
     )
     generationSettingsController = AgentPromptGenerationSettingsController(
       invocationData = invocationData,
@@ -143,6 +143,11 @@ internal class AgentPromptPaletteSessionController(
       modelCatalogScope = popupScope,
       launcherProvider = launcherProvider,
       onDefaultSaved = ::showInfo,
+      onLaunchProfileApplied = {
+        updateProviderOptionsVisibility()
+        updateSendAvailability()
+        refreshFooterHintForCurrentState()
+      },
       manageProfilesDialogRunner = ::runManageProfilesDialog,
     )
     submitController = AgentPromptPaletteSubmitController(
@@ -163,7 +168,7 @@ internal class AgentPromptPaletteSessionController(
       onPromptSubmitted = uiStateService::saveSubmittedPromptHistoryEntry,
       generationSettingsProvider = generationSettingsController::currentLaunchSettings,
       generationModelCatalogProvider = generationSettingsController::currentGenerationModelCatalog,
-      isContainerModeSelected = { view.containerModeAction.selected },
+      isContainerModeSelected = ::isContainerModeSelectedForCurrentState,
       isContainerModeSupported = ::isContainerModeSupported,
       isContainerModeRuntimeAvailable = ::isContainerModeRuntimeAvailable,
     )
@@ -281,6 +286,13 @@ internal class AgentPromptPaletteSessionController(
   fun onProviderOptionsChanged() {
     generationSettingsController.refreshPresentation()
     updateSendAvailability()
+  }
+
+  fun onProviderSelectionChanged() {
+    generationSettingsController.refreshSelectedProviderModels()
+    updateProviderOptionsVisibility()
+    updateSendAvailability()
+    refreshFooterHintForCurrentState()
   }
 
   fun removeContextEntry(entry: ContextEntry) {
@@ -577,34 +589,40 @@ internal class AgentPromptPaletteSessionController(
     generationSettingsController.setGenerationControlsVisible(
       contextState.activeExtensionTab == null && currentTargetMode() == PromptTargetMode.NEW_TASK
     )
+    syncContainerModeState()
+  }
 
-    val selectedProvider = providerSelector.selectedProvider?.bridge?.provider
-    val showContainerMode = shouldShowContainerModeOption(
-      selectedProvider = selectedProvider,
+  private fun syncContainerModeState(requestedSelection: Boolean = view.containerModeAction.selected) {
+    val state = resolveContainerModeOptionState(
+      selectedProvider = providerSelector.selectedProvider?.bridge?.provider,
       isExtensionTab = contextState.activeExtensionTab != null,
-      supportsContainerMode = ::isContainerModeSupported,
-    )
-    val enableContainerMode = shouldEnableContainerModeOption(
-      selectedProvider = selectedProvider,
-      isExtensionTab = contextState.activeExtensionTab != null,
+      requestedSelection = requestedSelection,
       supportsContainerMode = ::isContainerModeSupported,
       isContainerRuntimeAvailable = ::isContainerModeRuntimeAvailable,
     )
-    view.headerControls.setContainerModeVisible(showContainerMode)
-    view.headerControls.setContainerModeEnabled(enableContainerMode)
-    if (!enableContainerMode) {
-      view.headerControls.setContainerModeSelected(false)
-    }
-    view.headerControls.setContainerModeTooltip(
-      if (showContainerMode && !enableContainerMode) {
+    view.headerControls.setContainerModeState(
+      visible = state.visible,
+      enabled = state.enabled,
+      selected = state.selected,
+      tooltipText = if (state.showUnavailableTooltip) {
         AgentPromptBundle.message("popup.option.container.mode.unavailable.tooltip")
       }
       else {
         null
-      }
+      },
     )
     view.rightHeaderPanel.revalidate()
     view.rightHeaderPanel.repaint()
+  }
+
+  private fun isContainerModeSelectedForCurrentState(): Boolean {
+    return resolveContainerModeOptionState(
+      selectedProvider = providerSelector.selectedProvider?.bridge?.provider,
+      isExtensionTab = contextState.activeExtensionTab != null,
+      requestedSelection = view.containerModeAction.selected,
+      supportsContainerMode = ::isContainerModeSupported,
+      isContainerRuntimeAvailable = ::isContainerModeRuntimeAvailable,
+    ).selected
   }
 
   private fun isContainerModeSupported(provider: AgentSessionProvider): Boolean {
@@ -814,13 +832,14 @@ internal class AgentPromptPaletteSessionController(
     closePopup()
   }
 
-  private fun runManageProfilesDialog(showDialog: () -> Unit) {
+  private fun runManageProfilesDialog(openDialog: AgentPromptLaunchProfileEditorOpenDialog) {
     closePopup()
     ApplicationManager.getApplication().invokeLater {
       if (project.isDisposed) return@invokeLater
-      showDialog()
-      if (!project.isDisposed) {
-        project.service<AgentPromptPalettePopupService>().show(invocationData)
+      openDialog {
+        if (!project.isDisposed) {
+          project.service<AgentPromptPalettePopupService>().show(invocationData)
+        }
       }
     }
   }

@@ -206,17 +206,10 @@ internal class AgentPromptHeaderControls(
     updateActions()
   }
 
-  fun setContainerModeEnabled(enabled: Boolean) {
+  fun setContainerModeState(visible: Boolean, enabled: Boolean, selected: Boolean, tooltipText: @Nls String?) {
+    containerModeAction.visible = visible
     containerModeAction.enabled = enabled
-    updateActions()
-  }
-
-  fun setContainerModeSelected(selected: Boolean) {
     containerModeAction.selected = selected
-    updateActions()
-  }
-
-  fun setContainerModeTooltip(tooltipText: @Nls String?) {
     containerModeAction.tooltipText = tooltipText
     updateActions()
   }

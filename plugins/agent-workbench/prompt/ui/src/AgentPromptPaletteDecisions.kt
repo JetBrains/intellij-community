@@ -75,6 +75,34 @@ internal fun shouldEnableContainerModeOption(
   ) && selectedProvider?.let(isContainerRuntimeAvailable) == true
 }
 
+internal fun resolveContainerModeOptionState(
+  selectedProvider: AgentSessionProvider?,
+  isExtensionTab: Boolean,
+  requestedSelection: Boolean,
+  supportsContainerMode: (AgentSessionProvider) -> Boolean,
+  isContainerRuntimeAvailable: (AgentSessionProvider) -> Boolean,
+): ContainerModeOptionState {
+  val visible = shouldShowContainerModeOption(
+    selectedProvider = selectedProvider,
+    isExtensionTab = isExtensionTab,
+    supportsContainerMode = supportsContainerMode,
+  )
+  val enabled = visible && selectedProvider?.let(isContainerRuntimeAvailable) == true
+  return ContainerModeOptionState(
+    visible = visible,
+    enabled = enabled,
+    selected = requestedSelection && enabled,
+    showUnavailableTooltip = visible && !enabled,
+  )
+}
+
+internal data class ContainerModeOptionState(
+  @JvmField val visible: Boolean,
+  @JvmField val enabled: Boolean,
+  @JvmField val selected: Boolean,
+  @JvmField val showUnavailableTooltip: Boolean,
+)
+
 internal fun shouldSubmitContainerMode(
   isSelected: Boolean,
   selectedProvider: AgentSessionProvider?,

@@ -44,6 +44,7 @@ internal class AgentPromptProviderSelector(
    */
   private val asyncRefreshScope: CoroutineScope? = null,
   private val onProviderOptionsChanged: () -> Unit = {},
+  private val onProviderSelectionChanged: () -> Unit = {},
 ) {
   private val providerAvailabilityService = invocationData.project.service<AgentSessionProviderAvailabilityService>()
   private val providerSettingsService = service<AgentSessionProviderSettingsService>()
@@ -108,6 +109,8 @@ internal class AgentPromptProviderSelector(
     resolvedMenuModel: AgentSessionProviderMenuModel,
     resolvedEntries: List<ProviderEntry>,
   ) {
+    val previousProvider = selectedProvider?.bridge?.provider
+    val previousLaunchMode = selectedLaunchMode
     providerMenuModel = resolvedMenuModel
     providerEntries = resolvedEntries
     val activeProviders = providerEntries.mapTo(HashSet()) { entry -> entry.bridge.provider }
@@ -121,6 +124,7 @@ internal class AgentPromptProviderSelector(
     selectedProvider = findProviderEntry(currentProviderId) ?: providerEntries.firstOrNull()
     selectedLaunchMode = normalizeLaunchMode(selectedProvider?.bridge, selectedLaunchMode)
     updatePresentation()
+    notifyProviderSelectionChanged(previousProvider, previousLaunchMode)
   }
 
   fun restoreProviderOptionSelections(providerOptionsByProviderId: Map<String, Set<String>>) {
@@ -154,9 +158,12 @@ internal class AgentPromptProviderSelector(
     if (provider == null) {
       return
     }
+    val previousProvider = selectedProvider?.bridge?.provider
+    val previousLaunchMode = selectedLaunchMode
     selectedProvider = findProviderEntry(provider) ?: selectedProvider
     selectedLaunchMode = normalizeLaunchMode(selectedProvider?.bridge, launchMode ?: selectedLaunchMode)
     updatePresentation()
+    notifyProviderSelectionChanged(previousProvider, previousLaunchMode)
   }
 
   fun findProviderEntry(provider: AgentSessionProvider?): ProviderEntry? {
@@ -259,9 +266,12 @@ internal class AgentPromptProviderSelector(
         }
 
         val entry = findProviderEntry(item.bridge.provider) ?: return
+        val previousProvider = selectedProvider?.bridge?.provider
+        val previousLaunchMode = selectedLaunchMode
         selectedProvider = entry
         selectedLaunchMode = item.mode
         updatePresentation()
+        notifyProviderSelectionChanged(previousProvider, previousLaunchMode)
         onSelected(entry)
       }
 
@@ -337,6 +347,12 @@ internal class AgentPromptProviderSelector(
       .asSequence()
       .filter { optionId -> optionId in validIds }
       .toCollection(LinkedHashSet())
+  }
+
+  private fun notifyProviderSelectionChanged(previousProvider: AgentSessionProvider?, previousLaunchMode: AgentSessionLaunchMode) {
+    if (previousProvider != selectedProvider?.bridge?.provider || previousLaunchMode != selectedLaunchMode) {
+      onProviderSelectionChanged()
+    }
   }
 }
 
