@@ -670,6 +670,37 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  @TestFor(issues = "PY-42473")
+  public void testOverloadLiteralEnumImported() {
+    runWithAdditionalFileInLibDir("m.py", """
+      from enum import Enum, auto
+      from typing import Literal, overload
+      
+      
+      class E(Enum):
+          a = auto()
+          b = auto()
+      
+      
+      @overload
+      def f(x: Literal[E.a]) -> str: ...
+      
+      
+      @overload
+      def f(x: Literal[E.b]) -> int: ...
+      
+      
+      def f(x: E) -> object: ...
+      """, _ -> doTestByText(
+      """
+        from m import E, f
+  
+        a: int = f(E.b)
+        b: str = f(E.a)
+        """)
+    );
+  }
+
   // PY-42418
   public void testParametrizedBuiltinCollectionsAndTheirTypingAliasesAreEquivalent() {
     doTest();

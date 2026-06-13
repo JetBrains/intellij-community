@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.resolve.FileContextUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.LanguageLevel
@@ -38,6 +39,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiFacadeImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
 import java.math.BigInteger
@@ -370,6 +372,11 @@ class PyLiteralType private constructor(
           PyUtil.multiResolveTopPriority(expression, PyResolveContext.defaultContext(context)).firstNotNullOfOrNull {
             PyStdlibTypeProvider.getEnumMemberType(it!!, context)
           }
+          // When regular reference resolution yields nothing because the reference lives in a stub-only file rather than
+          // the one being analyzed (e.g. an overload signature `Literal[E.a]` in an imported module), fall back to
+          // stub-safe scope resolution of the enum member's qualified name. Without this, the literal type is lost and
+          // overload resolution can't tell the overloads apart. PY-42473.
+          ?: resolveEnumMemberInScope(expression, context)
         }
         if (type != null) {
           return type
@@ -387,6 +394,13 @@ class PyLiteralType private constructor(
                         as? PyClass ?: return null
       val enumMemberName = qualifiedName.lastComponent ?: return null
       return enumMember(enumClass, enumMemberName)
+    }
+
+    private fun resolveEnumMemberInScope(reference: PyReferenceExpression, context: TypeEvalContext): PyLiteralType? {
+      val qualifiedName = reference.asQualifiedName() ?: return null
+      val scopeOwner = ScopeUtil.getScopeOwner(reference) ?: return null
+      return PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, scopeOwner, context)
+        .firstNotNullOfOrNull { PyStdlibTypeProvider.getEnumMemberType(it, context) }
     }
 
     private fun extractLiteralValue(expression: PyExpression): PyLiteralValue? {
