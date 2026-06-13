@@ -344,14 +344,6 @@ jps_test(
 
 ### auto-generated section `build intellij.python.community.impl` start
 
-resourcegroup(
-    name = "python-community-impl_resources",
-    srcs = glob(
-        ["compatibilityResources/**/*"],
-    ),
-    strip_prefix = "compatibilityResources",
-)
-
 jvm_library(
     name = "python-community-impl",
     srcs = glob(
@@ -365,7 +357,6 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.python.community.impl",
-    resource_jars = [":python-community-impl_resources"],
     resource_strip_prefix = "pluginResources",
     resources = glob(
         ["pluginResources/**/*"],
