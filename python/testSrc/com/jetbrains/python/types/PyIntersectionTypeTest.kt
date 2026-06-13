@@ -97,6 +97,36 @@ class PyIntersectionTypeTest : PyCodeInsightTestCase() {
       #       └ TYPE C
       """.trimIndent())
 
+    @Test
+    @TestFor(issues = ["PY-89000"])
+    fun `property on a member`() = test("""
+      class A: pass
+      class B:
+          @property
+          def foo(self) -> int: ...
+
+      def f(ab: A):
+          if isinstance(ab, B):
+              expr = ab.foo
+      #       └ TYPE int
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-89000"])
+    fun `descriptor on a member`() = test("""
+      class Desc:
+          def __get__(self, obj, owner) -> int: ...
+
+      class A: pass
+      class B:
+          foo = Desc()
+
+      def f(ab: A):
+          if isinstance(ab, B):
+              expr = ab.foo
+      #       └ TYPE int
+      """.trimIndent())
+
     /**
      * A member without the attribute declares nothing, so it must not widen the result to Unknown.
      */
