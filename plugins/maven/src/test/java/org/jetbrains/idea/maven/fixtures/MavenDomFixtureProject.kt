@@ -294,6 +294,20 @@ fun MavenTestFixture.createPomFile(
   return f
 }
 
+fun MavenTestFixture.createPomFile(
+  dir: VirtualFile,
+  fileName: String,
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
+  omitModelVersionTag: Boolean = false,
+): VirtualFile {
+  val filePath = Path.of(dir.path, fileName)
+  Files.writeString(filePath, MavenTestCase.createPomXml(modelVersion, xml, omitModelVersionTag))
+  dir.refresh(false, false)
+  val f = dir.findChild(fileName) ?: throw AssertionError("can't find $fileName ${filePath.absolutePathString()} in VFS")
+  refreshFiles(listOf(f))
+  return f
+}
+
 fun MavenTestFixture.pathFromBasedir(relPath: String): String = pathFromBasedir(projectRoot, relPath)
 
 fun MavenTestFixture.pathFromBasedir(root: VirtualFile?, relPath: String): String =
