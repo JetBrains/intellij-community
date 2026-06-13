@@ -4,6 +4,8 @@ import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
+import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyArgumentList
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteExpression
@@ -12,14 +14,18 @@ import com.jetbrains.python.psi.PyDecoratorList
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyKeywordArgument
 import com.jetbrains.python.psi.PyListLiteralExpression
+import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParenthesizedExpression
 import com.jetbrains.python.psi.PySequenceExpression
 import com.jetbrains.python.psi.PySetLiteralExpression
 import com.jetbrains.python.psi.PyStarExpression
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.PyUtil
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.stubs.PyLiteralKind
 import com.jetbrains.python.psi.types.PyCollectionTypeUtil.flattenSequenceElements
 import com.jetbrains.python.psi.types.PyExpectedTypeJudgement.getExpectedType
 import com.jetbrains.python.psi.types.PyLiteralType.Companion.promoteToLiteral
@@ -328,6 +334,55 @@ object PyTypeInferenceCspFactory {
       }
     }
 
+    // parameter default values: a generic parameter that receives no argument falls back to the type of its default value (PY-90274)
+    val mappedParameterElements = mappedParameters.values.mapNotNullTo(HashSet()) { it.parameter }
+    for (parameter in callableType.getParameters(context).orEmpty()) {
+      if (parameter.isPositionalContainer || parameter.isKeywordContainer || parameter.isSelf) continue
+      // Everything below is stub-safe and avoids touching the default value AST until we know the parameter is generic,
+      // so unrelated (e.g. builtin/library) calls don't get their stubs parsed during inference.
+      if (!parameter.hasDefaultValue()) continue
+      if (parameter.parameter in mappedParameterElements) continue
+
+      val isNoneDefault = PyNames.NONE == parameter.defaultValueText
+      var expectedParameterType = parameter.getArgumentType(context)
+      // A `None` default widens the parameter's annotation to `<annotation> | None` (see PyTypingTypeProvider.getParameterType).
+      if (isNoneDefault && expectedParameterType is PyUnionType) {
+        // If the *declared* annotation already admits `None` (e.g. `label: T | None`), that explicit `None` absorbs the
+        // default value, so it says nothing about the type variable and must not pin it (PY-90274): `f()` then leaves the
+        // type variable unconstrained (`Unknown`/`Any`).
+        val namedParameter = parameter.parameter as? PyNamedParameter
+        if (namedParameter != null && parameterAnnotationAdmitsNone(namedParameter, context)) continue
+        // Otherwise the `None` was added purely by the widening; drop it so the default actually pins the type variable,
+        // e.g. `t: T = None` keeps `T`, not `T | None`.
+        expectedParameterType = PyUnionType.union(expectedParameterType.members.filterNot { it.isNoneType })
+      }
+      if (expectedParameterType.isUnknown || !expectedParameterType.hasGenerics(context)) continue
+
+      // The parameter's default value pins the type variable. We prefer a *stub-safe* type for it (the `None` type or the
+      // type of a literal default), derived without parsing the callable's own AST, so inference stays stub-safe for
+      // library/SDK callables. Only such stub-safe default types are allowed to override a declared PEP 696 TypeVar default:
+      // otherwise the override would be visible only in AST-enabled contexts and disagree with cached, stub-only results.
+      val stubSafeDefaultType = when {
+        isNoneDefault -> PyBuiltinCache.getInstance(callSite).noneType
+        else -> literalDefaultType(parameter.defaultValueText, callSite)
+      }
+      val defaultValueType = stubSafeDefaultType
+                             ?: parameter.parameter
+                               ?.takeIf { context.maySwitchToAST(it) }
+                               ?.let { parameter.defaultValue }
+                               ?.let { normalizeType(context.getType(it), context) }
+      if (defaultValueType == null) continue
+
+      // A PEP 696 TypeVar default (e.g. `T = int`) is overridden by the parameter's default value only when that value can
+      // be typed stub-safely. For non-stub-safe (e.g. arbitrary expression) defaults, keep deferring to the declared
+      // default so the type variable stays unconstrained here and its PEP 696 default is applied later.
+      if (stubSafeDefaultType == null && expectedParameterType.collectGenerics(context).typeVars.any { it.defaultType != null }) continue
+
+      val expectedParamTypeIV = PyTypeChecker.substitute(expectedParameterType, ivSubstitutions, context)
+      // semantics: typeof(default) <: TV
+      builder.addConstraint(expectedParamTypeIV, defaultValueType, PyVariance.CONTRAVARIANT, ConstraintPriority.MEDIUM)
+    }
+
     // return type
     return PyTypeChecker.substitute(declaredReturn, ivSubstitutions, context)
   }
@@ -355,6 +410,34 @@ object PyTypeInferenceCspFactory {
       actualArgType
     val normalizedType = normalizeType(argTypeSelfInstantiated, context)
     return normalizedType
+  }
+
+  /**
+   * Returns the type of a simple literal default value (e.g. `0`, `1.0`, `"s"`, `True`, `None`) derived from its stub
+   * text [defaultValueText], or `null` when the default is not such a literal. The literal text is parsed into a throwaway
+   * code fragment, so this never switches the callable's own file to AST and stays usable in stub-only contexts.
+   */
+  private fun literalDefaultType(defaultValueText: String?, anchor: PyCallExpression): PyType? {
+    if (defaultValueText == null) return null
+    val expression = PyUtil.createExpressionFromFragment(defaultValueText, anchor) ?: return null
+    val literalKind = PyLiteralKind.fromExpression(expression) ?: return null
+    return PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(anchor))
+  }
+
+  /**
+   * Whether [parameter]'s declared annotation already admits `None` on its own (e.g. `T | None` or `Optional`),
+   * independently of the implicit `<annotation> | None` widening that a `None` default value adds
+   * (see PyTypingTypeProvider.getParameterType). In that case a `None` default is absorbed by the explicit `None`
+   * member and does not pin a type variable mentioned in the annotation (PY-90274), so neither the call-site inference
+   * here nor [com.jetbrains.python.inspections.PyShadowedTypeParameterDefaultInspection] should treat it as pinning.
+   *
+   * Stub-safe: [PyTypingTypeProvider.getAnnotationValue] reads the stub annotation text outside AST-enabled contexts.
+   */
+  @JvmStatic
+  fun parameterAnnotationAdmitsNone(parameter: PyNamedParameter, context: TypeEvalContext): Boolean {
+    val annotationValue = PyTypingTypeProvider.getAnnotationValue(parameter, context) ?: return false
+    val declaredType = PyTypingTypeProvider.getType(annotationValue, context)?.get()
+    return declaredType is PyUnionType && declaredType.members.any { it.isNoneType }
   }
 
   private fun ensureBoundsAndConstraints(

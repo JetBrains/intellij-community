@@ -1887,7 +1887,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
     fun `new style generic function with default`() = test("""
       def foo[T = int](x: T = None) -> T: ...
       expr = foo()
-      #└ TYPE int
+      #└ TYPE None
       """.trimIndent())
 
     @Test

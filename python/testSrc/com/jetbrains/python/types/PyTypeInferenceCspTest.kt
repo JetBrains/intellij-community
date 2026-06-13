@@ -76,6 +76,87 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-90274"])
+  fun `parameter None default solves type var`() = test("""
+    def f[T](t: T = None) -> T:
+      return t
+
+    r1 = f(1)
+    #└ TYPE int
+    r2 = f()
+    #└ TYPE None
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-90274"])
+  fun `parameter literal default solves type var`() = test("""
+    def f[T](t: T = 0) -> T:
+      return t
+
+    r1 = f("s")
+    #└ TYPE str
+    r2 = f()
+    #└ TYPE int
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-90274"])
+  fun `None default with explicit optional annotation leaves type var unconstrained`() = test("""
+    def f[T](label: T | None = None) -> T: ...
+
+    r1 = f()
+    #└ TYPE Any
+    r2 = f("s")
+    #└ TYPE str
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-90274"])
+  fun `parameter None default overrides PEP 696 type var default`() = test("""
+    def f[T = int](a: T = None) -> T:
+      return a
+
+    r1 = f()
+    #└ TYPE None
+    r2 = f("s")
+    #└ TYPE str
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-90274"])
+  fun `parameter literal default overrides PEP 696 type var default`() = test("""
+    def f[T = int](t: T = "s") -> T:
+      return t
+
+    r1 = f()
+    #└ TYPE str
+    r2 = f(1.0)
+    #└ TYPE float
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-90274"])
+  fun `multiple parameter literal defaults`() = test("""
+    def f[T = int](t1: T = "s", t2: T = 1) -> T:
+      return t1
+
+    r1 = f()
+    #└ TYPE str | int
+    r2 = f(t2="s")
+    #└ TYPE str
+
+    def g[T = int](t1: T, t2: T = 1) -> T:
+      return t1
+
+    r3 = g(1)
+    #└ TYPE int
+    r4 = g("s")
+    #└ TYPE str | int
+    r5 = g("s", "s")
+    #└ TYPE str
+    """.trimIndent())
+
+  @Test
   fun `Empty tuple`() = test("""
     from typing import Sequence
 
