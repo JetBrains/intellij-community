@@ -777,6 +777,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     const val PARAM_SPEC_EXT: String = "typing_extensions.ParamSpec"
     private const val CHAIN_MAP = "typing.ChainMap"
     const val UNION: String = "typing.Union"
+    const val INTERSECTION_TY_EXT: String = "ty_extensions.Intersection"
     const val CONCATENATE: String = "typing.Concatenate"
     const val CONCATENATE_EXT: String = "typing_extensions.Concatenate"
     const val OPTIONAL: String = "typing.Optional"
@@ -899,6 +900,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       .add(PARAM_SPEC_EXT)
       .add(CONCATENATE)
       .add(CONCATENATE_EXT)
+      .add(INTERSECTION_TY_EXT)
       .add(TUPLE)
       .add(CALLABLE)
       .add(CALLABLE_EXT)
@@ -1540,6 +1542,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     }
 
     private fun getIntersectionType(resolved: PsiElement, context: Context): Ref<PyType?>? {
+      if (resolved is PySubscriptionExpression) {
+        if (!resolved.operand.resolvesToQualifiedNames(context.typeContext, INTERSECTION_TY_EXT)) return null
+        val memberTypes = getIndexTypes(resolved, context)
+        // An empty intersection (`Intersection[()]`) is the greatest lower bound of no types, i.e. the top type `object`.
+        if (memberTypes.isEmpty()) return Ref(PyBuiltinCache.getInstance(resolved).objectType)
+        return intersection(memberTypes)?.let { Ref(it) }
+      }
       if (resolved !is PyBinaryExpression || resolved.operator !== PyTokenTypes.AND) return null
       val left = resolved.leftExpression ?: return null
       val right = resolved.rightExpression ?: return null
