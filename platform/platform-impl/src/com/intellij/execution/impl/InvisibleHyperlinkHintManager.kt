@@ -14,12 +14,16 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.eel.isMac
@@ -53,6 +57,7 @@ import java.util.concurrent.CancellationException
 import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
 internal class InvisibleHyperlinkHintManager(private val editor: Editor, parentDisposable: Disposable) {
@@ -126,20 +131,32 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor, parentD
     }
     cancelPopup()
     if (e.mouseEvent.clickCount == 1 && !hadTextSelection) {
-      // delay showing the hint to detect if this is part of a multi click
       hintInfoDeferred = coroutineScope.async {
-        val delayMs = lastMousePressTime + UIUtil.getMultiClickInterval() - System.currentTimeMillis()
-        delay((delayMs.coerceAtLeast(0)).milliseconds)
+        val delay = getMultiClickDetectionDelay()
+        LOG.debug { "Awaiting $delay before showing the popup" }
+        // A mousePressed during this delay cancels this coroutine.
+        delay(delay)
         // Single click confirmed (not part of a multi-click) => show the popup.
         withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
           if (!link.isValid) {
             throw CancellationException("Invalid link")
           }
+          LOG.debug { "Showing the popup" }
           showHintImmediately(link, e, action)
         }
       }
       e.consume()
     }
+  }
+
+  /**
+   * Returns how long to wait before confirming a single click.
+   */
+  private fun getMultiClickDetectionDelay(): Duration {
+    val delayIntervalMs = Registry.intValue("editor.invisible.hyperlink.popup.delay.ms", 180)
+      .coerceIn(0, UIUtil.getMultiClickInterval())
+    val delayMs = lastMousePressTime + delayIntervalMs - System.currentTimeMillis()
+    return delayMs.coerceAtLeast(0).milliseconds
   }
 
   private fun showHintImmediately(link: RangeHighlighterEx, e: EditorMouseEvent, action: () -> Unit): HintInfo {
@@ -227,6 +244,8 @@ internal class InvisibleHyperlinkHintManager(private val editor: Editor, parentD
   )
 
   companion object {
+    private val LOG: Logger = logger<InvisibleHyperlinkHintManager>()
+
     private fun createCoroutineScope(editor: Editor, parentDisposable: Disposable): CoroutineScope {
       val baseScope = editor.project?.service<CoreUiCoroutineScopeHolder>()?.coroutineScope
                       ?: service<CoreUiCoroutineScopeHolder>().coroutineScope

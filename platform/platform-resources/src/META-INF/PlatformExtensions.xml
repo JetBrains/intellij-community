@@ -2110,6 +2110,10 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
                  restartRequired="true"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.EditorHyperlinkUsageCollector"/>
+    <registryKey key="editor.invisible.hyperlink.popup.delay.ms" defaultValue="180"
+                 description="Delay in milliseconds before showing the 'Open' popup for an invisible hyperlink on a single click.\n
+                  Multi-clicks within the delay suppress the popup, so text selection with double-/triple-clicks doesn't flash it.\n
+                  Set to 0 to show immediately; the value is capped at the system multi-click interval."/>
 
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.PluginUpdateSourceServiceImpl"/>
