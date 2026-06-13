@@ -2599,6 +2599,10 @@ f:org.jetbrains.jewel.ui.icons.AllIconsKeys$Actions
 - sf:New:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:NewFolder:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:NextOccurence:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:NotificationsBottomLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:NotificationsBottomRight:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:NotificationsTopLeft:org.jetbrains.jewel.ui.icon.IntelliJIconKey
+- sf:NotificationsTopRight:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:OfflineMode:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:OpenNewTab:org.jetbrains.jewel.ui.icon.IntelliJIconKey
 - sf:Pause:org.jetbrains.jewel.ui.icon.IntelliJIconKey

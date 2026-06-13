@@ -117,6 +117,10 @@ f:com.intellij.icons.AllIcons$Actions
 - sf:New:javax.swing.Icon
 - sf:NewFolder:javax.swing.Icon
 - sf:NextOccurence:javax.swing.Icon
+- sf:NotificationsBottomLeft:javax.swing.Icon
+- sf:NotificationsBottomRight:javax.swing.Icon
+- sf:NotificationsTopLeft:javax.swing.Icon
+- sf:NotificationsTopRight:javax.swing.Icon
 - sf:OfflineMode:javax.swing.Icon
 - sf:OpenNewTab:javax.swing.Icon
 - sf:Pause:javax.swing.Icon

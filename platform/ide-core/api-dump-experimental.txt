@@ -3,6 +3,24 @@ com.intellij.ide.dnd.DnDEvent$DropTargetHighlightingType
 c:com.intellij.notification.Notification
 - *s:isDoNotAskFor(com.intellij.openapi.project.Project,java.lang.String):Z
 - *:setDoNotAskFor(com.intellij.openapi.project.Project):com.intellij.notification.Notification
+*e:com.intellij.notification.NotificationLocation
+- java.lang.Enum
+- sf:BOTTOM_LEFT:com.intellij.notification.NotificationLocation
+- sf:BOTTOM_RIGHT:com.intellij.notification.NotificationLocation
+- *sf:Companion:com.intellij.notification.NotificationLocation$Companion
+- sf:TOP_LEFT:com.intellij.notification.NotificationLocation
+- sf:TOP_RIGHT:com.intellij.notification.NotificationLocation
+- *sf:getDefaultLocation():com.intellij.notification.NotificationLocation
+- s:getEntries():kotlin.enums.EnumEntries
+- *sf:getLocation(java.lang.String):com.intellij.notification.NotificationLocation
+- f:getStringValue():java.lang.String
+- f:isLeft():Z
+- f:isTop():Z
+- s:valueOf(java.lang.String):com.intellij.notification.NotificationLocation
+- s:values():com.intellij.notification.NotificationLocation[]
+*f:com.intellij.notification.NotificationLocation$Companion
+- f:getDefaultLocation():com.intellij.notification.NotificationLocation
+- f:getLocation(java.lang.String):com.intellij.notification.NotificationLocation
 f:com.intellij.notification.Notifications$Bus
 - *s:notifyAndHide(com.intellij.notification.Notification,com.intellij.openapi.project.Project):V
 *:com.intellij.openapi.options.Configurable$InnerWithModifiableParent

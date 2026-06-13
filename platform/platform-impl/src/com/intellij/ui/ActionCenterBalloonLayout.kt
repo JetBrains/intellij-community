@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.ActionCenter
 import com.intellij.notification.Notification
+import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -195,34 +196,41 @@ internal class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : Ba
   }
 
   override fun setBounds(balloons: List<Balloon>, startX: Int, startY: Int) {
-    val shadowVerticalOffset = 0
-    var verticalOffset = 0
-    var startX = startX
-    var y = startY
+    val location = NotificationsConfigurationImpl.getInstanceImpl().notificationLocation
     val startOffset = JBUI.scale(10)
     val insets = ShadowJava2DPainter.Type.NOTIFICATION.insets
-    val rightOffset = startOffset - insets.right
-    val bottomOffset = startOffset - insets.bottom
-    if (bottomOffset > 0) {
-      y -= bottomOffset
+
+    val anchorX = startX + when {
+      location.isLeft -> (startOffset - insets.left).coerceAtLeast(0)
+      else            -> -(startOffset - insets.right).coerceAtLeast(0)
     }
-    if (rightOffset > 0) {
-      startX -= rightOffset
+    var y = startY + when {
+      location.isTop -> (startOffset - insets.top).coerceAtLeast(0)
+      else           -> -(startOffset - insets.bottom).coerceAtLeast(0)
     }
 
     for (balloon in balloons) {
       val bounds = Rectangle(super.getSize(balloon))
+      val x = if (location.isLeft) anchorX else anchorX - bounds.width
       val info = collapsedData[balloon]
-      if (info != null) {
-        val offset = if (verticalOffset != shadowVerticalOffset) 0 else shadowVerticalOffset
-        info.balloon.setBounds(Rectangle(startX - bounds.width, y - info.fullHeight + offset, bounds.width, info.fullHeight))
-        y -= info.height
-      }
 
-      y -= bounds.height - verticalOffset
-      verticalOffset = shadowVerticalOffset
-      bounds.setLocation(startX - bounds.width, y)
-      balloon.setBounds(bounds)
+      if (location.isTop) {
+        if (info != null) {
+          info.balloon.setBounds(Rectangle(x, y, bounds.width, info.fullHeight))
+          y += info.height
+        }
+        bounds.setLocation(x, y)
+        balloon.setBounds(bounds)
+        y += bounds.height
+      } else {
+        if (info != null) {
+          info.balloon.setBounds(Rectangle(x, y - info.fullHeight, bounds.width, info.fullHeight))
+          y -= info.height
+        }
+        y -= bounds.height
+        bounds.setLocation(x, y)
+        balloon.setBounds(bounds)
+      }
     }
   }
 

@@ -1880,8 +1880,10 @@ f:com.intellij.notification.impl.NotificationsConfigurationImpl
 - com.intellij.openapi.components.PersistentStateComponent
 - changeSettings(com.intellij.notification.impl.NotificationSettings):V
 - s:getInstanceImpl():com.intellij.notification.impl.NotificationsConfigurationImpl
+- getNotificationLocation():com.intellij.notification.NotificationLocation
 - s:getSettings(java.lang.String):com.intellij.notification.impl.NotificationSettings
 - s:remove(java.lang.String[]):V
+- setNotificationLocation(com.intellij.notification.NotificationLocation):V
 f:com.intellij.notification.impl.NotificationsManagerImpl
 - com.intellij.notification.NotificationsManager
 - s:findWindowForBalloon(com.intellij.openapi.project.Project):java.awt.Window

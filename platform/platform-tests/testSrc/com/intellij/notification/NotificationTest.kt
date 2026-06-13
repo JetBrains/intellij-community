@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification
 
+import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -49,5 +50,31 @@ class NotificationTest : LightPlatformTestCase() {
       })
     }
     return NotificationsUtil.buildStatusMessage(notification)
+  }
+
+  fun testNotificationLocationConfiguration() {
+    val configuration = NotificationsConfigurationImpl()
+    assertEquals(NotificationLocation.getDefaultLocation(), configuration.notificationLocation)
+
+    for (location in NotificationLocation.entries) {
+      configuration.notificationLocation = location
+      val state = configuration.state!!
+      assertEquals(location.stringValue, state.getAttributeValue("notificationLocation"))
+
+      val newConfiguration = NotificationsConfigurationImpl()
+      newConfiguration.loadState(state)
+      assertEquals(location, newConfiguration.notificationLocation)
+    }
+  }
+
+  fun testNotificationLocationFlags() {
+    assertTrue(NotificationLocation.TOP_LEFT.isTop)
+    assertTrue(NotificationLocation.TOP_LEFT.isLeft)
+    assertTrue(NotificationLocation.TOP_RIGHT.isTop)
+    assertFalse(NotificationLocation.TOP_RIGHT.isLeft)
+    assertFalse(NotificationLocation.BOTTOM_LEFT.isTop)
+    assertTrue(NotificationLocation.BOTTOM_LEFT.isLeft)
+    assertFalse(NotificationLocation.BOTTOM_RIGHT.isTop)
+    assertFalse(NotificationLocation.BOTTOM_RIGHT.isLeft)
   }
 }

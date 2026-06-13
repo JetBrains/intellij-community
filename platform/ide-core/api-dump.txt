@@ -334,7 +334,9 @@ f:com.intellij.notification.Notifications$Bus
 a:com.intellij.notification.NotificationsConfiguration
 - com.intellij.notification.Notifications
 - a:getDisplayType(java.lang.String):com.intellij.notification.NotificationDisplayType
+- a:getNotificationLocation():com.intellij.notification.NotificationLocation
 - s:getNotificationsConfiguration():com.intellij.notification.NotificationsConfiguration
+- a:setNotificationLocation(com.intellij.notification.NotificationLocation):V
 a:com.intellij.notification.NotificationsManager
 - a:expire(com.intellij.notification.Notification):V
 - s:getNotificationsManager():com.intellij.notification.NotificationsManager

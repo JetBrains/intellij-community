@@ -353,6 +353,18 @@ public final class AllIconsKeys {
     public static final @NotNull IntelliJIconKey NextOccurence = new IntelliJIconKey("actions/nextOccurence.svg", "expui/general/down.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey NotificationsBottomLeft = new IntelliJIconKey("expui/actions/notificationsBottomLeft.svg", "expui/actions/notificationsBottomLeft.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey NotificationsBottomRight = new IntelliJIconKey("expui/actions/notificationsBottomRight.svg", "expui/actions/notificationsBottomRight.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey NotificationsTopLeft = new IntelliJIconKey("expui/actions/notificationsTopLeft.svg", "expui/actions/notificationsTopLeft.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
+    public static final @NotNull IntelliJIconKey NotificationsTopRight = new IntelliJIconKey("expui/actions/notificationsTopRight.svg", "expui/actions/notificationsTopRight.svg", AllIconsKeys.class);
+    /** 16x16 */ 
+    @GeneratedFromIntelliJSources
     public static final @NotNull IntelliJIconKey OfflineMode = new IntelliJIconKey("actions/offlineMode.svg", "expui/build/toggleOfflineMode.svg", AllIconsKeys.class);
     /** 16x16 */ 
     @GeneratedFromIntelliJSources

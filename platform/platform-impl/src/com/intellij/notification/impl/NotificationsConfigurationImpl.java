@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.notification.Notification;
@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
+import com.intellij.notification.NotificationLocation;
+
 @SuppressWarnings("SplitModeApiUsage")
 @State(name = "NotificationConfiguration", storages = @Storage("notifications.xml"), category = SettingsCategory.UI)
 public final class NotificationsConfigurationImpl extends NotificationsConfiguration implements PersistentStateComponent<Element>, Disposable {
@@ -31,6 +33,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   private static final String SHOW_BALLOONS_ATTRIBUTE = "showBalloons";
   private static final String SYSTEM_NOTIFICATIONS_ATTRIBUTE = "systemNotifications";
   private static final String NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE = "notificationsAnnouncingMode";
+  private static final String NOTIFICATION_LOCATION_ATTRIBUTE = "notificationLocation";
 
   private static final Comparator<NotificationSettings> NOTIFICATION_SETTINGS_COMPARATOR =
     (o1, o2) -> o1.getGroupId().compareToIgnoreCase(o2.getGroupId());
@@ -43,6 +46,8 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   public boolean SYSTEM_NOTIFICATIONS = true;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private NotificationAnnouncingMode NOTIFICATION_ANNOUNCING_MODE;
+  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
+  private NotificationLocation NOTIFICATION_LOCATION = NotificationLocation.getDefaultLocation();
 
   public static NotificationsConfigurationImpl getInstanceImpl() {
     return (NotificationsConfigurationImpl)getNotificationsConfiguration();
@@ -165,6 +170,16 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   }
 
   @Override
+  public @NotNull NotificationLocation getNotificationLocation() {
+    return NOTIFICATION_LOCATION != null ? NOTIFICATION_LOCATION : NotificationLocation.getDefaultLocation();
+  }
+
+  @Override
+  public void setNotificationLocation(@NotNull NotificationLocation location) {
+    NOTIFICATION_LOCATION = location;
+  }
+
+  @Override
   public @NotNull NotificationDisplayType getDisplayType(@NotNull String groupId) {
     return getSettings(groupId).getDisplayType();
   }
@@ -219,6 +234,10 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
       element.setAttribute(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE, NOTIFICATION_ANNOUNCING_MODE.getStringValue());
     }
 
+    if (NOTIFICATION_LOCATION != null) {
+      element.setAttribute(NOTIFICATION_LOCATION_ATTRIBUTE, NOTIFICATION_LOCATION.getStringValue());
+    }
+
     return element;
   }
 
@@ -244,6 +263,9 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     SYSTEM_NOTIFICATIONS = !"false".equals(state.getAttributeValue(SYSTEM_NOTIFICATIONS_ATTRIBUTE));
 
     NOTIFICATION_ANNOUNCING_MODE = NotificationAnnouncingMode.get(state.getAttributeValue(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE));
+
+    NotificationLocation location = NotificationLocation.getLocation(state.getAttributeValue(NOTIFICATION_LOCATION_ATTRIBUTE));
+    NOTIFICATION_LOCATION = location != null ? location : NotificationLocation.BOTTOM_RIGHT;
   }
 
   @Override
