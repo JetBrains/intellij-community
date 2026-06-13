@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jewel.markdown.processing.html
 
+import org.jetbrains.jewel.markdown.DimensionSize
 import org.jetbrains.jewel.markdown.InlineMarkdown
 import org.jetbrains.jewel.markdown.MarkdownBlock
 
@@ -39,9 +40,30 @@ private object ImageConverter : HtmlElementConverter {
                     source = htmlElement.attributes["src"].orEmpty(),
                     alt = htmlElement.attributes["alt"].orEmpty(),
                     title = htmlElement.attributes["title"],
+                    width = htmlElement.attributes["width"]?.parseHtmlSizeValue(),
+                    height = htmlElement.attributes["height"]?.parseHtmlSizeValue(),
+                    inlineContent = emptyList(),
                 )
             )
         )
+}
+
+internal fun String.parseHtmlSizeValue(): DimensionSize? {
+    val trimmed = trim()
+    if (trimmed.isEmpty()) return null
+
+    if (trimmed.endsWith("%")) {
+        val digits = trimmed.dropLast(1).trim()
+        val value = digits.toIntOrNull() ?: return null
+        if (value < 0) return null
+        return DimensionSize.Percent(value)
+    }
+
+    val digits = trimmed.takeWhile { it.isDigit() }
+    if (digits.isEmpty()) return null
+
+    val value = digits.toIntOrNull() ?: return null
+    return DimensionSize.Pixels(value)
 }
 
 private object ParagraphConverter : HtmlElementConverter {
