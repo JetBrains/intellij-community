@@ -8,7 +8,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.MavenSyncSession
 import org.jetbrains.idea.maven.buildtool.MavenSyncSpec
-import org.jetbrains.idea.maven.fixtures.mavenFixture
+import com.intellij.maven.testFramework.fixtures.mavenFixture
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertSame

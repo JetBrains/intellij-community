@@ -56,6 +56,8 @@ jvm_library(
         "//platform/ide-core",
         "//java/testFramework/backend",
         "//plugins/repository-search/common",
+        "//platform/util:util-ui",
+        "//platform/testFramework/junit5",
     ],
 )
 
@@ -109,6 +111,8 @@ jvm_library(
         "//platform/ide-core:ide-core_test_lib",
         "//java/testFramework/backend:backend_test_lib",
         "//plugins/repository-search/common:common_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//platform/testFramework/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.testFramework` end

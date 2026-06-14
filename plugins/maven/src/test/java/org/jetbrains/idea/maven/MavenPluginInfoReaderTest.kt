@@ -1,9 +1,10 @@
 // Copyright 2000-2016 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven
 
+import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
+import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.mavenFixture
 import com.intellij.testFramework.junit5.TestApplication
-import org.jetbrains.idea.maven.fixtures.assertOrderedElementsAreEqual
-import org.jetbrains.idea.maven.fixtures.mavenFixture
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil
 import org.jetbrains.idea.maven.utils.MavenPluginInfo
 import org.junit.jupiter.api.Assertions.assertEquals

@@ -2,6 +2,12 @@
 @file:Suppress("unused")
 package org.jetbrains.idea.maven.fixtures
 
+import com.intellij.maven.testFramework.fixtures.MavenImportingTestFixture
+import com.intellij.maven.testFramework.fixtures.MavenTestFixture
+import com.intellij.maven.testFramework.fixtures.assertUnorderedPathsAreEqual
+import com.intellij.maven.testFramework.fixtures.createProjectSubDir
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ModuleRootManager

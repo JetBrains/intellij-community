@@ -4,6 +4,12 @@ package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
+import com.intellij.maven.testFramework.fixtures.configTest
+import com.intellij.maven.testFramework.fixtures.findPsiFile
+import com.intellij.maven.testFramework.fixtures.getEditor
+import com.intellij.maven.testFramework.fixtures.getElementAtCaret
+import com.intellij.maven.testFramework.fixtures.getTestPsiFile
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile

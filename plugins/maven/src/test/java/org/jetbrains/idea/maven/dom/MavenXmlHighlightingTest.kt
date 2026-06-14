@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase
 import com.intellij.openapi.vfs.LocalFileSystem
-import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import java.io.File
 

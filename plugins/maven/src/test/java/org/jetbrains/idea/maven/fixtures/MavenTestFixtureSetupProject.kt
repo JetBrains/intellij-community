@@ -5,6 +5,8 @@ package org.jetbrains.idea.maven.fixtures
 import com.intellij.ide.actions.ImportProjectAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.maven.testFramework.assertWithinTimeout
+import com.intellij.maven.testFramework.fixtures.MavenTestFixture
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
 import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
 import com.intellij.openapi.externalSystem.util.performActionAsync
 import com.intellij.openapi.externalSystem.util.performOpenAction

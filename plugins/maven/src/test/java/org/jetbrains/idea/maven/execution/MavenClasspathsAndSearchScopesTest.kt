@@ -2,6 +2,15 @@
 package org.jetbrains.idea.maven.execution
 
 import com.intellij.execution.configurations.JavaParameters
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.createModule
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectSubDir
+import com.intellij.maven.testFramework.fixtures.importProjectsAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -43,19 +52,10 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.io.DigestUtil.sha1
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertModuleLibDeps
 import org.jetbrains.idea.maven.fixtures.assertModuleModuleDeps
-import org.jetbrains.idea.maven.fixtures.assertModules
-import org.jetbrains.idea.maven.fixtures.assertOrderedElementsAreEqual
-import org.jetbrains.idea.maven.fixtures.createModule
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.createProjectSubDir
 import org.jetbrains.idea.maven.fixtures.createProjectSubDirs
 import org.jetbrains.idea.maven.fixtures.getModule
-import org.jetbrains.idea.maven.fixtures.importProjectsAsync
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.projectPath
 import org.jetbrains.idea.maven.fixtures.repositoryPathCanonical
 import org.jetbrains.idea.maven.fixtures.setupJdkForModules
 import org.junit.jupiter.api.Assertions

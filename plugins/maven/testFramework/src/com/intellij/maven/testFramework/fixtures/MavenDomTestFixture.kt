@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.fixtures
+package com.intellij.maven.testFramework.fixtures
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.lookup.LookupElement
@@ -9,8 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.intellij.lang.annotations.Language
-import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
-import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 import java.util.function.Function
 
 /**
@@ -34,15 +32,14 @@ import java.util.function.Function
  *
  * This class is intentionally thin: it owns the per-test state and lifecycle only. The completion,
  * reference-resolution, highlighting, rename, import, versioning and module helpers are provided as
- * extension functions grouped by concern in sibling `MavenDomFixture*.kt` files (same package), so call
- * sites stay `maven.foo(...)` while each concern lives in its own small file.
+ * extension functions.
  *
  * It is created by [mavenDomFixture] over a per-method [Project] supplied by the platform `projectFixture`, with the
- * [CodeInsightTestFixture] attached (set up) **before** the initial Maven import (see [attachCodeInsight]) so that its
+ * [CodeInsightTestFixture] attached (set up) **before** the initial Maven import so that its
  * `VirtualFilePointerTracker` baseline is established before the import creates project-scoped pointers. A fresh project
  * is created and disposed for every test method.
  *
- * When [indices] is non-null, a [MavenIndicesTestFixture] copies the local and extra test repositories
+ * When [indices] is non-null, copies the local and extra test repositories
  * into a temp dir, points Maven's local repository at it, and builds GAV indices so that completion and
  * resolution of repository artifacts work offline.
  */
@@ -65,7 +62,6 @@ interface MavenDomTestFixture : MavenImportingTestFixture {
   val LOOKUP_STRING: Function<LookupElement, String?>
     get() = Function { obj: LookupElement -> obj.lookupString }
 
-  /** Matcher used by [checkHighlighting] overloads that take expected highlights. */
   class Highlight(
     val severity: HighlightSeverity = HighlightSeverity.ERROR,
     val text: String? = null,

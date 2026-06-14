@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.idea.maven.fixtures
+package com.intellij.maven.testFramework.fixtures
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.daemon.impl.analysis.XmlUnresolvedReferenceInspection
@@ -25,7 +25,6 @@ import kotlinx.coroutines.withContext
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.dom.inspections.MavenModelInspection
-import org.jetbrains.idea.maven.indices.MavenIndicesTestFixture
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenEmbedderWrappers
 import org.jetbrains.idea.maven.project.MavenPluginResolver
@@ -37,7 +36,7 @@ import org.jetbrains.idea.maven.server.MavenServerManager
 import java.nio.file.Files
 import java.nio.file.Path
 
-class MavenDomTestFixtureImpl internal constructor(
+internal class MavenDomTestFixtureImpl internal constructor(
   override val project: Project,
   override val dir: Path,
   override val mavenVersion: String = "bundled",

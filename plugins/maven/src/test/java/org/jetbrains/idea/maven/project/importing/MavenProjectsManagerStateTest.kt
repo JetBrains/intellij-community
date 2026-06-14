@@ -3,15 +3,15 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.assertUnorderedElementsAreEqual
-import org.jetbrains.idea.maven.fixtures.assertUnorderedPathsAreEqual
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.importProjectsAsync
-import org.jetbrains.idea.maven.fixtures.initProjectsManager
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.setIgnoredFilesPathForNextImport
-import org.jetbrains.idea.maven.fixtures.setIgnoredPathPatternsForNextImport
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.assertUnorderedPathsAreEqual
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.importProjectsAsync
+import com.intellij.maven.testFramework.fixtures.initProjectsManager
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.setIgnoredFilesPathForNextImport
+import com.intellij.maven.testFramework.fixtures.setIgnoredPathPatternsForNextImport
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach

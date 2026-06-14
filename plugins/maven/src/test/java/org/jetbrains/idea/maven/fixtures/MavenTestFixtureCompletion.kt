@@ -5,6 +5,8 @@ package org.jetbrains.idea.maven.fixtures
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
+import com.intellij.maven.testFramework.fixtures.configTest
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.UsefulTestCase.assertContainsElements
@@ -96,7 +98,7 @@ fun MavenDomTestFixture.getCompletionVariants(fixture: CodeInsightTestFixture, l
   return variants.map { lookupElementStringFunction.apply(it) }
 }
 
-/** Wraps [xml] into a full `pom.xml` document the same way [createProjectPom] does, for `fixture.checkResult(...)`. */
+/** Wraps [xml] into a full `pom.xml` document the same way [com.intellij.maven.testFramework.fixtures.createProjectPom] does, for `fixture.checkResult(...)`. */
 fun MavenDomTestFixture.createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): String {
   return MavenTestCase.createPomXml(modelVersion, xml, false)
 }

@@ -16,8 +16,8 @@ import com.intellij.util.ReflectionUtil
 import com.intellij.util.WaitFor
 import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.projectRoot
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectRoot
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotSame

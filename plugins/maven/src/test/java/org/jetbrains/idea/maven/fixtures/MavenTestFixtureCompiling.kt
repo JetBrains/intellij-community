@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.compiler.artifacts.ArtifactsTestUtil
 import com.intellij.compiler.impl.ModuleCompileScope
+import com.intellij.maven.testFramework.fixtures.MavenImportingTestFixture
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.compiler.CompileScope
 import com.intellij.openapi.compiler.CompilerMessageCategory

@@ -13,11 +13,11 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.PairConsumer
 import kotlinx.coroutines.runBlocking
 import org.jdom.Element
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModules
 import org.jetbrains.idea.maven.fixtures.importProjectStaticSync
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.testRootDisposable
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.testRootDisposable
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectChanges

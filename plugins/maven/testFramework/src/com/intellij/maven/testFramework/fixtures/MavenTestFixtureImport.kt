@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("unused")
-package org.jetbrains.idea.maven.fixtures
+
+package com.intellij.maven.testFramework.fixtures
 
 import com.intellij.maven.testFramework.utils.RealMavenPreventionFixture
 import com.intellij.openapi.Disposable
@@ -33,6 +34,7 @@ import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
+import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
 
 // Project import / sync orchestration.
@@ -225,57 +227,17 @@ suspend fun MavenImportingTestFixture.doImportProjectsAsync(
   files: List<VirtualFile>, failOnReadingError: Boolean,
   disabledProfiles: List<String>, vararg profiles: String,
 ) {
-  org.junit.jupiter.api.Assertions.assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed)
+  Assertions.assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed)
   initProjectsManager(false)
   projectsManager.state.originalFiles = files.map { it.path }
   projectsManager.explicitProfiles = MavenExplicitProfiles(profiles.toList(), disabledProfiles)
   updateAllProjects()
   if (failOnReadingError) {
     for (each in projectsManager.projectsTree.projects) {
-      org.junit.jupiter.api.Assertions.assertFalse(each.hasReadingErrors(), "Failed to import Maven project: " + each.problems)
+      Assertions.assertFalse(each.hasReadingErrors(), "Failed to import Maven project: " + each.problems)
     }
   }
 }
 
 fun MavenTestFixture.getRelativePath(base: Path, path: String): String =
   FileUtil.toCanonicalPath(base.relativize(Path.of(path)).toString())
-
-// Ported from AbstractMavenStaticSyncTest.importProjectsAsync: import via the static pre-importer instead of real Maven.
-suspend fun MavenImportingTestFixture.importProjectsStaticSync(files: List<VirtualFile>) {
-  val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)
-  try {
-    val result = MavenProjectStaticImporter.getInstance(project)
-      .syncStatic(MavenSyncSession(project, MavenSyncSpec.incremental("test"), projectsManager.projectsTree),
-                  files,
-                  null,
-                  mavenImporterSettings,
-                  mavenGeneralSettings,
-                  true,
-                  SimpleStructureProjectVisitor(),
-                  activity,
-                  true)
-    projectsManager.initForTests()
-    projectsManager.projectsTree.updater().copyFrom(result.projectTree)
-  }
-  finally {
-    activity.finished()
-  }
-}
-
-suspend fun MavenImportingTestFixture.importProjectStaticSync(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
-  val pom = createProjectPom(xml)
-  importProjectStaticSync()
-  return pom
-}
-
-suspend fun MavenImportingTestFixture.importProjectStaticSync() {
-  importProjectsStaticSync(listOf(projectPom))
-}
-
-suspend fun MavenImportingTestFixture.importProjectStaticSync(file: VirtualFile) {
-  importProjectsStaticSync(listOf(file))
-}
-
-suspend fun MavenImportingTestFixture.importProjectsStaticSync(vararg files: VirtualFile) {
-  importProjectsStaticSync(files.toList())
-}

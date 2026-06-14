@@ -4,6 +4,12 @@ package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.configTest
+import com.intellij.maven.testFramework.fixtures.getEditor
+import com.intellij.maven.testFramework.fixtures.getTestPsiFile
+import com.intellij.maven.testFramework.fixtures.refreshFiles
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction

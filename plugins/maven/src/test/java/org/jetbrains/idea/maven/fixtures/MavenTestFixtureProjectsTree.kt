@@ -2,6 +2,8 @@
 @file:Suppress("unused")
 package org.jetbrains.idea.maven.fixtures
 
+import com.intellij.maven.testFramework.fixtures.MavenImportingTestFixture
+import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
@@ -54,7 +56,8 @@ suspend fun MavenImportingTestFixture.updateAll(vararg files: VirtualFile) {
 }
 
 suspend fun MavenImportingTestFixture.updateAll(profiles: List<String>, vararg files: VirtualFile) {
-  tree.updateAll(listOf(*files), false, mavenGeneralSettings, MavenExplicitProfiles(profiles, emptySet()), mavenEmbedderWrappers, rawProgressReporter)
+  tree.updateAll(listOf(*files), false,
+                 mavenGeneralSettings, MavenExplicitProfiles(profiles, emptySet()), mavenEmbedderWrappers, rawProgressReporter)
 }
 
 suspend fun MavenImportingTestFixture.update(file: VirtualFile) {

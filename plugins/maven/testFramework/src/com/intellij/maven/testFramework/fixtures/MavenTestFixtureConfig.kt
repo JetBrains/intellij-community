@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("unused")
-package org.jetbrains.idea.maven.fixtures
+
+package com.intellij.maven.testFramework.fixtures
 
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT

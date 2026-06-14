@@ -4,6 +4,11 @@ package org.jetbrains.idea.maven.fixtures
 
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter
+import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
+import com.intellij.maven.testFramework.fixtures.MavenTestFixture
+import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.getEditor
+import com.intellij.maven.testFramework.fixtures.getTestPsiFile
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CustomizedDataContext
 import com.intellij.openapi.actionSystem.DataContext

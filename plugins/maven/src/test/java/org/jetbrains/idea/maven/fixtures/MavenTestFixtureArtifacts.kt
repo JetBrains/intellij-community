@@ -2,6 +2,7 @@
 @file:Suppress("unused")
 package org.jetbrains.idea.maven.fixtures
 
+import com.intellij.maven.testFramework.fixtures.MavenTestFixture
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.util.io.DigestUtil.sha1

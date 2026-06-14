@@ -2,10 +2,10 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.idea.TestFor
+import com.intellij.maven.testFramework.fixtures.mavenFixture
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.idea.maven.MavenCustomNioRepositoryHelper
-import org.jetbrains.idea.maven.fixtures.mavenFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assumptions.assumeTrue

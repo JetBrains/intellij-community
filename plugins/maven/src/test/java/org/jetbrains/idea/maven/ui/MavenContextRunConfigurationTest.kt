@@ -3,6 +3,13 @@ package org.jetbrains.idea.maven.ui
 
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.RunConfigurationProducer
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.initProjectsManager
+import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.maven.testFramework.fixtures.mn
+import com.intellij.maven.testFramework.fixtures.updateAllProjects
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.vfs.VirtualFile
@@ -14,13 +21,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.execution.MavenConfigurationProducer
 import org.jetbrains.idea.maven.execution.MavenGoalLocation
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration
-import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.createModulePom
-import org.jetbrains.idea.maven.fixtures.createProjectPom
-import org.jetbrains.idea.maven.fixtures.initProjectsManager
-import org.jetbrains.idea.maven.fixtures.mavenDomFixture
-import org.jetbrains.idea.maven.fixtures.mn
-import org.jetbrains.idea.maven.fixtures.updateAllProjects
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator
 import org.junit.jupiter.api.Assertions.assertEquals

@@ -2,10 +2,10 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.ide.highlighter.XmlFileType
+import com.intellij.maven.testFramework.fixtures.mavenFixture
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.junit5.TestApplication
-import org.jetbrains.idea.maven.fixtures.mavenFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull

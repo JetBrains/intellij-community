@@ -15,7 +15,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import com.intellij.testFramework.replaceService
 import org.jdom.output.XMLOutputter
-import org.jetbrains.idea.maven.fixtures.mavenFixture
+import com.intellij.maven.testFramework.fixtures.mavenFixture
 import org.jetbrains.idea.maven.utils.MavenSettings
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse

@@ -3,12 +3,12 @@ package org.jetbrains.idea.maven.statistics
 
 import com.intellij.internal.statistic.FUCollectorTestCase.collectProjectStateCollectorEvents
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.maven.testFramework.fixtures.assertContain
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.fus.reporting.api.ValidationResultType
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.assertContain
-import org.jetbrains.idea.maven.fixtures.importProjectAsync
-import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test

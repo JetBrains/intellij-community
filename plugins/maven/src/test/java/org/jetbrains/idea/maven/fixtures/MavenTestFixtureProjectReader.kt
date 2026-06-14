@@ -2,6 +2,10 @@
 @file:Suppress("unused")
 package org.jetbrains.idea.maven.fixtures
 
+import com.intellij.maven.testFramework.fixtures.MavenImportingTestFixture
+import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
+import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.model.MavenId

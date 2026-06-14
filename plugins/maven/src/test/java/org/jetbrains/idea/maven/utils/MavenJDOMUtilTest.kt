@@ -16,13 +16,13 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.idea.IJIgnore
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.mavenFixture
+import com.intellij.maven.testFramework.fixtures.projectPath
+import com.intellij.maven.testFramework.fixtures.refreshFiles
+import com.intellij.maven.testFramework.fixtures.updateProjectSubFile
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.createProjectSubFile
-import org.jetbrains.idea.maven.fixtures.mavenFixture
-import org.jetbrains.idea.maven.fixtures.projectPath
-import org.jetbrains.idea.maven.fixtures.refreshFiles
-import org.jetbrains.idea.maven.fixtures.updateProjectSubFile
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.fail
