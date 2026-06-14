@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.ProtectionLevel;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.AccessDirection;
@@ -62,6 +63,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.jetbrains.python.PyNames.isDunder;
+import static com.jetbrains.python.PyNames.isSunder;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 
@@ -255,8 +258,9 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
                                                                  @NotNull TypeEvalContext context) {
     assert isCustomEnum(enumClass, context);
 
-    String name = targetExpression.getName();
-    if (name == null || PyUtil.isClassPrivateName(name) || "_ignore_".equals(name)) return null;
+    var name = targetExpression.getName();
+    var protection = targetExpression.getProtectionLevel();
+    if (protection == ProtectionLevel.PRIVATE || name == null || isSunder(name) || isDunder(name)) return null;
 
     if (context.maySwitchToAST(targetExpression)) {
       PyExpression value = targetExpression.findAssignedValue();

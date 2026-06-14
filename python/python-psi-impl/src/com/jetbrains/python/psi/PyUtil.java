@@ -60,6 +60,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonCodeStyleService;
+import com.jetbrains.python.ast.PyAstElement;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.completion.OverwriteEqualsInsertHandler;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -993,7 +994,10 @@ public final class PyUtil {
 
   /**
    * @return true iff the name looks like a class-private one, starting with two underscores but not ending with two underscores.
+   *
+   * @deprecated use {@link PyAstElement#getProtectionLevel()} or {@link PyNames#isDunder(String)}
    */
+  @Deprecated
   public static boolean isClassPrivateName(@NotNull String name) {
     return name.startsWith("__") && !name.endsWith("__");
   }
