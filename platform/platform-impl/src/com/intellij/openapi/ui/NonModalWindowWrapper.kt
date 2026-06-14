@@ -299,7 +299,7 @@ abstract class NonModalWindowWrapper(
     windowListener?.let { activeWindow.removeWindowListener(it) }
     windowListener = null
     content.parent?.remove(content)
-    activeWindow.dispose()
+    disposeWindow(activeWindow)
     windowDisposable?.let { Disposer.dispose(it) }
     windowDisposable = null
     activeWindow = createAwtWindow(toFloat, content, minWindowSize, bounds.size)
@@ -465,8 +465,17 @@ abstract class NonModalWindowWrapper(
   override fun dispose() {
     isDisposed = true
     windowListener?.let { activeWindow.removeWindowListener(it) }
+    windowListener = null
     Disposer.dispose(frameDisposable)
-    activeWindow.dispose()
+    disposeWindow(activeWindow)
+  }
+
+  private fun disposeWindow(window: Window) {
+    window.dispose()
+    val rootPane = (window as? RootPaneContainer)?.rootPane
+    rootPane?.resetKeyboardActions()
+    DialogWrapper.cleanupRootPane(rootPane)
+    DialogWrapper.cleanupWindowListeners(window)
   }
 }
 
