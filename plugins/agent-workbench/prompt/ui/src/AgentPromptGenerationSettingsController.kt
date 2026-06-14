@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.Toggleable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
@@ -39,21 +38,16 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.ActionLink
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.isActive
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import javax.swing.Icon
 import javax.swing.JPanel
-import kotlin.time.Duration.Companion.seconds
-
-private val MODEL_CATALOG_REFRESH_STATUS_DELAY = 3.seconds
 
 internal class AgentPromptGenerationSettingsController(
   private val invocationData: AgentPromptInvocationData,
@@ -75,7 +69,6 @@ internal class AgentPromptGenerationSettingsController(
 ) {
   private val transientSettingsByProviderId = LinkedHashMap<String, AgentPromptGenerationSettings>()
   private val userProfilesById = LinkedHashMap<String, AgentPromptLaunchProfile>()
-  private val modelCatalogsByProviderId = LinkedHashMap<String, ModelCatalogState>()
   private var generationControlsVisible = true
   private var activeProfileId: String? = null
   private var defaultProfileId: String? = null
@@ -193,67 +186,23 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   private fun requestModelCatalogRefresh(selectedProvider: ProviderEntry) {
-    if (!selectedProvider.bridge.supportsGenerationModelSelection) {
-      return
-    }
     val providerId = selectedProvider.bridge.provider.value
-    when (modelCatalogsByProviderId[providerId]) {
-      ModelCatalogState.Loading,
-      is ModelCatalogState.Refreshing,
-        -> return
-      is ModelCatalogState.Loaded,
-      is ModelCatalogState.RefreshFailed,
-      ModelCatalogState.Failed,
-      null,
-        -> Unit
-    }
-
-    val cachedModels = loadedModelCatalog(providerId)
-    modelCatalogsByProviderId[providerId] = if (cachedModels == null) {
-      ModelCatalogState.Loading
-    }
-    else {
-      ModelCatalogState.Loaded(cachedModels)
-    }
-    val refresh = modelCatalogService.requestRefresh(selectedProvider.bridge, invocationData.project)
-    if (cachedModels != null) {
-      modelCatalogScope.launch {
-        delay(MODEL_CATALOG_REFRESH_STATUS_DELAY)
-        withContext(Dispatchers.EDT) {
-          if (!refresh.isCompleted && modelCatalogsByProviderId[providerId] == ModelCatalogState.Loaded(cachedModels)) {
-            modelCatalogsByProviderId[providerId] = ModelCatalogState.Refreshing(cachedModels)
-            refreshPresentation()
-            refreshModelPopupIfOpen(providerId)
-          }
-        }
+    modelCatalogService.requestStateRefresh(selectedProvider.bridge, invocationData.project) {
+      if (!modelCatalogScope.isActive) {
+        return@requestStateRefresh
       }
-    }
-    modelCatalogScope.launch {
-      val result = runCatching { refresh.await() }
-      withContext(Dispatchers.EDT) {
-        modelCatalogsByProviderId[providerId] = result.fold(
-          onSuccess = { models ->
-            ModelCatalogState.Loaded(models)
-          },
-          onFailure = {
-            val fallbackModels = modelCatalogService.cachedCatalog(providerId) ?: cachedModels
-            if (fallbackModels == null) {
-              ModelCatalogState.Failed
-            }
-            else {
-              ModelCatalogState.RefreshFailed(fallbackModels)
-            }
-          },
-        )
-        refreshPresentation()
-        refreshModelPopupIfOpen(providerId)
-      }
+      refreshPresentation()
+      refreshModelPopupIfOpen(providerId)
     }
   }
 
-  private fun modelCatalogState(providerId: String): ModelCatalogState? {
-    return modelCatalogsByProviderId[providerId]
-           ?: modelCatalogService.cachedCatalog(providerId)?.let { models -> ModelCatalogState.Loaded(models) }
+  private fun requestModelCatalogRefresh(providerId: String, onStateChanged: () -> Unit) {
+    val provider = providerSelector.providerEntries().firstOrNull { entry -> entry.bridge.provider.value == providerId } ?: return
+    modelCatalogService.requestStateRefresh(provider.bridge, invocationData.project, onStateChanged)
+  }
+
+  private fun modelCatalogState(providerId: String): AgentPromptGenerationModelCatalogState? {
+    return modelCatalogService.catalogState(providerId)
   }
 
   private fun loadedModelCatalog(providerId: String): List<AgentPromptGenerationModel>? {
@@ -491,47 +440,35 @@ internal class AgentPromptGenerationSettingsController(
     return createPlanReasoningEffortActionGroup(supportedEfforts)
   }
 
-  private fun createModelActionGroup(providerId: String, modelCatalogState: ModelCatalogState?): DefaultActionGroup {
+  private fun createModelActionGroup(providerId: String, modelCatalogState: AgentPromptGenerationModelCatalogState?): DefaultActionGroup {
     val group = DefaultActionGroup()
-    group.add(ModelAction(modelId = null, text = AgentPromptBundle.message("popup.generation.model.popup.auto")))
-    when (modelCatalogState) {
-      is ModelCatalogState.Loaded -> {
-        addModelActions(group, modelCatalogState.models)
+    buildGenerationModelSelectorEntries(providerId, modelCatalogState, currentSettings().modelId).forEach { entry ->
+      when (entry) {
+        is AgentPromptGenerationModelSelectorEntry.Model -> {
+          entry.separatorGroup?.let { group.add(Separator.create(it.modelSelectorText())) }
+          group.add(ModelAction(modelId = entry.modelId, text = entry.displayName))
+        }
+        is AgentPromptGenerationModelSelectorEntry.Status -> {
+          group.add(ModelCatalogStatusAction(entry.displayName, modelCatalogStatusIcon(entry.kind)))
+        }
+        is AgentPromptGenerationModelSelectorEntry.Retry -> {
+          group.add(RetryModelCatalogAction(entry.providerId))
+        }
       }
-      is ModelCatalogState.Refreshing -> {
-        addModelActions(group, modelCatalogState.models)
-        group.add(ModelCatalogStatusAction(AgentPromptBundle.message("popup.generation.model.refreshing"), AnimatedIcon.Default.INSTANCE))
-      }
-      is ModelCatalogState.RefreshFailed -> {
-        addModelActions(group, modelCatalogState.models)
-        addModelCatalogRetryActions(group, providerId, AgentPromptBundle.message("popup.generation.model.refresh.failed"))
-      }
-      ModelCatalogState.Loading -> {
-        group.add(ModelCatalogStatusAction(AgentPromptBundle.message("popup.generation.model.loading"), AnimatedIcon.Default.INSTANCE))
-      }
-      ModelCatalogState.Failed -> {
-        addModelCatalogRetryActions(group, providerId, AgentPromptBundle.message("popup.generation.model.load.failed"))
-      }
-      null -> Unit
     }
     return group
   }
 
-  private fun addModelActions(group: DefaultActionGroup, models: List<AgentPromptGenerationModel>) {
-    if (models.isEmpty()) {
-      group.add(ModelCatalogStatusAction(AgentPromptBundle.message("popup.generation.model.empty")))
+  private fun modelCatalogStatusIcon(kind: AgentPromptGenerationModelSelectorEntry.Status.Kind): Icon? {
+    return when (kind) {
+      AgentPromptGenerationModelSelectorEntry.Status.Kind.LOADING,
+      AgentPromptGenerationModelSelectorEntry.Status.Kind.REFRESHING,
+        -> AnimatedIcon.Default.INSTANCE
+      AgentPromptGenerationModelSelectorEntry.Status.Kind.EMPTY,
+      AgentPromptGenerationModelSelectorEntry.Status.Kind.LOAD_FAILED,
+      AgentPromptGenerationModelSelectorEntry.Status.Kind.REFRESH_FAILED,
+        -> null
     }
-    else {
-      models.groupedForModelSelector().forEach { section ->
-        group.add(Separator.create(section.group.modelSelectorText()))
-        section.models.forEach { model -> group.add(ModelAction(modelId = model.id, text = model.displayName)) }
-      }
-    }
-  }
-
-  private fun addModelCatalogRetryActions(group: DefaultActionGroup, providerId: String, statusText: @Nls String) {
-    group.add(ModelCatalogStatusAction(statusText))
-    group.add(RetryModelCatalogAction(providerId))
   }
 
   private fun createReasoningEffortActionGroup(supportedEfforts: Set<AgentPromptReasoningEffort>): DefaultActionGroup {
@@ -689,6 +626,8 @@ internal class AgentPromptGenerationSettingsController(
       providerEntries = providerSelector.providerEntries(),
       currentDraftProfile = currentDefaultNamedDraftProfile(),
       modelCatalogProvider = ::loadedModelCatalog,
+      modelCatalogStateProvider = ::modelCatalogState,
+      requestModelCatalogRefresh = ::requestModelCatalogRefresh,
       newUserProfileId = ::newUserProfileId,
       onCreateProfile = ::saveNewProfile,
       onUpdateProfile = ::updateUserProfile,
@@ -710,6 +649,8 @@ internal class AgentPromptGenerationSettingsController(
       providerEntries = request.providerEntries,
       currentDraftProfile = request.currentDraftProfile,
       modelCatalogProvider = request.modelCatalogProvider,
+      modelCatalogStateProvider = request.modelCatalogStateProvider,
+      requestModelCatalogRefresh = request.requestModelCatalogRefresh,
       newUserProfileId = request.newUserProfileId,
       onCreateProfile = request.onCreateProfile,
       onUpdateProfile = request.onUpdateProfile,
@@ -812,7 +753,7 @@ internal class AgentPromptGenerationSettingsController(
 
   private inner class ModelAction(
     private val modelId: String?,
-    text: @Nls String,
+    text: @NlsSafe String,
   ) : DumbAwareToggleAction(text) {
     init {
       templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Never
@@ -951,29 +892,6 @@ internal class AgentPromptGenerationSettingsController(
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
   }
 
-}
-
-private sealed interface ModelCatalogState {
-  data object Loading : ModelCatalogState
-
-  data class Loaded(@JvmField val models: List<AgentPromptGenerationModel>) : ModelCatalogState
-
-  data class Refreshing(@JvmField val models: List<AgentPromptGenerationModel>) : ModelCatalogState
-
-  data object Failed : ModelCatalogState
-
-  data class RefreshFailed(@JvmField val models: List<AgentPromptGenerationModel>) : ModelCatalogState
-}
-
-private fun ModelCatalogState.modelsOrNull(): List<AgentPromptGenerationModel>? {
-  return when (this) {
-    is ModelCatalogState.Loaded -> models
-    is ModelCatalogState.Refreshing -> models
-    is ModelCatalogState.RefreshFailed -> models
-    ModelCatalogState.Loading,
-    ModelCatalogState.Failed,
-      -> null
-  }
 }
 
 private fun AgentPromptLaunchProfile.profilePayload(): AgentPromptLaunchProfile {

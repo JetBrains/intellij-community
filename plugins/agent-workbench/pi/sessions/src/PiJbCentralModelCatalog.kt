@@ -2,7 +2,6 @@
 package com.intellij.agent.workbench.pi.sessions
 
 import com.intellij.agent.workbench.json.createJsonGenerator
-import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import com.intellij.agent.workbench.prompt.core.withGroup
@@ -24,8 +23,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import tools.jackson.core.JsonGenerator
-import tools.jackson.core.JsonParser
-import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import java.io.StringWriter
 import java.net.URI
@@ -140,7 +137,7 @@ internal class PiJbCentralModelCatalog(
                     ?: return null
       return try {
         val payload = String(Base64.getUrlDecoder().decode(encoded.padBase64Url()), StandardCharsets.UTF_8)
-        val node = parseJsonObject(payload) ?: return null
+        val node = JBCENTRAL_JSON_FACTORY.parseJsonObject(payload) ?: return null
         val formatVersion = node.intValue("formatVersion") ?: return null
         if (formatVersion != PI_JBCENTRAL_GENERATION_MODEL_FORMAT_VERSION) {
           return null
@@ -160,8 +157,8 @@ internal class PiJbCentralModelCatalog(
           agent = agent,
           contextWindow = node.intValue("contextWindow")?.takeIf { it > 0 },
           maxTokens = node.intValue("maxTokens")?.takeIf { it > 0 },
-          reasoning = node.booleanValue("reasoning") == true,
-          supportsImages = node.booleanValue("supportsImages") == true,
+          reasoning = node.booleanValue("reasoning", allowYes = true) == true,
+          supportsImages = node.booleanValue("supportsImages", allowYes = true) == true,
           profileId = node.stringValue("profileId")?.takeIf { it.isNotBlank() },
         )
       }
@@ -298,7 +295,7 @@ internal fun parsePiListModels(output: String, launchMetadata: PiJbCentralLaunch
 }
 
 internal fun parseJbCentralProfiles(output: String, launchMetadata: PiJbCentralLaunchMetadata): List<PiJbCentralModelCandidate> {
-  val root = parseJsonObject(output) ?: return emptyList()
+  val root = JBCENTRAL_JSON_FACTORY.parseJsonObject(output) ?: return emptyList()
   val profiles = root.listValue("profiles") ?: return emptyList()
   val candidatesByIdentity = LinkedHashMap<Pair<PiJbCentralAgent, String>, PiJbCentralModelCandidate>()
   for (profile in profiles.filterIsInstance<Map<*, *>>()) {
@@ -309,7 +306,7 @@ internal fun parseJbCentralProfiles(output: String, launchMetadata: PiJbCentralL
 }
 
 internal fun parseJbCentralProxyConfig(output: String): PiJbCentralProxyConfig? {
-  val root = parseJsonObject(output) ?: return null
+  val root = JBCENTRAL_JSON_FACTORY.parseJsonObject(output) ?: return null
   val proxyPort = root.intValue("proxy_port")?.takeIf { it > 0 }
   val proxySecret = root.stringValue("proxy_secret")?.trim()?.takeIf { it.isNotBlank() }
   return PiJbCentralProxyConfig(
@@ -375,10 +372,10 @@ private fun Map<*, *>.toJbCentralProfileCandidate(launchMetadata: PiJbCentralLau
 
 private fun Map<*, *>.isDeprecatedOrExperimental(): Boolean {
   val lifeCycle = objectValue("lifeCycle")
-  return booleanValue("deprecated") == true ||
-         booleanValue("experimental") == true ||
-         lifeCycle?.booleanValue("deprecated") == true ||
-         lifeCycle?.booleanValue("experimental") == true
+  return booleanValue("deprecated", allowYes = true) == true ||
+         booleanValue("experimental", allowYes = true) == true ||
+         lifeCycle?.booleanValue("deprecated", allowYes = true) == true ||
+         lifeCycle?.booleanValue("experimental", allowYes = true) == true
 }
 
 private fun Map<*, *>.toJbCentralProfileAgent(availableAgents: Set<PiJbCentralAgent>): PiJbCentralAgent? {
@@ -661,107 +658,6 @@ private fun PiJbCentralLaunchMetadata.toJsonString(): String {
   return writer.toString()
 }
 
-private fun parseJsonObject(text: String): Map<String, Any?>? {
-  JBCENTRAL_JSON_FACTORY.createJsonParser(text).use { parser ->
-    if (parser.nextToken() != JsonToken.START_OBJECT) {
-      return null
-    }
-    return parser.readObjectValue()
-  }
-}
-
-@Suppress("DuplicatedCode")
-private fun JsonParser.readJsonValue(): Any? {
-  return when (currentToken()) {
-    JsonToken.START_OBJECT -> readObjectValue()
-    JsonToken.START_ARRAY -> readArrayValue()
-    JsonToken.VALUE_STRING -> string
-    JsonToken.VALUE_NUMBER_INT -> longValue
-    JsonToken.VALUE_NUMBER_FLOAT -> doubleValue
-    JsonToken.VALUE_TRUE, JsonToken.VALUE_FALSE -> booleanValue
-    JsonToken.VALUE_NULL -> null
-    else -> {
-      skipChildren()
-      null
-    }
-  }
-}
-
-@Suppress("DuplicatedCode")
-private fun JsonParser.readObjectValue(): Map<String, Any?> {
-  val result = LinkedHashMap<String, Any?>()
-  while (true) {
-    val token = nextToken() ?: return result
-    if (token == JsonToken.END_OBJECT) {
-      return result
-    }
-    if (token != JsonToken.PROPERTY_NAME) {
-      skipChildren()
-      continue
-    }
-    val fieldName = currentName()
-    if (nextToken() == null) {
-      return result
-    }
-    result[fieldName] = readJsonValue()
-  }
-}
-
-private fun JsonParser.readArrayValue(): List<Any?> {
-  val result = mutableListOf<Any?>()
-  while (true) {
-    val token = nextToken() ?: return result
-    if (token == JsonToken.END_ARRAY) {
-      return result
-    }
-    result += readJsonValue()
-  }
-}
-
-private fun Map<*, *>.stringValue(key: String): String? {
-  return when (val value = this[key]) {
-    is String -> value
-    is Number, is Boolean -> value.toString()
-    else -> null
-  }
-}
-
-private fun Map<*, *>.objectValue(key: String): Map<*, *>? {
-  return this[key] as? Map<*, *>
-}
-
-private fun Map<*, *>.listValue(key: String): List<*>? {
-  return this[key] as? List<*>
-}
-
-private fun Map<*, *>.stringListValue(key: String): List<String> {
-  return listValue(key)
-           ?.mapNotNull { value ->
-             when (value) {
-               is String -> value
-               is Number, is Boolean -> value.toString()
-               else -> null
-             }
-           }
-         ?: emptyList()
-}
-
-private fun Map<*, *>.intValue(key: String): Int? {
-  return when (val value = this[key]) {
-    is Number -> value.toInt()
-    is String -> value.toIntOrNull() ?: value.toDoubleOrNull()?.toInt()
-    else -> null
-  }
-}
-
-private fun Map<*, *>.booleanValue(key: String): Boolean? {
-  return when (val value = this[key]) {
-    is Boolean -> value
-    is String -> value.equals("true", ignoreCase = true) || value.equals("yes", ignoreCase = true)
-    else -> null
-  }
-}
-
 private fun JsonGenerator.writeJbCentralAgentsField(agents: Set<PiJbCentralAgent>) {
   writeName("agents")
   writeStartArray()
@@ -781,11 +677,6 @@ private fun JsonGenerator.writeNumberField(fieldName: String, value: Int) {
 private fun JsonGenerator.writeStringField(fieldName: String, value: String) {
   writeName(fieldName)
   writeString(value)
-}
-
-private fun String.padBase64Url(): String {
-  val padding = (4 - length % 4) % 4
-  return this + "=".repeat(padding)
 }
 
 private val JBCENTRAL_PROXY_PORT_REGEX = Regex("""(?i)\bport\s+(\d+)\b""")

@@ -18,6 +18,10 @@ internal class AgentPromptLaunchProfileEditorRequest(
   @JvmField val providerEntries: List<ProviderEntry>,
   @JvmField val currentDraftProfile: AgentPromptLaunchProfile?,
   @JvmField val modelCatalogProvider: (String) -> List<AgentPromptGenerationModel>?,
+  @JvmField val modelCatalogStateProvider: (String) -> AgentPromptGenerationModelCatalogState? = { providerId ->
+    modelCatalogProvider(providerId)?.let(AgentPromptGenerationModelCatalogState::Loaded)
+  },
+  @JvmField val requestModelCatalogRefresh: (String, () -> Unit) -> Unit = { _, _ -> },
   @JvmField val newUserProfileId: () -> String,
   @JvmField val onCreateProfile: (AgentPromptLaunchProfile) -> Unit,
   @JvmField val onUpdateProfile: (AgentPromptLaunchProfile) -> Unit,
@@ -72,6 +76,10 @@ internal class AgentPromptLaunchProfileEditorWindowService {
       providerEntries = request.providerEntries,
       currentDraftProfile = request.currentDraftProfile,
       modelCatalogProvider = { providerId -> currentRequest().modelCatalogProvider(providerId) },
+      modelCatalogStateProvider = { providerId -> currentRequest().modelCatalogStateProvider(providerId) },
+      requestModelCatalogRefresh = { providerId, onStateChanged ->
+        currentRequest().requestModelCatalogRefresh(providerId, onStateChanged)
+      },
       newUserProfileId = { currentRequest().newUserProfileId() },
       onCreateProfile = { profile -> currentRequest().onCreateProfile(profile) },
       onUpdateProfile = { profile -> currentRequest().onUpdateProfile(profile) },

@@ -2,7 +2,6 @@
 package com.intellij.agent.workbench.pi.sessions
 
 import com.intellij.agent.workbench.json.createJsonGenerator
-import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import com.intellij.agent.workbench.prompt.core.withGroup
@@ -17,8 +16,6 @@ import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.spawnProcess
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
-import tools.jackson.core.JsonParser
-import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import java.io.StringWriter
 import java.nio.charset.StandardCharsets
@@ -72,7 +69,7 @@ internal class PiKnownModelCatalog(
                     ?: return null
       return try {
         val payload = String(Base64.getUrlDecoder().decode(encoded.padBase64Url()), StandardCharsets.UTF_8)
-        val node = parseJsonObject(payload) ?: return null
+        val node = KNOWN_MODEL_JSON_FACTORY.parseJsonObject(payload) ?: return null
         val formatVersion = node.intValue("formatVersion") ?: return null
         if (formatVersion != PI_KNOWN_GENERATION_MODEL_FORMAT_VERSION) {
           return null
@@ -392,87 +389,6 @@ private fun PiKnownModelSelection.toJsonString(): String {
   return writer.toString()
 }
 
-private fun parseJsonObject(text: String): Map<String, Any?>? {
-  KNOWN_MODEL_JSON_FACTORY.createJsonParser(text).use { parser ->
-    if (parser.nextToken() != JsonToken.START_OBJECT) {
-      return null
-    }
-    return parser.readObjectValue()
-  }
-}
-
-@Suppress("DuplicatedCode")
-private fun JsonParser.readJsonValue(): Any? {
-  return when (currentToken()) {
-    JsonToken.START_OBJECT -> readObjectValue()
-    JsonToken.START_ARRAY -> readArrayValue()
-    JsonToken.VALUE_STRING -> string
-    JsonToken.VALUE_NUMBER_INT -> longValue
-    JsonToken.VALUE_NUMBER_FLOAT -> doubleValue
-    JsonToken.VALUE_TRUE, JsonToken.VALUE_FALSE -> booleanValue
-    JsonToken.VALUE_NULL -> null
-    else -> {
-      skipChildren()
-      null
-    }
-  }
-}
-
-@Suppress("DuplicatedCode")
-private fun JsonParser.readObjectValue(): Map<String, Any?> {
-  val result = LinkedHashMap<String, Any?>()
-  while (true) {
-    val token = nextToken() ?: return result
-    if (token == JsonToken.END_OBJECT) {
-      return result
-    }
-    if (token != JsonToken.PROPERTY_NAME) {
-      skipChildren()
-      continue
-    }
-    val fieldName = currentName()
-    if (nextToken() == null) {
-      return result
-    }
-    result[fieldName] = readJsonValue()
-  }
-}
-
-private fun JsonParser.readArrayValue(): List<Any?> {
-  val result = mutableListOf<Any?>()
-  while (true) {
-    val token = nextToken() ?: return result
-    if (token == JsonToken.END_ARRAY) {
-      return result
-    }
-    result += readJsonValue()
-  }
-}
-
-private fun Map<*, *>.stringValue(key: String): String? {
-  return when (val value = this[key]) {
-    is String -> value
-    is Number, is Boolean -> value.toString()
-    else -> null
-  }
-}
-
-private fun Map<*, *>.intValue(key: String): Int? {
-  return when (val value = this[key]) {
-    is Number -> value.toInt()
-    is String -> value.toIntOrNull() ?: value.toDoubleOrNull()?.toInt()
-    else -> null
-  }
-}
-
-private fun Map<*, *>.booleanValue(key: String): Boolean? {
-  return when (val value = this[key]) {
-    is Boolean -> value
-    is String -> value.isPiListModelsTruthy()
-    else -> null
-  }
-}
-
 private fun String?.isPiListModelsTruthy(): Boolean {
   return equals("true", ignoreCase = true) || equals("yes", ignoreCase = true)
 }
@@ -553,11 +469,6 @@ private fun String?.parsePiListModelsSize(): Int? {
   val numberText = if (multiplier == 1) raw else raw.dropLast(1)
   val value = numberText.toDoubleOrNull() ?: return null
   return (value * multiplier).toInt().takeIf { it > 0 }
-}
-
-private fun String.padBase64Url(): String {
-  val padding = (4 - length % 4) % 4
-  return this + "=".repeat(padding)
 }
 
 private fun stripAnsiControlSequences(text: String): String {

@@ -1180,6 +1180,68 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun launchProfileEditorModelComboStartsCatalogLoadingOnOpen(): Unit = timeoutRunBlocking {
+    val project = ProjectManager.getInstance().defaultProject
+    val catalogService = project.service<AgentPromptGenerationModelCatalogService>()
+    val refreshStarted = CompletableDeferred<Unit>()
+    val finishRefresh = CompletableDeferred<Unit>()
+    val modelCatalogRequests = AtomicInteger()
+    val provider = testProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      promptOptions = emptyList(),
+      supportsGenerationModelSelection = true,
+      availableGenerationModelsResolver = {
+        modelCatalogRequests.incrementAndGet()
+        refreshStarted.complete(Unit)
+        finishRefresh.await()
+        listOf(AgentPromptGenerationModel(id = "gpt-5.5", displayName = "GPT-5.5"))
+      },
+    )
+    val profile = AgentPromptLaunchProfile(
+      id = "user:models",
+      name = "Models",
+      providerId = AgentSessionProvider.CODEX.value,
+    )
+    var editor: AgentPromptLaunchProfileEditorDialog? = null
+    try {
+      editor = withContext(Dispatchers.EDT) {
+        createLaunchProfileEditorForTest(
+          profiles = listOf(profile),
+          activeProfileId = profile.id,
+          providerOverride = provider,
+          modelCatalogStateProvider = catalogService::catalogState,
+          requestModelCatalogRefresh = { providerId, onStateChanged ->
+            if (providerId == AgentSessionProvider.CODEX.value) {
+              catalogService.requestStateRefresh(provider, project, onStateChanged)
+            }
+          },
+        ).also { it.selectProfileForTest(profile.id) }
+      }
+
+      withContext(Dispatchers.EDT) {
+        val activeEditor = editor
+        assertThat(activeEditor.modelOptionTextsForTest()).containsExactly("Default")
+        activeEditor.openModelComboForTest()
+        assertThat(activeEditor.modelOptionTextsForTest()).containsExactly("Default", "Loading models...")
+      }
+      waitForCondition { refreshStarted.isCompleted }
+      finishRefresh.complete(Unit)
+      waitForCondition {
+        withContext(Dispatchers.EDT) {
+          editor.modelOptionTextsForTest() == listOf("Default", "GPT-5.5")
+        }
+      }
+      assertThat(modelCatalogRequests.get()).isEqualTo(1)
+    }
+    finally {
+      if (!finishRefresh.isCompleted) {
+        finishRefresh.complete(Unit)
+      }
+      withContext(Dispatchers.EDT) { editor?.closeForTest() }
+    }
+  }
+
+  @Test
   fun launchProfileEditorModeControlShowsYoloOnlyWhenProviderSupportsIt() {
     runInEdtAndWait {
       val yoloProfile = AgentPromptLaunchProfile(
@@ -2248,9 +2310,15 @@ class AgentPromptProviderSelectorTest {
     defaultProfileId: String? = null,
     supportedLaunchModes: Set<AgentSessionLaunchMode> = setOf(AgentSessionLaunchMode.STANDARD),
     modelCatalog: List<AgentPromptGenerationModel> = emptyList(),
+    providerOverride: AgentSessionProviderDescriptor? = null,
+    modelCatalogStateProvider: (String) -> AgentPromptGenerationModelCatalogState? = { providerId ->
+      modelCatalog.takeIf { providerId == AgentSessionProvider.CODEX.value && it.isNotEmpty() }
+        ?.let(AgentPromptGenerationModelCatalogState::Loaded)
+    },
+    requestModelCatalogRefresh: (String, () -> Unit) -> Unit = { _, _ -> },
     onDeleteProfile: (AgentPromptLaunchProfile) -> Unit = {},
   ): AgentPromptLaunchProfileEditorDialog {
-    val provider = testProviderBridge(
+    val provider = providerOverride ?: testProviderBridge(
       provider = AgentSessionProvider.CODEX,
       promptOptions = emptyList(),
       supportedLaunchModesOverride = supportedLaunchModes,
@@ -2263,6 +2331,8 @@ class AgentPromptProviderSelectorTest {
       providerEntries = listOf(ProviderEntry(provider, "Codex", true, EmptyIcon.ICON_16)),
       currentDraftProfile = null,
       modelCatalogProvider = { modelCatalog },
+      modelCatalogStateProvider = modelCatalogStateProvider,
+      requestModelCatalogRefresh = requestModelCatalogRefresh,
       newUserProfileId = { "user:new" },
       onCreateProfile = {},
       onUpdateProfile = {},

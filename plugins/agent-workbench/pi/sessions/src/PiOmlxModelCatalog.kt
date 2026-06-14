@@ -2,14 +2,11 @@
 package com.intellij.agent.workbench.pi.sessions
 
 import com.intellij.agent.workbench.json.createJsonGenerator
-import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.openapi.diagnostic.logger
 import tools.jackson.core.JsonGenerator
-import tools.jackson.core.JsonParser
-import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import java.io.StringWriter
 import java.net.URI
@@ -141,7 +138,7 @@ internal class PiOmlxModelCatalog(
   private fun readJsonObject(path: Path): Map<String, Any?>? {
     val text = fileTextReader(path) ?: return null
     return try {
-      parseJsonObject(text)
+      OMLX_JSON_FACTORY.parseJsonObject(text)
     }
     catch (e: Exception) {
       OMLX_LOG.debug("Failed to parse $path", e)
@@ -165,7 +162,7 @@ internal class PiOmlxModelCatalog(
                     ?: return null
       return try {
         val payload = String(Base64.getUrlDecoder().decode(encoded.padBase64Url()), StandardCharsets.UTF_8)
-        val node = parseJsonObject(payload) ?: return null
+        val node = OMLX_JSON_FACTORY.parseJsonObject(payload) ?: return null
         val formatVersion = node.intValue("formatVersion") ?: return null
         if (formatVersion != PI_OMLX_GENERATION_MODEL_FORMAT_VERSION) {
           return null
@@ -183,7 +180,7 @@ internal class PiOmlxModelCatalog(
           tokenSource = tokenSource,
           contextWindow = node.intValue("contextWindow"),
           maxTokens = node.intValue("maxTokens"),
-          reasoning = node.booleanValue("reasoning") == true,
+          reasoning = node.booleanValue("reasoning", trimString = true) == true,
           modelType = node.stringValue("modelType")?.takeIf { it.isNotBlank() },
         )
       }
@@ -241,7 +238,7 @@ internal fun parseOmlxModelsStatus(
   baseUrl: String,
   tokenSource: PiOmlxTokenSource,
 ): List<PiOmlxModelCandidate> {
-  val root = parseJsonObject(responseJson) ?: return emptyList()
+  val root = OMLX_JSON_FACTORY.parseJsonObject(responseJson) ?: return emptyList()
   val models = root["models"] as? List<*> ?: return emptyList()
   return models
     .asSequence()
@@ -266,10 +263,10 @@ internal fun parseOmlxModelsStatus(
           tokenSource = tokenSource,
           contextWindow = entry.intValue("max_context_window"),
           maxTokens = entry.intValue("max_tokens"),
-          reasoning = entry.booleanValue("thinking_default") == true,
+          reasoning = entry.booleanValue("thinking_default", trimString = true) == true,
           modelType = modelType,
         ),
-        loaded = entry.booleanValue("loaded") == true,
+        loaded = entry.booleanValue("loaded", trimString = true) == true,
       )
     }
     .toList()
@@ -405,89 +402,6 @@ private fun fetchModelsStatus(connection: PiOmlxConnection): String? {
   }
 }
 
-private fun parseJsonObject(text: String): Map<String, Any?>? {
-  OMLX_JSON_FACTORY.createJsonParser(text).use { parser ->
-    if (parser.nextToken() != JsonToken.START_OBJECT) {
-      return null
-    }
-    return parser.readObjectValue()
-  }
-}
-
-private fun JsonParser.readJsonValue(): Any? {
-  return when (currentToken()) {
-    JsonToken.START_OBJECT -> readObjectValue()
-    JsonToken.START_ARRAY -> readArrayValue()
-    JsonToken.VALUE_STRING -> string
-    JsonToken.VALUE_NUMBER_INT -> longValue
-    JsonToken.VALUE_NUMBER_FLOAT -> doubleValue
-    JsonToken.VALUE_TRUE, JsonToken.VALUE_FALSE -> booleanValue
-    JsonToken.VALUE_NULL -> null
-    else -> {
-      skipChildren()
-      null
-    }
-  }
-}
-
-private fun JsonParser.readObjectValue(): Map<String, Any?> {
-  val result = LinkedHashMap<String, Any?>()
-  while (true) {
-    val token = nextToken() ?: return result
-    if (token == JsonToken.END_OBJECT) {
-      return result
-    }
-    if (token != JsonToken.PROPERTY_NAME) {
-      skipChildren()
-      continue
-    }
-    val fieldName = currentName()
-    if (nextToken() == null) {
-      return result
-    }
-    result[fieldName] = readJsonValue()
-  }
-}
-
-private fun JsonParser.readArrayValue(): List<Any?> {
-  val result = mutableListOf<Any?>()
-  while (true) {
-    val token = nextToken() ?: return result
-    if (token == JsonToken.END_ARRAY) {
-      return result
-    }
-    result += readJsonValue()
-  }
-}
-
-private fun Map<*, *>.stringValue(key: String): String? {
-  return when (val value = this[key]) {
-    is String -> value
-    is Number, is Boolean -> value.toString()
-    else -> null
-  }
-}
-
-private fun Map<*, *>.intValue(key: String): Int? {
-  return when (val value = this[key]) {
-    is Number -> value.toInt()
-    is String -> value.toIntOrNull() ?: value.toDoubleOrNull()?.toInt()
-    else -> null
-  }
-}
-
-private fun Map<*, *>.booleanValue(key: String): Boolean? {
-  return when (val value = this[key]) {
-    is Boolean -> value
-    is String -> when (value.trim().lowercase()) {
-      "true" -> true
-      "false" -> false
-      else -> null
-    }
-    else -> null
-  }
-}
-
 private fun JsonGenerator.writeNullableStringField(fieldName: String, value: String?) {
   writeName(fieldName)
   if (value == null) {
@@ -506,11 +420,6 @@ private fun JsonGenerator.writeNullableNumberField(fieldName: String, value: Int
   else {
     writeNumber(value)
   }
-}
-
-private fun String.padBase64Url(): String {
-  val padding = (4 - length % 4) % 4
-  return this + "=".repeat(padding)
 }
 
 private const val PI_CODING_AGENT_DIR_ENVIRONMENT_VARIABLE: String = "PI_CODING_AGENT_DIR"

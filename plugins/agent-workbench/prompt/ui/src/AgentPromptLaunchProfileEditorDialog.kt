@@ -8,7 +8,6 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
-import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
@@ -52,6 +51,8 @@ import javax.swing.Icon
 import javax.swing.KeyStroke
 import javax.swing.ListSelectionModel
 import javax.swing.event.DocumentEvent
+import javax.swing.event.PopupMenuEvent
+import javax.swing.event.PopupMenuListener
 
 internal class AgentPromptLaunchProfileEditorDialog(
   project: Project,
@@ -60,7 +61,11 @@ internal class AgentPromptLaunchProfileEditorDialog(
   defaultProfileId: String?,
   private var providerEntries: List<ProviderEntry>,
   private var currentDraftProfile: AgentPromptLaunchProfile?,
-  private val modelCatalogProvider: (String) -> List<AgentPromptGenerationModel>?,
+  modelCatalogProvider: (String) -> List<AgentPromptGenerationModel>?,
+  private val modelCatalogStateProvider: (String) -> AgentPromptGenerationModelCatalogState? = { providerId ->
+    modelCatalogProvider(providerId)?.let(AgentPromptGenerationModelCatalogState::Loaded)
+  },
+  private val requestModelCatalogRefresh: (String, () -> Unit) -> Unit = { _, _ -> },
   private val newUserProfileId: () -> String,
   private val onCreateProfile: (AgentPromptLaunchProfile) -> Unit,
   private val onUpdateProfile: (AgentPromptLaunchProfile) -> Unit,
@@ -74,6 +79,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
   private var currentDefaultProfileId: String? = defaultProfileId
   private var currentLaunchModes: Set<AgentSessionLaunchMode> = emptySet()
   private var isUpdatingEditor = false
+  private var selectedModelIdForEditor: String? = null
 
   private val profileListModel = DefaultListModel<AgentPromptLaunchProfile>()
   private val profileList = JBList(profileListModel).apply {
@@ -131,10 +137,34 @@ internal class AgentPromptLaunchProfileEditorDialog(
     }
     modelCombo.addActionListener {
       if (!isUpdatingEditor) {
-        refreshEffortOptions()
+        val selectedOption = selectedModelOption()
+        when {
+          selectedOption?.retryProviderId != null -> {
+            requestSelectedProviderModelRefresh()
+            refreshModelOptions(selectedModelId = selectedModelIdForEditor)
+          }
+          selectedOption?.selectable == true -> {
+            selectedModelIdForEditor = selectedOption.modelId
+            refreshEffortOptions()
+          }
+          else -> {
+            refreshModelOptions(selectedModelId = selectedModelIdForEditor)
+          }
+        }
         updateButtonState()
       }
     }
+    modelCombo.addPopupMenuListener(object : PopupMenuListener {
+      override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
+        requestSelectedProviderModelRefresh()
+      }
+
+      override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
+      }
+
+      override fun popupMenuCanceled(e: PopupMenuEvent?) {
+      }
+    })
     standardModeButton.addActionListener {
       if (!isUpdatingEditor) {
         updateButtonState()
@@ -309,6 +339,10 @@ internal class AgentPromptLaunchProfileEditorDialog(
     }
   }
 
+  fun openModelComboForTest() {
+    requestSelectedProviderModelRefresh()
+  }
+
   private fun profileListRendererComponentForTest(profileId: String): Component? {
     val index = managedProfiles.indexOfFirst { profile -> profile.id == profileId }
     val profile = managedProfiles.getOrNull(index) ?: return null
@@ -471,35 +505,73 @@ internal class AgentPromptLaunchProfileEditorDialog(
 
   private fun refreshModelOptions(profile: AgentPromptLaunchProfile? = selectedProfile()) {
     val providerId = selectedProviderOption()?.providerId ?: profile?.providerId
-    val selectedModelId = profile?.generationSettings?.modelId
-    val models = providerId?.let(modelCatalogProvider).orEmpty()
-    val options = ArrayList<ModelOption>()
-    options += ModelOption(null, AgentPromptBundle.message("popup.generation.model.popup.auto"))
-    val explicitModels = ArrayList<AgentPromptGenerationModel>()
-    selectedModelId
-      ?.takeIf { modelId -> models.none { model -> model.id == modelId } }
-      ?.let { modelId ->
-        explicitModels += AgentPromptGenerationModel(modelId, modelId).withGroup(AgentPromptGenerationModelGroup.OTHER)
+    val selectedModelId = profile?.generationSettings?.modelId ?: selectedModelIdForEditor
+    selectedModelIdForEditor = selectedModelId
+    val options = providerId
+      ?.let { id -> buildModelOptions(id, modelCatalogStateProvider(id), selectedModelId) }
+      ?: listOf(ModelOption(null, AgentPromptBundle.message("popup.generation.model.popup.auto")))
+    val wasUpdatingEditor = isUpdatingEditor
+    isUpdatingEditor = true
+    try {
+      modelCombo.model = DefaultComboBoxModel(options.toTypedArray())
+      modelCombo.selectedItem = options.firstOrNull { option -> option.selectable && option.modelId == selectedModelId }
+                                ?: options.firstOrNull { option -> option.selectable }
+    }
+    finally {
+      isUpdatingEditor = wasUpdatingEditor
+    }
+  }
+
+  private fun refreshModelOptions(selectedModelId: String?) {
+    selectedModelIdForEditor = selectedModelId
+    refreshModelOptions(profile = null)
+    refreshEffortOptions()
+  }
+
+  private fun requestSelectedProviderModelRefresh() {
+    val providerId = selectedProviderOption()?.providerId ?: return
+    requestModelCatalogRefresh(providerId) {
+      if (isDisposed) {
+        return@requestModelCatalogRefresh
       }
-    explicitModels += models
-    explicitModels.groupedForModelSelector().forEach { section ->
-      section.models.forEachIndexed { index, model ->
-        options += ModelOption(
-          modelId = model.id,
-          displayName = model.displayName,
-          separatorGroup = section.group.takeIf { index == 0 },
+      refreshModelOptions(selectedModelId = selectedModelIdForEditor)
+      updateButtonState()
+    }
+    refreshModelOptions(selectedModelId = selectedModelIdForEditor)
+  }
+
+  private fun buildModelOptions(
+    providerId: String,
+    catalogState: AgentPromptGenerationModelCatalogState?,
+    selectedModelId: String?,
+  ): List<ModelOption> {
+    return buildGenerationModelSelectorEntries(providerId, catalogState, selectedModelId).map { entry ->
+      when (entry) {
+        is AgentPromptGenerationModelSelectorEntry.Model -> ModelOption(
+          modelId = entry.modelId,
+          displayName = entry.displayName,
+          separatorGroup = entry.separatorGroup,
+        )
+        is AgentPromptGenerationModelSelectorEntry.Status -> ModelOption(
+          modelId = null,
+          displayName = entry.displayName,
+          selectable = false,
+        )
+        is AgentPromptGenerationModelSelectorEntry.Retry -> ModelOption(
+          modelId = null,
+          displayName = entry.displayName,
+          selectable = false,
+          retryProviderId = entry.providerId,
         )
       }
     }
-    modelCombo.model = DefaultComboBoxModel(options.toTypedArray())
-    modelCombo.selectedItem = options.firstOrNull { option -> option.modelId == selectedModelId } ?: options.first()
   }
 
   private fun refreshEffortOptions(profile: AgentPromptLaunchProfile? = selectedProfile()) {
     val selectedProvider = selectedProviderOption()
     val providerEntry = providerEntry(selectedProvider?.providerId)
-    val selectedModelId = selectedModelOption()?.modelId
-    val models = selectedProvider?.providerId?.let(modelCatalogProvider).orEmpty()
+    val selectedModelId = selectedModelIdForEditor
+    val models = selectedProvider?.providerId?.let { providerId -> modelCatalogStateProvider(providerId)?.modelsOrNull() }.orEmpty()
     val modelEfforts = selectedModelId
       ?.let { modelId -> models.firstOrNull { model -> model.id == modelId } }
       ?.supportedReasoningEfforts
@@ -544,7 +616,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
     return nameField.text.trim() != profile.name ||
            selectedProviderOption()?.providerId != profile.providerId ||
            selectedLaunchMode() != profile.launchMode ||
-           selectedModelOption()?.modelId != profile.generationSettings.modelId ||
+           selectedModelIdForEditor != profile.generationSettings.modelId ||
            selectedReasoningEffortOption()?.effort != profile.generationSettings.reasoningEffort
   }
 
@@ -661,7 +733,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
     val name = nameField.text.trim().takeIf { it.isNotEmpty() } ?: return null
     val provider = selectedProviderOption()?.takeIf { option -> option.isAvailable } ?: return null
     val launchMode = selectedLaunchMode() ?: return null
-    val modelId = selectedModelOption()?.modelId
+    val modelId = selectedModelIdForEditor
     val reasoningEffort = selectedReasoningEffortOption()?.effort ?: AgentPromptReasoningEffort.AUTO
     return AgentPromptLaunchProfile(
       id = existing?.id ?: "",
@@ -765,6 +837,8 @@ private data class ModelOption(
   @JvmField val modelId: String?,
   @JvmField val displayName: @NlsSafe String,
   @JvmField val separatorGroup: AgentPromptGenerationModelGroup? = null,
+  @JvmField val selectable: Boolean = true,
+  @JvmField val retryProviderId: String? = null,
 ) {
   override fun toString(): String = displayName
 }

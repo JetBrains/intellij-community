@@ -1,0 +1,154 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.agent.workbench.prompt.ui
+
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
+import com.intellij.agent.workbench.prompt.core.withGroup
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.Nls
+
+internal sealed interface AgentPromptGenerationModelCatalogState {
+  data object Loading : AgentPromptGenerationModelCatalogState
+
+  data class Loaded(@JvmField val models: List<AgentPromptGenerationModel>) : AgentPromptGenerationModelCatalogState
+
+  data class Refreshing(@JvmField val models: List<AgentPromptGenerationModel>) : AgentPromptGenerationModelCatalogState
+
+  data object Failed : AgentPromptGenerationModelCatalogState
+
+  data class RefreshFailed(@JvmField val models: List<AgentPromptGenerationModel>) : AgentPromptGenerationModelCatalogState
+}
+
+internal fun AgentPromptGenerationModelCatalogState.modelsOrNull(): List<AgentPromptGenerationModel>? {
+  return when (this) {
+    is AgentPromptGenerationModelCatalogState.Loaded -> models
+    is AgentPromptGenerationModelCatalogState.Refreshing -> models
+    is AgentPromptGenerationModelCatalogState.RefreshFailed -> models
+    AgentPromptGenerationModelCatalogState.Loading,
+    AgentPromptGenerationModelCatalogState.Failed,
+      -> null
+  }
+}
+
+internal sealed interface AgentPromptGenerationModelSelectorEntry {
+  val displayName: @NlsSafe String
+
+  data class Model(
+    @JvmField val modelId: String?,
+    override val displayName: @NlsSafe String,
+    @JvmField val separatorGroup: AgentPromptGenerationModelGroup? = null,
+  ) : AgentPromptGenerationModelSelectorEntry
+
+  data class Status(
+    override val displayName: @Nls String,
+    @JvmField val kind: Kind,
+  ) : AgentPromptGenerationModelSelectorEntry {
+    enum class Kind {
+      LOADING,
+      REFRESHING,
+      EMPTY,
+      LOAD_FAILED,
+      REFRESH_FAILED,
+    }
+  }
+
+  data class Retry(
+    override val displayName: @Nls String,
+    @JvmField val providerId: String,
+  ) : AgentPromptGenerationModelSelectorEntry
+}
+
+internal fun buildGenerationModelSelectorEntries(
+  providerId: String,
+  catalogState: AgentPromptGenerationModelCatalogState?,
+  selectedModelId: String?,
+): List<AgentPromptGenerationModelSelectorEntry> {
+  return buildList {
+    add(AgentPromptGenerationModelSelectorEntry.Model(null, AgentPromptBundle.message("popup.generation.model.popup.auto")))
+    when (catalogState) {
+      is AgentPromptGenerationModelCatalogState.Loaded -> {
+        addExplicitModelEntries(catalogState.models, selectedModelId)
+      }
+      is AgentPromptGenerationModelCatalogState.Refreshing -> {
+        addExplicitModelEntries(catalogState.models, selectedModelId)
+        add(AgentPromptGenerationModelSelectorEntry.Status(
+          AgentPromptBundle.message("popup.generation.model.refreshing"),
+          AgentPromptGenerationModelSelectorEntry.Status.Kind.REFRESHING,
+        ))
+      }
+      is AgentPromptGenerationModelCatalogState.RefreshFailed -> {
+        addExplicitModelEntries(catalogState.models, selectedModelId)
+        add(AgentPromptGenerationModelSelectorEntry.Status(
+          AgentPromptBundle.message("popup.generation.model.refresh.failed"),
+          AgentPromptGenerationModelSelectorEntry.Status.Kind.REFRESH_FAILED,
+        ))
+        add(AgentPromptGenerationModelSelectorEntry.Retry(AgentPromptBundle.message("popup.generation.model.retry"), providerId))
+      }
+      AgentPromptGenerationModelCatalogState.Loading -> {
+        addSavedUnknownModelEntry(selectedModelId, emptyList())
+        add(AgentPromptGenerationModelSelectorEntry.Status(
+          AgentPromptBundle.message("popup.generation.model.loading"),
+          AgentPromptGenerationModelSelectorEntry.Status.Kind.LOADING,
+        ))
+      }
+      AgentPromptGenerationModelCatalogState.Failed -> {
+        addSavedUnknownModelEntry(selectedModelId, emptyList())
+        add(AgentPromptGenerationModelSelectorEntry.Status(
+          AgentPromptBundle.message("popup.generation.model.load.failed"),
+          AgentPromptGenerationModelSelectorEntry.Status.Kind.LOAD_FAILED,
+        ))
+        add(AgentPromptGenerationModelSelectorEntry.Retry(AgentPromptBundle.message("popup.generation.model.retry"), providerId))
+      }
+      null -> {
+        addSavedUnknownModelEntry(selectedModelId, emptyList())
+      }
+    }
+  }
+}
+
+private fun MutableList<AgentPromptGenerationModelSelectorEntry>.addExplicitModelEntries(
+  models: List<AgentPromptGenerationModel>,
+  selectedModelId: String?,
+) {
+  val explicitModels = ArrayList<AgentPromptGenerationModel>()
+  addSavedUnknownModel(selectedModelId, models)?.let(explicitModels::add)
+  explicitModels += models
+  if (explicitModels.isEmpty()) {
+    add(AgentPromptGenerationModelSelectorEntry.Status(
+      AgentPromptBundle.message("popup.generation.model.empty"),
+      AgentPromptGenerationModelSelectorEntry.Status.Kind.EMPTY,
+    ))
+    return
+  }
+  explicitModels.groupedForModelSelector().forEach { section ->
+    section.models.forEachIndexed { index, model ->
+      add(AgentPromptGenerationModelSelectorEntry.Model(
+        modelId = model.id,
+        displayName = model.displayName,
+        separatorGroup = section.group.takeIf { index == 0 },
+      ))
+    }
+  }
+}
+
+private fun MutableList<AgentPromptGenerationModelSelectorEntry>.addSavedUnknownModelEntry(
+  selectedModelId: String?,
+  models: List<AgentPromptGenerationModel>,
+) {
+  addSavedUnknownModel(selectedModelId, models)?.let { model ->
+    add(AgentPromptGenerationModelSelectorEntry.Model(
+      modelId = model.id,
+      displayName = model.displayName,
+      separatorGroup = model.group,
+    ))
+  }
+}
+
+private fun addSavedUnknownModel(
+  selectedModelId: String?,
+  models: List<AgentPromptGenerationModel>,
+): AgentPromptGenerationModel? {
+  return selectedModelId
+    ?.takeIf { modelId -> models.none { model -> model.id == modelId } }
+    ?.let { modelId -> AgentPromptGenerationModel(modelId, modelId).withGroup(AgentPromptGenerationModelGroup.OTHER) }
+}
