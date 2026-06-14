@@ -27,6 +27,7 @@ import org.jetbrains.idea.maven.fixtures.createProjectPom
 import org.jetbrains.idea.maven.fixtures.createProjectSubFile
 import org.jetbrains.idea.maven.fixtures.importProjectAsync
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.project.BundledMaven3
 import org.jetbrains.idea.maven.project.MavenInSpecificPath
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent

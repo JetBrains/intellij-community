@@ -25,6 +25,7 @@ import org.jetbrains.idea.maven.fixtures.getRelativePath
 import org.jetbrains.idea.maven.fixtures.importProjectAsync
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.fixtures.mn
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.testRootDisposable
 import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager

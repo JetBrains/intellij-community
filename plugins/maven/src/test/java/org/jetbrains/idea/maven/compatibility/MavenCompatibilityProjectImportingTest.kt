@@ -19,6 +19,7 @@ import org.jetbrains.idea.maven.fixtures.importProjectAsync
 import org.jetbrains.idea.maven.fixtures.mavenGeneralSettings
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.fixtures.mn
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.projectsTree
 import org.jetbrains.idea.maven.fixtures.refreshFiles
 import org.jetbrains.idea.maven.model.MavenProjectProblem

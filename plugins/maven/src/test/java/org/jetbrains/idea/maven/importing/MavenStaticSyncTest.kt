@@ -27,6 +27,7 @@ import org.jetbrains.idea.maven.fixtures.createProjectSubDir
 import org.jetbrains.idea.maven.fixtures.getModule
 import org.jetbrains.idea.maven.fixtures.importProjectStaticSync
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.repositoryPathCanonical
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals

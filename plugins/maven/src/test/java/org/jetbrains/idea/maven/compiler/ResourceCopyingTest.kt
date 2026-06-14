@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.compiler
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
-import com.intellij.maven.testFramework.MavenCompilingTestCase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription
@@ -25,16 +24,8 @@ import com.intellij.openapi.module.ModuleManager.Companion.getInstance
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
-import kotlinx.coroutines.runBlocking
-import java.io.IOException
-import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.attribute.PosixFilePermission
-import kotlin.io.path.isWritable
-import kotlin.io.path.setPosixFilePermissions
-import kotlin.io.path.writeText
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.MavenVersionArguments
 import org.jetbrains.idea.maven.fixtures.assertCopied
 import org.jetbrains.idea.maven.fixtures.assertDefaultResources
@@ -51,16 +42,22 @@ import org.jetbrains.idea.maven.fixtures.getModule
 import org.jetbrains.idea.maven.fixtures.importProjectAsync
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.fixtures.projectPath
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.refreshFiles
 import org.jetbrains.idea.maven.fixtures.testRootDisposable
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
+import java.io.IOException
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.attribute.PosixFilePermission
+import kotlin.io.path.isWritable
+import kotlin.io.path.setPosixFilePermissions
+import kotlin.io.path.writeText
 
 @TestApplication
 @ParameterizedClass

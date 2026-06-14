@@ -10,6 +10,7 @@ import org.jetbrains.idea.maven.fixtures.checkHighlighting
 import org.jetbrains.idea.maven.fixtures.createProjectSubDir
 import org.jetbrains.idea.maven.fixtures.importProjectAsync
 import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.setRawPomFile
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull

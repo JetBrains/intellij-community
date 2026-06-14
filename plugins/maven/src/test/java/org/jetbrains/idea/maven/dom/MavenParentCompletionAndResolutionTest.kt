@@ -33,6 +33,7 @@ import org.jetbrains.idea.maven.fixtures.importProjectAsync
 import org.jetbrains.idea.maven.fixtures.importProjectsAsync
 import org.jetbrains.idea.maven.fixtures.mavenDomFixture
 import org.jetbrains.idea.maven.fixtures.moveCaretTo
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.runBlockingNoSync
 import org.jetbrains.idea.maven.fixtures.setPomContent
 import org.jetbrains.idea.maven.fixtures.updateProjectPom

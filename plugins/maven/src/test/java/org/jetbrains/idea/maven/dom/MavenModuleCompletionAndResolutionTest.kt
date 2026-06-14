@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.fixtures.getIntentionAtCaret
 import org.jetbrains.idea.maven.fixtures.importProjectAsync
 import org.jetbrains.idea.maven.fixtures.importProjectsAsync
 import org.jetbrains.idea.maven.fixtures.mavenDomFixture
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.updateProjectPom
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull

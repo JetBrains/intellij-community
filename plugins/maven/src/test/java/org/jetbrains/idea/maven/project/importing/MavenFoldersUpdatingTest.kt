@@ -43,6 +43,7 @@ import org.jetbrains.idea.maven.fixtures.createStdProjectFolders
 import org.jetbrains.idea.maven.fixtures.getModule
 import org.jetbrains.idea.maven.fixtures.importProjectAsync
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.projectsTree
 import org.jetbrains.idea.maven.fixtures.updateAllProjectsFullSync
 import org.jetbrains.idea.maven.importing.MavenEventsTestHelper

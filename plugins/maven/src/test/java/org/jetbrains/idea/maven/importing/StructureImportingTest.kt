@@ -7,6 +7,7 @@ import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource.FileInDirectory
 import com.intellij.platform.workspace.jps.entities.ModuleId
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.PsiTestUtil.addContentRoot
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
@@ -38,6 +39,7 @@ import org.jetbrains.idea.maven.fixtures.mavenGeneralSettings
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.fixtures.mn
 import org.jetbrains.idea.maven.fixtures.projectPath
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.projectsTree
 import org.jetbrains.idea.maven.fixtures.refreshFiles
 import org.jetbrains.idea.maven.fixtures.runWithoutStaticSync
@@ -213,9 +215,9 @@ class StructureImportingTest(mavenVersion: String, modelVersion: String) {
   fun testImportWithAlreadyExistingModuleWithDifferentNameButSameContentRoot() = runBlocking {
     val userModuleWithConflictingRoot = maven.createModule("userModuleWithConflictingRoot")
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null)
-    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, maven.projectRoot)
+    addContentRoot(userModuleWithConflictingRoot, maven.projectRoot)
     val anotherContentRoot = maven.createProjectSubFile("m1/user-content")
-    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, anotherContentRoot)
+    addContentRoot(userModuleWithConflictingRoot, anotherContentRoot)
     maven.assertContentRoots(userModuleWithConflictingRoot.getName(), maven.projectPath.toString(), anotherContentRoot.getPath())
 
     maven.createProjectPom("""
@@ -234,7 +236,7 @@ class StructureImportingTest(mavenVersion: String, modelVersion: String) {
   fun testImportWithAlreadyExistingModuleWithPartiallySameContentRoots() = runBlocking {
     val userModuleWithConflictingRoot = maven.createModule("userModuleWithConflictingRoot")
     PsiTestUtil.removeAllRoots(userModuleWithConflictingRoot, null)
-    PsiTestUtil.addContentRoot(userModuleWithConflictingRoot, maven.projectRoot)
+    addContentRoot(userModuleWithConflictingRoot, maven.projectRoot)
     maven.assertContentRoots(userModuleWithConflictingRoot.getName(), maven.projectPath.toString())
 
     val userModuleWithUniqueRoot = maven.createModule("userModuleWithUniqueRoot")

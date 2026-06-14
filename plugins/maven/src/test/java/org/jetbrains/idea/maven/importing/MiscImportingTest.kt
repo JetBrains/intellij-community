@@ -22,6 +22,7 @@ import org.jetbrains.idea.maven.fixtures.getModule
 import org.jetbrains.idea.maven.fixtures.importProjectAsync
 import org.jetbrains.idea.maven.fixtures.mavenGeneralSettings
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.projectsTree
 import org.jetbrains.idea.maven.fixtures.runWithoutStaticSync
 import org.jetbrains.idea.maven.fixtures.updateAllProjects
