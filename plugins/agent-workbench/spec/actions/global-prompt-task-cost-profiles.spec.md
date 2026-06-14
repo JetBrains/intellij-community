@@ -53,7 +53,7 @@ Task-cost profiles make the global prompt ready to send while still letting user
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
   [@test] ../../sessions/testSrc/AgentSessionUiPreferencesStateServiceTest.kt
 
-- `Copy` must persist the selected profile's current provider, launch mode, model, and effort as a new reusable user profile without also making it the default. Profile detail edits must be saved only through explicit editor actions such as `Save Changes`; those actions persist immediately. The editor must not expose a separate blank create mode.
+- `Copy` must persist the selected profile's current provider, launch mode, model, and effort as a new reusable user profile without also making it the default. Valid profile detail edits persist automatically; invalid detail edits remain transient and are discarded when another row is selected. The editor must not expose a separate blank create mode.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
 - The main toolbar primary click must launch with the stored default profile when one is applicable, falling back to the first available built-in profile. Launching from the primary click must not rewrite the default id.
@@ -67,7 +67,7 @@ Task-cost profiles make the global prompt ready to send while still letting user
 
 ## User Experience
 - Profile labels should read as task presets, for example `Default Profile`, `Careful`, or `Fast`, not as a raw settings list. The header should not duplicate the provider name as both icon identity and adjacent text.
-- Built-in and user profiles should appear together in the quick chooser. The built-in/user distinction matters in the manage dialog, where built-ins are read-only.
+- Built-in and user profiles should appear together in the quick chooser. The built-in/user distinction matters in the manage dialog, where built-in edits are stored as removable user customizations.
 - The profile popup should show profiles and one `Manage Launch Profiles` action.
 - Existing-task mode and extension tabs should hide task-cost controls because they do not launch a new task with generation settings.
 

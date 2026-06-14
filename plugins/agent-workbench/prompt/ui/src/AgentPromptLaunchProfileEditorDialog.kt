@@ -18,7 +18,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.DoubleClickListener
@@ -62,7 +61,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.PopupMenuEvent
 
 internal class AgentPromptLaunchProfileEditorDialog(
-  private val project: Project,
+  project: Project,
   profiles: List<AgentPromptLaunchProfile>,
   activeProfileId: String?,
   defaultProfileId: String?,
@@ -118,8 +117,6 @@ internal class AgentPromptLaunchProfileEditorDialog(
   private val modelCombo = ComboBox<ModelOption>()
   private val effortCombo = ComboBox<ReasoningEffortOption>()
   private val statusLabel = JBLabel(" ")
-  private val saveButton = JButton(AgentPromptBundle.message("popup.profile.editor.save.changes"))
-  private val revertButton = JButton(AgentPromptBundle.message("popup.profile.revert"))
   private val setDefaultButton = JButton(AgentPromptBundle.message("popup.profile.set.default"))
 
   init {
@@ -128,9 +125,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
     initModels()
     profileList.addListSelectionListener {
       if (!it.valueIsAdjusting) {
-        if (!handleProfileSelectionChange()) {
-          return@addListSelectionListener
-        }
+        handleProfileSelectionChange()
         renderSelectedProfile()
       }
     }
@@ -138,9 +133,8 @@ internal class AgentPromptLaunchProfileEditorDialog(
     providerCombo.addActionListener {
       if (!isUpdatingEditor) {
         refreshLaunchModeOptions()
-        refreshModelOptions()
-        refreshEffortOptions()
-        updateButtonState()
+        refreshModelOptions(selectedModelId = null)
+        handleEditorChanged()
       }
     }
     modelCombo.addActionListener {
@@ -153,31 +147,30 @@ internal class AgentPromptLaunchProfileEditorDialog(
           selectedOption?.selectable == true -> {
             selectedModelIdForEditor = selectedOption.modelId
             refreshEffortOptions()
+            handleEditorChanged()
           }
           else -> {
             refreshModelOptions(selectedModelId = selectedModelIdForEditor)
+            handleEditorChanged()
           }
         }
-        updateButtonState()
       }
     }
     standardModeButton.addActionListener {
       if (!isUpdatingEditor) {
-        updateButtonState()
+        handleEditorChanged()
       }
     }
     yoloModeButton.addActionListener {
       if (!isUpdatingEditor) {
-        updateButtonState()
+        handleEditorChanged()
       }
     }
     nameField.document.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        updateButtonState()
+        handleEditorChanged()
       }
     })
-    saveButton.addActionListener { saveSelectedProfile() }
-    revertButton.addActionListener { renderSelectedProfile() }
     setDefaultButton.addActionListener { setSelectedProfileAsDefault() }
     init()
     selectProfile(selectedProfileId ?: managedProfiles.firstOrNull()?.id)
@@ -272,8 +265,19 @@ internal class AgentPromptLaunchProfileEditorDialog(
     nameField.text = name
   }
 
-  fun saveSelectedProfileForTest() {
-    saveSelectedProfile()
+  fun selectedProfileNameForTest(): String {
+    return nameField.text
+  }
+
+  fun selectSelectedProfileProviderForTest(providerId: String) {
+    providerCombo.selectedItem = (0 until providerCombo.model.size)
+      .asSequence()
+      .map { index -> providerCombo.model.getElementAt(index) }
+      .first { option -> option.providerId == providerId }
+  }
+
+  fun selectedProfileModelIdForTest(): String? {
+    return selectedModelOption()?.modelId
   }
 
   fun renameSelectedProfileForTest() {
@@ -411,8 +415,6 @@ internal class AgentPromptLaunchProfileEditorDialog(
   private fun createButtonPanel(): JPanel {
     return JPanel().apply {
       isOpaque = false
-      add(saveButton)
-      add(revertButton)
       add(setDefaultButton)
     }
   }
@@ -490,53 +492,17 @@ internal class AgentPromptLaunchProfileEditorDialog(
     }
   }
 
-  private fun handleProfileSelectionChange(): Boolean {
+  private fun handleProfileSelectionChange() {
     if (isChangingSelection) {
-      return true
+      return
     }
     val previousProfile = profileById(selectedProfileId)
     val newProfile = selectedProfile()
     if (previousProfile?.id == newProfile?.id) {
-      return true
+      return
     }
-    if (previousProfile != null && hasEditorChanges(previousProfile) && !confirmDiscardOrSaveChanges(previousProfile)) {
-      selectProfile(previousProfile.id)
-      return false
-    }
-    selectProfile(newProfile?.id)
-    selectedProfileId = selectedProfile()?.id
-    onSelectProfile(selectedProfile())
-    return true
-  }
-
-  private fun confirmDiscardOrSaveChanges(profile: AgentPromptLaunchProfile): Boolean {
-    val draft = currentEditorDraft(profile)
-    val profileToSelectAfterSave = selectedProfile()?.id
-    val options = if (draft == null) {
-      arrayOf(AgentPromptBundle.message("popup.profile.editor.discard"), AgentPromptBundle.message("popup.profile.editor.cancel"))
-    }
-    else {
-      arrayOf(AgentPromptBundle.message("popup.profile.editor.save"),
-              AgentPromptBundle.message("popup.profile.editor.discard"),
-              AgentPromptBundle.message("popup.profile.editor.cancel"))
-    }
-    val result = Messages.showDialog(
-      project,
-      AgentPromptBundle.message("popup.profile.editor.unsaved.message", profile.name),
-      AgentPromptBundle.message("popup.profile.editor.unsaved.title"),
-      options,
-      0,
-      Messages.getQuestionIcon(),
-    )
-    return when {
-      draft != null && result == 0 -> {
-        saveProfileDraft(profile, draft, profileToSelectAfterSave)
-        true
-      }
-      draft != null && result == 1 -> true
-      draft == null && result == 0 -> true
-      else -> false
-    }
+    selectedProfileId = newProfile?.id
+    onSelectProfile(newProfile)
   }
 
   private fun renderSelectedProfile() {
@@ -591,8 +557,8 @@ internal class AgentPromptLaunchProfileEditorDialog(
     val selectedModelId = profile?.generationSettings?.modelId ?: selectedModelIdForEditor
     selectedModelIdForEditor = selectedModelId
     val options = providerId
-      ?.let { id -> buildModelOptions(id, modelCatalogStateProvider(id), selectedModelId) }
-      ?: listOf(ModelOption(null, AgentPromptBundle.message("popup.generation.model.popup.auto")))
+                    ?.let { id -> buildModelOptions(id, modelCatalogStateProvider(id), selectedModelId) }
+                  ?: listOf(ModelOption(null, AgentPromptBundle.message("popup.generation.model.popup.auto")))
     val wasUpdatingEditor = isUpdatingEditor
     isUpdatingEditor = true
     try {
@@ -675,21 +641,29 @@ internal class AgentPromptLaunchProfileEditorDialog(
     val profile = selectedProfile()
     val draft = currentEditorDraft(profile)
     val draftValid = draft != null
-    val modified = profile != null && draft != null && draft != profile
     nameField.isEnabled = profile != null
     providerCombo.isEnabled = profile != null
     updateLaunchModeControlState(profile != null)
     modelCombo.isEnabled = profile != null
     effortCombo.isEnabled = profile != null
-    saveButton.isVisible = profile != null
-    saveButton.isEnabled = modified
-    revertButton.isVisible = profile != null
-    revertButton.isEnabled = modified
     setDefaultButton.isEnabled =
-      profile != null && !modified && profile.id != currentDefaultProfileId && providerOption(profile.providerId)?.isAvailable == true
+      profile != null && draftValid && profile.id != currentDefaultProfileId && providerOption(profile.providerId)?.isAvailable == true
     val editorStatusText = statusText(profile, draftValid)
     statusLabel.text = editorStatusText
     updateDetailsAccessibleDescription(editorStatusText.ifBlank { null })
+  }
+
+  private fun handleEditorChanged() {
+    if (isUpdatingEditor) {
+      return
+    }
+    val profile = selectedProfile()
+    val draft = currentEditorDraft(profile)
+    updateButtonState()
+    if (profile == null || draft == null || draft == profile) {
+      return
+    }
+    saveProfileDraft(draft)
   }
 
   private fun updateDetailsAccessibleDescription(description: @Nls String?) {
@@ -753,25 +727,21 @@ internal class AgentPromptLaunchProfileEditorDialog(
     return true
   }
 
-  private fun saveSelectedProfile() {
-    val profile = selectedProfile() ?: return
-    val updated = currentEditorDraft(profile) ?: return
-    saveProfileDraft(profile, updated)
-  }
-
-  private fun saveProfileDraft(
-    profile: AgentPromptLaunchProfile,
-    updated: AgentPromptLaunchProfile,
-    profileToSelectAfterSave: String? = profile.id,
-  ) {
+  private fun saveProfileDraft(updated: AgentPromptLaunchProfile) {
+    val index = managedProfiles.indexOfFirst { item -> item.id == updated.id }
+    if (index < 0) {
+      return
+    }
     onUpdateProfile(updated)
     val builtInProfile = builtInProfile(updated.id)
     val effectiveProfile = if (builtInProfile != null && launchProfileMatchesBuiltIn(updated, builtInProfile)) builtInProfile else updated
-    managedProfiles = managedProfiles.map { item ->
-      if (item.id == updated.id) effectiveProfile else item
+    managedProfiles = managedProfiles.toMutableList().apply {
+      this[index] = effectiveProfile
     }
-    reloadListAndSelectProfile(profileToSelectAfterSave)
-    renderSelectedProfile()
+    profileListModel.set(index, effectiveProfile)
+    selectedProfileId = effectiveProfile.id
+    profileList.repaint()
+    updateButtonState()
   }
 
   private fun setSelectedProfileAsDefault() {

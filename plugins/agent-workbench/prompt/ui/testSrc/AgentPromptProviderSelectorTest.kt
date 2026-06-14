@@ -912,7 +912,6 @@ class AgentPromptProviderSelectorTest {
       try {
         editor.selectProfileForTest(profile.id)
         editor.setSelectedProfileNameForTest("Careful Updated")
-        editor.saveSelectedProfileForTest()
 
         assertThat(statusMessage).isEqualTo("Launch profile updated.")
         assertThat(launcher.preferences.launchProfiles.single().name).isEqualTo("Careful Updated")
@@ -952,7 +951,6 @@ class AgentPromptProviderSelectorTest {
       try {
         editor.selectProfileForTest(builtInProfileId)
         editor.setSelectedProfileNameForTest("Careful Codex")
-        editor.saveSelectedProfileForTest()
 
         val savedProfile = launcher.preferences.launchProfiles.single()
         assertThat(savedProfile.id).isEqualTo(builtInProfileId)
@@ -962,11 +960,101 @@ class AgentPromptProviderSelectorTest {
           .containsExactly("Careful Codex")
 
         editor.setSelectedProfileNameForTest("Codex")
-        editor.saveSelectedProfileForTest()
 
         assertThat(launcher.preferences.launchProfiles).isEmpty()
         assertThat(controller.manageProfilesRowsForTest().map(AgentPromptLaunchProfile::name))
           .containsExactly("Codex")
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorKeepsInvalidNameTransient() {
+    runInEdtAndWait {
+      val carefulProfile = AgentPromptLaunchProfile(
+        id = "user:careful",
+        name = "Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+      )
+      val fastProfile = AgentPromptLaunchProfile(
+        id = "user:fast",
+        name = "Fast",
+        providerId = AgentSessionProvider.CODEX.value,
+      )
+      val updatedProfiles = ArrayList<AgentPromptLaunchProfile>()
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(carefulProfile, fastProfile),
+        activeProfileId = carefulProfile.id,
+        onUpdateProfile = { profile -> updatedProfiles += profile },
+      )
+      try {
+        editor.selectProfileForTest(carefulProfile.id)
+        editor.setSelectedProfileNameForTest("")
+
+        assertThat(updatedProfiles).isEmpty()
+        assertThat(editor.profileNamesForTest()).containsExactly("Careful", "Fast")
+        assertThat(editor.selectedProfileNameForTest()).isEmpty()
+
+        editor.selectProfileForTest(fastProfile.id)
+        assertThat(editor.selectedProfileNameForTest()).isEqualTo("Fast")
+
+        editor.selectProfileForTest(carefulProfile.id)
+        assertThat(editor.selectedProfileNameForTest()).isEqualTo("Careful")
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorResetsModelWhenProviderChanges() {
+    runInEdtAndWait {
+      val profile = AgentPromptLaunchProfile(
+        id = "user:careful",
+        name = "Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+        generationSettings = AgentPromptGenerationSettings(modelId = "codex-model"),
+      )
+      val updatedProfiles = ArrayList<AgentPromptLaunchProfile>()
+      val codexProvider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        availableGenerationModels = listOf(AgentPromptGenerationModel("codex-model", "Codex Model")),
+      )
+      val claudeProvider = testProviderBridge(
+        provider = AgentSessionProvider.CLAUDE,
+        promptOptions = emptyList(),
+        availableGenerationModels = listOf(AgentPromptGenerationModel("claude-model", "Claude Model")),
+      )
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(profile),
+        activeProfileId = profile.id,
+        providerOverrides = listOf(codexProvider, claudeProvider),
+        modelCatalogStateProvider = { providerId ->
+          when (providerId) {
+            AgentSessionProvider.CODEX.value -> AgentPromptGenerationModelCatalogState.Loaded(
+              listOf(AgentPromptGenerationModel("codex-model", "Codex Model"))
+            )
+            AgentSessionProvider.CLAUDE.value -> AgentPromptGenerationModelCatalogState.Loaded(
+              listOf(AgentPromptGenerationModel("claude-model", "Claude Model"))
+            )
+            else -> null
+          }
+        },
+        onUpdateProfile = { updatedProfile -> updatedProfiles += updatedProfile },
+      )
+      try {
+        editor.selectProfileForTest(profile.id)
+        editor.selectSelectedProfileProviderForTest(AgentSessionProvider.CLAUDE.value)
+
+        val updatedProfile = updatedProfiles.single()
+        assertThat(updatedProfile.providerId).isEqualTo(AgentSessionProvider.CLAUDE.value)
+        assertThat(updatedProfile.generationSettings.modelId).isNull()
+        assertThat(editor.selectedProfileModelIdForTest()).isNull()
       }
       finally {
         editor.closeForTest()
@@ -2485,6 +2573,7 @@ class AgentPromptProviderSelectorTest {
     supportedReasoningEfforts: Set<AgentPromptReasoningEffort> = emptySet(),
     modelCatalog: List<AgentPromptGenerationModel> = emptyList(),
     providerOverride: AgentSessionProviderDescriptor? = null,
+    providerOverrides: List<AgentSessionProviderDescriptor>? = null,
     modelCatalogStateProvider: (String) -> AgentPromptGenerationModelCatalogState? = { providerId ->
       modelCatalog.takeIf { providerId == AgentSessionProvider.CODEX.value && it.isNotEmpty() }
         ?.let(AgentPromptGenerationModelCatalogState::Loaded)
@@ -2500,13 +2589,19 @@ class AgentPromptProviderSelectorTest {
       supportedLaunchModesOverride = supportedLaunchModes,
       supportedReasoningEffortsOverride = supportedReasoningEfforts,
     )
+    val providers = providerOverrides ?: listOf(provider)
     return AgentPromptLaunchProfileEditorDialog(
       project = ProjectManager.getInstance().defaultProject,
       profiles = profiles,
       activeProfileId = activeProfileId,
       defaultProfileId = defaultProfileId,
       builtInProfiles = profiles.filter { profile -> profile.kind == AgentPromptLaunchProfileKind.BUILT_IN },
-      providerEntries = listOf(ProviderEntry(provider, "Codex", true, EmptyIcon.ICON_16)),
+      providerEntries = providers.map { item ->
+        ProviderEntry(item,
+                      item.provider.value.replaceFirstChar(Char::uppercase),
+                      true,
+                      EmptyIcon.ICON_16)
+      },
       modelCatalogProvider = { modelCatalog },
       modelCatalogStateProvider = modelCatalogStateProvider,
       requestModelCatalogRefresh = requestModelCatalogRefresh,
