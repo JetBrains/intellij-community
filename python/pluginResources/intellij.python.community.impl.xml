@@ -1149,6 +1149,17 @@
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </action>
 
+    <action id="PyExtractFunction" class="com.jetbrains.python.refactoring.extractmethod.PyExtractFunctionAction"
+            use-shortcut-of="ExtractMethod">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="ExtractMethod"/>
+      <add-to-group group-id="Floating.CodeToolbar.Extract" anchor="first"/>
+    </action>
+
+    <action id="PyIntroduceAttribute" class="com.jetbrains.python.refactoring.introduce.field.PyIntroduceAttributeAction"
+            use-shortcut-of="IntroduceField">
+      <add-to-group group-id="IntroduceActionsGroup" anchor="after" relative-to-action="IntroduceField"/>
+    </action>
+
     <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction"
             icon="AllIcons.Debugger.StepIntoMyCode">
       <add-to-group group-id="DebuggingActionsGroup" relative-to-action="StepInto" anchor="after"/>

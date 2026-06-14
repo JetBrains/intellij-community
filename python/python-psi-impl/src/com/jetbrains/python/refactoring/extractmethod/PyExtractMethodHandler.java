@@ -15,7 +15,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.codeFragment.PyCodeFragment;
@@ -85,12 +84,12 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
     if (element1 == null || element2 == null) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           PyPsiBundle.message("refactoring.extract.method.error.bad.selection"),
-                                          RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
+                                          PyPsiBundle.message("refactoring.extract.function.title"), "refactoring.extractMethod");
       return;
     }
     if (rangeBelongsToSameClassBody(element1, element2)) {
       CommonRefactoringUtil.showErrorHint(project, editor, PyPsiBundle.message("refactoring.extract.method.error.class.level"),
-                                          RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
+                                          PyPsiBundle.message("refactoring.extract.function.title"), "refactoring.extractMethod");
       return;
     }
 
@@ -106,7 +105,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       }
       catch (CannotCreateCodeFragmentException e) {
         CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(),
-                                            RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
+                                            PyPsiBundle.message("refactoring.extract.function.title"), "refactoring.extractMethod");
         return;
       }
       PyExtractMethodUtil.extractFromStatements(project, editor, fragment, statements.getFirst(), statements.getSecond());
@@ -125,7 +124,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
       }
       catch (CannotCreateCodeFragmentException e) {
         CommonRefactoringUtil.showErrorHint(project, editor, e.getMessage(),
-                                            RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
+                                            PyPsiBundle.message("refactoring.extract.function.title"), "refactoring.extractMethod");
         return;
       }
       PyExtractMethodUtil.extractFromExpression(project, editor, fragment, expression);
@@ -134,7 +133,7 @@ public class PyExtractMethodHandler implements RefactoringActionHandler {
 
     CommonRefactoringUtil.showErrorHint(project, editor,
                                         PyPsiBundle.message("refactoring.extract.method.error.bad.selection"),
-                                        RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
+                                        PyPsiBundle.message("refactoring.extract.function.title"), "refactoring.extractMethod");
   }
 
   private static boolean rangeBelongsToSameClassBody(@NotNull PsiElement element1, @NotNull PsiElement element2) {

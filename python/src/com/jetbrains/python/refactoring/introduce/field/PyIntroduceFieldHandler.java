@@ -17,7 +17,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.jetbrains.python.PyBundle;
@@ -64,7 +63,7 @@ import java.util.function.Function;
 public class PyIntroduceFieldHandler extends IntroduceHandler {
 
   public PyIntroduceFieldHandler() {
-    super(new IntroduceFieldValidator(), RefactoringBundle.message("introduce.field.title"));
+    super(new IntroduceFieldValidator(), PyBundle.message("refactoring.introduce.attribute.title"));
   }
 
   @Override
@@ -257,7 +256,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     if (element != null && isInStaticMethod(element)) {
       CommonRefactoringUtil.showErrorHint(file.getProject(), editor,
                                           PyBundle.message("refactoring.introduce.field.cannot.be.used.in.static.methods"),
-                                          RefactoringBundle.message("introduce.field.title"),
+                                          PyBundle.message("refactoring.introduce.attribute.title"),
                                           "refactoring.extractMethod");
       return false;
     }
@@ -337,7 +336,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     PyInplaceFieldIntroducer(PyTargetExpression target,
                                     IntroduceOperation operation,
                                     List<PsiElement> occurrences) {
-      super(target, operation.getEditor(), operation.getProject(), RefactoringBundle.message("introduce.field.title"),
+      super(target, operation.getEditor(), operation.getProject(), PyBundle.message("refactoring.introduce.attribute.title"),
             occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
       myTargetSmartPointer = SmartPointerManager.createPointer(target);

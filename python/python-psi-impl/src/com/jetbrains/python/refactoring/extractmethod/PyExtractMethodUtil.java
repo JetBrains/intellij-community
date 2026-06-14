@@ -137,7 +137,7 @@ public final class PyExtractMethodUtil {
     if (elementsRange.isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           PyPsiBundle.message("refactoring.extract.method.error.empty.fragment"),
-                                          RefactoringBundle.message("extract.method.title"), "refactoring.extractMethod");
+                                          PyPsiBundle.message("refactoring.extract.function.title"), "refactoring.extractMethod");
       return pointers;
     }
 
