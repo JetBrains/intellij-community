@@ -482,6 +482,35 @@ class CodexRolloutSessionBackendTest {
           expectedRequiresResponse = true,
         ),
         ActivityCase(
+          id = "session-completed-plan-turn",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:02:32.000Z","type":"event_msg","payload":{"type":"user_message","message":"Plan the change"}}""",
+            """{"timestamp":"2026-02-13T11:02:33.000Z","type":"event_msg","payload":{"type":"task_started","turn_id":"turn-plan"}}""",
+            itemCompletedPlan(timestamp = "2026-02-13T11:02:34.000Z", turnId = "turn-plan"),
+            """{"timestamp":"2026-02-13T11:02:35.000Z","type":"event_msg","payload":{"type":"task_complete","turn_id":"turn-plan"}}""",
+          ),
+          expected = CodexSessionActivity.READY,
+        ),
+        ActivityCase(
+          id = "session-stale-completion-keeps-newer-plan",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:02:36.000Z","type":"event_msg","payload":{"type":"user_message","message":"Plan the change"}}""",
+            itemCompletedPlan(timestamp = "2026-02-13T11:02:37.000Z", turnId = "turn-new"),
+            turnCompleteLine(timestamp = "2026-02-13T11:02:38.000Z", turnId = "turn-old"),
+          ),
+          expected = CodexSessionActivity.NEEDS_INPUT,
+          expectedRequiresResponse = true,
+        ),
+        ActivityCase(
+          id = "session-legacy-completion-clears-plan",
+          eventLines = listOf(
+            """{"timestamp":"2026-02-13T11:02:39.000Z","type":"event_msg","payload":{"type":"user_message","message":"Plan the change"}}""",
+            itemCompletedPlan(timestamp = "2026-02-13T11:02:40.000Z"),
+            turnCompleteLine(timestamp = "2026-02-13T11:02:41.000Z"),
+          ),
+          expected = CodexSessionActivity.READY,
+        ),
+        ActivityCase(
           id = "session-cleared-plan",
           eventLines = listOf(
             """{"timestamp":"2026-02-13T11:02:40.000Z","type":"event_msg","payload":{"type":"user_message","message":"Plan the change"}}""",
@@ -1832,7 +1861,9 @@ private fun responseItemFunctionCall(
 }
 
 private fun responseItemFunctionCallOutput(timestamp: String, callId: String, output: String = "{}"): String {
-  return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call_output","call_id":"$callId","output":"${jsonString(output)}"}}"""
+  return """{"timestamp":"$timestamp","type":"response_item","payload":{"type":"function_call_output","call_id":"$callId","output":"${
+    jsonString(output)
+  }"}}"""
 }
 
 private fun approvalEventLine(timestamp: String, type: String, callId: String? = null, turnId: String? = null): String {
@@ -1854,8 +1885,9 @@ private fun turnCompleteLine(timestamp: String, turnId: String? = null): String 
   return """{"timestamp":"$timestamp","type":"event_msg","payload":{"type":"turn_complete"$turnIdField}}"""
 }
 
-private fun itemCompletedPlan(timestamp: String): String {
-  return """{"timestamp":"$timestamp","type":"event_msg","payload":{"type":"item_completed","item":{"type":"Plan","id":"turn-plan","text":"Plan text"}}}"""
+private fun itemCompletedPlan(timestamp: String, turnId: String? = null): String {
+  val turnIdField = turnId?.let { ""","turn_id":"$it"""" }.orEmpty()
+  return """{"timestamp":"$timestamp","type":"event_msg","payload":{"type":"item_completed"$turnIdField,"item":{"type":"Plan","id":"turn-plan","text":"Plan text"}}}"""
 }
 
 private fun sessionMetaLineWithoutId(cwd: Path): String {

@@ -40,11 +40,12 @@ Workbench shows normalized activity (`NEEDS_INPUT`, `UNREAD`, `REVIEWING`, `PROC
   [@test] ../codex/sessions/testSrc/backend/CodexSessionActivityResolverTest.kt
   [@test] ../codex/sessions/testSrc/backend/appserver/CodexAppServerRefreshHintsProviderTest.kt
 
-- App-server `thread/read includeTurns` detects pending plans from structured `plan`/`Plan` items. Rollout fallback detects plans from structured `item_completed` events whose nested item type is `Plan`; assistant text tags are not parsed for activity.
+- App-server `thread/read includeTurns` detects pending plans from structured `plan`/`Plan` items. Rollout fallback detects plans from structured `item_completed` events whose nested item type is `Plan`; assistant text tags are not parsed for activity. A matching or legacy no-id completed/aborted rollout turn clears pending plan attention.
   [@test] ../sessions/testSrc/CodexAppServerClientTest.kt
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Rollout task completion is turn-aware when `turn_id` is present: a stale completion from an earlier turn must not clear a newer processing turn, while a later completed turn supersedes earlier incomplete turns.
+- Codex activity projection is shared between app-server turn snapshots and rollout fallback. Completion is turn-aware when `turn_id` is present: a stale completion from an earlier turn must not clear a newer processing turn or pending plan, while a matching or legacy completed turn closes earlier incomplete work.
+  [@test] ../codex/sessions/testSrc/backend/CodexThreadActivityProjectionTest.kt
   [@test] ../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
 - App-server `thread/started` and `thread/status/changed` notifications may seed raw status/flag hints. Notification hints are timestamped, short-lived, path-normalized, and must not override a newer known thread seed. Snapshot-only promotions such as unread assistant output and review mode require `thread/read` or rollout fallback.
