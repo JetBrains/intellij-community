@@ -265,7 +265,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
     NOTIFICATION_ANNOUNCING_MODE = NotificationAnnouncingMode.get(state.getAttributeValue(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE));
 
     NotificationLocation location = NotificationLocation.getLocation(state.getAttributeValue(NOTIFICATION_LOCATION_ATTRIBUTE));
-    NOTIFICATION_LOCATION = location != null ? location : NotificationLocation.BOTTOM_RIGHT;
+    NOTIFICATION_LOCATION = location != null ? location : NotificationLocation.getDefaultLocation();
   }
 
   @Override
