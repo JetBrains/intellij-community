@@ -167,6 +167,7 @@ internal class AgentSessionWarmStateService
   internal data class WarmSubAgentState(
     @JvmField val id: String,
     @JvmField val name: String,
+    @JvmField val activity: String = AgentThreadActivity.READY.name,
   )
 }
 
@@ -203,7 +204,13 @@ private fun AgentSessionWarmStateService.WarmPathSnapshotState.toSnapshot(): Age
         archived = false,
         activity = parseWarmStateThreadActivity(thread.activity),
         provider = provider,
-        subAgents = thread.subAgents.map { subAgent -> AgentSubAgent(id = subAgent.id, name = subAgent.name) },
+        subAgents = thread.subAgents.map { subAgent ->
+          AgentSubAgent(
+            id = subAgent.id,
+            name = subAgent.name,
+            activity = parseWarmStateThreadActivity(subAgent.activity),
+          )
+        },
         originBranch = thread.originBranch,
         summaryActivity = parseWarmStateThreadSummaryActivity(thread.summaryActivity),
         cost = thread.cost?.toCost(),
@@ -227,7 +234,7 @@ private fun AgentSessionWarmPathSnapshot.toState(): AgentSessionWarmStateService
         activity = thread.activity.name,
         provider = thread.provider.value,
         subAgents = thread.subAgents.map { subAgent ->
-          AgentSessionWarmStateService.WarmSubAgentState(id = subAgent.id, name = subAgent.name)
+          AgentSessionWarmStateService.WarmSubAgentState(id = subAgent.id, name = subAgent.name, activity = subAgent.activity.name)
         },
         originBranch = thread.originBranch,
         summaryActivity = thread.summaryActivity?.name,

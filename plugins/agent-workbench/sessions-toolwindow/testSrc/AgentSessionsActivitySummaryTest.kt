@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.common.statusColor
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentation
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
@@ -263,6 +264,37 @@ class AgentSessionsActivitySummaryTest {
             providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
             threads = listOf(
               thread("ready", AgentThreadActivity.READY, 100),
+            ),
+          )
+        ),
+      )
+    )
+
+    assertThat(summary.attentionRows).isEmpty()
+    assertThat(summary.runningRows).isEmpty()
+    assertThat(summary.doneRows).isEmpty()
+  }
+
+  @Test
+  fun subAgentActivityDoesNotContributeToGlobalSummary() {
+    val summary = buildAgentSessionsActivitySummary(
+      AgentSessionsState(
+        projects = listOf(
+          AgentProjectSessions(
+            path = "/work/project-a",
+            name = "Project A",
+            isOpen = true,
+            providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX),
+            threads = listOf(
+              AgentSessionThread(
+                id = "parent-ready",
+                title = "Parent ready",
+                updatedAt = 100,
+                archived = false,
+                activity = AgentThreadActivity.READY,
+                provider = AgentSessionProvider.CODEX,
+                subAgents = listOf(AgentSubAgent(id = "child-done", name = "Child done", activity = AgentThreadActivity.UNREAD)),
+              ),
             ),
           )
         ),

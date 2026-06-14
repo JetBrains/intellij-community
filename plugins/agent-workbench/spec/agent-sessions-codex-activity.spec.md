@@ -56,7 +56,7 @@ Workbench shows normalized activity (`NEEDS_INPUT`, `UNREAD`, `REVIEWING`, `PROC
   [@test] ../codex/sessions/testSrc/CodexSessionSourceRolloutIntegrationTest.kt
 
 - Thread-scoped app-server refresh for a grouped sub-agent child must return the folded parent thread. Partial parent updates merge returned sub-agents by id with existing siblings so one child status update cannot drop other children.
-  Folded sub-agent activity may affect the parent row badge, but must not contribute to the parent summary activity used by tool-window counters, stripe badges, or OS notifications.
+  Folded sub-agent activity is rendered only on the sub-agent tree row. It must not contribute to parent row activity, parent summary activity, tool-window counters, stripe badges, activity menu rows, or OS notifications.
   [@test] ../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
   [@test] ../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
 

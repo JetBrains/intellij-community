@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
@@ -818,6 +819,47 @@ class AgentSessionsSwingTreeCellRendererTest {
   }
 
   @Test
+  fun subAgentRowsRenderOwnActivityStatusIcon() {
+    val tree = createTree(width = 420)
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", isOpen = true)
+    val thread = AgentSessionThread(
+      provider = AgentSessionProvider.CODEX,
+      id = "thread-1",
+      title = "Thread 1",
+      updatedAt = 0L,
+      archived = false,
+      activity = AgentThreadActivity.READY,
+      subAgents = listOf(
+        AgentSubAgent(id = "sub-ready", name = "Ready sub-agent"),
+        AgentSubAgent(id = "sub-done", name = "Done sub-agent", activity = AgentThreadActivity.UNREAD),
+      ),
+    )
+    val readySubAgentId = SessionTreeId.SubAgent(project.path, AgentSessionProvider.CODEX, thread.id, "sub-ready")
+    val doneSubAgentId = SessionTreeId.SubAgent(project.path, AgentSessionProvider.CODEX, thread.id, "sub-done")
+    val renderer = SessionTreeCellRenderer(
+      nowProvider = { 0L },
+      rowActionsProvider = { _, _, _ -> null },
+      nodeResolver = { id ->
+        when (id) {
+          readySubAgentId -> SessionTreeNode.SubAgent(project, thread, thread.subAgents[0])
+          doneSubAgentId -> SessionTreeNode.SubAgent(project, thread, thread.subAgents[1])
+          else -> null
+        }
+      },
+    )
+
+    renderer.getTreeCellRendererComponent(tree, descriptorValue(readySubAgentId), false, false, true, 0, false)
+    val readyIcon = renderer.icon
+    assertPluginThreadStatusIcon(readyIcon, AgentThreadActivity.READY)
+
+    renderer.getTreeCellRendererComponent(tree, descriptorValue(doneSubAgentId), false, false, true, 0, false)
+    val doneIcon = renderer.icon
+    assertPluginThreadStatusIcon(doneIcon, AgentThreadActivity.UNREAD)
+    assertThat(doneIcon).isNotSameAs(readyIcon)
+    assertThat(renderer.accessibleContext.accessibleName).contains(AgentSessionsBundle.message("toolwindow.thread.status.done"))
+  }
+
+  @Test
   fun threadRowsBadgeFallbackWhenProviderIconIsMissing() {
     val now = 14L * 24L * 60L * 60L * 1000L
     val tree = createTree(width = 420)
@@ -1226,6 +1268,16 @@ class AgentSessionsSwingTreeCellRendererTest {
     renderedIcon ?: return
 
     val expected = agentSessionThreadStatusIcon(provider, activity)
+    assertThat(renderedIcon.javaClass).isEqualTo(expected.javaClass)
+    assertThat(renderedIcon.iconWidth).isEqualTo(expected.iconWidth)
+    assertThat(renderedIcon.iconHeight).isEqualTo(expected.iconHeight)
+  }
+
+  private fun assertPluginThreadStatusIcon(renderedIcon: Icon?, activity: AgentThreadActivity) {
+    assertThat(renderedIcon).isNotNull()
+    renderedIcon ?: return
+
+    val expected = agentSessionThreadStatusIcon(AllIcons.Nodes.Plugin, activity)
     assertThat(renderedIcon.javaClass).isEqualTo(expected.javaClass)
     assertThat(renderedIcon.iconWidth).isEqualTo(expected.iconWidth)
     assertThat(renderedIcon.iconHeight).isEqualTo(expected.iconHeight)

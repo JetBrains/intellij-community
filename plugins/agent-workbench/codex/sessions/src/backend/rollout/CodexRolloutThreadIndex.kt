@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.codex.common.CodexSubAgent
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
 import com.intellij.agent.workbench.codex.sessions.resolveProjectDirectoryFromPath
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
+import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionActivity
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionCachedFile
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionFileStat
@@ -419,9 +420,14 @@ internal fun mergeParsedRolloutThreadsByCwd(parsedThreads: Collection<ParsedRoll
       parentThread.thread.subAgents.forEach { subAgent ->
         mergedSubAgents.putIfAbsent(subAgent.id, subAgent)
       }
+      val mergedSubAgentActivitiesById = LinkedHashMap<String, CodexSessionActivity>(
+        parentThread.subAgentActivitiesById.size + childThreads.size
+      )
+      mergedSubAgentActivitiesById.putAll(parentThread.subAgentActivitiesById)
       childThreads.forEach { childThread ->
         val subAgent = CodexSubAgent(id = childThread.thread.thread.id, name = childThread.thread.thread.title)
         mergedSubAgents.putIfAbsent(subAgent.id, subAgent)
+        mergedSubAgentActivitiesById.putIfAbsent(subAgent.id, childThread.thread.activity)
       }
 
       val mergedUsageSnapshots = ArrayList<AgentSessionUsageSnapshot>(
@@ -434,6 +440,7 @@ internal fun mergeParsedRolloutThreadsByCwd(parsedThreads: Collection<ParsedRoll
 
       topLevelThreads[index] = parentThread.copy(
         thread = parentThread.thread.copy(subAgents = ArrayList(mergedSubAgents.values)),
+        subAgentActivitiesById = mergedSubAgentActivitiesById,
         usageSnapshots = mergedUsageSnapshots,
       )
       resolvedParentIds.add(parentThread.thread.id)

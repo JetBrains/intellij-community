@@ -12,12 +12,10 @@ data class CodexBackendThread(
   @JvmField val activity: CodexSessionActivity = CodexSessionActivity.READY,
   @JvmField val requiresResponse: Boolean = false,
   @JvmField val summaryActivity: CodexSessionActivity? = activity,
+  @JvmField val subAgentActivitiesById: Map<String, CodexSessionActivity> = emptyMap(),
   @JvmField val usageSnapshots: List<AgentSessionUsageSnapshot> = emptyList(),
   @JvmField val hasExplicitTitle: Boolean = true,
-) {
-  val usageSnapshot: AgentSessionUsageSnapshot?
-    get() = usageSnapshots.singleOrNull()
-}
+)
 
 data class CodexBackendThreadRefreshResult(
   @JvmField val threads: List<CodexBackendThread> = emptyList(),

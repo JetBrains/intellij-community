@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.statusMessageKey
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadStatusIcon
 import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
@@ -154,9 +155,10 @@ internal class SessionTreeCellRenderer(
       }
 
       is SessionTreeNode.SubAgent -> {
-        icon = AllIcons.Nodes.Plugin
+        icon = agentSessionThreadStatusIcon(AllIcons.Nodes.Plugin, treeNode.subAgent.activity)
         val subAgentLabel: @NlsSafe String = treeNode.subAgent.name.ifBlank { treeNode.subAgent.id }
         append(subAgentLabel, SimpleTextAttributes.GRAY_ATTRIBUTES)
+        setAccessibleStatusText(AgentSessionsBundle.message(treeNode.subAgent.activity.statusMessageKey()))
       }
 
       is SessionTreeNode.Warning -> {

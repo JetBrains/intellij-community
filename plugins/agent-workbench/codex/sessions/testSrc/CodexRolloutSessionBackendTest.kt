@@ -566,10 +566,10 @@ class CodexRolloutSessionBackendTest {
       val threadsById = backend.listThreads(path = projectDir.toString(), openProject = null).associateBy { it.thread.id }
 
       assertThat(threadsById).hasSize(activityCases.size)
-      for (testCase in activityCases) {
-        val thread = threadsById.getValue(testCase.id)
-        assertThat(thread.activity).isEqualTo(testCase.expected)
-        assertThat(thread.requiresResponse).isEqualTo(testCase.expectedRequiresResponse)
+      for ((id, _, expected, expectedRequiresResponse) in activityCases) {
+        val thread = threadsById.getValue(id)
+        assertThat(thread.activity).isEqualTo(expected)
+        assertThat(thread.requiresResponse).isEqualTo(expectedRequiresResponse)
       }
     }
   }
@@ -804,6 +804,7 @@ class CodexRolloutSessionBackendTest {
             parentThreadId = "session-parent",
           ),
           """{"timestamp":"2026-02-14T16:01:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"review the agent threads for rollout nesting"}}""",
+          """{"timestamp":"2026-02-14T16:01:02.000Z","type":"event_msg","payload":{"type":"agent_message","message":"Done"}}""",
         ),
       )
 
@@ -813,10 +814,13 @@ class CodexRolloutSessionBackendTest {
       assertThat(threads).hasSize(1)
       val parentThread = threads.single()
       assertThat(parentThread.thread.id).isEqualTo("session-parent")
+      assertThat(parentThread.activity).isEqualTo(CodexSessionActivity.READY)
+      assertThat(parentThread.summaryActivity).isEqualTo(CodexSessionActivity.READY)
       assertThat(parentThread.thread.subAgents).hasSize(1)
       val subAgent = parentThread.thread.subAgents.single()
       assertThat(subAgent.id).isEqualTo("session-subagent")
       assertThat(subAgent.name).isEqualTo("review the agent threads for rollout nesting")
+      assertThat(parentThread.subAgentActivitiesById).containsEntry("session-subagent", CodexSessionActivity.UNREAD)
     }
   }
 

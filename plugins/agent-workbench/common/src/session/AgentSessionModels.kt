@@ -45,6 +45,7 @@ enum class AgentSessionLaunchMode {
 data class AgentSubAgent(
   @JvmField val id: @NlsSafe String,
   @JvmField val name: @NlsSafe String,
+  @JvmField val activity: AgentThreadActivity = AgentThreadActivity.READY,
 )
 
 data class AgentSessionThread(

@@ -679,13 +679,15 @@ private fun mergeCodexPresentationUpdates(
   primary: Map<String, AgentSessionThreadPresentationUpdate>,
   fallback: Map<String, AgentSessionThreadPresentationUpdate>,
 ): Map<String, AgentSessionThreadPresentationUpdate> {
-  if (primary.isEmpty()) return fallback
-  if (fallback.isEmpty()) return primary
   val merged = LinkedHashMap<String, AgentSessionThreadPresentationUpdate>(primary.size + fallback.size)
-  merged.putAll(primary)
-  for ((threadId, fallbackUpdate) in fallback) {
-    val primaryUpdate = merged[threadId]
-    merged[threadId] = if (primaryUpdate == null) fallbackUpdate else mergeAgentSessionThreadPresentationUpdates(primaryUpdate, fallbackUpdate)
+  for (threadId in primary.keys + fallback.keys) {
+    val primaryUpdate = primary[threadId]
+    val fallbackUpdate = fallback[threadId]
+    merged[threadId] = when {
+      primaryUpdate == null -> checkNotNull(fallbackUpdate)
+      fallbackUpdate == null -> primaryUpdate
+      else -> mergeAgentSessionThreadPresentationUpdates(primaryUpdate, fallbackUpdate)
+    }
   }
   return merged
 }
@@ -775,6 +777,7 @@ private fun toAgentSessionThread(thread: CodexBackendThread, cost: AgentSessionC
     thread = thread.thread,
     activity = thread.activity,
     summaryActivity = thread.summaryActivity,
+    subAgentActivitiesById = thread.subAgentActivitiesById,
     cost = cost,
   )
 }
@@ -806,6 +809,7 @@ private fun toAgentSessionThread(
   thread: CodexThread,
   activity: CodexSessionActivity,
   summaryActivity: CodexSessionActivity?,
+  subAgentActivitiesById: Map<String, CodexSessionActivity> = emptyMap(),
   cost: AgentSessionCost? = null,
 ): AgentSessionThread {
   return AgentSessionThread(
@@ -814,7 +818,13 @@ private fun toAgentSessionThread(
     updatedAt = thread.updatedAt,
     archived = thread.archived,
     provider = AgentSessionProvider.CODEX,
-    subAgents = thread.subAgents.map { AgentSubAgent(it.id, it.name) },
+    subAgents = thread.subAgents.map { subAgent ->
+      AgentSubAgent(
+        id = subAgent.id,
+        name = subAgent.name,
+        activity = subAgentActivitiesById[subAgent.id]?.toAgentThreadActivity() ?: AgentThreadActivity.READY,
+      )
+    },
     originBranch = thread.gitBranch,
     activity = activity.toAgentThreadActivity(),
     summaryActivity = summaryActivity?.toAgentThreadActivity(),

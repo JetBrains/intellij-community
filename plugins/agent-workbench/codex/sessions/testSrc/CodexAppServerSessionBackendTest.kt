@@ -63,8 +63,10 @@ class CodexAppServerSessionBackendTest {
       assertThat(parent.thread.subAgents).hasSize(1)
       assertThat(parent.thread.subAgents.single().id).isEqualTo("child-1")
       assertThat(parent.thread.subAgents.single().name).isEqualTo("Scout (reviewer)")
-      assertThat(parent.activity).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
+      assertThat(parent.activity).isEqualTo(CodexSessionActivity.READY)
       assertThat(parent.summaryActivity).isEqualTo(CodexSessionActivity.READY)
+      assertThat(parent.requiresResponse).isFalse()
+      assertThat(parent.subAgentActivitiesById).containsEntry("child-1", CodexSessionActivity.NEEDS_INPUT)
       assertThat(archiveCalls).containsExactly("orphan-1")
 
       val second = backend.listThreads(path = projectDir.toString(), openProject = null)
@@ -133,8 +135,10 @@ class CodexAppServerSessionBackendTest {
       val parent = result?.threads.orEmpty().single()
       assertThat(parent.thread.id).isEqualTo("parent-1")
       assertThat(parent.thread.subAgents.map { it.id }).containsExactly("child-1")
-      assertThat(parent.activity).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
+      assertThat(parent.activity).isEqualTo(CodexSessionActivity.READY)
       assertThat(parent.summaryActivity).isEqualTo(CodexSessionActivity.READY)
+      assertThat(parent.requiresResponse).isFalse()
+      assertThat(parent.subAgentActivitiesById).containsEntry("child-1", CodexSessionActivity.NEEDS_INPUT)
     }
   }
 
@@ -516,44 +520,29 @@ class CodexAppServerSessionBackendTest {
   }
 
   @Test
-  fun foldedParentActivityUsesConfiguredPriorityOrder() {
+  fun foldedSubAgentActivityDoesNotContributeToParentActivity() {
     runBlocking(Dispatchers.Default) {
-      val projectDir = tempDir.resolve("project-fold-priority")
+      val projectDir = tempDir.resolve("project-sub-agent-tree-only-activity")
       Files.createDirectories(projectDir)
       val cwd = normalizeRootPath(projectDir.invariantSeparatorsPathString)
 
       val backend = CodexAppServerSessionBackend(
         listThreadsForProject = {
           listOf(
-            parentThread(id = "parent-needs-input", cwd = cwd, updatedAt = 200L),
+            parentThread(id = "parent-ready", cwd = cwd, updatedAt = 200L),
             subAgentThread(
               id = "child-processing",
               cwd = cwd,
-              parentThreadId = "parent-needs-input",
+              parentThreadId = "parent-ready",
               updatedAt = 210L,
               activeFlags = emptyList(),
             ),
             subAgentThread(
               id = "child-approval",
               cwd = cwd,
-              parentThreadId = "parent-needs-input",
+              parentThreadId = "parent-ready",
               updatedAt = 220L,
               activeFlags = listOf(CodexThreadActiveFlag.WAITING_ON_APPROVAL),
-            ),
-            parentThread(id = "parent-needs-input-2", cwd = cwd, updatedAt = 300L),
-            subAgentThread(
-              id = "child-review-2",
-              cwd = cwd,
-              parentThreadId = "parent-needs-input-2",
-              updatedAt = 310L,
-              activeFlags = listOf(CodexThreadActiveFlag.WAITING_ON_APPROVAL),
-            ),
-            subAgentThread(
-              id = "child-unread-2",
-              cwd = cwd,
-              parentThreadId = "parent-needs-input-2",
-              updatedAt = 320L,
-              activeFlags = listOf(CodexThreadActiveFlag.WAITING_ON_USER_INPUT),
             ),
           )
         },
@@ -563,9 +552,14 @@ class CodexAppServerSessionBackendTest {
       val byId = backend.listThreads(path = projectDir.toString(), openProject = null)
         .associateBy { it.thread.id }
 
-      assertThat(byId.keys).containsExactlyInAnyOrder("parent-needs-input", "parent-needs-input-2")
-      assertThat(byId.getValue("parent-needs-input").activity).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
-      assertThat(byId.getValue("parent-needs-input-2").activity).isEqualTo(CodexSessionActivity.NEEDS_INPUT)
+      assertThat(byId.keys).containsExactly("parent-ready")
+      val parent = byId.getValue("parent-ready")
+      assertThat(parent.activity).isEqualTo(CodexSessionActivity.READY)
+      assertThat(parent.summaryActivity).isEqualTo(CodexSessionActivity.READY)
+      assertThat(parent.requiresResponse).isFalse()
+      assertThat(parent.thread.subAgents.map { it.id }).containsExactly("child-approval", "child-processing")
+      assertThat(parent.subAgentActivitiesById).containsEntry("child-processing", CodexSessionActivity.PROCESSING)
+      assertThat(parent.subAgentActivitiesById).containsEntry("child-approval", CodexSessionActivity.NEEDS_INPUT)
     }
   }
 }
