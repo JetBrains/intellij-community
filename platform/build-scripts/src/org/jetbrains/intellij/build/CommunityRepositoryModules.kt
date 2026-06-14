@@ -395,10 +395,11 @@ object CommunityRepositoryModules {
     addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?,
   ): PluginLayout =
     pluginAutoWithCustomDirName(mainModuleName, "android") { spec ->
-
       if (os != null && arch != null) {
         spec.bundlingRestrictions.supportedOs = persistentListOf(os)
         spec.bundlingRestrictions.supportedArch = persistentListOf(arch)
+
+        patchOsSpecificPluginXml(spec, os, arch)
 
         spec.withCustomVersion { pluginXmlSupplier, ideBuildVersion, _ ->
           // be careful, Marketplace expects linux/macos/windows for os and x86_64/x86/arm64/arm32 for arch
