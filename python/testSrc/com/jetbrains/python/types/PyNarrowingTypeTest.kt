@@ -6,6 +6,7 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Components
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.inspections.PyUnreachableCodeInspection
 
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -1769,6 +1770,104 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
     fun `comprehension if clause narrows produces no warning`() = test("""
       messages = ["a", None, "b"]
       "".join(msg for msg in messages if msg)
+      """.trimIndent())
+  }
+
+  @Nested
+  @TestInspections(enableInspections = [PyUnreachableCodeInspection::class])
+  inner class TruthinessReachability {
+    @Test
+    @TestFor(issues = ["PY-79184"])
+    fun `always falsy bool dunder makes then branch unreachable`() = test("""
+      from typing import Literal
+      class A:
+          def __bool__(self) -> Literal[False]: ...
+      if A():
+          print(1)
+      #   ^^^^^^^^ WARNING This code is unreachable
+      else:
+          print(2)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79184"])
+    fun `always truthy bool dunder makes else branch unreachable`() = test("""
+      from typing import Literal
+      class A:
+          def __bool__(self) -> Literal[True]: ...
+      if A():
+          print(1)
+      else:
+          print(2)
+      #   ^^^^^^^^ WARNING This code is unreachable
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79184"])
+    fun `always falsy len dunder makes then branch unreachable`() = test("""
+      from typing import Literal
+      class A:
+          def __len__(self) -> Literal[0]: ...
+      if A():
+          print(1)
+      #   ^^^^^^^^ WARNING This code is unreachable
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79184"])
+    fun `runtime bool dunder takes precedence over falsy len dunder`() = test("""
+      from typing import Literal
+      class A:
+          def __bool__(self) -> bool: ...
+          def __len__(self) -> Literal[0]: ...
+      if A():
+          print(1)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79184"])
+    fun `runtime bool dunder keeps branch reachable`() = test("""
+      class A:
+          def __bool__(self) -> bool: ...
+      if A():
+          print(1)
+      else:
+          print(2)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79184"])
+    fun `always falsy bool dunder makes while body unreachable`() = test("""
+      from typing import Literal
+      class A:
+          def __bool__(self) -> Literal[False]: ...
+      while A():
+          print(1)
+      #   ^^^^^^^^ WARNING This code is unreachable
+      """.trimIndent())
+
+    // The class object is always truthy regardless of the instance `__bool__`, so neither branch is unreachable.
+    @Test
+    @TestFor(issues = ["PY-79184"])
+    fun `always falsy bool dunder on class object keeps branches reachable`() = test("""
+      from typing import Literal
+      class A:
+          def __bool__(self) -> Literal[False]: ...
+      if A:
+          print(1)
+      else:
+          print(2)
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-54916"])
+    fun `false literal value makes if unreachable`() = test("""
+      from typing import Literal
+
+      a: Literal[False] = False
+      if a:
+          print(1)
+      #   ^^^^^^^^ WARNING This code is unreachable
       """.trimIndent())
   }
 }

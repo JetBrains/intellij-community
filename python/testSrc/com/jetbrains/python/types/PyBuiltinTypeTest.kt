@@ -618,7 +618,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `logical and expression`() = test("""
       expr = 'foo' and 2
-      #└ TYPE Literal["foo", 2]
+      #└ TYPE Literal[2]
       """.trimIndent())
 
     @Test

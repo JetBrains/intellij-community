@@ -1829,6 +1829,53 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """.trimIndent())
 
     @Test
+    @TestFor(issues = ["PY-79184"])
+    fun `or with always falsy bool dunder`() = test("""
+      from typing import Literal
+      class A:
+          def __bool__(self) -> Literal[False]: ...
+      expr = A() or 1
+      #└ TYPE Literal[1]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79184"])
+    fun `or with always truthy bool dunder`() = test("""
+      from typing import Literal
+      class A:
+          def __bool__(self) -> Literal[True]: ...
+      expr = A() or 1
+      #└ TYPE A
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79184"])
+    fun `and with always falsy bool dunder`() = test("""
+      from typing import Literal
+      class A:
+          def __bool__(self) -> Literal[False]: ...
+      expr = A() and 1
+      #└ TYPE A
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79184"])
+    fun `and with always truthy bool dunder`() = test("""
+      from typing import Literal
+      class A:
+          def __bool__(self) -> Literal[True]: ...
+      expr = A() and 1
+      #└ TYPE Literal[1]
+      """.trimIndent())
+
+    @Test
+    @TestFor(issues = ["PY-79184"])
+    fun `or keeps dunder debug on left side`() = test("""
+      expr = __debug__ or 1
+      #└ TYPE bool | Literal[1]
+      """.trimIndent())
+
+    @Test
     @TestFor(issues = ["PY-51329"])
     fun `metaclass or shadows reflected on right`() = test("""
       class M(type):

@@ -2,8 +2,10 @@ package com.jetbrains.python.codeInsight.controlflow
 
 import com.intellij.codeInsight.controlflow.ControlFlow
 import com.intellij.codeInsight.controlflow.Instruction
+import com.intellij.codeInsight.controlflow.ConditionalInstruction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
+import com.intellij.util.ThreeState
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.PyAssertStatement
 import com.jetbrains.python.psi.PyCallExpression
@@ -16,11 +18,23 @@ import com.jetbrains.python.psi.PyStatementList
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.types.PyNeverType
+import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.ArrayDeque
 
-data class FlowContext(val typeEvalContext: TypeEvalContext, val checkNoReturnCalls: Boolean)
+/**
+ * @param evaluateConditionTypes whether to treat a branch as unreachable when the static type of its condition
+ *   guarantees the opposite truthiness (e.g. the `then` branch of `if a:` where `a` is always falsy because its
+ *   `__bool__` returns a false literal).
+ *   Enabled only for inspection-facing reachability to keep the extra type evaluation out of hot paths like
+ *   reaching-definitions analysis.
+ */
+data class FlowContext @JvmOverloads constructor(
+  val typeEvalContext: TypeEvalContext,
+  val checkNoReturnCalls: Boolean,
+  val evaluateConditionTypes: Boolean = false,
+)
 
 @ApiStatus.Internal
 enum class Reachability {
@@ -86,6 +100,9 @@ class PyDataFlow(private val controlFlow: PyControlFlow, context: FlowContext) :
   ): Collection<Instruction> {
     if (context.checkNoReturnCalls && instruction is CallInstruction && instruction.isNoReturnCall(context.typeEvalContext)) return emptyList()
     if (instruction is PyWithContextExitInstruction && !instruction.isSuppressingExceptions(context.typeEvalContext)) return emptyList()
+    if (context.evaluateConditionTypes && instruction is ConditionalInstruction && isContradictedByConditionType(instruction, context.typeEvalContext)) {
+      return emptyList()
+    }
     return instruction.allSucc().filter {
       if (it is PyUnreachableInstruction) {
         return@filter includeUnreachableForTypeChecking && it.isUnreachableForTypeChecking
@@ -96,6 +113,18 @@ class PyDataFlow(private val controlFlow: PyControlFlow, context: FlowContext) :
       }
       return@filter true
     }
+  }
+
+  /**
+   * Returns `true` if the static type of the condition guarantees that the branch corresponding to
+   * [instruction] can never be taken, e.g. the `then` branch of `if a:` where `a` is always falsy
+   * (its `__bool__` returns a false literal).
+   */
+  private fun isContradictedByConditionType(instruction: ConditionalInstruction, context: TypeEvalContext): Boolean {
+    val condition = instruction.condition as? PyExpression ?: return false
+    val truthiness = PyTypeUtil.getTypeTruthiness(context.getType(condition), condition, context)
+    if (truthiness == ThreeState.UNSURE) return false
+    return instruction.result != (truthiness == ThreeState.YES)
   }
 
   fun getReachability(instruction: Instruction): Reachability {
@@ -122,7 +151,7 @@ class PyDataFlow(private val controlFlow: PyControlFlow, context: FlowContext) :
  * - calls to functions annotated with `NoReturn`
  */
 fun PsiElement.getReachabilityForInspection(context: TypeEvalContext): Reachability {
-  return getReachabilityForInspection(FlowContext(context, true))
+  return getReachabilityForInspection(FlowContext(context, checkNoReturnCalls = true, evaluateConditionTypes = true))
 }
 
 private fun PsiElement.getReachabilityForInspection(context: FlowContext): Reachability {

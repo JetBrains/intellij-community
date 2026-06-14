@@ -5,8 +5,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThreeState;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.PyUnsafeUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -66,18 +67,29 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   public @Nullable PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     if (isOperator(PyNames.AND) || isOperator(PyNames.OR)) {
       final PyExpression left = getLeftExpression();
-      PyType leftType = left != null ? context.getType(left) : null;
+      final PyType leftType = left != null ? context.getType(left) : null;
       final PyExpression right = getRightExpression();
       final PyType rightType = right != null ? context.getType(right) : null;
       if (leftType == null && rightType == null) {
         return PyAnyType.getUnknown();
       }
-      if (isOperator(PyNames.OR)) {
-        // TODO: also exclude Literal[False, 0, ""]
-        leftType = Ref.deref(PyTypeAssertionEvaluator.createAssertionType(
-          leftType, PyBuiltinCache.getInstance(this).getNoneType(), false, true, context));
+      // `a or b` evaluates to `a` when `a` is truthy and to `b` otherwise.
+      // `a and b` evaluates to `a` when `a` is falsy and to `b` otherwise.
+      // So `a` contributes only the part of its type with the relevant truthiness (excluding e.g. `None`,
+      // `Literal[False]` or a class whose `__bool__` is `Literal[False]`), and `b` contributes only when it can be reached.
+      final boolean isOr = isOperator(PyNames.OR);
+      final ThreeState leftTruthiness = PyTypeUtil.getTypeTruthiness(leftType, left, context);
+      final Ref<PyType> leftContribution = PyTypeUtil.narrowTypeByTruthiness(leftType, isOr, left, context);
+      final boolean rightReachable = isOr ? leftTruthiness != ThreeState.YES : leftTruthiness != ThreeState.NO;
+      if (leftContribution == null) {
+        // `a` never yields its own value as the result (e.g. an always-falsy `a` in `a or b`).
+        return rightType != null ? rightType : PyAnyType.getUnknown();
       }
-      return PyUnionType.unionOrUnknown(leftType, rightType);
+      if (!rightReachable) {
+        // `b` is never evaluated (e.g. an always-truthy `a` in `a or b`).
+        return leftContribution.get();
+      }
+      return PyUnionType.unionOrUnknown(leftContribution.get(), rightType);
     }
     final String referencedName = getReferencedName();
     if (PyNames.CONTAINS.equals(referencedName)) {
