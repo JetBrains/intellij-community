@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -111,6 +112,19 @@ public class PyClassVarInspectionTest extends PyInspectionTestCase {
                                                   x = 1  # type: int
                                               class B(A):
                                                   <warning descr="Cannot override instance variable 'x' (previously declared in base class 'A') with class variable">x</warning> = 2  # type: ClassVar[int]"""));
+  }
+
+  // A final attribute initialized in a class body must be inferred as a class variable, but it makes more sense
+  // to report it in PyFinalInspection
+  @TestFor(issues = "PY-88933")
+  public void testOverrideClassVarWithFinalNotReportedAsInstanceVariable() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doTestByText("""
+                                              from typing import ClassVar, Final
+                                              class A:
+                                                  x: ClassVar[int]
+                                              class B(A):
+                                                  x: Final[int] = 1"""));
   }
 
   public void testOverrideClassVarWithImplicitThenExplicitMultiFile() {
