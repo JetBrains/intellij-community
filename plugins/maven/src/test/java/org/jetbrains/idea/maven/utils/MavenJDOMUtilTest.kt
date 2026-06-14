@@ -16,13 +16,25 @@
 package org.jetbrains.idea.maven.utils
 
 import com.intellij.idea.IJIgnore
-import com.intellij.maven.testFramework.MavenTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.mavenFixture
+import org.jetbrains.idea.maven.fixtures.projectPath
+import org.jetbrains.idea.maven.fixtures.refreshFiles
+import org.jetbrains.idea.maven.fixtures.updateProjectSubFile
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.fail
 import java.io.IOException
 import java.nio.file.Files
 
 @IJIgnore(issue = "IDEA-386161")
-class MavenJDOMUtilTest : MavenTestCase() {
+@TestApplication
+class MavenJDOMUtilTest {
+  private val maven by mavenFixture()
+
+  @Test
   fun testReadingValuesWithComments() = runBlocking {
     assertEquals("aaa", readValue("<root><foo>aaa<!--a--></foo></root>", "foo"))
     assertEquals("aaa", readValue("""
@@ -43,15 +55,15 @@ class MavenJDOMUtilTest : MavenTestCase() {
 
   private suspend fun readValue(xml: String, valuePath: String): String? {
     val fileName = "foo.xml"
-    val filePath = projectPath.resolve(fileName)
+    val filePath = maven.projectPath.resolve(fileName)
     val f = if (!Files.exists(filePath)) {
-      createProjectSubFile(fileName, xml)
+      maven.createProjectSubFile(fileName, xml)
     }
     else {
-      updateProjectSubFile(fileName, xml)
+      maven.updateProjectSubFile(fileName, xml)
     }
 
-    refreshFiles(listOf(f))
+    maven.refreshFiles(listOf(f))
 
     val el = MavenJDOMUtil.read(f, object : MavenJDOMUtil.ErrorHandler {
       override fun onReadError(e: IOException?) {
