@@ -1,12 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintManager;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
+import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -34,7 +44,12 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
+import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.inplace.MemberInplaceRenamer;
+import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usages.TextChunk;
 import com.intellij.usages.Usage;
@@ -53,6 +68,7 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.refactoring.rename.RenamePyImportAliasProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,6 +79,7 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public final class PythonUiServiceImpl extends PythonUiService {
@@ -128,6 +145,112 @@ public final class PythonUiServiceImpl extends PythonUiService {
                                  boolean searchInComments,
                                  boolean searchTextOccurrences) {
     new RenameProcessor(project, element, newName, searchInComments, searchTextOccurrences).run();
+  }
+
+  @Override
+  public boolean invokeInplaceRename(@NotNull Editor editor, @NotNull PsiNameIdentifierOwner element,
+                                     @NotNull InplaceRenameListener onTemplateFinished) {
+    if (!editor.getSettings().isVariableInplaceRenameEnabled()) {
+      return false;
+    }
+    if (!new PyInplaceRenamer(element, element, editor, element.getName(), element.getName(), onTemplateFinished)
+      .performInplaceRename()) {
+      return false;
+    }
+    // In-place rename reports success without a template for a read-only file, and while another in-place rename is open.
+    // The caller then uses its own flow.
+    return TemplateManagerImpl.getTemplateState(editor) != null;
+  }
+
+  /**
+   * Reports the end of the rename to an {@link InplaceRenameListener}, once for each way out of the template.
+   * <p>
+   * The base class renames from a background task that it starts after the template ends, so a completed rename reports
+   * from {@link #performRefactoringRename}. A restart of the template, for example after a change of the rename options,
+   * gives the listener to the new renamer.
+   */
+  private static final class PyInplaceRenamer extends MemberInplaceRenamer {
+    private final @NotNull InplaceRenameListener myListener;
+
+    private PyInplaceRenamer(@NotNull PsiNamedElement element, @Nullable PsiElement substituted, @NotNull Editor editor,
+                             @Nullable String initialName, @Nullable String oldName, @NotNull InplaceRenameListener listener) {
+      super(element, substituted, editor, initialName, oldName);
+      myListener = listener;
+    }
+
+    @Override
+    protected @NotNull VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
+      return new PyInplaceRenamer(variable, getSubstituted(), editor, initialName, myOldName, myListener);
+    }
+
+    /** Leaves out of the template what the rename of an import alias leaves out. */
+    @Override
+    protected boolean acceptReference(PsiReference reference) {
+      final PsiNamedElement variable = getVariable();
+      return super.acceptReference(reference) && (variable == null || RenamePyImportAliasProcessor.isAliasReference(variable, reference));
+    }
+
+    @Override
+    public void afterTemplateStart() {
+      super.afterTemplateStart();
+      final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
+      if (templateState == null) {
+        return;
+      }
+      templateState.addTemplateStateListener(new TemplateEditingAdapter() {
+        @Override
+        public void templateFinished(@NotNull Template template, boolean brokenOff) {
+          if (brokenOff) {
+            reportBrokenOffLater();
+          }
+        }
+
+        @Override
+        public void templateCancelled(Template template) {
+          reportBrokenOffLater();
+        }
+      });
+    }
+
+    /** The rename options inlay breaks the template off and starts a new one at once. The new renamer reports in that case. */
+    private void reportBrokenOffLater() {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (!myEditor.isDisposed() && TemplateManagerImpl.getTemplateState(myEditor) == null) {
+          myListener.templateFinished(true, false);
+        }
+      }, myProject.getDisposed());
+    }
+
+    /** Asks like the base class does, but also reports a rollback, because the base class rolls back without a template event. */
+    @Override
+    protected void performOnInvalidIdentifier(String newName, LinkedHashSet<String> nameSuggestions) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        tryRollback();
+        myListener.templateFinished(true, false);
+        return;
+      }
+      JBPopupFactory.getInstance()
+        .createConfirmation(LangBundle.message("popup.title.inserted.identifier.valid"), IdeBundle.message("label.continue.editing"),
+                            CommonBundle.getCancelButtonText(),
+                            () -> WriteIntentReadAction.run(() -> {
+                              tryRollback();
+                              final PsiNamedElement variable = getVariable();
+                              if (variable != null) {
+                                createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions);
+                              }
+                            }),
+                            () -> ApplicationManager.getApplication().invokeLater(() -> {
+                              tryRollback();
+                              myListener.templateFinished(true, false);
+                            }), 0)
+        .showInBestPositionFor(myEditor);
+    }
+
+    @Override
+    protected void performRefactoringRename(String newName, StartMarkAction markAction) {
+      super.performRefactoringRename(newName, markAction);
+      myListener.templateFinished(false, !newName.equals(myOldName));
+    }
   }
 
   @Override

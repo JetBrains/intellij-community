@@ -16,6 +16,7 @@ import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyClass;
@@ -62,6 +63,33 @@ public class PythonUiService {
                                  String newName,
                                  boolean searchInComments,
                                  boolean searchTextOccurrences) { }
+
+  /**
+   * Starts an interactive in-place rename template on {@code element} in the given editor,
+   * highlighting the name and updating its usages live as the user types.
+   *
+   * @param onTemplateFinished reports the end of the template to the caller
+   * @return {@code true} if the template was started, {@code false} if in-place rename is unavailable
+   * (e.g. the UI layer is missing, the editor cannot host a template, or in-place rename did not start);
+   * callers should fall back to a non-interactive flow in that case.
+   */
+  public boolean invokeInplaceRename(@NotNull Editor editor, @NotNull PsiNameIdentifierOwner element,
+                                     @NotNull InplaceRenameListener onTemplateFinished) {
+    return false;
+  }
+
+  /** Reports the end of the in-place rename template that {@link #invokeInplaceRename} started. */
+  @FunctionalInterface
+  public interface InplaceRenameListener {
+    /**
+     * Runs once the rename is over, and after the element has its final name. A caller that inserted the
+     * element to rename has to take it out again when the element kept the name it started with.
+     *
+     * @param brokenOff {@code true} when the template ended without a name: Escape, an invalid name, or a cancelled template
+     * @param named     {@code true} when the user gave the element a name other than the one it started with
+     */
+    void templateFinished(boolean brokenOff, boolean named);
+  }
 
   public LocalQuickFix createPyChangeSignatureQuickFixForMismatchingMethods(PyFunction function, PyFunction method) {
     return null;

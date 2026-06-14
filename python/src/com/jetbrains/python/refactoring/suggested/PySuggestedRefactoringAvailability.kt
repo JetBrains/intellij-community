@@ -8,6 +8,7 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringAvailability
 import com.intellij.refactoring.suggested.SuggestedRefactoringData
 import com.intellij.refactoring.suggested.SuggestedRefactoringState
 import com.intellij.refactoring.suggested.SuggestedRenameData
+import com.jetbrains.python.psi.PyImportElement
 
 internal class PySuggestedRefactoringAvailability(support: PySuggestedRefactoringSupport) : SuggestedRefactoringAvailability(support) {
 
@@ -24,6 +25,13 @@ internal class PySuggestedRefactoringAvailability(support: PySuggestedRefactorin
       }
       PySuggestedRefactoringSupport.Helper.isAvailableForRename(declaration) -> {
         SuggestedRenameData(declaration as PsiNameIdentifierOwner, state.oldSignature.name)
+      }
+      PySuggestedRefactoringSupport.Helper.isAvailableForImportAlias(declaration) -> {
+        // Only an added/changed alias renames usages; editing the imported module name (no alias) does not.
+        val alias = (declaration as PyImportElement).asNameElement
+        val oldName = state.oldSignature.name
+        if (alias == null || alias.name == oldName) null
+        else SuggestedRenameData(alias, oldName)
       }
       else -> null
     }
