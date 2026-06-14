@@ -2,13 +2,13 @@
 @file:Suppress("unused")
 package org.jetbrains.idea.maven.fixtures
 
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
