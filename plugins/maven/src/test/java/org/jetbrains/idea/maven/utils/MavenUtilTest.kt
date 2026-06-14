@@ -11,6 +11,7 @@ import org.jetbrains.idea.maven.fixtures.createProjectSubDir
 import org.jetbrains.idea.maven.fixtures.createProjectSubFile
 import org.jetbrains.idea.maven.fixtures.mavenFixture
 import org.jetbrains.idea.maven.fixtures.projectPath
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenUtil.DOT_M2_DIR
 import org.jetbrains.idea.maven.utils.MavenUtil.containsDeclaredExtension

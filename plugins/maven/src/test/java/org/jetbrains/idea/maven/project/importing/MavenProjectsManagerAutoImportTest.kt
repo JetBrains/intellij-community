@@ -41,6 +41,7 @@ import org.jetbrains.idea.maven.fixtures.mavenGeneralSettings
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.fixtures.mn
 import org.jetbrains.idea.maven.fixtures.projectPath
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.projectsTree
 import org.jetbrains.idea.maven.fixtures.scheduleProjectImportAndWait
 import org.jetbrains.idea.maven.fixtures.updateAllProjects

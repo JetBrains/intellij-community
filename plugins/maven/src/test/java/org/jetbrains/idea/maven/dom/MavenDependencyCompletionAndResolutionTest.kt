@@ -39,6 +39,7 @@ import org.jetbrains.idea.maven.fixtures.importProjectsAsync
 import org.jetbrains.idea.maven.fixtures.importProjectsWithErrors
 import org.jetbrains.idea.maven.fixtures.mavenDomFixture
 import org.jetbrains.idea.maven.fixtures.mn
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.updateAllProjects
 import org.jetbrains.idea.maven.fixtures.updateModulePom
 import org.jetbrains.idea.maven.fixtures.updateProjectPom

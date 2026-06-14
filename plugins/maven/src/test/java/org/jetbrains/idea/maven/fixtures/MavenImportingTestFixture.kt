@@ -10,7 +10,6 @@ import java.nio.file.Path
 interface MavenTestFixture {
   val project: Project
   val dir: Path
-  val projectRoot: VirtualFile
 }
 
 interface MavenImportingTestFixture : MavenTestFixture {

@@ -21,6 +21,7 @@ import org.jetbrains.idea.maven.fixtures.mavenGeneralSettings
 import org.jetbrains.idea.maven.fixtures.mavenImporterSettings
 import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
 import org.jetbrains.idea.maven.fixtures.mavenVersionIsOrMoreThan
+import org.jetbrains.idea.maven.fixtures.projectRoot
 import org.jetbrains.idea.maven.fixtures.removeFromLocalRepository
 import org.jetbrains.idea.maven.fixtures.testRootDisposable
 import org.jetbrains.idea.maven.model.MavenProjectProblem

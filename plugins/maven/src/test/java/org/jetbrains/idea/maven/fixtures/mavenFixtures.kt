@@ -6,8 +6,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
@@ -45,10 +43,7 @@ fun mavenFixture(): TestFixture<MavenTestFixture> {
 private class MavenBaseTestFixtureImpl(
   override val project: Project,
   override val dir: Path,
-) : MavenTestFixture {
-  override val projectRoot: VirtualFile
-    get() = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(project.basePath!!))!!
-}
+) : MavenTestFixture
 
 /**
  * Creates a [MavenImportingTestFixture].

@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.TestDialog
 import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -66,9 +65,6 @@ class MavenDomTestFixtureImpl internal constructor(
 
   override val projectsManager: MavenProjectsManager
     get() = MavenProjectsManager.getInstance(project)
-
-  override val projectRoot: VirtualFile
-    get() = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(project.basePath!!))!!
 
   override var projectPom: VirtualFile
     get() = myProjectPom!!

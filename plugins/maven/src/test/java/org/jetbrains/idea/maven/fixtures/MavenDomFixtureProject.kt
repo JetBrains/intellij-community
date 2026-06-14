@@ -34,6 +34,9 @@ import kotlin.io.path.absolutePathString
 
 // Project-model authoring: creating/updating poms, profiles, sub-files and settings.
 
+val MavenTestFixture.projectRoot: VirtualFile
+  get() = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(project.basePath!!))!!
+
 fun MavenImportingTestFixture.createProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   return createPomFile(projectRoot, xml).also { projectPom = it }
 }
