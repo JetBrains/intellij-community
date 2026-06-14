@@ -16,10 +16,18 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertDefaultResources
+import com.intellij.maven.testFramework.fixtures.assertDefaultTestResources
+import com.intellij.maven.testFramework.fixtures.assertExcludes
+import com.intellij.maven.testFramework.fixtures.assertGeneratedSources
+import com.intellij.maven.testFramework.fixtures.assertSources
+import com.intellij.maven.testFramework.fixtures.assertTestSources
 import com.intellij.maven.testFramework.fixtures.awaitConfiguration
 import com.intellij.maven.testFramework.fixtures.createModule
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createStdProjectFolders
+import com.intellij.maven.testFramework.fixtures.getModule
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.maven.testFramework.fixtures.projectRoot
@@ -38,14 +46,6 @@ import com.intellij.openapi.vcs.changes.VcsIgnoreManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.assertDefaultResources
-import org.jetbrains.idea.maven.fixtures.assertDefaultTestResources
-import org.jetbrains.idea.maven.fixtures.assertExcludes
-import org.jetbrains.idea.maven.fixtures.assertGeneratedSources
-import org.jetbrains.idea.maven.fixtures.assertSources
-import org.jetbrains.idea.maven.fixtures.assertTestSources
-import org.jetbrains.idea.maven.fixtures.createStdProjectFolders
-import org.jetbrains.idea.maven.fixtures.getModule
 import org.jetbrains.idea.maven.importing.MavenEventsTestHelper
 import org.jetbrains.idea.maven.importing.MavenProjectImporter.Companion.updateTargetFolders
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter

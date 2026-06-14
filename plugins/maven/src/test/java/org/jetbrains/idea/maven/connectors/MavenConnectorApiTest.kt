@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.connectors
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeVersionMoreThan
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
@@ -12,7 +13,6 @@ import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
-import org.jetbrains.idea.maven.fixtures.assumeVersionMoreThan
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.model.MavenWorkspaceMap

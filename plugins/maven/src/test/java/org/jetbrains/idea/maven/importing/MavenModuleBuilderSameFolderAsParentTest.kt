@@ -2,9 +2,15 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertDefaultResources
+import com.intellij.maven.testFramework.fixtures.assertDefaultTestResources
 import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertRelativeContentRoots
+import com.intellij.maven.testFramework.fixtures.assertSources
+import com.intellij.maven.testFramework.fixtures.assertTestSources
 import com.intellij.maven.testFramework.fixtures.createPomXml
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.getModule
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.maven.testFramework.fixtures.projectPath
@@ -15,12 +21,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomUtil
-import org.jetbrains.idea.maven.fixtures.assertDefaultResources
-import org.jetbrains.idea.maven.fixtures.assertDefaultTestResources
-import org.jetbrains.idea.maven.fixtures.assertRelativeContentRoots
-import org.jetbrains.idea.maven.fixtures.assertSources
-import org.jetbrains.idea.maven.fixtures.assertTestSources
-import org.jetbrains.idea.maven.fixtures.getModule
 import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager

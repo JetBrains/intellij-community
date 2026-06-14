@@ -3,14 +3,14 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_1_0
 import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.getActualMavenVersion
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.assumeModel_4_1_0
-import org.jetbrains.idea.maven.fixtures.getActualMavenVersion
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertSame

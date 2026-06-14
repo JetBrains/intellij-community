@@ -5,8 +5,10 @@ import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.findPsiFile
+import com.intellij.maven.testFramework.fixtures.getActualMavenVersion
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.maven.testFramework.fixtures.mavenVersionIsOrMoreThan
 import com.intellij.maven.testFramework.fixtures.removeFromLocalRepository
 import com.intellij.maven.testFramework.fixtures.updateProjectPom
 import com.intellij.openapi.application.readAction
@@ -21,11 +23,9 @@ import org.jetbrains.idea.maven.fixtures.assertDocumentation
 import org.jetbrains.idea.maven.fixtures.assertResolved
 import org.jetbrains.idea.maven.fixtures.assertUnresolved
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
-import org.jetbrains.idea.maven.fixtures.getActualMavenVersion
 import org.jetbrains.idea.maven.fixtures.getCompletionVariants
 import org.jetbrains.idea.maven.fixtures.getDependencyCompletionVariants
 import org.jetbrains.idea.maven.fixtures.getReferenceAtCaret
-import org.jetbrains.idea.maven.fixtures.mavenVersionIsOrMoreThan
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull

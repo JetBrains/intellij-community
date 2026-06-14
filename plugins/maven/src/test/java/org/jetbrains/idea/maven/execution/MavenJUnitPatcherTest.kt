@@ -18,9 +18,12 @@ package org.jetbrains.idea.maven.execution
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.maven.jps.ide.execution.MavenJUnitPatcher
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
+import com.intellij.maven.testFramework.fixtures.getModule
 import com.intellij.maven.testFramework.fixtures.getRelativePath
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.importProjectsAsync
@@ -39,9 +42,6 @@ import com.intellij.util.PathUtil
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.Language
-import org.jetbrains.idea.maven.fixtures.assertModuleModuleDeps
-import org.jetbrains.idea.maven.fixtures.createProjectSubDirs
-import org.jetbrains.idea.maven.fixtures.getModule
 import org.jetbrains.idea.maven.project.MavenProjectSettings
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach

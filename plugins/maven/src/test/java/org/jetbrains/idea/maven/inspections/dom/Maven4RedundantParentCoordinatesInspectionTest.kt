@@ -2,6 +2,8 @@
 package org.jetbrains.idea.maven.inspections.dom
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createPomXml
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
@@ -9,8 +11,6 @@ import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.inspections.Maven4RedundantParentCoordinatesInspection
-import org.jetbrains.idea.maven.fixtures.assumeMaven3
-import org.jetbrains.idea.maven.fixtures.assumeMaven4
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test

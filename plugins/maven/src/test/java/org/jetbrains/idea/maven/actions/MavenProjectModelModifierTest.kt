@@ -3,9 +3,12 @@ package org.jetbrains.idea.maven.actions
 
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDep
 import com.intellij.maven.testFramework.fixtures.awaitConfiguration
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.defaultLanguageLevel
+import com.intellij.maven.testFramework.fixtures.getModule
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import com.intellij.openapi.application.readAction
@@ -23,10 +26,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.assertModuleLibDep
-import org.jetbrains.idea.maven.fixtures.defaultLanguageLevel
 import org.jetbrains.idea.maven.fixtures.findTag
-import org.jetbrains.idea.maven.fixtures.getModule
 import org.jetbrains.idea.maven.importing.MavenProjectModelModifier
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull

@@ -2,8 +2,11 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeVersionMoreThan
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.getModule
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import com.intellij.maven.testFramework.fixtures.mn
@@ -15,9 +18,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
-import org.jetbrains.idea.maven.fixtures.assumeMaven3
-import org.jetbrains.idea.maven.fixtures.assumeVersionMoreThan
-import org.jetbrains.idea.maven.fixtures.getModule
 import org.jetbrains.idea.maven.fixtures.resolveReference
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.junit.jupiter.api.Assertions.assertEquals

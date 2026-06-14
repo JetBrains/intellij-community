@@ -21,13 +21,25 @@ import com.intellij.build.events.BuildIssueEvent
 import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertContain
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDeps
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_1_0
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.doImportProjectsAsync
+import com.intellij.maven.testFramework.fixtures.forMaven3
+import com.intellij.maven.testFramework.fixtures.forMaven4
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.isMaven4
+import com.intellij.maven.testFramework.fixtures.isModel410
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.mavenVersionIsOrMoreThan
+import com.intellij.maven.testFramework.fixtures.moduleTag
+import com.intellij.maven.testFramework.fixtures.modulesTag
 import com.intellij.maven.testFramework.fixtures.projectsTree
 import com.intellij.maven.testFramework.fixtures.testRootDisposable
 import com.intellij.maven.testFramework.fixtures.updateAllProjects
@@ -41,18 +53,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.SyncBundle
-import org.jetbrains.idea.maven.fixtures.assertModuleLibDeps
-import org.jetbrains.idea.maven.fixtures.assumeMaven3
-import org.jetbrains.idea.maven.fixtures.assumeMaven4
-import org.jetbrains.idea.maven.fixtures.assumeModel_4_0_0
-import org.jetbrains.idea.maven.fixtures.assumeModel_4_1_0
-import org.jetbrains.idea.maven.fixtures.forMaven3
-import org.jetbrains.idea.maven.fixtures.forMaven4
-import org.jetbrains.idea.maven.fixtures.isMaven4
-import org.jetbrains.idea.maven.fixtures.isModel410
-import org.jetbrains.idea.maven.fixtures.mavenVersionIsOrMoreThan
-import org.jetbrains.idea.maven.fixtures.moduleTag
-import org.jetbrains.idea.maven.fixtures.modulesTag
 import org.jetbrains.idea.maven.fixtures.runWithoutStaticSync
 import org.jetbrains.idea.maven.project.MavenProject
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -363,7 +363,7 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
     val root = rootProjects[0]
     val problems = root.problems
     maven.forMaven3 {
-      UsefulTestCase.assertSize(2, problems)
+      assertSize(2, problems)
       val description = if (maven.mavenVersionIsOrMoreThan("3.9.0"))
         "Could not find artifact test:parent:pom:1"
       else
@@ -919,7 +919,7 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
 
     maven.forMaven3 {
       var problems = getModules(root)[0].problems
-      UsefulTestCase.assertSize(1, problems)
+      assertSize(1, problems)
       val description = if (maven.mavenVersionIsOrMoreThan("3.9.8"))
         "Unresolveable build extension: Plugin xxx:xxx:1 or one of its dependencies could not be resolved"
       else
@@ -927,7 +927,7 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
       assertTrue(problems[0].description!!.contains(description), problems[0].description)
 
       problems = getModules(root)[1].problems
-      UsefulTestCase.assertSize(1, problems)
+      assertSize(1, problems)
       val description2 = if (maven.mavenVersionIsOrMoreThan("3.9.8"))
         "Unresolveable build extension: Plugin yyy:yyy:1 or one of its dependencies could not be resolved"
       else
@@ -1027,7 +1027,7 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
     val problems = root.problems
 
     maven.forMaven3 {
-      UsefulTestCase.assertSize(1, problems)
+      assertSize(1, problems)
 
       val description = if (maven.mavenVersionIsOrMoreThan("3.9.8"))
         "Unresolveable build extension: Plugin $coordinates or one of its dependencies could not be resolved"
@@ -1038,7 +1038,7 @@ class InvalidProjectImportingTest(mavenVersion: String, modelVersion: String) {
     }
 
     maven.forMaven4 {
-      UsefulTestCase.assertSize(1, problems)
+      assertSize(1, problems)
 
       assertTrue(problems[0].description!!.contains("Could not find artifact $jarCoordinates") ||
         problems[0].description!!.contains("$jarCoordinates was not found"), "Expected unresolved dependency error for $jarCoordinates, but got: ${problems[0].description}")

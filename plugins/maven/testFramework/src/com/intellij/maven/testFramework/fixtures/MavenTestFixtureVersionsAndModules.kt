@@ -1,18 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("unused")
-package org.jetbrains.idea.maven.fixtures
+
+package com.intellij.maven.testFramework.fixtures
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
-import com.intellij.maven.testFramework.fixtures.MavenImportingTestFixture
-import com.intellij.maven.testFramework.fixtures.MavenTestFixture
-import com.intellij.maven.testFramework.fixtures.MavenTestVersions
-import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
-import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
-import com.intellij.maven.testFramework.fixtures.assertUnorderedPathsAreEqual
-import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
-import com.intellij.maven.testFramework.fixtures.projectPath
-import com.intellij.maven.testFramework.fixtures.refreshFiles
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -29,7 +21,10 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor.equals
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -46,6 +41,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.jupiter.api.Assumptions
+import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.readBytes
 
@@ -358,13 +354,13 @@ fun MavenTestFixture.assumeOnLocalEnvironmentOnly(cause: String) {
 val MavenImportingTestFixture.repositoryPathCanonical: String
   get() = FileUtil.toCanonicalPath(repositoryPath.toString())
 
-fun MavenImportingTestFixture.updateSettingsXmlFully(content: String): com.intellij.openapi.vfs.VirtualFile {
+fun MavenImportingTestFixture.updateSettingsXmlFully(content: String): VirtualFile {
   val ioFile = dir.resolve("settings.xml")
-  java.nio.file.Files.createDirectories(ioFile.parent)
-  if (!java.nio.file.Files.exists(ioFile)) java.nio.file.Files.createFile(ioFile)
-  com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess.allowRootAccess(project, ioFile.toString())
-  java.nio.file.Files.write(ioFile, content.toByteArray(Charsets.UTF_8))
-  val f = com.intellij.openapi.vfs.LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)!!
+  Files.createDirectories(ioFile.parent)
+  if (!Files.exists(ioFile)) Files.createFile(ioFile)
+  VfsRootAccess.allowRootAccess(project, ioFile.toString())
+  Files.write(ioFile, content.toByteArray(Charsets.UTF_8))
+  val f = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(ioFile)!!
   refreshFiles(listOf(f))
   mavenGeneralSettings.setUserSettingsFile(f.path)
   return f

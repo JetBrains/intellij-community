@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.inspections.dom
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_1_0
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
@@ -10,7 +11,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.inspections.MavenModulesInMaven4Inspection
-import org.jetbrains.idea.maven.fixtures.assumeModel_4_1_0
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach

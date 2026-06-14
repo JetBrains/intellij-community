@@ -5,6 +5,8 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
+import com.intellij.maven.testFramework.fixtures.assumeVersionMoreThan
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
 import com.intellij.maven.testFramework.fixtures.doImportProjectsAsync
@@ -24,8 +26,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
-import org.jetbrains.idea.maven.fixtures.assumeMaven4
-import org.jetbrains.idea.maven.fixtures.assumeVersionMoreThan
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
 import org.jetbrains.idea.maven.server.MavenServerManager

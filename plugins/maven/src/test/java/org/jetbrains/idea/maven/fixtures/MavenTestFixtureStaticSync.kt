@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.fixtures
 import com.intellij.maven.testFramework.fixtures.MavenImportingTestFixture
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
+import com.intellij.maven.testFramework.fixtures.mavenImporterSettings
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.lang.annotations.Language
@@ -21,7 +22,7 @@ suspend fun MavenImportingTestFixture.importProjectsStaticSync(files: List<Virtu
                   files,
                   null,
                   mavenImporterSettings,
-          mavenGeneralSettings,
+                  mavenGeneralSettings,
                   true,
                   SimpleStructureProjectVisitor(),
                   activity,

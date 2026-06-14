@@ -4,6 +4,9 @@ package org.jetbrains.idea.maven.project.importing
 import com.intellij.idea.IJIgnore
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertHasPendingProjectForReload
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDep
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDeps
+import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.assertNoPendingProjectForReload
 import com.intellij.maven.testFramework.fixtures.assertUnorderedPathsAreEqual
@@ -43,9 +46,6 @@ import com.intellij.util.io.createDirectories
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.fixtures.assertModuleLibDep
-import org.jetbrains.idea.maven.fixtures.assertModuleLibDeps
-import org.jetbrains.idea.maven.fixtures.assertModuleModuleDeps
 import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenSettingsCache

@@ -4,6 +4,8 @@ package org.jetbrains.idea.maven.utils
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.defaultResources
+import com.intellij.maven.testFramework.fixtures.defaultTestResources
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.maven.testFramework.fixtures.projectRoot
@@ -14,8 +16,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions
-import org.jetbrains.idea.maven.fixtures.defaultResources
-import org.jetbrains.idea.maven.fixtures.defaultTestResources
 import org.jetbrains.idea.maven.project.MavenDirectoryCompletionContributor
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType

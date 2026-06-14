@@ -23,6 +23,7 @@ import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.maven.testFramework.fixtures.projectsTree
+import com.intellij.maven.testFramework.fixtures.updateSettingsXmlFully
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.RunAll.Companion.runAll
@@ -30,7 +31,6 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.fixtures.createDummyArtifact
-import org.jetbrains.idea.maven.fixtures.updateSettingsXmlFully
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenDownloadSourcesRequest
 import org.jetbrains.idea.maven.project.MavenProjectsManager

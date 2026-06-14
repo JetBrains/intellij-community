@@ -3,28 +3,28 @@ package org.jetbrains.idea.maven.execution
 
 import com.intellij.ide.actions.runAnything.RunAnythingContext
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
-import com.intellij.openapi.module.ModuleManager.Companion.getInstance
-import com.intellij.openapi.util.text.StringUtil
-import kotlinx.coroutines.runBlocking
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.arrayOfNotNull
 import com.intellij.maven.testFramework.fixtures.assertContain
 import com.intellij.maven.testFramework.fixtures.assertDoNotContain
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.importProjectsAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.model.MavenConstants
-import java.util.function.Consumer
+import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.module.ModuleManager.Companion.getInstance
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.model.MavenConstants
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.jetbrains.idea.maven.fixtures.arrayOfNotNull
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.BeforeEach
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
+import java.util.function.Consumer
 
 @TestApplication
 @ParameterizedClass

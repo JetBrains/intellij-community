@@ -1,19 +1,19 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.compiler
 
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.junit5.TestApplication
-import kotlinx.coroutines.runBlocking
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModules
-import org.jetbrains.idea.maven.fixtures.assumeVersionAtLeast
-import org.jetbrains.idea.maven.fixtures.checkHighlighting
+import com.intellij.maven.testFramework.fixtures.assumeVersionAtLeast
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
-import org.jetbrains.idea.maven.fixtures.getSourceLanguageLevelForModule
-import org.jetbrains.idea.maven.fixtures.getTargetLanguageLevelForModule
+import com.intellij.maven.testFramework.fixtures.getSourceLanguageLevelForModule
+import com.intellij.maven.testFramework.fixtures.getTargetLanguageLevelForModule
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenDomFixture
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.runBlocking
+import org.jetbrains.idea.maven.fixtures.checkHighlighting
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass

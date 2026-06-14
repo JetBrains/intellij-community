@@ -2,24 +2,14 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.compiler.CompilerConfiguration
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.module.LanguageLevelUtil
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.impl.OrderEntryUtil
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.util.io.zipFile
-import kotlinx.coroutines.runBlocking
-import org.intellij.lang.annotations.Language
-import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModules
-import org.jetbrains.idea.maven.fixtures.assumeModel_4_0_0
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.createProjectSubDir
-import org.jetbrains.idea.maven.fixtures.getExpectedTargetLanguageLevel
-import org.jetbrains.idea.maven.fixtures.getModule
+import com.intellij.maven.testFramework.fixtures.getExpectedTargetLanguageLevel
+import com.intellij.maven.testFramework.fixtures.getModule
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.importProjectWithProfiles
 import com.intellij.maven.testFramework.fixtures.importProjectsAsync
@@ -29,14 +19,24 @@ import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.maven.testFramework.fixtures.updateAllProjects
 import com.intellij.maven.testFramework.fixtures.updateModulePom
 import com.intellij.maven.testFramework.fixtures.updateProjectPom
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.module.LanguageLevelUtil
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.impl.OrderEntryUtil
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.io.zipFile
+import kotlinx.coroutines.runBlocking
+import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
-import org.junit.jupiter.api.BeforeEach
 
 @TestApplication
 @ParameterizedClass

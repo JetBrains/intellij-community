@@ -3,8 +3,14 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertSources
+import com.intellij.maven.testFramework.fixtures.assertTestSources
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.getModule
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.moduleTag
+import com.intellij.maven.testFramework.fixtures.modulesTag
 import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.maven.testFramework.fixtures.projectRoot
 import com.intellij.maven.testFramework.fixtures.updateAllProjects
@@ -28,12 +34,6 @@ import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.jetbrains.idea.maven.fixtures.assertSources
-import org.jetbrains.idea.maven.fixtures.assertTestSources
-import org.jetbrains.idea.maven.fixtures.assumeMaven3
-import org.jetbrains.idea.maven.fixtures.getModule
-import org.jetbrains.idea.maven.fixtures.moduleTag
-import org.jetbrains.idea.maven.fixtures.modulesTag
 import org.jetbrains.idea.maven.fixtures.waitForImportWithinTimeout
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId

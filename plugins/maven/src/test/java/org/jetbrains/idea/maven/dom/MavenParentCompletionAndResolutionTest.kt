@@ -5,6 +5,10 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
+import com.intellij.maven.testFramework.fixtures.assumeVersionLessThan
+import com.intellij.maven.testFramework.fixtures.assumeVersionMoreThan
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createPomFile
 import com.intellij.maven.testFramework.fixtures.createProjectPom
@@ -32,10 +36,6 @@ import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
 import org.jetbrains.idea.maven.fixtures.assertResolved
-import org.jetbrains.idea.maven.fixtures.assumeMaven3
-import org.jetbrains.idea.maven.fixtures.assumeMaven4
-import org.jetbrains.idea.maven.fixtures.assumeVersionLessThan
-import org.jetbrains.idea.maven.fixtures.assumeVersionMoreThan
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
 import org.jetbrains.idea.maven.fixtures.getIntentionAtCaret
 import org.jetbrains.idea.maven.utils.MavenLog

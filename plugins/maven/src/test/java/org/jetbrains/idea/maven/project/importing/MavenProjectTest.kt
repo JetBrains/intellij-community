@@ -1,26 +1,26 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project.importing
 
-import com.intellij.openapi.components.service
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.testFramework.junit5.TestApplication
-import kotlinx.coroutines.runBlocking
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.assertContain
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.assertUnorderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
-import org.jetbrains.idea.maven.fixtures.getSourceLanguageLevelForModule
-import org.jetbrains.idea.maven.fixtures.getTargetLanguageLevelForModule
+import com.intellij.maven.testFramework.fixtures.getSourceLanguageLevelForModule
+import com.intellij.maven.testFramework.fixtures.getTargetLanguageLevelForModule
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.importProjectWithProfiles
 import com.intellij.maven.testFramework.fixtures.importProjectsAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
-import org.jetbrains.idea.maven.fixtures.mavenVersionIsOrMoreThan
+import com.intellij.maven.testFramework.fixtures.mavenVersionIsOrMoreThan
 import com.intellij.maven.testFramework.fixtures.updateSettingsXml
+import com.intellij.openapi.components.service
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.model.MavenArtifactNode
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.MavenEmbedderWrappersManager

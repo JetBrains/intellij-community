@@ -2,11 +2,11 @@
 package org.jetbrains.idea.maven.project
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeVersion
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
 import com.intellij.openapi.components.service
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.assumeVersion
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions

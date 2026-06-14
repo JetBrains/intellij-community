@@ -1,13 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("unused")
-package org.jetbrains.idea.maven.fixtures
 
-import com.intellij.maven.testFramework.fixtures.MavenImportingTestFixture
-import com.intellij.maven.testFramework.fixtures.MavenTestFixture
-import com.intellij.maven.testFramework.fixtures.assertUnorderedPathsAreEqual
-import com.intellij.maven.testFramework.fixtures.createProjectSubDir
-import com.intellij.maven.testFramework.fixtures.createProjectSubFile
-import com.intellij.maven.testFramework.fixtures.projectPath
+package com.intellij.maven.testFramework.fixtures
+
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ModuleRootManager

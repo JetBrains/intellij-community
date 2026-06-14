@@ -13,8 +13,14 @@ import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.maven.testFramework.fixtures.MavenImportingTestFixture
+import com.intellij.maven.testFramework.fixtures.assertExcludes
 import com.intellij.maven.testFramework.fixtures.assertModules
+import com.intellij.maven.testFramework.fixtures.assertResources
+import com.intellij.maven.testFramework.fixtures.assertSources
 import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubDirs
+import com.intellij.maven.testFramework.fixtures.createStdProjectFolders
+import com.intellij.maven.testFramework.fixtures.defaultResources
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
 import com.intellij.maven.testFramework.fixtures.projectPath

@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.issue.BuildIssue
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeModel_4_0_0
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
@@ -11,7 +12,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.buildtool.MavenBuildIssueHandler
-import org.jetbrains.idea.maven.fixtures.assumeModel_4_0_0
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull

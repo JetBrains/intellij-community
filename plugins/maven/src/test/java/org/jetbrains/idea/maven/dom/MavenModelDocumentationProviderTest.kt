@@ -4,12 +4,12 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.findPsiFile
+import com.intellij.maven.testFramework.fixtures.getActualMavenVersion
 import com.intellij.maven.testFramework.fixtures.mavenDomFixture
 import com.intellij.openapi.application.readAction
 import com.intellij.psi.xml.XmlFile
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.getActualMavenVersion
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass

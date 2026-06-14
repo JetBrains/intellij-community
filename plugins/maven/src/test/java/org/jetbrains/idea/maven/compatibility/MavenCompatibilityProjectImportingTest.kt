@@ -2,11 +2,13 @@
 package org.jetbrains.idea.maven.compatibility
 
 import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDep
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
 import com.intellij.maven.testFramework.fixtures.doImportProjectsAsync
+import com.intellij.maven.testFramework.fixtures.getModule
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
@@ -20,8 +22,6 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.assertModuleLibDep
-import org.jetbrains.idea.maven.fixtures.getModule
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.junit.jupiter.api.Assertions.assertEquals

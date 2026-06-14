@@ -5,6 +5,8 @@ import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture.Highlight
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixtureIndices
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
 import com.intellij.maven.testFramework.fixtures.configTest
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProfilesXml
@@ -25,8 +27,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.dom.inspections.MavenModelVersionMissedInspection
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariants
 import org.jetbrains.idea.maven.fixtures.assertCompletionVariantsInclude
-import org.jetbrains.idea.maven.fixtures.assumeMaven3
-import org.jetbrains.idea.maven.fixtures.assumeMaven4
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test

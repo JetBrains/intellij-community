@@ -2,6 +2,8 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
 import com.intellij.maven.testFramework.fixtures.createProjectSubFile
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenDomFixture
@@ -23,8 +25,6 @@ import com.intellij.util.xml.reflect.DomExtension
 import com.intellij.util.xml.reflect.DomExtensionsRegistrar
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.plugin.MavenDomPluginModel
-import org.jetbrains.idea.maven.fixtures.assumeMaven3
-import org.jetbrains.idea.maven.fixtures.assumeMaven4
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue

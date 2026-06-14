@@ -15,29 +15,29 @@
  */
 package org.jetbrains.idea.maven.dom
 
+import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.createModulePom
+import com.intellij.maven.testFramework.fixtures.createPomXml
+import com.intellij.maven.testFramework.fixtures.createProjectPom
+import com.intellij.maven.testFramework.fixtures.createProjectSubFile
+import com.intellij.maven.testFramework.fixtures.envVar
+import com.intellij.maven.testFramework.fixtures.importProjectAsync
+import com.intellij.maven.testFramework.fixtures.importProjectWithProfiles
+import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
-import kotlinx.coroutines.runBlocking
-import java.nio.file.Paths
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
-import org.jetbrains.idea.maven.fixtures.envVar
-import com.intellij.maven.testFramework.fixtures.createModulePom
-import com.intellij.maven.testFramework.fixtures.createPomXml
-import com.intellij.maven.testFramework.fixtures.createProjectPom
-import com.intellij.maven.testFramework.fixtures.createProjectSubFile
-import com.intellij.maven.testFramework.fixtures.importProjectAsync
-import com.intellij.maven.testFramework.fixtures.importProjectWithProfiles
-import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
-import com.intellij.maven.testFramework.fixtures.projectPath
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.provider.ArgumentsSource
+import java.nio.file.Paths
 
 @TestApplication
 @ParameterizedClass

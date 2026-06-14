@@ -4,6 +4,10 @@ package org.jetbrains.idea.maven.dom
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.maven.testFramework.fixtures.MavenDomTestFixture.Highlight
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModuleModuleDeps
+import com.intellij.maven.testFramework.fixtures.assumeMaven3
+import com.intellij.maven.testFramework.fixtures.assumeMaven4
+import com.intellij.maven.testFramework.fixtures.assumeVersionAtLeast
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.createProjectPom
 import com.intellij.maven.testFramework.fixtures.findPsiFile
@@ -13,11 +17,7 @@ import com.intellij.maven.testFramework.fixtures.moveCaretTo
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection
-import org.jetbrains.idea.maven.fixtures.assertModuleModuleDeps
 import org.jetbrains.idea.maven.fixtures.assertResolved
-import org.jetbrains.idea.maven.fixtures.assumeMaven3
-import org.jetbrains.idea.maven.fixtures.assumeMaven4
-import org.jetbrains.idea.maven.fixtures.assumeVersionAtLeast
 import org.jetbrains.idea.maven.fixtures.checkHighlighting
 import org.jetbrains.idea.maven.fixtures.getIntentionAtCaret
 import org.junit.jupiter.api.Assertions.assertEquals

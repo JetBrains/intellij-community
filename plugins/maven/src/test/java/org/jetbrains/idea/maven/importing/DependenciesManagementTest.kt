@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.fixtures.MavenVersionArguments
+import com.intellij.maven.testFramework.fixtures.assertModuleLibDeps
 import com.intellij.maven.testFramework.fixtures.assertModules
 import com.intellij.maven.testFramework.fixtures.createModulePom
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
@@ -25,7 +26,6 @@ import com.intellij.maven.testFramework.fixtures.updateAllProjects
 import com.intellij.maven.testFramework.fixtures.updateSettingsXml
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.idea.maven.fixtures.assertModuleLibDeps
 import org.jetbrains.idea.maven.fixtures.executeGoal
 import org.jetbrains.idea.maven.fixtures.hasMavenInstallation
 import org.junit.jupiter.api.Test
