@@ -2,15 +2,16 @@
 package org.jetbrains.idea.maven.utils;
 
 import org.jetbrains.idea.maven.server.ParallelRunnerForServer;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class ParallelRunnerForServerTest {
   @Test
@@ -37,13 +38,14 @@ public class ParallelRunnerForServerTest {
     assertEquals(text, rethrown.getMessage());
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void testSequentialSneakyRethrow() {
     var text = "should be rethrown";
     var in = List.of(1, 2, 3, 4, 5);
-    ParallelRunnerForServer.execute(false, in, it -> {
-      throw new RuntimeException(text);
-    });
+    assertThrows(RuntimeException.class, () ->
+      ParallelRunnerForServer.execute(false, in, it -> {
+        throw new RuntimeException(text);
+      }));
   }
 
   @Test
@@ -86,13 +88,14 @@ public class ParallelRunnerForServerTest {
     assertEquals(text, rethrown.getMessage());
   }
 
-  @Test(expected = RuntimeException.class)
+  @Test
   public void testParallelSneakyThrow() {
     var text = "should be rethrown";
     var in = List.of(1, 2, 3, 4, 5);
-    ParallelRunnerForServer.execute(true, in, it -> {
-      throw new RuntimeException(text);
-    });
+    assertThrows(RuntimeException.class, () ->
+      ParallelRunnerForServer.execute(true, in, it -> {
+        throw new RuntimeException(text);
+      }));
   }
 
 }
