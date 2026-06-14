@@ -2,25 +2,30 @@
 package org.jetbrains.idea.maven.statistics
 
 import com.intellij.internal.statistic.FUCollectorTestCase.collectProjectStateCollectorEvents
-import com.jetbrains.fus.reporting.api.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.maven.testFramework.MavenImportingTestCase
+import com.intellij.testFramework.junit5.TestApplication
+import com.jetbrains.fus.reporting.api.ValidationResultType
 import kotlinx.coroutines.runBlocking
-import org.junit.Test
+import org.jetbrains.idea.maven.fixtures.assertContain
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 
-class MavenPluginCollectorTest : MavenImportingTestCase() {
-
-  override fun runInDispatchThread(): Boolean = false
+@TestApplication
+class MavenPluginCollectorTest {
+  private val maven by mavenImportingFixture()
 
   @Test
   fun `test should collect info about plugins`() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <build>
                       <plugins>
-                          <plugin>    
+                          <plugin>
                               <artifactId>maven-compiler-plugin</artifactId>
                               <configuration>
                                   <source>1.8</source>
@@ -31,7 +36,7 @@ class MavenPluginCollectorTest : MavenImportingTestCase() {
                     </build>
                     """.trimIndent())
     val metrics = collectProjectStateCollectorEvents(
-      MavenPluginCollector::class.java, project)
+      MavenPluginCollector::class.java, maven.project)
 
     val compiler = metrics.map { it.data.build() }.first {
       it["group_artifact_id"] == "org.apache.maven.plugins:maven-compiler-plugin"
@@ -44,20 +49,20 @@ class MavenPluginCollectorTest : MavenImportingTestCase() {
 
   @Test
   fun `test should not collect info for private plugins`() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <build>
                       <plugins>
-                          <plugin>    
+                          <plugin>
                               <artifactId>maven-compiler-plugin</artifactId>
                               <configuration>
                                   <source>1.8</source>
                                   <target>1.8</target>
                               </configuration>
                           </plugin>
-                          <plugin>    
+                          <plugin>
                               <groupId>some-private-plugin</groupId>
                               <artifactId>my-plugin</artifactId>
                               <version>1.0</version>
@@ -66,7 +71,7 @@ class MavenPluginCollectorTest : MavenImportingTestCase() {
                     </build>
                     """.trimIndent())
     val metrics = collectProjectStateCollectorEvents(
-      MavenPluginCollector::class.java, project)
+      MavenPluginCollector::class.java, maven.project)
     val collectedGroupIds = metrics.map { it.data.build() }.map {
       it["group_artifact_id"].toString()
     }
