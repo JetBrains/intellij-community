@@ -187,11 +187,15 @@ internal fun shouldAllowPromptPopupCancellation(
   currentEvent: AWTEvent?,
   isExplicitClose: Boolean,
   resolveProject: (Component?) -> Project?,
+  autoClose: Boolean = true
 ): Boolean {
   return isExplicitClose || popupProject == null || when (currentEvent) {
-    is MouseEvent ->
+    is MouseEvent -> {
+      if (!autoClose) return false
+
       !isRecentSourceFrameActivation &&
       resolveProject(currentEvent.component) === popupProject
+    }
     is KeyEvent -> isEscapeKeyPress(currentEvent)
     is WindowEvent -> false
     else -> true

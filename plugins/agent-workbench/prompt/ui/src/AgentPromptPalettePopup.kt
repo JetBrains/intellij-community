@@ -88,6 +88,7 @@ internal class AgentPromptPalettePopup(
           currentEvent = IdeEventQueue.getInstance().trueCurrentEvent,
           isExplicitClose = isExplicitCloseInProgress,
           resolveProject = ::resolveProjectForComponent,
+          autoClose = uiStateService.autoClose
         )
       }
       .setCancelOnWindowDeactivation(false)
@@ -176,8 +177,10 @@ internal class AgentPromptPalettePopup(
       promptArea = promptArea,
       suggestionsPanel = suggestions.component,
       contextChipsPanel = contextChips.component,
+      pinned = { controllerRef.isPinned },
       onPromptLibraryClicked = { controllerRef.showPromptLibraryChooser() },
       onExistingTaskSelected = { selected -> controllerRef.onExistingTaskSelected(selected) },
+      onPinClicked = { controllerRef.togglePin() }
     )
     providerSelector = AgentPromptProviderSelector(
       invocationData = invocationData,

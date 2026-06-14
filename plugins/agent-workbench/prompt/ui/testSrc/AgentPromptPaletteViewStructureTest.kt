@@ -263,7 +263,7 @@ class AgentPromptPaletteViewStructureTest {
 
       assertThat(SwingUtilities.isDescendingFrom(view.promptLibraryIconLabel, view.rootPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(view.promptLibraryIconLabel, view.rightHeaderPanel)).isTrue()
-      assertThat(view.promptLibraryIconLabel.toolTipText).contains("Open prompt library")
+      assertThat(view.promptLibraryIconLabel.toolTipText).contains("Open Prompt Library")
       assertThat(view.promptLibraryIconLabel.preferredSize).isEqualTo(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
       assertThat(view.promptLibraryIconLabel.width).isEqualTo(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width)
       assertThat(view.promptLibraryIconLabel.horizontalAlignment).isEqualTo(SwingConstants.CENTER)

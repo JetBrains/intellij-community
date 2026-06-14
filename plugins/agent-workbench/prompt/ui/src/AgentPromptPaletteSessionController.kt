@@ -271,6 +271,13 @@ internal class AgentPromptPaletteSessionController(
     }
   }
 
+  val isPinned: Boolean
+    get() = !uiStateService.autoClose
+
+  fun togglePin() {
+    uiStateService.autoClose = !uiStateService.autoClose
+  }
+
   fun onExistingTaskSelected(selected: ThreadEntry) {
     existingTaskController.onUserSelected(selected)
     updateSendAvailability()
