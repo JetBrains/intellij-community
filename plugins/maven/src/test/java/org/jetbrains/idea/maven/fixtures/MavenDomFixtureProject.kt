@@ -34,7 +34,7 @@ import kotlin.io.path.absolutePathString
 
 // Project-model authoring: creating/updating poms, profiles, sub-files and settings.
 
-fun MavenTestFixture.createProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+fun MavenImportingTestFixture.createProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   return createPomFile(projectRoot, xml).also { projectPom = it }
 }
 
@@ -43,7 +43,7 @@ fun MavenTestFixture.createProjectPom(@Language(value = "XML", prefix = "<projec
  * does NOT wrap the content via [MavenTestCase.createPomXml], so the test keeps full control over the file (e.g. a
  * custom `<?xml ...?>` declaration, explicit `xmlns`, or model version).
  */
-fun MavenTestFixture.setRawPomFile(content: String) {
+fun MavenImportingTestFixture.setRawPomFile(content: String) {
   val filePath = Path.of(projectRoot.path, "pom.xml")
   Files.writeString(filePath, content)
   projectRoot.refresh(false, false)
@@ -52,23 +52,23 @@ fun MavenTestFixture.setRawPomFile(content: String) {
   refreshFiles(listOf(f))
 }
 
-fun MavenTestFixture.updateProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+fun MavenImportingTestFixture.updateProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   val pom = createProjectPom(xml)
   refreshFiles(listOf(pom))
   return pom
 }
 
-fun MavenTestFixture.createModulePom(relativePath: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+fun MavenImportingTestFixture.createModulePom(relativePath: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   return createPomFile(createProjectSubDir(relativePath), xml)
 }
 
-fun MavenTestFixture.updateModulePom(relativePath: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+fun MavenImportingTestFixture.updateModulePom(relativePath: String, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   val pom = createModulePom(relativePath, xml)
   refreshFiles(listOf(pom))
   return pom
 }
 
-fun MavenTestFixture.createPomFile(dir: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+fun MavenImportingTestFixture.createPomFile(dir: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
   val filePath = Path.of(dir.path, "pom.xml")
   Files.writeString(filePath, MavenTestCase.createPomXml(modelVersion, xml, false))
   dir.refresh(false, false)
@@ -104,7 +104,7 @@ fun MavenTestFixture.createFile(path: Path, content: String): VirtualFile {
   return file
 }
 
-fun MavenTestFixture.createProfilesXml(@Language(value = "XML", prefix = "<profiles>", suffix = "</profiles>") xml: String): VirtualFile {
+fun MavenImportingTestFixture.createProfilesXml(@Language(value = "XML", prefix = "<profiles>", suffix = "</profiles>") xml: String): VirtualFile {
   val content = "<?xml version=\"1.0\"?><profilesXml><profiles>$xml</profiles></profilesXml>"
   val filePath = Path.of(projectRoot.path, "profiles.xml")
   Files.writeString(filePath, content)
@@ -118,7 +118,7 @@ fun MavenTestFixture.createProfilesXml(relativePath: String, xml: String): Virtu
   return createProfilesFile(createProjectSubDir(relativePath), xml, false)
 }
 
-fun MavenTestFixture.createProfilesXmlOldStyle(@Language(value = "XML", prefix = "<profiles>", suffix = "</profiles>") xml: String): VirtualFile {
+fun MavenImportingTestFixture.createProfilesXmlOldStyle(@Language(value = "XML", prefix = "<profiles>", suffix = "</profiles>") xml: String): VirtualFile {
   return createProfilesFile(projectRoot, xml, true)
 }
 
@@ -169,7 +169,7 @@ fun MavenTestFixture.updateProjectSubFile(relativePath: String, content: String)
   return file
 }
 
-fun MavenTestFixture.setPomContent(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
+fun MavenImportingTestFixture.setPomContent(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
   Files.writeString(file.toNioPath(), MavenTestCase.createPomXml(modelVersion, xml, false))
   refreshFiles(listOf(file))
 }
@@ -215,7 +215,7 @@ fun MavenTestFixture.configConfirmationForNoAnswer(): AtomicInteger {
   return counter
 }
 
-fun MavenTestFixture.createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): String {
+fun MavenImportingTestFixture.createPomXml(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): String {
   return MavenTestCase.createPomXml(modelVersion, xml, false)
 }
 
@@ -256,14 +256,14 @@ fun <E : Throwable?> MavenTestFixture.runWriteAction(runnable: ThrowableRunnable
   WriteCommandAction.writeCommandAction(project).run(runnable)
 }
 
-fun MavenTestFixture.createProjectPom(
+fun MavenImportingTestFixture.createProjectPom(
   @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
   omitModelVersionTag: Boolean,
 ): VirtualFile {
   return createPomFile(projectRoot, xml, omitModelVersionTag).also { projectPom = it }
 }
 
-fun MavenTestFixture.createModulePom(
+fun MavenImportingTestFixture.createModulePom(
   relativePath: String,
   @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
   omitModelVersionTag: Boolean,
@@ -271,7 +271,7 @@ fun MavenTestFixture.createModulePom(
   return createPomFile(createProjectSubDir(relativePath), xml, omitModelVersionTag)
 }
 
-fun MavenTestFixture.updateModulePom(
+fun MavenImportingTestFixture.updateModulePom(
   relativePath: String,
   @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
   omitModelVersionTag: Boolean,
@@ -281,7 +281,7 @@ fun MavenTestFixture.updateModulePom(
   return pom
 }
 
-fun MavenTestFixture.createPomFile(
+fun MavenImportingTestFixture.createPomFile(
   dir: VirtualFile,
   @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
   omitModelVersionTag: Boolean,
@@ -294,7 +294,7 @@ fun MavenTestFixture.createPomFile(
   return f
 }
 
-fun MavenTestFixture.createPomFile(
+fun MavenImportingTestFixture.createPomFile(
   dir: VirtualFile,
   fileName: String,
   @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
@@ -308,7 +308,7 @@ fun MavenTestFixture.createPomFile(
   return f
 }
 
-fun MavenTestFixture.pathFromBasedir(relPath: String): String = pathFromBasedir(projectRoot, relPath)
+fun MavenImportingTestFixture.pathFromBasedir(relPath: String): String = pathFromBasedir(projectRoot, relPath)
 
 fun MavenTestFixture.pathFromBasedir(root: VirtualFile?, relPath: String): String =
   FileUtil.toSystemIndependentName(root!!.path + "/" + relPath)

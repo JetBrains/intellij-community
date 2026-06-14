@@ -38,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.backend.observation.Observation
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor.equals
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.platform.testFramework.eelJava.EelTestJdkProvider
@@ -84,7 +85,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.io.path.absolutePathString
 import kotlin.io.path.createDirectory
 import kotlin.io.path.createParentDirectories
 import kotlin.io.path.exists
@@ -105,9 +105,6 @@ abstract class MavenTestCase : UsefulTestCase() {
   private var myProject: Project? = null
 
   private var myProjectRoot: VirtualFile? = null
-
-  private var myProjectPom: VirtualFile? = null
-  private val myAllPoms: MutableSet<VirtualFile> = mutableSetOf()
 
   private var myModelVersion: String? = null
 
@@ -138,16 +135,6 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   val projectRoot: VirtualFile
     get() = myProjectRoot!!
-
-  var projectPom: VirtualFile
-    get() = myProjectPom!!
-    set(projectPom) {
-      myProjectPom = projectPom
-    }
-
-  fun addPom(pom: VirtualFile) {
-    myAllPoms.add(pom)
-  }
 
   protected fun useModel410() {
     myModelVersion = "4.1.0"
@@ -409,60 +396,6 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected fun createModule(name: String): Module = createModule(name, JavaModuleType.getModuleType())
 
-
-  protected fun createProjectPom(
-    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
-    omitModelVersionTag: Boolean = false,
-  ): VirtualFile {
-    return createPomFile(projectRoot, xml, omitModelVersionTag).also { myProjectPom = it }
-  }
-
-  protected fun updateProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
-    val pom = createProjectPom(xml)
-    refreshFiles(listOf(pom))
-    return pom
-  }
-
-  protected fun createModulePom(
-    relativePath: String,
-    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
-    omitModelVersionTag: Boolean = false,
-  ): VirtualFile {
-    return createPomFile(createProjectSubDir(relativePath), xml, omitModelVersionTag)
-  }
-
-  protected fun updateModulePom(
-    relativePath: String,
-    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
-    omitModelVersionTag: Boolean = false,
-  ): VirtualFile {
-    val pom = createModulePom(relativePath, xml, omitModelVersionTag)
-    refreshFiles(listOf(pom))
-    return pom
-  }
-
-  protected fun createPomFile(
-    dir: VirtualFile,
-    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
-    omitModelVersionTag: Boolean = false,
-  ): VirtualFile {
-    return createPomFile(dir, "pom.xml", xml, omitModelVersionTag)
-  }
-
-  protected fun createPomFile(
-    dir: VirtualFile, fileName: String = "pom.xml",
-    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String,
-    omitModelVersionTag: Boolean = false,
-  ): VirtualFile {
-    val filePath = Path.of(dir.path, fileName)
-    setPomContent(filePath, xml, omitModelVersionTag)
-    dir.refresh(false, false)
-    val f = dir.findChild(fileName) ?: throw AssertionError("can't find file ${filePath.absolutePathString()} in VFS")
-    myAllPoms.add(f)
-    refreshFiles(listOf(f))
-    return f
-  }
-
   protected fun createProfilesXmlOldStyle(xml: String): VirtualFile {
     return createProfilesFile(projectRoot, xml, true)
   }
@@ -664,19 +597,11 @@ abstract class MavenTestCase : UsefulTestCase() {
     setFileContent(file, createPomXml(xml, omitModelVersionTag))
   }
 
-  private fun setPomContent(
-    file: Path,
-    @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?,
-    omitModelVersionTag: Boolean = false,
-  ) {
-    setFileContent(file, createPomXml(xml, omitModelVersionTag))
-  }
-
   private fun setFileContent(file: VirtualFile, content: String) {
     return setFileContent(file.toNioPath(), content)
   }
 
-  private fun setFileContent(file: Path, content: String) {
+  protected fun setFileContent(file: Path, content: String) {
     val relativePath = dir.relativize(file)
     MavenLog.LOG.debug("Writing content to $relativePath")
     Files.write(file, content.toByteArray(StandardCharsets.UTF_8))
@@ -811,14 +736,6 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   protected fun assumeOnLocalEnvironmentOnly(cause: String) {
     assumeTrue("Unable to run the test in non-local environment: $cause", LocalEelDescriptor == project.getEelDescriptor())
-  }
-
-  protected fun setRawPomFile(content: String) {
-    Files.write(projectPath.resolve("pom.xml"), content.toByteArray(StandardCharsets.UTF_8))
-    projectRoot.refresh(false, false)
-    val f = projectRoot.findChild("pom.xml") ?: throw AssertionError("can't find pom.xml in vfs")
-    myProjectPom = f
-    refreshFiles(listOf(f))
   }
 
   @RequiresBackgroundThread

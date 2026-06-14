@@ -42,56 +42,56 @@ import kotlin.io.path.readBytes
 
 // Maven-version assumptions and module / language-level inspection.
 
-fun MavenTestFixture.getActualMavenVersion(): String = MavenTestVersions.getActualVersion(mavenVersion)
+fun MavenImportingTestFixture.getActualMavenVersion(): String = MavenTestVersions.getActualVersion(mavenVersion)
 
-fun MavenTestFixture.mavenVersionIsOrMoreThan(version: String): Boolean =
+fun MavenImportingTestFixture.mavenVersionIsOrMoreThan(version: String): Boolean =
   StringUtil.compareVersionNumbers(version, MavenTestVersions.getActualVersion(mavenVersion)) <= 0
 
-fun MavenTestFixture.assumeMaven3() {
+fun MavenImportingTestFixture.assumeMaven3() {
   Assumptions.assumeTrue(MavenTestVersions.getActualVersion(mavenVersion).startsWith("3."))
 }
 
-fun MavenTestFixture.assumeMaven4() {
+fun MavenImportingTestFixture.assumeMaven4() {
   Assumptions.assumeTrue(MavenTestVersions.getActualVersion(mavenVersion).startsWith("4."))
 }
 
-fun MavenTestFixture.assumeModel_4_0_0(message: String) {
+fun MavenImportingTestFixture.assumeModel_4_0_0(message: String) {
   Assumptions.assumeTrue(modelVersion == MavenConstants.MODEL_VERSION_4_0_0, message)
 }
 
-fun MavenTestFixture.assumeModel_4_1_0(message: String) {
+fun MavenImportingTestFixture.assumeModel_4_1_0(message: String) {
   Assumptions.assumeTrue(modelVersion == MavenConstants.MODEL_VERSION_4_1_0, message)
 }
 
-suspend fun MavenTestFixture.forModel40(block: suspend () -> Unit) {
+suspend fun MavenImportingTestFixture.forModel40(block: suspend () -> Unit) {
   if (modelVersion == MavenConstants.MODEL_VERSION_4_0_0) block()
 }
 
-suspend fun MavenTestFixture.forModel41(block: suspend () -> Unit) {
+suspend fun MavenImportingTestFixture.forModel41(block: suspend () -> Unit) {
   if (modelVersion == MavenConstants.MODEL_VERSION_4_1_0) block()
 }
 
-fun MavenTestFixture.assumeVersionAtLeast(version: String) {
+fun MavenImportingTestFixture.assumeVersionAtLeast(version: String) {
   Assumptions.assumeTrue(
     VersionComparatorUtil.compare(MavenTestVersions.getActualVersion(mavenVersion), MavenTestVersions.getActualVersion(version)) >= 0)
 }
 
-fun MavenTestFixture.assumeVersionMoreThan(version: String) {
+fun MavenImportingTestFixture.assumeVersionMoreThan(version: String) {
   Assumptions.assumeTrue(
     VersionComparatorUtil.compare(MavenTestVersions.getActualVersion(mavenVersion), MavenTestVersions.getActualVersion(version)) > 0)
 }
 
-fun MavenTestFixture.assumeVersionLessThan(version: String) {
+fun MavenImportingTestFixture.assumeVersionLessThan(version: String) {
   Assumptions.assumeTrue(
     VersionComparatorUtil.compare(MavenTestVersions.getActualVersion(mavenVersion), MavenTestVersions.getActualVersion(version)) < 0)
 }
 
-fun MavenTestFixture.assumeVersion(version: String) {
+fun MavenImportingTestFixture.assumeVersion(version: String) {
   Assume.assumeTrue("Version $mavenVersion is not $version, therefore skipped",
                     VersionComparatorUtil.compare(MavenTestVersions.getActualVersion(mavenVersion), MavenTestVersions.getActualVersion(version)) == 0)
 }
 
-val MavenTestFixture.defaultLanguageLevel: LanguageLevel
+val MavenImportingTestFixture.defaultLanguageLevel: LanguageLevel
   get() {
     val version = MavenTestVersions.getActualVersion(mavenVersion)
     if (VersionComparatorUtil.compare("3.9.3", version) <= 0) return LanguageLevel.JDK_1_8
@@ -175,16 +175,16 @@ private fun MavenTestFixture.getRootManager(module: String): ModuleRootManager {
   return ModuleRootManager.getInstance(getModule(module))
 }
 
-val MavenTestFixture.isMaven4: Boolean
+val MavenImportingTestFixture.isMaven4: Boolean
   get() = StringUtil.compareVersionNumbers(
     getActualMavenVersion(), "4.0") >= 0
 
-fun MavenTestFixture.withModel410Only(value: String?): String? {
+fun MavenImportingTestFixture.withModel410Only(value: String?): String? {
   val isRc3 = getActualMavenVersion().equals("4.0.0-rc-3", true)
   return if (isRc3 || this.modelVersion == MavenConstants.MODEL_VERSION_4_1_0) value else null
 }
 
-fun MavenTestFixture.isModel410(): Boolean {
+fun MavenImportingTestFixture.isModel410(): Boolean {
   val isRc3 = getActualMavenVersion().equals("4.0.0-rc-3", true)
   if (isRc3) return true
   return this.isMaven4 && this.modelVersion == MavenConstants.MODEL_VERSION_4_1_0
@@ -265,14 +265,14 @@ fun MavenTestFixture.assertNotMavenizedModule(name: String) {
 val MavenTestFixture.envVar: String
   get() = if (SystemInfo.isWindows) "TEMP" else "TMPDIR"
 
-val MavenTestFixture.modulesTag: String get() = if (isModel410()) "subprojects" else "modules"
-val MavenTestFixture.moduleTag: String get() = if (isModel410()) "subproject" else "module"
+val MavenImportingTestFixture.modulesTag: String get() = if (isModel410()) "subprojects" else "modules"
+val MavenImportingTestFixture.moduleTag: String get() = if (isModel410()) "subproject" else "module"
 
-fun MavenTestFixture.forMaven3(r: Runnable) {
+fun MavenImportingTestFixture.forMaven3(r: Runnable) {
   if (getActualMavenVersion().startsWith("3.")) r.run()
 }
 
-fun MavenTestFixture.forMaven4(r: Runnable) {
+fun MavenImportingTestFixture.forMaven4(r: Runnable) {
   if (getActualMavenVersion().startsWith("4.")) r.run()
 }
 
@@ -332,13 +332,13 @@ fun MavenTestFixture.assertModuleLibDep(
 }
 
 // Language-level expectations (2-tier; distinct from the 3-tier defaultLanguageLevel above).
-fun MavenTestFixture.getExpectedSourceLanguageLevel(): LanguageLevel =
+fun MavenImportingTestFixture.getExpectedSourceLanguageLevel(): LanguageLevel =
   if (mavenVersionIsOrMoreThan("3.9.3")) LanguageLevel.JDK_1_8 else LanguageLevel.JDK_1_5
 
-fun MavenTestFixture.getExpectedTargetLanguageLevel(): String =
+fun MavenImportingTestFixture.getExpectedTargetLanguageLevel(): String =
   if (mavenVersionIsOrMoreThan("3.9.3")) "1.8" else "1.5"
 
-fun MavenTestFixture.fileContentEqual(file1: Path, file2: Path): Boolean =
+fun MavenImportingTestFixture.fileContentEqual(file1: Path, file2: Path): Boolean =
   file1.readBytes().contentEquals(file2.readBytes())
 
 fun MavenTestFixture.assumeOnLocalEnvironmentOnly(cause: String) {
@@ -346,7 +346,7 @@ fun MavenTestFixture.assumeOnLocalEnvironmentOnly(cause: String) {
                          "Unable to run the test in non-local environment: $cause")
 }
 
-val MavenTestFixture.repositoryPathCanonical: String
+val MavenImportingTestFixture.repositoryPathCanonical: String
   get() = FileUtil.toCanonicalPath(repositoryPath.toString())
 
 fun MavenImportingTestFixture.updateSettingsXmlFully(content: String): com.intellij.openapi.vfs.VirtualFile {

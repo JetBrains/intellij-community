@@ -27,10 +27,10 @@ import kotlin.math.min
 // Project-folder authoring and source/resource-root assertions, mirroring MavenMultiVersionImportingTestCase /
 // MavenImportingTestCase. Source-root inspection reads the workspace model directly (legacy doAssertSourceRoots).
 
-fun MavenTestFixture.defaultResources(): Array<String> =
+fun MavenImportingTestFixture.defaultResources(): Array<String> =
   arrayOfNotNull("src/main/resources", withModel410Only("src/main/resources-filtered"))
 
-fun MavenTestFixture.defaultTestResources(): Array<String> =
+fun MavenImportingTestFixture.defaultTestResources(): Array<String> =
   arrayOfNotNull("src/test/resources", withModel410Only("src/test/resources-filtered"))
 
 // Ported from FoldersImportingTestCase.
@@ -44,10 +44,10 @@ fun MavenTestFixture.createProjectSubDirsWithFile(vararg dirs: String) {
   }
 }
 
-fun MavenTestFixture.allDefaultResources(): Array<String> =
+fun MavenImportingTestFixture.allDefaultResources(): Array<String> =
   ArrayUtil.mergeArrays(defaultResources(), *defaultTestResources())
 
-fun MavenTestFixture.createStdProjectFolders(subdir: String = "") {
+fun MavenImportingTestFixture.createStdProjectFolders(subdir: String = "") {
   val prefix = if (subdir.isEmpty()) "" else "$subdir/"
   val folders = ArrayUtil.mergeArrays(allDefaultResources(), "src/main/java", "src/test/java")
   for (path in folders) {
@@ -77,12 +77,12 @@ fun MavenTestFixture.assertTestResources(moduleName: String, vararg expectedSour
   doAssertSourceRoots(moduleName, JavaResourceRootType.TEST_RESOURCE, *expectedSources)
 }
 
-fun MavenTestFixture.assertDefaultResources(moduleName: String, vararg additionalSources: String) {
+fun MavenImportingTestFixture.assertDefaultResources(moduleName: String, vararg additionalSources: String) {
   val expectedSources = ArrayUtil.mergeArrays(defaultResources(), *additionalSources)
   assertResources(moduleName, *expectedSources)
 }
 
-fun MavenTestFixture.assertDefaultTestResources(moduleName: String, vararg additionalSources: String) {
+fun MavenImportingTestFixture.assertDefaultTestResources(moduleName: String, vararg additionalSources: String) {
   val expectedSources = ArrayUtil.mergeArrays(defaultTestResources(), *additionalSources)
   assertTestResources(moduleName, *expectedSources)
 }

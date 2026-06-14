@@ -10,14 +10,14 @@ import java.nio.file.Path
 interface MavenTestFixture {
   val project: Project
   val dir: Path
-  val mavenVersion: String
-  val modelVersion: String
   val projectRoot: VirtualFile
-  var projectPom: VirtualFile
-  var repositoryPath: Path
 }
 
 interface MavenImportingTestFixture : MavenTestFixture {
-  val projectsManager: MavenProjectsManager
+  val mavenVersion: String
+  val modelVersion: String
   val disposable: Disposable
+  val projectsManager: MavenProjectsManager
+  var projectPom: VirtualFile
+  var repositoryPath: Path
 }

@@ -6,6 +6,8 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture
@@ -15,11 +17,8 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.model.MavenConstants
-import org.jetbrains.idea.maven.project.MavenSettingsCache
 import java.nio.file.Path
 
 /**
@@ -47,21 +46,8 @@ private class MavenBaseTestFixtureImpl(
   override val project: Project,
   override val dir: Path,
 ) : MavenTestFixture {
-  override val mavenVersion: String = "bundled"
-  override val modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0
-
   override val projectRoot: VirtualFile
     get() = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(project.basePath!!))!!
-
-  override var projectPom: VirtualFile
-    get() = error("a bare mavenFixture() has no imported pom; use mavenImportingFixture() if you need one")
-    set(_) = error("a bare mavenFixture() has no imported pom; use mavenImportingFixture() if you need one")
-
-  override var repositoryPath: Path
-    get() = MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo()
-    set(path) {
-      MavenSettingsCache.getInstance(project).reload()
-    }
 }
 
 /**
