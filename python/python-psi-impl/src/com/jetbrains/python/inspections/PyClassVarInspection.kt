@@ -178,7 +178,10 @@ class PyClassVarInspection : PyInspection() {
       for (ancestor in cls.getAncestorClasses(myTypeEvalContext)) {
         val ancestorClassAttribute = ancestor.findClassAttribute(name, false, myTypeEvalContext)
         if (ancestorClassAttribute != null && ancestorClassAttribute.hasExplicitType() && target.hasExplicitType()) {
-          if (ancestorClassAttribute.isClassVar() && !target.isClassVar()) {
+          // PEP 591: a final attribute initialized in a class body is a class variable, not an instance variable,
+          // so it must not be reported as overriding a class variable with an instance one. The illegal narrowing
+          // of a writable attribute to a final one is reported separately by PyFinalInspection
+          if (ancestorClassAttribute.isClassVar() && !target.isClassVar() && !target.isFinalClassVariable()) {
             registerProblem(target, PyPsiBundle.message("INSP.class.var.can.not.override.class.variable", name, ancestor.name))
             break
           }
@@ -206,6 +209,9 @@ class PyClassVarInspection : PyInspection() {
 
     private fun <T> T.isClassVar(): Boolean where T : PyAnnotationOwner, T : PyTypeCommentOwner =
       PyTypingTypeProvider.isClassVar(this, myTypeEvalContext)
+
+    private fun PyTargetExpression.isFinalClassVariable(): Boolean =
+      hasAssignedValue() && PyTypingTypeProvider.isFinal(this, myTypeEvalContext)
 
     private fun resolvesToClassVar(expression: PyExpression): Boolean {
       return expression is PyReferenceExpression &&

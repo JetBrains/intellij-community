@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -587,6 +588,54 @@ public class PyFinalInspectionTest extends PyInspectionTestCase {
   // PY-34945
   public void testImportedClassFinalOverriding() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doMultiFileTest);
+  }
+
+  @TestFor(issues = "PY-88933")
+  public void testCanNotOverrideClassVarWithFinal() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                           from typing import ClassVar, Final
+
+                           class A:
+                               x: ClassVar[int]
+
+                           class B(A):
+                               <warning descr="Cannot override non-final attribute 'x' (previously declared in base class 'A') with a final attribute">x</warning>: Final[int] = 1
+                           """)
+    );
+  }
+
+  @TestFor(issues = "PY-88933")
+  public void testCanNotOverrideNonFinalAttributeWithFinal() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                           from typing import Final
+
+                           class A:
+                               a: int
+
+                           class B(A):
+                               <warning descr="Cannot override non-final attribute 'a' (previously declared in base class 'A') with a final attribute">a</warning>: Final[int] = 1
+                           """)
+    );
+  }
+
+  @TestFor(issues = "PY-88933")
+  public void testCanOverrideNonFinalUntypedAttributeWithFinal() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("""
+                           from typing import Final
+
+                           class A:
+                               a = 1
+
+                           class B(A):
+                               a: Final[int] = 2
+                           """)
+    );
   }
 
   // PY-34945

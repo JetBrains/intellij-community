@@ -92,6 +92,7 @@ class PyFinalInspection : PyInspection() {
       }
 
       checkOverridingInheritedFinalWithNewOne(node)
+      checkOverridingInheritedNonFinalWithFinal(node)
     }
 
     override fun visitPyFunction(node: PyFunction) {
@@ -323,6 +324,31 @@ class PyFinalInspection : PyInspection() {
       }
     }
 
+    private fun checkOverridingInheritedNonFinalWithFinal(cls: PyClass) {
+      // A final attribute initialized in a class body is a class variable (PEP 591). Overriding a writable
+      // inherited attribute with a final one narrows it to read-only, which violates the Liskov substitution
+      // principle. Overriding an inherited *final* attribute is reported by checkOverridingInheritedFinalWithNewOne.
+      val newClassLevelFinals = cls.classAttributes
+        .filter { isFinal(it) }
+        .mapNotNull { attribute -> attribute.name?.let { it to attribute } }
+        .toMap()
+      if (newClassLevelFinals.isEmpty()) return
+
+      val notRegistered = newClassLevelFinals.keys.toMutableSet()
+      for (ancestor in cls.getAncestorClasses(myTypeEvalContext)) {
+        if (notRegistered.isEmpty()) break
+        for (name in notRegistered.toList()) {
+          val inherited = ancestor.findClassAttribute(name, false, myTypeEvalContext) ?: continue
+          // The nearest ancestor declaring the attribute decides which message (if any) applies.
+          notRegistered.remove(name)
+          if (!isFinal(inherited) && inherited.hasExplicitType()) {
+            registerProblem(newClassLevelFinals.getValue(name),
+                            PyPsiBundle.message("INSP.final.can.not.override.non.final.attribute.with.final", name, ancestor.name))
+          }
+        }
+      }
+    }
+
     private fun checkInstanceFinalsOutsideInit(method: PyFunction) {
       if (PyUtil.isInitMethod(method)) return
 
@@ -490,6 +516,9 @@ class PyFinalInspection : PyInspection() {
     private fun <T> isFinal(node: T): Boolean where T : PyAnnotationOwner, T : PyTypeCommentOwner {
       return PyTypingTypeProvider.isFinal(node, myTypeEvalContext)
     }
+
+    private fun PyTargetExpression.hasExplicitType(): Boolean =
+      annotationValue != null || typeCommentAnnotation != null
 
     private fun resolvesToFinal(expression: PyExpression?): Boolean {
       return expression is PyReferenceExpression &&
