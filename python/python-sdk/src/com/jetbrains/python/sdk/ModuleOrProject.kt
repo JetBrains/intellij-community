@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Lots of actions might be run on the project level or module level.
@@ -30,6 +31,7 @@ import com.intellij.openapi.project.Project
  * }
  *
  */
+@ApiStatus.Experimental
 sealed class ModuleOrProject(val project: Project) {
   class ProjectOnly(project: Project) : ModuleOrProject(project)
   class ModuleAndProject(val module: Module) : ModuleOrProject(module.project)

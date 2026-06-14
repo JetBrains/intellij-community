@@ -90,6 +90,7 @@ fun Sdk.isRunAsRootViaSudo(): Boolean {
  *
  * @see PythonSdkFlavor.sdkSeemsValid
  */
+@get:Internal
 val Sdk.isSdkSeemsValid: Boolean
   get() {
     if (!isPythonSdk(this, true)) return false

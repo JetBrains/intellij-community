@@ -23,6 +23,7 @@ val Module.rootManager: ModuleRootManager
  * `null` means module is broken: i.e. not a Python module (and doesn't have a baseDir) or it was already disposed, or directory
  * was removed. Such modules should be ignored.
  */
+@get:Internal
 val Module.baseDir: VirtualFile?
   get() {
     val entity = findModuleEntity() ?: return null
