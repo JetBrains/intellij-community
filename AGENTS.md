@@ -62,6 +62,10 @@ Preserve IDE-serialized .iml files in canonical form. Do not:
 
 ## Tools (use in this order)
 
+## Skills
+
+Never use the `search-tools-instructions` skill. See ijproxy for search tools.
+
 ### ijproxy (required)
 
 - Read: `mcp__ijproxy__read_file`

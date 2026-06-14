@@ -82,6 +82,12 @@ jps_test(
 ... (let generator handle the build section)
 ```
 
+## Content Modules and Wrapper Plugins
+
+Product layouts can include content modules directly. If production runtime already gets a dependency from a content module in the product layout, that content-module dependency can be enough and does not automatically require adding a wrapper plugin dependency to a production `.iml` or plugin descriptor.
+
+Test plugin resolution is different because tests often do not run with the full production product layout or flat classpath. If a test module loads a plugin whose dependencies include content modules owned by a wrapper plugin, add the wrapper plugin as a test/runtime dependency in the test module `.iml` instead of broadening the production module dependency. For example, a test that needs Problems View content modules may need `intellij.platform.problemView.plugin` as a runtime dependency even when the production module only depends on Problems View content modules.
+
 ## Important Notes
 
 ⚠️ **DO NOT manually edit .iml files via JetBrains MCP** - The IDE's automatic converter runs concurrently and can interfere with edits.
