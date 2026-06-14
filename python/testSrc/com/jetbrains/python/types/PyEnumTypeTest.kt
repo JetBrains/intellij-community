@@ -108,6 +108,26 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
         """,
       "_enum_members.py" to "def func(x: int) -> None: ...",
     )
+
+    @Test
+    @TestFor(issues = ["PY-89968"])
+    fun `dunder is not member`() = test("""
+      from enum import Enum
+      
+      class E(Enum):
+        # test detail: ints are not members, strings are
+        __x__ = 1
+        __x = 2
+        # _x_ = 3  # this one is an error at runtime
+        _x = "a"
+        __ = "b"
+        _ = "c"
+      
+      def f(e: E):
+        expr = e.value, E.__x__
+      #  └ TYPE tuple[Literal["a", "b", "c"], int]
+      """)
+
   }
 
   @Nested
