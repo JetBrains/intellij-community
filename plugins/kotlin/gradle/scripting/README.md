@@ -52,13 +52,9 @@ The script configuration is stored in FS by using the IntelliJ VFS file attribut
 
 Note that we can provide custom scripting support only for projects that using Gradle 6.0 and later, as gathering script models unavailable in older Gradle versions. `GradleBuildRootsLocator` falling back to default scripting support for such linked Gradle builds. It is extended through: see "DefaultScriptingSupport extensions for older Gradle versions" for more details.
 
-## Watching files states across IntelliJ restarts
+## Tracking Gradle scripts
 
-To have consistent sate of scripts, we should also be aware of external script changes. This is achieved by watching files using the IntelliJ VFS events. [GradleScriptListener] is responsible for that.
-
-The first tricky part is that scripts are depending on each other: so, when one script is changed, we actually should invalidate all other scripts as we don't know dependencies between them (Gradle will provide this information later, but it is not yet implemented). Actually, we should know the last modified timestamp of all scripts excepting a particular one. This can be achieved by storing timestamps of two last modified files. [LastModifiedFiles] utility is responsible for that.
-
-Another tricky part is that we should track only scripts belong the Gradle project and should ignore all other `*.gradle.kts` files (in `testData` for example). This is achieved by storing Gradle project roots, as scripts can be exactly near Gradle project roots (excepting included and precompiled scripts which are not fully supported yet). This can be gathered from the Gradle project import information or from GradleProjectSettings when the import has not occurred yet. `GradleBuildRootsLocator` does it.
+We should track only scripts belong the Gradle project and should ignore all other `*.gradle.kts` files (in `testData` for example). This is achieved by storing Gradle project roots, as scripts can be exactly near Gradle project roots (excepting included and precompiled scripts which are not fully supported yet). This can be gathered from the Gradle project import information, from workspace model data, or from GradleProjectSettings when the import has not occurred yet. `GradleBuildRootsLocator` does it.
 
 ## Out of project Gradle scripts
 

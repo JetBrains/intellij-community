@@ -11,29 +11,10 @@ import org.gradle.tooling.model.kotlin.dsl.EditorReportSeverity
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslScriptsModel
 import org.jetbrains.kotlin.gradle.scripting.shared.getGradleScriptInputsStamp
 import org.jetbrains.kotlin.gradle.scripting.shared.kotlinDslScriptsModelImportSupported
-import org.jetbrains.kotlin.gradle.scripting.shared.roots.GradleBuildRootsLocator
 import org.jetbrains.kotlin.idea.gradleTooling.BrokenKotlinDslScriptsModel
 import org.jetbrains.plugins.gradle.model.GradleBuildScriptClasspathModel
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import java.io.File
-
-fun saveGradleBuildEnvironment(resolverCtx: ProjectResolverContext) {
-    val task = resolverCtx.externalSystemTaskId
-    val tasks = kotlinDslSyncListenerInstance?.tasks ?: return
-    synchronized(tasks) { tasks[task] }?.let { sync ->
-        val gradleHome = resolverCtx.getRootModel(GradleBuildScriptClasspathModel::class.java)?.gradleHomeDir?.path
-            ?: resolverCtx.settings.gradleHome
-
-        synchronized(sync) {
-            sync.gradleVersion = resolverCtx.projectGradleVersion
-            sync.javaHome = toSystemIndependentName(resolverCtx.buildEnvironment.java.javaHome.path)
-
-            if (gradleHome != null) {
-                sync.gradleHome = toSystemIndependentName(gradleHome)
-            }
-        }
-    }
-}
 
 fun getKotlinDslScripts(context: ProjectResolverContext): Sequence<KotlinDslScriptModel> = sequence {
     if (!kotlinDslScriptsModelImportSupported(context.projectGradleVersion)) return@sequence
@@ -51,10 +32,6 @@ fun getKotlinDslScripts(context: ProjectResolverContext): Sequence<KotlinDslScri
                 yieldAll(getDslScriptModels(context.project, dslScriptsModel, scriptClasspathModel))
             }
         }
-}
-
-fun Collection<KotlinDslScriptModel>.collectErrors(): List<KotlinDslScriptModel.Message> {
-    return this.flatMap { it.messages.filter { msg -> msg.severity == KotlinDslScriptModel.Severity.ERROR } }
 }
 
 private fun getDslScriptModels(
@@ -112,43 +89,14 @@ private fun getDslScriptModels(
     }
 }
 
-class KotlinDslGradleBuildSync(val workingDir: String, val taskId: ExternalSystemTaskId) {
-    val creationTimestamp: Long = System.currentTimeMillis()
-
-    // TODO: projectId is inconsistent - see com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId.getProjectId
-    var projectId: String? = null
-    var gradleVersion: String? = null
-    var gradleHome: String? = null
-    var javaHome: String? = null
-    val projectRoots: MutableSet<String> = mutableSetOf()
-    val models: MutableList<KotlinDslScriptModel> = mutableListOf()
-    var failed: Boolean = false
-
-    override fun toString(): String {
-        return "KotlinGradleDslSync(workingDir=$workingDir, gradleVersion=$gradleVersion, gradleHome=$gradleHome, javaHome=$javaHome, projectRoots=$projectRoots, failed=$failed)"
-    }
-}
-
-fun saveScriptModels(project: Project, build: KotlinDslGradleBuildSync) {
-    synchronized(build) {
-        reportErrors(project, build)
-
-        // todo: use real info about projects
-        build.projectRoots.addAll(build.models.map { toSystemIndependentName(File(it.file).parent) })
-
-        GradleBuildRootsLocator.getInstance(project).update(build)
-    }
-}
-
-internal fun reportErrors(
+fun reportErrors(
     project: Project,
-    build: KotlinDslGradleBuildSync
+    taskId: ExternalSystemTaskId,
+    models: List<KotlinDslScriptModel>,
 ) {
-    synchronized(build) {
-        val errorReporter = KotlinGradleDslErrorReporter(project, build.taskId)
+    val errorReporter = KotlinGradleDslErrorReporter(project, taskId)
 
-        build.models.forEach { model ->
-            errorReporter.reportError(File(model.file), model)
-        }
+    models.forEach { model ->
+        errorReporter.reportError(File(model.file), model)
     }
 }

@@ -12,10 +12,6 @@ import java.io.Serializable
 interface CachedConfigurationInputs: Serializable {
     fun isUpToDate(project: Project, file: VirtualFile, ktFile: KtFile? = null): Boolean
 
-    object UpToDate: CachedConfigurationInputs {
-        override fun isUpToDate(project: Project, file: VirtualFile, ktFile: KtFile?): Boolean = true
-    }
-
     data class PsiModificationStamp(
         val fileModificationStamp: Long,
         val psiModificationStamp: Long
