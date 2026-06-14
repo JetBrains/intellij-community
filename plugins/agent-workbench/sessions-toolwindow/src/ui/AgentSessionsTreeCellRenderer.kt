@@ -33,7 +33,6 @@ internal class SessionTreeCellRenderer(
   private val rowActionsProvider: (row: Int, node: SessionTreeNode, selected: Boolean) -> SessionTreeRowActionPresentation?,
   private val nodeResolver: (SessionTreeId) -> SessionTreeNode?,
   private val providerIconProvider: ((AgentSessionProvider) -> Icon?)? = null,
-  private val duplicateProjectNamesProvider: () -> Set<String> = { emptySet() },
 ) : ColoredTreeCellRenderer() {
   private data class SharedTimeColumnWidthCacheKey(
     @JvmField val fontHash: Int,
@@ -92,24 +91,25 @@ internal class SessionTreeCellRenderer(
         else {
           SimpleTextAttributes.REGULAR_ATTRIBUTES
         }
-        val projectName: @NlsSafe String = if (treeNode.project.name in duplicateProjectNamesProvider()) {
-          val projectPath: @NlsSafe String = treeNode.project.path
-          projectPath
-        }
-        else {
-          treeNode.project.name
-        }
-        val branchText = projectBranchText(treeNode.project)
-        if (branchText == null) {
+        val projectName: @NlsSafe String = treeNode.project.name
+        val inlineMetadataText = projectInlineMetadataText(treeNode)
+        if (inlineMetadataText == null) {
           append(projectName, titleAttributes)
         }
         else {
-          metaRightPadding = baseFontMetrics.stringWidth(branchText)
+          metaRightPadding = baseFontMetrics.stringWidth(inlineMetadataText)
           appendWithClipping(projectName, titleAttributes, middleTextClipper)
-          append(branchText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
+          append(inlineMetadataText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
         }
-        if (treeNode.project.isLoading) {
-          setAccessibleStatusText(AgentSessionsBundle.message("toolwindow.loading"))
+        val accessibleTrailingText: @NlsSafe String? = inlineMetadataText?.trim()
+        val loadingText = if (treeNode.project.isLoading) AgentSessionsBundle.message("toolwindow.loading") else null
+        val accessibleStatusText: @NlsSafe String? = when {
+          accessibleTrailingText != null && loadingText != null -> "$accessibleTrailingText, $loadingText"
+          accessibleTrailingText != null -> accessibleTrailingText
+          else -> loadingText
+        }
+        if (accessibleStatusText != null) {
+          setAccessibleStatusText(accessibleStatusText)
         }
       }
 
@@ -210,7 +210,7 @@ internal class SessionTreeCellRenderer(
       g2.fillRect(0, 0, width, height)
     }
 
-    // Paint the core renderer normally (selection/background/border), then overlay the trailing time.
+    // Paint the core renderer normally (selection/background/border), then overlay trailing thread metadata.
     // Title clipping is handled by SessionTreeMiddleTextClipper using right-side reserved space.
     super.paintComponent(g2)
     paintThreadTrailingMeta(g2)
@@ -328,6 +328,17 @@ internal fun projectBranchText(project: AgentProjectSessions): @NlsSafe String? 
   return " [$branch]"
 }
 
+internal fun projectInlineMetadataText(node: SessionTreeNode.Project): @NlsSafe String? {
+  val branchText = projectBranchText(node.project)
+  val pathQualifier = node.pathQualifier
+  return when {
+    branchText != null && pathQualifier != null -> "$branchText  $pathQualifier"
+    branchText != null -> branchText
+    pathQualifier != null -> "  $pathQualifier"
+    else -> null
+  }
+}
+
 internal fun clipSessionTreeMiddleText(
   text: @NlsSafe String,
   fontMetrics: FontMetrics,
@@ -377,7 +388,7 @@ private class SessionTreeMiddleTextClipper(
     availTextWidth: Int,
   ): String {
     // appendWithClipping gets full component width from SimpleColoredComponent; subtract right reserved
-    // area so thread titles don't paint into the trailing time/actions column.
+    // area so clipped row titles don't paint into inline metadata or trailing actions.
     val rightReservedWidth = component.ipad.right + component.insets.right
     val fontMetrics = component.getFontMetrics(g.font)
     return clipTextProvider(text, fontMetrics, availTextWidth, rightReservedWidth)

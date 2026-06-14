@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.sessions.state.InMemorySessionTreeUiState
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.agent.workbench.sessions.toolwindow.tree.buildSessionTreeModel
+import com.intellij.agent.workbench.sessions.toolwindow.tree.sessionTreeNodeSearchText
 import com.intellij.agent.workbench.sessions.toolwindow.ui.buildArchivedDisplayState
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -115,6 +116,63 @@ class AgentSessionsSwingTreeRenderingTest {
   }
 
   @Test
+  fun duplicateProjectNamesUseProjectNamesAndUniquePathQualifiers() {
+    val firstPath = "/work/project-a"
+    val secondPath = "/tmp/project-a"
+    val model = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(path = firstPath,
+                             name = "Project A",
+                             isOpen = true,
+                             providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX)),
+        AgentProjectSessions(path = secondPath,
+                             name = "Project A",
+                             isOpen = true,
+                             providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX)),
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+
+    val firstNode = model.entriesById.getValue(SessionTreeId.Project(firstPath)).node as SessionTreeNode.Project
+    val secondNode = model.entriesById.getValue(SessionTreeId.Project(secondPath)).node as SessionTreeNode.Project
+
+    assertThat(firstNode.project.name).isEqualTo("Project A")
+    assertThat(secondNode.project.name).isEqualTo("Project A")
+    assertThat(firstNode.pathQualifier).isEqualTo("…/work/project-a")
+    assertThat(secondNode.pathQualifier).isEqualTo("…/tmp/project-a")
+    assertThat(sessionTreeNodeSearchText(firstNode)).isEqualTo("Project A …/work/project-a")
+  }
+
+  @Test
+  fun differentVisibleBranchesDoNotUsePathQualifiers() {
+    val model = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(path = "/work/project-a",
+                             name = "Project A",
+                             branch = "feature-a",
+                             isOpen = true,
+                             providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX)),
+        AgentProjectSessions(path = "/tmp/project-a",
+                             name = "Project A",
+                             branch = "feature-b",
+                             isOpen = true,
+                             providerLoadStates = loadedProviderStates(AgentSessionProvider.CODEX)),
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+
+    val firstNode = model.entriesById.getValue(SessionTreeId.Project("/work/project-a")).node as SessionTreeNode.Project
+    val secondNode = model.entriesById.getValue(SessionTreeId.Project("/tmp/project-a")).node as SessionTreeNode.Project
+
+    assertThat(firstNode.pathQualifier).isNull()
+    assertThat(secondNode.pathQualifier).isNull()
+  }
+
+  @Test
   fun archivedDisplayStateFiltersRangeAndDropsEmptyProjects() {
     val zoneId = ZoneId.of("UTC")
     val nowMs = Instant.parse("2026-05-13T12:00:00Z").toEpochMilli()
@@ -150,7 +208,8 @@ class AgentSessionsSwingTreeRenderingTest {
             path = "/work/project-loading",
             name = "Loading Project",
             isOpen = false,
-            providerLoadStates = loadingProviderStates(AgentSessionProvider.CODEX),),
+            providerLoadStates = loadingProviderStates(AgentSessionProvider.CODEX),
+          ),
         ),
         lastUpdatedAt = nowMs,
         visibleClosedProjectCount = 7,

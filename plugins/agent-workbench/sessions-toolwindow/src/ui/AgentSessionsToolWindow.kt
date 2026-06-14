@@ -326,7 +326,6 @@ internal class AgentSessionsToolWindowPanel(
       nowProvider = { System.currentTimeMillis() },
       rowActionsProvider = { row, treeNode, selected -> rowActionsOverlay.rowActionPresentation(row, treeNode, selected) },
       nodeResolver = { treeId -> sessionTreeModel.entriesById[treeId]?.node },
-      duplicateProjectNamesProvider = { sessionTreeModel.duplicateProjectNames },
     )
     configureSessionTreeRenderingProperties(tree)
     TreeUIHelper.getInstance().installTreeSpeedSearch(tree)

@@ -173,6 +173,52 @@ class AgentSessionsTreeSnapshotTest {
   }
 
   @Test
+  fun projectSearchTextUsesProjectNameAndVisibleBranchWithoutPathFallback() {
+    val project = AgentProjectSessions(path = "/work/project-a", name = "Project A", branch = "feature-x", isOpen = true)
+
+    val searchText = sessionTreeNodeSearchText(SessionTreeNode.Project(project))
+
+    assertThat(searchText).isEqualTo("Project A feature-x")
+    assertThat(searchText).doesNotContain("/work/project-a")
+  }
+
+  @Test
+  fun projectSearchTextIncludesUniqueQualifierForSameNameAndSameBranch() {
+    val model = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(path = "/work/project-a", name = "Project A", branch = "feature-x", isOpen = true),
+        AgentProjectSessions(path = "/tmp/project-a", name = "Project A", branch = "feature-x", isOpen = true),
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+    val firstNode = model.entriesById.getValue(SessionTreeId.Project("/work/project-a")).node as SessionTreeNode.Project
+    val secondNode = model.entriesById.getValue(SessionTreeId.Project("/tmp/project-a")).node as SessionTreeNode.Project
+
+    assertThat(firstNode.pathQualifier).isEqualTo("…/work/project-a")
+    assertThat(secondNode.pathQualifier).isEqualTo("…/tmp/project-a")
+    assertThat(sessionTreeNodeSearchText(firstNode)).isEqualTo("Project A feature-x …/work/project-a")
+  }
+
+  @Test
+  fun projectSearchTextIncludesUniqueQualifierForSameNameAndHiddenDefaultBranch() {
+    val model = buildSessionTreeModel(
+      projects = listOf(
+        AgentProjectSessions(path = "/work/project-a", name = "Project A", branch = "main", isOpen = true),
+        AgentProjectSessions(path = "/tmp/project-a", name = "Project A", branch = "master", isOpen = true),
+      ),
+      visibleClosedProjectCount = Int.MAX_VALUE,
+      visibleThreadCounts = emptyMap(),
+      treeUiState = InMemorySessionTreeUiState(),
+    )
+    val firstNode = model.entriesById.getValue(SessionTreeId.Project("/work/project-a")).node as SessionTreeNode.Project
+
+    assertThat(firstNode.pathQualifier).isEqualTo("…/work/project-a")
+    assertThat(sessionTreeNodeSearchText(firstNode)).isEqualTo("Project A …/work/project-a")
+  }
+
+  @Test
   fun pendingAgentChatOverlayAddsProjectThreadWithoutMutatingBaseState() {
     val state = AgentSessionsState(
       projects = listOf(

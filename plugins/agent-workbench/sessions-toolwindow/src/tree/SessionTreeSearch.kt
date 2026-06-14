@@ -4,11 +4,12 @@ package com.intellij.agent.workbench.sessions.toolwindow.tree
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.tree.threadDisplayTitle
 
-internal fun sessionTreeNodeSearchText(node: SessionTreeNode, duplicateProjectNames: Set<String> = emptySet()): String {
+internal fun sessionTreeNodeSearchText(node: SessionTreeNode): String {
   return when (node) {
     is SessionTreeNode.Project -> searchText(
-      if (node.project.name in duplicateProjectNames) node.project.path else node.project.name,
+      node.project.name,
       visibleProjectBranch(node.project),
+      node.pathQualifier,
     )
 
     is SessionTreeNode.Worktree -> searchText(

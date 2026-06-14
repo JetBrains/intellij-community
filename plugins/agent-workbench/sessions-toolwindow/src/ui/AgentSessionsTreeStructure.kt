@@ -55,8 +55,7 @@ internal class AgentSessionsTreeStructure(
   }
 
   override fun isValid(element: Any): Boolean {
-    if (element === SessionTreeRootElement) return true
-    return element is SessionTreeId && modelProvider().entriesById.containsKey(element)
+    return element === SessionTreeRootElement || element is SessionTreeId && modelProvider().entriesById.containsKey(element)
   }
 }
 
@@ -95,7 +94,7 @@ private class AgentSessionsTreeNodeDescriptor(
       is SessionTreeId -> {
         val model = modelProvider()
         val node = model.entriesById[element]?.node ?: return -1
-        sessionTreeNodePresentation(node, model.duplicateProjectNames).hashCode()
+        sessionTreeNodePresentation(node).hashCode()
       }
       else -> 0
     }
@@ -105,6 +104,6 @@ private class AgentSessionsTreeNodeDescriptor(
     if (element !is SessionTreeId) return ""
     val model = modelProvider()
     val node = model.entriesById[element]?.node ?: return ""
-    return sessionTreeNodeSearchText(node, model.duplicateProjectNames)
+    return sessionTreeNodeSearchText(node)
   }
 }

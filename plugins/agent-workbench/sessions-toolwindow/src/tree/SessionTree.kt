@@ -25,14 +25,12 @@ internal data class SessionTreeModel(
   @JvmField val rootIds: List<SessionTreeId>,
   @JvmField val entriesById: Map<SessionTreeId, SessionTreeModelEntry>,
   @JvmField val autoOpenProjects: List<SessionTreeId.Project>,
-  @JvmField val duplicateProjectNames: Set<String> = emptySet(),
 ) {
   companion object {
     val EMPTY: SessionTreeModel = SessionTreeModel(
       rootIds = emptyList(),
       entriesById = emptyMap(),
       autoOpenProjects = emptyList(),
-      duplicateProjectNames = emptySet(),
     )
   }
 }
@@ -62,12 +60,8 @@ internal fun buildSessionTreeModel(
   treeUiState: SessionTreeUiState,
 ): SessionTreeModel {
   val visibleProjectsResult = computeVisibleProjects(projects, visibleClosedProjectCount)
-  val duplicateProjectNames = visibleProjectsResult.visibleProjects
-    .groupingBy { it.name }
-    .eachCount()
-    .filterValues { it > 1 }
-    .keys
-  val modelBuilder = SessionTreeModelBuilder(visibleThreadCounts)
+  val projectPathQualifiers = computeProjectPathQualifiers(visibleProjectsResult.visibleProjects)
+  val modelBuilder = SessionTreeModelBuilder(visibleThreadCounts, projectPathQualifiers)
   val baseModel = modelBuilder.build(visibleProjectsResult)
   val autoOpenProjects = visibleProjectsResult.visibleProjects
     .filter {
@@ -78,7 +72,7 @@ internal fun buildSessionTreeModel(
     }
     .filterNot { treeUiState.isProjectCollapsed(it.path) }
     .map { SessionTreeId.Project(it.path) }
-  return baseModel.copy(autoOpenProjects = autoOpenProjects, duplicateProjectNames = duplicateProjectNames)
+  return baseModel.copy(autoOpenProjects = autoOpenProjects)
 }
 
 internal fun diffSessionTreeModels(
@@ -93,8 +87,7 @@ internal fun diffSessionTreeModels(
     if (oldEntry.childIds != newEntry.childIds) {
       structureChangedIds += id
     }
-    if (sessionTreeNodePresentation(oldEntry.node, oldModel.duplicateProjectNames)
-      != sessionTreeNodePresentation(newEntry.node, newModel.duplicateProjectNames)) {
+    if (sessionTreeNodePresentation(oldEntry.node) != sessionTreeNodePresentation(newEntry.node)) {
       contentChangedIds += id
     }
   }
@@ -108,7 +101,7 @@ internal fun diffSessionTreeModels(
 
 private data class ProjectTreeRowPresentation(
   @JvmField val name: @NlsSafe String,
-  @JvmField val usePathAsName: Boolean,
+  @JvmField val pathQualifier: @NlsSafe String?,
   @JvmField val isOpen: Boolean,
   @JvmField val hasOpenWorktree: Boolean,
   @JvmField val hasWorktrees: Boolean,
@@ -134,13 +127,13 @@ private data class MoreThreadsTreeRowPresentation(
   @JvmField val hiddenCount: Int?,
 )
 
-internal fun sessionTreeNodePresentation(node: SessionTreeNode, duplicateProjectNames: Set<String> = emptySet()): Any {
+internal fun sessionTreeNodePresentation(node: SessionTreeNode): Any {
   return when (node) {
     is SessionTreeNode.Project -> {
       val hasWorktrees = node.project.worktrees.isNotEmpty()
       ProjectTreeRowPresentation(
         name = node.project.name,
-        usePathAsName = node.project.name in duplicateProjectNames,
+        pathQualifier = node.pathQualifier,
         isOpen = node.project.isOpen,
         hasOpenWorktree = node.project.worktrees.any { it.isOpen },
         hasWorktrees = hasWorktrees,
@@ -179,6 +172,41 @@ internal fun visibleProjectBranch(project: AgentProjectSessions): @NlsSafe Strin
   return branch.takeUnless { it in DEFAULT_PROJECT_BRANCH_NAMES }
 }
 
+private data class ProjectVisibleLabelKey(
+  @JvmField val name: @NlsSafe String,
+  @JvmField val branch: @NlsSafe String?,
+)
+
+internal fun computeProjectPathQualifiers(projects: List<AgentProjectSessions>): Map<String, @NlsSafe String> {
+  val collidingGroups = projects
+    .groupBy { ProjectVisibleLabelKey(name = it.name, branch = visibleProjectBranch(it)) }
+    .values
+    .filter { it.size > 1 }
+
+  if (collidingGroups.isEmpty()) return emptyMap()
+
+  val result = LinkedHashMap<String, @NlsSafe String>()
+  for (group in collidingGroups) {
+    result.putAll(computeUniquePathQualifiers(group))
+  }
+  return result
+}
+
+private fun computeUniquePathQualifiers(projects: List<AgentProjectSessions>): Map<String, @NlsSafe String> {
+  val normalizedPaths = projects.associate { project -> project.path to normalizeAgentWorkbenchPath(project.path) }
+  val pathSegments = normalizedPaths.mapValues { (_, normalizedPath) -> normalizedPath.split('/').filter { it.isNotBlank() } }
+  val maxSegmentCount = pathSegments.values.maxOfOrNull { it.size } ?: 0
+
+  for (segmentCount in 1..maxSegmentCount) {
+    val suffixes = pathSegments.mapValues { (_, segments) -> segments.takeLast(segmentCount).joinToString("/") }
+    if (suffixes.values.distinct().size == suffixes.size) {
+      return suffixes.mapValues { (_, suffix) -> "…/$suffix" }
+    }
+  }
+
+  return normalizedPaths.mapValues { (_, normalizedPath) -> normalizedPath }
+}
+
 internal fun computeVisibleProjects(
   projects: List<AgentProjectSessions>,
   visibleClosedProjectCount: Int,
@@ -207,6 +235,7 @@ internal fun computeVisibleProjects(
 
 private class SessionTreeModelBuilder(
   private val visibleThreadCounts: Map<String, Int>,
+  private val projectPathQualifiers: Map<String, @NlsSafe String>,
 ) {
   private val entriesById = LinkedHashMap<SessionTreeId, SessionTreeModelEntry>()
 
@@ -285,7 +314,7 @@ private class SessionTreeModelBuilder(
     addEntry(
       id = projectId,
       parentId = null,
-      node = SessionTreeNode.Project(project),
+      node = SessionTreeNode.Project(project, pathQualifier = projectPathQualifiers[project.path]),
       childIds = childIds,
     )
     return projectId
@@ -489,7 +518,11 @@ internal fun archiveTargetFromThreadNode(
 }
 
 internal sealed interface SessionTreeNode {
-  data class Project(@JvmField val project: AgentProjectSessions) : SessionTreeNode
+  data class Project(
+    @JvmField val project: AgentProjectSessions,
+    @JvmField val pathQualifier: @NlsSafe String? = null,
+  ) : SessionTreeNode
+
   data class Thread(
     @JvmField val project: AgentProjectSessions,
     @JvmField val thread: AgentSessionThread,

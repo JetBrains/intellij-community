@@ -104,7 +104,7 @@ private fun collectHiddenMatchingIds(
   val matches = LinkedHashSet<SessionTreeId>()
   fullModel.entriesById.forEach { (id, entry) ->
     if (id in visibleIds) return@forEach
-    val text = sessionTreeNodeSearchText(entry.node, fullModel.duplicateProjectNames)
+    val text = sessionTreeNodeSearchText(entry.node)
     if (text.isNotEmpty() && comparator.matchingFragments(pattern, text) != null) {
       matches.add(id)
     }
