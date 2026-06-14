@@ -1,85 +1,94 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.compatibility
 
-import com.intellij.maven.testFramework.MavenImportingTestCase
-import com.intellij.maven.testFramework.MavenWrapperTestFixture
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.text.VersionComparatorUtil
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
+import org.jetbrains.idea.maven.fixtures.assertModuleLibDep
+import org.jetbrains.idea.maven.fixtures.assertModules
+import org.jetbrains.idea.maven.fixtures.createModulePom
+import org.jetbrains.idea.maven.fixtures.createProjectPom
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.doImportProjectsAsync
+import org.jetbrains.idea.maven.fixtures.getModule
+import org.jetbrains.idea.maven.fixtures.importProjectAsync
+import org.jetbrains.idea.maven.fixtures.mavenGeneralSettings
+import org.jetbrains.idea.maven.fixtures.mavenImportingFixture
+import org.jetbrains.idea.maven.fixtures.mn
+import org.jetbrains.idea.maven.fixtures.projectsTree
+import org.jetbrains.idea.maven.fixtures.refreshFiles
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.junit.After
-import org.junit.Assume
-import org.junit.Before
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtensionContext
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.Arguments
+import org.junit.jupiter.params.provider.ArgumentsProvider
+import org.junit.jupiter.params.provider.ArgumentsSource
+import org.junit.jupiter.params.support.ParameterDeclarations
+import java.util.stream.Stream
 
 private val MAVEN_VERSIONS = listOf(
-  arrayOf("4.0.0-rc-5"),
-  arrayOf("3.9.16"),
-  arrayOf("3.8.8"),
-  arrayOf("3.6.3"),
-  arrayOf("3.5.4"),
-  arrayOf("3.2.5"),
-  arrayOf("3.1.1"),
+  "4.0.0-rc-5",
+  "3.9.16",
+  "3.8.8",
+  "3.6.3",
+  "3.5.4",
+  "3.2.5",
+  "3.1.1",
 )
 
-@RunWith(Parameterized::class)
-class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
-  protected var myWrapperTestFixture: MavenWrapperTestFixture? = null
+internal class MavenCompatibilityVersions : ArgumentsProvider {
+  override fun provideArguments(parameters: ParameterDeclarations?, context: ExtensionContext?): Stream<out Arguments?> {
+    return MAVEN_VERSIONS.map { Arguments.of(it) }.stream()
+  }
+}
 
-  @Parameterized.Parameter
-  @JvmField
-  var myMavenVersion: String? = null
+@TestApplication
+@ParameterizedClass
+@ArgumentsSource(MavenCompatibilityVersions::class)
+class MavenCompatibilityProjectImportingTest(private val myMavenVersion: String) {
+  private val maven by mavenImportingFixture(mavenVersion = myMavenVersion, skipPluginResolution = false)
 
-  override fun runInDispatchThread(): Boolean = false
+  @BeforeEach
+  fun before() {
+    val helper = MavenCustomRepositoryHelper(maven.dir, "local1")
+    maven.repositoryPath = helper.getTestData("local1")
+  }
 
   private fun assumeVersionMoreThan(version: String) {
-    Assume.assumeTrue("Version should be more than $version", VersionComparatorUtil.compare(myMavenVersion, version) > 0)
+    assumeTrue(VersionComparatorUtil.compare(myMavenVersion, version) > 0, "Version should be more than $version")
   }
 
   private fun assumeVersionAtLeast(version: String) {
-    Assume.assumeTrue("Version should be at least $version", VersionComparatorUtil.compare(myMavenVersion, version) >= 0)
+    assumeTrue(VersionComparatorUtil.compare(myMavenVersion, version) >= 0, "Version should be at least $version")
   }
 
 
   private fun assumeVersionLessOrEqualsThan(version: String) {
-    Assume.assumeTrue("Version should be less than $version", VersionComparatorUtil.compare(myMavenVersion, version) >= 0)
+    assumeTrue(VersionComparatorUtil.compare(myMavenVersion, version) >= 0, "Version should be less than $version")
   }
 
   private fun assumeVersionNot(version: String) {
-    Assume.assumeTrue("Version $version skipped", VersionComparatorUtil.compare(myMavenVersion, version) != 0)
+    assumeTrue(VersionComparatorUtil.compare(myMavenVersion, version) != 0, "Version $version skipped")
   }
-
-  @Before
-  fun before() = runBlocking {
-    myWrapperTestFixture = MavenWrapperTestFixture(project, myMavenVersion!!)
-    myWrapperTestFixture!!.setUp()
-
-
-    val helper = MavenCustomRepositoryHelper(dir, "local1")
-    val repoPath = helper.getTestData("local1")
-    repositoryPath = repoPath
-  }
-
-  @After
-  fun after() = runBlocking {
-    myWrapperTestFixture!!.tearDown()
-  }
-
 
   @Test
   fun testExceptionsFromMavenExtensionsAreReportedAsProblems() = runBlocking {
     assumeVersionAtLeast("3.1.0")
-    val helper = MavenCustomRepositoryHelper(dir, "plugins")
-    repositoryPath = helper.getTestData("plugins")
-    mavenGeneralSettings.isWorkOffline = true
+    val helper = MavenCustomRepositoryHelper(maven.dir, "plugins")
+    maven.repositoryPath = helper.getTestData("plugins")
+    maven.mavenGeneralSettings.isWorkOffline = true
 
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -94,40 +103,39 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                          </extensions>
                        </build>
                        """.trimIndent())
-    doImportProjectsAsync(listOf(projectPom), false)
+    maven.doImportProjectsAsync(listOf(maven.projectPom), false)
 
-    val projects = projectsTree.projects
+    val projects = maven.projectsTree.projects
     assertEquals(1, projects.size)
     val mavenProject = projects[0]
     val extensionProblems = mavenProject.problems.filter { "throw!" == it.description }
-    assertEquals(extensionProblems.toString(), 1, extensionProblems.size)
+    assertEquals(1, extensionProblems.size, extensionProblems.toString())
     val problem = extensionProblems[0]
-    assertEquals(problem.toString(), MavenProjectProblem.ProblemType.STRUCTURE, problem.type)
+    assertEquals(MavenProjectProblem.ProblemType.STRUCTURE, problem.type, problem.toString())
     val otherProblems = mavenProject.problems.filter { it !== problem }
-    assertTrue(otherProblems.toString(),
-               otherProblems.all {
+    assertTrue(otherProblems.all {
                  it.type == MavenProjectProblem.ProblemType.DEPENDENCY && it.description!!.startsWith("Unresolved plugin")
-               })
+               }, otherProblems.toString())
   }
 
   @Test
   fun testSmokeImport() = runBlocking {
     assertCorrectVersion()
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     """.trimIndent())
 
 
-    assertModules("project")
+    maven.assertModules("project")
   }
 
   @Test
   fun testSmokeImportWithUnknownExtension() = runBlocking {
     assertCorrectVersion()
-    createProjectSubFile(".mvn/extensions.xml", """
+    maven.createProjectSubFile(".mvn/extensions.xml", """
       <extensions>
         <extension>
           <groupId>org.example</groupId>
@@ -136,7 +144,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
         </extension>
       </extensions>
       """.trimIndent())
-    createProjectPom("""
+    maven.createProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -147,7 +155,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                        </modules>
                        """.trimIndent())
 
-    createModulePom("m1", """
+    maven.createModulePom("m1", """
                        <parent>
                          <groupId>test</groupId>
                          <artifactId>project</artifactId>
@@ -156,7 +164,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                        <artifactId>m1</artifactId>
                          """.trimIndent())
 
-    createModulePom("m2", """
+    maven.createModulePom("m2", """
                        <parent>
                          <groupId>test</groupId>
                          <artifactId>project</artifactId>
@@ -165,21 +173,21 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                        <artifactId>m2</artifactId>
                          """.trimIndent())
 
-    importProjectAsync()
+    maven.importProjectAsync()
 
-    assertModules("m2", "m1", "project")
+    maven.assertModules("m2", "m1", "project")
   }
 
 
   private suspend fun assertCorrectVersion() {
-    assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(project, projectRoot.path).mavenDistribution.version)
+    assertEquals(myMavenVersion, MavenServerManager.getInstance().getConnector(maven.project, maven.projectRoot.path).mavenDistribution.version)
   }
 
   @Test
   fun testInterpolateModel() = runBlocking {
     assertCorrectVersion()
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -195,9 +203,9 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                     </dependencies>
                     """.trimIndent())
 
-    assertModules("project")
+    maven.assertModules("project")
 
-    assertModuleLibDep("project", "Maven: junit:junit:4.0")
+    maven.assertModuleLibDep("project", "Maven: junit:junit:4.0")
   }
 
   @Test
@@ -206,7 +214,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
 
     assertCorrectVersion()
 
-    createModulePom("module1", """
+    maven.createModulePom("module1", """
       <parent>
       <groupId>test</groupId>
       <artifactId>project</artifactId>
@@ -223,7 +231,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
       """.trimIndent()
     )
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -236,9 +244,9 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                     </modules>
                     """.trimIndent())
 
-    assertModules("project", mn("project", "module1"))
+    maven.assertModules("project", maven.mn("project", "module1"))
 
-    assertModuleLibDep(mn("project", "module1"), "Maven: junit:junit:4.0")
+    maven.assertModuleLibDep(maven.mn("project", "module1"), "Maven: junit:junit:4.0")
   }
 
   @Test
@@ -248,7 +256,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
 
     assertCorrectVersion()
 
-    createModulePom("module1", """
+    maven.createModulePom("module1", """
       <parent>
       <groupId>test</groupId>
       <artifactId>project</artifactId>
@@ -265,7 +273,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
       """.trimIndent()
     )
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -278,11 +286,11 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                     </modules>
                     """.trimIndent())
 
-    assertModules("project", mn("project", "module1"))
+    maven.assertModules("project", maven.mn("project", "module1"))
 
-    assertModuleLibDep(mn("project", "module1"), "Maven: org.example:intellijmaventest:1.0")
+    maven.assertModuleLibDep(maven.mn("project", "module1"), "Maven: org.example:intellijmaventest:1.0")
 
-    val module1 = createModulePom("module1", """
+    val module1 = maven.createModulePom("module1", """
       <parent>
       <groupId>test</groupId>
       <artifactId>project</artifactId>
@@ -298,9 +306,9 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
       </dependencies>
       """.trimIndent()
     )
-    refreshFiles(listOf(module1))
+    maven.refreshFiles(listOf(module1))
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -313,7 +321,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                     <module>module1</module>
                     </modules>
                     """.trimIndent())
-    assertModuleLibDep(mn("project", "module1"), "Maven: org.example:intellijmaventest:2.0")
+    maven.assertModuleLibDep(maven.mn("project", "module1"), "Maven: org.example:intellijmaventest:2.0")
   }
 
   @Test
@@ -322,7 +330,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
 
     assertCorrectVersion()
 
-    createModulePom("module1", """
+    maven.createModulePom("module1", """
       <parent>
       <groupId>test</groupId>
       <artifactId>project</artifactId>
@@ -331,7 +339,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
       <artifactId>module1</artifactId>
       """.trimIndent())
 
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                         <artifactId>project</artifactId>
                         <version>${'$'}{revision}</version>
@@ -344,12 +352,12 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                         </properties>
                     """.trimIndent())
 
-    assertModules("project", mn("project", "module1"))
+    maven.assertModules("project", maven.mn("project", "module1"))
   }
 
   @Test
   fun testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() = runBlocking {
-    importProjectAsync("""
+    maven.importProjectAsync("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -364,7 +372,7 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
                       </plugins>
                     </build>
                     """.trimIndent())
-    assertModules("project")
+    maven.assertModules("project")
     val expectedVersion = if (isMaven4) {
       if (VersionComparatorUtil.compare(myMavenVersion, "4.0.0-alpha-7") >= 0) LanguageLevel.JDK_1_8
       else LanguageLevel.JDK_1_7
@@ -380,18 +388,9 @@ class MavenCompatibilityProjectImportingTest : MavenImportingTestCase() {
         LanguageLevel.JDK_1_5
       }
     }
-    assertEquals(expectedVersion, LanguageLevelUtil.getCustomLanguageLevel(getModule("project")))
+    assertEquals(expectedVersion, LanguageLevelUtil.getCustomLanguageLevel(maven.getModule("project")))
   }
 
   private val isMaven4: Boolean
     get() = StringUtil.compareVersionNumbers(myMavenVersion, "4.0") >= 0
-
-  companion object {
-    @JvmStatic
-    @get:Parameterized.Parameters(name = "with Maven-{0}")
-    val mavenVersions: List<Array<String>>
-      get() {
-        return MAVEN_VERSIONS
-      }
-  }
 }
