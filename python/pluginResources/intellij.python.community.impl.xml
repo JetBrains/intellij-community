@@ -60,6 +60,8 @@
     <registryKey defaultValue="true"
                  description="Show non-python modules(different type, no python facet) in Python configurable when they have base dir"
                  key="python.show.modules.with.base.dir" restartRequired="true"/>
+    <registryKey defaultValue="false" description="Master switch for the new Python formatter defaults (PY-85946). When off, the feature is fully disabled: classic formatting everywhere, no migration, no balloon." key="python.formatter.new.defaults.enabled" restartRequired="true"/>
+    <registryKey defaultValue="false" description="Whether this installation uses the new Python formatter defaults (PY-85946). Set automatically per installation (on for new installs, off for upgrades until the user switches); requires the master switch python.formatter.new.defaults.enabled." key="python.formatter.new.defaults" restartRequired="true"/>
     <fileType name="Requirements.txt"
               implementationClass="com.jetbrains.python.requirements.RequirementsFileType"
               fieldName="INSTANCE"
@@ -170,6 +172,7 @@
     <statistics.validation.customValidationRule implementation="com.jetbrains.python.run.features.PyRunToolIdValidator"/>
 
     <postStartupActivity implementation="com.jetbrains.python.sdk.PostStartupAvailableSdkNotifier"/>
+    <postStartupActivity implementation="com.jetbrains.python.formatter.PyCodeStyleMigrationActivity"/>
     <applicationSettings service="com.jetbrains.python.ReSTService$AppService"/>
     <projectSettings service="com.jetbrains.python.packaging.PyPackagingSettings"/>
     <applicationSettings service="com.jetbrains.python.packaging.PyPackageService"/>
@@ -740,6 +743,9 @@
     <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder"/>
 
     <notificationGroup id="Sync Python requirements" displayType="BALLOON" bundle="messages.PyBundle" key="python.requirements.balloon"/>
+
+    <notificationGroup id="Python code style" displayType="STICKY_BALLOON" bundle="messages.PyBundle"
+                       key="python.code.style.migration.notifications.group.title"/>
     <statistics.notificationIdsHolder implementation="com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder"/>
 
     <notificationGroup id="CythonWarning" displayType="BALLOON" bundle="messages.PyBundle" key="notification.group.cython"/>
