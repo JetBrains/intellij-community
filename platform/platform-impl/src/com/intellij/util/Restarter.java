@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -57,10 +57,10 @@ public final class Restarter {
 
   private static final NullableLazyValue<Path> ourLauncher = lazyNullable(() -> {
     if (Boolean.getBoolean("ide.started.from.remote.dev.launcher")) {
-      var launcher = PathManager.getBinDir().resolve("remote-dev-server" + (OS.CURRENT == OS.Windows ? ".exe" : ""));
+      var launcher = PathManager.getBinDir().resolve(OS.CURRENT.getBinaryName("remote-dev-server"));
       if (Files.exists(launcher)) return launcher;
       Logger.getInstance(Restarter.class).error(
-        "RemDev starter property is set, but launcher file at " + launcher + " was not found? Will restart using default entry point"
+        "RemDev starter property is set, but launcher file at " + launcher + " was not found? Will restart using the default entry point"
       );
     }
 
@@ -144,7 +144,7 @@ public final class Restarter {
   }
 
   @ApiStatus.Internal
-  public static void scheduleRestart(boolean elevate, @NotNull List<@NotNull String> @NotNull ... beforeRestart) throws IOException {
+  public static void scheduleRestart(boolean elevate, @SuppressWarnings("SSBasedInspection") @NotNull List<@NotNull String> @NotNull ... beforeRestart) throws IOException {
     var beforeRestartCommands = Stream.of(beforeRestart).filter(cmd -> !cmd.isEmpty()).toList();
     var exitCodeVariable = EnvironmentUtil.getValue(SPECIAL_EXIT_CODE_FOR_RESTART_ENV_VAR);
     if (exitCodeVariable != null) {
@@ -179,7 +179,7 @@ public final class Restarter {
 
   private static void restartOnWindows(boolean elevate, List<List<String>> beforeRestart, List<String> args) throws IOException {
     var starter = ourLauncher.getValue();
-    if (starter == null) throw new IOException("Starter executable not found in " + PathManager.getBinDir());
+    if (starter == null) throw new IOException("Starter executable wasn't found in " + PathManager.getBinDir());
     var command = prepareCommand("restarter.exe", beforeRestart);
     command.add(String.valueOf((elevate ? 2 : 1) + args.size()));
     if (elevate) {
@@ -192,7 +192,7 @@ public final class Restarter {
 
   private static void restartOnMac(List<List<String>> beforeRestart, List<String> args) throws IOException {
     var starter = ourLauncher.getValue();
-    if (starter == null) throw new IOException("Starter executable not found in: " + PathManager.getHomeDir());
+    if (starter == null) throw new IOException("Starter executable wasn't found in: " + PathManager.getHomeDir());
     var command = prepareCommand("restarter", beforeRestart);
     command.add(String.valueOf(args.size() + 1));
     command.add(starter.toString());
@@ -202,7 +202,7 @@ public final class Restarter {
 
   private static void restartOnLinux(List<List<String>> beforeRestart, List<String> args) throws IOException {
     var starterScript = ourLauncher.getValue();
-    if (starterScript == null) throw new IOException("Starter script not found in " + PathManager.getBinDir());
+    if (starterScript == null) throw new IOException("Starter script wasn't found in " + PathManager.getBinDir());
     var command = prepareCommand("restarter", beforeRestart);
     command.add(String.valueOf(args.size() + 1));
     command.add(starterScript.toString());
@@ -273,7 +273,7 @@ public final class Restarter {
       try {
         var lastUserActionTime = ReflectionUtil.getStaticFieldValue(Class.forName("sun.awt.X11.XBaseWindow"), long.class, "globalUserTime");
         if (lastUserActionTime == null) {
-          Logger.getInstance(Restarter.class).warn("Couldn't obtain last user action's timestamp");
+          Logger.getInstance(Restarter.class).warn("Couldn't get the last user action's timestamp");
         }
         else {
           // this doesn't initiate a "proper" startup sequence (by sending the 'new:' message to the root window),
