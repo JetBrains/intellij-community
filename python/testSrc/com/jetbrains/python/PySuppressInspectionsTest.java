@@ -48,7 +48,7 @@ public class PySuppressInspectionsTest extends PyTestCase {
   public void testSuppressForStatement() {
     myFixture.configureByFile("inspections/suppress/suppressForStatement.py");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-    final List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Suppress for a statement");
+    final List<IntentionAction> intentions = myFixture.filterAvailableIntentions("Suppress for this statement");
     // Rename reference, Ignore unresolved references, Ignore all unresolved attributes of
     assertEquals(3, intentions.size());
     final IntentionAction suppressAction = intentions.get(0);
@@ -62,5 +62,21 @@ public class PySuppressInspectionsTest extends PyTestCase {
     myFixture.configureByText("a.py", "# noinspection unresolved-references\nprint(xxx)");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
     myFixture.checkHighlighting(true, false, true);
+  }
+
+  // The suppress actions name the enclosing function/class (like Kotlin), instead of a bare "a function"/"a class".
+  @TestFor(issues="PY-90285")
+  public void testSuppressActionNamesFunction() {
+    myFixture.configureByText("a.py", "def f():\n    print(x<caret>xx)");
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    assertFalse(myFixture.filterAvailableIntentions("Suppress for function 'f'").isEmpty());
+  }
+
+  @TestFor(issues="PY-90285")
+  public void testSuppressActionNamesClassAndMethod() {
+    myFixture.configureByText("a.py", "class C:\n    def m(self):\n        print(x<caret>xx)");
+    myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
+    assertFalse(myFixture.filterAvailableIntentions("Suppress for class 'C'").isEmpty());
+    assertFalse(myFixture.filterAvailableIntentions("Suppress for function 'm'").isEmpty());
   }
 }
