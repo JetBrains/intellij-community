@@ -29,8 +29,7 @@ internal class Lsp4jServerConnectorSocket(private val lspClient: LspClientImpl) 
 
   init {
     if (socketInfo.startProcess) {
-      processHandler = (lspClient.descriptor as? LspProcessHandlerCreatingDescriptor)?.createProcessHandler()
-                       ?: lspClient.descriptor.startServerProcess()
+      processHandler = lspClient.descriptor.startServerProcess()
       processHandler.addProcessListener(object : LspServerProcessListenerBase(lspClient) {
         override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
           val text = event.text.trimEnd().takeIf { it.isNotEmpty() } ?: return
