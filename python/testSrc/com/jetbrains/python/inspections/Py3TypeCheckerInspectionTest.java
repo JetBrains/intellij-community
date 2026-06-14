@@ -474,4 +474,64 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
           n4: N = n2
         """);
   }
+
+  // a granular suppression code silences only its own category of problems.
+  @TestFor(issues = "PY-90265")
+  public void testSuppressBadReturnSuppressesOnlyReturn() {
+    doTestByText(
+      """
+        def g(x: int):
+            pass
+
+        def f() -> int:
+            # noinspection bad-return
+            return 'hello'
+
+        g(<warning descr="Expected type 'int', got 'Literal[\\"a\\"]' instead">'a'</warning>)
+        """);
+  }
+
+  // an unrelated code must not suppress a return-type mismatch.
+  @TestFor(issues = "PY-90265")
+  public void testSuppressBadArgumentTypeDoesNotSuppressReturn() {
+    doTestByText(
+      """
+        def f() -> int:
+            # noinspection bad-argument-type
+            return <warning descr="Expected type 'int', got 'Literal[\\"hello\\"]' instead">'hello'</warning>
+        """);
+  }
+
+  // the legacy `PyTypeChecker` umbrella code keeps suppressing every category.
+  @TestFor(issues = "PY-90265")
+  public void testSuppressPyTypeCheckerSuppressesEverything() {
+    doTestByText(
+      """
+        def f() -> int:
+            # noinspection PyTypeChecker
+            return 'hello'
+        """);
+  }
+
+  // a code placed on the enclosing function suppresses problems inside it.
+  @TestFor(issues = "PY-90265")
+  public void testSuppressBadReturnForFunctionScope() {
+    doTestByText(
+      """
+        # noinspection bad-return
+        def f() -> int:
+            return 'hello'
+        """);
+  }
+
+  // a comma-separated list of codes suppresses each listed category.
+  @TestFor(issues = "PY-90265")
+  public void testSuppressBadReturnAmongMultipleCodes() {
+    doTestByText(
+      """
+        def f() -> int:
+            # noinspection bad-return, bad-argument-type
+            return 'hello'
+        """);
+  }
 }
