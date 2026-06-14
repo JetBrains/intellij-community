@@ -32,7 +32,10 @@ import java.nio.file.Path
  */
 fun mavenFixture(): TestFixture<MavenTestFixture> {
   val dirFixture = tempPathFixture(subdirName = "project")
-  val projectFixture = projectFixture(pathFixture = dirFixture, openAfterCreation = true)
+  // Create the project but do NOT open it: bare util tests need only its base path, services and a PSI factory, none of
+  // which require an open project. Opening would run post-startup activities (e.g. PythonCore's poetry activity, which
+  // warns on a module-less project) and let those activities retain references to the project, leaking it past teardown.
+  val projectFixture = projectFixture(pathFixture = dirFixture, openAfterCreation = false)
   return testFixture {
     val project = projectFixture.init()
     val dir = dirFixture.get().parent
