@@ -62,7 +62,7 @@ class EventLogListenersManager(coroutineScope: CoroutineScope) {
 
   private fun unsubscribeExtension(listenerProvider: ExternalEventLogListenerProvider) {
     if (listenersFromEP.isEmpty()) return
-    val listener = listenersFromEP[listenerProvider.javaClass.name] ?: return
+    val listener = listenersFromEP.remove(listenerProvider.javaClass.name) ?: return
     // Do not filter providers by isForceCollectionEnabled flag as it can be dynamic
     StatisticsEventLogProviderUtil.getEventLogProviders().forEach {
       unsubscribe(listener, it.recorderId)
