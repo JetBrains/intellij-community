@@ -23,6 +23,13 @@ internal object PySuppressionUtil {
   private val SUPPRESS_PATTERN: Pattern = Pattern.compile(SuppressionUtil.COMMON_SUPPRESS_REGEXP)
 
   /**
+   * `PyTypeChecker` is excluded from the blanket alias mechanism: it fully manages its own granular suppression
+   * codes ([PyTypeCheckerSuppressionCode]), so it gets no auto-derived `type-checker` alias and keeps the legacy
+   * `PyTypeChecker` id as its catch-all.
+   */
+  private const val PY_TYPE_CHECKER_INSPECTION_ID = "PyTypeChecker"
+
+  /**
    * Returns `true` if [element] is covered by a `# noinspection <suppressId>` comment placed above its
    * enclosing statement, function, or class.
    */
@@ -32,14 +39,22 @@ internal object PySuppressionUtil {
     isSuppressedForParent(element, PyClass::class.java, suppressId)
 
   /**
+   * `true` for inspections that fully manage their own suppression UI (currently only `PyTypeChecker`, via
+   * [PyTypeCheckerSuppressableProblemGroup]). [PyInspectionsSuppressor] offers no blanket suppress actions for
+   * them, leaving the per-problem `SuppressableProblemGroup` as the sole source.
+   */
+  fun isCustomManaged(toolId: String): Boolean = toolId == PY_TYPE_CHECKER_INSPECTION_ID
+
+  /**
    * Maps a legacy inspection id to its industry-standard kebab-case suppression alias by dropping the `Py`
    * product prefix and converting CamelCase to `kebab-case` (e.g. `PyMethodOverriding` -> `method-overriding`,
    * `PyUnresolvedReferences` -> `unresolved-references`).
    *
    * Returns `null` for ids that are not `Py`-prefixed inspection ids (e.g. platform inspections that also run
-   * on Python files), which keep their original id only.
+   * on Python files), which keep their original id only, and for [PY_TYPE_CHECKER_INSPECTION_ID].
    */
   fun toSuppressionCode(toolId: String): String? {
+    if (toolId == PY_TYPE_CHECKER_INSPECTION_ID) return null
     if (toolId.length < 3 || !toolId.startsWith("Py") || !toolId[2].isUpperCase()) return null
     return toolId.substring(2)
       .replace(Regex("([A-Z]+)([A-Z][a-z])"), "$1-$2")
