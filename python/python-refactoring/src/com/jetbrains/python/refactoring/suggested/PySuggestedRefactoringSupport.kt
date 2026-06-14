@@ -16,7 +16,9 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringUI
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.psi.PyElement
+import com.jetbrains.python.psi.PyFromImportStatement
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PyParameterList
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -44,6 +46,19 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
       return function != null && !isAvailableForChangeSignature(function)
     }
 
+    /**
+     * The import binds a single name (a plain `import foo` or any `from m import name`), so adding/editing
+     * its `as` alias changes that visible name. Dotted `import a.b.c` is excluded: replacing the whole
+     * `a.b.c` qualifier on usages is out of scope for the automatic suggestion. A `from __future__` import
+     * is excluded because its names are fixed.
+     */
+    internal fun isAvailableForImportAlias(element: PsiElement): Boolean {
+      return element is PyImportElement &&
+             element.importReferenceExpression != null &&
+             element.importedQName.let { it != null && it.componentCount == 1 } &&
+             (element.parent as? PyFromImportStatement)?.isFromFuture != true
+    }
+
     internal fun shouldSuppressRefactoringForDeclaration(state: SuggestedRefactoringState): Boolean {
       val element = state.restoredDeclarationCopy()
       val declaration = state.declaration
@@ -66,7 +81,14 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
   override fun importsRange(psiFile: PsiFile): TextRange? = null
 
-  override fun nameRange(anchor: PsiElement): TextRange? = (anchor as? PsiNameIdentifierOwner)?.nameIdentifier?.textRange
+  override fun nameRange(anchor: PsiElement): TextRange? {
+    if (anchor is PyImportElement) {
+      val alias = anchor.asNameElement
+      if (alias != null) return alias.nameIdentifier?.textRange ?: alias.textRange
+      return anchor.importReferenceExpression?.textRange
+    }
+    return (anchor as? PsiNameIdentifierOwner)?.nameIdentifier?.textRange
+  }
 
   override fun isIdentifierStart(c: Char): Boolean = c == '_' || Character.isLetter(c)
 
@@ -83,7 +105,7 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
   internal data class ParameterData(val defaultValue: String?) : SuggestedRefactoringSupport.ParameterAdditionalData
 
   private fun findSupport(declaration: PsiElement): SupportInternal? {
-    return sequenceOf(ChangeSignatureSupport, RenameSupport(this)).firstOrNull { it.isApplicable(declaration) }
+    return sequenceOf(ChangeSignatureSupport, RenameSupport(this), ImportAliasSupport).firstOrNull { it.isApplicable(declaration) }
   }
 
   private interface SupportInternal {
@@ -108,5 +130,13 @@ class PySuggestedRefactoringSupport : SuggestedRefactoringSupport {
 
     override fun isApplicable(element: PsiElement): Boolean = Helper.isAvailableForRename(element)
     override fun signatureRange(declaration: PsiElement): TextRange? = mainSupport.nameRange(declaration)
+  }
+
+  private object ImportAliasSupport : SupportInternal {
+
+    override fun isApplicable(element: PsiElement): Boolean = Helper.isAvailableForImportAlias(element)
+
+    // Watch the whole import element so that typing " as alias" right after the imported name is tracked.
+    override fun signatureRange(declaration: PsiElement): TextRange? = declaration.textRange
   }
 }

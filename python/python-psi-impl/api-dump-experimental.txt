@@ -21,6 +21,7 @@
 - createPyRenameElementQuickFix(com.intellij.psi.PsiElement):com.intellij.codeInspection.LocalQuickFix
 - s:getInstance():com.jetbrains.python.PythonUiService
 - getSelectedEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileEditor.FileEditor
+- invokeInplaceRename(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiNameIdentifierOwner,com.jetbrains.python.PythonUiService$InplaceRenameListener):Z
 - openTextEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.editor.Editor
 - openTextEditor(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,I):com.intellij.openapi.editor.Editor
 - openTextEditor(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):com.intellij.openapi.editor.Editor
@@ -34,6 +35,8 @@
 - showInputDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,com.intellij.openapi.ui.InputValidator):java.lang.String
 - showPopup(com.intellij.openapi.project.Project,java.util.List,java.lang.String,com.intellij.util.Consumer):V
 - showYesDialog(com.intellij.openapi.project.Project,java.lang.String,java.lang.String):Z
+*:com.jetbrains.python.PythonUiService$InplaceRenameListener
+- a:templateFinished(Z,Z):V
 com.jetbrains.python.codeInsight.dataflow.scope.Scope
 - *a:getGlobals():java.util.Set
 c:com.jetbrains.python.documentation.PythonDocumentationProvider

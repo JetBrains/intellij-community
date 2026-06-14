@@ -44,6 +44,7 @@
     <lang.namesValidator language="Python" implementationClass="com.jetbrains.python.refactoring.rename.PythonNamesValidator"/>
 
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyVariableProcessor" order="last" id="pyvar"/>
+    <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyImportAliasProcessor" order="before pyvar" id="pyimportalias"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFunctionProcessor" order="before pyvar"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenamePyFileProcessor" order="first"/>
     <renamePsiElementProcessor implementation="com.jetbrains.python.refactoring.rename.RenameUnsupportedExpressionProcessor"
