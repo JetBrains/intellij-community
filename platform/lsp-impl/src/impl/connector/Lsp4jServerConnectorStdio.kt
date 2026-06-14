@@ -18,8 +18,7 @@ import java.io.PipedOutputStream
 import java.nio.charset.StandardCharsets
 
 internal class Lsp4jServerConnectorStdio(private val lspClient: LspClientImpl) : Lsp4jServerConnector(lspClient) {
-  private val processHandler: BaseProcessHandler<*> = (lspClient.descriptor as? LspProcessHandlerCreatingDescriptor)?.createProcessHandler()
-                                                      ?: lspClient.descriptor.startServerProcess()
+  private val processHandler: BaseProcessHandler<*> = lspClient.descriptor.startServerProcess()
 
   private val processListener: LspServerProcessListener = LspServerProcessListener(lspClient, ::logStdErr).also {
     processHandler.addProcessListener(it)
