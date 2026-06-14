@@ -1,4 +1,4 @@
-package com.intellij.platform.lsp.impl.features.inlayHint
+package com.intellij.platform.lsp.impl.features.inlayCommon
 
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
@@ -7,11 +7,9 @@ import com.intellij.codeInsight.hints.InlayHintsProvider
 import com.intellij.codeInsight.hints.InlayHintsSink
 import com.intellij.codeInsight.hints.NoSettings
 import com.intellij.codeInsight.hints.SettingsKey
-import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -19,13 +17,14 @@ import javax.swing.JPanel
 private val lspInlayHintsKey: SettingsKey<NoSettings> = SettingsKey("lsp.inlay.hints")
 
 /**
- * @see com.intellij.platform.lsp.impl.features.inlayHintColor.LspColorInlayHintsProvider
+ * The single daemon-pass trigger for all LSP out-of-band inline inlays. The daemon runs this per editor (including
+ * splits); it schedules [LspInlayApplier], which collects and paints BOTH inlay hints and document-color swatches.
  */
 internal class LspInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAware {
 
   override val isVisibleInSettings: Boolean = false
 
-  override val name: String = "LSP-based inlay hints" // doesn't show up in UI
+  override val name: String = "LSP-based inlays" // doesn't show up in UI
 
   override val key: SettingsKey<NoSettings> = lspInlayHintsKey
 
@@ -41,27 +40,10 @@ internal class LspInlayHintsProvider : InlayHintsProvider<NoSettings>, DumbAware
     val virtualFile = file.virtualFile ?: return null
     if (virtualFile is VirtualFileWindow || !virtualFile.isInLocalFileSystem) return null
 
-    val inlayHints = collectInlayHintData(file.project, virtualFile)
-    if (inlayHints.isEmpty()) return null
-
-    return object : InlayHintsCollector {
-      override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-        if (element !== file) return true
-
-        for (hintData in inlayHints) {
-          val factory = PresentationFactory(editor)
-          val presentation = buildInlayPresentation(
-            factory, file.project,
-            hintData.descriptor,
-            hintData.cached.highlightingInfo,
-            hintData.maxChars
-          )
-          val styledPresentation = factory.roundWithBackground(presentation)
-          sink.addInlineElement(hintData.cached.textRange.startOffset, false, styledPresentation, false)
-        }
-
-        return true
-      }
-    }
+    // The daemon runs this pass per editor (including splits), so it's our per-editor hook. scheduleRefresh triggers
+    // the server request (when the cache is stale) and re-applies the cache to every editor of the file, so a newly
+    // opened/split editor gets painted. Returning null keeps the daemon pass from painting, avoiding duplicates.
+    LspInlayApplier.getInstance(file.project).scheduleRefresh(virtualFile)
+    return null
   }
 }

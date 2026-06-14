@@ -69,7 +69,7 @@
              implementationClass="com.intellij.platform.lsp.impl.features.completion.LspCompletionWeigher"/>
     <codeInsight.codeVisionProvider implementation="com.intellij.platform.lsp.impl.features.codeLens.LspCodeVisionProvider"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.platform.lsp.impl.features.codeLens.LspCodeVisionGroupSettingProvider"/>
-    <codeInsight.inlayProviderFactory implementation="com.intellij.platform.lsp.impl.features.inlayHint.LspInlayHintsProviderFactory"/>
+    <codeInsight.inlayProviderFactory implementation="com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayHintsProviderFactory"/>
     <codeInsight.parameterInfo id="LspParameterInfoHandler" language=""
                                implementationClass="com.intellij.platform.lsp.impl.features.parameterInfo.LspParameterInfoHandler"/>
     <psi.implicitReferenceProvider id="LspImplicitReferenceProvider"

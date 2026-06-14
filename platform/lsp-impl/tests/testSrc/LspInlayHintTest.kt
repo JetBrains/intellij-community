@@ -24,6 +24,7 @@ import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 
@@ -230,6 +231,45 @@ internal class LspInlayHintTest {
   }
 
   @Test
+  fun `unchanged inlay reused across refresh, changed inlay recreated`(): Unit = timeoutRunBlocking {
+    (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+
+    val sourceText = "foo bar baz"
+    val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+    val fileUri = serverSession.fileUri(virtualFile)
+
+    serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
+      listOf(
+        InlayHint(Position(0, 3), Either.forLeft(": Int")),
+        InlayHint(Position(0, 7), Either.forLeft(": String")),
+      )
+    }
+    checkInlaysRetrying(sourceText, "foo/*<# : Int #>*/ bar/*<# : String #>*/ baz")
+
+    val intInlayBefore = managedInlayAt(3)
+    val stringInlayBefore = managedInlayAt(7)
+
+    // Second response: the ": Int" hint is identical, the ": String" hint changes to ": Long".
+    serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
+      listOf(
+        InlayHint(Position(0, 3), Either.forLeft(": Int")),
+        InlayHint(Position(0, 7), Either.forLeft(": Long")),
+      )
+    }
+    // Append at the end (does not shift the hint offsets before it) to invalidate the cache so the pass re-requests.
+    writeCommandAction(project, "") {
+      codeInsightFixture.editor.document.insertString(sourceText.length, " x")
+    }
+    checkInlaysRetrying("foo bar baz x", "foo/*<# : Int #>*/ bar/*<# : Long #>*/ baz x")
+
+    assertSame(intInlayBefore, managedInlayAt(3), "Unchanged inlay must be reused, not recreated")
+    assertNotSame(stringInlayBefore, managedInlayAt(7), "Changed inlay must be recreated")
+
+    serverSession.awaitExpected()
+  }
+
+  @Test
   fun `refresh re-requests hints without an edit`(): Unit = timeoutRunBlocking {
     (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
@@ -259,6 +299,11 @@ internal class LspInlayHintTest {
       assertEquals(expected.trim(), dumpInlays(sourceText).trim())
     }
   }
+
+  private fun managedInlayAt(offset: Int): Inlay<*> =
+    codeInsightFixture.editor.inlayModel
+      .getInlineElementsInRange(offset, offset, PresentationRenderer::class.java)
+      .single()
 
   @Suppress("SameParameterValue")
   private fun managedInlaysAt(offset: Int): List<Inlay<*>> =

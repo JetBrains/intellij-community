@@ -3,6 +3,7 @@ package com.intellij.platform.lsp.impl.features.inlayHint
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
@@ -10,36 +11,27 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.customization.LspInlayHintSupport
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
-import com.intellij.platform.lsp.impl.features.highlightingCommon.LspCachedHighlighting
+import com.intellij.platform.lsp.impl.features.inlayCommon.LspInlayItem
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.eclipse.lsp4j.InlayHint
 import org.eclipse.lsp4j.InlayHintLabelPart
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.jsonrpc.messages.Either
 import java.awt.Cursor
 
 private const val MAX_ALLOWED_INLAY_HINT_LENGTH = 100
 private const val MIN_ALLOWED_INLAY_HINT_LENGTH = 1
 
 /**
- * Shared rendering/data-collection for LSP inlay hints, used by both [LspInlayHintsProvider] (as a request trigger)
- * and [LspInlayHintsApplier] (which paints them out-of-band onto the editor [com.intellij.openapi.editor.InlayModel]).
- */
-internal data class LspInlayHintData(
-  val descriptor: LspClientDescriptor,
-  val cached: LspCachedHighlighting<InlayHint>,
-  val maxChars: Int,
-)
-
-/**
- * Reads the cached inlay hints for [virtualFile] across all clients that have it open.
+ * Reads the cached inlay hints for [virtualFile] across all clients that have it open, as [LspInlayItem]s.
  *
  * Calling this also triggers a server request when the cache is stale (see [LspInlayHintsCache]).
  */
 @RequiresBackgroundThread
 @RequiresReadLock
-internal fun collectInlayHintData(project: Project, virtualFile: VirtualFile): List<LspInlayHintData> {
+internal fun collectInlayHintItems(project: Project, virtualFile: VirtualFile): List<LspInlayItem> {
   val clients = LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(virtualFile)
   return clients.flatMap { client ->
     val customizer = client.descriptor.lspCustomization.inlayHintCustomizer
@@ -48,7 +40,7 @@ internal fun collectInlayHintData(project: Project, virtualFile: VirtualFile): L
       val maxChars = raw.coerceIn(MIN_ALLOWED_INLAY_HINT_LENGTH, MAX_ALLOWED_INLAY_HINT_LENGTH)
       client.getInlayHints(virtualFile)
         .filter { customizer.shouldDisplayInlayHint(virtualFile, it.highlightingInfo) }
-        .map { LspInlayHintData(client.descriptor, it, maxChars) }
+        .map { LspInlayHintItem(project, client.descriptor, it.highlightingInfo, it.textRange.startOffset, maxChars) }
     }
     else {
       emptyList()
@@ -56,7 +48,36 @@ internal fun collectInlayHintData(project: Project, virtualFile: VirtualFile): L
   }
 }
 
-internal fun buildInlayPresentation(
+private class LspInlayHintItem(
+  private val project: Project,
+  private val descriptor: LspClientDescriptor,
+  private val inlayHint: InlayHint,
+  override val offset: Int,
+  private val maxChars: Int,
+) : LspInlayItem {
+
+  override val identity: Any = LspInlayHintIdentity(descriptor, inlayHint.label, maxChars)
+
+  override fun buildPresentation(editor: Editor, factory: PresentationFactory): InlayPresentation {
+    val presentation = buildInlayPresentation(factory, project, descriptor, inlayHint, maxChars)
+    return factory.roundWithBackground(presentation)
+  }
+}
+
+/**
+ * The rendered identity of an inlay hint: everything [buildInlayPresentation] reads, and nothing else.
+ *
+ * Deliberately excludes the text range / [InlayHint.position]: an edit that only shifts a hint's offset moves the
+ * existing inlay automatically, so it must still match (and be reused) rather than be recreated. [Either] and
+ * [InlayHintLabelPart] both have value-based `equals`, so two structurally equal labels compare equal.
+ */
+private data class LspInlayHintIdentity(
+  val descriptor: LspClientDescriptor,
+  val label: Either<String, List<InlayHintLabelPart>>,
+  val maxChars: Int,
+)
+
+private fun buildInlayPresentation(
   factory: PresentationFactory,
   project: Project,
   descriptor: LspClientDescriptor,
