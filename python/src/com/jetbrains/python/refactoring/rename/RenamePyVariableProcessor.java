@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
-public final class RenamePyVariableProcessor extends RenamePyElementProcessor {
+public class RenamePyVariableProcessor extends RenamePyElementProcessor {
   @Override
   public boolean canProcessElement(@NotNull PsiElement element) {
     // extension ordering in python-plugin-common.xml ensures that classes and functions are handled by their own processors

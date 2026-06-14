@@ -16,6 +16,7 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.PyNamedParameter
 import com.jetbrains.python.psi.PyParameter
 import com.jetbrains.python.psi.PySingleStarParameter
@@ -45,7 +46,7 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
   }
 
   private fun findStateChanges(declaration: PsiElement): StateChangesInternal {
-    return sequenceOf(ChangeSignatureStateChanges(this), RenameStateChanges).first { it.isApplicable(declaration) }
+    return sequenceOf(ChangeSignatureStateChanges(this), RenameStateChanges, ImportAliasStateChanges).first { it.isApplicable(declaration) }
   }
 
   private interface StateChangesInternal {
@@ -153,6 +154,21 @@ internal class PySuggestedRefactoringStateChanges(support: PySuggestedRefactorin
 
     override fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): SuggestedRefactoringSupport.Signature? {
       val name = (declaration as PsiNameIdentifierOwner).name ?: return null
+      return SuggestedRefactoringSupport.Signature.create(name, null, emptyList(), null)
+    }
+
+    override fun parameterMarkerRanges(declaration: PsiElement): List<TextRange?> = emptyList()
+  }
+
+  private object ImportAliasStateChanges : StateChangesInternal {
+
+    override fun isApplicable(declaration: PsiElement): Boolean =
+      PySuggestedRefactoringSupport.Helper.isAvailableForImportAlias(declaration)
+
+    // The signature name is the import's visible name (the alias if present, otherwise the imported name),
+    // so adding/editing the `as` alias is seen as a rename of that name.
+    override fun signature(declaration: PsiElement, prevState: SuggestedRefactoringState?): SuggestedRefactoringSupport.Signature? {
+      val name = (declaration as PyImportElement).visibleName ?: return null
       return SuggestedRefactoringSupport.Signature.create(name, null, emptyList(), null)
     }
 

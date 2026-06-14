@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.executeCommand
+import com.intellij.idea.TestFor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.RefactoringBundle
@@ -839,6 +840,46 @@ class PySuggestedRefactoringTest : PyTestCase() {
       intention = changeSignatureIntention()
     ) {
       type("aram")
+    }
+  }
+
+  @TestFor(issues = ["PY-85806"])
+  fun testAddImportAliasUpdatesUsages() {
+    myFixture.addFileToProject("foo.py", "def bar(): pass")
+    doRenameTest(
+      "import foo<caret>\nfoo.bar()",
+      "import foo as f\nf.bar()",
+      "foo",
+      "f",
+      " as f"
+    )
+  }
+
+  @TestFor(issues = ["PY-85806"])
+  fun testAddFromImportAliasUpdatesUsages() {
+    myFixture.addFileToProject("mod.py", "def bar(): pass")
+    doRenameTest(
+      "from mod import bar<caret>\nbar()",
+      "from mod import bar as b\nb()",
+      "bar",
+      "b",
+      " as b"
+    )
+  }
+
+  // editing the imported module name (without adding an alias) must not offer to rename usages.
+  @TestFor(issues = ["PY-85806"])
+  fun testNoSuggestionWhenImportNameEdited() {
+    myFixture.addFileToProject("foo.py", "def bar(): pass")
+    myFixture.addFileToProject("fooo.py", "def bar(): pass")
+    doNoIntentionTest(
+      """
+        import foo<caret>
+        foo.bar()
+      """.trimIndent(),
+      intention = RefactoringBundle.message("suggested.refactoring.rename.intention.text", "foo", "fooo")
+    ) {
+      type("o")
     }
   }
 

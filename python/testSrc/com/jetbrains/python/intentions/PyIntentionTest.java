@@ -1,15 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.intentions;
 
+import com.intellij.idea.TestFor;
 import com.jetbrains.python.allure.Components;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
+import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.ui.TestInputDialog;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
@@ -956,15 +962,33 @@ public class  PyIntentionTest extends PyTestCase {
     doTest(PyPsiBundle.message("INTN.convert.static.method.to.function"));
   }
 
-  // PY-24482
+  @TestFor(issues = {"PY-24482", "PY-85806"})
   public void testImportToggleAlias() {
-    TestDialogManager.setTestInputDialog(new TestInputDialog() {
-      @Override
-      public String show(String message) {
-        return "mc"; //NON-NLS
-      }
-    });
-    doMultiFileTest(PyPsiBundle.message("INTN.add.import.alias.to.name", "MyClass"));
+    myFixture.copyDirectoryToProject("intentions/ImportToggleAlias", "");
+    myFixture.configureByFile("importToggleAlias.py");
+
+    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
+    myFixture.getEditor().getSettings().setVariableInplaceRenameEnabled(true);
+
+    final IntentionAction action = myFixture.findSingleIntention(PyPsiBundle.message("INTN.add.import.alias.to.name", "MyClass"));
+    CommandProcessor.getInstance().executeCommand(
+      myFixture.getProject(),
+      () -> action.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile()),
+      action.getText(),
+      null);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+
+    final TemplateState state = TemplateManagerImpl.getTemplateState(myFixture.getEditor());
+    assertNotNull(state);
+    final TextRange range = state.getCurrentVariableRange();
+    assertNotNull(range);
+    WriteCommandAction.runWriteCommandAction(
+      myFixture.getProject(),
+      () -> myFixture.getEditor().getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "mc"));
+    TemplateManagerImpl.getTemplateState(myFixture.getEditor()).gotoEnd(false);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+
+    myFixture.checkResultByFile("importToggleAlias.py", "intentions/ImportToggleAlias/importToggleAlias_after.py", false);
   }
 
   // PY-47325
