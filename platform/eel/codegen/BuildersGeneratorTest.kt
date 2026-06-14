@@ -933,15 +933,25 @@ private fun renderPropertyInBuilder(
     for ((enumMethodName, field) in fields) {
       val passingAnnotations = field.annotations
         .filter { annotation ->
-          val annotationClass =
-            annotation.nameReferenceElement?.resolve()?.let { it as? KtClass }
-            ?: return@filter false
-          annotationClass.annotationEntries.none { annotationOfAnnotation ->
-            annotationOfAnnotation.name == null &&
-            annotationOfAnnotation.shortName?.asString() == "Target" &&
-            annotationOfAnnotation.valueArguments.none { target ->
-              (target as KtValueArgument).renderWithFqnTypes() == "AnnotationTarget.FUNCTION"
+          when (val resolved = annotation.nameReferenceElement?.resolve()) {
+            is PsiClass -> {
+              val targetAnnotation = resolved.getAnnotation("java.lang.annotation.Target")
+                                     ?: resolved.getAnnotation("kotlin.annotation.Target")
+
+              targetAnnotation == null || targetAnnotation.text.let {
+                it.contains("METHOD") || it.contains("FUNCTION")
+              }
             }
+            is KtClass -> {
+              val targetAnnotation = resolved.annotationEntries.find {
+                it.shortName?.asString() == "Target"
+              }
+
+              targetAnnotation == null || targetAnnotation.valueArguments.any { target ->
+                (target as KtValueArgument).renderWithFqnTypes().contains("FUNCTION")
+              }
+            }
+            else -> false
           }
         }
         .joinToString("") { "$it\n" }

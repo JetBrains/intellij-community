@@ -143,6 +143,15 @@ object EelExecApiHelpers {
       mode(EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE)
 
     /**
+     * Like [LOGIN_INTERACTIVE], but uses the unified [spawnLoginShell] pipeline.
+     *
+     * **Notice:** MAY throw [EnvironmentVariablesException].
+     */
+    @ApiStatus.Internal
+    fun loginInteractiveViaShell(): EnvironmentVariables =
+      mode(EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE_VIA_SHELL)
+
+    /**
      * Fresh-logon snapshot.
      *
      * * On POSIX — non-interactive shell loading `~/.profile`, `~/.bashrc`, `~/.zshrc`, `/etc/profile` etc.

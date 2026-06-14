@@ -400,6 +400,14 @@ sealed interface EelExecApi {
        */
       @EelDelicateApi
       LOGIN_INTERACTIVE,
+
+      /**
+       * Like [LOGIN_INTERACTIVE], but uses the unified [spawnLoginShell] pipeline.
+       *
+       * **Notice:** MAY throw [EnvironmentVariablesException].
+       */
+      @ApiStatus.Internal
+      LOGIN_INTERACTIVE_VIA_SHELL,
     }
   }
 

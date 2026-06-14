@@ -103,6 +103,10 @@ class EelLocalExecPosixApi(
       EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE -> {
         environmentVariablesCache.getDeferred(mode, opts)
       }
+
+      EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE_VIA_SHELL -> {
+        environmentVariablesCache.getDeferred(EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE, opts)
+      }
     }
   }
 
@@ -113,6 +117,7 @@ class EelLocalExecPosixApi(
 
       EelExecApi.EnvironmentVariablesOptions.Mode.DEFAULT,
       EelExecApi.EnvironmentVariablesOptions.Mode.MINIMAL,
+      EelExecApi.EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE_VIA_SHELL,
       null
         -> error("unreachable")
     }
