@@ -816,7 +816,7 @@ private fun parseThreadActivitySnapshot(parser: JsonParser): CodexThreadActivity
       }
       "turns" -> {
         hasTurnActivity = true
-        parseTurnsActivity(parser, activityProjection)
+        CodexAppServerTurnActivityParser.parse(parser, activityProjection)
       }
       else -> parser.skipChildren()
     }
@@ -839,119 +839,121 @@ private fun parseThreadActivitySnapshot(parser: JsonParser): CodexThreadActivity
   )
 }
 
-private fun parseTurnsActivity(parser: JsonParser, activityProjection: CodexThreadActivityProjection) {
-  if (parser.currentToken != JsonToken.START_ARRAY) {
-    parser.skipChildren()
-    return
-  }
-
-  var nextItemIndex = 0L
-  var nextTurnIndex = 0L
-
-  while (true) {
-    val token = parser.nextToken() ?: break
-    if (token == JsonToken.END_ARRAY) {
-      break
-    }
-    if (token != JsonToken.START_OBJECT) {
+private object CodexAppServerTurnActivityParser {
+  fun parse(parser: JsonParser, activityProjection: CodexThreadActivityProjection) {
+    if (parser.currentToken != JsonToken.START_ARRAY) {
       parser.skipChildren()
-      continue
+      return
     }
 
-    var turnId: String? = null
-    var turnInProgress = false
-    forEachObjectField(parser) { fieldName ->
-      when (fieldName) {
-        "id", "turnId", "turn_id" -> turnId = readStringOrNull(parser)
-        "status" -> {
-          if (parseTurnInProgress(parser)) {
-            turnInProgress = true
-          }
-        }
-        "items" -> {
-          nextItemIndex = parseTurnItemsActivity(
-            parser = parser,
-            activityProjection = activityProjection,
-            turnId = turnId,
-            startItemIndex = nextItemIndex,
-          )
-        }
-        else -> parser.skipChildren()
+    var nextItemIndex = 0L
+    var nextTurnIndex = 0L
+
+    while (true) {
+      val token = parser.nextToken() ?: break
+      if (token == JsonToken.END_ARRAY) {
+        break
       }
-      true
-    }
-
-    if (turnInProgress) {
-      activityProjection.markTurnStarted(order = nextTurnIndex, turnId = turnId)
-    }
-    nextTurnIndex += 1
-  }
-}
-
-private fun parseTurnItemsActivity(
-  parser: JsonParser,
-  activityProjection: CodexThreadActivityProjection,
-  turnId: String?,
-  startItemIndex: Long,
-): Long {
-  if (parser.currentToken != JsonToken.START_ARRAY) {
-    parser.skipChildren()
-    return startItemIndex
-  }
-
-  var nextItemIndex = startItemIndex
-
-  while (true) {
-    val token = parser.nextToken() ?: break
-    if (token == JsonToken.END_ARRAY) {
-      break
-    }
-    if (token != JsonToken.START_OBJECT) {
-      parser.skipChildren()
-      continue
-    }
-
-    var itemType: String? = null
-    forEachObjectField(parser) { itemFieldName ->
-      when (itemFieldName) {
-        "type" -> itemType = readStringOrNull(parser)
-        else -> parser.skipChildren()
+      if (token != JsonToken.START_OBJECT) {
+        parser.skipChildren()
+        continue
       }
-      true
-    }
 
-    nextItemIndex += 1
-    when (normalizeToken(itemType)) {
-      "usermessage" -> activityProjection.markUserMessage(nextItemIndex)
-      "agentmessage" -> activityProjection.markAssistantMessage(nextItemIndex)
-      "plan" -> activityProjection.markPlan(order = nextItemIndex, turnId = turnId)
-      "enteredreviewmode" -> activityProjection.enterReviewMode()
-      "exitedreviewmode" -> activityProjection.exitReviewMode()
-    }
-  }
-
-  return nextItemIndex
-}
-
-private fun parseTurnInProgress(parser: JsonParser): Boolean {
-  return when (parser.currentToken) {
-    JsonToken.VALUE_STRING -> normalizeToken(parser.string) == "inprogress"
-    JsonToken.START_OBJECT -> {
-      var inProgress = false
+      var turnId: String? = null
+      var turnInProgress = false
       forEachObjectField(parser) { fieldName ->
         when (fieldName) {
-          "type" -> {
-            inProgress = normalizeToken(readStringOrNull(parser)) == "inprogress"
+          "id", "turnId", "turn_id" -> turnId = readStringOrNull(parser)
+          "status" -> {
+            if (parseTurnInProgress(parser)) {
+              turnInProgress = true
+            }
+          }
+          "items" -> {
+            nextItemIndex = parseTurnItemsActivity(
+              parser = parser,
+              activityProjection = activityProjection,
+              turnId = turnId,
+              startItemIndex = nextItemIndex,
+            )
           }
           else -> parser.skipChildren()
         }
         true
       }
-      inProgress
+
+      if (turnInProgress) {
+        activityProjection.apply(CodexThreadActivitySignal.TurnStarted(order = nextTurnIndex, turnId = turnId))
+      }
+      nextTurnIndex += 1
     }
-    else -> {
+  }
+
+  private fun parseTurnItemsActivity(
+    parser: JsonParser,
+    activityProjection: CodexThreadActivityProjection,
+    turnId: String?,
+    startItemIndex: Long,
+  ): Long {
+    if (parser.currentToken != JsonToken.START_ARRAY) {
       parser.skipChildren()
-      false
+      return startItemIndex
+    }
+
+    var nextItemIndex = startItemIndex
+
+    while (true) {
+      val token = parser.nextToken() ?: break
+      if (token == JsonToken.END_ARRAY) {
+        break
+      }
+      if (token != JsonToken.START_OBJECT) {
+        parser.skipChildren()
+        continue
+      }
+
+      var itemType: String? = null
+      forEachObjectField(parser) { itemFieldName ->
+        when (itemFieldName) {
+          "type" -> itemType = readStringOrNull(parser)
+          else -> parser.skipChildren()
+        }
+        true
+      }
+
+      nextItemIndex += 1
+      when (normalizeToken(itemType)) {
+        "usermessage" -> activityProjection.apply(CodexThreadActivitySignal.UserMessage(nextItemIndex))
+        "agentmessage" -> activityProjection.apply(CodexThreadActivitySignal.AssistantMessage(nextItemIndex))
+        "plan" -> activityProjection.apply(CodexThreadActivitySignal.Plan(order = nextItemIndex, turnId = turnId))
+        "enteredreviewmode" -> activityProjection.apply(CodexThreadActivitySignal.ReviewModeEntered)
+        "exitedreviewmode" -> activityProjection.apply(CodexThreadActivitySignal.ReviewModeExited)
+      }
+    }
+
+    return nextItemIndex
+  }
+
+  private fun parseTurnInProgress(parser: JsonParser): Boolean {
+    return when (parser.currentToken) {
+      JsonToken.VALUE_STRING -> normalizeToken(parser.string) == "inprogress"
+      JsonToken.START_OBJECT -> {
+        var inProgress = false
+        forEachObjectField(parser) { fieldName ->
+          when (fieldName) {
+            "type" -> {
+              inProgress = normalizeToken(readStringOrNull(parser)) == "inprogress"
+            }
+            else -> parser.skipChildren()
+          }
+          true
+        }
+        inProgress
+      }
+      else -> {
+        parser.skipChildren()
+        false
+      }
     }
   }
 }

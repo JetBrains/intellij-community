@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.codex.sessions.backend
 
 import com.intellij.agent.workbench.codex.common.CodexThreadActivityProjection
+import com.intellij.agent.workbench.codex.common.CodexThreadActivitySignal
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
@@ -82,6 +83,19 @@ class CodexThreadActivityProjectionTest {
 
     assertThat(snapshot.hasUnreadAssistantMessage).isTrue()
     assertThat(snapshot.toCodexSessionActivity()).isEqualTo(CodexSessionActivity.UNREAD)
+  }
+
+  @Test
+  fun activitySignalsUseProjectionSemantics() {
+    val projection = CodexThreadActivityProjection()
+    projection.apply(CodexThreadActivitySignal.UserMessage(1))
+    projection.apply(CodexThreadActivitySignal.Plan(order = 2, turnId = "turn-1"))
+    projection.apply(CodexThreadActivitySignal.TurnCompleted(order = 3, turnId = "turn-1"))
+
+    val snapshot = projection.snapshot()
+
+    assertThat(snapshot.hasPendingPlan).isFalse()
+    assertThat(snapshot.toCodexSessionActivity()).isEqualTo(CodexSessionActivity.READY)
   }
 
   private fun CodexThreadActivityProjection.snapshot() = toSnapshot(

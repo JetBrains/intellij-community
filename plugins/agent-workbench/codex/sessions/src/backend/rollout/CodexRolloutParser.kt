@@ -7,10 +7,12 @@ import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActivityProjection
+import com.intellij.agent.workbench.codex.common.CodexThreadActivitySignal
 import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
 import com.intellij.agent.workbench.codex.common.forEachObjectField
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
+import com.intellij.agent.workbench.codex.common.readLongOrNull
 import com.intellij.agent.workbench.codex.common.readStringOrNull
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.isResponseRequired
@@ -125,6 +127,14 @@ private fun CodexThreadSourceKind.isSubAgentSourceKind(): Boolean {
 }
 
 private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
+  reduceSessionMetadata(parseState, event)
+
+  val eventTimestamp = event.timestampMs
+  val eventOrder = parseState.nextActivityOrder++
+  reduceActivityEvent(parseState = parseState, event = event, eventOrder = eventOrder, eventTimestamp = eventTimestamp)
+}
+
+private fun reduceSessionMetadata(parseState: RolloutParseState, event: RolloutEvent) {
   parseState.updatedAt = maxTimestamp(parseState.updatedAt, event.timestampMs)
   parseState.updatedAt = maxTimestamp(parseState.updatedAt, event.sessionTimestampMs)
   parseState.sessionId = parseState.sessionId ?: event.sessionId
@@ -136,89 +146,84 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
   parseState.gitBranch = parseState.gitBranch ?: event.gitBranch
   parseState.modelId = event.payloadModel ?: parseState.modelId
 
-  val eventTimestamp = event.timestampMs
-  val eventOrder = parseState.nextActivityOrder++
+  if (event.topLevelType != "event_msg") {
+    return
+  }
+  when (normalizeToken(event.payloadType)) {
+    "usermessage" -> parseState.title = parseState.title ?: extractTitle(event.payloadMessage)
+    "threadnameupdated" -> parseState.title = extractThreadName(event.payloadThreadName) ?: parseState.title
+    "tokencount" -> {
+      event.payloadTokenUsage?.let { usageSnapshot ->
+        parseState.usageSnapshot = if (usageSnapshot.modelId != null || parseState.modelId == null) {
+          usageSnapshot
+        }
+        else {
+          usageSnapshot.copy(modelId = parseState.modelId)
+        }
+      }
+    }
+  }
+}
+
+private fun reduceActivityEvent(
+  parseState: RolloutParseState,
+  event: RolloutEvent,
+  eventOrder: Long,
+  eventTimestamp: Long?,
+) {
   when (event.topLevelType) {
     "event_msg" -> {
       when (normalizeToken(event.payloadType)) {
         "taskstarted", "turnstarted" -> {
           parseState.hasActivityEvidence = true
-          parseState.activityProjection.markTurnStarted(order = eventOrder, turnId = event.payloadTurnId)
+          parseState.activityProjection.apply(CodexThreadActivitySignal.TurnStarted(order = eventOrder, turnId = event.payloadTurnId))
         }
 
         "taskcomplete", "turncomplete", "turnaborted" -> {
           parseState.hasActivityEvidence = true
-          parseState.activityProjection.markTurnCompleted(order = eventOrder, turnId = event.payloadTurnId)
+          parseState.activityProjection.apply(CodexThreadActivitySignal.TurnCompleted(order = eventOrder, turnId = event.payloadTurnId))
           parseState.clearPendingFunctionCallsForCompletedTurn(completedTurnId = event.payloadTurnId)
         }
 
         "usermessage" -> {
-          parseState.activityProjection.markUserMessage(eventOrder)
-          parseState.title = parseState.title ?: extractTitle(event.payloadMessage)
-        }
-
-        "threadnameupdated" -> {
-          parseState.title = extractThreadName(event.payloadThreadName) ?: parseState.title
-        }
-
-        "tokencount" -> {
-          event.payloadTokenUsage?.let { usageSnapshot ->
-            parseState.usageSnapshot = if (usageSnapshot.modelId != null || parseState.modelId == null) {
-              usageSnapshot
-            }
-            else {
-              usageSnapshot.copy(modelId = parseState.modelId)
-            }
-          }
+          parseState.activityProjection.apply(CodexThreadActivitySignal.UserMessage(eventOrder))
         }
 
         "agentmessage" -> {
-          parseState.activityProjection.markAssistantMessage(eventOrder)
+          parseState.activityProjection.apply(CodexThreadActivitySignal.AssistantMessage(eventOrder))
         }
 
         "mcptoolcallend" -> {
-          parseState.activityProjection.clearToolCall(callId = event.payloadCallId, turnId = event.payloadTurnId)
+          parseState.activityProjection.apply(CodexThreadActivitySignal.ClearToolCall(callId = event.payloadCallId, turnId = event.payloadTurnId))
           event.payloadCallId?.let(parseState.pendingFunctionCallByCallId::remove)
         }
 
         "requestuserinput" -> {
-          parseState.activityProjection.markPendingUserInput(order = eventOrder, callId = event.payloadCallId)
+          parseState.activityProjection.apply(CodexThreadActivitySignal.PendingUserInput(order = eventOrder, callId = event.payloadCallId))
         }
 
         "execapprovalrequest", "applypatchapprovalrequest", "requestpermissions", "elicitationrequest" -> {
-          parseState.activityProjection.markPendingApproval(order = eventOrder, callId = event.payloadCallId, turnId = event.payloadTurnId)
+          parseState.activityProjection.apply(CodexThreadActivitySignal.PendingApproval(order = eventOrder,
+                                                                                       callId = event.payloadCallId,
+                                                                                       turnId = event.payloadTurnId))
         }
 
         in PROJECT_MUTATING_BEGIN_EVENT_TYPES -> {
-          parseState.activityProjection.clearPendingApproval(callId = event.payloadCallId, turnId = event.payloadTurnId)
-          parseState.markPendingFunctionCall(
-            eventTimestamp = eventTimestamp,
-            callId = event.payloadCallId,
-            turnId = event.payloadTurnId,
-            projectMutating = true,
-            changedProjectFilePaths = changedProjectFilePathsForProjectMutatingEvent(event, parseState.sessionCwd),
-          )
-          parseState.activityProjection.markToolCallStarted(order = eventOrder, callId = event.payloadCallId, turnId = event.payloadTurnId)
+          reduceProjectMutatingEventBegin(parseState, event, eventOrder, eventTimestamp)
         }
 
         in PROJECT_MUTATING_END_EVENT_TYPES -> {
-          parseState.markProjectFilesChangedForFinishedTool(
-            eventTimestamp = eventTimestamp,
-            callId = event.payloadCallId,
-            fallbackChangedProjectFilePaths = changedProjectFilePathsForProjectMutatingEvent(event, parseState.sessionCwd),
-          )
-          parseState.activityProjection.clearToolCall(callId = event.payloadCallId, turnId = event.payloadTurnId)
-          parseState.clearPendingFunctionCallForFinishedTool(callId = event.payloadCallId, turnId = event.payloadTurnId)
+          reduceProjectMutatingEventEnd(parseState, event, eventTimestamp)
         }
 
         "itemcompleted" -> {
           if (isPlanItemType(event.payloadItemType)) {
-            parseState.activityProjection.markPlan(order = eventOrder, turnId = event.payloadTurnId)
+            parseState.activityProjection.apply(CodexThreadActivitySignal.Plan(order = eventOrder, turnId = event.payloadTurnId))
           }
         }
 
-        "enteredreviewmode" -> parseState.activityProjection.enterReviewMode()
-        "exitedreviewmode" -> parseState.activityProjection.exitReviewMode()
+        "enteredreviewmode" -> parseState.activityProjection.apply(CodexThreadActivitySignal.ReviewModeEntered)
+        "exitedreviewmode" -> parseState.activityProjection.apply(CodexThreadActivitySignal.ReviewModeExited)
       }
     }
 
@@ -227,60 +232,94 @@ private fun reduceEvent(parseState: RolloutParseState, event: RolloutEvent) {
         "message" -> {
           when (event.payloadRole) {
             "user" -> {
-              parseState.activityProjection.markUserMessage(eventOrder)
+              parseState.activityProjection.apply(CodexThreadActivitySignal.UserMessage(eventOrder))
             }
 
             "assistant" -> {
-              parseState.activityProjection.markAssistantMessage(eventOrder)
+              parseState.activityProjection.apply(CodexThreadActivitySignal.AssistantMessage(eventOrder))
             }
           }
         }
 
         "functioncall" -> {
-          if (normalizeToken(event.payloadName) == "requestuserinput") {
-            parseState.activityProjection.markPendingUserInput(order = eventOrder, callId = event.payloadCallId)
-          }
-          else if (isApprovalFunctionCall(event)) {
-            parseState.activityProjection.markPendingApproval(order = eventOrder,
-                                                              callId = event.payloadCallId,
-                                                              turnId = event.payloadTurnId)
-            if (isToolFunctionCall(event)) {
-              parseState.markPendingFunctionCall(
-                eventTimestamp = eventTimestamp,
-                callId = event.payloadCallId,
-                turnId = event.payloadTurnId,
-                projectMutating = isProjectMutatingFunctionCall(event),
-                changedProjectFilePaths = changedProjectFilePathsForProjectMutatingFunctionCall(event, parseState.sessionCwd),
-              )
-              parseState.activityProjection.markToolCallStarted(order = eventOrder,
-                                                                callId = event.payloadCallId,
-                                                                turnId = event.payloadTurnId)
-            }
-          }
-          else {
-            parseState.markPendingFunctionCall(
-              eventTimestamp = eventTimestamp,
-              callId = event.payloadCallId,
-              turnId = event.payloadTurnId,
-              projectMutating = isProjectMutatingFunctionCall(event),
-              changedProjectFilePaths = changedProjectFilePathsForProjectMutatingFunctionCall(event, parseState.sessionCwd),
-            )
-            parseState.activityProjection.markToolCallStarted(order = eventOrder,
-                                                              callId = event.payloadCallId,
-                                                              turnId = event.payloadTurnId)
-          }
+          reduceResponseFunctionCall(parseState, event, eventOrder, eventTimestamp)
         }
 
         "functioncalloutput" -> {
-          parseState.activityProjection.clearPendingUserInput(event.payloadCallId)
-          parseState.activityProjection.clearPendingApproval(callId = event.payloadCallId, turnId = event.payloadTurnId)
-          parseState.markProjectFilesChangedForCompletedFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
-          parseState.activityProjection.clearToolCall(callId = event.payloadCallId, turnId = event.payloadTurnId)
-          event.payloadCallId?.let(parseState.pendingFunctionCallByCallId::remove)
+          reduceResponseFunctionCallOutput(parseState, event, eventTimestamp)
         }
       }
     }
   }
+}
+
+private fun reduceProjectMutatingEventBegin(
+  parseState: RolloutParseState,
+  event: RolloutEvent,
+  eventOrder: Long,
+  eventTimestamp: Long?,
+) {
+  parseState.activityProjection.apply(CodexThreadActivitySignal.ClearPendingApproval(callId = event.payloadCallId, turnId = event.payloadTurnId))
+  parseState.markPendingFunctionCall(
+    eventTimestamp = eventTimestamp,
+    callId = event.payloadCallId,
+    turnId = event.payloadTurnId,
+    projectMutating = true,
+    changedProjectFilePaths = changedProjectFilePathsForProjectMutatingEvent(event, parseState.sessionCwd),
+  )
+  parseState.activityProjection.apply(CodexThreadActivitySignal.ToolCallStarted(order = eventOrder,
+                                                                                callId = event.payloadCallId,
+                                                                                turnId = event.payloadTurnId))
+}
+
+private fun reduceProjectMutatingEventEnd(parseState: RolloutParseState, event: RolloutEvent, eventTimestamp: Long?) {
+  parseState.markProjectFilesChangedForFinishedTool(
+    eventTimestamp = eventTimestamp,
+    callId = event.payloadCallId,
+    fallbackChangedProjectFilePaths = changedProjectFilePathsForProjectMutatingEvent(event, parseState.sessionCwd),
+  )
+  parseState.activityProjection.apply(CodexThreadActivitySignal.ClearToolCall(callId = event.payloadCallId, turnId = event.payloadTurnId))
+  parseState.clearPendingFunctionCallForFinishedTool(callId = event.payloadCallId, turnId = event.payloadTurnId)
+}
+
+private fun reduceResponseFunctionCall(
+  parseState: RolloutParseState,
+  event: RolloutEvent,
+  eventOrder: Long,
+  eventTimestamp: Long?,
+) {
+  if (normalizeToken(event.payloadName) == "requestuserinput") {
+    parseState.activityProjection.apply(CodexThreadActivitySignal.PendingUserInput(order = eventOrder, callId = event.payloadCallId))
+    return
+  }
+
+  if (isApprovalFunctionCall(event)) {
+    parseState.activityProjection.apply(CodexThreadActivitySignal.PendingApproval(order = eventOrder,
+                                                                                  callId = event.payloadCallId,
+                                                                                  turnId = event.payloadTurnId))
+    if (!isToolFunctionCall(event)) {
+      return
+    }
+  }
+
+  parseState.markPendingFunctionCall(
+    eventTimestamp = eventTimestamp,
+    callId = event.payloadCallId,
+    turnId = event.payloadTurnId,
+    projectMutating = isProjectMutatingFunctionCall(event),
+    changedProjectFilePaths = changedProjectFilePathsForProjectMutatingFunctionCall(event, parseState.sessionCwd),
+  )
+  parseState.activityProjection.apply(CodexThreadActivitySignal.ToolCallStarted(order = eventOrder,
+                                                                                callId = event.payloadCallId,
+                                                                                turnId = event.payloadTurnId))
+}
+
+private fun reduceResponseFunctionCallOutput(parseState: RolloutParseState, event: RolloutEvent, eventTimestamp: Long?) {
+  parseState.activityProjection.apply(CodexThreadActivitySignal.ClearPendingUserInput(event.payloadCallId))
+  parseState.activityProjection.apply(CodexThreadActivitySignal.ClearPendingApproval(callId = event.payloadCallId, turnId = event.payloadTurnId))
+  parseState.markProjectFilesChangedForCompletedFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
+  parseState.activityProjection.apply(CodexThreadActivitySignal.ClearToolCall(callId = event.payloadCallId, turnId = event.payloadTurnId))
+  event.payloadCallId?.let(parseState.pendingFunctionCallByCallId::remove)
 }
 
 private fun parseEvent(parser: JsonParser): RolloutEvent? {
@@ -709,19 +748,6 @@ private fun parseTokenUsageSnapshot(parser: JsonParser, modelId: String?): Agent
     outputTokens = outputTokens + reasoningOutputTokens,
     cacheReadTokens = cachedInputTokens,
   )
-}
-
-private fun readLongOrNull(parser: JsonParser): Long? {
-  return when (parser.currentToken()) {
-    JsonToken.VALUE_NUMBER_INT -> parser.longValue
-    JsonToken.VALUE_NUMBER_FLOAT -> parser.valueAsLong
-    JsonToken.VALUE_STRING -> parser.string.toLongOrNull()
-    JsonToken.VALUE_NULL -> null
-    else -> {
-      parser.skipChildren()
-      null
-    }
-  }
 }
 
 private fun parseIsoTimestamp(value: String?): Long? {

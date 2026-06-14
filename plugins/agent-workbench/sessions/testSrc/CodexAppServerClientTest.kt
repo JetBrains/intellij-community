@@ -515,6 +515,22 @@ class CodexAppServerClientTest {
             ),
           ),
         ),
+        ThreadSpec(
+          id = "thread-plan-object-status",
+          title = "Thread pending plan with object status",
+          cwd = normalizedCwd,
+          sourceKind = "appServer",
+          statusType = "idle",
+          updatedAt = 1_700_000_033_000L,
+          archived = false,
+          readTurns = listOf(
+            ThreadTurnSpec(
+              statusType = "completed",
+              statusAsObject = true,
+              itemTypes = listOf("userMessage", "Plan"),
+            ),
+          ),
+        ),
       )
     )
     val backendDir = tempDir.resolve("backend-thread-read-plan-activity")
@@ -536,6 +552,11 @@ class CodexAppServerClientTest {
       assertThat(clearedPlan!!.hasPendingPlan).isFalse()
       assertThat(clearedPlan.hasUnreadAssistantMessage).isFalse()
       assertThat(clearedPlan.hasTurnActivity).isTrue()
+
+      val objectStatusPlan = client.readThreadActivitySnapshot("thread-plan-object-status")
+      assertThat(objectStatusPlan).isNotNull
+      assertThat(objectStatusPlan!!.hasPendingPlan).isTrue()
+      assertThat(objectStatusPlan.hasTurnActivity).isTrue()
     }
     finally {
       client.shutdown()

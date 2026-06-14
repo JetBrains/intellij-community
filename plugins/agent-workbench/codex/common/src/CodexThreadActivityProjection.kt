@@ -19,6 +19,24 @@ class CodexThreadActivityProjection {
   private val pendingToolCallByCallId = LinkedHashMap<String, PendingSignal>()
   private val inProgressTurnById = LinkedHashMap<String, PendingSignal>()
 
+  fun apply(signal: CodexThreadActivitySignal) {
+    when (signal) {
+      is CodexThreadActivitySignal.UserMessage -> markUserMessage(signal.order)
+      is CodexThreadActivitySignal.AssistantMessage -> markAssistantMessage(signal.order)
+      is CodexThreadActivitySignal.Plan -> markPlan(order = signal.order, turnId = signal.turnId)
+      is CodexThreadActivitySignal.TurnStarted -> markTurnStarted(order = signal.order, turnId = signal.turnId)
+      is CodexThreadActivitySignal.TurnCompleted -> markTurnCompleted(order = signal.order, turnId = signal.turnId)
+      is CodexThreadActivitySignal.PendingUserInput -> markPendingUserInput(order = signal.order, callId = signal.callId)
+      is CodexThreadActivitySignal.ClearPendingUserInput -> clearPendingUserInput(signal.callId)
+      is CodexThreadActivitySignal.PendingApproval -> markPendingApproval(order = signal.order, callId = signal.callId, turnId = signal.turnId)
+      is CodexThreadActivitySignal.ClearPendingApproval -> clearPendingApproval(callId = signal.callId, turnId = signal.turnId)
+      is CodexThreadActivitySignal.ToolCallStarted -> markToolCallStarted(order = signal.order, callId = signal.callId, turnId = signal.turnId)
+      is CodexThreadActivitySignal.ClearToolCall -> clearToolCall(callId = signal.callId, turnId = signal.turnId)
+      CodexThreadActivitySignal.ReviewModeEntered -> enterReviewMode()
+      CodexThreadActivitySignal.ReviewModeExited -> exitReviewMode()
+    }
+  }
+
   fun markUserMessage(order: Long) {
     latestUserMessageOrder = maxOf(latestUserMessageOrder, order)
     if (pendingPlan != null && order >= pendingPlan!!.order) {
@@ -172,4 +190,29 @@ class CodexThreadActivityProjection {
     @JvmField val order: Long,
     @JvmField val turnId: String?,
   )
+}
+
+@ApiStatus.Internal
+sealed interface CodexThreadActivitySignal {
+  data class UserMessage(@JvmField val order: Long) : CodexThreadActivitySignal
+  data class AssistantMessage(@JvmField val order: Long) : CodexThreadActivitySignal
+  data class Plan(@JvmField val order: Long, @JvmField val turnId: String? = null) : CodexThreadActivitySignal
+  data class TurnStarted(@JvmField val order: Long, @JvmField val turnId: String? = null) : CodexThreadActivitySignal
+  data class TurnCompleted(@JvmField val order: Long, @JvmField val turnId: String? = null) : CodexThreadActivitySignal
+  data class PendingUserInput(@JvmField val order: Long, @JvmField val callId: String? = null) : CodexThreadActivitySignal
+  data class ClearPendingUserInput(@JvmField val callId: String?) : CodexThreadActivitySignal
+  data class PendingApproval(
+    @JvmField val order: Long,
+    @JvmField val callId: String? = null,
+    @JvmField val turnId: String? = null,
+  ) : CodexThreadActivitySignal
+  data class ClearPendingApproval(@JvmField val callId: String?, @JvmField val turnId: String? = null) : CodexThreadActivitySignal
+  data class ToolCallStarted(
+    @JvmField val order: Long,
+    @JvmField val callId: String? = null,
+    @JvmField val turnId: String? = null,
+  ) : CodexThreadActivitySignal
+  data class ClearToolCall(@JvmField val callId: String?, @JvmField val turnId: String? = null) : CodexThreadActivitySignal
+  object ReviewModeEntered : CodexThreadActivitySignal
+  object ReviewModeExited : CodexThreadActivitySignal
 }
