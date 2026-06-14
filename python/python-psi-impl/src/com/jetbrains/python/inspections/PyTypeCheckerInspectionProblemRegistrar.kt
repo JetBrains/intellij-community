@@ -3,6 +3,8 @@ package com.jetbrains.python.inspections
 
 import com.google.common.collect.Sets
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
@@ -15,6 +17,7 @@ import com.jetbrains.python.inspections.PyTypeCheckerInspection.AnalyzeArgumentR
 import com.jetbrains.python.inspections.PyTypeCheckerInspection.AnalyzeCalleeResults
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionProblemRegistrar.breakdownTooltip
 import com.jetbrains.python.inspections.PyTypeCheckerInspectionProblemRegistrar.breakdownTooltipFromFragment
+import com.jetbrains.python.psi.PyAugAssignmentStatement
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyCallSiteOwner
@@ -31,15 +34,17 @@ import java.util.Optional
 
 internal object PyTypeCheckerInspectionProblemRegistrar {
   fun registerProblem(
-    visitor: PyInspectionVisitor,
+    holder: ProblemsHolder,
     callSite: PyCallSiteOwner,
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
     highlightOverride: ProblemHighlightType?,
   ) {
+    val code = suppressionCodeFor(callSite)
     if (calleesResults.size == 1) {
       registerSingleCalleeProblem(
-        visitor,
+        holder,
+        code,
         callSite,
         calleesResults[0],
         context,
@@ -47,12 +52,23 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
       )
     }
     else if (!calleesResults.isEmpty()) {
-      registerMultiCalleeProblem(visitor, callSite, calleesResults, context, highlightOverride)
+      registerMultiCalleeProblem(holder, code, callSite, calleesResults, context, highlightOverride)
     }
   }
 
+  /**
+   * Argument mismatches map to [PyTypeCheckerSuppressionCode.BAD_ARGUMENT_TYPE], except when the call site is
+   * an operator (binary / augmented assignment) or a subscription, which get their own dedicated codes.
+   */
+  private fun suppressionCodeFor(callSite: PyCallSiteOwner): PyTypeCheckerSuppressionCode = when (callSite) {
+    is PyBinaryExpression, is PyAugAssignmentStatement -> PyTypeCheckerSuppressionCode.UNSUPPORTED_OPERATOR
+    is PySubscriptionExpression -> PyTypeCheckerSuppressionCode.BAD_INDEX
+    else -> PyTypeCheckerSuppressionCode.BAD_ARGUMENT_TYPE
+  }
+
   private fun registerSingleCalleeProblem(
-    visitor: PyInspectionVisitor,
+    holder: ProblemsHolder,
+    code: PyTypeCheckerSuppressionCode,
     callSite: PyCallSiteOwner,
     calleeResults: AnalyzeCalleeResults,
     context: TypeEvalContext,
@@ -64,9 +80,9 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
       val argument = argumentResult.argument
       val message = getSingleCalleeProblemMessage(argumentResult, context)
       val type = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-      // The breakdown tooltip re-runs the match, so registerProblemWithTooltip invokes the supplier only on-the-fly.
+      // The breakdown tooltip re-runs the match, so reportWithTooltip invokes the supplier only on-the-fly.
       val expected = argumentResult.expectedTypeAfterSubstitution ?: argumentResult.expectedType
-      visitor.registerProblemWithTooltip(argument, message, type) {
+      PyTypeCheckerProblemReporter.reportWithTooltip(holder, code, argument, message, type) {
         breakdownTooltip(message,
                          expected,
                          argumentResult.actualType,
@@ -79,7 +95,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
       val argument = unexpectedArgumentForParamSpec.argument
       val paramSpecTypeName = unexpectedArgumentForParamSpec.paramSpecType.variableName
       registerWithOverride(
-        visitor, argument,
+        holder, code, argument,
         PyPsiBundle.problemMessage("INSP.type.checker.unexpected.argument.from.paramspec", paramSpecTypeName),
         highlightOverride
       )
@@ -95,7 +111,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
             val paramSpecTypeName = unfilledParameterFromParamSpec.paramSpecType.variableName
             if (parameterName != null) {
               registerWithOverride(
-                visitor, rpar, PyPsiBundle.problemMessage(
+                holder, code, rpar, PyPsiBundle.problemMessage(
                   "INSP.type.checker.unfilled.parameter.for.paramspec", parameterName,
                   paramSpecTypeName
                 ), highlightOverride
@@ -107,7 +123,7 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
             val varargName = unfilledParameterFromParamSpec.varargName
             val expectedType = PyInspectionMessages.CodifiedParam.ofType(unfilledParameterFromParamSpec.expectedType, rpar, context)
             registerWithOverride(
-              visitor, rpar, PyPsiBundle.problemMessage("INSP.type.checker.unfilled.vararg", varargName, expectedType),
+              holder, code, rpar, PyPsiBundle.problemMessage("INSP.type.checker.unfilled.vararg", varargName, expectedType),
               highlightOverride
             )
           }
@@ -117,33 +133,35 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
   }
 
   private fun registerWithOverride(
-    visitor: PyInspectionVisitor,
+    holder: ProblemsHolder,
+    code: PyTypeCheckerSuppressionCode,
     element: PsiElement,
     message: PyInspectionMessages.ProblemMessage,
     highlightOverride: ProblemHighlightType?,
   ) {
     val type = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-    visitor.registerProblem(element, message, type)
+    PyTypeCheckerProblemReporter.report(holder, code, element, message, type)
   }
 
-
   private fun registerMultiCalleeProblem(
-    visitor: PyInspectionVisitor,
+    holder: ProblemsHolder,
+    code: PyTypeCheckerSuppressionCode,
     callSite: PyCallSiteOwner,
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
     highlightOverride: ProblemHighlightType?,
   ) {
     if (callSite is PyBinaryExpression) {
-      registerMultiCalleeProblemForBinaryExpression(visitor, callSite, calleesResults, context, highlightOverride)
+      registerMultiCalleeProblemForBinaryExpression(holder, code, callSite, calleesResults, context, highlightOverride)
     }
     else {
-      registerMultiCalleeProblem(visitor, getMultiCalleeElementToHighlight(callSite), calleesResults, context, highlightOverride)
+      registerMultiCalleeProblem(holder, code, getMultiCalleeElementToHighlight(callSite), calleesResults, context, highlightOverride)
     }
   }
 
   private fun registerMultiCalleeProblem(
-    visitor: PyInspectionVisitor,
+    holder: ProblemsHolder,
+    code: PyTypeCheckerSuppressionCode,
     element: PsiElement?,
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
@@ -160,11 +178,10 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
 
     val description = PyMismatchTooltips.description(header, argumentSlots, expectedRows)
     val highlightType = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-    // The aligned-table tooltip is only worth building on-the-fly; registerProblemWithTooltip invokes the supplier then.
-    visitor.registerProblemWithTooltip(element,
-                                       description,
-                                       highlightType)
-                                        { PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows) }
+    // The aligned-table tooltip is only worth building on-the-fly; reportWithTooltip invokes the supplier then.
+    PyTypeCheckerProblemReporter.reportWithTooltip(holder, code, element, description, highlightType) {
+      PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows)
+    }
   }
 
   private fun getSingleCalleeProblemMessage(
@@ -246,7 +263,8 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
   }
 
   private fun registerMultiCalleeProblemForBinaryExpression(
-    visitor: PyInspectionVisitor,
+    holder: ProblemsHolder,
+    code: PyTypeCheckerSuppressionCode,
     binaryExpression: PyBinaryExpression,
     calleesResults: List<AnalyzeCalleeResults>,
     context: TypeEvalContext,
@@ -265,7 +283,8 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
 
     if (preferredOperatorsResults.size == 1) {
       registerSingleCalleeProblem(
-        visitor,
+        holder,
+        code,
         binaryExpression,
         preferredOperatorsResults[0],
         context,
@@ -274,7 +293,8 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     }
     else {
       registerMultiCalleeProblem(
-        visitor,
+        holder,
+        code,
         if (allCalleesAreRightOperators) binaryExpression.leftExpression else binaryExpression.rightExpression,
         preferredOperatorsResults, context, highlightOverride
       )
