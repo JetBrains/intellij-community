@@ -1017,6 +1017,8 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
     <statistics.applicationUsagesCollector
       implementation="com.intellij.internal.statistic.collectors.fus.plugins.PluginRepositoriesUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.openapi.updateSettings.impl.DuplicatingPluginIdStateCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.openapi.updateSettings.impl.ConsentUsagesCollector"
+                                           allowOnStartup="true"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.plugins.PluginSyncUsageCollector"/>
     <statistics.applicationUsagesCollector
       implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
