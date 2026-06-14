@@ -15,9 +15,54 @@ import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.lang.annotations.Language
 import org.jetbrains.idea.maven.model.MavenConstants
+import org.jetbrains.idea.maven.project.MavenSettingsCache
 import java.nio.file.Path
+
+/**
+ * Creates a bare [MavenTestFixture]: an opened project over a fresh per-run temp directory, with no Maven import
+ * infrastructure (no projects manager, JDK, settings.xml, or server). Use it for tests that only need a project
+ * directory to write files into and exercise pure helpers (e.g. [org.jetbrains.idea.maven.utils.MavenUtil] statics) —
+ * [mavenImportingFixture] is unnecessarily heavyweight for those.
+ *
+ * Use it with the property-delegate pattern in a `@TestApplication`-annotated test class:
+ * ```
+ * private val maven by mavenFixture()
+ * ```
+ */
+fun mavenFixture(): TestFixture<MavenTestFixture> {
+  val dirFixture = tempPathFixture(subdirName = "project")
+  val projectFixture = projectFixture(pathFixture = dirFixture, openAfterCreation = true)
+  return testFixture {
+    val project = projectFixture.init()
+    val dir = dirFixture.get().parent
+    initialized(MavenBaseTestFixtureImpl(project, dir) as MavenTestFixture) {}
+  }
+}
+
+private class MavenBaseTestFixtureImpl(
+  override val project: Project,
+  override val dir: Path,
+) : MavenTestFixture {
+  override val mavenVersion: String = "bundled"
+  override val modelVersion: String = MavenConstants.MODEL_VERSION_4_0_0
+
+  override val projectRoot: VirtualFile
+    get() = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(Path.of(project.basePath!!))!!
+
+  override var projectPom: VirtualFile
+    get() = error("a bare mavenFixture() has no imported pom; use mavenImportingFixture() if you need one")
+    set(_) = error("a bare mavenFixture() has no imported pom; use mavenImportingFixture() if you need one")
+
+  override var repositoryPath: Path
+    get() = MavenSettingsCache.getInstance(project).getEffectiveUserLocalRepo()
+    set(path) {
+      MavenSettingsCache.getInstance(project).reload()
+    }
+}
 
 /**
  * Creates a [MavenImportingTestFixture].

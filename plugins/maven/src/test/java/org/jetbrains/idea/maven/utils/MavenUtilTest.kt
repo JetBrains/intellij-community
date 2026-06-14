@@ -1,13 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
-import com.intellij.maven.testFramework.MavenTestCase
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
-import junit.framework.TestCase
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.config.MavenConfigParser
+import org.jetbrains.idea.maven.fixtures.createProjectSubDir
+import org.jetbrains.idea.maven.fixtures.createProjectSubFile
+import org.jetbrains.idea.maven.fixtures.mavenFixture
+import org.jetbrains.idea.maven.fixtures.projectPath
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.utils.MavenUtil.DOT_M2_DIR
 import org.jetbrains.idea.maven.utils.MavenUtil.containsDeclaredExtension
@@ -15,16 +18,23 @@ import org.jetbrains.idea.maven.utils.MavenUtil.getRepositoryFromSettings
 import org.jetbrains.idea.maven.utils.MavenUtil.getVFileBaseDir
 import org.jetbrains.idea.maven.utils.MavenUtil.inferModelVersionFromNamespace
 import org.jetbrains.idea.maven.utils.MavenUtil.isMaven410
-import java.io.IOException
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.Properties
 
-class MavenUtilTest : MavenTestCase() {
-  @Throws(IOException::class)
+@TestApplication
+class MavenUtilTest {
+  private val maven by mavenFixture()
+
+  @Test
   fun testFindExtension() {
-    val file = createProjectSubFile(
+    val file = maven.createProjectSubFile(
       ".mvn/extensions.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <extensions>
@@ -34,15 +44,15 @@ class MavenUtilTest : MavenTestCase() {
               <version>1.0.42</version>
           </extension>
       </extensions>
-      
+
       """.trimIndent()
     )
     assertTrue(containsDeclaredExtension(file.toNioPath(), MavenId("group-id:artifact-id:1.0.42")))
   }
 
-  @Throws(IOException::class)
+  @Test
   fun testFindLocalRepoSchema12() {
-    val file = createProjectSubFile(
+    val file = maven.createProjectSubFile(
       "testsettings.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
@@ -51,12 +61,12 @@ class MavenUtilTest : MavenTestCase() {
         <localRepository>mytestpath</localRepository></settings>
         """.trimIndent()
     )
-    TestCase.assertEquals("mytestpath", getRepositoryFromSettings(file.toNioPath(), null as Properties?))
+    assertEquals("mytestpath", getRepositoryFromSettings(file.toNioPath(), null as Properties?))
   }
 
-  @Throws(IOException::class)
+  @Test
   fun testFindLocalRepoSchema10() {
-    val file = createProjectSubFile(
+    val file = maven.createProjectSubFile(
       "testsettings.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
@@ -65,12 +75,12 @@ class MavenUtilTest : MavenTestCase() {
         <localRepository>mytestpath</localRepository></settings>
         """.trimIndent()
     )
-    TestCase.assertEquals("mytestpath", getRepositoryFromSettings(file.toNioPath(), null as Properties?))
+    assertEquals("mytestpath", getRepositoryFromSettings(file.toNioPath(), null as Properties?))
   }
 
-  @Throws(IOException::class)
+  @Test
   fun testFindLocalRepoSchema11() {
-    val file = createProjectSubFile(
+    val file = maven.createProjectSubFile(
       "testsettings.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <settings xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.1.0 http://maven.apache.org/xsd/settings-1.1.0.xsd"
@@ -78,26 +88,26 @@ class MavenUtilTest : MavenTestCase() {
                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">  <localRepository>mytestpath</localRepository></settings>
                 """.trimIndent()
     )
-    TestCase.assertEquals("mytestpath", getRepositoryFromSettings(file.toNioPath(), null as Properties?))
+    assertEquals("mytestpath", getRepositoryFromSettings(file.toNioPath(), null as Properties?))
   }
 
-  @Throws(IOException::class)
+  @Test
   fun testFindLocalRepoWithoutXmls() {
-    val file = createProjectSubFile(
+    val file = maven.createProjectSubFile(
       "testsettings.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <settings>
         <localRepository>mytestpath</localRepository>
       </settings>
-      
+
       """.trimIndent()
     )
-    TestCase.assertEquals("mytestpath", getRepositoryFromSettings(file.toNioPath(), null as Properties?))
+    assertEquals("mytestpath", getRepositoryFromSettings(file.toNioPath(), null as Properties?))
   }
 
-  @Throws(IOException::class)
+  @Test
   fun testFindLocalRepoWithNonTrimmed() {
-    val file = createProjectSubFile(
+    val file = maven.createProjectSubFile(
       "testsettings.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <settings>  <localRepository>
@@ -105,20 +115,20 @@ class MavenUtilTest : MavenTestCase() {
          ${'\t'}</localRepository></settings>
          """.trimIndent()
     )
-    TestCase.assertEquals("mytestpath", getRepositoryFromSettings(file.toNioPath(), null as Properties?))
+    assertEquals("mytestpath", getRepositoryFromSettings(file.toNioPath(), null as Properties?))
   }
 
-  @Throws(IOException::class)
+  @Test
   fun testSystemProperties() = runBlocking {
     try {
       System.setProperty("MavenUtilTest.testSystemPropertiesRepoPath", "repopath")
-      val file = createProjectSubFile(
+      val file = maven.createProjectSubFile(
         "testsettings.xml", """
         <?xml version="1.0" encoding="UTF-8"?>
         <settings>
           <localRepository>${'$'}{MavenUtilTest.testSystemPropertiesRepoPath}/testpath</localRepository>
         </settings>
-        
+
         """.trimIndent()
       )
       assertEquals("repopath/testpath", getRepositoryFromSettings(file.toNioPath()))
@@ -128,19 +138,19 @@ class MavenUtilTest : MavenTestCase() {
     }
   }
 
-  @Throws(IOException::class)
+  @Test
   fun testGetRepositoryFromSettingsWithBadSymbols() {
-    val file = createProjectSubFile("testsettings.xml")
+    val file = maven.createProjectSubFile("testsettings.xml")
     val str = """
       <settings> <!-- Bad UTF-8 symbol: ü -->
         <localRepository>mytestpath</localRepository>
       </settings>
       """.trimIndent()
     Files.writeString(file.toNioPath(), str, StandardCharsets.ISO_8859_1)
-    TestCase.assertEquals("mytestpath", getRepositoryFromSettings(file.toNioPath(), null as Properties?))
+    assertEquals("mytestpath", getRepositoryFromSettings(file.toNioPath(), null as Properties?))
   }
 
-  @Throws(IOException::class)
+  @Test
   fun testIsMaven41() {
     assertFalse(isMaven410(null, null))
     assertFalse(isMaven410(null, "http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd"))
@@ -195,15 +205,16 @@ class MavenUtilTest : MavenTestCase() {
     )
   }
 
+  @Test
   fun testBaseDir() {
-    createProjectSubDir(".mvn")
-    val subDir1 = createProjectSubDir("subdir1")
-    val subDir2 = createProjectSubDir("subdir2")
-    createProjectSubDir("subdir2/.mvn")
-    val subDir3 = createProjectSubDir("subdir3")
-    createProjectSubFile("subdir3/pom.xml", "bad pom xml syntax")
-    val subDir4 = createProjectSubDir("subdir4")
-    createProjectSubFile(
+    maven.createProjectSubDir(".mvn")
+    val subDir1 = maven.createProjectSubDir("subdir1")
+    val subDir2 = maven.createProjectSubDir("subdir2")
+    maven.createProjectSubDir("subdir2/.mvn")
+    val subDir3 = maven.createProjectSubDir("subdir3")
+    maven.createProjectSubFile("subdir3/pom.xml", "bad pom xml syntax")
+    val subDir4 = maven.createProjectSubDir("subdir4")
+    maven.createProjectSubFile(
       "subdir4/pom.xml",
       """
                            <?xml version="1.0" encoding="UTF-8"?>
@@ -219,53 +230,59 @@ class MavenUtilTest : MavenTestCase() {
                              """.trimIndent()
     )
 
-    assertEquals(projectRoot, getVFileBaseDir(subDir1))
+    assertEquals(maven.projectRoot, getVFileBaseDir(subDir1))
     assertEquals(subDir2, getVFileBaseDir(subDir2))
-    assertEquals(projectRoot, getVFileBaseDir(subDir3))
+    assertEquals(maven.projectRoot, getVFileBaseDir(subDir3))
     assertEquals(subDir4, getVFileBaseDir(subDir4))
   }
 
+  @Test
   fun testEelToolchainsOverrideWithEmptyString() = runBlocking {
-    createProjectSubFile(".mvn/maven.config", "-t\ntoolchains-path.xml")
-    createProjectSubFile("toolchains-path.xml")
-    val config = MavenConfigParser.parse(projectPath.toString())
-    val toolchainsFile = MavenEelUtil.getToolchainsFile(project, "", config)
-    val expected = projectPath.resolve("toolchains-path.xml")
-    assertTrue("Files $expected and $toolchainsFile should be the same", Files.isSameFile(expected, toolchainsFile))
+    maven.createProjectSubFile(".mvn/maven.config", "-t\ntoolchains-path.xml")
+    maven.createProjectSubFile("toolchains-path.xml")
+    val config = MavenConfigParser.parse(maven.projectPath.toString())
+    val toolchainsFile = MavenEelUtil.getToolchainsFile(maven.project, "", config)
+    val expected = maven.projectPath.resolve("toolchains-path.xml")
+    assertTrue(Files.isSameFile(expected, toolchainsFile), "Files $expected and $toolchainsFile should be the same")
   }
 
+  @Test
   fun testEelToolchainsOverrideWithNullString() = runBlocking {
-    createProjectSubFile(".mvn/maven.config", "-t\ntoolchains-path.xml")
-    createProjectSubFile("toolchains-path.xml")
-    val config = MavenConfigParser.parse(projectPath.toString())
-    val toolchainsFile = MavenEelUtil.getToolchainsFile(project, null, config)
-    val expected = projectPath.resolve("toolchains-path.xml")
-    assertTrue("Files $expected and $toolchainsFile should be the same", Files.isSameFile(expected, toolchainsFile))
+    maven.createProjectSubFile(".mvn/maven.config", "-t\ntoolchains-path.xml")
+    maven.createProjectSubFile("toolchains-path.xml")
+    val config = MavenConfigParser.parse(maven.projectPath.toString())
+    val toolchainsFile = MavenEelUtil.getToolchainsFile(maven.project, null, config)
+    val expected = maven.projectPath.resolve("toolchains-path.xml")
+    assertTrue(Files.isSameFile(expected, toolchainsFile), "Files $expected and $toolchainsFile should be the same")
   }
 
+  @Test
   fun testEelToolchainsOverrideWithNullStringNonExistingFile() = runBlocking {
-    createProjectSubFile(".mvn/maven.config", "-t\nnon-existent-toolchains-path.xml")
+    maven.createProjectSubFile(".mvn/maven.config", "-t\nnon-existent-toolchains-path.xml")
     //createProjectSubFile("non-existent-toolchains-path.xml")
-    val config = MavenConfigParser.parse(projectPath.toString())
-    val toolchainsFile = MavenEelUtil.getToolchainsFile(project, null, config)
-    assertEquals(projectPath.getEelDescriptor().toEelApi().userInfo.home.asNioPath()
+    val config = MavenConfigParser.parse(maven.projectPath.toString())
+    val toolchainsFile = MavenEelUtil.getToolchainsFile(maven.project, null, config)
+    assertEquals(maven.projectPath.getEelDescriptor().toEelApi().userInfo.home.asNioPath()
                    .resolve(DOT_M2_DIR)
                    .resolve(MavenUtil.TOOLCHAINS_XML).toString(), toolchainsFile.toString())
   }
 
+  @Test
   fun testEelToolchainsOverrideWithSettingsString() = runBlocking {
-    createProjectSubFile(".mvn/maven.config", "-t\ntoolchains-path.xml")
-    createProjectSubFile("toolchains-path.xml")
-    val config = MavenConfigParser.parse(projectPath.toString())
-    val toolchainsFile = MavenEelUtil.getToolchainsFile(project, "path/to/my-toolchains.xml", config)
+    maven.createProjectSubFile(".mvn/maven.config", "-t\ntoolchains-path.xml")
+    maven.createProjectSubFile("toolchains-path.xml")
+    val config = MavenConfigParser.parse(maven.projectPath.toString())
+    val toolchainsFile = MavenEelUtil.getToolchainsFile(maven.project, "path/to/my-toolchains.xml", config)
     assertEquals(Paths.get("path", "to", "my-toolchains.xml"), toolchainsFile)
   }
 
+  @Test
   fun testBaseDirIOfNoDotMvn() {
-    val subDir1 = createProjectSubDir("sub/dir1")
+    val subDir1 = maven.createProjectSubDir("sub/dir1")
     assertEquals(subDir1, getVFileBaseDir(subDir1))
   }
 
+  @Test
   fun testInferModelVersionFromNamespace() {
     // null namespace returns null
     assertNull(inferModelVersionFromNamespace(null))
