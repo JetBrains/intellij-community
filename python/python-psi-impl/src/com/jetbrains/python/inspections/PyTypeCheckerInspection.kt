@@ -96,6 +96,7 @@ import com.jetbrains.python.psi.types.PySentinelType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
+import com.jetbrains.python.psi.types.PyTypeChecker.containsAny
 import com.jetbrains.python.psi.types.PyTypeChecker.getTargetTypeFromTupleAssignment
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeChecker.isUnknown
@@ -202,9 +203,9 @@ open class PyTypeCheckerInspection : PyInspection() {
       if (target !is PyTupleExpression && target !is PyListLiteralExpression) return
       val source = forPart.source ?: return
       val sourceType = myTypeEvalContext.getType(source) ?: return
-      if (isUnknown(sourceType, myTypeEvalContext)) return
+      if (sourceType.containsAny(context = myTypeEvalContext)) return
       val itemType = PyTargetExpressionImpl.getIterationType(sourceType, source, source, node.isAsync, myTypeEvalContext)
-      if (!itemType.isAnyOrUnknown && !isUnknown(itemType, myTypeEvalContext) &&
+      if (!itemType.isAnyOrUnknown && !itemType.containsAny(context = myTypeEvalContext) &&
           !isSubtype(itemType, PyNames.ITERABLE, myTypeEvalContext)) {
         registerProblem(target,
                         PyPsiBundle.message("INSP.type.checker.unpack.expected.iterable",
