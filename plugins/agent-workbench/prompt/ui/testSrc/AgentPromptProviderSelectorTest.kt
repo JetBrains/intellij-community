@@ -1187,20 +1187,20 @@ class AgentPromptProviderSelectorTest {
     val finishRefresh = CompletableDeferred<Unit>()
     val modelCatalogRequests = AtomicInteger()
     val provider = testProviderBridge(
-      provider = AgentSessionProvider.CODEX,
+      provider = AgentSessionProvider.PI,
       promptOptions = emptyList(),
       supportsGenerationModelSelection = true,
       availableGenerationModelsResolver = {
         modelCatalogRequests.incrementAndGet()
         refreshStarted.complete(Unit)
         finishRefresh.await()
-        listOf(AgentPromptGenerationModel(id = "gpt-5.5", displayName = "GPT-5.5"))
+        listOf(AgentPromptGenerationModel(id = "pi:sonnet", displayName = "Pi Sonnet"))
       },
     )
     val profile = AgentPromptLaunchProfile(
       id = "user:models",
       name = "Models",
-      providerId = AgentSessionProvider.CODEX.value,
+      providerId = AgentSessionProvider.PI.value,
     )
     var editor: AgentPromptLaunchProfileEditorDialog? = null
     try {
@@ -1211,7 +1211,7 @@ class AgentPromptProviderSelectorTest {
           providerOverride = provider,
           modelCatalogStateProvider = catalogService::catalogState,
           requestModelCatalogRefresh = { providerId, onStateChanged ->
-            if (providerId == AgentSessionProvider.CODEX.value) {
+            if (providerId == AgentSessionProvider.PI.value) {
               catalogService.requestStateRefresh(provider, project, onStateChanged)
             }
           },
@@ -1220,15 +1220,18 @@ class AgentPromptProviderSelectorTest {
 
       withContext(Dispatchers.EDT) {
         val activeEditor = editor
+        assertThat(activeEditor.isModelComboLiveUpdateEnabledForTest()).isTrue()
         assertThat(activeEditor.modelOptionTextsForTest()).containsExactly("Default")
         activeEditor.openModelComboForTest()
         assertThat(activeEditor.modelOptionTextsForTest()).containsExactly("Default", "Loading models...")
+        assertThat(activeEditor.modelOptionIconsForTest()[0]).isNull()
+        assertThat(activeEditor.modelOptionIconsForTest()[1]).isNotNull()
       }
       waitForCondition { refreshStarted.isCompleted }
       finishRefresh.complete(Unit)
       waitForCondition {
         withContext(Dispatchers.EDT) {
-          editor.modelOptionTextsForTest() == listOf("Default", "GPT-5.5")
+          editor.modelOptionTextsForTest() == listOf("Default", "Pi Sonnet")
         }
       }
       assertThat(modelCatalogRequests.get()).isEqualTo(1)
@@ -1587,7 +1590,7 @@ class AgentPromptProviderSelectorTest {
 
   @Test
   @Suppress("RAW_SCOPE_CREATION")
-  fun generationSettingsSelectedProviderRefreshStartsCatalogLoadingAndDeduplicatesPopupLoad(): Unit = timeoutRunBlocking {
+  fun generationSettingsModelPopupLoadDeduplicatesInFlightRefresh(): Unit = timeoutRunBlocking {
     val modelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
     val refreshStarted = CompletableDeferred<Unit>()
     val finishRefresh = CompletableDeferred<Unit>()
@@ -1619,11 +1622,13 @@ class AgentPromptProviderSelectorTest {
       }
 
       withContext(Dispatchers.EDT) {
-        controller.refreshSelectedProviderModels()
+        assertThat(modelCatalogRequests.get()).isZero()
+        assertThat(modelActionTexts(controller, loadIfNeeded = true))
+          .containsExactly("Default", "Loading models...")
       }
       waitForCondition { refreshStarted.isCompleted }
       withContext(Dispatchers.EDT) {
-        assertThat(modelActionTexts(controller, loadIfNeeded = true))
+        assertThat(modelActionTexts(controller))
           .containsExactly("Default", "Loading models...")
         assertThat(modelCatalogRequests.get()).isEqualTo(1)
       }
@@ -1645,7 +1650,7 @@ class AgentPromptProviderSelectorTest {
 
   @Test
   @Suppress("RAW_SCOPE_CREATION")
-  fun generationSettingsSelectedProviderRefreshUsesRestoredProvider(): Unit = timeoutRunBlocking {
+  fun generationSettingsModelPopupLoadUsesSelectedProvider(): Unit = timeoutRunBlocking {
     val modelCatalogScope = CoroutineScope(SupervisorJob() + Dispatchers.EDT)
     try {
       val codexCatalogRequests = AtomicInteger()
@@ -1682,7 +1687,14 @@ class AgentPromptProviderSelectorTest {
           modelCatalogScope = modelCatalogScope,
           launcherProvider = { null },
           onDefaultSaved = { _ -> },
-        ).also { controller -> controller.refreshSelectedProviderModels() }
+        )
+      }
+
+      withContext(Dispatchers.EDT) {
+        assertThat(codexCatalogRequests.get()).isZero()
+        assertThat(piCatalogRequests.get()).isZero()
+        assertThat(modelActionTexts(controller, loadIfNeeded = true))
+          .containsExactly("Default", "Loading models...")
       }
 
       waitForCondition {
@@ -1731,7 +1743,8 @@ class AgentPromptProviderSelectorTest {
       }
 
       withContext(Dispatchers.EDT) {
-        controller.refreshSelectedProviderModels()
+        assertThat(modelActionTexts(controller, loadIfNeeded = true))
+          .containsExactly("Default", "Loading models...")
       }
       waitForCondition {
         withContext(Dispatchers.EDT) {

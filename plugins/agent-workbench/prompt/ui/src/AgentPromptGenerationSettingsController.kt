@@ -40,7 +40,6 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.ActionLink
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.isActive
@@ -97,11 +96,6 @@ internal class AgentPromptGenerationSettingsController(
         activeProfileId = null
       }
     }
-    refreshPresentation()
-  }
-
-  fun refreshSelectedProviderModels() {
-    providerSelector.selectedProvider?.let(::requestModelCatalogRefresh)
     refreshPresentation()
   }
 
@@ -457,18 +451,6 @@ internal class AgentPromptGenerationSettingsController(
       }
     }
     return group
-  }
-
-  private fun modelCatalogStatusIcon(kind: AgentPromptGenerationModelSelectorEntry.Status.Kind): Icon? {
-    return when (kind) {
-      AgentPromptGenerationModelSelectorEntry.Status.Kind.LOADING,
-      AgentPromptGenerationModelSelectorEntry.Status.Kind.REFRESHING,
-        -> AnimatedIcon.Default.INSTANCE
-      AgentPromptGenerationModelSelectorEntry.Status.Kind.EMPTY,
-      AgentPromptGenerationModelSelectorEntry.Status.Kind.LOAD_FAILED,
-      AgentPromptGenerationModelSelectorEntry.Status.Kind.REFRESH_FAILED,
-        -> null
-    }
   }
 
   private fun createReasoningEffortActionGroup(supportedEfforts: Set<AgentPromptReasoningEffort>): DefaultActionGroup {

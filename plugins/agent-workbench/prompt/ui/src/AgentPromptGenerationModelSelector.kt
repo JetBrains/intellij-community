@@ -5,7 +5,9 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.ui.AnimatedIcon
 import org.jetbrains.annotations.Nls
+import javax.swing.Icon
 
 internal sealed interface AgentPromptGenerationModelCatalogState {
   data object Loading : AgentPromptGenerationModelCatalogState
@@ -56,6 +58,18 @@ internal sealed interface AgentPromptGenerationModelSelectorEntry {
     override val displayName: @Nls String,
     @JvmField val providerId: String,
   ) : AgentPromptGenerationModelSelectorEntry
+}
+
+internal fun modelCatalogStatusIcon(kind: AgentPromptGenerationModelSelectorEntry.Status.Kind): Icon? {
+  return when (kind) {
+    AgentPromptGenerationModelSelectorEntry.Status.Kind.LOADING,
+    AgentPromptGenerationModelSelectorEntry.Status.Kind.REFRESHING,
+      -> AnimatedIcon.Default.INSTANCE
+    AgentPromptGenerationModelSelectorEntry.Status.Kind.EMPTY,
+    AgentPromptGenerationModelSelectorEntry.Status.Kind.LOAD_FAILED,
+    AgentPromptGenerationModelSelectorEntry.Status.Kind.REFRESH_FAILED,
+      -> null
+  }
 }
 
 internal fun buildGenerationModelSelectorEntries(

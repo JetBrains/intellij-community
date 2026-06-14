@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
@@ -18,6 +19,7 @@ import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.GroupedComboBoxRenderer
+import com.intellij.ui.PopupMenuListenerAdapter
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
@@ -52,7 +54,6 @@ import javax.swing.KeyStroke
 import javax.swing.ListSelectionModel
 import javax.swing.event.DocumentEvent
 import javax.swing.event.PopupMenuEvent
-import javax.swing.event.PopupMenuListener
 
 internal class AgentPromptLaunchProfileEditorDialog(
   project: Project,
@@ -141,7 +142,6 @@ internal class AgentPromptLaunchProfileEditorDialog(
         when {
           selectedOption?.retryProviderId != null -> {
             requestSelectedProviderModelRefresh()
-            refreshModelOptions(selectedModelId = selectedModelIdForEditor)
           }
           selectedOption?.selectable == true -> {
             selectedModelIdForEditor = selectedOption.modelId
@@ -154,17 +154,6 @@ internal class AgentPromptLaunchProfileEditorDialog(
         updateButtonState()
       }
     }
-    modelCombo.addPopupMenuListener(object : PopupMenuListener {
-      override fun popupMenuWillBecomeVisible(e: PopupMenuEvent?) {
-        requestSelectedProviderModelRefresh()
-      }
-
-      override fun popupMenuWillBecomeInvisible(e: PopupMenuEvent?) {
-      }
-
-      override fun popupMenuCanceled(e: PopupMenuEvent?) {
-      }
-    })
     standardModeButton.addActionListener {
       if (!isUpdatingEditor) {
         updateButtonState()
@@ -340,7 +329,17 @@ internal class AgentPromptLaunchProfileEditorDialog(
   }
 
   fun openModelComboForTest() {
-    requestSelectedProviderModelRefresh()
+    val event = PopupMenuEvent(modelCombo)
+    modelCombo.popupMenuListeners.forEach { listener -> listener.popupMenuWillBecomeVisible(event) }
+  }
+
+  fun modelOptionIconsForTest(): List<Icon?> {
+    return (0 until modelCombo.model.size).map { index -> modelCombo.model.getElementAt(index).icon }
+  }
+
+  @Suppress("UnstableApiUsage")
+  fun isModelComboLiveUpdateEnabledForTest(): Boolean {
+    return modelCombo.getClientProperty(DarculaJBPopupComboPopup.USE_LIVE_UPDATE_MODEL) == true
   }
 
   private fun profileListRendererComponentForTest(profileId: String): Component? {
@@ -431,6 +430,13 @@ internal class AgentPromptLaunchProfileEditorDialog(
     reloadList()
     providerCombo.renderer = ProviderOptionRenderer()
     modelCombo.isSwingPopup = false
+    @Suppress("UnstableApiUsage")
+    modelCombo.putClientProperty(DarculaJBPopupComboPopup.USE_LIVE_UPDATE_MODEL, true)
+    modelCombo.addPopupMenuListener(object : PopupMenuListenerAdapter() {
+      override fun popupMenuWillBecomeVisible(e: PopupMenuEvent) {
+        requestSelectedProviderModelRefresh()
+      }
+    })
     modelCombo.renderer = ModelOptionRenderer(modelCombo)
     effortCombo.renderer = ReasoningEffortOptionRenderer()
   }
@@ -556,6 +562,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
           modelId = null,
           displayName = entry.displayName,
           selectable = false,
+          icon = modelCatalogStatusIcon(entry.kind),
         )
         is AgentPromptGenerationModelSelectorEntry.Retry -> ModelOption(
           modelId = null,
@@ -839,6 +846,7 @@ private data class ModelOption(
   @JvmField val separatorGroup: AgentPromptGenerationModelGroup? = null,
   @JvmField val selectable: Boolean = true,
   @JvmField val retryProviderId: String? = null,
+  @JvmField val icon: Icon? = null,
 ) {
   override fun toString(): String = displayName
 }
@@ -862,6 +870,8 @@ private class ProviderOptionRenderer : PromptProfileComboRenderer<ProviderOption
 
 private class ModelOptionRenderer(component: JComponent) : GroupedComboBoxRenderer<ModelOption>(component) {
   override fun getText(item: ModelOption): @NlsSafe String = item.displayName
+
+  override fun getIcon(item: ModelOption): Icon? = item.icon
 
   override fun separatorFor(value: ModelOption): ListSeparator? {
     return value.separatorGroup?.let { group -> ListSeparator(group.modelSelectorText()) }

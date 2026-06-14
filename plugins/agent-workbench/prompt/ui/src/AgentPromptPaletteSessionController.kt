@@ -186,7 +186,6 @@ internal class AgentPromptPaletteSessionController(
     generationSettingsController.restoreLaunchProfiles(
       launcherProvider()?.loadProviderPreferences() ?: AgentPromptLauncherBridge.ProviderPreferences()
     )
-    generationSettingsController.refreshSelectedProviderModels()
     refreshExtensionTaskDraftsFromContext()
 
     if (invocationData.attributes[com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_PREFER_EXTENSIONS_KEY] == true) {
@@ -197,7 +196,7 @@ internal class AgentPromptPaletteSessionController(
     draftController.overrideInitialTextIfProvided(initialText)
     if (initialAddContextRequest != null) {
       applyInitialAddContextTarget(initialAddContextRequest.target)
-      generationSettingsController.refreshSelectedProviderModels()
+      generationSettingsController.refreshPresentation()
       contextController.syncActiveExtensionTab(view.tabbedPane.selectedComponent as? JPanel)
     }
     draftController.loadPromptTextForSelectedTab()
@@ -289,7 +288,7 @@ internal class AgentPromptPaletteSessionController(
   }
 
   fun onProviderSelectionChanged() {
-    generationSettingsController.refreshSelectedProviderModels()
+    generationSettingsController.refreshPresentation()
     updateProviderOptionsVisibility()
     updateSendAvailability()
     refreshFooterHintForCurrentState()
