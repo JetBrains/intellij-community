@@ -60,6 +60,7 @@ import org.jetbrains.jewel.foundation.LocalComponent
 import org.jetbrains.jewel.ui.component.PopupRenderer
 
 internal object JBPopupRenderer : PopupRenderer {
+    @Suppress("OVERRIDE_DEPRECATION")
     @Composable
     override fun Popup(
         popupPositionProvider: PopupPositionProvider,
