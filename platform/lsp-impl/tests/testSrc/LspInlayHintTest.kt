@@ -17,7 +17,9 @@ import kotlinx.coroutines.launch
 import org.eclipse.lsp4j.InlayHint
 import org.eclipse.lsp4j.InlayHintLabelPart
 import org.eclipse.lsp4j.InlayHintRegistrationOptions
+import org.eclipse.lsp4j.Location
 import org.eclipse.lsp4j.Position
+import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
@@ -123,6 +125,30 @@ internal class LspInlayHintTest {
 
     launch(start = CoroutineStart.UNDISPATCHED) {
       checkInlaysRetrying(sourceText, "hello/*<# [hello world] #>*/ world")
+    }
+
+    codeInsightFixture.doHighlighting()
+    serverSession.awaitExpected()
+  }
+
+  @Test
+  fun `inlay hint with clickable label part`(): Unit = timeoutRunBlocking {
+    (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+
+    val sourceText = "hello world"
+    val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+
+    serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+      listOf(InlayHint(Position(0, 5), Either.forRight(mutableListOf(
+        InlayHintLabelPart("clickable").apply {
+          location = Location(serverSession.fileUri(virtualFile), Range(Position(0, 0), Position(0, 0)))
+        },
+      ))))
+    }
+
+    launch(start = CoroutineStart.UNDISPATCHED) {
+      checkInlaysRetrying(sourceText, "hello/*<# [clickable] #>*/ world")
     }
 
     codeInsightFixture.doHighlighting()
