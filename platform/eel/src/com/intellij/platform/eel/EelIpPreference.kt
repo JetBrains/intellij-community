@@ -3,7 +3,17 @@ package com.intellij.platform.eel
 
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * Which IP protocol to prefer when a hostname resolves to both IPv4 and IPv6 addresses. Used by [EelTunnelsApi.HostAddress].
+ */
 @ApiStatus.Experimental
 enum class EelIpPreference {
-  PREFER_V4, PREFER_V6, USE_SYSTEM_DEFAULT
+  /** Prefer an IPv4 address. */
+  PREFER_V4,
+
+  /** Prefer an IPv6 address. */
+  PREFER_V6,
+
+  /** Let the environment's OS choose. */
+  USE_SYSTEM_DEFAULT,
 }

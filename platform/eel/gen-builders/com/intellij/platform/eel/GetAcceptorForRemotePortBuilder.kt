@@ -45,12 +45,15 @@ class GetAcceptorForRemotePortBuilder {
     this.protocolPreference = arg
   }
 
+  /** Prefer an IPv4 address. */
   fun preferV4(): GetAcceptorForRemotePortBuilder =
     protocolPreference(EelIpPreference.PREFER_V4)
 
+  /** Prefer an IPv6 address. */
   fun preferV6(): GetAcceptorForRemotePortBuilder =
     protocolPreference(EelIpPreference.PREFER_V6)
 
+  /** Let the environment's OS choose. */
   fun useSystemDefault(): GetAcceptorForRemotePortBuilder =
     protocolPreference(EelIpPreference.USE_SYSTEM_DEFAULT)
 

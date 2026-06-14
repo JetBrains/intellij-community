@@ -129,12 +129,15 @@ object EelTunnelsApiHelpers {
       this.protocolPreference = arg
     }
 
+    /** Prefer an IPv4 address. */
     fun preferV4(): GetAcceptorForRemotePort =
       protocolPreference(EelIpPreference.PREFER_V4)
 
+    /** Prefer an IPv6 address. */
     fun preferV6(): GetAcceptorForRemotePort =
       protocolPreference(EelIpPreference.PREFER_V6)
 
+    /** Let the environment's OS choose. */
     fun useSystemDefault(): GetAcceptorForRemotePort =
       protocolPreference(EelIpPreference.USE_SYSTEM_DEFAULT)
 
@@ -207,12 +210,15 @@ object EelTunnelsApiHelpers {
       this.protocolPreference = arg
     }
 
+    /** Prefer an IPv4 address. */
     fun preferV4(): GetConnectionToRemotePort =
       protocolPreference(EelIpPreference.PREFER_V4)
 
+    /** Prefer an IPv6 address. */
     fun preferV6(): GetConnectionToRemotePort =
       protocolPreference(EelIpPreference.PREFER_V6)
 
+    /** Let the environment's OS choose. */
     fun useSystemDefault(): GetConnectionToRemotePort =
       protocolPreference(EelIpPreference.USE_SYSTEM_DEFAULT)
 
