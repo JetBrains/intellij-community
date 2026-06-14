@@ -1,6 +1,8 @@
 package com.intellij.platform.lsp
 
 import com.intellij.codeInsight.hints.InlayDumpUtil
+import com.intellij.codeInsight.hints.presentation.PresentationRenderer
+import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Inlay
 import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspServerProviderFixture
@@ -22,6 +24,7 @@ import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 
 
@@ -155,12 +158,61 @@ internal class LspInlayHintTest {
     serverSession.awaitExpected()
   }
 
+  @Test
+  fun `two inlay hints at the same offset`(): Unit = timeoutRunBlocking {
+    (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+
+    val sourceText = "hello world"
+    val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+    val fileUri = serverSession.fileUri(virtualFile)
+
+    serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
+      listOf(
+        InlayHint(Position(0, 5), Either.forLeft(": A")),
+        InlayHint(Position(0, 5), Either.forLeft(": B")),
+      )
+    }
+    waitUntilAssertSucceeds(message = "Both same-offset inlays should be present") {
+      codeInsightFixture.doHighlighting()
+      assertEquals(listOf(": A", ": B"), managedInlaysAt(5).map { it.renderer.toString() }.sorted())
+    }
+
+    val inlayABefore = managedInlaysAt(5).single { it.renderer.toString() == ": A" }
+
+    // Second response: ": A" unchanged, the co-located ": B" changes to ": C".
+    serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
+      listOf(
+        InlayHint(Position(0, 5), Either.forLeft(": A")),
+        InlayHint(Position(0, 5), Either.forLeft(": C")),
+      )
+    }
+    // Append at the end (does not shift offset 5) to invalidate the cache so the pass re-requests.
+    writeCommandAction(project, "") {
+      codeInsightFixture.editor.document.insertString(sourceText.length, " x")
+    }
+    waitUntilAssertSucceeds(message = "Co-located hint should be updated") {
+      codeInsightFixture.doHighlighting()
+      assertEquals(listOf(": A", ": C"), managedInlaysAt(5).map { it.renderer.toString() }.sorted())
+    }
+
+    assertSame(inlayABefore, managedInlaysAt(5).single { it.renderer.toString() == ": A" },
+               "Unchanged co-located inlay must be reused, not recreated")
+
+    serverSession.awaitExpected()
+  }
+
   private suspend fun checkInlaysRetrying(sourceText: String, expected: String) {
     waitUntilAssertSucceeds(message = "Inlays don't match expected") {
       codeInsightFixture.doHighlighting()
       assertEquals(expected.trim(), dumpInlays(sourceText).trim())
     }
   }
+
+  @Suppress("SameParameterValue")
+  private fun managedInlaysAt(offset: Int): List<Inlay<*>> =
+    codeInsightFixture.editor.inlayModel
+      .getInlineElementsInRange(offset, offset, PresentationRenderer::class.java)
 
   private fun dumpInlays(sourceText: String): String {
     return InlayDumpUtil.dumpInlays(
