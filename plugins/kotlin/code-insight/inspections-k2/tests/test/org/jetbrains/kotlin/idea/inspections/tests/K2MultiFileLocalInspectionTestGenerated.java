@@ -530,6 +530,19 @@ public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/useNamedGetter/propertyNameWithBackticks")
+            public static class PropertyNameWithBackticks extends AbstractK2MultiFileLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("propertyNameWithBackticks.test")
+                public void testPropertyNameWithBackticks() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/useNamedGetter/propertyNameWithBackticks/propertyNameWithBackticks.test");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/multiFileInspectionsLocal/useNamedGetter/simpleDataClass")
             public static class SimpleDataClass extends AbstractK2MultiFileLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
@@ -539,6 +552,19 @@ public abstract class K2MultiFileLocalInspectionTestGenerated extends AbstractK2
                 @TestMetadata("simpleDataClass.test")
                 public void testSimpleDataClass() throws Exception {
                     runTest("testData/multiFileInspectionsLocal/useNamedGetter/simpleDataClass/simpleDataClass.test");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/multiFileInspectionsLocal/useNamedGetter/unrelatedComponent")
+            public static class UnrelatedComponent extends AbstractK2MultiFileLocalInspectionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("multipleComponents.test")
+                public void testMultipleComponents() throws Exception {
+                    runTest("testData/multiFileInspectionsLocal/useNamedGetter/unrelatedComponent/multipleComponents.test");
                 }
             }
         }
