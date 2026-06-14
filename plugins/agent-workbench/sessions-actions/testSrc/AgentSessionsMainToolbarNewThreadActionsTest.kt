@@ -592,6 +592,40 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
+  fun mainToolbarPickerUsesBuiltInOverrideWithoutDuplicatingProfile() {
+    val context = newThreadContext(path = "/tmp/repo-direct")
+    val overriddenBuiltInId = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
+    val overriddenProfile = AgentPromptLaunchProfile(
+      id = overriddenBuiltInId,
+      name = "Careful Codex",
+      kind = AgentPromptLaunchProfileKind.USER,
+      providerId = AgentSessionProvider.CODEX.value,
+      launchMode = AgentSessionLaunchMode.STANDARD,
+      generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
+    )
+    val codexBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+      cliAvailable = true,
+      yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(codexBridge) },
+      userLaunchProfiles = { listOf(overriddenProfile) },
+      activeLaunchProfileId = { overriddenBuiltInId },
+    )
+    val event = TestActionEvent.createTestEvent(action)
+
+    val children = action.actionGroup.getChildren(event)
+
+    assertThat(children.filterNot { child -> child is Separator }.map { child -> child.templatePresentation.text }).containsExactly(
+      "Careful Codex",
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
+    )
+  }
+
+  @Test
   fun mainToolbarPickerShowsImplicitDefaultBadgeWhenNoDefaultProfileStored() {
     val context = newThreadContext(path = "/tmp/repo-direct")
     val providerIcon = EmptyIcon.create(17)

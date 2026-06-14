@@ -15,8 +15,8 @@ internal class AgentPromptLaunchProfileEditorRequest(
   @JvmField val profiles: List<AgentPromptLaunchProfile>,
   @JvmField val activeProfileId: String?,
   @JvmField val defaultProfileId: String?,
+  @JvmField val builtInProfiles: List<AgentPromptLaunchProfile>,
   @JvmField val providerEntries: List<ProviderEntry>,
-  @JvmField val currentDraftProfile: AgentPromptLaunchProfile?,
   @JvmField val modelCatalogProvider: (String) -> List<AgentPromptGenerationModel>?,
   @JvmField val modelCatalogStateProvider: (String) -> AgentPromptGenerationModelCatalogState? = { providerId ->
     modelCatalogProvider(providerId)?.let(AgentPromptGenerationModelCatalogState::Loaded)
@@ -25,7 +25,7 @@ internal class AgentPromptLaunchProfileEditorRequest(
   @JvmField val newUserProfileId: () -> String,
   @JvmField val onCreateProfile: (AgentPromptLaunchProfile) -> Unit,
   @JvmField val onUpdateProfile: (AgentPromptLaunchProfile) -> Unit,
-  @JvmField val onDeleteProfile: (AgentPromptLaunchProfile) -> Unit,
+  @JvmField val onDeleteProfile: (AgentPromptLaunchProfile) -> Boolean,
   @JvmField val onSetDefaultProfile: (AgentPromptLaunchProfile) -> Unit,
 )
 
@@ -73,8 +73,8 @@ internal class AgentPromptLaunchProfileEditorWindowService {
       profiles = request.profiles,
       activeProfileId = request.activeProfileId,
       defaultProfileId = request.defaultProfileId,
+      builtInProfiles = request.builtInProfiles,
       providerEntries = request.providerEntries,
-      currentDraftProfile = request.currentDraftProfile,
       modelCatalogProvider = { providerId -> currentRequest().modelCatalogProvider(providerId) },
       modelCatalogStateProvider = { providerId -> currentRequest().modelCatalogStateProvider(providerId) },
       requestModelCatalogRefresh = { providerId, onStateChanged ->
@@ -101,8 +101,8 @@ internal class AgentPromptLaunchProfileEditorWindowService {
       profiles = request.profiles,
       activeProfileId = request.activeProfileId,
       defaultProfileId = request.defaultProfileId,
+      builtInProfiles = request.builtInProfiles,
       providerEntries = request.providerEntries,
-      currentDraftProfile = request.currentDraftProfile,
     )
   }
 

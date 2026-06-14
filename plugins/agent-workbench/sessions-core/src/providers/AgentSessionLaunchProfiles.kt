@@ -19,7 +19,44 @@ data class AgentSessionLaunchProfileSnapshot(
   @JvmField val activeProfileId: String?,
 ) {
   val allProfiles: List<AgentPromptLaunchProfile>
-    get() = builtInProfiles + userProfiles
+    get() = effectiveLaunchProfiles(builtInProfiles, userProfiles)
+}
+
+fun effectiveLaunchProfiles(
+  builtInProfiles: List<AgentPromptLaunchProfile>,
+  userProfiles: List<AgentPromptLaunchProfile>,
+): List<AgentPromptLaunchProfile> {
+  val userProfilesById = LinkedHashMap<String, AgentPromptLaunchProfile>()
+  userProfiles.forEach { profile -> userProfilesById[profile.id] = profile }
+  val builtInProfileIds = builtInProfiles.mapTo(HashSet()) { profile -> profile.id }
+  return builtInProfiles.map { profile -> userProfilesById[profile.id] ?: profile } +
+         userProfiles.filter { profile -> profile.id !in builtInProfileIds }
+}
+
+fun launchProfileEditablePayload(profile: AgentPromptLaunchProfile): AgentPromptLaunchProfile {
+  return profile.copy(
+    id = "",
+    kind = AgentPromptLaunchProfileKind.USER,
+    generationSettings = profile.generationSettings.copy(planReasoningEffort = null),
+    planEffort = AgentPromptPlanEffortMode.SAME_AS_NORMAL,
+    startInPlanMode = false,
+  )
+}
+
+fun launchProfileMatchesBuiltIn(
+  profile: AgentPromptLaunchProfile,
+  builtInProfile: AgentPromptLaunchProfile,
+): Boolean {
+  return launchProfileEditablePayload(profile) == launchProfileEditablePayload(builtInProfile)
+}
+
+fun normalizedUserLaunchProfile(profile: AgentPromptLaunchProfile): AgentPromptLaunchProfile {
+  return profile.copy(
+    kind = AgentPromptLaunchProfileKind.USER,
+    generationSettings = profile.generationSettings.copy(planReasoningEffort = null),
+    planEffort = AgentPromptPlanEffortMode.SAME_AS_NORMAL,
+    startInPlanMode = false,
+  )
 }
 
 fun builtInLaunchProfileId(provider: AgentSessionProvider, launchMode: AgentSessionLaunchMode): String {

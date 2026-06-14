@@ -17,7 +17,10 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
+import com.intellij.agent.workbench.sessions.core.providers.effectiveLaunchProfiles
 import com.intellij.agent.workbench.sessions.core.providers.generationSettingsForPlanEffort
+import com.intellij.agent.workbench.sessions.core.providers.launchProfileMatchesBuiltIn
+import com.intellij.agent.workbench.sessions.core.providers.normalizedUserLaunchProfile
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.setLaunchProfileIcon
 import com.intellij.icons.AllIcons
@@ -520,19 +523,26 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   private fun saveNewProfile(profile: AgentPromptLaunchProfile) {
-    userProfilesById[profile.id] = profile
-    activeProfileId = profile.id
+    userProfilesById[profile.id] = normalizedUserLaunchProfile(profile)
     saveProfiles()
     onDefaultSaved(AgentPromptBundle.message("popup.profile.saved"))
     refreshPresentation()
   }
 
-  private fun updateUserProfile(profile: AgentPromptLaunchProfile) {
-    if (profile.kind != AgentPromptLaunchProfileKind.USER || profile.id !in userProfilesById) {
-      return
+  private fun saveProfile(profile: AgentPromptLaunchProfile) {
+    val builtInProfile = builtInLaunchProfiles().firstOrNull { item -> item.id == profile.id }
+    when {
+      builtInProfile != null && launchProfileMatchesBuiltIn(profile, builtInProfile) -> {
+        userProfilesById.remove(profile.id)
+      }
+      builtInProfile != null -> {
+        userProfilesById[profile.id] = normalizedUserLaunchProfile(profile)
+      }
+      profile.kind == AgentPromptLaunchProfileKind.USER && profile.id in userProfilesById -> {
+        userProfilesById[profile.id] = normalizedUserLaunchProfile(profile)
+      }
+      else -> return
     }
-    userProfilesById[profile.id] = profile
-    activeProfileId = profile.id
     saveProfiles()
     onDefaultSaved(AgentPromptBundle.message("popup.profile.updated"))
     refreshPresentation()
@@ -545,25 +555,38 @@ internal class AgentPromptGenerationSettingsController(
     refreshPresentation()
   }
 
-  private fun deleteProfile(profile: AgentPromptLaunchProfile) {
+  private fun deleteProfile(profile: AgentPromptLaunchProfile): Boolean {
+    if (profile.id !in userProfilesById) {
+      return false
+    }
+    val resetsBuiltInProfile = builtInLaunchProfiles().any { item -> item.id == profile.id }
+    val message = if (resetsBuiltInProfile) {
+      AgentPromptBundle.message("popup.profile.reset.message", profile.name)
+    }
+    else {
+      AgentPromptBundle.message("popup.profile.delete.message", profile.name)
+    }
+    val title = if (resetsBuiltInProfile) AgentPromptBundle.message("popup.profile.reset.title")
+    else AgentPromptBundle.message("popup.profile.delete.title")
     if (Messages.showYesNoDialog(
         invocationData.project,
-        AgentPromptBundle.message("popup.profile.delete.message", profile.name),
-        AgentPromptBundle.message("popup.profile.delete.title"),
+        message,
+        title,
         Messages.getQuestionIcon(),
       ) != Messages.YES) {
-      return
+      return false
     }
     userProfilesById.remove(profile.id)
-    if (activeProfileId == profile.id) {
+    if (!resetsBuiltInProfile && activeProfileId == profile.id) {
       activeProfileId = null
     }
-    if (defaultProfileId == profile.id) {
+    if (!resetsBuiltInProfile && defaultProfileId == profile.id) {
       defaultProfileId = null
     }
     saveProfiles()
-    onDefaultSaved(AgentPromptBundle.message("popup.profile.deleted"))
+    onDefaultSaved(AgentPromptBundle.message(if (resetsBuiltInProfile) "popup.profile.reset" else "popup.profile.deleted"))
     refreshPresentation()
+    return true
   }
 
   private fun saveProfiles() {
@@ -605,14 +628,14 @@ internal class AgentPromptGenerationSettingsController(
       profiles = allManagedProfiles(),
       activeProfileId = activeProfileId,
       defaultProfileId = defaultProfileId,
+      builtInProfiles = builtInLaunchProfiles(),
       providerEntries = providerSelector.providerEntries(),
-      currentDraftProfile = currentDefaultNamedDraftProfile(),
       modelCatalogProvider = ::loadedModelCatalog,
       modelCatalogStateProvider = ::modelCatalogState,
       requestModelCatalogRefresh = ::requestModelCatalogRefresh,
       newUserProfileId = ::newUserProfileId,
       onCreateProfile = ::saveNewProfile,
-      onUpdateProfile = ::updateUserProfile,
+      onUpdateProfile = ::saveProfile,
       onDeleteProfile = ::deleteProfile,
       onSetDefaultProfile = ::setDefaultProfile,
     )
@@ -628,8 +651,8 @@ internal class AgentPromptGenerationSettingsController(
       profiles = request.profiles,
       activeProfileId = request.activeProfileId,
       defaultProfileId = request.defaultProfileId,
+      builtInProfiles = request.builtInProfiles,
       providerEntries = request.providerEntries,
-      currentDraftProfile = request.currentDraftProfile,
       modelCatalogProvider = request.modelCatalogProvider,
       modelCatalogStateProvider = request.modelCatalogStateProvider,
       requestModelCatalogRefresh = request.requestModelCatalogRefresh,
@@ -642,14 +665,6 @@ internal class AgentPromptGenerationSettingsController(
       onDispose = { onDispose(dialog) },
     )
     return dialog
-  }
-
-  private fun currentDefaultNamedDraftProfile(): AgentPromptLaunchProfile? {
-    return currentDraftProfile(
-      id = "",
-      name = AgentPromptBundle.message("popup.profile.name.default"),
-      kind = AgentPromptLaunchProfileKind.USER,
-    )
   }
 
   private fun currentDraftProfile(
@@ -671,7 +686,7 @@ internal class AgentPromptGenerationSettingsController(
 
   private fun findProfile(profileId: String?): AgentPromptLaunchProfile? {
     if (profileId == null) return null
-    return userProfilesById[profileId] ?: providerSelector.builtInLaunchProfiles().firstOrNull { profile -> profile.id == profileId }
+    return allManagedProfiles().firstOrNull { profile -> profile.id == profileId }
   }
 
   private fun profileIcon(profile: AgentPromptLaunchProfile?): Icon {
@@ -726,11 +741,15 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   private fun launchableProfiles(): List<AgentPromptLaunchProfile> {
-    return providerSelector.builtInLaunchProfiles() + userProfilesById.values.filter(::canApplyProfile)
+    return allManagedProfiles().filter(::canApplyProfile)
   }
 
   private fun allManagedProfiles(): List<AgentPromptLaunchProfile> {
-    return providerSelector.builtInLaunchProfiles() + userProfilesById.values
+    return effectiveLaunchProfiles(builtInLaunchProfiles(), userProfilesById.values.toList())
+  }
+
+  private fun builtInLaunchProfiles(): List<AgentPromptLaunchProfile> {
+    return providerSelector.builtInLaunchProfiles()
   }
 
   private inner class ModelAction(

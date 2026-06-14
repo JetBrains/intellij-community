@@ -38,6 +38,8 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.TestDialogManager
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.junit5.RegistryKey
@@ -923,6 +925,93 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun launchProfileEditorSavesAndRemovesBuiltInOverrides() {
+    runInEdtAndWait {
+      val builtInProfileId = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
+      val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { _ -> },
+      )
+      controller.restoreLaunchProfiles(launcher.preferences)
+      val editor = controller.createManageProfilesDialogForTest()
+      try {
+        editor.selectProfileForTest(builtInProfileId)
+        editor.setSelectedProfileNameForTest("Careful Codex")
+        editor.saveSelectedProfileForTest()
+
+        val savedProfile = launcher.preferences.launchProfiles.single()
+        assertThat(savedProfile.id).isEqualTo(builtInProfileId)
+        assertThat(savedProfile.kind).isEqualTo(AgentPromptLaunchProfileKind.USER)
+        assertThat(savedProfile.name).isEqualTo("Careful Codex")
+        assertThat(controller.manageProfilesRowsForTest().map(AgentPromptLaunchProfile::name))
+          .containsExactly("Careful Codex")
+
+        editor.setSelectedProfileNameForTest("Codex")
+        editor.saveSelectedProfileForTest()
+
+        assertThat(launcher.preferences.launchProfiles).isEmpty()
+        assertThat(controller.manageProfilesRowsForTest().map(AgentPromptLaunchProfile::name))
+          .containsExactly("Codex")
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorCopyCreatesUserProfileImmediately() {
+    runInEdtAndWait {
+      val profile = AgentPromptLaunchProfile(
+        id = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD),
+        name = "Codex",
+        kind = AgentPromptLaunchProfileKind.BUILT_IN,
+        providerId = AgentSessionProvider.CODEX.value,
+        generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
+      )
+      val createdProfiles = ArrayList<AgentPromptLaunchProfile>()
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(profile),
+        activeProfileId = profile.id,
+        supportedLaunchModes = setOf(AgentSessionLaunchMode.STANDARD),
+        supportedReasoningEfforts = setOf(AgentPromptReasoningEffort.HIGH),
+        onCreateProfile = { createdProfiles += it },
+      )
+      try {
+        editor.selectProfileForTest(profile.id)
+        editor.copySelectedProfileForTest()
+
+        val createdProfile = createdProfiles.single()
+        assertThat(createdProfile.id).isEqualTo("user:new")
+        assertThat(createdProfile.name).isEqualTo("Codex Copy")
+        assertThat(createdProfile.kind).isEqualTo(AgentPromptLaunchProfileKind.USER)
+        assertThat(createdProfile.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
+        assertThat(createdProfile.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
+        assertThat(editor.profileNamesForTest()).containsExactly("Codex", "Codex Copy")
+        assertThat(editor.isNameFieldTextSelectedForTest()).isTrue()
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
   fun launchProfileEditorIsNonModal() {
     runInEdtAndWait {
       val profile = AgentPromptLaunchProfile(
@@ -1040,22 +1129,93 @@ class AgentPromptProviderSelectorTest {
         profiles = listOf(builtInProfile, userProfile),
         activeProfileId = builtInProfile.id,
         defaultProfileId = userProfile.id,
-        onDeleteProfile = { profile -> deletedProfiles += profile },
+        onDeleteProfile = { profile ->
+          deletedProfiles += profile
+          true
+        },
       )
       try {
         editor.selectProfileForTest(builtInProfile.id)
         assertThat(editor.isSelectedProfileRemovableForTest()).isFalse()
-        assertThat(editor.isDuplicateToCustomizeVisibleForTest()).isTrue()
         editor.deleteSelectedProfileForTest()
         assertThat(deletedProfiles).isEmpty()
         assertThat(editor.profileNamesForTest()).containsExactly("Default Profile", "Careful")
 
         editor.selectProfileForTest(userProfile.id)
         assertThat(editor.isSelectedProfileRemovableForTest()).isTrue()
-        assertThat(editor.isDuplicateToCustomizeVisibleForTest()).isFalse()
         editor.deleteSelectedProfileForTest()
         assertThat(deletedProfiles).containsExactly(userProfile)
         assertThat(editor.profileNamesForTest()).containsExactly("Default Profile")
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorKeepsProfileWhenDeleteCallbackDeclines() {
+    runInEdtAndWait {
+      val userProfile = AgentPromptLaunchProfile(
+        id = "user:careful",
+        name = "Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+      )
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(userProfile),
+        activeProfileId = userProfile.id,
+        onDeleteProfile = { false },
+      )
+      try {
+        editor.selectProfileForTest(userProfile.id)
+        editor.deleteSelectedProfileForTest()
+
+        assertThat(editor.profileNamesForTest()).containsExactly("Careful")
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorKeepsProfileWhenDeleteConfirmationIsCancelled() {
+    runInEdtAndWait {
+      val userProfile = AgentPromptLaunchProfile(
+        id = "user:careful",
+        name = "Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+      )
+      val launcher = TestPromptLauncherBridge(
+        AgentPromptLauncherBridge.ProviderPreferences(launchProfiles = listOf(userProfile))
+      )
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { _ -> },
+      )
+      controller.restoreLaunchProfiles(launcher.preferences)
+      val editor = controller.createManageProfilesDialogForTest()
+      try {
+        editor.selectProfileForTest(userProfile.id)
+        withNoTestDialog {
+          editor.deleteSelectedProfileForTest()
+        }
+
+        assertThat(launcher.preferences.launchProfiles).containsExactly(userProfile)
+        assertThat(editor.profileNamesForTest()).contains("Careful")
       }
       finally {
         editor.closeForTest()
@@ -2322,6 +2482,7 @@ class AgentPromptProviderSelectorTest {
     activeProfileId: String? = null,
     defaultProfileId: String? = null,
     supportedLaunchModes: Set<AgentSessionLaunchMode> = setOf(AgentSessionLaunchMode.STANDARD),
+    supportedReasoningEfforts: Set<AgentPromptReasoningEffort> = emptySet(),
     modelCatalog: List<AgentPromptGenerationModel> = emptyList(),
     providerOverride: AgentSessionProviderDescriptor? = null,
     modelCatalogStateProvider: (String) -> AgentPromptGenerationModelCatalogState? = { providerId ->
@@ -2329,26 +2490,29 @@ class AgentPromptProviderSelectorTest {
         ?.let(AgentPromptGenerationModelCatalogState::Loaded)
     },
     requestModelCatalogRefresh: (String, () -> Unit) -> Unit = { _, _ -> },
-    onDeleteProfile: (AgentPromptLaunchProfile) -> Unit = {},
+    onCreateProfile: (AgentPromptLaunchProfile) -> Unit = {},
+    onUpdateProfile: (AgentPromptLaunchProfile) -> Unit = {},
+    onDeleteProfile: (AgentPromptLaunchProfile) -> Boolean = { true },
   ): AgentPromptLaunchProfileEditorDialog {
     val provider = providerOverride ?: testProviderBridge(
       provider = AgentSessionProvider.CODEX,
       promptOptions = emptyList(),
       supportedLaunchModesOverride = supportedLaunchModes,
+      supportedReasoningEffortsOverride = supportedReasoningEfforts,
     )
     return AgentPromptLaunchProfileEditorDialog(
       project = ProjectManager.getInstance().defaultProject,
       profiles = profiles,
       activeProfileId = activeProfileId,
       defaultProfileId = defaultProfileId,
+      builtInProfiles = profiles.filter { profile -> profile.kind == AgentPromptLaunchProfileKind.BUILT_IN },
       providerEntries = listOf(ProviderEntry(provider, "Codex", true, EmptyIcon.ICON_16)),
-      currentDraftProfile = null,
       modelCatalogProvider = { modelCatalog },
       modelCatalogStateProvider = modelCatalogStateProvider,
       requestModelCatalogRefresh = requestModelCatalogRefresh,
       newUserProfileId = { "user:new" },
-      onCreateProfile = {},
-      onUpdateProfile = {},
+      onCreateProfile = onCreateProfile,
+      onUpdateProfile = onUpdateProfile,
       onDeleteProfile = onDeleteProfile,
       onSetDefaultProfile = {},
       onSelectProfile = {},
@@ -2399,6 +2563,16 @@ class AgentPromptProviderSelectorTest {
         ?.singleOrNull { action -> action.templatePresentation.text == "Retry Loading Models" }
     )
     action.actionPerformed(TestActionEvent.createTestEvent(action))
+  }
+
+  private fun <T> withNoTestDialog(action: () -> T): T {
+    val previous = TestDialogManager.setTestDialog { Messages.NO }
+    try {
+      return action()
+    }
+    finally {
+      TestDialogManager.setTestDialog(previous)
+    }
   }
 
   private fun testProviderBridge(

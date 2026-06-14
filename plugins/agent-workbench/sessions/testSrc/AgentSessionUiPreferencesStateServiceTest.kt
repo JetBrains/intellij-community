@@ -237,6 +237,20 @@ class AgentSessionUiPreferencesStateServiceTest {
     assertThat(service.getActiveLaunchProfileId()).isEqualTo("user:careful")
   }
 
+  @Test
+  fun launchProfileStateServiceStoresBuiltInOverrides() {
+    val service = AgentSessionLaunchProfileStateService()
+    val profile = launchProfile("builtin:codex:standard", "Careful Codex", AgentSessionProvider.CODEX.value)
+
+    service.setLaunchProfiles(
+      profiles = listOf(profile),
+      activeProfileId = profile.id,
+    )
+
+    assertThat(service.getUserLaunchProfiles()).containsExactly(profile)
+    assertThat(service.getActiveLaunchProfileId()).isEqualTo(profile.id)
+  }
+
   private fun uiPreferencesService(): AgentSessionUiPreferencesStateService {
     return AgentSessionUiPreferencesStateService(AgentSessionLaunchProfileStateService())
   }
