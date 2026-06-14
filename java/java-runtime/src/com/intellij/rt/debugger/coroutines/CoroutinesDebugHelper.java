@@ -85,9 +85,13 @@ public final class CoroutinesDebugHelper {
     }
     // In case the caller frame is an instance of ScopeCoroutine, then extract the uCont that is wrapped by the ScopeCoroutine class.
     // ScopeCoroutine is used to wrap the current continuation and pass it into withContext/coroutineScope/flow.. invocation
-    Class<?> scopeCoroutine = Class.forName("kotlinx.coroutines.internal.ScopeCoroutine", false, continuation.getClass().getClassLoader());
-    if (scopeCoroutine.isInstance(callerFrame)) {
-      return getCallerFrame.invoke(callerFrame);
+    try {
+      Class<?> scopeCoroutine = Class.forName("kotlinx.coroutines.internal.ScopeCoroutine", false, continuation.getClass().getClassLoader());
+      if (scopeCoroutine.isInstance(callerFrame)) {
+        return getCallerFrame.invoke(callerFrame);
+      }
+    } catch (ClassNotFoundException e) {
+      // If ScopeCoroutine can't be loaded, callerFrame cannot be an instance.
     }
     return callerFrame;
   }
