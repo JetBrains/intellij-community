@@ -175,7 +175,6 @@ private fun assembleWorkspace(): TWorkspace = workspace() {
     generateK2RefactoringsTests()
     generateK2SearchTests()
     generateK2RefIndexTests()
-    generateK2AnalysisApiTests()
     generateK2InjectionTests()
     generateProjectStructureTest()
     generateK2GradleTests()

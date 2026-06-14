@@ -1219,7 +1219,6 @@ plugins/kotlin/all-tests-compose
 plugins/kotlin/all-tests-fir
 plugins/kotlin/base/analysis
 plugins/kotlin/base/analysis-api-platform
-plugins/kotlin/base/analysis-api/analysis-api-k2-tests
 plugins/kotlin/base/analysis-api/analysis-api-utils
 plugins/kotlin/base/code-insight
 plugins/kotlin/base/code-insight/minimal

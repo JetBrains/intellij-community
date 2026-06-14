@@ -49,7 +49,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.fixes.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.java" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.base.analysis.analysis-api.k2.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.test.compose.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.injection.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectStructure" scope="TEST" />
