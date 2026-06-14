@@ -51,6 +51,7 @@
       enumClass="com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl$EnvVarShellMode"
       default="LOGIN_INTERACTIVE"
       bundle="messages.IjentImplBundle"
+      visible="false"
       groupKey="advanced.settings.container.environments"
     />
     <projectConfigurable

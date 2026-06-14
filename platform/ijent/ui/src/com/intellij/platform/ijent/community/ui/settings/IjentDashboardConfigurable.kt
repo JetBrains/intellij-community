@@ -5,12 +5,12 @@ import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecPosixApi
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.isPosix
 import com.intellij.platform.eel.provider.toEelApi
@@ -24,11 +24,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import javax.swing.JComponent
 
-internal class IjentDashboardConfigurable(val eelDescriptor: EelDescriptor) : SearchableConfigurable, Configurable.NoScroll {
+internal class IjentDashboardConfigurable(val eelDescriptor: EelDescriptor, val eelMachine: EelMachine) : SearchableConfigurable, Configurable.NoScroll {
   override fun getId(): String = "ijent.settings.dashboard"
   override fun getDisplayName(): String = IjentImplBundle.message("configurable.ijent.dashboard.display.name")
 
-  val modeProperty = AtomicProperty(AdvancedSettings.getEnum("container.environments.env.var.shell.mode", LoginShellEnvVarModeProviderImpl.EnvVarShellMode::class.java))
+  val modeProperty = AtomicProperty(LoginShellEnvVarModeSettings.getInstance().get(eelMachine).envVarShellMode)
 
   override fun createComponent(): JComponent {
     val envVarsTab: DialogPanel = panel {
@@ -60,10 +60,10 @@ internal class IjentDashboardConfigurable(val eelDescriptor: EelDescriptor) : Se
   }
 
   override fun isModified(): Boolean {
-    return modeProperty.get() != AdvancedSettings.getEnum("container.environments.env.var.shell.mode", LoginShellEnvVarModeProviderImpl.EnvVarShellMode::class.java)
+    return modeProperty.get() != LoginShellEnvVarModeSettings.getInstance().get(eelMachine).envVarShellMode
   }
   override fun apply() {
-    AdvancedSettings.setEnum("container.environments.env.var.shell.mode", modeProperty.get())
+    LoginShellEnvVarModeSettings.getInstance().get(eelMachine).envVarShellMode = modeProperty.get()
   }
 }
 

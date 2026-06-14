@@ -114,7 +114,7 @@ sealed interface EelExecApi {
   @Suppress("FunctionName")
   @ApiStatus.Internal
   @ApiStatus.Obsolete
-  fun `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`(): Boolean = false
+  suspend fun `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`(): Boolean = false
 
   /**
    * Use [environmentVariables] instead.
