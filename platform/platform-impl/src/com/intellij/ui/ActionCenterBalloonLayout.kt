@@ -241,6 +241,7 @@ internal class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : Ba
     var doShow = true
     var height = 0
     var fullHeight = 0
+    private val isTopLayout: Boolean = NotificationsConfigurationImpl.getInstanceImpl().notificationLocation.isTop
 
     init {
       titleLabel = object : LinkLabel<Any>() {
@@ -253,7 +254,7 @@ internal class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : Ba
       titleLabel.setPaintUnderline(false)
       titleLabel.font = JBFont.medium()
       titleLabel.horizontalAlignment = SwingConstants.CENTER
-      titleLabel.border = JBUI.Borders.empty(10, 0, 4, 0)
+      titleLabel.border = if (isTopLayout) JBUI.Borders.empty(4, 0, 10, 0) else JBUI.Borders.empty(10, 0, 4, 0)
       titleLabel.icon = null
 
       titleLabel.setListener(LinkListener { _, _ ->
@@ -290,7 +291,7 @@ internal class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : Ba
         val provider = NotificationBalloonRoundShadowBorderProvider(NotificationsUtil.getMoreButtonBackground(),
                                                                     NotificationsManagerImpl.BORDER_COLOR)
         balloon.setShadowBorderProvider(provider)
-        provider.hideSide(true, false)
+        if (isTopLayout) provider.hideSide(false, true) else provider.hideSide(true, false)
 
         balloon.setActionProvider(object : BalloonImpl.ActionProvider {
           override fun createActions(): List<BalloonImpl.ActionButton> {
@@ -307,7 +308,7 @@ internal class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : Ba
       if (hostBalloon is BalloonImpl) {
         val provider = hostBalloon.shadowBorderProvider
         if (provider is NotificationBalloonRoundShadowBorderProvider) {
-          provider.hideSide(false, true)
+          if (isTopLayout) provider.hideSide(true, false) else provider.hideSide(false, true)
         }
       }
       return this
