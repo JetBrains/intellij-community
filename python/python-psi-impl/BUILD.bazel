@@ -68,6 +68,7 @@ jvm_library(
         "//python/python-requirements:requirements",
         "//plugins/toml",
         "//plugins/toml/core",
+        "//libraries/markdown",
     ],
 )
 
@@ -132,6 +133,7 @@ jvm_library(
         "//python/python-requirements:requirements_test_lib",
         "//plugins/toml:toml_test_lib",
         "//plugins/toml/core:core_test_lib",
+        "//libraries/markdown:markdown_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.psi.impl` end

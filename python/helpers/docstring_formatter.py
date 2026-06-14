@@ -1,3 +1,5 @@
+#  Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+
 import argparse
 import json
 import os
@@ -14,6 +16,10 @@ ENCODING = 'utf-8'
 # regexp from sphinxcontrib/napoleon/docstring.py:35 and py2only/docutils/parsers/rst/states.py:1107
 TAGS_START = re.compile(
     r'(\.\. \S+::)|:(?![: ])([^:\\]|\\.|:(?!([ `]|$)))*(?<! ):( +|$)')
+
+# Opening fence of a Markdown code block, e.g. ```py or ~~~ with an optional
+# info string. The first token of the info string is treated as the language.
+MARKDOWN_FENCE_START = re.compile(r'^([ \t]*)(`{3,}|~{3,})[ \t]*([^\s`~]*)[ \t]*$')
 
 
 def format_fragments(fragments_list):
@@ -344,6 +350,7 @@ def format_rest(docstring):
             self.output = ''
 
     writer = _DocumentPseudoWriter()
+    docstring = convert_markdown_code_blocks(docstring)
     docstring = add_blank_line_before_first_tag(docstring)
     publish_string(
         docstring,
@@ -371,6 +378,71 @@ def add_blank_line_before_first_tag(docstring):
                 input_lines.insert(i, '')
             break
     return '\n'.join(input_lines)
+
+
+def _is_closing_fence(line, fence_char, min_length):
+    # A CommonMark closing fence is a run of at least `min_length` of the same
+    # fence character, optionally surrounded by whitespace, and nothing else.
+    stripped = line.strip()
+    return len(stripped) >= min_length and all(char == fence_char for char in stripped)
+
+
+def convert_markdown_code_blocks(docstring):
+    """Rewrite Markdown fenced code blocks as reST ``code-block`` directives.
+
+    docutils doesn't understand Markdown fences, so a block like::
+
+        ```py
+        def f(): ...
+        ```
+
+    is otherwise parsed as inline literal (double backtick) markup and rendered
+    as a row of broken tokens (PY-84818). Converting it to a ``.. code-block``
+    directive routes it through the same path as native reST code blocks.
+    """
+    lines = docstring.splitlines()
+    result = []
+    i = 0
+    n = len(lines)
+    while i < n:
+        match = MARKDOWN_FENCE_START.match(lines[i])
+        if not match:
+            result.append(lines[i])
+            i += 1
+            continue
+
+        indent, fence, info = match.group(1), match.group(2), match.group(3)
+        fence_char = fence[0]
+        fence_length = len(fence)
+
+        content = []
+        j = i + 1
+        closed = False
+        while j < n:
+            if _is_closing_fence(lines[j], fence_char, fence_length):
+                closed = True
+                break
+            content.append(lines[j])
+            j += 1
+
+        if not closed:
+            # Unterminated fence: leave the original text untouched.
+            result.append(lines[i])
+            i += 1
+            continue
+
+        directive = indent + '.. code-block::'
+        if info:
+            directive += ' ' + info
+        result.append(directive)
+        result.append('')
+        content_indent = indent + '   '
+        for code_line in content:
+            result.append(content_indent + code_line if code_line.strip() else '')
+        result.append('')
+        i = j + 1
+
+    return '\n'.join(result)
 
 
 def format_google(docstring):
