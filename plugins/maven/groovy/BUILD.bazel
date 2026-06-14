@@ -39,7 +39,6 @@ jvm_library(
         "//platform/core-impl",
         "//xml/xml-psi-api:psi",
         "//plugins/maven/completion",
-        "//plugins/repository-search/common",
         "//plugins/repository-search/completion",
         "//platform/projectModel-api:projectModel",
         "//jps/model-api:model",
@@ -79,7 +78,6 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//xml/xml-psi-api:psi_test_lib",
         "//plugins/maven/completion:completion_test_lib",
-        "//plugins/repository-search/common:common_test_lib",
         "//plugins/repository-search/completion:completion_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//jps/model-api:model_test_lib",
@@ -203,6 +201,8 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
+        "//libraries/junit5-params",
+        "//libraries/junit5-params:junit5-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.groovy.tests` end

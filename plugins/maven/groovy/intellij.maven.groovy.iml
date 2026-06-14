@@ -26,7 +26,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.xml.psi" />
     <orderEntry type="module" module-name="intellij.maven.completion" />
-    <orderEntry type="module" module-name="intellij.repository.search.common" />
     <orderEntry type="module" module-name="intellij.repository.search.completion" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.jps.model" />
