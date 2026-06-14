@@ -11,8 +11,12 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyStatementList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class PyInspectionsSuppressor implements InspectionSuppressor {
   private static final String PY_INCORRECT_DOCSTRING_INSPECTION_ID = new PyIncorrectDocstringInspection().getID();
@@ -20,31 +24,62 @@ public final class PyInspectionsSuppressor implements InspectionSuppressor {
 
   @Override
   public SuppressQuickFix @NotNull [] getSuppressActions(@Nullable PsiElement element, @NotNull String toolId) {
+    // PyTypeChecker owns its suppression UI entirely (PyTypeCheckerSuppressableProblemGroup); offer no blanket
+    // actions for it, so the only suppressions shown are its granular per-code ones.
+    if (PySuppressionUtil.INSTANCE.isCustomManaged(toolId)) {
+      return SuppressQuickFix.EMPTY_ARRAY;
+    }
     // Insert the industry-standard kebab-case alias (e.g. `method-overriding`) when the inspection has one,
     // so that is the form users adopt; the legacy `PyMethodOverriding` id keeps working for recognition.
     final String suppressId = suppressId(toolId);
-    if (PY_INCORRECT_DOCSTRING_INSPECTION_ID.equals(toolId) || PY_MISSING_OR_EMPTY_DOCSTRING_INSPECTION_ID.equals(toolId)) {
-      return new SuppressQuickFix[]{
-        new PySuppressInspectionFix(suppressId, PyPsiBundle.message("INSP.python.suppressor.suppress.for.function"), PyFunction.class),
-        new PySuppressInspectionFix(suppressId, PyPsiBundle.message("INSP.python.suppressor.suppress.for.class"), PyClass.class)
-      };
-    }
-    else {
-      return new SuppressQuickFix[]{
-        new PySuppressInspectionFix(suppressId, PyPsiBundle.message("INSP.python.suppressor.suppress.for.statement"), PyStatement.class) {
-          @Override
-          public PsiElement getContainer(PsiElement context) {
-            if (PsiTreeUtil.getParentOfType(context, PyStatementList.class, false, ScopeOwner.class) != null ||
-                PsiTreeUtil.getParentOfType(context, PyFunction.class, PyClass.class) == null) {
-              return super.getContainer(context);
-            }
-            return null;
+    // Docstring inspections only attach to declarations, so they offer no per-statement suppression.
+    final boolean includeStatement = !PY_INCORRECT_DOCSTRING_INSPECTION_ID.equals(toolId) &&
+                                     !PY_MISSING_OR_EMPTY_DOCSTRING_INSPECTION_ID.equals(toolId);
+    return createSuppressActions(suppressId, element, includeStatement);
+  }
+
+  /**
+   * Builds the "Suppress for this statement / for function 'f' / for class 'C'" quick fixes that insert a
+   * {@code # noinspection <suppressId>} comment. Shared with {@link PyTypeCheckerSuppressableProblemGroup},
+   * which passes one of its granular codes as {@code suppressId} but reuses the same declaration-naming wording.
+   */
+  public static SuppressQuickFix @NotNull [] createSuppressActions(@NotNull String suppressId,
+                                                                   @Nullable PsiElement element,
+                                                                   boolean includeStatement) {
+    List<SuppressQuickFix> fixes = new ArrayList<>(3);
+    if (includeStatement) {
+      fixes.add(new PySuppressInspectionFix(suppressId, PyPsiBundle.message("INSP.python.suppressor.suppress.for.statement"), PyStatement.class) {
+        @Override
+        public PsiElement getContainer(PsiElement context) {
+          if (PsiTreeUtil.getParentOfType(context, PyStatementList.class, false, ScopeOwner.class) != null ||
+              PsiTreeUtil.getParentOfType(context, PyFunction.class, PyClass.class) == null) {
+            return super.getContainer(context);
           }
-        },
-        new PySuppressInspectionFix(suppressId, PyPsiBundle.message("INSP.python.suppressor.suppress.for.function"), PyFunction.class),
-        new PySuppressInspectionFix(suppressId, PyPsiBundle.message("INSP.python.suppressor.suppress.for.class"), PyClass.class)
-      };
+          return null;
+        }
+      });
     }
+    fixes.add(new PySuppressInspectionFix(suppressId, functionText(element), PyFunction.class));
+    fixes.add(new PySuppressInspectionFix(suppressId, classText(element), PyClass.class));
+    return fixes.toArray(SuppressQuickFix.EMPTY_ARRAY);
+  }
+
+  // Name the enclosing function/class in the action text (like Kotlin), falling back to the generic wording
+  // when there is no enclosing declaration (e.g. when the list is requested from the inspection tool window).
+  private static @Nls @NotNull String functionText(@Nullable PsiElement element) {
+    PyFunction function = element == null ? null : PsiTreeUtil.getParentOfType(element, PyFunction.class);
+    String name = function == null ? null : function.getName();
+    return name != null
+           ? PyPsiBundle.message("INSP.python.suppressor.suppress.for.function.named", name)
+           : PyPsiBundle.message("INSP.python.suppressor.suppress.for.function");
+  }
+
+  private static @Nls @NotNull String classText(@Nullable PsiElement element) {
+    PyClass pyClass = element == null ? null : PsiTreeUtil.getParentOfType(element, PyClass.class);
+    String name = pyClass == null ? null : pyClass.getName();
+    return name != null
+           ? PyPsiBundle.message("INSP.python.suppressor.suppress.for.class.named", name)
+           : PyPsiBundle.message("INSP.python.suppressor.suppress.for.class");
   }
 
   @Override
