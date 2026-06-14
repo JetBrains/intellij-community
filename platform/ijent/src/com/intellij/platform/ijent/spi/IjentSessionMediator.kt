@@ -30,4 +30,5 @@ class IjentConnectionContext(
   val targetPlatform: EelPlatform,
   val remoteBinaryPath: String,
   val connectionStrategy: IjentConnectionStrategy,
+  val backendPid: Long? = null,
 )
