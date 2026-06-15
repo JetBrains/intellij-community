@@ -229,6 +229,30 @@ internal class LspInlayHintTest {
     serverSession.awaitExpected()
   }
 
+  @Test
+  fun `refresh re-requests hints without an edit`(): Unit = timeoutRunBlocking {
+    (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+
+    val sourceText = "hello world"
+    val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+    val fileUri = serverSession.fileUri(virtualFile)
+
+    serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
+      listOf(InlayHint(Position(0, 5), Either.forLeft(": A")))
+    }
+    checkInlaysRetrying(sourceText, "hello/*<# : A #>*/ world")
+
+    // The server signals its hints changed even though the document didn't — expect a fresh request, no edit.
+    serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
+      listOf(InlayHint(Position(0, 5), Either.forLeft(": B")))
+    }
+    serverSession.sendRequest(serverSession.INLAY_HINT_REFRESH) { }
+
+    checkInlaysRetrying(sourceText, "hello/*<# : B #>*/ world")
+    serverSession.awaitExpected()
+  }
+
   private suspend fun checkInlaysRetrying(sourceText: String, expected: String) {
     waitUntilAssertSucceeds(message = "Inlays don't match expected") {
       codeInsightFixture.doHighlighting()
