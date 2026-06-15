@@ -1432,6 +1432,7 @@ plugins/laf/win10
 plugins/lombok
 plugins/lombok/generated
 plugins/lsp.ui
+plugins/lsp.ui/idea.product.modules
 plugins/markdown/compose
 plugins/markdown/core
 plugins/markdown/core/backend

@@ -1,0 +1,39 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.lsp.ui.idea.product.modules` start
+
+jvm_library(
+    name = "idea.product.modules",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.lsp.ui.idea.product.modules",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "idea.product.modules_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.lsp.ui.idea.product.modules",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":idea.product.modules"],
+)
+### auto-generated section `build intellij.lsp.ui.idea.product.modules` end
+
+### auto-generated section `iml intellij.lsp.ui.idea.product.modules` start
+exports_files(
+    [
+        "intellij.lsp.ui.idea.product.modules.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.lsp.ui.idea.product.modules` end
