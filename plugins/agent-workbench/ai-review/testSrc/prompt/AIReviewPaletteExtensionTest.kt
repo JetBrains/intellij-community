@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteInitialPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPoint
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
@@ -58,6 +59,16 @@ class AIReviewPaletteExtensionTest : BasePlatformTestCase() {
 
   fun `test ai review shows generation controls so model and effort can be adjusted`() {
     assertTrue(extension.showsGenerationControls())
+  }
+
+  fun `test ai review uses execute action by default`() {
+    assertEquals(AIReviewPromptSupport.AI_REVIEW_EXECUTE_ACTION_ID, extension.getSubmitActionId())
+  }
+
+  fun `test ai review uses execute action when tui registry is enabled`() {
+    Registry.get(AI_REVIEW_VIA_TUI_REGISTRY_KEY).setValue(true, testRootDisposable)
+
+    assertEquals(AIReviewPromptSupport.AI_REVIEW_EXECUTE_ACTION_ID, extension.getSubmitActionId())
   }
 
   fun `test ai review uses default draft kind when commit issues are absent`() {
@@ -276,5 +287,6 @@ class AIReviewPaletteExtensionTest : BasePlatformTestCase() {
 
   private companion object {
     const val AI_REVIEW_PROMPT_PROVIDER_EP: String = "com.intellij.agent.workbench.ai.review.promptProvider"
+    const val AI_REVIEW_VIA_TUI_REGISTRY_KEY: String = "ai.review.via.ai.code.review.plugin.tui"
   }
 }

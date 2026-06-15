@@ -25,9 +25,12 @@
     <registryKey key="ai.review.allow.interactive.elements.in.problem.description.renderer"
                  defaultValue="true"
                  description="Allow interactive elements (hyperlinks, buttons) in AI Review problem description renderer"/>
-    <registryKey key="ai.review.via.ai.code.review.plugin"
-                 defaultValue="false"
-                 description="Run Agent Workbench AI Review through the AI Code Review plugin: findings and the review session are hosted in its Problems view instead of Agent Workbench's own tab (requires the AI Code Review plugin)"/>
+    <registryKey key="ai.review.via.ai.code.review.plugin.acp"
+                  defaultValue="false"
+                  description="Run Agent Workbench AI Review through the AI Code Review plugin using the ACP agent path: findings and the review session are hosted in its Problems view instead of Agent Workbench's own tab (requires the AI Code Review plugin)"/>
+    <registryKey key="ai.review.via.ai.code.review.plugin.tui"
+                   defaultValue="true"
+                   description="Run Agent Workbench AI Review through a selected Agent Workbench terminal UI provider while hosting findings and the review session in the AI Code Review plugin Problems view"/>
   </extensions>
 
   <extensionPoints>

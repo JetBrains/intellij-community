@@ -22,16 +22,11 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.SimpleTextAttributes
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import javax.swing.JList
 
@@ -41,7 +36,6 @@ internal class AgentPromptPaletteSubmitController(
   private val promptArea: EditorTextField,
   private val providerSelector: AgentPromptProviderSelector,
   private val existingTaskController: AgentPromptExistingTaskController,
-  private val sessionScope: CoroutineScope,
   private val launcherProvider: () -> AgentPromptLauncherBridge?,
   private val launchState: AgentPromptPaletteLaunchState,
   private val currentTargetMode: () -> PromptTargetMode,
@@ -53,7 +47,6 @@ internal class AgentPromptPaletteSubmitController(
   private val onSubmitSucceeded: () -> Unit,
   private val onPromptSubmitted: (AgentPromptHistoryEntry) -> Unit = {},
   private val launchProfileIdProvider: () -> String? = { null },
-  private val launchTargetIdProvider: () -> String? = { null },
   private val generationSettingsProvider: () -> AgentPromptGenerationSettings = { AgentPromptGenerationSettings.AUTO },
   private val generationModelCatalogProvider: () -> List<AgentPromptGenerationModel> = { emptyList() },
   private val isContainerModeSelected: () -> Boolean = { false },
@@ -92,7 +85,7 @@ internal class AgentPromptPaletteSubmitController(
 
     val extensionTab = activeExtensionTab()
     if (extensionTab?.extension?.getSubmitActionId() != null) {
-      launchState.canSubmitNow = !launchState.launchInProgress
+      launchState.canSubmitNow = true
       return
     }
     val targetMode = if (extensionTab != null) PromptTargetMode.NEW_TASK else currentTargetMode()
@@ -101,17 +94,13 @@ internal class AgentPromptPaletteSubmitController(
                                   hasProjectPath &&
                                   selectedProviderEntry != null &&
                                   selectedProviderEntry.isCliAvailable
-    launchState.canSubmitNow = !launchState.launchInProgress && when (targetMode) {
+    launchState.canSubmitNow = when (targetMode) {
       PromptTargetMode.NEW_TASK -> submitPrerequisitesMet
       PromptTargetMode.EXISTING_TASK -> submitPrerequisitesMet && hasExistingTaskTarget
     }
   }
 
   fun submit() {
-    if (launchState.launchInProgress) {
-      return
-    }
-
     fun reportValidationFailure(validationErrorKey: String, selectedProviderEntry: ProviderEntry?) {
       if (shouldRetrySubmitAfterWorkingProjectPathSelection(validationErrorKey) && launcherProvider()?.let(::promptWorkingProjectPathSelection) == true) {
         return
@@ -136,9 +125,8 @@ internal class AgentPromptPaletteSubmitController(
             buildVisibleContextEntries().map(ContextEntry::item),
             contextProjectBasePath,
           ) ?: return
-          val prompt = promptArea.document.immutableCharSequence.toString().trim()
           val messageRequest = AgentPromptInitialMessageRequest(
-            prompt = prompt,
+            prompt = promptArea.text.trim(),
             projectPath = contextProjectBasePath,
             contextItems = contextSelection.items,
             contextEnvelopeSummary = contextSelection.summary,
@@ -166,10 +154,9 @@ internal class AgentPromptPaletteSubmitController(
     val launcher = launcherProvider()
     val projectPath = resolveWorkingProjectPath()
     val targetMode = if (extensionNormalLaunch) PromptTargetMode.NEW_TASK else currentTargetMode()
-    val promptText = promptArea.document.immutableCharSequence.toString()
     val validationErrorKey = resolveSubmitValidationErrorMessageKey(
       targetMode = targetMode,
-      prompt = promptText,
+      prompt = promptArea.text,
       selectedProvider = selectedProviderEntry?.bridge?.provider,
       isProviderCliAvailable = selectedProviderEntry?.isCliAvailable == true,
       hasProjectPath = projectPath != null,
@@ -181,7 +168,7 @@ internal class AgentPromptPaletteSubmitController(
       return
     }
 
-    val prompt = promptText.trim()
+    val prompt = promptArea.text.trim()
     val providerEntry = selectedProviderEntry ?: return
     val effectiveProjectPath = projectPath ?: return
     val selectedThreadActivity = existingTaskController.selectedEntry()?.activity
@@ -229,7 +216,6 @@ internal class AgentPromptPaletteSubmitController(
       provider = providerEntry.bridge.provider,
       projectPath = effectiveProjectPath,
       launchMode = providerSelector.selectedLaunchMode,
-      launchTargetId = if (isNewTaskLaunch) launchTargetIdProvider() else null,
       initialMessageRequest = AgentPromptInitialMessageRequest(
         prompt = prompt,
         projectPath = effectiveProjectPath,
@@ -250,35 +236,23 @@ internal class AgentPromptPaletteSubmitController(
       ),
     )
 
-    launchState.launchInProgress = true
-    updateSendAvailability()
-    sessionScope.launch {
-      val result = launcherBridge.launch(request)
-      launchState.launchInProgress = false
-      if (result.launched) {
-        onPromptSubmitted(
-          AgentPromptHistoryEntry(
-            promptText = prompt,
-            createdAtMs = System.currentTimeMillis(),
-            providerId = providerEntry.bridge.provider.value,
-            targetMode = targetMode,
-            launchMode = providerSelector.selectedLaunchMode.name,
-          )
+    val result = launcherBridge.launch(request)
+    if (result.launched) {
+      onPromptSubmitted(
+        AgentPromptHistoryEntry(
+          promptText = prompt,
+          createdAtMs = System.currentTimeMillis(),
+          providerId = providerEntry.bridge.provider.value,
+          targetMode = targetMode,
+          launchMode = providerSelector.selectedLaunchMode.name,
         )
-        launchState.clearDraftOnClose = true
-        withContext(Dispatchers.UiWithModelAccess) {
-          onSubmitSucceeded()
-        }
-        return@launch
-      }
-
-      updateSendAvailability()
-      onSubmitBlocked(resolveLaunchErrorMessage(result.error))
+      )
+      launchState.clearDraftOnClose = true
+      onSubmitSucceeded()
+      return
     }
-  }
 
-  private fun resolveLaunchErrorMessage(error: AgentPromptLaunchError?): @Nls String {
-    return when (error) {
+    val errorMessage = when (result.error) {
       AgentPromptLaunchError.PROVIDER_UNAVAILABLE -> AgentPromptBundle.message("popup.error.launch.provider")
       AgentPromptLaunchError.UNSUPPORTED_LAUNCH_MODE -> AgentPromptBundle.message("popup.error.launch.mode")
       AgentPromptLaunchError.TARGET_THREAD_NOT_FOUND -> AgentPromptBundle.message("popup.error.launch.thread.not.found")
@@ -289,6 +263,7 @@ internal class AgentPromptPaletteSubmitController(
       null,
         -> AgentPromptBundle.message("popup.error.launch.internal")
     }
+    onSubmitBlocked(errorMessage)
   }
 
   private fun resolveValidationErrorMessage(

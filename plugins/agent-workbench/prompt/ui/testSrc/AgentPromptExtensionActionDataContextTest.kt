@@ -39,6 +39,17 @@ class AgentPromptExtensionActionDataContextTest {
   }
 
   @Test
+  fun addsSelectedLaunchModeToExtensionActionDataContext() {
+    val enrichedDataContext = buildExtensionActionDataContext(
+      baseDataContext = SimpleDataContext.builder().build(),
+      selectedProviderId = "codex",
+      selectedLaunchMode = AgentSessionLaunchMode.YOLO,
+    )
+
+    assertEquals(AgentSessionLaunchMode.YOLO, AGENT_PROMPT_SELECTED_LAUNCH_MODE_DATA_KEY.getData(enrichedDataContext))
+  }
+
+  @Test
   fun addsMessageRequestToExtensionActionDataContext() {
     val messageRequest = AgentPromptInitialMessageRequest(
       prompt = "Review the selected changes",
@@ -67,19 +78,9 @@ class AgentPromptExtensionActionDataContextTest {
     val enrichedDataContext = buildExtensionActionDataContext(baseDataContext, selectedProviderId = null)
 
     assertNull(AGENT_PROMPT_SELECTED_PROVIDER_ID_DATA_KEY.getData(enrichedDataContext))
+    assertNull(AGENT_PROMPT_SELECTED_LAUNCH_MODE_DATA_KEY.getData(enrichedDataContext))
     assertNull(AGENT_PROMPT_MESSAGE_REQUEST_DATA_KEY.getData(enrichedDataContext))
     assertNull(AGENT_PROMPT_GENERATION_SETTINGS_DATA_KEY.getData(enrichedDataContext))
-  }
-
-  @Test
-  fun addsSelectedLaunchModeToExtensionActionDataContext() {
-    val enrichedDataContext = buildExtensionActionDataContext(
-      baseDataContext = SimpleDataContext.builder().build(),
-      selectedProviderId = "codex",
-      selectedLaunchMode = AgentSessionLaunchMode.YOLO,
-    )
-
-    assertEquals(AgentSessionLaunchMode.YOLO, AGENT_PROMPT_SELECTED_LAUNCH_MODE_DATA_KEY.getData(enrichedDataContext))
   }
 
   @Test
