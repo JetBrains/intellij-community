@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
+import com.intellij.ide.plugins.ProductPluginInitContext.Companion.configureProductModeModules
 import com.intellij.idea.AppMode
 import com.intellij.idea.WellKnownCommand
 import com.intellij.openapi.extensions.PluginId
@@ -202,6 +203,65 @@ class PluginManagerTest {
     }
     finally {
       AppMode.setFlags(emptyList())
+    }
+  }
+
+  @Test
+  fun `product mode modules match the gold data`() {
+    val modes = listOf(
+      ProductMode.MONOLITH to listOf(
+        "+ intellij.platform.backend",
+        "+ intellij.platform.frontend",
+        "- intellij.platform.frontend.split",
+        "+ intellij.platform.jps.build",
+        "+ intellij.platform.jps.build.dependencyGraph",
+        "+ intellij.platform.split",
+        "+ intellij.rd.client",
+      ),
+      ProductMode.BACKEND to listOf(
+        "+ intellij.platform.backend",
+        "- intellij.platform.frontend",
+        "- intellij.platform.frontend.split",
+        "+ intellij.platform.jps.build",
+        "+ intellij.platform.jps.build.dependencyGraph",
+        "+ intellij.platform.split",
+        "+ intellij.rd.client",
+      ),
+      ProductMode.FRONTEND to listOf(
+        "- intellij.platform.backend",
+        "+ intellij.platform.frontend",
+        "+ intellij.platform.frontend.split",
+        "- intellij.platform.jps.build",
+        "- intellij.platform.jps.build.dependencyGraph",
+        "+ intellij.platform.split",
+        "+ intellij.rd.client",
+      ),
+      ProductMode.LIGHT to listOf(
+        "- intellij.platform.backend",
+        "+ intellij.platform.frontend",
+        "- intellij.platform.frontend.split",
+        "- intellij.platform.jps.build",
+        "- intellij.platform.jps.build.dependencyGraph",
+        "- intellij.platform.split",
+        "- intellij.rd.client",
+      ),
+      ProductMode.LIGHT_WITH_RD_CONNECTION to listOf(
+        "- intellij.platform.backend",
+        "+ intellij.platform.frontend",
+        "- intellij.platform.frontend.split",
+        "- intellij.platform.jps.build",
+        "- intellij.platform.jps.build.dependencyGraph",
+        "- intellij.platform.split",
+        "- intellij.rd.client",
+      ))
+    for ((currentMode, expectedValues) in modes) {
+      val map = buildMap {
+        configureProductModeModules(currentMode.id)
+      }
+      val actual = map.map { it.key.name to it.value.isAvailable }.sortedBy { it.first }
+        .joinToString("\n") { (if (it.second) "+ " else "- ") + it.first }
+      val expected = expectedValues.joinToString("\n")
+      assertEquals("Product modules for '${currentMode.id}' do not match gold data", expected, actual)
     }
   }
 
