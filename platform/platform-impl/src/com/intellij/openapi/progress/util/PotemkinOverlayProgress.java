@@ -3,7 +3,6 @@ package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.actions.DumpThreadsAction;
 import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -57,12 +56,6 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   private long myLastInteraction;
   private boolean myShowing;
   private final boolean myCancellable;
-
-  static {
-    // preload classes
-    //noinspection ResultOfMethodCallIgnored
-    NlsMessages.formatDurationApproximateNarrow(0);
-  }
 
   @Obsolete
   public PotemkinOverlayProgress(@Nullable Component component) {
@@ -172,7 +165,7 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     //noinspection HardCodedStringLiteral
     String text = (cancellable ? KeymapUtil.getShortcutText(CANCEL_SHORTCUT) + " to cancel, " : "") +
                   KeymapUtil.getShortcutText(DUMP_SHORTCUT) + " to dump threads (" +
-                  NlsMessages.formatDurationApproximateNarrow(roundedDuration) + ")";
+                  formatDurationApproximateNarrow(roundedDuration) + ")";
     Graphics originalGraphics = GraphicsUtil.safelyGetGraphics(rootPane);
     Rectangle viewR = rootPane.getBounds(), iconR = new Rectangle(), textR = new Rectangle();
     FontMetrics fm = originalGraphics.getFontMetrics();
@@ -192,5 +185,33 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     UIUtil.drawImage(originalGraphics, backBuffer, 0, 0, null);
     graphics.dispose();
     originalGraphics.dispose();
+  }
+
+  // Minimal, English-only, dependency-free port of NlsMessages.formatDurationApproximateNarrow for whole-second
+  // inputs. Avoids loading ICU and DynamicBundle on the EDT during a Potemkin freeze.
+  private static @NotNull String formatDurationApproximateNarrow(long durationMillis) {
+    long totalSec = durationMillis / 1000;
+    if (totalSec <= 0) return "0 sec";
+
+    long sec = totalSec % 60;
+    long totalMin = totalSec / 60;
+    long min = totalMin % 60;
+    long hr = totalMin / 60;
+
+    if (hr > 0) {
+      long subSec = totalSec - hr * 3600L - min * 60L;
+      if (subSec > 30L && ++min >= 60) {
+        return formatDurationApproximateNarrow((hr + 1) * 3600L * 1000L);
+      }
+      return min == 0 && subSec == 0 ? unit(hr, "hr") : unit(hr, "hr") + " " + unit(min, "min");
+    }
+    if (min > 0) {
+      return sec == 0 ? unit(min, "min") : unit(min, "min") + " " + unit(sec, "sec");
+    }
+    return unit(sec, "sec");
+  }
+
+  private static @NotNull String unit(long n, @NotNull String label) {
+    return n + " " + label;
   }
 }
