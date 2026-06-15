@@ -87,7 +87,6 @@ open class PathMacroManager private constructor(private var pathMacros: PathMacr
     collapsePaths(element, recursively, replacePathMap)
   }
 
-  @ApiStatus.Internal
   companion object {
     @JvmStatic
     fun getInstance(componentManager: ComponentManager): PathMacroManager {
