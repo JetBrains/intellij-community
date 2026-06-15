@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -28,6 +31,8 @@ import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.UnixPythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.Interpreters
+@Layers.Functional
 public class PySdkFlavorTest extends PyTestCase {
   public void testPython27VersionString() {
     testVersionAndFlavor("Python 2.7.6\n", "Python 2.7.6", LanguageLevel.PYTHON27);
