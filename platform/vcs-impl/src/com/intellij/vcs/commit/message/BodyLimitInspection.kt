@@ -21,7 +21,7 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.util.DocumentUtil
 import org.jetbrains.annotations.Nls
 
-class BodyLimitInspection : BaseCommitMessageInspection() {
+internal class BodyLimitInspection : BaseCommitMessageInspection() {
   @JvmField
   var RIGHT_MARGIN: Int = 72
 
@@ -46,6 +46,10 @@ class BodyLimitInspection : BaseCommitMessageInspection() {
     }
     return false
   }
+
+  // checkFile() inspects lines by absolute number, so an edit on any line can affect the warning on another.
+  // Running for the whole file re-checks all lines on every change, so the warning shows/updates immediately.
+  override fun runForWholeFile(): Boolean = true
 
   override fun checkFile(file: PsiFile, document: Document, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor>? {
     val lines = 1 until document.getLineCount()

@@ -4233,14 +4233,6 @@ pc:com.intellij.vcs.commit.message.BaseCommitMessageInspection$ReformatCommitMes
 - invoke(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):V
 - isAvailable(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile):Z
 - startInWriteAction():Z
-f:com.intellij.vcs.commit.message.BodyLimitInspection
-- com.intellij.vcs.commit.message.BaseCommitMessageInspection
-- RIGHT_MARGIN:I
-- <init>():V
-- canReformat(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):Z
-- createOptions(com.intellij.ui.dsl.builder.Panel,com.intellij.openapi.project.Project,com.intellij.openapi.Disposable):Z
-- getDisplayName():java.lang.String
-- reformat(com.intellij.openapi.project.Project,com.intellij.openapi.editor.Document):V
 c:com.intellij.vcs.commit.message.CommitMessageInspectionProfile
 - com.intellij.codeInspection.ex.InspectionProfileImpl
 - com.intellij.openapi.components.PersistentStateComponent
