@@ -24,7 +24,7 @@ import kotlinx.coroutines.withTimeout
 import org.junit.ComparisonFailure
 
 /**
- * @see com.intellij.platform.lsp.tests.waitUntilFileOpenedByLspServer
+ * @see waitUntilFileOpenedByLspServer
  */
 suspend fun awaitFileOpenedByLspServer(project: Project, file: VirtualFile) {
   val topLevelFile = (file as? VirtualFileWindow)?.delegate ?: file
@@ -43,9 +43,9 @@ suspend fun awaitFileOpenedByLspServer(project: Project, file: VirtualFile) {
  * Await the next diagnostics, up until [DEFAULT_TEST_TIMEOUT].
  * Caller may specify shorter [withTimeout] up the stack as needed,
  * but especially since [com.intellij.testFramework.common.timeoutRunBlocking] doesn't time out in debug at all,
- * here we have default limit, so that the function is not endless.
+ * here we have a default limit, so that the function is not endless.
 
- * @see com.intellij.platform.lsp.tests.waitForDiagnosticsFromLspServer
+ * @see waitForDiagnosticsFromLspServer
  */
 suspend fun awaitDiagnosticsFromLspServer(project: Project, file: VirtualFile) {
   val topLevelFile = (file as? VirtualFileWindow)?.delegate ?: file
@@ -61,7 +61,7 @@ suspend fun awaitDiagnosticsFromLspServer(project: Project, file: VirtualFile) {
 }
 
 /**
- * @see com.intellij.platform.lsp.tests.checkLspHighlighting
+ * @see checkLspHighlighting
  */
 suspend fun CodeInsightTestFixture.checkHighlightingRetrying(initialCheck: Boolean = false) {
   val document = editor.document.let { (it as? DocumentWindow)?.delegate ?: it }
@@ -77,7 +77,7 @@ suspend fun CodeInsightTestFixture.checkHighlightingRetrying(initialCheck: Boole
  * So this function makes up to three attempts to call `fixture.collectAndCheckHighlighting`,
  * waiting for a new `diagnosticsReceived` notification from the client after each unlucky attempt.
  *
- * @see com.intellij.platform.lsp.tests.checkLspHighlightingForData
+ * @see checkLspHighlightingForData
  */
 suspend fun CodeInsightTestFixture.checkHighlightingRetrying(data: ExpectedHighlightingData, initialCheck: Boolean = false) {
   val fixture = this as CodeInsightTestFixtureImpl

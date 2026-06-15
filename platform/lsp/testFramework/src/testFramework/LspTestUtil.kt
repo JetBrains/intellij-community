@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.lsp.tests
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.lsp.testFramework
 
 import com.intellij.injected.editor.DocumentWindow
 import com.intellij.injected.editor.VirtualFileWindow
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * @see com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
+ * @see awaitFileOpenedByLspServer
  */
 @RequiresBlockingContext
 @RequiresEdt
@@ -61,7 +61,7 @@ fun waitUntilFileOpenedByLspServer(project: Project, file: VirtualFile) {
 /**
  * Please note that in some cases it isn't enough to call the method once, see [doCheckExpectedHighlightingData]
  *
- * @see com.intellij.platform.lsp.testFramework.awaitDiagnosticsFromLspServer
+ * @see awaitDiagnosticsFromLspServer
  */
 @RequiresBlockingContext
 @JvmOverloads
@@ -94,7 +94,7 @@ private fun doWaitForDiagnosticsFromLspServer(
  * Removes `<error>`/`<warning>` markup from the current file, waits for the `textDocument/publishDiagnostics` notification from the
  * LSP server and checks that the errors/warnings highlighting for the current file match the expected result.
  *
- * @see com.intellij.platform.lsp.testFramework.checkHighlightingRetrying
+ * @see checkHighlightingRetrying
  */
 @RequiresBlockingContext
 @RequiresEdt
@@ -106,7 +106,7 @@ fun CodeInsightTestFixture.checkLspHighlighting() {
 }
 
 /**
- * @see com.intellij.platform.lsp.testFramework.checkHighlightingRetrying
+ * @see checkHighlightingRetrying
  */
 @RequiresBlockingContext
 @RequiresEdt
