@@ -3,15 +3,12 @@ package com.intellij.driver.sdk.ui.keyboard
 import com.intellij.driver.sdk.step
 import com.intellij.driver.sdk.ui.remote.Robot
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfoRt
 import java.awt.event.KeyEvent
 
-class RemoteKeyboard(private val robot: Robot) {
+class RemoteKeyboard(private val robot: Robot, isRemoteMac: () -> Boolean) {
   companion object {
     private val LOG
       get() = logger<RemoteKeyboard>()
-
-    val defaultModifierKey: Int = if (SystemInfoRt.isMac) KeyEvent.VK_META else KeyEvent.VK_CONTROL
 
     /**
      * To keep references up to date:
@@ -31,6 +28,8 @@ class RemoteKeyboard(private val robot: Robot) {
     @Target(AnnotationTarget.FUNCTION)
     private annotation class DirectHotKeyUsage
   }
+
+  val defaultModifierKey: Int by lazy { if (isRemoteMac()) KeyEvent.VK_META else KeyEvent.VK_CONTROL }
 
   fun key(key: Int): Unit = step("Press key $key") { robot.pressAndReleaseKey(key) }
 

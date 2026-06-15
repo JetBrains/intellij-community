@@ -13,6 +13,12 @@ fun Driver.getSystemProperty(key: String): String {
   return utility(System::class).getProperty(key)
 }
 
+val Driver.isRemoteMac: Boolean
+  get() = osName.lowercase().startsWith("mac")
+
+val Driver.osName: String
+  get() = getSystemProperty("os.name")
+
 fun Driver.setSystemProperty(key: String, value: String) {
   utility(System::class).setProperty(key, value)
 }
