@@ -1,13 +1,24 @@
+### auto-generated section `iml intellij.kotlin.compilerPlugins.power-assert.gradle` start
+exports_files([
+  "intellij.kotlin.compilerPlugins.power-assert.gradle.iml",
+], visibility = ["//visibility:public"])
+### auto-generated section `iml intellij.kotlin.compilerPlugins.power-assert.gradle` end
+
 ### auto-generated section `build intellij.kotlin.compilerPlugins.power-assert.gradle` start
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "resourcegroup")
+
+resourcegroup(
+  name = "gradle_resources",
+  srcs = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
 
 jvm_library(
   name = "gradle",
   module_name = "intellij.kotlin.compilerPlugins.power-assert.gradle",
   visibility = ["//visibility:public"],
   srcs = glob(["src/**/*.kt", "src/**/*.java", "src/**/*.form"], allow_empty = True),
-  resources = glob(["resources/**/*"]),
-  resource_strip_prefix = "resources",
+  resources = [":gradle_resources"],
   deps = [
     "@lib//:kotlin-stdlib",
     "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle",
@@ -15,24 +26,4 @@ jvm_library(
     "//plugins/kotlin/gradle/gradle-java",
   ]
 )
-
-jvm_library(
-  name = "gradle_test_lib",
-  testonly = True,
-  module_name = "intellij.kotlin.compilerPlugins.power-assert.gradle",
-  visibility = ["//visibility:public"],
-  srcs = glob([], allow_empty = True),
-  runtime_deps = [
-    ":gradle",
-    "//plugins/kotlin/compiler-plugins/compiler-plugin-support/gradle:gradle_test_lib",
-    "//plugins/kotlin/base/plugin:plugin_test_lib",
-    "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
-  ]
-)
 ### auto-generated section `build intellij.kotlin.compilerPlugins.power-assert.gradle` end
-
-### auto-generated section `iml intellij.kotlin.compilerPlugins.power-assert.gradle` start
-exports_files([
-  "intellij.kotlin.compilerPlugins.power-assert.gradle.iml",
-], visibility = ["//visibility:public"])
-### auto-generated section `iml intellij.kotlin.compilerPlugins.power-assert.gradle` end
