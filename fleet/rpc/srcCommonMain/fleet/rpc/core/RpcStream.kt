@@ -337,6 +337,10 @@ fun serveStream(
             var requested = prefetchStrategy.streamStarted()
             var remaining = requested
             require(requested > 0)
+            // announce the consumer symmetrically to the producer's StreamInit:
+            // if the producer has already abandoned this stream, it will respond with StreamClosed
+            // and we won't linger waiting for data that will never arrive (StreamNext alone is ignored for unregistered streams)
+            sendMessage(RpcMessage.StreamInit(streamId = descriptor.uid))
             sendMessage(RpcMessage.StreamNext(descriptor.uid, requested))
             descriptor.bufferedChannel.consumeEach { each ->
               RpcStream.logger.trace { "Channel ${descriptor.uid} ${descriptor.displayName} processes message $each" }

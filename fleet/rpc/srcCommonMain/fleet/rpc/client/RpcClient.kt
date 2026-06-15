@@ -75,8 +75,9 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.startCoroutine
+import kotlin.time.Duration.Companion.milliseconds
 
-internal const val RPC_TIMEOUT = 60_000L
+internal val RPC_TIMEOUT = 60_000.milliseconds
 
 private data class OutgoingRequest(
   val route: UID,
@@ -347,7 +348,6 @@ private class RpcClient(
     when (message) {
       is RpcMessage.CallResult -> {
         logger.trace { "Got CallResult: requestId = ${message.requestId}" }
-        // TODO this value can contain send/receive channels that must be closed, we should not drop it on the ground
         outgoingRpc.remove(message.requestId)?.let { (rpc) ->
           try {
             val (returnResult, streams) = run {
@@ -425,7 +425,6 @@ private class RpcClient(
           }
         }
         else {
-          // TODO this value can contain send/receive channels that must be closed
           logger.trace { "Received StreamData for unregistered stream ${message.streamId}" }
         }
       }
