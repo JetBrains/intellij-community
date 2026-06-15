@@ -53,7 +53,9 @@ open class ProjectModelRule : TestRule {
   val baseProjectDir: TempDirectory = TempDirectory()
   val disposableRule: DisposableRule = DisposableRule()
 
-  lateinit var project: Project
+  private var _project: Project? = null
+  val project: Project
+    get() = _project ?: error("Project is not initialized or has already been disposed")
   lateinit var projectRootDir: Path
   lateinit var filePointerTracker: VirtualFilePointerTracker
 
@@ -62,13 +64,18 @@ open class ProjectModelRule : TestRule {
   inner class ProjectResource : ExternalResource() {
     public override fun before() {
       projectRootDir = baseProjectDir.root.toPath()
-      project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
+      _project = PlatformTestUtil.loadAndOpenProject(projectRootDir, disposableRule.disposable)
       filePointerTracker = VirtualFilePointerTracker()
     }
 
     public override fun after() {
-      PlatformTestUtil.forceCloseProjectWithoutSaving(project)
-      filePointerTracker.assertPointersAreDisposed()
+      try {
+        PlatformTestUtil.forceCloseProjectWithoutSaving(project)
+        filePointerTracker.assertPointersAreDisposed()
+      }
+      finally {
+        _project = null
+      }
     }
   }
 
