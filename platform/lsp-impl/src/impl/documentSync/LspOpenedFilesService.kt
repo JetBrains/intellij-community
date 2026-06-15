@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.LspClientProvider
 import com.intellij.platform.lsp.api.LspServerState
-import com.intellij.platform.lsp.api.LspServerSupportProvider
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -43,8 +42,7 @@ internal class LspOpenedFilesService(private val project: Project) {
    */
   fun processOpenedFiles(files: Collection<VirtualFile>) {
     if (!TrustedProjects.isProjectTrusted(project)) return
-    @Suppress("DEPRECATION")
-    if (!LspClientProvider.EP_NAME.hasAnyExtensions() && !LspServerSupportProvider.EP_NAME.hasAnyExtensions()) return
+    if (!LspClientProvider.hasAnyExtensions()) return
 
     val added = files.filter { it.isInLocalFileSystem }.let { openedFilesToHandle.addAll(it) }
     if (added) scheduleOpenedFilesProcessing()

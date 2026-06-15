@@ -130,5 +130,12 @@ interface LspClientProvider {
       @Suppress("DEPRECATION")
       yieldAll(LspServerSupportProvider.EP_NAME.extensionList)
     }
+
+    @ApiStatus.Internal
+    fun hasAnyExtensions(): Boolean {
+      return EP_NAME.hasAnyExtensions() ||
+             @Suppress("DEPRECATION")
+             LspServerSupportProvider.EP_NAME.hasAnyExtensions()
+    }
   }
 }
