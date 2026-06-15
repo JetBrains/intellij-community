@@ -15,9 +15,20 @@ import com.intellij.agent.workbench.json.forEachJsonObjectField
 import com.intellij.agent.workbench.json.readJsonLongOrNull
 import com.intellij.agent.workbench.json.readJsonStringOrNull
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshResult
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import com.intellij.agent.workbench.sessions.core.providers.resolveReadTrackedActivity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.merge
 import java.io.StringWriter
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -191,7 +202,11 @@ internal class JunieSessionIndexStore(
 
 internal class JunieSessionSource(
   internal val sessionIndexStore: JunieSessionIndexStore = JunieSessionIndexStore(),
-  private val costLoader: JunieSessionCostLoader = JunieSessionCostLoader(),
+  private val eventsAnalyzer: JunieSessionEventsAnalyzer = JunieSessionEventsAnalyzer(),
+  private val updateBackend: JunieSessionUpdateBackend = JunieSessionUpdateBackend(
+    sessionIndexStore = sessionIndexStore,
+    eventsAnalyzer = eventsAnalyzer,
+  ),
 ) : BaseAgentSessionSource(provider = AgentSessionProvider.JUNIE) {
   constructor(
     sessionIndexPathProvider: () -> Path,
@@ -200,13 +215,25 @@ internal class JunieSessionSource(
     archiveStatePathProvider: () -> Path = { defaultJunieArchiveStatePath(sessionIndexPathProvider()) },
   ) : this(
     sessionIndexStore = JunieSessionIndexStore(sessionIndexPathProvider, jsonFactory, timeProvider, archiveStatePathProvider),
-    costLoader = JunieSessionCostLoader(
+    eventsAnalyzer = JunieSessionEventsAnalyzer(
       sessionsRootPathProvider = { sessionIndexPathProvider().parent ?: defaultJunieSessionsRootPath() },
       jsonFactory = jsonFactory,
     ),
   )
 
+  override val supportsUpdates: Boolean get() = true
+
   override val supportsArchivedThreads: Boolean get() = true
+
+  override val updateEvents: Flow<AgentSessionSourceUpdateEvent>
+    get() = merge(
+      updateBackend.sessionUpdates,
+      readStateUpdateEvents,
+    )
+
+  override fun activeThreadUpdateEvents(path: String, threadId: String): Flow<AgentSessionSourceUpdateEvent> {
+    return updateBackend.activeThreadUpdateEvents(path = path, threadId = threadId)
+  }
 
   override suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread> {
     val normalizedProjectPath = normalizeJunieProjectPath(path) ?: return emptyList()
@@ -215,7 +242,7 @@ internal class JunieSessionSource(
       .filterNot { it.archived == true }
       .sortedByDescending(JunieSessionIndexEntry::updatedAt)
     rememberActiveThreadRead(matchingEntries, JunieSessionIndexEntry::sessionId, JunieSessionIndexEntry::updatedAt)
-    return matchingEntries.map { it.toAgentSessionThread(readTracker) }
+    return matchingEntries.map { it.toAgentSessionThread(readTracker, eventsAnalyzer.cachedAnalysis(it.sessionId)) }
   }
 
   override suspend fun listArchivedThreads(path: String, openProject: Project?): List<AgentSessionThread> {
@@ -224,7 +251,99 @@ internal class JunieSessionSource(
       .filter { it.normalizedProjectDir == normalizedProjectPath }
       .filter { it.archived == true }
       .sortedByDescending(JunieSessionIndexEntry::updatedAt)
-    return matchingEntries.map { it.toAgentSessionThread(readTracker) }
+    return matchingEntries.map { it.toAgentSessionThread(readTracker, eventsAnalyzer.cachedAnalysis(it.sessionId)) }
+  }
+
+  override suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult {
+    if (!request.isThreadScoped) {
+      return super.refreshThreads(request)
+    }
+
+    val partialThreadsByPath = LinkedHashMap<String, List<AgentSessionThread>>()
+    val completeThreadsByPath = LinkedHashMap<String, List<AgentSessionThread>>()
+    val removedThreadIdsByPath = LinkedHashMap<String, Set<String>>()
+    val failuresByPath = LinkedHashMap<String, Throwable>()
+    for (path in request.paths) {
+      try {
+        val entries = loadEntries(path = path)
+          .filter { entry -> entry.sessionId in request.threadIds }
+        val visibleEntries = entries.filterNot { entry -> entry.archived == true }
+        rememberActiveThreadRead(visibleEntries, JunieSessionIndexEntry::sessionId, JunieSessionIndexEntry::updatedAt)
+        partialThreadsByPath[path] = visibleEntries.map { entry ->
+          entry.toAgentSessionThread(readTracker, eventsAnalyzer.loadAnalysis(entry.sessionId))
+        }
+        val removedThreadIds = entries.asSequence()
+          .filter { entry -> entry.archived == true }
+          .map(JunieSessionIndexEntry::sessionId)
+          .toCollection(LinkedHashSet())
+        if (removedThreadIds.isNotEmpty()) {
+          removedThreadIdsByPath[path] = removedThreadIds
+        }
+      }
+      catch (e: Throwable) {
+        if (e is CancellationException) throw e
+        failuresByPath[path] = e
+      }
+    }
+
+    return AgentSessionSourceRefreshResult(
+      completeThreadsByPath = completeThreadsByPath,
+      partialThreadsByPath = partialThreadsByPath,
+      removedThreadIdsByPath = removedThreadIdsByPath,
+      failuresByPath = failuresByPath,
+    )
+  }
+
+  override suspend fun prefetchRefreshHints(
+    paths: List<String>,
+    refreshThreadSeedsByPath: Map<String, Set<AgentSessionRefreshThreadSeed>>,
+  ): Map<String, AgentSessionRefreshHints> {
+    if (paths.isEmpty()) return emptyMap()
+
+    val result = LinkedHashMap<String, AgentSessionRefreshHints>(paths.size)
+    for (path in paths) {
+      val knownThreadIds = refreshThreadSeedsByPath[path].orEmpty().asSequence().map { seed -> seed.threadId }.toCollection(LinkedHashSet())
+      val visibleEntries = loadEntries(path = path).filterNot { entry -> entry.archived == true }
+      if (visibleEntries.isEmpty()) {
+        continue
+      }
+
+      val rebindCandidates = ArrayList<AgentSessionRebindCandidate>()
+      val activityUpdatesByThreadId = LinkedHashMap<String, AgentSessionThreadActivityUpdate>()
+      val presentationUpdatesByThreadId = LinkedHashMap<String, AgentSessionThreadPresentationUpdate>()
+      for (entry in visibleEntries) {
+        if (entry.sessionId in knownThreadIds) {
+          val thread = entry.toAgentSessionThread(readTracker, eventsAnalyzer.loadAnalysis(entry.sessionId))
+          activityUpdatesByThreadId[entry.sessionId] = AgentSessionThreadActivityUpdate(
+            activityReport = thread.activityReport,
+            updatedAt = thread.updatedAt,
+          )
+          presentationUpdatesByThreadId[entry.sessionId] = AgentSessionThreadPresentationUpdate(
+            title = thread.title,
+            activityReport = thread.activityReport,
+            updatedAt = thread.updatedAt,
+          )
+        }
+        else {
+          val thread = entry.toAgentSessionThread(readTracker, eventsAnalyzer.cachedAnalysis(entry.sessionId))
+          rebindCandidates += AgentSessionRebindCandidate(
+            threadId = thread.id,
+            title = thread.title,
+            updatedAt = thread.updatedAt,
+            activity = thread.activity,
+          )
+        }
+      }
+
+      if (rebindCandidates.isNotEmpty() || activityUpdatesByThreadId.isNotEmpty() || presentationUpdatesByThreadId.isNotEmpty()) {
+        result[path] = AgentSessionRefreshHints(
+          rebindCandidates = rebindCandidates,
+          activityUpdatesByThreadId = activityUpdatesByThreadId,
+          presentationUpdatesByThreadId = presentationUpdatesByThreadId,
+        )
+      }
+    }
+    return result
   }
 
   override suspend fun loadThreadCosts(
@@ -236,8 +355,15 @@ internal class JunieSessionSource(
     }
 
     return threads.associate { thread ->
-      thread.id to costLoader.loadCost(thread.id)
+      thread.id to eventsAnalyzer.loadCost(thread.id, thread.updatedAt)
     }
+  }
+
+  private fun loadEntries(path: String): List<JunieSessionIndexEntry> {
+    val normalizedProjectPath = normalizeJunieProjectPath(path) ?: return emptyList()
+    return sessionIndexStore.loadEntries()
+      .filter { entry -> entry.normalizedProjectDir == normalizedProjectPath }
+      .sortedByDescending(JunieSessionIndexEntry::updatedAt)
   }
 }
 
@@ -257,7 +383,7 @@ private data class JunieSessionArchiveKey(
 )
 
 private fun defaultJunieSessionIndexPath(): Path {
-  return Path.of(System.getProperty("user.home") ?: ".", ".junie", "sessions", "index.jsonl")
+  return Path.of(System.getProperty("user.home") ?: ".", ".junie", "sessions", JUNIE_INDEX_FILE_NAME)
 }
 
 private fun defaultJunieArchiveStatePath(sessionIndexPath: Path): Path {
@@ -353,22 +479,31 @@ private fun List<JunieSessionIndexEntry>.latestBySessionId(): List<JunieSessionI
   }
 }
 
-private fun JunieSessionIndexEntry.toAgentSessionThread(readTracker: Map<String, Long>): AgentSessionThread {
+private fun JunieSessionIndexEntry.toAgentSessionThread(
+  readTracker: Map<String, Long>,
+  eventsAnalysis: JunieSessionEventsAnalysis?,
+): AgentSessionThread {
   return AgentSessionThread(
     id = sessionId,
     title = title,
     updatedAt = updatedAt,
     archived = archived == true,
-    activity = effectiveActivity(readTracker),
+    activity = effectiveActivity(readTracker, eventsAnalysis),
     provider = AgentSessionProvider.JUNIE,
   )
 }
 
-private fun JunieSessionIndexEntry.effectiveActivity(readTracker: Map<String, Long>): AgentThreadActivity {
+private fun JunieSessionIndexEntry.effectiveActivity(
+  readTracker: Map<String, Long>,
+  eventsAnalysis: JunieSessionEventsAnalysis?,
+): AgentThreadActivity {
+  if (eventsAnalysis?.activity == JunieSessionEventsActivity.PROCESSING) {
+    return AgentThreadActivity.PROCESSING
+  }
   return resolveReadTrackedActivity(readTracker = readTracker, threadId = sessionId, updatedAt = updatedAt)
 }
 
-private fun normalizeJunieProjectPath(path: String): String? {
+internal fun normalizeJunieProjectPath(path: String): String? {
   val trimmedPath = path.trim().takeIf { it.isNotEmpty() } ?: return null
   val normalizedPath = normalizeAgentWorkbenchPathOrNull(trimmedPath) ?: return null
   return normalizedPath.trimEnd('/').ifEmpty { "/" }
@@ -384,4 +519,5 @@ private fun String.normalizeJunieSessionTitle(): String? {
 
 private val THREAD_TITLE_WHITESPACE = Regex("\\s+")
 
-private const val JUNIE_AGENT_WORKBENCH_ARCHIVE_STATE_FILE = "agent-workbench-archive-state.jsonl"
+internal const val JUNIE_INDEX_FILE_NAME = "index.jsonl"
+internal const val JUNIE_AGENT_WORKBENCH_ARCHIVE_STATE_FILE = "agent-workbench-archive-state.jsonl"

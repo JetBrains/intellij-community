@@ -5,6 +5,11 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -317,6 +322,300 @@ class JunieSessionSourceTest {
     }
   }
 
+  @Test
+  fun `thread scoped refresh projects running Junie event activity`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-running-status")
+      val index = writeIndex(
+        sessionIndexLine(
+          sessionId = "session-running-status",
+          projectDir = projectDir,
+          taskName = "Running status",
+          updatedAt = 3000L,
+        ),
+      )
+      writeJunieEvents(
+        sessionsRoot = index.parent,
+        sessionId = "session-running-status",
+        sessionA2uxStatusEvent(status = "Sending LLM request"),
+      )
+      val source = JunieSessionSource(sessionIndexPathProvider = { index })
+
+      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      assertThat(listedThreads.single().activity).isEqualTo(AgentThreadActivity.READY)
+
+      val refreshResult = source.refreshThreads(
+        threadScopedRequest(projectDir, "session-running-status")
+      )
+
+      val refreshedThread = refreshResult.partialThreadsByPath.getValue(projectDir.toString()).single()
+      assertThat(refreshedThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(source.listThreadsFromClosedProject(projectDir.toString()).single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+    }
+  }
+
+  @Test
+  fun `thread scoped refresh falls back to read tracker when Junie status is complete`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-complete-status")
+      val index = writeIndex(
+        sessionIndexLine(
+          sessionId = "session-complete-status",
+          projectDir = projectDir,
+          taskName = "Complete status",
+          updatedAt = 3000L,
+        ),
+      )
+      writeJunieEvents(
+        sessionsRoot = index.parent,
+        sessionId = "session-complete-status",
+        sessionA2uxStatusEvent(status = "Sending LLM request"),
+        sessionA2uxStatusEvent(status = null),
+      )
+      val source = JunieSessionSource(sessionIndexPathProvider = { index })
+      source.markThreadAsRead("session-complete-status", 2000L)
+
+      val refreshResult = source.refreshThreads(
+        threadScopedRequest(projectDir, "session-complete-status")
+      )
+
+      val refreshedThread = refreshResult.partialThreadsByPath.getValue(projectDir.toString()).single()
+      assertThat(refreshedThread.activity).isEqualTo(AgentThreadActivity.UNREAD)
+    }
+  }
+
+  @Test
+  fun `prefetch refresh hints returns Junie rebind candidates and activity updates`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-refresh-hints")
+      val index = writeIndex(
+        sessionIndexLine(
+          sessionId = "session-known-hint",
+          projectDir = projectDir,
+          taskName = "Known hint",
+          updatedAt = 3000L,
+        ),
+        sessionIndexLine(
+          sessionId = "session-rebind-hint",
+          projectDir = projectDir,
+          taskName = "Materialized Junie title",
+          updatedAt = 4000L,
+        ),
+      )
+      writeJunieEvents(
+        sessionsRoot = index.parent,
+        sessionId = "session-known-hint",
+        sessionA2uxTerminalEvent(status = "IN_PROGRESS", stepId = "step-1"),
+      )
+      val source = JunieSessionSource(sessionIndexPathProvider = { index })
+
+      val hints = source.prefetchRefreshHints(
+        paths = listOf(projectDir.toString()),
+        refreshThreadSeedsByPath = mapOf(
+          projectDir.toString() to setOf(AgentSessionRefreshThreadSeed(threadId = "session-known-hint"))
+        ),
+      ).getValue(projectDir.toString())
+
+      assertThat(hints.activityUpdatesByThreadId.getValue("session-known-hint").activityReport.rowActivity)
+        .isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(hints.presentationUpdatesByThreadId.getValue("session-known-hint").title).isEqualTo("Known hint")
+      assertThat(hints.rebindCandidates.map { it.threadId }).containsExactly("session-rebind-hint")
+      assertThat(hints.rebindCandidates.single().title).isEqualTo("Materialized Junie title")
+    }
+  }
+
+  @Test
+  fun `load thread costs reuses cached Junie cost until updatedAt changes`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-cost-cache")
+      val index = writeIndex(
+        sessionIndexLine(
+          sessionId = "session-cost-cache",
+          projectDir = projectDir,
+          taskName = "Cost cache",
+          updatedAt = 3000L,
+        ),
+      )
+      writeJunieEvents(
+        sessionsRoot = index.parent,
+        sessionId = "session-cost-cache",
+        sessionA2uxLlmEvent(model = "gpt-4.1-mini-2025-04-14", cost = "0.10"),
+      )
+      val source = JunieSessionSource(sessionIndexPathProvider = { index })
+      val initialThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+
+      assertThat(source.loadThreadCosts(projectDir.toString(), listOf(initialThread))["session-cost-cache"]?.amountUsd)
+        .isEqualByComparingTo("0.10")
+
+      writeJunieEvents(
+        sessionsRoot = index.parent,
+        sessionId = "session-cost-cache",
+        sessionA2uxLlmEvent(model = "gpt-4.1-mini-2025-04-14", cost = "20.00"),
+      )
+      assertThat(source.loadThreadCosts(projectDir.toString(), listOf(initialThread))["session-cost-cache"]?.amountUsd)
+        .isEqualByComparingTo("0.10")
+
+      rewriteIndex(
+        index,
+        sessionIndexLine(
+          sessionId = "session-cost-cache",
+          projectDir = projectDir,
+          taskName = "Cost cache",
+          updatedAt = 4000L,
+        ),
+      )
+      val updatedThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      assertThat(source.loadThreadCosts(projectDir.toString(), listOf(updatedThread))["session-cost-cache"]?.amountUsd)
+        .isEqualByComparingTo("20.00")
+    }
+  }
+
+  @Test
+  fun `load thread costs caches unavailable Junie cost until updatedAt changes`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-missing-cost-cache")
+      val index = writeIndex(
+        sessionIndexLine(
+          sessionId = "session-missing-cost-cache",
+          projectDir = projectDir,
+          taskName = "Missing cost cache",
+          updatedAt = 3000L,
+        ),
+      )
+      val source = JunieSessionSource(sessionIndexPathProvider = { index })
+      val initialThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+
+      assertThat(source.loadThreadCosts(projectDir.toString(), listOf(initialThread)))
+        .containsEntry("session-missing-cost-cache", null)
+
+      writeJunieEvents(
+        sessionsRoot = index.parent,
+        sessionId = "session-missing-cost-cache",
+        sessionA2uxLlmEvent(model = "gpt-4.1-mini-2025-04-14", cost = "0.20"),
+      )
+      assertThat(source.loadThreadCosts(projectDir.toString(), listOf(initialThread)))
+        .containsEntry("session-missing-cost-cache", null)
+
+      rewriteIndex(
+        index,
+        sessionIndexLine(
+          sessionId = "session-missing-cost-cache",
+          projectDir = projectDir,
+          taskName = "Missing cost cache",
+          updatedAt = 4000L,
+        ),
+      )
+      val updatedThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      assertThat(source.loadThreadCosts(projectDir.toString(), listOf(updatedThread))["session-missing-cost-cache"]?.amountUsd)
+        .isEqualByComparingTo("0.20")
+    }
+  }
+
+  @Test
+  fun `Junie backend emits scoped event update for session events file`() {
+    val projectDir = tempDir.resolve("project-backend-events")
+    val index = writeIndex(
+      sessionIndexLine(
+        sessionId = "session-backend-events",
+        projectDir = projectDir,
+        taskName = "Backend events",
+        updatedAt = 3000L,
+      ),
+    )
+    writeJunieEvents(
+      sessionsRoot = index.parent,
+      sessionId = "session-backend-events",
+      sessionA2uxStatusEvent(status = "Sending LLM request"),
+    )
+    val backend = JunieSessionUpdateBackend(
+      sessionIndexStore = JunieSessionIndexStore(sessionIndexPathProvider = { index }),
+      eventsAnalyzer = JunieSessionEventsAnalyzer(sessionsRootPathProvider = { index.parent }),
+    )
+
+    val update = backend.buildSessionUpdate(
+      FileBackedSessionChangeSet(changedPaths = setOf(index.parent.resolve("session-backend-events").resolve("events.jsonl")))
+    )
+
+    assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
+    assertThat(update.scopedPaths).containsExactly(projectDir.toString())
+    assertThat(update.threadIds).containsExactly("session-backend-events")
+    assertThat(update.mayHaveChangedProjectFiles).isFalse()
+  }
+
+  @Test
+  fun `Junie backend emits thread-only hint when event path cannot be mapped to project`() {
+    val index = writeIndex()
+    writeJunieEvents(
+      sessionsRoot = index.parent,
+      sessionId = "session-unmapped-events",
+      sessionA2uxStatusEvent(status = "Sending LLM request"),
+    )
+    val backend = JunieSessionUpdateBackend(
+      sessionIndexStore = JunieSessionIndexStore(sessionIndexPathProvider = { index }),
+      eventsAnalyzer = JunieSessionEventsAnalyzer(sessionsRootPathProvider = { index.parent }),
+    )
+
+    val update = backend.buildSessionUpdate(
+      FileBackedSessionChangeSet(changedPaths = setOf(index.parent.resolve("session-unmapped-events").resolve("events.jsonl")))
+    )
+
+    assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
+    assertThat(update.scopedPaths).isNull()
+    assertThat(update.threadIds).containsExactly("session-unmapped-events")
+  }
+
+  @Test
+  fun `Junie backend emits scoped threads changed for index updates`() {
+    val projectDir = tempDir.resolve("project-backend-index")
+    val index = writeIndex(
+      sessionIndexLine(
+        sessionId = "session-backend-index",
+        projectDir = projectDir,
+        taskName = "Backend index",
+        updatedAt = 3000L,
+      ),
+    )
+    val backend = JunieSessionUpdateBackend(
+      sessionIndexStore = JunieSessionIndexStore(sessionIndexPathProvider = { index }),
+      eventsAnalyzer = JunieSessionEventsAnalyzer(sessionsRootPathProvider = { index.parent }),
+    )
+
+    val update = backend.buildSessionUpdate(FileBackedSessionChangeSet(changedPaths = setOf(index)))
+
+    assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.THREADS_CHANGED)
+    assertThat(update.scopedPaths).containsExactly(projectDir.toString())
+  }
+
+  @Test
+  fun `Junie backend includes explicit changed project file paths from events`() {
+    val projectDir = tempDir.resolve("project-backend-changed-files")
+    val changedFile = projectDir.resolve("src").resolve("Main.kt")
+    val index = writeIndex(
+      sessionIndexLine(
+        sessionId = "session-backend-changed-files",
+        projectDir = projectDir,
+        taskName = "Backend changed files",
+        updatedAt = 3000L,
+      ),
+    )
+    writeJunieEvents(
+      sessionsRoot = index.parent,
+      sessionId = "session-backend-changed-files",
+      sessionA2uxTerminalEvent(status = "COMPLETED", stepId = "step-1", changedPath = "src/Main.kt"),
+    )
+    val backend = JunieSessionUpdateBackend(
+      sessionIndexStore = JunieSessionIndexStore(sessionIndexPathProvider = { index }),
+      eventsAnalyzer = JunieSessionEventsAnalyzer(sessionsRootPathProvider = { index.parent }),
+    )
+
+    val update = backend.buildSessionUpdate(
+      FileBackedSessionChangeSet(changedPaths = setOf(index.parent.resolve("session-backend-changed-files").resolve("events.jsonl")))
+    )
+
+    assertThat(update.mayHaveChangedProjectFiles).isTrue()
+    assertThat(update.changedProjectFilePaths).containsExactly(changedFile.toString())
+  }
+
   private fun writeIndex(vararg lines: String): Path {
     val index = tempDir.resolve(".junie").resolve("sessions").resolve("index.jsonl")
     Files.createDirectories(index.parent)
@@ -347,6 +646,32 @@ class JunieSessionSourceTest {
     return """
       {"kind":"SessionA2uxEvent","event":{"agentEvent":{"kind":"LlmResponseMetadataEvent","modelUsage":[{"model":"$model",${costField}"inputTokens":1,"cacheInputTokens":0,"cacheCreateTokens":0,"outputTokens":1}]}}}
     """.trimIndent()
+  }
+
+  private fun sessionA2uxStatusEvent(status: String?): String {
+    val statusField = status?.let { ",\"status\":\"${it.jsonEscape()}\"" }.orEmpty()
+    return """
+      {"kind":"SessionA2uxEvent","event":{"state":"IN_PROGRESS","agentEvent":{"kind":"AgentCurrentStatusUpdatedEvent"$statusField}}}
+    """.trimIndent()
+  }
+
+  private fun sessionA2uxTerminalEvent(status: String, stepId: String, changedPath: String? = null): String {
+    val changesField = changedPath?.let { ",\"changes\":[{\"path\":\"${it.jsonEscape()}\"}]" }.orEmpty()
+    return """
+      {"kind":"SessionA2uxEvent","event":{"state":"IN_PROGRESS","agentEvent":{"kind":"TerminalBlockUpdatedEvent","stepId":"$stepId","status":"$status"$changesField}}}
+    """.trimIndent()
+  }
+
+  private fun threadScopedRequest(projectDir: Path, threadId: String): AgentSessionSourceRefreshRequest {
+    return AgentSessionSourceRefreshRequest(
+      paths = listOf(projectDir.toString()),
+      threadIds = setOf(threadId),
+      updateEvent = AgentSessionSourceUpdateEvent(
+        type = AgentSessionSourceUpdate.HINTS_CHANGED,
+        scopedPaths = setOf(projectDir.toString()),
+        threadIds = setOf(threadId),
+      ),
+    )
   }
 }
 
