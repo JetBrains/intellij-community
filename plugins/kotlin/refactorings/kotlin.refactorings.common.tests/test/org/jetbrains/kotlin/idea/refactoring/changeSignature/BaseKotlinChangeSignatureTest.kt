@@ -940,6 +940,10 @@ public @interface NotNull {
 
     fun testConvertParameterToReceiverForMember2() = doTest { receiverParameterInfo = newParameters[1] }
 
+    fun testConvertParameterToReceiverForMemberThisArg() = doTest { receiverParameterInfo = newParameters[0] }
+
+    fun testConvertParameterToReceiverForMemberThisArgObject() = doTest { receiverParameterInfo = newParameters[0] }
+
     fun testConvertParameterToReceiverForMemberConflict() = doTestConflict { receiverParameterInfo = newParameters[0] }
 
     fun testConvertReceiverToParameterForMember1() = doTest { receiverParameterInfo = null }

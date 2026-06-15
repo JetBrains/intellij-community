@@ -46,6 +46,8 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.psi.KtThisExpression
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.KtValueArgumentName
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
@@ -176,15 +178,29 @@ internal object KotlinChangeSignatureUsageSearcher {
 
                     val call = expression.resolveToCall()
 
-                    if (call == null && originalReceiverType != null) {
-                        //deleted or changed receiver, must be preserved as simple parameter
+                    if (call == null) {
                         val parentExpression = expression.parent
-                        if (parentExpression is KtThisExpression && parentExpression.parent !is KtDotQualifiedExpression &&
-                            parentExpression.expressionType?.isSubtypeOf(originalReceiverType) == true) {
-                            result.add(
-                                KotlinParameterUsage(parentExpression, originalReceiverInfo!!)
-                            )
-                            return
+                        if (originalReceiverType != null) {
+                            //deleted or changed receiver, must be preserved as simple parameter
+                            if (parentExpression is KtThisExpression && parentExpression.parent !is KtDotQualifiedExpression &&
+                                parentExpression.expressionType?.isSubtypeOf(originalReceiverType) == true) {
+                                result.add(
+                                    KotlinParameterUsage(parentExpression, originalReceiverInfo!!)
+                                )
+                                return
+                            }
+                        } else {
+                            // added new extension receiver: unlabeled `this` referring to the containing class
+                            // will be shadowed by the new receiver and must be qualified with a label.
+                            if (parentExpression is KtThisExpression && parentExpression.labelQualifier == null) {
+                                val containingClass = ktCallableDeclaration.containingClassOrObject
+                                val thisTarget = parentExpression.instanceReference.mainReference.resolve()
+                                val containingClassName = containingClass?.nameAsName
+                                if (containingClass != null && thisTarget == containingClass && containingClassName != null) {
+                                    result.add(KotlinNonQualifiedOuterThisUsage(parentExpression, containingClassName))
+                                    return
+                                }
+                            }
                         }
                     }
 
