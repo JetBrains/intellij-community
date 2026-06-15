@@ -10522,6 +10522,20 @@ http_file(
 )
 
 http_file(
+    name = "com_jetbrains_rd-client-renderdoc-rd-client-2025_2_1_http",
+    downloaded_file_path = "renderdoc-rd-client-2025.2.1.jar",
+    sha256 = "4debff3e7d4e5558741b91383f3c03e9d5f0b6378460ea1481f5bc8e160ec9b8",
+    url = "https://packages.jetbrains.team/maven/p/ij/intellij-private-dependencies/com/jetbrains/rd-client/renderdoc-rd-client/2025.2.1/renderdoc-rd-client-2025.2.1.jar",
+)
+
+http_file(
+    name = "com_jetbrains_rd-client-renderdoc-rd-client-2025_2_1-sources_http",
+    downloaded_file_path = "renderdoc-rd-client-2025.2.1-sources.jar",
+    sha256 = "9040f16ac0d1bdf3a39ddabad2e0bdfc4673b5e16f65a6b07c4779ef27337d6f",
+    url = "https://packages.jetbrains.team/maven/p/ij/intellij-private-dependencies/com/jetbrains/rd-client/renderdoc-rd-client/2025.2.1/renderdoc-rd-client-2025.2.1-sources.jar",
+)
+
+http_file(
     name = "com_jetbrains_rd-rd-core-2026_2_5_http",
     downloaded_file_path = "rd-core-2026.2.5.jar",
     sha256 = "0dc4da676b3e86f6fb30627aaea71f207b27ce268e794d8a7cb3ad76695295ab",

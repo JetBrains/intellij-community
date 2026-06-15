@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="jetbrains.rd.client.renderdoc" type="repository">
+        <properties maven-id="com.jetbrains.rd-client:renderdoc-rd-client:2025.2.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd-client/renderdoc-rd-client/2025.2.1/renderdoc-rd-client-2025.2.1.jar">
+              <sha256sum>4debff3e7d4e5558741b91383f3c03e9d5f0b6378460ea1481f5bc8e160ec9b8</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd-client/renderdoc-rd-client/2025.2.1/renderdoc-rd-client-2025.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd-client/renderdoc-rd-client/2025.2.1/renderdoc-rd-client-2025.2.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>
