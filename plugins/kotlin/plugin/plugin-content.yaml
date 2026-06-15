@@ -151,7 +151,7 @@
   - name: intellij.kotlin.searching.base
   - name: intellij.kotlin.uast
   - name: intellij.kotlin.uast.idea
-  - name: kotlin.refactorings.common
+  - name: intellij.kotlin.refactorings.base
   - name: intellij.kotlin.compilerPlugins.support.bundled
   - name: kotlin.jsr223
   - name: intellij.kotlin.base.serialization

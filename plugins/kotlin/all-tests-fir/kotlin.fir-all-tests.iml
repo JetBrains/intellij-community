@@ -116,6 +116,5 @@
     <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jps.graphImplementationTests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.testFramework" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.refactorings.common.tests" scope="RUNTIME" />
   </component>
 </module>

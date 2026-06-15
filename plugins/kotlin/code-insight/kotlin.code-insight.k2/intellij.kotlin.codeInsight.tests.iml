@@ -66,7 +66,7 @@
     <orderEntry type="module" module-name="intellij.java.impl" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api-impl-base" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.guava" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.refactorings.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.refactorings.base" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.facet" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.utils" scope="TEST" />

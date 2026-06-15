@@ -968,6 +968,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-wizard/idea/intellij.kotlin.projectWizard.idea.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-wizard/idea/intellij.kotlin.projectWizard.idea.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-wizard/maven/intellij.kotlin.projectWizard.maven.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-wizard/maven/intellij.kotlin.projectWizard.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.k2/intellij.kotlin.refactorings.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.k2/intellij.kotlin.refactorings.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.common/intellij.kotlin.refactorings.base.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.common/intellij.kotlin.refactorings.base.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/rename.k2/intellij.kotlin.refactorings.rename.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/rename.k2/intellij.kotlin.refactorings.rename.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/rename.k2/intellij.kotlin.refactorings.rename.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/rename.k2/intellij.kotlin.refactorings.rename.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.tests.k2/intellij.kotlin.refactorings.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.tests.k2/intellij.kotlin.refactorings.tests.iml" />
@@ -2105,8 +2106,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin/common/kotlin.plugin.common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin/common/kotlin.plugin.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/plugin/k2/kotlin.plugin.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/plugin/k2/kotlin.plugin.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/project-wizard/tests/kotlin.project-wizard.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/project-wizard/tests/kotlin.project-wizard.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.common/kotlin.refactorings.common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.common/kotlin.refactorings.common.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.common.tests/kotlin.refactorings.common.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/refactorings/kotlin.refactorings.common.tests/kotlin.refactorings.common.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting/kotlin.scripting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting/kotlin.scripting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting-plugin/kotlin.scripting-plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting-plugin/kotlin.scripting-plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/tests-compose/kotlin.tests-compose.iml" filepath="$PROJECT_DIR$/plugins/kotlin/tests-compose/kotlin.tests-compose.iml" />

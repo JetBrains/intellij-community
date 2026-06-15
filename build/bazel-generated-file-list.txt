@@ -1400,7 +1400,6 @@ plugins/kotlin/project-wizard/idea
 plugins/kotlin/project-wizard/maven
 plugins/kotlin/project-wizard/tests
 plugins/kotlin/refactorings/kotlin.refactorings.common
-plugins/kotlin/refactorings/kotlin.refactorings.common.tests
 plugins/kotlin/refactorings/kotlin.refactorings.k2
 plugins/kotlin/refactorings/kotlin.refactorings.tests.k2
 plugins/kotlin/refactorings/rename.k2

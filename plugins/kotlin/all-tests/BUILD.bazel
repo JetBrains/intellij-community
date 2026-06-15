@@ -101,7 +101,6 @@ jvm_library(
         "//plugins/kotlin/j2k/shared/tests",
         "//plugins/kotlin/jps/graphImplementationTests",
         "//plugins/kotlin/jvm-debugger/testFramework",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common.tests:kotlin-refactorings-common-tests",
     ],
 )
 
@@ -250,7 +249,6 @@ jvm_library(
         "//plugins/kotlin/j2k/shared/tests:tests_test_lib",
         "//plugins/kotlin/jps/graphImplementationTests:graphImplementationTests_test_lib",
         "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.common.tests:kotlin-refactorings-common-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.tests` end

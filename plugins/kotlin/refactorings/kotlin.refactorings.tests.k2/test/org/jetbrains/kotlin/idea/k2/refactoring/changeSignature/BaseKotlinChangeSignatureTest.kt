@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.refactoring.changeSignature
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.TargetElementUtil
@@ -33,6 +33,10 @@ import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.base.util.allScope
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableChangeInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableMethodDescriptor
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinModifiableParameterInfo
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinValVar
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.test.Diagnostic
 import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
@@ -55,9 +59,12 @@ import org.jetbrains.kotlin.utils.sure
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
+import kotlin.collections.flatMap
 import kotlin.reflect.KClass
 import kotlin.reflect.full.allSuperclasses
 import kotlin.reflect.full.declaredMemberFunctions
+import kotlin.text.removePrefix
+import kotlin.text.startsWith
 
 @RunWith(JUnit38ClassRunner::class)
 abstract class BaseKotlinChangeSignatureTest<C: KotlinModifiableChangeInfo<P>, P: KotlinModifiableParameterInfo, TypeInfo, V, MethodDescriptor: KotlinModifiableMethodDescriptor<P, V>> : KotlinLightCodeInsightFixtureTestCase() {
