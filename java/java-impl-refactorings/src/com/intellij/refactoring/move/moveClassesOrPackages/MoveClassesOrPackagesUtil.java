@@ -249,7 +249,7 @@ public final class MoveClassesOrPackagesUtil {
         documentManager.commitDocument(document);
       }
 
-      file = moveDestination.findFile(file.getName());
+      file = MoveFileInvalidationStrategy.invalidate(moveDestination, file);
 
     }
 

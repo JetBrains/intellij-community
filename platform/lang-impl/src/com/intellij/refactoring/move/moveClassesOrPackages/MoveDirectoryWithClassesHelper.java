@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -137,11 +137,11 @@ public abstract class MoveDirectoryWithClassesHelper {
 
       MoveFileHandler.forElement(psiFile).prepareMovedFile(psiFile, moveDestination, oldToNewElementsMapping);
 
-      PsiFile moving = moveDestination.findFile(psiFile.getName());
+      PsiFile moving = MoveFileInvalidationStrategy.invalidate(moveDestination, psiFile);
       if (moving == null) {
         MoveFilesOrDirectoriesUtil.doMoveFile(psiFile, moveDestination);
       }
-      moving = moveDestination.findFile(psiFile.getName());
+      moving = MoveFileInvalidationStrategy.invalidate(moveDestination, psiFile);
       movedFiles.add(moving);
       listener.elementMoved(psiFile);
       return true;

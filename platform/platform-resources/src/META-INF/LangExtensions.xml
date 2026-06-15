@@ -1226,6 +1226,7 @@
 
     <refactoring.moveDirectoryWithClassesHelper
       implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper$Default" order="last"/>
+    <refactoring.moveFileInvalidationStrategy implementation="com.intellij.refactoring.move.moveClassesOrPackages.DefaultMoveFileInvalidationStrategy"/>
 
     <defaultHighlightingSettingProvider id="GeneratedSourcesHighlightingSettingProvider"
                                         implementation="com.intellij.codeInsight.daemon.impl.analysis.GeneratedSourcesHighlightingSettingProvider"/>
