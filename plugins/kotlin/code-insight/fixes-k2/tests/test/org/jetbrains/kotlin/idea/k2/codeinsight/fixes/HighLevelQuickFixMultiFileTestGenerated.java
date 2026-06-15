@@ -2821,4 +2821,17 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             }
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/createContextParameterFromNamedArugment/multiFile")
+    public static class MultiFile extends AbstractHighLevelQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("crossFile.before.Main.kt")
+        public void testCrossFile() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/createContextParameterFromNamedArugment/multiFile/crossFile.before.Main.kt");
+        }
+    }
 }

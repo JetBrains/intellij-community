@@ -1,0 +1,15 @@
+// "Add context parameter to function" "true"
+// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
+// K2_ERROR: No parameter with name 'callback' found.
+// K2_AFTER_ERROR: No context argument for 'callback: (Int) -> String' found.
+// K2_AFTER_ERROR: No parameter with name 'callback' found.
+
+context(callback: (Int) -> String)
+fun f1() {
+}
+
+fun fdemo() {
+    f1(callback = { x: Int -> x.toString() })
+}
+
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.AddContextParameterFix$ForCalledFunction

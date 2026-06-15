@@ -5,18 +5,22 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.render
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class AddContextParameterFix(
+sealed class AddContextParameterFix(
     element: KtElement,
-    private val contextParameters: ContextParameter,
+    private val contextParameter: ContextParameter,
     private val targetFunctionPointer: SmartPsiElementPointer<KtNamedFunction>? = null,
 ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtElement>(element) {
 
@@ -25,36 +29,64 @@ class AddContextParameterFix(
         fun render(): String = "${name?.render() ?: "_"}: $type"
     }
 
+    protected abstract fun targetFunction(element: KtElement, updater: ModPsiUpdater): KtNamedFunction?
+
+    /** Whether to move/select the caret after modification. Useful for in-scope edits. */
+    protected open val updatesCaret: Boolean get() = true
+
     override fun invoke(context: ActionContext, element: KtElement, updater: ModPsiUpdater) {
-        val targetFunction = targetFunctionPointer?.element?.let(updater::getWritable)
-            ?: element.getStrictParentOfType<KtNamedFunction>()
-            ?: return
+        val targetFunction = targetFunction(element, updater) ?: return
 
         val psiFactory = KtPsiFactory(context.project)
         val existingParameters = targetFunction.contextParameters
-        val existingText = existingParameters.joinToString(", ") { it.text }
-        val newParam = "_: ${contextParameters.type}"
-        val contextClause = if (existingText.isEmpty()) "context($newParam)" else "context($existingText, $newParam)"
+        val contextClause = existingParameters.firstOrNull()?.parent
 
-        val newFunctionText = if (existingParameters.isNotEmpty()) {
-            val oldContextEnd =
-                existingParameters.last().parent.textRange.endOffset - targetFunction.textRange.startOffset
-            val rest = targetFunction.text.substring(oldContextEnd).trimStart()
-            "$contextClause $rest"
+        val addedParameter: KtParameter = if (contextClause != null) {
+            val rParen = contextClause.node.findChildByType(KtTokens.RPAR)?.psi ?: return
+            val hasTrailingComma = PsiTreeUtil.skipWhitespacesAndCommentsBackward(rParen)
+                ?.node?.elementType == KtTokens.COMMA
+            if (!hasTrailingComma) {
+                contextClause.addBefore(psiFactory.createComma(), rParen)
+            }
+            contextClause.addBefore(psiFactory.createParameter(contextParameter.render()), rParen) as KtParameter
         } else {
-            "$contextClause\n${targetFunction.text}"
+            val newFunction = psiFactory.createFunction(
+                "context(${contextParameter.render()})\n${targetFunction.text}"
+            )
+            val replaced = targetFunction.replace(newFunction) as KtNamedFunction
+            replaced.contextParameters.first()
         }
 
-        val newFunction = psiFactory.createFunction(newFunctionText)
-        val replacedFunction = targetFunction.replace(newFunction) as KtNamedFunction
+        shortenReferences(addedParameter.containingFile as KtElement)
 
-        if (targetFunctionPointer == null) {
-            val newParam = replacedFunction.contextParameters.getOrNull(existingParameters.size) ?: return
-            updater.select(newParam.nameIdentifier ?: return)
+        if (updatesCaret) {
+            updater.select(addedParameter.nameIdentifier ?: return)
         }
     }
 
     override fun getFamilyName(): @IntentionFamilyName String =
         KotlinBundle.message("fix.add.context.parameter.family")
 
+    class ForEnclosingFunction(
+        element: KtElement,
+        contextParameter: ContextParameter,
+    ) : AddContextParameterFix(element, contextParameter) {
+
+        override fun targetFunction(element: KtElement, updater: ModPsiUpdater): KtNamedFunction? =
+            element.getStrictParentOfType<KtNamedFunction>()
+    }
+
+    /** Adds context parameters to a specific [targetFunctionPointer].
+     *  The target is in another location.*/
+    class ForCalledFunction(
+        element: KtElement,
+        contextParameter: ContextParameter,
+        private val targetFunctionPointer: SmartPsiElementPointer<KtNamedFunction>,
+    ) : AddContextParameterFix(element, contextParameter) {
+
+        override val updatesCaret: Boolean get() = false
+
+        override fun targetFunction(element: KtElement, updater: ModPsiUpdater): KtNamedFunction? =
+            targetFunctionPointer.element?.let(updater::getWritable)
+    }
 }
