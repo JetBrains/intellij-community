@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.impl.FilePropertyPusher
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
@@ -296,11 +297,15 @@ abstract class PyCodeInsightTestCase {
     @Language("Python") fileContent: String,
     vararg otherFiles: Pair<String, String>,
   ) {
+    // using the shared `myFixture.projectDisposable` would accumulate flag modifications
+    // across all tests and dispose them only at @AfterAll, which can leave them non-nested and
+    // trip RecursionManager's "Non-nested assertion flag modifications" check.
+    val recursionFlagDisposable = Disposer.newDisposable("PyCodeInsightTestCase recursion-prevention flag")
     if (options.assertRecursionPrevention) {
-      RecursionManager.assertOnRecursionPrevention(myFixture.projectDisposable)
+      RecursionManager.assertOnRecursionPrevention(recursionFlagDisposable)
     }
     else {
-      RecursionManager.disableAssertOnRecursionPrevention(myFixture.projectDisposable)
+      RecursionManager.disableAssertOnRecursionPrevention(recursionFlagDisposable)
     }
     setLanguageLevel(options.languageLevel)
 
@@ -314,6 +319,7 @@ abstract class PyCodeInsightTestCase {
     finally {
       setLanguageLevel(null)
       anyTypeKey.setValue(oldAnyType)
+      Disposer.dispose(recursionFlagDisposable)
       testCallCount++
     }
   }

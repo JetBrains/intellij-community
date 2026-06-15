@@ -94,7 +94,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
     fun `empty Literal subscript type comment degrades to inferred`() = test("""
       from typing_extensions import Literal
       expr = 20  # type: Literal[]
-      # │                         └ ERROR Expression expected
+      # │                        └ ERROR Expression expected
       # └ TYPE int
       """)
 
