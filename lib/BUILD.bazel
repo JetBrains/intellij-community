@@ -13427,6 +13427,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "com.jetbrains.rd-client/renderdoc-rd-client-2025.2.1.jar_copy",
+    src = "@com_jetbrains_rd-client-renderdoc-rd-client-2025_2_1_http//file",
+    out = "com.jetbrains.rd-client/renderdoc-rd-client-2025.2.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-rd-client-renderdoc-jetbrains-rd-client-renderdoc",
+    jar = "@com_jetbrains_rd-client-renderdoc-rd-client-2025_2_1_http//file",
+    source_jar = "@com_jetbrains_rd-client-renderdoc-rd-client-2025_2_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "com.jetbrains.rd/rd-core-2026.2.4.jar_copy",
     src = "@com_jetbrains_rd-rd-core-2026_2_4_http//file",
     out = "com.jetbrains.rd/rd-core-2026.2.4.jar",
