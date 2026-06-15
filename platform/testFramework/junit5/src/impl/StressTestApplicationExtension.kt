@@ -37,6 +37,21 @@ class StressTestApplicationExtension : InvocationInterceptor {
   }
 
   /**
+   * intercept `@TestTemplate`-based invocations (e.g. `@ParameterizedTest`, `@RepeatedTest`), which JUnit5 dispatches through
+   * [interceptTestTemplateMethod] rather than [interceptTestMethod]. Without this override, parameterized stress tests would run
+   * with [ApplicationManagerEx.isInStressTest]`=false`.
+   */
+  override fun interceptTestTemplateMethod(
+    invocation: InvocationInterceptor.Invocation<Void>,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext?,
+  ) {
+    ApplicationManagerEx.runInStressTest<RuntimeException>(true) {
+      super.interceptTestTemplateMethod(invocation, invocationContext, extensionContext)
+    }
+  }
+
+  /**
    * intercept creation of a factory method, and wrap its evaluation return value with [ApplicationManagerEx.runInStressTest] so that
    * all returned [DynamicTest]s are run in a stress mode too.
    * */

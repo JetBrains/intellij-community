@@ -546,6 +546,11 @@ Most likely there was an uncaught exception in asynchronous execution that resul
   }
 
   protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    // Toggle the stress-test flag here too (not only in run(TestResult)): JUnit4 reaches runBare() without calling it.
+    ApplicationManagerEx.runInStressTest(isStressTest(), () -> doRunBare(testRunnable));
+  }
+
+  private void doRunBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     ThrowableRunnable<Throwable> wrappedRunnable = wrapTestRunnable(testRunnable);
     if (runInDispatchThread()) {
       try {
