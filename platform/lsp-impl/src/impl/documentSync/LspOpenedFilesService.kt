@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClientDescriptor
-import com.intellij.platform.lsp.api.LspClientProvider
+import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
@@ -42,7 +42,7 @@ internal class LspOpenedFilesService(private val project: Project) {
    */
   fun processOpenedFiles(files: Collection<VirtualFile>) {
     if (!TrustedProjects.isProjectTrusted(project)) return
-    if (!LspClientProvider.hasAnyExtensions()) return
+    if (!LspIntegrationProvider.hasAnyExtensions()) return
 
     val added = files.filter { it.isInLocalFileSystem }.let { openedFilesToHandle.addAll(it) }
     if (added) scheduleOpenedFilesProcessing()
@@ -52,7 +52,7 @@ internal class LspOpenedFilesService(private val project: Project) {
     class OpenedFilesData {
       val handledFiles: MutableSet<VirtualFile> = HashSet()
       val clientsToSendDidOpen: MultiMap<LspClientImpl, VirtualFile> = MultiMap()
-      val newClientsToStart: MutableCollection<Pair<Class<out LspClientProvider>, LspClientDescriptor>> = mutableListOf()
+      val newClientsToStart: MutableCollection<Pair<Class<out LspIntegrationProvider>, LspClientDescriptor>> = mutableListOf()
     }
 
     val lspServerManager = LspClientManagerImpl.getInstanceImpl(project)
@@ -63,8 +63,8 @@ internal class LspOpenedFilesService(private val project: Project) {
         data.handledFiles.addAll(openedFilesToHandle)
       }
 
-      for (provider in LspClientProvider.getAllExtensions()) {
-        val providerClass: Class<out LspClientProvider> = provider.javaClass
+      for (provider in LspIntegrationProvider.getAllExtensions()) {
+        val providerClass: Class<out LspIntegrationProvider> = provider.javaClass
         val clientsForProvider = lspServerManager.getClients(providerClass)
         var fileWithinServerRootsAndSupported = false
 

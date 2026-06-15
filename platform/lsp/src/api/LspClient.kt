@@ -17,12 +17,12 @@ import java.util.concurrent.CompletableFuture
  * To get an instance of [LspClient] use [LspClientManager.getClients]
  */
 interface LspClient {
-  val providerClass: Class<out LspClientProvider>
+  val providerClass: Class<out LspIntegrationProvider>
   val project: Project
 
   /**
    * An [LspClientDescriptor] that is used to start and control the behavior of this [LspClient].
-   * The returned object is exactly the one that the plugin passed to [LspClientProvider.LspClientStarter.ensureClientStarted].
+   * The returned object is exactly the one that the plugin passed to [LspIntegrationProvider.LspClientStarter.ensureClientStarted].
    */
   val descriptor: LspClientDescriptor
 

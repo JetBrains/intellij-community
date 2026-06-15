@@ -126,8 +126,8 @@
   </applicationListeners>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.platform.lsp.clientProvider"
-                    interface="com.intellij.platform.lsp.api.LspClientProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.lsp.integrationProvider"
+                    interface="com.intellij.platform.lsp.api.LspIntegrationProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.lsp.serverSupportProvider"
                     interface="com.intellij.platform.lsp.api.LspServerSupportProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.lsp.documentAdapter"
