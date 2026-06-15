@@ -73,7 +73,7 @@ The global prompt opens a project-scoped popup for starting a new task or sendin
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Extension tab auto-selection is opt-in through `AgentPromptPaletteExtension.shouldAutoSelect(contextItems)` and applies only to the auto-select action. Active extension tabs own their submit action and bypass provider/options routing, except that an extension may opt back into showing the provider selector through `AgentPromptPaletteExtension.showsProviderSelector()` so the user can pick which provider its submit action runs; per-task model/reasoning controls stay hidden.
+- Extension tab auto-selection is opt-in through `AgentPromptPaletteExtension.shouldAutoSelect(contextItems)` and applies only to the auto-select action. Active extension tabs own their submit action and bypass provider/options routing, except that an extension may opt back into the provider selector through `AgentPromptPaletteExtension.showsProviderSelector()` and into the per-task model/reasoning controls through `AgentPromptPaletteExtension.showsGenerationControls()`. The chosen provider, generation settings, and model catalog are forwarded to the submit action through the data context.
   [@test] ../../prompt/ui/testSrc/AgentPromptExtensionActionDataContextTest.kt
 
 - Prompt draft persistence must not serialize manual context items. Successful submit or explicit draft clear clears removed-auto-context and manual-context runtime state.

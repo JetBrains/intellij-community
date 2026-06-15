@@ -598,7 +598,7 @@ internal class AgentPromptPaletteSessionController(
     providerSelector.setProviderOptionsVisible(isStandardTab)
     generationSettingsController.setControlsVisibility(
       providerSelectorVisible = isNewTaskLaunch || extensionTab?.extension?.showsProviderSelector() == true,
-      generationControlsVisible = isNewTaskLaunch,
+      generationControlsVisible = isNewTaskLaunch || extensionTab?.extension?.showsGenerationControls() == true,
     )
     syncContainerModeState()
   }

@@ -65,6 +65,14 @@ interface AgentPromptPaletteExtension {
   fun showsProviderSelector(): Boolean = false
 
   /**
+   * Returns `true` if the prompt palette should also show the per-task generation controls (model and
+   * reasoning effort) while this tab is active, matching the standard `New Task` launch controls. Requires
+   * [showsProviderSelector] so a provider is chosen for the model catalog. The selected settings are forwarded
+   * to the submit action through the data context.
+   */
+  fun showsGenerationControls(): Boolean = false
+
+  /**
    * Returns a custom footer hint to display when this tab is active,
    * or `null` to use the default hint.
    */

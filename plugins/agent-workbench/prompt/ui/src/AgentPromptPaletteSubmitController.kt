@@ -129,10 +129,13 @@ internal class AgentPromptPaletteSubmitController(
             contextItems = contextSelection.items,
             contextEnvelopeSummary = contextSelection.summary,
           )
+          val showsGenerationControls = extensionTab.extension.showsGenerationControls()
           val dataContext = buildExtensionActionDataContext(
             baseDataContext = baseDataContext,
             selectedProviderId = providerSelector.selectedProvider?.bridge?.provider?.value,
             messageRequest = messageRequest,
+            generationSettings = if (showsGenerationControls) generationSettingsProvider() else null,
+            generationModelCatalog = if (showsGenerationControls) generationModelCatalogProvider() else emptyList(),
           )
           val event = AnActionEvent.createEvent(action, dataContext, null, invocationData.actionPlace ?: "", ActionUiKind.NONE, null)
           action.actionPerformed(event)

@@ -3,7 +3,12 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_MESSAGE_REQUEST_DATA_KEY
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_SELECTED_PROVIDER_ID_DATA_KEY
+import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_GENERATION_MODEL_CATALOG_DATA_KEY
+import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_GENERATION_SETTINGS_DATA_KEY
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.ui.context.buildExtensionActionDataContext
 import com.intellij.openapi.actionSystem.DataKey
@@ -61,5 +66,22 @@ class AgentPromptExtensionActionDataContextTest {
 
     assertNull(AGENT_PROMPT_SELECTED_PROVIDER_ID_DATA_KEY.getData(enrichedDataContext))
     assertNull(AGENT_PROMPT_MESSAGE_REQUEST_DATA_KEY.getData(enrichedDataContext))
+    assertNull(AGENT_PROMPT_GENERATION_SETTINGS_DATA_KEY.getData(enrichedDataContext))
+  }
+
+  @Test
+  fun addsGenerationSettingsAndCatalogToExtensionActionDataContext() {
+    val generationSettings = AgentPromptGenerationSettings(modelId = "gpt-5.1-codex", reasoningEffort = AgentPromptReasoningEffort.HIGH)
+    val catalog = listOf(AgentPromptGenerationModel(id = "gpt-5.1-codex", displayName = "GPT-5.1 Codex"))
+
+    val enrichedDataContext = buildExtensionActionDataContext(
+      baseDataContext = SimpleDataContext.builder().build(),
+      selectedProviderId = "codex",
+      generationSettings = generationSettings,
+      generationModelCatalog = catalog,
+    )
+
+    assertEquals(generationSettings, AGENT_PROMPT_GENERATION_SETTINGS_DATA_KEY.getData(enrichedDataContext))
+    assertEquals(catalog, AGENT_PROMPT_GENERATION_MODEL_CATALOG_DATA_KEY.getData(enrichedDataContext))
   }
 }

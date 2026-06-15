@@ -100,6 +100,8 @@ internal class AIReviewPaletteExtension : AgentPromptPaletteExtension {
 
   override fun showsProviderSelector(): Boolean = true
 
+  override fun showsGenerationControls(): Boolean = true
+
   override fun getFooterHint(): String = AIReviewBundle.message("popup.palette.footer.hint.ai.review")
 
   private fun isReviewContext(item: AgentPromptContextItem): Boolean {

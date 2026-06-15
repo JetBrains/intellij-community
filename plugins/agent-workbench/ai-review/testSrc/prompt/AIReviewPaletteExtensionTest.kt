@@ -56,6 +56,10 @@ class AIReviewPaletteExtensionTest : BasePlatformTestCase() {
     assertTrue(extension.showsProviderSelector())
   }
 
+  fun `test ai review shows generation controls so model and effort can be adjusted`() {
+    assertTrue(extension.showsGenerationControls())
+  }
+
   fun `test ai review uses default draft kind when commit issues are absent`() {
     val draftKind = withContextItems(emptyList()) {
       extension.getInitialPrompt(project).kind ?: error("Expected default draft kind")

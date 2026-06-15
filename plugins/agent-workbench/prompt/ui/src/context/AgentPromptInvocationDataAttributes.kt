@@ -3,6 +3,10 @@ package com.intellij.agent.workbench.prompt.ui.context
 
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_MESSAGE_REQUEST_DATA_KEY
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_SELECTED_PROVIDER_ID_DATA_KEY
+import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_GENERATION_MODEL_CATALOG_DATA_KEY
+import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_GENERATION_SETTINGS_DATA_KEY
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.openapi.actionSystem.CustomizedDataContext
@@ -21,8 +25,10 @@ internal fun buildExtensionActionDataContext(
     baseDataContext: DataContext,
     selectedProviderId: String?,
     messageRequest: AgentPromptInitialMessageRequest? = null,
+    generationSettings: AgentPromptGenerationSettings? = null,
+    generationModelCatalog: List<AgentPromptGenerationModel> = emptyList(),
 ): DataContext {
-    if (selectedProviderId.isNullOrBlank() && messageRequest == null) {
+    if (selectedProviderId.isNullOrBlank() && messageRequest == null && generationSettings == null) {
         return baseDataContext
     }
 
@@ -32,6 +38,10 @@ internal fun buildExtensionActionDataContext(
         }
         if (messageRequest != null) {
             sink[AGENT_PROMPT_MESSAGE_REQUEST_DATA_KEY] = messageRequest
+        }
+        if (generationSettings != null) {
+            sink[AGENT_PROMPT_GENERATION_SETTINGS_DATA_KEY] = generationSettings
+            sink[AGENT_PROMPT_GENERATION_MODEL_CATALOG_DATA_KEY] = generationModelCatalog
         }
     }
 }
