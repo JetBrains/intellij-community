@@ -90,17 +90,19 @@ class NotebookVisibleCellsBatchUpdater(
       visibleCells.add(cell)
     }
 
-    // no-op?
-    if (visibleCells == prevVisibleCells) return
-    val newInvisible = prevVisibleCells - visibleCells
-    val newVisible = visibleCells - prevVisibleCells
-    newInvisible.forEach {
-      //it.isInViewportRectangle.set(false)
-    }
-    newVisible.forEach {
-      //it.isInViewportRectangle.set(true)
+    if (visibleCells != prevVisibleCells) {
+      val newInvisible = prevVisibleCells - visibleCells
+      val newVisible = visibleCells - prevVisibleCells
+      newInvisible.forEach {
+        //it.isInViewportRectangle.set(false)
+      }
+      newVisible.forEach {
+        //it.isInViewportRectangle.set(true)
+      }
     }
 
+    // Output visibility can change while the visible cell set stays the same, for example when a lazy image output is first
+    // represented by a 1px placeholder in an already-visible cell.
     visibleCells.forEach { it.updateIfInVisibleRect() }
     prevVisibleCells = visibleCells
   }
