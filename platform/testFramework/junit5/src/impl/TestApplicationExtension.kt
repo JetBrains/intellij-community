@@ -13,6 +13,7 @@ import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
 import com.intellij.testFramework.common.cleanApplicationState
 import com.intellij.testFramework.common.disposeTestApplication
 import com.intellij.testFramework.common.initTestApplication
+import com.intellij.testFramework.common.isApplicationInitialized
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitForAppLeakingThreads
 import com.intellij.util.ui.EDT
@@ -25,6 +26,7 @@ import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import java.lang.AutoCloseable
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration.Companion.seconds
 
 @TestOnly
@@ -48,8 +50,20 @@ fun ExtensionContext.testApplication(): Result<Unit> {
 }
 
 @TestOnly
+fun testApplicationToken(): AutoCloseable = TestApplicationResource(initTestApplication())
+
+
+private val useCount = AtomicInteger(0)
+
+@TestOnly
 private class TestApplicationResource(val initializationResult: Result<Unit>) : AutoCloseable {
+  init {
+    useCount.incrementAndGet()
+  }
   override fun close() {
+    if (useCount.decrementAndGet() != 0 || !isApplicationInitialized) {
+      return
+    }
     check(!EDT.isCurrentThreadEdt())
     if (!initializationResult.isSuccess) {
       return
