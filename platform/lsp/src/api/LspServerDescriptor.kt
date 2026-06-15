@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lsp.api
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.OSProcessHandler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
@@ -21,6 +22,7 @@ import com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionSupport
 import com.intellij.platform.lsp.api.customization.LspHoverSupport
 import com.intellij.platform.lsp.api.customization.LspSemanticTokensSupport
 import com.intellij.platform.lsp.api.customization.defaultLspCustomization
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.ApiStatus
 
 @Deprecated(
@@ -33,6 +35,8 @@ abstract class LspServerDescriptor protected constructor(
   vararg roots: VirtualFile,
 ) : LspClientDescriptor(project, presentableName, *roots) {
 
+  @RequiresBackgroundThread
+  @Throws(ExecutionException::class)
   override fun startServerProcess(): OSProcessHandler {
     return super.startServerProcess() as OSProcessHandler
   }
