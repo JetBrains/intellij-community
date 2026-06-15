@@ -6,7 +6,7 @@ import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import org.eclipse.lsp4j.InitializeResult
 
 /**
- * Plugins can register their [LspServerListener] by overriding [LspServerDescriptor.lspServerListener].
+ * Plugins can register their [LspServerListener] by overriding [LspClientDescriptor.lspServerListener].
  */
 interface LspServerListener {
   /**

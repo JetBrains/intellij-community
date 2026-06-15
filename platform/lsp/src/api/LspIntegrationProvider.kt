@@ -46,7 +46,7 @@ interface LspIntegrationProvider {
   }
 
   /**
-   * This function is a convenient way for the `LspIntegrationProvider` implementation to start an LSP server lazily, only when
+   * This function is a convenient way for the `LspIntegrationProvider` implementation to start an LSP client lazily, only when
    * needed. `fileOpened()` is invoked each time when a file is opened in the editor, unless an already running
    * [LspClient] exists and the opened file is within the server roots.
    *
@@ -62,14 +62,14 @@ interface LspIntegrationProvider {
    * Note that calling [LspClientStarter.ensureClientStarted] after [fileOpened] function has exited won't have any effect.
    * So, plugins should not store references to [LspClientStarter] instances.
    *
-   * Plugins may want to start an LSP server not on 'file opened in the editor' event but on some other event, for example, on enabling a
+   * Plugins may want to start an LSP client not on 'file opened in the editor' event but on some other event, for example, on enabling a
    * plugin-specific framework support in Settings. In this case, plugins can call [LspClientManager.startClientsIfNeeded] function.
    *
-   * Some plugins may want to perform a time-consuming task before starting an LSP server,
+   * Some plugins may want to perform a time-consuming task before starting an LSP client,
    * for example, download server binaries from the internet.
    * [fileOpened] function implementation shouldn't be time-consuming, as it may freeze UI.
    * Here's an example of running a time-consuming task in a background thread,
-   * and starting an LSP server later using [LspClientManager.startClientsIfNeeded]:
+   * and starting an LSP client later using [LspClientManager.startClientsIfNeeded]:
    *
    *    override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspIntegrationProvider.LspClientStarter) {
    *      val fooService = FooService.getInstance(project)
@@ -104,7 +104,7 @@ interface LspIntegrationProvider {
     LspClientManager.getInstance(project).getClients(javaClass).mapNotNull { createWidgetItem(it, currentFile) }
 
   /**
-   * Creates an LSP server-specific item in the 'Language Services' status bar widget.
+   * Creates an LSP client-specific item in the 'Language Services' status bar widget.
    * The plugins are strongly recommended to override this function to have the correct icon
    * and the 'Open plugin page in Settings' action on click.
    *
