@@ -10,7 +10,9 @@ import com.jetbrains.python.inspections.PyPropertyDefinitionInspection;
 import com.jetbrains.python.inspections.PyShadowingBuiltinsInspection;
 import com.jetbrains.python.inspections.PyStatementEffectInspection;
 import com.jetbrains.python.inspections.PyTypeCheckerInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedFunctionInspection;
 import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +22,8 @@ public final class PyiVisitorFilter implements PythonVisitorFilter {
 
   private static final @NotNull Set<Class<?>> disabledVisitors = ImmutableSet.of(
     PyUnusedLocalInspection.class,
+    PyUnusedParameterInspection.class,
+    PyUnusedFunctionInspection.class,
     PyStatementEffectInspection.class,
     PyCompatibilityInspection.class,
     PyMissingOrEmptyDocstringInspection.class,
