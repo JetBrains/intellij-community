@@ -218,8 +218,8 @@ private object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
       if (retryAttempt < CODEX_PLAN_MODE_CONFIRMATION_RETRY_LIMIT) {
         return AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(calculateCodexPlanModeRetryBackoffMs(retryAttempt))
       }
-      LOG.debug("Codex plan mode was not confirmed after ${retryAttempt + 1} attempts; continuing with prompt dispatch")
-      return AgentChatInitialMessageRetryDecision.ProceedAndResetReadiness
+      LOG.debug("Codex plan mode was not confirmed after ${retryAttempt + 1} attempts; stopping prompt dispatch")
+      return AgentChatInitialMessageRetryDecision.Stop
     }
     if (dispatch.completionPolicy != AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY) {
       return AgentChatInitialMessageRetryDecision.PROCEED

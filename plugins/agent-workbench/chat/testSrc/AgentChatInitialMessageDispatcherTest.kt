@@ -77,7 +77,7 @@ class AgentChatInitialMessageDispatcherTest {
   }
 
   @Test
-  fun codexPlanModeEnsureFailureFallsBackToPromptSubmission(): Unit = timeoutRunBlocking {
+  fun codexPlanModeEnsureFailureStopsPromptSubmission(): Unit = timeoutRunBlocking {
     val file = createFile(
       listOf(
         terminalPlanModeStep(
@@ -105,11 +105,17 @@ class AgentChatInitialMessageDispatcherTest {
       tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot -> snapshots.add(snapshot) },
     ).schedule(tab)
 
-    waitForCondition { file.initialMessageSent }
-    assertThat(tab.events).containsExactly("backtab", "backtab", "backtab", "text:Refactor this")
-    assertThat(file.initialMessageDispatchStepIndex).isEqualTo(2)
-    assertThat(snapshots).hasSize(2)
-    assertThat(snapshots.last().runtime.initialMessageSent).isTrue()
+    waitForCondition { snapshots.isNotEmpty() && !file.hasPendingInitialMessageForDispatch() }
+    assertThat(tab.events).containsExactly("backtab", "backtab", "backtab")
+    assertThat(file.initialMessageDispatchSteps).isEmpty()
+    assertThat(file.initialMessageDispatchStepIndex).isZero()
+    assertThat(file.initialMessageToken).isNull()
+    assertThat(file.initialMessageSent).isFalse()
+    assertThat(snapshots).hasSize(1)
+    assertThat(snapshots.last().runtime.initialMessageDispatchSteps).isEmpty()
+    assertThat(snapshots.last().runtime.initialMessageDispatchStepIndex).isZero()
+    assertThat(snapshots.last().runtime.initialMessageToken).isNull()
+    assertThat(snapshots.last().runtime.initialMessageSent).isFalse()
   }
 
   @Test

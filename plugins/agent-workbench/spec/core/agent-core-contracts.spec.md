@@ -61,7 +61,7 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Post-start prompt dispatch is terminal-readiness-gated. Terminal plan-mode dispatch first ensures the TUI is visibly in Plan mode via the BackTab terminal sequence, then sends the plain prompt body; if Plan mode cannot be confirmed, the prompt body is not submitted.
+- Post-start prompt dispatch is terminal-readiness-gated. Terminal plan-mode dispatch first ensures the TUI is visibly in Plan mode via the BackTab terminal sequence, then sends the plain prompt body; if Plan mode cannot be confirmed, the prompt body is not submitted and dispatch must not fall back to standard-mode execution.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../../chat/testSrc/AgentChatInitialMessageDispatcherTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt

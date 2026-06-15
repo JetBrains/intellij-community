@@ -29,7 +29,7 @@ Codex starts new threads before the concrete provider thread id is known. Workbe
   [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
-- Codex plan-mode launches with a non-empty stripped prompt use the normal pending PTY path and enqueue ordered post-start dispatch: first ensure the TUI is visibly in Plan mode via BackTab, then submit the plain prompt body.
+- Codex plan-mode launches with a non-empty stripped prompt use the normal pending PTY path and enqueue ordered post-start dispatch: first ensure the TUI is visibly in Plan mode via BackTab, then submit the plain prompt body. If Plan mode cannot be confirmed, the plain prompt body must not be submitted.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../../codex/sessions/testSrc/CodexNewThreadPromptLaunchIntegrationTest.kt
   [@test] ../../chat/testSrc/AgentChatInitialMessageDispatcherTest.kt
