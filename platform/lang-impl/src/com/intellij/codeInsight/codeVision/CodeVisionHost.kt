@@ -75,6 +75,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeSource
 
 @ApiStatus.NonExtendable
 open class CodeVisionHost(val project: Project, protected val coroutineScope: CoroutineScope) {
@@ -89,7 +91,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
      * particular implementations of code vision to make sure that other tests' performance is not hurt.
      */
     val isCodeVisionTestKey: Key<Boolean> = Key.create("code.vision.test")
-    private val editorTrackingStart: Key<Long> = Key.create("editor.tracking.start")
+    private val editorTrackingStart: Key<TimeSource.Monotonic.ValueTimeMark> = Key.create("editor.tracking.start")
 
     /**
      * Returns true iff we are in test in [com.intellij.java.codeInsight.codeVision.CodeVisionTestCase].
@@ -400,8 +402,8 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     var recalculateWhenVisible = false
 
     var previousLenses: List<Pair<TextRange, CodeVisionEntry>> = context.zombies
-    val openTimeNs = System.nanoTime()
-    editor.putUserData(editorTrackingStart, openTimeNs)
+    val editorOpenedMark = TimeSource.Monotonic.markNow()
+    editor.putUserData(editorTrackingStart, editorOpenedMark)
     var calcRunning = false
 
     fun recalculateLenses(lensesToUpdate: UpdateLensesRequest = UpdateLensesRequest.All) {
@@ -511,7 +513,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     executeOnPooledThread(calcLifetime) {
       ProgressManager.checkCanceled()
       val isEditorInsideSettingsPanel = isInlaySettingsEditor(editor)
-      val editorOpenTimeNs = editor.getUserData(editorTrackingStart)
+      val editorOpenedTimeMark = editor.getUserData(editorTrackingStart)
       val modCount = modificationCount(editor)
 
       var results = mutableListOf<Pair<TextRange, CodeVisionEntry>>()
@@ -554,7 +556,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
           if (state.isReady) {
             results.addAll(state.result)
           }
-          else if (editorOpenTimeNs == null || shouldConsiderProvider(editorOpenTimeNs)) {
+          else if (editorOpenedTimeMark == null || shouldConsiderProvider(editorOpenedTimeMark)) {
             everyProviderReadyToUpdate = false
           }
         }
@@ -614,9 +616,8 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     return editor.editorKind == EditorKind.MAIN_EDITOR || editor.editorKind == EditorKind.UNTYPED
   }
 
-  private fun shouldConsiderProvider(editorOpenTimeNs: Long): Boolean {
-    val oneMinute = 60_000_000_000
-    return System.nanoTime() - editorOpenTimeNs < oneMinute
+  private fun shouldConsiderProvider(editorOpenedTimeMark: TimeSource.Monotonic.ValueTimeMark): Boolean {
+    return editorOpenedTimeMark.elapsedNow() < 1.minutes
   }
 
   private fun shouldRecomputeForEditor(editor: Editor, provider: CodeVisionProvider<Any?>, uiThings: Map<String, Any?>): Boolean {
