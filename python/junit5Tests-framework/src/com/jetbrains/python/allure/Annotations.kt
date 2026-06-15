@@ -45,6 +45,30 @@ object Subsystems {
   @Subsystem("Packaging. Requirements")
   @Inherited
   annotation class PackagingRequirements
+
+  @Subsystem("Editing")
+  @Inherited
+  annotation class Editing
+
+  @Subsystem("Parsing")
+  @Inherited
+  annotation class Parsing
+
+  @Subsystem("Formatter")
+  @Inherited
+  annotation class Formatter
+
+  @Subsystem("Quick Documentation")
+  @Inherited
+  annotation class QuickDocumentation
+
+  @Subsystem("IDE")
+  @Inherited
+  annotation class IDE
+
+  @Subsystem("Debugger")
+  @Inherited
+  annotation class Debugger
 }
 
 object Components {
@@ -83,6 +107,22 @@ object Components {
   @Component("Completion")
   @Inherited
   annotation class Completion
+
+  @Component("Highlighting")
+  @Inherited
+  annotation class Highlighting
+
+  @Component("Navigation")
+  @Inherited
+  annotation class Navigation
+
+  @Component("Find Usages")
+  @Inherited
+  annotation class FindUsages
+
+  @Component("Feature Trainer")
+  @Inherited
+  annotation class FeatureTrainer
 }
 
 object Layers {
