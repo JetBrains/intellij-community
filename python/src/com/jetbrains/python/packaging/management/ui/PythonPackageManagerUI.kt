@@ -86,7 +86,7 @@ class PythonPackageManagerUI private constructor(
    * @return List of all installed packages or null if the operation was failed.
    */
   @ApiStatus.Internal
-  suspend fun installPackagesRequestBackground(
+  internal suspend fun installPackagesRequestBackground(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
     module: Module? = null,

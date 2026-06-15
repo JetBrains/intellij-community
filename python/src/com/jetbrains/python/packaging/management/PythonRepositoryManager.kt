@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 @ApiStatus.Internal
-interface PythonRepositoryManager {
+internal interface PythonRepositoryManager {
   val project: Project
   val repositories: List<PyPackageRepository>
 

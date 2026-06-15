@@ -81,8 +81,6 @@ internal class PythonPackageManagerServiceImpl(private val serviceScope: Corouti
     }
   }
 
-  override fun getServiceScope(): CoroutineScope = serviceScope
-
   override fun dispose() {
     cache.clear()
   }

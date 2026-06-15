@@ -42,7 +42,7 @@ import javax.swing.JComponent
  * need to know about this provider.
  */
 @ApiStatus.Internal
-class PyPackageManagerEditorBanner : EditorNotificationProvider, DumbAware {
+internal class PyPackageManagerEditorBanner : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(
     project: Project,
     file: VirtualFile,

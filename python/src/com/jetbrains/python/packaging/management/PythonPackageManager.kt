@@ -120,7 +120,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @ApiStatus.Internal
   internal open val treeProvider: DependencyTreeProvider? = null
 
-  abstract val repositoryManager: PythonRepositoryManager
+  internal abstract val repositoryManager: PythonRepositoryManager
 
   @ApiStatus.Internal
   open val dependenciesExporter: DependenciesExporter? = null
@@ -135,7 +135,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   }
 
   @ApiStatus.Internal
-  suspend fun installPackage(
+  internal suspend fun installPackage(
     installRequest: PythonPackageInstallRequest,
     options: List<String> = emptyList(),
     module: Module? = null,
@@ -313,7 +313,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
    */
   @ApiStatus.Internal
   @CheckReturnValue
-  protected abstract suspend fun installPackageCommand(
+internal  abstract suspend fun installPackageCommand(
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
     module: Module? = null,
@@ -321,7 +321,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   @CheckReturnValue
-  protected open suspend fun installPackageDetachedCommand(
+  internal open suspend fun installPackageDetachedCommand(
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
   ): PyResult<Unit> =

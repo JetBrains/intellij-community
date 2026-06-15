@@ -10,8 +10,6 @@ import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridg
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.pip.PyPiPackageCache
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
 import org.mockito.ArgumentMatchers.argThat
@@ -19,7 +17,7 @@ import org.mockito.Mockito
 import java.util.concurrent.ConcurrentHashMap
 
 @TestOnly
-class TestPythonPackageManagerService(val installedPackages: List<PythonPackage> = emptyList()) : PythonPackageManagerService {
+internal class TestPythonPackageManagerService(val installedPackages: List<PythonPackage> = emptyList()) : PythonPackageManagerService {
   private val cache: MutableMap<Sdk, PythonPackageManager> = ConcurrentHashMap()
 
   override fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
@@ -51,11 +49,7 @@ class TestPythonPackageManagerService(val installedPackages: List<PythonPackage>
     return PythonPackageManagementServiceBridge(project, sdk)
   }
 
-  override fun getServiceScope(): CoroutineScope {
-    return CoroutineScope(Job())
-  }
-
-  companion object {
+    companion object {
 
 
     @JvmStatic

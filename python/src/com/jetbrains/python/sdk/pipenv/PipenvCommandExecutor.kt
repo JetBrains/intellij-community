@@ -40,7 +40,7 @@ suspend fun runPipEnv(dirPath: Path?, vararg args: String): PyResult<String> =
   )
 
 @Internal
-suspend fun <T> runPipEnv(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> =
+internal suspend fun <T> runPipEnv(dirPath: Path?, vararg args: String, transformer: ProcessOutputTransformer<T>): PyResult<T> =
   PIPENV_TOOL.runTool(
     fileSystem = dirPath.toEelFileSystem(),
     pathFromSdk = null,
@@ -53,14 +53,14 @@ suspend fun <T> runPipEnv(dirPath: Path?, vararg args: String, transformer: Proc
  * Returns the configured pipenv executable or detects it automatically on the given [fileSystem].
  */
 @Internal
-suspend fun <P : PathHolder> getPipEnvExecutable(fileSystem: FileSystem<P>): P? =
+internal suspend fun <P : PathHolder> getPipEnvExecutable(fileSystem: FileSystem<P>): P? =
   PIPENV_TOOL.getToolExecutable(fileSystem, pathFromSdk = null)
 
 /**
  * Returns the configured pipenv executable or detects it automatically.
  */
 @Internal
-suspend fun getPipEnvExecutable(eel: EelApi = localEel): Path? =
+internal suspend fun getPipEnvExecutable(eel: EelApi = localEel): Path? =
   getPipEnvExecutable(EelFileSystem(eel))?.path
 
 /**
@@ -75,7 +75,7 @@ suspend fun getPipEnvExecutable(eel: EelApi = localEel): Path? =
  * @return the SDK for pipenv, not stored in the SDK table yet.
  */
 @Internal
-suspend fun setupPipEnvSdkWithProgressReport(
+internal suspend fun setupPipEnvSdkWithProgressReport(
   moduleBasePath: Path,
   basePythonBinaryPath: PythonBinary?,
   installPackages: Boolean,
@@ -94,7 +94,7 @@ suspend fun setupPipEnvSdkWithProgressReport(
  * @return the path to the pipenv environment.
  */
 @Internal
-suspend fun setupPipEnv(
+internal suspend fun setupPipEnv(
   projectPath: Path,
   basePythonBinaryPath: PythonBinary?,
   installPackages: Boolean,

@@ -84,7 +84,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
 @Service(Service.Level.PROJECT)
-class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {
+internal class PyPackagingToolWindowService(val project: Project, val serviceScope: CoroutineScope) : Disposable {
   private var toolWindowPanel: PyPackagingToolWindowPanel? = null
   @Volatile private var installedPackages: List<DisplayablePackage> = emptyList()
   private var searchJob: Job? = null

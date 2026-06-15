@@ -26,14 +26,14 @@ import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
-fun PythonPackageManager.waitInitBlocking() {
+internal fun PythonPackageManager.waitInitBlocking() {
   runBlockingMaybeCancellable {
     waitForInit()
   }
 }
 
 @ApiStatus.Internal
-fun PythonPackageManager.reloadPackagesBlocking() {
+internal fun PythonPackageManager.reloadPackagesBlocking() {
   runBlockingMaybeCancellable {
     withContext(NON_INTERACTIVE_ROOT_TRACE_CONTEXT + ModalityState.any().asContextElement()) {
       reloadPackages().orLogException(thisLogger())
@@ -75,7 +75,7 @@ fun PythonPackageManager.isNotInstalledAndCanBeInstalled(packageName: String, ve
 
 
 @ApiStatus.Internal
-suspend fun PythonPackageManager.findPackageSpecification(
+internal suspend fun PythonPackageManager.findPackageSpecification(
   packageName: String,
   versionSpec: PyRequirementVersionSpec? = null,
 ): PythonRepositoryPackageSpecification? {
@@ -83,7 +83,7 @@ suspend fun PythonPackageManager.findPackageSpecification(
 }
 
 @ApiStatus.Internal
-suspend fun PythonPackageManager.findPackageSpecification(
+internal suspend fun PythonPackageManager.findPackageSpecification(
   requirement: PyRequirement,
   repository: PyPackageRepository? = null,
 ): PythonRepositoryPackageSpecification? {
@@ -92,7 +92,7 @@ suspend fun PythonPackageManager.findPackageSpecification(
 
 
 @ApiStatus.Internal
-suspend fun PythonPackageManager.findPackageSpecification(
+internal suspend fun PythonPackageManager.findPackageSpecification(
   packageName: String,
   version: String? = null,
   relation: PyRequirementRelation = PyRequirementRelation.EQ,

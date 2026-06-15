@@ -55,7 +55,7 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
-class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindowPanel(false, true), Disposable {
+internal class PyPackagingToolWindowPanel(private val project: Project) : SimpleToolWindowPanel(false, true), Disposable {
 
   private val packageSearchController = PyPackageSearchTextField(project).also {
     Disposer.register(this, it)

@@ -32,7 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 
-class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPackageManagementService(project, sdk), Disposable {
+internal class PythonPackageManagementServiceBridge(project: Project, sdk: Sdk) : PyPackageManagementService(project, sdk), Disposable {
 
   private val scope = project.service<PyPackagingToolWindowService>().serviceScope
 

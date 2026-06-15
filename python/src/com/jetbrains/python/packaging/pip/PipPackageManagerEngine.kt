@@ -27,7 +27,7 @@ import org.jetbrains.annotations.ApiStatus
 
 
 @ApiStatus.Internal
-class PipPackageManagerEngine(
+internal class PipPackageManagerEngine(
   private val project: Project,
   private val sdk: Sdk,
 ) : PythonPackageManagerEngine {

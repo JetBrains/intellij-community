@@ -12,7 +12,7 @@ import com.jetbrains.python.packaging.PyRequirementParser
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-object PipEnvParser {
+internal object PipEnvParser {
   private val gson = Gson()
 
   @JvmStatic

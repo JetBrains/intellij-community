@@ -23,7 +23,7 @@ import com.jetbrains.python.sdk.sdkFlavor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class PyPackageDetailsHtmlRender(val project: Project, val currentSdk: Sdk?) {
+internal class PyPackageDetailsHtmlRender(val project: Project, val currentSdk: Sdk?) {
   suspend fun getHtml(packageDetails: PythonPackageDetails): String {
     return runCatching {
       with(packageDetails) {

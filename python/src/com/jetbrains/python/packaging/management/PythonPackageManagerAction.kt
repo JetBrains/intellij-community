@@ -32,7 +32,7 @@ import kotlin.text.Regex.Companion.escape
  * @param V The result type of the background jobs performed by this action.
  */
 @ApiStatus.Internal
-abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwareAction() {
+internal abstract class PythonPackageManagerAction<T : PythonPackageManager, V> : DumbAwareAction() {
   protected val errorSink: ErrorSink = ErrorSink()
 
   /**

@@ -51,7 +51,7 @@ import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION
 
 @ApiStatus.Internal
-class PyPackagesTreeTable(
+internal class PyPackagesTreeTable(
   val project: Project,
   private val controller: PyPackagingToolWindowPanel,
   private var treeListener: PyPackagesTreeListener? = null,

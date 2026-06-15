@@ -40,7 +40,7 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 @ApiStatus.Internal
-object CondaExecutor {
+internal object CondaExecutor {
   suspend fun createNamedEnv(binaryToExec: BinaryToExec, envName: String, pythonVersion: String): PyResult<Unit> {
     val args = listOf("create", "-y", "-n", envName, "python=${pythonVersion}")
     return runConda(
@@ -230,7 +230,7 @@ object CondaExecutor {
 
 
 @ApiStatus.Internal
-fun Sdk.getCondaBinToExecute(): BinaryToExec {
+internal fun Sdk.getCondaBinToExecute(): BinaryToExec {
   val targetConfig = targetEnvConfiguration
   val pathOnTarget = (pySdkAdditionalData.flavorAndData.data as PyCondaFlavorData).env.fullCondaPathOnTarget
 

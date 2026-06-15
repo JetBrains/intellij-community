@@ -7,13 +7,13 @@ import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 
 @ApiStatus.Internal
-sealed class PythonPackageInstallRequest(val title: @NlsSafe String) {
+internal sealed class PythonPackageInstallRequest(val title: @NlsSafe String) {
   data class ByLocation(val location: URI) : PythonPackageInstallRequest(location.toString())
   data class ByRepositoryPythonPackageSpecifications(val specifications: List<PythonRepositoryPackageSpecification>) : PythonPackageInstallRequest(
     specifications.joinToString(", ") { it.nameWithVersionSpec })
 }
 
 @ApiStatus.Internal
-fun PythonRepositoryPackageSpecification.toInstallRequest(): PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications {
+internal fun PythonRepositoryPackageSpecification.toInstallRequest(): PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications {
   return PythonPackageInstallRequest.ByRepositoryPythonPackageSpecifications(listOf(this))
 }

@@ -7,7 +7,7 @@ import com.jetbrains.python.requirements.PyDependenciesFileProvider
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class PipFileLockFileProvider : PyDependenciesFileProvider {
+internal class PipFileLockFileProvider : PyDependenciesFileProvider {
   override suspend fun fromFile(file: VirtualFile): PyDependenciesFile? {
     return file.takeIf { it.name == PIP_FILE_LOCK }?.let { PipFileLockFile(it) }
   }

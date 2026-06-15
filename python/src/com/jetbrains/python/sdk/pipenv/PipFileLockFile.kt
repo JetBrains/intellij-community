@@ -14,6 +14,6 @@ const val PIP_FILE: String = "Pipfile"
 const val PIP_FILE_LOCK: String = "Pipfile.lock"
 
 @Internal
-data class PipFileLockFile(override val virtualFile: VirtualFile) : PyDependenciesFile {
+internal data class PipFileLockFile(override val virtualFile: VirtualFile) : PyDependenciesFile {
   override val icon: Icon get() = PythonRequirementsIcons.Requirements
 }
