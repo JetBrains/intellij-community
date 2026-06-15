@@ -14,10 +14,7 @@ import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
-import com.intellij.agent.workbench.sessions.core.providers.effectiveLaunchProfiles
 import com.intellij.agent.workbench.sessions.core.providers.generationSettingsForPlanMode
-import com.intellij.agent.workbench.sessions.core.providers.launchProfileMatchesBuiltIn
-import com.intellij.agent.workbench.sessions.core.providers.normalizedUserLaunchProfile
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.setLaunchProfileIcon
 import com.intellij.icons.AllIcons
@@ -53,10 +50,11 @@ internal class AgentPromptGenerationSettingsController(
   private val providerSelector: AgentPromptProviderSelector,
   private val generationSettingsPanel: JPanel,
   private val profileAction: AgentPromptToolbarProfileAction? = null,
-  private val launchProfileLink: ActionLink = ActionLink(AgentPromptBundle.message("popup.profile.default")),
+  private val launchProfileLink: ActionLink = ActionLink(AgentPromptBundle.message("popup.profile.header.standard")),
   private val modelSelectorLink: ActionLink,
   private val reasoningEffortLink: ActionLink,
   private val planReasoningEffortLink: ActionLink = ActionLink(AgentPromptBundle.message("popup.generation.plan.reasoning.same")),
+  defaultProfileActionControl: AgentPromptDefaultProfileActionControl = AgentPromptDefaultProfileActionControl(),
   private val modelCatalogScope: CoroutineScope,
   private val modelCatalogService: AgentPromptGenerationModelCatalogService = invocationData.project.service(),
   private val launcherProvider: () -> AgentPromptLauncherBridge?,
@@ -67,12 +65,19 @@ internal class AgentPromptGenerationSettingsController(
   },
 ) {
   private val transientSettingsByProviderId = LinkedHashMap<String, AgentPromptGenerationSettings>()
-  private val userProfilesById = LinkedHashMap<String, AgentPromptLaunchProfile>()
   private var generationControlsVisible = true
-  private var activeProfileId: String? = null
-  private var defaultProfileId: String? = null
   private var activeModelPopup: JBPopup? = null
   private var activeModelPopupProviderId: String? = null
+  private val launchProfileState = AgentPromptLaunchProfileState(
+    builtInProfiles = ::builtInLaunchProfiles,
+    canApplyProfile = ::canApplyProfile,
+  )
+  private val defaultProfileActionController = AgentPromptDefaultProfileActionController(
+    actionControl = defaultProfileActionControl,
+    actionProvider = { launchProfileState.defaultAction(currentProfileDraft()) },
+    onMakeDefault = ::setDefaultProfile,
+    onSaveAsDefault = ::saveDraftProfileAsDefault,
+  )
 
   init {
     if (profileAction == null) {
@@ -85,14 +90,14 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   fun restoreLaunchProfiles(preferences: AgentPromptLauncherBridge.ProviderPreferences) {
-    userProfilesById.clear()
-    preferences.launchProfiles.forEach { profile -> userProfilesById[profile.id] = profile }
-    defaultProfileId = preferences.activeLaunchProfileId
-    activeProfileId = defaultProfileId
-    val activeProfile = findProfile(activeProfileId)
+    launchProfileState.restore(
+      preferences = preferences,
+      implicitDefaultProfileId = implicitBuiltInDefaultProfileId(),
+    )
+    val activeProfile = preferences.activeLaunchProfileId?.let(::findProfile)
     if (activeProfile != null) {
       if (!applyProfile(activeProfile)) {
-        activeProfileId = null
+        launchProfileState.clearSelectedProfile()
       }
     }
     refreshPresentation()
@@ -139,8 +144,9 @@ internal class AgentPromptGenerationSettingsController(
     generationSettingsPanel.isVisible = showGenerationControls
     launchProfileLink.isVisible = showGenerationControls
     launchProfileLink.isEnabled = showGenerationControls
-    val profile = findProfile(activeProfileId)
-    val profileText = launchProfileText(profile, isActiveProfileModified())
+    val profileDraft = currentProfileDraft()
+    val profile = launchProfileState.profileForPresentation(profileDraft)
+    val profileText = launchProfileText(profile)
     val profileTooltip = AgentPromptBundle.message("popup.profile.tooltip")
     profileAction?.setPresentation(
       text = profileText,
@@ -155,6 +161,7 @@ internal class AgentPromptGenerationSettingsController(
     reasoningEffortLink.isEnabled = showGenerationControls && reasoningEffortAvailable
     planReasoningEffortLink.isVisible = showGenerationControls && planEffortSupported
     planReasoningEffortLink.isEnabled = showGenerationControls && planEffortSupported && planModeSelected
+    defaultProfileActionController.refreshPresentation(showGenerationControls)
     if (showGenerationControls) {
       launchProfileLink.text = profileText
       launchProfileLink.setToolTipText(HtmlChunk.text(profileTooltip))
@@ -501,7 +508,7 @@ internal class AgentPromptGenerationSettingsController(
     providerSelector.setPlanModeSelected(planModeSelected)
     onLaunchProfileApplied()
     transientSettingsByProviderId[profile.providerId] = profile.generationSettings
-    activeProfileId = profile.id
+    launchProfileState.selectProfile(profile)
     refreshPresentation()
     return true
   }
@@ -519,25 +526,15 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   private fun saveNewProfile(profile: AgentPromptLaunchProfile) {
-    userProfilesById[profile.id] = normalizedUserLaunchProfile(profile)
+    launchProfileState.saveNewProfile(profile)
     saveProfiles()
     onDefaultSaved(AgentPromptBundle.message("popup.profile.saved"))
     refreshPresentation()
   }
 
   private fun saveProfile(profile: AgentPromptLaunchProfile) {
-    val builtInProfile = builtInLaunchProfiles().firstOrNull { item -> item.id == profile.id }
-    when {
-      builtInProfile != null && launchProfileMatchesBuiltIn(profile, builtInProfile) -> {
-        userProfilesById.remove(profile.id)
-      }
-      builtInProfile != null -> {
-        userProfilesById[profile.id] = normalizedUserLaunchProfile(profile)
-      }
-      profile.kind == AgentPromptLaunchProfileKind.USER && profile.id in userProfilesById -> {
-        userProfilesById[profile.id] = normalizedUserLaunchProfile(profile)
-      }
-      else -> return
+    if (!launchProfileState.saveProfile(profile)) {
+      return
     }
     saveProfiles()
     onDefaultSaved(AgentPromptBundle.message("popup.profile.updated"))
@@ -545,14 +542,28 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   private fun setDefaultProfile(profile: AgentPromptLaunchProfile) {
-    defaultProfileId = profile.id
+    launchProfileState.setDefaultProfile(profile)
     saveProfiles()
     onDefaultSaved(AgentPromptBundle.message("popup.profile.default.saved"))
     refreshPresentation()
   }
 
+  private fun saveDraftProfileAsDefault() {
+    val draft = currentDraftProfile(
+      id = newUserProfileId(),
+      name = generatedDraftProfileName(),
+    ) ?: return
+    if (!canApplyProfile(draft)) {
+      return
+    }
+    launchProfileState.saveDraftAsDefault(draft)
+    saveProfiles()
+    onDefaultSaved(AgentPromptBundle.message("popup.profile.saved.default"))
+    refreshPresentation()
+  }
+
   private fun deleteProfile(profile: AgentPromptLaunchProfile): Boolean {
-    if (profile.id !in userProfilesById) {
+    if (!launchProfileState.canDeleteProfile(profile)) {
       return false
     }
     val resetsBuiltInProfile = builtInLaunchProfiles().any { item -> item.id == profile.id }
@@ -572,12 +583,8 @@ internal class AgentPromptGenerationSettingsController(
       ) != Messages.YES) {
       return false
     }
-    userProfilesById.remove(profile.id)
-    if (!resetsBuiltInProfile && activeProfileId == profile.id) {
-      activeProfileId = null
-    }
-    if (!resetsBuiltInProfile && defaultProfileId == profile.id) {
-      defaultProfileId = null
+    if (!launchProfileState.deleteProfile(profile)) {
+      return false
     }
     saveProfiles()
     onDefaultSaved(AgentPromptBundle.message(if (resetsBuiltInProfile) "popup.profile.reset" else "popup.profile.deleted"))
@@ -590,8 +597,8 @@ internal class AgentPromptGenerationSettingsController(
     val currentPreferences = launcher.loadProviderPreferences()
     launcher.saveProviderPreferences(
       currentPreferences.copy(
-        launchProfiles = userProfilesById.values.toList(),
-        activeLaunchProfileId = defaultProfileId,
+        launchProfiles = launchProfileState.userProfiles(),
+        activeLaunchProfileId = launchProfileState.persistedDefaultProfileId,
       )
     )
   }
@@ -622,8 +629,8 @@ internal class AgentPromptGenerationSettingsController(
     return AgentPromptLaunchProfileEditorRequest(
       project = invocationData.project,
       profiles = allManagedProfiles(),
-      activeProfileId = activeProfileId,
-      defaultProfileId = defaultProfileId,
+      activeProfileId = launchProfileState.selectedProfileId,
+      defaultProfileId = launchProfileState.effectiveDefaultProfileId,
       builtInProfiles = builtInLaunchProfiles(),
       providerEntries = providerSelector.providerEntries(),
       modelCatalogProvider = ::loadedModelCatalog,
@@ -666,14 +673,13 @@ internal class AgentPromptGenerationSettingsController(
   private fun currentDraftProfile(
     id: String,
     name: String,
-    kind: AgentPromptLaunchProfileKind,
   ): AgentPromptLaunchProfile? {
     val provider = providerSelector.selectedProvider?.bridge?.provider ?: return null
     val currentSettings = currentSettings()
     return AgentPromptLaunchProfile(
       id = id,
       name = name,
-      kind = kind,
+      kind = AgentPromptLaunchProfileKind.USER,
       providerId = provider.value,
       launchMode = providerSelector.selectedLaunchMode,
       generationSettings = currentSettings,
@@ -681,8 +687,7 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   private fun findProfile(profileId: String?): AgentPromptLaunchProfile? {
-    if (profileId == null) return null
-    return allManagedProfiles().firstOrNull { profile -> profile.id == profileId }
+    return launchProfileState.findProfile(profileId)
   }
 
   private fun profileIcon(profile: AgentPromptLaunchProfile?): Icon {
@@ -697,28 +702,54 @@ internal class AgentPromptGenerationSettingsController(
     return providerSelector.findMenuItem(AgentSessionProvider.fromOrNull(profile.providerId), profile.launchMode)
   }
 
-  private fun isActiveProfileModified(): Boolean {
-    val activeProfile = findProfile(activeProfileId) ?: return false
-    val draft = currentDraftProfile(activeProfile.id, activeProfile.name, activeProfile.kind) ?: return false
-    return activeProfile.profilePayload() != draft.profilePayload()
+  private fun selectedProfileIdForPresentation(): String? {
+    return launchProfileState.selectedProfileIdForPresentation(currentProfileDraft())
   }
 
-  private fun selectedProfileIdForPresentation(): String? {
-    val activeProfile = findProfile(activeProfileId)
-    if (activeProfile != null) {
-      if (isActiveProfileModified()) return null
-      return activeProfile.id
-    }
+  private fun currentProfileDraft(): AgentPromptLaunchProfile? {
+    return currentDraftProfile(id = "", name = "")
+  }
 
-    val draft = currentDraftProfile(id = "", name = "", kind = AgentPromptLaunchProfileKind.USER) ?: return null
-    return launchableProfiles().firstOrNull { profile -> profile.profilePayload() == draft.profilePayload() }?.id
+  private fun generatedDraftProfileName(): @NlsSafe String {
+    val providerEntry = providerSelector.selectedProvider
+    val providerName = providerEntry?.displayName.orEmpty()
+    val currentSettings = currentSettings()
+    val models = providerEntry?.bridge?.provider?.value?.let(::loadedModelCatalog).orEmpty()
+    val modelName = currentSettings.modelId?.let { modelId ->
+      models.firstOrNull { model -> model.id == modelId }?.displayName ?: modelId
+    }
+    val parts = buildList {
+      add(providerName)
+      if (providerSelector.selectedLaunchMode == AgentSessionLaunchMode.YOLO) {
+        add(AgentPromptBundle.message("popup.profile.generated.full.auto"))
+      }
+      modelName?.let(::add)
+      if (currentSettings.reasoningEffort != AgentPromptReasoningEffort.AUTO) {
+        add(reasoningEffortPopupText(currentSettings.reasoningEffort))
+      }
+      currentSettings.planReasoningEffort?.takeIf { effort -> effort != AgentPromptReasoningEffort.AUTO }?.let { effort ->
+        add(AgentPromptBundle.message("popup.profile.generated.plan.effort", reasoningEffortPopupText(effort)))
+      }
+    }
+    val baseName = parts.joinToString(" ").ifBlank { AgentPromptBundle.message("popup.profile.name.default") }
+    return nextProfileName(baseName)
+  }
+
+  private fun nextProfileName(baseName: @NlsSafe String): @NlsSafe String {
+    val existingNames = allManagedProfiles().mapTo(HashSet()) { profile -> profile.name }
+    if (baseName !in existingNames) return baseName
+    var suffix = 2
+    while ("$baseName $suffix" in existingNames) {
+      suffix++
+    }
+    return "$baseName $suffix"
   }
 
   private fun newUserProfileId(): String {
     val base = "user:${System.currentTimeMillis()}"
-    if (base !in userProfilesById) return base
+    if (findProfile(base) == null) return base
     var suffix = 2
-    while ("$base:$suffix" in userProfilesById) {
+    while (findProfile("$base:$suffix") != null) {
       suffix++
     }
     return "$base:$suffix"
@@ -737,15 +768,23 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   private fun launchableProfiles(): List<AgentPromptLaunchProfile> {
-    return allManagedProfiles().filter(::canApplyProfile)
+    return launchProfileState.launchableProfiles()
   }
 
   private fun allManagedProfiles(): List<AgentPromptLaunchProfile> {
-    return effectiveLaunchProfiles(builtInLaunchProfiles(), userProfilesById.values.toList())
+    return launchProfileState.allManagedProfiles()
   }
 
   private fun builtInLaunchProfiles(): List<AgentPromptLaunchProfile> {
     return providerSelector.builtInLaunchProfiles()
+  }
+
+  private fun implicitBuiltInDefaultProfileId(): String? {
+    val selectedProviderId = providerSelector.selectedProvider?.bridge?.provider?.value ?: return null
+    val selectedLaunchMode = providerSelector.selectedLaunchMode
+    return builtInLaunchProfiles().firstOrNull { profile ->
+      profile.providerId == selectedProviderId && profile.launchMode == selectedLaunchMode
+    }?.id
   }
 
   private inner class ModelAction(
@@ -876,6 +915,17 @@ internal class AgentPromptGenerationSettingsController(
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
   }
 
+  private fun launchProfileText(profile: AgentPromptLaunchProfile?): @Nls String {
+    val profileName = when {
+      profile == null -> AgentPromptBundle.message("popup.profile.header.custom")
+      profile.kind == AgentPromptLaunchProfileKind.BUILT_IN -> {
+        providerSelector.compactBuiltInProfileLabel(profile) ?: AgentPromptBundle.message("popup.profile.header.standard")
+      }
+      else -> profile.name
+    }
+    return AgentPromptBundle.message("popup.profile.selected", profileName)
+  }
+
   private inner class ManageProfilesAction : DumbAwareAction(AgentPromptBundle.message("popup.profile.manage")) {
     init {
       templatePresentation.description = AgentPromptBundle.message("popup.profile.manage.description")
@@ -889,14 +939,6 @@ internal class AgentPromptGenerationSettingsController(
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
   }
 
-}
-
-private fun AgentPromptLaunchProfile.profilePayload(): AgentPromptLaunchProfile {
-  return copy(
-    id = "",
-    name = "",
-    kind = AgentPromptLaunchProfileKind.USER,
-  )
 }
 
 internal fun List<AgentPromptGenerationModel>.catalogReasoningEfforts(): Set<AgentPromptReasoningEffort>? {
@@ -951,19 +993,6 @@ internal fun reasoningEffortPopupText(effort: AgentPromptReasoningEffort): @Nls 
     AgentPromptReasoningEffort.HIGH -> AgentPromptBundle.message("popup.generation.reasoning.popup.high")
     AgentPromptReasoningEffort.XHIGH -> AgentPromptBundle.message("popup.generation.reasoning.popup.xhigh")
     AgentPromptReasoningEffort.MAX -> AgentPromptBundle.message("popup.generation.reasoning.popup.max")
-  }
-}
-
-private fun launchProfileText(profile: AgentPromptLaunchProfile?, modified: Boolean): @Nls String {
-  val profileName = when {
-    profile == null || profile.kind == AgentPromptLaunchProfileKind.BUILT_IN -> AgentPromptBundle.message("popup.profile.default")
-    else -> profile.name
-  }
-  return if (modified) {
-    AgentPromptBundle.message("popup.profile.modified", profileName)
-  }
-  else {
-    AgentPromptBundle.message("popup.profile.selected", profileName)
   }
 }
 

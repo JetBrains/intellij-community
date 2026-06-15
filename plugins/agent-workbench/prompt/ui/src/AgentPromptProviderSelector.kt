@@ -184,6 +184,14 @@ internal class AgentPromptProviderSelector(
     return findMenuItem(selectedProvider?.bridge?.provider, selectedLaunchMode)
   }
 
+  fun compactBuiltInProfileLabel(profile: AgentPromptLaunchProfile): @Nls String? {
+    val item = findMenuItem(AgentSessionProvider.fromOrNull(profile.providerId), profile.launchMode) ?: return null
+    return when (profile.launchMode) {
+      AgentSessionLaunchMode.STANDARD -> AgentPromptBundle.message("popup.profile.header.standard")
+      AgentSessionLaunchMode.YOLO -> compactYoloModeLabel(item)
+    }
+  }
+
   fun selectedOptionIds(provider: AgentSessionProvider): Set<String> {
     val entry = findProviderEntry(provider) ?: return emptySet()
     return optionSelectionState(entry.bridge).toSet()
@@ -294,6 +302,14 @@ internal class AgentPromptProviderSelector(
 
   private fun AgentSessionProviderMenuItem.displayNameFallback(): @Nls String {
     return findProviderEntry(bridge.provider)?.displayName ?: bridge.displayNameFallback
+  }
+
+  private fun compactYoloModeLabel(item: AgentSessionProviderMenuItem): @Nls String {
+    val modeLabelKey = item.bridge.yoloSessionModeLabelKey
+    if (modeLabelKey != null) {
+      sessionsMessageResolver.resolve(modeLabelKey, item.bridge)?.let { label -> return label }
+    }
+    return AgentPromptBundle.message("popup.profile.header.yolo")
   }
 
   private fun providerMenuItemsForMode(launchMode: AgentSessionLaunchMode): List<AgentSessionProviderMenuItem> {

@@ -53,6 +53,9 @@ internal class JunieAgentSessionProviderDescriptor(
   override val yoloSessionLabelKey: String
     get() = "toolwindow.action.new.session.junie.yolo"
 
+  override val yoloSessionModeLabelKey: String
+    get() = "toolwindow.action.new.session.junie.yolo.mode"
+
   override val icon: Icon
     get() = AgentWorkbenchCommonIcons.Junie
 

@@ -63,6 +63,9 @@ internal class CodexAgentSessionProviderDescriptor(
   override val yoloSessionLabelKey: String
     get() = "toolwindow.action.new.session.codex.yolo"
 
+  override val yoloSessionModeLabelKey: String
+    get() = "toolwindow.action.new.session.codex.yolo.mode"
+
   override val icon: Icon
     get() = AgentWorkbenchCommonIcons.Codex
 

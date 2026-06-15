@@ -738,7 +738,7 @@ class AgentPromptProviderSelectorTest {
       builtInAction.actionPerformed(TestActionEvent.createTestEvent(builtInAction))
 
       assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(profile.id)
-      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Default Profile")
+      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Standard")
       assertThat(controller.currentSettings().reasoningEffort).isEqualTo(AgentPromptReasoningEffort.AUTO)
       assertThat(fixture.selector.isPlanModeSelected()).isTrue()
     }
@@ -1756,6 +1756,186 @@ class AgentPromptProviderSelectorTest {
       assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(fastProfile.id)
       assertThat(launcher.preferences.launchProfiles).containsExactly(carefulProfile, fastProfile)
       assertThat(fixture.view.launchProfileLink.text).isEqualTo("Fast")
+    }
+  }
+
+  @Test
+  fun inlineMakeDefaultActionPersistsSelectedProfile() {
+    runInEdtAndWait {
+      val carefulProfile = AgentPromptLaunchProfile(
+        id = "user:careful",
+        name = "Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+        generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
+      )
+      val fastProfile = AgentPromptLaunchProfile(
+        id = "user:fast",
+        name = "Fast",
+        providerId = AgentSessionProvider.CODEX.value,
+        generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.LOW),
+      )
+      val launcher = TestPromptLauncherBridge(
+        AgentPromptLauncherBridge.ProviderPreferences(
+          launchProfiles = listOf(carefulProfile, fastProfile),
+          activeLaunchProfileId = carefulProfile.id,
+        )
+      )
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.LOW, AgentPromptReasoningEffort.HIGH),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      var statusMessage: String? = null
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        defaultProfileActionControl = fixture.view.defaultProfileActionControl,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { message -> statusMessage = message },
+      )
+      controller.restoreLaunchProfiles(launcher.preferences)
+      val fastAction = controller.createLaunchProfileActionGroupForTest()
+        .getChildren(TestActionEvent.createTestEvent())
+        .single { action -> action.templatePresentation.text == "Fast" }
+
+      fastAction.actionPerformed(TestActionEvent.createTestEvent(fastAction))
+
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isTrue()
+      assertThat(fixture.view.defaultProfileActionControl.component.text).isEqualTo("Make Default")
+
+      fixture.view.defaultProfileActionControl.component.doClick()
+
+      assertThat(statusMessage).isEqualTo("Default profile updated.")
+      assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(fastProfile.id)
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
+    }
+  }
+
+  @Test
+  fun inlineDefaultActionIsHiddenForImplicitBuiltInDefaultProfile() {
+    runInEdtAndWait {
+      val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        defaultProfileActionControl = fixture.view.defaultProfileActionControl,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { _ -> },
+      )
+
+      controller.restoreLaunchProfiles(launcher.preferences)
+
+      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Standard")
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
+    }
+  }
+
+  @Test
+  fun inlineMakeDefaultActionPersistsSelectedBuiltInProfile() {
+    runInEdtAndWait {
+      val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedLaunchModesOverride = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      var statusMessage: String? = null
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        defaultProfileActionControl = fixture.view.defaultProfileActionControl,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { message -> statusMessage = message },
+      )
+      controller.restoreLaunchProfiles(launcher.preferences)
+      val yoloAction = controller.createLaunchProfileActionGroupForTest()
+        .getChildren(TestActionEvent.createTestEvent())
+        .single { action -> action.templatePresentation.text == "Codex (Full Auto)" }
+
+      yoloAction.actionPerformed(TestActionEvent.createTestEvent(yoloAction))
+
+      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Full Auto")
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isTrue()
+      assertThat(fixture.view.defaultProfileActionControl.component.text).isEqualTo("Make Default")
+
+      fixture.view.defaultProfileActionControl.component.doClick()
+
+      assertThat(statusMessage).isEqualTo("Default profile updated.")
+      assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(
+        builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO)
+      )
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
+    }
+  }
+
+  @Test
+  fun inlineSaveAsDefaultActionCreatesGeneratedProfile() {
+    runInEdtAndWait {
+      val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      var statusMessage: String? = null
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        defaultProfileActionControl = fixture.view.defaultProfileActionControl,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { message -> statusMessage = message },
+      )
+      controller.restoreLaunchProfiles(launcher.preferences)
+      val highAction = checkNotNull(controller.createReasoningEffortActionGroupForTest())
+        .getChildren(TestActionEvent.createTestEvent())
+        .single { action -> action.templatePresentation.text == "High" }
+
+      highAction.actionPerformed(TestActionEvent.createTestEvent(highAction))
+
+      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Custom")
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isTrue()
+      assertThat(fixture.view.defaultProfileActionControl.component.text).isEqualTo("Save as Default")
+
+      fixture.view.defaultProfileActionControl.component.doClick()
+
+      val savedProfile = launcher.preferences.launchProfiles.single()
+      assertThat(statusMessage).isEqualTo("Launch profile saved as default.")
+      assertThat(savedProfile.name).isEqualTo("Codex High")
+      assertThat(savedProfile.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
+      assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(savedProfile.id)
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
     }
   }
 
@@ -2922,6 +3102,7 @@ class AgentPromptProviderSelectorTest {
       override val displayNameKey: String = "provider.${provider.value}"
       override val newSessionLabelKey: String = "toolwindow.action.new.session.${provider.value}"
       override val yoloSessionLabelKey: String = "toolwindow.action.new.session.${provider.value}.yolo"
+      override val yoloSessionModeLabelKey: String = "toolwindow.action.new.session.${provider.value}.yolo.mode"
       override val promptOptions: List<AgentPromptProviderOption> = promptOptions
       override val supportedLaunchModes: Set<AgentSessionLaunchMode> = supportedLaunchModesOverride
       override val supportedReasoningEfforts: Set<AgentPromptReasoningEffort> = supportedReasoningEffortsOverride

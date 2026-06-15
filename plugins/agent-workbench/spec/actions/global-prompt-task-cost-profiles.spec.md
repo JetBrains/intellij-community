@@ -34,7 +34,7 @@ Task-cost profiles make the global prompt ready to send while still letting user
 - This spec does not require renaming the existing persisted `activeLaunchProfileId` field; it may remain the stored default profile id for compatibility.
 
 ## Requirements
-- The prompt header must expose a single task-cost profile control in the same top-right header location as the previous provider selector. The control must show the selected provider icon, including the red YOLO/Brave badge for YOLO profiles, and open the profile chooser on click. Built-in provider-backed profiles use the neutral `Default Profile` label in the header to avoid repeating provider names such as `Pi`; user profiles show their saved profile name.
+- The prompt header must expose a single task-cost profile control in the same top-right header location as the previous provider selector. The control must show the selected provider icon, including the red YOLO/Brave badge for YOLO profiles, and open the profile chooser on click. Built-in provider-backed profiles use compact mode labels in the header, such as `Standard`, `Full Auto`, `Skip Permissions`, or `Brave Mode`, to avoid repeating provider names. User profiles show their saved profile name, and unmatched edited controls show `Custom`.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
 
 - The prompt must restore the stored default profile on open when that profile is still applicable. If the default is unavailable, the prompt may fall back to the provider-list default without writing a replacement default.
@@ -43,13 +43,17 @@ Task-cost profiles make the global prompt ready to send while still letting user
 - Choosing a built-in or user profile in the prompt profile popup must apply that profile to the current task only. It must not update the stored default profile id.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
-- The prompt profile popup must list profiles only, split into normal profiles and YOLO/Brave profiles with a separator. Raw model, reasoning-effort, Plan-effort, rename, delete, update, and duplicate controls must not appear in this quick popup.
+- The prompt profile popup must list profiles only, split into normal profiles and YOLO/Brave profiles with a separator. Raw model, reasoning-effort, Plan-effort, rename, delete, update, default, and duplicate controls must not appear in this quick popup.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
 - The prompt Plan checkbox must remain a separate header option. Selecting or restoring a profile must not change the current Plan checkbox state, and saving/updating user profiles must not store Plan state.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
-- `Manage Launch Profiles` must open a single application-level standalone non-modal profile editor window with a profile list and a details pane for name, provider, launch mode, model, effort, and Plan effort when the selected provider supports dedicated Plan reasoning effort. Reopening the action while the window is open must focus the existing window instead of creating another one. When the action is invoked from the global prompt, the prompt popup must close while the editor is open and be restored after the editor closes. The editor must allow editing built-in and user profiles. Built-in edits are stored as user customizations for the built-in slot; saving a customized built-in back to the built-in values removes that customization. Selecting rows in the editor must only navigate the editor and must not apply that profile to the current prompt. Quick profile selection may omit unavailable profiles, but the management editor must still show stored unavailable user profiles so they can be deleted or switched to an available provider. `Set as Default` must be the explicit action that stores the selected profile as the default for future prompts.
+- When the current prompt uses an applicable saved or built-in profile that is not the stored default, the generation-control row must show an inline `Make Default` action. When the current provider, launch mode, model, effort, or Plan effort draft does not match any applicable profile, the same location must show `Save as Default`; this creates a user profile with a generated name, makes it the stored default, and keeps it active in the prompt. The inline action is hidden when the current profile is already the stored default or generation controls are hidden.
+  [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
+
+- `Manage Launch Profiles` must open a single application-level standalone non-modal profile editor window with a profile list and a details pane for name, provider, launch mode, model, effort, and Plan effort when the selected provider supports dedicated Plan reasoning effort. Reopening the action while the window is open must focus the existing window instead of creating another one. When the action is invoked from the global prompt, the prompt popup must close while the editor is open and be restored after the editor closes. The editor must allow editing built-in and user profiles. Built-in edits are stored as user customizations for the built-in slot; saving a customized built-in back to the built-in values removes that customization. Selecting rows in the editor must only navigate the editor and must not apply that profile to the current prompt. Quick profile selection may omit unavailable profiles, but the management editor must still show stored unavailable user profiles so they can be deleted or switched to an available provider. `Set as Default` remains an explicit editor action for setting the default without changing the current prompt.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
   [@test] ../../sessions/testSrc/AgentSessionUiPreferencesStateServiceTest.kt
 
@@ -66,9 +70,9 @@ Task-cost profiles make the global prompt ready to send while still letting user
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
 ## User Experience
-- Profile labels should read as task presets, for example `Default Profile`, `Careful`, or `Fast`, not as a raw settings list. The header should not duplicate the provider name as both icon identity and adjacent text.
+- Profile labels should read as task presets or compact states, for example `Standard`, `Custom`, `Careful`, or `Fast`, not as a raw settings list. The header should not duplicate the provider name as both icon identity and adjacent text, and `default` wording should be reserved for persisted future-run selection.
 - Built-in and user profiles should appear together in the quick chooser. The built-in/user distinction matters in the manage dialog, where built-in edits are stored as removable user customizations.
-- The profile popup should show profiles and one `Manage Launch Profiles` action.
+- The profile popup should show profiles and one `Manage Launch Profiles` action. Defaulting and saving the current draft are exposed as a compact inline action in the generation-control row, outside the popup.
 - Existing-task mode and extension tabs should hide task-cost controls because they do not launch a new task with generation settings.
 
 ## Data & Backend

@@ -65,6 +65,9 @@ internal class ClaudeAgentSessionProviderDescriptor(
   override val yoloSessionLabelKey: String
     get() = "toolwindow.action.new.session.claude.yolo"
 
+  override val yoloSessionModeLabelKey: String
+    get() = "toolwindow.action.new.session.claude.yolo.mode"
+
   override val icon: Icon
     get() = AgentWorkbenchCommonIcons.Claude
 

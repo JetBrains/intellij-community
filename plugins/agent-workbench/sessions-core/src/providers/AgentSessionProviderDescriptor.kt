@@ -127,6 +127,8 @@ interface AgentSessionProviderDescriptor {
     get() = null
   val yoloSessionLabelKey: String?
     get() = null
+  val yoloSessionModeLabelKey: String?
+    get() = null
   val icon: Icon
 
   /** Desaturated variant for persistent surfaces (tree, toolbar button, tabs, status bar); menus keep [icon]. */
