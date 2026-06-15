@@ -74,7 +74,7 @@ open class KotlinUMethod(
                 else -> null
             }
 
-            val lightParams = psi.parameterList.parameters
+            val lightParams = javaPsi.parameterList.parameters
             val receiver = receiverTypeReference ?: return@getOrBuild lightParams.map { KotlinUParameter(it, parameterOrigin(it), this) }
             val receiverLight = lightParams.firstOrNull() ?: return@getOrBuild emptyList()
             val uParameters = SmartList<UParameter>(KotlinReceiverUParameter(receiverLight, receiver, this))
@@ -82,6 +82,7 @@ open class KotlinUMethod(
             uParameters
         }
 
+    @Deprecated("see the base property description", ReplaceWith("javaPsi"))
     override val psi: PsiMethod = unwrap<UMethod, PsiMethod>(psi)
 
     override val javaPsi: PsiMethod = psi
@@ -92,16 +93,16 @@ open class KotlinUMethod(
 
     override fun getContainingFile(): PsiFile? {
         kotlinOrigin?.containingFile?.let { return it }
-        return unwrapFakeFileForLightClass(psi.containingFile)
+        return unwrapFakeFileForLightClass(javaPsi.containingFile)
     }
 
-    override fun getNameIdentifier(): UastLightIdentifier = UastLightIdentifier(psi, kotlinOrigin)
+    override fun getNameIdentifier(): UastLightIdentifier = UastLightIdentifier(javaPsi, kotlinOrigin)
 
     override val uAnnotations: List<UAnnotation>
         get() = uAnnotationsPart.getOrBuild {
             // NB: we can't use sourcePsi.annotationEntries directly due to annotation use-site targets. The given `psi` as a light element,
             // which spans regular function, property accessors, etc., is already built with targeted annotation.
-            baseResolveProviderService.getPsiAnnotations(psi).asSequence()
+            baseResolveProviderService.getPsiAnnotations(javaPsi).asSequence()
                 .filter { if (javaPsi.hasModifier(JvmModifier.STATIC)) !isJvmStatic(it) else true }
                 .mapNotNull { (it as? KtLightElement<*, *>)?.kotlinOrigin as? KtAnnotationEntry }
                 .map { baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this) }
