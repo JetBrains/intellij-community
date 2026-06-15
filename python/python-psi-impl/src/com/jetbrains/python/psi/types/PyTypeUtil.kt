@@ -63,15 +63,15 @@ object PyTypeUtil {
    * 
    * 
    * This method handles [PyUnionType] by distributing the check across its
-   * members. The types are considered overlapping if the condition holds for any
-   * pair of members.
+   * members. The types are considered subtype-related if the condition holds for
+   * any pair of members.
    */
-  fun PyType?.isOverlappingWith(type2: PyType?, context: TypeEvalContext): Boolean {
+  fun PyType?.isSubtypeRelated(type2: PyType?, context: TypeEvalContext): Boolean {
     if (this is PyUnionType || this is PyUnsafeUnionType) {
-      return this.members.any { it.isOverlappingWith(type2, context) }
+      return this.members.any { it.isSubtypeRelated(type2, context) }
     }
     if (type2 is PyUnionType || type2 is PyUnsafeUnionType) {
-      return type2.members.any { this.isOverlappingWith(it, context) }
+      return type2.members.any { this.isSubtypeRelated(it, context) }
     }
     return match(this, type2, context)
            || match(type2, this, context)

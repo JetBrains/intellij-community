@@ -20,7 +20,7 @@ import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyType
-import com.jetbrains.python.psi.types.PyTypeUtil.isOverlappingWith
+import com.jetbrains.python.psi.types.PyTypeUtil.isSubtypeRelated
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -58,11 +58,11 @@ class PyInvalidCastInspection : PyInspection() {
         val targetType = Ref.deref(targetTypeRef)
         val actualType = myTypeEvalContext.getType(args[1])
 
-        if (targetType.isOverlappingWith(actualType, myTypeEvalContext)) return
+        if (targetType.isSubtypeRelated(actualType, myTypeEvalContext)) return
 
-        // Relax the overlap check according to the enabled options:
+        // Relax the subtype-relation check according to the enabled options:
         //  - ignoring generic variance erases generic type arguments, so e.g. casting 'list[int]' to 'list[object]'
-        //    is treated as overlapping;
+        //    is treated as subtype-related;
         //  - ignoring TypedDict structure treats a TypedDict as a plain 'dict', so e.g. a 'dict[str, object]' may be
         //    cast to a TypedDict.
         if (ignoreGenericVariance || ignoreTypedDictStructure) {
@@ -76,7 +76,7 @@ class PyInvalidCastInspection : PyInspection() {
             relaxedTarget = relaxedTarget.eraseTypedDictStructure()
             relaxedActual = relaxedActual.eraseTypedDictStructure()
           }
-          if (relaxedTarget.isOverlappingWith(relaxedActual, myTypeEvalContext)) return
+          if (relaxedTarget.isSubtypeRelated(relaxedActual, myTypeEvalContext)) return
         }
         val fromName = PythonDocumentationProvider.getTypeName(actualType, myTypeEvalContext)
         val toName = PythonDocumentationProvider.getVerboseTypeName(targetType, myTypeEvalContext)
@@ -118,7 +118,7 @@ private class AddIntermediateCastQuickFix(private val typeText: String) : PsiUpd
 
 /**
  * Erases generic type arguments so that parameterized types are compared by their base class only,
- * making the overlap check insensitive to the variance of generic parameters
+ * making the subtype-relation check insensitive to the variance of generic parameters
  * (e.g. `list[int]` becomes plain `list`). Union members are erased element-wise.
  */
 private fun PyType?.eraseGenericParameters(): PyType? = when (this) {
@@ -128,7 +128,7 @@ private fun PyType?.eraseGenericParameters(): PyType? = when (this) {
 }
 
 /**
- * Replaces TypedDict types with their underlying `dict` class, so that the overlap check ignores the structural
+ * Replaces TypedDict types with their underlying `dict` class, so that the subtype-relation check ignores the structural
  * details of a TypedDict and treats it as a plain dictionary (e.g. a `dict[str, object]` may be cast to a TypedDict).
  * Union members are erased element-wise.
  */
