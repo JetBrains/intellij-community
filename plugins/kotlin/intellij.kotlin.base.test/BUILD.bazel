@@ -43,6 +43,8 @@ jvm_library(
         "//plugins/kotlin/tests-common:common-tests_test_lib",
         "//plugins/kotlin/base/testFramework",
         "//plugins/kotlin/base/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/references",
+        "//plugins/kotlin/references:references_test_lib",
         "@lib//:kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/base/plugin:plugin_test_lib",

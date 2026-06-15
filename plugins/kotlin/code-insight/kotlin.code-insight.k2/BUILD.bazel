@@ -39,6 +39,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-analysis-api",
         "@lib//:kotlinc-analysis-api-platform-interface",
@@ -120,6 +121,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-codeInsight",
+        "//plugins/kotlin/references:references_test_lib",
         "//java/java-indexing-api:indexing_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/code-style-api:codeStyle_test_lib",

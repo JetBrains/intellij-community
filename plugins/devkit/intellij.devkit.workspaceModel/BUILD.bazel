@@ -33,6 +33,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common-provided",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
@@ -93,6 +94,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":workspaceModel",
+        "//plugins/kotlin/references:references_test_lib",
         "@lib//:kotlinc-kotlin-compiler-common-provided",
         "@lib//:kotlinc-kotlin-jps-common-provided",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",

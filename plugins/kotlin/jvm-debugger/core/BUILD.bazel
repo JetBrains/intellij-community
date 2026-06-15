@@ -29,6 +29,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-analysis-api",
         "@lib//:kotlinc-analysis-api-impl-base",
@@ -97,6 +98,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":core",
+        "//plugins/kotlin/references:references_test_lib",
         "//libraries/asm:asm_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util/concurrency:concurrency_test_lib",

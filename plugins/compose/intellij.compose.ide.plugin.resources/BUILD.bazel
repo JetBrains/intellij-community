@@ -194,6 +194,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
+        "//plugins/kotlin/references:references_test_lib",
         "@lib//:kotlinc-kotlin-compiler-common-provided",
         "//platform/analysis-api:analysis",
         "//platform/analysis-api:analysis_test_lib",

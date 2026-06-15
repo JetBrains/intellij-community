@@ -34,6 +34,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-analysis-api",
         "//platform/analysis-api:analysis",
@@ -68,6 +69,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-refactorings-rename",
+        "//plugins/kotlin/references:references_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/indexing-api:indexing_test_lib",
         "//plugins/kotlin/base/psi:psi_test_lib",

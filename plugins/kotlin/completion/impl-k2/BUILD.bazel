@@ -34,6 +34,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:jetbrains-annotations",
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlinc-kotlin-compiler-fir",
         "@lib//:kotlinc-analysis-api",
@@ -98,6 +99,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":kotlin-completion-impl",
+        "//plugins/kotlin/references:references_test_lib",
         "//java/java-indexing-api:indexing_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core_test_lib",

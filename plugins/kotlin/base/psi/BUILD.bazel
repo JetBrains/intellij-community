@@ -21,6 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/references",
         "@lib//:kotlinc-kotlin-compiler-common",
         "//libraries/guava",
         "//platform/core-api:core",
@@ -47,6 +48,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":psi",
+        "//plugins/kotlin/references:references_test_lib",
         "//libraries/guava:guava_test_lib",
         "//platform/core-api:core_test_lib",
         "//plugins/kotlin/base/util:util_test_lib",
