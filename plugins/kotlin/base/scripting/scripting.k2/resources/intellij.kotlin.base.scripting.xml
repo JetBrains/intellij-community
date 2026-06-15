@@ -84,6 +84,11 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <scriptDefinitionsSource
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.definitions.MainKtsScriptDefinitionSource"/>
+
+    <scriptAfterRunCallbackProvider
+            implementation="org.jetbrains.kotlin.idea.core.script.k2.MainKtsAfterRunCallbackProvider"/>
 
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.core.script.k2.dependencies.ModuleScriptAdditionalIdeaDependenciesProvider"/>
 
