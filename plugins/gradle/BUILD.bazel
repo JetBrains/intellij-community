@@ -417,8 +417,6 @@ jvm_library(
         "//platform/workspace/jps:jps_test_lib",
         "//platform/workspace/storage",
         "//platform/workspace/storage:storage_test_lib",
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
         "//platform/backend/observation",
         "//platform/backend/observation:observation_test_lib",
         "//platform/xdebugger-api:debugger",

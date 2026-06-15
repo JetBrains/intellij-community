@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.service.project
+package com.intellij.gradle.performanceTests.service.project
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsDataStorage
@@ -10,6 +10,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.workspaceModel.updateProjectModel
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import org.jetbrains.plugins.gradle.service.project.GradleModuleDataIndex
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestEntityStorage
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestEntityStorage.Companion.entityStorage
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestProjectNode.Companion.externalProjectInfo

@@ -1132,6 +1132,7 @@ plugins/gradle/jps-plugin
 plugins/gradle/kotlin
 plugins/gradle/native
 plugins/gradle/native/tooling
+plugins/gradle/performanceTests
 plugins/gradle/plugin
 plugins/gradle/properties
 plugins/gradle/settings
