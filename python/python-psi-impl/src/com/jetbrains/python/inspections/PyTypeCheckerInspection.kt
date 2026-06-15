@@ -579,17 +579,20 @@ open class PyTypeCheckerInspection : PyInspection() {
       anchor: PsiElement,
       @PropertyKey(resourceBundle = PyPsiBundle.BUNDLE) messageKey: @PropertyKey(resourceBundle = PyPsiBundle.BUNDLE) String,
     ): PyInspectionMessages.ProblemMessage {
-      return PyPsiBundle.problemMessage(
+      val base = PyPsiBundle.problemMessage(
         messageKey,
         CodifiedParam.ofType(expected, anchor, myTypeEvalContext, verbose = true),
         CodifiedParam.ofType(actual, anchor, myTypeEvalContext),
       )
+      val diff = PyTypeDiff.diffTooltip(expected, actual, myTypeEvalContext)
+      return if (diff != null) base.copy(tooltip = diff) else base
     }
 
     /**
-     * Registers a type-mismatch problem, attaching the breakdown ([PyTypeChecker.explainMismatch]) as a separate
-     * HTML tooltip when running on-the-fly. The one-line [message] remains the problem description, so batch results
-     * and existing golden tests are unaffected; only the editor hover shows the breakdown.
+     * Registers a type-mismatch problem. On-the-fly the editor-hover tooltip is the [message]'s own tooltip — the
+     * aligned [PyTypeDiff] for structural mismatches — with the breakdown ([PyTypeChecker.explainMismatch]) appended
+     * below it. The one-line [message] description stays flat, so batch results and existing golden tests are
+     * unaffected; only the editor hover shows the diff and breakdown.
      */
     private fun registerTypeMismatch(
       element: PsiElement?,
@@ -599,8 +602,8 @@ open class PyTypeCheckerInspection : PyInspection() {
       type: ProblemHighlightType,
       vararg fixes: LocalQuickFix,
     ) {
-      // Description stays the plain one-liner; on-the-fly the tooltip is the rich breakdown (built from the
-      // enriched [message]). registerProblemWithTooltip runs the supplier only on-the-fly, since it re-runs the match.
+      // registerProblemWithTooltip runs the supplier only on-the-fly, since it re-runs the match. breakdownTooltip
+      // uses the enriched [message]'s tooltip (the diff) as the headline and appends the breakdown tree.
       registerProblemWithTooltip(element, message, type, *fixes)
                                   { PyTypeCheckerInspectionProblemRegistrar.breakdownTooltip(message, expected, actual, myTypeEvalContext, element) }
     }

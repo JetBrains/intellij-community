@@ -5,6 +5,7 @@ import com.intellij.AbstractBundle
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil
 import com.jetbrains.python.documentation.PyDocumentationLink
@@ -47,6 +48,14 @@ object PyInspectionMessages {
     @InspectionMessage @Nls val description: String,
     @NlsContexts.Tooltip val tooltip: String,
   )
+
+  /**
+   * The [message]'s rich tooltip as a raw [HtmlChunk] (its outer `<html>` wrapper stripped), suitable for use as
+   * a diff headline that must keep its embedded `<code>` spans and `#element/` links rather than being escaped.
+   */
+  @JvmStatic
+  fun tooltipHeadline(message: ProblemMessage): HtmlChunk =
+    HtmlChunk.raw(message.tooltip.removeSurrounding("<html>", "</html>"))
 
   /**
    * A parameter value that carries its own description form and tooltip form. Use this when the value is

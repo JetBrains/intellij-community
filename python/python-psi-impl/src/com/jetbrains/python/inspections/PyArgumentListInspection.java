@@ -416,8 +416,7 @@ public final class PyArgumentListInspection extends PyInspection {
     final List<PyMismatchTooltips.Slot> argumentSlots = new ArrayList<>();
     for (PyExpression argument : node.getArguments()) {
       final boolean matched = ContainerUtil.exists(mappings, mapping -> !containsIdentity(mapping.getUnmappedArguments(), argument));
-      argumentSlots.add(new PyMismatchTooltips.Slot(
-        PyMismatchTooltips.actualArgumentText(argument, context.getType(argument), context), matched));
+      argumentSlots.add(PyMismatchTooltips.argumentSlot(argument, context.getType(argument), context, matched));
     }
 
     final List<List<PyMismatchTooltips.Slot>> expectedRows = new ArrayList<>();
@@ -430,7 +429,7 @@ public final class PyArgumentListInspection extends PyInspection {
           final PyCallableParameter parameter = parameters.get(i);
           if (parameter.isPositionOnlySeparator() || parameter.isKeywordOnlySeparator()) continue;
           final boolean matched = !containsIdentity(mapping.getUnmappedParameters(), parameter);
-          row.add(new PyMismatchTooltips.Slot(PyMismatchTooltips.parameterText(parameter, context), matched));
+          row.add(PyMismatchTooltips.parameterSlot(parameter, context, matched));
         }
       }
       expectedRows.add(row);

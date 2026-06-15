@@ -81,9 +81,20 @@ public final class PyMethodOverridingInspection extends PyInspection {
 
       if (!PyTypeChecker.match(baseMethodInputSignature, functionInputSignature, myTypeEvalContext)) {
         ProblemMessage msg = PyPsiBundle.problemMessage("INSP.signature.mismatch", methodSignatureParam, baseClassParam);
+        LocalQuickFix fix = PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(function, baseMethod);
 
-        registerOverrideMismatch(function.getParameterList(), baseMethodInputSignature, functionInputSignature, msg,
-                                 PythonUiService.getInstance().createPyChangeSignatureQuickFixForMismatchingMethods(function, baseMethod));
+        // Keep the headline's clickable `B.f()`/`A` links: feed the rich tooltip HTML, not the escaped description.
+        String diff = PyTypeDiff.paramsDiffTooltip(baseMethod.getParameters(myTypeEvalContext),
+                                                   function.getParameters(myTypeEvalContext),
+                                                   PyInspectionMessages.tooltipHeadline(msg), myTypeEvalContext);
+        ProblemMessage problemMessage = new ProblemMessage(msg.description(), diff);
+        // The diff is the message tooltip; registerOverrideMismatch appends the breakdown below it on-the-fly.
+        if (fix != null) {
+          registerOverrideMismatch(function.getParameterList(), baseMethodInputSignature, functionInputSignature, problemMessage, fix);
+        }
+        else {
+          registerOverrideMismatch(function.getParameterList(), baseMethodInputSignature, functionInputSignature, problemMessage);
+        }
       }
 
       PyAnnotation annotation = function.getAnnotation();
