@@ -25,7 +25,7 @@ internal abstract class LspWorkspaceSymbolContributor : ChooseByNameContributorE
     val project = parameters.project
     val query = parameters.completePattern
     // skipping the processor.process early helps to reduce complexity from the platform side
-    if (query.isBlank() || LspClientManagerImpl.getInstanceImpl(project).getAllRunningClients().isEmpty()) return
+    if (query.isBlank() || LspClientManagerImpl.getInstanceImpl(project).getRunningClients().isEmpty()) return
 
     processor.process(query)
   }
@@ -46,7 +46,7 @@ internal abstract class LspWorkspaceSymbolContributor : ChooseByNameContributorE
   ) {
     val project = parameters.project
     val scope = parameters.searchScope
-    val clients = LspClientManagerImpl.getInstanceImpl(project).getAllRunningClients().filter {
+    val clients = LspClientManagerImpl.getInstanceImpl(project).getRunningClients().filter {
       it.descriptor.lspCustomization.workspaceSymbolCustomizer is LspWorkspaceSymbolSupport && it.supportsGoToSymbol()
     }
 

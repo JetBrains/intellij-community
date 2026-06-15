@@ -118,7 +118,7 @@ internal class LspOpenedFilesService(private val project: Project) {
    */
   fun scheduleClosingFilesThatAreNotOfInterest() {
     val lspServerManager = LspClientManagerImpl.getInstanceImpl(project)
-    val runningClients = lspServerManager.getAllRunningClients()
+    val runningClients = lspServerManager.getRunningClients()
     if (runningClients.isEmpty()) return
 
     ReadAction

@@ -73,7 +73,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
   internal fun getClientsWithThisFileOpen(file: VirtualFile): Collection<LspClientImpl> =
     lspClients.filter { it.isFileOpened(file) }
 
-  internal fun getAllRunningClients(): Collection<LspClientImpl> = lspClients.filter { it.state == LspServerState.Running }
+  internal fun getRunningClients(): Collection<LspClientImpl> = lspClients.filter { it.state == LspServerState.Running }
 
   internal fun findRunningClient(condition: (LspClientImpl) -> Boolean): LspClientImpl? =
     lspClients.find { it.state == LspServerState.Running && condition(it) }
@@ -96,7 +96,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
 
     cs.launch {
       val descriptorsToStart = readAction {
-        val runningClients = getClients(providerClass)
+        val clients = getClients(providerClass)
         val descriptorsToStart = mutableListOf<LspClientDescriptor>()
 
         for (file in FileEditorManager.getInstance(project).openFiles) {
@@ -104,7 +104,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
           if (!file.isInLocalFileSystem) continue
           if (!ProjectFileIndex.getInstance(project).isInContent(file)) continue
 
-          if (runningClients.any { client ->
+          if (clients.any { client ->
               client.descriptor.roots.any { root -> VfsUtilCore.isAncestor(root, file, true) }
             }) {
             // the file is already within the roots of a running server
