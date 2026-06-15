@@ -12,6 +12,7 @@ import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.SOLVED
 import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID
 import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.VARIANCE_OPTION_ID
 import com.jetbrains.python.psi.LanguageLevel
+import com.jetbrains.python.psi.PyClass
 
 class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
 
@@ -35,7 +36,7 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     def bar(a: int)/*<# -> Literal["Hi!"] #>*/:
         return "Hi!"
         
-    def gen(a: int)/*<# -> Generator[Literal[42, "str"] | float, Any, Literal["Hi!", 42… #>*/:
+    def gen(a: int)/*<# -> Generator[Literal[42, "str"] | float, Any, Literal["Hi!", 42]] #>*/:
         yield 42
         yield "str"
         yield 42.5
@@ -322,6 +323,38 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, false, SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID)
   }
 
+  @TestFor(issues = ["PY-90293"])
+  fun `test return type name is navigable`() {
+    doTestNavigable("""
+      def f(x: int)/*<# -> |<int>int #>*/:
+          return x
+    """, FUNCTION_RETURN_TYPE_OPTION_ID)
+  }
+
+  @TestFor(issues = ["PY-90293"])
+  fun `test return type names in union are navigable`() {
+    doTestNavigable("""
+      def f(x: int, y: float)/*<# -> |<float>float| | |<int>int #>*/:
+          return x + y
+    """, FUNCTION_RETURN_TYPE_OPTION_ID)
+  }
+
+  @TestFor(issues = ["PY-90293"])
+  fun `test return type names in generic are navigable`() {
+    doTestNavigable("""
+      def f()/*<# -> |<list>list|[|<int>int|] #>*/:
+          return [1]
+    """, FUNCTION_RETURN_TYPE_OPTION_ID)
+  }
+
+  @TestFor(issues = ["PY-90293"])
+  fun `test parameter type name is navigable`() {
+    doTestNavigable("""
+      def f(a/*<# : |<int>int #>*/=1):
+          pass
+    """, PARAMETER_TYPE_ANNOTATION)
+  }
+
   private val allOptions = mapOf(
     REVEAL_TYPE_OPTION_ID to true,
     FUNCTION_RETURN_TYPE_OPTION_ID to true,
@@ -343,6 +376,26 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
                    testOptions,
                    verifyHintsPresence = verifyHintsPresence,
                    testMode = ProviderTestMode.SIMPLE)
+  }
+
+  /**
+   * Renders hints in [ProviderTestMode.DETAILED] mode, where each navigable name carries the resolved class wrapped in
+   * `<>` so the expected text can assert both the rendered text and the navigation target of each clickable name.
+   */
+  private fun doTestNavigable(text: String, vararg enabledOptions: String) {
+    customToStringProvider = { element -> "<${(element as PyClass).name}>" }
+    try {
+      val testOptions = allOptions.mapValues { (key, _) -> key in enabledOptions }
+      doTestProvider("A.py",
+                     text.trimIndent(),
+                     PyTypeInlayHintsProvider(),
+                     testOptions,
+                     verifyHintsPresence = true,
+                     testMode = ProviderTestMode.DETAILED)
+    }
+    finally {
+      customToStringProvider = null
+    }
   }
 
   override fun getProjectDescriptor(): LightProjectDescriptor {
