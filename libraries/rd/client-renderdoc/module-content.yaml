@@ -1,6 +1,0 @@
-- name: <file>
-  modules:
-  - name: intellij.libraries.rd.client.renderdoc
-    libraries:
-      rd-core:
-      - name: $MAVEN_REPOSITORY$/com/jetbrains/rd-client/renderdoc-rd-client/2025.2.1/renderdoc-rd-client-2025.2.1

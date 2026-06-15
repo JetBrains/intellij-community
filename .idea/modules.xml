@@ -1154,7 +1154,6 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/protobuf/intellij.libraries.protobuf.iml" filepath="$PROJECT_DIR$/libraries/protobuf/intellij.libraries.protobuf.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/proxy-vole/intellij.libraries.proxy.vole.iml" filepath="$PROJECT_DIR$/libraries/proxy-vole/intellij.libraries.proxy.vole.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/pty4j/intellij.libraries.pty4j.iml" filepath="$PROJECT_DIR$/libraries/pty4j/intellij.libraries.pty4j.iml" />
-      <module fileurl="file://$PROJECT_DIR$/libraries/rd/client-renderdoc/intellij.libraries.rd.client.renderdoc.iml" filepath="$PROJECT_DIR$/libraries/rd/client-renderdoc/intellij.libraries.rd.client.renderdoc.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/rd/core/intellij.libraries.rd.core.iml" filepath="$PROJECT_DIR$/libraries/rd/core/intellij.libraries.rd.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/rd/framework/intellij.libraries.rd.framework.iml" filepath="$PROJECT_DIR$/libraries/rd/framework/intellij.libraries.rd.framework.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/rd/swing/intellij.libraries.rd.swing.iml" filepath="$PROJECT_DIR$/libraries/rd/swing/intellij.libraries.rd.swing.iml" />
