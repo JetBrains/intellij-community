@@ -231,6 +231,7 @@ class PluginManagerTest {
         "- intellij.platform.jps.build.dependencyGraph",
       ),
       ProductMode.LIGHT to listOf(
+        "- intellij.cwm.plugin.common",
         "- intellij.platform.backend",
         "+ intellij.platform.frontend",
         "- intellij.platform.frontend.split",
@@ -242,6 +243,7 @@ class PluginManagerTest {
         "- intellij.rd.client",
       ),
       ProductMode.LIGHT_WITH_RD_CONNECTION to listOf(
+        "- intellij.cwm.plugin.common",
         "- intellij.platform.backend",
         "+ intellij.platform.frontend",
         "- intellij.platform.frontend.split",

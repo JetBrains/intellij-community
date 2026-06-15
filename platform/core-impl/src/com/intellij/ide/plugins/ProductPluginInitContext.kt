@@ -223,10 +223,11 @@ class ProductPluginInitContext(
           val platformSplitConnection = PluginModuleId("intellij.platform.split.connection", PluginModuleId.JETBRAINS_NAMESPACE)
           val platformSplit = PluginModuleId("intellij.platform.split", PluginModuleId.JETBRAINS_NAMESPACE)
           val rdClient = PluginModuleId("intellij.rd.client", PluginModuleId.JETBRAINS_NAMESPACE)
+          val cwmPluginCommon = PluginModuleId("intellij.cwm.plugin.common", PluginModuleId.JETBRAINS_NAMESPACE)
 
           setModuleAvailability(frontendSplitBase, true)
 
-          for (moduleId in listOf(frontendSplit, platformSplit, rdClient)) {
+          for (moduleId in listOf(frontendSplit, platformSplit, rdClient, cwmPluginCommon)) {
             setModuleAvailability(moduleId, false)
           }
 
