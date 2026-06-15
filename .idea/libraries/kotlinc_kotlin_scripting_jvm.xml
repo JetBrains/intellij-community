@@ -1,11 +1,18 @@
 <component name="libraryTable">
-  <library name="kotlinc.kotlin-scripting-jvm">
+  <library name="kotlinc.kotlin-scripting-jvm" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-jvm:2.4.20-dev-6724">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.4.20-dev-6724/kotlin-scripting-jvm-2.4.20-dev-6724.jar">
+          <sha256sum>2096fe83ede00288e3ce6ea4cd5ac08e7552b9a160785b1947c16157f98fe229</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-jvm/2.4.255-dev-255/kotlin-scripting-jvm-2.4.255-dev-255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.4.20-dev-6724/kotlin-scripting-jvm-2.4.20-dev-6724.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/kotlin-snapshot/org/jetbrains/kotlin/kotlin-scripting-jvm/2.4.255-dev-255/kotlin-scripting-jvm-2.4.255-dev-255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/2.4.20-dev-6724/kotlin-scripting-jvm-2.4.20-dev-6724-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
