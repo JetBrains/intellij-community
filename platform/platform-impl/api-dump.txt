@@ -5473,6 +5473,8 @@ Ff:com.intellij.ui.dsl.builder.Row$DefaultImpls
 - bs:comment$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:contextHelp$default(com.intellij.ui.dsl.builder.Row,java.lang.String,java.lang.String,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:expandableTextField$default(com.intellij.ui.dsl.builder.Row,com.intellij.util.Function,com.intellij.util.Function,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:icon$default(com.intellij.ui.dsl.builder.Row,com.intellij.platform.icons.Icon,com.intellij.platform.icons.scale.IconScale,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
+- bs:icon$default(com.intellij.ui.dsl.builder.Row,com.intellij.platform.icons.scale.IconScale,kotlin.jvm.functions.Function1,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:intTextField$default(com.intellij.ui.dsl.builder.Row,kotlin.ranges.IntRange,java.lang.Integer,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:radioButton$default(com.intellij.ui.dsl.builder.Row,java.lang.String,java.lang.Object,I,java.lang.Object):com.intellij.ui.dsl.builder.Cell
 - bs:rowComment$default(com.intellij.ui.dsl.builder.Row,java.lang.String,I,com.intellij.ui.dsl.builder.HyperlinkEventAction,I,java.lang.Object):com.intellij.ui.dsl.builder.Row

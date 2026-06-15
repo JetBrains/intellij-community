@@ -14,6 +14,11 @@ interface IconScale {
      *   originalHeight to allow relative scale
      */
     fun toFactor(density: Float, originalWidth: Int, originalHeight: Int, contextScale: Float = 1f): Float
+
+    companion object {
+      @JvmField
+      val Default: IconScale = factor(1f)
+    }
 }
 
 interface FactorScale : IconScale {

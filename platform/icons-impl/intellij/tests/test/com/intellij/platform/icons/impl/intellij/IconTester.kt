@@ -73,14 +73,14 @@ class IconTestRun(
 
 class TestIconManager: DefaultIconManager() {
   override val resolverService: DeferredIconResolverService
-    get() = TODO("not implemented")
+    get() = throw NotImplementedError()
 
   override suspend fun sendDeferredNotifications(id: IconIdentifier, result: Icon) {
-    TODO("not implemented")
+    throw NotImplementedError()
   }
 
   override fun markDeferredIconUnused(id: IconIdentifier) {
-    TODO("not implemented")
+    throw NotImplementedError()
   }
 
   override fun icon(designer: IconDesigner.() -> Unit): Icon {
@@ -201,7 +201,7 @@ class TestPaintingContext(
     alpha: Float,
     mode: DrawMode,
   ) {
-    TODO("not implemented")
+    throw NotImplementedError()
   }
 
   override fun drawRect(
@@ -213,7 +213,7 @@ class TestPaintingContext(
     alpha: Float,
     mode: DrawMode,
   ) {
-    TODO("not implemented")
+    throw NotImplementedError()
   }
 
   override fun createNestedLayer(

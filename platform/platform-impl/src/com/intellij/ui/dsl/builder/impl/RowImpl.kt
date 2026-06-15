@@ -11,6 +11,16 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.icons.design.BlendMode
+import com.intellij.platform.icons.design.Color
+import com.intellij.platform.icons.design.IconDesigner
+import com.intellij.platform.icons.filters.ColorFilter
+import com.intellij.platform.icons.filters.tint
+import com.intellij.platform.icons.icon
+import com.intellij.platform.icons.modifiers.IconModifier
+import com.intellij.platform.icons.modifiers.colorFilter
+import com.intellij.platform.icons.scale.IconScale
+import com.intellij.platform.icons.swing.toSwingIcon
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.UIBundle
@@ -309,6 +319,18 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     val label = JBLabel(icon)
     label.disabledIcon = IconUtil.desaturate(icon)
     return cell(label)
+  }
+
+  override fun icon(icon: com.intellij.platform.icons.Icon, scale: IconScale): CellImpl<JLabel> {
+    val label = JBLabel(icon, scale)
+    label.disabledIcon = com.intellij.platform.icons.icon {
+      icon(icon, IconModifier.colorFilter(ColorFilter.tint(Color.Black, BlendMode.Saturation)))
+    }.toSwingIcon()
+    return cell(label)
+  }
+
+  override fun icon(scale: IconScale, designer: IconDesigner.() -> Unit): Cell<JLabel> {
+    return icon(icon(designer), scale)
   }
 
   override fun contextHelp(description: String, title: String?): CellImpl<JLabel> {
