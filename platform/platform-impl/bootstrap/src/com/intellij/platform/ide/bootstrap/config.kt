@@ -62,7 +62,7 @@ internal suspend fun importConfigIfNeeded(
         CustomConfigMigrationOption.MergeConfigs.writeConfigMarkerFile()
       }
     }
-    log.info("config importing not performed in headless mode")
+    log.info("config importing skipped in headless mode")
     return null
   }
 
@@ -77,12 +77,13 @@ internal suspend fun importConfigIfNeeded(
 
   if (ClassicUiToIslandsMigration.isEnabledFeature) {
     ClassicUiToIslandsMigration.enableNewUiWithIslands(logDeferred)
-  } else {
+  }
+  else {
     enableNewUi(logDeferred, isNewUser)
   }
 
   if (isNewUser && InitialConfigImportState.isStartupWizardEnabled()) {
-    log.info("Will enter initial app wizard flow.")
+    log.info("entering the initial app wizard flow")
     val result = CompletableDeferred<Boolean>()
     isInitialStart = result
     return result

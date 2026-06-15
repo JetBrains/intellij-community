@@ -1,6 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import com.intellij.ide.IdeBundle
@@ -20,6 +18,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.io.awaitExit
+import com.intellij.util.system.OS
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -41,7 +40,7 @@ private var IS_NOTIFICATION_REGISTERED = false
 
 @ApiStatus.Internal
 suspend fun disableInputMethodsIfPossible() {
-  if (SystemInfo.isWindows || SystemInfo.isMac || !SystemInfo.isJetBrainsJvm) {
+  if (!OS.isGenericUnix() || !SystemInfo.isJetBrainsJvm) {
     return
   }
   if (StartupUiUtil.isWaylandToolkit()) {
@@ -72,14 +71,12 @@ suspend fun disableInputMethodsIfPossible() {
     return
   }
 
-  // Offer to disable IM via notification
-
+  // suggest disabling input methods via a notification
   if (!IS_NOTIFICATION_REGISTERED) {
     IS_NOTIFICATION_REGISTERED = true
     NotificationsConfiguration.getNotificationsConfiguration().register(
-      NOTIFICATION_GROUP,
-      NotificationDisplayType.STICKY_BALLOON,
-      true)
+      NOTIFICATION_GROUP, NotificationDisplayType.STICKY_BALLOON, true
+    )
   }
 
   val title = IdeBundle.message("notification.title.input.method.disabler")
@@ -137,11 +134,10 @@ private fun freeIMRecursively(c: Component) {
 private suspend fun canDisableInputMethod(): Boolean {
   val gdmSession = System.getenv("GDMSESSION") ?: ""
   val xdgDesktop = System.getenv("XDG_CURRENT_DESKTOP")?.lowercase(Locale.ENGLISH) ?: ""
-  val isGTKDesktop = gdmSession.startsWith("gnome")
-                     || gdmSession.startsWith("ubuntu")
-                     || xdgDesktop.startsWith("unity")
-                     || xdgDesktop.startsWith("ubuntu")
-                     || xdgDesktop.startsWith("gnome")
+  val isGTKDesktop = (
+    gdmSession.startsWith("gnome") || gdmSession.startsWith("ubuntu") || xdgDesktop.startsWith("unity") ||
+    xdgDesktop.startsWith("ubuntu") || xdgDesktop.startsWith("gnome")
+  )
   if (!isGTKDesktop) {
     LOG.info("Input method disabler: not gtk desktop: '$gdmSession' | '$xdgDesktop'")
     return false
@@ -184,7 +180,7 @@ private suspend fun canDisableInputMethod(): Boolean {
 }
 
 private suspend fun processInputSources(layoutId2type: MutableMap<String, String>): Boolean {
-  @Suppress("SpellCheckingInspection")
+  @Suppress("SpellCheckingInspection", "BlockingMethodInNonBlockingContext")
   val process = ProcessBuilder("gsettings", "get", "org.gnome.desktop.input-sources", "sources").start()
   process.awaitExit()
 
@@ -200,6 +196,7 @@ private suspend fun processInputSources(layoutId2type: MutableMap<String, String
         val type = parser.extractString(if (first) "('" else "'", "'")
         if (type == null) {
           if (first) { // error (or empty output)
+            @Suppress("SpellCheckingInspection")
             LOG.warn("Input method disabler: can't parse gsettings line: $line")
             return false
           }
@@ -209,11 +206,12 @@ private suspend fun processInputSources(layoutId2type: MutableMap<String, String
         val layoutId = parser.extractString("'", "'")
         if (layoutId == null) {
           // error (must be presented)
+          @Suppress("SpellCheckingInspection")
           LOG.warn("Input method disabler: can't parse gsettings line: $line")
           return false
         }
 
-        layoutId2type.put(layoutId, type)
+        layoutId2type[layoutId] = type
       }
     }
   }
@@ -221,6 +219,7 @@ private suspend fun processInputSources(layoutId2type: MutableMap<String, String
     throw e
   }
   catch (e: Throwable) {
+    @Suppress("SpellCheckingInspection")
     LOG.warn("Input method disabler: error during parsing gsettings line: $lastLine", e)
   }
   return true

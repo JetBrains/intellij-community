@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
 import com.intellij.accessibility.enableScreenReaderSupportIfNeeded
@@ -40,6 +40,7 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
@@ -86,7 +87,7 @@ open class IdeStarter : ModernApplicationStarter() {
       val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
 
       val openProjectBlock: suspend CoroutineScope.() -> Unit = {
-        openProjectIfNeeded(args = args, app = app, coroutineScope = this, publisher = lifecyclePublisher)
+        openProjectIfNeeded(args, app, coroutineScope = this, lifecyclePublisher)
         // update an "open projects" state to whichever projects were decided to be opened in openProjectIfNeeded (=which are open now)
         serviceAsync<RecentProjectsManager>().updateLastProjectPath()
       }
@@ -260,7 +261,7 @@ open class IdeStarter : ModernApplicationStarter() {
       }
 
       val recentProjectManager = serviceAsync<RecentProjectsManager>()
-      val isOpened = (if (recentProjectManager.willReopenProjectOnStart()) recentProjectManager.reopenLastProjectsOnStart() else true)
+      val isOpened = !recentProjectManager.willReopenProjectOnStart() || recentProjectManager.reopenLastProjectsOnStart()
       if (!isOpened) {
         coroutineScope.launch(Dispatchers.EDT) {
           serviceAsync<LightEditService>().showEditorWindow()
@@ -275,10 +276,9 @@ open class IdeStarter : ModernApplicationStarter() {
 private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): Project? {
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory = null)
   if (result.hasError) {
-    logger<IdeStarter>().warn(result.getErrorMessage() ?: "Can't process command line")
+    logger<IdeStarter>().warn(result.getErrorMessage() ?: "Can't process the command line")
     withContext(Dispatchers.EDT) {
-      if (!ApplicationManagerEx.isInIntegrationTest() ||
-          !java.lang.Boolean.parseBoolean(System.getProperty("closeIDESilentlyOnStartupErrorInTests"))) {
+      if (!(ApplicationManagerEx.isInIntegrationTest() && System.getProperty("closeIDESilentlyOnStartupErrorInTests").toBoolean())) {
         result.showError()
       }
       if (!AppMode.isRemoteDevHost()) {
@@ -289,17 +289,18 @@ private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<Str
   return result.project
 }
 
+@OptIn(LowLevelLocalMachineAccess::class)
 private fun postOpenUiTasks(scope: CoroutineScope) {
   if (PluginManagerCore.isRunningFromSources()) {
     updateAppWindowIcon(JOptionPane.getRootFrame())
   }
 
   if (OS.CURRENT == OS.macOS) {
-    scope.launch(CoroutineName("mac touchbar on app init")) {
+    scope.launch(CoroutineName("macOS touchbar on app init")) {
       TouchbarSupport.onApplicationLoaded()
     }
   }
-  else if (OS.CURRENT != OS.Windows && SystemInfo.isJetBrainsJvm) {
+  else if (OS.isGenericUnix() && SystemInfo.isJetBrainsJvm) {
     scope.launch(CoroutineName("input method disabling on Linux")) {
       disableInputMethodsIfPossible()
     }

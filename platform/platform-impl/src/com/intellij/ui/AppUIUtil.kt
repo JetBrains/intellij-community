@@ -44,6 +44,7 @@ import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.ResourceUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.io.URLUtil
+import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ImageUtil
@@ -70,13 +71,12 @@ import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.border.Border
+import kotlin.io.path.absolutePathString
 import kotlin.io.path.extension
 import kotlin.math.roundToInt
-import java.lang.Boolean.getBoolean as getBooleanSystemProperty
 
 private const val VENDOR_PREFIX = "jetbrains-"
-private var appIcons: MutableList<Image?>? = null
-
+private var appIcons: List<Image>? = null
 @Volatile
 private var isMacDocIconSet = false
 
@@ -88,9 +88,8 @@ fun updateAppWindowIcon(window: Window) {
     return
   }
 
-  var images = appIcons
-  if (images == null) {
-    images = ArrayList(3)
+  if (appIcons == null) {
+    val images = ArrayList<Image>(3)
     val appInfo = ApplicationInfoImpl.getShadowInstance()
     val scaleContext = ScaleContext.create(window)
     if (OS.CURRENT == OS.Linux) {
@@ -109,42 +108,44 @@ fun updateAppWindowIcon(window: Window) {
     for (i in images.indices) {
       val image = images[i]
       if (image is JBHiDPIScaledImage) {
-        images[i] = image.delegate
+        when (val delegate = image.delegate) {
+          null -> images.removeAt(i)
+          else -> images[i] = delegate
+        }
       }
     }
-
-    appIcons = images
+    appIcons = images.toList()
   }
 
-  if (!images.isEmpty()) {
+  appIcons?.takeIf { it.isNotEmpty() }?.let { images ->
     if (OS.CURRENT != OS.macOS) {
       window.iconImages = images
     }
     else if (!isMacDocIconSet) {
-      MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.first()!!))
       isMacDocIconSet = true
+      MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.first()))
     }
   }
 }
 
-/** Returns a HiDPI-aware image. */
+// returns a HiDPI-aware image
 private fun loadAppIconImage(svgPath: String, scaleContext: ScaleContext, size: Int): Image? {
   val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-  val sysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
-  val userScale = scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
-  val userSize = (size * userScale).roundToInt()
-  val svgData = findAppIconSvgData(path = svgPath, pixScale = pixScale)
+  val svgData = findAppIconSvgData(svgPath, pixScale)
   if (svgData == null) {
     LOG.warn("Cannot load SVG application icon from $svgPath")
     return null
   }
-  return loadWithSizes(sizes = listOf(userSize), data = svgData, scale = sysScale).first()
+  val sysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
+  val userScale = scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
+  val userSize = (size * userScale).roundToInt()
+  return loadWithSizes(listOf(userSize), svgData, sysScale).first()
 }
 
 private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
   val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
   // app icon doesn't support `dark` concept, and moreover, it cannot depend on a current LaF
-  val descriptors = createImageDescriptorList(path = path, isDark = false, isStroke = false, pixScale = pixScale)
+  val descriptors = createImageDescriptorList(path, isDark = false, isStroke = false, pixScale)
   val rawPathWithoutExt = path.substring(if (path.startsWith('/')) 1 else 0, path.lastIndexOf('.'))
   for (descriptor in descriptors) {
     val transformedPath = descriptor.pathTransform(rawPathWithoutExt, "svg")
@@ -154,14 +155,13 @@ private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
       IconLoadMeasurer.loadFromResources.end(resourceLoadStart)
     }
     if (loadingStart != -1L) {
-      IconLoadMeasurer.addLoading(isSvg = descriptor.isSvg, start = loadingStart)
+      IconLoadMeasurer.addLoading(descriptor.isSvg, loadingStart)
     }
     return data
   }
   return null
 }
 
-// todo[tav] JBR supports loading icon resource (id=2000) from the exe launcher, remove when OpenJDK supports it as well
 fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon =
   loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
 
@@ -169,7 +169,6 @@ fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestRelea
   val appInfo = ApplicationInfoImpl.getShadowInstance()
   val upscale = size * scaleContext.getScale(DerivedScaleType.PIX_SCALE) >= 20
   val svgUrl = if (appInfo is ApplicationInfoImpl) {
-    // This is the way to load the release icon in EAP. Needed for some actions.
     if (upscale) appInfo.getApplicationSvgIconUrl(!requestReleaseIcon) else appInfo.getSmallApplicationSvgIconUrl(!requestReleaseIcon)
   }
   else {
@@ -184,12 +183,12 @@ fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestRelea
 }
 
 fun findAppIcon(): String? {
-  val svgFile = Files.list(Path.of(PathManager.getBinPath())).use { stream ->
+  val svgFile = Files.list(PathManager.getBinDir()).use { stream ->
     stream.filter { it.extension == "svg" }.findFirst().orElse(null)
   }
   if (svgFile != null) return svgFile.toString()
   val url = ApplicationInfo::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
-  return if (url != null && URLUtil.FILE_PROTOCOL == url.protocol) URLUtil.urlToFile(url).absolutePath else null
+  return if (url?.protocol == URLUtil.FILE_PROTOCOL) Path.of(url.toURI().schemeSpecificPart).absolutePathString() else null
 }
 
 fun isWindowIconAlreadyExternallySet(): Boolean {
@@ -204,21 +203,7 @@ fun isWindowIconAlreadyExternallySet(): Boolean {
   }
 }
 
-private fun removeTraceLocalConsents(localConsents: MutableList<Consent>) {
-  localConsents.removeIf { localConsent ->
-    LocalConsentOptions.condTraceDataCollectionNonComLocalConsent().test(localConsent) ||
-    LocalConsentOptions.condTraceDataCollectionComLocalConsent().test(localConsent)
-  }
-}
-
-private fun removeTraceConsents(consents: MutableList<Consent>) { // IJPL-208500, IJPL-212133
-  consents.removeIf { consent ->
-    ConsentOptions.condTraceDataCollectionConsent().test(consent) ||
-    ConsentOptions.condTraceDataCollectionComConsent().test(consent) ||
-    ConsentOptions.condTraceDataCollectionNonComConsent().test(consent)
-  }
-}
-
+@OptIn(LowLevelLocalMachineAccess::class)
 object AppUIUtil {
   @JvmStatic
   fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? =
@@ -278,7 +263,7 @@ object AppUIUtil {
     if (!second) {
       return false
     }
-    else if (EventQueue.isDispatchThread()) {
+    else if (@Suppress("SwingIsEventDispatchThread") EventQueue.isDispatchThread()) {
       return confirmConsentOptions(first)
     }
     else {
@@ -392,13 +377,22 @@ object AppUIUtil {
     return result
   }
 
+  private fun removeTraceConsents(consents: MutableList<Consent>) { // IJPL-208500, IJPL-212133
+    consents.removeIf { consent ->
+      ConsentOptions.condTraceDataCollectionConsent().test(consent) ||
+      ConsentOptions.condTraceDataCollectionComConsent().test(consent) ||
+      ConsentOptions.condTraceDataCollectionNonComConsent().test(consent)
+    }
+  }
+
   @JvmStatic
   @ApiStatus.Internal
   fun loadLocalConsentsAsConsentsForEditing(): List<Consent> {
     val localConsents = LocalConsentOptions.getLocalConsents().first.toMutableList()
     if (TraceConsentManager.getInstance()?.canDisplayTraceConsent() != true) {
       removeTraceLocalConsents(localConsents)
-    } else {
+    }
+    else {
       val licenseTypeFlag = LicensingFacade.getInstance()?.metadata?.getOrNull(10)
       when (licenseTypeFlag) {
         'F' -> localConsents.removeIf(LocalConsentOptions.condTraceDataCollectionComLocalConsent())
@@ -407,6 +401,13 @@ object AppUIUtil {
       }
     }
     return localConsents
+  }
+
+  private fun removeTraceLocalConsents(localConsents: MutableList<Consent>) {
+    localConsents.removeIf { localConsent ->
+      LocalConsentOptions.condTraceDataCollectionNonComLocalConsent().test(localConsent) ||
+      LocalConsentOptions.condTraceDataCollectionComLocalConsent().test(localConsent)
+    }
   }
 
   @JvmStatic
