@@ -131,6 +131,15 @@
                                           nameKey="INLAY.numeric.promotion"
                                           providerId="python.numeric.promotion.inlays"/>
 
+    <codeInsight.declarativeInlayProvider group="VALUES_GROUP"
+                                          bundle="messages.PyPsiBundle"
+                                          implementationClass="com.jetbrains.python.inlayHints.PyEnumAutoValueInlayHintsProvider"
+                                          isEnabledByDefault="true"
+                                          language="Python"
+                                          nameKey="INLAY.enum.auto.value"
+                                          descriptionKey="INLAY.enum.auto.value.description"
+                                          providerId="python.enum.auto.value.inlays"/>
+
     <codeInsight.declarativeInlayProvider group="PARAMETERS_GROUP"
                                           bundle="messages.PyPsiBundle"
                                           implementationClass="com.jetbrains.python.inlayHints.PyTestParametrizeInlayHintsProvider"
