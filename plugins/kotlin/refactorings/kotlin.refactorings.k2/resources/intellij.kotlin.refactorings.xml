@@ -91,7 +91,7 @@
             description="Shows a selector for moving declarations into classes in the move dialog"/>
     <registryKey
             key="kotlin.move.enable.move.to.class.intention"
-            defaultValue="false"
+            defaultValue="true"
             description="Enables an intention for moving functions to classes"/>
   </extensions>
 
