@@ -126,6 +126,12 @@ public final class CompletionParameters implements BaseCompletionParameters {
     return myProcess;
   }
 
+  @Override
+  @ApiStatus.Internal
+  public @NotNull CompletionParameters asCompletionParameters() {
+    return this;
+  }
+
   public boolean isTestingMode() {
     return myIsTestingMode;
   }

@@ -3,6 +3,7 @@ package com.intellij.modcompletion;
 
 import com.intellij.codeInsight.completion.BaseCompletionParameters;
 import com.intellij.codeInsight.completion.CompletionContributor;
+import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProcess;
 import com.intellij.codeInsight.completion.CompletionSorter;
 import com.intellij.codeInsight.completion.CompletionType;
@@ -100,7 +101,8 @@ public interface ModCompletionItemProvider extends PossiblyDumbAware {
     PsiElement element,
     PrefixMatcher matcher,
     int invocationCount,
-    CompletionType type
+    CompletionType type,
+    @Nullable CompletionParameters oldParameters
   )
     implements BaseCompletionParameters {
     /**
@@ -161,6 +163,12 @@ public interface ModCompletionItemProvider extends PossiblyDumbAware {
     @Override
     public int getInvocationCount() {
       return invocationCount();
+    }
+
+    @Override
+    public CompletionParameters asCompletionParameters() {
+      if (oldParameters != null) return oldParameters;
+      throw new UnsupportedOperationException("No CompletionParameters object available. Try to use BaseCompletionParameters instead.");
     }
   }
 }
