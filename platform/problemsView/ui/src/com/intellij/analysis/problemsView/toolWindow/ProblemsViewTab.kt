@@ -1,10 +1,12 @@
 package com.intellij.analysis.problemsView.toolWindow
 
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.content.Content
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicReference
 
@@ -24,12 +26,21 @@ interface ProblemsViewTab {
   fun visibilityChangedTo(visible: Boolean) {
   }
 
-  @ApiStatus.Internal
+  @Internal
   fun customizeTabContent(content: Content) {
   }
 }
 
-@ApiStatus.Internal
+@Internal
+interface CurrentFileProblemsTab {
+  fun isShowing(): Boolean
+
+  fun setCurrentFile(virtualFile: VirtualFile?, document: Document?)
+
+  fun getCurrentFile(): VirtualFile?
+}
+
+@Internal
 abstract class ProblemsViewTabWithMetrics : SimpleToolWindowPanel(false), ProblemsViewTab {
   abstract val project: Project
   abstract val usagesTabId: String

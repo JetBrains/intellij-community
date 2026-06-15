@@ -56,9 +56,11 @@
     <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewIconUpdater" open="true"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStatsCollector"/>
     <projectSettings service="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStateManager"/>
+    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowProblemsEmpty" canCloseContents="true"
+                factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <group id="ProblemsView.ToolWindow.SecondaryActions">
       <action id="ProblemsView.AutoscrollToSource"
               icon="AllIcons.General.AutoscrollToSource"

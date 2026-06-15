@@ -202,6 +202,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
         "//platform/util/coroutines",
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util:util-ui",

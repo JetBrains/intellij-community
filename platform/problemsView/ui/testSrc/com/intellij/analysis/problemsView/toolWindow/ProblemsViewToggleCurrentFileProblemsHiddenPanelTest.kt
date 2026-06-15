@@ -1,53 +1,72 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
-import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
-import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import javax.swing.JPanel
 
-class ProblemsViewToggleCurrentFileProblemsHiddenPanelTest : LightPlatformTestCase() {
-  private lateinit var toolWindow: ToolWindow
+@TestApplication
+class ProblemsViewToggleCurrentFileProblemsHiddenPanelTest {
+  private val projectFixture = projectFixture()
+  private val project by projectFixture
 
-  override fun setUp() {
-    super.setUp()
+  @TestDisposable
+  private lateinit var testRootDisposable: Disposable
 
-    toolWindow = object : ToolWindowHeadlessManagerImpl.MockToolWindow(project) {
-      override fun getId(): String = ToolWindowId.PROBLEMS_VIEW
-    }
+  private var toolWindow: ToolWindow? = null
 
-    val toolWindowManager = object : ToolWindowManagerImpl(
-      project,
-      (project as ComponentManagerEx).instanceCoroutineScope(ProblemsViewToggleCurrentFileProblemsHiddenPanelTest::class.java)
-    ) {
-      override fun getToolWindow(id: String?): ToolWindow? = if (id == ToolWindowId.PROBLEMS_VIEW) toolWindow else null
+  @BeforeEach
+  fun setUp() {
+    runInEdtAndWait {
+      val problemsToolWindow = object : ToolWindowHeadlessManagerImpl.MockToolWindow(project) {
+        override fun getId(): String = ToolWindowId.PROBLEMS_VIEW
+      }
+      toolWindow = problemsToolWindow
 
-      override fun activateToolWindow(id: String, runnable: Runnable?, autoFocusContents: Boolean, source: ToolWindowEventSource?) {
-        runnable?.run()
+      val toolWindowManager = object : ToolWindowHeadlessManagerImpl(project) {
+        override fun getToolWindow(id: String?): ToolWindow? = if (id == ToolWindowId.PROBLEMS_VIEW) problemsToolWindow else null
       }
 
-      override fun hideToolWindow(id: String, hideSide: Boolean, moveFocus: Boolean, removeFromStripe: Boolean, source: ToolWindowEventSource?) {
-      }
+      project.replaceService(ToolWindowManager::class.java, toolWindowManager, testRootDisposable)
     }
-
-    project.replaceService(ToolWindowManager::class.java, toolWindowManager, testRootDisposable)
   }
 
+  @AfterEach
+  fun tearDown() {
+    runInEdtAndWait {
+      toolWindow?.let { Disposer.dispose(it.contentManager as Disposable) }
+      toolWindow = null
+    }
+  }
+
+  @Test
   fun testToggleCurrentFileProblemsUpdatesHiddenHighlightingPanel() {
     runInEdtAndWait {
-      val panel = HighlightingPanel(project, ProblemsViewState.getInstance(project))
-      toolWindow.contentManager.addContent(toolWindow.contentManager.factory.createContent(panel, "Current File", false))
+      val toolWindow = requireNotNull(toolWindow)
+      val panel = TestCurrentFileProblemsTab()
+      val content = toolWindow.contentManager.factory.createContent(panel, "Current File", false)
+      toolWindow.contentManager.addContent(content)
 
       ProblemsViewToolWindowUtils.selectContent(toolWindow.contentManager, HighlightingPanel.ID)
-      assertFalse("Precondition: HighlightingPanel must not be showing", panel.isShowing)
+      assertFalse(panel.isShowing, "Precondition: current-file tab must not be showing")
 
       val fileA = LightVirtualFile("GoodFile.java")
       val docA = EditorFactory.getInstance().createDocument("class GoodFile {}")
@@ -61,5 +80,19 @@ class ProblemsViewToggleCurrentFileProblemsHiddenPanelTest : LightPlatformTestCa
 
       assertEquals(fileB, panel.getCurrentFile())
     }
+  }
+
+  private class TestCurrentFileProblemsTab : JPanel(), ProblemsViewTab, CurrentFileProblemsTab {
+    private var currentFile: VirtualFile? = null
+
+    override fun getName(count: Int): String = "Current File"
+
+    override fun getTabId(): String = HighlightingPanel.ID
+
+    override fun setCurrentFile(virtualFile: VirtualFile?, document: Document?) {
+      currentFile = virtualFile
+    }
+
+    override fun getCurrentFile(): VirtualFile? = currentFile
   }
 }

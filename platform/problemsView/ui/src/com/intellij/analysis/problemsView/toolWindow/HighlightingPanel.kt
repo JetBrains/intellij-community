@@ -35,7 +35,7 @@ import org.jetbrains.concurrency.CancellablePromise
 
 open class HighlightingPanel(project: Project, state: ProblemsViewState) // open for RD frontend sub-class
   : ProblemsViewPanel(project, ID, state, ProblemsViewBundle.messagePointer("problems.view.highlighting")),
-    FileEditorManagerListener, PowerSaveMode.Listener {
+    CurrentFileProblemsTab, FileEditorManagerListener, PowerSaveMode.Listener {
 
   @ApiStatus.Internal
   companion object {
@@ -43,6 +43,7 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState) // open
   }
 
   private val statusUpdateAlarm: SingleAlarm = SingleAlarm.pooledThreadSingleAlarm(delay = 200, parentDisposable = this) { updateStatus() }
+
   @Volatile
   private var previousStatus: Status? = null
 
@@ -80,9 +81,11 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState) // open
   override fun fileOpened(manager: FileEditorManager, file: VirtualFile) {
     updateCurrentFileIfLocalId()
   }
+
   override fun fileClosed(manager: FileEditorManager, file: VirtualFile) {
     updateCurrentFileIfLocalId()
   }
+
   override fun selectionChanged(event: FileEditorManagerEvent) {
     updateCurrentFileIfLocalId()
   }
@@ -96,7 +99,7 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState) // open
       updateSelectedFile()
     }
   }
-  
+
   fun updateSelectedFile(): CancellablePromise<*> {
     return ReadAction.nonBlocking {
       if (!myDisposed) {
@@ -118,8 +121,8 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState) // open
   open fun getCurrentDocument(): Document? = currentRoot?.document
 
   @ApiStatus.Internal
-  open fun setCurrentFile(virtualFile: VirtualFile?, document:Document?) {
-    if (virtualFile ==null || document == null) {
+  override fun setCurrentFile(virtualFile: VirtualFile?, document: Document?) {
+    if (virtualFile == null || document == null) {
       if (treeModel.root == null) return
       treeModel.root = null
     }
@@ -131,7 +134,7 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState) // open
     powerSaveStateChanged()
   }
 
-  open fun getCurrentFile(): VirtualFile? = currentRoot?.file
+  override fun getCurrentFile(): VirtualFile? = currentRoot?.file
 
   fun selectHighlighter(highlighter: RangeHighlighterEx) {
     val problem = currentRoot?.findProblem(highlighter) ?: return
@@ -151,7 +154,8 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState) // open
       if (virtualFile == null) {
         virtualFile = FileDocumentManager.getInstance().getFile(document)
       }
-    } else {
+    }
+    else {
       virtualFile = fileEditor.file
       document = if (virtualFile == null) null else FileDocumentManager.getInstance().getDocument(virtualFile)
     }
@@ -162,7 +166,7 @@ open class HighlightingPanel(project: Project, state: ProblemsViewState) // open
   @RequiresBackgroundThread
   private fun updateStatus() {
     ApplicationManager.getApplication().assertIsNonDispatchThread()
-    val status = ClientId.withClientId(session.clientId) { ReadAction.computeBlocking(ThrowableComputable { getCurrentStatus() })}
+    val status = ClientId.withClientId(session.clientId) { ReadAction.computeBlocking(ThrowableComputable { getCurrentStatus() }) }
     if (previousStatus != status) {
       ApplicationManager.getApplication().invokeLater {
         if (!myDisposed) {

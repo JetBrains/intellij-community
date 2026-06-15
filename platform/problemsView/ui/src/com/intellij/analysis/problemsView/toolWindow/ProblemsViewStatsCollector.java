@@ -27,7 +27,7 @@ final class ProblemsViewStatsCollector extends CounterUsagesCollector {
   private static final EventField<Long> DURATION = EventFields.Long("duration_seconds");
   private static final EventField<Integer> PROBLEM_SEVERITY = EventFields.Int("severity");
 
-  private static final EventLogGroup PROBLEMS_VIEW_GROUP = new EventLogGroup("problems.view.sessions", 2);
+  private static final EventLogGroup PROBLEMS_VIEW_GROUP = new EventLogGroup("problems.view.sessions", 3);
   private static final VarargEventId TAB_SHOWN = PROBLEMS_VIEW_GROUP.registerVarargEvent(
     "problems.tab.shown", TAB_NAME, PROBLEMS_COUNT, PREVIEW_ENABLED);
   private static final VarargEventId TAB_HIDDEN = PROBLEMS_VIEW_GROUP.registerVarargEvent(

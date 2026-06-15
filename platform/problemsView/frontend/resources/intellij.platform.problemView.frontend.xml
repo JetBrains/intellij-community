@@ -31,9 +31,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <!--suppress PluginXmlRegistrationCheck -->
-    <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowProblemsEmpty" canCloseContents="true"
-                factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
     <projectService serviceInterface="com.intellij.analysis.problemsView.toolWindow.splitApi.ProblemsCollectorProvider"
                     serviceImplementation="com.intellij.platform.problemsView.frontend.FrontendProjectErrorsRootProvider"/>
     <ui.content.impl.toolWindowContentPostprocessor implementation="com.intellij.platform.problemsView.frontend.ProblemsViewToolWindowContentReplacer"/>
@@ -41,7 +38,7 @@
     <frontendProblemsViewContentProvider implementation="com.intellij.platform.problemsView.frontend.FrontendProjectErrorsProblemsContentProvider"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.ActionsBundle">
     <group id="ProblemsView.Frontend.SecondaryActions">
       <action id="ProblemsView.Frontend.AutoscrollToSource"
               icon="AllIcons.General.AutoscrollToSource"
