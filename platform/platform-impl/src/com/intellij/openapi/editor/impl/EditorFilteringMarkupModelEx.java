@@ -27,25 +27,26 @@ public final class EditorFilteringMarkupModelEx implements MarkupModelEx {
   private final @NotNull EditorImpl myEditor;
   private final @NotNull MarkupModelEx myDelegate;
 
-  private final Condition<RangeHighlighter> IS_AVAILABLE = highlighter -> isAvailable(highlighter);
+  private final Condition<RangeHighlighter> IS_AVAILABLE;
 
   @ApiStatus.Internal
   public EditorFilteringMarkupModelEx(@NotNull EditorImpl editor, @NotNull MarkupModelEx delegate) {
     myEditor = editor;
     myDelegate = delegate;
+    IS_AVAILABLE = highlighter -> isAvailable(highlighter, myEditor);
   }
 
   public @NotNull MarkupModelEx getDelegate() {
     return myDelegate;
   }
 
-  private boolean isAvailable(@NotNull RangeHighlighter highlighter) {
-    return highlighter.isValid() && highlighter.getEditorFilter().avaliableIn(myEditor) && myEditor.isHighlighterAvailable(highlighter);
+  private static boolean isAvailable(@NotNull RangeHighlighter highlighter, @NotNull EditorImpl editor) {
+    return highlighter.isValid() && highlighter.getEditorFilter().avaliableIn(editor) && editor.isHighlighterAvailable(highlighter);
   }
 
   @Override
   public boolean containsHighlighter(@NotNull RangeHighlighter highlighter) {
-    return isAvailable(highlighter) && myDelegate.containsHighlighter(highlighter);
+    return isAvailable(highlighter, myEditor) && myDelegate.containsHighlighter(highlighter);
   }
 
   @Override
@@ -61,8 +62,14 @@ public final class EditorFilteringMarkupModelEx implements MarkupModelEx {
   }
 
   @Override
+  public @NotNull MarkupIterator<RangeHighlighterEx> overlappingGutterIterator(int startOffset, int endOffset) {
+    MarkupIterator<RangeHighlighterEx> iterator = myDelegate.overlappingGutterIterator(startOffset, endOffset);
+    return FilteringMarkupIterator.create(iterator, h -> isAvailable(h, myEditor));
+  }
+
+  @Override
   public @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
-    return FilteringMarkupIterator.create(myDelegate.overlappingIterator(startOffset, endOffset), highlighter -> isAvailable(highlighter));
+    return FilteringMarkupIterator.create(myDelegate.overlappingIterator(startOffset, endOffset), highlighter -> isAvailable(highlighter, myEditor));
   }
 
   @Override

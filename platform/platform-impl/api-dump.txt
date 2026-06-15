@@ -2529,6 +2529,7 @@ f:com.intellij.openapi.editor.impl.EditorFactoryImpl
 f:com.intellij.openapi.editor.impl.EditorFilteringMarkupModelEx
 - com.intellij.openapi.editor.ex.MarkupModelEx
 - getAllHighlighters():com.intellij.openapi.editor.markup.RangeHighlighter[]
+- overlappingGutterIterator(I,I):com.intellij.openapi.editor.ex.MarkupIterator
 com.intellij.openapi.editor.impl.EditorGutterListener
 - java.util.EventListener
 - lineNumberConvertersChanged():V
