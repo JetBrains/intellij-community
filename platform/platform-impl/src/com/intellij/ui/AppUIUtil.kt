@@ -76,144 +76,114 @@ import kotlin.io.path.absolutePathString
 import kotlin.io.path.extension
 import kotlin.math.roundToInt
 
-private const val VENDOR_PREFIX = "jetbrains-"
-private const val MAC_DOCK_ICON_BORDER = 25
-private var appIcons: List<Image>? = null
-private val isMacDocIconSet = AtomicBoolean(false)
-
-private val LOG: Logger
-  get() = logger<AppUIUtil>()
-
-@OptIn(LowLevelLocalMachineAccess::class)
-fun updateAppWindowIcon(window: Window) {
-  if (AppUIUtil.isWindowIconAlreadyExternallySet()) {
-    return
-  }
-
-  if (appIcons == null) {
-    val images = ArrayList<Image>(3)
-    val appInfo = ApplicationInfoImpl.getShadowInstance()
-    val scaleContext = ScaleContext.create(window)
-    if (OS.CURRENT != OS.Windows) {
-      loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 128)?.let {
-        images.add(it)
-      }
-    }
-    if (OS.CURRENT != OS.macOS) {
-      loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 32)?.let {
-        images.add(it)
-      }
-    }
-    if (OS.CURRENT == OS.Windows) {
-      loadAppIconImage(appInfo.smallApplicationSvgIconUrl, scaleContext, size = 16)?.let {
-        images.add(it)
-      }
-    }
-    for (i in images.indices) {
-      val image = images[i]
-      if (image is JBHiDPIScaledImage) {
-        when (val delegate = image.delegate) {
-          null -> images.removeAt(i)
-          else -> images[i] = delegate
-        }
-      }
-    }
-    appIcons = images.toList()
-  }
-
-  appIcons?.takeIf { it.isNotEmpty() }?.let { images ->
-    if (OS.CURRENT != OS.macOS) {
-      window.iconImages = images
-    }
-    else if (!isMacDocIconSet.getAndSet(true)) {
-      MacAppIcon.setDockIcon(addTransparentBorder(images.first()))
-    }
-  }
-}
-
-private fun addTransparentBorder(img: Image): BufferedImage {
-  val border = MAC_DOCK_ICON_BORDER
-  val width = img.getWidth(null)
-  val height = img.getHeight(null)
-  val result = @Suppress("UndesirableClassUsage") BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
-  val g = result.createGraphics()
-  try {
-    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
-    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-    g.drawImage(img, border, border, width - 2 * border, height - 2 * border, null)
-  }
-  finally {
-    g.dispose()
-  }
-  return result
-}
-
-// returns a HiDPI-aware image
-private fun loadAppIconImage(svgPath: String, scaleContext: ScaleContext, size: Int): Image? {
-  val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
-  val svgData = findAppIconSvgData(svgPath, pixScale)
-  if (svgData == null) {
-    LOG.warn("Cannot load SVG application icon from $svgPath")
-    return null
-  }
-  val sysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
-  val userScale = scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
-  val userSize = (size * userScale).roundToInt()
-  return loadWithSizes(listOf(userSize), svgData, sysScale).first()
-}
-
-private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
-  val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-  // app icon doesn't support `dark` concept, and moreover, it cannot depend on a current LaF
-  val descriptors = createImageDescriptorList(path, isDark = false, isStroke = false, pixScale)
-  val rawPathWithoutExt = path.substring(if (path.startsWith('/')) 1 else 0, path.lastIndexOf('.'))
-  for (descriptor in descriptors) {
-    val transformedPath = descriptor.pathTransform(rawPathWithoutExt, "svg")
-    val resourceLoadStart = StartUpMeasurer.getCurrentTimeIfEnabled()
-    val data = ResourceUtil.getResourceAsBytes(transformedPath, AppUIUtil::class.java.classLoader, true) ?: continue
-    if (resourceLoadStart != -1L) {
-      IconLoadMeasurer.loadFromResources.end(resourceLoadStart)
-    }
-    if (loadingStart != -1L) {
-      IconLoadMeasurer.addLoading(descriptor.isSvg, loadingStart)
-    }
-    return data
-  }
-  return null
-}
-
-fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon =
-  loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
-
-fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
-  val appInfo = ApplicationInfoImpl.getShadowInstance()
-  val upscale = size * scaleContext.getScale(DerivedScaleType.PIX_SCALE) >= 20
-  val svgUrl = if (appInfo is ApplicationInfoImpl) {
-    if (upscale) appInfo.getApplicationSvgIconUrl(!requestReleaseIcon) else appInfo.getSmallApplicationSvgIconUrl(!requestReleaseIcon)
-  }
-  else {
-    if (upscale) appInfo.applicationSvgIconUrl else appInfo.smallApplicationSvgIconUrl
-  }
-  val iconImage = loadAppIconImage(svgUrl, scaleContext, size)
-  if (iconImage == null) {
-    LOG.error("Can't load '${svgUrl}'")
-    return EmptyIcon.create(size)
-  }
-  return JBImageIcon(iconImage)
-}
-
-fun findAppIcon(): String? {
-  val svgFile = Files.list(PathManager.getBinDir()).use { stream ->
-    stream.filter { it.extension == "svg" }.findFirst().orElse(null)
-  }
-  if (svgFile != null) return svgFile.toString()
-  val url = ApplicationInfo::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
-  return if (url?.protocol == URLUtil.FILE_PROTOCOL) Path.of(url.toURI().schemeSpecificPart).absolutePathString() else null
-}
-
 @OptIn(LowLevelLocalMachineAccess::class)
 object AppUIUtil {
+  private const val VENDOR_PREFIX = "jetbrains-"
+  private const val MAC_DOCK_ICON_BORDER = 25
+  private var appIcons: List<Image>? = null
+  private val isMacDocIconSet = AtomicBoolean(false)
+
+  private val LOG: Logger get() = logger<AppUIUtil>()
+
+  @JvmStatic
+  fun updateAppWindowIcon(window: Window) {
+    if (isWindowIconAlreadyExternallySet()) {
+      return
+    }
+
+    if (appIcons == null) {
+      val images = ArrayList<Image>(3)
+      val appInfo = ApplicationInfoImpl.getShadowInstance()
+      val scaleContext = ScaleContext.create(window)
+      if (OS.CURRENT != OS.Windows) {
+        loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 128)?.let {
+          images.add(it)
+        }
+      }
+      if (OS.CURRENT != OS.macOS) {
+        loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 32)?.let {
+          images.add(it)
+        }
+      }
+      if (OS.CURRENT == OS.Windows) {
+        loadAppIconImage(appInfo.smallApplicationSvgIconUrl, scaleContext, size = 16)?.let {
+          images.add(it)
+        }
+      }
+      for (i in images.indices) {
+        val image = images[i]
+        if (image is JBHiDPIScaledImage) {
+          when (val delegate = image.delegate) {
+            null -> images.removeAt(i)
+            else -> images[i] = delegate
+          }
+        }
+      }
+      appIcons = images.toList()
+    }
+
+    appIcons?.takeIf { it.isNotEmpty() }?.let { images ->
+      if (OS.CURRENT != OS.macOS) {
+        window.iconImages = images
+      }
+      else if (!isMacDocIconSet.getAndSet(true)) {
+        MacAppIcon.setDockIcon(addTransparentBorder(images.first()))
+      }
+    }
+  }
+
+  // returns a HiDPI-aware image
+  private fun loadAppIconImage(svgPath: String, scaleContext: ScaleContext, size: Int): Image? {
+    val pixScale = scaleContext.getScale(DerivedScaleType.PIX_SCALE).toFloat()
+    val svgData = findAppIconSvgData(svgPath, pixScale)
+    if (svgData == null) {
+      LOG.warn("Cannot load SVG application icon from $svgPath")
+      return null
+    }
+    val sysScale = scaleContext.getScale(ScaleType.SYS_SCALE).toFloat()
+    val userScale = scaleContext.getScale(ScaleType.USR_SCALE).toFloat()
+    val userSize = (size * userScale).roundToInt()
+    return loadWithSizes(listOf(userSize), svgData, sysScale).first()
+  }
+
+  private fun findAppIconSvgData(path: String, pixScale: Float): ByteArray? {
+    val loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+    // app icon doesn't support `dark` concept, and moreover, it cannot depend on a current LaF
+    val descriptors = createImageDescriptorList(path, isDark = false, isStroke = false, pixScale)
+    val rawPathWithoutExt = path.substring(if (path.startsWith('/')) 1 else 0, path.lastIndexOf('.'))
+    for (descriptor in descriptors) {
+      val transformedPath = descriptor.pathTransform(rawPathWithoutExt, "svg")
+      val resourceLoadStart = StartUpMeasurer.getCurrentTimeIfEnabled()
+      val data = ResourceUtil.getResourceAsBytes(transformedPath, AppUIUtil::class.java.classLoader, true) ?: continue
+      if (resourceLoadStart != -1L) {
+        IconLoadMeasurer.loadFromResources.end(resourceLoadStart)
+      }
+      if (loadingStart != -1L) {
+        IconLoadMeasurer.addLoading(descriptor.isSvg, loadingStart)
+      }
+      return data
+    }
+    return null
+  }
+
+  private fun addTransparentBorder(img: Image): BufferedImage {
+    val border = MAC_DOCK_ICON_BORDER
+    val width = img.getWidth(null)
+    val height = img.getHeight(null)
+    val result = @Suppress("UndesirableClassUsage") BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+    val g = result.createGraphics()
+    try {
+      g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+      g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+      g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+      g.drawImage(img, border, border, width - 2 * border, height - 2 * border, null)
+    }
+    finally {
+      g.dispose()
+    }
+    return result
+  }
+
   @ApiStatus.Internal
   @JvmStatic
   fun isWindowIconAlreadyExternallySet(): Boolean {
@@ -225,9 +195,42 @@ object AppUIUtil {
   }
 
   @JvmStatic
+  fun findAppIcon(): String? {
+    val svgFile = Files.list(PathManager.getBinDir()).use { stream ->
+      stream.filter { it.extension == "svg" }.findFirst().orElse(null)
+    }
+    if (svgFile != null) return svgFile.toString()
+    val url = ApplicationInfo::class.java.getResource(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl)
+    return if (url?.protocol == URLUtil.FILE_PROTOCOL) Path.of(url.toURI().schemeSpecificPart).absolutePathString() else null
+  }
+
+  @JvmStatic
   fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? =
     loadAppIconImage(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl, ctx, size)
       ?.let { JBImageIcon(it) }
+
+  @JvmStatic
+  fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int): Icon =
+    loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon = !ApplicationInfoImpl.getShadowInstance().isEAP)
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon {
+    val appInfo = ApplicationInfoImpl.getShadowInstance()
+    val upscale = size * scaleContext.getScale(DerivedScaleType.PIX_SCALE) >= 20
+    val svgUrl = if (appInfo is ApplicationInfoImpl) {
+      if (upscale) appInfo.getApplicationSvgIconUrl(!requestReleaseIcon) else appInfo.getSmallApplicationSvgIconUrl(!requestReleaseIcon)
+    }
+    else {
+      if (upscale) appInfo.applicationSvgIconUrl else appInfo.smallApplicationSvgIconUrl
+    }
+    val iconImage = loadAppIconImage(svgUrl, scaleContext, size)
+    if (iconImage == null) {
+      LOG.error("Can't load '${svgUrl}'")
+      return EmptyIcon.create(size)
+    }
+    return JBImageIcon(iconImage)
+  }
 
   @JvmStatic
   fun invokeLaterIfProjectAlive(project: Project, runnable: Runnable) {
@@ -602,6 +605,23 @@ object AppUIUtil {
     return TexturePaint(image, Rectangle(xStart, yStart, width, height))
   }
 }
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated("Use 'AppUIUtil.updateAppWindowIcon' instead", level = DeprecationLevel.ERROR)
+fun updateAppWindowIcon(window: Window): Unit = AppUIUtil.updateAppWindowIcon(window)
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated("Use 'AppUIUtil.findAppIcon' instead")
+fun findAppIcon(): String? = AppUIUtil.findAppIcon()
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated("Use 'AppUIUtil.loadSmallApplicationIcon' instead", level = DeprecationLevel.ERROR)
+fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int = 16): Icon = AppUIUtil.loadSmallApplicationIcon(scaleContext, size)
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated("Use 'AppUIUtil.loadSmallApplicationIcon' instead", level = DeprecationLevel.ERROR)
+fun loadSmallApplicationIcon(scaleContext: ScaleContext, size: Int, requestReleaseIcon: Boolean): Icon =
+  AppUIUtil.loadSmallApplicationIcon(scaleContext, size, requestReleaseIcon)
 
 @Suppress("DeprecatedCallableAddReplaceWith")
 @Deprecated("Internal stuff; don't use", level = DeprecationLevel.ERROR)

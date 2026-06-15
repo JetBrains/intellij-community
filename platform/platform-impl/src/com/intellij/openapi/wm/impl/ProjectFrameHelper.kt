@@ -48,6 +48,7 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.ActionCenterBalloonLayout
+import com.intellij.ui.AppUIUtil
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.BalloonLayoutImpl
 import com.intellij.ui.ClientProperty
@@ -55,7 +56,6 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.JBColor
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowResizeListenerEx
-import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUser
 import com.intellij.util.ui.JBUI
@@ -147,7 +147,7 @@ abstract class ProjectFrameHelper internal constructor(
     rootPane.overrideGlassPane(glassPane)
 
     InternalUICustomization.getInstance()?.attachIdeFrameBackgroundPainter(this, glassPane)
-    
+
     frame.doSetRootPane(rootPane)
 
     frameDecorator = IdeFrameDecorator.decorate(frame, glassPane, coroutineScope.childScope("IdeFrameDecorator"))
@@ -311,7 +311,7 @@ abstract class ProjectFrameHelper internal constructor(
 
       // in production (not from sources) it makes sense only on Linux
       // or on Windows (for products that don't use a native launcher, e.g., MPS)
-      updateAppWindowIcon(frame)
+      AppUIUtil.updateAppWindowIcon(frame)
     }
 
     InternalUICustomization.getInstance()?.configureMainFrame(frame)

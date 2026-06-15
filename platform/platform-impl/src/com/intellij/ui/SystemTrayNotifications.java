@@ -27,7 +27,7 @@ final class SystemTrayNotifications implements SystemNotificationsImpl.Notifier 
   }
 
   private static Image createIcon() {
-    var icon = AppUIUtilKt.loadSmallApplicationIcon(ScaleContext.create(), 16);
+    var icon = AppUIUtil.loadSmallApplicationIcon(ScaleContext.create(), 16);
     return ImageUtil.toBufferedImage(IconUtil.toImage(icon));
   }
 

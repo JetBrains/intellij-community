@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.CommonBundle
@@ -42,11 +42,11 @@ import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.bootstrap.hideSplashBeforeShow
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.platform.ide.menu.installAppMenuIfNeeded
+import com.intellij.ui.AppUIUtil
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.BalloonLayoutImpl
 import com.intellij.ui.DisposableWindow
 import com.intellij.ui.mac.touchbar.TouchbarSupport
-import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
@@ -80,14 +80,13 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor, DisposableWi
     glassPane.isVisible = false
     contentPane = screen.welcomePanel
     title = ApplicationNamesInfo.getInstance().fullProductName
-    updateAppWindowIcon(this)
-    ApplicationManager.getApplication().messageBus.connect(listenerDisposable).subscribe(ProjectManager.TOPIC,
-                                                                                         object : ProjectManagerListener {
-                                                                                           @Suppress("removal", "OVERRIDE_DEPRECATION")
-                                                                                           override fun projectOpened(project: Project) {
-                                                                                             dispose()
-                                                                                           }
-                                                                                         })
+    AppUIUtil.updateAppWindowIcon(window = this)
+    ApplicationManager.getApplication().messageBus.connect(listenerDisposable).subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      @Suppress("removal", "OVERRIDE_DEPRECATION")
+      override fun projectOpened(project: Project) {
+        dispose()
+      }
+    })
     myBalloonLayout = BalloonLayoutImpl(rootPane, JBUI.insets(8))
     myScreen = screen
     setupCloseAction(this)

@@ -4374,12 +4374,34 @@ a:com.intellij.ui.AppIcon
 - requestFocus():V
 - requestFocus(com.intellij.openapi.wm.IdeFrame):V
 f:com.intellij.ui.AppUIUtil
+- sf:INSTANCE:com.intellij.ui.AppUIUtil
+- f:confirmConsentOptions(java.util.List):Z
+- f:createHorizontalGradientTexture(java.awt.Graphics,java.awt.Color,java.awt.Color,I,I,I):java.awt.TexturePaint
+- bs:createHorizontalGradientTexture$default(com.intellij.ui.AppUIUtil,java.awt.Graphics,java.awt.Color,java.awt.Color,I,I,I,I,java.lang.Object):java.awt.TexturePaint
+- f:createVerticalGradientTexture(java.awt.Graphics,java.awt.Color,java.awt.Color,I,I,I):java.awt.TexturePaint
+- bs:createVerticalGradientTexture$default(com.intellij.ui.AppUIUtil,java.awt.Graphics,java.awt.Color,java.awt.Color,I,I,I,I,java.lang.Object):java.awt.TexturePaint
+- sf:findAppIcon():java.lang.String
+- f:getAdjustedFractionalMetricsValue():java.lang.Object
+- f:getFrameClass():java.lang.String
+- sf:invokeLaterIfProjectAlive(com.intellij.openapi.project.Project,java.lang.Runnable):V
 - sf:invokeOnEdt(java.lang.Runnable):V
+- sf:invokeOnEdt(java.lang.Runnable,com.intellij.openapi.util.Condition):V
+- sf:isInFullScreen(java.awt.Window):Z
+- sf:loadApplicationIcon(com.intellij.ui.scale.ScaleContext,I):javax.swing.Icon
 - sf:loadConsentsForEditing():java.util.List
+- sf:loadSmallApplicationIcon(com.intellij.ui.scale.ScaleContext,I):javax.swing.Icon
 - sf:saveConsents(java.util.List):V
+- f:showConsentsAgreementIfNeeded(com.intellij.openapi.diagnostic.Logger,java.util.function.Predicate):Z
+- sf:targetToDevice(java.awt.Component,java.awt.Component):V
+- sf:updateAppWindowIcon(java.awt.Window):V
+- sf:updateForDarcula(Z):V
 f:com.intellij.ui.AppUIUtilKt
 - sf:findAppIcon():java.lang.String
+- sf:isWindowIconAlreadyExternallySet():Z
+- sf:loadSmallApplicationIcon(com.intellij.ui.scale.ScaleContext,I):javax.swing.Icon
 - sf:loadSmallApplicationIcon(com.intellij.ui.scale.ScaleContext,I,Z):javax.swing.Icon
+- bs:loadSmallApplicationIcon$default(com.intellij.ui.scale.ScaleContext,I,I,java.lang.Object):javax.swing.Icon
+- sf:updateAppWindowIcon(java.awt.Window):V
 f:com.intellij.ui.BadgeIconSupplier
 - <init>(javax.swing.Icon):V
 - f:getErrorIcon():javax.swing.Icon

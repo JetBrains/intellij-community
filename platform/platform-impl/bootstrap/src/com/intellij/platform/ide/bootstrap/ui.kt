@@ -21,7 +21,6 @@ import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IconManager
 import com.intellij.ui.icons.CoreIconManager
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.util.ui.RawSwingDispatcher
@@ -249,7 +248,7 @@ internal fun scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
         appInfoDeferred.join()
         // most of the time is consumed by loading SVG and can be done in parallel
         span("update window icon") {
-          updateAppWindowIcon(JOptionPane.getRootFrame())
+          AppUIUtil.updateAppWindowIcon(JOptionPane.getRootFrame())
         }
       }
     }

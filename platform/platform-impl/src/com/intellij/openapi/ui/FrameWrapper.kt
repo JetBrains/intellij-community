@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
@@ -38,6 +38,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDia
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.ui.AppUIUtil
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.DisposableWindow
@@ -46,7 +47,6 @@ import com.intellij.ui.FullScreenSupport
 import com.intellij.ui.ToolbarService
 import com.intellij.ui.mac.screenmenu.Menu
 import com.intellij.ui.mac.touchbar.TouchbarSupport
-import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CompletableDeferred
@@ -183,7 +183,7 @@ open class FrameWrapper @JvmOverloads constructor(
     }
 
     if (images.isEmpty()) {
-      updateAppWindowIcon(frame)
+      AppUIUtil.updateAppWindowIcon(frame)
     }
     else {
       // unwrap the image before setting as frame's icon
