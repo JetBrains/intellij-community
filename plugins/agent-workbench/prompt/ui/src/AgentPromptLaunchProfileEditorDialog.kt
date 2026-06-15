@@ -624,7 +624,10 @@ internal class AgentPromptLaunchProfileEditorDialog(
     catalogState: AgentPromptGenerationModelCatalogState?,
     selectedModelId: String?,
   ): List<ModelOption> {
-    return buildGenerationModelSelectorEntries(providerId, catalogState, selectedModelId).map { entry ->
+    return buildGenerationModelSelectorEntries(providerId, catalogState, selectedModelId) { modelId ->
+      providerEntry(providerId)?.bridge?.displayNameForGenerationModelId(modelId)
+      ?: unknownGenerationModelDisplayName(modelId)
+    }.map { entry ->
       when (entry) {
         is AgentPromptGenerationModelSelectorEntry.Model -> ModelOption(
           modelId = entry.modelId,
@@ -666,7 +669,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
     planEffortCombo.model = DefaultComboBoxModel(options.toTypedArray())
     val selectedPlanEffort = sanitizePlanReasoningEffort(profile?.generationSettings?.planReasoningEffort, supportedEfforts)
     planEffortCombo.selectedItem = options.firstOrNull { option -> option.planReasoningEffort == selectedPlanEffort }
-                                    ?: options.first()
+                                   ?: options.first()
   }
 
   private fun updateButtonState() {
@@ -721,7 +724,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
            selectedLaunchMode() != profile.launchMode ||
            selectedModelIdForEditor != profile.generationSettings.modelId ||
            selectedReasoningEffortOption()?.effort != profile.generationSettings.reasoningEffort ||
-            selectedPlanReasoningEffort() != profile.generationSettings.planReasoningEffort
+           selectedPlanReasoningEffort() != profile.generationSettings.planReasoningEffort
   }
 
   private fun updateLaunchModeControlState(enabled: Boolean) {

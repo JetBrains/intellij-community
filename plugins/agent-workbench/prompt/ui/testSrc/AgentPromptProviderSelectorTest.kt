@@ -1571,6 +1571,45 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun launchProfileEditorUsesProviderDisplayNameForUnknownSelectedModel() {
+    runInEdtAndWait {
+      val encodedModelId = "pi:eyJmb3JtYXRWZXJzaW9uIjoxLCJwcm92aWRlciI6IkpldEJyYWlucyBDZW50cmFsIiwibW9kZWxJZCI6ImdwdC01LjUifQ"
+      val profile = AgentPromptLaunchProfile(
+        id = "user:encoded-model",
+        name = "Encoded Model",
+        providerId = AgentSessionProvider.CODEX.value,
+        generationSettings = AgentPromptGenerationSettings(modelId = encodedModelId),
+      )
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportsGenerationModelSelection = true,
+        displayNameForGenerationModelId = { modelId ->
+          if (modelId == encodedModelId) "GPT-5.5 (JetBrains Central)" else null
+        },
+      )
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(profile),
+        activeProfileId = profile.id,
+        providerOverride = provider,
+      )
+      try {
+        editor.selectProfileForTest(profile.id)
+
+        assertThat(editor.selectedProfileModelIdForTest()).isEqualTo(encodedModelId)
+        assertThat(editor.modelOptionTextsForTest()).containsExactly(
+          "Default",
+          "GPT-5.5 (JetBrains Central)",
+        )
+        assertThat(editor.modelOptionTextsForTest()).doesNotContain(encodedModelId)
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
   fun launchProfileEditorModelComboStartsCatalogLoadingOnOpen(): Unit = timeoutRunBlocking {
     val project = ProjectManager.getInstance().defaultProject
     val catalogService = project.service<AgentPromptGenerationModelCatalogService>()
@@ -3093,6 +3132,7 @@ class AgentPromptProviderSelectorTest {
     availableGenerationModelsError: Throwable? = null,
     availableGenerationModelsResolver: suspend () -> List<AgentPromptGenerationModel> = { availableGenerationModels },
     onListAvailableGenerationModels: () -> Unit = {},
+    displayNameForGenerationModelId: (String) -> String? = { null },
     icon: Icon = EmptyIcon.ICON_16,
     monochromeIconOverride: Icon? = null,
   ): AgentSessionProviderDescriptor {
@@ -3121,6 +3161,10 @@ class AgentPromptProviderSelectorTest {
         onListAvailableGenerationModels()
         availableGenerationModelsError?.let { throw it }
         return availableGenerationModelsResolver()
+      }
+
+      override fun displayNameForGenerationModelId(modelId: String): String? {
+        return displayNameForGenerationModelId.invoke(modelId)
       }
 
       override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {

@@ -166,7 +166,11 @@ internal class AgentPromptGenerationSettingsController(
       launchProfileLink.text = profileText
       launchProfileLink.setToolTipText(HtmlChunk.text(profileTooltip))
       launchProfileLink.accessibleContext.accessibleName = AgentPromptBundle.message("popup.profile.accessible.name") + ": " + profileText
-      modelSelectorLink.text = modelText(currentSettings.modelId, modelCatalog.orEmpty())
+      modelSelectorLink.text = modelText(
+        modelId = currentSettings.modelId,
+        models = modelCatalog.orEmpty(),
+        displayNameForSavedModel = ::displayNameForSavedModel,
+      )
       modelSelectorLink.setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.model.tooltip")))
       modelSelectorLink.accessibleContext.accessibleName = modelSelectorLink.text
       reasoningEffortLink.text = reasoningEffortText(currentSettings.reasoningEffort)
@@ -442,7 +446,10 @@ internal class AgentPromptGenerationSettingsController(
 
   private fun createModelActionGroup(providerId: String, modelCatalogState: AgentPromptGenerationModelCatalogState?): DefaultActionGroup {
     val group = DefaultActionGroup()
-    buildGenerationModelSelectorEntries(providerId, modelCatalogState, currentSettings().modelId).forEach { entry ->
+    buildGenerationModelSelectorEntries(providerId,
+                                        modelCatalogState,
+                                        currentSettings().modelId,
+                                        ::displayNameForSavedModel).forEach { entry ->
       when (entry) {
         is AgentPromptGenerationModelSelectorEntry.Model -> {
           entry.separatorGroup?.let { group.add(Separator.create(it.modelSelectorText())) }
@@ -702,6 +709,11 @@ internal class AgentPromptGenerationSettingsController(
     return providerSelector.findMenuItem(AgentSessionProvider.fromOrNull(profile.providerId), profile.launchMode)
   }
 
+  private fun displayNameForSavedModel(modelId: String): @NlsSafe String {
+    return providerSelector.selectedProvider?.bridge?.displayNameForGenerationModelId(modelId)
+           ?: unknownGenerationModelDisplayName(modelId)
+  }
+
   private fun selectedProfileIdForPresentation(): String? {
     return launchProfileState.selectedProfileIdForPresentation(currentProfileDraft())
   }
@@ -922,11 +934,15 @@ internal fun List<AgentPromptGenerationModel>.catalogReasoningEfforts(): Set<Age
   return efforts.takeIf { it.isNotEmpty() }
 }
 
-private fun modelText(modelId: String?, models: List<AgentPromptGenerationModel>): @Nls String {
+private fun modelText(
+  modelId: String?,
+  models: List<AgentPromptGenerationModel>,
+  displayNameForSavedModel: (String) -> @NlsSafe String,
+): @Nls String {
   if (modelId == null) {
     return AgentPromptBundle.message("popup.generation.model.auto")
   }
-  val displayName = models.firstOrNull { model -> model.id == modelId }?.displayName ?: modelId
+  val displayName = models.firstOrNull { model -> model.id == modelId }?.displayName ?: displayNameForSavedModel(modelId)
   return AgentPromptBundle.message("popup.generation.model.selected", displayName)
 }
 

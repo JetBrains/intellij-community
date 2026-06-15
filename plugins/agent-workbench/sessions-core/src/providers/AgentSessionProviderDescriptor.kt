@@ -155,6 +155,12 @@ interface AgentSessionProviderDescriptor {
   val supportsGenerationModelSelection: Boolean
     get() = false
 
+  /**
+   * True when provider model discovery should run even if the launch profile uses automatic generation settings.
+   */
+  val resolvesGenerationModelCatalogForAutoSettings: Boolean
+    get() = false
+
   val supportsPromptLaunch: Boolean
     get() = true
 
@@ -245,6 +251,10 @@ interface AgentSessionProviderDescriptor {
     return emptyList()
   }
 
+  fun displayNameForGenerationModelId(modelId: String): String? {
+    return null
+  }
+
   suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec
 
   fun sanitizeGenerationSettings(generationSettings: AgentPromptGenerationSettings): AgentPromptGenerationSettings {
@@ -257,7 +267,7 @@ interface AgentSessionProviderDescriptor {
     val planReasoningEffort = if (supportsPlanReasoningEffort) {
       generationSettings.planReasoningEffort
         ?.takeIf { effort -> effort == AgentPromptReasoningEffort.AUTO || effort in supportedReasoningEfforts }
-        ?: generationSettings.planReasoningEffort?.let { AgentPromptReasoningEffort.AUTO }
+      ?: generationSettings.planReasoningEffort?.let { AgentPromptReasoningEffort.AUTO }
     }
     else {
       null

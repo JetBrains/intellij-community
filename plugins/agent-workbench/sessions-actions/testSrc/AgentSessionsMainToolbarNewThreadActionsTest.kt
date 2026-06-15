@@ -261,6 +261,41 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
+  fun getMainActionLaunchesExplicitDefaultUserProfile() {
+    val context = newThreadContext(path = "/tmp/toolbar-project")
+    val defaultProfile = AgentPromptLaunchProfile(
+      id = "user:careful-pi",
+      name = "Careful Pi",
+      providerId = AgentSessionProvider.PI.value,
+      generationSettings = AgentPromptGenerationSettings(
+        modelId = "pi:model-1",
+        reasoningEffort = AgentPromptReasoningEffort.HIGH,
+      ),
+    )
+    var launchedProfile: AgentPromptLaunchProfile? = null
+    val piBridge = TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.PI,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+      newSessionLabelKeyOverride = "toolwindow.action.new.session.pi",
+    )
+    val action = AgentSessionsMainToolbarNewThreadAction(
+      resolveContext = { context },
+      allBridges = { listOf(piBridge) },
+      createNewSession = { _, profile, _, _ ->
+        launchedProfile = profile
+      },
+      userLaunchProfiles = { listOf(defaultProfile) },
+      activeLaunchProfileId = { defaultProfile.id },
+    )
+    val mainAction = checkNotNull(action.getMainAction(TestActionEvent.createTestEvent(action)))
+
+    mainAction.actionPerformed(TestActionEvent.createTestEvent(mainAction))
+
+    assertThat(launchedProfile).isEqualTo(defaultProfile)
+  }
+
+  @Test
   fun getMainActionUsesDefaultProviderWhenNoLastUsedProvider() {
     val context = newThreadContext()
     var launchedProfile: AgentPromptLaunchProfile? = null

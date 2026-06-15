@@ -97,6 +97,9 @@ internal class PiAgentSessionProviderDescriptor(
   override val supportsGenerationModelSelection: Boolean
     get() = omlxSupportEnabledResolver() || jbCentralSupportEnabledResolver()
 
+  override val resolvesGenerationModelCatalogForAutoSettings: Boolean
+    get() = true
+
   override val providerSettings: List<AgentWorkbenchCheckboxSetting>
     get() = listOf(
       AgentWorkbenchCheckboxSetting(
@@ -285,6 +288,13 @@ internal class PiAgentSessionProviderDescriptor(
       modelId = modelId,
       reasoningEffort = reasoningEffort,
     )
+  }
+
+  override fun displayNameForGenerationModelId(modelId: String): String? {
+    PiOmlxModelCatalog.decodeGenerationModelId(modelId)?.let { selection -> return selection.displayName }
+    PiJbCentralModelCatalog.decodeGenerationModelId(modelId)?.let { selection -> return selection.displayName }
+    PiKnownModelCatalog.decodeGenerationModelId(modelId)?.let { selection -> return selection.displayName }
+    return null
   }
 
   private fun isEnabledPiGenerationModelId(modelId: String): Boolean {
@@ -592,7 +602,8 @@ private sealed interface PiScopedModel {
 
   data class Known(val selection: PiKnownModelSelection) : PiScopedModel {
     override val identity: String = "known:${selection.provider}\u0000${selection.modelId}"
-    override val selector: String = if (selection.provider.isUrlLikePiProvider()) selection.modelId else "${selection.provider}/${selection.modelId}"
+    override val selector: String =
+      if (selection.provider.isUrlLikePiProvider()) selection.modelId else "${selection.provider}/${selection.modelId}"
   }
 }
 

@@ -123,7 +123,7 @@ object AgentSessionLaunchPlanner {
     if (generationModelCatalog.isNotEmpty()) {
       return generationModelCatalog
     }
-    if (generationSettings == AgentPromptGenerationSettings.AUTO) {
+    if (generationSettings == AgentPromptGenerationSettings.AUTO && !descriptor.resolvesGenerationModelCatalogForAutoSettings) {
       return emptyList()
     }
     return try {
