@@ -1194,56 +1194,57 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       int infoStartOffset = TextRangeScalarUtil.startOffset(finalInfoRange);
       int infoEndOffset = TextRangeScalarUtil.endOffset(finalInfoRange);
 
-      InvalidPsi recycled = recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, newInfo.getDescription());
-      String from;
-      if (recycled == null) {
-        recycled = invalidElementRecycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, newInfo.getDescription());
-        from = "invalidElementRecycler";
-      }
-      else {
-        from = "recycler";
-      }
-      if (recycled != null) {
-        if (LOG.isTraceEnabled()) {
-          LOG.trace("assignRangeHighlighters: pickedup " + recycled + " from " + from+ " "+session.getProgressIndicator());
+      synchronized (newInfo) {
+        InvalidPsi recycled = recycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, newInfo.getDescription());
+        String from;
+        if (recycled == null) {
+          recycled = invalidElementRecycler.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer, newInfo.getDescription());
+          from = "invalidElementRecycler";
         }
-        toRemove.add(recycled);
-      }
-      List<Object> existingInfos = List.of();
-      if (recycled == null && LOG.isTraceEnabled()) {
-        List<RangeHighlighterEx> dups = new ArrayList<>();
-        markup.processRangeHighlightersOverlappingWith(newInfo.getStartOffset(), newInfo.getEndOffset(), new CommonProcessors.CollectProcessor<>(dups));
-        String description = newInfo.getDescription();
-        TextAttributesKey infoTextAttributesKey = newInfo.forcedTextAttributesKey == null ? newInfo.type.getAttributesKey() : newInfo.forcedTextAttributesKey;
-        dups.removeIf(r-> {
-          HighlightInfo hi;
-          return !r.getTextRange().equalsToRange(infoStartOffset, infoEndOffset) ||
-                 !Objects.equals(r.getTextAttributesKey(), infoTextAttributesKey) ||
-                 (hi=HighlightInfo.fromRangeHighlighter(r)) == null ||
-                 !Objects.equals(hi.getDescription(), description)
-            ;
-        });
-
-        existingInfos =
-          ContainerUtil.map(dups, dup -> {
-            HighlightInfo info = HighlightInfo.fromRangeHighlighter(dup);
-            return info == null ? "no HI" : info.getHighlighter() != dup ? "inconsistent HI" : "duplicate: "+dup+":"+findInData(info, psiFile);
+        else {
+          from = "recycler";
+        }
+        if (recycled != null) {
+          if (LOG.isTraceEnabled()) {
+            LOG.trace("assignRangeHighlighters: pickedup " + recycled + " from " + from + " " + session.getProgressIndicator());
+          }
+          toRemove.add(recycled);
+        }
+        List<Object> existingInfos = List.of();
+        if (recycled == null && LOG.isTraceEnabled()) {
+          List<RangeHighlighterEx> dups = new ArrayList<>();
+          markup.processRangeHighlightersOverlappingWith(newInfo.getStartOffset(), newInfo.getEndOffset(), new CommonProcessors.CollectProcessor<>(dups));
+          String description = newInfo.getDescription();
+          TextAttributesKey infoTextAttributesKey = newInfo.forcedTextAttributesKey == null ? newInfo.type.getAttributesKey() : newInfo.forcedTextAttributesKey;
+          dups.removeIf(r -> {
+            HighlightInfo hi;
+            return !r.getTextRange().equalsToRange(infoStartOffset, infoEndOffset) ||
+                   !Objects.equals(r.getTextAttributesKey(), infoTextAttributesKey) ||
+                   (hi = HighlightInfo.fromRangeHighlighter(r)) == null ||
+                   !Objects.equals(hi.getDescription(), description)
+              ;
           });
-      }
-      RangeHighlighterEx newHighlighter = changeRangeHighlighterAttributes(session, psiFile, markup, newInfo, range2markerCache, finalInfoRange, recycled, isFileLevel, infoStartOffset, infoEndOffset, layer, severityRegistrar);
-      if (recycled != null) {
-        recycled.info().invalidate();
-      }
-      else if (LOG.isTraceEnabled() && !existingInfos.isEmpty()) {
-        LOG.trace("assignRangeHighlighters duplicates: " + newInfo +
-                  "\ndups(" + existingInfos.size() + "): " + existingInfos +
-                  "\nnew: " + newHighlighter +
-                  "\nrecycler: " + recycler + ":" + recycler.forAllInGarbageBin() +
-                  "\ninvalidRecycler:" + invalidElementRecycler + ":" + invalidElementRecycler.forAllInGarbageBin() +
-                  "\nold infos(" + oldInfos.size() + "): " + oldInfos +
-                  "\nvisitedPsiElement:" + debugPsiInfo(visitedPsiElement) +
-                  "\n" + session.getProgressIndicator()
-                  );
+
+          existingInfos = ContainerUtil.map(dups, dup -> {
+            HighlightInfo info = HighlightInfo.fromRangeHighlighter(dup);
+            return info == null ? "no HI" : info.getHighlighter() != dup ? "inconsistent HI" : "duplicate: " + dup + ":" + findInData(info, psiFile);
+          });
+        }
+        RangeHighlighterEx newHighlighter = changeRangeHighlighterAttributes(session, psiFile, markup, newInfo, range2markerCache, finalInfoRange, recycled, isFileLevel, infoStartOffset, infoEndOffset, layer, severityRegistrar);
+        if (recycled != null) {
+          recycled.info().invalidate();
+        }
+        else if (LOG.isTraceEnabled() && !existingInfos.isEmpty()) {
+          LOG.trace("assignRangeHighlighters duplicates: " + newInfo +
+                    "\ndups(" + existingInfos.size() + "): " + existingInfos +
+                    "\nnew: " + newHighlighter +
+                    "\nrecycler: " + recycler + ":" + recycler.forAllInGarbageBin() +
+                    "\ninvalidRecycler:" + invalidElementRecycler + ":" + invalidElementRecycler.forAllInGarbageBin() +
+                    "\nold infos(" + oldInfos.size() + "): " + oldInfos +
+                    "\nvisitedPsiElement:" + debugPsiInfo(visitedPsiElement) +
+                    "\n" + session.getProgressIndicator()
+          );
+        }
       }
     }
     removeFromDataAtomically(data, toRemove, session);

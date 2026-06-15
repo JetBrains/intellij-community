@@ -463,39 +463,41 @@ public final class UpdateHighlightersUtil {
   }
   // disposes highlighter, and schedules removal from the file-level component if this highlighter happened to be file-level
   static void disposeWithFileLevelIgnoreErrors(@NotNull HighlightInfo info, @NotNull HighlightingSession session) {
-    if (info.isFileLevelAnnotation()) {
-      session.removeFileLevelHighlight(info);
-    }
-    RangeHighlighter highlighter = info.getHighlighter();
-    try {
-      if (highlighter != null) {
-        highlighter.dispose();
+    synchronized (info) {
+      if (info.isFileLevelAnnotation()) {
+        session.removeFileLevelHighlight(info);
       }
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      // in theory, rogue plugin might register a listener on range marker 'dispose', which can do nasty things, including throwing exceptions,
-      // but in highlighting, range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
-      LOG.warn(e);
-    }
-    if (LOG.isTraceEnabled()) {
-      MarkupModel model = highlighter == null ? null : DocumentMarkupModel.forDocument(highlighter.getDocument(), session.getProject(), false);
-      List<RangeHighlighterEx> dups = new ArrayList<>();
-      if (model != null) {
-        ((MarkupModelEx)model).processRangeHighlightersOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), new CommonProcessors.CollectProcessor<>(dups));
-        dups.removeIf(h-> {
-          HighlightInfo hi;
-          return !h.getTextRange().equals(highlighter.getTextRange()) ||
-                 h.getTextAttributesKey() != highlighter.getTextAttributesKey() ||
-                 (hi=HighlightInfo.fromRangeHighlighter(h)) == null ||
-                 !Objects.equals(hi.getDescription(), info.getDescription()) ||
-                 !Objects.equals(hi.getToolId(), info.getToolId())
-            ;
-        });
+      RangeHighlighter highlighter = info.getHighlighter();
+      try {
+        if (highlighter != null) {
+          highlighter.dispose();
+        }
       }
-      LOG.trace("disposeWithFileLevelIgnoreErrors: " + info +(highlighter == null ? " (highlighter is null)":"")+(dups.isEmpty() ? "" : "; same range highlighters remain: "+dups));
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        // in theory, rogue plugin might register a listener on range marker 'dispose', which can do nasty things, including throwing exceptions,
+        // but in highlighting, range highlighters must be removed no matter what, to avoid sticky highlighters, so ignore these exceptions
+        LOG.warn(e);
+      }
+      if (LOG.isTraceEnabled()) {
+        MarkupModel model = highlighter == null ? null : DocumentMarkupModel.forDocument(highlighter.getDocument(), session.getProject(), false);
+        List<RangeHighlighterEx> dups = new ArrayList<>();
+        if (model != null) {
+          ((MarkupModelEx)model).processRangeHighlightersOverlappingWith(highlighter.getStartOffset(), highlighter.getEndOffset(), new CommonProcessors.CollectProcessor<>(dups));
+          dups.removeIf(h-> {
+            HighlightInfo hi;
+            return !h.getTextRange().equals(highlighter.getTextRange()) ||
+                   h.getTextAttributesKey() != highlighter.getTextAttributesKey() ||
+                   (hi=HighlightInfo.fromRangeHighlighter(h)) == null ||
+                   !Objects.equals(hi.getDescription(), info.getDescription()) ||
+                   !Objects.equals(hi.getToolId(), info.getToolId())
+              ;
+          });
+        }
+        LOG.trace("disposeWithFileLevelIgnoreErrors: " + info +(highlighter == null ? " (highlighter is null)":"")+(dups.isEmpty() ? "" : "; same range highlighters remain: "+dups));
+      }
     }
   }
 }
