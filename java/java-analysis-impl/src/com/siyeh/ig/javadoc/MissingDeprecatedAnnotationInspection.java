@@ -23,7 +23,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaDocTokenType;
@@ -42,6 +41,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiDocToken;
+import com.intellij.util.CommentUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -134,7 +134,7 @@ public final class MissingDeprecatedAnnotationInspection extends BaseInspection 
       }
       else {
         @NlsSafe PsiDocComment newDocComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(
-          StringUtil.join("/**\n", " * ", "@" + DEPRECATED_TAG_NAME + TEXT, "\n */")
+          CommentUtil.convertToDocComment(element.getContainingFile(), "@" + DEPRECATED_TAG_NAME + TEXT, false)
         );
         PsiDocComment addedComment = (PsiDocComment)documentedElement.addBefore(newDocComment, documentedElement.getFirstChild());
         PsiDocTag addedTag = addedComment.findTagByName(DEPRECATED_TAG_NAME);

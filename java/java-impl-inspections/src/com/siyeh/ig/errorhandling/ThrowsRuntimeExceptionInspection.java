@@ -21,6 +21,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.CommentUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -82,7 +83,8 @@ public final class ThrowsRuntimeExceptionInspection extends BaseInspection {
         comment.add(docTag);
       }
       else {
-        final PsiDocComment docComment = factory.createDocCommentFromText("/** */");
+        final PsiDocComment docComment =
+          factory.createDocCommentFromText(CommentUtil.convertToDocComment(element.getContainingFile(), " ", false));
         final PsiComment resultComment = (PsiComment)method.addBefore(docComment, method.getModifierList());
         final DocumentationProvider documentationProvider = LanguageDocumentation.INSTANCE.forLanguage(method.getLanguage());
         final CodeDocumentationProvider codeDocumentationProvider;
@@ -99,7 +101,8 @@ public final class ThrowsRuntimeExceptionInspection extends BaseInspection {
           return;
         }
         final String commentStub = codeDocumentationProvider.generateDocumentationContentStub(resultComment);
-        final PsiDocComment newComment = factory.createDocCommentFromText("/**\n" + commentStub + "*/");
+        final PsiDocComment newComment =
+          factory.createDocCommentFromText(CommentUtil.convertToDocComment(element.getContainingFile(), commentStub, false));
         resultComment.replace(newComment);
       }
       element.delete();

@@ -2,6 +2,9 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.TestDataPath;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
@@ -9,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
+@TestDataPath("$CONTENT_ROOT/testData/ig/com/siyeh/igtest/bugs/comparable_implemented_but_equals_not_overridden")
 public class ComparableImplementedButEqualsNotOverriddenInspectionTest extends LightJavaInspectionTestCase {
 
   public void testInterfaceImplementingComparable() { doTest(); }
@@ -18,9 +22,25 @@ public class ComparableImplementedButEqualsNotOverriddenInspectionTest extends L
     checkQuickFix(InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.fix.generate.equals.name"));
   }
 
-  public void testAbstractClass1() {
+  public void testSimpleMarkdown() {
     doTest();
     checkQuickFix(InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.fix.add.note.name"));
+  }
+
+  public void testNoteMarkdown() {
+    doTest();
+  }
+
+  public void testAddNoteToExistingComments() {
+    doTest();
+    checkQuickFixAll();
+  }
+
+  public void testAbstractClass1() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_22, () -> {
+      doTest();
+      checkQuickFix(InspectionGadgetsBundle.message("comparable.implemented.but.equals.not.overridden.fix.add.note.name"));
+    });
   }
 
   public void testAbstractClass2() { doTest(); }

@@ -877,8 +877,10 @@ Fc:com.intellij.openapi.util.text.StringUtil
 - s:trimExtensions(java.lang.String):java.lang.String
 - s:trimLeading(java.lang.CharSequence):java.lang.CharSequence
 - s:trimLeading(java.lang.String):java.lang.String
+- s:trimLeadingLines(java.lang.String):java.lang.String
 - s:trimTrailing(java.lang.CharSequence):java.lang.CharSequence
 - s:trimTrailing(java.lang.String):java.lang.String
+- s:trimTrailingLines(java.lang.String):java.lang.String
 - s:unescapeBackSlashes(java.lang.String):java.lang.String
 - s:unescapeStringCharacters(java.lang.String):java.lang.String
 - s:unescapeXml(java.lang.String):java.lang.String

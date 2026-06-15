@@ -23,6 +23,7 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.javadoc.PsiInlineDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.CommentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -250,7 +251,8 @@ public final class JavaDocFixes {
     @Override
     protected @NotNull PsiDocComment createDonorJavadoc(@NotNull PsiElement element) {
       final PsiElementFactory instance = PsiElementFactory.getInstance(element.getProject());
-      return instance.createDocCommentFromText(String.format("/** {@code %s} */", element.getText()));
+      return instance.createDocCommentFromText(
+        CommentUtil.convertToDocComment(element.getContainingFile(), String.format("{@code %s} ", element.getText())));
     }
 
     @Override
@@ -274,7 +276,8 @@ public final class JavaDocFixes {
     @Override
     protected @NotNull PsiDocComment createDonorJavadoc(@NotNull PsiElement element) {
       final PsiElementFactory instance = PsiElementFactory.getInstance(element.getProject());
-      return instance.createDocCommentFromText("/** &#064;" + element.getText().substring(1) + " */");
+      return instance.createDocCommentFromText(
+        CommentUtil.convertToDocComment(element.getContainingFile(), " &#064;" + element.getText().substring(1) + " "));
     }
 
     @Override

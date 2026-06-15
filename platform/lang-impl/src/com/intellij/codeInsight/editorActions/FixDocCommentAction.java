@@ -6,7 +6,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.documentation.DocCommentFixer;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
-import com.intellij.lang.CodeDocumentationAwareCommenterEx;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
@@ -43,6 +42,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+
+import static com.intellij.util.CommentUtil.preferDocumentationLineComment;
 
 /**
  * Creates documentation comment for the current context if it's not created yet (e.g. the caret is inside a method which
@@ -310,25 +311,5 @@ public final class FixDocCommentAction extends EditorAction {
       }
     }
     return result;
-  }
-
-  /// @param file    The file being worked on. Useful to retrieve the settings.
-  /// @param comment A comment possibly targeted by an action.
-  /// @return `true` if the language/comment prefers/id **line** documentation comments
-  /// over **block** documentation comments.
-  public static boolean preferDocumentationLineComment(@NotNull PsiFile file, @Nullable PsiDocCommentBase comment) {
-    Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(file.getLanguage());
-    if (commenter instanceof CodeDocumentationAwareCommenter docCommenter) {
-      if (comment == null) {
-        if (docCommenter instanceof CodeDocumentationAwareCommenterEx docCommenterEx) {
-          return docCommenterEx
-            .shouldUseDocumentationLineComments(file, CodeStyle.getLanguageSettings(file).DOCUMENTATION_LINE_COMMENT_PREFERRED);
-        }
-        return CodeStyle.getLanguageSettings(file).DOCUMENTATION_LINE_COMMENT_PREFERRED;
-      }
-      return docCommenter.isDocumentationLineComment(comment);
-    }
-    // Can't guess
-    return false;
   }
 }

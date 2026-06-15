@@ -21,6 +21,7 @@ import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiModifierList
 import com.intellij.psi.javadoc.PsiDocComment
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.CommentUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.Contract
 import java.util.Arrays
@@ -65,7 +66,8 @@ public class ReplaceWithJavadocInspection : LocalInspectionTool() {
       // the set will contain all the comment nodes that are directly before the method's modifier list
       val commentNodes = mutableSetOf<PsiComment>()
 
-      val javadocText = prepareJavadocComment(child, commentNodes)
+      val javadocText =
+        CommentUtil.convertToDocComment(element.containingFile, prepareJavadocComment(child, commentNodes), false)
       val javadoc = factory.createDocCommentFromText(javadocText)
 
       if (commentNodes.isEmpty()) {
@@ -85,11 +87,10 @@ public class ReplaceWithJavadocInspection : LocalInspectionTool() {
     @Contract(mutates = "param2")
     private fun prepareJavadocComment(comment: PsiComment, visited: MutableSet<PsiComment>): String {
       val commentContent: Collection<String> = siblingsComments(comment, visited)
-      val sb = StringBuilder("/**\n")
+      val sb = StringBuilder()
       for (string in commentContent) {
         val line = string.trim { it <= ' ' }
         if (line.isEmpty()) continue
-        sb.append("* ")
         sb.append(line)
         sb.append("\n")
       }
@@ -98,12 +99,10 @@ public class ReplaceWithJavadocInspection : LocalInspectionTool() {
         if (tags.size > 0) {
           val start = tags[0].startOffsetInParent
           val end = tags[tags.size - 1].textRangeInParent.endOffset
-          sb.append("* ")
           sb.append(comment.getText(), start, end)
           sb.append("\n")
         }
       }
-      sb.append("*/")
       return sb.toString()
     }
 

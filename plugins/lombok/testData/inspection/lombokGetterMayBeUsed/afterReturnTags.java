@@ -8,7 +8,7 @@ public class Foo {
     /**
      * -- GETTER --
      *  Returns The date.
-     *  It's an instance field.
+     * It's an instance field.
      *
      * @return The date
      * @return The value

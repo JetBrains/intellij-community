@@ -5,7 +5,7 @@ public class Test {
     Inner inner = new Inner();
   }
 
-  /** @noinspection deprecation*/
+  /** @noinspection deprecation */
   private static class Inner {
 
     /**

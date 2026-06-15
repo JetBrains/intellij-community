@@ -827,7 +827,6 @@ a:com.intellij.codeInsight.editorActions.ExtendWordSelectionHandlerBase
 f:com.intellij.codeInsight.editorActions.FixDocCommentAction
 - com.intellij.openapi.editor.actionSystem.EditorAction
 - s:generateComment(com.intellij.psi.PsiElement,com.intellij.openapi.project.Project,com.intellij.openapi.editor.ModNavigator):V
-- s:preferDocumentationLineComment(com.intellij.psi.PsiFile,com.intellij.psi.PsiDocCommentBase):Z
 f:com.intellij.codeInsight.editorActions.IndentTransferableData
 - com.intellij.codeInsight.editorActions.TextBlockTransferableData
 - java.io.Serializable

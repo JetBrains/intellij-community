@@ -9,7 +9,7 @@ public class MergeJavaDoc {
    * The process date.
    * -- SETTER --
    *  Sets The date.
-   *  It's an instance field.
+   * It's an instance field.
    *
    * @param The date
 
