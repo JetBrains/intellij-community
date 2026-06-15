@@ -5,8 +5,8 @@ import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.ui.providers.bounds.JupyterBoundsChangeNotifier
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
@@ -67,7 +67,7 @@ class NotebookVisibleCellsBatchUpdater(
     val visibleArea = editor.scrollingModel.visibleArea
 
     if (visibleArea.height == 0 || visibleArea.width == 0) {
-      prevVisibleCells.forEach {
+      prevVisibleCells.forEach { _ ->
         //it.isInViewportRectangle.set(false)
       }
       prevVisibleCells = emptyList()
@@ -91,17 +91,17 @@ class NotebookVisibleCellsBatchUpdater(
     }
 
     if (visibleCells != prevVisibleCells) {
-      val newInvisible = prevVisibleCells - visibleCells
-      val newVisible = visibleCells - prevVisibleCells
-      newInvisible.forEach {
+      val newInvisible = prevVisibleCells - visibleCells.toSet()
+      val newVisible = visibleCells - prevVisibleCells.toSet()
+      newInvisible.forEach { _ ->
         //it.isInViewportRectangle.set(false)
       }
-      newVisible.forEach {
+      newVisible.forEach { _ ->
         //it.isInViewportRectangle.set(true)
       }
     }
 
-    // Output visibility can change while the visible cell set stays the same, for example when a lazy image output is first
+    // Output visibility can change while the visible cell set stays the same, for example, when a lazy image output is first
     // represented by a 1px placeholder in an already-visible cell.
     visibleCells.forEach { it.updateIfInVisibleRect() }
     prevVisibleCells = visibleCells
@@ -113,7 +113,7 @@ class NotebookVisibleCellsBatchUpdater(
     fun install(editor: EditorImpl) {
       val updater = NotebookVisibleCellsBatchUpdater(editor)
       editor.putUserData(INSTANCE_KEY, updater)
-      Disposer.register(editor.disposable, updater)
+      EditorUtil.disposeWithEditor(editor, updater)
     }
 
     fun get(editor: EditorImpl): NotebookVisibleCellsBatchUpdater? = INSTANCE_KEY.get(editor)

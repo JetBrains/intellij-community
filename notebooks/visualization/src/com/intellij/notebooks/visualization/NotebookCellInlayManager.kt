@@ -140,7 +140,7 @@ class NotebookCellInlayManager private constructor(
   suspend fun initialize() {
     editor.putUserData(CELL_INLAY_MANAGER_KEY, this)
 
-    val connection = ApplicationManager.getApplication().messageBus.connect(editor.disposable)
+    val connection = ApplicationManager.getApplication().messageBus.connect(this)
     connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
       updateAll()
     })
