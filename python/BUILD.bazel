@@ -1317,6 +1317,8 @@ jvm_library(
         "//libraries/junit5-jupiter:junit5-jupiter_test_lib",
         "//libraries/junit5-params",
         "//libraries/junit5-params:junit5-params_test_lib",
+        "//libraries/junit5-suites",
+        "//libraries/junit5-suites:junit5-suites_test_lib",
         "//platform/platform-impl/remote",
         "//platform/ide-core",
         "//platform/testFramework/junit5",

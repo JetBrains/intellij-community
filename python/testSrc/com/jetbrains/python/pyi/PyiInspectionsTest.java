@@ -146,7 +146,7 @@ public class PyiInspectionsTest extends PyTestCase {
   }
 
   public void testPyiRelativeImports() {
-    myRootsDisposable = PyiTypeTest.addPyiStubsToContentRoot(myFixture);
+    myRootsDisposable = LegacyPyiTypeTest.addPyiStubsToContentRoot(myFixture);
     doTestByFileName(PyUnresolvedReferencesInspection.class, "package_with_stub_in_path/a.pyi");
   }
 

@@ -1,139 +1,276 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.pyi
+
+import com.intellij.idea.TestFor
+import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import org.junit.jupiter.api.Test
+
+/**
+ * Type inference tests for `.pyi` stub files: a `.py` implementation without annotations paired with
+ * a same-named (or sibling-module) `.pyi` stub that supplies the types.
  */
-package com.jetbrains.python.pyi;
+class PyiTypeTest : PyCodeInsightTestCase() {
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
-import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.PyTypedElement;
-import com.jetbrains.python.psi.types.TypeEvalContext;
-import org.jetbrains.annotations.NotNull;
+  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
 
-public class PyiTypeTest extends PyTestCase {
+  @Test
+  fun `function parameter`() = test(
+    "FunctionParameter.py",
+    """
+    def f(x):
+    #     └ TYPE int
+        pass
+    """,
+    "FunctionParameter.pyi" to "def f(x: int) -> None: ...",
+  )
 
-  private Disposable myDisposable;
+  @Test
+  fun `function return type`() = test(
+    "FunctionReturnType.py",
+    """
+    def f():
+        pass
+    
+    x = f()
+    #\ TYPE int | None
+    """,
+    "FunctionReturnType.pyi" to """
+      from typing import Optional
+      
+      
+      def f() -> Optional[int]: ...
+      """,
+  )
 
-  // return Disposable which undoes configuration
-  public static Disposable addPyiStubsToContentRoot(CodeInsightTestFixture fixture) {
-    final String path = fixture.getTestDataPath() + "/pyi/pyiStubs";
-    final VirtualFile file = StandardFileSystems.local().refreshAndFindFileByPath(path);
-    assertNotNull(file);
-    file.refresh(false, true);
-    ModuleRootModificationUtil.addContentRoot(fixture.getModule(), path);
-    return () -> ModuleRootModificationUtil.updateModel(fixture.getModule(), model -> {
-      for (ContentEntry entry : model.getContentEntries()) {
-        if (file.equals(entry.getFile())) {
-          model.removeContentEntry(entry);
-        }
-      }
-    });
-  }
+  @Test
+  fun `function type`() = test(
+    "FunctionType.py",
+    """
+    def f(x):
+    #   └ TYPE (x: int) -> dict[Any, Any]
+        pass
+    """,
+    "FunctionType.pyi" to "def f(x: int) -> dict: ...",
+  )
 
-  @Override
-  public void tearDown() throws Exception {
-    try {
-      if (myDisposable != null) {
-        Disposer.dispose(myDisposable);
-        myDisposable = null;
-      }
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
+  @Test
+  fun `module attribute`() = test(
+    "ModuleAttribute.py",
+    """
+    x = None # WARNING Expected type 'int', got 'None' instead
+    #\ TYPE int
+    """,
+    "ModuleAttribute.pyi" to "x = ...  # type: int",
+  )
 
-  private void doTest(@NotNull String expectedType) {
-    myFixture.copyDirectoryToProject("pyi/type/" + getTestName(true), "");
-    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-    final String fileName = getTestName(false) + ".py";
-    final var file = myFixture.configureByFile(fileName);
-    final PsiElement element = myFixture.getElementAtCaret();
-    assertInstanceOf(element, PyTypedElement.class);
-    final PyTypedElement typedElement = (PyTypedElement)element;
-    final Project project = element.getProject();
-    assertType(expectedType, typedElement, TypeEvalContext.codeAnalysis(project, file));
-    assertProjectFilesNotParsed(file);
-    assertType(expectedType, typedElement, TypeEvalContext.userInitiated(project, file));
-  }
+  @Test
+  fun `coroutine type`() = test(
+    "CoroutineType.py",
+    """
+    async def f():
+        return 42
+    
+    coroutine = f()
+    #\ TYPE CoroutineType[Any, Any, int]
+    """,
+    "CoroutineType.pyi" to """
+      async def f() -> int:
+          ...
+      """,
+  )
 
-  public void testFunctionParameter() {
-    doTest("int");
-  }
+  @Test
+  fun `overloaded return type`() = test(
+    "OverloadedReturnType.py",
+    """
+    def f(x):
+        pass
+    
+    
+    x = f('foo')
+    #\ TYPE str
+    """,
+    "OverloadedReturnType.pyi" to """
+      from typing import overload
+      
+      
+      @overload
+      def f(x: int) -> int: ...
+      @overload
+      def f(x: str) -> str: ...
+      """,
+  )
 
-  public void testFunctionReturnType() {
-    doTest("int | None");
-  }
+  @Test
+  @TestFor(issues = ["PY-22808"])
+  fun `overloaded not matched type`() = test(
+    """
+    from typing import Any
+    from m1 import C
+    
+    def f(x: Any):
+        c = C()
+        expr = c.foo(x)
+    #   └ TYPE list[Any] | Any
+    """,
+    "m1.pyi" to """
+      from typing import TypeVar, Generic, overload, List
+      
+      _T = TypeVar('_T')
+      
+      class C(Generic[_T]):
+          @overload
+          def foo(self, i: int) -> _T: ...
+          @overload
+          def foo(self, s: slice) -> List[_T]: ...
+      """,
+  )
 
-  public void testFunctionType() {
-    doTest("(x: int) -> dict[Any, Any]");
-  }
+  @Test
+  @TestFor(issues = ["PY-22808"])
+  fun `overloaded not matched generic type`() = test(
+    """
+    from typing import Any
+    from m1 import C
+    
+    def f(x: list):
+    c = C()
+    #\ ERROR Indent expected
+    expr = c.foo(non_existing=0) # ISSUES *
+    #\ TYPE dict[str, Any] | list[Any]
+    """,
+    "m1.pyi" to """
+      from typing import TypeVar, Generic, overload, List, Dict
+      
+      _T = TypeVar('_T')
+      
+      class C(Generic[_T]):
+          @overload
+          def foo(self, i: int) -> Dict[str, _T]: ...
+          @overload
+          def foo(self, s: str) -> List[_T]: ...
+      """,
+  )
 
-  public void testModuleAttribute() {
-    doTest("int");
-  }
+  @Test
+  fun `generic class definition in other file`() = test(
+    """
+    from other import Holder
+    
+    expr = Holder(42).get()
+    #\ TYPE int
+    """,
+    "other.pyi" to """
+      from typing import Generic, TypeVar
+      
+      T = TypeVar('T')
+      
+      
+      class Holder(Generic[T]):
+          def __init__(self, x: T):
+              pass
+      
+          def get(self) -> T:
+              pass
+      """,
+    "other.py" to """
+      class Holder:
+          def __init__(self, x):
+              self.x = x
+      
+          def get(self):
+              return self.x
+      """,
+  )
 
-  public void testCoroutineType() {
-    doTest("CoroutineType[Any, Any, int]");
-  }
+  @Test
+  @TestFor(issues = ["PY-27186"])
+  fun `generic class definition in same file`() = test(
+    "main.py",
+    """
+    class Holder:
+        def __init__(self, x):
+            self.x = x # WARNING Unresolved attribute reference 'x' for class 'Holder'
 
-  public void testPyiOnPythonPath() {
-    myDisposable = addPyiStubsToContentRoot(myFixture);
-    doTest("int");
-  }
+        def get(self):
+            return self.x # WARNING Unresolved attribute reference 'x' for class 'Holder'
 
-  public void testOverloadedReturnType() {
-    doTest("str");
-  }
 
-  // PY-22808
-  public void testOverloadedNotMatchedType() {
-    doTest("list[Any] | Any");
-  }
+    expr = Holder(42).get()
+    # └ TYPE int
+    """,
+    "main.pyi" to """
+      from typing import Generic, TypeVar
+      
+      T = TypeVar('T')
+      
+      
+      class Holder(Generic[T]):
+          def __init__(self, x: T):
+              pass
+      
+          def get(self) -> T:
+              pass
+      """,
+  )
 
-  // PY-22808
-  public void testOverloadedNotMatchedGenericType() {
-    doTest("dict[str, Any] | list[Any]");
-  }
+  @Test
+  fun `comparison operator overloads`() = test(
+    """
+    from lib import MyClass
+    
+    expr = 42 < MyClass(42) < MyClass('foo')
+    #\ TYPE int
+    """,
+    "lib.pyi" to """
+      from typing import overload, Generic, TypeVar
+      
+      T = TypeVar('T')
+      
+      
+      class MyClass(Generic[T]):
+          def __init__(self, x: T):
+              pass
+      
+          @overload
+          def __lt__(self, other: MyClass) -> T:
+              pass
+      
+          @overload
+          def __lt__(self, other: str) -> bool:
+              pass
+      
+          def __gt__(self, other: int) -> bool:
+              pass
+      """,
+    "lib.py" to """
+      class MyClass:
+          def __init__(self, *args):
+              pass
+      
+          def __lt__(self, other):
+              pass
+      
+          def __gt__(self, other):
+              return True
+      """,
+  )
 
-  public void testGenericClassDefinitionInOtherFile() {
-    doTest("int");
-  }
-
-  // PY-27186
-  public void testGenericClassDefinitionInSameFile() {
-    doTest("int");
-  }
-
-  public void testComparisonOperatorOverloads() {
-    doTest("int");
-  }
-
-  // PY-24929
-  public void testInstanceAttributeAnnotation() {
-    doTest("int");
-  }
+  @Test
+  @TestFor(issues = ["PY-24929"])
+  fun `instance attribute annotation`() = test(
+    "InstanceAttributeAnnotation.py",
+    """
+    class C:
+        def __init__(self):
+            self.attr = None # WARNING Expected type 'int', got 'None' instead
+    
+    C().attr
+    #   └ TYPE int
+    """,
+    "InstanceAttributeAnnotation.pyi" to """
+      class C:
+          attr: int
+      """,
+  )
 }

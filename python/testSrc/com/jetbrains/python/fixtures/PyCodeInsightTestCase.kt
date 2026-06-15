@@ -45,6 +45,7 @@ import com.jetbrains.python.codeInsight.completion.PyTestAssertionParserUtils.sk
 import com.jetbrains.python.codeInsight.completion.PyTestAssertionType
 import com.jetbrains.python.documentation.PyTypeRenderer
 import com.jetbrains.python.documentation.PythonDocumentationProvider
+import com.jetbrains.python.fixtures.PyCodeInsightTestCase.Companion.myFixture
 import com.jetbrains.python.fixtures.PyTestAssertionInliner.findCounterparts
 import com.jetbrains.python.fixtures.PyTestAssertionParser.parseAssertions
 import com.jetbrains.python.inspections.PyAbstractClassInspection
@@ -527,8 +528,8 @@ abstract class PyCodeInsightTestCase {
     fun renderType(context: TypeEvalContext) =
       PythonDocumentationProvider.getTypeName(expr.getType(context), context, PyTypeRenderer.Feature.UNSAFE_UNION)
 
-    val actualTypeCA = renderType(codeAnalysis(project, containingFile))
-    val actualTypeUI = renderType(userInitiated(project, containingFile))
+    val actualTypeCA = renderType(codeAnalysis(project, containingFile).withTracing())
+    val actualTypeUI = renderType(userInitiated(project, containingFile).withTracing())
 
     if (actualTypeCA != actualTypeUI) {
       return "Type mismatch for code analysis context ('$actualTypeCA') and user initiated context ('$actualTypeUI')"
