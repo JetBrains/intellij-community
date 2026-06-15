@@ -12,6 +12,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.ComparisonFailure;
 
+/**
+ * Purely Python 2 related tests, safe to delete without a second thought if we drop Python 2 support.
+ * <p>
+ * This class runs at {@link LanguageLevel#PYTHON27} (see {@link #getProjectDescriptor()}). All
+ * Python-3-relevant value from these tests is being migrated to the modern inline-assertion type
+ * tests under {@code com.jetbrains.python.types} (a {@code PyCodeInsightTestCase} suite); whatever
+ * remains here is Python-2-specific (e.g. {@code str}/{@code unicode}, old-style classes,
+ * {@code long})
+ * <p>
+ * NOTE: upon removal, remove the corresponding python fixtures
+ */
 public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
 
   @Override
