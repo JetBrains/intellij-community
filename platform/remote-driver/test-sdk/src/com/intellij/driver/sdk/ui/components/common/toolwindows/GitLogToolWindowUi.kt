@@ -28,6 +28,7 @@ class GitLogToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
     driver.ui.popupMenu().select(optionToSelect)
   }
 
+  fun pressUndoCommit(commitMessage: String): Unit = openContextMenuForCommitAndSelectOption(commitMessage, "Undo Commit…")
 
   private enum class GitLogTab(val value: String) {
     CONSOLE("Console"),
