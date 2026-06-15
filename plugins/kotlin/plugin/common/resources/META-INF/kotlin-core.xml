@@ -357,6 +357,8 @@
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor"/>
 
+    <java.class.action.suppressor implementation="org.jetbrains.kotlin.idea.core.KotlinJavaClassActionSuppressor"/>
+
     <lang.inspectionSuppressor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.suppress.KotlinInspectionSuppressor"/>
     <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinCompilerPluginProvider"/>
     <optionController implementation="org.jetbrains.kotlin.idea.configuration.KotlinDependencyProvider"/>

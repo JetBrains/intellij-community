@@ -12,6 +12,7 @@ import com.intellij.ide.fileTemplates.JavaCreateFromTemplateHandler;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
@@ -36,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.Icon;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -54,6 +56,19 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
                            @Nullable Supplier<? extends @Nullable Icon> icon,
                            Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
     super(text, description, icon, rootTypes);
+  }
+
+  @Override
+  protected boolean isAvailable(@NotNull DataContext dataContext) {
+    if (!super.isAvailable(dataContext)) return false;
+
+    List<JavaClassActionSuppressor> list = JavaClassActionSuppressor.EP_NAME.getExtensionList();
+    for (JavaClassActionSuppressor suppressor : list) {
+      if (suppressor.isSuppressed(dataContext)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

@@ -383,4 +383,9 @@
       <synonym key="action.DevKit.Bootstrap.synonym"/>
     </action>
   </actions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.java.class.action.suppressor"
+                    interface="com.intellij.ide.actions.JavaClassActionSuppressor" dynamic="true"/>
+  </extensionPoints>
 </idea-plugin>
