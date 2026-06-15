@@ -13,15 +13,16 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class AddContextParameterFix(
     element: KtElement,
-    private val contextTypes: List<String>
+    private val contextType: String
 ) : KotlinPsiUpdateModCommandAction.ElementContextless<KtElement>(element) {
     override fun invoke(context: ActionContext, element: KtElement, updater: ModPsiUpdater) {
         val containingFunction = element.getStrictParentOfType<KtNamedFunction>() ?: return
 
         val psiFactory = KtPsiFactory(context.project)
         val existingParameters = containingFunction.contextParameters
-        val allParams = existingParameters.map { it.text } + contextTypes.map { "_: $it" }
-        val contextClause = allParams.joinToString(", ", "context(", ")")
+        val existingText = existingParameters.joinToString(", ") { it.text }
+        val newParam = "_: $contextType"
+        val contextClause = if (existingText.isEmpty()) "context($newParam)" else "context($existingText, $newParam)"
 
         val newFunctionText = if (existingParameters.isNotEmpty()) {
             val oldContextEnd = existingParameters.last().parent.textRange.endOffset - containingFunction.textRange.startOffset

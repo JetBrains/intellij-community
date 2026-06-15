@@ -44,7 +44,7 @@ internal object NoContextParameterFixFactory {
         val expression = diagnostic.psi as? KtExpression ?: return@ModCommandBased emptyList()
         val symbol = diagnostic.symbol as? KaContextParameterSymbol ?: return@ModCommandBased emptyList()
         val requiredType = symbol.returnType
-        val contextType = symbol.returnType.render(renderer = KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
+        val requiredTypeText = requiredType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, Variance.INVARIANT)
 
         buildList {
             val surroundingCall = findSurroundingContextCall(expression)
@@ -66,7 +66,7 @@ internal object NoContextParameterFixFactory {
             addIfNotNull(buildExplicitContextArgumentFix(expression, symbol))
             val containingFunction = expression.getStrictParentOfType<KtNamedFunction>()
             if (containingFunction != null && !containingFunction.hasModifier(KtTokens.OVERRIDE_KEYWORD)) {
-                add(AddContextParameterFix(expression, contextType))
+                add(AddContextParameterFix(expression, requiredTypeText))
             }
         }
     }
