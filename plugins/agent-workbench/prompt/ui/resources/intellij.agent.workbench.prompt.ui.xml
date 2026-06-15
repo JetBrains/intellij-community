@@ -41,6 +41,10 @@
     </action>
 
     <action
+      id="AgentWorkbenchPrompt.ManageLaunchProfiles"
+      class="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchManageLaunchProfilesAction"/>
+
+    <action
       id="AgentWorkbenchPrompt.OpenGlobalPalette"
       class="com.intellij.agent.workbench.prompt.ui.actions.AgentWorkbenchGlobalPromptAction">
       <keyboard-shortcut first-keystroke="control BACK_SLASH" keymap="$default"/>

@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
+import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
@@ -21,6 +22,7 @@ import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfile
 import com.intellij.agent.workbench.sessions.core.providers.initialMessageRequestForLaunchProfile
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -589,11 +591,12 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
     val children = action.actionGroup.getChildren(event)
 
-    assertThat(children.filterIsInstance<Separator>()).hasSize(2)
+    assertThat(children.filterIsInstance<Separator>()).hasSize(3)
     assertThat(children.filterNot { child -> child is Separator }.map { child -> child.templatePresentation.text }).containsExactly(
       AgentSessionsBundle.message("toolwindow.action.new.session.codex"),
       "Careful Codex",
       AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
+      MANAGE_LAUNCH_PROFILES_TEXT,
     )
     val selectedAction = children.single { child -> child.templatePresentation.text == "Careful Codex" }
     val unselectedAction =
@@ -627,6 +630,86 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
+  fun mainToolbarPickerIncludesManageLaunchProfilesActionWhenRegistered() {
+    var managePerformed = false
+    val cleanup = registerManageLaunchProfilesAction { managePerformed = true }
+    try {
+      val context = newThreadContext(path = "/tmp/repo-direct")
+      var launchedProfile: AgentPromptLaunchProfile? = null
+      val codexBridge = TestAgentSessionProviderDescriptor(
+        provider = AgentSessionProvider.CODEX,
+        supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+        cliAvailable = true,
+      )
+      val action = AgentSessionsMainToolbarNewThreadAction(
+        resolveContext = { context },
+        allBridges = { listOf(codexBridge) },
+        createNewSession = { _, profile, _, _ -> launchedProfile = profile },
+        activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
+      )
+
+      val children = action.actionGroup.getChildren(TestActionEvent.createTestEvent(action))
+
+      assertThat(children.filterIsInstance<Separator>()).hasSize(1)
+      assertThat(children.filterNot { child -> child is Separator }.map { child -> child.templatePresentation.text }).containsExactly(
+        AgentSessionsBundle.message("toolwindow.action.new.session.codex"),
+        MANAGE_LAUNCH_PROFILES_TEXT,
+      )
+
+      children.single { child -> child.templatePresentation.text == MANAGE_LAUNCH_PROFILES_TEXT }
+        .actionPerformed(TestActionEvent.createTestEvent())
+
+      assertThat(managePerformed).isTrue()
+      assertThat(launchedProfile).isNull()
+    }
+    finally {
+      cleanup()
+    }
+  }
+
+  @Test
+  fun mainToolbarPickerShowsSingleTopLevelManageLaunchProfilesActionForCandidates() {
+    val cleanup = registerManageLaunchProfilesAction()
+    try {
+      val context = newThreadContext(
+        projectPathCandidates = listOf(
+          projectCandidate(path = "/work/repo-a", displayName = "Project A"),
+          projectCandidate(path = "/tmp/repo-a", displayName = "/tmp/repo-a"),
+        ),
+      )
+      val codexBridge = TestAgentSessionProviderDescriptor(
+        provider = AgentSessionProvider.CODEX,
+        supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+        cliAvailable = true,
+      )
+      val action = AgentSessionsMainToolbarNewThreadAction(
+        resolveContext = { context },
+        allBridges = { listOf(codexBridge) },
+        createNewSession = { _, _, _, _ -> },
+        activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
+      )
+      val event = TestActionEvent.createTestEvent(action)
+
+      val children = action.actionGroup.getChildren(event)
+
+      assertThat(children.filterIsInstance<Separator>()).hasSize(1)
+      assertThat(children.filterNot { child -> child is Separator }.map { child -> child.templatePresentation.text }).containsExactly(
+        "Project A",
+        "/tmp/repo-a",
+        MANAGE_LAUNCH_PROFILES_TEXT,
+      )
+      val firstProjectActions = (children.first() as ActionGroup).getChildren(event)
+      assertThat(firstProjectActions.filterNot { child -> child is Separator }
+                   .map { child -> child.templatePresentation.text }).containsExactly(
+        AgentSessionsBundle.message("toolwindow.action.new.session.codex"),
+      )
+    }
+    finally {
+      cleanup()
+    }
+  }
+
+  @Test
   fun mainToolbarPickerUsesBuiltInOverrideWithoutDuplicatingProfile() {
     val context = newThreadContext(path = "/tmp/repo-direct")
     val overriddenBuiltInId = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
@@ -657,6 +740,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     assertThat(children.filterNot { child -> child is Separator }.map { child -> child.templatePresentation.text }).containsExactly(
       "Careful Codex",
       AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
+      MANAGE_LAUNCH_PROFILES_TEXT,
     )
   }
 
@@ -987,7 +1071,30 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       null,
     )
   }
+
+  private fun registerManageLaunchProfilesAction(onPerformed: () -> Unit = {}): () -> Unit {
+    val actionManager = ActionManager.getInstance()
+    val actionId = AgentWorkbenchActionIds.Prompt.MANAGE_LAUNCH_PROFILES
+    val previousAction = actionManager.getAction(actionId)
+    if (previousAction != null) {
+      actionManager.unregisterAction(actionId)
+    }
+    val action = object : AnAction(MANAGE_LAUNCH_PROFILES_TEXT) {
+      override fun actionPerformed(e: AnActionEvent) {
+        onPerformed()
+      }
+    }
+    actionManager.registerAction(actionId, action)
+    return {
+      actionManager.unregisterAction(actionId)
+      if (previousAction != null) {
+        actionManager.registerAction(actionId, previousAction)
+      }
+    }
+  }
 }
+
+private const val MANAGE_LAUNCH_PROFILES_TEXT: String = "Manage Launch Profiles…"
 
 private fun editorContext(): AgentChatEditorTabActionContext {
   val path = "/work/event-chat-repo"

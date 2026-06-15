@@ -2749,7 +2749,8 @@ class AgentPromptProviderSelectorTest {
 
       assertThat(fixture.view.planReasoningEffortLink.isVisible).isTrue()
       assertThat(fixture.view.planReasoningEffortLink.isEnabled).isFalse()
-      assertThat(fixture.view.planReasoningEffortLink.toolTipText).contains("Enable Plan mode to apply Plan effort.")
+      assertThat(fixture.view.planReasoningEffortLink.toolTipText)
+        .contains(AgentPromptBundle.message("popup.generation.plan.reasoning.disabled.tooltip"))
       assertThat(controller.currentLaunchSettings().planReasoningEffort).isNull()
     }
   }

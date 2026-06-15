@@ -2,6 +2,10 @@
 package com.intellij.agent.workbench.common
 
 object AgentWorkbenchActionIds {
+  object Prompt {
+    const val MANAGE_LAUNCH_PROFILES: String = "AgentWorkbenchPrompt.ManageLaunchProfiles"
+  }
+
   object Sessions {
     const val OPEN_DEDICATED_FRAME: String = "AgentWorkbenchSessions.OpenDedicatedFrame"
     const val SWITCH_SOURCE_AND_CHAT: String = "AgentWorkbenchSessions.SwitchSourceAndChat"

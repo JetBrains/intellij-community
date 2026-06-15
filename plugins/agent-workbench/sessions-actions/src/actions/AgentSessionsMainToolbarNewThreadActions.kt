@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.actions
 // @spec community/plugins/agent-workbench/spec/sessions/agent-terminal-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-task-cost-profiles.spec.md
 
+import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
@@ -21,6 +22,7 @@ import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -222,7 +224,7 @@ private class ProfilePickerActionGroup(
         createNewSession = createNewSession,
         activeLaunchProfileId = selectedProfileId,
       )
-      is AgentSessionsEditorTabNewThreadTarget.Candidates -> target.candidates.map { candidate ->
+      is AgentSessionsEditorTabNewThreadTarget.Candidates -> target.candidates.mapTo(mutableListOf<AnAction>()) { candidate ->
         DefaultActionGroup(candidate.displayName, true).apply {
           buildProfileMenuActions(
             path = candidate.path,
@@ -231,9 +233,10 @@ private class ProfilePickerActionGroup(
             entryPoint = entryPoint,
             createNewSession = createNewSession,
             activeLaunchProfileId = selectedProfileId,
+            includeManageAction = false,
           ).forEach(::add)
         }
-      }.toTypedArray<AnAction>()
+      }.let(::appendManageLaunchProfilesAction).toTypedArray<AnAction>()
     }
   }
 }
@@ -747,6 +750,7 @@ private fun buildProfileMenuActions(
   entryPoint: AgentWorkbenchEntryPoint,
   createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
   activeLaunchProfileId: String?,
+  includeManageAction: Boolean = true,
 ): Array<AnAction> {
   val actions = mutableListOf<AnAction>()
   val standardProfiles = profiles.filter { profileItem -> profileItem.profile.launchMode != AgentSessionLaunchMode.YOLO }
@@ -772,7 +776,19 @@ private fun buildProfileMenuActions(
   }
   addProfileSection(null, standardProfiles)
   addProfileSection(AgentSessionsBundle.message("toolwindow.action.new.session.section.auto"), yoloProfiles)
+  if (includeManageAction) {
+    appendManageLaunchProfilesAction(actions)
+  }
   return actions.toTypedArray()
+}
+
+private fun appendManageLaunchProfilesAction(actions: MutableList<AnAction>): MutableList<AnAction> {
+  val manageAction = ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Prompt.MANAGE_LAUNCH_PROFILES) ?: return actions
+  if (actions.isNotEmpty()) {
+    actions.add(Separator.getInstance())
+  }
+  actions.add(manageAction)
+  return actions
 }
 
 private fun toolbarProfileActionText(item: ToolbarProfileItem): @Nls String {
