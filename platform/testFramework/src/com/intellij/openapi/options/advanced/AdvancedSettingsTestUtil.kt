@@ -11,3 +11,14 @@ inline fun withAdvancedSettingValue(settingId: String, tempValue: Boolean, cross
     AdvancedSettings.setBoolean(settingId, currentValue)
   }
 }
+
+inline fun <T> withAdvancedSettingValue(settingId: String, tempValue: Int, crossinline block: () -> T): T {
+  val currentValue = AdvancedSettings.getInt(settingId)
+  try {
+    AdvancedSettings.setInt(settingId, tempValue)
+    return block()
+  }
+  finally {
+    AdvancedSettings.setInt(settingId, currentValue)
+  }
+}
