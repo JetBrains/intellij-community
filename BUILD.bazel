@@ -1064,6 +1064,8 @@ jvm_library(
         "//platform/pluginSystem/parser/impl:pluginSystem-parser-impl-tests_test_lib",
         "//platform/problemsView/backend:problemView-backend-tests",
         "//platform/problemsView/backend:problemView-backend-tests_test_lib",
+        "//platform/problemsView/ui:problemView-ui-tests",
+        "//platform/problemsView/ui:problemView-ui-tests_test_lib",
         "//platform/sqlite:sqlite-tests",
         "//platform/sqlite:sqlite-tests_test_lib",
         "//platform/statistics/devkit:devkit-tests",

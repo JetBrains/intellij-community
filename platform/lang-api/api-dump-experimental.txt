@@ -14,6 +14,8 @@
 - getLanguage():com.intellij.lang.Language
 - getLanguageDomainId():java.lang.String
 - getPropertyDescription(java.lang.String):java.lang.String
+*:com.intellij.build.BuildProgressObservable
+- a:addListener(com.intellij.build.BuildProgressListener,com.intellij.openapi.Disposable):V
 *:com.intellij.build.BuildViewSettingsProvider
 - a:isExecutionViewHidden():Z
 *:com.intellij.build.BuildWorkspaceConfiguration

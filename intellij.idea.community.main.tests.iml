@@ -232,6 +232,7 @@
     <orderEntry type="module" module-name="intellij.platform.pluginGraph.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.pluginSystem.parser.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.problemView.backend.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.problemView.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.sqlite.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics.devkit.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.statistics.tests" scope="TEST" />
