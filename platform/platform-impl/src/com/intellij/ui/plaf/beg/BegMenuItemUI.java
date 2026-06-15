@@ -17,6 +17,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.jdesktop.swingx.util.OS;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -571,15 +572,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     @Override
     public void mouseReleased(MouseEvent e){
       MenuSelectionManager manager=MenuSelectionManager.defaultManager();
-      Point p = e.getPoint();
-      if (p.x >= 0 && p.x < menuItem.getWidth() && p.y >= 0 && p.y < menuItem.getHeight()) {
-        if (e.getButton() == MouseEvent.BUTTON1) {
-          doClick(manager, e);
-        }
-      }
-      else {
-        manager.processMouseEvent(e);
-      }
+      if (handleReleaseOnMenuItem(e, manager)) return;
+      manager.processMouseEvent(e);
     }
   }
 
@@ -603,16 +597,26 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
     public void menuDragMouseExited(MenuDragMouseEvent e){}
 
     @Override
-    public void menuDragMouseReleased(MenuDragMouseEvent e){
-      if (!AdvancedSettings.getBoolean("ide.trigger.menu.actions.on.rmb.release")) return;
+    public void menuDragMouseReleased(MenuDragMouseEvent e) {
+      if (!triggerMenuActionsOnRmbRelease()) return;
       MenuSelectionManager manager=e.getMenuSelectionManager();
-      Point p=e.getPoint();
-      if(p.x>=0&&p.x<menuItem.getWidth()&&
-         p.y>=0&&p.y<menuItem.getHeight()){
-        doClick(manager,e);
-      } else{
-        manager.clearSelectedPath();
-      }
+      if (handleReleaseOnMenuItem(e, manager)) return;
+      manager.clearSelectedPath();
     }
+  }
+
+  private static boolean triggerMenuActionsOnRmbRelease() {
+    return !OS.isWindows() && AdvancedSettings.getBoolean("ide.trigger.menu.actions.on.rmb.release");
+  }
+
+  private boolean handleReleaseOnMenuItem(@NotNull MouseEvent e, @NotNull MenuSelectionManager manager) {
+    Point p = e.getPoint();
+    if (p.x >= 0 && p.x < menuItem.getWidth() && p.y >= 0 && p.y < menuItem.getHeight()) {
+      if (e.getButton() == MouseEvent.BUTTON1 || triggerMenuActionsOnRmbRelease()) {
+        doClick(manager, e);
+      }
+      return true;
+    }
+    return false;
   }
 }
