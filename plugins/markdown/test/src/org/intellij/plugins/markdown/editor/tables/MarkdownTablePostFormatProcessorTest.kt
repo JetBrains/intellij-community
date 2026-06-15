@@ -29,6 +29,9 @@ class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
   fun `emoji table`() = doTest()
 
   @Test
+  fun `table with colored boxes`() = doTest()
+
+  @Test
   fun `emoji sequence table`() = doTest()
 
   private fun doTest() {
