@@ -393,6 +393,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   @Override
   protected JavaParameters createJavaParameters() throws ExecutionException {
+    String preferredRunner = getRunner();
     JavaParameters javaParameters = super.createJavaParameters();
 
     int timeout = Registry.intValue("idea.test.graceful.shutdown.timeout.seconds", DEFAULT_SHUTDOWN_TIMEOUT);
@@ -422,7 +423,6 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       }
     }
 
-    String preferredRunner = getRunner();
     if (!DEFAULT_RUNNER.equals(preferredRunner)) {
       javaParameters.getProgramParametersList().add(preferredRunner);
     }
