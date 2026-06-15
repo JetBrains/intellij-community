@@ -101,8 +101,10 @@ public final class JavaFormatInjector implements MultiHostInjector {
   /**
    * Splits the resolved injection ranges at the format specifiers, bridging each gap with the corresponding argument
    * value (or {@link #MISSING_VALUE} when not computable). The implicit-argument count is threaded across the infos so
-   * a multi-piece host (e.g. a text block) keeps numbering arguments continuously. Returns {@code null} when there are
-   * no specifiers to split on, so the caller keeps the original list.
+   * a multi-piece host (e.g. a text block) keeps numbering arguments continuously.
+   * Returns {@code null} when there are no specifiers to split on, so the caller keeps the original list as a plain injection.
+   * When the format string is malformed (a specifier cannot be parsed), returns the original (unsplit) infos with {@code unparsable == true}, so
+   * the caller keeps the whole-string injection but marks it frankenstein.
    */
   private static @Nullable FormatSplit splitFormatInjection(@NotNull Configuration configuration,
                                                             @NotNull List<InjectionInfo> infos,
@@ -120,6 +122,11 @@ public final class JavaFormatInjector implements MultiHostInjector {
       TextRange range = info.range();
       String rangeText = range.substring(host.getText());
       FormatSpecifiers specifiers = FormatDecode.getFormatSpecifiers(rangeText, implicitBase);
+      if (specifiers == null) {
+        // Malformed format string (e.g. a positional index that overflows int): the text cannot be reliably
+        // reconstructed, so keep the original whole-string injection but flag it frankenstein to suppress highlighting.
+        return new FormatSplit(List.copyOf(infos), true);
+      }
       int segmentStart = 0;
       for (FormatSpecifier specifier : specifiers.specifiers()) {
         anySpecifier = true;
@@ -161,7 +168,9 @@ public final class JavaFormatInjector implements MultiHostInjector {
     return new Bridge(value == null ? MISSING_VALUE : String.valueOf(value), !uncomputables.isEmpty());
   }
 
-  /** Result of {@link #splitFormatInjection}: the re-split pieces and whether any argument was missing/uncomputable. */
+  /** Result of {@link #splitFormatInjection}: the re-split pieces and whether any argument was missing/uncomputable.
+   *  For a malformed format string the original (unsplit) infos are returned with {@code unparsable == true}
+   */
   private record FormatSplit(@NotNull List<InjectionInfo> infos, boolean unparsable) {
   }
 

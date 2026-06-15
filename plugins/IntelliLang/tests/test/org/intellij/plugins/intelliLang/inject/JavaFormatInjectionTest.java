@@ -61,6 +61,43 @@ public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
            "p and q");
   }
 
+  public void testBrokenSpecifiers() {
+    doTest("""
+             import org.intellij.lang.annotations.Language;
+             class X {
+               static final String A = "p";
+               static final String B = "q";
+               void test() {
+                  @Language("JAVA") String q = "%1$s and %aaaa$s".formatted(A, B);
+               }
+             }""",
+           //as is, because formatted is broken
+           "p and paaa$s");
+  }
+
+  public void testErrorIsHighlightedInFormattedInjection() {
+    highlightTest("""
+                    import org.intellij.lang.annotations.Language;
+                    class X {
+                      static final String NAME = "Foo";
+                      void test() {
+                        @Language("JAVA") String q = "class %s {<error descr="'}' expected">"</error>.formatted(NAME);
+                      }
+                    }""");
+  }
+
+  public void testMalformedPositionalSpecifierSuppressesHighlighting() {
+    // %99999999999$s overflows the positional index. No highlighting
+    highlightTest("""
+                    import org.intellij.lang.annotations.Language;
+                    class X {
+                      static final String A = "p";
+                      void test() {
+                        @Language("JAVA") String q = "class %99999999999$s {".formatted(A);
+                      }
+                    }""");
+  }
+
   public void testEscapedPercentWithoutArguments() {
     doTest("""
              import org.intellij.lang.annotations.Language;
@@ -91,6 +128,19 @@ public class JavaFormatInjectionTest extends AbstractLanguageInjectionTestCase {
       configuration.setDfaOption(Configuration.DfaOption.OFF);
       myFixture.configureByText("X.java", text);
       getInjectionTestFixture().assertInjectedContent(expectedInjectedContent);
+    }
+    finally {
+      configuration.setDfaOption(oldOption);
+    }
+  }
+
+  private void highlightTest(String text) {
+    Configuration.AdvancedConfiguration configuration = Configuration.getInstance().getAdvancedConfiguration();
+    Configuration.DfaOption oldOption = configuration.getDfaOption();
+    try {
+      configuration.setDfaOption(Configuration.DfaOption.OFF);
+      myFixture.configureByText("X.java", text);
+      myFixture.testHighlighting(false, false, false);
     }
     finally {
       configuration.setDfaOption(oldOption);
