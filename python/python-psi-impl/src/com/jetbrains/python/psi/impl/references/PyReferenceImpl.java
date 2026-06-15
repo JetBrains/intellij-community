@@ -274,6 +274,24 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
       return ((PyFile)realContext).multiResolveName(referencedName);
     }
 
+    // PY-89956 fast path: for a plain local variable, resolve straight to its control-flow
+    // reaching definitions instead of first collecting *all* same-name definitions of the scope
+    final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(realContext);
+    if (typeEvalContext.maySwitchToAST(realContext) && owner != null && !(owner instanceof PyClass)) {
+      final Scope scope = ControlFlowCache.getScope(owner);
+      if (scope.declaresName(referencedName) && !scope.isGlobal(referencedName) && !scope.isNonlocal(referencedName)) {
+        final List<Instruction> defs =
+          PyDefUseUtil.getLatestDefs(owner, referencedName, realContext, false, true, typeEvalContext).defs();
+        if (!defs.isEmpty() && ContainerUtil.and(defs, i -> i.getElement() instanceof PyTargetExpression)) {
+          final ResolveResultList latest = resolveToLatestDefs(defs, realContext, referencedName, typeEvalContext);
+          if (!latest.isEmpty()) {
+            return latest;
+          }
+        }
+      }
+    }
+
     // here we have an unqualified expr. it may be defined:
     // ...in current file
     final PyResolveProcessor processor = new PyResolveProcessor(referencedName);
