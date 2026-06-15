@@ -69,7 +69,8 @@ class PyPackagesTreeTable(
 
   private val treeTableModel: PyPackagesTreeTableModel
     get() = model as PyPackagesTreeTableModel
-  private val packagingService = project.service<PyPackagingToolWindowService>()
+  private val packagingService: PyPackagingToolWindowService
+    get() = project.service<PyPackagingToolWindowService>()
 
   var hoveredColumn: Int = INVALID_POSITION
 
@@ -270,7 +271,11 @@ class PyPackagesTreeTable(
   }
 
   private fun loadMoreItems(node: ExpandResultNode) {
-    val viewData = packagingService.getMoreResultsForPage(node.repository, node.result, node.pageIndex)
+    val viewData = packagingService.getMoreResultsForPage(node.repository, node.result, node.pageIndex).getOr { 
+      packagingService.rerunSearch()
+      return
+    }
+
     items = items.dropLast(1) + viewData.displayable
     if (viewData.result.hasMorePagesAfterPageIndex(viewData.pageIndex)) {
       node.pageIndex = viewData.pageIndex

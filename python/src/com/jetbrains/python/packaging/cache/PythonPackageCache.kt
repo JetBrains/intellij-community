@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.cache
 
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.jetbrains.python.Result
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -12,14 +14,16 @@ interface PythonPackageCache {
   /**
    * The total amount of packages tracked by the cache.
    */
+  @get:RequiresBackgroundThread
   val size: Int
 
   /**
-   * Checks if the specified pacakge name is contained in this cache.
+   * Checks if the specified package name is contained in this cache.
    * 
    * @param name the exact name of the package to check.
    * @return true if the package is contained, false otherwise.
    */
+  @RequiresBackgroundThread
   operator fun contains(name: String): Boolean
 
   /**
@@ -29,6 +33,7 @@ interface PythonPackageCache {
    * @param pageSize the size of the page returned.
    * @return the search result.
    */
+  @RequiresBackgroundThread
   fun search(prefix: String, pageSize: Int = 100): PythonPackageSearchResult
 }
 
@@ -73,21 +78,27 @@ fun PythonPackageSearchResult.hasMorePagesAfterPageIndex(index: Int): Boolean =
 /**
  * Gets the first page of the result.
  * 
- * @return the first page, or an empty page if no first page can be found.
+ * @return an instance of [Result.Success] containing the first page, or if none exists, an empty list. If the page exists but was
+ * invalidated, returns an instance of [Result.Failure] that wraps [PythonPackageSearchPage.DataInvalidatedError].
  */
 @ApiStatus.Internal
-fun PythonPackageSearchResult.firstPageOrEmpty(): PythonPackageSearchPage =
-  if (pages.isEmpty()) {
-    object : PythonPackageSearchPage {
-      override fun iterator(): Iterator<String> = emptySequence<String>().iterator()
-    }
-  }
-  else {
-    pages[0]
-  }
+fun PythonPackageSearchResult.firstPageOrEmpty(): Result<List<String>, PythonPackageSearchPage.DataInvalidatedError> =
+  pages.firstOrNull()?.contents() ?: Result.Success(emptyList())
 
 /**
- * Represents a search result page as a sequence of strings.
+ * Represents a search result page.
  */
 @ApiStatus.Internal
-interface PythonPackageSearchPage : Sequence<String>
+interface PythonPackageSearchPage {
+  /**
+   * @return an instance of [Result.Success] containing a list of package names stored in this page, or an instance of [Result.Failure] that
+   * wraps [DataInvalidatedError] when the underlying page data is invalidated (e.g., unloaded from memory and no longer available). When
+   * data is invalidated, the caller should then rerun search.
+   */
+  fun contents(): Result<List<String>, DataInvalidatedError>
+
+  /**
+   * This error is returned when [contents] is called on a page that has its underlying data invalidated.
+   */
+  object DataInvalidatedError
+}

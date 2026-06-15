@@ -8,6 +8,7 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.components.service
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.xmlb.annotations.Transient
 import com.jetbrains.python.errorProcessing.MessageError
@@ -102,6 +103,7 @@ open class PyPackageRepository() {
   fun clearCredentials() = cachedPassword.set(null)
 
   @ApiStatus.Internal
+  @RequiresBackgroundThread
   fun findPackageSpecificationWithSpec(pyRequirement: PyRequirement): PythonRepositoryPackageSpecification? =
     if (hasPackage(pyRequirement))
       PythonRepositoryPackageSpecification(this, pyRequirement)
@@ -109,27 +111,32 @@ open class PyPackageRepository() {
       null
 
   @ApiStatus.Internal
+  @RequiresBackgroundThread
   fun findPackageSpecification(
     pyRequirement: PyRequirement,
   ): PythonRepositoryPackageSpecification? {
     return findPackageSpecificationWithSpec(pyRequirement)
   }
 
+  @RequiresBackgroundThread
   open fun search(needle: String, pageSize: Int = 100): PythonPackageSearchResult {
     val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return PythonPackageSearchResult(0, emptyList(), pageSize)
     return cache.search(needle, pageSize)
   }
 
+  @RequiresBackgroundThread
   open fun hasPackage(name: String): Boolean {
     val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return false
     return name in cache
   }
 
+  @RequiresBackgroundThread
   open fun getSize(): Int {
     val cache = service<PythonSimpleRepositoryCacheService>()[this] ?: return 0
     return cache.size
   }
 
+  @RequiresBackgroundThread
   open fun hasPackage(pyPackage: PyRequirement): Boolean = hasPackage(pyPackage.name)
 
   open fun buildPackageDetails(packageName: String): PyResult<PythonPackageDetails> {

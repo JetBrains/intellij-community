@@ -52,7 +52,7 @@ abstract class PythonRepositoryManagerBase : PythonRepositoryManager, Disposable
     val found = repositories.firstNotNullOfOrNull { it.findPackageSpecification(requirement) }
     if (found == null) {
       thisLogger().debug("Package specification not found for $requirement. Tried repositories: ${
-        repositories.joinToString(",") { "${it.name}: packages=${it.getSize()}" }
+        repositories.joinToString(",") { it.name }
       }")
       return found
     }

@@ -2,6 +2,7 @@
 package com.jetbrains.python.packaging.management
 
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.PyPackageVersion
@@ -28,15 +29,18 @@ interface PythonRepositoryManager {
   @Throws(IOException::class)
   suspend fun initCaches()
 
+  @RequiresBackgroundThread
   fun searchPackages(repository: PyPackageRepository, needle: String, pageSize: Int = 100): PythonPackageSearchResult {
     val normalizedNeedle = PyPackageName.normalizePackageName(needle)
     return repository.search(normalizedNeedle, pageSize)
   }
 
+  @RequiresBackgroundThread
   fun searchPackages(needle: String, pageSize: Int = 100): Map<PyPackageRepository, PythonPackageSearchResult> {
     return repositories.associateWith { searchPackages(it, needle, pageSize) }
   }
 
+  @RequiresBackgroundThread
   fun hasPackageSnapshot(packageName: String): Boolean {
     return repositories.any { it.hasPackage(packageName) }
   }

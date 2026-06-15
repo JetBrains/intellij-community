@@ -5,7 +5,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
-import com.jetbrains.python.packaging.PyPIPackageCache;
 import com.jetbrains.python.packaging.PyRequirement;
 import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.RequirementsProviderType;
@@ -19,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.inspections.ModuleAssocToolKt.setAssociationToModuleAsync;
+import static com.jetbrains.python.packaging.management.TestPythonPackageManagerService.replacePyPiPackageCacheService;
 import static com.jetbrains.python.packaging.management.TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance;
 
 
@@ -37,7 +37,9 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
     assertNotNull(sdk);
     setAssociationToModuleAsync(sdk, myFixture.getModule());
 
-    PyPIPackageCache.reload(List.of("opster", "clevercss", "django", "test3", "pyzmq", "markdown", "pytest", "django-simple-captcha"));
+    var cachedPackages = List.of("opster", "clevercss", "django", "test3", "pyzmq", "markdown", "pytest", "django-simple-captcha");
+
+    replacePyPiPackageCacheService(myFixture.getProject(), cachedPackages);
     replacePythonPackageManagerServiceWithTestInstance(myFixture.getProject(), List.of());
   }
 

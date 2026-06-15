@@ -1,66 +1,94 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.pip
 
-import com.google.gson.Gson
-import com.google.gson.JsonSyntaxException
-import com.google.gson.reflect.TypeToken
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.SafeFileOutputStream
 import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageName
 import com.jetbrains.python.packaging.cache.PythonPackageCache
+import com.jetbrains.python.packaging.cache.PythonPackageSearchPage
 import com.jetbrains.python.packaging.cache.PythonPackageSearchResult
-import com.jetbrains.python.packaging.cache.impl.InMemorySearchPage
-import kotlinx.coroutines.CancellationException
+import com.jetbrains.python.packaging.pip.PackedAsciiStringSet.SearchResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
-import java.io.BufferedReader
 import java.io.IOException
+import java.lang.foreign.Arena
+import java.nio.ByteBuffer
+import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.StandardOpenOption
 import java.time.Duration
 import java.time.Instant
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 import kotlin.io.path.exists
 
+private const val CONTAINS_CACHE_SIZE = 512L
+private const val SEARCH_CACHE_SIZE = 128L
+
+@Service
 @ApiStatus.Internal
-open class PyPiPackageCache : PythonPackageCache {
+class PyPiPackageCache : PythonPackageCache {
   val filePath: Path = getCachePath()
 
   override val size: Int
-    get() = cache.size
-  
-  @Volatile
-  private var cache: Set<String> = emptySet()
+    @RequiresBackgroundThread
+    get() =
+      rwLock.read {
+        set.size
+      }
 
-  private val lock = Mutex()
+  private val rwLock = ReentrantReadWriteLock()
+  private var arena = Arena.ofShared()
+  private var set = PackedAsciiStringSet.create(ByteBuffer.allocate(0)).orThrow()
+
+  private var containsCache = createContainsCache()
+  private var searchCache = createSearchCache()
+
+  private val reloadLock = Mutex()
   private var loadInProgress: Boolean = false
-  private val gson: Gson = Gson()
 
+  @RequiresBackgroundThread
   override operator fun contains(name: String): Boolean =
-    name in cache
+    rwLock.read {
+      containsCache.get(name) {
+        name in set
+      }
+    }
 
-  override fun search(prefix: String, pageSize: Int): PythonPackageSearchResult {
-    val needleLowercase = prefix.lowercase()
-    val matches = cache.asSequence().filter { it.lowercase().startsWith(needleLowercase) }.toList()
+  @RequiresBackgroundThread
+  override fun search(prefix: String, pageSize: Int): PythonPackageSearchResult =
+    rwLock.read {
+      val searchResult = searchCache.get(prefix) {
+        set.searchByPrefix(prefix.lowercase(), pageSize)
+      }
 
-    return InMemorySearchPage.resultFromMatches(matches, pageSize)
-  }
+      PythonPackageSearchResult(
+        searchResult.total,
+        searchResult.pages.map { MemoryMappedSearchPage(it) },
+        pageSize,
+      )
+    }
 
   @CheckReturnValue
-  open suspend fun reloadCache(force: Boolean = false): Result<Unit, IOException> {
-    lock.withLock {
-      if ((cache.isNotEmpty() && !force) || loadInProgress) {
+  suspend fun reloadCache(force: Boolean = false): Result<Unit, PyPiPackageCacheError> {
+    reloadLock.withLock {
+      if ((set.size > 0 && !force) || loadInProgress) {
         return Result.success(Unit)
       }
 
@@ -68,81 +96,69 @@ open class PyPiPackageCache : PythonPackageCache {
     }
 
     try {
-      LOG.info("Reloading Pypi package cache")
+      logger.info("Reloading PyPI package cache")
       withContext(Dispatchers.IO) {
         if (!tryLoadFromFile()) {
           return@withContext refresh()
         }
-      }
-      if (cache.isEmpty()) {
-        LOG.warn("Empty Pypi loaded package cache")
+
+        return@withContext Result.Success(Unit)
+      }.getOr { return it }
+      
+      if (set.size == 0) {
+        logger.warn("Loaded empty PyPI package cache")
       }
     }
     finally {
-      lock.withLock {
+      reloadLock.withLock {
         loadInProgress = false
       }
     }
+
     return Result.success(Unit)
   }
 
   private fun getCachePath(): Path {
     val overridePath = System.getProperty(PACKAGE_INDEX_CACHE_PROPERTY)
+
     if (overridePath != null) {
-      thisLogger().debug("Using package index cache path from property: $overridePath")
+      logger.debug { "Using package index cache path from property: $overridePath" }
       return Paths.get(overridePath)
     }
 
-    val path = Paths.get(PathManager.getSystemPath(), "python_packages", "packages_v2.json")
-    thisLogger().debug("Using package index cache path: $path")
+    val path = Paths.get(PathManager.getSystemPath(), CACHE_FOLDER, DEFAULT_CACHE_FILE_NAME)
+    logger.debug { "Using package index cache path: $path" }
     return path
   }
-
 
   private suspend fun tryLoadFromFile(): Boolean {
     return withContext(Dispatchers.IO) {
       if (isFileCacheExpired()) {
-        thisLogger().debug("Pypi package cache file is expired")
+        logger.debug { "PyPI package cache file is expired" }
         return@withContext false
       }
 
-      var packageList: Set<String>
-      try {
-        val type = object : TypeToken<LinkedHashSet<String>>() {}.type
-        packageList = Files.newBufferedReader(filePath, StandardCharsets.UTF_8)
-          .use<BufferedReader, LinkedHashSet<String>> {
-            gson.fromJson(it, type)
-          }
-
-        LOG.info("Package list loaded from file ${filePath} with ${Files.size(filePath) / 1024}Kb size with ${packageList.size} entries")
-
-      }
-      catch (e: JsonSyntaxException) {
-        LOG.warn("Corrupted pypi cache file: $e")
+      remap().getOr { error ->
+        logger.warn("Corrupted PyPI cache file: $error")
         return@withContext false
       }
-      cache = packageList.map { PyPackageName.normalizePackageName(it) }.toSet()
+
+      logger.info("Package list loaded from file ${filePath} with ${Files.size(filePath) / 1024}Kb size with ${size} entries")
+
       true
     }
   }
 
   @CheckReturnValue
-  private suspend fun refresh(): Result<Unit, IOException> {
+  private suspend fun refresh(): Result<Unit, PyPiPackageCacheError> {
     withContext(Dispatchers.IO) {
-      LOG.info("Loading python packages from PyPi Repository")
-      val pypiList = service<PypiPackageLoader>().loadPackages().getOr { return@withContext it }
-      LOG.info("Loaded ${pypiList.size} python packages from PyPi Repository")
-      cache = pypiList.toSet()
-      store()
-    }
-    return Result.success(Unit)
-  }
+      logger.info("Fetching python packages from the PyPI repository")
+      val pyPiList = service<PyPiPackageLoader>().loadPackages().getOr { return@withContext it }
+      logger.info("Fetched ${pyPiList.size} python packages from the PyPI Repository")
+      remap(pyPiList)
+    }.getOr { return it }
 
-  private fun store() {
-    Files.createDirectories(filePath.parent)
-    SafeFileOutputStream(filePath).writer(StandardCharsets.UTF_8).use { writer ->
-      gson.toJson(cache.toList(), writer)
-    }
+    return Result.success(Unit)
   }
 
   private fun isFileCacheExpired(): Boolean {
@@ -156,22 +172,85 @@ open class PyPiPackageCache : PythonPackageCache {
     return expirationTime.isBefore(Instant.now())
   }
 
+  @RequiresBackgroundThread
+  @CheckReturnValue
+  private fun remap(storeBeforeLoading: List<String>? = null): Result<Unit, PyPiPackageCacheError> {
+    var fileToMap = filePath
+
+    storeBeforeLoading?.also { packages ->
+      Files.createDirectories(filePath.parent)
+      fileToMap = filePath.parent.resolve(TEMPORARY_CACHE_FILE_NAME)
+      SafeFileOutputStream(fileToMap).writer(StandardCharsets.US_ASCII).use { writer ->
+        for (pkg in packages) {
+          writer.write(pkg)
+          writer.write('\n'.code)
+        }
+      }
+    }
+
+    rwLock.write {
+      set = PackedAsciiStringSet.create(ByteBuffer.allocate(0)).orThrow()
+      arena.close()
+      containsCache.invalidateAll()
+      searchCache.invalidateAll()
+
+      FileChannel.open(fileToMap, StandardOpenOption.READ).use { channel ->
+        arena = Arena.ofShared()
+        set =
+          PackedAsciiStringSet.create(
+            channel
+              .map(FileChannel.MapMode.READ_ONLY, 0, channel.size(), arena)
+              .asByteBuffer()
+          ).getOr { return Result.Failure(PyPiPackageCacheError.InvalidCacheFileFormat(it.error.message)) }
+        containsCache = createContainsCache()
+        searchCache = createSearchCache()
+      }
+    }
+
+    storeBeforeLoading?.also {
+      Files.deleteIfExists(filePath)
+      Files.move(fileToMap, filePath)
+    }
+
+    return Result.Success(Unit)
+  }
+
+  /**
+   * A search page that gets its data from a memory-mapped buffer.
+   */
+  @ApiStatus.Internal
+  class MemoryMappedSearchPage internal constructor(
+    private val searchPageIterable: Iterable<String>,
+  ) : PythonPackageSearchPage {
+    /**
+     * Gets contents of the page as a list. Returns null if the buffer that the page references was unmapped.
+     */
+    override fun contents(): Result<List<String>, PythonPackageSearchPage.DataInvalidatedError> =
+      try {
+        Result.Success(searchPageIterable.toList())
+      }
+      catch (_: IllegalStateException) {
+        Result.Failure(PythonPackageSearchPage.DataInvalidatedError)
+      }
+  }
 
   @ApiStatus.Internal
   @Service
-  class PypiPackageLoader {
+  class PyPiPackageLoader {
     @RequiresBackgroundThread
-    fun loadPackages(): Result<Collection<String>, IOException> = try {
-      val pypiPackages = loadPackagesFromPypi().map { PyPackageName.normalizePackageName(it) }.toSet()
-      Result.success(pypiPackages)
-    }
-    catch (e: IOException) {
-      Result.failure(e)
-    }
-    catch (t: Throwable) {
-      thisLogger().warn("Cannot load pypiList from internet", t)
-      throw t
-    }
+    @CheckReturnValue
+    fun loadPackages(): Result<List<String>, PyPiPackageCacheError> =
+      try {
+        val pypiPackages = loadPackagesFromPypi().map { PyPackageName.normalizePackageName(it) }.sorted().toList()
+        Result.success(pypiPackages)
+      }
+      catch (e: IOException) {
+        Result.failure(PyPiPackageCacheError.FailedToFetchPackages(e.message ?: "IOException"))
+      }
+      catch (t: Throwable) {
+        logger.warn("Cannot fetch PyPI packages from the internet", t)
+        throw t
+      }
 
     /**
      * In some tests we have a problem that pypi return 0 packages without any error.
@@ -179,38 +258,66 @@ open class PyPiPackageCache : PythonPackageCache {
      */
     private fun loadPackagesFromPypi(): List<String> {
       var error: Throwable? = null
-
       val maxAttempts = 3
+
       repeat(maxAttempts) {
-        thisLogger().debug("Attempt ${it + 1} to load Pypi packages list")
-        val loaded = try {
-          PyPIPackageUtil.parsePyPIListFromWeb(PyPIPackageUtil.PYPI_LIST_URL)
+        logger.debug { "PyPI packages fetch attempt ${it + 1}" }
+
+        val fetched =
+          try {
+            PyPIPackageUtil.parsePyPIListFromWeb(PyPIPackageUtil.PYPI_LIST_URL)
+          }
+          catch (t: IOException) {
+            logger.warn("Failed to fetch PyPI packages on attempt ${it + 1}", t)
+            error = t
+            return@repeat
+          }
+
+        logger.debug { "Fetched PyPI packages on attempt ${it + 1}" }
+
+        if (fetched.size > 2) {
+          return fetched
         }
-        catch (t: CancellationException) {
-          throw t
-        }
-        catch (t: Throwable) {
-          thisLogger().warn("Attempt ${it + 1} Cannot load Pypi packages list", t)
-          error = t
-          return@repeat
-        }
-        thisLogger().debug("Attempt ${it + 1} Loaded ${loaded.size} Pypi packages")
-        if (loaded.size > 2) {
-          return loaded
-        }
-        thisLogger().debug("Attempt ${it + 1} Return TOO SMALL Pypi packages list. Loaded ${loaded}")
+
+        logger.debug { "Fetched PyPI packages list on attempt ${it + 1} is too small. Fetched ${fetched}" }
       }
+
       if (error != null) {
         throw error
       }
-      thisLogger().warn("Return empty Pypi packages list after $maxAttempts attempts")
+
+      logger.warn("Empty PyPI packages list returned after $maxAttempts attempts")
+      
       return emptyList()
     }
 
+    companion object {
+      private val logger = logger<PyPiPackageLoader>()
+    }
+  }
+
+  @ApiStatus.Internal
+  sealed interface PyPiPackageCacheError {
+    val message: String
+
+    @ApiStatus.Internal
+    data class FailedToFetchPackages(override val message: String) : PyPiPackageCacheError
+
+    @ApiStatus.Internal
+    data class InvalidCacheFileFormat(override val message: String) : PyPiPackageCacheError
   }
 
   companion object {
-    private val LOG = thisLogger()
-    const val PACKAGE_INDEX_CACHE_PROPERTY = "python.packages.cache.index.path"
+    const val PACKAGE_INDEX_CACHE_PROPERTY: String = "python.packages.cache.index.path"
+    private const val CACHE_FOLDER = "python_packages"
+    private const val TEMPORARY_CACHE_FILE_NAME = "pypi_tmp.txt"
+    private const val DEFAULT_CACHE_FILE_NAME = "packages_v3.txt"
+    private val logger = logger<PyPiPackageCache>()
+
+    private fun createContainsCache() =
+      Caffeine.newBuilder().maximumSize(CONTAINS_CACHE_SIZE).build<String, Boolean>()
+
+    private fun createSearchCache() =
+      Caffeine.newBuilder().maximumSize(SEARCH_CACHE_SIZE).build<String, SearchResult>()
   }
 }

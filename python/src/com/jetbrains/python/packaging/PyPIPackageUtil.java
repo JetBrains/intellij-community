@@ -12,7 +12,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
@@ -20,7 +19,6 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
-import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.packaging.repository.PyPackageRepositories;
 import com.jetbrains.python.packaging.repository.PyPackageRepositoryUtil;
@@ -103,17 +101,6 @@ public final class PyPIPackageUtil {
     });
 
   /**
-   * Contains cached packages taken from additional repositories.
-   */
-  private final LoadingCache<String, List<RepoPackage>> myAdditionalPackages = CacheBuilder.newBuilder().build(
-    new CacheLoader<>() {
-      @Override
-      public List<RepoPackage> load(@NotNull String key) throws Exception {
-        return getPackagesFromAdditionalRepository(key);
-      }
-    });
-
-  /**
    * Contains cached package information retrieved through PyPI's JSON API.
    *
    * @see #refreshAndGetPackageDetailsFromPyPI(String, boolean)
@@ -131,13 +118,6 @@ public final class PyPIPackageUtil {
     });
 
   /**
-   * Prevents simultaneous updates of {@link PyPackageService#PYPI_REMOVED}
-   * because the corresponding response contains tons of data and multiple
-   * queries at the same time can cause memory issues.
-   */
-  private final Object myPyPIPackageCacheUpdateLock = new Object();
-
-  /**
    * Value for "User Agent" HTTP header in form: PyCharm/2016.2 EAP
    */
   private static @NotNull String getUserAgent() {
@@ -146,42 +126,6 @@ public final class PyPIPackageUtil {
 
   public static boolean isPyPIRepository(@Nullable String repository) {
     return repository != null && repository.startsWith(PYPI_BASE_URL);
-  }
-
-  public void loadAdditionalPackages(@NotNull List<String> repositories, boolean alwaysRefresh) {
-    var failedToConnect = new ArrayList<String>();
-    if (alwaysRefresh) {
-      for (String url : repositories) {
-        try {
-          myAdditionalPackages.refresh(url);
-        }
-        catch (Exception e) {
-          LOG.error("Error connecting to " + url, e);
-          failedToConnect.add(url);
-          ApplicationManager.getApplication().getService(PyPackageRepositories.class).markInvalid(url);
-        }
-      }
-    }
-    else {
-      for (String url : repositories) {
-        try {
-          getCachedValueOrRethrowIO(myAdditionalPackages, url);
-        }
-        catch (Exception e) {
-          LOG.warn("Error connecting to " + url, e);
-          failedToConnect.add(url);
-          ApplicationManager.getApplication().getService(PyPackageRepositories.class).markInvalid(url);
-        }
-      }
-    }
-    if (!failedToConnect.isEmpty()) {
-      PyPackageService packageService = PyPackageService.getInstance();
-      failedToConnect.forEach(repo -> packageService.removeRepository(repo));
-    }
-  }
-
-  private static @NotNull List<RepoPackage> getPackagesFromAdditionalRepository(@NotNull String url) throws IOException {
-    return ContainerUtil.map(parsePyPIListFromWeb(url), s -> new RepoPackage(s, url, null));
   }
 
   public void fillPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<PackageDetails.Info, Exception> callback) {
@@ -232,13 +176,6 @@ public final class PyPIPackageUtil {
                                 PyPackageVersionComparator.getSTR_COMPARATOR().reversed());
   }
 
-  private @Nullable String getLatestPackageVersionFromPyPI(@NotNull Project project, @NotNull String packageName) throws IOException {
-    LOG.debug("Requesting the latest PyPI version for the package " + packageName);
-    final List<String> versions = getPackageVersionsFromPyPI(packageName, true);
-    if (project.isDisposed()) return null;
-    return PyPackagingSettings.getInstance(project).selectLatestVersion(versions);
-  }
-
   /**
    * Fetches available package versions by scrapping the page containing package archives.
    * It's primarily used for additional repositories since, e.g. devpi doesn't provide another way to get this information.
@@ -256,27 +193,6 @@ public final class PyPIPackageUtil {
       final Throwable cause = e.getCause();
       throw (cause instanceof IOException ? (IOException)cause : new IOException("Unexpected non-IO error", cause));
     }
-  }
-
-  private @Nullable String getLatestPackageVersionFromAdditionalRepositories(@NotNull Project project, @NotNull String packageName)
-    throws IOException {
-    final List<String> versions = getPackageVersionsFromAdditionalRepositories(packageName);
-    return PyPackagingSettings.getInstance(project).selectLatestVersion(versions);
-  }
-
-  public @Nullable String fetchLatestPackageVersion(@NotNull Project project, @NotNull String packageName) throws IOException {
-    String version = null;
-    // Package is on PyPI, not, say, some system package on Ubuntu
-    if (PyPIPackageCache.getInstance().containsPackage(packageName)) {
-      version = getLatestPackageVersionFromPyPI(project, packageName);
-    }
-    if (!PyPackageService.getInstance().additionalRepositories.isEmpty()) {
-      final String extraVersion = getLatestPackageVersionFromAdditionalRepositories(project, packageName);
-      if (extraVersion != null) {
-        version = extraVersion;
-      }
-    }
-    return version;
   }
 
   private static String normalizeRepositoryUrl(@NotNull String repositoryUrl) throws NotSimpleRepositoryApiUrlException {
@@ -403,12 +319,6 @@ public final class PyPIPackageUtil {
     return null;
   }
 
-  public void updatePyPICache() throws IOException {
-    final PyPackageService service = PyPackageService.getInstance();
-    if (service.PYPI_REMOVED) return;
-    PyPIPackageCache.reload(parsePyPIListFromWeb(PYPI_LIST_URL));
-  }
-
   @RequiresBackgroundThread
   public static @NotNull List<@NotNull String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
     LOG.info("Fetching index of all packages available on " + url);
@@ -449,25 +359,6 @@ public final class PyPIPackageUtil {
       }, true);
       return packages;
     });
-  }
-
-  public void loadPackages() throws IOException {
-    // This lock is solely to prevent multiple threads from updating
-    // the mammoth cache of PyPI packages simultaneously.
-    synchronized (myPyPIPackageCacheUpdateLock) {
-      final PyPIPackageCache cache = PyPIPackageCache.getInstance();
-      if (cache.getPackageNames().isEmpty()) {
-        updatePyPICache();
-      }
-    }
-  }
-
-  /**
-   * @see PyPIPackageCache#containsPackage(String)
-   */
-  public boolean isInPyPI(@NotNull String packageName) {
-    if (packageName.isEmpty()) return false;
-    return PyPIPackageCache.getInstance().containsPackage(packageName);
   }
 
   @SuppressWarnings("FieldMayBeFinal")

@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.management
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
@@ -8,10 +9,13 @@ import com.intellij.testFramework.replaceService
 import com.jetbrains.python.packaging.bridge.PythonPackageManagementServiceBridge
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
+import com.jetbrains.python.packaging.pip.PyPiPackageCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.TestOnly
+import org.mockito.ArgumentMatchers.argThat
+import org.mockito.Mockito
 import java.util.concurrent.ConcurrentHashMap
 
 @TestOnly
@@ -57,6 +61,20 @@ class TestPythonPackageManagerService(val installedPackages: List<PythonPackage>
     @JvmStatic
     fun replacePythonPackageManagerServiceWithTestInstance(project: Project, installedPackages: List<PythonPackage> = emptyList()) {
       project.replaceService(PythonPackageManagerService::class.java, TestPythonPackageManagerService(installedPackages), project)
+    }
+
+    @JvmStatic
+    fun replacePyPiPackageCacheService(project: Project, cache: List<String>) {
+      val mock = Mockito.mock(PyPiPackageCache::class.java)
+      Mockito.`when`(mock.contains(argThat { o -> cache.contains(o) } ?: "")).thenReturn(true)
+
+      ApplicationManager
+        .getApplication()
+        .replaceService(
+          PyPiPackageCache::class.java,
+          mock,
+          project
+        )
     }
   }
 }

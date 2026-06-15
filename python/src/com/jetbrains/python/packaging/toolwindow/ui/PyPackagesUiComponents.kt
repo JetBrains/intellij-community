@@ -48,8 +48,8 @@ object PyPackagesUiComponents {
           val repository = checkNotNull(selectedPackage.repository)
           val packageName = PyPackageName.from(selectedPackage.name).name
           val version = selectedValue?.let { pyRequirementVersionSpec(it) }
-          val specification = repository.findPackageSpecification(pyRequirement(packageName, version))
           PyPackageCoroutine.launch(project, Dispatchers.IO) {
+            val specification = repository.findPackageSpecification(pyRequirement(packageName, version))
             project.service<PyPackagingToolWindowService>().installPackage(specification!!.toInstallRequest())
           }
         }

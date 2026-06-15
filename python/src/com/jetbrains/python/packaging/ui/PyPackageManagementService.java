@@ -332,21 +332,6 @@ public abstract class PyPackageManagementService extends PackageManagementServic
   }
 
   @Override
-  public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<? super String, ? super Exception> consumer) {
-    myExecutorService.execute(() -> {
-      if (myProject.isDisposed()) return;
-      try {
-        PyPIPackageUtil.INSTANCE.loadPackages();
-        final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(myProject, pkg.getName());
-        consumer.consume(StringUtil.notNullize(version));
-      }
-      catch (IOException e) {
-        consumer.consume(e);
-      }
-    });
-  }
-
-  @Override
   public final int compareVersions(@NotNull String version1, @NotNull String version2) {
     return PyPackageVersionComparator.getSTR_COMPARATOR().compare(version1, version2);
   }

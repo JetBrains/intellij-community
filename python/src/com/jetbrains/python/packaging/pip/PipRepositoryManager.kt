@@ -47,7 +47,7 @@ internal class PipRepositoryManager(override val project: Project) : PythonRepos
   @Throws(IOException::class)
   override suspend fun initCaches() {
     service<PyPiPackageCache>().reloadCache().onFailure {
-      thisLogger().warn("Failed to load PyPI packages cache", it)
+      thisLogger().warn("Failed to load PyPI packages cache. Error: $it")
     }.orThrow()
 
     val repositoryService = service<PyPackageRepositories>()

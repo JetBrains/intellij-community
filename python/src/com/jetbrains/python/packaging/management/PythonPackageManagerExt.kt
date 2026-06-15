@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.errorProcessing.PyResult
@@ -68,6 +69,7 @@ fun PythonPackageManager.hasInstalledPackageSnapshot(packageName: String, versio
 
 
 @ApiStatus.Internal
+@RequiresBackgroundThread
 fun PythonPackageManager.isNotInstalledAndCanBeInstalled(packageName: String, version: String? = null): Boolean =
   !hasInstalledPackageSnapshot(packageName, version) && repositoryManager.hasPackageSnapshot(packageName)
 
