@@ -324,7 +324,7 @@ class CodexWebSocketAppServerClient(
     )
   }
 
-  suspend fun persistThread(threadId: String) {
+  suspend fun persistThread(threadId: String, text: String = "") {
     requestUnit(
       method = "turn/start",
       paramsWriter = { generator ->
@@ -334,7 +334,7 @@ class CodexWebSocketAppServerClient(
         generator.writeStartArray()
         generator.writeStartObject()
         generator.writeStringField("type", "text")
-        generator.writeStringField("text", "")
+        generator.writeStringField("text", text)
         generator.writeEndObject()
         generator.writeEndArray()
         generator.writeEndObject()

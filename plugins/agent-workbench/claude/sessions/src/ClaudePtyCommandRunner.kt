@@ -45,7 +45,12 @@ internal class PtyClaudeThreadCommandRunner(
       val outputMonitor = ClaudePtyOutputMonitor(process = process, currentTimeMs = currentTimeMs)
       outputMonitor.start()
       try {
-        val readinessFailure = awaitStartupReady(process = process, outputMonitor = outputMonitor, timeoutMs = timeoutMs)
+        val readinessFailure = if (launchSpec.command.contains(CLAUDE_PRINT_FLAG)) {
+          awaitPrintCommandCompletion(process = process, outputMonitor = outputMonitor, timeoutMs = timeoutMs)
+        }
+        else {
+          awaitStartupReady(process = process, outputMonitor = outputMonitor, timeoutMs = timeoutMs)
+        }
         if (readinessFailure != null) {
           return@withContext ClaudeThreadCommandResult(
             successful = false,
@@ -88,6 +93,19 @@ internal class PtyClaudeThreadCommandRunner(
     }
       .onFailure { PTY_LOG.warn("Failed to start Claude PTY process for $path", it) }
       .getOrNull()
+  }
+
+  private fun awaitPrintCommandCompletion(process: PtyProcess, outputMonitor: ClaudePtyOutputMonitor, timeoutMs: Int): String? {
+    val deadline = currentTimeMs() + timeoutMs.toLong()
+    while (currentTimeMs() <= deadline) {
+      detectStartupFailure(outputMonitor.outputTail())?.let { return it }
+      if (!process.isAlive) {
+        val exitCode = runCatching { process.exitValue() }.getOrDefault(-1)
+        return if (exitCode == 0) null else "Claude print command exited with code $exitCode"
+      }
+      sleepFn(POLL_INTERVAL_MS)
+    }
+    return "Timed out waiting for Claude print command completion"
   }
 
   private fun awaitStartupReady(process: PtyProcess, outputMonitor: ClaudePtyOutputMonitor, timeoutMs: Int): String? {
@@ -256,3 +274,4 @@ private val CTRL_C = byteArrayOf(3)
 // Vertical bar + space + ">" is the composer input-box marker in Claude's TUI.
 private const val CLAUDE_COMPOSER_MARKER = "│ >"
 private const val NO_CONVERSATION_FOUND_ERROR = "No conversation found with session ID"
+private const val CLAUDE_PRINT_FLAG = "--print"

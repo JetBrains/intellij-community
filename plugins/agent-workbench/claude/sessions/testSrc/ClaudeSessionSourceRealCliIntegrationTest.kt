@@ -57,7 +57,7 @@ class ClaudeSessionSourceRealCliIntegrationTest {
         )
         .isNotNull
       assertThat(thread!!.id).isEqualTo(fixture.sessionId)
-      assertThat(thread.title).isEqualTo(fixture.prompt)
+      assertThat(thread.title).isEqualTo(fixture.initialTitle)
       assertThat(thread.provider).isEqualTo(AgentSessionProvider.CLAUDE)
     }
   }
@@ -75,7 +75,7 @@ class ClaudeSessionSourceRealCliIntegrationTest {
       assertThat(archiver.archiveThread(path = fixture.projectDir.toString(), threadId = fixture.sessionId))
         .withFailMessage("Claude archive command failed. stdout=%s stderr=%s", fixture.stdout.trim(), fixture.stderr.trim())
         .isTrue()
-      assertThat(awaitLatestTranscriptTitle(fixture.transcriptFile, "[archived] ${fixture.prompt}"))
+      assertThat(awaitLatestTranscriptTitle(fixture.transcriptFile, "[archived] ${fixture.initialTitle}"))
         .withFailMessage("Timed out waiting for transcript title after archive in %s", fixture.transcriptFile)
         .isTrue()
       assertThat(awaitThreadHidden(source = fixture.source, projectPath = fixture.projectDir.toString(), sessionId = fixture.sessionId))
@@ -88,15 +88,15 @@ class ClaudeSessionSourceRealCliIntegrationTest {
       )
       assertThat(archivedThread).isNotNull
       assertThat(archivedThread!!.archived).isTrue()
-      assertThat(archivedThread.title).isEqualTo(fixture.prompt)
+      assertThat(archivedThread.title).isEqualTo(fixture.initialTitle)
 
       assertThat(archiver.unarchiveThread(path = fixture.projectDir.toString(), threadId = fixture.sessionId)).isTrue()
-      assertThat(awaitLatestTranscriptTitle(fixture.transcriptFile, fixture.prompt))
+      assertThat(awaitLatestTranscriptTitle(fixture.transcriptFile, fixture.initialTitle))
         .withFailMessage("Timed out waiting for transcript title after unarchive in %s", fixture.transcriptFile)
         .isTrue()
       val restoredThread = awaitThread(source = fixture.source, projectPath = fixture.projectDir.toString(), sessionId = fixture.sessionId)
       assertThat(restoredThread).isNotNull
-      assertThat(restoredThread!!.title).isEqualTo(fixture.prompt)
+      assertThat(restoredThread!!.title).isEqualTo(fixture.initialTitle)
     }
   }
 
@@ -108,27 +108,34 @@ class ClaudeSessionSourceRealCliIntegrationTest {
                        "yourself using normal IDE tools, VCS integrations, or git commands. Use normal IDE tools, git " +
                        "workflow, file edits, and any installed skills. Success means this worktree leaves VCS conflict " +
                        "state for the current merge-related operation."
-      val fixture = prepareRealClaudeSessionFixture(tempDir = tempDir, prompt = longPrompt)
+      val fixture = prepareRealClaudeSessionFixture(tempDir = tempDir)
       transcriptDirectoriesToDelete.add(fixture.transcriptFile.parent)
       val archiver = PtyClaudeThreadRenameEngine(
         backend = fixture.backend,
         commandRunner = realHomeCommandRunner(),
       )
 
+      assertThat(archiver.rename(path = fixture.projectDir.toString(), threadId = fixture.sessionId, newTitle = longPrompt))
+        .withFailMessage("Claude long-title setup rename failed. stdout=%s stderr=%s", fixture.stdout.trim(), fixture.stderr.trim())
+        .isTrue()
+      assertThat(awaitLatestTranscriptTitle(fixture.transcriptFile, longPrompt))
+        .withFailMessage("Timed out waiting for long-title setup rename in %s", fixture.transcriptFile)
+        .isTrue()
+
       assertThat(archiver.archiveThread(path = fixture.projectDir.toString(), threadId = fixture.sessionId))
         .withFailMessage("Claude long-title archive failed. stdout=%s stderr=%s", fixture.stdout.trim(), fixture.stderr.trim())
         .isTrue()
-      assertThat(awaitLatestTranscriptTitle(fixture.transcriptFile, "[archived] ${fixture.prompt}"))
+      assertThat(awaitLatestTranscriptTitle(fixture.transcriptFile, "[archived] $longPrompt"))
         .withFailMessage("Timed out waiting for long-title transcript title after archive in %s", fixture.transcriptFile)
         .isTrue()
 
       assertThat(archiver.unarchiveThread(path = fixture.projectDir.toString(), threadId = fixture.sessionId)).isTrue()
-      assertThat(awaitLatestTranscriptTitle(fixture.transcriptFile, fixture.prompt))
+      assertThat(awaitLatestTranscriptTitle(fixture.transcriptFile, longPrompt))
         .withFailMessage("Timed out waiting for long-title transcript title after unarchive in %s", fixture.transcriptFile)
         .isTrue()
       val restoredThread = awaitThread(source = fixture.source, projectPath = fixture.projectDir.toString(), sessionId = fixture.sessionId)
       assertThat(restoredThread).isNotNull
-      assertThat(restoredThread!!.title).isEqualTo(fixture.prompt)
+      assertThat(restoredThread!!.title).isEqualTo(longPrompt)
     }
   }
 
@@ -174,6 +181,7 @@ private data class RealClaudeSessionFixture(
   val projectDir: Path,
   val sessionId: String,
   val prompt: String,
+  val initialTitle: String,
   val stdout: String,
   val stderr: String,
   val backend: ClaudeStoreSessionBackend,
@@ -222,16 +230,19 @@ private suspend fun prepareRealClaudeSessionFixture(tempDir: Path, prompt: Strin
   val backend = ClaudeStoreSessionBackend(claudeHomeProvider = { claudeHome })
   val transcriptDirectory = ClaudeSessionsStore(claudeHomeProvider = { claudeHome }).findMatchingDirectories(projectDir.toString()).singleOrNull()
   assumeTrue(transcriptDirectory != null, "Claude did not create a project directory for the real session fixture")
+  val transcriptFile = checkNotNull(transcriptDirectory).resolve("$sessionId.jsonl")
+  val initialThread = awaitBackendThread(backend = backend, projectPath = projectDir.toString(), sessionId = sessionId)
   return RealClaudeSessionFixture(
     claudeHome = claudeHome,
     projectDir = projectDir,
     sessionId = sessionId,
     prompt = resolvedPrompt,
+    initialTitle = initialThread?.title ?: latestTranscriptTitle(transcriptFile) ?: resolvedPrompt,
     stdout = processOutput.stdout,
     stderr = processOutput.stderr,
     backend = backend,
     source = ClaudeSessionSource(backend = backend),
-    transcriptFile = checkNotNull(transcriptDirectory).resolve("$sessionId.jsonl"),
+    transcriptFile = transcriptFile,
   )
 }
 

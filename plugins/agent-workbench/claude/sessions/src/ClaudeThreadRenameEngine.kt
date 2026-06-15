@@ -252,7 +252,7 @@ private fun describeObservedState(thread: ClaudeBackendThread?): String {
   }
 }
 
-private const val DEFAULT_CLAUDE_THREAD_COMMAND_TIMEOUT_MS = 30_000
+private const val DEFAULT_CLAUDE_THREAD_COMMAND_TIMEOUT_MS = 60_000
 private const val DEFAULT_CLAUDE_THREAD_RENAME_WAIT_TIMEOUT_MS = 10_000L
 private const val DEFAULT_CLAUDE_THREAD_RENAME_POLL_INTERVAL_MS = 250L
 private const val CLAUDE_PRINT_FLAG = "--print"

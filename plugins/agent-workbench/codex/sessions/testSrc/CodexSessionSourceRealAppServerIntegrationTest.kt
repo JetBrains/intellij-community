@@ -73,7 +73,7 @@ class CodexSessionSourceRealAppServerIntegrationTest {
         try {
           val originalSession = client.createThreadSession(cwd = projectDir.toString())
           val originalId = originalSession.thread.id
-          client.persistThread(originalId)
+          client.persistThread(originalId, text = "Create the original thread for fork rename testing.")
 
           val source = createRealAppServerSource(client = client, notifications = notifications)
           val originalRows = eventually(timeout = 30.seconds) {
