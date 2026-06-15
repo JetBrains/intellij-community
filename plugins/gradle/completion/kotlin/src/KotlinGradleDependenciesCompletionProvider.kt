@@ -191,13 +191,16 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     lookupStringProvider: (DependencyCompletionResult) -> String,
     invokePosition: GradleScriptDependencyCompletionPosition,
   ) {
-    val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
-    loadingAdvertiser.showSearchingStatus()
-
     val documentText = parameters.editor.document.text
     val offset = parameters.offset
     val startOffset = getDependencyCompletionStartOffset(documentText, offset)
     val text = documentText.substring(startOffset, offset)
+
+    // Autocomplete the dependency coordinate only after 3 or more characters are typed
+    if (parameters.isAutoPopup && text.length < 3) return
+
+    val loadingAdvertiser = DependencyCompletionLoadingAdvertiser()
+    loadingAdvertiser.showSearchingStatus()
 
     val completionService = service<DependencyCompletionService>()
     val request = DependencyCompletionRequest(text, parameters.getCompletionContext())

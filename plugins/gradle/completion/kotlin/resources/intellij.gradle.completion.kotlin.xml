@@ -21,6 +21,8 @@
                             implementationClass="com.intellij.gradle.completion.kotlin.KotlinGradleScriptCompletionContributor"/>
     <typedHandler implementation="com.intellij.gradle.completion.kotlin.KotlinGradleDependenciesAutoPopupHandler"
                   id="KotlinGradleDependenciesAutoPopupHandler"/>
+    <typedHandler implementation="com.intellij.gradle.completion.kotlin.KotlinGradleTopLevelDependenciesAutoPopupHandler"
+                  id="KotlinGradleTopLevelDependenciesAutoPopupHandler"/>
     <completion.confidence
       language="kotlin"
       implementationClass="com.intellij.gradle.completion.kotlin.EnableAutoPopupInKotlinGradleDependencyString"
