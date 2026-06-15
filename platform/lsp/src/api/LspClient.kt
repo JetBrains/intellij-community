@@ -98,7 +98,7 @@ interface LspClient {
 
   /**
    * Creates [TextDocumentIdentifier](https://microsoft.github.io/language-server-protocol/specification/#textDocumentIdentifier)
-   * for the given [file] to be used in various LSP server requests.
+   * for the given [file] to be used in various LSP requests.
    */
   fun getDocumentIdentifier(file: VirtualFile): TextDocumentIdentifier
 

@@ -31,30 +31,30 @@ import java.net.URI
 import java.net.URISyntaxException
 
 /**
- * Defines how to start the LSP server process ([startServerProcess], [createCommandLine], and [lspCommunicationChannel]),
- * and how to communicate with the running LSP server (all other functions and properties).
+ * Defines how the [LspClient] interacts with the running LSP server
+ * and how to start the LSP server process ([startServerProcess], [createCommandLine], and [lspCommunicationChannel]).
  *
- * See [LspServerSupportProvider] documentation for details about starting an LSP server.
+ * See [LspIntegrationProvider] documentation for details about starting a `LspClient`.
  *
- * Plugins that want to run a single LSP server for the whole project, regardless of the project structure, should extend
+ * Plugins that want to run a single LSP client (and server) for the whole project, regardless of the project structure, should extend
  * [ProjectWideLspClientDescriptor].
  *
  * Normally, `LspClientDescriptor` implementations don't store any modifiable state.
  *
  * As a rule, plugins don't keep references to the `LspClientDescriptor` implementations. To get an `LspClientDescriptor` that is used to
- * start a specific LSP server, use [LspServer.descriptor], where the [LspClient] itself could be found using
- * [LspServerManager.getServersForProvider].
+ * start a specific LSP server, use [LspClient.descriptor], where the [LspClient] itself could be found using
+ * [LspClientManager.getClients].
  *
  * To see all [window/logMessage](https://microsoft.github.io/language-server-protocol/specification/#window_logMessage)
  * and [$/logTrace](https://microsoft.github.io/language-server-protocol/specification/#traceValue) notifications from the server in the
  * `Notifications` tool window, select the `'Show in tool window'` check box for the `'LSP log: info, trace'` category
  * in Settings -> Appearance & Behavior -> Notifications.
  *
- * @param presentableName this string may appear in UI in some cases, for example:
+ * @param presentableName this string may appear in the UI in some cases, for example:
  * - `Language Services` status bar widget item
- * ([LspServerWidgetItem.getWidgetActionText][com.intellij.platform.lsp.api.lsWidget.LspServerWidgetItem.widgetActionText])
+ * ([LspClientWidgetItem.getWidgetActionText][com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem.widgetActionText])
  * - `Show Usages` popup header
- * - LSP server-related information in the `Notifications` tool window
+ * - LSP-related information in the `Notifications` tool window
  */
 abstract class LspClientDescriptor protected constructor(
   val project: Project,

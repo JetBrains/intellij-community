@@ -8,11 +8,11 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 /**
- * Tracks started LSP servers, allows starting, restarting, and stopping LSP servers.
+ * Tracks started LSP clients, allows starting, restarting, and stopping LSP clients.
  *
- * Plugins that want to start LSP servers should implement [LspIntegrationProvider].
+ * Plugins that want to start LSP clients should implement [LspIntegrationProvider].
  *
- * See [LspIntegrationProvider.fileOpened] function documentation for information about starting an LSP server.
+ * See [LspIntegrationProvider.fileOpened] function documentation for information about starting an LSP client.
  */
 interface LspClientManager {
   companion object {

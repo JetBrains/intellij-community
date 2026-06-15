@@ -33,7 +33,7 @@ open class LspSemanticTokensSupport : LspSemanticTokensCustomizer() {
    * [SemanticTokensClientCapabilities.tokenTypes](https://microsoft.github.io/language-server-protocol/specification/#semanticTokensClientCapabilities)
    * when sending the [initialize](https://microsoft.github.io/language-server-protocol/specification/#initialize) request.
    *
-   * @see [com.intellij.platform.lsp.api.LspServerDescriptor.clientCapabilities]
+   * @see [com.intellij.platform.lsp.api.LspClientDescriptor.clientCapabilities]
    */
   open val tokenTypes: List<String> = listOf(
     SemanticTokenTypes.Namespace,
@@ -66,7 +66,7 @@ open class LspSemanticTokensSupport : LspSemanticTokensCustomizer() {
    * [SemanticTokensClientCapabilities.tokenModifiers](https://microsoft.github.io/language-server-protocol/specification/#semanticTokensClientCapabilities)
    * when sending the [initialize](https://microsoft.github.io/language-server-protocol/specification/#initialize) request.
    *
-   * @see [com.intellij.platform.lsp.api.LspServerDescriptor.clientCapabilities]
+   * @see [com.intellij.platform.lsp.api.LspClientDescriptor.clientCapabilities]
    */
   open val tokenModifiers: List<String> = listOf(
     SemanticTokenModifiers.Declaration,
