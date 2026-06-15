@@ -544,7 +544,7 @@ class JunieAgentSessionProviderDescriptorTest {
 
   @Test
   fun `supported initial message launch passes prompt to Junie command`(): Unit = runBlocking(Dispatchers.Default) {
-    val descriptor = descriptorWithCliVersion(JunieCliVersion(1963, 1))
+    val descriptor = descriptorWithCliVersion(JunieCliVersion(2030, 1))
     assertThat(descriptor.isCliAvailable()).isTrue()
     val initialMessagePlan = AgentInitialMessagePlan(message = "Implement the feature")
 
@@ -583,7 +583,7 @@ class JunieAgentSessionProviderDescriptorTest {
 
   @Test
   fun `supported plan mode initial message uses Junie plan prompt command`(): Unit = runBlocking(Dispatchers.Default) {
-    val descriptor = descriptorWithCliVersion(JunieCliVersion(1963, 1))
+    val descriptor = descriptorWithCliVersion(JunieCliVersion(2030, 1))
     assertThat(descriptor.isCliAvailable()).isTrue()
 
     val plan = descriptor.buildInitialMessagePlan(
@@ -685,6 +685,8 @@ class JunieAgentSessionProviderDescriptorTest {
   fun `Junie CLI version parser reads build versions`() {
     assertThat(JunieCliSupport.parseCliVersion("Junie version: build 1963.1 nightly"))
       .isEqualTo(JunieCliVersion(1963, 1))
+    assertThat(JunieCliSupport.parseCliVersion("Junie version: build 2030.1 nightly"))
+      .isEqualTo(JunieCliVersion(2030, 1))
     assertThat(JunieCliSupport.parseCliVersion("26.6.8 (1892.12)"))
       .isEqualTo(JunieCliVersion(1892, 12))
     assertThat(JunieCliSupport.parseCliVersion("Junie version unknown"))

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -158,6 +159,31 @@ class ClaudeThreadRenameEngineTest {
 
       assertThat(engine.rename(path = PROJECT_PATH, threadId = "session-1", newTitle = "Same title")).isTrue()
       assertThat(invocations).isEmpty()
+    }
+  }
+
+  @Test
+  fun renameThreadDispatchesOpenTabCommandWithoutInitialPromptRecord() {
+    runBlocking(Dispatchers.Default) {
+      var threads = listOf(ClaudeBackendThread(id = "session-1", title = "Old title", updatedAt = 100L))
+      var dispatchedPlan: AgentInitialMessageDispatchPlan? = null
+      val engine = ClaudeOpenTabAwareThreadRenameEngine(
+        backend = testBackend { threads },
+        fallbackEngine = fallbackRenameEngine(),
+        openTabDispatcher = ClaudeOpenTabRenameDispatcher { _, _, _, dispatchPlan ->
+          dispatchedPlan = dispatchPlan
+          threads = listOf(ClaudeBackendThread(id = "session-1", title = "New title", updatedAt = 101L))
+          true
+        },
+        waitTimeoutMs = 1_000L,
+        pollIntervalMs = 1L,
+        delayFn = {},
+      )
+
+      assertThat(engine.rename(path = PROJECT_PATH, threadId = "session-1", newTitle = "New title")).isTrue()
+      val dispatchPlan = checkNotNull(dispatchedPlan)
+      assertThat(dispatchPlan.promptRecord).isNull()
+      assertThat(dispatchPlan.postStartDispatchSteps.single().text).isEqualTo("/rename New title")
     }
   }
 

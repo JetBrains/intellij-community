@@ -52,8 +52,8 @@ class JunieNewThreadPromptLaunchIntegrationTest {
       "--prompt",
       "Implement the Junie flow",
     )
-    assertThat(observation.postStartDispatchSteps.single().action).isEqualTo(AgentInitialMessageDispatchAction.SEND_TEXT)
-    assertThat(observation.postStartDispatchSteps.single().text).isEqualTo("Implement the Junie flow")
+    assertThat(observation.postStartDispatchSteps).isEmpty()
+    assertThat(observation.initialPromptMessage).isEqualTo("Implement the Junie flow")
     assertThat(observation.initialMessageToken).isNotNull()
   }
 
@@ -75,8 +75,8 @@ class JunieNewThreadPromptLaunchIntegrationTest {
       "--prompt",
       "Implement the Junie flow",
     )
-    assertThat(observation.postStartDispatchSteps.single().action).isEqualTo(AgentInitialMessageDispatchAction.SEND_TEXT)
-    assertThat(observation.postStartDispatchSteps.single().text).isEqualTo("Implement the Junie flow")
+    assertThat(observation.postStartDispatchSteps).isEmpty()
+    assertThat(observation.initialPromptMessage).isEqualTo("Implement the Junie flow")
     assertThat(observation.initialMessageToken).isNotNull()
   }
 
@@ -137,11 +137,8 @@ class JunieNewThreadPromptLaunchIntegrationTest {
       "--prompt",
       "Plan the Junie flow",
     )
-    assertThat(observation.postStartDispatchSteps.map { it.action }).containsExactly(
-      AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
-      AgentInitialMessageDispatchAction.SEND_TEXT,
-    )
-    assertThat(observation.postStartDispatchSteps.map { it.text }).containsExactly("", "Plan the Junie flow")
+    assertThat(observation.postStartDispatchSteps).isEmpty()
+    assertThat(observation.initialPromptMessage).isEqualTo("Plan the Junie flow")
     assertThat(observation.initialMessageToken).isNotNull()
   }
 
@@ -189,7 +186,7 @@ private fun newThreadLaunchRequest(
   )
 }
 
-private fun descriptor(cliVersion: JunieCliVersion? = JunieCliVersion(1963, 1)): JunieAgentSessionProviderDescriptor {
+private fun descriptor(cliVersion: JunieCliVersion? = JunieCliVersion(2030, 1)): JunieAgentSessionProviderDescriptor {
   return JunieAgentSessionProviderDescriptor(
     sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.JUNIE),
     executableResolver = { JunieCliSupport.JUNIE_COMMAND },

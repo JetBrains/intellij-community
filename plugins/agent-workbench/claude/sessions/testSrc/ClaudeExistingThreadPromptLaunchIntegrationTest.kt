@@ -46,7 +46,7 @@ class ClaudeExistingThreadPromptLaunchIntegrationTest {
     val startupLaunchSpec = checkNotNull(observation.startupLaunchSpecOverride)
 
     assertThat(startupLaunchSpec.command).containsExactly(
-      "claude", "--resume", EXISTING_THREAD_ID, "--permission-mode", "plan", "--", observation.postStartDispatchSteps.single().text
+      "claude", "--resume", EXISTING_THREAD_ID, "--permission-mode", "plan", "--", observation.initialPromptMessage
     )
   }
 }

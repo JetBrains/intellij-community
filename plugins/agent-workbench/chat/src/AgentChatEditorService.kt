@@ -255,10 +255,15 @@ suspend fun openChat(
   else {
     null
   }
-  val snapshotInitialMessageDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps
-  val snapshotInitialMessageToken = initialMessageDispatchPlan.initialMessageToken
-  val snapshotInitialMessageSent = false
-  val hasExplicitInitialMessageDispatch = snapshotInitialMessageDispatchSteps.isNotEmpty() || snapshotInitialMessageToken != null
+  val effectiveInitialMessageDispatchPlan = if (isNewTab) {
+    initialMessageDispatchPlan
+  }
+  else {
+    initialMessageDispatchPlan.withStartupDeliveryIgnored()
+  }
+  val snapshotInitialPromptRecord = effectiveInitialMessageDispatchPlan.promptRecord
+  val snapshotTerminalPromptDispatch = effectiveInitialMessageDispatchPlan.terminalDispatch
+  val hasExplicitInitialPromptDelivery = snapshotInitialPromptRecord != null || snapshotTerminalPromptDispatch != null
   val snapshot = AgentChatTabSnapshot.create(
     projectHash = project.locationHash,
     projectPath = projectPath,
@@ -273,9 +278,8 @@ suspend fun openChat(
     launchMode = launchMode ?: existing?.launchMode,
     generationSettings = effectiveGenerationSettings,
     newThreadRebindRequestedAtMs = existing?.newThreadRebindRequestedAtMs,
-    initialMessageDispatchSteps = snapshotInitialMessageDispatchSteps,
-    initialMessageToken = snapshotInitialMessageToken,
-    initialMessageSent = snapshotInitialMessageSent,
+    initialPromptRecord = snapshotInitialPromptRecord,
+    terminalPromptDispatch = snapshotTerminalPromptDispatch,
   )
   LOG.debug {
     "openChat(project=${project.name}, path=$projectPath, identity=$threadIdentity, " +
@@ -300,12 +304,10 @@ suspend fun openChat(
                            pendingLaunchMode = pendingLaunchMode,
                          )
     val launchModeUpdated = oldLaunchMode != existing.launchMode
-    if (hasExplicitInitialMessageDispatch) {
-      existing.updateInitialMessageMetadata(
-        initialMessageDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
-        initialMessageDispatchStepIndex = 0,
-        initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
-        initialMessageSent = false,
+    if (hasExplicitInitialPromptDelivery) {
+      existing.updateInitialPromptDelivery(
+        promptRecord = snapshotInitialPromptRecord,
+        terminalDispatch = snapshotTerminalPromptDispatch,
       )
     }
     LOG.debug {
@@ -314,7 +316,7 @@ suspend fun openChat(
       "currentName=${existing.name}," +
       " currentTitle=${existing.threadTitle}, currentActivity=${existing.threadActivity}"
     }
-    if (titleUpdated || activityUpdated || pendingUpdated || launchModeUpdated || hasExplicitInitialMessageDispatch ||
+    if (titleUpdated || activityUpdated || pendingUpdated || launchModeUpdated || hasExplicitInitialPromptDelivery ||
         deferredStartStateUpdated) {
       withContext(Dispatchers.EDT) {
         manager.updateFilePresentation(existing)
@@ -343,7 +345,7 @@ suspend fun openChat(
     file.putUserData(FileEditorProvider.KEY, AgentChatFileEditorProvider())
   }
   manager.openFile(file = file, options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true))
-  if (existing != null && hasExplicitInitialMessageDispatch && !file.initialMessageSent) {
+  if (existing != null && hasExplicitInitialPromptDelivery && !file.initialMessageSent) {
     flushPendingInitialMessageForOpenEditors(manager = manager, file = file)
   }
   LOG.debug {
@@ -420,11 +422,9 @@ suspend fun updateAgentChatDeferredStartState(
     chatFile.updateBootstrapThreadActivity(it)
   }
   initialMessageDispatchPlan?.let { dispatchPlan ->
-    chatFile.updateInitialMessageMetadata(
-      initialMessageDispatchSteps = dispatchPlan.postStartDispatchSteps,
-      initialMessageDispatchStepIndex = 0,
-      initialMessageToken = dispatchPlan.initialMessageToken,
-      initialMessageSent = false,
+    chatFile.updateInitialPromptDelivery(
+      promptRecord = dispatchPlan.promptRecord,
+      terminalDispatch = dispatchPlan.terminalDispatch,
     )
   }
   if (persistSnapshot) {
