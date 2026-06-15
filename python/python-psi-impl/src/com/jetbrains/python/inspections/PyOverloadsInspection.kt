@@ -37,7 +37,6 @@ import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
 import org.jetbrains.annotations.Nls
 import java.util.EnumSet
-import java.util.function.Supplier
 
 class PyOverloadsInspection : PyInspection() {
 
@@ -120,20 +119,25 @@ class PyOverloadsInspection : PyInspection() {
           if (!PyTypeChecker.match(overloadInputSignature, implementationInputSignature, myTypeEvalContext)) {
             val message = PyPsiBundle.message("INSP.overloads.this.overload.signature.not.compatible.with.implementation",
                                               if (owner is PyClass) 1 else 0)
-            registerSignatureMismatch(overload.nameIdentifier, overloadInputSignature, implementationInputSignature, message)
+            val diff = PyTypeDiff.paramsDiffTooltip(overload.getParameters(myTypeEvalContext),
+                                                    implementation.getParameters(myTypeEvalContext),
+                                                    HtmlChunk.text(message), myTypeEvalContext)
+            registerSignatureMismatch(overload.nameIdentifier, overloadInputSignature, implementationInputSignature,
+                                      PyInspectionMessages.ProblemMessage(message, diff))
           }
         }
       }
     }
 
     /**
-     * Registers an overload-incompatibility problem, attaching the breakdown ([PyTypeChecker.explainMismatch]) as a
-     * separate on-the-fly HTML tooltip while keeping the one-line [message] as the flat description.
+     * Registers an overload-incompatibility problem: the aligned parameter diff ([message]'s tooltip) with the
+     * breakdown ([PyTypeChecker.explainMismatch]) appended below it as a separate on-the-fly HTML tooltip, while
+     * keeping the one-line description flat.
      */
     private fun registerSignatureMismatch(element: PsiElement?,
                                           expected: PyType?,
                                           actual: PyType?,
-                                          @InspectionMessage message: String) {
+                                          message: PyInspectionMessages.ProblemMessage) {
       if (element == null) return
       registerProblemWithTooltip(element, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
                                   { PyTypeCheckerInspectionProblemRegistrar.breakdownTooltip(message, expected, actual, myTypeEvalContext, element) }
@@ -220,10 +224,11 @@ class PyOverloadsInspection : PyInspection() {
           else if (PyTypeChecker.match(currInputSignature, nextOverloadInputSignature, myTypeEvalContext)) {
             if (!PyTypeChecker.match(nextReturnType, currReturnType, myTypeEvalContext)) {
               val signatureRepresentation = PythonDocumentationProvider.getTypeName(currCallableType, myTypeEvalContext)
-              val message =
-                buildMessage(PyPsiBundle.message("INSP.overloads.overload.overlaps.with.incompatible.return.type", j + 1),
-                             signatureRepresentation)
-              registerProblem(current.nameIdentifier, message)
+              val headline = PyPsiBundle.message("INSP.overloads.overload.overlaps.with.incompatible.return.type", j + 1)
+              val message = buildMessage(headline, signatureRepresentation)
+              val diff = PyTypeDiff.diffTooltip(nextCallableType, currCallableType, HtmlChunk.text(headline), myTypeEvalContext)
+              if (diff != null) registerProblem(current.nameIdentifier, PyInspectionMessages.ProblemMessage(message, diff))
+              else registerProblem(current.nameIdentifier, message)
             }
           }
         }
