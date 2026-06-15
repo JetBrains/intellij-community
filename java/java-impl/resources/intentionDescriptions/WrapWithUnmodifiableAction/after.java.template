@@ -1,3 +1,10 @@
-List<String> result = new ArrayList<String>();
-// ...
-return <spot>Collections.unmodifiableList</spot>(result);
+import java.util.*;
+
+public class X {
+  List<String> f() {
+    List<String> result = new ArrayList<String>();
+    result.add("bacon");
+    result.add("eggs");
+    return Collections.unmodifiableList(result);
+  }
+}

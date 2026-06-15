@@ -1,3 +1,10 @@
-List<String> result = new ArrayList<String>();
-// ...
-return result;
+import java.util.*;
+
+public class X {
+  List<String> f() {
+    List<String> result = new ArrayList<String>();
+    result.add("bacon");
+    result.add("eggs");
+    return <spot>result</spot>;
+  }
+}
