@@ -34,8 +34,10 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_POST_WINDOW_MS
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_PRE_WINDOW_MS
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributors
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchIntent
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchOperation
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchPlanner
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionPlannedLaunch
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
@@ -125,6 +127,7 @@ internal interface AgentSessionChatOpenExecutor {
     launchSpecOverride: AgentSessionTerminalLaunchSpec?,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
     launchMode: AgentSessionLaunchMode?,
+    generationSettings: AgentPromptGenerationSettings,
   )
 
   suspend fun openNewChat(
@@ -133,6 +136,7 @@ internal interface AgentSessionChatOpenExecutor {
     launchSpec: AgentSessionTerminalLaunchSpec,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
     launchMode: AgentSessionLaunchMode?,
+    generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
     threadTitle: String? = null,
@@ -170,6 +174,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
     launchSpecOverride: AgentSessionTerminalLaunchSpec?,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
     launchMode: AgentSessionLaunchMode?,
+    generationSettings: AgentPromptGenerationSettings,
   ) {
     openAgentSessionChat(
       normalizedPath = normalizedPath,
@@ -178,6 +183,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
       launchSpecOverride = launchSpecOverride,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
       launchMode = launchMode,
+      generationSettings = generationSettings,
     )
   }
 
@@ -187,6 +193,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
     launchSpec: AgentSessionTerminalLaunchSpec,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
     launchMode: AgentSessionLaunchMode?,
+    generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
     threadTitle: String?,
@@ -197,6 +204,7 @@ private object DefaultAgentSessionChatOpenExecutor : AgentSessionChatOpenExecuto
       launchSpec = launchSpec,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
       launchMode = launchMode,
+      generationSettings = generationSettings,
       preferredDedicatedFrame = preferredDedicatedFrame,
       openedChatHandler = openedChatHandler,
       threadTitle = threadTitle,
@@ -355,6 +363,29 @@ class AgentSessionLaunchService internal constructor(
           thread = effectiveThread,
           descriptor = descriptor,
         )
+        val effectiveResumeLaunchMode = resolveResumeLaunchMode(
+          descriptor = descriptor,
+          requestedLaunchMode = resumeLaunchMode,
+        )
+        val launchModeForChatState = resolveLaunchModeForChatState(
+          requestedLaunchMode = resumeLaunchMode,
+          effectiveLaunchMode = effectiveResumeLaunchMode,
+        )
+        AgentWorkbenchTelemetry.logThreadOpenRequested(entryPoint, effectiveThread.provider, AgentWorkbenchTargetKind.THREAD)
+        val plannedResumeLaunch = AgentSessionLaunchPlanner.plan(
+          intent = AgentSessionLaunchIntent(
+            projectPath = normalizedPath,
+            provider = effectiveThread.provider,
+            operation = AgentSessionLaunchOperation.RESUME,
+            sessionId = effectiveThread.id,
+            launchMode = effectiveResumeLaunchMode,
+            generationSettings = generationSettings,
+          ),
+          project = currentProject,
+          initialMessagePlan = effectiveInitialMessagePlan ?: AgentInitialMessagePlan.EMPTY,
+          extraEnvVariables = extraEnvVariables,
+          extraCommandArgs = extraCommandArgs,
+        )
         val effectiveInitialMessageDispatchPlan = if (initialMessageDispatchPlan != AgentInitialMessageDispatchPlan.EMPTY) {
           initialMessageDispatchPlan
         }
@@ -365,43 +396,18 @@ class AgentSessionLaunchService internal constructor(
             initialMessageRequest = initialMessageRequest,
             generationSettings = generationSettings,
             precomputedInitialMessagePlan = effectiveInitialMessagePlan,
+            precomputedResumeLaunch = plannedResumeLaunch,
           )
-        }
-        val effectiveResumeLaunchMode = resolveResumeLaunchMode(
-          descriptor = descriptor,
-          requestedLaunchMode = resumeLaunchMode,
-        )
-        val launchModeForChatState = resolveLaunchModeForChatState(
-          requestedLaunchMode = resumeLaunchMode,
-          effectiveLaunchMode = effectiveResumeLaunchMode,
-        )
-        AgentWorkbenchTelemetry.logThreadOpenRequested(entryPoint, effectiveThread.provider, AgentWorkbenchTargetKind.THREAD)
-        // When the caller passes prompt-time overrides (e.g. AWB container env vars), augment the
-        // resume launch spec so the respawned CLI receives them. Without this the resume path would reuse whatever env was
-        // baked in at first spawn, which breaks `${VAR}` placeholders in `.mcp.json` after IDE restart.
-        val launchSpecOverride = if (extraEnvVariables.isNotEmpty() || extraCommandArgs.isNotEmpty()) {
-          val baseResumeSpec = AgentSessionLaunchSpecs.resolveResume(
-            projectPath = normalizedPath,
-            provider = effectiveThread.provider,
-            sessionId = effectiveThread.id,
-            launchMode = effectiveResumeLaunchMode,
-          )
-          baseResumeSpec.copy(
-            command = if (extraCommandArgs.isNotEmpty()) baseResumeSpec.command + extraCommandArgs else baseResumeSpec.command,
-            envVariables = if (extraEnvVariables.isNotEmpty()) baseResumeSpec.envVariables + extraEnvVariables else baseResumeSpec.envVariables,
-          )
-        }
-        else {
-          null
         }
 
         chatOpenExecutor.openChat(
           normalizedPath = normalizedPath,
           thread = effectiveThread,
           subAgent = null,
-          launchSpecOverride = launchSpecOverride,
+          launchSpecOverride = plannedResumeLaunch.launchSpec,
           initialMessageDispatchPlan = effectiveInitialMessageDispatchPlan,
           launchMode = launchModeForChatState,
+          generationSettings = plannedResumeLaunch.intent.generationSettings,
         )
         scheduleRefreshAfterArchivedThreadOpen(archiveResolution)
         promptLaunchResolved?.invoke(AgentPromptLaunchResult.SUCCESS)
@@ -510,6 +516,7 @@ class AgentSessionLaunchService internal constructor(
         launchSpecOverride = null,
         initialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
         launchMode = null,
+        generationSettings = AgentPromptGenerationSettings.AUTO,
       )
       scheduleRefreshAfterArchivedThreadOpen(archiveResolution)
     }
@@ -657,41 +664,22 @@ class AgentSessionLaunchService internal constructor(
         val initialMessagePlan = effectiveInitialMessageRequest
                                    ?.let(descriptor::buildInitialMessagePlan)
                                  ?: AgentInitialMessagePlan.EMPTY
-        val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(mode)
-        val generationLaunchSpec = descriptor.applyGenerationSettings(
-          baseLaunchSpec = baseLaunchSpec,
-          generationSettings = generationSettings,
+        val plannedLaunch = AgentSessionLaunchPlanner.plan(
+          intent = AgentSessionLaunchIntent(
+            projectPath = normalizedPath,
+            provider = provider,
+            operation = AgentSessionLaunchOperation.NEW,
+            launchMode = mode,
+            generationSettings = generationSettings,
+          ),
+          project = currentProject,
           initialMessagePlan = initialMessagePlan,
-        )
-        val generationCatalogLaunchSpec = descriptor.applyGenerationModelCatalog(
-          baseLaunchSpec = generationLaunchSpec,
-          generationSettings = generationSettings,
           generationModelCatalog = generationModelCatalog,
+          extraEnvVariables = extraEnvVariables,
+          extraCommandArgs = extraCommandArgs,
         )
-        val augmentedSpec = AgentSessionLaunchSpecs.augment(
-          projectPath = normalizedPath,
-          provider = provider,
-          launchSpec = generationCatalogLaunchSpec,
-        )
-        // Apply launch contributors (e.g. AwbMcpConfigContributor writing the merged
-        // `.awb/awb-mcp.json` and adding `--mcp-config`). sessionId is null for new
-        // launches; contributors that only make sense on resume should early-return
-        // when null.
-        val withContributors = AgentSessionLaunchContributors.applyAll(
-          projectPath = normalizedPath,
-          provider = provider,
-          sessionId = null,
-          launchSpec = augmentedSpec,
-        )
-        val launchSpec = if (extraEnvVariables.isNotEmpty() || extraCommandArgs.isNotEmpty()) {
-          withContributors.copy(
-            command = if (extraCommandArgs.isNotEmpty()) withContributors.command + extraCommandArgs else withContributors.command,
-            envVariables = if (extraEnvVariables.isNotEmpty()) withContributors.envVariables + extraEnvVariables else withContributors.envVariables,
-          )
-        }
-        else {
-          withContributors
-        }
+        val baseLaunchSpec = plannedLaunch.baseLaunchSpec
+        val launchSpec = plannedLaunch.launchSpec
         val identity = buildNewSessionIdentity(provider = provider, launchSpec = launchSpec)
         val initialMessageDispatchPlan = buildInitialMessageDispatchPlan(
           descriptor = descriptor,
@@ -717,6 +705,7 @@ class AgentSessionLaunchService internal constructor(
             launchSpec = launchSpec,
             initialMessageDispatchPlan = initialMessageDispatchPlan,
             launchMode = mode,
+            generationSettings = plannedLaunch.intent.generationSettings,
             preferredDedicatedFrame = preferredDedicatedFrame,
             openedChatHandler = openedChatHandler,
             threadTitle = threadTitle,
@@ -774,12 +763,14 @@ class AgentSessionLaunchService internal constructor(
       uiPreferencesState.updateProviderPreferencesOnLaunch(provider, mode, initialMessageRequest = null)
     }
 
-    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(mode)
-    val launchSpec = AgentSessionLaunchSpecs.augment(
-      projectPath = normalizedPath,
-      provider = provider,
-      launchSpec = baseLaunchSpec,
-    )
+    val launchSpec = AgentSessionLaunchPlanner.plan(
+      intent = AgentSessionLaunchIntent(
+        projectPath = normalizedPath,
+        provider = provider,
+        operation = AgentSessionLaunchOperation.NEW,
+        launchMode = mode,
+      ),
+    ).launchSpec
     val identity = buildNewSessionIdentity(provider = provider, launchSpec = launchSpec)
     val waitingState = AgentChatDeferredStartState(
       phase = AgentChatDeferredStartPhase.WAITING,
@@ -1037,6 +1028,7 @@ private suspend fun openAgentSessionChat(
   launchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
   launchMode: AgentSessionLaunchMode? = null,
+  generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
 ) {
   if (AgentChatOpenModeSettings.openInDedicatedFrame()) {
     openChatInDedicatedFrame(
@@ -1046,6 +1038,7 @@ private suspend fun openAgentSessionChat(
       launchSpecOverride = launchSpecOverride,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
       launchMode = launchMode,
+      generationSettings = generationSettings,
     )
     return
   }
@@ -1058,6 +1051,7 @@ private suspend fun openAgentSessionChat(
     launchSpecOverride = launchSpecOverride,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
     launchMode = launchMode,
+    generationSettings = generationSettings,
   )
 }
 
@@ -1188,6 +1182,7 @@ private suspend fun resolvePromptInitialMessageDispatchPlan(
   initialMessageRequest: AgentPromptInitialMessageRequest?,
   generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
   precomputedInitialMessagePlan: AgentInitialMessagePlan? = null,
+  precomputedResumeLaunch: AgentSessionPlannedLaunch? = null,
 ): AgentInitialMessageDispatchPlan {
   if (initialMessageRequest == null) {
     return AgentInitialMessageDispatchPlan.EMPTY
@@ -1197,22 +1192,23 @@ private suspend fun resolvePromptInitialMessageDispatchPlan(
                    ?: return AgentInitialMessageDispatchPlan.EMPTY
   val initialMessagePlan = precomputedInitialMessagePlan ?: descriptor.buildInitialMessagePlan(initialMessageRequest)
   val identity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id)
-  val baseResumeLaunchSpec = AgentSessionLaunchSpecs.resolveResume(
-    projectPath = normalizedPath,
-    provider = thread.provider,
-    sessionId = thread.id,
+  val plannedResumeLaunch = precomputedResumeLaunch ?: AgentSessionLaunchPlanner.plan(
+    intent = AgentSessionLaunchIntent(
+      projectPath = normalizedPath,
+      provider = thread.provider,
+      operation = AgentSessionLaunchOperation.RESUME,
+      sessionId = thread.id,
+      generationSettings = generationSettings,
+    ),
+    initialMessagePlan = initialMessagePlan,
   )
   val allowStartupPromptOverride = initialMessagePlan.mode == AgentInitialMessageMode.PLAN
   val resumeLaunchSpec =
     if (allowStartupPromptOverride && initialMessagePlan.startupPolicy == AgentInitialMessageStartupPolicy.TRY_STARTUP_COMMAND) {
-      descriptor.applyGenerationSettings(
-        baseLaunchSpec = baseResumeLaunchSpec,
-        generationSettings = generationSettings,
-        initialMessagePlan = initialMessagePlan,
-      )
+      plannedResumeLaunch.launchSpec
     }
     else {
-      baseResumeLaunchSpec
+      plannedResumeLaunch.baseLaunchSpec
     }
   return buildInitialMessageDispatchPlan(
     descriptor = descriptor,
@@ -1265,6 +1261,7 @@ private suspend fun openAgentSessionNewChat(
   launchSpec: AgentSessionTerminalLaunchSpec,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
   launchMode: AgentSessionLaunchMode?,
+  generationSettings: AgentPromptGenerationSettings,
   preferredDedicatedFrame: Boolean?,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
   threadTitle: String? = null,
@@ -1279,6 +1276,7 @@ private suspend fun openAgentSessionNewChat(
       title = title,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
       launchMode = launchMode,
+      generationSettings = generationSettings,
       openedChatHandler = openedChatHandler,
     )
     return
@@ -1292,6 +1290,7 @@ private suspend fun openAgentSessionNewChat(
     title = title,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
     launchMode = launchMode,
+    generationSettings = generationSettings,
     openedChatHandler = openedChatHandler,
   )
 }
@@ -1344,6 +1343,7 @@ private suspend fun openNewChatInDedicatedFrame(
   title: String,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
   launchMode: AgentSessionLaunchMode?,
+  generationSettings: AgentPromptGenerationSettings,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
   val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
@@ -1358,6 +1358,7 @@ private suspend fun openNewChatInDedicatedFrame(
       title = title,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
       launchMode = launchMode,
+      generationSettings = generationSettings,
       openedChatHandler = openedChatHandler,
     )
     return
@@ -1384,6 +1385,7 @@ private suspend fun openNewChatInDedicatedFrame(
     title = title,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
     launchMode = launchMode,
+    generationSettings = generationSettings,
     openedChatHandler = openedChatHandler,
   )
 }
@@ -1446,6 +1448,7 @@ private suspend fun openNewChatInProject(
   title: String,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
   launchMode: AgentSessionLaunchMode?,
+  generationSettings: AgentPromptGenerationSettings,
   openedChatHandler: (suspend (Project, VirtualFile) -> Unit)? = null,
 ) {
   val threadId = resolveAgentSessionId(identity)
@@ -1467,6 +1470,7 @@ private suspend fun openNewChatInProject(
     newSessionProvider = provider,
     newSessionLaunchMode = launchMode,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
+    generationSettings = generationSettings,
     startupLaunchSpec = launchSpec,
   )
   recordOpenedNewSession(
@@ -1552,6 +1556,7 @@ private suspend fun openChatInDedicatedFrame(
   launchSpecOverride: AgentSessionTerminalLaunchSpec?,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
   launchMode: AgentSessionLaunchMode? = null,
+  generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
 ) {
   val dedicatedProjectPath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()
   val openProject = findOpenProject(dedicatedProjectPath)
@@ -1565,6 +1570,7 @@ private suspend fun openChatInDedicatedFrame(
       launchSpecOverride = launchSpecOverride,
       initialMessageDispatchPlan = initialMessageDispatchPlan,
       launchMode = launchMode,
+      generationSettings = generationSettings,
     )
     return
   }
@@ -1587,6 +1593,7 @@ private suspend fun openChatInDedicatedFrame(
     launchSpecOverride = launchSpecOverride,
     initialMessageDispatchPlan = initialMessageDispatchPlan,
     launchMode = launchMode,
+    generationSettings = generationSettings,
   )
 }
 
@@ -1598,6 +1605,7 @@ private suspend fun openChatInProject(
   launchSpecOverride: AgentSessionTerminalLaunchSpec?,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
   launchMode: AgentSessionLaunchMode? = null,
+  generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
 ) {
   val chatOpenPayload = resolveAgentSessionChatOpenPayload(
     projectPath = projectPath,
@@ -1605,6 +1613,7 @@ private suspend fun openChatInProject(
     subAgent = subAgent,
     launchSpecOverride = launchSpecOverride,
     launchMode = launchMode ?: AgentSessionLaunchMode.STANDARD,
+    generationSettings = generationSettings,
   )
   val effectiveInitialMessageDispatchPlan = if (initialMessageDispatchPlan != AgentInitialMessageDispatchPlan.EMPTY) {
     initialMessageDispatchPlan
@@ -1624,6 +1633,7 @@ private suspend fun openChatInProject(
     threadActivity = thread.activity,
     launchMode = serializeAgentChatLaunchMode(launchMode),
     initialMessageDispatchPlan = effectiveInitialMessageDispatchPlan,
+    generationSettings = generationSettings,
     startupLaunchSpec = chatOpenPayload.launchSpec,
   )
 

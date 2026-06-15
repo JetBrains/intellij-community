@@ -10,8 +10,9 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormat
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeSummary
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributors
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchIntent
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchOperation
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchPlanner
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.ide.OccurenceNavigator
@@ -297,28 +298,31 @@ internal class AgentChatFileEditor(
     if (startupIntent.launchMode !in descriptor.supportedLaunchModes) {
       throw IllegalStateException("Unsupported Agent Chat launch mode ${startupIntent.launchMode} for ${startupIntent.provider.value}")
     }
-    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(startupIntent.launchMode)
-    val augmented = AgentSessionLaunchSpecs.augment(
-      projectPath = file.projectPath,
-      provider = startupIntent.provider,
-      launchSpec = baseLaunchSpec,
-    )
-    return AgentSessionLaunchContributors.applyAll(
-      projectPath = file.projectPath,
-      provider = startupIntent.provider,
-      sessionId = null,
-      launchSpec = augmented,
-    )
+    return AgentSessionLaunchPlanner.plan(
+      intent = AgentSessionLaunchIntent(
+        projectPath = file.projectPath,
+        provider = startupIntent.provider,
+        operation = AgentSessionLaunchOperation.NEW,
+        launchMode = startupIntent.launchMode,
+        generationSettings = file.generationSettings,
+      ),
+      project = project,
+    ).launchSpec
   }
 
   private suspend fun resolveResumeLaunchSpec(): AgentSessionTerminalLaunchSpec {
     val provider = file.provider ?: throw IllegalStateException("Missing Agent Chat provider for ${file.url}")
-    return AgentSessionLaunchSpecs.resolveResume(
-      projectPath = file.projectPath,
-      provider = provider,
-      sessionId = file.threadId.ifBlank { file.sessionId },
-      launchMode = parseAgentChatLaunchMode(file.launchMode),
-    )
+    return AgentSessionLaunchPlanner.plan(
+      intent = AgentSessionLaunchIntent(
+        projectPath = file.projectPath,
+        provider = provider,
+        operation = AgentSessionLaunchOperation.RESUME,
+        sessionId = file.threadId.ifBlank { file.sessionId },
+        launchMode = parseAgentChatLaunchMode(file.launchMode),
+        generationSettings = file.generationSettings,
+      ),
+      project = project,
+    ).launchSpec
   }
 
   private suspend fun attachTerminal(

@@ -5,7 +5,10 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchIntent
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchOperation
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchPlanner
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
@@ -25,27 +28,23 @@ internal suspend fun resolveAgentSessionChatOpenPayload(
   subAgent: AgentSubAgent?,
   launchSpecOverride: AgentSessionTerminalLaunchSpec?,
   launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
+  generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
   resumeLaunchSpecProvider: (suspend (AgentSessionProvider, String, AgentSessionLaunchMode) -> AgentSessionTerminalLaunchSpec)? = null,
 ): AgentSessionChatOpenPayload {
   val threadIdentity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id)
   val runtimeThreadId = subAgent?.id ?: thread.id
   val launchSpec = launchSpecOverride
-                   ?: resumeLaunchSpecProvider
-                     ?.let { provider ->
-                       AgentSessionLaunchSpecs.resolveResume(
-                         projectPath = projectPath,
-                         provider = thread.provider,
-                         sessionId = runtimeThreadId,
-                         launchMode = launchMode,
-                         baseLaunchSpecProvider = provider,
-                       )
-                     }
-                   ?: AgentSessionLaunchSpecs.resolveResume(
-                     projectPath = projectPath,
-                     provider = thread.provider,
-                     sessionId = runtimeThreadId,
-                     launchMode = launchMode,
-                   )
+                   ?: AgentSessionLaunchPlanner.plan(
+                     intent = AgentSessionLaunchIntent(
+                       projectPath = projectPath,
+                       provider = thread.provider,
+                       operation = AgentSessionLaunchOperation.RESUME,
+                       sessionId = runtimeThreadId,
+                       launchMode = launchMode,
+                       generationSettings = generationSettings,
+                     ),
+                     resumeLaunchSpecProvider = resumeLaunchSpecProvider,
+                   ).launchSpec
   val threadTitle = subAgent?.name?.ifBlank { subAgent.id } ?: thread.title
   return AgentSessionChatOpenPayload(
     threadIdentity = threadIdentity,

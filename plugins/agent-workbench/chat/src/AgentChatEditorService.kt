@@ -12,7 +12,10 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecs
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchIntent
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchOperation
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchPlanner
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
@@ -210,6 +213,7 @@ suspend fun openChat(
   newSessionProvider: AgentSessionProvider? = null,
   newSessionLaunchMode: AgentSessionLaunchMode? = null,
   initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
+  generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
   persistSnapshot: Boolean = true,
   deferredStartState: AgentChatDeferredStartState? = null,
   startupLaunchSpec: AgentSessionTerminalLaunchSpec? = null,
@@ -228,6 +232,12 @@ suspend fun openChat(
                  ?: findExistingChat(manager.openFiles, threadIdentity, subAgentId)
   val launchSpec = startupLaunchSpec ?: AgentSessionTerminalLaunchSpec(command = shellCommand, envVariables = shellEnvVariables)
   val isNewTab = existing == null
+  val effectiveGenerationSettings = if (generationSettings == AgentPromptGenerationSettings.AUTO) {
+    existing?.generationSettings ?: AgentPromptGenerationSettings.AUTO
+  }
+  else {
+    generationSettings
+  }
   val startupOverrideForTab = if (isNewTab) {
     initialMessageDispatchPlan.startupLaunchSpecOverride ?: launchSpec.takeIf(::shouldUseStartupLaunchSpecOverride)
   }
@@ -261,6 +271,7 @@ suspend fun openChat(
     pendingFirstInputAtMs = pendingFirstInputAtMs,
     pendingLaunchMode = pendingLaunchMode,
     launchMode = launchMode ?: existing?.launchMode,
+    generationSettings = effectiveGenerationSettings,
     newThreadRebindRequestedAtMs = existing?.newThreadRebindRequestedAtMs,
     initialMessageDispatchSteps = snapshotInitialMessageDispatchSteps,
     initialMessageToken = snapshotInitialMessageToken,
@@ -544,18 +555,21 @@ private fun AgentChatTabRebindTarget.toRebindLaunchSpecKey(): AgentChatRebindLau
 
 private suspend fun resolveRebindLaunchSpec(target: AgentChatTabRebindTarget): AgentSessionTerminalLaunchSpec? {
   return try {
-    AgentSessionLaunchSpecs.resolveResume(
-      projectPath = normalizeAgentWorkbenchPath(target.projectPath),
-      provider = target.provider,
-      sessionId = target.threadId,
-    )
+    AgentSessionLaunchPlanner.plan(
+      intent = AgentSessionLaunchIntent(
+        projectPath = normalizeAgentWorkbenchPath(target.projectPath),
+        provider = target.provider,
+        operation = AgentSessionLaunchOperation.RESUME,
+        sessionId = target.threadId,
+      ),
+    ).launchSpec
   }
   catch (t: Throwable) {
     LOG.warn(
       "Failed to resolve chat rebind launch spec for ${target.provider.value}:${target.projectPath}:${target.threadId}",
       t,
     )
-    null
+    AgentSessionTerminalLaunchSpec(command = listOf(target.provider.value, "resume", target.threadId))
   }
 }
 

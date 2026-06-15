@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
 
@@ -20,6 +21,7 @@ internal data class AgentChatTabRuntime(
   @JvmField val pendingFirstInputAtMs: Long? = null,
   @JvmField val pendingLaunchMode: String? = null,
   @JvmField val launchMode: String? = null,
+  @JvmField val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
   @JvmField val newThreadRebindRequestedAtMs: Long? = null,
   @JvmField val initialMessageDispatchSteps: List<AgentInitialMessageDispatchStep> = emptyList(),
   @JvmField val initialMessageDispatchStepIndex: Int = 0,
@@ -45,6 +47,7 @@ internal data class AgentChatTabSnapshot(
       pendingFirstInputAtMs: Long? = null,
       pendingLaunchMode: String? = null,
       launchMode: String? = null,
+      generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
       newThreadRebindRequestedAtMs: Long? = null,
       initialMessageToken: String? = null,
       initialMessageSent: Boolean = false,
@@ -75,6 +78,7 @@ internal data class AgentChatTabSnapshot(
           pendingFirstInputAtMs = pendingFirstInputAtMs,
           pendingLaunchMode = pendingLaunchMode,
           launchMode = normalizeAgentChatLaunchMode(launchMode),
+          generationSettings = generationSettings,
           newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
           initialMessageDispatchSteps = normalizedDispatchSteps,
           initialMessageDispatchStepIndex = initialMessageDispatchStepIndex.coerceIn(0, normalizedDispatchSteps.size),

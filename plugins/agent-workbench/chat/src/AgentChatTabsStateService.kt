@@ -5,6 +5,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.sessions.core.isAgentSessionPendingThreadId
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
@@ -27,7 +28,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import kotlin.time.Duration.Companion.minutes
 
-private const val AGENT_CHAT_TABS_STATE_VERSION = 8
+private const val AGENT_CHAT_TABS_STATE_VERSION = 9
 private const val AGENT_CHAT_TABS_STATE_TTL_MILLIS = 30L * 24 * 60 * 60 * 1000
 private const val AGENT_CHAT_LEGACY_METADATA_DIR_NAME = "agent-workbench-chat-frame"
 private const val AGENT_CHAT_LEGACY_METADATA_TABS_DIR_NAME = "tabs"
@@ -217,6 +218,7 @@ internal data class PersistedAgentChatTabState(
   @JvmField val pendingFirstInputAtMs: Long? = null,
   @JvmField val pendingLaunchMode: String? = null,
   @JvmField val launchMode: String? = null,
+  @JvmField val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
   @JvmField val newThreadRebindRequestedAtMs: Long? = null,
   @JvmField val initialMessageDispatchSteps: List<PersistedAgentChatInitialMessageDispatchStep> = emptyList(),
   @JvmField val initialMessageDispatchStepIndex: Int = 0,
@@ -309,6 +311,7 @@ private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): Agen
       pendingFirstInputAtMs = pendingFirstInputAtMs,
       pendingLaunchMode = pendingLaunchMode,
       launchMode = normalizeAgentChatLaunchMode(launchMode),
+      generationSettings = generationSettings,
       newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
       initialMessageDispatchSteps = runtimeSteps,
       initialMessageDispatchStepIndex = runtimeStepIndex,
@@ -337,6 +340,7 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
     pendingFirstInputAtMs = runtime.pendingFirstInputAtMs,
     pendingLaunchMode = runtime.pendingLaunchMode,
     launchMode = runtime.launchMode,
+    generationSettings = runtime.generationSettings,
     newThreadRebindRequestedAtMs = runtime.newThreadRebindRequestedAtMs,
     initialMessageDispatchSteps = runtime.initialMessageDispatchSteps.map(AgentInitialMessageDispatchStep::toPersisted),
     initialMessageDispatchStepIndex = runtime.initialMessageDispatchStepIndex,

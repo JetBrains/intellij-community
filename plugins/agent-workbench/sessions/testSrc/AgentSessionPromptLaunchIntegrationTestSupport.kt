@@ -6,6 +6,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
@@ -333,6 +334,7 @@ internal class RecordingChatOpenExecutor(
     launchSpecOverride: AgentSessionTerminalLaunchSpec?,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
     launchMode: AgentSessionLaunchMode?,
+    generationSettings: AgentPromptGenerationSettings,
   ) {
     val request = OpenChatRequest(
       normalizedPath = normalizedPath,
@@ -343,6 +345,7 @@ internal class RecordingChatOpenExecutor(
       postStartDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
       initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
       launchMode = launchMode,
+      generationSettings = generationSettings,
     )
     val callIndex = openChatCalls.incrementAndGet()
     openChatRequests.add(request)
@@ -357,6 +360,7 @@ internal class RecordingChatOpenExecutor(
     launchSpec: AgentSessionTerminalLaunchSpec,
     initialMessageDispatchPlan: AgentInitialMessageDispatchPlan,
     launchMode: AgentSessionLaunchMode?,
+    generationSettings: AgentPromptGenerationSettings,
     preferredDedicatedFrame: Boolean?,
     openedChatHandler: (suspend (Project, VirtualFile) -> Unit)?,
     threadTitle: String?,
@@ -369,6 +373,7 @@ internal class RecordingChatOpenExecutor(
       postStartDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
       initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
       launchMode = launchMode,
+      generationSettings = generationSettings,
       preferredDedicatedFrame = preferredDedicatedFrame,
     )
     val callIndex = openNewChatCalls.incrementAndGet()
@@ -388,6 +393,7 @@ internal data class OpenChatRequest(
   @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
   @JvmField val initialMessageToken: String?,
   @JvmField val launchMode: AgentSessionLaunchMode?,
+  @JvmField val generationSettings: AgentPromptGenerationSettings,
 ) {
   val initialComposedMessage: String?
     get() = postStartDispatchSteps.singleOrNull()?.text
@@ -401,6 +407,7 @@ internal data class OpenNewChatRequest(
   @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
   @JvmField val initialMessageToken: String?,
   @JvmField val launchMode: AgentSessionLaunchMode?,
+  @JvmField val generationSettings: AgentPromptGenerationSettings,
   @JvmField val preferredDedicatedFrame: Boolean?,
 ) {
   val initialComposedMessage: String?

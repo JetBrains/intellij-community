@@ -759,6 +759,73 @@ class AgentSessionPromptLauncherBridgeTest {
           waitForCondition { chatOpenExecutor.openNewChatCalls.get() == 1 }
           assertThat(chatOpenExecutor.lastOpenNewChatRequest.get()?.launchSpec?.command)
             .containsExactly("test", "new", AgentSessionLaunchMode.STANDARD.name, "--effort", "high")
+          assertThat(chatOpenExecutor.lastOpenNewChatRequest.get()?.generationSettings)
+            .isEqualTo(AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH))
+        }
+      }
+    }
+  }
+
+  @Test
+  fun promptLaunchAppliesGenerationSettingsToExistingThreadResumeLaunchSpec() {
+    val generationSettings = AgentPromptGenerationSettings(modelId = "pi:custom-model")
+    val providerBridge = RecordingPromptLaunchProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      startupPolicyOverride = AgentInitialMessageStartupPolicy.POST_START_ONLY,
+      generationSettingsApplier = { launchSpec, settings ->
+        launchSpec.copy(command = launchSpec.command + listOf("--model", settings.modelId.orEmpty()))
+      },
+    )
+    val chatOpenExecutor = RecordingChatOpenExecutor()
+    AgentSessionProviders.withRegistryForTest(
+      InMemoryAgentSessionProviderRegistry(listOf(providerBridge))
+    ) {
+      runBlocking(Dispatchers.Default) {
+        withServiceAndLaunch(
+          sessionSourcesProvider = {
+            listOf(
+              ScriptedSessionSource(
+                provider = AgentSessionProvider.CODEX,
+                listFromOpenProject = { path, _ ->
+                  if (path == PROJECT_PATH) {
+                    listOf(thread(id = "thread-existing", updatedAt = 200, provider = AgentSessionProvider.CODEX))
+                  }
+                  else {
+                    emptyList()
+                  }
+                },
+              )
+            )
+          },
+          projectEntriesProvider = { listOf(openProjectEntry(PROJECT_PATH, "Project A")) },
+          chatOpenExecutor = chatOpenExecutor,
+        ) { service, launchService ->
+          service.refresh()
+          waitForCondition {
+            val project = service.state.value.projects.firstOrNull { it.path == PROJECT_PATH } ?: return@waitForCondition false
+            project.providerLoadStates[AgentSessionProvider.CODEX] == AgentSessionProviderLoadState.LOADED &&
+            project.threads.any { thread -> thread.id == "thread-existing" }
+          }
+
+          val bridge = promptLauncherBridge(service, launchService)
+
+          val result = bridge.launch(
+            promptLaunchRequest(
+              provider = AgentSessionProvider.CODEX,
+              targetThreadId = "thread-existing",
+              generationSettings = generationSettings,
+            )
+          )
+
+          assertThat(result.launched).isTrue()
+          waitForCondition { chatOpenExecutor.openChatCalls.get() == 1 }
+          val openRequest = chatOpenExecutor.lastOpenChatRequest.get()
+          assertThat(openRequest?.launchSpecOverride?.command)
+            .containsExactly("test", "resume", "thread-existing", "--model", "pi:custom-model")
+          assertThat(openRequest?.generationSettings).isEqualTo(generationSettings)
+          assertThat(providerBridge.lastGenerationSettings.get()).isEqualTo(generationSettings)
+          assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
         }
       }
     }
@@ -2369,6 +2436,7 @@ private class RecordingPromptLaunchProviderBridge(
   val lastStartupBaseLaunchSpec: AtomicReference<AgentSessionTerminalLaunchSpec?> = AtomicReference(null)
   val lastStartupPrompt: AtomicReference<String?> = AtomicReference(null)
   val lastShouldUseStartupPromptCommandRequest: AtomicReference<AgentPromptInitialMessageRequest?> = AtomicReference(null)
+  val lastGenerationSettings: AtomicReference<AgentPromptGenerationSettings?> = AtomicReference(null)
   val lastGenerationSettingsInitialMessagePlan: AtomicReference<AgentInitialMessagePlan?> = AtomicReference(null)
   val generationSettingsApplyCalls: AtomicInteger = AtomicInteger(0)
 
@@ -2417,8 +2485,10 @@ private class RecordingPromptLaunchProviderBridge(
     initialMessagePlan: AgentInitialMessagePlan,
   ): AgentSessionTerminalLaunchSpec {
     generationSettingsApplyCalls.incrementAndGet()
+    val sanitizedGenerationSettings = sanitizeGenerationSettings(generationSettings)
+    lastGenerationSettings.set(sanitizedGenerationSettings)
     lastGenerationSettingsInitialMessagePlan.set(initialMessagePlan)
-    return generationSettingsApplier(baseLaunchSpec, sanitizeGenerationSettings(generationSettings))
+    return generationSettingsApplier(baseLaunchSpec, sanitizedGenerationSettings)
   }
 
   override fun buildLaunchSpecWithInitialMessage(

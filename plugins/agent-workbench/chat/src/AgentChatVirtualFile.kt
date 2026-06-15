@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
@@ -103,6 +104,9 @@ internal class AgentChatVirtualFile internal constructor(
     private set
 
   var launchMode: String? = null
+    private set
+
+  var generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO
     private set
 
   var newThreadRebindRequestedAtMs: Long? = null
@@ -306,6 +310,14 @@ internal class AgentChatVirtualFile internal constructor(
       return false
     }
     this.launchMode = normalized
+    return true
+  }
+
+  fun updateGenerationSettings(generationSettings: AgentPromptGenerationSettings): Boolean {
+    if (this.generationSettings == generationSettings) {
+      return false
+    }
+    this.generationSettings = generationSettings
     return true
   }
 
@@ -578,6 +590,7 @@ internal class AgentChatVirtualFile internal constructor(
       pendingLaunchMode = snapshot.runtime.pendingLaunchMode,
     )
     updateLaunchMode(snapshot.runtime.launchMode)
+    updateGenerationSettings(snapshot.runtime.generationSettings)
     updateNewThreadRebindRequestedAtMs(snapshot.runtime.newThreadRebindRequestedAtMs)
     updateInitialMessageMetadata(
       initialMessageDispatchSteps = snapshot.runtime.initialMessageDispatchSteps,
@@ -611,6 +624,7 @@ internal class AgentChatVirtualFile internal constructor(
         pendingFirstInputAtMs = pendingFirstInputAtMs,
         pendingLaunchMode = pendingLaunchMode,
         launchMode = launchMode,
+        generationSettings = generationSettings,
         newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
         initialMessageDispatchSteps = initialMessageDispatchSteps,
         initialMessageDispatchStepIndex = initialMessageDispatchStepIndex,
