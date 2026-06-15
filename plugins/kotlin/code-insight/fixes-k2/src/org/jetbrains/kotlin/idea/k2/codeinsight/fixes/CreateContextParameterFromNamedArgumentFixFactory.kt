@@ -34,16 +34,16 @@ internal object CreateContextParameterFromNamedArgumentFixFactory {
         val argumentType = argumentExpression.expressionType?.takeIf { it !is KaErrorType }
             ?: builtinTypes.any
         val renderedType = argumentType.render(
-            renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
+            renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
             position = Variance.INVARIANT,
         )
 
         listOf(
-            AddContextParameterFix(
+            AddContextParameterFix.ForCalledFunction(
                 element = argument,
-                contextParameters = listOf(
+                contextParameter =
                     AddContextParameterFix.ContextParameter(name = parameterName, type = renderedType)
-                ),
+                ,
                 targetFunctionPointer = targetFunction.createSmartPointer(),
             )
         )
