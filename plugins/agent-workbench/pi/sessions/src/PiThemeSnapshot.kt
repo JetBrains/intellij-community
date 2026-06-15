@@ -13,7 +13,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import java.awt.Color
 import javax.swing.UIManager
 
-// @spec community/plugins/agent-workbench/spec/agent-sessions-pi.spec.md
+// @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-pi.spec.md
 
 internal data class PiThemeSnapshot(
   val formatVersion: Int,

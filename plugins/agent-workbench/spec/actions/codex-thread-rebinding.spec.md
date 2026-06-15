@@ -71,5 +71,5 @@ Codex starts new threads before the concrete provider thread id is known. Workbe
 
 ## References
 - `new-thread.spec.md`
-- `../agent-chat-editor.spec.md`
-- `../agent-sessions-codex-rollout-source.spec.md`
+- `../chat/agent-chat-editor.spec.md`
+- `../sessions/agent-sessions-codex-rollout-source.spec.md`

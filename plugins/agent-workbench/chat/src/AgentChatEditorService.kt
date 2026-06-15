@@ -3,7 +3,7 @@
 
 package com.intellij.agent.workbench.chat
 
-// @spec community/plugins/agent-workbench/spec/agent-chat-editor.spec.md
+// @spec community/plugins/agent-workbench/spec/chat/agent-chat-editor.spec.md
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivityReport

@@ -62,4 +62,4 @@ Date: 2026-05-09
 ## References
 - `global-prompt-entry.spec.md`
 - `../prompt-context/prompt-context-contracts.spec.md`
-- `../agent-chat-editor.spec.md`
+- `../chat/agent-chat-editor.spec.md`

@@ -2,13 +2,13 @@
 name: Agent Main Toolbar Activity
 description: Requirements and UX rationale for global Agent activity counters in main toolbars.
 targets:
-  - ../sessions-toolwindow/src/actions/AgentSessionsMainToolbarActivityGroup.kt
-  - ../sessions-toolwindow/src/ui/AgentSessionsTitleActions.kt
-  - ../sessions-toolwindow/src/ui/AgentSessionsActivityCounterComponent.kt
-  - ../sessions-toolwindow/resources/intellij.agent.workbench.sessions.toolwindow.xml
-  - ../sessions/resources/intellij.agent.workbench.sessions.xml
-  - ../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
-  - ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+  - ../../sessions-toolwindow/src/actions/AgentSessionsMainToolbarActivityGroup.kt
+  - ../../sessions-toolwindow/src/ui/AgentSessionsTitleActions.kt
+  - ../../sessions-toolwindow/src/ui/AgentSessionsActivityCounterComponent.kt
+  - ../../sessions-toolwindow/resources/intellij.agent.workbench.sessions.toolwindow.xml
+  - ../../sessions/resources/intellij.agent.workbench.sessions.xml
+  - ../../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
+  - ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 ---
 
 # Agent Main Toolbar Activity
@@ -33,36 +33,36 @@ The group is a lightweight global Agent activity switcher: it helps users notice
 
 ## Requirements
 - Sessions toolwindow plugin must register `AgentWorkbenchSessions.MainToolbar.Activity` in `MainToolbarLeft` after `MainToolbarVCSGroup`.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
 
 - Main toolbar activity must expose exactly three stable counters: `Needs attention`, `Running`, and `Done`. The counters must reuse the Agent Threads title-bar counter action/component and bucket popup behavior.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
 
 - Source project activity must be disabled by default and controlled by the Agent Workbench setting `Show Agent activity in main toolbar`.
-  [@test] ../sessions/testSrc/core/settings/AgentWorkbenchSettingsTest.kt
-  [@test] ../sessions/testSrc/settings/AgentWorkbenchSettingsConfigurableTest.kt
+  [@test] ../../sessions/testSrc/core/settings/AgentWorkbenchSettingsTest.kt
+  [@test] ../../sessions/testSrc/settings/AgentWorkbenchSettingsConfigurableTest.kt
 
 - Source project activity must be visible only for non-dedicated projects with an openable normalized source project path.
   Dedicated Agent frames must not exclude `AgentWorkbenchSessions.MainToolbar.Activity` from the main toolbar.
   They must show the group regardless of source-project path, source-toolbar setting, or current-run attention state.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
-  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Source-frame counts and popup rows must include fresh active rows from the current-run attention-gated summary for the selected bucket, regardless of the current source project path.
   Dedicated-frame counts and popup rows must include fresh active rows from the shared chrome activity summary for the selected bucket.
   Rows whose thread `updatedAt` is older than 3 days must not contribute to either main-toolbar activity group.
   Popup rows must keep project/worktree identity visible through the existing row label.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
 
 - Even when the setting is enabled, the source project toolbar group must stay hidden until a fresh thread enters `Needs attention` after the initial loaded Agent activity baseline for the current IDE process. The group must hide again after all such attention rows leave the bucket or expire from the fresh chrome summary.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsActivitySummaryTest.kt
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsActivitySummaryTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
 
 - Zero-count counters must remain visible and disabled with their bucket tooltip while the group is visible, so counter positions are stable for muscle memory.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
 
 - Clicking a non-empty counter must open the same bucket popup used by Agent Threads and let the user choose the chat tab to open or focus from the toolbar entry point.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsMainToolbarActivityGroupTest.kt
 
 ## User Experience
 - The source project toolbar answers: did an Agent task become actionable during this IDE session?
@@ -82,5 +82,5 @@ The group is a lightweight global Agent activity switcher: it helps users notice
 - `./tests.cmd --module intellij.agent.workbench.sessions.actions.tests --test com.intellij.agent.workbench.sessions.AgentSessionsGearActionsTest`
 
 ## References
-- `spec/agent-sessions-tree.spec.md`
-- `spec/agent-dedicated-frame-project-switching.spec.md`
+- `../sessions/agent-sessions-tree.spec.md`
+- `agent-dedicated-frame-project-switching.spec.md`

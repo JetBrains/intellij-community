@@ -2,35 +2,35 @@
 name: Dedicated Frame Project Switching
 description: Requirements for dedicated-frame switching UX and init-time main-toolbar pruning.
 targets:
-  - ../../platform/project-frame/src/com/intellij/openapi/wm/ex/ProjectFrameCapabilities.kt
-  - ../../platform/project-frame/src/com/intellij/openapi/wm/ex/ProjectFrameActionExclusions.kt
-  - ../../platform/project-frame/resources/intellij.platform.projectFrame.xml
-  - ../../platform/ide-core-impl/src/com/intellij/ide/impl/OpenProjectTask.kt
-  - ../../platform/platform-impl/src/com/intellij/ide/RecentProjectMetaInfo.kt
-  - ../../platform/platform-impl/src/com/intellij/ide/RecentProjectsManagerBase.kt
-  - ../../platform/platform-impl/src/com/intellij/ide/ProjectWindowCustomizerService.kt
-  - ../../platform/platform-impl/src/com/intellij/ide/ActiveWindowsWatcher.java
-  - ../../platform/platform-impl/src/com/intellij/openapi/project/impl/IdeProjectFrameAllocator.kt
-  - ../../platform/platform-impl/src/com/intellij/openapi/wm/impl/ProjectFrameHelper.kt
-  - ../../platform/platform-impl/src/com/intellij/openapi/wm/impl/IdeRootPane.kt
-  - ../../platform/platform-impl/src/com/intellij/openapi/wm/impl/headertoolbar/MainToolbar.kt
-  - ../../platform/platform-impl/src/com/intellij/openapi/wm/impl/ProjectFrameCustomHeaderHelper.kt
-  - ../../platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MacToolbarFrameHeader.kt
-  - ../../platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MenuFrameHeader.kt
-  - ../../platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/toolbar/ToolbarFrameHeader.kt
-  - ../sessions/src/service/AgentSessionLaunchService.kt
-  - ../sessions/src/frame/AgentWorkbenchDedicatedFrameProjectManager.kt
-  - ../sessions/src/frame/AgentWorkbenchProjectFrameCapabilitiesProvider.kt
-  - ../sessions/src/service/AgentSourceChatSwitching.kt
-  - ../sessions-actions/src/actions/AgentSessionsGoToSourceProjectFromToolbarAction.kt
-  - ../sessions-actions/src/actions/AgentSessionsSwitchSourceAndChatAction.kt
-  - ../chat/src/AgentChatFocusService.kt
-  - ../sessions-actions/src/actions/AgentSessionsGoToSourceProjectFromEditorTabAction.kt
-  - ../sessions/resources/intellij.agent.workbench.sessions.xml
-  - ../sessions/testSrc/*.kt
-  - ../chat/src/AgentChatEditorTabColorProvider.kt
-  - ../chat/resources/intellij.agent.workbench.chat.xml
-  - ../chat/testSrc/AgentChatEditorTabColorProviderTest.kt
+  - ../../../../platform/project-frame/src/com/intellij/openapi/wm/ex/ProjectFrameCapabilities.kt
+  - ../../../../platform/project-frame/src/com/intellij/openapi/wm/ex/ProjectFrameActionExclusions.kt
+  - ../../../../platform/project-frame/resources/intellij.platform.projectFrame.xml
+  - ../../../../platform/ide-core-impl/src/com/intellij/ide/impl/OpenProjectTask.kt
+  - ../../../../platform/platform-impl/src/com/intellij/ide/RecentProjectMetaInfo.kt
+  - ../../../../platform/platform-impl/src/com/intellij/ide/RecentProjectsManagerBase.kt
+  - ../../../../platform/platform-impl/src/com/intellij/ide/ProjectWindowCustomizerService.kt
+  - ../../../../platform/platform-impl/src/com/intellij/ide/ActiveWindowsWatcher.kt
+  - ../../../../platform/platform-impl/src/com/intellij/openapi/project/impl/IdeProjectFrameAllocator.kt
+  - ../../../../platform/platform-impl/src/com/intellij/openapi/wm/impl/ProjectFrameHelper.kt
+  - ../../../../platform/platform-impl/src/com/intellij/openapi/wm/impl/IdeRootPane.kt
+  - ../../../../platform/platform-impl/src/com/intellij/openapi/wm/impl/headertoolbar/MainToolbar.kt
+  - ../../../../platform/platform-impl/src/com/intellij/openapi/wm/impl/ProjectFrameCustomHeaderHelper.kt
+  - ../../../../platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MacToolbarFrameHeader.kt
+  - ../../../../platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MenuFrameHeader.kt
+  - ../../../../platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/toolbar/ToolbarFrameHeader.kt
+  - ../../sessions/src/service/AgentSessionLaunchService.kt
+  - ../../sessions/src/frame/AgentWorkbenchDedicatedFrameProjectManager.kt
+  - ../../sessions/src/frame/AgentWorkbenchProjectFrameCapabilitiesProvider.kt
+  - ../../sessions/src/service/AgentSourceChatSwitching.kt
+  - ../../sessions-actions/src/actions/AgentSessionsGoToSourceProjectFromToolbarAction.kt
+  - ../../sessions-actions/src/actions/AgentSessionsSwitchSourceAndChatAction.kt
+  - ../../chat/src/AgentChatFocusService.kt
+  - ../../sessions-actions/src/actions/AgentSessionsGoToSourceProjectFromEditorTabAction.kt
+  - ../../sessions/resources/intellij.agent.workbench.sessions.xml
+  - ../../sessions/testSrc/*.kt
+  - ../../chat/src/AgentChatEditorTabColorProvider.kt
+  - ../../chat/resources/intellij.agent.workbench.chat.xml
+  - ../../chat/testSrc/AgentChatEditorTabColorProviderTest.kt
 ---
 
 # Dedicated Frame Project Switching
@@ -51,8 +51,8 @@ This spec owns:
 - bidirectional source/chat focus action for user keymap binding,
 - editor-tab popup affordance to jump to source project.
 
-Terminal hyperlink click routing in dedicated frame is owned by `spec/agent-dedicated-frame-terminal-hyperlink-routing.spec.md`.
-Source-frame main-toolbar Agent activity is owned by `spec/agent-main-toolbar-activity.spec.md`.
+Terminal hyperlink click routing in dedicated frame is owned by `agent-dedicated-frame-terminal-hyperlink-routing.spec.md`.
+Source-frame main-toolbar Agent activity is owned by `agent-main-toolbar-activity.spec.md`.
 
 ## Goals
 - Keep dedicated frame out of project-window cycling while preserving it in global window cycling.
@@ -68,13 +68,13 @@ Source-frame main-toolbar Agent activity is owned by `spec/agent-main-toolbar-ac
 
 ## Requirements
 - Dedicated frame capability set must include `ProjectFrameCapability.EXCLUDE_FROM_PROJECT_WINDOW_SWITCH_ORDER`.
-  [@test] ../sessions/testSrc/AgentWorkbenchProjectFrameCapabilitiesProviderTest.kt
+  [@test] ../../sessions/testSrc/AgentWorkbenchProjectFrameCapabilitiesProviderTest.kt
 
 - `ProjectWindowActionGroup` traversal (`Next/Previous Project Window`) and `OpenProjectWindows` visible entries must honor `EXCLUDE_FROM_PROJECT_WINDOW_SWITCH_ORDER` while keeping the currently focused window eligible as traversal anchor.
-  [@test] ../../platform/lang-impl/testSources/com/intellij/openapi/wm/impl/ProjectWindowActionGroupTest.kt
+  [@test] ../../../../platform/lang-impl/testSources/com/intellij/openapi/wm/impl/ProjectWindowActionGroupTest.kt
 
 - Platform global window traversal (`Cmd+\``) must keep dedicated frames in traversal order by not assigning `EXCLUDE_FROM_WINDOW_SWITCH_ORDER` to dedicated projects.
-  [@test] ../sessions/testSrc/AgentWorkbenchProjectFrameCapabilitiesProviderTest.kt
+  [@test] ../../sessions/testSrc/AgentWorkbenchProjectFrameCapabilitiesProviderTest.kt
 
 - `OpenProjectTask` and recent-project metadata must carry `projectFrameTypeId`, and allocator must resolve frame type by priority:
   - `OpenProjectTask.projectFrameTypeId`, then
@@ -91,43 +91,43 @@ Source-frame main-toolbar Agent activity is owned by `spec/agent-main-toolbar-ac
   - `ExecutionTargetsToolbarGroup`
   - `NewUiRunWidget`
   - `AIAssistantHubPopupAction`
-  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sessions plugin must not register `AgentSessionsToolbarActionConfigurationCustomizer`.
-  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - In dedicated frame, editor-tab popup must expose `AgentWorkbenchSessions.GoToSourceProjectFromEditorTab`, and the action must stay hidden outside dedicated projects.
-  [@test] ../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
-  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - In dedicated frame, Agent chat editor tabs must reuse the source project's stored project color when `UISettings.differentiateProjects` is enabled:
   - use the platform recent-project soft background palette keyed by the stored source-project color index,
   - derive a muted tab color from stored custom project colors,
   - do not generate or persist project color metadata during tab color resolution,
   - expose the source project path in the tab tooltip so color is not the only project-identification cue.
-  [@test] ../chat/testSrc/AgentChatEditorTabColorProviderTest.kt
-  [@test] ../chat/testSrc/AgentChatEditorServiceTest.kt
+  [@test] ../../chat/testSrc/AgentChatEditorTabColorProviderTest.kt
+  [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Agent chat editor tabs can be dragged from the dedicated frame to the matching already-open source project frame:
   - the matching source project frame accepts the drop,
   - other project frames reject the drop,
   - closed source projects are not opened during drag-and-drop,
   - the running terminal-backed agent session is preserved and must not restart.
-  [@test] ../chat/testSrc/AgentChatCrossProjectDockTargetRegistrarTest.kt
-  [@test] ../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+  [@test] ../../chat/testSrc/AgentChatCrossProjectDockTargetRegistrarTest.kt
+  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
 - In dedicated frame, main toolbar must expose `AgentWorkbenchSessions.GoToSourceProjectFromToolbar`:
   - visible only in dedicated projects,
   - shows active chat tab source project name and opens/focuses source project in one click,
   - shows disabled `No source project` placeholder when no valid active source project path is available.
-  [@test] ../sessions-actions/testSrc/AgentSessionsGoToSourceProjectFromToolbarActionTest.kt
-  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsGoToSourceProjectFromToolbarActionTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sessions plugin must register `AgentWorkbenchSessions.OpenDedicatedFrame` and expose it from both:
   - sessions toolwindow header title actions,
   - `OpenProjectWindows` group (Window menu project windows section).
-  [@test] ../sessions-actions/testSrc/AgentSessionsOpenDedicatedFrameActionTest.kt
-  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsOpenDedicatedFrameActionTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 - Sessions plugin must register `AgentWorkbenchSessions.SwitchSourceAndChat` in `OpenProjectWindows` after
   `AgentWorkbenchSessions.OpenDedicatedFrame`, without any bundled default keyboard shortcut:
@@ -135,8 +135,8 @@ Source-frame main-toolbar Agent activity is owned by `spec/agent-main-toolbar-ac
     falling back to the first open chat tab for that source project and then to opening/focusing the dedicated frame without selecting an unrelated chat,
   - from the dedicated frame, it opens/focuses the source project for the selected Agent chat tab,
   - in the dedicated frame, it stays disabled when the selected chat tab has no openable source project.
-  [@test] ../sessions-actions/testSrc/AgentSessionsSwitchSourceAndChatActionTest.kt
-  [@test] ../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsSwitchSourceAndChatActionTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
 ## User Experience
 - `Cmd+\`` in normal project frames includes dedicated frame windows.
@@ -174,7 +174,7 @@ Source-frame main-toolbar Agent activity is owned by `spec/agent-main-toolbar-ac
 - If source-aware `Cmd+\`` behavior becomes required later, this spec should evolve to define platform-level semantics explicitly.
 
 ## References
-- `spec/agent-dedicated-frame.spec.md`
-- `spec/agent-sessions.spec.md`
-- `spec/agent-main-toolbar-activity.spec.md`
-- `spec/agent-dedicated-frame-terminal-hyperlink-routing.spec.md`
+- `agent-dedicated-frame.spec.md`
+- `../sessions/agent-sessions.spec.md`
+- `agent-main-toolbar-activity.spec.md`
+- `agent-dedicated-frame-terminal-hyperlink-routing.spec.md`

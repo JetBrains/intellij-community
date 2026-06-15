@@ -4,7 +4,7 @@
 
 package com.intellij.agent.workbench.codex.sessions.backend.rollout
 
-// @spec community/plugins/agent-workbench/spec/agent-sessions-codex-rollout-source.spec.md
+// @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-codex-rollout-source.spec.md
 
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread

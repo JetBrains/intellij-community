@@ -84,4 +84,4 @@ Ask Agent launch controls let users choose a provider, launch mode, model, and n
 
 ## References
 - `global-prompt-entry.spec.md`
-- `../agent-core-contracts.spec.md`
+- `../core/agent-core-contracts.spec.md`

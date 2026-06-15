@@ -72,17 +72,17 @@ Projects
 
 Detailed requirements and testing contracts are documented in `spec/`.
 
-- [Core Contracts](spec/agent-core-contracts.spec.md) - Canonical cross-feature contracts: identity, command mapping, shared editor-tab actions, and shared visibility primitives.
-- [Agent Threads Tool Window](spec/agent-sessions.spec.md) - Provider aggregation, load/refresh lifecycle, deduplication, and project/worktree tree behavior.
-- [Agent Threads Visibility and More Row](spec/agent-sessions-thread-visibility.spec.md) - Deterministic visibility rendering and More-row precedence rules.
-- [Agent Chat Editor](spec/agent-chat-editor.spec.md) - Chat tab lifecycle, persistence/restore, lazy terminal initialization, titles/icons.
-- [Agent Chat Dedicated Frame](spec/agent-dedicated-frame.spec.md) - Dedicated-frame mode routing, lifecycle, shortcut semantics, and filtering.
-- [Agent Main Toolbar Activity](spec/agent-main-toolbar-activity.spec.md) - Global Agent activity counters shown in source-project main toolbars.
-- [Codex Sessions Rollout Source](spec/agent-sessions-codex-rollout-source.spec.md) - Rollout-default Codex discovery, watcher semantics, backend selector, and app-server write interoperability.
+- [Core Contracts](spec/core/agent-core-contracts.spec.md) - Canonical cross-feature contracts: identity, command mapping, shared editor-tab actions, and shared visibility primitives.
+- [Agent Threads Tool Window](spec/sessions/agent-sessions.spec.md) - Provider aggregation, load/refresh lifecycle, deduplication, and project/worktree tree behavior.
+- [Agent Threads Visibility and More Row](spec/sessions/agent-sessions-thread-visibility.spec.md) - Deterministic visibility rendering and More-row precedence rules.
+- [Agent Chat Editor](spec/chat/agent-chat-editor.spec.md) - Chat tab lifecycle, persistence/restore, lazy terminal initialization, titles/icons.
+- [Agent Chat Dedicated Frame](spec/frame/agent-dedicated-frame.spec.md) - Dedicated-frame mode routing, lifecycle, shortcut semantics, and filtering.
+- [Agent Main Toolbar Activity](spec/frame/agent-main-toolbar-activity.spec.md) - Global Agent activity counters shown in source-project main toolbars.
+- [Codex Sessions Rollout Source](spec/sessions/agent-sessions-codex-rollout-source.spec.md) - Rollout-default Codex discovery, watcher semantics, backend selector, and app-server write interoperability.
 - [Agent Sessions New-Session Actions](spec/actions/new-thread.spec.md) - New-thread UX, provider/YOLO selection, creation dedup, pending-thread rebinding.
 - [Global Prompt Entry](spec/actions/global-prompt-entry.spec.md) - Global shortcut entrypoint, centered popup UX, context capture, and launch bridge flow.
 - [Global Prompt Suggestions](spec/actions/global-prompt-suggestions.spec.md) - Context-derived seed prompts, prompt-panel suggestion UI, async refresh semantics, and Codex polishing.
-- [Testing Contract](spec/agent-sessions-testing.spec.md) - Coverage ownership matrix and required contract test suites.
+- [Testing Contract](spec/sessions/agent-sessions-testing.spec.md) - Coverage ownership matrix and required contract test suites.
 
 ## Test All
 

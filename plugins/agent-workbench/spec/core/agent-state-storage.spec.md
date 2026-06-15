@@ -2,20 +2,21 @@
 name: Agent Workbench State Storage
 description: Inventory of Agent Workbench persistent state components and storage scopes.
 targets:
-  - ../chat/src/AgentChatFileEditorState.kt
-  - ../chat/src/AgentChatTabsStateService.kt
-  - ../terminal/sessions/src/TerminalSessionStateService.kt
-  - ../sessions/src/state/*.kt
-  - ../prompt/ui/src/AgentPromptUiSessionStateService.kt
-  - ../chat/testSrc/AgentChatFileEditorProviderTest.kt
-  - ../terminal/sessions/testSrc/TerminalSessionSourceTest.kt
-  - ../sessions/testSrc/AgentSession*StateServiceTest.kt
-  - ../prompt/ui/testSrc/AgentPromptUiSessionStateServiceTest.kt
+  - ../../chat/src/AgentChatFileEditorState.kt
+  - ../../chat/src/AgentChatTabsStateService.kt
+  - ../../terminal/sessions/src/TerminalSessionStateService.kt
+  - ../../sessions/src/state/*.kt
+  - ../../prompt/ui/src/AgentPromptUiSessionStateService.kt
+  - ../../chat/testSrc/AgentChatFileEditorProviderTest.kt
+  - ../../terminal/sessions/testSrc/TerminalSessionSourceTest.kt
+  - ../../sessions/testSrc/AgentSession*StateServiceTest.kt
+  - ../../prompt/ui/testSrc/AgentPromptUiSessionStateServiceTest.kt
 ---
 
 # Agent Workbench State Storage
 
-Status: Draft Date: 2026-05-09
+Status: Draft
+Date: 2026-06-15
 
 ## Summary
 
@@ -37,20 +38,20 @@ machine-local preferences, and project workspace state stores the prompt draft o
   - `AgentPromptUiState`, project-level workspace file, for prompt draft fields.
 
 - Warm session state must not persist blocking errors, provider warnings, loading flags, or pending `new-*` identities.
-  [@test] ../sessions/testSrc/AgentSessionWarmStateServiceTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionWarmStateServiceTest.kt
 
 - Agent Chat persisted tab state must persist tab identity, UI/runtime restore metadata including concrete-tab resume launch mode, and
   command-free startup intent for pending new-session tabs, but must not persist shell command or environment variables. The provider
   variant and stored launch mode are the canonical sources for resume and new-session command construction.
-  [@test] ../chat/testSrc/AgentChatFileEditorProviderTest.kt
+  [@test] ../../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - Prompt context restore snapshots are runtime-only and must not be serialized into `AgentPromptUiState`.
-  [@test] ../prompt/ui/testSrc/AgentPromptUiSessionStateServiceTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptUiSessionStateServiceTest.kt
 
 - State payloads used by `SerializablePersistentStateComponent` must be Kotlin-serializable.
-  [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
-  [@test] ../sessions/testSrc/AgentSessionUiPreferencesStateServiceTest.kt
-  [@test] ../prompt/ui/testSrc/AgentPromptUiSessionStateServiceTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionUiPreferencesStateServiceTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptUiSessionStateServiceTest.kt
 
 ## Testing / Local Run
 
@@ -63,7 +64,7 @@ machine-local preferences, and project workspace state stores the prompt draft o
 
 ## References
 
-- `spec/agent-chat-editor.spec.md`
-- `spec/agent-sessions.spec.md`
-- `spec/agent-terminal-sessions.spec.md`
-- `spec/actions/global-prompt-entry.spec.md`
+- `../chat/agent-chat-editor.spec.md`
+- `../sessions/agent-sessions.spec.md`
+- `../sessions/agent-terminal-sessions.spec.md`
+- `../actions/global-prompt-entry.spec.md`

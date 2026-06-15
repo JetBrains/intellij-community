@@ -2,10 +2,10 @@
 name: Agent Sessions Junie Cost
 description: Requirements for exact Junie session cost aggregation from root session events.
 targets:
-  - ../junie/sessions/src/**/*.kt
-  - ../junie/sessions/testSrc/**/*.kt
-  - ../sessions/src/service/*.kt
-  - ../sessions/testSrc/*.kt
+  - ../../junie/sessions/src/**/*.kt
+  - ../../junie/sessions/testSrc/**/*.kt
+  - ../../sessions/src/service/*.kt
+  - ../../sessions/testSrc/*.kt
 ---
 
 # Agent Sessions Junie Cost

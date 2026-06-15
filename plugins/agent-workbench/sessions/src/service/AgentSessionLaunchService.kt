@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.service
 
-// @spec community/plugins/agent-workbench/spec/agent-sessions.spec.md
-// @spec community/plugins/agent-workbench/spec/agent-dedicated-frame.spec.md
+// @spec community/plugins/agent-workbench/spec/sessions/agent-sessions.spec.md
+// @spec community/plugins/agent-workbench/spec/frame/agent-dedicated-frame.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/new-thread.spec.md
-// @spec community/plugins/agent-workbench/spec/agent-terminal-sessions.spec.md
+// @spec community/plugins/agent-workbench/spec/sessions/agent-terminal-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-entry.spec.md
-// @spec community/plugins/agent-workbench/spec/agent-workbench-telemetry.spec.md
+// @spec community/plugins/agent-workbench/spec/core/agent-workbench-telemetry.spec.md
 
 import com.intellij.agent.workbench.chat.AgentChatDeferredStartPhase
 import com.intellij.agent.workbench.chat.AgentChatDeferredStartState

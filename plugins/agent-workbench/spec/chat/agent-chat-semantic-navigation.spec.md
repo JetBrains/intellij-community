@@ -2,16 +2,16 @@
 name: Agent Chat Semantic Navigation
 description: Requirements for semantic transcript regions and editor navigation affordances in Agent Workbench chat tabs.
 targets:
-  - ../chat/src/AgentChatFileEditor.kt
-  - ../chat/src/AgentChatTerminalViewSupport.kt
-  - ../chat/src/AgentChatEditorTabProposedPlanActions.kt
-  - ../chat/src/CodexTuiPatchFoldController.kt
-  - ../chat/resources/intellij.agent.workbench.chat.xml
-  - ../chat/resources/messages/AgentChatBundle.properties
-  - ../common/src/AgentWorkbenchActionIds.kt
-  - ../plugin/resources/META-INF/plugin.xml
-  - ../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
-  - ../sessions-actions/testSrc/AgentWorkbenchPluginLoadingTest.kt
+  - ../../chat/src/AgentChatFileEditor.kt
+  - ../../chat/src/AgentChatTerminalViewSupport.kt
+  - ../../chat/src/AgentChatEditorTabProposedPlanActions.kt
+  - ../../chat/src/CodexTuiPatchFoldController.kt
+  - ../../chat/resources/intellij.agent.workbench.chat.xml
+  - ../../chat/resources/messages/AgentChatBundle.properties
+  - ../../common/src/AgentWorkbenchActionIds.kt
+  - ../../plugin/resources/META-INF/plugin.xml
+  - ../../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
+  - ../../sessions-actions/testSrc/AgentWorkbenchPluginLoadingTest.kt
 ---
 
 # Agent Chat Semantic Navigation
@@ -20,7 +20,7 @@ Status: Draft
 Date: 2026-04-01
 
 ## Summary
-Define how Agent Workbench chat tabs annotate semantically meaningful terminal-transcript regions and expose them through IntelliJ editor navigation affordances. V1 owns proposed-plan navigation in embedded Codex chats; chat tab lifecycle and persistence remain owned by `spec/agent-chat-editor.spec.md`.
+Define how Agent Workbench chat tabs annotate semantically meaningful terminal-transcript regions and expose them through IntelliJ editor navigation affordances. V1 owns proposed-plan navigation in embedded Codex chats; chat tab lifecycle and persistence remain owned by `agent-chat-editor.spec.md`.
 
 ## Goals
 - Make important TUI transcript regions navigable through standard IntelliJ editor affordances.
@@ -35,32 +35,32 @@ Define how Agent Workbench chat tabs annotate semantically meaningful terminal-t
 
 ## Requirements
 - Agent Workbench chat must define semantic transcript navigation as provider-pluggable region detection over terminal transcript snapshots, with editor integration owned by shared chat-editor plumbing instead of provider-specific action logic.
-  [@test] ../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
+  [@test] ../../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
 
 - V1 semantic navigation must support only `PROPOSED_PLAN` regions for Codex chats; providers without a registered detector must expose no semantic transcript regions.
 - V1 semantic navigation must also support `UPDATED_PLAN` regions for Codex chats to mark plan updates (accepted/modified plans) alongside proposed plans.
-  [@test] ../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
+  [@test] ../../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
 
 - Proposed-plan navigation must remain gated by registry key `agent.workbench.semantic.proposed.plan.navigation`, default `false`.
-  [@test] ../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
+  [@test] ../../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
 
 - Codex plan detection must use TUI header patterns emitted by the Codex CLI: `• Proposed Plan` for proposed plans and `• Updated Plan` for plan updates (U+2022 BULLET prefix). Header-only lines without subsequent content must not produce semantic regions.
-  [@test] ../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
+  [@test] ../../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
 
 - Proposed-plan summaries must derive from the first meaningful line inside the block, ignoring empty lines, code fences, and Markdown heading/list prefixes used only for formatting.
-  [@test] ../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
+  [@test] ../../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
 
 - Multiple proposed-plan regions in one transcript must preserve transcript order and assign deterministic same-content ordinals so repeated content remains independently navigable.
-  [@test] ../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
+  [@test] ../../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
 
 - Semantic-region state must materialize navigable editor markup for each active proposed-plan region and must support wrap-around previous/next navigation based on the editor caret position.
-  [@test] ../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
+  [@test] ../../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
 
 - Proposed plans and updated plans must use distinct error-stripe mark colors so users can visually distinguish plan states at a glance.
-  [@test] ../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
+  [@test] ../../chat/testSrc/AgentChatSemanticRegionControllerTest.kt
 
 - Agent Workbench chat plugin must register editor-tab actions `Previous Proposed Plan` and `Next Proposed Plan` so navigation is discoverable from chat tabs and standard IntelliJ action lookup.
-  [@test] ../sessions-actions/testSrc/AgentWorkbenchPluginLoadingTest.kt
+  [@test] ../../sessions-actions/testSrc/AgentWorkbenchPluginLoadingTest.kt
 
 ## User Experience
 - When the registry key is disabled, or the selected chat provider has no semantic detector, the chat editor shows no semantic-navigation actions or markers.
@@ -90,5 +90,5 @@ Define how Agent Workbench chat tabs annotate semantically meaningful terminal-t
 - Long transcript truncation or alternate-screen transitions may need explicit product rules if navigation is expected to reach historical regions no longer present in the active editor buffer.
 
 ## References
-- `spec/agent-chat-editor.spec.md`
-- `spec/agent-core-contracts.spec.md`
+- `agent-chat-editor.spec.md`
+- `../core/agent-core-contracts.spec.md`

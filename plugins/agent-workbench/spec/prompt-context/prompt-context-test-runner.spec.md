@@ -2,11 +2,11 @@
 name: "Prompt Context: Test Runner"
 description: Requirements for test-selection prompt context contributor and test-failures renderer/chip behavior.
 targets:
-  - ../../prompt-testrunner/src/context/AgentPromptTestSelectionContextContributor.kt
-  - ../../prompt-testrunner/src/render/AgentPromptTestFailuresContextRendererBridge.kt
-  - ../../prompt-testrunner/resources/intellij.agent.workbench.prompt.testrunner.xml
-  - ../../prompt-testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
-  - ../../prompt-testrunner/testSrc/render/AgentPromptTestFailuresContextRendererBridgeTest.kt
+  - ../../prompt/testrunner/src/context/AgentPromptTestSelectionContextContributor.kt
+  - ../../prompt/testrunner/src/render/AgentPromptTestFailuresContextRendererBridge.kt
+  - ../../prompt/testrunner/resources/intellij.agent.workbench.prompt.testrunner.xml
+  - ../../prompt/testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
+  - ../../prompt/testrunner/testSrc/render/AgentPromptTestFailuresContextRendererBridgeTest.kt
 ---
 
 # Prompt Context: Test Runner
@@ -35,19 +35,19 @@ Define test-runner prompt context behavior for selected tests, including status/
 - Test contributor selection source priority:
   - `AbstractTestProxy.DATA_KEYS` array,
   - fallback to `AbstractTestProxy.DATA_KEY` single item.
-  [@test] ../../prompt-testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
+  [@test] ../../prompt/testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
 
 - Applicability contract:
   - contributor returns empty when selected tests are present but the focused invocation editor is a non-console editor,
   - contributor remains eligible when no editor is present,
   - contributor remains eligible when the active console editor is a console editor.
-  [@test] ../../prompt-testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
+  [@test] ../../prompt/testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
 
 - Contributor output must produce one context item with:
   - `rendererId = testFailures`,
   - `source = testRunner`,
   - line format `<status>: <reference>[ | assertion: <hint>]`.
-  [@test] ../../prompt-testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
+  [@test] ../../prompt/testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
 
 - Console output contract:
   - when the active console editor is a console editor, contributor captures failure text from that editor,
@@ -55,29 +55,29 @@ Define test-runner prompt context behavior for selected tests, including status/
   - outer blank lines are trimmed while internal formatting is preserved,
   - console output is stored as optional payload fields `consoleOutput` and `consoleOutputFromSelection`,
   - console output is source-truncated to a fixed char cap.
-  [@test] ../../prompt-testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
+  [@test] ../../prompt/testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
 
 - Status and assertion contract:
   - status normalization supports `failed`, `passed`, `ignored`, `inProgress`, `unknown`,
   - assertion hint prefers error message, then first non-empty stacktrace line,
   - assertion hint is whitespace-normalized and capped to 180 chars.
-  [@test] ../../prompt-testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
+  [@test] ../../prompt/testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
 
 - Source limit contract:
   - include at most 5 tests,
   - cap console output to the contributor source limit,
   - set truncation reason `SOURCE_LIMIT` when capped.
-  [@test] ../../prompt-testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
+  [@test] ../../prompt/testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
 
 - Payload contract for test item:
   - `entries[]` with `name`, `status`, `reference`, optional `locationUrl`, optional `assertionMessage`,
   - optional `consoleOutput`, optional `consoleOutputFromSelection`,
   - `selectedCount`, `candidateCount`, `includedCount`,
   - `statusCounts` map.
-  [@test] ../../prompt-testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
+  [@test] ../../prompt/testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
 
 - If no failing tests are selected, contributor must still include selected tests with normalized statuses.
-  [@test] ../../prompt-testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
+  [@test] ../../prompt/testrunner/testSrc/context/AgentPromptTestSelectionContextContributorTest.kt
 
 - Test renderer contract:
   - envelope label is derived from status counts,
@@ -85,13 +85,13 @@ Define test-runner prompt context behavior for selected tests, including status/
   - when `consoleOutput` is present, renderer appends a `failure console output:` text code block after the test entries,
   - when payload missing, renderer parses legacy body lines,
   - legacy `java:test://Suite.testA` anchor must render as `Suite#testA`.
-  [@test] ../../prompt-testrunner/testSrc/render/AgentPromptTestFailuresContextRendererBridgeTest.kt
+  [@test] ../../prompt/testrunner/testSrc/render/AgentPromptTestFailuresContextRendererBridgeTest.kt
 
 - Test chip contract:
   - chip preview prefers first failed entry, else first available entry,
   - console output does not change chip preview selection,
   - chip text combines group label + preview.
-  [@test] ../../prompt-testrunner/testSrc/render/AgentPromptTestFailuresContextRendererBridgeTest.kt
+  [@test] ../../prompt/testrunner/testSrc/render/AgentPromptTestFailuresContextRendererBridgeTest.kt
 
 ## User Experience
 - Selected tests should appear as concise references with optional short assertion hints.

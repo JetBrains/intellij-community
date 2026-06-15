@@ -94,4 +94,4 @@ The global prompt opens a project-scoped popup for starting a new task or sendin
 - `global-prompt-generation-controls.spec.md`
 - `global-prompt-suggestions.spec.md`
 - `../prompt-context/prompt-context-contracts.spec.md`
-- `../agent-core-contracts.spec.md`
+- `../core/agent-core-contracts.spec.md`

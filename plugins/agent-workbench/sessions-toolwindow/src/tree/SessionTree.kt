@@ -1,7 +1,7 @@
 package com.intellij.agent.workbench.sessions.toolwindow.tree
 
-// @spec community/plugins/agent-workbench/spec/agent-sessions.spec.md
-// @spec community/plugins/agent-workbench/spec/agent-sessions-thread-visibility.spec.md
+// @spec community/plugins/agent-workbench/spec/sessions/agent-sessions.spec.md
+// @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-thread-visibility.spec.md
 
 import com.intellij.agent.workbench.chat.AgentChatTabSelection
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath

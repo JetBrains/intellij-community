@@ -2,13 +2,13 @@
 name: Agent Threads Testing
 description: Coverage ownership matrix for Agent Threads, Agent Chat, provider backends, and prompt-launch contracts.
 targets:
-  - ../sessions/testSrc/*.kt
-  - ../sessions-toolwindow/testSrc/*.kt
-  - ../sessions-actions/testSrc/*.kt
-  - ../chat/testSrc/*.kt
-  - ../claude/sessions/testSrc/**/*.kt
-  - ../codex/sessions/testSrc/**/*.kt
-  - ../filewatch/testSrc/**/*.kt
+  - ../../sessions/testSrc/*.kt
+  - ../../sessions-toolwindow/testSrc/*.kt
+  - ../../sessions-actions/testSrc/*.kt
+  - ../../chat/testSrc/*.kt
+  - ../../claude/sessions/testSrc/**/*.kt
+  - ../../codex/sessions/testSrc/**/*.kt
+  - ../../filewatch/testSrc/**/*.kt
 ---
 
 # Agent Threads Testing
@@ -45,10 +45,10 @@ This spec maps Agent Workbench behavior specs to their primary module tests. It 
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.CodexAppServerClientTest`
 
 ## References
-- `spec/agent-core-contracts.spec.md`
-- `spec/agent-sessions.spec.md`
-- `spec/agent-sessions-tree.spec.md`
-- `spec/agent-sessions-refresh.spec.md`
-- `spec/agent-chat-editor.spec.md`
-- `spec/actions/new-thread.spec.md`
-- `spec/agent-sessions-codex-rollout-source.spec.md`
+- `../core/agent-core-contracts.spec.md`
+- `agent-sessions.spec.md`
+- `agent-sessions-tree.spec.md`
+- `agent-sessions-refresh.spec.md`
+- `../chat/agent-chat-editor.spec.md`
+- `../actions/new-thread.spec.md`
+- `agent-sessions-codex-rollout-source.spec.md`

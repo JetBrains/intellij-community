@@ -11,7 +11,7 @@ targets:
   - ../../vcs-merge/resources/messages/AgentVcsMergeBundle.properties
   - ../../sessions/src/state/AgentSessionUiPreferencesStateService.kt
   - ../../sessions/src/service/AgentSessionLaunchService.kt
-  - ../../git4idea/src/git4idea/conflicts/MergeConflictResolveUtil.kt
+  - ../../../git4idea/backend/src/conflicts/MergeConflictResolveUtil.kt
   - ../../../../platform/vcs-impl/resources/META-INF/VcsExtensionPoints.xml
   - ../../../../platform/vcs-impl/shared/src/com/intellij/openapi/vcs/changes/ui/ChangesBrowserConflictsNode.kt
   - ../../../../platform/vcs-impl/shared/src/com/intellij/openapi/vcs/merge/MergeResolveActionProvider.kt
@@ -21,7 +21,7 @@ targets:
   - ../../../../platform/vcs-impl/src/com/intellij/openapi/vcs/merge/flow/OneShotMergeFlowDelegate.kt
   - ../../../../platform/vcs-impl/testSrc/com/intellij/openapi/vcs/merge/flow/OneShotMergeFlowDelegateTest.kt
   - ../../../../platform/vcs-impl/shared/testSrc/com/intellij/openapi/vcs/changes/ui/ChangesBrowserConflictsNodeTest.kt
-  - ../../git4idea/tests/git4idea/conflicts/GitMergeConflictEditorNotificationProviderTest.kt
+  - ../../../git4idea/tests/git4idea/conflicts/GitMergeConflictEditorNotificationProviderTest.kt
   - ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 ---
 
@@ -58,14 +58,14 @@ Agent Workbench owns the only concrete contributed action today. Platform and `g
 - `MergeResolveActionSupport` must build action events with `PROJECT`, `CONTEXT_COMPONENT`, and `MergeResolveActionContext.KEY`, and it must drive contributed actions through normal `ActionUtil.updateAction` and `ActionUtil.performAction` calls.
   [@test] ../../../../platform/vcs-impl/shared/testSrc/com/intellij/openapi/vcs/changes/ui/ChangesBrowserConflictsNodeTest.kt
   [@test] ../../../../platform/vcs-impl/testSrc/com/intellij/openapi/vcs/merge/flow/OneShotMergeFlowDelegateTest.kt
-  [@test] ../../git4idea/tests/git4idea/conflicts/GitMergeConflictEditorNotificationProviderTest.kt
+  [@test] ../../../git4idea/tests/git4idea/conflicts/GitMergeConflictEditorNotificationProviderTest.kt
 
 - `MergeResolveActionContext` for non-iterative launch surfaces must remain lightweight and contain only the project, an optional current-selection hint, and optional launch-surface callbacks. It must not carry conflicted-file inventories, `MergeProvider`, or `MergeDialogCustomizer`.
 
 - Contributed non-iterative merge actions must be ordered by `MergeResolveActionProvider.order` across all launch surfaces.
   [@test] ../../../../platform/vcs-impl/shared/testSrc/com/intellij/openapi/vcs/changes/ui/ChangesBrowserConflictsNodeTest.kt
   [@test] ../../../../platform/vcs-impl/testSrc/com/intellij/openapi/vcs/merge/flow/OneShotMergeFlowDelegateTest.kt
-  [@test] ../../git4idea/tests/git4idea/conflicts/GitMergeConflictEditorNotificationProviderTest.kt
+  [@test] ../../../git4idea/tests/git4idea/conflicts/GitMergeConflictEditorNotificationProviderTest.kt
 
 - The Changes conflicts surface must expose `Resolve with Agent` as a contributed conflict-node action, honor normal action update presentation for visibility and enabled state, and render disabled state with tooltip text.
   [@test] ../../../../platform/vcs-impl/shared/testSrc/com/intellij/openapi/vcs/changes/ui/ChangesBrowserConflictsNodeTest.kt
@@ -80,7 +80,7 @@ Agent Workbench owns the only concrete contributed action today. Platform and `g
 - The Git conflicted-file editor banner must keep `Resolve conflicts…` as the first link and append `Resolve with Agent` as a second link when the agent action is available and enabled for that single-file merge context.
 - The Git conflicted-file banner must build the same shared merge action context shape used by other non-modal launch surfaces and invoke the action through the standard action pipeline.
 - The existing Git “resolve in progress” banner remains manual-window-only and must not gain agent-session state in v1.
-  [@test] ../../git4idea/tests/git4idea/conflicts/GitMergeConflictEditorNotificationProviderTest.kt
+  [@test] ../../../git4idea/tests/git4idea/conflicts/GitMergeConflictEditorNotificationProviderTest.kt
 
 - For non-iterative launch surfaces, the agent plugin must treat explicit launch-selection files as the backend preparation scope. If no concrete file selection exists, the launch must skip backend merge preparation and let the agent discover the worktree conflict set through normal IDE, VCS, or git tooling.
 - Selection-capable launch surfaces may attach only their current concrete file selection as an optional launch-selection hint. If no concrete file selection exists, they must omit that hint instead of falling back to the full conflicted-file inventory. Single-file launch surfaces may attach that one file as the launch-selection hint.
@@ -142,7 +142,7 @@ Agent Workbench owns the only concrete contributed action today. Platform and `g
 - `./tests.cmd --module intellij.agent.workbench.vcs.merge.tests --test com.intellij.agent.workbench.vcs.merge.AgentResolveConflictsActionTest`
 - `./tests.cmd --module intellij.platform.vcs.impl.tests --test com.intellij.openapi.vcs.merge.flow.OneShotMergeFlowDelegateTest`
 - `./tests.cmd --module intellij.platform.vcs.impl.shared.tests --test com.intellij.openapi.vcs.changes.ui.ChangesBrowserConflictsNodeTest`
-- `./tests.cmd --module intellij.vcs.git.tests --test git4idea.conflicts.GitMergeConflictEditorNotificationProviderTest`
+- `./tests.cmd --module intellij.vcs.git.backend.tests --test git4idea.conflicts.GitMergeConflictEditorNotificationProviderTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest`
 
 ## Open Questions / Risks
@@ -152,6 +152,6 @@ Agent Workbench owns the only concrete contributed action today. Platform and `g
 - If future consumers need more than project, launch-surface selection hints, and handoff callbacks in the shared non-iterative context, that contract must be revised carefully to avoid pulling `intellij.platform.vcs` APIs back into `vcs-impl/shared`.
 
 ## References
-- `./agent-core-contracts.spec.md`
-- `./agent-sessions.spec.md`
-- `./actions/new-thread.spec.md`
+- `../core/agent-core-contracts.spec.md`
+- `../sessions/agent-sessions.spec.md`
+- `../actions/new-thread.spec.md`

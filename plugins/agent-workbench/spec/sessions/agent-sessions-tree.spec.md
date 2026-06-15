@@ -2,10 +2,10 @@
 name: Agent Threads Tree UI
 description: Swing tree rendering, interaction, speed-search, and row affordance requirements for Agent Threads.
 targets:
-  - ../sessions-toolwindow/src/**/*.kt
-  - ../sessions-toolwindow/testSrc/*.kt
-  - ../sessions/src/state/AgentSessionTreeUiStateService.kt
-  - ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
+  - ../../sessions-toolwindow/src/**/*.kt
+  - ../../sessions-toolwindow/testSrc/*.kt
+  - ../../sessions/src/state/AgentSessionTreeUiStateService.kt
+  - ../../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
 ---
 
 # Agent Threads Tree UI
@@ -18,14 +18,14 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
 
 ## Requirements
 - Rendering precedence is strict: blocking path error suppresses provider warnings and empty rows; warnings suppress empty rows; `More` rows preserve exact and unknown-count semantics.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeRenderingTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeRenderingTest.kt
 
 - Thread rows must render provider icon, normalized activity badge, relative update time, and tooltip status. Raw provider statuses must not create extra visible activity states.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsCodexActivityRenderingIntegrationTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsCodexActivityRenderingIntegrationTest.kt
 
 - Long thread titles must clip within the visible tool window and must not create horizontal tree scrolling. Full clipped content remains available through the row tooltip.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeCellRendererTest.kt
 
 - The tool window surfaces thread activity through chrome rather than a body strip:
   the title bar carries one counter action per active bucket (`Needs attention` covers `NEEDS_INPUT`/`REVIEWING`,
@@ -47,38 +47,38 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
   baseline emits a per-thread OS system notification through platform system notifications. On platform implementations
   that support exact native activation callbacks, clicking the OS notification opens/focuses the matching chat tab by
   stable path/provider/thread id. Initial loaded rows and `Running` transitions do not notify.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsActivitySummaryTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsActivitySummaryTest.kt
 
-- Source-frame main-toolbar Agent activity reuses these counter visuals and popup primitives, but its global scope and placement are owned by `spec/agent-main-toolbar-activity.spec.md`.
+- Source-frame main-toolbar Agent activity reuses these counter visuals and popup primitives, but its global scope and placement are owned by `../frame/agent-main-toolbar-activity.spec.md`.
 
 - Selection and activation must match platform tree behavior: single-click selects, Enter/double-click opens openable rows, and double-click on openable parent rows prefers open/focus over expansion.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeInteractionTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
 - Chat tab selection controls when `Done` is acknowledged. Selecting an already `Done` thread marks it read immediately.
   If a selected thread transitions to `Done`, the tree keeps that state visible until selection leaves that chat tab,
   including switching to another editor or closing the selected tab.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreeStateControllerTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreeStateControllerTest.kt
 
 - Context menus must preserve multi-selection when invoked from an already selected row and retarget selection when invoked from an unselected row.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeInteractionTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeInteractionTest.kt
 
 - Project/worktree context menus must keep the platform `CopyReferencePopupGroup` for copy path/reference actions.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
 - Tree speed search must use platform tree speed search, derive searchable text from rendered row labels, and match only at word starts or camel humps.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsTreeSnapshotTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreeSnapshotTest.kt
 
 - Speed search must reveal hidden matching project/thread rows behind `More` rows by using the shared visibility primitives.
-  [@test] ../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionRefreshOnDemandIntegrationTest.kt
 
 - Project/worktree rows expose hover-or-selection new-thread affordances and loading indicators without changing normal tree selection semantics.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingNewSessionActionsTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
 - The active tree view overlays currently open pending Agent Chat tabs as ephemeral placeholders. The archived view ignores them, and placeholders are not archive, cost, or row-action targets.
 
 - Collapse/expand state must persist by normalized project path and must not store transient thread content.
-  [@test] ../sessions-toolwindow/testSrc/AgentSessionsSwingTreeStatePersistenceTest.kt
-  [@test] ../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
+  [@test] ../../sessions-toolwindow/testSrc/AgentSessionsSwingTreeStatePersistenceTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionTreeUiStateServiceTest.kt
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.sessions.toolwindow.tests --test "com.intellij.agent.workbench.sessions.toolwindow.AgentSessionsSwing*Test"`
@@ -86,7 +86,7 @@ The Agent Threads tree follows IntelliJ tree conventions while adding provider-s
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionRefreshOnDemandIntegrationTest`
 
 ## References
-- `spec/agent-sessions.spec.md`
-- `spec/agent-core-contracts.spec.md`
-- `spec/actions/new-thread.spec.md`
-- `spec/agent-main-toolbar-activity.spec.md`
+- `agent-sessions.spec.md`
+- `../core/agent-core-contracts.spec.md`
+- `../actions/new-thread.spec.md`
+- `../frame/agent-main-toolbar-activity.spec.md`
