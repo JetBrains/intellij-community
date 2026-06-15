@@ -1,5 +1,5 @@
 <html><body>
-This intention changes a library method contract.
+Adds or edits a method contract annotation in a separate <code>annotations.xml</code> file.
 
 A method contract has the following syntax:
 <pre><code>
@@ -16,7 +16,7 @@ The constraints denote the following:<br/>
 <ul>
   <li> <code>_</code>: any value
   <li> <code>null</code>: null value
-  <li> <code>null!</code>: a value statically proved to be not-null
+  <li> <code>!null</code>: a value statically proved to be not-null
   <li> <code>true</code>: true boolean value
   <li> <code>false</code>: false boolean value
   <li> <code>fail</code>: the method throws exception if the arguments satisfy argument constraints
@@ -30,4 +30,8 @@ Examples:<br/>
   <li> <code>@Contract("_, null -> null; _, !null -> !null")</code>: method returns null if its second argument is null and not-null otherwise.
   <li> <code>@Contract("true -> fail")</code>: a typical <code>assertFalse</code> method which throws an exception if <code>true</code> is passed to it.
 </ul>
+<p>
+  This intention is available for library code. To enable it for project code use the <em>Use external annotations</em> option under
+  <a href="settings://preferences.sourceCode.JAVA?Use%20external%20annotations">Settings | Editor | Code Style | Java | Code Generation</a>.
+</p>
 </body></html>
