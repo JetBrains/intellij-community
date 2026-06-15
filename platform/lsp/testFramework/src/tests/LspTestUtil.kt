@@ -7,9 +7,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
-import com.intellij.platform.lsp.api.LspServerManager
-import com.intellij.platform.lsp.api.LspServerManagerListener
+import com.intellij.platform.lsp.api.LspClient
+import com.intellij.platform.lsp.api.LspClientManager
+import com.intellij.platform.lsp.api.LspClientManagerListener
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.testFramework.ExpectedHighlightingData
 import com.intellij.testFramework.PlatformTestUtil
@@ -33,17 +33,17 @@ fun waitUntilFileOpenedByLspServer(project: Project, file: VirtualFile) {
   try {
     val fileOpened = AtomicBoolean()
     val serverShutdown = AtomicBoolean()
-    LspServerManager.getInstance(project).addLspServerManagerListener(object : LspServerManagerListener {
-      override fun serverStateChanged(lspServer: LspServer) {
-        if (lspServer.state in arrayOf(LspServerState.ShutdownNormally, LspServerState.ShutdownUnexpectedly)) {
+    LspClientManager.getInstance(project).addListener(object : LspClientManagerListener {
+      override fun serverStateChanged(lspClient: LspClient) {
+        if (lspClient.state in arrayOf(LspServerState.ShutdownNormally, LspServerState.ShutdownUnexpectedly)) {
           serverShutdown.set(true)
         }
       }
 
-      override fun fileOpened(lspServer: LspServer, file: VirtualFile) {
+      override fun fileOpened(lspClient: LspClient, file: VirtualFile) {
         if (file == topLevelFile) fileOpened.set(true)
       }
-    }, disposable, sendEventsForExistingServers = true)
+    }, disposable, sendEventsForExistingClients = true)
 
     PlatformTestUtil.waitWithEventsDispatching("LSP server not initialized in 10 seconds",
                                                {
@@ -122,10 +122,10 @@ private fun <T> withDiagnosticsReceivedCounter(project: Project, file: VirtualFi
   val disposable = Disposer.newDisposable()
   try {
     val diagnosticsReceivedCounter = DiagnosticsReceivedCounter(topLevelFile)
-    LspServerManager.getInstance(project).addLspServerManagerListener(
+    LspClientManager.getInstance(project).addListener(
       listener = diagnosticsReceivedCounter,
       parentDisposable = disposable,
-      sendEventsForExistingServers = true,
+      sendEventsForExistingClients = true
     )
     return block(diagnosticsReceivedCounter)
   }
@@ -175,7 +175,7 @@ private fun doCheckExpectedHighlightingData(
   }
 }
 
-private class DiagnosticsReceivedCounter(val file: VirtualFile) : LspServerManagerListener {
+private class DiagnosticsReceivedCounter(val file: VirtualFile) : LspClientManagerListener {
   @Volatile
   var serverShutdown: Boolean = false
     private set
@@ -183,13 +183,13 @@ private class DiagnosticsReceivedCounter(val file: VirtualFile) : LspServerManag
   private val _diagnosticsReceivedCount = AtomicInteger(0)
   val diagnosticsReceivedCount: Int get() = _diagnosticsReceivedCount.get()
 
-  override fun serverStateChanged(lspServer: LspServer) {
-    if (lspServer.state in arrayOf(LspServerState.ShutdownNormally, LspServerState.ShutdownUnexpectedly)) {
+  override fun serverStateChanged(lspClient: LspClient) {
+    if (lspClient.state in arrayOf(LspServerState.ShutdownNormally, LspServerState.ShutdownUnexpectedly)) {
       serverShutdown = true
     }
   }
 
-  override fun diagnosticsReceived(lspServer: LspServer, file: VirtualFile) {
+  override fun diagnosticsReceived(lspClient: LspClient, file: VirtualFile) {
     if (file == this.file) {
       _diagnosticsReceivedCount.incrementAndGet()
     }
