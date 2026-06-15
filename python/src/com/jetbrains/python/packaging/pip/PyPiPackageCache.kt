@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.SafeFileOutputStream
 import com.jetbrains.python.Result
@@ -196,12 +197,21 @@ class PyPiPackageCache : PythonPackageCache {
 
       FileChannel.open(fileToMap, StandardOpenOption.READ).use { channel ->
         arena = Arena.ofShared()
-        set =
+        set = if (Registry.`is`("disable.python.cache.memory.mapping")) {
+          val buffer = ByteBuffer.allocate(channel.size().toInt())
+          channel.read(buffer)
+
+          PackedAsciiStringSet.create(buffer)
+            .getOr { return Result.Failure(PyPiPackageCacheError.InvalidCacheFileFormat(it.error.message)) }
+        }
+        else {
           PackedAsciiStringSet.create(
             channel
               .map(FileChannel.MapMode.READ_ONLY, 0, channel.size(), arena)
               .asByteBuffer()
           ).getOr { return Result.Failure(PyPiPackageCacheError.InvalidCacheFileFormat(it.error.message)) }
+        }
+
         containsCache = createContainsCache()
         searchCache = createSearchCache()
       }

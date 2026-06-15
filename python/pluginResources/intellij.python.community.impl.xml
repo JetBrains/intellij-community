@@ -769,6 +769,11 @@
                  restartRequired="false"
                  description="Disables automatic updating of PyPI package cache and ranking on project startup."/>
 
+    <registryKey key="disable.python.cache.memory.mapping"
+                 defaultValue="false"
+                 restartRequired="true"
+                 description="Disables memory mapping for Python package cache, opting to use in-memory representation instead."/>
+
     <!-- Setting up cross-module dependencies -->
     <registryKey key="python.detect.cross.module.dependencies" defaultValue="false"
                  description="Try to detect and automatically set-up module dependencies in a multi-module project"/>
@@ -1083,6 +1088,8 @@
       <keyboard-shortcut keymap="Eclipse" first-keystroke="ctrl alt E" replace-all="true"/>
       <keyboard-shortcut keymap="NetBeans 6.5" first-keystroke="ctrl alt E" replace-all="true"/>
     </action>
+
+    <action id="ReloadPyPiCacheAction" class="com.jetbrains.python.packaging.pip.actions.ReloadPyPiCacheAction"/>
 
     <action id="PyRunFileInConsole" class="com.jetbrains.python.actions.PyRunFileInConsoleAction">
       <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ExecuteInPyConsoleAction"/>
