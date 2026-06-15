@@ -243,6 +243,11 @@ public class FirLegacyUastIdentifiersTestGenerated extends AbstractFirLegacyUast
         runTest("../../uast-kotlin/tests/testData/NonTrivialIdentifiers.kt");
     }
 
+    @TestMetadata("ObjectExpressionExplicitTypeReference.kt")
+    public void testObjectExpressionExplicitTypeReference() throws Exception {
+        runTest("../../uast-kotlin/tests/testData/ObjectExpressionExplicitTypeReference.kt");
+    }
+
     @TestMetadata("ObjectExpressionMultipleInterfaces.kt")
     public void testObjectExpressionMultipleInterfaces() throws Exception {
         runTest("../../uast-kotlin/tests/testData/ObjectExpressionMultipleInterfaces.kt");

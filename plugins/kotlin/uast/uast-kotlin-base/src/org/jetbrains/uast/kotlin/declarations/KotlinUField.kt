@@ -13,6 +13,7 @@ import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtProperty
@@ -42,8 +43,10 @@ open class KotlinUField(
         val type = delegateExpression?.getExpressionType()
         if (type != null) return type
 
+        // anonymous type for object expression
         val initializer = uastInitializer
-        if (initializer != null && initializer is UObjectLiteralExpression) { // anonymous type for object expression
+        val sourceTypeReference = (sourcePsi as? KtCallableDeclaration)?.typeReference
+        if (sourceTypeReference == null && initializer != null && initializer is UObjectLiteralExpression) {
             return PsiTypesUtil.getClassType(initializer.declaration.javaPsi)
         }
 
