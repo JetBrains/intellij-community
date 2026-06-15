@@ -33,7 +33,7 @@ import com.jetbrains.python.inspections.PyTypeCheckerInspection;
 import com.jetbrains.python.inspections.PyUnboundLocalVariableInspection;
 import com.jetbrains.python.inspections.PyUnusedImportsInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
+import com.jetbrains.python.inspections.unusedLocal.PyUnusedParameterInspection;
 import com.jetbrains.python.psi.PythonVisitorFilter;
 import org.jetbrains.annotations.NotNull;
 
@@ -110,7 +110,7 @@ public class PyiInspectionsTest extends PyTestCase {
   }
 
   public void testPyiUnusedParameters() {
-    doPyiTest(PyUnusedLocalInspection.class);
+    doPyiTest(PyUnusedParameterInspection.class);
   }
 
   public void testPyiStatementEffect() {
