@@ -47,7 +47,9 @@ open class LspInlayHintSupport : LspInlayHintCustomizer() {
    * @param inlayHint the LSP InlayHint object containing all hint information
    * @return true if the hint should be processed and displayed, false to filter it out
    */
-  open fun shouldDisplayInlayHint(file: VirtualFile, inlayHint: InlayHint): Boolean = shouldApplyInlayHint(inlayHint)
+  open fun shouldDisplayInlayHint(file: VirtualFile, inlayHint: InlayHint): Boolean =
+    @Suppress("DEPRECATION")
+    shouldApplyInlayHint(inlayHint)
 
   /**
    * Maximum number of characters allowed for a single inlay hint label.
