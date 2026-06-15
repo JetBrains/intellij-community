@@ -13,7 +13,7 @@ import com.intellij.mcpserver.settings.McpToolDisallowListSettings
 import com.intellij.mcpserver.settings.McpToolFilterSettings
 
 internal class McpServerApplicationUsagesCollector : ApplicationUsagesCollector() {
-  private val GROUP = EventLogGroup("mcpserver", 7)
+  private val GROUP = EventLogGroup("mcpserver", 8)
   private val MCP_RUNNING = GROUP.registerEvent("mcp.running", EventFields.Enabled)
   private val MCP_BRAVE_MODE_ENABLED = GROUP.registerEvent("mcp.brave.mode.enabled", EventFields.Enabled)
   private val MCP_GLOBAL_CLIENTS = GROUP.registerEvent("mcp.global.clients",
