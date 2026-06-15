@@ -530,7 +530,6 @@ libraries/plexus-utils
 libraries/protobuf
 libraries/proxy-vole
 libraries/pty4j
-libraries/rd/client-renderdoc
 libraries/rd/core
 libraries/rd/framework
 libraries/rd/swing
