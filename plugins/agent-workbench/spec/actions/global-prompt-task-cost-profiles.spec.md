@@ -57,7 +57,7 @@ Task-cost profiles make the global prompt ready to send while still letting user
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
   [@test] ../../sessions/testSrc/AgentSessionUiPreferencesStateServiceTest.kt
 
-- `Copy` must persist the selected profile's current provider, launch mode, model, effort, and Plan effort as a new reusable user profile without also making it the default. Valid profile detail edits persist automatically; invalid detail edits remain transient and are discarded when another row is selected. The editor must not expose a separate blank create mode.
+- `Copy` must persist the selected profile's current provider, launch mode, model, effort, and Plan effort as a new reusable user profile without also making it the default. Generated names must be compact profile labels suitable for the prompt header, such as `High`, `GPT-5 High`, or `Full Auto`, avoiding provider names when the provider is already identified by icon/details. Valid profile detail edits persist automatically; invalid detail edits remain transient and are discarded when another row is selected. The editor must not expose a separate blank create mode.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
 - The main toolbar primary click must launch with the stored default profile when one is applicable, falling back to the first available built-in profile. Launching from the primary click must not rewrite the default id.

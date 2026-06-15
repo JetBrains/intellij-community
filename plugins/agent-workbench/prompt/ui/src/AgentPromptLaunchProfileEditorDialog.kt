@@ -67,7 +67,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
   defaultProfileId: String?,
   builtInProfiles: List<AgentPromptLaunchProfile>,
   private var providerEntries: List<ProviderEntry>,
-  modelCatalogProvider: (String) -> List<AgentPromptGenerationModel>?,
+  private val modelCatalogProvider: (String) -> List<AgentPromptGenerationModel>?,
   private val modelCatalogStateProvider: (String) -> AgentPromptGenerationModelCatalogState? = { providerId ->
     modelCatalogProvider(providerId)?.let(AgentPromptGenerationModelCatalogState::Loaded)
   },
@@ -752,7 +752,12 @@ internal class AgentPromptLaunchProfileEditorDialog(
     val draft = currentEditorDraft(profile) ?: return
     val copy = draft.copy(
       id = newUserProfileId(),
-      name = nextCopyProfileName(draft.name),
+      name = generatedLaunchProfileName(
+        profile = draft,
+        existingProfiles = managedProfiles,
+        models = modelCatalogProvider(draft.providerId).orEmpty(),
+        compactLaunchModeLabel = AgentPromptBundle.message("popup.profile.generated.full.auto"),
+      ),
       kind = AgentPromptLaunchProfileKind.USER,
     )
     onCreateProfile(copy)
@@ -915,17 +920,6 @@ internal class AgentPromptLaunchProfileEditorDialog(
 
   private fun builtInProfile(profileId: String): AgentPromptLaunchProfile? {
     return currentBuiltInProfiles.firstOrNull { profile -> profile.id == profileId }
-  }
-
-  private fun nextCopyProfileName(profileName: String): String {
-    val baseName = AgentPromptBundle.message("popup.profile.editor.copy.name", profileName)
-    val existingNames = managedProfiles.mapTo(HashSet()) { profile -> profile.name }
-    if (baseName !in existingNames) return baseName
-    var suffix = 2
-    while ("$baseName $suffix" in existingNames) {
-      suffix++
-    }
-    return "$baseName $suffix"
   }
 
   private fun providerOption(providerId: String): ProviderOption? {

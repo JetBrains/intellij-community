@@ -711,38 +711,14 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   private fun generatedDraftProfileName(): @NlsSafe String {
-    val providerEntry = providerSelector.selectedProvider
-    val providerName = providerEntry?.displayName.orEmpty()
-    val currentSettings = currentSettings()
-    val models = providerEntry?.bridge?.provider?.value?.let(::loadedModelCatalog).orEmpty()
-    val modelName = currentSettings.modelId?.let { modelId ->
-      models.firstOrNull { model -> model.id == modelId }?.displayName ?: modelId
-    }
-    val parts = buildList {
-      add(providerName)
-      if (providerSelector.selectedLaunchMode == AgentSessionLaunchMode.YOLO) {
-        add(AgentPromptBundle.message("popup.profile.generated.full.auto"))
-      }
-      modelName?.let(::add)
-      if (currentSettings.reasoningEffort != AgentPromptReasoningEffort.AUTO) {
-        add(reasoningEffortPopupText(currentSettings.reasoningEffort))
-      }
-      currentSettings.planReasoningEffort?.takeIf { effort -> effort != AgentPromptReasoningEffort.AUTO }?.let { effort ->
-        add(AgentPromptBundle.message("popup.profile.generated.plan.effort", reasoningEffortPopupText(effort)))
-      }
-    }
-    val baseName = parts.joinToString(" ").ifBlank { AgentPromptBundle.message("popup.profile.name.default") }
-    return nextProfileName(baseName)
-  }
-
-  private fun nextProfileName(baseName: @NlsSafe String): @NlsSafe String {
-    val existingNames = allManagedProfiles().mapTo(HashSet()) { profile -> profile.name }
-    if (baseName !in existingNames) return baseName
-    var suffix = 2
-    while ("$baseName $suffix" in existingNames) {
-      suffix++
-    }
-    return "$baseName $suffix"
+    val draft = currentProfileDraft() ?: return AgentPromptBundle.message("popup.profile.name.default")
+    val providerId = providerSelector.selectedProvider?.bridge?.provider?.value
+    return generatedLaunchProfileName(
+      profile = draft,
+      existingProfiles = allManagedProfiles(),
+      models = providerId?.let(::loadedModelCatalog).orEmpty(),
+      compactLaunchModeLabel = providerSelector.compactBuiltInProfileLabel(draft),
+    )
   }
 
   private fun newUserProfileId(): String {

@@ -1084,11 +1084,11 @@ class AgentPromptProviderSelectorTest {
 
         val createdProfile = createdProfiles.single()
         assertThat(createdProfile.id).isEqualTo("user:new")
-        assertThat(createdProfile.name).isEqualTo("Codex Copy")
+        assertThat(createdProfile.name).isEqualTo("High")
         assertThat(createdProfile.kind).isEqualTo(AgentPromptLaunchProfileKind.USER)
         assertThat(createdProfile.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
         assertThat(createdProfile.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
-        assertThat(editor.profileNamesForTest()).containsExactly("Codex", "Codex Copy")
+        assertThat(editor.profileNamesForTest()).containsExactly("Codex", "High")
         assertThat(editor.isNameFieldTextSelectedForTest()).isTrue()
       }
       finally {
@@ -1932,7 +1932,7 @@ class AgentPromptProviderSelectorTest {
 
       val savedProfile = launcher.preferences.launchProfiles.single()
       assertThat(statusMessage).isEqualTo("Launch profile saved as default.")
-      assertThat(savedProfile.name).isEqualTo("Codex High")
+      assertThat(savedProfile.name).isEqualTo("High")
       assertThat(savedProfile.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
       assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(savedProfile.id)
       assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
