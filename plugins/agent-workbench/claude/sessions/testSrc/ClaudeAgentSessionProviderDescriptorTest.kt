@@ -106,6 +106,22 @@ class ClaudeAgentSessionProviderDescriptorTest {
   }
 
   @Test
+  fun applyGenerationSettingsIgnoresPlanReasoningEffort(): Unit = runBlocking(Dispatchers.Default) {
+    val launchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+    val sessionId = assertValidUuid(launchSpec.preallocatedSessionId)
+
+    val updatedLaunchSpec = bridge.applyGenerationSettings(
+      launchSpec,
+      AgentPromptGenerationSettings(planReasoningEffort = AgentPromptReasoningEffort.MAX),
+      STANDARD_INITIAL_MESSAGE_PLAN,
+    )
+
+    assertThat(updatedLaunchSpec.command)
+      .containsExactly("claude", "--session-id", sessionId)
+    assertThat(updatedLaunchSpec.preallocatedSessionId).isEqualTo(sessionId)
+  }
+
+  @Test
   fun replaceOrAddEffortInsertsBeforePromptSeparator() {
     assertThat(replaceOrAddEffort(listOf("claude", "--", "Refactor this"), "xhigh"))
       .containsExactly("claude", "--effort", "xhigh", "--", "Refactor this")

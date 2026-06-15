@@ -89,6 +89,9 @@ internal class CodexAgentSessionProviderDescriptor(
       AgentPromptReasoningEffort.XHIGH,
     )
 
+  override val supportsPlanReasoningEffort: Boolean
+    get() = true
+
   override val supportsGenerationModelSelection: Boolean
     get() = true
 

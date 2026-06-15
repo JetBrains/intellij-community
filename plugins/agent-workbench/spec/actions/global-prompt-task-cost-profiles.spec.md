@@ -49,11 +49,11 @@ Task-cost profiles make the global prompt ready to send while still letting user
 - The prompt Plan checkbox must remain a separate header option. Selecting or restoring a profile must not change the current Plan checkbox state, and saving/updating user profiles must not store Plan state.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
-- `Manage Launch Profiles` must open a single application-level standalone non-modal profile editor window with a profile list and a details pane for name, provider, launch mode, model, and effort. Reopening the action while the window is open must focus the existing window instead of creating another one. When the action is invoked from the global prompt, the prompt popup must close while the editor is open and be restored after the editor closes. The editor must allow editing built-in and user profiles. Built-in edits are stored as user customizations for the built-in slot; saving a customized built-in back to the built-in values removes that customization. Selecting rows in the editor must only navigate the editor and must not apply that profile to the current prompt. Quick profile selection may omit unavailable profiles, but the management editor must still show stored unavailable user profiles so they can be deleted or switched to an available provider. `Set as Default` must be the explicit action that stores the selected profile as the default for future prompts.
+- `Manage Launch Profiles` must open a single application-level standalone non-modal profile editor window with a profile list and a details pane for name, provider, launch mode, model, effort, and Plan effort when the selected provider supports dedicated Plan reasoning effort. Reopening the action while the window is open must focus the existing window instead of creating another one. When the action is invoked from the global prompt, the prompt popup must close while the editor is open and be restored after the editor closes. The editor must allow editing built-in and user profiles. Built-in edits are stored as user customizations for the built-in slot; saving a customized built-in back to the built-in values removes that customization. Selecting rows in the editor must only navigate the editor and must not apply that profile to the current prompt. Quick profile selection may omit unavailable profiles, but the management editor must still show stored unavailable user profiles so they can be deleted or switched to an available provider. `Set as Default` must be the explicit action that stores the selected profile as the default for future prompts.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
   [@test] ../../sessions/testSrc/AgentSessionUiPreferencesStateServiceTest.kt
 
-- `Copy` must persist the selected profile's current provider, launch mode, model, and effort as a new reusable user profile without also making it the default. Valid profile detail edits persist automatically; invalid detail edits remain transient and are discarded when another row is selected. The editor must not expose a separate blank create mode.
+- `Copy` must persist the selected profile's current provider, launch mode, model, effort, and Plan effort as a new reusable user profile without also making it the default. Valid profile detail edits persist automatically; invalid detail edits remain transient and are discarded when another row is selected. The editor must not expose a separate blank create mode.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
 - The main toolbar primary click must launch with the stored default profile when one is applicable, falling back to the first available built-in profile. Launching from the primary click must not rewrite the default id.
@@ -73,9 +73,9 @@ Task-cost profiles make the global prompt ready to send while still letting user
 
 ## Data & Backend
 - The persisted `activeLaunchProfileId` value represents the explicit default profile id.
-- User launch profiles and the explicit default profile id must be stored in the app-level roamable `AgentSessionLaunchProfileState`, not in the non-roamable UI preferences state.
+- User launch profiles and the explicit default profile id must be stored in the app-level roamable `AgentSessionLaunchProfileStateV2`, not in the non-roamable UI preferences state.
 - Per-task prompt changes live in the prompt controller state and are sent with the launch request; they are not persisted unless the user chooses `Set as Default` or `Save Current` in profile management.
-- Profile UI must not create or rely on Plan-bearing profiles.
+- Profile UI may store Plan effort only for providers that support dedicated Plan reasoning effort, but must not store Plan checkbox state or create profiles that automatically start in Plan mode.
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test com.intellij.agent.workbench.prompt.ui.AgentPromptProviderSelectorTest`

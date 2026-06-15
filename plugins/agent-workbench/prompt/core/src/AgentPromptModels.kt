@@ -108,34 +108,6 @@ enum class AgentPromptLaunchProfileKind {
 }
 
 @Serializable
-enum class AgentPromptPlanEffortModeKind {
-  SAME_AS_NORMAL,
-  PROVIDER_DEFAULT,
-  EXPLICIT,
-}
-
-@Serializable
-data class AgentPromptPlanEffortMode(
-  @JvmField val kind: AgentPromptPlanEffortModeKind = AgentPromptPlanEffortModeKind.SAME_AS_NORMAL,
-  @JvmField val explicitEffort: AgentPromptReasoningEffort? = null,
-) {
-  companion object {
-    @JvmField
-    val SAME_AS_NORMAL: AgentPromptPlanEffortMode = AgentPromptPlanEffortMode(AgentPromptPlanEffortModeKind.SAME_AS_NORMAL)
-
-    @JvmField
-    val PROVIDER_DEFAULT: AgentPromptPlanEffortMode = AgentPromptPlanEffortMode(AgentPromptPlanEffortModeKind.PROVIDER_DEFAULT)
-
-    fun explicit(effort: AgentPromptReasoningEffort): AgentPromptPlanEffortMode {
-      return AgentPromptPlanEffortMode(
-        kind = AgentPromptPlanEffortModeKind.EXPLICIT,
-        explicitEffort = effort.takeIf { it != AgentPromptReasoningEffort.AUTO },
-      )
-    }
-  }
-}
-
-@Serializable
 data class AgentPromptLaunchProfile(
   @JvmField val id: String,
   @JvmField val name: @NlsSafe String,
@@ -143,8 +115,6 @@ data class AgentPromptLaunchProfile(
   @JvmField val providerId: String,
   @JvmField val launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
   @JvmField val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
-  @JvmField val planEffort: AgentPromptPlanEffortMode = AgentPromptPlanEffortMode.SAME_AS_NORMAL,
-  @JvmField val startInPlanMode: Boolean = false,
 )
 
 data class AgentPromptGenerationModel(

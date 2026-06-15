@@ -144,6 +144,12 @@ interface AgentSessionProviderDescriptor {
   val supportedReasoningEfforts: Set<AgentPromptReasoningEffort>
     get() = emptySet()
 
+  /**
+   * True when the provider has a dedicated Plan-mode reasoning effort transport separate from normal reasoning effort.
+   */
+  val supportsPlanReasoningEffort: Boolean
+    get() = false
+
   val supportsGenerationModelSelection: Boolean
     get() = false
 
@@ -246,9 +252,14 @@ interface AgentSessionProviderDescriptor {
     val reasoningEffort = generationSettings.reasoningEffort
                             .takeIf { effort -> effort == AgentPromptReasoningEffort.AUTO || effort in supportedReasoningEfforts }
                           ?: AgentPromptReasoningEffort.AUTO
-    val planReasoningEffort = generationSettings.planReasoningEffort
-      ?.takeIf { effort -> effort == AgentPromptReasoningEffort.AUTO || effort in supportedReasoningEfforts }
-      ?: generationSettings.planReasoningEffort?.let { AgentPromptReasoningEffort.AUTO }
+    val planReasoningEffort = if (supportsPlanReasoningEffort) {
+      generationSettings.planReasoningEffort
+        ?.takeIf { effort -> effort == AgentPromptReasoningEffort.AUTO || effort in supportedReasoningEfforts }
+        ?: generationSettings.planReasoningEffort?.let { AgentPromptReasoningEffort.AUTO }
+    }
+    else {
+      null
+    }
     return generationSettings.copy(
       modelId = modelId,
       reasoningEffort = reasoningEffort,

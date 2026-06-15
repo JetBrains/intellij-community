@@ -385,7 +385,6 @@ class AgentPromptProviderSelectorTest {
         name = "Careful",
         providerId = AgentSessionProvider.CODEX.value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
-        startInPlanMode = true,
       )
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
@@ -704,7 +703,6 @@ class AgentPromptProviderSelectorTest {
         name = "Careful",
         providerId = AgentSessionProvider.CODEX.value,
         generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
-        startInPlanMode = true,
       )
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
@@ -1092,6 +1090,151 @@ class AgentPromptProviderSelectorTest {
         assertThat(createdProfile.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
         assertThat(editor.profileNamesForTest()).containsExactly("Codex", "Codex Copy")
         assertThat(editor.isNameFieldTextSelectedForTest()).isTrue()
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorCopyPreservesPlanEffort() {
+    runInEdtAndWait {
+      val profile = AgentPromptLaunchProfile(
+        id = "user:careful",
+        name = "Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+        generationSettings = AgentPromptGenerationSettings(planReasoningEffort = AgentPromptReasoningEffort.AUTO),
+      )
+      val createdProfiles = ArrayList<AgentPromptLaunchProfile>()
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = listOf(planModeOption()),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+        supportsPlanReasoningEffortOverride = true,
+      )
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(profile),
+        activeProfileId = profile.id,
+        providerOverride = provider,
+        onCreateProfile = { createdProfile -> createdProfiles += createdProfile },
+      )
+      try {
+        editor.selectProfileForTest(profile.id)
+        editor.copySelectedProfileForTest()
+
+        assertThat(createdProfiles.single().generationSettings.planReasoningEffort).isEqualTo(AgentPromptReasoningEffort.AUTO)
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorPlanEffortCustomizesBuiltInProfile() {
+    runInEdtAndWait {
+      val builtInProfileId = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
+      val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = listOf(planModeOption()),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+        supportsPlanReasoningEffortOverride = true,
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { _ -> },
+      )
+      controller.restoreLaunchProfiles(launcher.preferences)
+      val editor = controller.createManageProfilesDialogForTest()
+      try {
+        editor.selectProfileForTest(builtInProfileId)
+        editor.selectPlanEffortForTest(AgentPromptReasoningEffort.AUTO)
+
+        assertThat(launcher.preferences.launchProfiles.single().generationSettings.planReasoningEffort)
+          .isEqualTo(AgentPromptReasoningEffort.AUTO)
+
+        editor.selectPlanEffortForTest(null)
+
+        assertThat(launcher.preferences.launchProfiles).isEmpty()
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorSavesPlanEffortForPlanCapableProvider() {
+    runInEdtAndWait {
+      val profile = AgentPromptLaunchProfile(
+        id = "user:careful",
+        name = "Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+      )
+      val updatedProfiles = ArrayList<AgentPromptLaunchProfile>()
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = listOf(planModeOption()),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH, AgentPromptReasoningEffort.XHIGH),
+        supportsPlanReasoningEffortOverride = true,
+      )
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(profile),
+        activeProfileId = profile.id,
+        providerOverride = provider,
+        onUpdateProfile = { updatedProfile -> updatedProfiles += updatedProfile },
+      )
+      try {
+        editor.selectProfileForTest(profile.id)
+
+        assertThat(editor.isPlanEffortVisibleForTest()).isTrue()
+        assertThat(editor.planEffortOptionTextsForTest())
+          .containsExactly("Same as Effort", "Provider Default", "High", "Extra High")
+
+        editor.selectPlanEffortForTest(AgentPromptReasoningEffort.XHIGH)
+
+        val updatedProfile = updatedProfiles.single()
+        assertThat(updatedProfile.generationSettings.planReasoningEffort).isEqualTo(AgentPromptReasoningEffort.XHIGH)
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
+  fun launchProfileEditorHidesPlanEffortForProviderWithoutPlanEffortSupport() {
+    runInEdtAndWait {
+      val profile = AgentPromptLaunchProfile(
+        id = "user:careful",
+        name = "Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+      )
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = listOf(planModeOption()),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+      )
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(profile),
+        activeProfileId = profile.id,
+        providerOverride = provider,
+      )
+      try {
+        editor.selectProfileForTest(profile.id)
+
+        assertThat(editor.isPlanEffortVisibleForTest()).isFalse()
       }
       finally {
         editor.closeForTest()
@@ -2356,6 +2499,7 @@ class AgentPromptProviderSelectorTest {
           AgentPromptReasoningEffort.HIGH,
           AgentPromptReasoningEffort.XHIGH,
         ),
+        supportsPlanReasoningEffortOverride = true,
       )
       val fixture = createSelectorFixture(listOf(provider))
       fixture.selector.refresh()
@@ -2384,8 +2528,93 @@ class AgentPromptProviderSelectorTest {
       fixture.selector.setPlanModeSelected(false)
       controller.refreshPresentation()
 
-      assertThat(fixture.view.planReasoningEffortLink.isVisible).isFalse()
+      assertThat(fixture.view.planReasoningEffortLink.isVisible).isTrue()
+      assertThat(fixture.view.planReasoningEffortLink.isEnabled).isFalse()
+      assertThat(fixture.view.planReasoningEffortLink.toolTipText).contains("Enable Plan mode to apply Plan effort.")
       assertThat(controller.currentLaunchSettings().planReasoningEffort).isNull()
+    }
+  }
+
+  @Test
+  fun planReasoningEffortStaysHiddenForProviderWithoutPlanEffortSupport() {
+    runInEdtAndWait {
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CLAUDE,
+        promptOptions = listOf(planModeOption()),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        planReasoningEffortLink = fixture.view.planReasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { null },
+        onDefaultSaved = { _ -> },
+      )
+
+      controller.refreshPresentation()
+
+      assertThat(fixture.selector.isPlanModeSelected()).isTrue()
+      assertThat(fixture.view.planReasoningEffortLink.isVisible).isFalse()
+      assertThat(controller.createPlanReasoningEffortActionGroupForTest()).isNull()
+    }
+  }
+
+  @Test
+  fun launchProfileAppliesPlanEffortWithoutChangingPlanModeSelection() {
+    runInEdtAndWait {
+      val profile = AgentPromptLaunchProfile(
+        id = "user:plan-careful",
+        name = "Plan Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+        generationSettings = AgentPromptGenerationSettings(planReasoningEffort = AgentPromptReasoningEffort.XHIGH),
+      )
+      val launcher = TestPromptLauncherBridge(
+        AgentPromptLauncherBridge.ProviderPreferences(
+          launchProfiles = listOf(profile),
+          activeLaunchProfileId = profile.id,
+        )
+      )
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = listOf(planModeOption()),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH, AgentPromptReasoningEffort.XHIGH),
+        supportsPlanReasoningEffortOverride = true,
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      fixture.selector.setPlanModeSelected(false)
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        planReasoningEffortLink = fixture.view.planReasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { _ -> },
+      )
+
+      controller.restoreLaunchProfiles(launcher.preferences)
+
+      assertThat(fixture.selector.isPlanModeSelected()).isFalse()
+      assertThat(fixture.view.planReasoningEffortLink.isVisible).isTrue()
+      assertThat(fixture.view.planReasoningEffortLink.isEnabled).isFalse()
+      assertThat(fixture.view.planReasoningEffortLink.text).isEqualTo("Plan Effort Extra High")
+      assertThat(controller.currentLaunchSettings().planReasoningEffort).isNull()
+
+      fixture.selector.setPlanModeSelected(true)
+      controller.refreshPresentation()
+
+      assertThat(fixture.view.planReasoningEffortLink.isVisible).isTrue()
+      assertThat(fixture.view.planReasoningEffortLink.isEnabled).isTrue()
+      assertThat(controller.currentLaunchSettings().planReasoningEffort).isEqualTo(AgentPromptReasoningEffort.XHIGH)
     }
   }
 
@@ -2678,6 +2907,7 @@ class AgentPromptProviderSelectorTest {
     cliVisibilityPolicy: AgentSessionProviderCliVisibilityPolicy = AgentSessionProviderCliVisibilityPolicy.PROMINENT,
     supportedLaunchModesOverride: Set<AgentSessionLaunchMode> = setOf(AgentSessionLaunchMode.STANDARD),
     supportedReasoningEffortsOverride: Set<AgentPromptReasoningEffort> = emptySet(),
+    supportsPlanReasoningEffortOverride: Boolean = false,
     availableGenerationModels: List<AgentPromptGenerationModel> = emptyList(),
     supportsGenerationModelSelection: Boolean = availableGenerationModels.isNotEmpty(),
     availableGenerationModelsError: Throwable? = null,
@@ -2695,6 +2925,7 @@ class AgentPromptProviderSelectorTest {
       override val promptOptions: List<AgentPromptProviderOption> = promptOptions
       override val supportedLaunchModes: Set<AgentSessionLaunchMode> = supportedLaunchModesOverride
       override val supportedReasoningEfforts: Set<AgentPromptReasoningEffort> = supportedReasoningEffortsOverride
+      override val supportsPlanReasoningEffort: Boolean = supportsPlanReasoningEffortOverride
       override val supportsGenerationModelSelection: Boolean = supportsGenerationModelSelection
       override val supportsPromptLaunch: Boolean = supportsPromptLaunch
       override val sessionSource: AgentSessionSource

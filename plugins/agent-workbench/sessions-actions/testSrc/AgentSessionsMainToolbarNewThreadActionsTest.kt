@@ -660,22 +660,17 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
-  fun launchProfileInitialMessageRequestReflectsPlanModeSelection() {
-    val planProfile = AgentPromptLaunchProfile(
+  fun launchProfileInitialMessageRequestDoesNotStorePlanMode() {
+    val profile = AgentPromptLaunchProfile(
       id = "user:plan",
       name = "Plan Codex",
       providerId = AgentSessionProvider.CODEX.value,
-      startInPlanMode = true,
     )
-    val standardProfile = planProfile.copy(id = "user:standard", startInPlanMode = false)
 
-    val planRequest = initialMessageRequestForLaunchProfile(planProfile)
-    val standardRequest = initialMessageRequestForLaunchProfile(standardProfile)
+    val request = initialMessageRequestForLaunchProfile(profile)
 
-    assertThat(planRequest.prompt).isEmpty()
-    assertThat(planRequest.providerOptionIds).containsExactly("plan_mode")
-    assertThat(standardRequest.prompt).isEmpty()
-    assertThat(standardRequest.providerOptionIds).isEmpty()
+    assertThat(request.prompt).isEmpty()
+    assertThat(request.providerOptionIds).isEmpty()
   }
 
   @Test

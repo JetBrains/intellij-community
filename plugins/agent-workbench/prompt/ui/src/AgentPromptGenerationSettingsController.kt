@@ -9,16 +9,13 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
-import com.intellij.agent.workbench.prompt.core.AgentPromptPlanEffortMode
-import com.intellij.agent.workbench.prompt.core.AgentPromptPlanEffortModeKind
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.effectiveLaunchProfiles
-import com.intellij.agent.workbench.sessions.core.providers.generationSettingsForPlanEffort
+import com.intellij.agent.workbench.sessions.core.providers.generationSettingsForPlanMode
 import com.intellij.agent.workbench.sessions.core.providers.launchProfileMatchesBuiltIn
 import com.intellij.agent.workbench.sessions.core.providers.normalizedUserLaunchProfile
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
@@ -74,7 +71,6 @@ internal class AgentPromptGenerationSettingsController(
   private var generationControlsVisible = true
   private var activeProfileId: String? = null
   private var defaultProfileId: String? = null
-  private var selectedPlanEffortMode: AgentPromptPlanEffortMode = AgentPromptPlanEffortMode.SAME_AS_NORMAL
   private var activeModelPopup: JBPopup? = null
   private var activeModelPopupProviderId: String? = null
 
@@ -123,9 +119,8 @@ internal class AgentPromptGenerationSettingsController(
 
   fun currentLaunchSettings(): AgentPromptGenerationSettings {
     val currentSettings = currentSettings()
-    return generationSettingsForPlanEffort(
+    return generationSettingsForPlanMode(
       generationSettings = currentSettings,
-      planEffort = currentPlanEffortMode(currentSettings),
       startInPlanMode = providerSelector.isPlanModeSelected(),
     )
   }
@@ -137,13 +132,10 @@ internal class AgentPromptGenerationSettingsController(
     val modelSelectionAvailable = selectedProvider?.bridge?.supportsGenerationModelSelection == true
     val currentSettings = currentSettings()
     val reasoningEfforts = availableReasoningEfforts(currentSettings, modelCatalog)
-    val currentPlanEffortMode = sanitizePlanEffortMode(selectedPlanEffortMode, reasoningEfforts)
-    selectedPlanEffortMode = currentPlanEffortMode
+    val currentPlanReasoningEffort = sanitizePlanReasoningEffort(currentSettings.planReasoningEffort, reasoningEfforts)
     val reasoningEffortAvailable = reasoningEfforts.isNotEmpty()
-    val hasPlanModeOption = selectedProvider?.bridge?.promptOptions?.any { option ->
-      option.id == AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
-    } == true
-    val planEffortAvailable = reasoningEffortAvailable && providerSelector.isPlanModeSelected() && hasPlanModeOption
+    val planModeSelected = providerSelector.isPlanModeSelected()
+    val planEffortSupported = reasoningEffortAvailable && selectedProvider?.bridge?.supportsPlanReasoningEffort == true
     generationSettingsPanel.isVisible = showGenerationControls
     launchProfileLink.isVisible = showGenerationControls
     launchProfileLink.isEnabled = showGenerationControls
@@ -161,8 +153,8 @@ internal class AgentPromptGenerationSettingsController(
     modelSelectorLink.isEnabled = showGenerationControls && modelSelectionAvailable
     reasoningEffortLink.isVisible = showGenerationControls
     reasoningEffortLink.isEnabled = showGenerationControls && reasoningEffortAvailable
-    planReasoningEffortLink.isVisible = showGenerationControls && planEffortAvailable
-    planReasoningEffortLink.isEnabled = showGenerationControls && planEffortAvailable
+    planReasoningEffortLink.isVisible = showGenerationControls && planEffortSupported
+    planReasoningEffortLink.isEnabled = showGenerationControls && planEffortSupported && planModeSelected
     if (showGenerationControls) {
       launchProfileLink.text = profileText
       launchProfileLink.setToolTipText(HtmlChunk.text(profileTooltip))
@@ -173,8 +165,14 @@ internal class AgentPromptGenerationSettingsController(
       reasoningEffortLink.text = reasoningEffortText(currentSettings.reasoningEffort)
       reasoningEffortLink.setToolTipText(HtmlChunk.text(reasoningEffortTooltipText(reasoningEffortAvailable)))
       reasoningEffortLink.accessibleContext.accessibleName = reasoningEffortLink.text
-      planReasoningEffortLink.text = planReasoningEffortText(currentPlanEffortMode)
-      planReasoningEffortLink.setToolTipText(HtmlChunk.text(AgentPromptBundle.message("popup.generation.plan.reasoning.tooltip")))
+      planReasoningEffortLink.text = planReasoningEffortText(currentPlanReasoningEffort)
+      val planReasoningEffortTooltipKey = if (planModeSelected) {
+        "popup.generation.plan.reasoning.tooltip"
+      }
+      else {
+        "popup.generation.plan.reasoning.disabled.tooltip"
+      }
+      planReasoningEffortLink.setToolTipText(HtmlChunk.text(AgentPromptBundle.message(planReasoningEffortTooltipKey)))
       planReasoningEffortLink.accessibleContext.accessibleName =
         AgentPromptBundle.message("popup.generation.plan.reasoning.accessible.name") + ": " + planReasoningEffortLink.text
     }
@@ -250,23 +248,16 @@ internal class AgentPromptGenerationSettingsController(
            ?: providerSelector.selectedProvider?.bridge?.supportedReasoningEfforts.orEmpty()
   }
 
-  private fun currentPlanEffortMode(settings: AgentPromptGenerationSettings): AgentPromptPlanEffortMode {
-    val providerId = providerSelector.selectedProvider?.bridge?.provider?.value ?: return AgentPromptPlanEffortMode.PROVIDER_DEFAULT
-    return sanitizePlanEffortMode(
-      planEffort = selectedPlanEffortMode,
-      supportedEfforts = availableReasoningEfforts(settings, loadedModelCatalog(providerId)),
-    )
-  }
-
-  private fun sanitizePlanEffortMode(
-    planEffort: AgentPromptPlanEffortMode,
+  private fun sanitizePlanReasoningEffort(
+    planReasoningEffort: AgentPromptReasoningEffort?,
     supportedEfforts: Set<AgentPromptReasoningEffort>,
-  ): AgentPromptPlanEffortMode {
-    if (planEffort.kind != AgentPromptPlanEffortModeKind.EXPLICIT) {
-      return planEffort
+  ): AgentPromptReasoningEffort? {
+    return when (planReasoningEffort) {
+      null -> null
+      AgentPromptReasoningEffort.AUTO -> AgentPromptReasoningEffort.AUTO
+      in supportedEfforts -> planReasoningEffort
+      else -> AgentPromptReasoningEffort.AUTO
     }
-    val explicitEffort = planEffort.explicitEffort ?: return AgentPromptPlanEffortMode.PROVIDER_DEFAULT
-    return if (explicitEffort in supportedEfforts) planEffort else AgentPromptPlanEffortMode.PROVIDER_DEFAULT
   }
 
   private fun showModelPopup() {
@@ -396,8 +387,10 @@ internal class AgentPromptGenerationSettingsController(
     refreshPresentation()
   }
 
-  private fun selectPlanReasoningEffort(planEffort: AgentPromptPlanEffortMode) {
-    selectedPlanEffortMode = planEffort
+  private fun selectPlanReasoningEffort(planReasoningEffort: AgentPromptReasoningEffort?) {
+    val providerId = providerSelector.selectedProvider?.bridge?.provider?.value ?: return
+    val currentSettings = currentSettings()
+    transientSettingsByProviderId[providerId] = currentSettings.copy(planReasoningEffort = planReasoningEffort)
     refreshPresentation()
   }
 
@@ -429,6 +422,9 @@ internal class AgentPromptGenerationSettingsController(
   @TestOnly
   internal fun createPlanReasoningEffortActionGroupForTest(): DefaultActionGroup? {
     val selectedProvider = providerSelector.selectedProvider ?: return null
+    if (!selectedProvider.bridge.supportsPlanReasoningEffort || !providerSelector.isPlanModeSelected()) {
+      return null
+    }
     val providerId = selectedProvider.bridge.provider.value
     val supportedEfforts = availableReasoningEfforts(currentSettings(), loadedModelCatalog(providerId))
     if (supportedEfforts.isEmpty()) {
@@ -466,11 +462,11 @@ internal class AgentPromptGenerationSettingsController(
 
   private fun createPlanReasoningEffortActionGroup(supportedEfforts: Set<AgentPromptReasoningEffort>): DefaultActionGroup {
     val group = DefaultActionGroup()
-    group.add(PlanReasoningEffortAction(AgentPromptPlanEffortMode.SAME_AS_NORMAL))
-    group.add(PlanReasoningEffortAction(AgentPromptPlanEffortMode.PROVIDER_DEFAULT))
+    group.add(PlanReasoningEffortAction(null))
+    group.add(PlanReasoningEffortAction(AgentPromptReasoningEffort.AUTO))
     reasoningEffortOrder()
       .filter { effort -> effort != AgentPromptReasoningEffort.AUTO && effort in supportedEfforts }
-      .forEach { effort -> group.add(PlanReasoningEffortAction(AgentPromptPlanEffortMode.explicit(effort))) }
+      .forEach { effort -> group.add(PlanReasoningEffortAction(effort)) }
     return group
   }
 
@@ -831,19 +827,19 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   private inner class PlanReasoningEffortAction(
-    private val planEffort: AgentPromptPlanEffortMode,
-  ) : DumbAwareToggleAction(planReasoningEffortPopupText(planEffort)) {
+    private val planReasoningEffort: AgentPromptReasoningEffort?,
+  ) : DumbAwareToggleAction(planReasoningEffortPopupText(planReasoningEffort)) {
     init {
       templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Never
     }
 
     override fun isSelected(e: AnActionEvent): Boolean {
-      return selectedPlanEffortMode == planEffort
+      return currentSettings().planReasoningEffort == planReasoningEffort
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
       if (state) {
-        selectPlanReasoningEffort(planEffort)
+        selectPlanReasoningEffort(planReasoningEffort)
       }
     }
 
@@ -900,8 +896,6 @@ private fun AgentPromptLaunchProfile.profilePayload(): AgentPromptLaunchProfile 
     id = "",
     name = "",
     kind = AgentPromptLaunchProfileKind.USER,
-    planEffort = AgentPromptPlanEffortMode.SAME_AS_NORMAL,
-    startInPlanMode = false,
   )
 }
 
@@ -973,28 +967,22 @@ private fun launchProfileText(profile: AgentPromptLaunchProfile?, modified: Bool
   }
 }
 
-private fun planReasoningEffortText(planEffort: AgentPromptPlanEffortMode): @Nls String {
-  return when (planEffort.kind) {
-    AgentPromptPlanEffortModeKind.SAME_AS_NORMAL -> AgentPromptBundle.message("popup.generation.plan.reasoning.same")
-    AgentPromptPlanEffortModeKind.PROVIDER_DEFAULT -> AgentPromptBundle.message("popup.generation.plan.reasoning.provider.default")
-    AgentPromptPlanEffortModeKind.EXPLICIT -> when (planEffort.explicitEffort) {
-      AgentPromptReasoningEffort.LOW -> AgentPromptBundle.message("popup.generation.plan.reasoning.low")
-      AgentPromptReasoningEffort.MEDIUM -> AgentPromptBundle.message("popup.generation.plan.reasoning.medium")
-      AgentPromptReasoningEffort.HIGH -> AgentPromptBundle.message("popup.generation.plan.reasoning.high")
-      AgentPromptReasoningEffort.XHIGH -> AgentPromptBundle.message("popup.generation.plan.reasoning.xhigh")
-      AgentPromptReasoningEffort.MAX -> AgentPromptBundle.message("popup.generation.plan.reasoning.max")
-      AgentPromptReasoningEffort.AUTO,
-      null,
-        -> AgentPromptBundle.message("popup.generation.plan.reasoning.provider.default")
-    }
+private fun planReasoningEffortText(planReasoningEffort: AgentPromptReasoningEffort?): @Nls String {
+  return when (planReasoningEffort) {
+    null -> AgentPromptBundle.message("popup.generation.plan.reasoning.same")
+    AgentPromptReasoningEffort.AUTO -> AgentPromptBundle.message("popup.generation.plan.reasoning.provider.default")
+    AgentPromptReasoningEffort.LOW -> AgentPromptBundle.message("popup.generation.plan.reasoning.low")
+    AgentPromptReasoningEffort.MEDIUM -> AgentPromptBundle.message("popup.generation.plan.reasoning.medium")
+    AgentPromptReasoningEffort.HIGH -> AgentPromptBundle.message("popup.generation.plan.reasoning.high")
+    AgentPromptReasoningEffort.XHIGH -> AgentPromptBundle.message("popup.generation.plan.reasoning.xhigh")
+    AgentPromptReasoningEffort.MAX -> AgentPromptBundle.message("popup.generation.plan.reasoning.max")
   }
 }
 
-private fun planReasoningEffortPopupText(planEffort: AgentPromptPlanEffortMode): @Nls String {
-  return when (planEffort.kind) {
-    AgentPromptPlanEffortModeKind.SAME_AS_NORMAL -> AgentPromptBundle.message("popup.generation.plan.reasoning.popup.same")
-    AgentPromptPlanEffortModeKind.PROVIDER_DEFAULT -> AgentPromptBundle.message("popup.generation.plan.reasoning.popup.provider.default")
-    AgentPromptPlanEffortModeKind.EXPLICIT -> planEffort.explicitEffort?.let(::reasoningEffortPopupText)
-                                              ?: AgentPromptBundle.message("popup.generation.plan.reasoning.popup.provider.default")
+private fun planReasoningEffortPopupText(planReasoningEffort: AgentPromptReasoningEffort?): @Nls String {
+  return when (planReasoningEffort) {
+    null -> AgentPromptBundle.message("popup.generation.plan.reasoning.popup.same")
+    AgentPromptReasoningEffort.AUTO -> AgentPromptBundle.message("popup.generation.plan.reasoning.popup.provider.default")
+    else -> reasoningEffortPopupText(planReasoningEffort)
   }
 }

@@ -153,12 +153,7 @@ internal class ClaudeAgentSessionProviderDescriptor(
     initialMessagePlan: AgentInitialMessagePlan,
   ): AgentSessionTerminalLaunchSpec {
     val settings = sanitizeGenerationSettings(generationSettings)
-    val effort = if (initialMessagePlan.mode == AgentInitialMessageMode.PLAN) {
-      settings.planReasoningEffort ?: settings.reasoningEffort
-    }
-    else {
-      settings.reasoningEffort
-    }
+    val effort = settings.reasoningEffort
     if (effort == AgentPromptReasoningEffort.AUTO) {
       return baseLaunchSpec
     }

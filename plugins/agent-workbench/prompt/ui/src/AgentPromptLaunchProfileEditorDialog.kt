@@ -116,6 +116,8 @@ internal class AgentPromptLaunchProfileEditorDialog(
   }
   private val modelCombo = ComboBox<ModelOption>()
   private val effortCombo = ComboBox<ReasoningEffortOption>()
+  private val planEffortCombo = ComboBox<PlanEffortOption>()
+  private var planEffortLabel: JBLabel? = null
   private val statusLabel = JBLabel(" ")
   private val setDefaultButton = JButton(AgentPromptBundle.message("popup.profile.set.default"))
 
@@ -134,6 +136,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
       if (!isUpdatingEditor) {
         refreshLaunchModeOptions()
         refreshModelOptions(selectedModelId = null)
+        refreshPlanEffortOptions()
         handleEditorChanged()
       }
     }
@@ -147,6 +150,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
           selectedOption?.selectable == true -> {
             selectedModelIdForEditor = selectedOption.modelId
             refreshEffortOptions()
+            refreshPlanEffortOptions()
             handleEditorChanged()
           }
           else -> {
@@ -162,6 +166,11 @@ internal class AgentPromptLaunchProfileEditorDialog(
       }
     }
     yoloModeButton.addActionListener {
+      if (!isUpdatingEditor) {
+        handleEditorChanged()
+      }
+    }
+    planEffortCombo.addActionListener {
       if (!isUpdatingEditor) {
         handleEditorChanged()
       }
@@ -280,6 +289,21 @@ internal class AgentPromptLaunchProfileEditorDialog(
     return selectedModelOption()?.modelId
   }
 
+  fun isPlanEffortVisibleForTest(): Boolean {
+    return planEffortCombo.isVisible && planEffortLabel?.isVisible == true
+  }
+
+  fun planEffortOptionTextsForTest(): List<String> {
+    return (0 until planEffortCombo.model.size).map { index -> planEffortCombo.model.getElementAt(index).displayName }
+  }
+
+  fun selectPlanEffortForTest(planReasoningEffort: AgentPromptReasoningEffort?) {
+    planEffortCombo.selectedItem = (0 until planEffortCombo.model.size)
+      .asSequence()
+      .map { index -> planEffortCombo.model.getElementAt(index) }
+      .first { option -> option.planReasoningEffort == planReasoningEffort }
+  }
+
   fun renameSelectedProfileForTest() {
     renameSelectedProfile()
   }
@@ -391,6 +415,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
     panel.addLabeledField(row++, AgentPromptBundle.message("popup.profile.manage.column.mode"), launchModePanel)
     panel.addLabeledField(row++, AgentPromptBundle.message("popup.profile.group.model"), modelCombo)
     panel.addLabeledField(row++, AgentPromptBundle.message("popup.profile.group.effort"), effortCombo)
+    planEffortLabel = panel.addLabeledField(row++, AgentPromptBundle.message("popup.profile.group.plan.effort"), planEffortCombo)
     panel.add(statusLabel, GridBagConstraints().apply {
       gridx = 0
       gridy = row++
@@ -440,6 +465,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
     })
     modelCombo.renderer = ModelOptionRenderer(modelCombo)
     effortCombo.renderer = ReasoningEffortOptionRenderer()
+    planEffortCombo.renderer = PlanEffortOptionRenderer()
   }
 
   private fun reloadList() {
@@ -514,6 +540,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
       refreshLaunchModeOptions(profile)
       refreshModelOptions(profile)
       refreshEffortOptions(profile)
+      refreshPlanEffortOptions(profile)
     }
     finally {
       isUpdatingEditor = false
@@ -575,6 +602,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
     selectedModelIdForEditor = selectedModelId
     refreshModelOptions(profile = null)
     refreshEffortOptions()
+    refreshPlanEffortOptions()
   }
 
   private fun requestSelectedProviderModelRefresh() {
@@ -584,9 +612,11 @@ internal class AgentPromptLaunchProfileEditorDialog(
         return@requestModelCatalogRefresh
       }
       refreshModelOptions(selectedModelId = selectedModelIdForEditor)
+      refreshPlanEffortOptions()
       updateButtonState()
     }
     refreshModelOptions(selectedModelId = selectedModelIdForEditor)
+    refreshPlanEffortOptions()
   }
 
   private fun buildModelOptions(
@@ -618,23 +648,25 @@ internal class AgentPromptLaunchProfileEditorDialog(
   }
 
   private fun refreshEffortOptions(profile: AgentPromptLaunchProfile? = selectedProfile()) {
-    val selectedProvider = selectedProviderOption()
-    val providerEntry = providerEntry(selectedProvider?.providerId)
-    val selectedModelId = selectedModelIdForEditor
-    val models = selectedProvider?.providerId?.let { providerId -> modelCatalogStateProvider(providerId)?.modelsOrNull() }.orEmpty()
-    val modelEfforts = selectedModelId
-      ?.let { modelId -> models.firstOrNull { model -> model.id == modelId } }
-      ?.supportedReasoningEfforts
-      ?.takeIf { efforts -> efforts.isNotEmpty() }
-    val supportedEfforts = modelEfforts
-                           ?: models.catalogReasoningEfforts()
-                           ?: providerEntry?.bridge?.supportedReasoningEfforts.orEmpty()
+    val supportedEfforts = selectedProviderReasoningEfforts()
     val efforts = reasoningEffortOrder()
       .filter { effort -> effort == AgentPromptReasoningEffort.AUTO || effort in supportedEfforts }
       .map { effort -> ReasoningEffortOption(effort, reasoningEffortPopupText(effort)) }
     effortCombo.model = DefaultComboBoxModel(efforts.toTypedArray())
     effortCombo.selectedItem =
       efforts.firstOrNull { option -> option.effort == profile?.generationSettings?.reasoningEffort } ?: efforts.first()
+  }
+
+  private fun refreshPlanEffortOptions(profile: AgentPromptLaunchProfile? = selectedProfile()) {
+    val supportedEfforts = selectedProviderReasoningEfforts()
+    val visible = isSelectedProviderPlanEffortAvailable(supportedEfforts)
+    planEffortLabel?.isVisible = visible
+    planEffortCombo.isVisible = visible
+    val options = planEffortOptions(supportedEfforts)
+    planEffortCombo.model = DefaultComboBoxModel(options.toTypedArray())
+    val selectedPlanEffort = sanitizePlanReasoningEffort(profile?.generationSettings?.planReasoningEffort, supportedEfforts)
+    planEffortCombo.selectedItem = options.firstOrNull { option -> option.planReasoningEffort == selectedPlanEffort }
+                                    ?: options.first()
   }
 
   private fun updateButtonState() {
@@ -646,6 +678,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
     updateLaunchModeControlState(profile != null)
     modelCombo.isEnabled = profile != null
     effortCombo.isEnabled = profile != null
+    planEffortCombo.isEnabled = profile != null && planEffortCombo.isVisible
     setDefaultButton.isEnabled =
       profile != null && draftValid && profile.id != currentDefaultProfileId && providerOption(profile.providerId)?.isAvailable == true
     val editorStatusText = statusText(profile, draftValid)
@@ -667,7 +700,16 @@ internal class AgentPromptLaunchProfileEditorDialog(
   }
 
   private fun updateDetailsAccessibleDescription(description: @Nls String?) {
-    listOf(nameField, providerCombo, launchModePanel, standardModeButton, yoloModeButton, modelCombo, effortCombo).forEach { component ->
+    listOf(
+      nameField,
+      providerCombo,
+      launchModePanel,
+      standardModeButton,
+      yoloModeButton,
+      modelCombo,
+      effortCombo,
+      planEffortCombo,
+    ).forEach { component ->
       component.accessibleContext.accessibleDescription = description
     }
   }
@@ -678,7 +720,8 @@ internal class AgentPromptLaunchProfileEditorDialog(
            selectedProviderOption()?.providerId != profile.providerId ||
            selectedLaunchMode() != profile.launchMode ||
            selectedModelIdForEditor != profile.generationSettings.modelId ||
-           selectedReasoningEffortOption()?.effort != profile.generationSettings.reasoningEffort
+           selectedReasoningEffortOption()?.effort != profile.generationSettings.reasoningEffort ||
+            selectedPlanReasoningEffort() != profile.generationSettings.planReasoningEffort
   }
 
   private fun updateLaunchModeControlState(enabled: Boolean) {
@@ -780,6 +823,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
     val launchMode = selectedLaunchMode() ?: return null
     val modelId = selectedModelIdForEditor
     val reasoningEffort = selectedReasoningEffortOption()?.effort ?: AgentPromptReasoningEffort.AUTO
+    val planReasoningEffort = selectedPlanReasoningEffort()
     return AgentPromptLaunchProfile(
       id = existing?.id ?: "",
       name = name,
@@ -789,8 +833,75 @@ internal class AgentPromptLaunchProfileEditorDialog(
       generationSettings = AgentPromptGenerationSettings(
         modelId = modelId,
         reasoningEffort = reasoningEffort,
+        planReasoningEffort = planReasoningEffort,
       ),
     )
+  }
+
+  private fun selectedProviderReasoningEfforts(): Set<AgentPromptReasoningEffort> {
+    val selectedProvider = selectedProviderOption()
+    val providerEntry = providerEntry(selectedProvider?.providerId)
+    val selectedModelId = selectedModelIdForEditor
+    val models = selectedProvider?.providerId?.let { providerId -> modelCatalogStateProvider(providerId)?.modelsOrNull() }.orEmpty()
+    val modelEfforts = selectedModelId
+      ?.let { modelId -> models.firstOrNull { model -> model.id == modelId } }
+      ?.supportedReasoningEfforts
+      ?.takeIf { efforts -> efforts.isNotEmpty() }
+    return modelEfforts
+           ?: models.catalogReasoningEfforts()
+           ?: providerEntry?.bridge?.supportedReasoningEfforts.orEmpty()
+  }
+
+  private fun isSelectedProviderPlanEffortAvailable(supportedEfforts: Set<AgentPromptReasoningEffort>): Boolean {
+    if (supportedEfforts.isEmpty()) {
+      return false
+    }
+    val providerEntry = providerEntry(selectedProviderOption()?.providerId) ?: return false
+    return providerEntry.bridge.supportsPlanReasoningEffort
+  }
+
+  private fun planEffortOptions(supportedEfforts: Set<AgentPromptReasoningEffort>): List<PlanEffortOption> {
+    return buildList {
+      add(
+        PlanEffortOption(
+          null,
+          planReasoningEffortPopupText(null),
+        )
+      )
+      add(
+        PlanEffortOption(
+          AgentPromptReasoningEffort.AUTO,
+          planReasoningEffortPopupText(AgentPromptReasoningEffort.AUTO),
+        )
+      )
+      reasoningEffortOrder()
+        .filter { effort -> effort != AgentPromptReasoningEffort.AUTO && effort in supportedEfforts }
+        .forEach { effort ->
+          add(PlanEffortOption(effort, planReasoningEffortPopupText(effort)))
+        }
+    }
+  }
+
+  private fun selectedPlanReasoningEffort(): AgentPromptReasoningEffort? {
+    val supportedEfforts = selectedProviderReasoningEfforts()
+    return if (isSelectedProviderPlanEffortAvailable(supportedEfforts)) {
+      (planEffortCombo.selectedItem as? PlanEffortOption)?.planReasoningEffort
+    }
+    else {
+      null
+    }
+  }
+
+  private fun sanitizePlanReasoningEffort(
+    planReasoningEffort: AgentPromptReasoningEffort?,
+    supportedEfforts: Set<AgentPromptReasoningEffort>,
+  ): AgentPromptReasoningEffort? {
+    return when (planReasoningEffort) {
+      null -> null
+      AgentPromptReasoningEffort.AUTO -> AgentPromptReasoningEffort.AUTO
+      in supportedEfforts -> planReasoningEffort
+      else -> AgentPromptReasoningEffort.AUTO
+    }
   }
 
   private fun isRemovableProfile(profile: AgentPromptLaunchProfile): Boolean {
@@ -892,7 +1003,7 @@ internal class AgentPromptLaunchProfileEditorDialog(
   }
 }
 
-private fun JPanel.addLabeledField(row: Int, labelText: @Nls String, component: JComponent) {
+private fun JPanel.addLabeledField(row: Int, labelText: @Nls String, component: JComponent): JBLabel {
   val label = JBLabel(labelText).apply { labelFor = component }
   add(label, GridBagConstraints().apply {
     gridx = 0
@@ -907,6 +1018,7 @@ private fun JPanel.addLabeledField(row: Int, labelText: @Nls String, component: 
     weightx = 1.0
     insets = JBUI.insetsBottom(8)
   })
+  return label
 }
 
 private data class ProviderOption(
@@ -936,6 +1048,13 @@ private data class ReasoningEffortOption(
   override fun toString(): String = displayName
 }
 
+private data class PlanEffortOption(
+  @JvmField val planReasoningEffort: AgentPromptReasoningEffort?,
+  @JvmField val displayName: @NlsSafe String,
+) {
+  override fun toString(): String = displayName
+}
+
 private class ProviderOptionRenderer : PromptProfileComboRenderer<ProviderOption>() {
   override fun text(value: ProviderOption): @NlsSafe String {
     return if (value.isAvailable) value.displayName
@@ -958,6 +1077,10 @@ private class ModelOptionRenderer(component: JComponent) : GroupedComboBoxRender
 
 private class ReasoningEffortOptionRenderer : PromptProfileComboRenderer<ReasoningEffortOption>() {
   override fun text(value: ReasoningEffortOption): @NlsSafe String = value.displayName
+}
+
+private class PlanEffortOptionRenderer : PromptProfileComboRenderer<PlanEffortOption>() {
+  override fun text(value: PlanEffortOption): @NlsSafe String = value.displayName
 }
 
 private abstract class PromptProfileComboRenderer<T> : javax.swing.DefaultListCellRenderer() {
@@ -987,5 +1110,13 @@ private fun launchModeText(mode: AgentSessionLaunchMode): @Nls String {
   return when (mode) {
     AgentSessionLaunchMode.STANDARD -> AgentPromptBundle.message("popup.profile.manage.mode.standard")
     AgentSessionLaunchMode.YOLO -> AgentPromptBundle.message("popup.profile.manage.mode.yolo")
+  }
+}
+
+private fun planReasoningEffortPopupText(planReasoningEffort: AgentPromptReasoningEffort?): @Nls String {
+  return when (planReasoningEffort) {
+    null -> AgentPromptBundle.message("popup.generation.plan.reasoning.popup.same")
+    AgentPromptReasoningEffort.AUTO -> AgentPromptBundle.message("popup.generation.plan.reasoning.popup.provider.default")
+    else -> reasoningEffortPopupText(planReasoningEffort)
   }
 }

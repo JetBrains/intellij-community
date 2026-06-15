@@ -14,7 +14,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderActionModel
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
-import com.intellij.agent.workbench.sessions.core.providers.generationSettingsForPlanEffort
+import com.intellij.agent.workbench.sessions.core.providers.generationSettingsForPlanMode
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.providers.initialMessageRequestForLaunchProfile
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
@@ -50,10 +50,9 @@ fun createNewThreadViaService(
     entryPoint = entryPoint,
     currentProject = currentProject,
     initialMessageRequest = initialMessageRequestForLaunchProfile(profile),
-    generationSettings = generationSettingsForPlanEffort(
+    generationSettings = generationSettingsForPlanMode(
       generationSettings = profile.generationSettings,
-      planEffort = profile.planEffort,
-      startInPlanMode = profile.startInPlanMode,
+      startInPlanMode = false,
     ),
   )
 }

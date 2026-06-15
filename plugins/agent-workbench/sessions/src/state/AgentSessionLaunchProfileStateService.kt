@@ -9,7 +9,7 @@ import com.intellij.openapi.components.Storage
 import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
-@State(name = "AgentSessionLaunchProfileState", storages = [Storage("agentWorkbenchLaunchProfiles.xml")])
+@State(name = "AgentSessionLaunchProfileStateV2", storages = [Storage("agentWorkbenchLaunchProfilesV2.xml")])
 class AgentSessionLaunchProfileStateService
   : SerializablePersistentStateComponent<AgentSessionLaunchProfileStateService.LaunchProfileState>(LaunchProfileState()) {
 

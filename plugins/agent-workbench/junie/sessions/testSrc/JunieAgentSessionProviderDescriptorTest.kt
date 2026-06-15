@@ -364,6 +364,20 @@ class JunieAgentSessionProviderDescriptorTest {
   }
 
   @Test
+  fun `apply generation settings ignores plan effort`(): Unit = runBlocking(Dispatchers.Default) {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+    val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+
+    val updatedLaunchSpec = descriptor.applyGenerationSettings(
+      baseLaunchSpec,
+      AgentPromptGenerationSettings(planReasoningEffort = AgentPromptReasoningEffort.XHIGH),
+      STANDARD_INITIAL_MESSAGE_PLAN,
+    )
+
+    assertThat(updatedLaunchSpec.command).containsExactly("junie-test", "--skip-update-check")
+  }
+
+  @Test
   fun `apply generation settings adds model and effort flags`(): Unit = runBlocking(Dispatchers.Default) {
     val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
     val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)

@@ -31,7 +31,7 @@ machine-local preferences, and project workspace state stores the prompt draft o
   - `AgentChatTabsState`, app-level cache file, keyed by chat `tabKey`, retained for legacy restore migration and cleanup only.
   - `AgentSessionWarmState`, app-level cache file, for warm-start session rows for open paths.
   - `AgentSessionTreeUiState`, app-level cache file, for collapsed project paths.
-  - `AgentSessionLaunchProfileState`, app-level roaming file, for user launch profiles and the explicit default profile id.
+  - `AgentSessionLaunchProfileStateV2`, app-level roaming file, for user launch profiles and the explicit default profile id.
   - `AgentSessionUiPreferencesState`, app-level non-roamable file, for machine-local provider/mode preferences and Claude quota hint state.
   - `AgentWorkbenchTerminalSessions`, app-level non-roamable file, for user-created terminal session rows and bounded terminal restore
     context.

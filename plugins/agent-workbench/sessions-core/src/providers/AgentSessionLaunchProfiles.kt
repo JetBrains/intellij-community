@@ -7,9 +7,6 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
-import com.intellij.agent.workbench.prompt.core.AgentPromptPlanEffortMode
-import com.intellij.agent.workbench.prompt.core.AgentPromptPlanEffortModeKind
-import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 
 const val BUILT_IN_LAUNCH_PROFILE_PREFIX: String = "builtin:"
 
@@ -37,9 +34,6 @@ fun launchProfileEditablePayload(profile: AgentPromptLaunchProfile): AgentPrompt
   return profile.copy(
     id = "",
     kind = AgentPromptLaunchProfileKind.USER,
-    generationSettings = profile.generationSettings.copy(planReasoningEffort = null),
-    planEffort = AgentPromptPlanEffortMode.SAME_AS_NORMAL,
-    startInPlanMode = false,
   )
 }
 
@@ -53,9 +47,6 @@ fun launchProfileMatchesBuiltIn(
 fun normalizedUserLaunchProfile(profile: AgentPromptLaunchProfile): AgentPromptLaunchProfile {
   return profile.copy(
     kind = AgentPromptLaunchProfileKind.USER,
-    generationSettings = profile.generationSettings.copy(planReasoningEffort = null),
-    planEffort = AgentPromptPlanEffortMode.SAME_AS_NORMAL,
-    startInPlanMode = false,
   )
 }
 
@@ -80,23 +71,16 @@ fun buildBuiltInLaunchProfiles(
     }
 }
 
-fun generationSettingsForPlanEffort(
+fun generationSettingsForPlanMode(
   generationSettings: AgentPromptGenerationSettings,
-  planEffort: AgentPromptPlanEffortMode,
   startInPlanMode: Boolean,
 ): AgentPromptGenerationSettings {
   if (!startInPlanMode) {
     return generationSettings.copy(planReasoningEffort = null)
   }
-  val planReasoningEffort = when (planEffort.kind) {
-    AgentPromptPlanEffortModeKind.SAME_AS_NORMAL -> null
-    AgentPromptPlanEffortModeKind.PROVIDER_DEFAULT -> AgentPromptReasoningEffort.AUTO
-    AgentPromptPlanEffortModeKind.EXPLICIT -> planEffort.explicitEffort ?: AgentPromptReasoningEffort.AUTO
-  }
-  return generationSettings.copy(planReasoningEffort = planReasoningEffort)
+  return generationSettings
 }
 
-fun initialMessageRequestForLaunchProfile(profile: AgentPromptLaunchProfile): AgentPromptInitialMessageRequest {
-  val providerOptionIds = if (profile.startInPlanMode) setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE) else emptySet()
-  return AgentPromptInitialMessageRequest(prompt = "", providerOptionIds = providerOptionIds)
+fun initialMessageRequestForLaunchProfile(@Suppress("UNUSED_PARAMETER") profile: AgentPromptLaunchProfile): AgentPromptInitialMessageRequest {
+  return AgentPromptInitialMessageRequest(prompt = "")
 }
