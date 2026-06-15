@@ -1124,6 +1124,7 @@ plugins/gradle/java/groovy
 plugins/gradle/java/groovy/ml
 plugins/gradle/java/groovy/toml
 plugins/gradle/java/performance
+plugins/gradle/java/performanceTests
 plugins/gradle/java/plugin
 plugins/gradle/java/properties
 plugins/gradle/java/toml
