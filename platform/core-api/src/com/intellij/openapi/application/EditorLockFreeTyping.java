@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -21,10 +20,8 @@ import org.jetbrains.annotations.Nullable;
 public final class EditorLockFreeTyping {
   private static final Key<Boolean> USE_ELF_PSI_IN_SCOPE_KEY = Key.create("USE_ELF_PSI_IN_SCOPE_KEY");
 
-  private static final RegistryValue LOCK_FREE_TYPING_ENABLED = Registry.get("editor.lockfree.typing.enabled");
-
   public static boolean isEnabled() {
-    return LOCK_FREE_TYPING_ENABLED.asBoolean();
+    return Registry.is("editor.lockfree.typing.enabled", false);
   }
 
   @RequiresEdt
