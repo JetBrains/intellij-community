@@ -15,7 +15,7 @@ import java.awt.event.InputEvent
  * @param keyModifier a modifier key that is used to toggle the breakpoint on/off. When pressed,
  *   the IDE only suggests placement/removal of a breakpoint of that type.
  */
-@ApiStatus.Internal
+@ApiStatus.Experimental
 @Serializable
 enum class XLineBreakpointVerticalPlacement(val keyModifier: Int) {
   /**
@@ -23,11 +23,11 @@ enum class XLineBreakpointVerticalPlacement(val keyModifier: Int) {
    */
   ON_LINE(if (SystemInfo.isMac) InputEvent.META_DOWN_MASK else InputEvent.CTRL_DOWN_MASK),
 
-          /**
+  /**
    * A breakpoint placed between source lines.
    *
    * Such a breakpoint is associated with the source line below that gap, so it is rendered above that line.
    * This placement is used only for line breakpoint types whose [XLineBreakpointType.supportsInterLinePlacement] returns `true`.
    */
-          INTER_LINE(InputEvent.SHIFT_DOWN_MASK),
+  INTER_LINE(InputEvent.SHIFT_DOWN_MASK),
 }

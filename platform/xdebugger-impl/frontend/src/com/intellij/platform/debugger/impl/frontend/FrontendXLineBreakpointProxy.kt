@@ -130,14 +130,6 @@ internal class FrontendXLineBreakpointProxy(
   override val attachments: List<XBreakpointAttachment> =
     FrontendXLineBreakpointAttachmentProvider.createAttachments(this, attachmentScope)
 
-  init {
-    attachmentScope.launch(Dispatchers.EDT) {
-      for (attachment in attachments) {
-        attachment.breakpointChanged()
-      }
-    }
-  }
-
   override fun isTemporary(): Boolean {
     return lineBreakpointInfo.isTemporary
   }

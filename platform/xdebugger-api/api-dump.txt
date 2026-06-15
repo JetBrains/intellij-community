@@ -264,6 +264,7 @@ com.intellij.xdebugger.breakpoints.XBreakpointManager
 - a:addBreakpointListener(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointListener):V
 - a:addBreakpointListener(com.intellij.xdebugger.breakpoints.XBreakpointType,com.intellij.xdebugger.breakpoints.XBreakpointListener,com.intellij.openapi.Disposable):V
 - a:addLineBreakpoint(com.intellij.xdebugger.breakpoints.XLineBreakpointType,java.lang.String,I,com.intellij.xdebugger.breakpoints.XBreakpointProperties):com.intellij.xdebugger.breakpoints.XLineBreakpoint
+- a:addLineBreakpoint(com.intellij.xdebugger.breakpoints.XLineBreakpointType,java.lang.String,I,com.intellij.xdebugger.breakpoints.XBreakpointProperties,com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo):com.intellij.xdebugger.breakpoints.XLineBreakpoint
 - a:addLineBreakpoint(com.intellij.xdebugger.breakpoints.XLineBreakpointType,java.lang.String,I,com.intellij.xdebugger.breakpoints.XBreakpointProperties,Z):com.intellij.xdebugger.breakpoints.XLineBreakpoint
 - a:findBreakpointAtLine(com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.openapi.vfs.VirtualFile,I):com.intellij.xdebugger.breakpoints.XLineBreakpoint
 - a:findBreakpointsAtLine(com.intellij.xdebugger.breakpoints.XLineBreakpointType,com.intellij.openapi.vfs.VirtualFile,I):java.util.Collection

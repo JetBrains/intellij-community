@@ -53,6 +53,7 @@ import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.SuspendPolicy
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties
 import com.intellij.xdebugger.breakpoints.XBreakpointType
+import com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.breakpoints.InlineBreakpointsVariantsManager
@@ -225,14 +226,19 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     val breakpointManager = getBreakpointManager(project)
     val placement = request.placement
     val line = readAction { position.line }
-    val breakpoint = XDebuggerUtilImpl.addLineBreakpoint(breakpointManager, variant, position.file, line, request.isTemporary, placement)
-    if (request.isLogging) {
-      breakpoint.setSuspendPolicy(SuspendPolicy.NONE)
-      if (request.logExpression != null) {
-        breakpoint.isLogMessage = true
-        breakpoint.setLogExpression(request.logExpression)
+    val additionalInfoBuilder = XLineBreakpointAdditionalInfo.Builder().apply {
+      setVerticalPlacement(placement)
+      if (request.isLogging) {
+        setSuspendPolicy(SuspendPolicy.NONE)
+        setLogExpressionIfEnabled(request.logExpression)
       }
+      setTemporary(request.isTemporary)
     }
+    val breakpoint = XDebuggerUtilImpl.addLineBreakpoint(breakpointManager,
+                                                         variant,
+                                                         position.file,
+                                                         line,
+                                                         additionalInfoBuilder.build())
     return breakpoint as XBreakpointBase<*, *, *>
   }
 

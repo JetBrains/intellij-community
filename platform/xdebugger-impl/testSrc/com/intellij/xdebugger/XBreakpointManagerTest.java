@@ -9,6 +9,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement;
 import com.intellij.xdebugger.impl.BreakpointManagerState;
 import com.intellij.xdebugger.impl.breakpoints.BreakpointState;
@@ -98,11 +99,11 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
   public void testSameLineBreakpointsCanCoexistByPlacement() {
     VirtualFile file = getTempDir().createVirtualFile("coexisting-breakpoints.txt");
     XLineBreakpoint<MyBreakpointProperties> onLine =
-      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, new MyBreakpointProperties("on-line"), false,
-                                            XLineBreakpointVerticalPlacement.ON_LINE);
+      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, new MyBreakpointProperties("on-line"),
+                                            new XLineBreakpointAdditionalInfo.Builder().setVerticalPlacement(XLineBreakpointVerticalPlacement.ON_LINE).build());
     XLineBreakpoint<MyBreakpointProperties> interLine =
-      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, new MyBreakpointProperties("inter-line"), false,
-                                            XLineBreakpointVerticalPlacement.INTER_LINE);
+      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, new MyBreakpointProperties("inter-line"),
+                                            new XLineBreakpointAdditionalInfo.Builder().setVerticalPlacement(XLineBreakpointVerticalPlacement.INTER_LINE).build());
 
     assertSameElements(myBreakpointManager.getBreakpoints(MY_LINE_BREAKPOINT_TYPE), onLine, interLine);
     assertSame(onLine, assertOneElement(myBreakpointManager.findBreakpointsAtLine(MY_LINE_BREAKPOINT_TYPE, file, 0)));
@@ -115,10 +116,10 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
 
   @Test
   public void testSerializePlacement() {
-    myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "myurl", 239, new MyBreakpointProperties("on-line"), false,
-                                          XLineBreakpointVerticalPlacement.ON_LINE);
-    myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "myurl", 239, new MyBreakpointProperties("inter-line"), false,
-                                          XLineBreakpointVerticalPlacement.INTER_LINE);
+    myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "myurl", 239, new MyBreakpointProperties("on-line"),
+                                          new XLineBreakpointAdditionalInfo.Builder().setVerticalPlacement(XLineBreakpointVerticalPlacement.ON_LINE).build());
+    myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, "myurl", 239, new MyBreakpointProperties("inter-line"),
+                                          new XLineBreakpointAdditionalInfo.Builder().setVerticalPlacement(XLineBreakpointVerticalPlacement.INTER_LINE).build());
 
     reload();
 
@@ -133,11 +134,11 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
   public void testRestoreRemovedBreakpointDoesNotRemoveOtherPlacement() {
     VirtualFile file = getTempDir().createVirtualFile("breakpoint.txt");
     XLineBreakpoint<MyBreakpointProperties> onLine =
-      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, new MyBreakpointProperties("on-line"), false,
-                                            XLineBreakpointVerticalPlacement.ON_LINE);
+      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, new MyBreakpointProperties("on-line"),
+                                            new XLineBreakpointAdditionalInfo.Builder().setVerticalPlacement(XLineBreakpointVerticalPlacement.ON_LINE).build());
     XLineBreakpoint<MyBreakpointProperties> interLine =
-      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, new MyBreakpointProperties("inter-line"), false,
-                                            XLineBreakpointVerticalPlacement.INTER_LINE);
+      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, new MyBreakpointProperties("inter-line"),
+                                            new XLineBreakpointAdditionalInfo.Builder().setVerticalPlacement(XLineBreakpointVerticalPlacement.INTER_LINE).build());
 
     myBreakpointManager.rememberRemovedBreakpoint((XBreakpointBase<?, ?, ?>)interLine);
     removeBreakPoint(myBreakpointManager, interLine);
@@ -153,8 +154,8 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
   public void testChangingPlacementFromLogpointToBreakpointAndBackUpdatesBreakpointLookup() {
     VirtualFile file = getTempDir().createVirtualFile("breakpoint.txt");
     XLineBreakpoint<MyBreakpointProperties> breakpoint =
-      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, new MyBreakpointProperties("inter-line"), false,
-                                            XLineBreakpointVerticalPlacement.INTER_LINE);
+      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, new MyBreakpointProperties("inter-line"),
+                                            new XLineBreakpointAdditionalInfo.Builder().setVerticalPlacement(XLineBreakpointVerticalPlacement.INTER_LINE).build());
 
     StringBuilder out = new StringBuilder();
     myBreakpointManager.addBreakpointListener(MY_LINE_BREAKPOINT_TYPE, new XBreakpointListener<>() {
@@ -181,8 +182,8 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
   public void testChangingPlacementFromBreakpointToLogpointAndBackUpdatesBreakpointLookup() {
     VirtualFile file = getTempDir().createVirtualFile("breakpoint.txt");
     XLineBreakpoint<MyBreakpointProperties> breakpoint =
-      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, new MyBreakpointProperties("on-line"), false,
-                                            XLineBreakpointVerticalPlacement.ON_LINE);
+      myBreakpointManager.addLineBreakpoint(MY_LINE_BREAKPOINT_TYPE, file.getUrl(), 0, new MyBreakpointProperties("on-line"),
+                                            new XLineBreakpointAdditionalInfo.Builder().setVerticalPlacement(XLineBreakpointVerticalPlacement.ON_LINE).build());
 
     StringBuilder out = new StringBuilder();
     myBreakpointManager.addBreakpointListener(MY_LINE_BREAKPOINT_TYPE, new XBreakpointListener<>() {
