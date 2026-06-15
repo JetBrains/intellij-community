@@ -3664,6 +3664,69 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../../../idea/tests/testData/quickfix/contextParameter/existingContext")
+        public static class ExistingContext extends AbstractHighLevelQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("alreadyInContext.kt")
+            public void testAlreadyInContext() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/alreadyInContext.kt");
+            }
+
+            @TestMetadata("ambiguity.kt")
+            public void testAmbiguity() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/ambiguity.kt");
+            }
+
+            @TestMetadata("ambiguity2.kt")
+            public void testAmbiguity2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/ambiguity2.kt");
+            }
+
+            @TestMetadata("emptyContext.kt")
+            public void testEmptyContext() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/emptyContext.kt");
+            }
+
+            @TestMetadata("infix.kt")
+            public void testInfix() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/infix.kt");
+            }
+
+            @TestMetadata("localValue.kt")
+            public void testLocalValue() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/localValue.kt");
+            }
+
+            @TestMetadata("outerNameParameter.kt")
+            public void testOuterNameParameter() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/outerNameParameter.kt");
+            }
+
+            @TestMetadata("subtypeReceiver.kt")
+            public void testSubtypeReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/subtypeReceiver.kt");
+            }
+
+            @TestMetadata("topLevel.kt")
+            public void testTopLevel() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/topLevel.kt");
+            }
+
+            @TestMetadata("twoPossible.kt")
+            public void testTwoPossible() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/twoPossible.kt");
+            }
+
+            @TestMetadata("twoPossible2.kt")
+            public void testTwoPossible2() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/existingContext/twoPossible2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../../idea/tests/testData/quickfix/contextParameter/surroundWithContext")
         public static class SurroundWithContext extends AbstractHighLevelQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
