@@ -9,8 +9,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.lang.ASTNode;
-import com.intellij.lang.Language;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -50,19 +48,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.ResolveState;
 import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -79,7 +69,6 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import javax.swing.Icon;
 import java.lang.ref.Reference;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -1163,288 +1152,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
    * For these infos the associated PSI element is assumed to be this {@code FAKE_ELEMENT}
    */
   @ApiStatus.Internal
-  public static final PsiElement FAKE_ELEMENT = createFakePsiElement("inspectionFinished");
-
-  static @NotNull PsiElement createFakePsiElement(@NotNull String debugString) {
-    return new PsiElement() {
-      @Override
-      public @NotNull Project getProject() {
-        throw createException();
-      }
-
-      @Override
-      public @NotNull Language getLanguage() {
-        throw createException();
-      }
-
-      @Override
-      public PsiManager getManager() {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement @NotNull [] getChildren() {
-        return EMPTY_ARRAY;
-      }
-
-      @Override
-      public PsiElement getParent() {
-        return null;
-      }
-
-      @Override
-      public @Nullable PsiElement getFirstChild() {
-        return null;
-      }
-
-      @Override
-      public @Nullable PsiElement getLastChild() {
-        return null;
-      }
-
-      @Override
-      public @Nullable PsiElement getNextSibling() {
-        return null;
-      }
-
-      @Override
-      public @Nullable PsiElement getPrevSibling() {
-        return null;
-      }
-
-      @Override
-      public PsiFile getContainingFile() {
-        return null;
-      }
-
-      @Override
-      public TextRange getTextRange() {
-        return TextRange.EMPTY_RANGE;
-      }
-
-      @Override
-      public int getStartOffsetInParent() {
-        return -1;
-      }
-
-      @Override
-      public int getTextLength() {
-        return 0;
-      }
-
-      @Override
-      public PsiElement findElementAt(int offset) {
-        return null;
-      }
-
-      @Override
-      public @Nullable PsiReference findReferenceAt(int offset) {
-        return null;
-      }
-
-      @Override
-      public int getTextOffset() {
-        return 0;
-      }
-
-      @Override
-      public String getText() {
-        return "";
-      }
-
-      @Override
-      public char @NotNull [] textToCharArray() {
-        return ArrayUtil.EMPTY_CHAR_ARRAY;
-      }
-
-      @Override
-      public PsiElement getNavigationElement() {
-        return null;
-      }
-
-      @Override
-      public PsiElement getOriginalElement() {
-        return null;
-      }
-
-      @Override
-      public boolean textMatches(@NotNull CharSequence text) {
-        return false;
-      }
-
-      @Override
-      public boolean textMatches(@NotNull PsiElement element) {
-        return false;
-      }
-
-      @Override
-      public boolean textContains(char c) {
-        return false;
-      }
-
-      @Override
-      public void accept(@NotNull PsiElementVisitor visitor) {
-
-      }
-
-      @Override
-      public void acceptChildren(@NotNull PsiElementVisitor visitor) {
-
-      }
-
-      @Override
-      public PsiElement copy() {
-        return null;
-      }
-
-      @Override
-      public PsiElement add(@NotNull PsiElement element) {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement addBefore(@NotNull PsiElement element, PsiElement anchor) {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) {
-        throw createException();
-      }
-
-      @Override
-      public void checkAdd(@NotNull PsiElement element) {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement addRange(PsiElement first, PsiElement last) {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement addRangeBefore(@NotNull PsiElement first, @NotNull PsiElement last, PsiElement anchor) {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement addRangeAfter(PsiElement first, PsiElement last, PsiElement anchor) {
-        throw createException();
-      }
-
-      @Override
-      public void delete() {
-        throw createException();
-      }
-
-      @Override
-      public void checkDelete() {
-        throw createException();
-      }
-
-      @Override
-      public void deleteChildRange(PsiElement first, PsiElement last) {
-        throw createException();
-      }
-
-      @Override
-      public PsiElement replace(@NotNull PsiElement newElement) {
-        throw createException();
-      }
-
-      @Override
-      public boolean isValid() {
-        return true;
-      }
-
-      @Override
-      public boolean isWritable() {
-        return false;
-      }
-
-      PsiInvalidElementAccessException createException() {
-        return new PsiInvalidElementAccessException(this, toString(), null);
-      }
-
-      @Override
-      public @Nullable PsiReference getReference() {
-        return null;
-      }
-
-      @Override
-      public PsiReference @NotNull [] getReferences() {
-        return PsiReference.EMPTY_ARRAY;
-      }
-
-      @Override
-      public <T> T getCopyableUserData(@NotNull Key<T> key) {
-        throw createException();
-      }
-
-      @Override
-      public <T> void putCopyableUserData(@NotNull Key<T> key, T value) {
-        throw createException();
-      }
-
-      @Override
-      public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
-                                         @NotNull ResolveState state,
-                                         PsiElement lastParent,
-                                         @NotNull PsiElement place) {
-        return false;
-      }
-
-      @Override
-      public PsiElement getContext() {
-        return null;
-      }
-
-      @Override
-      public boolean isPhysical() {
-        return true;
-      }
-
-      @Override
-      public @NotNull GlobalSearchScope getResolveScope() {
-        throw createException();
-      }
-
-      @Override
-      public @NotNull SearchScope getUseScope() {
-        throw createException();
-      }
-
-      @Override
-      public ASTNode getNode() {
-        throw createException();
-      }
-
-      @Override
-      public <T> T getUserData(@NotNull Key<T> key) {
-        throw createException();
-      }
-
-      @Override
-      public <T> void putUserData(@NotNull Key<T> key, T value) {
-        throw createException();
-      }
-
-      @Override
-      public Icon getIcon(int flags) {
-        throw createException();
-      }
-
-      @Override
-      public boolean isEquivalentTo(final PsiElement another) {
-        return this == another;
-      }
-
-      @Override
-      public String toString() {
-        return "FAKE_PSI_ELEMENT: "+debugString;
-      }
-    };
-  }
+  public static final PsiElement FAKE_ELEMENT = HighlightFakePsiElement.create("inspectionFinished");
 
   /**
    * for each info in `newInfos` retrieve the RH from recycler (and then invalidElementRecycler if not found) or create new RH

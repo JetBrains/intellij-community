@@ -751,7 +751,7 @@ a:com.intellij.psi.impl.FakePsiElement
 - com.intellij.psi.PsiNamedElement
 - <init>():V
 - pf:getElementIcon(I):javax.swing.Icon
-- f:getIcon(I):javax.swing.Icon
+- getIcon(I):javax.swing.Icon
 - getIcon(Z):javax.swing.Icon
 - getText():java.lang.String
 - getTextLength():I
