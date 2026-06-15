@@ -73,6 +73,7 @@ class SePopupVm(
   val session: SeSession,
   private val project: Project?,
   tabs: List<SeTab>,
+  initialDummyTabVms: List<SeDummyTabVm>,
   deferredTabs: List<SuspendLazyProperty<SeTab?>>,
   adaptedTabs: SuspendLazyProperty<List<SeTab>>,
   initialSearchPattern: String?,
@@ -88,10 +89,13 @@ class SePopupVm(
   private val _deferredTabVms = MutableSharedFlow<SeTabInitEvent>(replay = 100)
   private val _tabsModelFlow = MutableStateFlow(run {
     val customizer = SeTabsCustomizer.getInstance()
-    val tabsVms = tabs.mapNotNull {
+    val initializedTabVms = tabs.mapNotNull {
       val tabInfo = customizer.customizeTabInfo(it.id, SeTabInfo(it.priority, it.name)) ?: return@mapNotNull null
       SeTabVmImpl(project, coroutineScope, it, tabInfo, searchPattern, availableLegacyContributors.allTab)
     }
+
+    val initialisedTabVmIds = initializedTabVms.map { it.tabId }.toSet()
+    val tabsVms = initializedTabVms + initialDummyTabVms.filter { !initialisedTabVmIds.contains(it.tabId) }
 
     // Just for safety in case the initially selected tab is not in the initial tabs
     val initialTabId =
@@ -192,6 +196,7 @@ class SePopupVm(
         }
       }
 
+      SeLog.log(SeLog.LIFE_CYCLE) { "Initialized deferred adapted tabs: [${adaptedCustomized.joinToString { it.tabId }}]" }
       _deferredTabVms.emit(SeTabInitEvent(adaptedCustomized, true))
     }
 
