@@ -28,7 +28,16 @@ sealed class RpcMessage {
     val service: InstanceId,
     val method: String,
     val args: Map<String, JsonElement>,
-    val meta: Map<String, JsonElement> = emptyMap()
+    val meta: Map<String, JsonElement> = emptyMap(),
+    /**
+     * Initial budget granted to every producer (TO_REMOTE stream) the remote starts while serving this call.
+     * It lets producers emit up to this many elements before they receive the first [StreamNext],
+     * saving a roundtrip when fetching from a returned stream/flow.
+     *
+     * The value is taken from the [fleet.rpc.core.PrefetchStrategy] configured on the client.
+     * When `0` (the default), producers start suspended as before and wait for an explicit [StreamNext].
+     */
+    val streamBudget: Int = 0,
   ) : RpcMessage() {
     val displayName: String get() = "RPC call ${classMethodDisplayName()}[#${requestId}]"
 

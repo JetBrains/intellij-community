@@ -53,7 +53,7 @@ class StreamDescriptor(
 ) {
 
   override fun toString(): String {
-    return "StreamDescriptor: ${displayName}"
+    return "StreamDescriptor: $displayName"
   }
 }
 
@@ -148,28 +148,45 @@ sealed class InternalStreamDescriptor {
     val channel: SendChannel<Any?>,
     val prefetchStrategy: PrefetchStrategy,
     val bufferedChannel: Channel<InternalStreamMessage>,
+    /**
+     * Budget the remote producer was pre-seeded with (see [RpcMessage.CallRequest.streamBudget]).
+     * The producer may emit this many items before it sees the first [RpcMessage.StreamNext],
+     * so the consumer subtracts it from its initial request to avoid over-granting.
+     */
+    val producerInitialBudget: Int,
   ) : InternalStreamDescriptor()
 
   companion object {
-    fun fromDescriptor(desc: StreamDescriptor, route: UID, prefetchStrategy: PrefetchStrategy, scope: CoroutineScope): InternalStreamDescriptor {
+    fun fromDescriptor(
+      desc: StreamDescriptor,
+      route: UID,
+      prefetchStrategy: PrefetchStrategy,
+      scope: CoroutineScope,
+      initialBudget: Int,
+    ): InternalStreamDescriptor {
       return when (desc.direction) {
-        is StreamDirection.FromRemote -> FromRemote(route = route,
-                                                    displayName = desc.displayName,
-                                                    uid = desc.uid,
-                                                    elementSerializer = desc.elementSerializer,
-                                                    channel = desc.direction.channel,
-                                                    bufferedChannel = Channel(Channel.UNLIMITED),
-                                                    token = desc.token,
-                                                    prefetchStrategy = prefetchStrategy,
-                                                    serviceScope = scope)
-        is StreamDirection.ToRemote -> ToRemote(route = route,
-                                                displayName = desc.displayName,
-                                                uid = desc.uid,
-                                                elementSerializer = desc.elementSerializer,
-                                                token = desc.token,
-                                                channel = desc.direction.channel,
-                                                budget = Budget(0),
-                                                serviceScope = scope)
+        is StreamDirection.FromRemote -> FromRemote(
+          route = route,
+          displayName = desc.displayName,
+          uid = desc.uid,
+          elementSerializer = desc.elementSerializer,
+          channel = desc.direction.channel,
+          bufferedChannel = Channel(Channel.UNLIMITED),
+          token = desc.token,
+          prefetchStrategy = prefetchStrategy,
+          producerInitialBudget = initialBudget,
+          serviceScope = scope,
+        )
+        is StreamDirection.ToRemote -> ToRemote(
+          route = route,
+          displayName = desc.displayName,
+          uid = desc.uid,
+          elementSerializer = desc.elementSerializer,
+          token = desc.token,
+          channel = desc.direction.channel,
+          budget = Budget(initialBudget),
+          serviceScope = scope,
+        )
       }
     }
   }
@@ -335,13 +352,20 @@ fun serveStream(
           }
           try {
             var requested = prefetchStrategy.streamStarted()
-            var remaining = requested
             require(requested > 0)
+            // the producer may have been pre-seeded with some budget by the consumer via CallRequest.streamBudget,
+            // which lets it emit data before seeing the first StreamNext and saves a roundtrip.
+            // account for that budget here so we don't over-grant: only request what is missing.
+            var remaining = descriptor.producerInitialBudget
             // announce the consumer symmetrically to the producer's StreamInit:
             // if the producer has already abandoned this stream, it will respond with StreamClosed
             // and we won't linger waiting for data that will never arrive (StreamNext alone is ignored for unregistered streams)
             sendMessage(RpcMessage.StreamInit(streamId = descriptor.uid))
-            sendMessage(RpcMessage.StreamNext(descriptor.uid, requested))
+            val toRequest = requested - remaining
+            if (toRequest > 0) {
+              sendMessage(RpcMessage.StreamNext(descriptor.uid, toRequest))
+              remaining += toRequest
+            }
             descriptor.bufferedChannel.consumeEach { each ->
               RpcStream.logger.trace { "Channel ${descriptor.uid} ${descriptor.displayName} processes message $each" }
               when (each) {

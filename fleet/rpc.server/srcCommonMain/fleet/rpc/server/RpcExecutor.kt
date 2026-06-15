@@ -167,7 +167,8 @@ class RpcExecutor private constructor(
               json.decodeFromJsonElement(kser, arg)
             }
             streamDescriptors.forEach {
-              registerStream(serviceScope, it, clientId)
+              // argument streams follow the call's budget policy too: pre-seed producers and let consumers reconcile (see CallRequest.streamBudget)
+              registerStream(serviceScope, it, clientId, message.streamBudget)
               serveStream(serviceScope, requireNotNull(channels[it.uid]), clientId)
             }
             `object`
@@ -195,7 +196,9 @@ class RpcExecutor private constructor(
             logger.trace { "Executing interceptor for request  ${message.requestId}" }
             val result = rpcInterceptor.execute(message) { request ->
               logger.trace { "Executing method for request  ${message.requestId}" }
-              val result = (impl.remoteApiDescriptor as RemoteApiDescriptor<RemoteApi<*>>).call(impl.instance, message.method, args.toTypedArray())
+              @Suppress("UNCHECKED_CAST")
+              val result =
+                (impl.remoteApiDescriptor as RemoteApiDescriptor<RemoteApi<*>>).call(impl.instance, message.method, args.toTypedArray())
               logger.trace { "Got result for request  ${message.requestId}" }
               val remoteObjectId = InstanceId(UID.random().toString())
               val returnType = signature.returnType
@@ -204,6 +207,7 @@ class RpcExecutor private constructor(
                 val ready = CompletableDeferred<RemoteResource>()
 
                 val job = serviceScope.launch {
+                  @Suppress("UNCHECKED_CAST")
                   val resource = (result as Resource<RemoteResource>).useOn(this).await()
                   ready.complete(resource)
                 }
@@ -228,13 +232,17 @@ class RpcExecutor private constructor(
                   json.encodeToJsonElement(Unit.serializer(), Unit)
                 }
                 else {
-                  val (resultSerialized, streamDescriptors) = withSerializationContext("Result of ${message.displayName}", null, serviceScope) {
+                  val (resultSerialized, streamDescriptors) = withSerializationContext("Result of ${message.displayName}",
+                                                                                       null,
+                                                                                       serviceScope) {
                     val kserializer = returnType.serializer(message.classMethodDisplayName())
                     json.encodeToJsonElement(kserializer, result)
                   }
 
                   streamDescriptors.forEach {
-                    registeredStreams.add(registerStream(serviceScope, it, clientId))
+                    // pre-seed producers returned by this call with the budget requested by the client,
+                    // so the first batch can be sent right after the result without waiting for StreamNext
+                    registeredStreams.add(registerStream(serviceScope, it, clientId, message.streamBudget))
                   }
 
                   resultSerialized
@@ -281,7 +289,7 @@ class RpcExecutor private constructor(
           }
 
           streamDescriptors.forEach {
-            serveStream(stream.serviceScope, registerStream(stream.serviceScope, it, clientId), clientId)
+            serveStream(stream.serviceScope, registerStream(stream.serviceScope, it, clientId, initialBudget = 0), clientId)
           }
           runCatching { stream.requireBufferedChannel().send(InternalStreamMessage.Payload(de)) }
             .onFailure { ex ->
@@ -325,27 +333,32 @@ class RpcExecutor private constructor(
   }
 
   private fun serveStream(coroutineScope: CoroutineScope, descriptor: InternalStreamDescriptor, clientId: UID) {
-    serveStream(origin = route,
-                coroutineScope = coroutineScope,
-                descriptor = descriptor,
-                registerStream = { stream -> registerStream(coroutineScope, stream, clientId) },
-                unregisterStream = { streamId ->
-                  channels.remove(streamId)?.also { s -> routeChannels[s.route]?.remove(s.uid) }
-                },
-                sendAsync = ::sendAsync,
-                prefetchStrategy = PrefetchStrategy.Default)
+    serveStream(
+      origin = route,
+      coroutineScope = coroutineScope,
+      descriptor = descriptor,
+      // nested streams started while serving always begin with no budget; only the direct result streams are pre-seeded
+      registerStream = { stream -> registerStream(coroutineScope, stream, clientId, initialBudget = 0) },
+      unregisterStream = { streamId ->
+        channels.remove(streamId)?.also { s -> routeChannels[s.route]?.remove(s.uid) }
+      },
+      sendAsync = ::sendAsync,
+      prefetchStrategy = PrefetchStrategy.Default,
+    )
   }
 
   private fun registerStream(
     serviceScope: CoroutineScope,
     descriptor: StreamDescriptor,
     route: UID,
+    initialBudget: Int,
   ): InternalStreamDescriptor {
     val registeredStream = InternalStreamDescriptor.fromDescriptor(
       desc = descriptor,
       route = route,
       prefetchStrategy = PrefetchStrategy.Default,
       scope = serviceScope,
+      initialBudget = initialBudget,
     )
     val previous = channels.put(descriptor.uid, registeredStream)
     require(previous == null) {
