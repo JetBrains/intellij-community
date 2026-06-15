@@ -184,6 +184,13 @@ class AgentChatFileEditorProviderTest {
     assertThat(element.getAttributeValue("startupProvider")).isEqualTo(AgentSessionProvider.CODEX.value)
     assertThat(element.getAttributeValue("startupLaunchMode")).isEqualTo(AgentSessionLaunchMode.YOLO.name)
     assertThat(element.getAttributeValue("launchMode")).isEqualTo("yolo")
+    assertThat(element.getAttributeValue("initialPromptMessage")).isNull()
+    assertThat(element.getAttributeValue("initialPromptMode")).isNull()
+    assertThat(element.getAttributeValue("initialPromptToken")).isNull()
+    assertThat(element.getAttributeValue("initialPromptDeliveryStatus")).isNull()
+    assertThat(element.getAttributeValue("initialPromptDeliveryChannel")).isNull()
+    assertThat(element.getAttributeValue("terminalPromptDispatchStepIndex")).isNull()
+    assertThat(element.getChild("initialMessageDispatchSteps")).isNull()
 
     val file = AgentChatVirtualFile(
       projectPath = snapshot.identity.projectPath,
@@ -206,12 +213,55 @@ class AgentChatFileEditorProviderTest {
     assertThat(restored?.runtime?.pendingLaunchMode).isEqualTo(AgentSessionLaunchMode.STANDARD.name)
     assertThat(restored?.runtime?.launchMode).isEqualTo("yolo")
     assertThat(restored?.runtime?.newThreadRebindRequestedAtMs).isEqualTo(300)
-    assertThat(restored?.runtime?.initialMessageDispatchSteps).containsExactlyElementsOf(dispatchSteps)
-    assertThat(restored?.runtime?.initialMessageDispatchStepIndex).isEqualTo(1)
-    assertThat(restored?.runtime?.initialMessageToken).isEqualTo("token-state")
+    assertThat(restored?.runtime?.initialMessageDispatchSteps).isEmpty()
+    assertThat(restored?.runtime?.initialMessageDispatchStepIndex).isEqualTo(0)
+    assertThat(restored?.runtime?.initialMessageToken).isNull()
     assertThat(restored?.runtime?.initialMessageSent).isFalse()
+    assertThat(restored?.runtime?.initialPromptRecord).isNull()
+    assertThat(restored?.runtime?.terminalPromptDispatch).isNull()
     assertThat(restoredState.startupIntent).isEqualTo(startupIntent)
     assertThat(file.launchMode).isEqualTo("yolo")
+  }
+
+  @Test
+  fun fileEditorStateIgnoresLegacyPromptDispatchMetadata() {
+    val element = Element("state").apply {
+      setAttribute("version", "3")
+      setAttribute("projectHash", "hash-1")
+      setAttribute("projectPath", "/work/project-a")
+      setAttribute("threadIdentity", "CODEX:thread-legacy")
+      setAttribute("threadId", "thread-legacy")
+      setAttribute("threadTitle", "Legacy thread")
+      setAttribute("threadActivity", AgentThreadActivity.UNREAD.name)
+      setAttribute("initialMessageDispatchStepIndex", "1")
+      setAttribute("initialMessageToken", "legacy-token")
+      setAttribute("initialMessageSent", "false")
+      addContent(Element("initialMessageDispatchSteps").apply {
+        addContent(Element("step").apply { text = "first step" })
+        addContent(Element("step").apply { text = "second step" })
+      })
+    }
+    val file = AgentChatVirtualFile(
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-legacy",
+      shellCommand = emptyList(),
+      threadId = "thread-legacy",
+      threadTitle = "Legacy thread",
+      subAgentId = null,
+      projectHash = "hash-1",
+    )
+
+    val restored = readAgentChatFileEditorState(element, file).snapshot
+
+    assertThat(restored?.runtime?.threadId).isEqualTo("thread-legacy")
+    assertThat(restored?.runtime?.threadTitle).isEqualTo("Legacy thread")
+    assertThat(restored?.runtime?.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+    assertThat(restored?.runtime?.initialMessageDispatchSteps).isEmpty()
+    assertThat(restored?.runtime?.initialMessageDispatchStepIndex).isEqualTo(0)
+    assertThat(restored?.runtime?.initialMessageToken).isNull()
+    assertThat(restored?.runtime?.initialMessageSent).isFalse()
+    assertThat(restored?.runtime?.initialPromptRecord).isNull()
+    assertThat(restored?.runtime?.terminalPromptDispatch).isNull()
   }
 
   @Test

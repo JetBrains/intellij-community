@@ -6,6 +6,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageD
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryChannel
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.terminal.frontend.view.TerminalKeyEvent
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
@@ -107,15 +109,17 @@ class AgentChatInitialMessageDispatcherTest {
 
     waitForCondition { file.initialMessageSent }
     assertThat(tab.events).containsExactly("backtab", "backtab", "backtab", "text:Refactor this")
-    assertThat(file.initialMessageDispatchSteps).hasSize(2)
-    assertThat(file.initialMessageDispatchStepIndex).isEqualTo(2)
+    assertThat(file.initialMessageDispatchSteps).isEmpty()
+    assertThat(file.initialMessageDispatchStepIndex).isZero()
     assertThat(file.initialMessageToken).isEqualTo("token")
     assertThat(file.initialMessageSent).isTrue()
     assertThat(snapshots).hasSize(2)
-    assertThat(snapshots.last().runtime.initialMessageDispatchSteps).hasSize(2)
-    assertThat(snapshots.last().runtime.initialMessageDispatchStepIndex).isEqualTo(2)
-    assertThat(snapshots.last().runtime.initialMessageToken).isEqualTo("token")
-    assertThat(snapshots.last().runtime.initialMessageSent).isTrue()
+    val promptRecord = snapshots.last().runtime.initialPromptRecord
+    assertThat(promptRecord?.message).isEqualTo("Refactor this")
+    assertThat(promptRecord?.token).isEqualTo("token")
+    assertThat(promptRecord?.deliveryStatus).isEqualTo(AgentInitialPromptDeliveryStatus.DELIVERED)
+    assertThat(promptRecord?.deliveryChannel).isEqualTo(AgentInitialPromptDeliveryChannel.TERMINAL)
+    assertThat(snapshots.last().runtime.terminalPromptDispatch).isNull()
   }
 
   @Test
@@ -166,7 +170,7 @@ class AgentChatInitialMessageDispatcherTest {
   }
 
   @Test
-  fun legacyCodexPlanModeActionRestoresAsTerminalPlanModeAction() {
+  fun persistedCodexPlanModeActionRestoresAsTerminalPlanModeAction() {
     val identity = AgentChatTabIdentity(
       projectHash = "hash",
       projectPath = "/project",
@@ -185,7 +189,9 @@ class AgentChatInitialMessageDispatcherTest {
             subAgentId = identity.subAgentId,
             threadId = "new-test",
             lastKnownTitle = "Codex",
-            initialMessageDispatchSteps = listOf(
+            initialPromptMessage = "Refactor this",
+            initialPromptToken = "token",
+            terminalPromptDispatchSteps = listOf(
               PersistedAgentChatInitialMessageDispatchStep(
                 action = "ENSURE_CODEX_PLAN_MODE",
                 timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS.name,
@@ -199,7 +205,7 @@ class AgentChatInitialMessageDispatcherTest {
 
     val loaded = checkNotNull(service.load(tabKey))
 
-    assertThat(loaded.runtime.initialMessageDispatchSteps.single().action)
+    assertThat(loaded.runtime.terminalPromptDispatch?.steps?.single()?.action)
       .isEqualTo(AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE)
   }
 }

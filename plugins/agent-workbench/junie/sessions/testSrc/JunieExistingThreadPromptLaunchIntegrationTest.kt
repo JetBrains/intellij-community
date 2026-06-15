@@ -42,8 +42,9 @@ class JunieExistingThreadPromptLaunchIntegrationTest {
       EXISTING_THREAD_ID,
       "--plan",
       "--prompt",
-      observation.postStartDispatchSteps.last().text,
+      observation.initialPromptMessage,
     )
+    assertThat(observation.postStartDispatchSteps).isEmpty()
   }
 
   @Test
@@ -76,8 +77,9 @@ class JunieExistingThreadPromptLaunchIntegrationTest {
       "high",
       "--plan",
       "--prompt",
-      observation.postStartDispatchSteps.last().text,
+      observation.initialPromptMessage,
     )
+    assertThat(observation.postStartDispatchSteps).isEmpty()
   }
 
   @Test
@@ -96,7 +98,7 @@ class JunieExistingThreadPromptLaunchIntegrationTest {
   }
 }
 
-private fun descriptor(cliVersion: JunieCliVersion? = JunieCliVersion(1963, 1)): JunieAgentSessionProviderDescriptor {
+private fun descriptor(cliVersion: JunieCliVersion? = JunieCliVersion(2030, 1)): JunieAgentSessionProviderDescriptor {
   return JunieAgentSessionProviderDescriptor(
     sessionSource = ScriptedSessionSource(
       provider = AgentSessionProvider.JUNIE,

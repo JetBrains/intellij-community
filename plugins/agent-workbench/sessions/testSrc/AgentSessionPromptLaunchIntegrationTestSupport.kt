@@ -136,12 +136,7 @@ fun assertExistingThreadLaunchUsesPostStartDispatch(
         assertThat(openRequest.startupLaunchSpecOverride).isNull()
         assertThat(openRequest.postStartDispatchSteps).containsExactlyElementsOf(expectedSteps)
         assertThat(openRequest.initialMessageToken).isNotNull()
-        if (expectedSteps.size == 1) {
-          assertThat(openRequest.initialComposedMessage).isEqualTo(expectedSteps.single().text)
-        }
-        else {
-          assertThat(openRequest.initialComposedMessage).isNull()
-        }
+        assertThat(openRequest.initialPromptMessage).isEqualTo(initialMessagePlan.message)
       }
     }
   }
@@ -179,7 +174,6 @@ fun assertExistingThreadLaunchUsesStartupOverride(
 
         val openRequest = checkNotNull(chatOpenExecutor.lastOpenChatRequest.get())
         val initialMessagePlan = descriptor.buildInitialMessagePlan(request.initialMessageRequest)
-        val expectedSteps = descriptor.buildPostStartDispatchSteps(initialMessagePlan)
 
         assertThat(chatOpenExecutor.openNewChatCalls.get()).isZero()
         assertThat(openRequest.normalizedPath).isEqualTo(projectPath)
@@ -187,7 +181,8 @@ fun assertExistingThreadLaunchUsesStartupOverride(
         assertThat(openRequest.thread.provider).isEqualTo(provider)
         assertThat(openRequest.subAgent).isNull()
         assertThat(openRequest.startupLaunchSpecOverride).isNotNull()
-        assertThat(openRequest.postStartDispatchSteps).containsExactlyElementsOf(expectedSteps)
+        assertThat(openRequest.postStartDispatchSteps).isEmpty()
+        assertThat(openRequest.initialPromptMessage).isEqualTo(initialMessagePlan.message)
         assertThat(openRequest.initialMessageToken).isNotNull()
         observation = ExistingThreadPromptLaunchObservation(
           launchResult = result,
@@ -195,6 +190,7 @@ fun assertExistingThreadLaunchUsesStartupOverride(
           thread = openRequest.thread,
           startupLaunchSpecOverride = openRequest.startupLaunchSpecOverride,
           postStartDispatchSteps = openRequest.postStartDispatchSteps,
+          initialPromptMessage = openRequest.initialPromptMessage,
           initialMessageToken = openRequest.initialMessageToken,
         )
       }
@@ -245,6 +241,7 @@ fun assertNewThreadPromptLaunchOpensNewChat(
           launchSpec = openRequest.launchSpec,
           startupLaunchSpecOverride = openRequest.startupLaunchSpecOverride,
           postStartDispatchSteps = openRequest.postStartDispatchSteps,
+          initialPromptMessage = openRequest.initialPromptMessage,
           initialMessageToken = openRequest.initialMessageToken,
           preferredDedicatedFrame = openRequest.preferredDedicatedFrame,
         )
@@ -343,6 +340,7 @@ internal class RecordingChatOpenExecutor(
       launchSpecOverride = launchSpecOverride,
       startupLaunchSpecOverride = initialMessageDispatchPlan.startupLaunchSpecOverride,
       postStartDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
+      initialPromptMessage = initialMessageDispatchPlan.promptRecord?.message,
       initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
       launchMode = launchMode,
       generationSettings = generationSettings,
@@ -371,6 +369,7 @@ internal class RecordingChatOpenExecutor(
       launchSpec = launchSpec,
       startupLaunchSpecOverride = initialMessageDispatchPlan.startupLaunchSpecOverride,
       postStartDispatchSteps = initialMessageDispatchPlan.postStartDispatchSteps,
+      initialPromptMessage = initialMessageDispatchPlan.promptRecord?.message,
       initialMessageToken = initialMessageDispatchPlan.initialMessageToken,
       launchMode = launchMode,
       generationSettings = generationSettings,
@@ -391,12 +390,13 @@ internal data class OpenChatRequest(
   @JvmField val launchSpecOverride: AgentSessionTerminalLaunchSpec?,
   @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
   @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
+  @JvmField val initialPromptMessage: String?,
   @JvmField val initialMessageToken: String?,
   @JvmField val launchMode: AgentSessionLaunchMode?,
   @JvmField val generationSettings: AgentPromptGenerationSettings,
 ) {
   val initialComposedMessage: String?
-    get() = postStartDispatchSteps.singleOrNull()?.text
+    get() = initialPromptMessage ?: postStartDispatchSteps.singleOrNull()?.text
 }
 
 internal data class OpenNewChatRequest(
@@ -405,13 +405,14 @@ internal data class OpenNewChatRequest(
   @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
   @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
   @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
+  @JvmField val initialPromptMessage: String?,
   @JvmField val initialMessageToken: String?,
   @JvmField val launchMode: AgentSessionLaunchMode?,
   @JvmField val generationSettings: AgentPromptGenerationSettings,
   @JvmField val preferredDedicatedFrame: Boolean?,
 ) {
   val initialComposedMessage: String?
-    get() = postStartDispatchSteps.singleOrNull()?.text
+    get() = initialPromptMessage ?: postStartDispatchSteps.singleOrNull()?.text
 }
 
 data class NewThreadPromptLaunchObservation(
@@ -421,6 +422,7 @@ data class NewThreadPromptLaunchObservation(
   @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
   @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
   @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
+  @JvmField val initialPromptMessage: String?,
   @JvmField val initialMessageToken: String?,
   @JvmField val preferredDedicatedFrame: Boolean?,
 )
@@ -431,6 +433,7 @@ data class ExistingThreadPromptLaunchObservation(
   @JvmField val thread: AgentSessionThread,
   @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec?,
   @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
+  @JvmField val initialPromptMessage: String?,
   @JvmField val initialMessageToken: String?,
 )
 

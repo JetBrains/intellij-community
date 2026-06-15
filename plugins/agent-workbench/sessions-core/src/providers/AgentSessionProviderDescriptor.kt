@@ -72,17 +72,6 @@ data class AgentInitialMessagePlan(
   }
 }
 
-data class AgentInitialMessageDispatchPlan(
-  @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
-  @JvmField val postStartDispatchSteps: List<AgentInitialMessageDispatchStep> = emptyList(),
-  @JvmField val initialMessageToken: String? = null,
-) {
-  companion object {
-    @JvmField
-    val EMPTY: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan()
-  }
-}
-
 data class AgentInitialMessageDispatchStep(
   @JvmField val text: String = "",
   @JvmField val timeoutPolicy: AgentInitialMessageTimeoutPolicy = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK,
@@ -93,6 +82,136 @@ data class AgentInitialMessageDispatchStep(
     return action != AgentInitialMessageDispatchAction.SEND_TEXT || text.isNotBlank()
   }
 }
+
+enum class AgentInitialPromptDeliveryStatus {
+  PENDING,
+  DELIVERED,
+}
+
+enum class AgentInitialPromptDeliveryChannel {
+  STARTUP_COMMAND,
+  TERMINAL,
+}
+
+data class AgentInitialPromptRecord(
+  @JvmField val message: String?,
+  @JvmField val mode: AgentInitialMessageMode = AgentInitialMessageMode.STANDARD,
+  @JvmField val token: String? = null,
+  @JvmField val deliveryStatus: AgentInitialPromptDeliveryStatus = AgentInitialPromptDeliveryStatus.PENDING,
+  @JvmField val deliveryChannel: AgentInitialPromptDeliveryChannel? = null,
+)
+
+data class AgentTerminalPromptDispatch(
+  @JvmField val steps: List<AgentInitialMessageDispatchStep>,
+  @JvmField val stepIndex: Int = 0,
+) {
+  fun normalized(): AgentTerminalPromptDispatch? {
+    val normalizedSteps = steps.filter(AgentInitialMessageDispatchStep::isDispatchable)
+    if (normalizedSteps.isEmpty()) return null
+    return AgentTerminalPromptDispatch(
+      steps = normalizedSteps,
+      stepIndex = stepIndex.coerceIn(0, normalizedSteps.size),
+    )
+  }
+}
+
+data class AgentInitialPromptDeliveryPlan(
+  @JvmField val startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
+  @JvmField val promptRecord: AgentInitialPromptRecord? = null,
+  @JvmField val terminalDispatch: AgentTerminalPromptDispatch? = null,
+  @JvmField val startupFallbackTerminalDispatch: AgentTerminalPromptDispatch? = null,
+) {
+  constructor(
+    startupLaunchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
+    postStartDispatchSteps: List<AgentInitialMessageDispatchStep>,
+    initialMessageToken: String? = null,
+  ) : this(
+    startupLaunchSpecOverride = startupLaunchSpecOverride,
+    promptRecord = buildPromptRecord(
+      steps = postStartDispatchSteps,
+      token = initialMessageToken,
+      deliveredByStartupCommand = startupLaunchSpecOverride != null,
+    ),
+    terminalDispatch = AgentTerminalPromptDispatch(
+      steps = postStartDispatchSteps,
+    ).normalized().takeIf { startupLaunchSpecOverride == null },
+    startupFallbackTerminalDispatch = AgentTerminalPromptDispatch(
+      steps = postStartDispatchSteps,
+    ).normalized().takeIf { startupLaunchSpecOverride != null },
+  )
+
+  val postStartDispatchSteps: List<AgentInitialMessageDispatchStep>
+    get() = terminalDispatch?.steps.orEmpty()
+
+  val initialMessageToken: String?
+    get() = promptRecord?.token
+
+  fun withStartupDeliveryIgnored(): AgentInitialPromptDeliveryPlan {
+    val record = promptRecord ?: return EMPTY
+    if (startupLaunchSpecOverride == null) {
+      return this
+    }
+    val fallbackDispatch = terminalDispatch ?: startupFallbackTerminalDispatch ?: buildTerminalDispatch(record)
+    return AgentInitialPromptDeliveryPlan(
+      promptRecord = record.copy(
+        deliveryStatus = AgentInitialPromptDeliveryStatus.PENDING,
+        deliveryChannel = fallbackDispatch?.let { AgentInitialPromptDeliveryChannel.TERMINAL },
+      ),
+      terminalDispatch = fallbackDispatch,
+    )
+  }
+
+  companion object {
+    @JvmField
+    val EMPTY: AgentInitialPromptDeliveryPlan = AgentInitialPromptDeliveryPlan()
+  }
+}
+
+private fun buildTerminalDispatch(promptRecord: AgentInitialPromptRecord): AgentTerminalPromptDispatch? {
+  val message = promptRecord.message?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  val steps = when (promptRecord.mode) {
+    AgentInitialMessageMode.STANDARD -> listOf(AgentInitialMessageDispatchStep(text = message))
+    AgentInitialMessageMode.PLAN -> listOf(
+      AgentInitialMessageDispatchStep(
+        action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
+        timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+      ),
+      AgentInitialMessageDispatchStep(
+        text = message,
+        timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+      ),
+    )
+  }
+  return AgentTerminalPromptDispatch(steps = steps).normalized()
+}
+
+private fun buildPromptRecord(
+  steps: List<AgentInitialMessageDispatchStep>,
+  token: String?,
+  deliveredByStartupCommand: Boolean,
+): AgentInitialPromptRecord? {
+  val message = steps.lastOrNull { step -> step.action == AgentInitialMessageDispatchAction.SEND_TEXT && step.text.isNotBlank() }
+    ?.text
+    ?: return null
+  return AgentInitialPromptRecord(
+    message = message,
+    token = token,
+    deliveryStatus = if (deliveredByStartupCommand) {
+      AgentInitialPromptDeliveryStatus.DELIVERED
+    }
+    else {
+      AgentInitialPromptDeliveryStatus.PENDING
+    },
+    deliveryChannel = if (deliveredByStartupCommand) {
+      AgentInitialPromptDeliveryChannel.STARTUP_COMMAND
+    }
+    else {
+      AgentInitialPromptDeliveryChannel.TERMINAL
+    },
+  )
+}
+
+typealias AgentInitialMessageDispatchPlan = AgentInitialPromptDeliveryPlan
 
 data class AgentPendingSessionMetadata(
   @JvmField val createdAtMs: Long,

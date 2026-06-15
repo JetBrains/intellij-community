@@ -14,6 +14,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageD
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryChannel
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryStatus
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
@@ -302,7 +304,7 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun suppressedStartupCommandDispatchClearsInitialMessageFallbackBeforeRebindSnapshot() {
+  fun suppressedStartupCommandDispatchKeepsDeliveredInitialPromptBeforeRebindSnapshot() {
     val initialMessage = "Refactor selected code"
     val file = pendingTestFile()
     file.setStartupLaunchSpecOverride(
@@ -329,9 +331,15 @@ class AgentChatFileEditorLifecycleTest {
     assertThat(terminalTabs.tab.sentTexts).isEmpty()
     assertThat(file.hasPendingInitialMessageForDispatch()).isFalse()
     assertThat(file.initialMessageDispatchSteps).isEmpty()
-    assertThat(file.initialMessageToken).isNull()
-    assertThat(file.toSnapshot().runtime.initialMessageDispatchSteps).isEmpty()
-    assertThat(file.toSnapshot().runtime.initialMessageToken).isNull()
+    assertThat(file.initialComposedMessage).isEqualTo(initialMessage)
+    assertThat(file.initialMessageToken).isEqualTo("token-startup")
+    assertThat(file.initialMessageSent).isTrue()
+    val runtime = file.toSnapshot().runtime
+    assertThat(runtime.terminalPromptDispatch).isNull()
+    assertThat(runtime.initialPromptRecord?.message).isEqualTo(initialMessage)
+    assertThat(runtime.initialPromptRecord?.token).isEqualTo("token-startup")
+    assertThat(runtime.initialPromptRecord?.deliveryStatus).isEqualTo(AgentInitialPromptDeliveryStatus.DELIVERED)
+    assertThat(runtime.initialPromptRecord?.deliveryChannel).isEqualTo(AgentInitialPromptDeliveryChannel.STARTUP_COMMAND)
   }
 
   @Test
@@ -1201,7 +1209,7 @@ class AgentChatFileEditorLifecycleTest {
     editor.flushPendingInitialMessageIfInitialized()
 
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
-    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
+    waitForCondition { file.initialMessageSent }
 
     assertThat(file.initialMessageSent).isTrue()
     assertThat(terminalTabs.tab.sentTexts)
@@ -1585,7 +1593,8 @@ class AgentChatFileEditorLifecycleTest {
 
     waitForCondition(timeoutMs = 5_000) { file.initialMessageSent }
     assertThat(terminalTabs.tab.backTabCount.get()).isEqualTo(3)
-    assertThat(file.initialMessageDispatchStepIndex).isEqualTo(2)
+    assertThat(file.initialMessageDispatchStepIndex).isZero()
+    assertThat(file.initialMessageDispatchSteps).isEmpty()
     assertThat(terminalTabs.tab.sentTexts)
       .containsExactly(SentTerminalText("Send after plan fallback", shouldExecute = true))
   }
@@ -1866,7 +1875,7 @@ class AgentChatFileEditorLifecycleTest {
 
     editor.selectNotify()
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
-    waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
+    waitForCondition { file.initialMessageSent }
 
     assertThat(file.initialMessageSent).isTrue()
     assertThat(terminalTabs.tab.sentTexts)

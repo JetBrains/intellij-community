@@ -66,7 +66,7 @@ class CodexNewThreadPromptLaunchTerminalIntegrationTest {
         terminalHarness.awaitBackTabCalls(1)
         terminalHarness.awaitSentTexts(1)
         val finalSnapshot = terminalHarness.awaitInitialMessageSent()
-        assertThat(finalSnapshot.initialMessageDispatchStepIndex).isEqualTo(2)
+        assertThat(finalSnapshot.initialMessageDispatchStepIndex).isZero()
       }
 
       val startupCommand = terminalHarness.startupLaunchSpecs.single().command

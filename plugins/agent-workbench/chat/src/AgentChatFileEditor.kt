@@ -13,6 +13,7 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchIntent
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchOperation
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchPlanner
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryChannel
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.ide.OccurenceNavigator
@@ -362,9 +363,7 @@ internal class AgentChatFileEditor(
     tab = createdTab
     file.updateStartupIntent(null)
     if (suppressInitialMessageDispatch) {
-      // The startup command already carried this prompt; do not snapshot and replay the fallback after title rebind
-      // or restore.
-      file.clearInitialMessageDispatchMetadata()
+      file.markInitialPromptDelivered(AgentInitialPromptDeliveryChannel.STARTUP_COMMAND)
     }
     if (file.isPendingThread) {
       file.updateRestoreOnRestart(false)

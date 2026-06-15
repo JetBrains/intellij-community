@@ -38,11 +38,16 @@ import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchInten
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchOperation
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchPlanner
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionPlannedLaunch
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryChannel
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryPlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryStatus
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptRecord
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageStartupPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentTerminalPromptDispatch
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOptionTarget
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
@@ -1085,14 +1090,36 @@ private fun buildInitialMessageDispatchPlan(
     allowStartupPromptOverride = allowStartupPromptOverride,
   )
   if (postStartDispatchSteps.isEmpty() && startupLaunchSpecOverride == null) {
-    return AgentInitialMessageDispatchPlan.EMPTY
+    return AgentInitialPromptDeliveryPlan.EMPTY
   }
-  return AgentInitialMessageDispatchPlan(
+  val terminalDispatch = AgentTerminalPromptDispatch(steps = postStartDispatchSteps).normalized()
+  val deliveryChannel = if (startupLaunchSpecOverride != null) {
+    AgentInitialPromptDeliveryChannel.STARTUP_COMMAND
+  }
+  else {
+    terminalDispatch?.let { AgentInitialPromptDeliveryChannel.TERMINAL }
+  }
+  val deliveryStatus = if (startupLaunchSpecOverride != null) {
+    AgentInitialPromptDeliveryStatus.DELIVERED
+  }
+  else {
+    AgentInitialPromptDeliveryStatus.PENDING
+  }
+  val token = terminalDispatch
+    ?.steps
+    ?.takeIf { steps -> steps.isNotEmpty() }
+    ?.let { steps -> buildInitialMessageToken(identity = identity, steps = steps) }
+  return AgentInitialPromptDeliveryPlan(
     startupLaunchSpecOverride = startupLaunchSpecOverride,
-    postStartDispatchSteps = postStartDispatchSteps,
-    initialMessageToken = postStartDispatchSteps
-      .takeIf { steps -> steps.isNotEmpty() }
-      ?.let { steps -> buildInitialMessageToken(identity = identity, steps = steps) },
+    promptRecord = AgentInitialPromptRecord(
+      message = initialMessagePlan.message,
+      mode = initialMessagePlan.mode,
+      token = token,
+      deliveryStatus = deliveryStatus,
+      deliveryChannel = deliveryChannel,
+    ),
+    terminalDispatch = terminalDispatch.takeIf { startupLaunchSpecOverride == null },
+    startupFallbackTerminalDispatch = terminalDispatch.takeIf { startupLaunchSpecOverride != null },
   )
 }
 

@@ -51,9 +51,14 @@ These contracts keep shared identity, command mapping, provider capabilities, pr
   [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
   [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
 
-- Prompt launch handoff carries one optional startup launch override plus ordered post-start dispatch steps and token. Dispatch steps carry an explicit action; legacy text-only steps are interpreted as text dispatch. Startup prompt commands are transient and must not replace persisted chat resume commands.
+- Prompt launch handoff carries one optional startup launch override, a durable initial prompt record, and an optional ordered terminal dispatch queue. Startup CLI delivery marks the prompt record delivered through `STARTUP_COMMAND` and must not persist or replay a terminal fallback queue. Terminal delivery keeps the prompt record pending through `TERMINAL`, advances the queue while sending, and clears the queue after delivery while preserving the delivered prompt record. If a startup override is ignored because the target chat tab is already open, the prompt must be rebased to terminal delivery instead of being treated as delivered.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
+
+- Providers with startup prompt CLI support must use startup delivery for both new sessions and resumed threads when Agent Workbench opens the process. Junie build `2030.1` qualifies for both `--prompt` and plan `--plan --prompt` startup delivery; older Junie builds without plan startup support fall back to terminal plan-mode dispatch.
+  [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
+  [@test] ../../junie/sessions/testSrc/JunieNewThreadPromptLaunchIntegrationTest.kt
+  [@test] ../../junie/sessions/testSrc/JunieExistingThreadPromptLaunchIntegrationTest.kt
 
 - Prompt plan mode is requested only through provider option ids. A user-typed `/plan` prefix is ordinary prompt text owned by the provider CLI, not Agent Workbench syntax, and must not be stripped or converted into plan mode.
   [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt

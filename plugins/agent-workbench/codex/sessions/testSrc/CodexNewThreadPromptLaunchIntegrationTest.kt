@@ -99,7 +99,8 @@ class CodexNewThreadPromptLaunchIntegrationTest {
       .containsExactlyElementsOf(CODEX_BASE_COMMAND)
     assertThat(observation.startupLaunchSpecOverride?.command)
       .containsExactlyElementsOf(CODEX_BASE_COMMAND + listOf("--", "Refactor selected code"))
-    assertThat(observation.postStartDispatchSteps.single().text).isEqualTo("Refactor selected code")
+    assertThat(observation.postStartDispatchSteps).isEmpty()
+    assertThat(observation.initialPromptMessage).isEqualTo("Refactor selected code")
     assertThat(observation.initialMessageToken).isNotNull()
   }
 }
