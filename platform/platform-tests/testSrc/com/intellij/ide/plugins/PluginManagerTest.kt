@@ -215,8 +215,6 @@ class PluginManagerTest {
         "- intellij.platform.frontend.split",
         "+ intellij.platform.jps.build",
         "+ intellij.platform.jps.build.dependencyGraph",
-        "+ intellij.platform.split",
-        "+ intellij.rd.client",
       ),
       ProductMode.BACKEND to listOf(
         "+ intellij.platform.backend",
@@ -224,8 +222,6 @@ class PluginManagerTest {
         "- intellij.platform.frontend.split",
         "+ intellij.platform.jps.build",
         "+ intellij.platform.jps.build.dependencyGraph",
-        "+ intellij.platform.split",
-        "+ intellij.rd.client",
       ),
       ProductMode.FRONTEND to listOf(
         "- intellij.platform.backend",
@@ -233,25 +229,27 @@ class PluginManagerTest {
         "+ intellij.platform.frontend.split",
         "- intellij.platform.jps.build",
         "- intellij.platform.jps.build.dependencyGraph",
-        "+ intellij.platform.split",
-        "+ intellij.rd.client",
       ),
       ProductMode.LIGHT to listOf(
         "- intellij.platform.backend",
         "+ intellij.platform.frontend",
         "- intellij.platform.frontend.split",
+        "+ intellij.platform.frontend.split.base",
         "- intellij.platform.jps.build",
         "- intellij.platform.jps.build.dependencyGraph",
         "- intellij.platform.split",
+        "- intellij.platform.split.connection",
         "- intellij.rd.client",
       ),
       ProductMode.LIGHT_WITH_RD_CONNECTION to listOf(
         "- intellij.platform.backend",
         "+ intellij.platform.frontend",
         "- intellij.platform.frontend.split",
+        "+ intellij.platform.frontend.split.base",
         "- intellij.platform.jps.build",
         "- intellij.platform.jps.build.dependencyGraph",
         "- intellij.platform.split",
+        "+ intellij.platform.split.connection",
         "- intellij.rd.client",
       ))
     for ((currentMode, expectedValues) in modes) {
