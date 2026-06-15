@@ -29,12 +29,17 @@ internal class LoginShellEnvVarModeProviderImpl : LoginShellEnvVarModeProvider {
       override fun toString(): String =
         IjentImplBundle.message("advanced.setting.container.environments.env.var.shell.mode.login.non.interactive")
     },
+    LOGIN_INTERACTIVE_SHELL {
+      override fun toString(): String =
+        IjentImplBundle.message("advanced.setting.container.environments.env.var.shell.mode.login.interactive.shell")
+    },
   }
 
   override fun get(eelMachine: EelMachine): LoginShellEnvVarMode {
     return when (LoginShellEnvVarModeSettings.getInstance().get(eelMachine).envVarShellMode) {
       EnvVarShellMode.LOGIN_INTERACTIVE -> LoginShellEnvVarMode.LOGIN_INTERACTIVE
       EnvVarShellMode.LOGIN_NON_INTERACTIVE -> LoginShellEnvVarMode.LOGIN_NON_INTERACTIVE
+      EnvVarShellMode.LOGIN_INTERACTIVE_SHELL -> LoginShellEnvVarMode.LOGIN_INTERACTIVE // TODO
     }
   }
 }

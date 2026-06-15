@@ -6,7 +6,6 @@ import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.getEelDescriptor
-import com.intellij.platform.eel.provider.getEelMachine
 
 internal class IjentDashboardConfigurableProvider(private val project: Project) : ConfigurableProvider() {
   override fun canCreateConfigurable(): Boolean {
@@ -16,5 +15,5 @@ internal class IjentDashboardConfigurableProvider(private val project: Project) 
     }
   }
 
-  override fun createConfigurable(): Configurable = IjentDashboardConfigurable(project.getEelDescriptor(), project.getEelMachine())
+  override fun createConfigurable(): Configurable = IjentDashboardConfigurable(project)
 }

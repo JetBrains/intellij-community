@@ -20,6 +20,8 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "//libraries/jediterm-core",
+        "//libraries/jediterm-ui",
         "//platform/observable",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
@@ -44,6 +46,8 @@ jvm_library(
         "//platform/util/coroutines",
         "//platform/lang-api:lang",
         "//platform/execution",
+        "//platform/execution-impl",
+        "//libraries/pty4j",
     ],
 )
 
@@ -59,6 +63,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":ui",
+        "//libraries/jediterm-core:jediterm-core_test_lib",
+        "//libraries/jediterm-ui:jediterm-ui_test_lib",
         "//platform/observable:observable_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/eel:eel_test_lib",
@@ -81,6 +87,8 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//platform/lang-api:lang_test_lib",
         "//platform/execution:execution_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//libraries/pty4j:pty4j_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ijent.community.ui` end
