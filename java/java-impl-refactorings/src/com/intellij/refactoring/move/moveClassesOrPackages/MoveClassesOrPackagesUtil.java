@@ -248,6 +248,9 @@ public final class MoveClassesOrPackagesUtil {
       if (document != null) {
         documentManager.commitDocument(document);
       }
+
+      file = moveDestination.findFile(file.getName());
+
     }
 
     if (newPackage != null && file instanceof PsiClassOwner && !FileTypeUtils.isInServerPageFile(file) &&
