@@ -208,6 +208,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
     val resultSet = result.withPrefixMatcher(GradleDependencyCompletionFuzzyMatcher(text))
       .withRelevanceSorter(CompletionSorter.emptySorter().weigh(StrictOrderWeigher()))
     var index = 0
+    val seenLookupStrings = HashSet<String>()
     runBlockingCancellable {
       completionService.suggestCompletions(request)
         .collect { event ->
@@ -215,6 +216,7 @@ internal class KotlinGradleDependenciesCompletionProvider : CompletionProvider<C
           if (event !is DependencyCompletionEvent.Item) return@collect
           val item = event.result
           val lookupString = lookupStringProvider(item)
+          if (!seenLookupStrings.add(lookupString)) return@collect
           val lookupElement = LookupElementBuilder
             .create(item, lookupString)
             .withPresentableText(lookupString)
