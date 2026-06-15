@@ -1,11 +1,10 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="org.intellij.plugins.markdown"/>
     <module name="intellij.python.community.impl"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.markdown"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
   <extensions defaultExtensionNs="org.intellij.markdown">
     <fenceLanguageProvider implementation="com.intellij.python.markdown.PyCodeFenceLanguageProvider"/>
   </extensions>

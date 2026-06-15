@@ -1,7 +1,6 @@
 <idea-plugin package="com.intellij.grazie.ide.language.markdown">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <plugin id="org.intellij.plugins.markdown"/>
     <module name="intellij.grazie.core"/>
     <module name="intellij.libraries.ai.grazie.spell.gec.engine.local"/>
     <module name="intellij.markdown"/>
