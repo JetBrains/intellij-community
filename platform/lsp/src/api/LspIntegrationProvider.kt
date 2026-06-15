@@ -12,23 +12,23 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Plugins register their implementations of the `LspClientProvider` to add LSP-based support for some programming language
- * or framework. In [LSP terminology](https://microsoft.github.io/language-server-protocol/) the IDE is the client, which is why this
- * extension point (and the IDE-side model [LspClient]) is named after the client rather than the server.
+ * Plugins register their implementations of the `LspIntegrationProvider` to add LSP-based support for some programming language
+ * or framework. In [LSP terminology](https://microsoft.github.io/language-server-protocol/) the IDE is the client, which is why
+ * the IDE-side [LspClient] is named after the client rather than the server.
  *
  * @see [fileOpened]
  * @see [https://microsoft.github.io/language-server-protocol/](https://microsoft.github.io/language-server-protocol/)
  */
-interface LspClientProvider {
+interface LspIntegrationProvider {
   /**
-   * Instance of [LspClientStarter] is passed to the plugin's implementation of the [LspClientProvider.fileOpened] function.
+   * Instance of [LspClientStarter] is passed to the plugin's implementation of the [LspIntegrationProvider.fileOpened] function.
    * If needed, the plugin may call [LspClientStarter.ensureClientStarted].
    *
    * Note that calling [LspClientStarter.ensureClientStarted]
-   * after [LspClientProvider.fileOpened] function has exited won't have any effect.
+   * after [LspIntegrationProvider.fileOpened] function has exited won't have any effect.
    * So, plugins should not store references to [LspClientStarter] instances.
    *
-   * @see [LspClientProvider.fileOpened]
+   * @see [LspIntegrationProvider.fileOpened]
    */
   interface LspClientStarter {
     /**
@@ -37,7 +37,7 @@ interface LspClientProvider {
      * If not, then a new [LspClient] is created and started, using the passed [descriptor] to control its startup and behavior.
      *
      * Note that calling [LspClientStarter.ensureClientStarted]
-     * after [LspClientProvider.fileOpened] function has exited won't have any effect.
+     * after [LspIntegrationProvider.fileOpened] function has exited won't have any effect.
      * So, plugins should not store references to [LspClientStarter] instances.
      *
      * Tip: for a running [LspClient], the [descriptor] object that was used to start it is available as [LspClient.descriptor].
@@ -46,7 +46,7 @@ interface LspClientProvider {
   }
 
   /**
-   * This function is a convenient way for the `LspClientProvider` implementation to start an LSP server lazily, only when
+   * This function is a convenient way for the `LspIntegrationProvider` implementation to start an LSP server lazily, only when
    * needed. `fileOpened()` is invoked each time when a file is opened in the editor, unless an already running
    * [LspClient] exists and the opened file is within the server roots.
    *
@@ -71,7 +71,7 @@ interface LspClientProvider {
    * Here's an example of running a time-consuming task in a background thread,
    * and starting an LSP server later using [LspClientManager.startClientsIfNeeded]:
    *
-   *    override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspClientProvider.LspClientStarter) {
+   *    override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspIntegrationProvider.LspClientStarter) {
    *      val fooService = FooService.getInstance(project)
    *      if (file.extension != "foo" || !fooService.isFooSupportEnabled) return
    *
@@ -118,14 +118,14 @@ interface LspClientProvider {
 
 
   companion object {
-    val EP_NAME: ExtensionPointName<LspClientProvider> = create("com.intellij.platform.lsp.clientProvider")
+    val EP_NAME: ExtensionPointName<LspIntegrationProvider> = create("com.intellij.platform.lsp.integrationProvider")
 
     /**
      * Enumerates providers from both the canonical [EP_NAME] and the deprecated [LspServerSupportProvider.EP_NAME].
-     * Since [LspServerSupportProvider] is an [LspClientProvider], callers can treat all providers uniformly.
+     * Since [LspServerSupportProvider] is an [LspIntegrationProvider], callers can treat all providers uniformly.
      */
     @ApiStatus.Internal
-    fun getAllExtensions(): Sequence<LspClientProvider> = sequence {
+    fun getAllExtensions(): Sequence<LspIntegrationProvider> = sequence {
       yieldAll(EP_NAME.extensionList)
       @Suppress("DEPRECATION")
       yieldAll(LspServerSupportProvider.EP_NAME.extensionList)

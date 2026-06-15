@@ -6,11 +6,11 @@ import com.intellij.lsp.ui.settings.LspServersConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
-import com.intellij.platform.lsp.api.LspClientProvider
+import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
 
-internal class ConfigurableLspClientProvider : LspClientProvider {
-  override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspClientProvider.LspClientStarter) {
+internal class ConfigurableLspIntegrationProvider : LspIntegrationProvider {
+  override fun fileOpened(project: Project, file: VirtualFile, clientStarter: LspIntegrationProvider.LspClientStarter) {
     val settings = LspServerSettings.getInstance(project)
     for (configuration in settings.servers) {
       if (!configuration.enabled) {

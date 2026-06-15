@@ -88,7 +88,7 @@ open class LspClientWidgetItem(
     ?: object : AnAction(widgetActionText, null, icon) {
       override fun actionPerformed(e: AnActionEvent) {
         // There's no single reasonable action that would work for each LSP API-based plugin.
-        // The plugins are strongly recommended to override `LspClientProvider.createWidgetItem()`.
+        // The plugins are strongly recommended to override `LspIntegrationProvider.createWidgetItem()`.
         // Typical implementation:
         //     override fun createWidgetItem(...) = LspClientWidgetItem(lspClient, currentFile, fooIcon, FooConfigurable::class.java)
       }
