@@ -43,10 +43,10 @@ import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyCollectionTypeImpl;
 import com.jetbrains.python.psi.types.PyLiteralType;
 import com.jetbrains.python.psi.types.PyTupleType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeParser;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -170,7 +170,10 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
         }
       }
       else if ("enum.EnumMeta.__members__".equals(name)) {
-        return Ref.create(PyTypeParser.getTypeByName(referenceTarget, "dict[str, unknown]", context));
+        Ref<PyType> membersType = getEnumMembersMappingType(referenceTarget, anchor, context);
+        if (membersType != null) {
+          return membersType;
+        }
       }
     }
     @Nullable PyType enumAutoType = getEnumAutoConstructorType(referenceTarget, context, anchor);
@@ -506,6 +509,52 @@ public final class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
     return null;
+  }
+
+  /**
+   * Returns the type of {@code Enum.__members__}, a read-only mapping from each member name to the member itself, e.g. for
+   * {@code class Color(Enum): red = 1; green = 2} it is {@code MappingProxyType[Literal["red", "green"], Literal[Color.red, Color.green]]}.
+   */
+  private static @Nullable Ref<PyType> getEnumMembersMappingType(@NotNull PsiElement referenceTarget,
+                                                                 @Nullable PsiElement anchor,
+                                                                 @NotNull TypeEvalContext context) {
+    if (!(anchor instanceof PyReferenceExpression anchorExpr) || !context.maySwitchToAST(anchor)) {
+      return null;
+    }
+    final PyExpression qualifier = anchorExpr.getQualifier();
+    if (qualifier == null) {
+      return null;
+    }
+    final PyClassType enumType = as(context.getType(qualifier), PyClassType.class);
+    if (enumType == null) {
+      return null;
+    }
+    final PyClass enumClass = enumType.getPyClass();
+    if (!isCustomEnum(enumClass, context)) {
+      return null;
+    }
+
+    final List<PyType> memberNameTypes = new ArrayList<>();
+    final List<PyType> memberTypes = new ArrayList<>();
+    getEnumMembers(enumClass, context)
+      .filter(Objects::nonNull)
+      .forEach(member -> {
+        final String memberName = member.getEnumMemberName();
+        final PyLiteralType memberNameType = memberName != null ? PyLiteralType.stringLiteral(referenceTarget, memberName) : null;
+        if (memberNameType != null) {
+          memberNameTypes.add(memberNameType);
+          memberTypes.add(member);
+        }
+      });
+
+    final var builtins = PyBuiltinCache.getInstance(referenceTarget);
+    final PyType keyType = memberTypes.isEmpty() ? builtins.getStrType() : PyUnionType.union(memberNameTypes);
+    final PyType valueType = memberTypes.isEmpty() ? getEnumValueType(enumClass, context) : PyUnionType.union(memberTypes);
+
+    final PyCollectionTypeImpl mappingType =
+      PyCollectionTypeImpl.createTypeByQName(
+        referenceTarget, "types.MappingProxyType", false, Arrays.asList(keyType, valueType));
+    return mappingType != null ? Ref.create(mappingType) : null;
   }
 
   @Override

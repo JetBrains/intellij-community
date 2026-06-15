@@ -727,4 +727,32 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
               return set(self) # OK
       """)
   }
+
+  @Test
+  @TestFor(issues = ["PY-58076"])
+  fun `enum members mapping`() = test(
+    """
+    from enum import Enum, IntEnum
+
+    class Color(Enum):
+        red = 1
+        green = 2
+        blue = 3
+
+    Color.__members__
+    #        └ TYPE MappingProxyType[Literal["red", "green", "blue"], Literal[Color.red, Color.green, Color.blue]]
+    
+    
+    class Empty(Enum):
+        pass
+
+    Empty.__members__
+    #       └ TYPE MappingProxyType[str, object]
+    
+    class EmptyInt(IntEnum):
+        pass
+
+    EmptyInt.__members__
+    #         └ TYPE MappingProxyType[str, int]
+    """)
 }

@@ -14,4 +14,4 @@ print(Color.red.<warning descr="Unresolved attribute reference 'foo' for class '
 
 
 print(Color.__members__.items())
-print(Color.__members__.<warning descr="Unresolved attribute reference 'foo' for class 'dict'">foo</warning>)
+print(Color.__members__.<warning descr="Unresolved attribute reference 'foo' for class 'MappingProxyType'">foo</warning>)
