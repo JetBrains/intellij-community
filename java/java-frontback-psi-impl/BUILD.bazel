@@ -6,8 +6,6 @@ jvm_library(
     name = "frontback-psi-impl",
     srcs = glob(
         [
-            "gen/**/*.kt",
-            "gen/**/*.java",
             "src/**/*.kt",
             "src/**/*.java",
             "src/**/*.form",
