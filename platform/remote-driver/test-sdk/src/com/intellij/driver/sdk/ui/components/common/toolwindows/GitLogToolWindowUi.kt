@@ -13,7 +13,7 @@ class GitLogToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
   }
 
   fun openContextMenuForCommit(partialCommitText: String): PopupMenuUiComponent {
-    vcsLogGraphTable().apply { findRowColumn { it.contains(partialCommitText) }.apply { rightClickCell(first, second) } }
+    vcsLogGraphTable { findRowColumn { it.contains(partialCommitText) }.apply { rightClickCell(first, second) } }
     return driver.ui.popupMenu()
   }
 
