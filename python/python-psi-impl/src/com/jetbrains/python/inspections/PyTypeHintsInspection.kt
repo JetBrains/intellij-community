@@ -1986,6 +1986,12 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun validateTypeVarDefaultType(typeVarType: PyTypeVarType, defaultType: PyType?, defaultExpression: PyExpression) {
+      if (defaultType is PyCallableParameterVariadicType) {
+        registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.default.type.must.be.type.expression"),
+                        effectiveHighlightType(ProblemHighlightType.GENERIC_ERROR_OR_WARNING))
+        return
+      }
+
       val defaultTypes = when (defaultType) {
         is PyTypeVarType -> defaultType.constraints.ifEmpty {
           listOf(defaultType.bound ?: PyBuiltinCache.getInstance(defaultExpression).objectType)
