@@ -1418,6 +1418,15 @@ def _jump_event(code, from_offset, to_offset):
     # We know the frame depth.
     frame = _getframe(1)
 
+    info = thread_info.additional_info
+    if info.pydev_step_cmd == -1:
+        # Not stepping — don't re-evaluate breakpoints for same-line backward jumps
+        # (e.g., comprehension loop iterations on Python < 3.13).
+        # The LINE event already handled the initial breakpoint when the line was first reached.
+        if info.pydev_state == STATE_SUSPEND:
+            _do_wait_suspend(py_db, thread_info, frame, "line", None)
+        return
+
     # Disable the next line event as we're jumping to a line. The line event will be redundant.
     _thread_local_info.f_disable_next_line_if_match = (func_code_info.co_filename, frame.f_lineno)
     # pydev_log.debug('_jump_event', code.co_name, 'from line', from_line, 'to line', frame.f_lineno)
