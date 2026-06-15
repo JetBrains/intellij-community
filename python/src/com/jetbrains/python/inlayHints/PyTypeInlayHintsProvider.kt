@@ -115,11 +115,10 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
           else -> type
         }
 
-        val typeHint = PythonDocumentationProvider.getTypeHint(type, typeEvalContext)
         sink.addPresentation(position = InlineInlayPosition(function.parameterList.textRange.endOffset, true),
                              hintFormat = returnTypeHintFormat) {
           text("-> ")
-          appendTypeHint(typeHint)
+          printPyTypeHint(type, typeEvalContext)
         }
       }
     }
@@ -174,16 +173,14 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
                             else -> rawParameterType
                           } ?: return
 
-      val typeHint = PythonDocumentationProvider.getTypeHint(parameterType, typeEvalContext)
-
       val offset = parameter.nameIdentifier?.textRange?.endOffset ?: parameter.textRange.endOffset
-
 
       sink.addPresentation(
         position = InlineInlayPosition(offset, true),
         hintFormat = HintFormat.default
       ) {
-        text(": $typeHint")
+        text(": ")
+        printPyTypeHint(parameterType, typeEvalContext)
       }
     }
 
