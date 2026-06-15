@@ -83,6 +83,8 @@ class MarkdownFormatterTest: LightPlatformCodeInsightTestCase() {
     wrapTextIfLong = false,
   )
 
+  fun `test reflow apostrophe as word boundary`() = doTest(rightMargin = 120)
+
   override fun getTestDataPath(): String {
     return MarkdownTestingUtil.TEST_DATA_PATH + "/formatter/"
   }
