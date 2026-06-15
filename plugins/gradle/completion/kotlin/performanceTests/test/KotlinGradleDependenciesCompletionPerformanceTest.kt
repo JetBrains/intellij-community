@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.completion.kotlin
+package com.intellij.gradle.completion.kotlin.performanceTests
 
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.gradle.completion.GradleLocalDependencyCompletionContributor
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
+import com.intellij.gradle.completion.kotlin.AbstractKotlinGradleCompletionTest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.RangeMarker
@@ -31,8 +32,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 
+// TODO avoid inheritance on AbstractKotlinGradleCompletionTest, or move this parent class to another module.
+//  Currently, it brings dependencies on intellij.gradle.completion.kotlin.tests, kotlin.gradle.gradle-java.tests.shared, intellij.groovy.tests
 @PerformanceUnitTest
-
 @GradleProjectTestApplication
 internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractKotlinGradleCompletionTest() {
 

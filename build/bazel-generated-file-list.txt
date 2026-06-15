@@ -1112,6 +1112,7 @@ plugins/gradle
 plugins/gradle-maven
 plugins/gradle/completion
 plugins/gradle/completion/kotlin
+plugins/gradle/completion/kotlin/performanceTests
 plugins/gradle/completion/kotlin/tests
 plugins/gradle/completion/toml
 plugins/gradle/gradle-declarative-sync
