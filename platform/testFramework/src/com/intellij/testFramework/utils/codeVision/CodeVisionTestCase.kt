@@ -13,7 +13,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
-import com.intellij.util.ui.EDT
 
 abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
 
@@ -24,6 +23,22 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
     fun waitForCodeVisionSync(editor: Editor, host: CodeVisionHost, disposable: Disposable) {
       val done = host.calculateCodeVisionSync(editor, disposable)
       PlatformTestUtil.waitForFuture(done)
+    }
+
+    @JvmStatic
+    fun dumpCodeVisionHints(sourceText: String, editor: Editor, onlyCodeVisionHintsAllowed: Boolean): String {
+      return InlayDumpUtil.dumpInlays(
+        sourceText, editor,
+        filter = {
+          val rendererSupported = it.renderer is CodeVisionInlayRenderer
+          if (onlyCodeVisionHintsAllowed && !rendererSupported) error("renderer not supported")
+          rendererSupported
+        },
+        renderer = { _, inlay ->
+          inlay.getUserData(CodeVisionListData.KEY)!!
+            .visibleLens
+            .joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation }
+        })
     }
   }
 
@@ -84,15 +99,6 @@ abstract class CodeVisionTestCase : InlayHintsProviderTestCase() {
   }
 
   private fun dumpCodeVisionHints(sourceText: String): String {
-    return InlayDumpUtil.dumpInlays(
-      sourceText, myFixture.editor,
-      filter = {
-        val rendererSupported = it.renderer is CodeVisionInlayRenderer
-        if (onlyCodeVisionHintsAllowed && !rendererSupported) error("renderer not supported")
-        rendererSupported
-      },
-      renderer = { _, inlay ->
-        inlay.getUserData(CodeVisionListData.KEY)!!.visibleLens.joinToString(prefix = "[", postfix = "]", separator = "   ") { it.longPresentation }
-      })
+    return dumpCodeVisionHints(sourceText, myFixture.editor, onlyCodeVisionHintsAllowed)
   }
 }
