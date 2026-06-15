@@ -5,6 +5,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAnnouncingMode;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationLocation;
 import com.intellij.notification.Notifications;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.openapi.Disposable;
@@ -23,8 +24,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-
-import com.intellij.notification.NotificationLocation;
 
 @SuppressWarnings("SplitModeApiUsage")
 @State(name = "NotificationConfiguration", storages = @Storage("notifications.xml"), category = SettingsCategory.UI)
@@ -47,7 +46,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
   private NotificationAnnouncingMode NOTIFICATION_ANNOUNCING_MODE;
   @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized")
-  private NotificationLocation NOTIFICATION_LOCATION = NotificationLocation.getDefaultLocation();
+  private NotificationLocation NOTIFICATION_LOCATION;
 
   public static NotificationsConfigurationImpl getInstanceImpl() {
     return (NotificationsConfigurationImpl)getNotificationsConfiguration();
@@ -264,8 +263,7 @@ public final class NotificationsConfigurationImpl extends NotificationsConfigura
 
     NOTIFICATION_ANNOUNCING_MODE = NotificationAnnouncingMode.get(state.getAttributeValue(NOTIFICATION_ANNOUNCING_MODE_ATTRIBUTE));
 
-    NotificationLocation location = NotificationLocation.getLocation(state.getAttributeValue(NOTIFICATION_LOCATION_ATTRIBUTE));
-    NOTIFICATION_LOCATION = location != null ? location : NotificationLocation.getDefaultLocation();
+    NOTIFICATION_LOCATION = NotificationLocation.getLocation(state.getAttributeValue(NOTIFICATION_LOCATION_ATTRIBUTE));
   }
 
   @Override
