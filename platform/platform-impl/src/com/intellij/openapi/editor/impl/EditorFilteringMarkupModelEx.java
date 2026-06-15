@@ -62,7 +62,7 @@ public final class EditorFilteringMarkupModelEx implements MarkupModelEx {
 
   @Override
   public @NotNull MarkupIterator<RangeHighlighterEx> overlappingIterator(int startOffset, int endOffset) {
-    return new FilteringMarkupIterator<>(myDelegate.overlappingIterator(startOffset, endOffset), highlighter -> isAvailable(highlighter));
+    return FilteringMarkupIterator.create(myDelegate.overlappingIterator(startOffset, endOffset), highlighter -> isAvailable(highlighter));
   }
 
   @Override
