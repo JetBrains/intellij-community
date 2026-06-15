@@ -17,9 +17,7 @@ import org.jetbrains.kotlin.analysis.api.components.upperBoundIfFlexible
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource.WITH_SHORT_NAMES
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.nameOrAnonymous
@@ -69,13 +67,14 @@ internal object ClassLookupElementFactory {
 
     context(_: KaSession)
     fun createAnonymousObjectLookup(
-        symbol: KaClassSymbol,
+        symbol: KaClassLikeSymbol,
+        classKind: KaClassKind,
         typeArguments: List<KaTypeProjection>?,
         importingStrategy: ImportStrategy,
         aliasName: Name? = null,
     ): LookupElementBuilder {
         val name = aliasName ?: symbol.nameOrAnonymous
-        val constructorParenthesis = if (symbol.classKind != KaClassKind.INTERFACE) "()" else ""
+        val constructorParenthesis = if (classKind != KaClassKind.INTERFACE) "()" else ""
         val hasTypeArguments = typeArguments == null || typeArguments.isNotEmpty()
 
         @OptIn(KaExperimentalApi::class)
@@ -163,14 +162,14 @@ internal object ClassLookupElementFactory {
     @OptIn(KaExperimentalApi::class)
     context(s: KaSession)
     fun createSamObjectLookupElement(
-        samInterfaceSymbol: KaNamedClassSymbol,
+        samInterfaceSymbol: KaClassLikeSymbol,
         samFunction: KaNamedFunctionSymbol,
         samConstructorSymbol: KaSamConstructorSymbol,
         importingStrategy: ImportStrategy,
         inputTypeArgumentsAreRequired: Boolean,
         aliasName: Name?,
     ): LookupElementBuilder {
-        val name = samInterfaceSymbol.name
+        val name = samInterfaceSymbol.nameOrAnonymous
 
         val options = CallableInsertionOptions(
             importingStrategy = importingStrategy,

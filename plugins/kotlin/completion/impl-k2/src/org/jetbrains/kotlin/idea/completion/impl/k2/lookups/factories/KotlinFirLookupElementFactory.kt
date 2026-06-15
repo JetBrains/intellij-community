@@ -12,11 +12,10 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
@@ -114,13 +113,15 @@ object KotlinFirLookupElementFactory {
 
     context(_: KaSession)
     fun createAnonymousObjectLookupElement(
-        classSymbol: KaClassSymbol,
+        classSymbol: KaClassLikeSymbol,
+        classKind: KaClassKind,
         typeArguments: List<KaTypeProjection>?,
         importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
         aliasName: Name? = null,
     ): LookupElementBuilder {
         return ClassLookupElementFactory.createAnonymousObjectLookup(
             symbol = classSymbol,
+            classKind = classKind,
             typeArguments = typeArguments,
             importingStrategy = importingStrategy,
             aliasName = aliasName
@@ -129,7 +130,7 @@ object KotlinFirLookupElementFactory {
 
     context(_: KaSession)
     internal fun createSamObjectLookupElement(
-        samInterfaceSymbol: KaNamedClassSymbol,
+        samInterfaceSymbol: KaClassLikeSymbol,
         samFunction: KaNamedFunctionSymbol,
         samConstructorSymbol: KaSamConstructorSymbol,
         inputTypeArgumentsAreRequired: Boolean,
