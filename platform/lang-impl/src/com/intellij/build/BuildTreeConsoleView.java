@@ -31,6 +31,7 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.execution.ui.ConsoleViewWithDelegateKt;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.IdeBundle;
@@ -1317,7 +1318,9 @@ public final class BuildTreeConsoleView implements ConsoleView, UiDataProvider, 
     private @Nullable ExecutionConsole getCurrentConsole() {
       String nodeConsoleViewName = myNodeConsoleViewName.get();
       if (nodeConsoleViewName == null) return null;
-      return myView.getView(nodeConsoleViewName);
+      var console = myView.getView(nodeConsoleViewName);
+      if (console == null) return null;
+      return ConsoleViewWithDelegateKt.unwrapDelegate(console);
     }
 
     private @Nullable Editor getEditor() {
