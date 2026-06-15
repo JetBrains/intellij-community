@@ -83,16 +83,18 @@ internal class AgentPromptPaletteSubmitController(
     val hasProjectPath = resolveWorkingProjectPath() != null
     val hasExistingTaskTarget = !existingTaskController.selectedExistingTaskId.isNullOrBlank()
 
-    if (activeExtensionTab() != null) {
+    val extensionTab = activeExtensionTab()
+    if (extensionTab?.extension?.getSubmitActionId() != null) {
       launchState.canSubmitNow = true
       return
     }
+    val targetMode = if (extensionTab != null) PromptTargetMode.NEW_TASK else currentTargetMode()
 
     val submitPrerequisitesMet = hasPrompt &&
-                                 hasProjectPath &&
-                                 selectedProviderEntry != null &&
-                                 selectedProviderEntry.isCliAvailable
-    launchState.canSubmitNow = when (currentTargetMode()) {
+                                  hasProjectPath &&
+                                  selectedProviderEntry != null &&
+                                  selectedProviderEntry.isCliAvailable
+    launchState.canSubmitNow = when (targetMode) {
       PromptTargetMode.NEW_TASK -> submitPrerequisitesMet
       PromptTargetMode.EXISTING_TASK -> submitPrerequisitesMet && hasExistingTaskTarget
     }
@@ -147,11 +149,13 @@ internal class AgentPromptPaletteSubmitController(
       }
     }
 
+    val extensionNormalLaunch = extensionTab != null
     val selectedProviderEntry = providerSelector.selectedProvider
     val launcher = launcherProvider()
     val projectPath = resolveWorkingProjectPath()
+    val targetMode = if (extensionNormalLaunch) PromptTargetMode.NEW_TASK else currentTargetMode()
     val validationErrorKey = resolveSubmitValidationErrorMessageKey(
-      targetMode = currentTargetMode(),
+      targetMode = targetMode,
       prompt = promptArea.text,
       selectedProvider = selectedProviderEntry?.bridge?.provider,
       isProviderCliAvailable = selectedProviderEntry?.isCliAvailable == true,
@@ -167,7 +171,6 @@ internal class AgentPromptPaletteSubmitController(
     val prompt = promptArea.text.trim()
     val providerEntry = selectedProviderEntry ?: return
     val effectiveProjectPath = projectPath ?: return
-    val targetMode = currentTargetMode()
     val selectedThreadActivity = existingTaskController.selectedEntry()?.activity
     val effectiveProviderOptionIds = resolveEffectiveProviderOptionIds(
       selectedProvider = providerEntry.bridge,
@@ -201,7 +204,6 @@ internal class AgentPromptPaletteSubmitController(
     val launcherBridge = launcher ?: return
 
     val targetThreadId = when {
-      activeExtensionTab() != null -> null
       targetMode == PromptTargetMode.NEW_TASK -> null
       else -> existingTaskController.selectedExistingTaskId ?: return
     }
@@ -228,7 +230,7 @@ internal class AgentPromptPaletteSubmitController(
       containerMode = shouldSubmitContainerMode(
         isSelected = isContainerModeSelected(),
         selectedProvider = providerEntry.bridge.provider,
-        isExtensionTab = activeExtensionTab() != null,
+        isExtensionTab = extensionNormalLaunch,
         supportsContainerMode = isContainerModeSupported,
         isContainerRuntimeAvailable = isContainerModeRuntimeAvailable,
       ),

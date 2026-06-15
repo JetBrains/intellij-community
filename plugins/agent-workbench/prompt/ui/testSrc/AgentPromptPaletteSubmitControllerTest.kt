@@ -1,11 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.ui
 
-import com.intellij.platform.ai.agent.core.AgentThreadActivity
-import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
-import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
-import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
-import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeSummary
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
@@ -18,7 +13,18 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
+import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteExtension
+import com.intellij.agent.workbench.prompt.core.AgentPromptPaletteInitialPrompt
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
+import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.platform.ai.agent.common.session.isClaudeMenuCommandPrompt
+import com.intellij.platform.ai.agent.core.AgentThreadActivity
+import com.intellij.platform.ai.agent.core.session.AgentSessionLaunchMode
+import com.intellij.platform.ai.agent.core.session.AgentSessionProvider
+import com.intellij.platform.ai.agent.core.session.AgentSessionThread
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE
 import com.intellij.platform.ai.agent.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentInitialMessagePlan
@@ -28,10 +34,6 @@ import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionProvid
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionSource
 import com.intellij.platform.ai.agent.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.platform.ai.agent.sessions.core.providers.buildPlanModeInitialMessagePlan
-import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
-import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
-import com.intellij.openapi.components.service
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
@@ -112,6 +114,28 @@ class AgentPromptPaletteSubmitControllerTest {
       assertThat(fixture.controller.canSubmit()).isFalse()
 
       fixture.existingTaskController.selectedExistingTaskId = "thread-1"
+      fixture.controller.updateSendAvailability()
+      assertThat(fixture.controller.canSubmit()).isTrue()
+    }
+  }
+
+  @Test
+  fun updateSendAvailabilityUsesNormalLaunchPrerequisitesForExtensionWithoutSubmitAction() {
+    runInEdtAndWait {
+      val project = ProjectManager.getInstance().defaultProject
+      val fixture = createFixture(
+        project = project,
+        activeExtensionTab = { extensionTabWithoutSubmitAction() },
+        currentTargetMode = { PromptTargetMode.EXISTING_TASK },
+      )
+      fixture.providerSelector.refresh()
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("codex"))
+      fixture.promptArea.text = "Review selected changes"
+
+      fixture.controller.updateSendAvailability()
+      assertThat(fixture.controller.canSubmit()).isFalse()
+
+      fixture.launchState.selectedWorkingProjectPath = "/repo"
       fixture.controller.updateSendAvailability()
       assertThat(fixture.controller.canSubmit()).isTrue()
     }
@@ -278,6 +302,51 @@ class AgentPromptPaletteSubmitControllerTest {
       assertThat(request.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.MEDIUM)
       assertThat(request.generationModelCatalog.map { model -> model.id }).containsExactly("gpt-5", "claude-sonnet-4-5")
       assertThat(request.targetThreadId).isNull()
+    }
+  }
+
+  @Test
+  fun submitUsesNormalNewTaskLaunchForExtensionWithoutSubmitAction() {
+    runInEdtAndWait {
+      val project = ProjectManager.getInstance().defaultProject
+      var capturedRequest: AgentPromptLaunchRequest? = null
+      val fixture = createFixture(
+        project = project,
+        launcherProvider = {
+          object : AgentPromptLauncherBridge {
+            override fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult {
+              capturedRequest = request
+              return AgentPromptLaunchResult.SUCCESS
+            }
+
+            override fun resolveWorkingProjectPath(invocationData: AgentPromptInvocationData): String = "/launcher/path"
+          }
+        },
+        providersProvider = { listOf(testProviderBridge(provider = AgentSessionProvider.from("codex"))) },
+        currentTargetMode = { PromptTargetMode.EXISTING_TASK },
+        activeExtensionTab = { extensionTabWithoutSubmitAction() },
+        generationSettingsProvider = {
+          AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH)
+        },
+        generationModelCatalogProvider = {
+          listOf(AgentPromptGenerationModel(id = "qwen3.6", displayName = "Qwen 3.6"))
+        },
+      )
+      fixture.providerSelector.refresh()
+      fixture.providerSelector.selectProvider(AgentSessionProvider.from("codex"))
+      fixture.promptArea.text = "Review selected changes"
+      fixture.launchState.selectedWorkingProjectPath = "/repo"
+      fixture.existingTaskController.selectedExistingTaskId = "thread-1"
+
+      fixture.controller.submit()
+
+      val request = checkNotNull(capturedRequest)
+      assertThat(request.provider).isEqualTo(AgentSessionProvider.from("codex"))
+      assertThat(request.projectPath).isEqualTo("/repo")
+      assertThat(request.initialMessageRequest.prompt).isEqualTo("Review selected changes")
+      assertThat(request.targetThreadId).isNull()
+      assertThat(request.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
+      assertThat(request.generationModelCatalog.map { model -> model.id }).containsExactly("qwen3.6")
     }
   }
 
@@ -581,6 +650,7 @@ class AgentPromptPaletteSubmitControllerTest {
     isContainerModeSelected: () -> Boolean = { false },
     isContainerModeSupported: (AgentSessionProvider) -> Boolean = { false },
     isContainerModeRuntimeAvailable: (AgentSessionProvider) -> Boolean = { false },
+    activeExtensionTab: () -> AgentPromptPaletteExtensionTab? = { null },
   ): SubmitControllerFixture {
     val promptArea = EditorTextField()
     val view = createAgentPromptPaletteView(
@@ -623,7 +693,7 @@ class AgentPromptPaletteSubmitControllerTest {
       launcherProvider = launcherProvider,
       launchState = launchState,
       currentTargetMode = currentTargetMode,
-      activeExtensionTab = { null },
+      activeExtensionTab = activeExtensionTab,
       buildVisibleContextEntries = buildVisibleContextEntries,
       resolveContextSelection = resolveContextSelection,
       onWorkingProjectPathSelected = {},
@@ -673,6 +743,25 @@ class AgentPromptPaletteSubmitControllerTest {
         return this.provider == AgentSessionProvider.from("claude") && prompt.isClaudeMenuCommandPrompt()
       }
     }
+  }
+
+  private fun extensionTabWithoutSubmitAction(): AgentPromptPaletteExtensionTab {
+    return AgentPromptPaletteExtensionTab(
+      extension = object : AgentPromptPaletteExtension {
+        override fun matches(contextItems: List<AgentPromptContextItem>): Boolean = true
+
+        override fun getTabTitle(): String = "Review"
+
+        override fun getInitialPrompt(project: com.intellij.openapi.project.Project): AgentPromptPaletteInitialPrompt =
+          AgentPromptPaletteInitialPrompt(content = "Review selected changes")
+
+        override fun getSubmitActionId(): String? = null
+
+        override fun getFooterHint(): String? = null
+      },
+      tabPanel = JPanel(),
+      taskKeyPrefix = "review",
+    )
   }
 
   private data class SubmitControllerFixture(

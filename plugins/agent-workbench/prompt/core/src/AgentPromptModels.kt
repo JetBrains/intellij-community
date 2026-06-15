@@ -168,7 +168,7 @@ data class AgentPromptLaunchRequest(
    * Used by the EEL container flow to add `--disallowedTools` so that
    * Claude Code's built-in file/bash tools are disabled, forcing all
    * operations through the ij-proxy MCP tools (which route to the container).
-   */
+  */
   @JvmField val containerSessionExtraArgs: List<String> = emptyList(),
 )
 

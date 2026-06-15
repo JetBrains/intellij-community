@@ -96,7 +96,9 @@ internal class AIReviewPaletteExtension : AgentPromptPaletteExtension {
     return currentPrompt.copy(kind = targetKind)
   }
 
-  override fun getSubmitActionId(): String = AIReviewPromptSupport.AI_REVIEW_EXECUTE_ACTION_ID
+  override fun getSubmitActionId(): String {
+    return AIReviewPromptSupport.AI_REVIEW_EXECUTE_ACTION_ID
+  }
 
   override fun showsProviderSelector(): Boolean = true
 
