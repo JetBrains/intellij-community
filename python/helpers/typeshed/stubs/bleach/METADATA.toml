@@ -1,4 +1,4 @@
-version = "6.3.*"
+version = "6.4.*"
 dependencies = ["types-html5lib"]
 upstream-repository = "https://github.com/mozilla/bleach"
 
