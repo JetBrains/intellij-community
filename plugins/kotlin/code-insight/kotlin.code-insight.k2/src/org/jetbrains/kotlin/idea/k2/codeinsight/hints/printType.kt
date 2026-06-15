@@ -8,7 +8,6 @@ import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
 import com.intellij.psi.createSmartPointer
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaStandardTypeClassIds
@@ -16,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.components.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.components.isNullable
 import org.jetbrains.kotlin.analysis.api.components.withNullability
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
+import org.jetbrains.kotlin.analysis.api.types.KaResolvedClassTypeQualifier
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
@@ -36,13 +37,11 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObj
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.ClassIdBasedLocality
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 
 @OptIn(KaExperimentalApi::class)
-@ApiStatus.Internal
 context(_: KaSession)
 internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     // See org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer.renderType
@@ -150,36 +149,50 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     if (markedNullable) text("?")
 }
 
-@OptIn(ClassIdBasedLocality::class)
 context(_: KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
     val classType = type.approximateAnonymousObjectToSupertypeOrSelf() as KaClassType
-    val truncatedName = truncatedName(classType)
-    if (truncatedName.isNotEmpty()) {
-        if (classType.classId.isLocal) {
-            printSymbolPsi(classType.symbol, truncatedName)
-        } else {
-            printClassId(classType.classId, truncatedName)
-        }
-    }
+    val qualifiers = classType.qualifiers
+    val anotherQualifiers = anotherType?.qualifiers
 
-    val ownTypeArguments = classType.typeArguments
-    if (ownTypeArguments.isNotEmpty()) {
-        text("<")
-
-        val anotherOwnTypeArguments = anotherType?.typeArguments
-        val iterator = ownTypeArguments.iterator()
-        val anotherIterator = anotherOwnTypeArguments?.iterator()
-        while (iterator.hasNext()) {
-            val projection = iterator.next()
-            val anotherProjection = anotherIterator?.takeIf { it.hasNext() }?.next()
-
-            printProjection(projection, anotherProjection != null && projection != anotherProjection)
-
-            if (iterator.hasNext()) text(", ")
+    var lastUsedIndex = -1
+    var nested = false
+    for ((index, qualifier) in qualifiers.withIndex()) {
+        if (qualifier.typeArguments.isEmpty() && index != qualifiers.lastIndex) {
+            // skip ahead to type arguments
+            continue
         }
 
-        text(">")
+        val truncatedName = truncatedName(qualifiers.subList(lastUsedIndex + 1, index + 1))
+        if (truncatedName.isNotEmpty()) {
+            if (nested) text(".")
+
+            val classId = (qualifier.symbol as? KaClassLikeSymbol)?.classId
+            if (classId == null) {
+                printSymbolPsi(qualifier.symbol, truncatedName)
+            } else {
+                printClassId(classId, truncatedName)
+            }
+
+            val ownTypeArguments = qualifier.typeArguments.ifEmpty { break } // no type arguments, so we've reached the end of qualifiers
+            text("<")
+
+            val anotherOwnTypeArguments = anotherQualifiers?.getOrNull(index)?.typeArguments
+            val iterator = ownTypeArguments.iterator()
+            val anotherIterator = anotherOwnTypeArguments?.iterator()
+            while (iterator.hasNext()) {
+                val projection = iterator.next()
+                val anotherProjection = anotherIterator?.takeIf { it.hasNext() }?.next()
+
+                printProjection(projection, anotherProjection != null && projection != anotherProjection)
+
+                if (iterator.hasNext()) text(", ")
+            }
+
+            text(">")
+            lastUsedIndex = index
+            nested = true
+        }
     }
 }
 
@@ -231,9 +244,8 @@ private fun PresentationTreeBuilder.printSymbolPsi(symbol: KaSymbol, name: Strin
 
 private fun isMutabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
     // see org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer.AS_SHORT.isMutabilityFlexibleType
-    if (lower !is KaClassType || upper !is KaClassType) return false
-
-    return (StandardClassIds.Collections.mutableCollectionToBaseCollection[lower.classId] == upper.classId)
+    return !(lower !is KaClassType || upper !is KaClassType) &&
+            (StandardClassIds.Collections.mutableCollectionToBaseCollection[lower.classId] == upper.classId)
 }
 
 
@@ -274,8 +286,8 @@ private fun isSimilarTypes(
 ): Boolean = lower.typeArguments.zip(upper.typeArguments)
     .none { (lowerTypeArg, upperTypeArg) -> lowerTypeArg.type != upperTypeArg.type }
 
-private fun truncatedName(classType: KaClassType): String {
-    val names = classType.qualifiers
+private fun truncatedName(qualifiers: List<KaResolvedClassTypeQualifier>): String {
+    val names = qualifiers
         .mapNotNull {
             val symbol = it.symbol
             symbol.takeUnless { classifierSymbol ->

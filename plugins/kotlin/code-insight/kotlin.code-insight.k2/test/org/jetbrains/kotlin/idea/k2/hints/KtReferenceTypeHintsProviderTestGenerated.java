@@ -158,6 +158,11 @@ public class KtReferenceTypeHintsProviderTestGenerated extends AbstractKtReferen
         runTest("../../idea/tests/testData/codeInsight/hints/types/ImportedEnumEntry.kt");
     }
 
+    @TestMetadata("InnerClassWithGenerics.kt")
+    public void testInnerClassWithGenerics() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/types/InnerClassWithGenerics.kt");
+    }
+
     @TestMetadata("JavaFQName.kt")
     public void testJavaFQName() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/types/JavaFQName.kt");
