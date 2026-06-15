@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
+import com.intellij.codeInsight.daemon.impl.analysis.DefaultJavaErrorFixProvider;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.openapi.util.TextRange;
@@ -21,12 +22,19 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Will be eventually removed. Do not add new code here.
+ * The new fixes should be registered either in {@link DefaultJavaErrorFixProvider} or in 
+ * {@link com.intellij.codeInspection.AdditionalJavaErrorFixProvider} (if you need more dependencies).
+ */
+@ApiStatus.Obsolete
 public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider<PsiJavaCodeReferenceElement> {
   @Override
   public void registerFixes(@NotNull PsiJavaCodeReferenceElement ref, @NotNull QuickFixActionRegistrar registrar) {
