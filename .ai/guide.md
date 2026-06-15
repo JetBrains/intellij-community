@@ -70,6 +70,15 @@ Never use the `search-tools-instructions` skill. See ijproxy for search tools.
 - Search regex: `search_regex`
 - List dir: `list_dir`
 <!-- /IF_TOOL:CLAUDE -->
+<!-- IF_TOOL:JUNIE -->
+- Read: `read_file`
+- Edit/Write: `apply_patch`
+- **Search symbols (preferred):** `search_symbol`
+- Find files (glob): `search_file`
+- Search text: `search_text`
+- Search regex: `search_regex`
+- List dir: `list_dir`
+<!-- /IF_TOOL:JUNIE -->
 
 ### Client fallback (no MCP)
 <!-- IF_EDITION:ULTIMATE -->
@@ -99,6 +108,9 @@ Available via ijproxy or JetBrains MCP. Use these for semantic operations; avoid
 <!-- IF_TOOL:CLAUDE -->
 - For repo edits, use the ijproxy edit/write tools listed above. Generic edit/write fallbacks are forbidden unless ijproxy is unavailable.
 <!-- /IF_TOOL:CLAUDE -->
+<!-- IF_TOOL:JUNIE -->
+- For repo edits, use the ijproxy edit/write tools listed above. Generic edit/write fallbacks are forbidden unless ijproxy is unavailable.
+<!-- /IF_TOOL:JUNIE -->
 <!-- IF_EDITION:ULTIMATE -->
 - Never shell for file ops (`cat`, `sed`, `find`, `grep`) on repo paths, except the client fallback (`./community/tools/fd.cmd`, `./community/tools/rg.cmd`) when no MCP is available.
 <!-- /IF_EDITION:ULTIMATE -->

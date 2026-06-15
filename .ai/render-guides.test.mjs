@@ -34,12 +34,13 @@ function createFixture() {
   const communitySourceDir = join(rootDir, 'community', '.agents', 'skills')
   const agentsDir = join(rootDir, '.agents', 'skills')
   const claudeDir = join(rootDir, '.claude', 'skills')
+  const junieDir = join(rootDir, '.junie', 'skills')
   const communityClaudeDir = join(rootDir, 'community', '.claude', 'skills')
 
   writeSkill(join(communitySourceDir, 'testing'), 'testing', '# Testing\n')
   writeSkill(join(agentsDir, 'platform-deep-dives'), 'platform-deep-dives', '# Platform Deep Dives\n')
 
-  return {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir}
+  return {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir}
 }
 
 describe('render-guides skills', () => {
@@ -77,33 +78,44 @@ describe('render-guides skills', () => {
       !communityOutput.includes('./.ai/community/.agents'),
       'community guide should not include a spurious .ai segment in rewritten skill links',
     )
+
+    const junieOutput = rewriteMarkdownLinks(guideTemplate, guidePath, join(__dirname, '..', '..', '.junie', 'AGENTS.md'))
+    ok(
+      junieOutput.includes('[TESTING](../community/.agents/skills/testing/SKILL.md)'),
+      'Junie guide should link to the testing skill relative to .junie/AGENTS.md',
+    )
   })
 
   it('in ULTIMATE, emits ultimate-only stubs and cleans stale generated dirs', async () => {
-    const {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir} = createFixture()
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
 
     const staleAgentsDir = join(agentsDir, 'stale-generated-in-agents')
     const staleClaudeDir = join(claudeDir, 'stale-generated-in-claude')
+    const staleJunieDir = join(junieDir, 'stale-generated-in-junie')
     const staleCommunityClaudeDir = join(communityClaudeDir, 'stale-generated-in-community-claude')
     try {
       writeSkill(staleAgentsDir, 'stale-agents', 'stale\n', 'community/.agents/skills/testing/SKILL.md')
       writeSkill(staleClaudeDir, 'stale-claude', 'stale\n', 'community/.agents/skills/testing/SKILL.md')
+      writeSkill(staleJunieDir, 'stale-junie', 'stale\n', 'community/.agents/skills/testing/SKILL.md')
       writeSkill(staleCommunityClaudeDir, 'stale-community-claude', 'stale\n', 'community/.agents/skills/testing/SKILL.md')
 
       ok(existsSync(staleAgentsDir))
       ok(existsSync(staleClaudeDir))
+      ok(existsSync(staleJunieDir))
       ok(existsSync(staleCommunityClaudeDir))
 
       await renderSkills({
         communitySourceDir,
         agentsDir,
         claudeDir,
+        junieDir,
         communityClaudeDir,
         edition: 'ULTIMATE',
       })
 
       ok(!existsSync(staleAgentsDir), 'stale generated stub in .agents/skills was not removed')
       ok(!existsSync(staleClaudeDir), 'stale generated stub in .claude/skills was not removed')
+      ok(!existsSync(staleJunieDir), 'stale generated stub in .junie/skills was not removed')
       ok(!existsSync(staleCommunityClaudeDir), 'stale generated stub in community/.claude/skills was not removed')
 
       const ultimateSkillPath = join(agentsDir, 'platform-deep-dives', 'SKILL.md')
@@ -116,6 +128,14 @@ describe('render-guides skills', () => {
       ok(
         claudeUltimateStubContent.includes(generatedSkillMarker),
         'ultimate-only stub in .claude/skills does not point to the source skill',
+      )
+
+      const junieUltimateStubPath = join(junieDir, 'platform-deep-dives', 'SKILL.md')
+      ok(existsSync(junieUltimateStubPath), 'ultimate-only stub is missing in .junie/skills')
+      const junieUltimateStubContent = readFileSync(junieUltimateStubPath, 'utf8')
+      ok(
+        junieUltimateStubContent.includes(generatedSkillMarker),
+        'ultimate-only stub in .junie/skills does not point to the source skill',
       )
 
       const communityClaudeUltimateStubPath = join(communityClaudeDir, 'platform-deep-dives', 'SKILL.md')
@@ -132,6 +152,14 @@ describe('render-guides skills', () => {
         'community skill stub in .claude/skills does not point to community source',
       )
 
+      const junieCommunityStubPath = join(junieDir, 'testing', 'SKILL.md')
+      ok(existsSync(junieCommunityStubPath), 'community skill stub is missing in .junie/skills')
+      const junieCommunityStubContent = readFileSync(junieCommunityStubPath, 'utf8')
+      ok(
+        junieCommunityStubContent.includes(generatedSkillMarker),
+        'community skill stub in .junie/skills does not point to community source',
+      )
+
       const communityClaudeTestingStubPath = join(communityClaudeDir, 'testing', 'SKILL.md')
       ok(existsSync(communityClaudeTestingStubPath), 'community skill stub is missing in community/.claude/skills')
     } finally {
@@ -140,25 +168,32 @@ describe('render-guides skills', () => {
   })
 
   it('in COMMUNITY, skips ultimate-only stubs and removes stale generated ultimate stubs', async () => {
-    const {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir} = createFixture()
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
 
     const staleUltimateStubDir = join(claudeDir, 'platform-deep-dives')
+    const staleJunieUltimateStubDir = join(junieDir, 'platform-deep-dives')
     try {
       writeSkill(staleUltimateStubDir, 'platform-deep-dives', 'stale\n', 'community/.agents/skills/testing/SKILL.md')
+      writeSkill(staleJunieUltimateStubDir, 'platform-deep-dives', 'stale\n', 'community/.agents/skills/testing/SKILL.md')
       ok(existsSync(staleUltimateStubDir), 'expected stale ultimate stub before render')
+      ok(existsSync(staleJunieUltimateStubDir), 'expected stale Junie ultimate stub before render')
 
       await renderSkills({
         communitySourceDir,
         agentsDir,
         claudeDir,
+        junieDir,
         communityClaudeDir,
         edition: 'COMMUNITY',
       })
 
       ok(!existsSync(staleUltimateStubDir), 'community render should remove stale generated ultimate stub')
+      ok(!existsSync(staleJunieUltimateStubDir), 'community render should remove stale generated Junie ultimate stub')
 
       const claudeUltimateStubPath = join(claudeDir, 'platform-deep-dives', 'SKILL.md')
       ok(!existsSync(claudeUltimateStubPath), 'community render should not emit ultimate-only stub')
+      const junieUltimateStubPath = join(junieDir, 'platform-deep-dives', 'SKILL.md')
+      ok(!existsSync(junieUltimateStubPath), 'community render should not emit Junie ultimate-only stub')
 
       const agentsUltimateSourcePath = join(agentsDir, 'platform-deep-dives', 'SKILL.md')
       const agentsUltimateSourceContent = readFileSync(agentsUltimateSourcePath, 'utf8')
@@ -170,6 +205,9 @@ describe('render-guides skills', () => {
       const claudeCommunityStubPath = join(claudeDir, 'testing', 'SKILL.md')
       ok(existsSync(claudeCommunityStubPath), 'community skill stub is missing in .claude/skills')
 
+      const junieCommunityStubPath = join(junieDir, 'testing', 'SKILL.md')
+      ok(existsSync(junieCommunityStubPath), 'community skill stub is missing in .junie/skills')
+
       const communityClaudeTestingStubPath = join(communityClaudeDir, 'testing', 'SKILL.md')
       ok(existsSync(communityClaudeTestingStubPath), 'community skill stub is missing in community/.claude/skills')
     } finally {
@@ -178,7 +216,7 @@ describe('render-guides skills', () => {
   })
 
   it('fails fast when community and manual ultimate skill names collide', async () => {
-    const {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir} = createFixture()
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
 
     try {
       writeSkill(join(communitySourceDir, 'platform-deep-dives'), 'platform-deep-dives', '# Community Platform Deep Dives\n')
@@ -188,6 +226,7 @@ describe('render-guides skills', () => {
           communitySourceDir,
           agentsDir,
           claudeDir,
+          junieDir,
           communityClaudeDir,
           edition: 'ULTIMATE',
         }),
@@ -206,7 +245,7 @@ describe('render-guides skills', () => {
   })
 
   it('fails fast when a community source skill has no YAML frontmatter', async () => {
-    const {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir} = createFixture()
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
 
     const staleGeneratedTestingDir = join(agentsDir, 'testing')
     try {
@@ -218,6 +257,7 @@ describe('render-guides skills', () => {
           communitySourceDir,
           agentsDir,
           claudeDir,
+          junieDir,
           communityClaudeDir,
           edition: 'COMMUNITY',
         }),
@@ -233,7 +273,7 @@ describe('render-guides skills', () => {
   })
 
   it('fails fast when a manual ultimate source skill has no YAML frontmatter', async () => {
-    const {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir} = createFixture()
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
 
     try {
       writeFileSync(join(agentsDir, 'platform-deep-dives', 'SKILL.md'), '# Missing frontmatter\n', 'utf8')
@@ -243,6 +283,7 @@ describe('render-guides skills', () => {
           communitySourceDir,
           agentsDir,
           claudeDir,
+          junieDir,
           communityClaudeDir,
           edition: 'ULTIMATE',
         }),
@@ -254,7 +295,7 @@ describe('render-guides skills', () => {
   })
 
   it('accepts CRLF frontmatter in community source skills', async () => {
-    const {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir} = createFixture()
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
 
     const crlfSkillDir = join(communitySourceDir, 'crlf-frontmatter')
     try {
@@ -269,6 +310,7 @@ describe('render-guides skills', () => {
         communitySourceDir,
         agentsDir,
         claudeDir,
+        junieDir,
         communityClaudeDir,
         edition: 'COMMUNITY',
       })
@@ -286,7 +328,7 @@ describe('render-guides skills', () => {
   })
 
   it('accepts BOM frontmatter with closing delimiter at EOF', async () => {
-    const {rootDir, communitySourceDir, agentsDir, claudeDir, communityClaudeDir} = createFixture()
+    const {rootDir, communitySourceDir, agentsDir, claudeDir, junieDir, communityClaudeDir} = createFixture()
 
     const eofSkillDir = join(communitySourceDir, 'bom-eof-frontmatter')
     try {
@@ -301,6 +343,7 @@ describe('render-guides skills', () => {
         communitySourceDir,
         agentsDir,
         claudeDir,
+        junieDir,
         communityClaudeDir,
         edition: 'COMMUNITY',
       })
