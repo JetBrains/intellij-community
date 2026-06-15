@@ -884,4 +884,86 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       #               ^^^^^^^ WARNING Expected type 'str', got 'Literal[42]' instead
       """)
   }
+
+  @Test
+  @TestFor(issues = ["PY-90291"])
+  fun `TypedDict as Mapping or dict`() = test("""
+    from typing import Mapping, TypedDict, NotRequired
+    
+    
+    # A closed TypedDict has no extra items, so it is assignable to Mapping[str, VT]
+    # when the value types of all its items are subtypes of VT, but it is never
+    # assignable to a mutable dict[str, VT].
+    class Closed1(TypedDict, closed=True, total=False):
+        a: int
+    
+    
+    class Closed2(TypedDict, closed=True):
+        a: int
+    
+    
+    c1: Closed1 = {"a": 1}
+    c2: Closed2 = {"a": 1}
+    
+    m_int_1: Mapping[str, int] = c1
+    m_int_2: Mapping[str, int] = c2
+    m_obj_1: Mapping[str, object] = c1
+    m_str_1: Mapping[str, str] = c1
+    #                            ^^ WARNING Expected type 'Mapping[str, str]', got 'Closed1' instead
+    
+    d_int_1: dict[str, int] = c1
+    #                         ^^ WARNING Expected type 'dict[str, int]', got 'Closed1' instead
+    d_int_2: dict[str, int] = c2
+    #                         ^^ WARNING Expected type 'dict[str, int]', got 'Closed2' instead
+    
+    
+    # A TypedDict with mutable extra items is assignable to dict[str, VT] when every
+    # declared item is mutable, non-required and equivalent to VT.
+    class ExtraInt(TypedDict, extra_items=int):
+        pass
+    
+    
+    class ExtraIntRequired(ExtraInt):
+        name: NotRequired[int]
+    
+    
+    class ExtraIntNotRequired(TypedDict, extra_items=int, total=False):
+        name: int
+    
+    
+    class ExtraStrName(TypedDict, extra_items=int):
+        name: str
+    
+    
+    ei: ExtraInt = {}
+    eir: ExtraIntRequired = {"name": 1}
+    einr: ExtraIntNotRequired = {"name": 1}
+    esn: ExtraStrName = {"name": "s"}
+    
+    m_ei: Mapping[str, int] = ei
+    m_eir: Mapping[str, int] = eir
+    m_esn_int: Mapping[str, int] = esn
+    #                              ^^^ WARNING Expected type 'Mapping[str, int]', got 'ExtraStrName' instead
+    m_esn_union: Mapping[str, int | str] = esn
+    
+    d_ei: dict[str, int] = ei
+    d_eir: dict[str, int] = eir
+    #                       ^^^ WARNING Expected type 'dict[str, int]', got 'ExtraIntRequired' instead
+    d_einr: dict[str, int] = einr
+    
+    
+    # A plain (open) TypedDict implicitly allows read-only extra items of type object,
+    # so it is only assignable to Mapping[str, object] and never to dict[str, VT].
+    class Open(TypedDict):
+        a: int
+    
+    
+    op: Open = {"a": 1}
+    
+    m_open_obj: Mapping[str, object] = op
+    m_open_int: Mapping[str, int] = op
+    #                               ^^ WARNING Expected type 'Mapping[str, int]', got 'Open' instead
+    d_open: dict[str, int] = op
+    #                        ^^ WARNING Expected type 'dict[str, int]', got 'Open' instead
+    """)
 }

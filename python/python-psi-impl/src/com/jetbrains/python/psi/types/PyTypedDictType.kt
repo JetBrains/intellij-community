@@ -338,7 +338,8 @@ class PyTypedDictType(
 
     private fun matchTypedDictWithCollection(expected: PyClassType, actual: PyTypedDictType, context: TypeEvalContext): Boolean? {
       val expectedClassQName = expected.classQName
-      if (expectedClassQName != PyTypingTypeProvider.MAPPING && expectedClassQName != PyNames.FQN.DICT) return null
+      val isMapping = expectedClassQName == PyTypingTypeProvider.MAPPING
+      if (!isMapping && expectedClassQName != PyNames.FQN.DICT) return null
 
       val builtinCache = PyBuiltinCache.getInstance(actual.dictClass)
       val elementTypes = expected.typeArguments
@@ -349,24 +350,20 @@ class PyTypedDictType(
 
       val expectedValueType = elementTypes[1]
       val extraItemsType = actual.extraItemsType
-      val hasExtraItems = extraItemsType != null && extraItemsType != PyNeverType.NEVER
+      // Extra items are present only when they are explicitly typed and the TypedDict is not closed
+      // (closed=True is equivalent to extra_items=Never).
+      val hasExtraItems = extraItemsType != null && extraItemsType != PyNeverType.NEVER && !actual.isClosed
 
-      val allValueTypes = mutableListOf<PyType?>()
-      allValueTypes.addAll(actual.fields.values.mapNotNull { it.type })
-
-      if (extraItemsType != null && !actual.isClosed) {
-        allValueTypes.add(extraItemsType)
-      }
-
-      val unionOfFieldTypes = PyUnionType.union(allValueTypes)
-
-      if (PyTypingTypeProvider.MAPPING == expectedClassQName) {
-        if (hasExtraItems && !actual.isClosed) {
-          return PyTypeChecker.match(expectedValueType, unionOfFieldTypes, context)
+      if (isMapping) {
+        // A TypedDict is assignable to Mapping[str, VT] when every value type of its items is assignable to VT.
+        // An open (non-closed) TypedDict is considered to have read-only extra items of type 'object'.
+        val valueTypes: MutableList<PyType?> = actual.fields.values.mapNotNullTo(mutableListOf()) { it.type }
+        when {
+          actual.isClosed || extraItemsType == PyNeverType.NEVER -> {}
+          extraItemsType != null -> valueTypes.add(extraItemsType)
+          else -> builtinCache.objectType?.let { valueTypes.add(it) }
         }
-        else {
-          return elementTypes[1] == null || PyNames.OBJECT == elementTypes[1].name
-        }
+        return PyTypeChecker.match(expectedValueType, PyUnionType.union(valueTypes), context)
       }
       else {
         // A TypedDict is generally not assignable to `dict[str, X]` because `dict` is mutable and
@@ -376,16 +373,21 @@ class PyTypedDictType(
         if (expectedValueType.isAnyOrUnknown) {
           return actual.fields.values.none { it.isReadOnly }
         }
-        if (hasExtraItems && !actual.isClosed) {
-          return actual.fields.values.all { field ->
-            !field.isReadOnly &&
-            field.qualifiers.isRequired != true &&
-            PyTypeChecker.match(expectedValueType, field.type, context) &&
-            PyTypeChecker.match(field.type, expectedValueType, context)
-          }
-        }
-        return false
+        // A TypedDict is assignable to dict[str, VT] only when it has mutable extra items equivalent to VT
+        // and every declared item is mutable, non-required, and has a value type equivalent to VT.
+        return hasExtraItems &&
+               !actual.extraItemsQualifiers.isReadOnly &&
+               areEquivalent(extraItemsType, expectedValueType, context) &&
+               actual.fields.values.all { field ->
+                 !field.isReadOnly &&
+                 field.qualifiers.isRequired != true &&
+                 areEquivalent(field.type, expectedValueType, context)
+               }
       }
+    }
+
+    private fun areEquivalent(left: PyType?, right: PyType?, context: TypeEvalContext): Boolean {
+      return PyTypeChecker.match(right, left, context) && PyTypeChecker.match(left, right, context)
     }
   }
 
