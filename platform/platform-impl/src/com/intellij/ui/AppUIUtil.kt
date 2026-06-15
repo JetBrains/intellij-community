@@ -66,6 +66,7 @@ import java.awt.image.BufferedImage
 import java.lang.reflect.InvocationTargetException
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 import javax.swing.Action
 import javax.swing.Icon
@@ -76,15 +77,16 @@ import kotlin.io.path.extension
 import kotlin.math.roundToInt
 
 private const val VENDOR_PREFIX = "jetbrains-"
+private const val MAC_DOCK_ICON_BORDER = 25
 private var appIcons: List<Image>? = null
-@Volatile
-private var isMacDocIconSet = false
+private val isMacDocIconSet = AtomicBoolean(false)
 
 private val LOG: Logger
   get() = logger<AppUIUtil>()
 
+@OptIn(LowLevelLocalMachineAccess::class)
 fun updateAppWindowIcon(window: Window) {
-  if (isWindowIconAlreadyExternallySet()) {
+  if (AppUIUtil.isWindowIconAlreadyExternallySet()) {
     return
   }
 
@@ -92,13 +94,15 @@ fun updateAppWindowIcon(window: Window) {
     val images = ArrayList<Image>(3)
     val appInfo = ApplicationInfoImpl.getShadowInstance()
     val scaleContext = ScaleContext.create(window)
-    if (OS.CURRENT == OS.Linux) {
+    if (OS.CURRENT != OS.Windows) {
       loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 128)?.let {
         images.add(it)
       }
     }
-    loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 32)?.let {
-      images.add(it)
+    if (OS.CURRENT != OS.macOS) {
+      loadAppIconImage(appInfo.applicationSvgIconUrl, scaleContext, size = 32)?.let {
+        images.add(it)
+      }
     }
     if (OS.CURRENT == OS.Windows) {
       loadAppIconImage(appInfo.smallApplicationSvgIconUrl, scaleContext, size = 16)?.let {
@@ -121,11 +125,28 @@ fun updateAppWindowIcon(window: Window) {
     if (OS.CURRENT != OS.macOS) {
       window.iconImages = images
     }
-    else if (!isMacDocIconSet) {
-      isMacDocIconSet = true
-      MacAppIcon.setDockIcon(ImageUtil.toBufferedImage(images.first()))
+    else if (!isMacDocIconSet.getAndSet(true)) {
+      MacAppIcon.setDockIcon(addTransparentBorder(images.first()))
     }
   }
+}
+
+private fun addTransparentBorder(img: Image): BufferedImage {
+  val border = MAC_DOCK_ICON_BORDER
+  val width = img.getWidth(null)
+  val height = img.getHeight(null)
+  val result = @Suppress("UndesirableClassUsage") BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
+  val g = result.createGraphics()
+  try {
+    g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR)
+    g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
+    g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+    g.drawImage(img, border, border, width - 2 * border, height - 2 * border, null)
+  }
+  finally {
+    g.dispose()
+  }
+  return result
 }
 
 // returns a HiDPI-aware image
@@ -191,20 +212,18 @@ fun findAppIcon(): String? {
   return if (url?.protocol == URLUtil.FILE_PROTOCOL) Path.of(url.toURI().schemeSpecificPart).absolutePathString() else null
 }
 
-fun isWindowIconAlreadyExternallySet(): Boolean {
-  if (getBooleanSystemProperty("intellij.platform.force.update.app.window.icon")) {
-    return false
-  }
-  return when (OS.CURRENT) {
-    OS.Windows -> getBooleanSystemProperty("ide.native.launcher") && SystemInfo.isJetBrainsJvm
-    // to prevent mess with java dukes when running from source
-    OS.macOS -> isMacDocIconSet || !PluginManagerCore.isRunningFromSources()
-    else -> false
-  }
-}
-
 @OptIn(LowLevelLocalMachineAccess::class)
 object AppUIUtil {
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isWindowIconAlreadyExternallySet(): Boolean {
+    return !System.getProperty("intellij.platform.force.update.app.window.icon").toBoolean() && when (OS.CURRENT) {
+      OS.Windows -> System.getProperty("ide.native.launcher").toBoolean() && SystemInfo.isJetBrainsJvm
+      OS.macOS -> isMacDocIconSet.get() || !(AppMode.isRunningFromDevBuild() || PluginManagerCore.isRunningFromSources())
+      else -> false
+    }
+  }
+
   @JvmStatic
   fun loadApplicationIcon(ctx: ScaleContext, size: Int): Icon? =
     loadAppIconImage(ApplicationInfoImpl.getShadowInstance().applicationSvgIconUrl, ctx, size)
@@ -358,8 +377,8 @@ object AppUIUtil {
     if (options.isEAP) {
       val statConsent = options.defaultUsageStatsConsent
       val errorAutoReportConsent = when {
-          ExceptionAutoReportUtil.isConsentAllowedToBeVisible -> options.defaultErrorAutoReportConsent
-          else -> null
+        ExceptionAutoReportUtil.isConsentAllowedToBeVisible -> options.defaultErrorAutoReportConsent
+        else -> null
       }
       if (statConsent != null || errorAutoReportConsent != null) {
         // init stats consent and automatic error report consent for EAP from the dedicated location
@@ -583,3 +602,7 @@ object AppUIUtil {
     return TexturePaint(image, Rectangle(xStart, yStart, width, height))
   }
 }
+
+@Suppress("DeprecatedCallableAddReplaceWith")
+@Deprecated("Internal stuff; don't use", level = DeprecationLevel.ERROR)
+fun isWindowIconAlreadyExternallySet(): Boolean = AppUIUtil.isWindowIconAlreadyExternallySet()

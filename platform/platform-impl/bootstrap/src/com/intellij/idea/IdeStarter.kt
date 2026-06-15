@@ -12,7 +12,6 @@ import com.intellij.ide.ProtocolHandler
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.lightEdit.LightEditService
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.ui.IconDbMaintainer
 import com.intellij.internal.inspector.UiInspectorUtil
 import com.intellij.openapi.actionSystem.ActionManager
@@ -37,8 +36,8 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
+import com.intellij.ui.AppUIUtil
 import com.intellij.ui.mac.touchbar.TouchbarSupport
-import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
@@ -291,9 +290,7 @@ private suspend fun loadProjectFromExternalCommandLine(commandLineArgs: List<Str
 
 @OptIn(LowLevelLocalMachineAccess::class)
 private fun postOpenUiTasks(scope: CoroutineScope) {
-  if (PluginManagerCore.isRunningFromSources()) {
-    updateAppWindowIcon(JOptionPane.getRootFrame())
-  }
+  AppUIUtil.updateAppWindowIcon(JOptionPane.getRootFrame())
 
   if (OS.CURRENT == OS.macOS) {
     scope.launch(CoroutineName("macOS touchbar on app init")) {

@@ -20,7 +20,6 @@ import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IconManager
 import com.intellij.ui.icons.CoreIconManager
-import com.intellij.ui.isWindowIconAlreadyExternallySet
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.system.LowLevelLocalMachineAccess
@@ -244,7 +243,7 @@ internal fun scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
     }
 
     // `updateWindowIcon` should be called after `initUiJob`, because it uses computed system font data for scale context
-    if (!isWindowIconAlreadyExternallySet()) {
+    if (!AppUIUtil.isWindowIconAlreadyExternallySet()) {
       launch {
         initUiScale.join()
         appInfoDeferred.join()
