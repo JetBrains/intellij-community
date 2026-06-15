@@ -93,12 +93,12 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
         comboBox(options, listCellRenderer("") {
           icon(notificationLocationIcon(value))
           text(notificationLocationText(value))
-          if (value == NotificationLocation.BOTTOM_RIGHT) {
+          if (value == NotificationLocation.getDefaultLocation()) {
             text(IdeBundle.message("notifications.configurable.location.default")) {
               foreground = greyForeground
             }
           }
-        }).bindItem(settings::getNotificationLocation) { settings.setNotificationLocation(it ?: NotificationLocation.TOP_RIGHT) }
+        }).bindItem(settings::getNotificationLocation) { settings.notificationLocation = it ?: NotificationLocation.getDefaultLocation() }
       }
       if (isNotificationAnnouncerFeatureAvailable) {
         row(IdeBundle.message("notifications.configurable.announcing.title")) {
