@@ -1,5 +1,7 @@
 package com.intellij.mcpserver.elicitation
 
+import com.intellij.lang.Language
+
 
 // ---- DSL -----------------------------------------------------------------
 /** Scope marker for the elicitation form builder DSL. */
@@ -7,13 +9,18 @@ package com.intellij.mcpserver.elicitation
 annotation class ElicitationDsl
 
 /**
- * Builder for an [ElicitationForm]. Set [message] and add fields via the typed
- * `stringField`/`integerField`/`booleanField`/`singleSelect`/... methods.
+ * Builder for an [ElicitationForm]. Build the message with `message { ... }`, and add input fields
+ * with `stringField`/`integerField`/`booleanField`/`singleSelect`/...
  */
 @ElicitationDsl
 class ElicitationFormBuilder @PublishedApi internal constructor() {
-  var message: String = ""
   private val fields = mutableListOf<ElicitationField>()
+  private var messageParts: List<ElicitationMessagePart> = emptyList()
+
+  /** Build the message shown above the fields from ordered parts (text / code / styled). */
+  fun message(block: ElicitationMessageBuilder.() -> Unit) {
+    messageParts = ElicitationMessageBuilder().apply(block).build()
+  }
 
   fun stringField(name: String, block: StringFieldBuilder.() -> Unit = {}) {
     fields += StringFieldBuilder(name).apply(block).build()
@@ -41,9 +48,32 @@ class ElicitationFormBuilder @PublishedApi internal constructor() {
 
   @PublishedApi
   internal fun build(): ElicitationForm {
-    require(message.isNotEmpty()) { "Elicitation form message is required" }
-    return ElicitationForm(message, fields.toList())
+    require(messageParts.isNotEmpty()) { "Elicitation form requires at least one message part" }
+    return ElicitationForm(messageParts, fields.toList())
   }
+}
+
+/** Builds the ordered message parts of an [ElicitationForm]: `text`, `code`, and `styled` segments. */
+@ElicitationDsl
+class ElicitationMessageBuilder internal constructor() {
+  private val parts = mutableListOf<ElicitationMessagePart>()
+
+  /** Add plain text (put newlines here). */
+  fun text(text: String) {
+    parts += ElicitationMessagePart.Text(text)
+  }
+
+  /** Add source code, shown syntax-highlighted for [language]. */
+  fun code(text: String, language: Language) {
+    parts += ElicitationMessagePart.Code(text, language)
+  }
+
+  /** Add styled text: font [styles] and an optional [color]. */
+  fun styled(text: String, vararg styles: ElicitationMessagePart.FontStyle, color: ElicitationMessagePart.TextColor? = null) {
+    parts += ElicitationMessagePart.Styled(text, styles.toSet(), color)
+  }
+
+  internal fun build(): List<ElicitationMessagePart> = parts.toList()
 }
 
 @ElicitationDsl
