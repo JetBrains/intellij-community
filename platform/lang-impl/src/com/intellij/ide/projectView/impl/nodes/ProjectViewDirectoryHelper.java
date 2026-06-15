@@ -75,6 +75,10 @@ public class ProjectViewDirectoryHelper {
   }
 
   public @Nullable String getLocationString(@NotNull PsiDirectory psiDirectory, boolean includeUrl, boolean includeRootType) {
+    return getLocationString(psiDirectory, includeUrl, includeRootType, true);
+  }
+
+  public @Nullable String getLocationString(@NotNull PsiDirectory psiDirectory, boolean includeUrl, boolean includeRootType, boolean includeModuleAdditionalInfo) {
     StringBuilder result = new StringBuilder();
 
     final VirtualFile directory = psiDirectory.getVirtualFile();

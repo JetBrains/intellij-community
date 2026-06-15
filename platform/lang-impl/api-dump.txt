@@ -3452,6 +3452,7 @@ f:com.intellij.ide.projectView.impl.nodes.NestingTreeNode
 c:com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
 - s:getInstance(com.intellij.openapi.project.Project):com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper
 - getLocationString(com.intellij.psi.PsiDirectory):java.lang.String
+- getLocationString(com.intellij.psi.PsiDirectory,Z,Z,Z):java.lang.String
 - getTopLevelRoots():java.util.List
 - supportsFlattenPackages():Z
 - supportsHideEmptyMiddlePackages():Z
