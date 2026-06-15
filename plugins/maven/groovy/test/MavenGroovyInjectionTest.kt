@@ -1,18 +1,14 @@
-package com.intellij.maven.groovy;
+package com.intellij.maven.groovy
 
-import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.junit.Test;
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.junit.Test
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-public class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCase {
-  @Test
-  public void testCompletion() {
-    myFixture.configureByText("pom.xml", """
+class MavenGroovyInjectionTest : LightJavaCodeInsightFixtureTestCase() {
+    @Test
+    fun testCompletion() {
+        myFixture.configureByText(
+            "pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -57,17 +53,20 @@ public class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCas
         </build>
 
       </project>
-      """);
+      
+      """.trimIndent()
+        )
 
-    myFixture.completeBasic();
+        myFixture.completeBasic()
 
-    List<String> lookups = myFixture.getLookupElementStrings();
-    assert lookups.containsAll(new ArrayList<String>(Arrays.asList("String", "StringBuffer", "StringBuilder")));
-  }
+        val lookups = myFixture.getLookupElementStrings()
+        assert(lookups!!.containsAll(ArrayList<String?>(mutableListOf<String?>("String", "StringBuffer", "StringBuilder"))))
+    }
 
-  @Test
-  public void testCompletion2() {
-    myFixture.configureByText("pom.xml", """
+    @Test
+    fun testCompletion2() {
+        myFixture.configureByText(
+            "pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -97,17 +96,20 @@ public class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCas
         </build>
 
       </project>
-      """);
+      
+      """.trimIndent()
+        )
 
-    myFixture.completeBasic();
+        myFixture.completeBasic()
 
-    List<String> lookups = myFixture.getLookupElementStrings();
-    assert lookups.containsAll(new ArrayList<String>(Arrays.asList("String", "StringBuffer", "StringBuilder")));
-  }
+        val lookups = myFixture.getLookupElementStrings()
+        assert(lookups!!.containsAll(ArrayList<String?>(mutableListOf<String?>("String", "StringBuffer", "StringBuilder"))))
+    }
 
-  @Test
-  public void testCompletion3() {
-    myFixture.configureByText("pom.xml", """
+    @Test
+    fun testCompletion3() {
+        myFixture.configureByText(
+            "pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -137,17 +139,20 @@ public class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCas
         </build>
 
       </project>
-      """);
+      
+      """.trimIndent()
+        )
 
-    myFixture.completeBasic();
+        myFixture.completeBasic()
 
-    List<String> lookups = myFixture.getLookupElementStrings();
-    assert lookups.containsAll(new ArrayList<String>(Arrays.asList("String", "StringBuffer", "StringBuilder")));
-  }
+        val lookups = myFixture.getLookupElementStrings()
+        assert(lookups!!.containsAll(ArrayList<String?>(mutableListOf<String?>("String", "StringBuffer", "StringBuilder"))))
+    }
 
-  @Test
-  public void testInjectionVariables() {
-    myFixture.configureByText("pom.xml", """
+    @Test
+    fun testInjectionVariables() {
+        myFixture.configureByText(
+            "pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -177,17 +182,20 @@ public class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCas
         </build>
 
       </project>
-      """);
+      
+      """.trimIndent()
+        )
 
-    PsiElement element = myFixture.getElementAtCaret();
+        val element = myFixture.getElementAtCaret()
 
-    assert element instanceof GrVariable;
-    assert ((GrVariable)element).getDeclaredType().getPresentableText().equals("MavenProject");
-  }
+        assert(element is GrVariable)
+        assert((element as GrVariable).getDeclaredType()!!.getPresentableText() == "MavenProject")
+    }
 
-  @Test
-  public void testHighlighting() {
-    myFixture.configureByText("pom.xml", """
+    @Test
+    fun testHighlighting() {
+        myFixture.configureByText(
+            "pom.xml", """
       <?xml version="1.0" encoding="UTF-8"?>
       <project xmlns="http://maven.apache.org/POM/4.0.0"
                xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -220,8 +228,10 @@ public class MavenGroovyInjectionTest extends LightJavaCodeInsightFixtureTestCas
         </build>
 
       </project>
-      """);
+      
+      """.trimIndent()
+        )
 
-    myFixture.checkHighlighting(true, false, true);
-  }
+        myFixture.checkHighlighting(true, false, true)
+    }
 }
