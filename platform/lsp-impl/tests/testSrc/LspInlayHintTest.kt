@@ -159,6 +159,33 @@ internal class LspInlayHintTest {
   }
 
   @Test
+  fun `inlays removed when refresh returns no hints`(): Unit = timeoutRunBlocking {
+    (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+
+    val sourceText = "hello world"
+    val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+    val fileUri = serverSession.fileUri(virtualFile)
+
+    serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
+      listOf(InlayHint(Position(0, 5), Either.forLeft(": A")))
+    }
+    checkInlaysRetrying(sourceText, "hello/*<# : A #>*/ world")
+
+    // The server now returns no hints; the existing inlay must be disposed (the diff's "dispose leftovers" path).
+    // Append at the end to invalidate the cache so the pass re-requests.
+    serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == fileUri }) {
+      emptyList()
+    }
+    writeCommandAction(project, "") {
+      codeInsightFixture.editor.document.insertString(sourceText.length, " x")
+    }
+    checkInlaysRetrying("hello world x", "hello world x")
+
+    serverSession.awaitExpected()
+  }
+
+  @Test
   fun `two inlay hints at the same offset`(): Unit = timeoutRunBlocking {
     (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
 
