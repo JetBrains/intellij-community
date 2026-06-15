@@ -179,9 +179,10 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
     // Name uniqueness
     val project = context.project
     if (project != null) {
-      val module = when (val model = ProjectStructureConfigurable.getInstance(project)?.context?.modulesConfigurator?.moduleModel) {
-        null -> ModuleManager.getInstance(project)?.findModuleByName(moduleName)
-        else -> model.findModuleByName(moduleName)
+      val projectStructureConfigurable = ProjectStructureConfigurable.getInstance(project)
+      val module = when {
+        projectStructureConfigurable.isUiInitialized -> projectStructureConfigurable.modulesConfig.getModule(moduleName)
+        else -> ModuleManager.getInstance(project).findModuleByName(moduleName)
       }
       if (module != null) return error(
         JavaUiBundle.message("module.name.location.dialog.message.module.already.exist.in.project", moduleName))
