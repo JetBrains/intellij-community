@@ -4,9 +4,10 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
 public interface FilesProcessor extends Disposable {
-  void processFiles(@NotNull Collection<VirtualFile> files);
+  void processFiles(@NotNull @Unmodifiable Collection<VirtualFile> files);
 }

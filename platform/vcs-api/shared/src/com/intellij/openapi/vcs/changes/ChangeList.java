@@ -3,10 +3,12 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
 public interface ChangeList {
+  @Unmodifiable
   Collection<Change> getChanges();
 
   @NlsSafe

@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnChangeProvider;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
@@ -591,7 +592,7 @@ public class SvnChangeList implements CommittedChangeList, VcsRevisionNumberAwar
   }
 
   @Override
-  public Collection<Change> getChangesWithMovedTrees() {
+  public @Unmodifiable Collection<Change> getChangesWithMovedTrees() {
     if (myListsHolder == null) {
       createLists();
     }

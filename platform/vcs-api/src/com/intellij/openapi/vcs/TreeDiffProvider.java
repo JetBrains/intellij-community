@@ -3,9 +3,10 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collection;
 
 public interface TreeDiffProvider {
-  Collection<String> getRemotelyChanged(final VirtualFile vcsRoot, final Collection<String> paths);
+  @Unmodifiable Collection<String> getRemotelyChanged(final VirtualFile vcsRoot, final Collection<String> paths);
 }
