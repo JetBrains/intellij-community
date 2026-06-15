@@ -48,8 +48,9 @@ class tqdm_slack(tqdm_auto[_T]):
         colour: str | None = ...,
         delay: float | None = ...,
         gui: bool = ...,
-        token: str = ...,
-        channel: int = ...,
+        *,
+        token: str | None = None,
+        channel: int | None = None,
         **kwargs,
     ) -> None: ...
     @overload
@@ -81,8 +82,9 @@ class tqdm_slack(tqdm_auto[_T]):
         colour: str | None = ...,
         delay: float | None = ...,
         gui: bool = ...,
-        token: str = ...,
-        channel: int = ...,
+        *,
+        token: str | None = None,
+        channel: int | None = None,
         **kwargs,
     ) -> None: ...
 

@@ -1,10 +1,10 @@
 import sys
 from _typeshed import SupportsWrite as SupportsWrite
 from collections.abc import Sequence
-from typing import Any, Protocol, TypeAlias, TypeVar, type_check_only
+from typing import Any, Literal, Protocol, TypeAlias, TypedDict, TypeVar, type_check_only
 
 import numpy as np
-from numpy.typing import NDArray
+import numpy.typing as npt
 
 from .lib import Geometry
 
@@ -44,7 +44,7 @@ OptGeoArrayLike: TypeAlias = ArrayLike[Geometry | None]
 # There is no way to pronounce "array of BaseGeometry" currently because of the restriction on
 # NDArray type variable to np.dtype and because np.object_ is not generic.
 # Note the use of `BaseGeometry` instead of `Geometry` as the alias is used in return types.
-GeoArray: TypeAlias = NDArray[np.object_]
+GeoArray: TypeAlias = npt.NDArray[np.object_]
 
 @type_check_only
 class SupportsGeoInterface(Protocol):
@@ -55,3 +55,21 @@ class SupportsGeoInterface(Protocol):
 @type_check_only
 class SupportsRead(Protocol[_T_co]):
     def read(self) -> _T_co: ...
+
+CastingKind: TypeAlias = Literal["no", "equiv", "safe", "same_kind", "unsafe"]
+OrderKind: TypeAlias = Literal["K", "A", "C", "F"]
+
+@type_check_only
+class _UFuncKwargsBase(TypedDict, total=False):
+    where: npt.ArrayLike
+    casting: CastingKind
+    order: OrderKind
+    dtype: np.dtype[Any] | type[Any]
+    subok: bool
+
+@type_check_only
+class UFuncKwargs(_UFuncKwargsBase, total=False):
+    out: npt.NDArray[Any] | tuple[npt.NDArray[Any], ...]
+
+@type_check_only
+class UFuncKwargsNoOut(_UFuncKwargsBase, total=False): ...

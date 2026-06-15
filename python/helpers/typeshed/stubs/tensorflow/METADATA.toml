@@ -3,7 +3,7 @@
 version = "~=2.18.0"
 upstream-repository = "https://github.com/tensorflow/tensorflow"
 # requires a version of numpy with a `py.typed` file
-dependencies = ["numpy>=1.20", "types-protobuf", "types-requests"]
+dependencies = ["numpy>=1.20", "types-protobuf", "requests>=2.34.0"]
 extra-description = "Partially generated using [mypy-protobuf==3.6.0](https://github.com/nipunn1313/mypy-protobuf/tree/v3.6.0) and libprotoc 27.2 on `tensorflow==2.18.0`."
 partial-stub = true
 
