@@ -406,6 +406,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
     editor.putUserData(editorTrackingStart, editorOpenedMark)
     var calcRunning = false
 
+    @RequiresEdt
     fun recalculateLenses(lensesToUpdate: UpdateLensesRequest = UpdateLensesRequest.All) {
       val editorManager = FileEditorManager.getInstance(project)
       if (!isInlaySettingsEditor(editor) && !editorManager.selectedEditors.any {
@@ -489,6 +490,7 @@ open class CodeVisionHost(val project: Project, protected val coroutineScope: Co
   private fun isAllowedFileEditor(fileEditor: FileEditor?) = fileEditor is TextEditor && fileEditor !is BaseRemoteFileEditor
 
   /** @param consumer Continuation called on EDT with the calculated lenses */
+  @RequiresEdt
   private fun calculateFrontendLenses(
     calcLifetime: Lifetime,
     editor: Editor,
