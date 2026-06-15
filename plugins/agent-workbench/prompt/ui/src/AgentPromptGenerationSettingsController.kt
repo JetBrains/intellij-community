@@ -66,6 +66,7 @@ internal class AgentPromptGenerationSettingsController(
 ) {
   private val transientSettingsByProviderId = LinkedHashMap<String, AgentPromptGenerationSettings>()
   private var generationControlsVisible = true
+  private var providerSelectorVisible = true
   private var activeModelPopup: JBPopup? = null
   private var activeModelPopupProviderId: String? = null
   private val launchProfileState = AgentPromptLaunchProfileState(
@@ -104,7 +105,16 @@ internal class AgentPromptGenerationSettingsController(
   }
 
   fun setGenerationControlsVisible(visible: Boolean) {
-    generationControlsVisible = visible
+    setControlsVisibility(providerSelectorVisible = visible, generationControlsVisible = visible)
+  }
+
+  /**
+   * Decouples the provider selector from the per-task generation controls so an extension tab can keep the
+   * provider chooser while hiding model/reasoning controls that its submit action does not consume.
+   */
+  fun setControlsVisibility(providerSelectorVisible: Boolean, generationControlsVisible: Boolean) {
+    this.providerSelectorVisible = providerSelectorVisible
+    this.generationControlsVisible = generationControlsVisible
     refreshPresentation()
   }
 
@@ -133,6 +143,7 @@ internal class AgentPromptGenerationSettingsController(
   fun refreshPresentation() {
     val selectedProvider = providerSelector.selectedProvider
     val showGenerationControls = generationControlsVisible
+    val showProviderSelector = providerSelectorVisible
     val modelCatalog = selectedProvider?.bridge?.provider?.value?.let(::loadedModelCatalog)
     val modelSelectionAvailable = selectedProvider?.bridge?.supportsGenerationModelSelection == true
     val currentSettings = currentSettings()
@@ -142,8 +153,8 @@ internal class AgentPromptGenerationSettingsController(
     val planModeSelected = providerSelector.isPlanModeSelected()
     val planEffortSupported = reasoningEffortAvailable && selectedProvider?.bridge?.supportsPlanReasoningEffort == true
     generationSettingsPanel.isVisible = showGenerationControls
-    launchProfileLink.isVisible = showGenerationControls
-    launchProfileLink.isEnabled = showGenerationControls
+    launchProfileLink.isVisible = showProviderSelector
+    launchProfileLink.isEnabled = showProviderSelector
     val profileDraft = currentProfileDraft()
     val profile = launchProfileState.profileForPresentation(profileDraft)
     val profileText = launchProfileText(profile)
@@ -152,8 +163,8 @@ internal class AgentPromptGenerationSettingsController(
       text = profileText,
       description = profileTooltip,
       icon = profileIcon(profile),
-      visible = showGenerationControls,
-      enabled = showGenerationControls,
+      visible = showProviderSelector,
+      enabled = showProviderSelector,
     )
     modelSelectorLink.isVisible = showGenerationControls && modelSelectionAvailable
     modelSelectorLink.isEnabled = showGenerationControls && modelSelectionAvailable
@@ -162,10 +173,12 @@ internal class AgentPromptGenerationSettingsController(
     planReasoningEffortLink.isVisible = showGenerationControls && planEffortSupported
     planReasoningEffortLink.isEnabled = showGenerationControls && planEffortSupported && planModeSelected
     defaultProfileActionController.refreshPresentation(showGenerationControls)
-    if (showGenerationControls) {
+    if (showProviderSelector) {
       launchProfileLink.text = profileText
       launchProfileLink.setToolTipText(HtmlChunk.text(profileTooltip))
       launchProfileLink.accessibleContext.accessibleName = AgentPromptBundle.message("popup.profile.accessible.name") + ": " + profileText
+    }
+    if (showGenerationControls) {
       modelSelectorLink.text = modelText(
         modelId = currentSettings.modelId,
         models = modelCatalog.orEmpty(),

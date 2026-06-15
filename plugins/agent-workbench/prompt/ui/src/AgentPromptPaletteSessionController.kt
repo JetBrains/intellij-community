@@ -592,9 +592,13 @@ internal class AgentPromptPaletteSessionController(
   }
 
   private fun updateProviderOptionsVisibility() {
-    providerSelector.setProviderOptionsVisible(contextState.activeExtensionTab == null)
-    generationSettingsController.setGenerationControlsVisible(
-      contextState.activeExtensionTab == null && currentTargetMode() == PromptTargetMode.NEW_TASK
+    val extensionTab = contextState.activeExtensionTab
+    val isStandardTab = extensionTab == null
+    val isNewTaskLaunch = isStandardTab && currentTargetMode() == PromptTargetMode.NEW_TASK
+    providerSelector.setProviderOptionsVisible(isStandardTab)
+    generationSettingsController.setControlsVisibility(
+      providerSelectorVisible = isNewTaskLaunch || extensionTab?.extension?.showsProviderSelector() == true,
+      generationControlsVisible = isNewTaskLaunch,
     )
     syncContainerModeState()
   }

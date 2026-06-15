@@ -241,6 +241,38 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun providerSelectorStaysVisibleWhileGenerationControlsAreHidden() {
+    runInEdtAndWait {
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.PI,
+        promptOptions = emptyList(),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { null },
+        onDefaultSaved = { _ -> },
+      )
+
+      // AI Review and other provider-aware extension tabs keep the provider selector while hiding the
+      // per-task model/reasoning controls their submit action does not consume.
+      controller.setControlsVisibility(providerSelectorVisible = true, generationControlsVisible = false)
+
+      assertThat(fixture.view.launchProfileLink.isVisible).isTrue()
+      assertThat(fixture.view.generationSettingsPanel.isVisible).isFalse()
+      assertThat(fixture.view.modelSelectorLink.isVisible).isFalse()
+      assertThat(fixture.view.reasoningEffortLink.isVisible).isFalse()
+    }
+  }
+
+  @Test
   fun generationSettingsControlsStayVisibleWhenReasoningEffortIsUnsupported() {
     runInEdtAndWait {
       val provider = testProviderBridge(

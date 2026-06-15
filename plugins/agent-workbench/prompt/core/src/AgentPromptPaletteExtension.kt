@@ -56,6 +56,15 @@ interface AgentPromptPaletteExtension {
   fun getSubmitActionId(): String?
 
   /**
+   * Returns `true` if the prompt palette should keep the provider selector visible while this tab is active,
+   * so the user can choose which Agent Workbench provider the [getSubmitActionId] action runs.
+   *
+   * Extension tabs otherwise bypass provider routing and hide the selector. The selected provider id is always
+   * forwarded to the submit action through the data context regardless of this flag.
+   */
+  fun showsProviderSelector(): Boolean = false
+
+  /**
    * Returns a custom footer hint to display when this tab is active,
    * or `null` to use the default hint.
    */

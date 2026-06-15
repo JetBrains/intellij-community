@@ -98,6 +98,8 @@ internal class AIReviewPaletteExtension : AgentPromptPaletteExtension {
 
   override fun getSubmitActionId(): String = AIReviewPromptSupport.AI_REVIEW_EXECUTE_ACTION_ID
 
+  override fun showsProviderSelector(): Boolean = true
+
   override fun getFooterHint(): String = AIReviewBundle.message("popup.palette.footer.hint.ai.review")
 
   private fun isReviewContext(item: AgentPromptContextItem): Boolean {
