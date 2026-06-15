@@ -251,6 +251,7 @@ class KotlinChangeSignatureConflictSearcher(
 
         loop@ for (usageInfo in usages) {
             if (!(usageInfo is KotlinFunctionCallUsage || usageInfo is KotlinPropertyCallUsage || usageInfo is KotlinByConventionCallUsage)) continue
+            if (usageInfo is KotlinFunctionCallUsage && usageInfo.canPreserveExplicitDispatchReceiver(originalInfo)) continue
 
             val callElement = usageInfo.element as? KtElement ?: continue
 

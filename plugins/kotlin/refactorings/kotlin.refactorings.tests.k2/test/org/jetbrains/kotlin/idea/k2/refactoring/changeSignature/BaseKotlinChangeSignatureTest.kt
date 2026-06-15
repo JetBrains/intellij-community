@@ -953,6 +953,8 @@ public @interface NotNull {
 
     fun testConvertParameterToReceiverForMemberConflict() = doTestConflict { receiverParameterInfo = newParameters[0] }
 
+    fun testConvertParameterToReceiverForMemberDispatchReceiver() = doTest { receiverParameterInfo = newParameters[0] }
+
     fun testConvertReceiverToParameterForMember1() = doTest { receiverParameterInfo = null }
 
     fun testAddNewReceiver() = doTestAndIgnoreConflicts {
