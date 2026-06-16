@@ -4,6 +4,7 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.amazon.ion.IonType
+import com.esotericsoftware.kryo.kryo5.Kryo
 import com.google.common.collect.Multimap
 import com.google.gson.GsonBuilder
 import com.intellij.gradle.toolingExtension.GradleToolingExtensionClass
@@ -98,7 +99,8 @@ val GRADLE_TOOLING_EXTENSION_PROXY_CLASSES: Set<Class<*>> = GRADLE_TOOLING_EXTEN
   Gradle::class.java, // gradle-api jar
   LoggerFactory::class.java, JDK14LoggerFactory::class.java, // logging jars
   Main::class.java, // gradle tooling proxy module
-  MissingMethodException::class.java // groovy runtime for serialization
+  MissingMethodException::class.java, // groovy runtime for serialization
+  Kryo::class.java, // kryo
 )
 
 @ApiStatus.Internal

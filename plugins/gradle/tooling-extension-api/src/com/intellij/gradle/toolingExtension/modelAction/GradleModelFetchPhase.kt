@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.modelAction
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.NonExtendable
@@ -130,7 +131,8 @@ sealed interface GradleModelFetchPhase : Comparable<GradleModelFetchPhase>, Seri
 
 // Implementation
 
-private data object GradleBaseScriptModelFetchPhase : GradleModelFetchPhase.BaseScript {
+@Internal
+data object GradleBaseScriptModelFetchPhase : GradleModelFetchPhase.BaseScript {
 
   override val name: String = "BASE_SCRIPT_MODEL_PHASE"
 
@@ -145,7 +147,8 @@ private data object GradleBaseScriptModelFetchPhase : GradleModelFetchPhase.Base
   }
 }
 
-private class GradleProjectLoadedModelFetchPhase(
+@Internal
+class GradleProjectLoadedModelFetchPhase(
   override val order: Int,
   override val name: String,
 ) : GradleModelFetchPhase.ProjectLoaded {
@@ -174,7 +177,8 @@ private class GradleProjectLoadedModelFetchPhase(
   }
 }
 
-private class GradleBuildFinishedModelFetchPhase(
+@Internal
+class GradleBuildFinishedModelFetchPhase(
   override val order: Int,
   override val name: String,
 ) : GradleModelFetchPhase.BuildFinished {

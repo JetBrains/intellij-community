@@ -28,6 +28,8 @@ jvm_library(
         "@lib//:slf4j-jdk14",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//libraries/jspecify",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+        "//libraries/kryo5",
     ],
 )
 
@@ -46,6 +48,8 @@ jvm_library(
         ":tooling-proxy",
         "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
         "//libraries/jspecify:jspecify_test_lib",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
+        "//libraries/kryo5:kryo5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.toolingProxy` end
