@@ -19,13 +19,12 @@ internal class KotlinJavaClassActionSuppressor: JavaClassActionSuppressor {
         return ideView.directories.any { directory: PsiDirectory ->
             val virtualFile = directory.virtualFile
             val module = projectFileIndex.getModuleForFile(virtualFile) ?: return@any false
+            if (projectFileIndex.isUnderSourceRootOfType(virtualFile, KOTLIN_SOURCE_ROOT_TYPES)) return true
+            val sourceRootPath = projectFileIndex.getSourceRootForFile(virtualFile)?.toNioPath()?.toString() ?: return@any false
+
             val kotlinFacet = KotlinFacet.get(module)
-            val kotlinSourceFolders = kotlinFacet?.configuration?.settings?.pureKotlinSourceFolders
-            val kotlinSourceRootOfType =
-                projectFileIndex.isUnderSourceRootOfType(virtualFile, KOTLIN_SOURCE_ROOT_TYPES) ||
-                        (kotlinSourceFolders?.let {
-                            projectFileIndex.getSourceRootForFile(virtualFile)?.toNioPath()?.toString() in it
-                        } ?: false)
+            val kotlinSourceFolders = kotlinFacet?.configuration?.settings?.pureKotlinSourceFolders ?: return@any false
+            val kotlinSourceRootOfType = kotlinSourceFolders.any { sourceRootPath.startsWith(it, ignoreCase = true) }
             kotlinSourceRootOfType
         }
     }
