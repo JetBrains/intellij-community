@@ -31,7 +31,7 @@ class ClaudeNewThreadPromptLaunchIntegrationTest {
     val sessionId = checkNotNull(observation.launchSpec.preallocatedSessionId)
 
     assertThat(observation.startupLaunchSpecOverride?.command).containsExactly(
-      "claude", "--session-id", sessionId, "--permission-mode", "plan", "--", observation.postStartDispatchSteps.single().text
+      "claude", "--session-id", sessionId, "--permission-mode", "plan", "--", observation.initialPromptMessage
     )
   }
 }

@@ -232,6 +232,8 @@ jvm_library(
         "//plugins/agent-workbench/sessions-toolwindow:agent-workbench-sessions-toolwindow-tests_test_lib",
         "//plugins/agent-workbench/filewatch:agent-workbench-filewatch-tests",
         "//plugins/agent-workbench/filewatch:agent-workbench-filewatch-tests_test_lib",
+        "//plugins/agent-workbench/ui:agent-workbench-ui-tests",
+        "//plugins/agent-workbench/ui:agent-workbench-ui-tests_test_lib",
         "//plugins/agent-workbench/sessions-launch-config/backend:agent-workbench-sessions-launch-config-backend-tests",
         "//plugins/agent-workbench/sessions-launch-config/backend:agent-workbench-sessions-launch-config-backend-tests_test_lib",
     ],
