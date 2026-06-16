@@ -17,6 +17,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
@@ -73,6 +74,44 @@ class CodexSessionSourceTest {
 
       assertThat(costs).isEmpty()
       assertThat(refreshRequests).isEmpty()
+    }
+  }
+
+  @Test
+  fun loadThreadOutlineUsesRolloutBackendForRolloutOnlyThread() {
+    val projectDir = tempDir.resolve("project-outline-source")
+    Files.createDirectories(projectDir)
+    val threadId = "thread-outline-source"
+    val rolloutFile = tempDir.resolve("sessions").resolve("2026").resolve("06").resolve("16").resolve("rollout-outline-source.jsonl")
+    Files.createDirectories(rolloutFile.parent)
+    Files.write(
+      rolloutFile,
+      listOf(
+        codexSessionMetaLine(threadId = threadId, cwd = projectDir),
+        """{"timestamp":"2026-05-28T10:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Load outline from rollout"}}""",
+      ),
+    )
+    val rolloutBackend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+    val source = CodexSessionSource(
+      backend = object : CodexSessionBackend {
+        override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> = emptyList()
+      },
+      appServerRefreshHintsProvider = staticHintsProvider(emptyMap()),
+      rolloutRefreshHintsProvider = staticHintsProvider(emptyMap()),
+      rolloutBackend = rolloutBackend,
+      threadPathIndex = InMemoryCodexThreadPathIndex(),
+    )
+
+    runBlocking(Dispatchers.Default) {
+      assertThat(rolloutBackend.listThreads(path = projectDir.toString(), openProject = null).map { it.thread.id }).contains(threadId)
+
+      val outline = source.loadThreadOutline(path = projectDir.toString(), threadId = threadId, subAgentId = null)
+
+      assertThat(outline).isNotNull
+      assertThat(outline!!.threadId).isEqualTo(threadId)
+      assertThat(outline.title).isEqualTo("Load outline from rollout")
+      assertThat(outline.items.single().kind).isEqualTo(AgentSessionOutlineItemKind.USER_PROMPT)
+      assertThat(outline.items.single().preview).isEqualTo("Load outline from rollout")
     }
   }
 
@@ -983,7 +1022,9 @@ private fun CodexSessionSourceTest.writeCodexSessionSourceRollout(
 
 private fun codexSessionMetaLine(threadId: String, cwd: Path): String {
   val timestamp = "2026-05-28T10:00:00.000Z"
-  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$threadId","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}"}}"""
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$threadId","timestamp":"$timestamp","cwd":"${
+    cwd.toString().replace("\\", "\\\\")
+  }"}}"""
 }
 
 private fun codexTokenUsageLine(model: String, inputTokens: Long, outputTokens: Long): String {

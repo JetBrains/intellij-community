@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core.providers
 
+// @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
+
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionCost
@@ -239,6 +241,12 @@ interface AgentSessionSource {
     path: String,
     threads: List<AgentSessionThread>,
   ): Map<String, AgentSessionCost?> = emptyMap()
+
+  suspend fun loadThreadOutline(
+    path: String,
+    threadId: String,
+    subAgentId: String? = null,
+  ): AgentSessionThreadOutline? = null
 
   fun markThreadAsRead(threadId: String, updatedAt: Long) {}
 

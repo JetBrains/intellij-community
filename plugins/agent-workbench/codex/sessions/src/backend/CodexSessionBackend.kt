@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.codex.sessions.backend
 
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -37,6 +38,8 @@ interface CodexSessionBackend {
   suspend fun listArchivedThreads(path: String, openProject: Project?): List<CodexBackendThread> = emptyList()
 
   suspend fun refreshThreads(path: String, threadIds: Set<String>, openProject: Project?): CodexBackendThreadRefreshResult? = null
+
+  suspend fun loadThreadOutline(path: String, threadId: String): AgentSessionThreadOutline? = null
 
   val updates: Flow<Unit>
     get() = emptyFlow()

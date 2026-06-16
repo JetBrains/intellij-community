@@ -457,7 +457,7 @@ internal fun mergeParsedRolloutThreadsByCwd(parsedThreads: Collection<ParsedRoll
       childThreads.forEach { childThread ->
         val subAgent = CodexSubAgent(id = childThread.thread.thread.id, name = childThread.thread.thread.title)
         mergedSubAgents.putIfAbsent(subAgent.id, subAgent)
-        mergedSubAgentActivitiesById.putIfAbsent(subAgent.id, childThread.thread.activity)
+        mergedSubAgentActivitiesById.putIfAbsent(subAgent.id, activityForFoldedChildThread(childThread))
       }
 
       val mergedUsageSnapshots = ArrayList<AgentSessionUsageSnapshot>(
@@ -537,6 +537,15 @@ private data class RolloutRefreshPlan(
   @JvmField val pathKeys: Set<String>,
   @JvmField val dirtyPathKeys: Set<String>,
 )
+
+private fun activityForFoldedChildThread(childThread: ParsedRolloutThread): CodexSessionActivity {
+  if (childThread.parentThreadId == null &&
+      childThread.thread.thread.sourceKind == CodexThreadSourceKind.EXEC &&
+      childThread.thread.activity == CodexSessionActivity.READY) {
+    return CodexSessionActivity.UNREAD
+  }
+  return childThread.thread.activity
+}
 
 private fun ParsedRolloutThread?.relatedThreadIds(): Set<String> {
   if (this == null) {

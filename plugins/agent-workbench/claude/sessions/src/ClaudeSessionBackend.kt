@@ -1,8 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
+// @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
+
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.project.Project
@@ -25,6 +28,8 @@ interface ClaudeSessionBackend {
   suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread>
 
   suspend fun refreshThreads(path: String, threadIds: Set<String>, openProject: Project?): ClaudeBackendThreadRefreshResult? = null
+
+  suspend fun loadThreadOutline(path: String, threadId: String): AgentSessionThreadOutline? = null
 
   val sessionUpdates: Flow<AgentSessionSourceUpdateEvent>
     get() = updates.map { AgentSessionSourceUpdateEvent(type = AgentSessionSourceUpdate.THREADS_CHANGED) }
