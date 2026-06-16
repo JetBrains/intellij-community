@@ -28,7 +28,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.controlflow.getReachabilityForInspection
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix
-import com.jetbrains.python.inspections.PyInspectionVisitor.getContext
+import com.jetbrains.python.inspections.PyInspectionVisitor.Companion.getContext
 import com.jetbrains.python.psi.PsiReferenceEx
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyExceptPart

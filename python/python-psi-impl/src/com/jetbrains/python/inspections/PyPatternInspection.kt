@@ -37,7 +37,7 @@ class PyPatternInspection : PyInspection() {
 }
 
 private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
-  override fun getHolder(): ProblemsHolder = super.getHolder()!!
+  override val holder = super.holder!!
 
   /**
    * Simplify `int() as name` to `int(name)`. Only for [PyClassPattern.SPECIAL_BUILTINS].
@@ -66,7 +66,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
       if (invalidTypes.isNotEmpty()) {
         val invalidTypesUnion = PyUnionType.union(invalidTypes)
         val invalidTypeName = PythonDocumentationProvider.getTypeName(invalidTypesUnion, myTypeEvalContext)
-        holder.problem(node.classNameReference,
+        holder!!.problem(node.classNameReference,
                        PyPsiBundle.message("INSP.patterns.not.a.class", node.classNameReference.text, invalidTypeName))
           .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING).register()
         return
@@ -79,7 +79,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
 
     val matchArgs = PyClassPatternImpl.getMatchArgs(classType, myTypeEvalContext) ?: run {
       node.argumentList.patterns.filterNot { it is PyKeywordPattern }.forEach { pattern ->
-        holder.problem(pattern,
+        holder!!.problem(pattern,
                        PyPsiBundle.message("INSP.patterns.class.does.not.support.pattern.matching.with.positional.arguments", pyClass.name))
           .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
           .fix(AddMatchArgsFix(pyClass))
@@ -91,7 +91,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
     val (positionalPatterns, keywordPatterns) = node.argumentList.patterns.partition { it !is PyKeywordPattern }
 
     for (pattern in positionalPatterns.drop(matchArgs.size)) {
-      holder.problem(pattern, PyPsiBundle.message("INSP.patterns.too.many.positional.patterns.expected", matchArgs.size))
+      holder!!.problem(pattern, PyPsiBundle.message("INSP.patterns.too.many.positional.patterns.expected", matchArgs.size))
         .highlight(ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
         .fix(PyRemoveElementFix(pattern))
         .register()
@@ -109,7 +109,7 @@ private class PyPatternInspectionVisitor(holder: ProblemsHolder, context: TypeEv
       val keywordName = (keywordPattern as PyKeywordPattern).keyword
       val positionalIndex = positionalAttributeNames.indexOf(keywordName)
       if (positionalIndex >= 0) {
-        holder.problem(keywordPattern,
+        holder!!.problem(keywordPattern,
                        PyPsiBundle.message("INSP.patterns.attribute.already.specified.as.positional.pattern.at.position",
                                            keywordName,
                                            positionalIndex + 1))
