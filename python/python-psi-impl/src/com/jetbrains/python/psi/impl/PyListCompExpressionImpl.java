@@ -46,7 +46,7 @@ public class PyListCompExpressionImpl extends PyComprehensionElementImpl impleme
     final PyBuiltinCache cache = PyBuiltinCache.getInstance(this);
     final PyClass list = cache.getClass("list");
     if (resultExpr != null && list != null) {
-      final PyType elementType = PyLiteralType.upcastLiteralToClass(resultExpr.getType(context));
+      final PyType elementType = PyLiteralType.upcastLiteralToClass(getResultElementType(resultExpr, context));
       return new PyCollectionTypeImpl(list, false, Collections.singletonList(elementType));
     }
     return cache.getListType();

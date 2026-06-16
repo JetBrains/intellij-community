@@ -44,6 +44,38 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
           pass
       """)
 
+    // PEP 798
+    @Test
+    fun `unpacking in list comprehension type`() = test("""
+      def f(its: list[list[int]]):
+          expr = [*it for it in its]
+      #   └ TYPE list[int]
+      """)
+
+    // PEP 798
+    @Test
+    fun `unpacking in set comprehension type`() = test("""
+      def f(its: list[list[int]]):
+          expr = {*it for it in its}
+      #   └ TYPE set[int]
+      """)
+
+    // PEP 798
+    @Test
+    fun `unpacking in generator comprehension type`() = test(TestOptions(assertRecursionPrevention = false), """
+      def f(its: list[list[int]]):
+          expr = (*it for it in its)
+      #   └ TYPE Generator[int, Unknown, None]
+      """)
+
+    // PEP 798
+    @Test
+    fun `unpacking in dict comprehension type`() = test("""
+      def f(dicts: list[dict[str, int]]):
+          expr = {**d for d in dicts}
+      #   └ TYPE dict[str, int]
+      """)
+
     @Test
     fun `list constructor call with generator expression`() = test("""
       expr = list(int(i) for i in '1')
@@ -1729,5 +1761,4 @@ class PyComprehensionAndIteratorTypeTest : PyCodeInsightTestCase() {
       #└ TYPE AsyncGenerator[Literal[42], Any]
       """)
   }
-
 }
