@@ -168,8 +168,8 @@ internal class AgentPromptPaletteContextController(
 
     fun installImagePasteHandler() {
         promptArea.addSettingsProvider { editor ->
-            editor.putUserData(AGENT_PROMPT_IMAGE_PASTE_HANDLER_KEY, AgentPromptImagePasteHandler { item ->
-                appendManualContextItems(sourceId = IMAGE_PASTE_SOURCE_ID, items = listOf(item))
+            editor.putUserData(AGENT_PROMPT_IMAGE_PASTE_HANDLER_KEY, AgentPromptImagePasteHandler { items ->
+                appendManualContextItems(sourceId = IMAGE_PASTE_SOURCE_ID, items = items)
             })
         }
     }

@@ -81,6 +81,9 @@ The global prompt opens a project-scoped popup for starting a new task or sendin
   [@test] ../../prompt/ui/testSrc/AgentPromptDraftPersistenceDecisionsTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptUiSessionStateServiceTest.kt
 
+- Pasting a clipboard image into the prompt adds it as a screenshot context item. If the clipboard contains copied image files, those files are decoded and preferred over generic `imageFlavor` icon data; non-image copied files must not be consumed by the image paste provider.
+  [@test] ../../prompt/ui/testSrc/context/AgentPromptImagePasteProviderTest.kt
+
 ## User Experience
 - The popup is a focused launcher, not a persistent tool window.
 - The popup keep-open toggle is a secondary footer control, not part of the primary header action cluster.
