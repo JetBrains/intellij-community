@@ -754,10 +754,8 @@ public final class RefactoringUtil {
   }
 
   public static boolean isModifiedInScope(PsiVariable variable, PsiElement scope) {
-    for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(scope), false).asIterable()) {
-      if (isAssignmentLHS(reference.getElement())) return true;
-    }
-    return false;
+    return ReferencesSearch.search(variable, new LocalSearchScope(scope), false)
+      .anyMatch(reference -> isAssignmentLHS(reference.getElement()));
   }
 
 
