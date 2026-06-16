@@ -59,6 +59,40 @@ abstract class KotlinTrimmedInjectionTestBase : AbstractInjectionTest() {
         )
     }
 
+    fun testTrimIndentInJavaAnnotationWithBlankPage() {
+        doInjectionPresentTest(
+            """
+                import kotlin.text.trimIndent
+    
+                fun bar(a: Int) { 
+                    Test.foo(""${'"'}
+                    some trim indented code
+                        is written here
+     
+                    no spaces before each line should appear<caret>
+                    ""${'"'}.trimIndent())
+                }
+                """,
+            javaText =
+                """
+                import org.intellij.lang.annotations.Language;
+    
+                public class Test {
+                    public static void foo(@Language("HTML") String str) {}
+                }
+                """,
+            languageId = HTMLLanguage.INSTANCE.id,
+            unInjectShouldBePresent = false,
+            shreds = null,
+            injectedText =
+                """|    some trim indented code
+                   |        is written here
+                   |
+                   |    no spaces before each line should appear"""
+                    .trimMargin("|")
+        )
+    }
+
     fun testTrimMarginInJavaAnnotation() {
         doInjectionPresentTest(
             """
