@@ -22,6 +22,8 @@ internal object PlatformApi {
   private val excludeModuleNamePrefixes = setOf(
     "intellij.platform.testFramework.",
     "intellij.platform.buildScripts.",
+    // I don't want to rename the module for the case if we decide to make it really the platform one in future
+    "intellij.platform.ui.webview", // plugin
   )
 
   private val excludeModuleNameSuffixes = setOf(
