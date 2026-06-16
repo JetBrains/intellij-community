@@ -108,6 +108,9 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                    "METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE",
                                    "ALIGN_MULTILINE_PARAMETERS_IN_CALLS");
 
+      consumer.renameStandardOption("METHOD_PARAMETERS_WRAP", PySyntaxBundle.message("formatter.function.declaration.parameters"));
+      consumer.renameStandardOption("CALL_PARAMETERS_WRAP", PySyntaxBundle.message("formatter.function.call.arguments"));
+
       consumer.showCustomOption(PyCodeStyleSettings.class,
                                 "USE_TRAILING_COMMA_IN_ARGUMENTS_LIST",
                                 PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
@@ -117,6 +120,18 @@ public final class PyLanguageCodeStyleSettingsProvider extends LanguageCodeStyle
                                 "USE_TRAILING_COMMA_IN_PARAMETER_LIST",
                                 PySyntaxBundle.message("formatter.force.trailing.comma.if.multiline"),
                                 ApplicationBundle.message("wrapping.method.parameters"));
+
+      // "Use continuation indent" checkboxes
+      consumer.showCustomOption(PyCodeStyleSettings.class, "USE_CONTINUATION_INDENT_FOR_PARAMETERS",
+                                PySyntaxBundle.message("formatter.use.continuation.indent"),
+                                getInstance().WRAPPING_METHOD_PARAMETERS);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "USE_CONTINUATION_INDENT_FOR_ARGUMENTS",
+                                PySyntaxBundle.message("formatter.use.continuation.indent"),
+                                getInstance().WRAPPING_METHOD_ARGUMENTS_WRAPPING);
+      consumer.showCustomOption(PyCodeStyleSettings.class, "USE_CONTINUATION_INDENT_FOR_COLLECTION_AND_COMPREHENSIONS",
+                                PySyntaxBundle.message("formatter.use.continuation.indent"),
+                                PySyntaxBundle.message("formatter.collections.and.comprehensions"));
+
 
       consumer.showCustomOption(PyCodeStyleSettings.class, "NEW_LINE_AFTER_COLON",
                                 PySyntaxBundle.message("formatter.single.clause.statements"),
