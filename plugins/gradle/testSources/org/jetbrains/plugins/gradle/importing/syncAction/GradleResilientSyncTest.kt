@@ -24,7 +24,6 @@ import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfoA
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfoBuilder
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.file
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaModuleInfo
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
@@ -70,7 +69,6 @@ class GradleResilientSyncTest(private val gradleVersion: GradleVersion) {
   @ArgumentsSource(TestArgumentsProvider::class)
   fun `test resilient sync when`(brokenProject: BrokenProject, brokenFile: BrokenFile) = runBlocking {
     val projectInfo = gradleProjectInfo(gradleVersion, "project") {
-      gradleWrapper()
       configureJavaProjectInfoWithUtils(
         settingsFile = {
           pluginManagement {

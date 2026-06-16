@@ -16,7 +16,6 @@ import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildFile
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildScriptName
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.file
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest
@@ -44,7 +43,6 @@ class GradleBuildIssuesMiscImportingTest(private val gradleVersion: GradleVersio
   fun `test out of memory build failures`(gradleDsl: GradleDsl): Unit = runBlocking {
 
     val projectInfo = gradleProjectInfo(gradleVersion, gradleDsl = gradleDsl) {
-      gradleWrapper()
       file("gradle.properties", """
         |org.gradle.jvmargs=-Xmx100m
       """.trimMargin())

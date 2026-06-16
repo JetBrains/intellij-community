@@ -66,6 +66,7 @@ fun gradleProjectInfo(
   configure: GradleProjectInfoBuilder.() -> Unit = {},
 ): GradleProjectInfo =
   GradleProjectInfoBuilderImpl(projectName, relativePath, gradleVersion, gradleDsl)
+    .apply { files.withGradleWrapper(gradleVersion) }
     .apply(configure)
     .build()
 
@@ -75,7 +76,6 @@ fun simpleJavaProjectInfo(
   gradleDsl: GradleDsl = GradleDsl.KOTLIN,
 ): GradleProjectInfo {
   return gradleProjectInfo(gradleVersion, relativePath, gradleDsl) {
-    gradleWrapper()
     simpleSettingsFile()
     simpleJavaRootModuleInfo()
   }
@@ -87,7 +87,6 @@ fun complexJavaProjectInfo(
   gradleDsl: GradleDsl = GradleDsl.KOTLIN,
 ): GradleProjectInfo {
   return gradleProjectInfo(gradleVersion, relativePath, gradleDsl) {
-    gradleWrapper()
     simpleSettingsFile {
       include("module")
       includeFlat("$projectName-flat-module")
@@ -162,9 +161,6 @@ fun GradleModuleInfoBuilder.file(relativePath: String, content: String): Unit =
 
 fun GradleModuleInfoBuilder.directory(relativePath: String): Unit =
   files.withDirectory(relativePath)
-
-fun GradleProjectInfoBuilder.gradleWrapper(): Unit =
-  files.withGradleWrapper(gradleVersion)
 
 fun GradleModuleInfoBuilder.settingsFile(configure: GradleSettingScriptBuilder<*>.() -> Unit): Unit =
   files.withSettingsFile(gradleVersion, gradleDsl = gradleDsl, configure = configure)

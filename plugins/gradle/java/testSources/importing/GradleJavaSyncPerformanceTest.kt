@@ -16,7 +16,6 @@ import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfo
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfoAssertions.assertProjectStructure
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.file
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleJavaModuleInfo
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleSettingsFile
 import org.junit.jupiter.api.Nested
@@ -75,7 +74,6 @@ class GradleJavaSyncPerformanceTest(private val gradleVersion: GradleVersion) {
 
     fun projectInfo(gradleVersion: GradleVersion): GradleProjectInfo =
       gradleProjectInfo(gradleVersion) {
-        gradleWrapper()
         file("gradle.properties", """
           |org.gradle.jvmargs=-Xmx3g
         """.trimMargin())

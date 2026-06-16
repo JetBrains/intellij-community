@@ -29,7 +29,6 @@ import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.GradleProjectInfo
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.buildFile
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleProjectInfo
-import org.jetbrains.plugins.gradle.testFramework.projectInfo.gradleWrapper
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.initProject
 import org.jetbrains.plugins.gradle.testFramework.projectInfo.simpleSettingsFile
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -174,7 +173,6 @@ class GradleBuildIssueImportingTest(private val gradleVersion: GradleVersion) {
       gradleDsl: GradleDsl,
       brokenFile: BrokenFile,
     ): GradleProjectInfo = gradleProjectInfo(gradleVersion, gradleDsl = gradleDsl) {
-      gradleWrapper()
       simpleSettingsFile {
         if (brokenFile == BrokenFile.SETTINGS_SCRIPT) {
           addCode { throwTestBuildScriptException(gradleDsl) }
