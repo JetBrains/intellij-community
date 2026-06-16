@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tests;
 
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.io.URLUtil;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
 import org.junit.platform.engine.support.descriptor.ClassSource;
@@ -11,7 +13,6 @@ import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.InputStream;
-import java.net.JarURLConnection;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -172,8 +173,12 @@ public final class TestLocationStorage {
       return null;
     }
 
-    try {
-      JarFile jarFile = ((JarURLConnection)classUrl.openConnection()).getJarFile();
+    Pair<String, String> jarUrl = URLUtil.splitJarUrl(classUrl.toString());
+    if (jarUrl == null) {
+      return null;
+    }
+
+    try (JarFile jarFile = new JarFile(jarUrl.first)) {
       return jarFile.stream()
         .map(JarEntry::getName)
         .filter(name -> name.startsWith(META_INF_PREFIX) && name.endsWith(KOTLIN_MODULE_SUFFIX))
@@ -305,14 +310,29 @@ public final class TestLocationStorage {
     }
   }
 
-  static void recordTestLocation(TestIdentifier testIdentifier, TestExecutionResult.Status status, String testName) {
+  public static void recordTestLocation(String testName, Class<?> testClass, boolean failed) {
+    if (testClass == null) {
+      return;
+    }
+
+    TestLocationInfo info = getTestLocationInfo(testClass);
+    if (info == null) {
+      return;
+    }
+
+    recordTestLocation(testName, info, failed);
+  }
+
+  public static void recordTestLocation(TestIdentifier testIdentifier, TestExecutionResult.Status status, String testName) {
     TestLocationInfo info = getTestLocationInfo(testIdentifier);
     if (info == null) {
       return;
     }
 
-    boolean failed = (status == TestExecutionResult.Status.FAILED);
+    recordTestLocation(testName, info, status == TestExecutionResult.Status.FAILED);
+  }
 
+  private static void recordTestLocation(String testName, TestLocationInfo info, boolean failed) {
     String json = String.format(
       "{\"test\":\"%s\",\"module\":\"%s\",\"package\":\"%s\",\"file\":\"%s\",\"failed\":%s}%n",
       escapeJson(testName),

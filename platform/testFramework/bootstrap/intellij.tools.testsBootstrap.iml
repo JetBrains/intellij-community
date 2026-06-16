@@ -21,5 +21,6 @@
     <orderEntry type="module" module-name="intellij.libraries.asm.tools" />
     <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
 </module>
