@@ -31,6 +31,22 @@ class AgentPromptPalettePopupDismissalDecisionsTest {
   }
 
   @Test
+  fun sameFrameMouseClickDoesNotCancelPopupWhenAutoCloseIsDisabled() {
+    val project = projectProxy("source-project")
+    val content = JPanel()
+    assertThat(
+      shouldAllowPromptPopupCancellation(
+        popupProject = project,
+        isRecentSourceFrameActivation = false,
+        currentEvent = mousePressed(content),
+        isExplicitClose = false,
+        resolveProject = byComponent(content to project),
+        autoClose = false,
+      )
+    ).isFalse()
+  }
+
+  @Test
   fun activationClickInSourceFrameDoesNotAllowPopupCancellation() {
     // The click came right after WINDOW_ACTIVATED on the source frame (user was in another app or
     // another IDE frame and clicked back into the source frame). The click's purpose is window
@@ -95,6 +111,22 @@ class AgentPromptPalettePopupDismissalDecisionsTest {
   }
 
   @Test
+  fun escapeAllowsPopupCancellationWhenAutoCloseIsDisabled() {
+    val sourceProject = projectProxy("source-project")
+    val content = JPanel()
+    assertThat(
+      shouldAllowPromptPopupCancellation(
+        popupProject = sourceProject,
+        isRecentSourceFrameActivation = false,
+        currentEvent = keyPressed(content, KeyEvent.VK_ESCAPE, modifiersEx = 0),
+        isExplicitClose = false,
+        resolveProject = byComponent(content to sourceProject),
+        autoClose = false,
+      )
+    ).isTrue()
+  }
+
+  @Test
   fun explicitCloseAllowsPopupCancellation() {
     val sourceProject = projectProxy("source-project")
     val otherProject = projectProxy("other-project")
@@ -108,6 +140,23 @@ class AgentPromptPalettePopupDismissalDecisionsTest {
         currentEvent = mousePressed(otherContent),
         isExplicitClose = true,
         resolveProject = byComponent(otherContent to otherProject),
+      )
+    ).isTrue()
+  }
+
+  @Test
+  fun explicitCloseAllowsPopupCancellationWhenAutoCloseIsDisabled() {
+    val sourceProject = projectProxy("source-project")
+    val otherProject = projectProxy("other-project")
+    val otherContent = JPanel()
+    assertThat(
+      shouldAllowPromptPopupCancellation(
+        popupProject = sourceProject,
+        isRecentSourceFrameActivation = false,
+        currentEvent = mousePressed(otherContent),
+        isExplicitClose = true,
+        resolveProject = byComponent(otherContent to otherProject),
+        autoClose = false,
       )
     ).isTrue()
   }

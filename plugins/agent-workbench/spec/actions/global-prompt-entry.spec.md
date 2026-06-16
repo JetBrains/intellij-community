@@ -83,6 +83,7 @@ The global prompt opens a project-scoped popup for starting a new task or sendin
 
 ## User Experience
 - The popup is a focused launcher, not a persistent tool window.
+- The popup keep-open toggle is a secondary footer control, not part of the primary header action cluster.
 - Validation errors appear inline and keep the popup open.
 - Successful launches close the popup and clear the submitted draft.
 
