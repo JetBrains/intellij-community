@@ -312,7 +312,7 @@ class LspClientManagerImpl internal constructor(private val project: Project, in
     // TODO Some running servers might need to be stopped if they serve roots that don't belong to the project anymore
 
     readAction {
-      val openedFiles = FileEditorManager.getInstance(project).openFiles
+      val openedFiles = FileEditorManager.getInstance(project).openFiles.filterNotNull()
       val unsavedFiles = FileDocumentManager.getInstance().unsavedDocuments.mapNotNull { FileDocumentManager.getInstance().getFile(it) }
       LspOpenedFilesService.getInstance(project).processOpenedFiles(unsavedFiles + openedFiles)
     }
