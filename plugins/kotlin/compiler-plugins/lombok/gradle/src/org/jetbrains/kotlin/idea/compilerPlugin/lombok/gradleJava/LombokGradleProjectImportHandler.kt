@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.lombok.gradleJava
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractGradleImportHandler
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.MavenCoordinates
 import java.nio.file.Path
@@ -16,6 +17,8 @@ class LombokGradleProjectImportHandler: AbstractGradleImportHandler() {
     )
 
     override val replacementJarFromPluginBundle: Path = KotlinArtifacts.lombokCompilerPluginPath
+
+    override val availableSinceVersion: IdeKotlinVersion? = IdeKotlinVersion.opt("1.9.0-Beta")
 
     companion object {
         private const val LOMBOK_COMPILER_PLUGIN_EMBEDDABLE_JAR_NAME = "kotlin-lombok-compiler-plugin-embeddable"
