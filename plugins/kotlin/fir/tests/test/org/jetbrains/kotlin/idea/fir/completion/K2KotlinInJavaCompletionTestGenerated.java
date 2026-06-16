@@ -46,6 +46,21 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/companionObject/HideSuspendFunction.java");
         }
 
+        @TestMetadata("InheritedDefaultMethod.java")
+        public void testInheritedDefaultMethod() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/InheritedDefaultMethod.java");
+        }
+
+        @TestMetadata("InheritedFromAbstractClass.java")
+        public void testInheritedFromAbstractClass() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/InheritedFromAbstractClass.java");
+        }
+
+        @TestMetadata("InheritedProperty.java")
+        public void testInheritedProperty() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/InheritedProperty.java");
+        }
+
         @TestMetadata("JvmField.java")
         public void testJvmField() throws Exception {
             runTest("../../completion/testData/inJava/companionObject/JvmField.java");
@@ -76,6 +91,11 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
             runTest("../../completion/testData/inJava/companionObject/PrivateOuterClass.java");
         }
 
+        @TestMetadata("PrivateSetter.java")
+        public void testPrivateSetter() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/PrivateSetter.java");
+        }
+
         @TestMetadata("PropertyAccessors.java")
         public void testPropertyAccessors() throws Exception {
             runTest("../../completion/testData/inJava/companionObject/PropertyAccessors.java");
@@ -84,6 +104,11 @@ public abstract class K2KotlinInJavaCompletionTestGenerated extends AbstractK2Ko
         @TestMetadata("ProtectedMember.java")
         public void testProtectedMember() throws Exception {
             runTest("../../completion/testData/inJava/companionObject/ProtectedMember.java");
+        }
+
+        @TestMetadata("ProtectedSetter.java")
+        public void testProtectedSetter() throws Exception {
+            runTest("../../completion/testData/inJava/companionObject/ProtectedSetter.java");
         }
 
         @TestMetadata("SimpleMethod.java")
