@@ -253,6 +253,8 @@ jvm_library(
         "//plugins/maven-server-api/test:maven-server-tests_test_lib",
         "//plugins/maven/src/test:maven-tests",
         "//plugins/maven/src/test:maven-tests_test_lib",
+        "//plugins/maven/groovy:groovy-tests",
+        "//plugins/maven/groovy:groovy-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.tests.main` end
