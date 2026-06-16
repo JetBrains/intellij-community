@@ -40,7 +40,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationSettings service="com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings"/>
-    <applicationSettings service="com.intellij.agent.workbench.sessions.core.cost.OpenRouterPriceCatalogService"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchFusCollector"/>
     <registryKey key="agent.workbench.mcp.use.direct.http"

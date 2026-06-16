@@ -9,6 +9,9 @@ data class AgentSessionUsageSnapshot(
   @JvmField val outputTokens: Long = 0,
   @JvmField val cacheReadTokens: Long = 0,
   @JvmField val cacheWriteTokens: Long = 0,
+  @JvmField val cacheWrite5mTokens: Long = 0,
+  @JvmField val cacheWrite1hTokens: Long = 0,
+  @JvmField val reasoningTokens: Long = 0,
   @JvmField val requestCount: Long = 0,
   @JvmField val nativeExactCostUsd: BigDecimal? = null,
 )

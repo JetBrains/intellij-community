@@ -421,6 +421,340 @@ class CodexSessionSourceTest {
   }
 
   @Test
+  fun loadThreadCostsUsesExactRolloutPathWhenOriginalProjectPathNoLongerExists() {
+    val existingProjectDir = tempDir.resolve("project-missing-rollout-cost")
+    Files.createDirectories(existingProjectDir)
+    val deletedProjectPath = tempDir.resolve("deleted-project").toString()
+    val rolloutPath = writeCodexSessionSourceRollout(
+      threadId = "thread-missing-path",
+      projectDir = existingProjectDir,
+      fileName = "rollout-thread-missing-path.jsonl",
+      inputTokens = 120,
+      outputTokens = 0,
+    )
+    val threadPathIndex = InMemoryCodexThreadPathIndex().apply {
+      recordThreads(
+        listOf(
+          CodexThread(
+            id = "thread-missing-path",
+            title = "thread-missing-path",
+            updatedAt = 100L,
+            archived = false,
+            cwd = deletedProjectPath,
+            path = rolloutPath,
+          )
+        )
+      )
+    }
+    var listCalls = 0
+    var refreshCalls = 0
+    val source = CodexSessionSource(
+      backend = object : CodexSessionBackend {
+        override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
+          listCalls += 1
+          return emptyList()
+        }
+
+        override suspend fun refreshThreads(
+          path: String,
+          threadIds: Set<String>,
+          openProject: Project?,
+        ): CodexBackendThreadRefreshResult {
+          refreshCalls += 1
+          return CodexBackendThreadRefreshResult()
+        }
+      },
+      appServerRefreshHintsProvider = staticHintsProvider(emptyMap()),
+      rolloutRefreshHintsProvider = staticHintsProvider(emptyMap()),
+      rolloutBackend = object : CodexSessionBackend {
+        override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
+          error("Rollout fallback should not be needed when exact rollout path is known")
+        }
+
+        override suspend fun refreshThreads(
+          path: String,
+          threadIds: Set<String>,
+          openProject: Project?,
+        ): CodexBackendThreadRefreshResult {
+          error("Rollout fallback should not be needed when exact rollout path is known")
+        }
+      },
+      calculateCost = { usage ->
+        AgentSessionCost(
+          amountUsd = BigDecimal.valueOf(usage.inputTokens),
+          kind = AgentSessionCostKind.ESTIMATED,
+          matchedModelId = usage.modelId,
+        )
+      },
+      threadPathIndex = threadPathIndex,
+    )
+
+    runBlocking(Dispatchers.Default) {
+      val loadedCosts = source.loadThreadCosts(
+        path = deletedProjectPath,
+        threads = listOf(
+          AgentSessionThread(
+            id = "thread-missing-path",
+            title = "thread-missing-path",
+            updatedAt = 100L,
+            archived = false,
+            provider = AgentSessionProvider.CODEX,
+          )
+        ),
+      )
+
+      assertThat(listCalls).isZero()
+      assertThat(refreshCalls).isZero()
+      assertThat(loadedCosts.getValue("thread-missing-path")).isEqualTo(
+        AgentSessionCost(
+          amountUsd = BigDecimal.valueOf(120),
+          kind = AgentSessionCostKind.ESTIMATED,
+          matchedModelId = "gpt-5",
+        )
+      )
+    }
+  }
+
+  @Test
+  fun loadThreadCostsKeepsExactRolloutCostsWhenParentAndSubAgentAreRequestedInSameBatch() {
+    val projectDir = tempDir.resolve("project-subagent-exact-rollout-cost")
+    Files.createDirectories(projectDir)
+    val projectPath = projectDir.toString()
+    val parentRolloutPath = writeCodexSessionSourceRollout(
+      threadId = "thread-parent",
+      projectDir = projectDir,
+      fileName = "rollout-thread-parent.jsonl",
+      inputTokens = 100,
+      outputTokens = 0,
+    )
+    val childRolloutPath = writeCodexSessionSourceSubAgentRollout(
+      threadId = "thread-child",
+      parentThreadId = "thread-parent",
+      projectDir = projectDir,
+      fileName = "rollout-thread-child.jsonl",
+      inputTokens = 50,
+      outputTokens = 0,
+    )
+    val threadPathIndex = InMemoryCodexThreadPathIndex().apply {
+      recordThreads(
+        listOf(
+          CodexThread(
+            id = "thread-parent",
+            title = "thread-parent",
+            updatedAt = 100L,
+            archived = false,
+            cwd = projectPath,
+            path = parentRolloutPath,
+          ),
+          CodexThread(
+            id = "thread-child",
+            title = "thread-child",
+            updatedAt = 100L,
+            archived = false,
+            cwd = projectPath,
+            path = childRolloutPath,
+            parentThreadId = "thread-parent",
+          ),
+        )
+      )
+    }
+    var listCalls = 0
+    var refreshCalls = 0
+    val source = CodexSessionSource(
+      backend = object : CodexSessionBackend {
+        override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
+          listCalls += 1
+          return emptyList()
+        }
+
+        override suspend fun refreshThreads(
+          path: String,
+          threadIds: Set<String>,
+          openProject: Project?,
+        ): CodexBackendThreadRefreshResult {
+          refreshCalls += 1
+          return CodexBackendThreadRefreshResult()
+        }
+      },
+      appServerRefreshHintsProvider = staticHintsProvider(emptyMap()),
+      rolloutRefreshHintsProvider = staticHintsProvider(emptyMap()),
+      rolloutBackend = object : CodexSessionBackend {
+        override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
+          error("Rollout fallback should not be needed when exact rollout paths are known")
+        }
+
+        override suspend fun refreshThreads(
+          path: String,
+          threadIds: Set<String>,
+          openProject: Project?,
+        ): CodexBackendThreadRefreshResult {
+          error("Rollout fallback should not be needed when exact rollout paths are known")
+        }
+      },
+      calculateCost = { usage ->
+        AgentSessionCost(
+          amountUsd = BigDecimal.valueOf(usage.inputTokens),
+          kind = AgentSessionCostKind.ESTIMATED,
+          matchedModelId = usage.modelId,
+        )
+      },
+      threadPathIndex = threadPathIndex,
+    )
+
+    runBlocking(Dispatchers.Default) {
+      val loadedCosts = source.loadThreadCosts(
+        path = projectPath,
+        threads = listOf(
+          AgentSessionThread(
+            id = "thread-parent",
+            title = "thread-parent",
+            updatedAt = 100L,
+            archived = false,
+            provider = AgentSessionProvider.CODEX,
+          ),
+          AgentSessionThread(
+            id = "thread-child",
+            title = "thread-child",
+            updatedAt = 100L,
+            archived = false,
+            provider = AgentSessionProvider.CODEX,
+          ),
+        ),
+      )
+
+      assertThat(listCalls).isZero()
+      assertThat(refreshCalls).isZero()
+      assertThat(loadedCosts.getValue("thread-parent")).isEqualTo(
+        AgentSessionCost(
+          amountUsd = BigDecimal.valueOf(100),
+          kind = AgentSessionCostKind.ESTIMATED,
+          matchedModelId = "gpt-5",
+        )
+      )
+      assertThat(loadedCosts.getValue("thread-child")).isEqualTo(
+        AgentSessionCost(
+          amountUsd = BigDecimal.valueOf(50),
+          kind = AgentSessionCostKind.ESTIMATED,
+          matchedModelId = "gpt-5",
+        )
+      )
+    }
+  }
+
+  @Test
+  fun loadThreadCostsAggregatesExactSubAgentRolloutCostsWhenRequestedThreadIncludesSubAgents() {
+    val projectDir = tempDir.resolve("project-subagent-aggregate-rollout-cost")
+    Files.createDirectories(projectDir)
+    val projectPath = projectDir.toString()
+    val parentRolloutPath = writeCodexSessionSourceRollout(
+      threadId = "thread-parent-aggregate",
+      projectDir = projectDir,
+      fileName = "rollout-thread-parent-aggregate.jsonl",
+      inputTokens = 100,
+      outputTokens = 0,
+    )
+    val childRolloutPath = writeCodexSessionSourceSubAgentRollout(
+      threadId = "thread-child-aggregate",
+      parentThreadId = "thread-parent-aggregate",
+      projectDir = projectDir,
+      fileName = "rollout-thread-child-aggregate.jsonl",
+      inputTokens = 50,
+      outputTokens = 0,
+    )
+    val threadPathIndex = InMemoryCodexThreadPathIndex().apply {
+      recordThreads(
+        listOf(
+          CodexThread(
+            id = "thread-parent-aggregate",
+            title = "thread-parent-aggregate",
+            updatedAt = 100L,
+            archived = false,
+            cwd = projectPath,
+            path = parentRolloutPath,
+          ),
+          CodexThread(
+            id = "thread-child-aggregate",
+            title = "thread-child-aggregate",
+            updatedAt = 100L,
+            archived = false,
+            cwd = projectPath,
+            path = childRolloutPath,
+            parentThreadId = "thread-parent-aggregate",
+          ),
+        )
+      )
+    }
+    var listCalls = 0
+    var refreshCalls = 0
+    val source = CodexSessionSource(
+      backend = object : CodexSessionBackend {
+        override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
+          listCalls += 1
+          return emptyList()
+        }
+
+        override suspend fun refreshThreads(
+          path: String,
+          threadIds: Set<String>,
+          openProject: Project?,
+        ): CodexBackendThreadRefreshResult {
+          refreshCalls += 1
+          return CodexBackendThreadRefreshResult()
+        }
+      },
+      appServerRefreshHintsProvider = staticHintsProvider(emptyMap()),
+      rolloutRefreshHintsProvider = staticHintsProvider(emptyMap()),
+      rolloutBackend = object : CodexSessionBackend {
+        override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> {
+          error("Rollout fallback should not be needed when exact rollout paths are known")
+        }
+
+        override suspend fun refreshThreads(
+          path: String,
+          threadIds: Set<String>,
+          openProject: Project?,
+        ): CodexBackendThreadRefreshResult {
+          error("Rollout fallback should not be needed when exact rollout paths are known")
+        }
+      },
+      calculateCost = { usage ->
+        AgentSessionCost(
+          amountUsd = BigDecimal.valueOf(usage.inputTokens),
+          kind = AgentSessionCostKind.ESTIMATED,
+          matchedModelId = usage.modelId,
+        )
+      },
+      threadPathIndex = threadPathIndex,
+    )
+
+    runBlocking(Dispatchers.Default) {
+      val loadedCosts = source.loadThreadCosts(
+        path = projectPath,
+        threads = listOf(
+          AgentSessionThread(
+            id = "thread-parent-aggregate",
+            title = "thread-parent-aggregate",
+            updatedAt = 100L,
+            archived = false,
+            provider = AgentSessionProvider.CODEX,
+            subAgents = listOf(com.intellij.agent.workbench.common.session.AgentSubAgent(id = "thread-child-aggregate", name = "thread-child-aggregate")),
+          )
+        ),
+      )
+
+      assertThat(listCalls).isZero()
+      assertThat(refreshCalls).isZero()
+      assertThat(loadedCosts.getValue("thread-parent-aggregate")).isEqualTo(
+        AgentSessionCost(
+          amountUsd = BigDecimal.valueOf(150),
+          kind = AgentSessionCostKind.ESTIMATED,
+          matchedModelId = "gpt-5",
+        )
+      )
+    }
+  }
+
+  @Test
   fun markThreadAsReadSuppressesStaleUnreadRefreshHints() {
     val source = createSource(
       appServerHints = mapOf(
@@ -1020,11 +1354,41 @@ private fun CodexSessionSourceTest.writeCodexSessionSourceRollout(
   return rolloutFile.toString()
 }
 
+private fun CodexSessionSourceTest.writeCodexSessionSourceSubAgentRollout(
+  threadId: String,
+  parentThreadId: String,
+  projectDir: Path,
+  fileName: String,
+  inputTokens: Long,
+  outputTokens: Long,
+): String {
+  val rolloutDir = tempDir.resolve("sessions").resolve("2026").resolve("05").resolve("28")
+  val rolloutFile = rolloutDir.resolve(fileName)
+  Files.createDirectories(rolloutDir)
+  Files.write(
+    rolloutFile,
+    listOf(
+      codexSubAgentSessionMetaLine(threadId = threadId, parentThreadId = parentThreadId, cwd = projectDir),
+      codexTokenUsageLine(
+        model = "gpt-5",
+        inputTokens = inputTokens,
+        outputTokens = outputTokens,
+      ),
+    ),
+  )
+  return rolloutFile.toString()
+}
+
 private fun codexSessionMetaLine(threadId: String, cwd: Path): String {
   val timestamp = "2026-05-28T10:00:00.000Z"
   return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$threadId","timestamp":"$timestamp","cwd":"${
     cwd.toString().replace("\\", "\\\\")
   }"}}"""
+}
+
+private fun codexSubAgentSessionMetaLine(threadId: String, parentThreadId: String, cwd: Path): String {
+  val timestamp = "2026-05-28T10:00:00.000Z"
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$threadId","timestamp":"$timestamp","cwd":"${cwd.toString().replace("\\", "\\\\")}","source":{"subagent":{"thread_spawn":{"parent_thread_id":"$parentThreadId"}}}}}"""
 }
 
 private fun codexTokenUsageLine(model: String, inputTokens: Long, outputTokens: Long): String {

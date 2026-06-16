@@ -367,6 +367,8 @@ private data class UsageSnapshotAccumulator(
   @JvmField var outputTokens: Long = 0,
   @JvmField var cacheReadTokens: Long = 0,
   @JvmField var cacheWriteTokens: Long = 0,
+  @JvmField var cacheWrite5mTokens: Long = 0,
+  @JvmField var cacheWrite1hTokens: Long = 0,
   @JvmField var requestCount: Long = 0,
 ) {
   fun add(snapshot: ClaudeUsageSnapshot) {
@@ -377,6 +379,8 @@ private data class UsageSnapshotAccumulator(
     outputTokens += snapshot.outputTokens
     cacheReadTokens += snapshot.cacheReadTokens
     cacheWriteTokens += snapshot.cacheWriteTokens
+    cacheWrite5mTokens += snapshot.cacheWrite5mTokens
+    cacheWrite1hTokens += snapshot.cacheWrite1hTokens
     requestCount += snapshot.requestCount
   }
 
@@ -387,6 +391,8 @@ private data class UsageSnapshotAccumulator(
       outputTokens = outputTokens,
       cacheReadTokens = cacheReadTokens,
       cacheWriteTokens = cacheWriteTokens,
+      cacheWrite5mTokens = cacheWrite5mTokens,
+      cacheWrite1hTokens = cacheWrite1hTokens,
       requestCount = requestCount,
     )
   }

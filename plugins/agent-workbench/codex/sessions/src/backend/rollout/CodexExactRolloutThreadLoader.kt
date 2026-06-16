@@ -7,7 +7,12 @@ import java.nio.file.Path
 internal class CodexExactRolloutThreadLoader(
   private val parseRollout: (Path) -> ParsedRolloutThread? = CodexRolloutParser()::parse,
 ) {
-  fun loadThreads(cwdFilter: String, threadIds: Set<String>, rolloutPaths: Set<String>): Map<String, CodexBackendThread> {
+  fun loadThreads(
+    cwdFilter: String?,
+    threadIds: Set<String>,
+    aggregateThreadIds: Set<String>,
+    rolloutPaths: Set<String>,
+  ): Map<String, CodexBackendThread> {
     if (threadIds.isEmpty() || rolloutPaths.isEmpty()) {
       return emptyMap()
     }
@@ -20,10 +25,24 @@ internal class CodexExactRolloutThreadLoader(
       return emptyMap()
     }
 
-    return mergeParsedRolloutThreadsByCwd(parsedThreads)[cwdFilter]
-      .orEmpty()
+    val mergedThreads = mergeParsedRolloutThreadsByCwd(parsedThreads)
+    val candidateThreads = if (cwdFilter == null) {
+      mergedThreads.values.asSequence().flatten().toList()
+    }
+    else {
+      mergedThreads[cwdFilter].orEmpty()
+    }
+    val exactThreadsById = parsedThreads
       .asSequence()
-      .filter { thread -> thread.matchesRequestedThreadIds(threadIds) }
-      .associateBy { thread -> thread.thread.id }
+      .filter { parsedThread -> cwdFilter == null || parsedThread.normalizedCwd == cwdFilter }
+      .associate { parsedThread -> parsedThread.thread.thread.id to parsedThread }
+    val mergedThreadsById = candidateThreads.associateBy { thread -> thread.thread.id }
+    return threadIds.mapNotNull { threadId ->
+      val resolvedThread = when {
+        threadId in aggregateThreadIds -> mergedThreadsById[threadId] ?: exactThreadsById[threadId]?.thread
+        else -> exactThreadsById[threadId]?.thread ?: mergedThreadsById[threadId]
+      } ?: return@mapNotNull null
+      threadId to resolvedThread
+    }.toMap(LinkedHashMap())
   }
 }
