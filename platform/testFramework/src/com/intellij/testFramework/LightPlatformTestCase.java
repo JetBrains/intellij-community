@@ -114,7 +114,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private ThreadTracker myThreadTracker;
 
   static {
-    PlatformTestUtil.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
+    LeakHunter.registerProjectCleanup(LightPlatformTestCase::closeAndDeleteProject);
   }
 
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
