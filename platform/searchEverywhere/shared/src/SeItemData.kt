@@ -6,10 +6,13 @@ import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContrib
 import com.intellij.openapi.application.readAction
 import com.intellij.platform.searchEverywhere.impl.SeItemEntity
 import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
+import com.intellij.platform.searchEverywhere.providers.SeLog
 import com.intellij.platform.searchEverywhere.providers.computeCatchingOrNull
+import com.jetbrains.rhizomedb.DbContext
 import fleet.kernel.DurableRef
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Serializable data interface for search everywhere results
@@ -83,9 +86,18 @@ class SeItemDataImpl internal constructor(
 
   val isSemantic: Boolean get() = additionalInfo[SeItemDataKeys.IS_SEMANTIC]?.toBoolean() == true
 
-  override fun fetchItemIfExists(): SeItem? {
-    return itemRef.derefOrNull()?.findItemOrNull()
-  }
+  override fun fetchItemIfExists(): SeItem? =
+    try {
+      itemRef.derefOrNull()?.findItemOrNull()
+    }
+    catch (e: CancellationException) {
+      // `poison` is the Throwable the read tripped over; for the match-invalidation case it is a
+      // `fleet.kernel.rete.UnsatisfiedMatchException` ("match invalidated by rete"). It also serves
+      // as the discriminator: a non-poisoned context means this is a real cancellation -> rethrow.
+      val poison = DbContext.threadBoundOrNull?.poison ?: throw e
+      SeLog.warn("Couldn't fetch SE item ${providerId.value}/$uuid, DB context is poisoned: $poison")
+      null
+    }
 
   fun withUuidToReplace(uuidToReplace: List<String>): SeItemDataImpl {
     return SeItemDataImpl(uuid, providerId, weight, presentation, uuidToReplace, additionalInfo, itemRef)
