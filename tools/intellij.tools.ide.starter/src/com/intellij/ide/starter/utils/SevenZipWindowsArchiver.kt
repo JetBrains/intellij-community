@@ -5,74 +5,51 @@ import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.utils.FileSystem.deleteRecursivelyQuietly
 import com.intellij.tools.ide.util.common.logOutput
-import com.intellij.util.system.CpuArch
 import java.nio.file.Path
-import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.absolutePathString
 import kotlin.io.path.copyTo
 import kotlin.io.path.createDirectories
-import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.extension
 import kotlin.io.path.fileSize
 import kotlin.io.path.isRegularFile
-import kotlin.io.path.nameWithoutExtension
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.measureTime
 
 object SevenZipWindowsArchiver {
-  val sevenZipExePath: Path by lazy {
-    val sevenZipCacheDir = GlobalPaths.instance.getCacheDirectoryFor("7zip")
 
-    fun archiveInfo(arch: CpuArch): Triple<String, Path, Path> {
-      val url = if (arch == CpuArch.ARM64) SevenZipDistribution.WINDOWS_ARM64_URL else SevenZipDistribution.WINDOWS_X64_URL
-      val file = sevenZipCacheDir / url.split("/").last()
-      val tool = sevenZipCacheDir / file.fileName.nameWithoutExtension
-      return Triple(url, file, tool)
+  val sevenZipExePath: Path by lazy { findInstalledSevenZipExe() }
+
+  private fun findInstalledSevenZipExe(): Path {
+    val installedPath = findSevenZipInPath()
+    if (installedPath == null) {
+      throw RuntimeException("7-Zip is not installed on the host or is not available in PATH. Install 7z.exe on the test agent and add it to PATH.")
     }
-
-    val (sevenZipUrl, sevenZipFile, sevenZipTool) = archiveInfo(CpuArch.X86_64)
-    val (sevenZipArm64Url, sevenZipArm64File, sevenZipArm64Tool) = archiveInfo(CpuArch.ARM64)
-    fun sevenZipExePath(arch: CpuArch = CpuArch.CURRENT): Path = (if (arch == CpuArch.ARM64) sevenZipArm64Tool else sevenZipTool) / "7z.exe"
-    if (sevenZipExePath().exists()) return@lazy sevenZipExePath()
-
-    // First, download an old 7-Zip distribution that is available as ZIP
-    val sevenZipOldUrl = "https://www.7-zip.org/a/7za920.zip"
-    val sevenZipOldFile = sevenZipCacheDir / sevenZipOldUrl.split("/").last()
-    val sevenZipOldTool = sevenZipCacheDir / sevenZipOldFile.fileName.nameWithoutExtension
-
-    HttpClient.downloadIfMissing(sevenZipOldUrl, sevenZipOldFile)
-    FileSystem.unpackIfMissing(sevenZipOldFile, sevenZipOldTool)
-
-    val sevenZipOldToolExe = sevenZipOldTool.resolve("7za.exe")
-
-    // Then, download the new 7-Zip and unpack it using the old one
-    HttpClient.downloadIfMissing(sevenZipUrl, sevenZipFile)
-    ProcessExecutor(
-      presentableName = "unpack-7zip",
-      workDir = sevenZipCacheDir,
-      timeout = 1.minutes,
-      //https://7-zip.opensource.jp/chm/cmdline/switches/index.htm
-      args = listOf(sevenZipOldToolExe.absolutePathString(), "x", "-y", "-o$sevenZipTool", sevenZipFile.absolutePathString()),
-      stderrRedirect = ExecOutputRedirect.ToStdOut("unpack-7zip"),
-    ).start()
-
-    //Old 7-zip version cannot properly unpack arm64 archive
-    if (CpuArch.isArm64()) {
-      HttpClient.downloadIfMissing(sevenZipArm64Url, sevenZipArm64File)
-      ProcessExecutor(
-        presentableName = "unpack-7zip-arm64",
-        workDir = sevenZipCacheDir,
-        timeout = 1.minutes,
-        args = listOf(sevenZipExePath(CpuArch.X86_64).absolutePathString(), "x", "-y", "-o$sevenZipArm64Tool", sevenZipArm64File.absolutePathString()),
-        stderrRedirect = ExecOutputRedirect.ToStdOut("unpack-7zip-arm64"),
-      ).start()
-    }
-    sevenZipExePath()
+    logOutput("Using installed 7-Zip: $installedPath")
+    return installedPath
   }
 
-  @OptIn(ExperimentalPathApi::class)
+  private fun findSevenZipInPath(): Path? {
+    val stdout = ExecOutputRedirect.ToString()
+    val exitCode = ProcessExecutor(
+      presentableName = "find-7zip",
+      workDir = GlobalPaths.instance.localCacheDirectory,
+      timeout = 10.seconds,
+      args = listOf("where.exe", "7z.exe"),
+      stdoutRedirect = stdout,
+      stderrRedirect = ExecOutputRedirect.ToStdOut("find-7zip"),
+      analyzeProcessExit = false,
+      silent = true,
+    ).start(printEnvVariables = false)
+
+    if (exitCode != 0) return null
+
+    return stdout.read().lineSequence().firstOrNull { it.isNotBlank() && Path.of(it).exists() }
+      ?.let { Path.of(it) }
+  }
+
   fun unpackWinMsi(exeFile: Path, targetDir: Path, timeout: Duration = 10.minutes) {
     targetDir.deleteRecursivelyQuietly()
 
