@@ -23,7 +23,9 @@ internal class KotlinJavaClassActionSuppressor: JavaClassActionSuppressor {
             val kotlinSourceFolders = kotlinFacet?.configuration?.settings?.pureKotlinSourceFolders
             val kotlinSourceRootOfType =
                 projectFileIndex.isUnderSourceRootOfType(virtualFile, KOTLIN_SOURCE_ROOT_TYPES) ||
-                        (kotlinSourceFolders?.let { virtualFile.toNioPath().toString() in it } ?: false)
+                        (kotlinSourceFolders?.let {
+                            projectFileIndex.getSourceRootForFile(virtualFile)?.toNioPath()?.toString() in it
+                        } ?: false)
             kotlinSourceRootOfType
         }
     }
