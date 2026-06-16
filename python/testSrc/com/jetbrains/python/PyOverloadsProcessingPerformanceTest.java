@@ -139,8 +139,9 @@ public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
     PyCallExpression call = configureAndGetCallExprUnderCaret("mainUnqualified.py");
     PyReferenceExpression refExpr = assertInstanceOf(call.getCallee(), PyReferenceExpression.class);
     ResolveResult[] resolveResults = refExpr.getReference().multiResolve(false);
-    // Overloads, lower-priority imported name and the function itself.
-    assertEquals(NUMBER_OF_OVERLOADS + 2, resolveResults.length);
+    // Overloads and the lower-priority imported name. The runtime function itself is shadowed by the
+    // complete (non-partial) stub package per PEP 561 (see PY-55589).
+    assertEquals(NUMBER_OF_OVERLOADS + 1, resolveResults.length);
   }
 
   public void testOverloadsNotDuplicatedInQualifiedReferenceMultiResolveResults() {
