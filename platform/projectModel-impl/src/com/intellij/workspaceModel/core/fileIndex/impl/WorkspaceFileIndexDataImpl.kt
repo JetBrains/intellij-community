@@ -50,6 +50,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetExclusionCondition
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+import java.util.concurrent.ConcurrentHashMap
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 
 @Suppress("DuplicatedCode")
@@ -58,7 +59,7 @@ internal suspend fun initWorkspaceFileIndexData(
   contributorList: List<WorkspaceFileIndexContributor<*>>,
 ): WorkspaceFileIndexDataImpl {
   @Suppress("SSBasedInspection")
-  val fileSets = Object2ObjectOpenHashMap<VirtualFile, StoredFileSetCollection>()
+  val fileSets = ConcurrentHashMap<VirtualFile, StoredFileSetCollection>()
   val fileSetsByPackagePrefix = PackagePrefixStorage()
 
   @Suppress("UnsafeOpenServiceCast")
@@ -118,7 +119,7 @@ internal fun blockingInitWorkspaceFileIndexData(
   contributorList: List<WorkspaceFileIndexContributor<*>>,
 ): WorkspaceFileIndexDataImpl {
   @Suppress("SSBasedInspection")
-  val fileSets = Object2ObjectOpenHashMap<VirtualFile, StoredFileSetCollection>()
+  val fileSets = ConcurrentHashMap<VirtualFile, StoredFileSetCollection>()
   val fileSetsByPackagePrefix = PackagePrefixStorage()
 
   @Suppress("UnsafeOpenServiceCast")
