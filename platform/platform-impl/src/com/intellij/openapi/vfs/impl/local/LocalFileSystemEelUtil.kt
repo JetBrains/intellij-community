@@ -70,7 +70,7 @@ fun readAttributesUsingEel(nioPath: Path): FileAttributes {
   }
   else {
     @OptIn(EelDelicateApi::class)
-    val eelPath = nioPath.asEelPath(eelDescriptor)
+    val eelPath = nioPath.asEelPath()
     val directAccessPath = (nioPath.fileSystem as? EelMountProvider)?.getMountRoot(eelPath)?.takeIf {
       eelPath.fsBlocking {
         it.canReadPermissionsDirectly(EelMountRoot.DirectAccessOptions.BasicAttributesAndWritable)
@@ -96,10 +96,9 @@ fun getAttributeListingPaths(nioPath: Path): Pair<Path?, EelPath?> {
   val eelDescriptor = nioPath.getEelDescriptor()
   if (eelDescriptor === LocalEelDescriptor) {
     return nioPath to null
-  }
-
-  @OptIn(EelDelicateApi::class)
-  val eelPath = nioPath.asEelPath(eelDescriptor)
+    }
+    @OptIn(EelDelicateApi::class)
+  val eelPath = nioPath.asEelPath()
   val directAccessPath = (nioPath.fileSystem as? EelMountProvider)
     ?.getMountRoot(eelPath)
     ?.takeIf { eelPath.fsBlocking { it.canReadPermissionsDirectly(EelMountRoot.DirectAccessOptions.BasicAttributesAndWritable) } }
@@ -152,8 +151,8 @@ fun withPrefetchForRemoteRoots(roots: Collection<@JvmWildcard VirtualFile>, bloc
       val nioPath = root.fileSystem.getNioPath(root) ?: return@mapNotNull null
       val descriptor = nioPath.getEelDescriptor()
       if (descriptor === LocalEelDescriptor) return@mapNotNull null
-      @OptIn(EelDelicateApi::class)
-      val eelPath = nioPath.asEelPath(descriptor)
+        @OptIn(EelDelicateApi::class)
+      val eelPath = nioPath.asEelPath()
       // skip FS root — prefetching entire remote filesystem is wasteful; VFS refresh from root only checks cached children anyway
       if (eelPath.parent == null) return@mapNotNull null
       // skip paths with direct local mount — they bypass gRPC entirely

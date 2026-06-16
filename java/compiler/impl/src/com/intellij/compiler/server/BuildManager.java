@@ -1934,7 +1934,7 @@ public final class BuildManager implements Disposable {
       var descriptor = EelProviderUtil.getEelDescriptor(project);
       hashFunction = s -> {
         try {
-          return asEelPath(Path.of(s), descriptor).toString().hashCode();
+          return asEelPath(Path.of(s)).toString().hashCode();
         }
         catch (Throwable e) {
           return s.hashCode();
