@@ -15,6 +15,9 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
+import org.jetbrains.kotlin.analysis.api.useSiteModule
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.formatter.KotlinCommonCodeStyleSettings
 import org.jetbrains.kotlin.idea.formatter.kotlinCommonSettings
@@ -109,6 +112,7 @@ object SpecifyRemainingArgumentsByNameUtil {
      * See [RemainingArgumentsData] for details.
      */
     @OptIn(KaExperimentalApi::class)
+    context(session: KaSession)
     private fun KaFunctionCall<*>.getRemainingArgumentsData(): RemainingArgumentsData? {
         if (!symbol.hasStableParameterNames) return null
 
@@ -126,14 +130,27 @@ object SpecifyRemainingArgumentsByNameUtil {
             !parameter.name.isSpecial && parameter.name.identifier !in existingValueArguments && !parameter.isVararg
         }
 
-        val allContextParams = (symbol as? KaNamedFunctionSymbol)?.contextParameters ?: emptyList()
+        val isExplicitContextArgumentsSupported =
+            useSiteModule.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitContextArguments)
+
+        val allContextParams =
+            if (isExplicitContextArgumentsSupported) {
+                (symbol as? KaNamedFunctionSymbol)?.contextParameters ?: emptyList()
+            } else {
+                emptyList()
+            }
 
         val allContextParamNames = allContextParams
             .mapTo(hashSetOf()) { it.name }
 
-        val contextRemainingArguments = allContextParams.filter { parameter ->
-            !parameter.name.isSpecial && parameter.name.identifier !in existingContextArguments
-        }
+        val contextRemainingArguments =
+            if (isExplicitContextArgumentsSupported) {
+                allContextParams.filter { parameter ->
+                    !parameter.name.isSpecial && parameter.name.identifier !in existingContextArguments
+                }
+            } else {
+                emptyList()
+            }
 
         if (valueRemainingArguments.isEmpty() && contextRemainingArguments.isEmpty()) return null
 

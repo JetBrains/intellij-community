@@ -2905,6 +2905,11 @@ public abstract class SharedK2IntentionTestGenerated extends AbstractSharedK2Int
             runTest("testData/intentions/specifyAllRemainingArgumentsByName/noExplicitContextArguments.kt");
         }
 
+        @TestMetadata("noExplicitContextArguments2.kt")
+        public void testNoExplicitContextArguments2() throws Exception {
+            runTest("testData/intentions/specifyAllRemainingArgumentsByName/noExplicitContextArguments2.kt");
+        }
+
         @TestMetadata("noNameProvided.kt")
         public void testNoNameProvided() throws Exception {
             runTest("testData/intentions/specifyAllRemainingArgumentsByName/noNameProvided.kt");
