@@ -22,7 +22,6 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -226,11 +225,7 @@ public final class BindFieldsFromParametersAction implements ModCommandAction, D
   }
 
   private static boolean isFieldAssigned(PsiField field, PsiMethod method) {
-    for (PsiReference reference : ReferencesSearch.search(field, new LocalSearchScope(method)).asIterable()) {
-      if (reference instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiReferenceExpression)reference)) {
-        return true;
-      }
-    }
-    return false;
+    return ReferencesSearch.search(field, new LocalSearchScope(method)).anyMatch(
+      reference -> reference instanceof PsiReferenceExpression && PsiUtil.isOnAssignmentLeftHand((PsiReferenceExpression)reference));
   }
 }
