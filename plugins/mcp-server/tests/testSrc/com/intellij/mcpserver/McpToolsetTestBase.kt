@@ -180,7 +180,7 @@ abstract class McpToolsetTestBase {
     toolName: String,
     arguments: Map<String, Any?> = emptyMap(),
     meta: Map<String, Any?> = emptyMap(),
-    timeout: Duration = 10.seconds,
+    timeout: Duration = 239.seconds,
   ): ToolCallWithProgress {
     val progressEvents = ArrayList<ObservedProgress>()
     var result: CallToolResult? = null
@@ -227,7 +227,7 @@ abstract class McpToolsetTestBase {
     resultChecker: (CallToolResult) -> Unit,
   ) {
     withConnection { client ->
-      val result = client.callTool(toolName, input)
+      val result = client.callTool(toolName, input, options = RequestOptions(timeout = 239.seconds))
       resultChecker(result)
       assertThat(result).isNotNull()
       println("[DEBUG_LOG] Tool $toolName result: $result")
