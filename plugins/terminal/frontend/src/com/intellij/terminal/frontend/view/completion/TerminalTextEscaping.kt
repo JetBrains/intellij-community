@@ -33,4 +33,4 @@ internal fun escapeUnixShellArgument(argument: String): String {
 
 private const val POWERSHELL_CHARS_TO_ESCAPE = " \n\t\r`$'\"(){}[]<>|;&,@#"
 
-private const val UNIX_SHELLS_CHARS_TO_ESCAPE = " \n\t\r`$'\"(){}[]<>|;&*?\\"
+private const val UNIX_SHELLS_CHARS_TO_ESCAPE = " \n\t\r`$'\"(){}[]<>|;&!*?\\"
