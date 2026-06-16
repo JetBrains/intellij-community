@@ -206,6 +206,8 @@ abstract class AbstractLayoutCodeProcessor private constructor(
   /**
    * Ensures that a given file is ready to reformatting and prepares it if necessary.
    *
+   * Beware: it is not guaranteed to run on a BGT.
+   *
    * @param psiFile                    file to process
    * @param processChangedTextOnly  flag that defines is only the changed text (in terms of VCS change) should be processed
    * @return          task that triggers formatting of the given file. Returns value of that task indicates whether formatting
