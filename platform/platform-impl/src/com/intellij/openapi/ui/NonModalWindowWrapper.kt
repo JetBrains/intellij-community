@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.FullScreenSupport
+import com.intellij.ui.ScreenUtil
 import com.intellij.ui.ToolbarService
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.launchOnShow
@@ -46,6 +47,7 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.EventQueue
 import java.awt.Frame
+import java.awt.Rectangle
 import java.awt.Toolkit
 import java.awt.Window
 import java.awt.event.AWTEventListener
@@ -202,6 +204,7 @@ abstract class NonModalWindowWrapper(
     this.minWindowSize = minSize
     activeWindow = createAwtWindow(isFloat, content, minSize, initialSize)
     loadAndRegisterWindowState(activeWindow)
+    fitWindowToScreen(activeWindow)
     installWindowListeners()
     installToolkitListener()
   }
@@ -210,6 +213,36 @@ abstract class NonModalWindowWrapper(
     val key = dimensionKey ?: return
     val state = WindowStateService.getInstance(project).getState(key, window)
     state?.applyTo(window)
+  }
+
+  /**
+   * Clamps the window's `minimumSize` to the available screen area. This prevents the window
+   * manager from re-expanding the window beyond the screen after it has been shrunk.
+   *
+   * Called at init and on pin/unpin, plus continuously from the `setBounds` overrides in
+   * [FloatDialog] and [WindowFrame] so that dragging the window to a smaller monitor also
+   * re-clamps the minimum size (otherwise the user cannot resize the window down to fit).
+   *
+   * Continuous **bounds** fitting is enforced by those same `setSize`/`setBounds` overrides,
+   * mirroring [DialogWrapperPeerImpl][com.intellij.openapi.ui.impl.DialogWrapperPeerImpl].
+   */
+  private fun fitWindowToScreen(window: Window) {
+    clampMinimumSizeToScreen(window)
+  }
+
+  /**
+   * If the window's `minimumSize` exceeds the screen it currently occupies, shrink it.
+   * This is intentionally cheap: only two [Dimension] and one [Rectangle] allocation.
+   */
+  private fun clampMinimumSizeToScreen(window: Window) {
+    val screenBounds = ScreenUtil.getScreenRectangle(window.location)
+    val minSize = window.minimumSize
+    if (minSize.width > screenBounds.width || minSize.height > screenBounds.height) {
+      window.minimumSize = Dimension(
+        minOf(minSize.width, screenBounds.width),
+        minOf(minSize.height, screenBounds.height),
+      )
+    }
   }
 
   // ── Window creation and mode switching ──────────────────────────────────────
@@ -275,6 +308,28 @@ abstract class NonModalWindowWrapper(
       UIUtil.markAsPossibleOwner(this)
     }
 
+    override fun setSize(width: Int, height: Int) {
+      val rect = Rectangle(location.x, location.y, width, height)
+      ScreenUtil.fitToScreen(rect)
+      super.setSize(rect.width, rect.height)
+      if (location.x != rect.x || location.y != rect.y) {
+        setLocation(rect.x, rect.y)
+      }
+    }
+
+    override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
+      clampMinimumSizeToScreen(this)
+      val rect = Rectangle(x, y, width, height)
+      ScreenUtil.fitToScreen(rect)
+      super.setBounds(rect.x, rect.y, rect.width, rect.height)
+    }
+
+    override fun setBounds(r: Rectangle) {
+      clampMinimumSizeToScreen(this)
+      ScreenUtil.fitToScreen(r)
+      super.setBounds(r)
+    }
+
     override fun uiDataSnapshot(sink: DataSink): Unit = this@NonModalWindowWrapper.uiDataSnapshot(sink)
   }
 
@@ -283,6 +338,28 @@ abstract class NonModalWindowWrapper(
       defaultCloseOperation = DO_NOTHING_ON_CLOSE
       background = UIUtil.getPanelBackground()
       focusTraversalPolicy = IdeFocusTraversalPolicy()
+    }
+
+    override fun setSize(width: Int, height: Int) {
+      val rect = Rectangle(location.x, location.y, width, height)
+      ScreenUtil.fitToScreen(rect)
+      super.setSize(rect.width, rect.height)
+      if (location.x != rect.x || location.y != rect.y) {
+        setLocation(rect.x, rect.y)
+      }
+    }
+
+    override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
+      clampMinimumSizeToScreen(this)
+      val rect = Rectangle(x, y, width, height)
+      ScreenUtil.fitToScreen(rect)
+      super.setBounds(rect.x, rect.y, rect.width, rect.height)
+    }
+
+    override fun setBounds(r: Rectangle) {
+      clampMinimumSizeToScreen(this)
+      ScreenUtil.fitToScreen(r)
+      super.setBounds(r)
     }
 
     override fun uiDataSnapshot(sink: DataSink): Unit = this@NonModalWindowWrapper.uiDataSnapshot(sink)
@@ -303,6 +380,7 @@ abstract class NonModalWindowWrapper(
     windowDisposable?.let { Disposer.dispose(it) }
     windowDisposable = null
     activeWindow = createAwtWindow(toFloat, content, minWindowSize, bounds.size)
+    fitWindowToScreen(activeWindow)
     installWindowListeners()
     savedDefaultButton?.let { (activeWindow as RootPaneContainer).rootPane.defaultButton = it }
     activeWindow.bounds = bounds
