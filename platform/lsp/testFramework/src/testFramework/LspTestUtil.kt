@@ -25,7 +25,8 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * @see awaitFileOpenedByLspServer
  */
-@RequiresBlockingContext
+@RequiresBlockingContext(ReplaceWith("awaitFileOpenedByLspServer(project, file)",
+                                     "com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer"))
 @RequiresEdt
 fun waitUntilFileOpenedByLspServer(project: Project, file: VirtualFile) {
   val topLevelFile = (file as? VirtualFileWindow)?.delegate ?: file
@@ -63,7 +64,8 @@ fun waitUntilFileOpenedByLspServer(project: Project, file: VirtualFile) {
  *
  * @see awaitDiagnosticsFromLspServer
  */
-@RequiresBlockingContext
+@RequiresBlockingContext(ReplaceWith("awaitDiagnosticsFromLspServer(project, file)",
+                                     "com.intellij.platform.lsp.testFramework.awaitDiagnosticsFromLspServer"))
 @JvmOverloads
 @RequiresEdt
 fun waitForDiagnosticsFromLspServer(project: Project, file: VirtualFile, timeout: Int = 30) {
@@ -96,7 +98,8 @@ private fun doWaitForDiagnosticsFromLspServer(
  *
  * @see checkHighlightingRetrying
  */
-@RequiresBlockingContext
+@RequiresBlockingContext(ReplaceWith("checkHighlightingRetrying()",
+                                     "com.intellij.platform.lsp.testFramework.checkHighlightingRetrying"))
 @RequiresEdt
 fun CodeInsightTestFixture.checkLspHighlighting() {
   val document = editor.document.let { (it as? DocumentWindow)?.delegate ?: it }
@@ -108,7 +111,8 @@ fun CodeInsightTestFixture.checkLspHighlighting() {
 /**
  * @see checkHighlightingRetrying
  */
-@RequiresBlockingContext
+@RequiresBlockingContext(ReplaceWith("checkHighlightingRetrying(data)",
+                                     "com.intellij.platform.lsp.testFramework.checkHighlightingRetrying"))
 @RequiresEdt
 fun CodeInsightTestFixture.checkLspHighlightingForData(data: ExpectedHighlightingData) {
   withDiagnosticsReceivedCounter(project, file.virtualFile) { diagnosticsReceivedCounter ->
