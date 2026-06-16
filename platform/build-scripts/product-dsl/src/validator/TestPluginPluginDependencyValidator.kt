@@ -38,10 +38,11 @@ import java.nio.file.Path
 internal object TestPluginPluginDependencyValidator : PipelineNode {
   override val id get() = NodeIds.TEST_PLUGIN_PLUGIN_DEPENDENCY_VALIDATION
 
-  override val requires: Set<DataSlot<*>> get() = setOf(
-    Slots.TEST_PLUGIN_DEPENDENCY_PLAN,
-    Slots.TEST_PLUGINS,
-  )
+  override val requires: Set<DataSlot<*>>
+    get() = setOf(
+      Slots.TEST_PLUGIN_DEPENDENCY_PLAN,
+      Slots.TEST_PLUGINS,
+    )
 
   override suspend fun execute(ctx: ComputeContext) {
     val model = ctx.model
@@ -135,6 +136,9 @@ private fun buildUnresolvedDependencyErrors(
           dependencyChains = dependencyChains,
           globalAllowedMissing = globalAllowedMissing,
         )
+        val allowedOwners = dependency.owningPlugins.filter { it.pluginId in moduleAllowedMissing }
+        if (allowedOwners.isNotEmpty()) continue
+
         val disallowedOwners = dependency.owningPlugins.filterNot { it.pluginId in moduleAllowedMissing }
         if (disallowedOwners.isEmpty()) continue
         errors.add(

@@ -114,10 +114,11 @@ private fun buildTestPluginDependencyPlan(
     .mapTo(LinkedHashSet()) { it.contentName() }
   val allowedMissingByModule = buildAllowedMissingByModule(contentData)
   val globalAllowedMissing = spec.allowedMissingPluginIds.toSet()
+  val additionalBundledPluginTargetNames = spec.additionalBundledPluginTargetNames.toSet()
 
   val bundledPluginNames = resolutionContext.resolveBundledPlugins(productName)
-  val resolvableOwners = resolutionContext.resolveBundledPlugins(productName, spec.additionalBundledPluginTargetNames.toSet())
-  val resolvableModules = collectResolvableModules(graph, productName, spec.additionalBundledPluginTargetNames.toSet())
+  val resolvableOwners = resolutionContext.resolveBundledPlugins(productName, additionalBundledPluginTargetNames)
+  val resolvableModules = collectResolvableModules(graph, productName, additionalBundledPluginTargetNames)
 
   val requiredByPlugin = LinkedHashMap<PluginId, LinkedHashSet<ContentModuleName>>()
   val moduleDepsFromContent = LinkedHashSet<ContentModuleName>()
@@ -172,7 +173,12 @@ private fun buildTestPluginDependencyPlan(
         continue
       }
 
-      val resolvableProdOwners = owningProdPlugins.filter { it.name in resolvableOwners }
+      val resolvableProdOwners = resolutionContext.resolveProductOwningPlugins(
+        module = dependency,
+        productName = productName,
+        additionalBundles = additionalBundledPluginTargetNames,
+        includeTestSources = true,
+      )
       if (resolvableProdOwners.isEmpty()) {
         continue
       }
@@ -313,9 +319,11 @@ private fun collectTargetDependencies(
               val owners = resolutionContext.resolveOwningPlugins(classification.moduleName)
               val owningProdPlugins = owners.filterNot { it.isTest }
               if (owningProdPlugins.isNotEmpty()) {
-                val resolvableOwners = owningProdPlugins.filter {
-                  it.name in bundledPluginNames || it.name in additionalBundledPluginTargetNames
-                }
+                val resolvableOwners = resolutionContext.resolveProductOwningPlugins(
+                  module = classification.moduleName,
+                  productName = productName,
+                  additionalBundles = additionalBundledPluginTargetNames,
+                )
                 if (resolvableOwners.isNotEmpty()) {
                   if (declarationPolicy == ModuleDependencyDeclarationPolicy.EXPLICIT_MODULE) {
                     explicitModuleDeps.add(classification.moduleName)

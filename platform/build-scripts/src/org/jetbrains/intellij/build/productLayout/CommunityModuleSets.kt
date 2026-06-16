@@ -306,7 +306,7 @@ object CommunityModuleSets {
    * These are commonly needed by test plugins and are duplicated across products.
    */
   fun platformTestFrameworksCore(): ModuleSet = moduleSet("platform.testFrameworks.core") {
-    module("intellij.platform.testExtensions")
+    module("intellij.platform.testExtensions", allowedMissingPluginIds = listOf("org.jetbrains.ls.plugin.java"))
     module("intellij.platform.testFramework", allowedMissingPluginIds = listOf("com.intellij.java", "com.intellij.platform.images"))
     module("intellij.platform.testFramework.common")
     module("intellij.platform.testFramework.core")
