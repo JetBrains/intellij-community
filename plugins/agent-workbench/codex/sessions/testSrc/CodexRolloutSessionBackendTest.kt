@@ -825,6 +825,200 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
+  fun foldsCodexExecOutputThreadUnderParentThread() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-codex-exec-subagent")
+      Files.createDirectories(projectDir)
+      val sessionsRoot = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-root.jsonl"),
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-14T16:00:00.000Z", id = "session-root", cwd = projectDir),
+          """{"timestamp":"2026-02-14T16:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Root title"}}""",
+        ),
+      )
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-parent-subagent.jsonl"),
+        lines = listOf(
+          subAgentSessionMetaLine(
+            timestamp = "2026-02-14T16:01:00.000Z",
+            id = "session-parent-subagent",
+            cwd = projectDir,
+            parentThreadId = "session-root",
+          ),
+          """{"timestamp":"2026-02-14T16:01:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Parent subagent title"}}""",
+          responseItemFunctionCall(
+            timestamp = "2026-02-14T16:01:02.000Z",
+            callId = "call-codex-exec",
+            name = "exec_command",
+            arguments = codexExecArguments(projectDir),
+          ),
+          responseItemFunctionCallOutput(
+            timestamp = "2026-02-14T16:01:03.000Z",
+            callId = "call-codex-exec",
+            output = codexExecOutput(projectDir = projectDir, childThreadId = "11111111-1111-4111-8111-111111111111"),
+          ),
+        ),
+      )
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-exec-child.jsonl"),
+        lines = listOf(
+          execSessionMetaLine(timestamp = "2026-02-14T16:02:00.000Z", id = "11111111-1111-4111-8111-111111111111", cwd = projectDir),
+          """{"timestamp":"2026-02-14T16:02:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Exec child title"}}""",
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      val rootThread = threads.single()
+      assertThat(rootThread.thread.id).isEqualTo("session-root")
+      assertThat(rootThread.thread.subAgents.map { subAgent -> subAgent.id })
+        .containsExactlyInAnyOrder("session-parent-subagent", "11111111-1111-4111-8111-111111111111")
+      assertThat(rootThread.subAgentActivitiesById).containsEntry("11111111-1111-4111-8111-111111111111", CodexSessionActivity.UNREAD)
+    }
+  }
+
+  @Test
+  fun keepsCodexExecThreadTopLevelWithoutParentOutputEvidence() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-codex-exec-root")
+      Files.createDirectories(projectDir)
+      writeRollout(
+        file = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14").resolve("rollout-exec-root.jsonl"),
+        lines = listOf(
+          execSessionMetaLine(timestamp = "2026-02-14T17:00:00.000Z", id = "session-exec-root", cwd = projectDir),
+          """{"timestamp":"2026-02-14T17:00:01.000Z","type":"event_msg","payload":{"type":"user_message","message":"Standalone exec title"}}""",
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      assertThat(threads.single().thread.id).isEqualTo("session-exec-root")
+      assertThat(threads.single().thread.subAgents).isEmpty()
+    }
+  }
+
+  @Test
+  fun ignoresCodexHeaderOutputFromNonCodexExecCommand() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-codex-exec-false-positive")
+      Files.createDirectories(projectDir)
+      val sessionsRoot = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-parent.jsonl"),
+        lines = listOf(
+          sessionMetaLine(timestamp = "2026-02-14T18:00:00.000Z", id = "session-parent", cwd = projectDir),
+          responseItemFunctionCall(
+            timestamp = "2026-02-14T18:00:01.000Z",
+            callId = "call-not-codex-exec",
+            name = "exec_command",
+            arguments = """{"cmd":"echo codex exec","workdir":"$projectDir"}""",
+          ),
+          responseItemFunctionCallOutput(
+            timestamp = "2026-02-14T18:00:02.000Z",
+            callId = "call-not-codex-exec",
+            output = codexExecOutput(projectDir = projectDir, childThreadId = "22222222-2222-4222-8222-222222222222"),
+          ),
+        ),
+      )
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-exec-child.jsonl"),
+        lines = listOf(
+          execSessionMetaLine(timestamp = "2026-02-14T18:01:00.000Z", id = "22222222-2222-4222-8222-222222222222", cwd = projectDir),
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads.map { thread -> thread.thread.id }).containsExactlyInAnyOrder("session-parent",
+                                                                                       "22222222-2222-4222-8222-222222222222")
+      assertThat(threads.flatMap { thread -> thread.thread.subAgents }).isEmpty()
+    }
+  }
+
+  @Test
+  fun scopedRolloutUpdateForInferredCodexExecChildRefreshesParentChain() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-codex-exec-update")
+      Files.createDirectories(projectDir)
+      val sessionsRoot = tempDir.resolve("sessions").resolve("2026").resolve("02").resolve("14")
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-root.jsonl"),
+        lines = listOf(sessionMetaLine(timestamp = "2026-02-14T19:00:00.000Z", id = "session-root", cwd = projectDir)),
+      )
+      writeRollout(
+        file = sessionsRoot.resolve("rollout-parent-subagent.jsonl"),
+        lines = listOf(
+          subAgentSessionMetaLine(
+            timestamp = "2026-02-14T19:01:00.000Z",
+            id = "session-parent-subagent",
+            cwd = projectDir,
+            parentThreadId = "session-root",
+          ),
+          responseItemFunctionCall(
+            timestamp = "2026-02-14T19:01:01.000Z",
+            callId = "call-codex-exec-update",
+            name = "exec_command",
+            arguments = codexExecArguments(projectDir),
+          ),
+          responseItemFunctionCallOutput(
+            timestamp = "2026-02-14T19:01:02.000Z",
+            callId = "call-codex-exec-update",
+            output = codexExecOutput(projectDir = projectDir, childThreadId = "33333333-3333-4333-8333-333333333333"),
+          ),
+        ),
+      )
+      val childRollout = sessionsRoot.resolve("rollout-exec-child.jsonl")
+      writeRollout(
+        file = childRollout,
+        lines = listOf(
+          execSessionMetaLine(timestamp = "2026-02-14T19:02:00.000Z", id = "33333333-3333-4333-8333-333333333333", cwd = projectDir),
+          responseItemFunctionCall(
+            timestamp = "2026-02-14T19:02:01.000Z",
+            callId = "call-child-tool",
+            name = "exec_command",
+          ),
+        ),
+      )
+
+      val sourceUpdates = MutableSharedFlow<FileBackedSessionChangeSet>(replay = 1, extraBufferCapacity = 1)
+      val backend = CodexRolloutSessionBackend(
+        codexHomeProvider = { tempDir },
+        rolloutChangeSource = { sourceUpdates },
+      )
+      backend.listThreads(path = projectDir.toString(), openProject = null)
+      val updates = Channel<AgentSessionSourceUpdateEvent>(capacity = Channel.CONFLATED)
+      val updatesJob = launch {
+        backend.sessionUpdates.collect { update ->
+          updates.trySend(update)
+        }
+      }
+
+      try {
+        drainUpdateChannel(updates)
+        sourceUpdates.emit(FileBackedSessionChangeSet(changedPaths = setOf(childRollout)))
+
+        val update = withTimeoutOrNull(WATCHER_UPDATE_WAIT_TIMEOUT) { updates.receive() }
+        assertThat(update).isNotNull
+        assertThat(update!!.scopedPaths).containsExactly(projectDir.toString())
+        assertThat(update.threadIds).containsExactlyInAnyOrder("session-root",
+                                                               "session-parent-subagent",
+                                                               "33333333-3333-4333-8333-333333333333")
+        assertThat(update.activityUpdatesByThreadId).doesNotContainKey("33333333-3333-4333-8333-333333333333")
+        assertThat(update.presentationUpdatesByThreadId).doesNotContainKey("33333333-3333-4333-8333-333333333333")
+      }
+      finally {
+        updatesJob.cancelAndJoin()
+      }
+    }
+  }
+
+  @Test
   fun keepsSubAgentThreadTopLevelWhenParentIsMissing() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-subagent-missing-parent")
@@ -1905,6 +2099,37 @@ private fun subAgentSessionMetaLine(timestamp: String, id: String, cwd: Path, pa
   return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${
     cwd.toString().replace("\\", "\\\\")
   }","source":{"subagent":{"thread_spawn":{"parent_thread_id":"$parentThreadId","depth":1}}}}}"""
+}
+
+private fun execSessionMetaLine(timestamp: String, id: String, cwd: Path): String {
+  return """{"timestamp":"$timestamp","type":"session_meta","payload":{"id":"$id","timestamp":"$timestamp","cwd":"${
+    cwd.toString().replace("\\", "\\\\")
+  }","source":"exec","thread_source":"user"}}"""
+}
+
+private fun codexExecArguments(projectDir: Path): String {
+  return """{"cmd":"codex exec --sandbox read-only --cd $projectDir Review launch profiles","workdir":"$projectDir"}"""
+}
+
+private fun codexExecOutput(projectDir: Path, childThreadId: String): String {
+  return """
+    Chunk ID: abc123
+    Wall time: 30.0000 seconds
+    Process running with session ID 12345
+    Output:
+    OpenAI Codex v0.139.0
+    --------
+    workdir: $projectDir
+    model: gpt-5.5
+    provider: wire
+    approval: never
+    sandbox: read-only
+    reasoning effort: xhigh
+    session id: $childThreadId
+    --------
+    user
+    Review launch profiles
+  """.trimIndent()
 }
 
 private fun tokenUsageLine(
