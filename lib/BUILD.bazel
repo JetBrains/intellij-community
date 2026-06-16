@@ -19059,28 +19059,6 @@ jvm_import(
     source_jar = "@com_fasterxml_jackson_dataformat-jackson-dataformat-xml-2_15_0-sources_http//file",
 )
 
-copy_file(
-    name = "org.jetbrains.compose.compiler/compiler-hosted-1.5.14.jar_copy",
-    src = "@org_jetbrains_compose_compiler-compiler-hosted-1_5_14_http//file",
-    out = "org.jetbrains.compose.compiler/compiler-hosted-1.5.14.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "platform-compose-compiler_plugin-jetbrains-compose-compiler-hosted",
-    jar = "@org_jetbrains_compose_compiler-compiler-hosted-1_5_14_http//file",
-    source_jar = "@org_jetbrains_compose_compiler-compiler-hosted-1_5_14-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "platform-compose-compiler_plugin-jetbrains-compose-compiler-hosted-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":platform-compose-compiler_plugin-jetbrains-compose-compiler-hosted"],
-)
-
 jvm_import(
     name = "platform-coverage-agent-intellij-coverage",
     jar = "@org_jetbrains_intellij_deps-intellij-coverage-agent-1_0_776_http//file",
