@@ -26,6 +26,8 @@
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenContentProvider"
                     interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightTabContentProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenCustomTabProvider"
+                    interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeRightCustomTabProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenFeatureUi"
                     interface="com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenFeatureUI" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.platform.ide.welcomeScreenRightTabBannerProvider"
