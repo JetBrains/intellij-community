@@ -11,7 +11,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
-import com.intellij.agent.workbench.sessions.core.cost.OpenRouterPriceCatalogService
+import com.intellij.agent.workbench.sessions.core.cost.LiteLlmPriceCatalogService
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
@@ -38,7 +38,7 @@ class ClaudeSessionSource internal constructor(
     backend: ClaudeSessionBackend = createDefaultClaudeSessionBackend(),
   ) : this(
     backend = backend,
-    calculateCost = { usage -> service<OpenRouterPriceCatalogService>().calculateCost(usage) },
+    calculateCost = { usage -> service<LiteLlmPriceCatalogService>().calculateCost(usage) },
   )
 
   private val observedUpdatedAtByThreadId: ConcurrentHashMap<String, Long> = ConcurrentHashMap()

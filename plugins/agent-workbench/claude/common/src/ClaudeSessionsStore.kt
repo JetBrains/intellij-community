@@ -538,6 +538,8 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
           outputTokens = usage.outputTokens,
           cacheReadTokens = usage.cacheReadTokens,
           cacheWriteTokens = usage.cacheWriteTokens,
+          cacheWrite5mTokens = usage.cacheWrite5mTokens,
+          cacheWrite1hTokens = usage.cacheWrite1hTokens,
         )
       }
     }
@@ -634,6 +636,8 @@ private fun readUsageObject(parser: JsonParser): ParsedClaudeUsage? {
   var sawUsageField = false
   var inputTokens = 0L
   var cacheWriteTokens = 0L
+  var cacheWrite5mTokens = 0L
+  var cacheWrite1hTokens = 0L
   var cacheReadTokens = 0L
   var outputTokens = 0L
   forEachJsonObjectField(parser) { fieldName ->
@@ -645,6 +649,27 @@ private fun readUsageObject(parser: JsonParser): ParsedClaudeUsage? {
       "cache_creation_input_tokens" -> {
         cacheWriteTokens = readLongOrZero(parser)
         sawUsageField = true
+      }
+      "cache_creation" -> {
+        if (parser.currentToken() == JsonToken.START_OBJECT) {
+          forEachJsonObjectField(parser) { nestedField ->
+            when (nestedField) {
+              "ephemeral_5m_input_tokens" -> {
+                cacheWrite5mTokens = readLongOrZero(parser)
+                sawUsageField = true
+              }
+              "ephemeral_1h_input_tokens" -> {
+                cacheWrite1hTokens = readLongOrZero(parser)
+                sawUsageField = true
+              }
+              else -> parser.skipChildren()
+            }
+            true
+          }
+        }
+        else {
+          parser.skipChildren()
+        }
       }
       "cache_read_input_tokens" -> {
         cacheReadTokens = readLongOrZero(parser)
@@ -660,11 +685,23 @@ private fun readUsageObject(parser: JsonParser): ParsedClaudeUsage? {
   }
 
   return if (sawUsageField) {
+    val resolvedCacheWrite5mTokens: Long
+    val resolvedCacheWrite1hTokens: Long
+    if (cacheWrite5mTokens == 0L && cacheWrite1hTokens == 0L) {
+      resolvedCacheWrite5mTokens = cacheWriteTokens
+      resolvedCacheWrite1hTokens = 0L
+    }
+    else {
+      resolvedCacheWrite5mTokens = cacheWrite5mTokens
+      resolvedCacheWrite1hTokens = cacheWrite1hTokens
+    }
     ParsedClaudeUsage(
       inputTokens = inputTokens,
       outputTokens = outputTokens,
       cacheReadTokens = cacheReadTokens,
       cacheWriteTokens = cacheWriteTokens,
+      cacheWrite5mTokens = resolvedCacheWrite5mTokens,
+      cacheWrite1hTokens = resolvedCacheWrite1hTokens,
     )
   }
   else {
@@ -1086,6 +1123,8 @@ private data class ParsedClaudeUsage(
   @JvmField val outputTokens: Long,
   @JvmField val cacheReadTokens: Long,
   @JvmField val cacheWriteTokens: Long,
+  @JvmField val cacheWrite5mTokens: Long,
+  @JvmField val cacheWrite1hTokens: Long,
 )
 
 private data class ClaudeAssistantUsage(
@@ -1095,6 +1134,8 @@ private data class ClaudeAssistantUsage(
   @JvmField val outputTokens: Long,
   @JvmField val cacheReadTokens: Long,
   @JvmField val cacheWriteTokens: Long,
+  @JvmField val cacheWrite5mTokens: Long,
+  @JvmField val cacheWrite1hTokens: Long,
 )
 
 private data class ParsedMessageContent(
@@ -1294,6 +1335,8 @@ private data class UsageByModelAccumulator(
   @JvmField var outputTokens: Long = 0,
   @JvmField var cacheReadTokens: Long = 0,
   @JvmField var cacheWriteTokens: Long = 0,
+  @JvmField var cacheWrite5mTokens: Long = 0,
+  @JvmField var cacheWrite1hTokens: Long = 0,
   @JvmField var requestCount: Long = 0,
 ) {
   fun add(usage: ClaudeAssistantUsage) {
@@ -1304,6 +1347,8 @@ private data class UsageByModelAccumulator(
     outputTokens += usage.outputTokens
     cacheReadTokens += usage.cacheReadTokens
     cacheWriteTokens += usage.cacheWriteTokens
+    cacheWrite5mTokens += usage.cacheWrite5mTokens
+    cacheWrite1hTokens += usage.cacheWrite1hTokens
     requestCount += 1
   }
 
@@ -1314,6 +1359,8 @@ private data class UsageByModelAccumulator(
       outputTokens = outputTokens,
       cacheReadTokens = cacheReadTokens,
       cacheWriteTokens = cacheWriteTokens,
+      cacheWrite5mTokens = cacheWrite5mTokens,
+      cacheWrite1hTokens = cacheWrite1hTokens,
       requestCount = requestCount,
     )
   }
@@ -1325,6 +1372,8 @@ data class ClaudeUsageSnapshot(
   @JvmField val outputTokens: Long = 0,
   @JvmField val cacheReadTokens: Long = 0,
   @JvmField val cacheWriteTokens: Long = 0,
+  @JvmField val cacheWrite5mTokens: Long = 0,
+  @JvmField val cacheWrite1hTokens: Long = 0,
   @JvmField val requestCount: Long = 0,
 )
 
@@ -1336,9 +1385,27 @@ private fun mergeAssistantUsage(left: ClaudeAssistantUsage, right: ClaudeAssista
     outputTokens = maxOf(left.outputTokens, right.outputTokens),
     cacheReadTokens = maxOf(left.cacheReadTokens, right.cacheReadTokens),
     cacheWriteTokens = maxOf(left.cacheWriteTokens, right.cacheWriteTokens),
+    cacheWrite5mTokens = maxOf(left.cacheWrite5mTokens, right.cacheWrite5mTokens),
+    cacheWrite1hTokens = maxOf(left.cacheWrite1hTokens, right.cacheWrite1hTokens),
   )
 }
 
 private fun MutableMap<String?, UsageByModelAccumulator>.accumulate(usage: ClaudeAssistantUsage) {
+  if (usage.isIgnorableZeroTokenUsage()) return
   getOrPut(usage.modelId) { UsageByModelAccumulator(modelId = usage.modelId) }.add(usage)
+}
+
+private fun ClaudeAssistantUsage.isIgnorableZeroTokenUsage(): Boolean {
+  val hasNoTokens = inputTokens == 0L &&
+                    outputTokens == 0L &&
+                    cacheReadTokens == 0L &&
+                    cacheWriteTokens == 0L &&
+                    cacheWrite5mTokens == 0L &&
+                    cacheWrite1hTokens == 0L
+  if (!hasNoTokens) return false
+
+  return when (modelId?.trim()?.lowercase()) {
+    null, "", "synthetic", "<synthetic>" -> true
+    else -> false
+  }
 }

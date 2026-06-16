@@ -13,7 +13,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.promptLauncher implementation="com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge"/>
-    <postStartupActivity implementation="com.intellij.agent.workbench.sessions.service.OpenRouterPriceCatalogStartupActivity"/>
+    <postStartupActivity implementation="com.intellij.agent.workbench.sessions.service.LiteLlmPriceCatalogStartupActivity"/>
     <postStartupActivity implementation="com.intellij.agent.workbench.sessions.sleep.AgentSessionSleepPreventionStartupActivity"/>
     <notificationGroup id="Agent Workbench Sessions" displayType="BALLOON" bundle="messages.AgentSessionsBundle"
                        key="notification.group.agent.workbench.sessions"/>

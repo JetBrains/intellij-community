@@ -103,7 +103,56 @@ class CodexSessionSourceRolloutIntegrationTest {
       assertThat(listedThreads.single().cost).isNull()
       assertThat(loadedCosts.getValue(listedThreads.single().id)).isEqualTo(
         AgentSessionCost(
-          amountUsd = BigDecimal("142569340"),
+          amountUsd = BigDecimal("613250"),
+          kind = AgentSessionCostKind.ESTIMATED,
+          matchedModelId = "gpt-5.4",
+        )
+      )
+    }
+  }
+
+  @Test
+  fun rolloutTopLevelTurnContextProvidesFallbackModelForTokenUsage() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = createProjectDir("project-rollout-top-level-turn-context")
+      writeRolloutFile(
+        fileName = "rollout-top-level-turn-context.jsonl",
+        lines = listOf(
+          sessionMetaLine(threadId = THREAD_ID, cwd = projectDir),
+          turnContextLine(
+            timestamp = "2026-03-08T10:05:00.000Z",
+            cwd = projectDir,
+            model = "gpt-5.4",
+          ),
+          tokenUsageLineWithoutModel(
+            timestamp = "2026-03-08T10:05:01.000Z",
+            totalInputTokens = 100,
+            cachedInputTokens = 40,
+            outputTokens = 5,
+          ),
+        ),
+      )
+
+      val source = testCreateSource(
+        projectDir = projectDir,
+        codexHome = tempDir,
+        threadIds = listOf(THREAD_ID),
+        calculateCost = { usage ->
+          AgentSessionCost(
+            amountUsd = BigDecimal.valueOf(usage.inputTokens + usage.outputTokens + usage.cacheReadTokens),
+            kind = AgentSessionCostKind.ESTIMATED,
+            matchedModelId = usage.modelId,
+          )
+        },
+      )
+
+      val listedThreads = source.listThreadsFromClosedProject(projectDir.toString())
+      val loadedCosts = source.loadThreadCosts(projectDir.toString(), listedThreads)
+
+      assertThat(listedThreads).hasSize(1)
+      assertThat(loadedCosts.getValue(listedThreads.single().id)).isEqualTo(
+        AgentSessionCost(
+          amountUsd = BigDecimal.valueOf(105),
           kind = AgentSessionCostKind.ESTIMATED,
           matchedModelId = "gpt-5.4",
         )
@@ -489,6 +538,10 @@ private fun eventMsg(timestamp: String, type: String, message: String? = null): 
   return """{"timestamp":"$timestamp","type":"event_msg","payload":{"type":"$type"$messageField}}"""
 }
 
+private fun turnContextLine(timestamp: String, cwd: Path, model: String): String {
+  return """{"timestamp":"$timestamp","type":"turn_context","payload":{"cwd":"${cwd.toString().replace("\\", "\\\\")}","model":"$model"}}"""
+}
+
 private fun tokenUsageLine(
   timestamp: String,
   model: String,
@@ -498,4 +551,14 @@ private fun tokenUsageLine(
   reasoningOutputTokens: Long = 0,
 ): String {
   return """{"timestamp":"$timestamp","type":"event_msg","payload":{"type":"token_count","model":"$model","info":{"total_token_usage":{"input_tokens":$totalInputTokens,"cached_input_tokens":$cachedInputTokens,"output_tokens":$outputTokens,"reasoning_output_tokens":$reasoningOutputTokens}}}}"""
+}
+
+private fun tokenUsageLineWithoutModel(
+  timestamp: String,
+  totalInputTokens: Long,
+  cachedInputTokens: Long,
+  outputTokens: Long,
+  reasoningOutputTokens: Long = 0,
+): String {
+  return """{"timestamp":"$timestamp","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":$totalInputTokens,"cached_input_tokens":$cachedInputTokens,"output_tokens":$outputTokens,"reasoning_output_tokens":$reasoningOutputTokens}}}}"""
 }

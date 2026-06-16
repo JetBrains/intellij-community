@@ -30,7 +30,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
-import com.intellij.agent.workbench.sessions.core.cost.OpenRouterPriceCatalogService
+import com.intellij.agent.workbench.sessions.core.cost.LiteLlmPriceCatalogService
 import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
@@ -81,7 +81,7 @@ internal class CodexSessionSource internal constructor(
     ),
     rolloutRefreshHintsProvider = CodexRolloutRefreshHintsProvider(rolloutBackend = rolloutBackend),
     rolloutBackend = rolloutBackend,
-    calculateCost = service<OpenRouterPriceCatalogService>()::calculateCost,
+    calculateCost = service<LiteLlmPriceCatalogService>()::calculateCost,
     threadPathIndex = threadPathIndex,
   )
 
@@ -481,8 +481,6 @@ internal class CodexSessionSource internal constructor(
     path: String,
     threads: List<RequestedCodexThreadCost>,
   ): Map<String, CodexBackendThread> {
-    val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return emptyMap()
-    val cwdFilter = com.intellij.agent.workbench.codex.common.normalizeRootPath(workingDirectory.toString().replace('\\', '/'))
     val fullyMappedThreads = threads.filter { thread ->
       thread.relatedThreadIds().all { threadId -> threadPathIndex.entry(threadId)?.rolloutPath != null }
     }
@@ -498,9 +496,15 @@ internal class CodexSessionSource internal constructor(
       return emptyMap()
     }
 
+    val aggregateThreadIds = fullyMappedThreads.asSequence()
+      .filter { thread -> thread.subAgentIds.isNotEmpty() }
+      .mapTo(LinkedHashSet()) { thread -> thread.threadId }
+    val cwdFilter = resolveProjectDirectoryFromPath(path)
+      ?.let { workingDirectory -> com.intellij.agent.workbench.codex.common.normalizeRootPath(workingDirectory.toString().replace('\\', '/')) }
     return exactRolloutThreadLoader.loadThreads(
       cwdFilter = cwdFilter,
       threadIds = fullyMappedThreads.mapTo(LinkedHashSet()) { thread -> thread.threadId },
+      aggregateThreadIds = aggregateThreadIds,
       rolloutPaths = rolloutPaths,
     )
   }

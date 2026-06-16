@@ -621,6 +621,38 @@ class ClaudeSessionsStoreTest {
   }
 
   @Test
+  fun parseUsageJsonlFileIgnoresSyntheticZeroTokenUsageRows() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-usage")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("usage-session.jsonl")
+    Files.writeString(
+      transcript,
+      """
+      {"type":"assistant","sessionId":"usage-session","cwd":"/work/project-usage","isSidechain":false,"timestamp":"2026-06-14T21:49:35.000Z","message":{"model":"<synthetic>","role":"assistant","content":[{"type":"text","text":"synthetic"}],"usage":{"input_tokens":0,"output_tokens":0,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"cache_creation":{"ephemeral_5m_input_tokens":0,"ephemeral_1h_input_tokens":0}}}}
+      {"type":"assistant","sessionId":"usage-session","cwd":"/work/project-usage","isSidechain":false,"timestamp":"2026-06-14T21:49:36.000Z","message":{"model":"claude-opus-4-8","role":"assistant","content":[{"type":"text","text":"real"}],"usage":{"input_tokens":2,"output_tokens":158,"cache_creation_input_tokens":1530,"cache_read_input_tokens":129744,"cache_creation":{"ephemeral_5m_input_tokens":1530,"ephemeral_1h_input_tokens":0}}}}
+      """.trimIndent()
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val usageFile = store.parseUsageJsonlFile(transcript)
+
+    assertThat(usageFile).isNotNull
+    assertThat(usageFile!!.usageSnapshots).containsExactly(
+      com.intellij.agent.workbench.claude.common.ClaudeUsageSnapshot(
+        modelId = "claude-opus-4-8",
+        inputTokens = 2,
+        outputTokens = 158,
+        cacheReadTokens = 129744,
+        cacheWriteTokens = 1530,
+        cacheWrite5mTokens = 1530,
+        cacheWrite1hTokens = 0,
+        requestCount = 1,
+      )
+    )
+  }
+
+  @Test
   fun parseJsonlFileReturnsNullForSidechainSession() {
     val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-any-path")
     Files.createDirectories(projectDir)

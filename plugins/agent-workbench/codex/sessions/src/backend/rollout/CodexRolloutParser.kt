@@ -6,6 +6,7 @@ package com.intellij.agent.workbench.codex.sessions.backend.rollout
 
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
+import tools.jackson.core.ObjectReadContext
 import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.CodexThreadActivityProjection
@@ -116,7 +117,11 @@ internal class CodexRolloutParser(
         activity = activity,
         requiresResponse = activitySnapshot.activeFlags.isResponseRequired() || activitySnapshot.hasPendingPlan,
         summaryActivity = summaryActivity,
-        usageSnapshots = listOfNotNull(state.usageSnapshot),
+        usageSnapshots = collectRolloutUsageSnapshots(
+          path = path,
+          fallbackModelId = state.modelId,
+          isSubAgentThreadSpawn = state.parentThreadId != null,
+        ).ifEmpty { listOfNotNull(state.usageSnapshot) },
         hasExplicitTitle = !usedFallbackTitle,
       ),
     )
@@ -150,6 +155,385 @@ internal class CodexRolloutParser(
     )
   }
 
+}
+
+private fun collectRolloutUsageSnapshots(
+  path: Path,
+  fallbackModelId: String?,
+  isSubAgentThreadSpawn: Boolean,
+): List<AgentSessionUsageSnapshot> {
+  val usageByModel = LinkedHashMap<String?, UsageTotals>()
+  var currentModel = fallbackModelId
+  var previousTotalUsage: AgentSessionUsageSnapshot? = null
+  val replayCandidates = ArrayList<PendingReplayTokenEvent>()
+  var replayResolved = !isSubAgentThreadSpawn
+
+  Files.newBufferedReader(path).useLines { lines ->
+    lines.forEach { line ->
+      val parsed = parseUsageLine(line) ?: return@forEach
+      when (parsed.eventType) {
+        "session_meta", "turn_context" -> {
+          currentModel = parsed.eventModelId ?: currentModel
+        }
+        "token_count" -> {
+          val pending = PendingReplayTokenEvent(
+            timestampSecond = parsed.timestampSecond,
+            modelId = parsed.eventModelId ?: currentModel,
+            totalUsage = parsed.totalUsage?.copy(modelId = parsed.eventModelId ?: currentModel),
+            lastUsage = parsed.lastUsage?.copy(modelId = parsed.eventModelId ?: currentModel),
+          ).takeUnless { it.totalUsage == null && it.lastUsage == null } ?: return@forEach
+          if (!replayResolved) {
+            if (replayCandidates.isEmpty()) {
+              replayCandidates += pending
+              return@forEach
+            }
+            val firstSecond = replayCandidates.first().timestampSecond
+            if (pending.timestampSecond == firstSecond) {
+              replayCandidates += pending
+              return@forEach
+            }
+
+            flushReplayCandidates(
+              replayCandidates = replayCandidates,
+              skipAsReplay = replayCandidates.size > 1,
+              previousTotalUsageRef = { previousTotalUsage },
+              updatePreviousTotalUsage = { previousTotalUsage = it },
+              usageByModel = usageByModel,
+              finalFallbackModelId = { currentModel },
+            )
+            replayCandidates.clear()
+            replayResolved = true
+          }
+
+          applyPendingTokenEvent(
+            pending = pending,
+            previousTotalUsageRef = { previousTotalUsage },
+            updatePreviousTotalUsage = { previousTotalUsage = it },
+            usageByModel = usageByModel,
+            finalFallbackModelId = { currentModel },
+          )
+        }
+      }
+      if (parsed.eventType == "turn.completed" && parsed.execUsage != null) {
+          val modelId = parsed.execModelId ?: currentModel
+          val resolvedModelId = resolveCodexPricingModel(modelId)
+          usageByModel.getOrPut(resolvedModelId) { UsageTotals(modelId = resolvedModelId) }
+            .add(parsed.execUsage.copy(modelId = resolvedModelId))
+      }
+    }
+  }
+
+  if (!replayResolved && replayCandidates.isNotEmpty()) {
+    flushReplayCandidates(
+      replayCandidates = replayCandidates,
+      skipAsReplay = replayCandidates.size > 1,
+      previousTotalUsageRef = { previousTotalUsage },
+      updatePreviousTotalUsage = { previousTotalUsage = it },
+      usageByModel = usageByModel,
+      finalFallbackModelId = { currentModel },
+    )
+  }
+
+  return usageByModel.values
+    .map(UsageTotals::toSnapshot)
+    .filterNot(AgentSessionUsageSnapshot::isZeroUsage)
+}
+
+private data class PendingReplayTokenEvent(
+  @JvmField val timestampSecond: String,
+  @JvmField val modelId: String?,
+  @JvmField val totalUsage: AgentSessionUsageSnapshot?,
+  @JvmField val lastUsage: AgentSessionUsageSnapshot?,
+)
+
+private data class UsageTotals(
+  @JvmField var modelId: String?,
+  @JvmField var inputTokens: Long = 0,
+  @JvmField var outputTokens: Long = 0,
+  @JvmField var cacheReadTokens: Long = 0,
+  @JvmField var cacheWriteTokens: Long = 0,
+  @JvmField var cacheWrite5mTokens: Long = 0,
+  @JvmField var cacheWrite1hTokens: Long = 0,
+  @JvmField var reasoningTokens: Long = 0,
+) {
+  fun add(usage: AgentSessionUsageSnapshot) {
+    if (modelId == null) {
+      modelId = usage.modelId
+    }
+    inputTokens += usage.inputTokens
+    outputTokens += usage.outputTokens
+    cacheReadTokens += usage.cacheReadTokens
+    cacheWriteTokens += usage.cacheWriteTokens
+    cacheWrite5mTokens += usage.cacheWrite5mTokens
+    cacheWrite1hTokens += usage.cacheWrite1hTokens
+    reasoningTokens += usage.reasoningTokens
+  }
+
+  fun toSnapshot(): AgentSessionUsageSnapshot {
+    return AgentSessionUsageSnapshot(
+      modelId = modelId,
+      inputTokens = inputTokens,
+      outputTokens = outputTokens,
+      cacheReadTokens = cacheReadTokens,
+      cacheWriteTokens = cacheWriteTokens,
+      cacheWrite5mTokens = cacheWrite5mTokens,
+      cacheWrite1hTokens = cacheWrite1hTokens,
+      reasoningTokens = reasoningTokens,
+    )
+  }
+}
+
+private fun flushReplayCandidates(
+  replayCandidates: List<PendingReplayTokenEvent>,
+  skipAsReplay: Boolean,
+  previousTotalUsageRef: () -> AgentSessionUsageSnapshot?,
+  updatePreviousTotalUsage: (AgentSessionUsageSnapshot?) -> Unit,
+  usageByModel: MutableMap<String?, UsageTotals>,
+  finalFallbackModelId: () -> String?,
+) {
+  if (skipAsReplay) {
+    replayCandidates.forEach { candidate ->
+      if (candidate.totalUsage != null) {
+        updatePreviousTotalUsage(candidate.totalUsage)
+      }
+    }
+    return
+  }
+
+  replayCandidates.forEach { candidate ->
+    applyPendingTokenEvent(
+      pending = candidate,
+      previousTotalUsageRef = previousTotalUsageRef,
+      updatePreviousTotalUsage = updatePreviousTotalUsage,
+      usageByModel = usageByModel,
+      finalFallbackModelId = finalFallbackModelId,
+    )
+  }
+}
+
+private fun applyPendingTokenEvent(
+  pending: PendingReplayTokenEvent,
+  previousTotalUsageRef: () -> AgentSessionUsageSnapshot?,
+  updatePreviousTotalUsage: (AgentSessionUsageSnapshot?) -> Unit,
+  usageByModel: MutableMap<String?, UsageTotals>,
+  finalFallbackModelId: () -> String?,
+) {
+  val deltaUsage = pending.lastUsage ?: run {
+    val totalUsage = pending.totalUsage ?: return
+    val previous = previousTotalUsageRef()
+    val delta = totalUsage.subtract(previous)
+    updatePreviousTotalUsage(totalUsage)
+    delta
+  }
+  if (pending.lastUsage != null && pending.totalUsage != null) {
+    updatePreviousTotalUsage(pending.totalUsage)
+  }
+  if (deltaUsage.isZeroUsage()) {
+    return
+  }
+
+  val resolvedModelId = resolveCodexPricingModel(pending.modelId ?: finalFallbackModelId())
+  usageByModel.getOrPut(resolvedModelId) { UsageTotals(modelId = resolvedModelId) }.add(deltaUsage.copy(modelId = resolvedModelId))
+}
+
+private data class ParsedUsageLine(
+  @JvmField val topLevelType: String?,
+  @JvmField val payloadType: String?,
+  @JvmField val eventType: String?,
+  @JvmField val timestampSecond: String,
+  @JvmField val eventModelId: String?,
+  @JvmField val totalUsage: AgentSessionUsageSnapshot?,
+  @JvmField val lastUsage: AgentSessionUsageSnapshot?,
+  @JvmField val execModelId: String?,
+  @JvmField val execUsage: AgentSessionUsageSnapshot?,
+)
+
+private fun parseUsageLine(line: String): ParsedUsageLine? {
+  var topLevelType: String? = null
+  var timestampSecond = ""
+  var payloadType: String? = null
+  var payloadModelId: String? = null
+  var infoModelId: String? = null
+  var totalUsage: AgentSessionUsageSnapshot? = null
+  var lastUsage: AgentSessionUsageSnapshot? = null
+  var execModelId: String? = null
+  var execUsage: AgentSessionUsageSnapshot? = null
+
+  JsonFactory().createParser(ObjectReadContext.empty(), line).use { parser ->
+    if (parser.nextToken() != JsonToken.START_OBJECT) return null
+    forEachObjectField(parser) { fieldName ->
+      when (fieldName) {
+        "type" -> topLevelType = readStringOrNull(parser)
+        "timestamp" -> {
+          val timestamp = readStringOrNull(parser)
+          timestampSecond = timestamp?.take(19).orEmpty()
+        }
+        "model" -> execModelId = readStringOrNull(parser)
+        "model_name" -> execModelId = execModelId ?: readStringOrNull(parser)
+        "usage" -> execUsage = parseUsageSnapshotObject(parser)
+        "result", "data", "response" -> {
+          val nested = parseUsageContainer(parser)
+          if (execModelId == null) {
+            execModelId = nested.first
+          }
+          if (execUsage == null) {
+            execUsage = nested.second
+          }
+        }
+        "payload" -> {
+          if (parser.currentToken() == JsonToken.START_OBJECT) {
+            forEachObjectField(parser) { payloadField ->
+              when (payloadField) {
+                "type" -> payloadType = readStringOrNull(parser)
+                "model" -> payloadModelId = readStringOrNull(parser)
+                "model_name" -> payloadModelId = payloadModelId ?: readStringOrNull(parser)
+                "info" -> {
+                  val parsedInfo = parseTokenInfo(parser)
+                  infoModelId = parsedInfo.modelId
+                  totalUsage = parsedInfo.totalUsage
+                  lastUsage = parsedInfo.lastUsage
+                }
+                else -> parser.skipChildren()
+              }
+              true
+            }
+          }
+          else {
+            parser.skipChildren()
+          }
+        }
+        else -> parser.skipChildren()
+      }
+      true
+    }
+  }
+
+  return ParsedUsageLine(
+    topLevelType = topLevelType,
+    payloadType = payloadType,
+    eventType = payloadType ?: topLevelType,
+    timestampSecond = timestampSecond,
+    eventModelId = payloadModelId ?: infoModelId,
+    totalUsage = totalUsage,
+    lastUsage = lastUsage,
+    execModelId = execModelId,
+    execUsage = execUsage,
+  )
+}
+
+private data class ParsedTokenInfo(
+  @JvmField val modelId: String?,
+  @JvmField val totalUsage: AgentSessionUsageSnapshot?,
+  @JvmField val lastUsage: AgentSessionUsageSnapshot?,
+)
+
+private fun parseTokenInfo(parser: JsonParser): ParsedTokenInfo {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return ParsedTokenInfo(modelId = null, totalUsage = null, lastUsage = null)
+  }
+
+  var modelId: String? = null
+  var totalUsage: AgentSessionUsageSnapshot? = null
+  var lastUsage: AgentSessionUsageSnapshot? = null
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "model" -> modelId = readStringOrNull(parser)
+      "total_token_usage", "total_usage", "usage" -> {
+        if (totalUsage == null) {
+          totalUsage = parseUsageSnapshotObject(parser)
+        }
+        else {
+          parser.skipChildren()
+        }
+      }
+      "last_token_usage" -> lastUsage = parseUsageSnapshotObject(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return ParsedTokenInfo(modelId = modelId, totalUsage = totalUsage, lastUsage = lastUsage)
+}
+
+private fun parseUsageContainer(parser: JsonParser): Pair<String?, AgentSessionUsageSnapshot?> {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null to null
+  }
+
+  var modelId: String? = null
+  var usage: AgentSessionUsageSnapshot? = null
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "model" -> modelId = readStringOrNull(parser)
+      "model_name" -> modelId = modelId ?: readStringOrNull(parser)
+      "usage" -> usage = parseUsageSnapshotObject(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return modelId to usage
+}
+
+private fun parseUsageSnapshotObject(parser: JsonParser): AgentSessionUsageSnapshot? {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+
+  var inputTokens = 0L
+  var cachedInputTokens = 0L
+  var outputTokens = 0L
+  var reasoningTokens = 0L
+  forEachObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "input_tokens", "prompt_tokens", "input" -> inputTokens = readLongOrNull(parser) ?: 0L
+      "cached_input_tokens", "cache_read_input_tokens", "cached_tokens" -> cachedInputTokens = readLongOrNull(parser) ?: 0L
+      "output_tokens", "completion_tokens", "output" -> outputTokens = readLongOrNull(parser) ?: 0L
+      "reasoning_output_tokens", "reasoning_tokens" -> reasoningTokens = readLongOrNull(parser) ?: 0L
+      else -> parser.skipChildren()
+    }
+    true
+  }
+
+  return AgentSessionUsageSnapshot(
+    modelId = null,
+    inputTokens = maxOf(inputTokens - cachedInputTokens, 0L),
+    outputTokens = outputTokens,
+    cacheReadTokens = minOf(cachedInputTokens, inputTokens),
+    reasoningTokens = reasoningTokens,
+  ).takeUnless(AgentSessionUsageSnapshot::isZeroUsage)
+}
+
+private fun AgentSessionUsageSnapshot.subtract(previous: AgentSessionUsageSnapshot?): AgentSessionUsageSnapshot {
+  if (previous == null) return this
+  return copy(
+    inputTokens = maxOf(inputTokens - previous.inputTokens, 0L),
+    outputTokens = maxOf(outputTokens - previous.outputTokens, 0L),
+    cacheReadTokens = maxOf(cacheReadTokens - previous.cacheReadTokens, 0L),
+    cacheWriteTokens = maxOf(cacheWriteTokens - previous.cacheWriteTokens, 0L),
+    cacheWrite5mTokens = maxOf(cacheWrite5mTokens - previous.cacheWrite5mTokens, 0L),
+    cacheWrite1hTokens = maxOf(cacheWrite1hTokens - previous.cacheWrite1hTokens, 0L),
+    reasoningTokens = maxOf(reasoningTokens - previous.reasoningTokens, 0L),
+  )
+}
+
+private fun AgentSessionUsageSnapshot.isZeroUsage(): Boolean {
+  return inputTokens == 0L &&
+         outputTokens == 0L &&
+         cacheReadTokens == 0L &&
+         cacheWriteTokens == 0L &&
+         cacheWrite5mTokens == 0L &&
+         cacheWrite1hTokens == 0L &&
+         reasoningTokens == 0L
+}
+
+private fun resolveCodexPricingModel(modelId: String?): String? {
+  return when (modelId) {
+    null -> null
+    "codex-auto-review" -> "gpt-5.5"
+    else -> modelId
+  }
 }
 
 private fun CodexThreadSourceKind.isSubAgentSourceKind(): Boolean {
