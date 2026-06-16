@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -44,7 +44,8 @@ public final class LeftEdgeAlignmentProcessor extends AbstractBlockAlignmentProc
   protected boolean applyIndentToTheFirstBlockOnLine(@NotNull IndentData alignmentAnchorIndent, @NotNull Context context) {
     WhiteSpace whiteSpace = context.targetBlock().getWhiteSpace();
     whiteSpace.setSpaces(alignmentAnchorIndent.getSpaces(), alignmentAnchorIndent.getIndentSpaces());
-    if (alignmentAnchorIndent.getSpaces() > 0) {
+    if (alignmentAnchorIndent.getSpaces() > 0 &&
+        LanguageAlignmentWhitespacePolicy.useSpacesForAlignment(context.targetBlock())) {
       // Alignment spaces should not be converted into tabs
       whiteSpace.setForceSkipTabulationsUsage(true);
     }
