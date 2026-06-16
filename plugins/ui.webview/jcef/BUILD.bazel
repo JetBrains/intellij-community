@@ -1,13 +1,6 @@
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.platform.ui.webview.jcef` start
-
-create_kotlinc_options(
-    name = "custom_jcef",
-    api_version = "2.3",
-    language_version = "2.3",
-)
 
 jvm_library(
     name = "jcef",
@@ -19,7 +12,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_jcef",
     module_name = "intellij.platform.ui.webview.jcef",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -49,7 +41,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_jcef",
     module_name = "intellij.platform.ui.webview.jcef",
     visibility = ["//visibility:public"],
     runtime_deps = [

@@ -1,39 +1,38 @@
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load(":webview_plugin_zip.bzl", "webview_plugin_zip")
 
-exports_files(["build-web-assets"], visibility = ["//visibility:public"])
+exports_files(
+    ["build-web-assets"],
+    visibility = ["//visibility:public"],
+)
 
 native_binary(
-  name = "build_web_assets",
-  src = "build-web-assets",
-  env = {
-    "WEBVIEW_SRC_DIR": "community/plugins/ui.webview/webview-src",
-  },
-  tags = ["manual", "local"],
+    name = "build_web_assets",
+    src = "build-web-assets",
+    env = {
+        "WEBVIEW_SRC_DIR": "community/plugins/ui.webview/webview-src",
+    },
+    tags = [
+        "local",
+        "manual",
+    ],
 )
 
 webview_plugin_zip(
     name = "webview_plugin_zip",
+    out = "webview.zip",
     files = {
         ":ui.webview.jar": "lib/com.intellij.platform.ui.webview.jar",
         "//plugins/ui.webview/jcef:jcef.jar": "lib/modules/intellij.platform.ui.webview.jcef.jar",
     },
     native_files = glob(["lib/webview-native/win/**"]),
-    out = "webview.zip",
     root_dir = "webview",
     visibility = ["//visibility:public"],
 )
 
 ### auto-generated section `build intellij.platform.ui.webview` start
-
-create_kotlinc_options(
-    name = "custom_ui.webview",
-    api_version = "2.3",
-    language_version = "2.3",
-)
 
 jvm_library(
     name = "ui.webview",
@@ -45,7 +44,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_ui.webview",
     module_name = "intellij.platform.ui.webview",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -77,7 +75,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_ui.webview",
     module_name = "intellij.platform.ui.webview",
     visibility = ["//visibility:public"],
     runtime_deps = [

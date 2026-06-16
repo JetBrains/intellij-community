@@ -1,3 +1,6 @@
+- name: lib/modules/intellij.platform.ui.webview.jcef.jar
+  contentModules:
+  - name: intellij.platform.ui.webview.jcef
 - name: lib/platform-ui-webview.jar
   modules:
   - name: intellij.platform.ui.webview

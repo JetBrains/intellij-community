@@ -1,11 +1,11 @@
 <idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-    <plugin id="com.intellij.modules.jcef"/>
+    <plugin id="com.intellij.platform.ui.webview"/>
     <module name="intellij.libraries.jcef"/>
     <module name="intellij.platform.ui.jcef"/>
-    <!-- endregion -->
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <webViewEngineProvider implementation="com.intellij.ui.webview.impl.jcef.JcefEngineProvider"/>

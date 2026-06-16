@@ -1,41 +1,37 @@
 load("@bazel_skylib//rules:native_binary.bzl", "native_binary")
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//plugins/ui.webview:webview_plugin_zip.bzl", "webview_plugin_zip")
 
 native_binary(
-  name = "build_web_assets",
-  src = "//plugins/ui.webview:build-web-assets",
-  env = {
-    "WEBVIEW_SRC_DIR": "community/plugins/ui.webview/markdown-preview/webview-src",
-  },
-  tags = ["manual", "local"],
+    name = "build_web_assets",
+    src = "//plugins/ui.webview:build-web-assets",
+    env = {
+        "WEBVIEW_SRC_DIR": "community/plugins/ui.webview/markdown-preview/webview-src",
+    },
+    tags = [
+        "local",
+        "manual",
+    ],
 )
 
 alias(
-  name = "webview-preview",
-  actual = ":markdown-webview-preview",
-  visibility = ["//visibility:public"],
+    name = "webview-preview",
+    actual = ":markdown-webview-preview",
+    visibility = ["//visibility:public"],
 )
 
 webview_plugin_zip(
     name = "markdown_webview_preview_plugin_zip",
+    out = "markdown-webview-preview.zip",
     files = {
         ":markdown-webview-preview.jar": "lib/org.intellij.plugins.markdown.webview.preview.jar",
     },
-    out = "markdown-webview-preview.zip",
     root_dir = "markdown-webview-preview",
     visibility = ["//visibility:public"],
 )
 
 ### auto-generated section `build intellij.markdown.webview.preview` start
-
-create_kotlinc_options(
-    name = "custom_markdown-webview-preview",
-    api_version = "2.3",
-    language_version = "2.3",
-)
 
 jvm_library(
     name = "markdown-webview-preview",
@@ -47,7 +43,6 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_markdown-webview-preview",
     module_name = "intellij.markdown.webview.preview",
     resource_strip_prefix = "resources",
     resources = glob(
@@ -84,7 +79,6 @@ jvm_library(
         [],
         allow_empty = True,
     ),
-    kotlinc_opts = ":custom_markdown-webview-preview",
     module_name = "intellij.markdown.webview.preview",
     visibility = ["//visibility:public"],
     runtime_deps = [

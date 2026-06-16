@@ -1,14 +1,7 @@
 load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
-load("//build:compiler-options.bzl", "create_kotlinc_options")
 
 ### auto-generated section `build intellij.markdown.webview.preview.tests` start
-
-create_kotlinc_options(
-    name = "custom_tests",
-    api_version = "2.3",
-    language_version = "2.3",
-)
 
 jvm_library(
     name = "tests",
@@ -35,7 +28,6 @@ jvm_library(
         "//plugins/ui.webview/markdown-preview:markdown-webview-preview",
         "//plugins/ui.webview/markdown-preview:markdown-webview-preview_test_lib",
     ],
-    kotlinc_opts = ":custom_tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
