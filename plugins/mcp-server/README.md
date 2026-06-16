@@ -30,6 +30,7 @@ IntelliJ plugin). If you want a one-page summary, jump to the [cheat sheet](#16-
 15. [Advanced](#15-advanced)
 16. [Cheat sheet / checklist](#16-cheat-sheet--checklist)
 17. [Implementation details](#17-implementation-details)
+18. [Built-in IDE diagnostics tool](#18-built-in-ide-diagnostics-tool)
 
 Sections 1–16 are the **user guide** — everything you need to write a tool. Section 17 is **implementation details** for readers who want to
 understand how the framework turns a Kotlin method into an MCP tool, or who plan to extend the framework itself.
@@ -1076,3 +1077,31 @@ Implementation details:
 - `hasMcpServerRuntimeOverrides()` is a quick probe used by settings UI to hide / disable controls that the system property already dictates.
 
 These overrides are **not a public API** — they are JetBrains-internal knobs for evaluation and should not be depended on by downstream plugins.
+
+---
+
+## 18. Built-in IDE diagnostics tool
+
+The built-in `get_ide_diagnostics` tool captures cheap diagnostics from the running IDE process: IDE/project identity, JVM uptime, process CPU
+load, memory, garbage collector counters, thread-state summary, CPU-ranked threads, and optionally the raw IntelliJ thread/coroutine dump.
+
+The toolset is disabled by default because it exposes process-wide diagnostic details. Start the IDE with:
+
+```bash
+-Didea.diagnostics.mcp.enabled=true
+```
+
+Tool parameters:
+
+| Parameter            | Default | Meaning                                                                                  |
+|----------------------|---------|------------------------------------------------------------------------------------------|
+| `sampleMillis`       | `1000`  | CPU sampling window in milliseconds. Values are clamped to `0..30000`; use `0` for a snapshot. |
+| `topThreadCount`     | `25`    | Maximum CPU-ranked threads to return. Values are clamped to `1..200`.                    |
+| `includeRawDump`     | `true`  | Include the raw IntelliJ thread dump text.                                                |
+| `maxDumpChars`       | `200000`| Maximum raw dump characters. Values are clamped to `0..2000000`.                         |
+| `stripCoroutineDump` | `true`  | Strip coroutine dump frames with little diagnostic value.                                  |
+
+Use this tool for quick answers to "what is this IDE doing right now?" questions: high CPU, blocked threads, thread-state spikes, or a raw
+dump that should be attached to a performance investigation. It is not a replacement for JFR, async-profiler, or a long-running profiler
+recording. Per-thread CPU data is based on `ThreadMXBean` CPU-time deltas sampled inside the IDE process, and raw dumps are truncated when they
+exceed `maxDumpChars`.
