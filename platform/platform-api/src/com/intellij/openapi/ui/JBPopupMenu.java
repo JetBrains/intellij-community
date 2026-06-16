@@ -77,6 +77,7 @@ public class JBPopupMenu extends JPopupMenu {
   @Override
   public void show(Component invoker, int x, int y) {
     if (LOG.isDebugEnabled()) logMenuPosition(invoker, x, y);
+    JBPopupMenuDragSupportKt.prepareForMenuDragSession(this, invoker, x, y);
     super.show(invoker, x, y);
   }
 

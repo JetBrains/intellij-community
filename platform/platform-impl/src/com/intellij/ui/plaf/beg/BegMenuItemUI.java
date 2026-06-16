@@ -10,6 +10,7 @@ import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
+import com.intellij.openapi.ui.JBPopupMenuDragSupportKt;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ExperimentalUI;
@@ -591,6 +592,8 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
       MenuSelectionManager manager=e.getMenuSelectionManager();
       MenuElement[] path = e.getPath();
       manager.setSelectedPath(path);
+      var dragSession = JBPopupMenuDragSupportKt.getCurrentMenuDragSession();
+      if (dragSession != null) dragSession.onMenuDragged(e);
     }
 
     @Override
@@ -612,11 +615,20 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   private boolean handleReleaseOnMenuItem(@NotNull MouseEvent e, @NotNull MenuSelectionManager manager) {
     Point p = e.getPoint();
     if (p.x >= 0 && p.x < menuItem.getWidth() && p.y >= 0 && p.y < menuItem.getHeight()) {
-      if (e.getButton() == MouseEvent.BUTTON1 || triggerMenuActionsOnRmbRelease()) {
+      if (
+        e.getButton() == MouseEvent.BUTTON1 ||
+        (triggerMenuActionsOnRmbRelease() && isClickOrNoticeableDrag())
+      ) {
         doClick(manager, e);
       }
       return true;
     }
     return false;
+  }
+
+  private static boolean isClickOrNoticeableDrag() {
+    var dragSession = JBPopupMenuDragSupportKt.getCurrentMenuDragSession();
+    if (dragSession == null) return true; // We don't know the reason, so the safe bet is to handle normally.
+    return dragSession.isClickOrNoticeableDrag();
   }
 }
