@@ -23,3 +23,4 @@ com.intellij.refactoring.rename.RenameHandlerRegistry
 com.intellij.platform.ide.customization.ExternalProductResourceUrls
 com.jetbrains.rdclient.permissions.FrontendPermissionHost
 com.intellij.openapi.updateSettings.impl.UpdateRequestParametersProvider
+com.intellij.xdebugger.impl.RunToCursorService
