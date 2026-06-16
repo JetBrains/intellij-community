@@ -1,0 +1,80 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.agent.workbench.opencode.sessions
+
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigBuilder
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import kotlinx.coroutines.runBlocking
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+
+class OpenCodeMcpUrlLaunchContributorTest {
+  @Test
+  fun contributesActualMcpUrlEnvironmentForOpenCodeLaunches(): Unit = runBlocking {
+    val contributor = OpenCodeMcpUrlLaunchContributor(
+      mcpUrlResolver = { "http://127.0.0.1:63342/api/mcp" },
+    )
+
+    val launchSpec = contributor.contribute(
+      projectPath = "/work/project",
+      provider = AgentSessionProvider.OPENCODE,
+      sessionId = null,
+      launchSpec = AgentSessionTerminalLaunchSpec(command = listOf("opencode")),
+    )
+
+    assertThat(launchSpec.envVariables).containsEntry(OPENCODE_MCP_URL_ENVIRONMENT_VARIABLE, "http://127.0.0.1:63342/api/mcp")
+    assertThat(launchSpec.envVariables).containsEntry(AwbMcpConfigBuilder.PROJECT_PATH_ENV, "/work/project")
+  }
+
+  @Test
+  fun preservesExistingLaunchEnvironmentVariables(): Unit = runBlocking {
+    val contributor = OpenCodeMcpUrlLaunchContributor(
+      mcpUrlResolver = { "http://127.0.0.1:63342/api/mcp" },
+    )
+
+    val launchSpec = contributor.contribute(
+      projectPath = "/work/project",
+      provider = AgentSessionProvider.OPENCODE,
+      sessionId = "thread-1",
+      launchSpec = AgentSessionTerminalLaunchSpec(
+        command = listOf("opencode"),
+        envVariables = mapOf("EXISTING" to "1"),
+      ),
+    )
+
+    assertThat(launchSpec.envVariables).containsEntry("EXISTING", "1")
+    assertThat(launchSpec.envVariables).containsEntry(OPENCODE_MCP_URL_ENVIRONMENT_VARIABLE, "http://127.0.0.1:63342/api/mcp")
+  }
+
+  @Test
+  fun leavesNonOpenCodeLaunchesUnchanged(): Unit = runBlocking {
+    val contributor = OpenCodeMcpUrlLaunchContributor(
+      mcpUrlResolver = { "http://127.0.0.1:63342/api/mcp" },
+    )
+    val baseLaunchSpec = AgentSessionTerminalLaunchSpec(command = listOf("codex"))
+
+    val launchSpec = contributor.contribute(
+      projectPath = "/work/project",
+      provider = AgentSessionProvider.CODEX,
+      sessionId = null,
+      launchSpec = baseLaunchSpec,
+    )
+
+    assertThat(launchSpec).isSameAs(baseLaunchSpec)
+  }
+
+  @Test
+  fun leavesOpenCodeLaunchUnchangedWhenMcpUrlIsUnavailable(): Unit = runBlocking {
+    val contributor = OpenCodeMcpUrlLaunchContributor(mcpUrlResolver = { null })
+    val baseLaunchSpec = AgentSessionTerminalLaunchSpec(command = listOf("opencode"))
+
+    val launchSpec = contributor.contribute(
+      projectPath = "/work/project",
+      provider = AgentSessionProvider.OPENCODE,
+      sessionId = null,
+      launchSpec = baseLaunchSpec,
+    )
+
+    assertThat(launchSpec).isSameAs(baseLaunchSpec)
+  }
+}

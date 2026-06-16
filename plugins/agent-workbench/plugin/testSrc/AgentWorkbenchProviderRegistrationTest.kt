@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionProviderMenuModel
 import com.intellij.testFramework.junit5.TestApplication
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -21,6 +22,7 @@ class AgentWorkbenchProviderRegistrationTest {
     assertTrue(AgentSessionProvider.CODEX in registeredProviderIds)
     assertTrue(AgentSessionProvider.CLAUDE in registeredProviderIds)
     assertTrue(AgentSessionProvider.JUNIE in registeredProviderIds)
+    assertTrue(AgentSessionProvider.OPENCODE in registeredProviderIds)
     assertTrue(AgentSessionProvider.PI in registeredProviderIds)
     assertTrue(AgentSessionProvider.TERMINAL in registeredProviderIds)
 
@@ -29,6 +31,13 @@ class AgentWorkbenchProviderRegistrationTest {
       providers.associate { it.provider to true },
     ).standardItems.map { it.bridge.provider }
     assertTrue(AgentSessionProvider.JUNIE in standardMenuProviders)
+    assertTrue(AgentSessionProvider.OPENCODE in standardMenuProviders)
     assertTrue(AgentSessionProvider.PI in standardMenuProviders)
+
+    val yoloMenuProviders = buildAgentSessionProviderMenuModel(
+      providers,
+      providers.associate { it.provider to true },
+    ).yoloItems.map { it.bridge.provider }
+    assertFalse(AgentSessionProvider.OPENCODE in yoloMenuProviders)
   }
 }

@@ -20,5 +20,7 @@ public final class AgentWorkbenchCommonIcons {
   /** 16x16 */ public static final @NotNull Icon CodexGray = load("icons/codexGray.svg", 1835398902, 2);
   /** 16x16 */ public static final @NotNull Icon Junie = load("icons/junie.svg", -76396756, 0);
   /** 16x16 */ public static final @NotNull Icon JunieGray = load("icons/junieGray.svg", 465929641, 2);
+  /** 16x16 */ public static final @NotNull Icon Opencode = load("icons/opencode.svg", -1522185687, 0);
+  /** 16x16 */ public static final @NotNull Icon OpencodeGray = load("icons/opencodeGray.svg", 1279569419, 2);
   /** 16x16 */ public static final @NotNull Icon PI = load("icons/pi.svg", 1349425160, 2);
 }
