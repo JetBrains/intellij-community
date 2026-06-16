@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.CacheSwitcher;
@@ -302,7 +302,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     File rootDir = new File("/");
     VirtualFilePointer rootPointerByFile = createPointerByFile(rootDir, null);
     assertTrue(rootPointerByFile.isValid());
-    
+
     VirtualFilePointer rootPointerByUrl = myVirtualFilePointerManager.create("file:///", disposable, null);
     assertTrue(rootPointerByUrl.isValid());
 
@@ -1243,36 +1243,36 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void pointerCreatedWithURLAndThenTheDirectoryCreatedWithDifferentCaseSensitivityThenItMustNotFreakOutButSortItsChildrenAccordingToNewCaseSensitivity() throws IOException {
+  public void pointerSortsChildrenWhenDirectoryCaseSensitivityChanges() throws IOException {
     IoTestUtil.assumeWindows();
     IoTestUtil.assumeWslPresence();
     assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
 
     myVirtualFilePointerManager.assertConsistency();
-    File dir = new File(tempDir.getRoot(), "dir");
-    File file = new File(dir, "child.txt");
-    assertFalse(file.exists());
-    assertEquals(tempDir.getRoot().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(tempDir.getRootPath()));
+    var dir = tempDir.getRootPath().resolve("dir");
+    var file = dir.resolve("child.txt");
+    var FILE = dir.resolve("CHILD.TXT");
+    assertFalse(Files.exists(dir));
+    assertEquals(tempDir.getRootPath().toString(), FileAttributes.CaseSensitivity.INSENSITIVE, FileSystemUtil.readParentCaseSensitivity(tempDir.getRootPath()));
 
-    VirtualFilePointer pointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(file.getPath()), disposable, null);
+    var pointer = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(file.toString()), disposable, null);
     myVirtualFilePointerManager.assertConsistency();
-    assertTrue(dir.mkdirs());
-    assertTrue(file.createNewFile());
-
+    Files.createDirectories(dir);
     IoTestUtil.setCaseSensitivity(dir, true);
-    File file2 = new File(dir, "CHILD.TXT");
-    assertTrue(file2.createNewFile());
-    VirtualFile vFile2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file2);
-    assertNotNull(vFile2);
-    assertEquals("CHILD.TXT", vFile2.getName());
-    VirtualFilePointer pointer2 = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(file2.getPath()), disposable, null);
-    assertNotSame(pointer2, pointer);
+    Files.createFile(file);
+    Files.createFile(FILE);
+
+    var vFILE = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(FILE);
+    assertNotNull(vFILE);
+    assertEquals("CHILD.TXT", vFILE.getName());
+    var POINTER = myVirtualFilePointerManager.create(VfsUtilCore.pathToUrl(FILE.toString()), disposable, null);
+    assertNotSame(POINTER, pointer);
     myVirtualFilePointerManager.assertConsistency();
 
-    VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    var vFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file);
     assertNotNull(vFile);
     assertTrue(vFile.isCaseSensitive());
-    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(file.toPath()));
+    assertEquals(FileAttributes.CaseSensitivity.SENSITIVE, FileSystemUtil.readParentCaseSensitivity(file));
     myVirtualFilePointerManager.assertConsistency();
   }
 
@@ -1432,7 +1432,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
 
     File jar = IoTestUtil.createTestJar(new File(tempRoot+"/"+abc), List.of(Pair.create(expectedPathInsideJar, new byte[]{' ', ' '})));
     assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(jar));
-    
+
     assertTrue(pointer.isValid());
     VirtualFile virtualFile = pointer.getFile();
     assertNotNull(virtualFile);
