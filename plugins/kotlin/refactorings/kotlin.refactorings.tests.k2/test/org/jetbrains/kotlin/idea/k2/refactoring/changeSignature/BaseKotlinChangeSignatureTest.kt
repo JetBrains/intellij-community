@@ -1104,6 +1104,12 @@ public @interface NotNull {
 
     fun testRenameFunction() = doTest { newName = "after" }
 
+    fun testRenameExplicitContextArgument() = doTest { newParameters[0].name = "s" }
+
+    fun testRenameExplicitContextArgument2() = doTest { newParameters[0].name = "s" }
+
+    fun testRenameExplicitContextArgument3() = doTest { newParameters[1].name = "str" }
+
     //--------------------reorder----------------------------
 
     fun testConstructorSwapArguments() = doTest {//default parameter is not passed explicitly

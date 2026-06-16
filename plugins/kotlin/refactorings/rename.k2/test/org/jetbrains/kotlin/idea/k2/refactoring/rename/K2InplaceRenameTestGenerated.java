@@ -193,6 +193,21 @@ public class K2InplaceRenameTestGenerated extends AbstractK2InplaceRenameTest {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/EraseCompanionName.kt");
     }
 
+    @TestMetadata("ExplicitContextArgument.kt")
+    public void testExplicitContextArgument() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/ExplicitContextArgument.kt");
+    }
+
+    @TestMetadata("ExplicitContextArgument2.kt")
+    public void testExplicitContextArgument2() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/ExplicitContextArgument2.kt");
+    }
+
+    @TestMetadata("ExplicitContextArgument3.kt")
+    public void testExplicitContextArgument3() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/rename/inplace/ExplicitContextArgument3.kt");
+    }
+
     @TestMetadata("expressionsInRange.kt")
     public void testExpressionsInRange() throws Exception {
         runTest("../../idea/tests/testData/refactoring/rename/inplace/expressionsInRange.kt");

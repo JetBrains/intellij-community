@@ -38,6 +38,8 @@ import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.defaultValue
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.appendValueArgument
+import org.jetbrains.kotlin.idea.base.psi.deleteValueArgument
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -112,14 +114,14 @@ internal class KotlinFunctionCallUsage(
                 val map = mutableMapOf<Int, SmartPsiElementPointer<KtExpression>>()
 
                 val oldIdxMap: Map<KaValueParameterSymbol, Int> = partiallyAppliedSymbol.signature.valueParameters.mapIndexed { idx, s -> s.symbol to (idx + receiverOffset) }.toMap()
-                functionCall.argumentMapping.forEach { (expr, variableSymbol) ->
+                functionCall.valueArgumentMapping.forEach { (expr, variableSymbol) ->
                     map[oldIdxMap[variableSymbol.symbol]!!] = expr.createSmartPointer()
                 }
-                for (entry in oldIdxMap.entries) {
-                    if (!map.containsKey(entry.value)) {
-                        entry.key.defaultValue?.let {
+                for ((key, value) in oldIdxMap) {
+                    if (!map.containsKey(value)) {
+                        key.defaultValue?.let {
                             //create copy because the (unused) parameter might be removed during introduce parameter refactoring
-                            map[entry.value] = (it.copy() as KtExpression).createSmartPointer()
+                            map[value] = (it.copy() as KtExpression).createSmartPointer()
                         }
                     }
                 }
@@ -381,28 +383,28 @@ internal class KotlinFunctionCallUsage(
                 val name = argInfo.name?.let { Name.identifier(it) }
 
                 if (argInfo.receiverValue != null) {
-                    addArgument(psiFactory.createArgument(psiFactory.createExpression(argInfo.receiverValue), name))
+                    appendValueArgument(psiFactory.createArgument(psiFactory.createExpression(argInfo.receiverValue), name))
                     continue
                 }
 
                 when (val resolvedArgument = argInfo.resolvedArgument) {
                     null -> {
                         val argument = argInfo.getArgumentByDefaultValue(element, allUsages, psiFactory)
-                        addArgument(argument)
+                        appendValueArgument(argument)
                     }
                     // TODO: Support Kotlin varargs
 
                     else -> {
                         val expression = resolvedArgument.element ?: continue
                         if (!expression.isPhysical) {
-                            addArgument(psiFactory.createArgument(expression, name))
+                            appendValueArgument(psiFactory.createArgument(expression, name))
                             continue
                         }
                         var newArgument: KtValueArgument = expression.parent as? KtValueArgument ?: continue
                         if (newArgument.getArgumentName()?.asName != name || newArgument is KtLambdaArgument) {
                             newArgument = psiFactory.createArgument(newArgument.getArgumentExpression(), name)
                         }
-                        addArgument(newArgument)
+                        appendValueArgument(newArgument)
                     }
                 }
             }
@@ -421,7 +423,7 @@ internal class KotlinFunctionCallUsage(
 
         newArgumentList.arguments.singleOrNull()?.let {
             if (it.getArgumentExpression() == null) {
-                newArgumentList.removeArgument(it)
+                newArgumentList.deleteValueArgument(it)
             }
         }
 
@@ -431,7 +433,7 @@ internal class KotlinFunctionCallUsage(
         val lambdaArgumentNotTouched = lastOldArgument is KtLambdaArgument && oldLastResolvedArgument == lastOldArgument
 
         if (lambdaArgumentNotTouched) {
-            newArgumentList.removeArgument(newArgumentList.arguments.last())
+            newArgumentList.deleteValueArgument(newArgumentList.arguments.last())
         } else {
             val lambdaArguments = element.lambdaArguments
             if (lambdaArguments.isNotEmpty()) {
@@ -521,8 +523,7 @@ internal class KotlinFunctionCallUsage(
             val argumentName = argument.getArgumentName()
             val argumentNameExpression = argumentName?.referenceExpression ?: continue
             val referencedName = argumentNameExpression.getReferencedName()
-            val oldParameterIndex = changeInfo.getOldParameterIndex(referencedName) ?: continue
-            val parameterInfo = changeInfo.newParameters.find { it.oldIndex == oldParameterIndex } ?: continue
+            val parameterInfo = changeInfo.newParameters.find { it.oldName == referencedName } ?: continue
             val identifier = argumentNameExpression.getIdentifier() ?: continue
             val newName = if (callee is KtCallableDeclaration) parameterInfo.getInheritedName(callee) else parameterInfo.name
             identifier.replace(KtPsiFactory(project).createIdentifier(newName))
@@ -547,18 +548,18 @@ internal class KotlinFunctionCallUsage(
 
 
         fun needSeparateVariable(element: PsiElement): Boolean {
-            return when {
-                element is KtConstantExpression || element is KtThisExpression || element is KtSimpleNameExpression -> false
-                element is KtBinaryExpression && OperatorConventions.ASSIGNMENT_OPERATIONS.contains(element.operationToken) -> true
-                element is KtUnaryExpression && OperatorConventions.INCREMENT_OPERATIONS.contains(element.operationToken) -> true
-                element is KtCallExpression -> element.calleeExpression?.mainReference?.resolve() is KtConstructor<*>
+            return when (element) {
+                is KtConstantExpression, is KtThisExpression, is KtSimpleNameExpression -> false
+                is KtBinaryExpression if OperatorConventions.ASSIGNMENT_OPERATIONS.contains(element.operationToken) -> true
+                is KtUnaryExpression if OperatorConventions.INCREMENT_OPERATIONS.contains(element.operationToken) -> true
+                is KtCallExpression -> element.calleeExpression?.mainReference?.resolve() is KtConstructor<*>
                 else -> element.children.any { needSeparateVariable(it) }
             }
         }
 
         val replacements = ArrayList<Pair<KtExpression, KtExpression>>()
         loop@ for ((ref, paramIdx) in referenceMap.entries) {
-            var addReceiver: Boolean = paramIdx == Int.MAX_VALUE
+            val addReceiver: Boolean = paramIdx == Int.MAX_VALUE
             var argumentExpression = indexToExpMap?.get(paramIdx)?.element ?: continue
 
             if (argumentExpression.isPhysical &&  //don't create variable for default value expression

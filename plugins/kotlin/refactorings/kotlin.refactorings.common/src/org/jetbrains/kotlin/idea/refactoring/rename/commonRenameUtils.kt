@@ -47,7 +47,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
  */
 val KtParameter.useScopeForRename: SearchScope
     get() {
-        val owner = ownerFunction as? KtFunction
+        val owner = ownerDeclaration as? KtFunction
         return owner?.useScope ?: useScope
     }
 
