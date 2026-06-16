@@ -99,17 +99,9 @@
       <keyboard-shortcut first-keystroke="shift INSERT" keymap="$default"/>
     </action>
     <action id="Terminal.PasteFromHistory" class="com.intellij.terminal.frontend.action.TerminalPasteFromHistoryAction"
-            icon="AllIcons.Actions.MenuPaste">
-      <keyboard-shortcut first-keystroke="control shift V" keymap="$default"/>
+            icon="AllIcons.Actions.MenuPaste" use-shortcut-of="PasteMultiple">
       <!-- On XWin Ctrl+Shift+V is owned by Terminal.Paste -->
       <keyboard-shortcut first-keystroke="control shift V" keymap="Default for XWin" remove="true"/>
-      <!-- Sublime Text rebinds Ctrl+Shift+V to $Paste -->
-      <keyboard-shortcut first-keystroke="control shift V" keymap="Sublime Text" remove="true"/>
-      <keyboard-shortcut first-keystroke="meta shift V" keymap="Mac OS X" replace-all="true"/>
-      <keyboard-shortcut first-keystroke="meta shift V" keymap="Mac OS X 10.5+" replace-all="true"/>
-      <!-- Sublime Text (Mac OS X) rebinds Cmd+Shift+V to $Paste -->
-      <keyboard-shortcut first-keystroke="meta shift V" keymap="Sublime Text (Mac OS X)" remove="true"/>
-      <keyboard-shortcut first-keystroke="meta shift V" keymap="VSCode OSX" remove="true"/>
     </action>
     <action id="Terminal.PasteSelection" class="com.intellij.terminal.frontend.action.TerminalPasteSelectionAction"
             use-shortcut-of="EditorPasteFromX11">
