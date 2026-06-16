@@ -105,6 +105,13 @@ internal class NoJavaExecutableFilterTest {
     """.trimIndent(), listOf(1))
   }
 
+  @Test
+  fun `IDEA-390587`() {
+    doTest(""":
+      
+    """.trimMargin(), listOf())
+  } 
+
   /** 
    * Run the filter through the lines
    * @param expectedResultLines On which line a result is expected
