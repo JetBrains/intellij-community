@@ -20,7 +20,7 @@ internal object BacktickPathReferenceProvider {
   private const val SKILL_MD = "SKILL.md"
 
   fun getReferences(codeSpan: MarkdownCodeSpan, contentRange: TextRange, content: String): Array<PsiReference> {
-    val pathReference = parsePathReference(contentRange.substring(codeSpan.text)) ?: return PsiReference.EMPTY_ARRAY
+    val pathReference = parsePathReference(content) ?: return PsiReference.EMPTY_ARRAY
     val contexts = pathReference.getContexts(codeSpan)
     if (contexts.isEmpty()) return PsiReference.EMPTY_ARRAY
 

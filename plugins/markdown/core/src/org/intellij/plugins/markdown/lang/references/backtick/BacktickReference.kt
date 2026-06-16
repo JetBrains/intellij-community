@@ -6,6 +6,8 @@ import com.intellij.navigation.ChooseByNameContributorEx
 import com.intellij.navigation.NavigationItem
 import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -20,8 +22,8 @@ import com.intellij.psi.impl.source.resolve.ResolveCache
 import com.intellij.util.indexing.FindSymbolParameters
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
 
-class BacktickReference(element: MarkdownCodeSpan) :
-  PsiPolyVariantReferenceBase<MarkdownCodeSpan>(element, true) {
+class BacktickReference(element: MarkdownCodeSpan, range: TextRange) :
+  PsiPolyVariantReferenceBase<MarkdownCodeSpan>(element, range, true) {
 
   private object Resolver : ResolveCache.PolyVariantResolver<BacktickReference> {
     override fun resolve(ref: BacktickReference, incompleteCode: Boolean): Array<ResolveResult> {
@@ -55,9 +57,13 @@ class BacktickReference(element: MarkdownCodeSpan) :
     val name = canonicalText
     val navigationItems = mutableListOf<NavigationItem>()
 
-    resolveWithContributor(name, name, element.project, ChooseByNameContributorEx.CLASS_EP_NAME, navigationItems)
-    if (shouldSearchInSymbols(name)) {
-      resolveWithContributor(name, name, element.project, ChooseByNameContributorEx.SYMBOL_EP_NAME, navigationItems)
+    if (isFile()) {
+      resolveWithContributor(name, name, element.project, ChooseByNameContributorEx.FILE_EP_NAME, navigationItems)
+    } else {
+      resolveWithContributor(name, name, element.project, ChooseByNameContributorEx.CLASS_EP_NAME, navigationItems)
+      if (shouldSearchInSymbols(name)) {
+        resolveWithContributor(name, name, element.project, ChooseByNameContributorEx.SYMBOL_EP_NAME, navigationItems)
+      }
     }
 
     return navigationItems
@@ -69,8 +75,6 @@ class BacktickReference(element: MarkdownCodeSpan) :
       .toList()
       .toTypedArray()
   }
-
-  override fun getRangeInElement(): TextRange = element.getContentRange()!!
 
   private fun resolveWithContributor(
     name: String,
@@ -100,6 +104,12 @@ class BacktickReference(element: MarkdownCodeSpan) :
 
   private fun shouldSearchInSymbols(elementName: String): Boolean =
     elementName.length >= Registry.intValue("markdown.backtick.reference.symbol.length") || NameUtil.nameToWordList(elementName).size > 1
+
+  private fun isFile(): Boolean {
+    val filetype = FileTypeRegistry.getInstance().getFileTypeByFileName(canonicalText)
+    val endOffset = rangeInElement.endOffset - filetype.defaultExtension.length - 1
+    return filetype != UnknownFileType.INSTANCE && rangeInElement.startOffset < endOffset
+  }
 
   private fun NavigationItem.toPsiElement(): PsiElement? {
     return when (this) {
