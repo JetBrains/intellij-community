@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.wsl.ijent.nio
 
-import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.NlsSafe
@@ -40,7 +39,6 @@ import java.nio.file.attribute.FileAttributeView
 import java.nio.file.spi.FileSystemProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ExecutorService
-import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.ExperimentalPathApi
 
 /**
@@ -68,7 +66,7 @@ internal class IjentWslNioFileSystemProvider(
   private val createdFileSystems: MutableMap<String, IjentWslNioFileSystem> = ConcurrentHashMap()
 
   internal fun removeFileSystem(wslId: String) {
-    createdFileSystems.remove(wslId)
+    createdFileSystems.remove(wslId.lowercase())
   }
 
   override fun toString(): String = """${javaClass.simpleName}(${wslId})"""
@@ -133,11 +131,11 @@ internal class IjentWslNioFileSystemProvider(
     getFileSystem(uri)
 
   private fun getFileSystem(wslId: String): IjentWslNioFileSystem {
-    return createdFileSystems.computeIfAbsent(wslId) { wslId ->
+    return createdFileSystems.computeIfAbsent(wslId.lowercase()) { _ ->
       IjentWslNioFileSystem(
         provider = this,
-        wslId = wslId,
-        ijentFs = ijentFsProvider.getFileSystem(URI("ijent", "wsl", "/$wslId", null, null)),
+        wslId = this.wslId,
+        ijentFs = ijentFsProvider.getFileSystem(ijentFsUri),
         originalFs = originalFsProvider.getFileSystem(URI("file:/")),
         eelDescriptor = eelDescriptor,
       )
@@ -148,8 +146,8 @@ internal class IjentWslNioFileSystemProvider(
     val root = path.toAbsolutePath().root.toString()
     val wslMarker = """\\wsl"""
     if (!root.startsWith(wslMarker, ignoreCase = true)) return null
-    val wslIdWithProbablyWrongCase = root.substring(wslMarker.length).substringAfter('\\').trimEnd('\\')
-    return allWslDistributionIds.get().singleOrNull { wslId -> wslId.equals(wslIdWithProbablyWrongCase, ignoreCase = true) }
+    val wslId = root.substring(wslMarker.length).substringAfter('\\').trimEnd('\\')
+    return wslId.ifEmpty { null }
   }
 
   override fun checkAccess(path: Path, vararg modes: AccessMode): Unit =
@@ -345,21 +343,6 @@ internal class IjentWslNioFileSystemProvider(
   }
 
   companion object {
-    private val allWslDistributionIds: AtomicReference<Set<String>> by lazy {
-      val ref = AtomicReference(emptySet<String>())
-      val wslDistributionManager = WslDistributionManager.getInstance()
-      wslDistributionManager.addWslDistributionsChangeListener { old, new ->
-        ref.updateAndGet { oldFromRef ->
-          val result = HashSet(oldFromRef)
-          result.removeAll(old.map { it.id })
-          result.addAll(new.map { it.id })
-          result
-        }
-      }
-      ref.set(wslDistributionManager.installedDistributions.map { it.id }.toHashSet())
-      ref
-    }
-
     private val LOG = logger<IjentWslNioFileSystemProvider>()
   }
 }
