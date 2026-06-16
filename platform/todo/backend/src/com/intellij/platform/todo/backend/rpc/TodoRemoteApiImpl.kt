@@ -41,6 +41,7 @@ import com.intellij.util.text.CharArrayUtil
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.launch
@@ -186,23 +187,15 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     val results = readAction {
       blockingContextToIndicator {
         val helper = PsiTodoSearchHelper.getInstance(project)
-        val fileResults = mutableListOf<TodoFileResult>()
 
         helper.processFilesWithTodoItems { psiFile ->
           val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
-          val result = buildTodoFileResult(project, psiFile, virtualFile, resolvedFilter)
-          if (result != null) {
-            fileResults.add(result)
-          }
-          true
+          val result = buildTodoFileResult(project, psiFile, virtualFile, resolvedFilter) ?: return@processFilesWithTodoItems true
+          trySend(result).isSuccess
         }
-        fileResults
       }
     }
-    for (result in results) {
-      send(result)
-    }
-  }
+  }.buffer(Channel.UNLIMITED)
 
   override fun listTodos(
     projectId: ProjectId,
@@ -298,7 +291,6 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     val results = readAction {
       blockingContextToIndicator {
         val helper = PsiTodoSearchHelper.getInstance(project)
-        val fileIds = mutableListOf<VirtualFileId>()
 
         helper.processFilesWithTodoItems { psiFile ->
           val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
@@ -310,18 +302,13 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
           }
 
           if (matchesFilter) {
-            fileIds.add(virtualFile.rpcId())
+            return@processFilesWithTodoItems true
           }
-          true
+          trySend(virtualFile.rpcId()).isSuccess
         }
-        fileIds
       }
     }
-
-    for (result in results) {
-      send(result)
-    }
-  }
+  }.buffer(Channel.UNLIMITED)
 
   override suspend fun getTodoCount(
     projectId: ProjectId,
