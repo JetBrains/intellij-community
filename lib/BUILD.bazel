@@ -79,9 +79,9 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie/grazie-rule-engine-0.3.221.jar_copy",
-    src = "@ai_grazie-grazie-rule-engine-0_3_221_http//file",
-    out = "ai.grazie/grazie-rule-engine-0.3.221.jar",
+    name = "ai.grazie/grazie-rule-engine-0.3.229.jar_copy",
+    src = "@ai_grazie-grazie-rule-engine-0_3_229_http//file",
+    out = "ai.grazie/grazie-rule-engine-0.3.229.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -99,15 +99,15 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":ai_grazie-grazie-rule-engine-0_3_221_http_import",
+        ":ai_grazie-grazie-rule-engine-0_3_229_http_import",
         ":net_fellbaum-jemoji-1_3_1_http_import",
     ],
 )
 
 jvm_import(
-    name = "ai_grazie-grazie-rule-engine-0_3_221_http_import",
-    jar = "@ai_grazie-grazie-rule-engine-0_3_221_http//file",
-    source_jar = "@ai_grazie-grazie-rule-engine-0_3_221-sources_http//file",
+    name = "ai_grazie-grazie-rule-engine-0_3_229_http_import",
+    jar = "@ai_grazie-grazie-rule-engine-0_3_229_http//file",
+    source_jar = "@ai_grazie-grazie-rule-engine-0_3_229-sources_http//file",
 )
 
 jvm_import(
@@ -117,17 +117,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie/grazie-rules-llm-0.3.221.jar_copy",
-    src = "@ai_grazie-grazie-rules-llm-0_3_221_http//file",
-    out = "ai.grazie/grazie-rules-llm-0.3.221.jar",
+    name = "ai.grazie/grazie-rules-llm-0.3.229.jar_copy",
+    src = "@ai_grazie-grazie-rules-llm-0_3_229_http//file",
+    out = "ai.grazie/grazie-rules-llm-0.3.229.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "ai-grazie-semantic-engine",
-    jar = "@ai_grazie-grazie-rules-llm-0_3_221_http//file",
-    source_jar = "@ai_grazie-grazie-rules-llm-0_3_221-sources_http//file",
+    jar = "@ai_grazie-grazie-rules-llm-0_3_229_http//file",
+    source_jar = "@ai_grazie-grazie-rules-llm-0_3_229-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -4262,6 +4262,70 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
+copy_file(
+    name = "ai.grazie.client/client-cbor-jvm-0.8.184.jar_copy",
+    src = "@ai_grazie_client-client-cbor-jvm-0_8_184_http//file",
+    out = "ai.grazie.client/client-cbor-jvm-0.8.184.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "ai.grazie.utils/utils-cbor-jvm-0.8.184.jar_copy",
+    src = "@ai_grazie_utils-utils-cbor-jvm-0_8_184_http//file",
+    out = "ai.grazie.utils/utils-cbor-jvm-0.8.184.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.jetbrains.kotlinx/kotlinx-serialization-cbor-jvm-1.7.3.jar_copy",
+    src = "@org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3_http//file",
+    out = "org.jetbrains.kotlinx/kotlinx-serialization-cbor-jvm-1.7.3.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "grazie-tests-pro-ai-grazie-api-gateway-client-jvm",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":ai_grazie_api-api-gateway-client-jvm-0_8_184_http_import",
+        ":ai_grazie_indexing-indexing-provider-api-jvm-0_8_184_http_import",
+        ":ai_grazie_api-api-gateway-api-jvm-0_8_184_http_import",
+        ":ai_grazie_model-model-gateway-jvm-0_8_184_http_import",
+        ":ai_grazie_client-client-cbor-jvm-0_8_184_http_import",
+        ":ai_grazie_utils-utils-cbor-jvm-0_8_184_http_import",
+        ":org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3_http_import",
+    ],
+)
+
+jvm_import(
+    name = "ai_grazie_client-client-cbor-jvm-0_8_184_http_import",
+    jar = "@ai_grazie_client-client-cbor-jvm-0_8_184_http//file",
+    source_jar = "@ai_grazie_client-client-cbor-jvm-0_8_184-sources_http//file",
+)
+
+jvm_import(
+    name = "ai_grazie_utils-utils-cbor-jvm-0_8_184_http_import",
+    jar = "@ai_grazie_utils-utils-cbor-jvm-0_8_184_http//file",
+    source_jar = "@ai_grazie_utils-utils-cbor-jvm-0_8_184-sources_http//file",
+)
+
+jvm_import(
+    name = "org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3_http_import",
+    jar = "@org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3_http//file",
+    source_jar = "@org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3-sources_http//file",
+)
+
+jvm_import(
+    name = "grazie-tests-pro-ai-grazie-gec-util",
+    jar = "@ai_grazie_gec-gec-util-0_8_184_http//file",
+    source_jar = "@ai_grazie_gec-gec-util-0_8_184-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
 jvm_import(
     name = "grazie-tests-pro-ai-grazie-model-ner-jvm",
     jar = "@ai_grazie_model-model-ner-jvm-0_8_184_http//file",
@@ -4438,6 +4502,13 @@ jvm_import(
     name = "ai_grazie_nlp-nlp-phonetics-jvm-0_8_184_http_import",
     jar = "@ai_grazie_nlp-nlp-phonetics-jvm-0_8_184_http//file",
     source_jar = "@ai_grazie_nlp-nlp-phonetics-jvm-0_8_184-sources_http//file",
+)
+
+jvm_import(
+    name = "grazie-tests-pro-ai-grazie-tasks-library-model-jvm",
+    jar = "@ai_grazie_tasks-library-tasks-library-model-jvm-0_4_18_http//file",
+    source_jar = "@ai_grazie_tasks-library-tasks-library-model-jvm-0_4_18-sources_http//file",
+    visibility = ["//visibility:public"],
 )
 
 copy_file(

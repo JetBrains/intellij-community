@@ -8,26 +8,41 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.grazie.cloud.GrazieCloudConnector
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.hasAdditionalConnectors
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.hasQuota
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnected
 import com.intellij.grazie.ide.language.markdown.semantics.analyzer.Analyzer
+import com.intellij.grazie.ide.language.markdown.semantics.inspection.quickfix.ReplacementQuickFix
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiFile
-import com.intellij.util.text.StringSearcher
+import com.intellij.psi.SmartPointerManager
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
+import org.jetbrains.annotations.ApiStatus
 
-internal abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
+@ApiStatus.Internal
+@ApiStatus.Experimental
+abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
 
   open fun reportProblem(holder: ProblemsHolder, file: PsiFile, issue: LlmIssue<T>) {
-    findAllOccurrences(issue, file).forEach { range ->
-      @Suppress("HardCodedStringLiteral")
-      holder.registerProblem(createProblemDescriptor(file, range, issue.message))
+    if (issue.startOffset() == -1 && issue.endOffset() == -1) {
+      thisLogger().warn("No occurrences found by ${javaClass.name} in text")
+      return
     }
+
+    val range = TextRange(issue.startOffset(), issue.endOffset())
+    val underline = SmartPointerManager.getInstance(file.project).createSmartPsiFileRangePointer(file, range)
+    val replacements = issue.replacements
+    val fixes = if (replacements.isNotEmpty()) ReplacementQuickFix(underline, replacements).getAllAsFixes().toTypedArray() else emptyArray()
+    val descriptor = ProblemDescriptorBase(
+      file, file, issue.message, fixes,
+      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+      false, range, true, true
+    )
+    holder.registerProblem(descriptor)
   }
 
   abstract fun getAnalyzer(file: PsiFile): LlmAnalyzer<T>?
@@ -52,26 +67,7 @@ internal abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
     }
   }
 
-  protected fun findAllOccurrences(issue: LlmIssue<T>, file: PsiFile): List<TextRange> {
-    if (issue.startOffset != -1 && issue.endOffset != -1) {
-      return listOf(TextRange(issue.startOffset, issue.endOffset))
-    }
-    val pattern = issue.text
-    val indexes = StringSearcher(pattern, false, true).findAllOccurrences(file.text)
-    if (indexes.isEmpty()) {
-      thisLogger().warn("No occurrences found by ${javaClass.name} in text")
-    }
-    return indexes.map { index -> TextRange(index, index + pattern.length) }
-  }
-
-  protected fun createProblemDescriptor(file: PsiFile, range: TextRange, @InspectionMessage description: String): ProblemDescriptorBase =
-    ProblemDescriptorBase(
-      file, file, description, emptyArray(),
-      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-      false, range, true, true
-    )
-
-  private fun isAgentMarkdownFile(file: PsiFile): Boolean = AGENT_MARKDOWN_FILE_NAME_PATTERN.matches(file.name)
+  private fun isAgentMarkdownFile(file: PsiFile): Boolean = file is MarkdownFile && AGENT_MARKDOWN_FILE_NAME_PATTERN.matches(file.name)
 
   private fun validateAndGetClient(isOnTheFly: Boolean): SuspendableAPIGatewayClient? {
     if (!isOnTheFly) return null
@@ -79,7 +75,7 @@ internal abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
       thisLogger().debug("Specification semantics inspection is disabled")
       return null
     }
-    if (!hasAdditionalConnectors() || !seemsCloudConnected() || !hasQuota()) {
+    if (!seemsCloudConnected() || !hasQuota()) {
       thisLogger().warn("Additional connectors = ${hasAdditionalConnectors()}, seemsCloudConnected = ${seemsCloudConnected()}, hasQuota = ${hasQuota()}")
       return null
     }

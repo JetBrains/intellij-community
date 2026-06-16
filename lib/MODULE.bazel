@@ -29,10 +29,10 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rule-engine-0_3_221_http",
-    downloaded_file_path = "grazie-rule-engine-0.3.221.jar",
-    sha256 = "29c097698a3628ab6d45cf479158ffa37865af0a3d73555e053207c8a68785b8",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.221/grazie-rule-engine-0.3.221.jar",
+    name = "ai_grazie-grazie-rule-engine-0_3_229_http",
+    downloaded_file_path = "grazie-rule-engine-0.3.229.jar",
+    sha256 = "f6899abb0fbac1d6738964fcd1ff7dc1ffc1c29fb796377902c260ced942f7eb",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.229/grazie-rule-engine-0.3.229.jar",
 )
 
 http_file(
@@ -43,10 +43,10 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rule-engine-0_3_221-sources_http",
-    downloaded_file_path = "grazie-rule-engine-0.3.221-sources.jar",
-    sha256 = "ee8da4a6562a619071b0ee5140d942ade3fe34653e03c6ba9713da0e863defa1",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.221/grazie-rule-engine-0.3.221-sources.jar",
+    name = "ai_grazie-grazie-rule-engine-0_3_229-sources_http",
+    downloaded_file_path = "grazie-rule-engine-0.3.229-sources.jar",
+    sha256 = "69c3dea404669b8575735d9ff25921985b44863b9d3329cf8861df99e7d3c827",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.229/grazie-rule-engine-0.3.229-sources.jar",
 )
 
 http_file(
@@ -57,17 +57,17 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rules-llm-0_3_221_http",
-    downloaded_file_path = "grazie-rules-llm-0.3.221.jar",
-    sha256 = "40249815386555fb5f0068eb5af88734dc6c2375aa0d130694ff07df1b6f65d0",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.221/grazie-rules-llm-0.3.221.jar",
+    name = "ai_grazie-grazie-rules-llm-0_3_229_http",
+    downloaded_file_path = "grazie-rules-llm-0.3.229.jar",
+    sha256 = "bca48ae76344cef11a85e1c0297e6a16ea1471b52827ec5ab47d97defe2d506e",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.229/grazie-rules-llm-0.3.229.jar",
 )
 
 http_file(
-    name = "ai_grazie-grazie-rules-llm-0_3_221-sources_http",
-    downloaded_file_path = "grazie-rules-llm-0.3.221-sources.jar",
-    sha256 = "d4cc6e57e7346663cb4a9ec183511d868c6539ebd234883329e2ea19e06ffaa8",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.221/grazie-rules-llm-0.3.221-sources.jar",
+    name = "ai_grazie-grazie-rules-llm-0_3_229-sources_http",
+    downloaded_file_path = "grazie-rules-llm-0.3.229-sources.jar",
+    sha256 = "05623580be801809074bc3ae4504317391bac937ee45139cc38f3d06fd4c1a5c",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.229/grazie-rules-llm-0.3.229-sources.jar",
 )
 
 http_file(
@@ -3351,6 +3351,48 @@ http_file(
     downloaded_file_path = "portuguese-pos-dict-1.2.0.jar",
     sha256 = "fe8da88bb31b6372855741fbd81ee1c7477b4f8a0624d3dafd20ee23e184650e",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/languagetool/portuguese-pos-dict/1.2.0/portuguese-pos-dict-1.2.0.jar",
+)
+
+http_file(
+    name = "ai_grazie_client-client-cbor-jvm-0_8_184_http",
+    downloaded_file_path = "client-cbor-jvm-0.8.184.jar",
+    sha256 = "6ffc70b63b1aebf27552b5acab83c882d88edf9e9be9b0ead4f6a13956e9fafe",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-cbor-jvm/0.8.184/client-cbor-jvm-0.8.184.jar",
+)
+
+http_file(
+    name = "ai_grazie_utils-utils-cbor-jvm-0_8_184_http",
+    downloaded_file_path = "utils-cbor-jvm-0.8.184.jar",
+    sha256 = "d68040a5ed1d2fefdb963182673b06b48678f8a285172f397d7bfca54244e0fd",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-cbor-jvm/0.8.184/utils-cbor-jvm-0.8.184.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3_http",
+    downloaded_file_path = "kotlinx-serialization-cbor-jvm-1.7.3.jar",
+    sha256 = "ec45d74e2293eacbc1f804f3ec55d4908f9905ac5053316b565f1b66326f1f70",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.7.3/kotlinx-serialization-cbor-jvm-1.7.3.jar",
+)
+
+http_file(
+    name = "ai_grazie_client-client-cbor-jvm-0_8_184-sources_http",
+    downloaded_file_path = "client-cbor-jvm-0.8.184-sources.jar",
+    sha256 = "b35a01ac2b476f267cf8b438d88a220df9dece5c0969d84c6962ac5913f7324a",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-cbor-jvm/0.8.184/client-cbor-jvm-0.8.184-sources.jar",
+)
+
+http_file(
+    name = "ai_grazie_utils-utils-cbor-jvm-0_8_184-sources_http",
+    downloaded_file_path = "utils-cbor-jvm-0.8.184-sources.jar",
+    sha256 = "d20b905b6b03389ca5192175640211051a35ef12dceccff7b4a646787749ede8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-cbor-jvm/0.8.184/utils-cbor-jvm-0.8.184-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3-sources_http",
+    downloaded_file_path = "kotlinx-serialization-cbor-jvm-1.7.3-sources.jar",
+    sha256 = "91ac6c3b6539c6bbdfc1a3713c9068056f990a930fae192ac9d868fd0253586e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.7.3/kotlinx-serialization-cbor-jvm-1.7.3-sources.jar",
 )
 
 http_file(
