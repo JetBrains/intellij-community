@@ -6,6 +6,7 @@ package com.intellij.testFramework.junit5.impl
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.common.BazelTestUtil
 import com.intellij.testFramework.common.assertDisposerEmpty
 import com.intellij.testFramework.common.assertNonDefaultProjectsAreNotLeaked
@@ -67,6 +68,7 @@ private class TestApplicationResource(val initializationResult: Result<Unit>) : 
         val application = ApplicationManager.getApplication()
         application.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appWillBeClosed(false)
         yield()
+        LeakHunter.cleanupAllProjects()
         waitForAppLeakingThreads(application, 10, TimeUnit.SECONDS)
         assertNonDefaultProjectsAreNotLeaked() // TODO? ability to disable this check for local (=non-build-server) runs
         yield()

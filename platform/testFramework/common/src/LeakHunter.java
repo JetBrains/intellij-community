@@ -51,12 +51,14 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 @TestOnly
 public final class LeakHunter {
   private static final Logger LOG = Logger.getInstance(LeakHunter.class);
+  private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
 
   @TestOnly
   private static @NotNull String getCreationPlace(@NotNull Project project) {
@@ -351,5 +353,16 @@ public final class LeakHunter {
   // Here we forcibly flush the batch and avoid a leak of component managers.
   private static void flushTelemetry() {
     TelemetryManager.getInstance().forceFlushMetricsBlocking();
+  }
+
+  public static void registerProjectCleanup(@NotNull Runnable cleanup) {
+    ourProjectCleanups.add(cleanup);
+  }
+
+  public static void cleanupAllProjects() {
+    for (var each : ourProjectCleanups) {
+      each.run();
+    }
+    ourProjectCleanups.clear();
   }
 }
