@@ -145,7 +145,10 @@ class GrazieCheckers(coroutineScope: CoroutineScope) : GrazieStateLifecycle {
     }
   }
 
-  fun hasSpellerTool(langs: List<Lang>): Boolean = langs.any { lang -> checkers?.any { it.lang == lang } ?: false }
+  fun hasSpellerTool(langs: List<Lang>): Boolean {
+    val checkers = heavyInit()
+    return langs.any { lang -> checkers.any { it.lang == lang } }
+  }
 
   fun lookup(word: String): Dictionary.LookupStatus {
     val myCheckers = filterCheckers(word)
