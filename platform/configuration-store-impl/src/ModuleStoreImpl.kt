@@ -140,19 +140,6 @@ private class ModuleStateStorageManager(macroSubstitutor: TrackingPathMacroSubst
     }
   }
 
-  override fun beforeElementLoaded(element: Element) {
-    val optionElement = Element("component").setAttribute("name", "DeprecatedModuleOptionManager")
-    val iterator = element.attributes.iterator()
-    for (attribute in iterator) {
-      if (attribute.name != VERSION_OPTION) {
-        iterator.remove()
-        optionElement.addContent(Element("option").setAttribute("key", attribute.name).setAttribute("value", attribute.value))
-      }
-    }
-
-    element.addContent(optionElement)
-  }
-
   override fun beforeElementSaved(elements: MutableList<Element>, rootAttributes: MutableMap<String, String>) {
     val componentIterator = elements.iterator()
     for (component in componentIterator) {

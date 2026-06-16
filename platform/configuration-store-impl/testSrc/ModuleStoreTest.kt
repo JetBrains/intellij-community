@@ -250,6 +250,41 @@ class ModuleStoreTest {
       assertThat(moduleFilePath.readText()).isEqualTo(imlFileText)
     }
   }
+
+  @Test
+  @Suppress("DEPRECATION")
+  fun `custom module options in iml attributes are preserved on save`() = runBlocking {
+    val imlFileText = """
+      |<?xml version="1.0" encoding="UTF-8"?>
+      |<module type="JAVA_MODULE" uml-param="show" version="4">
+      |  <component name="NewModuleRootManager" />
+      |</module>""".trimMargin()
+    val modulesXmlText = """
+      |<?xml version="1.0" encoding="UTF-8"?>
+      |<project version="4">
+      |  <component name="ProjectModuleManager">
+      |    <modules>
+      |      <module fileurl="file://PROJECT_DIR_MACRO/module.iml" filepath="PROJECT_DIR_MACRO/module.iml" />
+      |    </modules>
+      |  </component>
+      |</project>""".trimMargin().replace("PROJECT_DIR_MACRO", "$" + "PROJECT_DIR$")
+    val projectCreator: (VirtualFile) -> Path = {
+      it.writeChild(".idea/modules.xml", modulesXmlText)
+      it.writeChild("module.iml", imlFileText)
+      Path.of(it.path)
+    }
+
+    loadAndUseProjectInLoadComponentStateMode(tempDirManager, projectCreator) { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      assertThat(module.getOptionValue("uml-param")).isEqualTo("show")
+
+      module.setOption("uml-param", "show")
+      project.stateStore.save()
+
+      val moduleFilePath = Path.of(project.basePath!!).resolve("module.iml")
+      assertThat(moduleFilePath.readText()).isEqualTo(imlFileText)
+    }
+  }
 }
 
 suspend inline fun <T> Module.useAndDispose(task: Module.() -> T): T {

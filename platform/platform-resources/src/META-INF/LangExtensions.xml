@@ -387,8 +387,6 @@
     <applicationService serviceInterface="com.intellij.configurationStore.ModuleStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.DefaultModuleStoreFactory"/>
 
-    <moduleService serviceImplementation="com.intellij.openapi.module.impl.DeprecatedModuleOptionManager"/>
-
     <applicationService serviceInterface="com.intellij.ide.scratch.ScratchFileService"
                         serviceImplementation="com.intellij.ide.scratch.ScratchFileServiceImpl"/>
     <treeStructureProvider implementation="com.intellij.ide.scratch.ScratchTreeStructureProvider" order="last"/>
