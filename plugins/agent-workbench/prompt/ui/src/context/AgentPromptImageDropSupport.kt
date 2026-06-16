@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.prompt.ui.context
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.ui.context.AgentPromptImageContextItems.buildDroppedImageContextItem
+import com.intellij.agent.workbench.prompt.ui.context.AgentPromptImageContextItems.getImageFilesFromAttachedObject
+import com.intellij.agent.workbench.prompt.ui.context.AgentPromptImageContextItems.getImageFilesFromTransferable
 import com.intellij.agent.workbench.prompt.ui.context.AgentPromptImageContextItems.readImageFile
 import com.intellij.agent.workbench.prompt.ui.context.AgentPromptImageContextItems.readTransferableImage
 import com.intellij.ide.dnd.DnDDropHandler
@@ -26,11 +28,7 @@ import java.awt.datatransfer.DataFlavor.imageFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
-import java.nio.file.Files
-import java.nio.file.Path
-import javax.imageio.ImageIO
 import javax.swing.JComponent
-import kotlin.io.path.extension
 
 internal fun interface AgentPromptImageDropHandler {
   fun onImagesDropped(items: List<AgentPromptContextItem>): Boolean
@@ -149,7 +147,7 @@ internal fun canHandleAgentPromptImageDrop(event: DnDEvent): Boolean {
     return false
   }
 
-  if (getDroppedImageFiles(event.attachedObject).isEmpty()) {
+  if (getImageFilesFromAttachedObject(event.attachedObject).isEmpty()) {
     return false
   }
 
@@ -172,7 +170,7 @@ internal fun buildDroppedImageContextItems(transferable: Transferable): List<Age
     return listOf(buildDroppedImageContextItem(transferableImage))
   }
 
-  return getDroppedImageFiles(transferable).mapNotNull { file ->
+  return getImageFilesFromTransferable(transferable).mapNotNull { file ->
     readImageFile(file)?.let(::buildDroppedImageContextItem)
   }
 }
@@ -184,25 +182,8 @@ private fun resolveDropTransferable(event: DnDEvent): Transferable {
   }
 }
 
-private fun getDroppedImageFiles(attachedObject: Any?): List<Path> {
-  return FileCopyPasteUtil.getFileListFromAttachedObject(attachedObject)
-    .map { file -> file.toPath() }
-    .filter { path -> Files.isRegularFile(path) && hasImageReaderForPath(path) }
-}
-
-private fun getDroppedImageFiles(transferable: Transferable): List<Path> {
-  return FileCopyPasteUtil.getFileList(transferable).orEmpty()
-    .map { file -> file.toPath() }
-    .filter { path -> Files.isRegularFile(path) && hasImageReaderForPath(path) }
-}
-
 private fun copyDataFlavors(transferFlavors: Array<out DataFlavor>): Array<DataFlavor> {
   return Array(transferFlavors.size) { index -> transferFlavors[index] }
-}
-
-private fun hasImageReaderForPath(path: Path): Boolean {
-  val extension = path.extension.takeIf { it.isNotBlank() } ?: return false
-  return ImageIO.getImageReadersBySuffix(extension).hasNext()
 }
 
 internal class AgentPromptImageEditorDropHandler(
