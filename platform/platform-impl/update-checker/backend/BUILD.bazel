@@ -1,0 +1,63 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.platform.ide.updateChecker.backend` start
+
+jvm_library(
+    name = "backend",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.updateChecker.backend",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "@lib//:kotlin-stdlib",
+        "//platform/kernel/rpc.backend",
+        "//platform/kernel/backend",
+        "//platform/platform-impl/rpc",
+        "//platform/backend",
+        "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/update-checker",
+    ],
+)
+
+jvm_library(
+    name = "backend_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.platform.ide.updateChecker.backend",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":backend",
+        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
+        "//platform/kernel/backend:backend_test_lib",
+        "//platform/platform-impl/rpc:rpc_test_lib",
+        "//platform/backend:backend_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/update-checker:update-checker_test_lib",
+    ],
+)
+### auto-generated section `build intellij.platform.ide.updateChecker.backend` end
+
+### auto-generated section `iml intellij.platform.ide.updateChecker.backend` start
+exports_files(
+    [
+        "intellij.platform.ide.updateChecker.backend.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.platform.ide.updateChecker.backend` end

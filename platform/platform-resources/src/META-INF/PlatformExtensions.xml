@@ -205,9 +205,6 @@ The refresh itself is toggled by (Preferences | Appearance &amp; Behavior | Syst
 
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerFacadeImpl"/>
-    <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.PluginUpdateHandlerProvider"
-                        serviceImplementation="com.intellij.openapi.updateSettings.impl.DefaultPluginUpdateHandlerProvider" open="true"/>
-
     <pluginInitializationErrorHandler implementation="com.intellij.ide.plugins.DefaultPluginInitializationErrorHandler"/>
 
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
