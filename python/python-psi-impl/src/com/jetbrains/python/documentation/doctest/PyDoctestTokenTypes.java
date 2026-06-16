@@ -15,17 +15,15 @@
  */
 package com.jetbrains.python.documentation.doctest;
 
-import com.intellij.lang.SyntaxTreeBuilder;
-import com.jetbrains.python.parsing.ParsingContext;
-import com.jetbrains.python.parsing.PyParser;
-import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyElementType;
 
 /**
  * User : ktisha
  */
-public class PyDocstringParser extends PyParser {
-  @Override
-  protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel) {
-    return new PyDocstringParsingContext(builder, languageLevel);
+public final class PyDoctestTokenTypes {
+  public static final PyElementType DOC_REFERENCE = new PyElementType("DOC_REFERENCE", node -> new PyDocReferenceExpression(node));
+  public static final PyElementType DOTS = new PyElementType("DOTS");
+
+  private PyDoctestTokenTypes() {
   }
 }

@@ -14,33 +14,33 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User : ktisha
  */
-public final class PyDocstringParserDefinition extends PythonParserDefinition {
-  public static final IFileElementType PYTHON_DOCSTRING_FILE = new PyDocstringFileElementType(PyDocstringLanguageDialect
+public final class PyDoctestParserDefinition extends PythonParserDefinition {
+  public static final IFileElementType PYTHON_DOCTEST_FILE = new PyDocstringFileElementType(PyDoctestLanguageDialect
                                                                                                 .getInstance());
 
   @Override
   public @NotNull Lexer createLexer(Project project) {
-    return new PyDocstringLexer();
+    return new PyDoctestLexer();
   }
 
   @Override
   public @NotNull PsiParser createParser(Project project) {
-    return new PyDocstringParser();
+    return new PyDoctestParser();
   }
 
 
   @Override
   public @NotNull TokenSet getWhitespaceTokens() {
-    return TokenSet.orSet(super.getWhitespaceTokens(), TokenSet.create(PyDocstringTokenTypes.DOTS));
+    return TokenSet.orSet(super.getWhitespaceTokens(), TokenSet.create(PyDoctestTokenTypes.DOTS));
   }
 
   @Override
   public @NotNull IFileElementType getFileNodeType() {
-    return PYTHON_DOCSTRING_FILE;
+    return PYTHON_DOCTEST_FILE;
   }
 
   @Override
   public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
-    return new PyDocstringFile(viewProvider);
+    return new PyDoctestFile(viewProvider);
   }
 }

@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2000-2014 JetBrains s.r.o.
  *
@@ -15,23 +16,33 @@
  */
 package com.jetbrains.python.documentation.doctest;
 
-import com.intellij.psi.tree.TokenSet;
-import com.jetbrains.python.PythonDialectsTokenSetContributorBase;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User : ktisha
  */
-public final class PyDocstringTokenSetContributor extends PythonDialectsTokenSetContributorBase {
-  public static final TokenSet DOCSTRING_REFERENCE_EXPRESSIONS = TokenSet.create(PyDocstringTokenTypes.DOC_REFERENCE);
+public class PyDoctestFileType extends PythonFileType {
+  public static final PythonFileType INSTANCE = new PyDoctestFileType();
 
-  @Override
-  public @NotNull TokenSet getExpressionTokens() {
-    return DOCSTRING_REFERENCE_EXPRESSIONS;
+  private PyDoctestFileType() {
+    super(new PyDoctestLanguageDialect());
   }
 
   @Override
-  public @NotNull TokenSet getReferenceExpressionTokens() {
-    return DOCSTRING_REFERENCE_EXPRESSIONS;
+  public @NotNull String getName() {
+    return PyNames.PY_DOCSTRING_ID;
+  }
+
+  @Override
+  public @NotNull String getDescription() {
+    return PyPsiBundle.message("filetype.python.docstring.description");
+  }
+
+  @Override
+  public @NotNull String getDefaultExtension() {
+    return "doctest";
   }
 }

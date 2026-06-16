@@ -21,7 +21,7 @@ import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyParsingBundle;
 import com.jetbrains.python.PyTokenTypes;
-import com.jetbrains.python.documentation.doctest.PyDocstringTokenTypes;
+import com.jetbrains.python.documentation.doctest.PyDoctestTokenTypes;
 import com.jetbrains.python.parsing.ExpressionParsing;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
@@ -40,7 +40,7 @@ public class PyFunctionTypeAnnotationParser extends PyParser {
       private final ExpressionParsing myExpressionParsing = new ExpressionParsing(this) {
         @Override
         protected IElementType getReferenceType() {
-          return PyDocstringTokenTypes.DOC_REFERENCE;
+          return PyDoctestTokenTypes.DOC_REFERENCE;
         }
       };
 
