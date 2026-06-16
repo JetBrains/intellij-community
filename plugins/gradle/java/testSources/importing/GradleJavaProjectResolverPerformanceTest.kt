@@ -125,12 +125,12 @@ class GradleJavaProjectResolverPerformanceTest(gradleVersion: GradleVersion) {
 
   companion object {
 
-    fun javaProjectResolver(context: ProjectResolverContext): JavaGradleProjectResolver = JavaGradleProjectResolver().apply {
+    private fun javaProjectResolver(context: ProjectResolverContext): JavaGradleProjectResolver = JavaGradleProjectResolver().apply {
       setProjectResolverContext(context)
       setNext(GradleTestNoOpProjectResolverExtension())
     }
 
-    fun setGradleJvm(project: Project, gradleJvm: String) {
+    private fun setGradleJvm(project: Project, gradleJvm: String) {
       project.gradleSettings.linkedProjectsSettings = listOf(
         GradleProjectSettings(project.basePath!!).also { it.gradleJvm = gradleJvm }
       )

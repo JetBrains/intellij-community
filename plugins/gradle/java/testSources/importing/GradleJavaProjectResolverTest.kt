@@ -2,22 +2,31 @@
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.project.ModuleData
+import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.JAVA_HOME
 import com.intellij.openapi.externalSystem.util.environment.TestEnvironment.Companion.useEnvironmentVariables
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.common.mock.notImplemented
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.runBlocking
+import org.gradle.tooling.model.idea.IdeaModule
+import org.gradle.tooling.model.idea.IdeaProject
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.importing.GradleJavaProjectResolverPerformanceTest.Companion.javaProjectResolver
-import org.jetbrains.plugins.gradle.importing.GradleJavaProjectResolverPerformanceTest.Companion.setGradleJvm
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension
+import org.jetbrains.plugins.gradle.service.project.JavaGradleProjectResolver
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestExternalProject.Companion.externalProjects
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestIdeaProject.Companion.ideaProject
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestProjectNode.Companion.projectNode
@@ -26,6 +35,7 @@ import org.jetbrains.plugins.gradle.testFramework.projectModel.moduleNodes
 import org.jetbrains.plugins.gradle.testFramework.projectModel.moduleSdkNode
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
+import org.jetbrains.plugins.gradle.util.gradleSettings
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Nested
@@ -114,6 +124,24 @@ class GradleJavaProjectResolverTest {
       writeAction {
         jdkTable.addJdk(sdk, asDisposable())
       }
+    }
+
+    private fun setGradleJvm(project: Project, gradleJvm: String) {
+      project.gradleSettings.linkedProjectsSettings = listOf(
+        GradleProjectSettings(project.basePath!!).also { it.gradleJvm = gradleJvm }
+      )
+    }
+
+    private fun javaProjectResolver(context: ProjectResolverContext): JavaGradleProjectResolver = JavaGradleProjectResolver().apply {
+      setProjectResolverContext(context)
+      setNext(GradleTestNoOpProjectResolverExtension())
+    }
+
+    @Suppress("JavaDefaultMethodsNotOverriddenByDelegation")
+    private class GradleTestNoOpProjectResolverExtension :
+      GradleProjectResolverExtension by notImplemented<GradleProjectResolverExtension>() {
+      override fun populateModuleExtraModels(gradleModule: IdeaModule, ideModule: DataNode<ModuleData>) {}
+      override fun populateProjectExtraModels(gradleProject: IdeaProject, ideProject: DataNode<ProjectData>) {}
     }
   }
 }
