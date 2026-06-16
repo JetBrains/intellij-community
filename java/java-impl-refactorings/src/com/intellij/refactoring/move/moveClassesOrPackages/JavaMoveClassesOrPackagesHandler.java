@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
@@ -16,13 +16,11 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
@@ -36,6 +34,7 @@ import com.intellij.psi.PsiPackage;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiSyntheticClass;
 import com.intellij.psi.impl.file.JavaDirectoryServiceImpl;
+import com.intellij.psi.impl.file.PsiPackageImplUtil;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -46,7 +45,6 @@ import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveHandlerDelegate;
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +130,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
 
   @Override
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, final MoveCallback callback) {
-    if (canMoveOrRearrangePackages(elements) ) {
+    if (canMoveOrRearrangePackages(elements)) {
       final PsiDirectory[] directories = new PsiDirectory[elements.length];
       //canMoveOrRearrangePackages ensures that all elements are directories
       //noinspection SuspiciousSystemArraycopy
@@ -308,16 +306,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
        return false;
      }
      for (PsiElement element : elements) {
-       if (!(element instanceof PsiDirectory directory)) return false;
-       if (RefactoringUtil.isSourceRoot(directory)) {
-         return false;
-       }
-       final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directory);
-       if (aPackage == null) return false;
-       if (aPackage.getQualifiedName().isEmpty()) return false;
-       final VirtualFile sourceRootForFile = ProjectRootManager.getInstance(element.getProject()).getFileIndex()
-         .getSourceRootForFile(directory.getVirtualFile());
-       if (sourceRootForFile == null) return false;
+       if (!PsiPackageImplUtil.isDirectoryUnderPackage(element)) return false;
      }
      return true;
    }
