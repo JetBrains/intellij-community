@@ -479,6 +479,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/intellij.gradle.common.iml" filepath="$PROJECT_DIR$/plugins/gradle/intellij.gradle.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/completion/intellij.gradle.completion.iml" filepath="$PROJECT_DIR$/plugins/gradle/completion/intellij.gradle.completion.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/completion/kotlin/intellij.gradle.completion.kotlin.iml" filepath="$PROJECT_DIR$/plugins/gradle/completion/kotlin/intellij.gradle.completion.kotlin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/completion/kotlin/performanceTests/intellij.gradle.completion.kotlin.performanceTests.iml" filepath="$PROJECT_DIR$/plugins/gradle/completion/kotlin/performanceTests/intellij.gradle.completion.kotlin.performanceTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/completion/kotlin/tests/intellij.gradle.completion.kotlin.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/completion/kotlin/tests/intellij.gradle.completion.kotlin.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/completion/intellij.gradle.completion.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/completion/intellij.gradle.completion.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/completion/toml/intellij.gradle.completion.toml.iml" filepath="$PROJECT_DIR$/plugins/gradle/completion/toml/intellij.gradle.completion.toml.iml" />
@@ -494,6 +495,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle-maven/intellij.gradle.java.maven.iml" filepath="$PROJECT_DIR$/plugins/gradle-maven/intellij.gradle.java.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle-maven/intellij.gradle.java.maven.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle-maven/intellij.gradle.java.maven.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/performance/intellij.gradle.java.performance.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/performance/intellij.gradle.java.performance.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/performanceTests/intellij.gradle.java.performanceTests.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/performanceTests/intellij.gradle.java.performanceTests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/plugin/intellij.gradle.java.plugin.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/plugin/intellij.gradle.java.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/properties/intellij.gradle.java.properties.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/properties/intellij.gradle.java.properties.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/java/intellij.gradle.java.tests.iml" />
@@ -505,6 +507,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/native/intellij.gradle.native.iml" filepath="$PROJECT_DIR$/plugins/gradle/native/intellij.gradle.native.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/native/tooling/intellij.gradle.native.tooling.iml" filepath="$PROJECT_DIR$/plugins/gradle/native/tooling/intellij.gradle.native.tooling.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/native/tooling/intellij.gradle.native.tooling.tests.iml" filepath="$PROJECT_DIR$/plugins/gradle/native/tooling/intellij.gradle.native.tooling.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/performanceTests/intellij.gradle.performanceTests.iml" filepath="$PROJECT_DIR$/plugins/gradle/performanceTests/intellij.gradle.performanceTests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/gradle/performanceTests/intellij.gradle.performanceTests.main.iml" filepath="$PROJECT_DIR$/plugins/gradle/performanceTests/intellij.gradle.performanceTests.main.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/plugin/intellij.gradle.plugin.iml" filepath="$PROJECT_DIR$/plugins/gradle/plugin/intellij.gradle.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/properties/intellij.gradle.properties.iml" filepath="$PROJECT_DIR$/plugins/gradle/properties/intellij.gradle.properties.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/gradle/settings/intellij.gradle.settings.iml" filepath="$PROJECT_DIR$/plugins/gradle/settings/intellij.gradle.settings.iml" />
