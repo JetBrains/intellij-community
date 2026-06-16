@@ -1,9 +1,18 @@
 <idea-plugin>
   <id>com.intellij.platform.ui.webview</id>
-  <name>WebView Runtime</name>
-  <vendor>JetBrains</vendor>
+  <name>WebView Runtime (Experimental)</name>
+  <!--suppress PluginXmlValidity -->
+  <vendor>Artem Bukhonov</vendor>
   <category>Other Tools</category>
-  <description>Provides WebView runtime platform modules for the IDE.</description>
+  <description><![CDATA[
+    Provides an embedded WebView panel for IntelliJ-based IDEs, making it possible to build rich local IDE UI with the standard web stack.
+    <ul>
+      <li>Supports HTML, CSS, JavaScript, TypeScript, and framework-based UI such as React, Preact, Svelte, Lit, or plain Web Components.</li>
+      <li>Uses Vite to build frontend sources into static assets that can be bundled with IDE plugins.</li>
+      <li>Provides typed Kotlin and TypeScript interop so WebView UI can call IDE code and receive data through strongly typed contracts.</li>
+      <li>Runs on browser engines: WKWebView on macOS, Microsoft Edge WebView2 on Windows, and JCEF on Linux.</li>
+    </ul>
+  ]]></description>
 
   <content namespace="jetbrains">
     <module name="intellij.platform.ui.webview.jcef" loading="optional"/>

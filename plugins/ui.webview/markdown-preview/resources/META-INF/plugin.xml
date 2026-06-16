@@ -1,13 +1,24 @@
 <idea-plugin allow-bundled-update="true">
   <id>org.intellij.plugins.markdown.webview.preview</id>
-  <name>Markdown WebView Preview</name>
-  <vendor>JetBrains</vendor>
+  <name>Markdown WebView Preview (Experimental)</name>
+  <!--suppress PluginXmlValidity -->
+  <vendor>Artem Bukhonov</vendor>
   <category>Languages</category>
-  <description>Provides a WebView-based preview renderer for Markdown files.</description>
+  <description><![CDATA[
+    Provides a Markdown preview powered by an embedded WebView panel.
+    <ul>
+      <li>Renders Markdown content in the same kind of browser surface used by WebView-based IDE UI.</li>
+      <li>Uses browser engines: WKWebView on macOS, Microsoft Edge WebView2 on Windows, and JCEF on Linux.</li>
+      <li>Fits the WebView frontend workflow where UI and preview assets can be authored with HTML, CSS, TypeScript, frontend frameworks, Vite, and typed Kotlin/TypeScript interop.</li>
+    </ul>
+  ]]></description>
 
   <dependencies>
     <plugin id="org.intellij.plugins.markdown"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.platform.ui.webview"/>
+    <module name="intellij.markdown"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensions defaultExtensionNs="org.intellij.markdown">

@@ -1,8 +1,17 @@
 <idea-plugin>
   <id>com.intellij.platform.ui.webview.demo</id>
-  <name>WebView Demo</name>
-  <vendor>JetBrains</vendor>
-  <description>Provides internal WebView demo tools for platform development.</description>
+  <name>WebView Demo (Experimental)</name>
+  <!--suppress PluginXmlValidity -->
+  <vendor>Artem Bukhonov</vendor>
+  <description><![CDATA[
+    Provides a WebView Demo tool window with sample IDE panels built as local web UI.
+    <ul>
+      <li>Shows how HTML, CSS, TypeScript, and frontend frameworks can be embedded into IntelliJ-based IDEs.</li>
+      <li>Demonstrates Vite-built WebView assets loaded from the plugin instead of a local web server.</li>
+      <li>Includes examples of typed Kotlin and TypeScript interop between IDE code and WebView UI.</li>
+      <li>Helps try the same WebView UI on macOS WKWebView, Windows WebView2, and JCEF on Linux.</li>
+    </ul>
+  ]]></description>
   <resource-bundle>messages.WebViewDemoBundle</resource-bundle>
 
   <dependencies>
@@ -13,13 +22,15 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
+    <!--suppress SplitModeXmlApiUsage -->
     <fileBasedIndex implementation="com.intellij.ui.webview.markdown.linkgraph.MarkdownLinkDestinationIndex"/>
 
+    <!--suppress SplitModeXmlApiUsage -->
     <toolWindow id="WebView Demo"
                 factoryClass="com.intellij.ui.webview.demo.WebViewDemoToolWindowFactory"
                 anchor="bottom"
                 secondary="true"
                 doNotActivateOnStart="false"
-                icon="AllIcons.Toolwindows.Documentation"/>
+                icon="/icons/toolWindowWebViewDemo.svg"/>
   </extensions>
 </idea-plugin>

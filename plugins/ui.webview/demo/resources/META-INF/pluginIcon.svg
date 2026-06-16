@@ -1,3 +1,4 @@
+<!-- Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
   <rect x="4" y="6" width="32" height="28" rx="3" fill="none" stroke="#000000" stroke-width="2.5"/>
   <path d="M4 13h32" stroke="#000000" stroke-width="2.5"/>
