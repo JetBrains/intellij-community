@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.ProjectManager
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
@@ -17,7 +18,7 @@ import java.awt.event.MouseEvent
 class PresentableGoToChangePopupAction<T : Any> private constructor(
   private val changesSupplier: () -> ListSelection<out T>,
   private val popupController: GoToChangePopupController<T>,
-) : LinkAction() {
+) : LinkAction(), DumbAware {
   init {
     ActionUtil.copyFrom(this, "GotoChangedFile")
   }
