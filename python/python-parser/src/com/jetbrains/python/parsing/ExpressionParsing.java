@@ -328,7 +328,13 @@ public class ExpressionParsing extends Parsing {
         expr.done(PyElementTypes.DICT_LITERAL_EXPRESSION);
         return;
       }
-      parseDictLiteralContentTail(expr);
+      if (atForOrAsyncFor()) {
+        // PEP 798: dict comprehension with double-star unpacking, e.g. {**d for d in dicts}
+        parseComprehension(expr, PyTokenTypes.RBRACE, PyElementTypes.DICT_COMP_EXPRESSION);
+      }
+      else {
+        parseDictLiteralContentTail(expr);
+      }
       return;
     }
 
