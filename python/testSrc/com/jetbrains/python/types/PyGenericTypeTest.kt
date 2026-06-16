@@ -704,6 +704,35 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       expr = foo(MyClass)
       #└ TYPE type[MyClass]
       """)
+
+    @Test
+    @TestFor(issues = ["PY-60614"])
+    fun `parameterized TypeAlias for type of TypeVar`() = test("""
+      from typing import TypeVar
+      T = TypeVar('T')
+      TypeAlias = type[T]
+      expr: TypeAlias[int]
+      #└ TYPE type[int]
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-60614"])
+    fun `call return type inferred via parameterized TypeAlias for type of TypeVar`() = test("""
+      from typing import TypeVar
+      T = TypeVar('T')
+      TypeAlias = type[T]
+      def f(x: TypeAlias[T]) -> T: ...
+      expr = f(int)
+      #└ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-60614"])
+    fun `parameterized TypeAlias for type of TypeVar with PEP695 syntax`() = test("""
+      type TypeAlias[T] = type[T]
+      expr: TypeAlias[int]
+      #└ TYPE type[int]
+      """)
   }
 
   @Nested

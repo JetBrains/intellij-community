@@ -1913,7 +1913,13 @@ object PyTypeChecker {
       }
 
       override fun visitPyTypeParameterType(typeParameterType: PyTypeParameterType): PyRecursiveTypeVisitor.Traversal {
-        generics.allTypeParameters.add(typeParameterType)
+        // Record a type variable in its instance form, so that a variable used both as `T` and as `type[T]`
+        // is the same parameter rather than two distinct ones
+        val normalized = if (typeParameterType is PyTypeVarType && typeParameterType.isDefinition)
+          typeParameterType.toInstance()
+        else
+          typeParameterType
+        generics.allTypeParameters.add(normalized)
         return PyRecursiveTypeVisitor.Traversal.PRUNE
       }
     })
@@ -1996,6 +2002,11 @@ object PyTypeChecker {
           if (sameScopeSubstitution != null && substitution.defaultType != null) {
             return clone(sameScopeSubstitution)
           }
+        }
+        // Keep the class-object form when the type variable stands for `type[T]`, so that e.g.
+        // `Alias = type[T]` parameterized with `int` yields `type[int]`, not `int` (PY-60614).
+        if (typeVarType.isDefinition && substitution is PyInstantiableType<*> && !substitution.isDefinition) {
+          substitution = substitution.toClass()
         }
         // TODO remove !typeVar.equals(substitution) part, it's necessary due to the logic in unifyReceiverWithParamSpecs
         if ((typeVarType != substitution) && (substitution !is PySelfType) && substitution.hasGenerics(context)) {
