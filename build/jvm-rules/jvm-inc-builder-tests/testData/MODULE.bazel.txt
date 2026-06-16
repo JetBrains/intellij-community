@@ -21,9 +21,9 @@ single_version_override(
 bazel_dep(name = "rules_kotlin", version = "2.2.2")
 archive_override(
     module_name = "rules_kotlin",
-    sha256 = "5c9b4664b3f926624a405f1d39ce74bcfc0a46b319df4f20d2ee63bdfed9c43e",
-    strip_prefix = "rules_kotlin-ffbc4307c3a55f61e05c12481b6dcb929d6e2b1f",
-    url = "https://github.com/JetBrains/rules_kotlin/archive/ffbc4307c3a55f61e05c12481b6dcb929d6e2b1f.zip",
+    sha256 = "2709f780d60a01f5d863fe89fb030b2f4ac68bf7d219b913f5e2f8692eae567c",
+    strip_prefix = "rules_kotlin-342a4a90662961199d0c8c4c50216339246f6276",
+    url = "https://github.com/JetBrains/rules_kotlin/archive/342a4a90662961199d0c8c4c50216339246f6276.zip",
 )
 
 # the module is supposed to always be overridden with the local version
