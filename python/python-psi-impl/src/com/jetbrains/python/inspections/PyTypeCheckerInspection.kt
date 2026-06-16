@@ -142,10 +142,7 @@ open class PyTypeCheckerInspection : PyInspection() {
   }
 
   open class Visitor(holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
-    protected override fun getHolder(): ProblemsHolder {
-      val holder = checkNotNull(super.getHolder())
-      return holder
-    }
+    override val holder = super.holder!!
 
     // TODO: Visit decorators with arguments
     override fun visitPyCallExpression(node: PyCallExpression) {

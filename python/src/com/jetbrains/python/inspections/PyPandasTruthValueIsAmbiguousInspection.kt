@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
@@ -28,7 +28,7 @@ class PyPandasTruthValueIsAmbiguousInspection : PyInspection() {
     return Visitor(holder, PyInspectionVisitor.getContext(session))
   }
 
-  private class Visitor(private val holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
+  private class Visitor(override val holder: ProblemsHolder, context: TypeEvalContext) : PyInspectionVisitor(holder, context) {
     override fun visitPyAssertStatement(node: PyAssertStatement) {
       super.visitPyAssertStatement(node)
       val expression = node.arguments.firstOrNull() ?: return

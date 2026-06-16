@@ -3,7 +3,6 @@ package com.jetbrains.python.inspections
 
 import com.google.common.collect.Sets
 import com.intellij.codeInspection.ProblemHighlightType
-import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.jetbrains.python.PyPsiBundle
@@ -109,20 +108,6 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
   private fun registerWithOverride(
     visitor: PyInspectionVisitor,
     element: PsiElement,
-    @InspectionMessage message: @InspectionMessage String,
-    highlightOverride: ProblemHighlightType?,
-  ) {
-    if (highlightOverride != null) {
-      visitor.registerProblem(element, message, highlightOverride)
-    }
-    else {
-      visitor.registerProblem(element, message)
-    }
-  }
-
-  private fun registerWithOverride(
-    visitor: PyInspectionVisitor,
-    element: PsiElement,
     message: PyInspectionMessages.ProblemMessage,
     highlightOverride: ProblemHighlightType?,
   ) {
@@ -163,9 +148,10 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
 
     val description = PyMismatchTooltips.description(header, argumentSlots, expectedRows)
     val highlightType = highlightOverride ?: ProblemHighlightType.GENERIC_ERROR_OR_WARNING
-    if (isOnTheFly(visitor)) {
+    if (visitor.isOnTheFly) {
       visitor.registerProblem(element,
-                              PyInspectionMessages.ProblemMessage(description, PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows)),
+                              PyInspectionMessages.ProblemMessage(description,
+                                                                  PyMismatchTooltips.tooltip(header, argumentSlots, expectedRows)),
                               highlightType)
     }
     else {
@@ -296,11 +282,6 @@ internal object PyTypeCheckerInspectionProblemRegistrar {
     calleesResults: List<AnalyzeCalleeResults>,
   ): Boolean = calleesResults.none { calleeResults ->
     calleeResults.results.any { it.argument === argument && it.isMatched }
-  }
-
-  private fun isOnTheFly(visitor: PyInspectionVisitor): Boolean {
-    val holder = visitor.holder
-    return holder != null && holder.isOnTheFly
   }
 
   private fun getAttributes(type: PyType, context: TypeEvalContext): MutableSet<String?>? {
