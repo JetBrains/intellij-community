@@ -16,8 +16,6 @@ import com.intellij.concurrency.JobScheduler
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.createTestOpenProjectOptions
-import com.intellij.testFramework.junit5.RunInEdt
-import com.intellij.testFramework.junit5.RunMethodInEdt
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.io.createDirectories
@@ -35,8 +33,6 @@ import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
 
 @TestApplication
-@Suppress("DEPRECATION")
-@RunInEdt(allMethods = false)
 @OptIn(ExperimentalPathApi::class)
 class ShelveChangesManagerTest {
   private lateinit var shelvedChangesManager: ShelveChangesManager
@@ -73,105 +69,119 @@ class ShelveChangesManagerTest {
   }
 
   @Test
-  @RunMethodInEdt
   fun `unshelve list`() {
-    doTestUnshelve(0, 0, 2, 1)
+    runInEdtAndWait(false) {
+      doTestUnshelve(0, 0, 2, 1)
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `unshelve files`() {
-    doTestUnshelve(changeCount = 1, binariesNum = 1, expectedListNum = 3, expectedRecycledNum = 1)
+    runInEdtAndWait(false) {
+      doTestUnshelve(changeCount = 1, binariesNum = 1, expectedListNum = 3, expectedRecycledNum = 1)
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `unshelve all files`() {
-    doTestUnshelve(2, 2, 2, 1)
+    runInEdtAndWait(false) {
+      doTestUnshelve(2, 2, 2, 1)
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `do not remove files when unshelve`() {
-    doTestUnshelve(0, 0, 3, 0, false)
+    runInEdtAndWait(false) {
+      doTestUnshelve(0, 0, 3, 0, false)
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `delete list`() {
-    doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 0, 0, 2, 1)
+    runInEdtAndWait(false) {
+      doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 0, 0, 2, 1)
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `delete files`() {
-    doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 1, 1, 3, 1)
+    runInEdtAndWait(false) {
+      doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 1, 1, 3, 1)
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `delete all files`() {
-    doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 2, 2, 2, 1)
+    runInEdtAndWait(false) {
+      doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 2, 2, 2, 1)
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `delete deleted list`() {
-    val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
-    shelvedChangesManager.markChangeListAsDeleted(shelvedChangeList)
-    doTestDelete(shelvedChangeList, 0, 0, 2, 0)
+    runInEdtAndWait(false) {
+      val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
+      shelvedChangesManager.markChangeListAsDeleted(shelvedChangeList)
+      doTestDelete(shelvedChangeList, 0, 0, 2, 0)
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `delete deleted files`() {
-    val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
-    shelvedChangesManager.markChangeListAsDeleted(shelvedChangeList)
-    doTestDelete(shelvedChangeList, 1, 1, 2, 1)
+    runInEdtAndWait(false) {
+      val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
+      shelvedChangesManager.markChangeListAsDeleted(shelvedChangeList)
+      doTestDelete(shelvedChangeList, 1, 1, 2, 1)
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `delete all deleted files`() {
-    val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
-    shelvedChangesManager.markChangeListAsDeleted(shelvedChangeList)
-    doTestDelete(shelvedChangeList, 2, 2, 2, 0)
+    runInEdtAndWait(false) {
+      val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
+      shelvedChangesManager.markChangeListAsDeleted(shelvedChangeList)
+      doTestDelete(shelvedChangeList, 2, 2, 2, 0)
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `undo list deletion`() {
-    doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 0, 0, 2, 1, true)
+    runInEdtAndWait(false) {
+      doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 0, 0, 2, 1, true)
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `undo file deletion`() {
-    //correct undo depends on ability to merge 2 shelved lists with separated changes inside
-    doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 1, 1, 3, 1, true)
+    runInEdtAndWait(false) {
+      //correct undo depends on ability to merge 2 shelved lists with separated changes inside
+      doTestDelete(shelvedChangesManager.shelvedChangeLists[0], 1, 1, 3, 1, true)
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `create patch from shelf`() {
-    val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
-    shelvedChangeList.loadChangesIfNeeded(project)
-    val patchBuilder = ShelfPatchBuilder(project, shelvedChangeList, emptyList())
-    val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false)
-    val changeSize = shelvedChangeList.changes?.size ?: 0
-    assertTrue(patches.size == (changeSize + shelvedChangeList.binaryFiles.size))
+    runInEdtAndWait(false) {
+      val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
+      shelvedChangeList.loadChangesIfNeeded(project)
+      val patchBuilder = ShelfPatchBuilder(project, shelvedChangeList, emptyList())
+      val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false)
+      val changeSize = shelvedChangeList.changes?.size ?: 0
+      assertTrue(patches.size == (changeSize + shelvedChangeList.binaryFiles.size))
+    }
   }
 
   @Test
-  @RunMethodInEdt
   fun `create patch from shelved changes`() {
-    val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
-    shelvedChangeList.loadChangesIfNeeded(project)
-    val selectedPaths = listOf(ShelvedWrapper(shelvedChangeList.changes!!.first(), shelvedChangeList).path,
-                               ShelvedWrapper(shelvedChangeList.binaryFiles!!.first(), shelvedChangeList).path)
-    val patchBuilder = ShelfPatchBuilder(project, shelvedChangeList, selectedPaths)
-    val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false)
-    assertTrue(patches.size == selectedPaths.size)
+    runInEdtAndWait(false) {
+      val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
+      shelvedChangeList.loadChangesIfNeeded(project)
+      val selectedPaths = listOf(ShelvedWrapper(shelvedChangeList.changes!!.first(), shelvedChangeList).path,
+                                 ShelvedWrapper(shelvedChangeList.binaryFiles!!.first(), shelvedChangeList).path)
+      val patchBuilder = ShelfPatchBuilder(project, shelvedChangeList, selectedPaths)
+      val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false)
+      assertTrue(patches.size == selectedPaths.size)
+    }
   }
 
   @Test
