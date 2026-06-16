@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.assignment.gradleJava
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractGradleImportHandler
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.MavenCoordinates
 import java.nio.file.Path
@@ -21,6 +22,8 @@ class AssignmentGradleProjectImportHandler : AbstractGradleImportHandler() {
     )
 
     override val replacementJarFromPluginBundle: Path = KotlinArtifacts.assignmentCompilerPluginPath
+
+    override val availableSinceVersion: IdeKotlinVersion? = IdeKotlinVersion.opt("1.8.0-Beta")
 
     companion object {
         private const val ASSIGNMENT_COMPILER_PLUGIN_EMBEDDABLE_JAR_NAME = "kotlin-assignment-compiler-plugin-embeddable"
