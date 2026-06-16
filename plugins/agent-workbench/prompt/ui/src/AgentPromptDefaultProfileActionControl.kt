@@ -42,6 +42,7 @@ internal enum class AgentPromptDefaultProfileActionState(
   val presentation: AgentPromptDefaultProfileActionPresentation,
 ) {
   MAKE_DEFAULT(AgentPromptDefaultProfileActionPresentation.MAKE_DEFAULT),
+  UPDATE_PROFILE(AgentPromptDefaultProfileActionPresentation.UPDATE_PROFILE),
   SAVE_AS_DEFAULT(AgentPromptDefaultProfileActionPresentation.SAVE_AS_DEFAULT),
 }
 
@@ -52,6 +53,10 @@ internal enum class AgentPromptDefaultProfileActionPresentation(
   MAKE_DEFAULT(
     textKey = "popup.profile.make.default",
     descriptionKey = "popup.profile.make.default.description",
+  ),
+  UPDATE_PROFILE(
+    textKey = "popup.profile.update",
+    descriptionKey = "popup.profile.update.description",
   ),
   SAVE_AS_DEFAULT(
     textKey = "popup.profile.save.as.default",

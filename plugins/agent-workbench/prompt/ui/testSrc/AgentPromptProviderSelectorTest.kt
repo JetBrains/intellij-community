@@ -1232,6 +1232,48 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun launchProfileEditorReasoningEffortCustomizesBuiltInProfile() {
+    runInEdtAndWait {
+      val builtInProfileId = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
+      val launcher = TestPromptLauncherBridge(AgentPromptLauncherBridge.ProviderPreferences())
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { _ -> },
+      )
+      controller.restoreLaunchProfiles(launcher.preferences)
+      val editor = controller.createManageProfilesDialogForTest()
+      try {
+        editor.selectProfileForTest(builtInProfileId)
+        editor.selectReasoningEffortForTest(AgentPromptReasoningEffort.HIGH)
+
+        assertThat(launcher.preferences.launchProfiles.single().generationSettings.reasoningEffort)
+          .isEqualTo(AgentPromptReasoningEffort.HIGH)
+
+        editor.selectReasoningEffortForTest(AgentPromptReasoningEffort.AUTO)
+
+        assertThat(launcher.preferences.launchProfiles).isEmpty()
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
   fun launchProfileEditorPlanEffortCustomizesBuiltInProfile() {
     runInEdtAndWait {
       val builtInProfileId = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
@@ -2074,6 +2116,64 @@ class AgentPromptProviderSelectorTest {
       assertThat(savedProfile.name).isEqualTo("High")
       assertThat(savedProfile.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
       assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(savedProfile.id)
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
+    }
+  }
+
+  @Test
+  fun inlineUpdateProfileActionUpdatesActiveCustomProfile() {
+    runInEdtAndWait {
+      val carefulProfile = AgentPromptLaunchProfile(
+        id = "user:careful",
+        name = "Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+      )
+      val launcher = TestPromptLauncherBridge(
+        AgentPromptLauncherBridge.ProviderPreferences(
+          launchProfiles = listOf(carefulProfile),
+          activeLaunchProfileId = carefulProfile.id,
+        )
+      )
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      var statusMessage: String? = null
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        defaultProfileActionControl = fixture.view.defaultProfileActionControl,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { message -> statusMessage = message },
+      )
+      controller.restoreLaunchProfiles(launcher.preferences)
+      val highAction = checkNotNull(controller.createReasoningEffortActionGroupForTest())
+        .getChildren(TestActionEvent.createTestEvent())
+        .single { action -> action.templatePresentation.text == "High" }
+
+      highAction.actionPerformed(TestActionEvent.createTestEvent(highAction))
+
+      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Custom")
+      assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isTrue()
+      assertThat(fixture.view.defaultProfileActionControl.component.text).isEqualTo("Update Profile")
+
+      fixture.view.defaultProfileActionControl.component.doClick()
+
+      val savedProfile = launcher.preferences.launchProfiles.single()
+      assertThat(statusMessage).isEqualTo("Launch profile updated.")
+      assertThat(savedProfile.id).isEqualTo(carefulProfile.id)
+      assertThat(savedProfile.name).isEqualTo(carefulProfile.name)
+      assertThat(savedProfile.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
+      assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(carefulProfile.id)
+      assertThat(fixture.view.launchProfileLink.text).isEqualTo("Careful")
       assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
     }
   }

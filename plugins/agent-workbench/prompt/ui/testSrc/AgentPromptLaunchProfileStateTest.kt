@@ -80,6 +80,62 @@ internal class AgentPromptLaunchProfileStateTest {
   }
 
   @Test
+  fun modifiedSelectedUserProfileProducesUpdateProfileAction() {
+    val carefulProfile = AgentPromptLaunchProfile(
+      id = "user:careful",
+      name = "Careful",
+      providerId = AgentSessionProvider.CODEX.value,
+    )
+    val state = createState()
+    state.restore(
+      preferences = AgentPromptLauncherBridge.ProviderPreferences(
+        launchProfiles = listOf(carefulProfile),
+        activeLaunchProfileId = carefulProfile.id,
+      ),
+      implicitDefaultProfileId = standardBuiltInProfile.id,
+    )
+    val draft = carefulProfile.asDraft().copy(
+      generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
+    )
+
+    val action = state.defaultAction(draft)
+
+    assertThat(action).isEqualTo(
+      AgentPromptDefaultProfileAction.UpdateProfile(
+        carefulProfile.copy(generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH))
+      )
+    )
+  }
+
+  @Test
+  fun modifiedSelectedUserProfileMatchingAnotherProfileProducesMakeDefaultAction() {
+    val carefulProfile = AgentPromptLaunchProfile(
+      id = "user:careful",
+      name = "Careful",
+      providerId = AgentSessionProvider.CODEX.value,
+      generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
+    )
+    val fastProfile = AgentPromptLaunchProfile(
+      id = "user:fast",
+      name = "Fast",
+      providerId = AgentSessionProvider.CODEX.value,
+      generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.LOW),
+    )
+    val state = createState()
+    state.restore(
+      preferences = AgentPromptLauncherBridge.ProviderPreferences(
+        launchProfiles = listOf(carefulProfile, fastProfile),
+        activeLaunchProfileId = carefulProfile.id,
+      ),
+      implicitDefaultProfileId = standardBuiltInProfile.id,
+    )
+
+    val action = state.defaultAction(fastProfile.asDraft())
+
+    assertThat(action).isEqualTo(AgentPromptDefaultProfileAction.MakeDefault(fastProfile))
+  }
+
+  @Test
   fun matchingProfileDraftIsUsedForPresentationWhenSelectedProfileDiffers() {
     val carefulProfile = AgentPromptLaunchProfile(
       id = "user:careful",

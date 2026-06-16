@@ -7,6 +7,7 @@ internal class AgentPromptDefaultProfileActionController(
   private val actionControl: AgentPromptDefaultProfileActionControl,
   private val actionProvider: () -> AgentPromptDefaultProfileAction?,
   private val onMakeDefault: (AgentPromptLaunchProfile) -> Unit,
+  private val onUpdateProfile: (AgentPromptLaunchProfile) -> Unit,
   private val onSaveAsDefault: () -> Unit,
 ) {
   init {
@@ -21,6 +22,7 @@ internal class AgentPromptDefaultProfileActionController(
   private fun performAction() {
     when (val state = actionProvider()) {
       is AgentPromptDefaultProfileAction.MakeDefault -> onMakeDefault(state.profile)
+      is AgentPromptDefaultProfileAction.UpdateProfile -> onUpdateProfile(state.profile)
       AgentPromptDefaultProfileAction.SaveAsDefault -> onSaveAsDefault()
       null -> return
     }
@@ -29,6 +31,7 @@ internal class AgentPromptDefaultProfileActionController(
   private fun AgentPromptDefaultProfileAction.controlState(): AgentPromptDefaultProfileActionState {
     return when (this) {
       is AgentPromptDefaultProfileAction.MakeDefault -> AgentPromptDefaultProfileActionState.MAKE_DEFAULT
+      is AgentPromptDefaultProfileAction.UpdateProfile -> AgentPromptDefaultProfileActionState.UPDATE_PROFILE
       AgentPromptDefaultProfileAction.SaveAsDefault -> AgentPromptDefaultProfileActionState.SAVE_AS_DEFAULT
     }
   }

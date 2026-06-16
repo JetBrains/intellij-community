@@ -81,6 +81,7 @@ internal class AgentPromptGenerationSettingsController(
     actionControl = defaultProfileActionControl,
     actionProvider = { launchProfileState.defaultAction(currentProfileDraft()) },
     onMakeDefault = ::setDefaultProfile,
+    onUpdateProfile = ::saveProfile,
     onSaveAsDefault = ::saveDraftProfileAsDefault,
   )
 
