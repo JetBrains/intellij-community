@@ -7,7 +7,7 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.gradle.completion.GradleLocalDependencyCompletionContributor
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
-import com.intellij.gradle.completion.kotlin.AbstractKotlinGradleCompletionTest
+import com.intellij.gradle.completion.kotlin.integrationTests.AbstractKotlinGradleCompletionTest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.RangeMarker
