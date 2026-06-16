@@ -65,9 +65,10 @@ The global prompt opens a project-scoped popup for starting a new task or sendin
   [@test] ../../prompt/ui/testSrc/AgentPromptPlanModeDecisionsTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- `NEW_TASK` exposes provider-backed model and reasoning-effort controls as specified by `global-prompt-generation-controls.spec.md`. Header actions stay limited to prompt-surface tools such as provider selection, Plan mode, Run in container, preview, and prompt library.
+- `NEW_TASK` and `EXISTING_TASK` expose the provider selector. Changing provider in `EXISTING_TASK` reloads the selectable task list for that provider. Provider-backed model and reasoning-effort controls are exposed for `NEW_TASK` as specified by `global-prompt-generation-controls.spec.md`. Header actions stay limited to prompt-surface tools such as provider selection, Plan mode, Run in container, preview, and prompt library.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteViewStructureTest.kt
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
+  [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSessionControllerTest.kt
 
 - Generation settings are applied only to `NEW_TASK` launches; `EXISTING_TASK` must not expose editable model or reasoning-effort controls.
   [@test] ../../prompt/ui/testSrc/AgentPromptPaletteSubmitControllerTest.kt
