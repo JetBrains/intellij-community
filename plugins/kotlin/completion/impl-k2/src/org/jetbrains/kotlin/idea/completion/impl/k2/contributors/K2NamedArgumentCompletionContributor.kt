@@ -85,7 +85,7 @@ internal class K2NamedArgumentCompletionContributor : K2SimpleCompletionContribu
                 val namesAtCurrentIndex = namedArgumentInfos
                     .filter { namedArgument -> namedArgument.indexedTypes.any { it.index == currentArgumentIndex } }
                     .mapTo(mutableSetOf()) { it.name }
-                getLocalVariablesForNames(namesAtCurrentIndex, scopeContext)
+                getNonImportedAvailableVariables(namesAtCurrentIndex, scopeContext)
             }
 
             buildList {

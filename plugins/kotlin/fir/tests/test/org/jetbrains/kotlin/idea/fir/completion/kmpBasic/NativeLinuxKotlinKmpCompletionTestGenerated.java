@@ -2282,6 +2282,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameVariableAlreadyPassed.kt");
         }
 
+        @TestMetadata("PrefillSameNameVariableFromClass.kt")
+        public void testPrefillSameNameVariableFromClass() throws Exception {
+            runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameVariableFromClass.kt");
+        }
+
         @TestMetadata("PrefillSameNameVariableSmart.kt")
         public void testPrefillSameNameVariableSmart() throws Exception {
             runTest("../../completion/testData/basic/common/namedArguments/PrefillSameNameVariableSmart.kt");
