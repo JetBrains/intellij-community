@@ -1453,6 +1453,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON314);
   }
 
+  // PEP 798: unpacking (* and **) in comprehensions and generator expressions
+  public void testUnpackingInComprehensions() {
+    doTest(LanguageLevel.PYTHON315);
+  }
+
   public void doTest() {
     doTest(LanguageLevel.PYTHON26);
   }
