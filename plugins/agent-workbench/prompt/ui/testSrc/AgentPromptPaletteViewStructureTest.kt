@@ -2,6 +2,9 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.openapi.actionSystem.ActionToolbar
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
@@ -240,11 +243,22 @@ class AgentPromptPaletteViewStructureTest {
       }
 
       layoutPopupRoot(view.rootPanel)
+      val referenceAdvertiserHeight = referenceAdvertiser.adComponent.preferredSize.height
+      val footerPinToolbarSize = view.footerPinToolbar.component.preferredSize
+      val footerPinToolbarInsets = view.footerPinToolbar.component.insets
 
+      assertThat(SwingUtilities.isDescendingFrom(view.footerPanel, view.bottomPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.statusStrip.component, view.footerPanel)).isTrue()
       assertThat(SwingUtilities.isDescendingFrom(view.statusStrip.component, view.bottomPanel)).isTrue()
-      assertThat(view.statusStrip.component.preferredSize.height)
-        .isEqualTo(referenceAdvertiser.adComponent.preferredSize.height)
-      assertThat(view.statusStrip.component.preferredSize.height)
+      assertThat(view.footerPanel.background).isEqualTo(referenceAdvertiser.adComponent.background)
+      assertThat(view.statusStrip.component.border.getBorderInsets(view.statusStrip.component))
+        .isEqualTo(referenceAdvertiser.adComponent.border.getBorderInsets(referenceAdvertiser.adComponent))
+      assertThat(footerPinToolbarSize.height).isEqualTo(referenceAdvertiserHeight)
+      assertThat(footerPinToolbarSize.width)
+        .isLessThanOrEqualTo(referenceAdvertiserHeight + footerPinToolbarInsets.left + footerPinToolbarInsets.right)
+      assertThat(view.footerPanel.preferredSize.height)
+        .isEqualTo(referenceAdvertiserHeight)
+      assertThat(view.footerPanel.preferredSize.height)
         .isLessThan(view.rootPanel.preferredSize.height / 10)
     }
   }
@@ -267,6 +281,43 @@ class AgentPromptPaletteViewStructureTest {
       assertThat(view.promptLibraryIconLabel.preferredSize).isEqualTo(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
       assertThat(view.promptLibraryIconLabel.width).isEqualTo(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.width)
       assertThat(view.promptLibraryIconLabel.horizontalAlignment).isEqualTo(SwingConstants.CENTER)
+    }
+  }
+
+  @Test
+  fun keepOpenControlIsASecondaryFooterEntry() {
+    runInEdtAndWait {
+      var pinned = false
+      val view = createAgentPromptPaletteView(
+        promptArea = EditorTextField(),
+        contextChipsPanel = JPanel(),
+        pinned = { pinned },
+        onPinClicked = { pinned = !pinned },
+        onExistingTaskSelected = {},
+      )
+      layoutPopupRoot(view.rootPanel)
+      val event = AnActionEvent.createEvent(
+        view.footerPinAction,
+        DataContext.EMPTY_CONTEXT,
+        null,
+        "",
+        ActionUiKind.TOOLBAR,
+        null,
+      )
+
+      assertThat(view.footerPinToolbar.component.parent).isSameAs(view.footerPanel)
+      assertThat(SwingUtilities.isDescendingFrom(view.footerPinToolbar.component, view.footerPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.footerPinToolbar.component, view.bottomPanel)).isTrue()
+      assertThat(SwingUtilities.isDescendingFrom(view.footerPinToolbar.component, view.rightHeaderPanel)).isFalse()
+      assertThat(SwingUtilities.isDescendingFrom(view.footerPinToolbar.component, view.headerControls.toolbarComponent)).isFalse()
+      assertThat(view.footerPinToolbar.component.isOpaque).isFalse()
+      assertThat(view.footerPinAction.templatePresentation.text).isEqualTo("Keep Popup Open")
+      assertThat(view.footerPinAction.isSelected(event)).isFalse()
+
+      view.footerPinAction.actionPerformed(event)
+
+      assertThat(pinned).isTrue()
+      assertThat(view.footerPinAction.isSelected(event)).isTrue()
     }
   }
 

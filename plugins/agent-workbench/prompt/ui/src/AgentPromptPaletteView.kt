@@ -78,6 +78,8 @@ private val PROMPT_PANEL_MINIMUM_SIZE = JBUI.size(0, 120)
 
 @NonNls
 private const val HEADER_ACTIONS_PLACE = "AgentPromptPalette.Header"
+@NonNls
+private const val FOOTER_ACTIONS_PLACE = "AgentPromptPalette.Footer"
 private const val CARD_EDITOR = "editor"
 private const val CARD_PREVIEW = "preview"
 
@@ -104,10 +106,13 @@ internal data class AgentPromptPaletteView(
   @JvmField val existingTaskList: JBList<ThreadEntry>,
   @JvmField val existingTaskScrollPane: JBScrollPane,
   @JvmField val statusStrip: AgentPromptStatusStrip,
+  @JvmField val footerPanel: JPanel,
   @JvmField val rightHeaderPanel: JPanel,
   @JvmField val headerToolbar: ActionToolbar,
   @JvmField val headerControls: AgentPromptHeaderControls,
   @JvmField val containerModeAction: AgentPromptHeaderCheckBoxAction,
+  @JvmField val footerPinToolbar: ActionToolbar,
+  @JvmField val footerPinAction: AgentPromptToolbarIconToggleAction,
 )
 
 internal class AgentPromptHeaderCheckBoxAction(
@@ -184,7 +189,6 @@ internal class AgentPromptHeaderControls(
   private val previewAction: AgentPromptToolbarIconAction,
   private val promptLibraryAction: AgentPromptToolbarIconAction,
   private val profileAction: AgentPromptToolbarProfileAction,
-  private val pinAction: AgentPromptToolbarIconToggleAction,
 ) {
   private var providerOptionsVisible = true
 
@@ -228,7 +232,6 @@ internal class AgentPromptHeaderControls(
     rootGroup.add(previewAction)
     rootGroup.add(promptLibraryAction)
     rootGroup.add(profileAction)
-    rootGroup.add(pinAction)
     updateActions()
   }
 }
@@ -411,7 +414,7 @@ internal fun createAgentPromptPaletteView(
   onPinClicked: () -> Unit = {},
 ): AgentPromptPaletteView {
   val pinAction = AgentPromptToolbarIconToggleAction(
-    text = AgentPromptBundle.message("popup.pin.toggle.tooltip"),
+    text = AgentPromptBundle.message("popup.keep.open.toggle.tooltip"),
     initialIcon = AllIcons.Actions.PinTab,
     isSet = pinned,
     onToggleClick = onPinClicked,
@@ -494,10 +497,26 @@ internal fun createAgentPromptPaletteView(
     previewAction = previewToggleAction,
     promptLibraryAction = promptLibraryAction,
     profileAction = profileSelectorAction,
-    pinAction = pinAction,
   )
   launchProfileLink.onVisibilityChanged = headerControls::updateActions
   profileSelectorAction.onPresentationChanged = headerControls::updateActions
+
+  val statusStrip = AgentPromptStatusStrip(AgentPromptBundle.message("popup.footer.hint"))
+  val footerRowHeight = statusStrip.component.preferredSize.height
+  val footerPinButtonSize = Dimension(footerRowHeight, footerRowHeight)
+  val footerPinToolbar = ActionManager.getInstance().createActionToolbar(
+    FOOTER_ACTIONS_PLACE,
+    DefaultActionGroup(pinAction),
+    true,
+  ).apply {
+    layoutStrategy = ToolbarLayoutStrategy.NOWRAP_STRATEGY
+    setReservePlaceAutoPopupIcon(false)
+    setMinimumButtonSize(footerPinButtonSize)
+    (this as? ActionToolbarImpl)?.setSkipWindowAdjustments(true)
+    (this as? ActionToolbarImpl)?.setActionButtonBorder(JBUI.Borders.empty())
+    component.isOpaque = false
+    component.border = JBUI.Borders.emptyRight(4)
+  }
 
   lateinit var tabbedPane: JBTabbedPane
   val rightHeaderPanel = JPanel(BorderLayout()).apply {
@@ -643,12 +662,16 @@ internal fun createAgentPromptPaletteView(
     minimumSize = PROMPT_PANEL_MINIMUM_SIZE
   }
 
-  val statusStrip = AgentPromptStatusStrip(AgentPromptBundle.message("popup.footer.hint"))
+  val footerPanel = JPanel(BorderLayout()).apply {
+    background = JBUI.CurrentTheme.BigPopup.advertiserBackground()
+    add(statusStrip.component, BorderLayout.CENTER)
+    add(footerPinToolbar.component, BorderLayout.EAST)
+  }
 
   val bottomPanel = BorderLayoutPanel().apply {
     background = JBUI.CurrentTheme.Popup.BACKGROUND
     addToCenter(existingTaskScrollPane)
-    addToBottom(statusStrip.component)
+    addToBottom(footerPanel)
   }
   installComposerContextVisibilitySync(
     contextChipsPanel = contextChipsPanel,
@@ -667,7 +690,10 @@ internal fun createAgentPromptPaletteView(
     addToBottom(bottomPanel)
   }
   headerToolbar.targetComponent = rootPanel
+  footerPinToolbar.targetComponent = rootPanel
   headerControls.updateActions()
+  @Suppress("DEPRECATION")
+  footerPinToolbar.updateActionsImmediately()
 
   WindowMoveListener(rootPanel).installTo(headerPanel)
 
@@ -692,10 +718,13 @@ internal fun createAgentPromptPaletteView(
     existingTaskList = existingTaskList,
     existingTaskScrollPane = existingTaskScrollPane,
     statusStrip = statusStrip,
+    footerPanel = footerPanel,
     rightHeaderPanel = rightHeaderPanel,
     headerToolbar = headerToolbar,
     headerControls = headerControls,
     containerModeAction = containerModeAction,
+    footerPinToolbar = footerPinToolbar,
+    footerPinAction = pinAction,
   )
 }
 
