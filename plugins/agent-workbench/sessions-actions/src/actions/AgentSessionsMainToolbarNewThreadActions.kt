@@ -21,10 +21,13 @@ import com.intellij.agent.workbench.sessions.core.providers.buildBuiltInLaunchPr
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
+import com.intellij.agent.workbench.sessions.ui.AgentWorkbenchPopupRow
+import com.intellij.agent.workbench.sessions.ui.createAgentWorkbenchListPopup
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -42,7 +45,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ClientProperty
+import com.intellij.util.ui.LafIconLookup
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 import java.awt.Dimension
 import javax.swing.JComponent
 
@@ -84,7 +89,7 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
     createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
     userLaunchProfiles: () -> List<AgentPromptLaunchProfile> = { service<AgentSessionUiPreferencesStateService>().getUserLaunchProfiles() },
     activeLaunchProfileId: () -> String? = { service<AgentSessionUiPreferencesStateService>().getActiveLaunchProfileId() },
-    showPicker: (ActionGroup, AnActionEvent) -> Unit = ::showToolbarPicker,
+    showPicker: (ActionGroup, AnActionEvent) -> Unit = ::showToolbarProfilePicker,
   ) : this(
     resolveContext = resolveContext,
     allBridges = allBridges,
@@ -131,6 +136,11 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
                           ?: AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.text")
     e.presentation.description = describeProfileTooltip(quickStart, context.targetForUpdate)
     e.presentation.isEnabledAndVisible = true
+  }
+
+  @TestOnly
+  fun createProfilePickerRowsForTest(e: AnActionEvent): List<AgentWorkbenchPopupRow> {
+    return (actionGroup as ProfilePickerActionGroup).createRows(e)
   }
 }
 
@@ -237,6 +247,44 @@ private class ProfilePickerActionGroup(
           ).forEach(::add)
         }
       }.let(::appendManageLaunchProfilesAction).toTypedArray<AnAction>()
+    }
+  }
+  fun createRows(e: AnActionEvent): List<AgentWorkbenchPopupRow> {
+    val context = resolveContext(e) ?: return emptyList()
+    val target = context.target ?: return emptyList()
+    val menuModel = buildNewThreadMenuModel(allBridges(), context.project)
+    if (!menuModel.hasEntries()) return emptyList()
+    val activeProfileId = activeLaunchProfileId()
+    val profiles = resolveToolbarProfileItems(menuModel, userLaunchProfiles(), activeProfileId)
+    if (profiles.isEmpty()) return emptyList()
+    val selectedProfileId = resolveToolbarProfileItem(profiles, activeProfileId)?.profile?.id
+    return when (target) {
+      is AgentSessionsEditorTabNewThreadTarget.Direct -> buildProfileMenuRows(
+        path = target.path,
+        project = context.project,
+        profiles = profiles,
+        entryPoint = entryPoint,
+        createNewSession = createNewSession,
+        activeLaunchProfileId = selectedProfileId,
+        event = e,
+      )
+      is AgentSessionsEditorTabNewThreadTarget.Candidates -> target.candidates.map { candidate ->
+        AgentWorkbenchPopupRow(
+          text = candidate.displayName,
+          tooltipText = candidate.path.takeIf { path -> path != candidate.displayName },
+          secondaryIcon = AllIcons.General.ArrowRight,
+          subRows = buildProfileMenuRows(
+            path = candidate.path,
+            project = context.project,
+            profiles = profiles,
+            entryPoint = entryPoint,
+            createNewSession = createNewSession,
+            activeLaunchProfileId = selectedProfileId,
+            includeManageAction = false,
+            event = e,
+          ),
+        )
+      }.let { rows -> appendManageLaunchProfilesRow(rows.toMutableList(), e) }
     }
   }
 }
@@ -782,6 +830,75 @@ private fun buildProfileMenuActions(
   return actions.toTypedArray()
 }
 
+private fun buildProfileMenuRows(
+  path: String,
+  project: Project,
+  profiles: List<ToolbarProfileItem>,
+  entryPoint: AgentWorkbenchEntryPoint,
+  createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
+  activeLaunchProfileId: String?,
+  includeManageAction: Boolean = true,
+  event: AnActionEvent,
+): List<AgentWorkbenchPopupRow> {
+  val rows = mutableListOf<AgentWorkbenchPopupRow>()
+  val standardProfiles = profiles.filter { profileItem -> profileItem.profile.launchMode != AgentSessionLaunchMode.YOLO }
+  val yoloProfiles = profiles.filter { profileItem -> profileItem.profile.launchMode == AgentSessionLaunchMode.YOLO }
+  fun addProfileSection(title: @Nls String?, sectionProfiles: List<ToolbarProfileItem>) {
+    if (sectionProfiles.isEmpty()) return
+    sectionProfiles.forEachIndexed { index, profileItem ->
+      rows.add(createProfileMenuRow(
+        path = path,
+        project = project,
+        profileItem = profileItem,
+        entryPoint = entryPoint,
+        createNewSession = createNewSession,
+        activeLaunchProfileId = activeLaunchProfileId,
+        separatorText = if (index == 0) title else null,
+      ))
+    }
+  }
+  addProfileSection(null, standardProfiles)
+  addProfileSection(AgentSessionsBundle.message("toolwindow.action.new.session.section.auto"), yoloProfiles)
+  if (includeManageAction) {
+    appendManageLaunchProfilesRow(rows, event)
+  }
+  return rows
+}
+
+private fun createProfileMenuRow(
+  path: String,
+  project: Project,
+  profileItem: ToolbarProfileItem,
+  entryPoint: AgentWorkbenchEntryPoint,
+  createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
+  activeLaunchProfileId: String?,
+  separatorText: @Nls String?,
+): AgentWorkbenchPopupRow {
+  val isActiveProfile = profileItem.profile.id == activeLaunchProfileId
+  val isEnabled = profileItem.menuItem.isEnabled
+  return AgentWorkbenchPopupRow(
+    text = profileItem.profile.name,
+    separatorText = separatorText,
+    primaryIcon = providerItemMonochromeIconWithMode(profileItem.menuItem),
+    secondaryIcon = when {
+      !isActiveProfile -> null
+      isEnabled -> LafIconLookup.getIcon("checkmark")
+      else -> LafIconLookup.getDisabledIcon("checkmark")
+    },
+    tooltipText = profileActionDescription(
+      profileItem = profileItem,
+      projectLabel = projectLabelForPath(path),
+    ),
+    selected = isActiveProfile,
+    selectable = isEnabled,
+    onChosen = {
+      if (isEnabled) {
+        createNewSession(path, profileItem.profile, project, entryPoint)
+      }
+    },
+  )
+}
+
 private fun appendManageLaunchProfilesAction(actions: MutableList<AnAction>): MutableList<AnAction> {
   val manageAction = ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Prompt.MANAGE_LAUNCH_PROFILES) ?: return actions
   if (actions.isNotEmpty()) {
@@ -789,6 +906,21 @@ private fun appendManageLaunchProfilesAction(actions: MutableList<AnAction>): Mu
   }
   actions.add(manageAction)
   return actions
+}
+
+private fun appendManageLaunchProfilesRow(rows: MutableList<AgentWorkbenchPopupRow>, event: AnActionEvent): List<AgentWorkbenchPopupRow> {
+  val manageAction = ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Prompt.MANAGE_LAUNCH_PROFILES) ?: return rows
+  val text = manageAction.templatePresentation.text ?: return rows
+  rows.add(AgentWorkbenchPopupRow(
+    text = text,
+    separatorText = "",
+    tooltipText = manageAction.templatePresentation.description,
+    onChosen = {
+      val actionEvent = AnActionEvent.createEvent(manageAction, event.dataContext, null, event.place, ActionUiKind.POPUP, event.inputEvent)
+      ActionUtil.performAction(manageAction, actionEvent)
+    },
+  ))
+  return rows
 }
 
 private fun toolbarProfileActionText(item: ToolbarProfileItem): @Nls String {
@@ -902,6 +1034,23 @@ private fun showToolbarPicker(group: ActionGroup, e: AnActionEvent) {
       null,
       Int.MAX_VALUE,
     )
+  val anchor = resolveQuickStartProjectPopupAnchor(e)
+  if (anchor != null) {
+    popup.showUnderneathOf(anchor)
+  }
+  else {
+    popup.showInBestPositionFor(e.dataContext)
+  }
+}
+
+private fun showToolbarProfilePicker(group: ActionGroup, e: AnActionEvent) {
+  if (group !is ProfilePickerActionGroup) {
+    showToolbarPicker(group, e)
+    return
+  }
+  val rows = group.createRows(e)
+  if (rows.isEmpty()) return
+  val popup = createAgentWorkbenchListPopup(null, rows)
   val anchor = resolveQuickStartProjectPopupAnchor(e)
   if (anchor != null) {
     popup.showUnderneathOf(anchor)

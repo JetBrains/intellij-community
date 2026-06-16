@@ -108,6 +108,7 @@ dependencies {
     pluginModule(implementation(project(":sessions")))
     pluginModule(implementation(project(":sessions-jbcentral")))
     pluginModule(implementation(project(":sessions-core")))
+    pluginModule(implementation(project(":sessions-ui")))
     pluginModule(implementation(project(":sessions-actions")))
     pluginModule(implementation(project(":sessions-toolwindow")))
     pluginModule(implementation(project(":sessions-launch-config-backend")))

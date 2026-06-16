@@ -1,0 +1,64 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.agent.workbench.sessions.ui` start
+
+jvm_library(
+    name = "agent-workbench-sessions-ui",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.sessions.ui",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util",
+        "//platform/util:util-ui",
+    ],
+)
+
+jvm_library(
+    name = "agent-workbench-sessions-ui_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.sessions.ui",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":agent-workbench-sessions-ui",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+    ],
+)
+### auto-generated section `build intellij.agent.workbench.sessions.ui` end
+
+### auto-generated section `iml intellij.agent.workbench.sessions.ui` start
+exports_files(
+    [
+        "intellij.agent.workbench.sessions.ui.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.agent.workbench.sessions.ui` end

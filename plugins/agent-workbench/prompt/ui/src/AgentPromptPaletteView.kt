@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.ex.CheckboxAction
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -266,15 +265,12 @@ internal class AgentPromptToolbarProfileAction(
   initialDescription: @Nls String,
   initialIcon: Icon,
 ) : DumbAwareAction(initialText, initialDescription, initialIcon), CustomComponentAction {
-  private val actionGroupProvider: () -> DefaultActionGroup
-    get() = currentActionGroupProvider
-
   private var visible: Boolean = true
   private var enabled: Boolean = true
   private var profileText: @Nls String = initialText
   private var profileDescription: @Nls String = initialDescription
   private var profileIcon: Icon = initialIcon
-  private var currentActionGroupProvider: () -> DefaultActionGroup = { DefaultActionGroup() }
+  private var popupHandler: (DataContext, JComponent) -> Unit = { _, _ -> }
 
   var onPresentationChanged: (() -> Unit)? = null
 
@@ -289,7 +285,7 @@ internal class AgentPromptToolbarProfileAction(
     accessibleContext.accessibleName = initialText
     accessibleContext.accessibleDescription = initialDescription
     addActionListener {
-      showProfilePopup(DataManager.getInstance().getDataContext(this), this)
+      popupHandler.invoke(DataManager.getInstance().getDataContext(this), this)
     }
   }
 
@@ -305,8 +301,8 @@ internal class AgentPromptToolbarProfileAction(
     templatePresentation.icon = initialIcon
   }
 
-  fun setActionGroupProvider(provider: () -> DefaultActionGroup) {
-    currentActionGroupProvider = provider
+  fun setPopupHandler(handler: (DataContext, JComponent) -> Unit) {
+    popupHandler = handler
   }
 
   fun setPresentation(
@@ -349,21 +345,7 @@ internal class AgentPromptToolbarProfileAction(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    showProfilePopup(e.dataContext, link)
-  }
-
-  private fun showProfilePopup(dataContext: DataContext, anchor: JComponent) {
-    val popup = JBPopupFactory.getInstance()
-      .createActionGroupPopup(
-        null,
-        actionGroupProvider(),
-        dataContext,
-        JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
-        true,
-        null,
-        Int.MAX_VALUE,
-      )
-    popup.showUnderneathOf(anchor)
+    popupHandler.invoke(e.dataContext, link)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

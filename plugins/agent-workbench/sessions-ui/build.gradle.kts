@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
@@ -26,7 +26,7 @@ intellijPlatform {
 sourceSets {
   main {
     java { setSrcDirs(listOf("src")) }
-    resources { setSrcDirs(listOf("resources")) }
+    resources { setSrcDirs(emptyList<String>()) }
   }
 }
 
@@ -41,20 +41,7 @@ dependencies {
       intellijIdeaUltimate(platformVersion) { useInstaller = false }
     }
     jetbrainsRuntime()
-    if (platformLocalPath == null) {
-      bundledPlugins("org.intellij.plugins.markdown")
-    }
   }
-
-  if (platformLocalPath != null) {
-    val ideDir = rootProject.file(platformLocalPath)
-    compileOnly(fileTree(ideDir.resolve("plugins/markdown/lib")) { include("**/*.jar") })
-  }
-
-  implementation(project(":common"))
-  implementation(project(":prompt-core"))
-  implementation(project(":sessions-core"))
-  implementation(project(":sessions-ui"))
 }
 
 kotlin {
