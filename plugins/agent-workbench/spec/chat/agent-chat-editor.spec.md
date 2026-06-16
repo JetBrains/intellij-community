@@ -61,7 +61,7 @@ Agent Chat tabs are protocol-backed editor tabs around terminal-backed agent ses
 
 - Pending-thread and concrete `/new` rebinding follow `../actions/codex-thread-rebinding.spec.md`.
 
-- Initial prompt delivery is readiness-gated for terminal dispatch and follows shared prompt-record/startup-command contracts in `../core/agent-core-contracts.spec.md`. Delivered startup prompts remain visible in restored chat metadata; completed terminal dispatch clears only the terminal queue.
+- Initial prompt delivery is readiness-gated for terminal dispatch and follows shared live prompt-record/startup-command contracts in `../core/agent-core-contracts.spec.md`. Prompt text, tokens, delivery state, and terminal dispatch queues are live-session-only metadata and must not be persisted in editor state or tab cache restore data.
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 

@@ -170,7 +170,7 @@ class AgentChatInitialMessageDispatcherTest {
   }
 
   @Test
-  fun persistedCodexPlanModeActionRestoresAsTerminalPlanModeAction() {
+  fun persistedPromptDataIsNotRestoredForDispatch() {
     val identity = AgentChatTabIdentity(
       projectHash = "hash",
       projectPath = "/project",
@@ -189,14 +189,6 @@ class AgentChatInitialMessageDispatcherTest {
             subAgentId = identity.subAgentId,
             threadId = "new-test",
             lastKnownTitle = "Codex",
-            initialPromptMessage = "Refactor this",
-            initialPromptToken = "token",
-            terminalPromptDispatchSteps = listOf(
-              PersistedAgentChatInitialMessageDispatchStep(
-                action = "ENSURE_CODEX_PLAN_MODE",
-                timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS.name,
-              )
-            ),
             updatedAt = System.currentTimeMillis(),
           )
         ),
@@ -205,8 +197,11 @@ class AgentChatInitialMessageDispatcherTest {
 
     val loaded = checkNotNull(service.load(tabKey))
 
-    assertThat(loaded.runtime.terminalPromptDispatch?.steps?.single()?.action)
-      .isEqualTo(AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE)
+    assertThat(loaded.runtime.initialPromptRecord).isNull()
+    assertThat(loaded.runtime.terminalPromptDispatch).isNull()
+    assertThat(loaded.runtime.initialMessageDispatchSteps).isEmpty()
+    assertThat(loaded.runtime.initialMessageToken).isNull()
+    assertThat(loaded.runtime.initialMessageSent).isFalse()
   }
 }
 

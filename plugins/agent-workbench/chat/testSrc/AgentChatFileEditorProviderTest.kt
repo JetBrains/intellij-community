@@ -576,6 +576,9 @@ class AgentChatFileEditorProviderTest {
       threadTitle = "Thread",
       subAgentId = null,
       threadActivity = AgentThreadActivity.UNREAD,
+      initialMessageDispatchSteps = listOf(AgentInitialMessageDispatchStep(text = "do not persist this prompt")),
+      initialMessageToken = "do-not-persist-token",
+      initialMessageSent = false,
     )
     val store = AgentChatTabsStateService(null)
     store.upsert(snapshot)
@@ -588,6 +591,13 @@ class AgentChatFileEditorProviderTest {
       assertThat(loaded?.runtime?.threadTitle).isEqualTo(snapshot.runtime.threadTitle)
       assertThat(loaded?.identity?.subAgentId).isEqualTo(snapshot.identity.subAgentId)
       assertThat(loaded?.runtime?.threadActivity).isEqualTo(AgentThreadActivity.UNREAD)
+      assertThat(loaded?.runtime?.initialMessageDispatchSteps).isEmpty()
+      assertThat(loaded?.runtime?.initialMessageDispatchStepIndex).isZero()
+      assertThat(loaded?.runtime?.initialComposedMessage).isNull()
+      assertThat(loaded?.runtime?.initialMessageToken).isNull()
+      assertThat(loaded?.runtime?.initialMessageSent).isFalse()
+      assertThat(loaded?.runtime?.initialPromptRecord).isNull()
+      assertThat(loaded?.runtime?.terminalPromptDispatch).isNull()
     }
     finally {
       store.delete(snapshot.tabKey)

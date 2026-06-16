@@ -1928,7 +1928,7 @@ class AgentChatEditorServiceTest {
   }
 
   @Test
-  fun testResolveFromPathRestoresMultiStepInitialMessageProgress(): Unit = timeoutRunBlocking {
+  fun testResolveFromPathDoesNotRestoreInitialMessagePromptData(): Unit = timeoutRunBlocking {
     val tabsService = service<AgentChatTabsService>()
     val steps = listOf(
       AgentInitialMessageDispatchStep(text = "step one"),
@@ -1949,19 +1949,25 @@ class AgentChatEditorServiceTest {
     tabsService.upsert(snapshot)
     try {
       val restored = tabsService.resolveFromPath(snapshot.tabKey.toPath()) as AgentChatTabResolution.Resolved
-      assertThat(restored.snapshot.runtime.initialMessageDispatchSteps).containsExactlyElementsOf(steps)
-      assertThat(restored.snapshot.runtime.initialMessageDispatchStepIndex).isEqualTo(1)
-      assertThat(restored.snapshot.runtime.initialMessageToken).isEqualTo("token-multi-step-restore")
+      assertThat(restored.snapshot.identity).isEqualTo(snapshot.identity)
+      assertThat(restored.snapshot.runtime.threadId).isEqualTo("multi-step-restore")
+      assertThat(restored.snapshot.runtime.threadTitle).isEqualTo("Multi-step restore")
+      assertThat(restored.snapshot.runtime.initialMessageDispatchSteps).isEmpty()
+      assertThat(restored.snapshot.runtime.initialMessageDispatchStepIndex).isZero()
+      assertThat(restored.snapshot.runtime.initialComposedMessage).isNull()
+      assertThat(restored.snapshot.runtime.initialMessageToken).isNull()
       assertThat(restored.snapshot.runtime.initialMessageSent).isFalse()
+      assertThat(restored.snapshot.runtime.initialPromptRecord).isNull()
+      assertThat(restored.snapshot.runtime.terminalPromptDispatch).isNull()
 
       val fileSystem = agentChatVirtualFileSystem()
       val file = checkNotNull(runInUi {
         fileSystem.findFileByPath(snapshot.tabKey.toPath())
       }) as AgentChatVirtualFile
-      assertThat(file.initialMessageDispatchSteps).containsExactlyElementsOf(steps)
-      assertThat(file.initialMessageDispatchStepIndex).isEqualTo(1)
-      assertThat(file.initialComposedMessage).isEqualTo("step two")
-      assertThat(file.initialMessageToken).isEqualTo("token-multi-step-restore")
+      assertThat(file.initialMessageDispatchSteps).isEmpty()
+      assertThat(file.initialMessageDispatchStepIndex).isZero()
+      assertThat(file.initialComposedMessage).isNull()
+      assertThat(file.initialMessageToken).isNull()
       assertThat(file.initialMessageSent).isFalse()
     }
     finally {
