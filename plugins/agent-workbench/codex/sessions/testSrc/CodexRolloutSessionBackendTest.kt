@@ -226,7 +226,7 @@ class CodexRolloutSessionBackendTest {
   }
 
   @Test
-  fun keepsLatestCumulativeTokenUsageWithoutDoubleCountingRepeatedSnapshots() {
+  fun prefersLastTokenUsageWhenRepeatedSnapshotsAlsoCarryCumulativeTotals() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-cost-usage")
       Files.createDirectories(projectDir)
@@ -243,9 +243,10 @@ class CodexRolloutSessionBackendTest {
       assertThat(threads.single().usageSnapshots).containsExactly(
         AgentSessionUsageSnapshot(
           modelId = "gpt-5.4",
-          inputTokens = 10_230_044,
-          outputTokens = 408_288,
-          cacheReadTokens = 131_931_008,
+          inputTokens = 599_919,
+          outputTokens = 1_939,
+          cacheReadTokens = 11_392,
+          reasoningTokens = 1_002,
         )
       )
     }
