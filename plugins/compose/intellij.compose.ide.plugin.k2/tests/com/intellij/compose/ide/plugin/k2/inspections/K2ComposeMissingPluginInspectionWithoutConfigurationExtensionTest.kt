@@ -3,7 +3,7 @@ package com.intellij.compose.ide.plugin.k2.inspections
 
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
-import com.intellij.compose.ide.plugin.shared.util.enableComposeInTest
+import com.intellij.compose.ide.plugin.k2.enableComposeInTest
 import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 

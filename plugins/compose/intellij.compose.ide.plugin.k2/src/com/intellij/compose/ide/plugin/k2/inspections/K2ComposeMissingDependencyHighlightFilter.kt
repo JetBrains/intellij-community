@@ -4,7 +4,6 @@ package com.intellij.compose.ide.plugin.k2.inspections
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoFilter
 import com.intellij.compose.ide.plugin.k2.checkRequiresComposePlugin
-import com.intellij.compose.ide.plugin.shared.inspections.ComposeMissingPluginInspection
 import com.intellij.compose.ide.plugin.shared.inspections.ComposeModuleConfigurationExtension
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiFile
@@ -16,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 /**
  * Suppresses the MISSING_DEPENDENCY_CLASS and ARGUMENT_TYPE_MISMATCH diagnostic for Compose-related errors
  * when the Compose compiler plugin is missing. In this case,
- * [ComposeMissingPluginInspection] provides a more actionable error with a quick-fix.
+ * [K2ComposeMissingPluginInspection] provides a more actionable error with a quick-fix.
  */
 internal class K2ComposeMissingDependencyHighlightFilter : HighlightInfoFilter {
 

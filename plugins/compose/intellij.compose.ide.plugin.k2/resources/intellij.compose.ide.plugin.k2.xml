@@ -9,6 +9,7 @@
     <module name="intellij.kotlin.base.codeInsight"/>
     <module name="intellij.kotlin.base.compilerConfiguration"/>
     <module name="intellij.kotlin.base.facet"/>
+    <module name="intellij.kotlin.base.util"/>
     <module name="intellij.kotlin.codeInsight.api"/>
     <module name="intellij.kotlin.codeInsight.inspections"/>
     <module name="intellij.kotlin.completion.impl"/>
@@ -16,6 +17,7 @@
     <module name="intellij.kotlin.projectConfiguration"/>
     <module name="intellij.kotlin.refactorings"/>
     <module name="intellij.kotlin.refactorings.base"/>
+    <module name="intellij.kotlin.references"/>
     <module name="intellij.libraries.kotlinc.analysis.api"/>
     <module name="intellij.libraries.kotlinc.analysis.api.k2"/>
     <module name="intellij.libraries.kotlinc.kotlin.compiler.common"/>
@@ -25,14 +27,19 @@
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.externalSystem.impl"/>
+    <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.lang.impl"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.uast"/>
+    <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <callHighlighterExtension implementation="com.intellij.compose.ide.plugin.k2.highlighting.ComposableFunctionCallHighlighterExtension"/>
+    <callHighlighterExtension
+      implementation="com.intellij.compose.ide.plugin.k2.highlighting.K2ComposableFunctionCallHighlighterExtension"/>
     <extractFunctionDescriptorModifier implementation="com.intellij.compose.ide.plugin.k2.K2ComposableAnnotationToExtractedFunctionAdder"
                                        order="last"/>
     <libraryVersionProvider
@@ -44,13 +51,18 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <additionalTextAttributes scheme="Default" file="colorSchemes/IntelliJComposeColorSchemeDefault.xml"/>
+    <additionalTextAttributes scheme="Darcula" file="colorSchemes/IntelliJComposeColorSchemeDarcula.xml"/>
+    <codeInsight.lineMarkerProvider language="kotlin"
+                                    implementationClass="com.intellij.compose.ide.plugin.k2.lineMarkers.K2ComposeColorLineMarkerProviderDescriptor"/>
+    <codeInsight.unresolvedReferenceQuickFixProvider
+      implementation="com.intellij.compose.ide.plugin.k2.intentions.K2AddComposeRuntimeQuickFixProvider"/>
     <completion.contributor language="kotlin"
                             implementationClass="com.intellij.compose.ide.plugin.k2.completion.K2ComposeModifierCompletionContributor"
                             order="first, before KotlinCompletionContributor"/>
-
-    <codeInsight.lineMarkerProvider language="kotlin"
-                                    implementationClass="com.intellij.compose.ide.plugin.k2.K2ComposeColorLineMarkerProviderDescriptor"/>
-
+    <daemon.highlightInfoFilter implementation="com.intellij.compose.ide.plugin.k2.inspections.K2ComposeMissingDependencyHighlightFilter"/>
+    <lang.inspectionSuppressor language="kotlin"
+                               implementationClass="com.intellij.compose.ide.plugin.k2.inspections.ComposableNamingInspectionSuppressor"/>
     <localInspection implementationClass="com.intellij.compose.ide.plugin.k2.inspections.K2ComposeMissingPluginInspection"
                      language="kotlin"
                      enabledByDefault="true"
@@ -59,10 +71,22 @@
                      key="compose.inspection.missing.plugin.name"
                      level="ERROR"
                      shortName="ComposableCallWithoutComposePlugin"/>
-
-    <daemon.highlightInfoFilter implementation="com.intellij.compose.ide.plugin.k2.inspections.K2ComposeMissingDependencyHighlightFilter"/>
-
-    <codeInsight.unresolvedReferenceQuickFixProvider
-      implementation="com.intellij.compose.ide.plugin.k2.intentions.K2AddComposeRuntimeQuickFixProvider"/>
+    <localInspection implementationClass="com.intellij.compose.ide.plugin.k2.inspections.MultiplatformPreviewAnnotationInFunctionWithParametersInspection"
+                     language="kotlin"
+                     enabledByDefault="true"
+                     bundle="messages.ComposeIdeBundle"
+                     groupKey="compose.preview.inspection.group.name"
+                     key="compose.preview.inspection.no.parameters.name"
+                     level="ERROR"/>
+    <localInspection implementationClass="com.intellij.compose.ide.plugin.k2.inspections.MultiplatformPreviewMultipleParameterProvidersInspection"
+                     language="kotlin"
+                     enabledByDefault="true"
+                     bundle="messages.ComposeIdeBundle"
+                     groupKey="compose.preview.inspection.group.name"
+                     key="compose.preview.inspection.no.multiple.preview.provider.name"
+                     level="ERROR"/>
+    <overrideImplementsAnnotationsFilter id="ComposeOverrideImplementsAnnotationsFilter"
+                                         implementation="com.intellij.compose.ide.plugin.k2.ComposeOverrideImplementsAnnotationsFilter" />
+    <pluginSuggestionProvider implementation="com.intellij.compose.ide.plugin.k2.suggestions.KmpPluginSuggestionProvider"/>
   </extensions>
 </idea-plugin>

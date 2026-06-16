@@ -20,8 +20,9 @@ package com.intellij.compose.ide.plugin.k2.completion
 import com.intellij.codeInsight.completion.CompletionInitializationContext
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementDecorator
+import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.compose.ide.plugin.shared.COMPOSE_MODIFIER_FQN
-import com.intellij.compose.ide.plugin.shared.completion.ModifierLookupElement
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.analysis.api.KaIdeApi
@@ -29,7 +30,37 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.psi.KtFile
 
-internal class K2ModifierLookupElement(delegate: LookupElement, insertModifier: Boolean) : ModifierLookupElement(delegate, insertModifier) {
+/**
+ * Inserts "Modifier." before [delegate] and imports
+ * [com.intellij.compose.ide.plugin.shared.COMPOSE_MODIFIER_FQN] if it's not imported.
+ */
+internal class K2ModifierLookupElement(delegate: LookupElement, val insertModifier: Boolean) :
+  LookupElementDecorator<LookupElement>(delegate) {
+  companion object {
+    const val CALL_ON_MODIFIER_OBJECT: String = "Modifier."
+  }
+
+  override fun renderElement(presentation: LookupElementPresentation) {
+    super.renderElement(presentation)
+    presentation.itemText = lookupString
+  }
+
+  override fun getAllLookupStrings(): Set<String> {
+    if (insertModifier) {
+      val lookupStrings = super.getAllLookupStrings().toMutableSet()
+      lookupStrings.add(CALL_ON_MODIFIER_OBJECT + super.getLookupString())
+      return lookupStrings
+    }
+    return super.getAllLookupStrings()
+  }
+
+  override fun getLookupString(): String {
+    if (insertModifier) {
+      return CALL_ON_MODIFIER_OBJECT + super.getLookupString()
+    }
+    return super.getLookupString()
+  }
+
   override fun handleInsert(context: InsertionContext) {
     val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
     val ktFile = context.file as KtFile

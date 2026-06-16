@@ -55,5 +55,11 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections" />
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.kotlin.references" />
+    <orderEntry type="module" module-name="intellij.platform.uast" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.util" />
   </component>
 </module>

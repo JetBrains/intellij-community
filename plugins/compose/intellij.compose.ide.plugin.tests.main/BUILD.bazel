@@ -37,8 +37,6 @@ jvm_library(
         "//plugins/compose/intellij.compose.ide.plugin.k2:ide-plugin-k2-tests_test_lib",
         "//plugins/compose/intellij.compose.ide.plugin.projectStructureTests:ide-plugin-projectStructureTests",
         "//plugins/compose/intellij.compose.ide.plugin.projectStructureTests:ide-plugin-projectStructureTests_test_lib",
-        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests",
-        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",
         "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources-tests",
         "//plugins/compose/intellij.compose.ide.plugin.resources:ide-plugin-resources-tests_test_lib",
     ],

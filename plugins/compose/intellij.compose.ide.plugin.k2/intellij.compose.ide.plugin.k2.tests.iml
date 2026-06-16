@@ -25,7 +25,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.k2" scope="TEST" />
     <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.compose.ide.plugin.shared.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings.base" scope="TEST" />
@@ -34,6 +33,7 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
@@ -50,6 +50,7 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.analysis" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.compilerConfiguration" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.api" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" scope="TEST" />
@@ -60,6 +61,13 @@
     <orderEntry type="module" module-name="kotlin.fir.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.mockk" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.mockk.jvm" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.analysis.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.android.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinc.compose.compiler.plugin" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.compose.ide.plugin.k2" />
 </module>
