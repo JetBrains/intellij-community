@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -162,7 +162,7 @@ public final class ClassesTreeStructureProvider implements SelectableTreeStructu
     return element instanceof PsiClass && ClassUtil.isTopLevelClass((PsiClass)element);
   }
 
-  private static class PsiClassOwnerTreeNode extends PsiFileNode implements FileNodeWithNestedFileNodes {
+  public static final class PsiClassOwnerTreeNode extends PsiFileNode implements FileNodeWithNestedFileNodes {
     private final @NotNull Collection<? extends AbstractTreeNode<?>> myNestedFileNodes;
     private final boolean myIsImplicitClass;
 
@@ -173,6 +173,10 @@ public final class ClassesTreeStructureProvider implements SelectableTreeStructu
       super(classOwner.getProject(), classOwner, settings);
       myIsImplicitClass = isImplicitClass;
       myNestedFileNodes = nestedFileNodes;
+    }
+
+    public boolean isImplicitClass() {
+      return myIsImplicitClass;
     }
 
     @Override

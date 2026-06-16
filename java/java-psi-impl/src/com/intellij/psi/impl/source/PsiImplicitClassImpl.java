@@ -1,7 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
@@ -335,6 +337,11 @@ public class PsiImplicitClassImpl extends JavaStubPsiElement<PsiClassStub<?>> im
   @Override
   public boolean isEquivalentTo(PsiElement another) {
     return PsiClassImplUtil.isClassEquivalentTo(this, another);
+  }
+
+  @Override
+  public ItemPresentation getPresentation() {
+    return ItemPresentationProviders.getItemPresentation(this);
   }
 
   @Override

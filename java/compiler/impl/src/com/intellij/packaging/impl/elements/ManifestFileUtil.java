@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.CommonBundle;
@@ -37,10 +37,12 @@ import com.intellij.packaging.impl.artifacts.PackagingElementPath;
 import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -293,9 +295,17 @@ public final class ManifestFileUtil {
     final TreeClassChooserFactory chooserFactory = TreeClassChooserFactory.getInstance(project);
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
     final PsiClass aClass = initialClassName != null ? JavaPsiFacade.getInstance(project).findClass(initialClassName, searchScope) : null;
-    final TreeClassChooser chooser =
+    final TreeClassChooser chooser;
+    if (JavaFeature.IMPLICIT_CLASSES.isSufficient(PsiUtil.getLanguageLevel(project))) {
+      chooser =
+        chooserFactory.createWithInnerAndImplicitClassesScopeChooser(JavaCompilerBundle.message("dialog.title.manifest.select.main.class"),
+                                                                     searchScope, new MainClassFilter(), aClass);
+    }
+    else {
+      chooser =
         chooserFactory.createWithInnerClassesScopeChooser(JavaCompilerBundle.message("dialog.title.manifest.select.main.class"),
                                                           searchScope, new MainClassFilter(), aClass);
+    }
     chooser.showDialog();
     return chooser.getSelected();
   }
