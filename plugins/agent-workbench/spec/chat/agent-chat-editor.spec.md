@@ -33,6 +33,9 @@ Agent Chat tabs are protocol-backed editor tabs around terminal-backed agent ses
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
+- Restore of a concrete tab whose provider now reports the backing thread or sub-agent as archived must close and forget that persisted tab without starting a terminal or showing a restore-failure warning. Explicitly opening an archived row remains owned by the sessions archived view and must unarchive before opening.
+  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
 - Open pending Agent Chat editor tabs are tracked by the pending-tabs state/lifecycle service. Closing a pending tab removes its matching ephemeral projection.
 
 - Terminal content initialization is lazy: the lightweight editor shell appears immediately, and the terminal starts only after explicit tab selection/focus.

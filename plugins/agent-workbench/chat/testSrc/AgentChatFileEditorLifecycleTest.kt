@@ -669,6 +669,40 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
+  fun restoredArchivedThreadClosesWithoutStartingTerminal() {
+    val file = restoredConcreteTestFile()
+    val terminalTabs = FakeAgentChatTerminalTabs()
+    val closedFiles = CopyOnWriteArrayList<AgentChatVirtualFile>()
+    val descriptor = ArchivedThreadsProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      archivedThreads = listOf(
+        AgentSessionThread(
+          id = "thread-restored",
+          title = "Restored thread",
+          updatedAt = 1L,
+          archived = true,
+          activity = AgentThreadActivity.READY,
+          provider = AgentSessionProvider.CODEX,
+        )
+      ),
+    )
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      val editor = testEditor(
+        file = file,
+        terminalTabs = terminalTabs,
+        archivedRestoreHandler = AgentChatArchivedRestoreHandler { closedFile -> closedFiles += closedFile },
+      )
+
+      editor.selectNotify()
+    }
+
+    assertThat(terminalTabs.createCalls).isEqualTo(0)
+    assertThat(closedFiles).containsExactly(file)
+    assertThat(file.shouldRestoreOnRestart()).isFalse()
+  }
+
+  @Test
   fun editorShellCreationDoesNotResolveLiveTerminalRegistry() {
     val editor = AgentChatFileEditor(
       project = testProject(),
@@ -2437,6 +2471,7 @@ private fun testEditor(
   terminalTabs: AgentChatTerminalTabs = FakeAgentChatTerminalTabs(),
   liveTerminalRegistry: AgentChatLiveTerminalRegistry = TestAgentChatLiveTerminalRegistry(project),
   snapshotWriter: AgentChatTabSnapshotWriter = AgentChatTabSnapshotWriter { },
+  archivedRestoreHandler: AgentChatArchivedRestoreHandler = AgentChatArchivedRestoreHandler { },
   pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
   editorCoroutineScope: CoroutineScope? = unconfinedTestScope(),
   showComponent: Boolean = true,
@@ -2447,6 +2482,7 @@ private fun testEditor(
     terminalTabs = terminalTabs,
     liveTerminalRegistry = liveTerminalRegistry,
     tabSnapshotWriter = snapshotWriter,
+    archivedRestoreHandler = archivedRestoreHandler,
     pendingScopedRefreshRetryIntervalMs = pendingScopedRefreshRetryIntervalMs,
     editorCoroutineScope = editorCoroutineScope,
   ).also { editor ->
@@ -2604,6 +2640,38 @@ private data class ClosedTerminalSession(
   @JvmField val path: String,
   @JvmField val threadId: String,
 )
+
+private class ArchivedThreadsProviderDescriptor(
+  override val provider: AgentSessionProvider,
+  private val archivedThreads: List<AgentSessionThread>,
+) : AgentSessionProviderDescriptor {
+  override val displayNameKey: String = "test.provider"
+  override val newSessionLabelKey: String = "test.new.session"
+  override val icon: Icon = EmptyIcon.ICON_0
+  override val sessionSource: AgentSessionSource = object : AgentSessionSource {
+    override val provider: AgentSessionProvider
+      get() = this@ArchivedThreadsProviderDescriptor.provider
+
+    override val supportsArchivedThreads: Boolean = true
+
+    override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+
+    override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
+
+    override suspend fun listArchivedThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = archivedThreads
+  }
+  override val cliMissingMessageKey: String = "test.cli.missing"
+
+  override suspend fun isCliAvailable(): Boolean = true
+
+  override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec =
+    AgentSessionTerminalLaunchSpec(listOf(provider.value, "resume", sessionId))
+
+  override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec =
+    AgentSessionTerminalLaunchSpec(listOf(provider.value))
+
+  override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan = AgentInitialMessagePlan.EMPTY
+}
 
 private class RecordingTerminalSessionClosedProvider(
   override val provider: AgentSessionProvider,
