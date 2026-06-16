@@ -80,6 +80,3 @@
     reason: <- intellij.evaluationPlugin.llm
   contentModules:
   - name: intellij.evaluationPlugin.llm
-    libraries:
-      langfuse.java:
-      - name: $MAVEN_REPOSITORY$/com/langfuse/langfuse-java/0/langfuse-java-0.jar
