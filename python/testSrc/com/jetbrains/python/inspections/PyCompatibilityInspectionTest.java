@@ -310,6 +310,11 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON313);
   }
 
+  // PEP 798: unpacking (* and **) in comprehensions is not supported before Python 3.15
+  public void testUnpackingInComprehensions() {
+    testAgainstVersions(LanguageLevel.PYTHON315, LanguageLevel.PYTHON314);
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }
