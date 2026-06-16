@@ -1,8 +1,7 @@
 <idea-plugin>
   <id>com.intellij.platform.ui.webview.demo</id>
   <name>WebView Demo (Experimental)</name>
-  <!--suppress PluginXmlValidity -->
-  <vendor>Artem Bukhonov</vendor>
+  <vendor>JetBrains</vendor>
   <description><![CDATA[
     Provides a WebView Demo tool window with sample IDE panels built as local web UI.
     <ul>

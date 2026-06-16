@@ -1,8 +1,7 @@
 <idea-plugin allow-bundled-update="true">
   <id>org.intellij.plugins.markdown.webview.preview</id>
   <name>Markdown WebView Preview (Experimental)</name>
-  <!--suppress PluginXmlValidity -->
-  <vendor>Artem Bukhonov</vendor>
+  <vendor>JetBrains</vendor>
   <category>Languages</category>
   <description><![CDATA[
     Provides a Markdown preview powered by an embedded WebView panel.

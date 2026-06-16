@@ -1,8 +1,7 @@
 <idea-plugin>
   <id>com.intellij.platform.ui.webview</id>
   <name>WebView Runtime (Experimental)</name>
-  <!--suppress PluginXmlValidity -->
-  <vendor>Artem Bukhonov</vendor>
+  <vendor>JetBrains</vendor>
   <category>Other Tools</category>
   <description><![CDATA[
     Provides an embedded WebView panel for IntelliJ-based IDEs, making it possible to build rich local IDE UI with the standard web stack.
