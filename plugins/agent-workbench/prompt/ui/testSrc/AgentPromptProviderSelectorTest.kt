@@ -25,6 +25,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminal
 import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfileId
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
+import com.intellij.agent.workbench.sessions.ui.AgentWorkbenchPopupRow
+import com.intellij.agent.workbench.sessions.ui.AgentWorkbenchPopupRowRenderer
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -47,6 +49,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.CompletableDeferred
@@ -65,6 +68,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.awt.event.KeyEvent
 import javax.swing.Icon
+import javax.swing.JList
 import javax.swing.JPanel
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -455,6 +459,70 @@ class AgentPromptProviderSelectorTest {
         .containsExactly("Codex", "Careful", "Codex (Full Auto)", "Manage Launch Profiles…")
       assertThat(profileActions.last().templatePresentation.keepPopupOnPerform).isEqualTo(KeepPopupOnPerform.Never)
       assertThat(actions.filterIsInstance<Separator>()).hasSize(3)
+    }
+  }
+
+  @Test
+  fun launchProfilePopupRowsKeepDefaultMarkerSeparateFromCurrentSelection() {
+    runInEdtAndWait {
+      val provider = testProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        promptOptions = emptyList(),
+        supportedReasoningEffortsOverride = setOf(AgentPromptReasoningEffort.HIGH),
+        supportsGenerationModelSelection = true,
+      )
+      val defaultProfile = AgentPromptLaunchProfile(
+        id = "user:careful",
+        name = "Careful",
+        providerId = AgentSessionProvider.CODEX.value,
+        generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
+      )
+      val launcher = TestPromptLauncherBridge(
+        AgentPromptLauncherBridge.ProviderPreferences(
+          launchProfiles = listOf(defaultProfile),
+          activeLaunchProfileId = defaultProfile.id,
+        )
+      )
+      val fixture = createSelectorFixture(listOf(provider))
+      fixture.selector.refresh()
+      val controller = AgentPromptGenerationSettingsController(
+        invocationData = testInvocationData(ProjectManager.getInstance().defaultProject),
+        providerSelector = fixture.selector,
+        generationSettingsPanel = fixture.view.generationSettingsPanel,
+        launchProfileLink = fixture.view.launchProfileLink,
+        modelSelectorLink = fixture.view.modelSelectorLink,
+        reasoningEffortLink = fixture.view.reasoningEffortLink,
+        modelCatalogScope = testScope(),
+        launcherProvider = { launcher },
+        onDefaultSaved = { _ -> },
+      )
+      controller.restoreLaunchProfiles(launcher.preferences)
+
+      val standardAction = controller.createLaunchProfileActionGroupForTest()
+        .getChildren(TestActionEvent.createTestEvent())
+        .single { action -> action.templatePresentation.text == "Codex" }
+      standardAction.actionPerformed(TestActionEvent.createTestEvent(standardAction))
+
+      val rows = controller.createLaunchProfilePopupRowsForTest()
+      val popupStep = controller.createLaunchProfilePopupStepForTest()
+
+      val currentRow = rows.single { row -> row.text == "Codex" }
+      assertThat(currentRow.selected).isTrue()
+      assertThat(currentRow.primaryIcon).isNotNull()
+      val workbenchRow = AgentWorkbenchPopupRow(text = currentRow.text)
+      assertThat(popupStep.getIconFor(workbenchRow)).isNull()
+      assertThat(popupStep.getSelectedIconFor(workbenchRow)).isNull()
+      val defaultRow = rows.single { row -> row.text == "Careful" }
+      assertThat(defaultRow.selected).isFalse()
+      assertThat(defaultRow.marksDefaultProfile).isTrue()
+      assertThat(defaultRow.secondaryIcon).isNotNull()
+      assertThat(defaultRow.tooltipText).isEqualTo("Default profile")
+
+      val renderedCurrentRow = AgentWorkbenchPopupRowRenderer()
+        .getListCellRendererComponent(JList(arrayOf(workbenchRow)), workbenchRow, 0, true, true)
+
+      assertThat(renderedCurrentRow).isInstanceOf(SelectablePanel::class.java)
+      assertThat((renderedCurrentRow as SelectablePanel).selectionColor).isNotNull()
     }
   }
 
