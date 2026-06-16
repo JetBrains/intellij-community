@@ -1,0 +1,37 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.agent.workbench.opencode.sessions
+
+import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributor
+import com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigBuilder
+import com.intellij.agent.workbench.sessions.core.launch.McpStreamUrlProvider
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.openapi.diagnostic.logger
+
+internal class OpenCodeMcpUrlLaunchContributor(
+  private val mcpUrlResolver: () -> String? = McpStreamUrlProvider::resolve,
+) : AgentSessionLaunchContributor {
+  override suspend fun contribute(
+    projectPath: String,
+    provider: AgentSessionProvider,
+    sessionId: String?,
+    launchSpec: AgentSessionTerminalLaunchSpec,
+  ): AgentSessionTerminalLaunchSpec {
+    if (provider != AgentSessionProvider.OPENCODE) return launchSpec
+    val mcpUrl = mcpUrlResolver() ?: run {
+      LOG.info("No MCP stream URL available for $projectPath; OpenCode launch will not receive $OPENCODE_MCP_URL_ENVIRONMENT_VARIABLE")
+      return launchSpec
+    }
+    val envVariables = LinkedHashMap(launchSpec.envVariables)
+    envVariables[OPENCODE_MCP_URL_ENVIRONMENT_VARIABLE] = mcpUrl
+    normalizeAgentWorkbenchPathOrNull(projectPath)?.let { normalizedProjectPath ->
+      envVariables[AwbMcpConfigBuilder.PROJECT_PATH_ENV] = normalizedProjectPath
+    }
+    return launchSpec.copy(envVariables = envVariables)
+  }
+
+  companion object {
+    private val LOG = logger<OpenCodeMcpUrlLaunchContributor>()
+  }
+}

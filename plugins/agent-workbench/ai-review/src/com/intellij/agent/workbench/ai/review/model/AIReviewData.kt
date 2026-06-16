@@ -9,6 +9,8 @@ import com.intellij.agent.workbench.ai.review.model.AIReviewResult.Severity.Stro
 import com.intellij.agent.workbench.ai.review.model.AIReviewResult.Severity.Typo
 import com.intellij.agent.workbench.ai.review.model.AIReviewResult.Severity.Warning
 import com.intellij.agent.workbench.ai.review.model.AIReviewResult.Severity.WeakWarning
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.openapi.vcs.changes.Change
 import org.jetbrains.annotations.ApiStatus
@@ -35,6 +37,8 @@ sealed interface AIReviewRequest {
   data class LocalChanges(
     val changes: List<Change>,
     val initialMessageRequest: AgentPromptInitialMessageRequest? = null,
+    val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
+    val generationModelCatalog: List<AgentPromptGenerationModel> = emptyList(),
     override val selectedAgent: AIReviewAgent? = null,
     override val requestId: Long = Random().nextLong(),
   ) : AIReviewRequest
