@@ -143,7 +143,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -175,12 +174,27 @@ public final class PlatformTestUtil {
 
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
 
-  private static final List<Runnable> ourProjectCleanups = new CopyOnWriteArrayList<>();
   private static final long MAX_WAIT_TIME = TimeUnit.MINUTES.toMillis(2);
 
   public static @NotNull String getTestName(@NotNull String name, boolean lowercaseFirstLetter) {
     name = StringUtil.trimStart(name, "test");
     return name.isEmpty() ? "" : lowercaseFirstLetter(name, lowercaseFirstLetter);
+  }
+
+  /**
+   * @deprecated use {@link LeakHunter#registerProjectCleanup(Runnable)}
+   */
+  @Deprecated(forRemoval = true)
+  public static void registerProjectCleanup(@NotNull Runnable cleanup) {
+    LeakHunter.registerProjectCleanup(cleanup);
+  }
+
+  /**
+   * @deprecated use {@link LeakHunter#cleanupAllProjects()}
+   */
+  @Deprecated(forRemoval = true)
+  public static void cleanupAllProjects() {
+    LeakHunter.cleanupAllProjects();
   }
 
   public static @NotNull String lowercaseFirstLetter(@NotNull String name, boolean lowercaseFirstLetter) {
@@ -1137,17 +1151,6 @@ public final class PlatformTestUtil {
       }
     }
     throw new AssertionError("given reference should be " + refType + " but " + (reference != null ? reference.getClass() : null) + " was given");
-  }
-
-  public static void registerProjectCleanup(@NotNull Runnable cleanup) {
-    ourProjectCleanups.add(cleanup);
-  }
-
-  public static void cleanupAllProjects() {
-    for (var each : ourProjectCleanups) {
-      each.run();
-    }
-    ourProjectCleanups.clear();
   }
 
   public static <T> void assertComparisonContractNotViolated(

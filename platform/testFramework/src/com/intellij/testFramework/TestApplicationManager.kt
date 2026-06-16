@@ -206,7 +206,7 @@ class TestApplicationManager private constructor() {
     fun disposeApplicationAndCheckForLeaks(ignoredTraverseEntries : List<IgnoredTraverseEntry>) {
       val edtThrowable = runInEdtAndGet {
         runAllCatching(
-          { PlatformTestUtil.cleanupAllProjects() },
+          { LeakHunter.cleanupAllProjects() },
           { PlatformTestUtil.dispatchAllEventsInIdeEventQueue() },
           {
             println((AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService).statistics())
