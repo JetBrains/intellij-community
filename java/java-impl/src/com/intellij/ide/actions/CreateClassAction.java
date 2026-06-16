@@ -13,6 +13,7 @@ import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
@@ -32,6 +33,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -62,13 +64,11 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   protected boolean isAvailable(@NotNull DataContext dataContext) {
     if (!super.isAvailable(dataContext)) return false;
 
-    List<JavaClassActionSuppressor> list = JavaClassActionSuppressor.EP_NAME.getExtensionList();
-    for (JavaClassActionSuppressor suppressor : list) {
-      if (suppressor.isSuppressed(dataContext)) {
-        return false;
-      }
-    }
-    return true;
+    if (AdvancedSettings.getBoolean("java.show.new.class.in.irrelevant.java.source.roots")) return true;
+
+    List<JavaClassActionSuppressor> suppressors = JavaClassActionSuppressor.EP_NAME.getExtensionList();
+    return !ContainerUtil.exists(suppressors,
+                                 suppressor -> suppressor.isSuppressed(dataContext));
   }
 
   @Override

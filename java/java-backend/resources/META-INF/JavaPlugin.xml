@@ -1214,6 +1214,8 @@
 
     <advancedSetting id="java.show.irrelevant.templates.in.source.roots" default="false"
                      groupKey="advanced.settings.group.java" bundle="messages.JavaBundle"/>
+    <advancedSetting id="java.show.new.class.in.irrelevant.java.source.roots" default="false"
+                     groupKey="advanced.settings.group.java" bundle="messages.JavaBundle"/>
     <newFileActionCategoryHandler implementation="com.intellij.ide.actions.JavaNewFileCategoryHandler"/>
 
     <inspection.basicVisitor class="com.intellij.psi.JavaElementVisitor"/>
