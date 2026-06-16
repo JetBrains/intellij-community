@@ -208,6 +208,8 @@ jvm_library(
         "//platform/util:util-tests_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/diff-impl",
         "//platform/diff-impl:diff-impl_test_lib",
         "//libraries/assertj-core",
