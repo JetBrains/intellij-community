@@ -83,6 +83,11 @@ single_version_override(
 
 http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
 
+# Loading-phase compilation-backend switch (JPS vs rules_kotlin/BTA); see backend_config.bzl.
+backend_config_repo = use_repo_rule("//:backend_config.bzl", "backend_config_repo")
+
+backend_config_repo(name = "ij_backend_config")
+
 # Parsed by `BazelProjectStructureTest` (to assert alignment with `.idea/kotlinc.xml`) and by
 # `com.intellij.monorepo.devkit.bazel.ComposeCompilerPluginProjectPathMacroContributor` (to resolve the
 # `KOTLIN_COMPOSE_COMPILER_PLUGIN` path macro). If you rename this variable, update both regexes too.

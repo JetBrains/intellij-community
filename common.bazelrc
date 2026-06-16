@@ -63,6 +63,11 @@ common:windows --disk_cache=~/AppData/Local/Temp/JetBrains/monorepo-bazel-cache
 common --@rules_jvm//:default-javac-opts=@community//:default-javac-opts
 common --@rules_jvm//:default-kotlinc-opts=@community//:k25
 
+# rules_jvm / rules_kotlin compilation backend switch (see rules_jvm backend_config.bzl). Default = JPS / rules_jvm.
+# Use --config=bta to compile with the rules_kotlin (BTA) backend instead.
+common:jps --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=0
+common:bta --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=1
+
 # configure resources
 common --local_resources=memory=HOST_RAM*.77 --local_resources=cpu=HOST_CPUS*2
 common --jobs=HOST_CPUS*2 --worker_max_multiplex_instances=JvmCompile=HOST_CPUS*2
