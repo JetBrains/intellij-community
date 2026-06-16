@@ -141,7 +141,7 @@ sealed interface EelExecApi {
   @Suppress("FunctionName")
   @ApiStatus.Internal
   @ApiStatus.Obsolete
-  suspend fun `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`(): Boolean = false
+  suspend fun `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`(): EnvironmentVariablesOptions.Mode? = null
 
   /**
    * Use [environmentVariables] instead.
@@ -153,9 +153,12 @@ sealed interface EelExecApi {
   @ApiStatus.Experimental
   @ApiStatus.Obsolete
   suspend fun fetchLoginShellEnvVariables(): Map<String, String> {
-    if (`_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`()) {
-      @Suppress("checkedExceptions")
-      return environmentVariables().eelIt().await()
+    when (val delegateToMode = `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`()) {
+      null -> {}
+      else -> {
+        @Suppress("checkedExceptions")
+        return environmentVariables().mode(delegateToMode).eelIt().await()
+      }
     }
 
     return when (this) {

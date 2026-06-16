@@ -39,7 +39,7 @@ internal class LoginShellEnvVarModeProviderImpl : LoginShellEnvVarModeProvider {
     return when (LoginShellEnvVarModeSettings.getInstance().get(eelMachine).envVarShellMode) {
       EnvVarShellMode.LOGIN_INTERACTIVE -> LoginShellEnvVarMode.LOGIN_INTERACTIVE
       EnvVarShellMode.LOGIN_NON_INTERACTIVE -> LoginShellEnvVarMode.LOGIN_NON_INTERACTIVE
-      EnvVarShellMode.LOGIN_INTERACTIVE_SHELL -> LoginShellEnvVarMode.LOGIN_INTERACTIVE // TODO
+      EnvVarShellMode.LOGIN_INTERACTIVE_SHELL -> LoginShellEnvVarMode.LOGIN_INTERACTIVE_SHELL
     }
   }
 }

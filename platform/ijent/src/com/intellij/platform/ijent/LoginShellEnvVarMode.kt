@@ -10,11 +10,15 @@ import java.util.ServiceLoader
  */
 @ApiStatus.Internal
 enum class LoginShellEnvVarMode {
-  /** Run the login shell interactively to collect its environment. */
+  /** Run the login shell interactively to collect its environment.
+   * Cached results have expiration time [com.intellij.platform.eel.fetchLoginShellEnvVariablesCacheExpirationTime] */
   LOGIN_INTERACTIVE,
 
-  /** Skip the interactive shell and use the IDE process's own environment. */
+  /** Skip the interactive shell and use the IDE process's own environment. Cached results never expire until ide restart. */
   LOGIN_NON_INTERACTIVE,
+
+  /** Uses attachable terminal to run login shell interactively. Cached results never expire until ide restart. */
+  LOGIN_INTERACTIVE_SHELL,
 }
 
 /**
