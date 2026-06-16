@@ -13,22 +13,22 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Rpc
 interface TodoRemoteApi : RemoteApi<Unit> {
-  suspend fun watchTodoFiles(
+  fun watchTodoFiles(
     projectId: ProjectId,
     request: TodoFilesWatchRequest,
   ) : Flow<TodoFileEvent>
 
-  suspend fun listTodoFiles(
+  fun listTodoFiles(
     projectId: ProjectId,
     filter: TodoFilterConfig?
   ) : Flow<TodoFileResult>
 
-  suspend fun listTodos(
+  fun listTodos(
     projectId: ProjectId,
     settings: TodoQuerySettings,
   ): Flow<TodoResult>
 
-  suspend fun getFilesWithTodos(
+  fun getFilesWithTodos(
     projectId: ProjectId,
     filter: TodoFilterConfig?
   ): Flow<VirtualFileId>

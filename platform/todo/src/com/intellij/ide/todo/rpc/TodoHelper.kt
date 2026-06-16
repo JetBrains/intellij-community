@@ -19,7 +19,7 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 data class ResolvedTodoFileEvent(
-  val type: TodoFileEventType,
+  val event: TodoFileEvent,
   val fileId: VirtualFileId?,
   val virtualFile: VirtualFile?,
   val file: TodoFileResult?,
@@ -40,19 +40,27 @@ suspend fun collectWatchedTodoFiles(
     )
 
     TodoRemoteApi.getInstance().watchTodoFiles(projectId, request).collect { event ->
-      val eventFileId = event.file?.fileId ?: event.fileId
+      val eventFileId = when (event) {
+        is TodoFileEvent.Updated -> event.file.fileId
+        is TodoFileEvent.Removed -> event.fileId
+        TodoFileEvent.InitialScanFinished, TodoFileEvent.Reset -> null
+      }
       val virtualFile = eventFileId?.virtualFile()
+      val todoFile = when (event) {
+        is TodoFileEvent.Updated -> event.file
+        is TodoFileEvent.Removed, TodoFileEvent.InitialScanFinished, TodoFileEvent.Reset -> null
+      }
 
       System.out.println(
-        "TODO watch frontend helper: event=${event.type}, fileId=$eventFileId, virtualFile=${virtualFile?.path}, hasFile=${event.file != null}"
+        "TODO watch frontend helper: event=${event}, fileId=$eventFileId, virtualFile=${virtualFile?.path}, hasFile=${todoFile != null}"
       )
 
       collector(
         ResolvedTodoFileEvent(
-          type = event.type,
+          event = event,
           fileId = eventFileId,
           virtualFile = virtualFile,
-          file = event.file,
+          file = todoFile,
         )
       )
     }

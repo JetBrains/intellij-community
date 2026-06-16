@@ -5,22 +5,22 @@ import com.intellij.ide.vfs.VirtualFileId
 import org.jetbrains.annotations.ApiStatus
 import kotlinx.serialization.Serializable
 
-
 @ApiStatus.Internal
 @Serializable
-enum class TodoFileEventType {
-  Updated,
-  Removed,
-  InitialScanFinished,
-  Reset
+sealed interface TodoFileEvent {
+  @Serializable
+  data class Updated(
+    val file: TodoFileResult,
+  ) : TodoFileEvent
+
+  @Serializable
+  data class Removed(
+    val fileId: VirtualFileId
+  ) : TodoFileEvent
+
+  @Serializable
+  data object InitialScanFinished : TodoFileEvent
+
+  @Serializable
+  data object Reset : TodoFileEvent
 }
-
-@ApiStatus.Internal
-@Serializable
-data class TodoFileEvent(
-  val type: TodoFileEventType,
-  val fileId: VirtualFileId? = null,
-  val file: TodoFileResult? = null
-)
-
-

@@ -3,7 +3,7 @@ package com.intellij.ide.todo
 
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
-import com.intellij.ide.todo.rpc.TodoFileEventType
+import com.intellij.ide.todo.rpc.TodoFileEvent
 import com.intellij.ide.todo.rpc.TodoQuerySettings
 import com.intellij.ide.todo.rpc.TodoRemoteApi
 import com.intellij.ide.todo.rpc.TodoResult
@@ -83,20 +83,18 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
         }
 
         System.out.println("TODO watch frontend: subscribing to backend watch")
-        collectWatchedTodoFiles(treeBuilder.project, treeBuilder.todoTreeStructure.todoFilter) { event ->
-          System.out.println("TODO watch frontend: event type=${event.type}, fileId=${event.fileId}, hasFile=${event.file != null}")
+        collectWatchedTodoFiles(treeBuilder.project, treeBuilder.todoTreeStructure.todoFilter) { resolvedEvent ->
+          System.out.println(
+            "TODO watch frontend: event=${resolvedEvent.event::class.simpleName}, fileId=${resolvedEvent.fileId}, hasFile=${resolvedEvent.file != null}"
+          )
 
-          when (event.type) {
-            TodoFileEventType.Updated -> {
+          when (val event = resolvedEvent.event) {
+            is TodoFileEvent.Updated -> {
               val result = event.file
-              if (result == null) {
-                System.out.println("TODO watch frontend: Updated event has null file")
-                return@collectWatchedTodoFiles
-              }
 
-              val virtualFile = event.virtualFile
+              val virtualFile = resolvedEvent.virtualFile
               if (virtualFile == null) {
-                System.out.println("TODO watch frontend: Updated event has null resolved virtual file, fileId=${event.fileId}")
+                System.out.println("TODO watch frontend: Updated event has null resolved virtual file, fileId=${resolvedEvent.fileId}")
                 return@collectWatchedTodoFiles
               }
 
@@ -120,8 +118,8 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
               }
             }
 
-            TodoFileEventType.Removed -> {
-              val virtualFile = event.fileId?.virtualFile()
+            is TodoFileEvent.Removed -> {
+              val virtualFile = resolvedEvent.virtualFile
               if (virtualFile == null) {
                 System.out.println("TODO watch frontend: Removed event cannot resolve fileId=${event.fileId}")
                 return@collectWatchedTodoFiles
@@ -135,7 +133,7 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
               }
             }
 
-            TodoFileEventType.Reset -> {
+            TodoFileEvent.Reset -> {
               System.out.println("TODO watch frontend: reset")
 
               readAction {
@@ -144,7 +142,7 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
               }
             }
 
-            TodoFileEventType.InitialScanFinished -> {
+            TodoFileEvent.InitialScanFinished -> {
               System.out.println("TODO watch frontend: initial scan finished; invalidating tree")
 
               readAction {

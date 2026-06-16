@@ -4,7 +4,6 @@ package com.intellij.platform.todo.backend.rpc
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.ide.todo.TodoFilter
 import com.intellij.ide.todo.rpc.TodoFileEvent
-import com.intellij.ide.todo.rpc.TodoFileEventType
 import com.intellij.ide.todo.rpc.TodoFileResult
 import com.intellij.ide.todo.rpc.TodoFilesWatchRequest
 import com.intellij.ide.todo.rpc.TodoFilterConfig
@@ -49,7 +48,7 @@ import kotlinx.coroutines.launch
 private val LOG: Logger = logger<TodoRemoteApiImpl>()
 
 internal class TodoRemoteApiImpl : TodoRemoteApi {
-  override suspend fun watchTodoFiles(
+  override fun watchTodoFiles(
     projectId: ProjectId,
     request: TodoFilesWatchRequest,
   ): Flow<TodoFileEvent> = channelFlow {
@@ -79,7 +78,11 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
             val fileResults = mutableListOf<TodoFileResult>()
 
             helper.processFilesWithTodoItems { psiFile ->
-              val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
+              val virtualFile = psiFile.virtualFile
+              if (virtualFile == null) {
+                System.out.println("TODO watch backend: psiFile without virtualFile=${psiFile.name}")
+                return@processFilesWithTodoItems true
+              }
               val result = buildTodoFileResult(project, psiFile, virtualFile, resolvedFilter)
               if (result != null) {
                 fileResults.add(result)
@@ -93,18 +96,17 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
 
       for (result in initialResults) {
         cache[result.fileId] = result
-        send(
-          TodoFileEvent(TodoFileEventType.Updated, result.fileId, result)
-        )
+        System.out.println("TODO watch backend: sending Updated fileId=${result.fileId}, todos=${result.todos.size}")
+        send(TodoFileEvent.Updated(result))
       }
-      send(TodoFileEvent(TodoFileEventType.InitialScanFinished))
+      send(TodoFileEvent.InitialScanFinished)
     }
 
     suspend fun updateFile(virtualFile: VirtualFile) {
       if (!virtualFile.isValid) {
         val fileId = virtualFile.rpcId()
         if (cache.remove(fileId) != null) {
-          send(TodoFileEvent(TodoFileEventType.Removed, fileId))
+          send(TodoFileEvent.Removed(fileId))
         }
         return
       }
@@ -120,12 +122,12 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
       val fileId = virtualFile.rpcId()
       if (result == null) {
         if (cache.remove(fileId) != null) {
-          send(TodoFileEvent(TodoFileEventType.Removed, fileId))
+          send(TodoFileEvent.Removed(fileId))
         }
       }
       else {
         cache[fileId] = result
-        send(TodoFileEvent(TodoFileEventType.Updated, fileId, result))
+        send(TodoFileEvent.Updated(result))
       }
     }
 
@@ -174,7 +176,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     return null
   }
 
-  override suspend fun listTodoFiles(
+  override fun listTodoFiles(
     projectId: ProjectId,
     filter: TodoFilterConfig?,
   ): Flow<TodoFileResult> = channelFlow {
@@ -202,7 +204,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     }
   }
 
-  override suspend fun listTodos(
+  override fun listTodos(
     projectId: ProjectId,
     settings: TodoQuerySettings
   ): Flow<TodoResult> = channelFlow {
@@ -286,7 +288,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     )
   }
 
-  override suspend fun getFilesWithTodos(
+  override fun getFilesWithTodos(
     projectId: ProjectId,
     filter: TodoFilterConfig?,
   ): Flow<VirtualFileId> = channelFlow {
