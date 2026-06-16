@@ -81,7 +81,7 @@ class NoJavaExecutableFilter : ConsoleFilterProviderEx, Filter {
    */
   private fun isCommandNotFound(line: String): Boolean {
     // most "not found" kind of messages have `:` in their structure
-    if (!line.endsWith('\n') || !line.contains(':')) return false
+    if (!line.endsWith('\n') || !line.contains(':') || line.length <= 5) return false
 
     // bash/fish/zsh: not found
     val shellIndex = CharArrayUtil.indexOf(line, "sh", 0, 4)
