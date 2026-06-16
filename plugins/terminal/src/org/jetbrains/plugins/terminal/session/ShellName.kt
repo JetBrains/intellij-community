@@ -26,6 +26,10 @@ sealed interface ShellName {
     fun isPowerShell(shellName: ShellName): Boolean {
       return shellName == POWERSHELL || shellName == PWSH
     }
+
+    fun isCommandPrompt(shellName: ShellName): Boolean {
+      return shellName.value == "cmd" || shellName.value == "cmd.exe"
+    }
   }
 }
 
