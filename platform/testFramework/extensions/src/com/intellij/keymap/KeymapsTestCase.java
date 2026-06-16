@@ -644,7 +644,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "Table-selectLastRow",
     "Table-selectLastRowExtendSelection",
     "Vcs.CombinedDiff.CaretToPrevBlock",
-    "Vcs.CombinedDiff.CaretToNextBlock"
+    "Vcs.CombinedDiff.CaretToNextBlock",
+    "Terminal.PasteFromHistory"
   );
 
   private static final Set<String> DEFAULT_CONFLICT_SAFE_GROUPS = Set.of(
