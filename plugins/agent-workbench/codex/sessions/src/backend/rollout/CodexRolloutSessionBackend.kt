@@ -151,8 +151,10 @@ internal class CodexRolloutSessionBackend(
       }
       scopedPaths += parsedThread.normalizedCwd
       threadIds += parsedThread.thread.thread.id
-      parsedThread.parentThreadId?.let(threadIds::add)
-      if (parsedThread.parentThreadId == null) {
+      threadIds.addAll(parsedThread.spawnedExecThreadIds)
+      val parentThreadIds = parentThreadIdsForUpdate(parsedThread)
+      threadIds.addAll(parentThreadIds)
+      if (parentThreadIds.isEmpty()) {
         val threadId = parsedThread.thread.thread.id
         val activityReport = AgentThreadActivityReport(
           rowActivity = parsedThread.thread.activity.toAgentThreadActivity(),
@@ -201,7 +203,7 @@ internal class CodexRolloutSessionBackend(
     }
     val parsedThread = parser.parse(path) ?: return null
     val consumedProjectFileChangeEvidence = consumeProjectFileChangeEvidence(parsedThread)
-    val activeThreadActivityHint = parsedThread.toActiveThreadActivityHint()
+    val activeThreadActivityHint = parsedThread.toActiveThreadActivityHint(parentThreadIdsForUpdate(parsedThread))
     val hasActivityChange = activeThreadActivityHint != null && rememberActiveThreadActivityHint(
       path = parsedThread.path,
       activityHint = activeThreadActivityHint,
@@ -342,6 +344,18 @@ internal class CodexRolloutSessionBackend(
       )
     }
   }
+
+  private fun parentThreadIdsForUpdate(parsedThread: ParsedRolloutThread): Set<String> {
+    val parentThreadIds = LinkedHashSet<String>()
+    parsedThread.parentThreadId?.let(parentThreadIds::add)
+    parentThreadIds.addAll(
+      threadIndex.findKnownParentThreadIds(
+        cwdFilter = parsedThread.normalizedCwd,
+        childThreadId = parsedThread.thread.thread.id,
+      )
+    )
+    return parentThreadIds
+  }
 }
 
 private fun resolvePathFilters(paths: List<String>): List<Pair<String, String>> {
@@ -394,8 +408,8 @@ private data class ActiveThreadActivityHint(
   @JvmField val updatedAt: Long,
 )
 
-private fun ParsedRolloutThread.toActiveThreadActivityHint(): ActiveThreadActivityHint? {
-  if (parentThreadId != null) {
+private fun ParsedRolloutThread.toActiveThreadActivityHint(parentThreadIds: Set<String>): ActiveThreadActivityHint? {
+  if (parentThreadIds.isNotEmpty()) {
     return null
   }
   val threadId = thread.thread.id

@@ -31,7 +31,11 @@ import java.time.format.DateTimeParseException
 private const val USER_MESSAGE_BEGIN = "## My request for Codex:"
 private const val ENVIRONMENT_CONTEXT_OPEN_TAG = "<environment_context>"
 private const val TURN_ABORTED_OPEN_TAG = "<turn_aborted>"
+private const val CODEX_EXEC_HEADER = "OpenAI Codex"
+private const val CODEX_EXEC_WORKDIR_PREFIX = "workdir:"
+private const val CODEX_EXEC_SESSION_ID_PREFIX = "session id:"
 private val THREAD_TITLE_WHITESPACE = Regex("\\s+")
+private val CODEX_THREAD_ID = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 
 private val LOG = logger<CodexRolloutParser>()
 
@@ -86,6 +90,7 @@ internal class CodexRolloutParser(
       projectFilesChangedAt = state.projectFilesChangedAt,
       projectFileChangeEvidence = state.projectFileChangeEvidence.sortedBy { it.timestampMillis },
       hasExplicitTitle = !usedFallbackTitle,
+      spawnedExecThreadIds = state.spawnedExecThreadIds,
       thread = CodexBackendThread(
         thread = CodexThread(
           id = resolvedSessionId,
@@ -194,7 +199,8 @@ private fun reduceActivityEvent(
         }
 
         "mcptoolcallend" -> {
-          parseState.activityProjection.apply(CodexThreadActivitySignal.ClearToolCall(callId = event.payloadCallId, turnId = event.payloadTurnId))
+          parseState.activityProjection.apply(CodexThreadActivitySignal.ClearToolCall(callId = event.payloadCallId,
+                                                                                      turnId = event.payloadTurnId))
           event.payloadCallId?.let(parseState.pendingFunctionCallByCallId::remove)
         }
 
@@ -204,8 +210,8 @@ private fun reduceActivityEvent(
 
         "execapprovalrequest", "applypatchapprovalrequest", "requestpermissions", "elicitationrequest" -> {
           parseState.activityProjection.apply(CodexThreadActivitySignal.PendingApproval(order = eventOrder,
-                                                                                       callId = event.payloadCallId,
-                                                                                       turnId = event.payloadTurnId))
+                                                                                        callId = event.payloadCallId,
+                                                                                        turnId = event.payloadTurnId))
         }
 
         in PROJECT_MUTATING_BEGIN_EVENT_TYPES -> {
@@ -259,7 +265,8 @@ private fun reduceProjectMutatingEventBegin(
   eventOrder: Long,
   eventTimestamp: Long?,
 ) {
-  parseState.activityProjection.apply(CodexThreadActivitySignal.ClearPendingApproval(callId = event.payloadCallId, turnId = event.payloadTurnId))
+  parseState.activityProjection.apply(CodexThreadActivitySignal.ClearPendingApproval(callId = event.payloadCallId,
+                                                                                     turnId = event.payloadTurnId))
   parseState.markPendingFunctionCall(
     eventTimestamp = eventTimestamp,
     callId = event.payloadCallId,
@@ -312,12 +319,17 @@ private fun reduceResponseFunctionCall(
   parseState.activityProjection.apply(CodexThreadActivitySignal.ToolCallStarted(order = eventOrder,
                                                                                 callId = event.payloadCallId,
                                                                                 turnId = event.payloadTurnId))
+  if (isCodexExecFunctionCall(event)) {
+    parseState.markPendingCodexExecFunctionCall(event.payloadCallId)
+  }
 }
 
 private fun reduceResponseFunctionCallOutput(parseState: RolloutParseState, event: RolloutEvent, eventTimestamp: Long?) {
   parseState.activityProjection.apply(CodexThreadActivitySignal.ClearPendingUserInput(event.payloadCallId))
-  parseState.activityProjection.apply(CodexThreadActivitySignal.ClearPendingApproval(callId = event.payloadCallId, turnId = event.payloadTurnId))
+  parseState.activityProjection.apply(CodexThreadActivitySignal.ClearPendingApproval(callId = event.payloadCallId,
+                                                                                     turnId = event.payloadTurnId))
   parseState.markProjectFilesChangedForCompletedFunctionCall(eventTimestamp = eventTimestamp, callId = event.payloadCallId)
+  parseState.markSpawnedExecThreadsForCompletedFunctionCall(callId = event.payloadCallId, output = event.payloadOutput)
   parseState.activityProjection.apply(CodexThreadActivitySignal.ClearToolCall(callId = event.payloadCallId, turnId = event.payloadTurnId))
   event.payloadCallId?.let(parseState.pendingFunctionCallByCallId::remove)
 }
@@ -333,6 +345,7 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
     var payloadMessage: String? = null
     var payloadName: String? = null
     var payloadArguments: String? = null
+    var payloadOutput: String? = null
     var payloadCallId: String? = null
     var payloadItemType: String? = null
     var payloadThreadName: String? = null
@@ -359,6 +372,7 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
                 "message" -> payloadMessage = readStringOrNull(parser)
                 "name" -> payloadName = readStringOrNull(parser)
                 "arguments" -> payloadArguments = readStringOrNull(parser)
+                "output" -> payloadOutput = readStringOrNull(parser)
                 "call_id" -> payloadCallId = readStringOrNull(parser)
                 "item" -> payloadItemType = parseRolloutItemType(parser)
                 "thread_name", "threadName" -> payloadThreadName = readStringOrNull(parser)
@@ -403,6 +417,7 @@ private fun parseEvent(parser: JsonParser): RolloutEvent? {
       payloadMessage = payloadMessage,
       payloadName = payloadName,
       payloadArguments = payloadArguments,
+      payloadOutput = payloadOutput,
       payloadCallId = payloadCallId,
       payloadItemType = payloadItemType,
       payloadThreadName = payloadThreadName,
@@ -429,6 +444,7 @@ internal data class ParsedRolloutThread(
   @JvmField val projectFilesChangedAt: Long,
   @JvmField val projectFileChangeEvidence: List<CodexProjectFileChangeEvidence>,
   @JvmField val hasExplicitTitle: Boolean,
+  @JvmField val spawnedExecThreadIds: Set<String>,
   @JvmField val thread: CodexBackendThread,
 )
 
@@ -445,6 +461,7 @@ private data class RolloutEvent(
   @JvmField val payloadMessage: String?,
   @JvmField val payloadName: String?,
   @JvmField val payloadArguments: String?,
+  @JvmField val payloadOutput: String?,
   @JvmField val payloadCallId: String?,
   @JvmField val payloadItemType: String?,
   @JvmField val payloadThreadName: String?,
@@ -475,6 +492,7 @@ private data class RolloutParseState(
   @JvmField var projectFilesChangedAt: Long = Long.MIN_VALUE,
   @JvmField val projectFileChangeEvidence: MutableList<CodexProjectFileChangeEvidence> = ArrayList(),
   @JvmField val pendingFunctionCallByCallId: LinkedHashMap<String, PendingFunctionCall> = LinkedHashMap(),
+  @JvmField val spawnedExecThreadIds: MutableSet<String> = LinkedHashSet(),
   @JvmField var nextSyntheticPendingFunctionCallId: Int = 0,
 )
 
@@ -483,6 +501,7 @@ private data class PendingFunctionCall(
   @JvmField val turnId: String?,
   @JvmField val projectMutating: Boolean,
   @JvmField val changedProjectFilePaths: Set<String>?,
+  @JvmField val codexExecCommand: Boolean = false,
 )
 
 private fun RolloutParseState.markPendingFunctionCall(
@@ -508,8 +527,23 @@ private fun RolloutParseState.markPendingFunctionCall(
       turnId = turnId,
       projectMutating = mergedProjectMutating,
       changedProjectFilePaths = mergedChangedProjectFilePaths,
+      codexExecCommand = previous?.codexExecCommand == true,
     )
   }
+}
+
+private fun RolloutParseState.markPendingCodexExecFunctionCall(callId: String?) {
+  val resolvedCallId = callId ?: return
+  val pendingFunctionCall = pendingFunctionCallByCallId[resolvedCallId] ?: return
+  pendingFunctionCallByCallId[resolvedCallId] = pendingFunctionCall.copy(codexExecCommand = true)
+}
+
+private fun RolloutParseState.markSpawnedExecThreadsForCompletedFunctionCall(callId: String?, output: String?) {
+  val pendingFunctionCall = callId?.let(pendingFunctionCallByCallId::get) ?: return
+  if (!pendingFunctionCall.codexExecCommand) {
+    return
+  }
+  spawnedExecThreadIds.addAll(extractSpawnedCodexExecThreadIds(output))
 }
 
 private fun RolloutParseState.markProjectFilesChanged(eventTimestamp: Long?, changedProjectFilePaths: Set<String>?) {
@@ -596,6 +630,55 @@ private fun isToolFunctionCall(event: RolloutEvent): Boolean {
 
 private fun isProjectMutatingFunctionCall(event: RolloutEvent): Boolean {
   return normalizeToken(event.payloadName) in PROJECT_MUTATING_FUNCTION_CALL_NAMES
+}
+
+private fun isCodexExecFunctionCall(event: RolloutEvent): Boolean {
+  return normalizeToken(event.payloadName) == "execcommand" && readCommandText(event.payloadArguments)?.let(::isCodexExecCommand) == true
+}
+
+private fun isCodexExecCommand(command: String): Boolean {
+  val text = command.trimStart()
+  return text == "codex exec" ||
+         text.startsWith("codex exec ") ||
+         text == "/Applications/Codex.app/Contents/Resources/codex exec" ||
+         text.startsWith("/Applications/Codex.app/Contents/Resources/codex exec ")
+}
+
+private fun readCommandText(arguments: String?): String? {
+  val text = arguments?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  return try {
+    JsonFactory().createJsonParser(text).use { parser ->
+      if (parser.nextToken() != JsonToken.START_OBJECT) return@use null
+      var commandText: String? = null
+      forEachObjectField(parser) { fieldName ->
+        when (fieldName) {
+          "cmd", "command" -> commandText = readStringOrNull(parser) ?: commandText
+          else -> parser.skipChildren()
+        }
+        true
+      }
+      commandText
+    }
+  }
+  catch (_: Throwable) {
+    null
+  }
+}
+
+private fun extractSpawnedCodexExecThreadIds(output: String?): Set<String> {
+  val text = output?.takeIf { it.contains(CODEX_EXEC_HEADER) && it.contains(CODEX_EXEC_WORKDIR_PREFIX) } ?: return emptySet()
+  val result = LinkedHashSet<String>()
+  text.lineSequence().forEach { line ->
+    val trimmedLine = line.trim()
+    if (!trimmedLine.startsWith(CODEX_EXEC_SESSION_ID_PREFIX, ignoreCase = true)) {
+      return@forEach
+    }
+    val threadId = trimmedLine.substring(CODEX_EXEC_SESSION_ID_PREFIX.length).trim()
+    if (CODEX_THREAD_ID.matches(threadId)) {
+      result.add(threadId)
+    }
+  }
+  return result
 }
 
 private fun changedProjectFilePathsForProjectMutatingFunctionCall(event: RolloutEvent, cwd: String?): Set<String>? {
