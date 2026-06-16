@@ -29,6 +29,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.concurrent.atomics.AtomicReference
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * [f] will be invoked each time when it's return value may be changed.
@@ -129,21 +132,31 @@ private object Logger {
   val logger = logger<Logger>()
 }
 
-suspend fun <T> waitForNotNullWithTimeout(timeMillis: Long = 30000L, p: () -> T?): T {
-  return waitForNotNullWithTimeoutOrNull(timeMillis, p) ?: run {
-    Logger.logger.error(Throwable("Timed out waiting for ${p::class} to return not null, $timeMillis ms"))
-    throw CancellationException("$p is null, after ${timeMillis}ms")
+suspend fun <T> waitForNotNullWithTimeout(timeout: Duration = 30.seconds, p: () -> T?): T {
+  return waitForNotNullWithTimeoutOrNull(timeout, p) ?: run {
+    Logger.logger.error(Throwable("Timed out waiting for ${p::class} to return not null, $timeout"))
+    throw CancellationException("$p is null, after $timeout")
   }
 }
 
-suspend fun <T> waitForNotNullWithTimeoutOrNull(timeMillis: Long = 30000L, p: () -> T?): T? {
+@Deprecated("Use overload with Duration")
+suspend fun <T> waitForNotNullWithTimeout(timeMillis: Long, p: () -> T?): T {
+  return waitForNotNullWithTimeout(timeMillis.milliseconds, p)
+}
+
+suspend fun <T> waitForNotNullWithTimeoutOrNull(timeout: Duration = 30.seconds, p: () -> T?): T? {
   val value = p()
   if (value != null) return value
-  return withTimeoutOrNull(timeMillis) { query { p() }.asValuesFlow().firstOrNull { it != null } }
+  return withTimeoutOrNull(timeout) { query { p() }.asValuesFlow().firstOrNull { it != null } }
+}
+
+@Deprecated("Use overload with Duration")
+suspend fun <T> waitForNotNullWithTimeoutOrNull(timeMillis: Long, p: () -> T?): T? {
+  return waitForNotNullWithTimeoutOrNull(timeMillis.milliseconds, p)
 }
 
 suspend fun <T> waitForNotNull(p: () -> T?): T {
-  return waitForNotNullWithTimeout(Long.MAX_VALUE, p)
+  return waitForNotNullWithTimeout(Duration.INFINITE, p)
 }
 
 /**
