@@ -25,11 +25,6 @@ public final class PreferredSdkComparator implements Comparator<Sdk> {
     if (remote1Weight != remote2Weight) {
       return remote2Weight - remote1Weight;
     }
-    int detectedWeight1 = PyDetectedSdk.asPyDetectedSdk(o1) != null ? 0 : 1;
-    int detectedWeight2 = PyDetectedSdk.asPyDetectedSdk(o2) != null ? 0 : 1;
-    if (detectedWeight1 != detectedWeight2) {
-      return detectedWeight2 - detectedWeight1;
-    }
 
     int venv1weight = isNonToolVirtualEnv(o1) || isCondaVirtualEnv(o1) ? 0 : 1;
     int venv2weight = isNonToolVirtualEnv(o2) || isCondaVirtualEnv(o2) ? 0 : 1;
