@@ -9,8 +9,14 @@ import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineTreeRecord
+import com.intellij.agent.workbench.common.session.agentSessionOutlinePhaseTitle
+import com.intellij.agent.workbench.common.session.buildAgentSessionOutlineTree
+import com.intellij.agent.workbench.common.session.normalizeAgentSessionOutlinePreview
 import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
 import com.intellij.agent.workbench.json.forEachJsonObjectField
@@ -73,6 +79,11 @@ internal class PiSessionStore(
     }
   }
 
+  fun loadOutline(projectPath: String, threadId: String): AgentSessionThreadOutline? {
+    val entry = findEntry(projectPath, threadId) ?: return null
+    return parseSessionOutline(entry)
+  }
+
   private fun loadSessionFiles(sessionDir: Path): List<PiSessionIndexEntry> {
     if (!Files.isDirectory(sessionDir)) return emptyList()
     return try {
@@ -124,6 +135,40 @@ internal class PiSessionStore(
       entryIds = state.entryIds,
       activity = state.leafActivity,
       archived = false,
+    )
+  }
+
+  private fun parseSessionOutline(entry: PiSessionIndexEntry): AgentSessionThreadOutline? {
+    val state = try {
+      WorkbenchJsonlScanner.scanJsonObjects(
+        path = entry.sessionFile,
+        jsonFactory = jsonFactory,
+        newState = ::PiSessionOutlineState,
+      ) { parser, state ->
+        parseSessionOutlineObject(parser, state)
+        true
+      }
+    }
+    catch (e: Exception) {
+      LOG.debug("Failed to parse Pi session outline: ${entry.sessionFile}", e)
+      return null
+    }
+    val header = state.header ?: return null
+    if (header.id != entry.sessionId) {
+      return null
+    }
+    val title = state.name?.normalizePiSessionTitle()
+                ?: state.firstUserMessage?.normalizePiSessionTitle()
+                ?: header.id
+    val headerTime = parseIsoTimestamp(header.timestamp)
+    val fileMtime = runCatching { Files.getLastModifiedTime(entry.sessionFile).toMillis() }.getOrDefault(0L)
+    val updatedAt = state.updatedAtMs ?: headerTime ?: fileMtime
+    return AgentSessionThreadOutline(
+      provider = AgentSessionProvider.PI,
+      threadId = header.id,
+      title = title,
+      updatedAt = updatedAt,
+      items = buildAgentSessionOutlineTree(state.records),
     )
   }
 
@@ -282,6 +327,11 @@ internal class PiSessionSource(
       .map { entry -> entry.toAgentSessionThread(readTracker) }
   }
 
+  override suspend fun loadThreadOutline(path: String, threadId: String, subAgentId: String?): AgentSessionThreadOutline? {
+    rememberSessionDirectory(path)
+    return sessionStore.loadOutline(path, threadId)
+  }
+
   private fun rememberActiveWorkingThreadRead(entries: Iterable<PiSessionIndexEntry>) {
     rememberActiveThreadRead(
       threads = entries,
@@ -356,6 +406,73 @@ private data class PiSessionFileState(
   val entryIds: LinkedHashSet<String> = LinkedHashSet(),
 )
 
+private data class PiSessionOutlineState(
+  var header: PiSessionHeader? = null,
+  var firstUserMessage: String? = null,
+  var name: String? = null,
+  var updatedAtMs: Long? = null,
+  var nextGeneratedRecordIndex: Int = 0,
+  val recordIds: HashSet<String> = HashSet(),
+  val records: MutableList<AgentSessionOutlineTreeRecord> = ArrayList(),
+) {
+  fun noteActivity(timestampMs: Long?) {
+    if (timestampMs != null) {
+      updatedAtMs = maxOf(updatedAtMs ?: 0L, timestampMs)
+    }
+  }
+
+  fun addRecord(
+    id: String?,
+    parentId: String?,
+    kind: AgentSessionOutlineItemKind,
+    title: String,
+    preview: String?,
+    timestampMs: Long?,
+    visible: Boolean = true,
+  ): String {
+    val baseId = id?.trim()?.takeIf { it.isNotEmpty() } ?: "outline-${nextGeneratedRecordIndex++}"
+    val recordId = uniqueRecordId(baseId)
+    records += AgentSessionOutlineTreeRecord(
+      id = recordId,
+      parentId = parentId?.trim()?.takeIf { it.isNotEmpty() },
+      kind = kind,
+      title = title,
+      preview = preview,
+      timestampMs = timestampMs,
+      visible = visible,
+    )
+    return recordId
+  }
+
+  fun addHiddenRecord(id: String?, parentId: String?, timestampMs: Long?) {
+    if (!id.isNullOrBlank()) {
+      addRecord(
+        id = id,
+        parentId = parentId,
+        kind = AgentSessionOutlineItemKind.METADATA,
+        title = "Metadata",
+        preview = null,
+        timestampMs = timestampMs,
+        visible = false,
+      )
+    }
+  }
+
+  private fun uniqueRecordId(baseId: String): String {
+    if (recordIds.add(baseId)) {
+      return baseId
+    }
+    var index = 2
+    while (true) {
+      val candidate = "$baseId-$index"
+      if (recordIds.add(candidate)) {
+        return candidate
+      }
+      index++
+    }
+  }
+}
+
 private data class PiSessionArchiveKey(
   val normalizedProjectDir: String,
   val sessionId: String,
@@ -422,10 +539,7 @@ private fun parseSessionObject(parser: JsonParser, state: PiSessionFileState) {
 
   val normalizedType = type ?: return
   if (normalizedType == "session") {
-    val headerId = id?.trim()?.takeIf { it.isNotEmpty() } ?: return
-    val headerTimestamp = timestamp?.trim()?.takeIf { it.isNotEmpty() } ?: return
-    val headerCwd = cwd?.trim()?.takeIf { it.isNotEmpty() } ?: return
-    state.header = PiSessionHeader(id = headerId, timestamp = headerTimestamp, cwd = headerCwd)
+    state.header = parsePiSessionHeader(id = id, timestamp = timestamp, cwd = cwd) ?: return
     return
   }
 
@@ -464,13 +578,204 @@ private fun parseSessionObject(parser: JsonParser, state: PiSessionFileState) {
   }
 }
 
+private fun parseSessionOutlineObject(parser: JsonParser, state: PiSessionOutlineState) {
+  var type: String? = null
+  var id: String? = null
+  var timestamp: String? = null
+  var cwd: String? = null
+  var parentId: String? = null
+  var sessionInfoName: String? = null
+  var targetId: String? = null
+  var customType: String? = null
+  var content: String? = null
+  var summary: String? = null
+  var message: PiOutlineMessage? = null
+
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "type" -> type = readJsonStringOrNull(parser)
+      "id" -> id = readJsonStringOrNull(parser)
+      "timestamp" -> timestamp = readJsonStringOrNull(parser)
+      "cwd" -> cwd = readJsonStringOrNull(parser)
+      "parentId" -> parentId = readJsonStringOrNull(parser)
+      "targetId" -> targetId = readJsonStringOrNull(parser)
+      "name" -> sessionInfoName = readJsonStringOrNull(parser)
+      "customType" -> customType = readJsonStringOrNull(parser)
+      "content", "text" -> content = readPiOutlineTextValue(parser) ?: content
+      "summary" -> summary = readPiOutlineTextValue(parser) ?: summary
+      "message" -> message = parsePiOutlineMessage(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+
+  val normalizedType = type ?: return
+  val entryTimestampMs = timestamp?.let(::parseIsoTimestamp)
+  if (normalizedType == "session") {
+    state.header = parsePiSessionHeader(id = id, timestamp = timestamp, cwd = cwd) ?: return
+    return
+  }
+
+  when (normalizedType) {
+    "session_info" -> {
+      state.name = sessionInfoName?.trim()?.takeIf { it.isNotEmpty() }
+      state.addHiddenRecord(id = id, parentId = parentId, timestampMs = entryTimestampMs)
+    }
+    "leaf" -> state.addHiddenRecord(id = id, parentId = targetId ?: parentId, timestampMs = entryTimestampMs)
+    "label", "custom", "model_change", "thinking_level_change" -> {
+      state.addHiddenRecord(id = id, parentId = parentId, timestampMs = entryTimestampMs)
+    }
+    "message" -> recordPiOutlineMessage(
+      state = state,
+      id = id,
+      parentId = parentId,
+      entryTimestampMs = entryTimestampMs,
+      message = message,
+    )
+    "compaction" -> {
+      state.noteActivity(entryTimestampMs)
+      state.addRecord(
+        id = id,
+        parentId = parentId,
+        kind = AgentSessionOutlineItemKind.SUMMARY,
+        title = "Compaction",
+        preview = summary ?: content,
+        timestampMs = entryTimestampMs,
+      )
+    }
+    "branch_summary" -> {
+      state.noteActivity(entryTimestampMs)
+      state.addRecord(
+        id = id,
+        parentId = parentId,
+        kind = AgentSessionOutlineItemKind.SUMMARY,
+        title = "Branch summary",
+        preview = summary ?: content,
+        timestampMs = entryTimestampMs,
+      )
+    }
+    "custom_message" -> {
+      val preview = content?.takeIf { it.isNotBlank() }
+      if (preview == null) {
+        state.addHiddenRecord(id = id, parentId = parentId, timestampMs = entryTimestampMs)
+      }
+      else {
+        state.noteActivity(entryTimestampMs)
+        state.addRecord(
+          id = id,
+          parentId = parentId,
+          kind = AgentSessionOutlineItemKind.METADATA,
+          title = customType?.normalizePiSessionTitle() ?: "Metadata",
+          preview = preview,
+          timestampMs = entryTimestampMs,
+        )
+      }
+    }
+    else -> state.addHiddenRecord(id = id, parentId = parentId, timestampMs = entryTimestampMs)
+  }
+}
+
+private fun recordPiOutlineMessage(
+  state: PiSessionOutlineState,
+  id: String?,
+  parentId: String?,
+  entryTimestampMs: Long?,
+  message: PiOutlineMessage?,
+) {
+  if (message == null) {
+    state.addHiddenRecord(id = id, parentId = parentId, timestampMs = entryTimestampMs)
+    return
+  }
+  val timestampMs = message.timestamp ?: entryTimestampMs
+  state.noteActivity(timestampMs)
+  when (message.role) {
+    "user" -> {
+      val preview = normalizeAgentSessionOutlinePreview(message.text)
+      if (preview == null) {
+        state.addHiddenRecord(id = id, parentId = parentId, timestampMs = timestampMs)
+        return
+      }
+      if (state.firstUserMessage == null) {
+        state.firstUserMessage = preview
+      }
+      state.addRecord(
+        id = id,
+        parentId = parentId,
+        kind = AgentSessionOutlineItemKind.USER_PROMPT,
+        title = "My prompt",
+        preview = preview,
+        timestampMs = timestampMs,
+      )
+    }
+    "assistant" -> recordPiAssistantMessage(state, id, parentId, timestampMs, message)
+    "toolResult", "bashExecution" -> state.addRecord(
+      id = id,
+      parentId = parentId,
+      kind = AgentSessionOutlineItemKind.TOOL_RESULT,
+      title = message.exitCode?.let { exitCode -> "Exit $exitCode" } ?: "Tool result",
+      preview = message.text,
+      timestampMs = timestampMs,
+    )
+    else -> state.addHiddenRecord(id = id, parentId = parentId, timestampMs = timestampMs)
+  }
+}
+
+private fun recordPiAssistantMessage(
+  state: PiSessionOutlineState,
+  id: String?,
+  parentId: String?,
+  timestampMs: Long?,
+  message: PiOutlineMessage,
+) {
+  val normalizedText = normalizeAgentSessionOutlinePreview(message.text)
+  val parentRecordId = when {
+    normalizedText != null -> state.addRecord(
+      id = id,
+      parentId = parentId,
+      kind = AgentSessionOutlineItemKind.ASSISTANT_RESPONSE,
+      title = agentSessionOutlinePhaseTitle(normalizedText) ?: "Assistant response",
+      preview = normalizedText,
+      timestampMs = timestampMs,
+    )
+    message.toolCalls.isNotEmpty() -> state.addRecord(
+      id = id,
+      parentId = parentId,
+      kind = AgentSessionOutlineItemKind.AGENT_WORK,
+      title = "Agent work",
+      preview = null,
+      timestampMs = timestampMs,
+    )
+    else -> {
+      state.addHiddenRecord(id = id, parentId = parentId, timestampMs = timestampMs)
+      return
+    }
+  }
+  message.toolCalls.forEachIndexed { index, toolCall ->
+    state.addRecord(
+      id = toolCall.id ?: "$parentRecordId-tool-$index",
+      parentId = parentRecordId,
+      kind = AgentSessionOutlineItemKind.TOOL_CALL,
+      title = toolCall.name ?: "Tool call",
+      preview = toolCall.preview,
+      timestampMs = timestampMs,
+    )
+  }
+}
+
+private fun parsePiSessionHeader(id: String?, timestamp: String?, cwd: String?): PiSessionHeader? {
+  val headerId = id?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  val headerTimestamp = timestamp?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  val headerCwd = cwd?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+  return PiSessionHeader(id = headerId, timestamp = headerTimestamp, cwd = headerCwd)
+}
+
 private fun isPiActivityMessageRole(role: String): Boolean {
-  return role == "user" || role == "assistant" || role == "toolResult"
+  return role == "user" || role == "assistant" || role == "toolResult" || role == "bashExecution"
 }
 
 private fun resolvePiLeafActivity(role: String, stopReason: String?): AgentThreadActivity? {
   return when (role) {
-    "user", "toolResult" -> AgentThreadActivity.PROCESSING
+    "user", "toolResult", "bashExecution" -> AgentThreadActivity.PROCESSING
     "assistant" -> if (stopReason?.trim() == "toolUse") AgentThreadActivity.PROCESSING else null
     else -> null
   }
@@ -481,6 +786,26 @@ private data class PiParsedMessage(
   val text: String?,
   val timestamp: Long?,
   val stopReason: String?,
+)
+
+private data class PiOutlineMessage(
+  val role: String?,
+  val text: String?,
+  val timestamp: Long?,
+  val exitCode: Long?,
+  val toolCalls: List<PiOutlineToolCall>,
+)
+
+private data class PiOutlineContent(
+  val text: String? = null,
+  val toolCalls: List<PiOutlineToolCall> = emptyList(),
+  val exitCode: Long? = null,
+)
+
+private data class PiOutlineToolCall(
+  val id: String?,
+  val name: String?,
+  val preview: String?,
 )
 
 private fun parsePiMessage(parser: JsonParser): PiParsedMessage {
@@ -503,6 +828,154 @@ private fun parsePiMessage(parser: JsonParser): PiParsedMessage {
     true
   }
   return PiParsedMessage(role = role, text = text, timestamp = timestamp, stopReason = stopReason)
+}
+
+private fun parsePiOutlineMessage(parser: JsonParser): PiOutlineMessage? {
+  if (parser.currentToken() != JsonToken.START_OBJECT) {
+    parser.skipChildren()
+    return null
+  }
+  var role: String? = null
+  var content = PiOutlineContent()
+  var timestamp: Long? = null
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "role" -> role = readJsonStringOrNull(parser)
+      "content" -> content = readPiOutlineContent(parser)
+      "timestamp" -> timestamp = readJsonLongOrNull(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+  return PiOutlineMessage(
+    role = role,
+    text = content.text,
+    timestamp = timestamp,
+    exitCode = content.exitCode,
+    toolCalls = content.toolCalls,
+  )
+}
+
+private fun readPiOutlineTextValue(parser: JsonParser): String? {
+  return when (parser.currentToken()) {
+    JsonToken.VALUE_STRING -> readJsonStringOrNull(parser)
+    JsonToken.START_ARRAY,
+    JsonToken.START_OBJECT,
+      -> readPiOutlineContent(parser).text
+    else -> {
+      parser.skipChildren()
+      null
+    }
+  }
+}
+
+private fun readPiOutlineContent(parser: JsonParser): PiOutlineContent {
+  return when (parser.currentToken()) {
+    JsonToken.VALUE_STRING -> PiOutlineContent(text = readJsonStringOrNull(parser))
+    JsonToken.START_ARRAY -> readPiOutlineContentArray(parser)
+    JsonToken.START_OBJECT -> readPiOutlineContentBlock(parser)
+    else -> {
+      parser.skipChildren()
+      PiOutlineContent()
+    }
+  }
+}
+
+private fun readPiOutlineContentArray(parser: JsonParser): PiOutlineContent {
+  val texts = ArrayList<String>()
+  val toolCalls = ArrayList<PiOutlineToolCall>()
+  var exitCode: Long? = null
+  while (parser.nextToken() != null) {
+    when (parser.currentToken()) {
+      JsonToken.END_ARRAY -> break
+      JsonToken.VALUE_STRING -> readJsonStringOrNull(parser)?.let(texts::add)
+      JsonToken.START_OBJECT -> {
+        val block = readPiOutlineContentBlock(parser)
+        block.text?.let(texts::add)
+        toolCalls += block.toolCalls
+        exitCode = block.exitCode ?: exitCode
+      }
+      else -> parser.skipChildren()
+    }
+  }
+  return PiOutlineContent(
+    text = texts.joinToString(" ").takeIf { it.isNotBlank() },
+    toolCalls = toolCalls,
+    exitCode = exitCode,
+  )
+}
+
+private fun readPiOutlineContentBlock(parser: JsonParser): PiOutlineContent {
+  var type: String? = null
+  var id: String? = null
+  var name: String? = null
+  var text: String? = null
+  var contentText: String? = null
+  var inputPreview: String? = null
+  var exitCode: Long? = null
+  forEachJsonObjectField(parser) { fieldName ->
+    when (fieldName) {
+      "type" -> type = readJsonStringOrNull(parser)
+      "id", "toolUseId", "tool_use_id" -> id = readJsonStringOrNull(parser) ?: id
+      "name" -> name = readJsonStringOrNull(parser)
+      "text" -> text = readJsonStringOrNull(parser)
+      "content" -> contentText = readPiOutlineTextValue(parser) ?: contentText
+      "input" -> inputPreview = readPiOutlineInputPreview(parser)
+      "exitCode", "exit_code" -> exitCode = readJsonLongOrNull(parser)
+      else -> parser.skipChildren()
+    }
+    true
+  }
+
+  val normalizedType = type?.trim().orEmpty()
+  if (isPiToolUseContentType(normalizedType)) {
+    return PiOutlineContent(
+      toolCalls = listOf(
+        PiOutlineToolCall(
+          id = id?.trim()?.takeIf { it.isNotEmpty() },
+          name = name?.normalizePiSessionTitle(),
+          preview = inputPreview,
+        )
+      )
+    )
+  }
+
+  return PiOutlineContent(
+    text = (text ?: contentText)?.takeIf { it.isNotBlank() },
+    exitCode = exitCode,
+  )
+}
+
+private fun readPiOutlineInputPreview(parser: JsonParser): String? {
+  return when (parser.currentToken()) {
+    JsonToken.VALUE_STRING -> readJsonStringOrNull(parser)
+    JsonToken.START_OBJECT -> {
+      var result: String? = null
+      forEachJsonObjectField(parser) { fieldName ->
+        when (fieldName) {
+          "cmd", "command", "description", "file_path", "path" -> {
+            if (result == null) {
+              result = readJsonStringOrNull(parser)
+            }
+            else {
+              parser.skipChildren()
+            }
+          }
+          else -> parser.skipChildren()
+        }
+        true
+      }
+      result
+    }
+    else -> {
+      parser.skipChildren()
+      null
+    }
+  }
+}
+
+private fun isPiToolUseContentType(type: String): Boolean {
+  return type == "tool_use" || type == "toolUse" || type == "tool-call" || type == "toolCall"
 }
 
 private fun readPiMessageContent(parser: JsonParser): String? {

@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.pi.sessions
 
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivityReport
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
@@ -220,6 +221,46 @@ class PiSessionSourceTest {
       val thread = source.listThreadsFromClosedProject(projectDir.toString()).single()
 
       assertThat(thread.title).isEqualTo("First task")
+    }
+  }
+
+  @Test
+  fun `loads thread outline from pi session jsonl tree`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-outline")
+      val sessionDir = tempDir.resolve("outline-sessions")
+      writePiSession(
+        sessionDir = sessionDir,
+        sessionId = "session-outline",
+        cwd = projectDir,
+        piUserMessageEntry(id = "user-outline", content = "Fix flaky test", timestamp = 1_000L),
+        piLabelEntry(),
+        piAssistantTextAndToolEntry(),
+        piBashExecutionMessageEntry(),
+        piNamedSessionInfoEntry(id = "name-outline", name = "Named outline"),
+      )
+      val source = sourceFor(sessionDir)
+
+      val outline = source.loadThreadOutline(projectDir.toString(), "session-outline", null)
+
+      assertThat(outline).isNotNull
+      assertThat(outline!!.provider).isEqualTo(AgentSessionProvider.PI)
+      assertThat(outline.threadId).isEqualTo("session-outline")
+      assertThat(outline.title).isEqualTo("Named outline")
+      assertThat(outline.updatedAt).isEqualTo(3_000L)
+      val userPrompt = outline.items.single()
+      assertThat(userPrompt.kind).isEqualTo(AgentSessionOutlineItemKind.USER_PROMPT)
+      assertThat(userPrompt.preview).isEqualTo("Fix flaky test")
+      val assistant = userPrompt.children.single()
+      assertThat(assistant.kind).isEqualTo(AgentSessionOutlineItemKind.ASSISTANT_RESPONSE)
+      assertThat(assistant.title).isEqualTo("I will inspect the failure.")
+      assertThat(assistant.children.map { it.kind }).containsExactly(
+        AgentSessionOutlineItemKind.TOOL_CALL,
+        AgentSessionOutlineItemKind.TOOL_RESULT,
+      )
+      assertThat(assistant.children.map { it.title }).containsExactly("Read", "Exit 0")
+      assertThat(assistant.children[0].preview).isEqualTo("src/Test.kt")
+      assertThat(assistant.children[1].preview).isEqualTo("ok")
     }
   }
 
@@ -514,6 +555,47 @@ private fun piToolResultMessageEntry(): String {
     entryTimestamp = "2026-01-01T00:00:03Z",
     messageFields = "\"role\":\"toolResult\",\"content\":[],\"timestamp\":3000",
   )
+}
+
+private fun piAssistantTextAndToolEntry(): String {
+  val messageFields = """
+    "role":"assistant",
+    "content":[
+      {"type":"text","text":"I will inspect the failure."},
+      {"type":"tool_use","id":"tool-read","name":"Read","input":{"file_path":"src/Test.kt"}}
+    ],
+    "timestamp":2000
+  """.trimIndent().replace("\n", "")
+  return piMessageEntry(
+    id = "assistant-outline",
+    parentId = "label-outline",
+    entryTimestamp = "2026-01-01T00:00:03Z",
+    messageFields = messageFields,
+  )
+}
+
+private fun piBashExecutionMessageEntry(): String {
+  val messageFields = """
+    "role":"bashExecution",
+    "content":{"type":"bashExecution","text":"ok","exitCode":0},
+    "timestamp":3000
+  """.trimIndent().replace("\n", "")
+  return piMessageEntry(
+    id = "result-outline",
+    parentId = "assistant-outline",
+    entryTimestamp = "2026-01-01T00:00:04Z",
+    messageFields = messageFields,
+  )
+}
+
+private fun piLabelEntry(): String {
+  return listOf(
+    "\"type\":\"label\"",
+    "\"id\":\"label-outline\"",
+    "\"parentId\":\"user-outline\"",
+    "\"timestamp\":\"2026-01-01T00:00:02Z\"",
+    "\"label\":\"hidden\"",
+  ).joinToString(separator = ",", prefix = "{", postfix = "}")
 }
 
 private fun piCustomMessageEntry(): String {

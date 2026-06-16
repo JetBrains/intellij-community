@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-editor.spec.md
+// @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Document
@@ -13,6 +14,8 @@ import com.intellij.openapi.fileEditor.FileEditorState
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ide.structureView.StructureViewBuilder
+import com.intellij.openapi.fileEditor.ex.StructureViewFileEditorProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -20,7 +23,7 @@ import org.jdom.Element
 import java.util.concurrent.atomic.AtomicReference
 
 @Suppress("unused")
-internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
+internal class AgentChatFileEditorProvider : AsyncFileEditorProvider, StructureViewFileEditorProvider {
   override fun accept(project: Project, file: VirtualFile): Boolean = file is AgentChatVirtualFile
 
   override fun acceptRequiresReadAction(): Boolean = false
@@ -40,6 +43,11 @@ internal class AgentChatFileEditorProvider : AsyncFileEditorProvider {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val chatFile = file as AgentChatVirtualFile
     return createAgentChatFileEditor(project = project, file = chatFile, editorCoroutineScope = null)
+  }
+
+  override fun getStructureViewBuilder(project: Project, file: VirtualFile): StructureViewBuilder? {
+    val chatFile = file as? AgentChatVirtualFile ?: return null
+    return createAgentChatStructureViewBuilder(file = chatFile)
   }
 
   override fun readState(sourceElement: Element, project: Project, file: VirtualFile): FileEditorState {

@@ -2,15 +2,20 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
+import com.intellij.agent.workbench.sessions.frame.AGENT_WORKBENCH_DEDICATED_LAYOUT_PROFILE_ID
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchProjectFrameCapabilitiesProvider
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.toolWindow.ProjectFrameToolWindowLayoutService
+import com.intellij.toolWindow.ToolWindowLayoutProfileService
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.util.concurrent.TimeUnit
 import java.lang.reflect.Proxy
+import java.util.concurrent.TimeUnit
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -55,6 +60,26 @@ class AgentWorkbenchProjectFrameCapabilitiesProviderTest {
         setOf(ProjectFrameCapability.SUPPRESS_VCS_UI),
       )
     ).isNotNull()
+  }
+
+  @Test
+  fun dedicatedLayoutSuppressesProjectButKeepsStructureRegistered() {
+    val suppressedToolWindowIds = service<ProjectFrameToolWindowLayoutService>().getSuppressedToolWindowIds(
+      frameType = null,
+      profileId = AGENT_WORKBENCH_DEDICATED_LAYOUT_PROFILE_ID,
+    )
+
+    assertThat(suppressedToolWindowIds)
+      .contains(ToolWindowId.PROJECT_VIEW)
+      .doesNotContain(ToolWindowId.STRUCTURE_VIEW)
+
+    val profile = service<ToolWindowLayoutProfileService>().getProfile(
+      project = testProject(basePath = AgentWorkbenchDedicatedFrameProjectManager.dedicatedProjectPath()),
+      profileId = AGENT_WORKBENCH_DEDICATED_LAYOUT_PROFILE_ID,
+      isNewUi = true,
+    )
+    assertThat(profile).isNotNull()
+    assertThat(profile!!.migrationVersion).isEqualTo(4)
   }
 }
 

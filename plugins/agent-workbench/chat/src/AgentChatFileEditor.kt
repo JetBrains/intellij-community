@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-editor.spec.md
+// @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
 import com.intellij.CommonBundle
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
@@ -35,6 +36,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.wm.StatusBar
+import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.terminal.frontend.view.TerminalInputInterceptor
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.CancellationException
@@ -139,6 +141,10 @@ internal class AgentChatFileEditor(
       cachedTabActionsInitialized = true
     }
     return cachedTabActions
+  }
+
+  override fun getStructureViewBuilder(): StructureViewBuilder? {
+    return createAgentChatStructureViewBuilder(file = file)
   }
 
   override fun getState(level: FileEditorStateLevel): FileEditorState {

@@ -21,6 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/agent-workbench/common",
         "//plugins/agent-workbench/json",
         "//libraries/jackson3/jackson:libraries-jackson3",
     ],
@@ -38,6 +39,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":common",
+        "//plugins/agent-workbench/common:common_test_lib",
         "//plugins/agent-workbench/json:json_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     ],

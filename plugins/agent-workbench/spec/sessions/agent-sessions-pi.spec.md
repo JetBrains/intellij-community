@@ -70,6 +70,9 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
 - Listed Pi threads must be filtered by the session header `cwd`, use the header `id`, use the latest `session_info.name` as the title, fall back to the first user message, and sort newest first by latest user/assistant activity timestamp, header timestamp, or file mtime.
   [@test] ../../pi/sessions/testSrc/PiSessionSourceTest.kt
 
+- Pi thread outlines must be loaded from persisted JSONL without launching Pi or parsing interactive `/tree` output. Outline loading follows Pi tree semantics by resolving `id`/`parentId`, treating missing and self-parent nodes as roots, sorting siblings by timestamp, promoting visible descendants of hidden bookkeeping nodes, and mapping conversation/tool records to the shared Agent Chat Structure View outline kinds.
+  [@test] ../../pi/sessions/testSrc/PiSessionSourceTest.kt
+
 - Pi thread activity must be inferred from the persisted JSONL leaf. User, tool-result, custom, and assistant `toolUse` leaves are shown
   as `PROCESSING`; completed assistant leaves use the shared Done/read semantics when observed work completes. Pi does not report
   `NEEDS_INPUT` from session JSONL until an explicit persisted status signal exists.

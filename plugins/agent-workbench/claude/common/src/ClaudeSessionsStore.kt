@@ -1,6 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.common
 
+// @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
+
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItem
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
+import com.intellij.agent.workbench.common.session.agentSessionOutlinePhaseTitle
+import com.intellij.agent.workbench.common.session.normalizeAgentSessionOutlinePreview
+import com.intellij.agent.workbench.common.session.summarizeAgentSessionOutlineChildren
 import com.intellij.agent.workbench.json.createJsonParser
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
@@ -52,6 +61,10 @@ data class ClaudeSessionThread(
   @JvmField val titleSource: ClaudeSessionTitleSource = ClaudeSessionTitleSource.DEFAULT,
   @JvmField val projectPath: String? = null,
 )
+
+typealias ClaudeSessionOutline = AgentSessionThreadOutline
+typealias ClaudeSessionOutlineItem = AgentSessionOutlineItem
+typealias ClaudeSessionOutlineItemKind = AgentSessionOutlineItemKind
 
 data class ClaudeProjectFileChangeEvidence(
   @JvmField val timestampMillis: Long,
@@ -140,6 +153,64 @@ class ClaudeSessionsStore(
       hasCustomTitle = tailState.agentName != null || tailState.customTitle != null,
       titleSource = resolvedTitle.source,
       projectPath = projectPath,
+    )
+  }
+
+  fun parseOutlineJsonlFile(path: Path): ClaudeSessionOutline? {
+    val state = try {
+      WorkbenchJsonlScanner.scanJsonObjects(
+        path = path,
+        jsonFactory = jsonFactory,
+        newState = ::JsonlOutlineScanState,
+      ) { parser, outlineState ->
+        val lineData = parseJsonlLine(parser) ?: return@scanJsonObjects true
+        if (lineData.isSidechain) {
+          outlineState.isSidechain = true
+          return@scanJsonObjects false
+        }
+        if (outlineState.sessionId == null && !lineData.sessionId.isNullOrBlank()) {
+          outlineState.sessionId = lineData.sessionId
+        }
+        if (outlineState.firstPrompt == null && !lineData.firstPrompt.isNullOrBlank()) {
+          outlineState.firstPrompt = lineData.firstPrompt
+        }
+        if (!lineData.agentName.isNullOrBlank()) {
+          outlineState.agentName = lineData.agentName
+        }
+        if (!lineData.customTitle.isNullOrBlank()) {
+          outlineState.customTitle = lineData.customTitle
+        }
+        if (!lineData.aiTitle.isNullOrBlank()) {
+          outlineState.aiTitle = lineData.aiTitle
+        }
+        if (!lineData.lastPrompt.isNullOrBlank()) {
+          outlineState.lastPrompt = lineData.lastPrompt
+        }
+        lineData.timestampMillis?.let { timestamp -> outlineState.updatedAt = maxOf(outlineState.updatedAt ?: 0L, timestamp) }
+        outlineState.record(lineData)
+        true
+      }
+    }
+    catch (_: Throwable) {
+      return null
+    }
+    if (state.isSidechain) return null
+    val sessionId = state.sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val title = resolveThreadTitle(
+      agentName = state.agentName,
+      customTitle = state.customTitle,
+      aiTitle = state.aiTitle,
+      firstPrompt = state.firstPrompt,
+      lastPrompt = state.lastPrompt,
+      sessionId = sessionId,
+    ).title
+    val updatedAt = state.updatedAt ?: runCatching { Files.getLastModifiedTime(path).toMillis() }.getOrDefault(0L)
+    return ClaudeSessionOutline(
+      provider = AgentSessionProvider.CLAUDE,
+      threadId = sessionId,
+      title = title,
+      updatedAt = updatedAt,
+      items = state.buildItems(),
     )
   }
 
@@ -490,6 +561,11 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
       assistantUsage = assistantUsage,
       projectMutatingToolUsesById = messageProjectMutatingToolUsesById,
       completedToolUseIds = messageCompletedToolUseIds,
+      messageRole = messageRole,
+      messageContent = messageContent,
+      messageHasToolUse = messageHasToolUse,
+      messageNeedsInputToolUse = messageNeedsInputToolUse,
+      messageHasToolResult = messageHasToolResult,
     )
   }
   catch (_: Throwable) {
@@ -768,6 +844,18 @@ private fun normalizeNonBlank(value: String?): String? {
   return value?.trim()?.takeIf { it.isNotEmpty() }
 }
 
+private fun outlinePhaseTitle(preview: String?): String? {
+  return agentSessionOutlinePhaseTitle(preview)
+}
+
+private fun summarizeClaudeOutlineChildren(children: List<ClaudeSessionOutlineItem>): String? {
+  return summarizeAgentSessionOutlineChildren(children)
+}
+
+private fun normalizeOutlinePreview(value: String?): String? {
+  return normalizeAgentSessionOutlinePreview(value)
+}
+
 private fun parseIsoTimestamp(value: String?): Long? {
   val text = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
   return try {
@@ -850,7 +938,133 @@ private data class ParsedJsonlLine(
   @JvmField val assistantUsage: ClaudeAssistantUsage? = null,
   @JvmField val projectMutatingToolUsesById: Map<String, Set<String>?> = emptyMap(),
   @JvmField val completedToolUseIds: Set<String> = emptySet(),
+  @JvmField val messageRole: String? = null,
+  @JvmField val messageContent: String? = null,
+  @JvmField val messageHasToolUse: Boolean = false,
+  @JvmField val messageNeedsInputToolUse: Boolean = false,
+  @JvmField val messageHasToolResult: Boolean = false,
 )
+
+private data class JsonlOutlineScanState(
+  @JvmField var sessionId: String? = null,
+  @JvmField var firstPrompt: String? = null,
+  @JvmField var agentName: String? = null,
+  @JvmField var customTitle: String? = null,
+  @JvmField var aiTitle: String? = null,
+  @JvmField var lastPrompt: String? = null,
+  @JvmField var updatedAt: Long? = null,
+  @JvmField var isSidechain: Boolean = false,
+  @JvmField var nextItemIndex: Int = 0,
+  @JvmField val items: MutableList<ClaudeSessionOutlineItemBuilder> = ArrayList(),
+  @JvmField var currentPhase: ClaudeSessionOutlineItemBuilder? = null,
+) {
+  fun record(lineData: ParsedJsonlLine) {
+    when (lineData.activityEvent) {
+      ClaudeActivityEvent.USER_PROMPT -> {
+        currentPhase = null
+        addRootItem(ClaudeSessionOutlineItemKind.USER_PROMPT, "My prompt", lineData.messageContent, lineData.timestampMillis)
+      }
+      ClaudeActivityEvent.TOOL_CONTINUATION -> addPhaseDetail(ClaudeSessionOutlineItemKind.TOOL_RESULT,
+                                                              "Tool result",
+                                                              lineData.messageContent,
+                                                              lineData.timestampMillis)
+      ClaudeActivityEvent.ASSISTANT_NEEDS_INPUT -> {
+        val phase = addAssistantResponse(lineData)
+        phase.kind = ClaudeSessionOutlineItemKind.AGENT_WORK
+        phase.children += newItem(ClaudeSessionOutlineItemKind.INPUT_REQUEST, "Input requested", null, lineData.timestampMillis)
+      }
+      ClaudeActivityEvent.ASSISTANT_IN_PROGRESS -> {
+        val phase = addAssistantResponse(lineData)
+        if (lineData.messageHasToolUse) {
+          phase.kind = ClaudeSessionOutlineItemKind.AGENT_WORK
+          phase.children += newItem(ClaudeSessionOutlineItemKind.TOOL_CALL, "Tool call", null, lineData.timestampMillis)
+        }
+      }
+      ClaudeActivityEvent.ASSISTANT_TERMINAL -> addAssistantResponse(lineData)
+      ClaudeActivityEvent.PROGRESS,
+      ClaudeActivityEvent.QUEUE_OPERATION,
+        -> addPhaseDetail(ClaudeSessionOutlineItemKind.AGENT_WORK, "Agent work", null, lineData.timestampMillis)
+      ClaudeActivityEvent.OTHER -> Unit
+    }
+  }
+
+  fun buildItems(): List<ClaudeSessionOutlineItem> = items.map(ClaudeSessionOutlineItemBuilder::build)
+
+  private fun addAssistantResponse(lineData: ParsedJsonlLine): ClaudeSessionOutlineItemBuilder {
+    if (lineData.messageRole == "assistant" || !lineData.messageContent.isNullOrBlank()) {
+      val phase = newItem(
+        kind = ClaudeSessionOutlineItemKind.ASSISTANT_RESPONSE,
+        title = outlinePhaseTitle(lineData.messageContent) ?: "Assistant response",
+        preview = lineData.messageContent,
+        timestampMillis = lineData.timestampMillis,
+        summarizesChildren = true,
+      )
+      items += phase
+      currentPhase = phase
+      return phase
+    }
+    return currentPhase ?: addRootItem(ClaudeSessionOutlineItemKind.AGENT_WORK, "Agent work", null, lineData.timestampMillis)
+  }
+
+  private fun addPhaseDetail(kind: ClaudeSessionOutlineItemKind, title: String, preview: String?, timestampMillis: Long?) {
+    val item = newItem(kind, title, preview, timestampMillis)
+    val phase = currentPhase
+    if (phase == null) {
+      items += item
+      return
+    }
+    phase.kind = ClaudeSessionOutlineItemKind.AGENT_WORK
+    phase.children += item
+  }
+
+  private fun addRootItem(
+    kind: ClaudeSessionOutlineItemKind,
+    title: String,
+    preview: String?,
+    timestampMillis: Long?,
+  ): ClaudeSessionOutlineItemBuilder {
+    return newItem(kind, title, preview, timestampMillis).also(items::add)
+  }
+
+  private fun newItem(
+    kind: ClaudeSessionOutlineItemKind,
+    title: String,
+    preview: String?,
+    timestampMillis: Long?,
+    summarizesChildren: Boolean = false,
+  ): ClaudeSessionOutlineItemBuilder {
+    return ClaudeSessionOutlineItemBuilder(
+      id = "outline-${nextItemIndex++}",
+      kind = kind,
+      title = title,
+      preview = normalizeOutlinePreview(preview),
+      timestampMillis = timestampMillis,
+      summarizesChildren = summarizesChildren,
+    )
+  }
+}
+
+private data class ClaudeSessionOutlineItemBuilder(
+  @JvmField val id: String,
+  @JvmField var kind: ClaudeSessionOutlineItemKind,
+  @JvmField val title: String,
+  @JvmField val preview: String?,
+  @JvmField val timestampMillis: Long?,
+  @JvmField val summarizesChildren: Boolean = false,
+  @JvmField val children: MutableList<ClaudeSessionOutlineItemBuilder> = ArrayList(),
+) {
+  fun build(): ClaudeSessionOutlineItem {
+    val builtChildren = children.map(ClaudeSessionOutlineItemBuilder::build)
+    return ClaudeSessionOutlineItem(
+      id = id,
+      kind = kind,
+      title = title,
+      preview = if (summarizesChildren && builtChildren.isNotEmpty()) summarizeClaudeOutlineChildren(builtChildren) else preview,
+      timestampMs = timestampMillis,
+      children = builtChildren,
+    )
+  }
+}
 
 private data class ParsedMessageObject(
   @JvmField val modelId: String?,

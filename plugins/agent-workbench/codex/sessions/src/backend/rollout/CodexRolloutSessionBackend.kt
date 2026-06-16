@@ -22,6 +22,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -82,6 +83,15 @@ internal class CodexRolloutSessionBackend(
 
   internal fun resolveActiveThreadFilePaths(path: String, threadId: String): List<Path> {
     return threadIndex.resolveThreadFilePaths(path = path, threadId = threadId)
+  }
+
+  override suspend fun loadThreadOutline(path: String, threadId: String): AgentSessionThreadOutline? {
+    return withContext(Dispatchers.IO) {
+      resolveActiveThreadFilePaths(path = path, threadId = threadId)
+        .asSequence()
+        .mapNotNull { rolloutPath -> runCatching { parser.parseOutline(rolloutPath) }.getOrNull() }
+        .firstOrNull { outline -> outline.threadId == threadId }
+    }
   }
 
   private fun createUpdatesFlow(sourceUpdates: Flow<FileBackedSessionChangeSet>): Flow<AgentSessionSourceUpdateEvent> {

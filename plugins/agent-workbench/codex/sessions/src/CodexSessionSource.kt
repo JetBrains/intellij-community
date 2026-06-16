@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.codex.sessions
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-codex-rollout-source.spec.md
+// @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
@@ -16,6 +17,7 @@ import com.intellij.agent.workbench.codex.sessions.backend.appserver.SharedCodex
 import com.intellij.agent.workbench.codex.sessions.backend.createDefaultCodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexExactRolloutThreadLoader
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProvider
+import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutParser
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentSessionRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentThreadActivity
@@ -31,6 +33,7 @@ import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.cost.OpenRouterPriceCatalogService
 import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
@@ -49,6 +52,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import java.math.BigDecimal
+import java.nio.file.Path
 
 private val LOG = logger<CodexSessionSource>()
 
@@ -57,7 +61,10 @@ internal class CodexSessionSource internal constructor(
   private val appServerRefreshHintsProvider: CodexRefreshHintsProvider,
   private val rolloutRefreshHintsProvider: CodexRefreshHintsProvider,
   private val rolloutBackend: CodexSessionBackend? = null,
-  private val calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost = { AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE) },
+  private val calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost = {
+    AgentSessionCost(amountUsd = null,
+                     kind = AgentSessionCostKind.UNAVAILABLE)
+  },
   private val threadPathIndex: CodexThreadPathIndex = InMemoryCodexThreadPathIndex(),
   private val exactRolloutThreadLoader: CodexExactRolloutThreadLoader = CodexExactRolloutThreadLoader(),
 ) : BaseAgentSessionSource(provider = AgentSessionProvider.CODEX, canReportExactThreadCount = false) {
@@ -183,10 +190,45 @@ internal class CodexSessionSource internal constructor(
                    threadPathIndex = threadPathIndex,
                  )
                  ?: AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
-                     .also { unavailableCost -> threadPathIndex.recordFrozenCost(thread.threadId, thread.updatedAt, unavailableCost) }
+                   .also { unavailableCost -> threadPathIndex.recordFrozenCost(thread.threadId, thread.updatedAt, unavailableCost) }
       costsByThreadId[thread.threadId] = cost
     }
     return costsByThreadId
+  }
+
+  override suspend fun loadThreadOutline(path: String, threadId: String, subAgentId: String?): AgentSessionThreadOutline? {
+    return loadThreadOutlineFromBackend(backend, path, threadId)
+           ?: rolloutBackend
+             ?.takeIf { fallbackBackend -> fallbackBackend !== backend }
+             ?.let { fallbackBackend -> loadThreadOutlineFromBackend(fallbackBackend, path, threadId) }
+           ?: loadIndexedRolloutThreadOutline(threadId)
+  }
+
+  private suspend fun loadThreadOutlineFromBackend(
+    backend: CodexSessionBackend,
+    path: String,
+    threadId: String,
+  ): AgentSessionThreadOutline? {
+    return try {
+      backend.loadThreadOutline(path = path, threadId = threadId)?.takeIf { outline -> outline.threadId == threadId }
+    }
+    catch (e: Throwable) {
+      if (e is CancellationException) throw e
+      LOG.warn("Failed to load Codex backend outline", e)
+      null
+    }
+  }
+
+  private fun loadIndexedRolloutThreadOutline(threadId: String): AgentSessionThreadOutline? {
+    val rolloutPath = threadPathIndex.entry(threadId)?.rolloutPath ?: return null
+    return try {
+      CodexRolloutParser().parseOutline(Path.of(rolloutPath))?.takeIf { outline -> outline.threadId == threadId }
+    }
+    catch (e: Throwable) {
+      if (e is CancellationException) throw e
+      LOG.warn("Failed to load Codex rollout outline", e)
+      null
+    }
   }
 
   override suspend fun prefetchThreads(paths: List<String>): Map<String, List<AgentSessionThread>> {
@@ -396,7 +438,7 @@ internal class CodexSessionSource internal constructor(
 
     return try {
       val refreshedThreads = backend.refreshThreads(path = path, threadIds = threadIds, openProject = null)?.threads
-                           ?: backend.listThreads(path = path, openProject = null)
+                             ?: backend.listThreads(path = path, openProject = null)
       rememberThreadMetadata(refreshedThreads)
       refreshedThreads.asSequence()
         .filter { thread -> thread.thread.id in threadIds }
@@ -422,7 +464,7 @@ internal class CodexSessionSource internal constructor(
     val rolloutBackend = rolloutBackend ?: return emptyMap()
     val recoveredThreads = try {
       val refreshedThreads = rolloutBackend.refreshThreads(path = path, threadIds = missingThreadIds, openProject = null)?.threads
-                           ?: rolloutBackend.listThreads(path = path, openProject = null)
+                             ?: rolloutBackend.listThreads(path = path, openProject = null)
       refreshedThreads.asSequence()
         .filter { thread -> thread.thread.id in missingThreadIds }
         .associateBy { thread -> thread.thread.id }

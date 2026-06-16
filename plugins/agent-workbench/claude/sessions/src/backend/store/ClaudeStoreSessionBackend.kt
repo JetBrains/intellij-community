@@ -1,8 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions.backend.store
 
+// @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
+
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.claude.common.ClaudeProjectFileChangeEvidence
+import com.intellij.agent.workbench.claude.common.ClaudeSessionOutline
+import com.intellij.agent.workbench.claude.common.ClaudeSessionOutlineItem
+import com.intellij.agent.workbench.claude.common.ClaudeSessionOutlineItemKind
 import com.intellij.agent.workbench.claude.common.ClaudeSessionThread
 import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
 import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThread
@@ -18,7 +23,10 @@ import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChang
 import com.intellij.agent.workbench.json.filebacked.toFileBackedSessionPathKey
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineItem
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -293,6 +301,16 @@ internal class ClaudeStoreSessionBackend(
       )
     }
   }
+
+  override suspend fun loadThreadOutline(path: String, threadId: String): AgentSessionThreadOutline? {
+    return withContext(Dispatchers.IO) {
+      resolveActiveThreadFilePaths(path = path, threadId = threadId)
+        .asSequence()
+        .mapNotNull(store::parseOutlineJsonlFile)
+        .firstOrNull { outline -> outline.sessionId == threadId }
+        ?.toAgentSessionThreadOutline()
+    }
+  }
 }
 
 private val UNSCOPED_CLAUDE_SESSION_UPDATE = claudeSessionUpdate()
@@ -361,4 +379,29 @@ private fun ClaudeSessionThread.toAgentThreadActivityHint(): AgentThreadActivity
     ClaudeSessionActivity.NEEDS_INPUT -> AgentThreadActivity.NEEDS_INPUT
     ClaudeSessionActivity.READY -> if (awaitingAssistantTurn) AgentThreadActivity.READY else AgentThreadActivity.UNREAD
   }
+}
+
+private fun ClaudeSessionOutline.toAgentSessionThreadOutline(): AgentSessionThreadOutline {
+  return AgentSessionThreadOutline(
+    provider = com.intellij.agent.workbench.common.session.AgentSessionProvider.CLAUDE,
+    threadId = sessionId,
+    title = title,
+    updatedAt = updatedAt,
+    items = items.map(ClaudeSessionOutlineItem::toAgentSessionOutlineItem),
+  )
+}
+
+private fun ClaudeSessionOutlineItem.toAgentSessionOutlineItem(): AgentSessionOutlineItem {
+  return AgentSessionOutlineItem(
+    id = id,
+    kind = kind.toAgentSessionOutlineItemKind(),
+    title = title,
+    preview = preview,
+    timestampMs = timestampMillis,
+    children = children.map(ClaudeSessionOutlineItem::toAgentSessionOutlineItem),
+  )
+}
+
+private fun ClaudeSessionOutlineItemKind.toAgentSessionOutlineItemKind(): AgentSessionOutlineItemKind {
+  return this
 }

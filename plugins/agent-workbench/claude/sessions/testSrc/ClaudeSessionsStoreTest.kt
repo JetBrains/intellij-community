@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
+import com.intellij.agent.workbench.claude.common.ClaudeSessionOutlineItemKind
 import com.intellij.agent.workbench.claude.common.ClaudeSessionTitleSource
 import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
 import org.assertj.core.api.Assertions.assertThat
@@ -45,6 +46,44 @@ class ClaudeSessionsStoreTest {
     assertThat(thread.title).contains("Investigate flaky test")
     assertThat(thread.updatedAt).isGreaterThan(0)
     assertThat(thread.projectPath).isEqualTo("/work/project-b")
+  }
+
+  @Test
+  fun parsesOutlineFromJsonlFile() {
+    val projectDir = tempDir.resolve(".claude").resolve("projects").resolve("-work-project-outline")
+    Files.createDirectories(projectDir)
+    val transcript = projectDir.resolve("outline-session.jsonl")
+    Files.writeString(
+      transcript,
+      """
+      {"type":"user","sessionId":"outline-session","cwd":"/work/project-outline","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Fix flaky test"}}
+      {"type":"assistant","sessionId":"outline-session","cwd":"/work/project-outline","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z","message":{"role":"assistant","content":[{"type":"text","text":"I will edit the test"},{"type":"tool_use","id":"tool-1","name":"Edit","input":{"file_path":"src/Test.kt"}}]}}
+      {"type":"user","sessionId":"outline-session","cwd":"/work/project-outline","isSidechain":false,"timestamp":"2026-02-08T01:00:02.000Z","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"tool-1","content":"ok"}]}}
+      {"type":"assistant","sessionId":"outline-session","cwd":"/work/project-outline","isSidechain":false,"timestamp":"2026-02-08T01:00:03.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Done"}]}}
+      """.trimIndent()
+    )
+
+    val store = ClaudeSessionsStore(claudeHomeProvider = { tempDir.resolve(".claude") })
+
+    val outline = store.parseOutlineJsonlFile(transcript)
+
+    assertThat(outline).isNotNull
+    assertThat(outline!!.sessionId).isEqualTo("outline-session")
+    assertThat(outline.title).isEqualTo("Fix flaky test")
+    assertThat(outline.updatedAt).isEqualTo(Instant.parse("2026-02-08T01:00:03.000Z").toEpochMilli())
+    assertThat(outline.items.map { it.kind }).containsExactly(
+      ClaudeSessionOutlineItemKind.USER_PROMPT,
+      ClaudeSessionOutlineItemKind.AGENT_WORK,
+      ClaudeSessionOutlineItemKind.ASSISTANT_RESPONSE,
+    )
+    assertThat(outline.items[0].preview).isEqualTo("Fix flaky test")
+    assertThat(outline.items[1].title).isEqualTo("I will edit the test")
+    assertThat(outline.items[1].preview).isEqualTo("1 tool, 1 result")
+    assertThat(outline.items[1].children.map { it.kind }).containsExactly(
+      ClaudeSessionOutlineItemKind.TOOL_CALL,
+      ClaudeSessionOutlineItemKind.TOOL_RESULT,
+    )
+    assertThat(outline.items[2].preview).isEqualTo("Done")
   }
 
   @Test
