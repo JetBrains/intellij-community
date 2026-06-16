@@ -25,28 +25,12 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
-
-/**
- * [f] will be invoked each time when it's return value may be changed.
- * All subsequent repetitions of the same value are filtered out.
- * @return cold flow of read values, will subscribe to changes only when flow termination operation is invoked.
- *
- *  Note: this function has existed before Rete, which probably means that all it's usages are outdated and perhaps contains consistency issues.
- *  These are highlighted in the editor now, so that responsible developer could think a little bit and do one of two things:
- *  1. just `query {}.matchesFlow().map { it.value }` to lose the consistency explicitly, or
- *  2. `query{}.collect {}`, or `query {}.matchesFlow().transform().collectMatches { }`
- */
-@Deprecated("Use query", replaceWith = ReplaceWith("query { f() }", imports = ["fleet.kernel.rete.query"]))
-suspend fun <T> queryAsFlow(f: () -> T): Flow<T> =
-  query { f() }.asValuesFlow()
-
 
 suspend fun <T : Entity> launchOnEachEntity(entityType: EntityType<T>, f: suspend CoroutineScope.(T) -> Unit) {
   entityType.each().launchOnEach { v ->
