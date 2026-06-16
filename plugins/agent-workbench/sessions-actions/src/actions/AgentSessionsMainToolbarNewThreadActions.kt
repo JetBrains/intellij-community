@@ -21,8 +21,8 @@ import com.intellij.agent.workbench.sessions.core.providers.buildBuiltInLaunchPr
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
-import com.intellij.agent.workbench.sessions.ui.AgentWorkbenchPopupRow
-import com.intellij.agent.workbench.sessions.ui.createAgentWorkbenchListPopup
+import com.intellij.agent.workbench.ui.AgentWorkbenchPopupRow
+import com.intellij.agent.workbench.ui.createAgentWorkbenchListPopup
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionGroup

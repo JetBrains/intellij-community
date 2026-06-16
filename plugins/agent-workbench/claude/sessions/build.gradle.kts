@@ -49,6 +49,7 @@ dependencies {
   implementation(project(":claude-common"))
   implementation(project(":prompt-core"))
   implementation(project(":sessions-core"))
+  implementation(project(":ui"))
   runtimeOnly(project(":sessions-actions"))
 }
 

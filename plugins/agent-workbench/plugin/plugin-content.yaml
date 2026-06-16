@@ -108,15 +108,15 @@
 - name: lib/modules/intellij.agent.workbench.sessions.launch.config.backend.jar
   contentModules:
   - name: intellij.agent.workbench.sessions.launch.config.backend
-- name: lib/modules/intellij.agent.workbench.sessions.ui.jar
-  contentModules:
-  - name: intellij.agent.workbench.sessions.ui
 - name: lib/modules/intellij.agent.workbench.sessions.toolwindow.jar
   contentModules:
   - name: intellij.agent.workbench.sessions.toolwindow
 - name: lib/modules/intellij.agent.workbench.terminal.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.terminal.sessions
+- name: lib/modules/intellij.agent.workbench.ui.jar
+  contentModules:
+  - name: intellij.agent.workbench.ui
 - name: lib/modules/intellij.agent.workbench.vcs.merge.jar
   contentModules:
   - name: intellij.agent.workbench.vcs.merge

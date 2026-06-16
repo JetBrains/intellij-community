@@ -2,8 +2,8 @@
 package com.intellij.agent.workbench.sessions.jbcentral
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.ui.AgentWorkbenchHintBanner
-import com.intellij.agent.workbench.sessions.core.ui.AgentWorkbenchHintBannerState
+import com.intellij.agent.workbench.ui.AgentWorkbenchHintBanner
+import com.intellij.agent.workbench.ui.AgentWorkbenchHintBannerState
 import com.intellij.openapi.components.service
 
 class JbCentralQuotaHintBanner(
