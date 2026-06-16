@@ -139,6 +139,10 @@ open class TypeEvalContextImpl internal constructor(
     if (!Registry.`is`("python.use.better.control.flow.type.inference")) {
       return func(this)
     }
+    // PY-89956: if this exact (element, type) assumption is already in effect, don't nest another context.
+    if (this is AssumptionContext && isAlreadyAssumed(element, type)) {
+      return func(this)
+    }
     val context = AssumptionContext(this, element, type)
     return try {
       func(context)
@@ -316,12 +320,25 @@ open class TypeEvalContextImpl internal constructor(
     TypeEvalContextImpl(myParent.constraints) {
 
     val myInstructionCache: MutableMap<List<Any>, PyType> = ConcurrentHashMap()
-    
+
     private val topAssumption: AssumptionContext =
       if (myParent is AssumptionContext) myParent.topAssumption else this
 
+    private val assumedElement: PyTypedElement = element
+    private val assumedType: PyType? = type
+
     init {
       myEvaluated[element] = type ?: PyNullType
+    }
+
+    /** Whether the same `(element, type)` assumption is already in effect somewhere in this assumption chain. */
+    fun isAlreadyAssumed(element: PyTypedElement, type: PyType?): Boolean {
+      var current: TypeEvalContextImpl = this
+      while (current is AssumptionContext) {
+        if (current.assumedElement === element && current.assumedType == type) return true
+        current = current.myParent
+      }
+      return false
     }
 
     override fun getKnownType(element: PyTypedElement): PyType? {
