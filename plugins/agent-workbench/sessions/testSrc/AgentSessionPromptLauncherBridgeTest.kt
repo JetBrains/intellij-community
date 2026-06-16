@@ -1156,18 +1156,8 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(openRequest.startupLaunchSpecOverride?.command)
             .containsExactly("test", "new", AgentSessionLaunchMode.STANDARD.name, "--", "Refactor selected code")
           assertThat(openRequest.startupLaunchSpecOverride?.envVariables).isEmpty()
-          assertThat(openRequest.initialComposedMessage).isNull()
-          assertThat(openRequest.postStartDispatchSteps).containsExactly(
-            AgentInitialMessageDispatchStep(
-              action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
-              timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-              completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-            ),
-            AgentInitialMessageDispatchStep(
-              text = "Refactor selected code",
-              timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-            ),
-          )
+          assertThat(openRequest.initialComposedMessage).isEqualTo("Refactor selected code")
+          assertThat(openRequest.postStartDispatchSteps).isEmpty()
           assertThat(openRequest.initialMessageToken).isNotNull()
         }
       }
@@ -1324,18 +1314,8 @@ class AgentSessionPromptLauncherBridgeTest {
           assertThat(openRequest.startupLaunchSpecOverride?.command)
             .containsExactly("test", "resume", "thread-existing", "--effort", "high", "--", "Refactor selected code")
           assertThat(openRequest.startupLaunchSpecOverride?.envVariables).isEmpty()
-          assertThat(openRequest.initialComposedMessage).isNull()
-          assertThat(openRequest.postStartDispatchSteps).containsExactly(
-            AgentInitialMessageDispatchStep(
-              action = AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE,
-              timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-              completionPolicy = AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY,
-            ),
-            AgentInitialMessageDispatchStep(
-              text = "Refactor selected code",
-              timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
-            ),
-          )
+          assertThat(openRequest.initialComposedMessage).isEqualTo("Refactor selected code")
+          assertThat(openRequest.postStartDispatchSteps).isEmpty()
           assertThat(openRequest.initialMessageToken).isNotNull()
         }
       }

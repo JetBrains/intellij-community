@@ -175,17 +175,21 @@ private open class AgentWorkbenchPopupRowComponent {
   }
 
   init {
+    iconLabel.isOpaque = false
+    textLabel.isOpaque = false
+    secondaryIconLabel.isOpaque = false
     iconLabel.border = JBUI.Borders.emptyRight(JBUI.CurrentTheme.ActionsList.elementIconGap())
     secondaryIconLabel.border = JBUI.Borders.emptyLeft(JBUI.CurrentTheme.ActionsList.elementIconGap() + 1)
 
     val content = JPanel(BorderLayout()).apply {
       isOpaque = false
-      border = JBUI.Borders.empty(0, JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET.get())
       add(iconLabel, BorderLayout.WEST)
       add(textLabel, BorderLayout.CENTER)
       add(secondaryIconLabel, BorderLayout.EAST)
     }
-    selectablePanel = SelectablePanel.wrap(content, JBUI.CurrentTheme.Popup.BACKGROUND)
+    selectablePanel = SelectablePanel.wrap(content, JBUI.CurrentTheme.Popup.BACKGROUND).apply {
+      isOpaque = true
+    }
     PopupUtil.configListRendererFixedHeight(selectablePanel)
   }
 }

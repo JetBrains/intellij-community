@@ -141,9 +141,8 @@ class AgentChatOpenTopLevelDispatchTest {
     waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
     assertThat(terminalTabs.tab.sentTexts)
       .containsExactly(OpenTabDispatchSentTerminalText("Dispatch through helper", shouldExecute = true))
-
-    val persisted = checkNotNull(service<AgentChatTabsService>().load(file.tabKey))
-    assertThat(persisted.runtime.initialMessageSent).isTrue()
+    waitForCondition { file.initialMessageSent }
+    assertThat(file.initialMessageSent).isTrue()
   }
 
   @Test
