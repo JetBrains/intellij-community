@@ -2,7 +2,7 @@
   <id>com.intellij.platform.acp</id>
   <name>Agent Client Protocol</name>
   <vendor>JetBrains</vendor>
-  <category>IDE Settings</category>
+  <category>AI-Powered</category>
 
   <description><![CDATA[
     Provides the Agent Client Protocol (ACP) API for launching ACP agent processes
