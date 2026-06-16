@@ -45,5 +45,6 @@
     <orderEntry type="module" module-name="intellij.libraries.guava" />
     <orderEntry type="module" module-name="intellij.libraries.groovy" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.libraries.groovy.ant" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.libraries.kryo5" />
   </component>
 </module>

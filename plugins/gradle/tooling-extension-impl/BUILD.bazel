@@ -60,6 +60,7 @@ jvm_library(
         "//libraries/commons/lang3",
         "//libraries/commons/io",
         "//libraries/guava",
+        "//libraries/kryo5",
         ":libraries_groovy_provided",
         ":libraries_groovy_ant_provided",
     ],
@@ -98,6 +99,7 @@ jvm_library(
         "//libraries/groovy:groovy_test_lib",
         "//libraries/groovy/ant",
         "//libraries/groovy/ant:ant_test_lib",
+        "//libraries/kryo5:kryo5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.toolingExtension.impl` end
