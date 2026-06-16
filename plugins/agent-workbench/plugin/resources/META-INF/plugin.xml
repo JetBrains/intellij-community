@@ -5,8 +5,10 @@
     Run and manage AI coding agents — Codex, Claude, Junie, OpenCode, and more — directly inside your IDE.
     <ul>
       <li><b>Quick Launch</b> — press <code>Ctrl Ctrl</code> from anywhere to start a new task or continue an existing one. Your current selection, file, and symbol are attached automatically.</li>
+      <li><b>Launch Profiles</b> — bundle provider, model, reasoning effort, and launch mode into reusable presets (Standard, Full Auto, Brave Mode, or your own) and pick a cheaper, faster, or more careful setup per task without changing your default.</li>
       <li><b>AI Review</b> — hold <code>Alt</code>/<code>Option</code> and press <code>Ctrl</code> twice to review local changes or commits with AI and catch bugs, security issues, and style problems before they reach the main branch.</li>
       <li><b>All Sessions in One Place</b> — browse, reopen, and resume AI sessions across providers, grouped by project.</li>
+      <li><b>Terminal Sessions</b> — open regular terminal shells from the same launcher and track them alongside your agent threads; reopen, rename, and archive them just like agent sessions.</li>
       <li><b>Persistent Chat Tabs</b> — each session opens in its own editor tab and survives IDE restarts.</li>
       <li><b>Separate Window Mode</b> — run AI chat in a dedicated frame so you can work on code and manage tasks side by side.</li>
       <li><b>Automatic Context</b> — editor selections, VCS changes, project-view selections, and test results are collected and sent with your prompt so the agent has the context it needs.</li>
