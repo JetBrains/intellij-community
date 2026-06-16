@@ -17,12 +17,25 @@ import javax.swing.Icon
 
 private val LOG = Logger.getInstance(LanguageRef::class.java)
 
-data class LanguageRef(val id: String, @field:Nls val displayName: String, val icon: Icon?) {
+class LanguageRef private constructor(
+  val id: String,
+  @field:Nls val displayName: String,
+  iconProvider: () -> Icon?,
+) {
+  private val lazyIcon: Lazy<Icon?> = lazy(LazyThreadSafetyMode.PUBLICATION, iconProvider)
+  val icon: Icon? get() = lazyIcon.value
+
+  constructor(id: String, displayName: @Nls String, icon: Icon?) : this(id, displayName, { icon })
+
   companion object {
     @JvmStatic
     fun forLanguage(lang: Language): LanguageRef =
       (nonDependentLanguage(lang) ?: lang).let {
-        LanguageRef(it.id, it.displayName, it.associatedFileType?.icon)
+        LanguageRef(it.id, it.displayName) {
+          runCatching {
+            it.associatedFileType?.icon
+          }.getOrLogException(LOG)
+        }
       }
 
     private fun nonDependentLanguage(lang: Language): Language? =
@@ -40,11 +53,7 @@ data class LanguageRef(val id: String, @field:Nls val displayName: String, val i
       return Language.getRegisteredLanguages()
         .filter { it !== Language.ANY && it !is DependentLanguage }
         .sortedWith(LanguageUtil.LANGUAGE_COMPARATOR)
-        .mapNotNull {
-          runCatching {
-            forLanguage(it)
-          }.getOrLogException(LOG)
-        }
+        .map { forLanguage(it) }
     }
   }
 
@@ -62,20 +71,30 @@ data class LanguageRef(val id: String, @field:Nls val displayName: String, val i
   }
 }
 
-data class FileTypeRef(val name: @NonNls String, val displayName: @Nls String, val icon: Icon?) {
+class FileTypeRef private constructor(
+  val name: @NonNls String,
+  val displayName: @Nls String,
+  iconProvider: () -> Icon?,
+) {
+  private val lazyIcon: Lazy<Icon?> = lazy(LazyThreadSafetyMode.PUBLICATION, iconProvider)
+  val icon: Icon? get() = lazyIcon.value
+
+  constructor(name: @NonNls String, displayName: @Nls String, icon: Icon?) : this(name, displayName, { icon })
+
   companion object {
     @JvmStatic
-    fun forFileType(fileType: FileType): FileTypeRef = FileTypeRef(fileType.name, fileType.displayName, fileType.icon)
+    fun forFileType(fileType: FileType): FileTypeRef =
+      FileTypeRef(fileType.name, fileType.displayName) {
+        runCatching {
+          fileType.icon
+        }.getOrLogException(LOG)
+      }
 
     @JvmStatic
     fun forAllFileTypes(): List<FileTypeRef> {
       return FileTypeManager.getInstance().registeredFileTypes
         .sortedWith(FileTypeComparator.INSTANCE)
-        .mapNotNull{
-          runCatching {
-            forFileType(it)
-          }.getOrLogException(LOG)
-        }
+        .map { forFileType(it) }
     }
   }
 

@@ -5642,11 +5642,6 @@ f:com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor
 f:com.intellij.ide.util.gotoByName.FileTypeRef
 - sf:Companion:com.intellij.ide.util.gotoByName.FileTypeRef$Companion
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon):V
-- f:component1():java.lang.String
-- f:component2():java.lang.String
-- f:component3():javax.swing.Icon
-- f:copy(java.lang.String,java.lang.String,javax.swing.Icon):com.intellij.ide.util.gotoByName.FileTypeRef
-- bs:copy$default(com.intellij.ide.util.gotoByName.FileTypeRef,java.lang.String,java.lang.String,javax.swing.Icon,I,java.lang.Object):com.intellij.ide.util.gotoByName.FileTypeRef
 - equals(java.lang.Object):Z
 - sf:forAllFileTypes():java.util.List
 - sf:forFileType(com.intellij.openapi.fileTypes.FileType):com.intellij.ide.util.gotoByName.FileTypeRef
@@ -5768,11 +5763,6 @@ c:com.intellij.ide.util.gotoByName.GotoSymbolModel2
 f:com.intellij.ide.util.gotoByName.LanguageRef
 - sf:Companion:com.intellij.ide.util.gotoByName.LanguageRef$Companion
 - <init>(java.lang.String,java.lang.String,javax.swing.Icon):V
-- f:component1():java.lang.String
-- f:component2():java.lang.String
-- f:component3():javax.swing.Icon
-- f:copy(java.lang.String,java.lang.String,javax.swing.Icon):com.intellij.ide.util.gotoByName.LanguageRef
-- bs:copy$default(com.intellij.ide.util.gotoByName.LanguageRef,java.lang.String,java.lang.String,javax.swing.Icon,I,java.lang.Object):com.intellij.ide.util.gotoByName.LanguageRef
 - equals(java.lang.Object):Z
 - sf:forAllLanguages():java.util.List
 - sf:forLanguage(com.intellij.lang.Language):com.intellij.ide.util.gotoByName.LanguageRef
