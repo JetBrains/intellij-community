@@ -34,7 +34,7 @@ public final class PyDocstringErrorFilter extends HighlightErrorFilter {
   @Override
   public boolean shouldHighlightErrorElement(@NotNull PsiErrorElement element) {
     final PsiFile file = element.getContainingFile();
-    if (file instanceof PyDocstringFile) return false;
+    if (file instanceof PyDoctestFile) return false;
 
     final InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
     if (manager == null) return true;

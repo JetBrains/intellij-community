@@ -85,13 +85,13 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       if (!trimmedString.startsWith(">>>") && !trimmedString.startsWith("...") && gotExample && start < end) {
         gotExample = false;
         if (!endsWithSlash) {
-          injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
+          injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
         }
       }
 
       if (endsWithSlash && !trimmedString.endsWith("\\")) {
         endsWithSlash = false;
-        injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(),
+        injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(),
                                           TextRange.create(start, getEndOffset(currentPosition, string, maxPosition, closingQuote)), null,
                                           null);
       }
@@ -125,7 +125,7 @@ public class PyDocstringLanguageInjector implements LanguageInjector {
       currentPosition += string.length();
     }
     if (gotExample && start < end) {
-      injectionPlacesRegistrar.addPlace(PyDocstringLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
+      injectionPlacesRegistrar.addPlace(PyDoctestLanguageDialect.getInstance(), TextRange.create(start, end), null, null);
     }
   }
 

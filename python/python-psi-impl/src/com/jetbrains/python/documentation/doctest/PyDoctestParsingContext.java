@@ -28,11 +28,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User : ktisha
  */
-public class PyDocstringParsingContext extends ParsingContext {
+public class PyDoctestParsingContext extends ParsingContext {
   private final StatementParsing myStatementParser;
   private final ExpressionParsing myExpressionParser;
 
-  public PyDocstringParsingContext(final SyntaxTreeBuilder builder, LanguageLevel languageLevel) {
+  public PyDoctestParsingContext(final SyntaxTreeBuilder builder, LanguageLevel languageLevel) {
     super(builder, languageLevel);
     myStatementParser = new PyDocstringStatementParsing(this);
     myExpressionParser = new PyDocstringExpressionParsing(this);
@@ -55,7 +55,7 @@ public class PyDocstringParsingContext extends ParsingContext {
 
     @Override
     protected IElementType getReferenceType() {
-      return PyDocstringTokenTypes.DOC_REFERENCE;
+      return PyDoctestTokenTypes.DOC_REFERENCE;
     }
   }
 
@@ -67,13 +67,13 @@ public class PyDocstringParsingContext extends ParsingContext {
 
     @Override
     protected IElementType getReferenceType() {
-      return PyDocstringTokenTypes.DOC_REFERENCE;
+      return PyDoctestTokenTypes.DOC_REFERENCE;
     }
 
     @Override
     public @NotNull IElementType filter(@NotNull IElementType source, int start, int end, @NotNull CharSequence text) {
       if (source == PyTokenTypes.DOT && CharArrayUtil.regionMatches(text, start, end, "..."))
-        return PyDocstringTokenTypes.DOTS;
+        return PyDoctestTokenTypes.DOTS;
       if (source == PyTokenTypes.GTGT && CharArrayUtil.regionMatches(text, start, end, ">>>"))
         return PyTokenTypes.SPACE;
       return super.filter(source, start, end, text);

@@ -37,7 +37,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementInfo;
 import com.jetbrains.python.codeInsight.mlcompletion.PyCompletionMlElementKind;
-import com.jetbrains.python.documentation.doctest.PyDocstringFile;
+import com.jetbrains.python.documentation.doctest.PyDoctestFile;
 import com.jetbrains.python.inspections.PyLazyImportInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAnnotation;
@@ -290,7 +290,7 @@ public final class PyKeywordCompletionContributor extends CompletionContributor 
 
   private static final PsiElementPattern.Capture<PsiElement> IN_STRING_LITERAL =
     psiElement().inside(PyStringLiteralExpression.class).andNot(
-      psiElement().inFile(psiFile(PyDocstringFile.class)));
+      psiElement().inFile(psiFile(PyDoctestFile.class)));
 
   private static final ElementPattern<PsiElement> IN_FUNCTION_HEADER =
     psiElement().inside(PyFunction.class)

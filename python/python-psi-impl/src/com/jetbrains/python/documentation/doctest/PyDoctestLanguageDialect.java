@@ -25,13 +25,13 @@ import com.jetbrains.python.PythonLanguage;
 /**
  * User : ktisha
  */
-public class PyDocstringLanguageDialect extends Language implements DependentLanguage, InjectableLanguage {
+public class PyDoctestLanguageDialect extends Language implements DependentLanguage, InjectableLanguage {
 
-  public static PyDocstringLanguageDialect getInstance() {
-    return (PyDocstringLanguageDialect)PyDocstringFileType.INSTANCE.getLanguage();
+  public static PyDoctestLanguageDialect getInstance() {
+    return (PyDoctestLanguageDialect)PyDoctestFileType.INSTANCE.getLanguage();
   }
 
-  protected PyDocstringLanguageDialect() {
+  protected PyDoctestLanguageDialect() {
     super(PythonLanguage.getInstance(), PyNames.PY_DOCSTRING_ID);
     putUserData(QuickEditActionKeys.EDIT_ACTION_AVAILABLE, false);
   }

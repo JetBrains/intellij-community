@@ -25,7 +25,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.documentation.doctest.PyDocstringParserDefinition;
+import com.jetbrains.python.documentation.doctest.PyDoctestParserDefinition;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 import java.util.List;
@@ -101,7 +101,7 @@ public class PyDocstringTest extends PyTestCase {
 
 
   private void doTestLexer(final String text, String... expectedTokens) {
-    Lexer lexer = new PyDocstringParserDefinition().createLexer(myFixture.getProject());
+    Lexer lexer = new PyDoctestParserDefinition().createLexer(myFixture.getProject());
     lexer.start(text);
     int idx = 0;
     while (lexer.getTokenType() != null) {

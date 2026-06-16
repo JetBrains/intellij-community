@@ -10,7 +10,7 @@ import com.jetbrains.python.psi.PythonVisitorFilter
 
 /**
  * Disables all inspections for plain Python code blocks injected inside docstrings
- * Doctest fragments ([PyDocstringLanguageDialect]) are handled separately by `PyDocstringVisitorFilter`.
+ * Doctest fragments ([PyDoctestLanguageDialect]) are handled separately by `PyDocstringVisitorFilter`.
  */
 internal class PyDocstringCodeBlockVisitorFilter : PythonVisitorFilter {
   override fun isSupported(visitorClass: Class<out PyElementVisitor?>, file: PsiFile): Boolean {

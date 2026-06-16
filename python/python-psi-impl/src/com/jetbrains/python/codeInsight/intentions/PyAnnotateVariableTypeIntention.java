@@ -21,7 +21,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.AnnotationInfo;
 import com.jetbrains.python.codeInsight.intentions.PyTypeHintGenerationUtil.Pep484IncompatibleTypeException;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
-import com.jetbrains.python.documentation.doctest.PyDocstringFile;
+import com.jetbrains.python.documentation.doctest.PyDoctestFile;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyAssignmentStatement;
@@ -74,7 +74,7 @@ public final class PyAnnotateVariableTypeIntention extends PyBaseIntentionAction
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
-    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDocstringFile) {
+    if (!(psiFile instanceof PyFile) || psiFile instanceof PyDoctestFile) {
       return false;
     }
     final List<PyTargetExpression> resolved = findSuitableTargetsUnderCaret(project, editor, psiFile);

@@ -12,7 +12,7 @@ import com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationP
 import com.jetbrains.python.codeInsight.typeRepresentation.PyTypeRepresentationTokenSetContributor
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyFunctionTypeRepresentation
 import com.jetbrains.python.codeInsight.typeRepresentation.psi.PyTypeRepresentationFile
-import com.jetbrains.python.documentation.doctest.PyDocstringTokenSetContributor
+import com.jetbrains.python.documentation.doctest.PyDoctestTokenSetContributor
 import com.jetbrains.python.psi.PyBinaryExpression
 import com.jetbrains.python.psi.PyEllipsisLiteralExpression
 import com.jetbrains.python.psi.PyExpression
@@ -36,7 +36,7 @@ class PyTypeRepresentationParsingTest : ParsingTestCase("typeRepresentation/pars
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME,
                            PythonDialectsTokenSetContributor::class.java)
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PythonTokenSetContributor())
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PyDocstringTokenSetContributor())
+    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PyDoctestTokenSetContributor())
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, PyTypeRepresentationTokenSetContributor())
     addExplicitExtension(LanguageASTFactory.INSTANCE, PythonLanguage.getInstance(), PythonASTFactory())
   }

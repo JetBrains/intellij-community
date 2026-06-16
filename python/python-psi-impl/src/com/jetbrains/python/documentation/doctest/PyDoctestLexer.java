@@ -9,7 +9,7 @@ import com.jetbrains.python.lexer.PythonIndentingLexer;
 /**
  * User : ktisha
  */
-public class PyDocstringLexer extends PythonIndentingLexer {
+public class PyDoctestLexer extends PythonIndentingLexer {
   @Override
   public void advance() {
     if (super.getTokenType() == PyTokenTypes.DOT) {
