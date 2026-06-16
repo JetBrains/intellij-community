@@ -48,6 +48,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.markdown" scope="TEST" />
     <orderEntry type="module" module-name="intellij.markdown.webview.preview" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.markdown.webview.preview" />

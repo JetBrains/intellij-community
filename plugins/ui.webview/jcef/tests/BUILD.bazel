@@ -68,6 +68,8 @@ jvm_library(
         "//platform/util",
         "//platform/util:util_test_lib",
         "@lib//:jna",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ui.webview.jcef.tests` end
