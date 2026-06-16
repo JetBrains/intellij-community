@@ -22,7 +22,7 @@ import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfile
 import com.intellij.agent.workbench.sessions.core.providers.initialMessageRequestForLaunchProfile
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
-import com.intellij.agent.workbench.sessions.ui.AgentWorkbenchPopupStep
+import com.intellij.agent.workbench.ui.AgentWorkbenchPopupStep
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionGroup

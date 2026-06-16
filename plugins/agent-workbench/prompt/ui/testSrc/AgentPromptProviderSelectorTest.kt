@@ -25,8 +25,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminal
 import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfileId
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
-import com.intellij.agent.workbench.sessions.ui.AgentWorkbenchPopupRow
-import com.intellij.agent.workbench.sessions.ui.AgentWorkbenchPopupRowRenderer
+import com.intellij.agent.workbench.ui.AgentWorkbenchPopupRow
+import com.intellij.agent.workbench.ui.AgentWorkbenchPopupRowRenderer
 import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent

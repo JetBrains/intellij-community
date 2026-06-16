@@ -26,7 +26,7 @@ intellijPlatform {
 sourceSets {
   main {
     java { setSrcDirs(listOf("src")) }
-    resources { setSrcDirs(emptyList<String>()) }
+    resources { setSrcDirs(listOf("resources")) }
   }
 }
 

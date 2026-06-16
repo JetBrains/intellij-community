@@ -54,7 +54,7 @@ dependencies {
   implementation(project(":common"))
   implementation(project(":prompt-core"))
   implementation(project(":sessions-core"))
-  implementation(project(":sessions-ui"))
+  implementation(project(":ui"))
 }
 
 kotlin {

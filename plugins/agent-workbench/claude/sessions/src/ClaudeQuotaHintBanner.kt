@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
-import com.intellij.agent.workbench.sessions.core.ui.AgentWorkbenchHintBanner
-import com.intellij.agent.workbench.sessions.core.ui.AgentWorkbenchHintBannerState
+import com.intellij.agent.workbench.ui.AgentWorkbenchHintBanner
+import com.intellij.agent.workbench.ui.AgentWorkbenchHintBannerState
 import com.intellij.openapi.components.service
 
 internal class ClaudeQuotaHintBanner(

@@ -1,0 +1,143 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.agent.workbench.ui` start
+
+jvm_library(
+    name = "ui",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.ui",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util",
+        "//platform/util:util-ui",
+    ],
+)
+
+jvm_library(
+    name = "ui_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.ui",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":ui",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui_test_lib",
+    ],
+)
+### auto-generated section `build intellij.agent.workbench.ui` end
+
+### auto-generated section `iml intellij.agent.workbench.ui` start
+exports_files(
+    [
+        "intellij.agent.workbench.ui.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.agent.workbench.ui` end
+
+### auto-generated section `build intellij.agent.workbench.ui.tests` start
+
+jvm_library(
+    name = "agent-workbench-ui-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.ui.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "agent-workbench-ui-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/agent-workbench/ui",
+        "//plugins/agent-workbench/ui:ui_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":agent-workbench-ui-tests",
+        "//platform/ide-core:ide-core_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/platform-api:ide",
+        "//platform/platform-api:ide_test_lib",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/util:util-ui",
+        "//platform/util:util-ui_test_lib",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5:junit5_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.agent.workbench.ui.tests` end
+
+### auto-generated section `iml intellij.agent.workbench.ui.tests` start
+exports_files(
+    [
+        "intellij.agent.workbench.ui.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.agent.workbench.ui.tests` end
+
+### auto-generated section `test intellij.agent.workbench.ui.tests` start
+
+jps_test(
+    name = "agent-workbench-ui-tests_test",
+    runtime_deps = [":agent-workbench-ui-tests_test_lib"],
+)
+### auto-generated section `test intellij.agent.workbench.ui.tests` end

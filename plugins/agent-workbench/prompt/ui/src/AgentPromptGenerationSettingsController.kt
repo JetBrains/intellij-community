@@ -16,9 +16,9 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.generationSettingsForPlanMode
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.setLaunchProfileIcon
-import com.intellij.agent.workbench.sessions.ui.AgentWorkbenchPopupRow
-import com.intellij.agent.workbench.sessions.ui.AgentWorkbenchPopupStep
-import com.intellij.agent.workbench.sessions.ui.createAgentWorkbenchListPopup
+import com.intellij.agent.workbench.ui.AgentWorkbenchPopupRow
+import com.intellij.agent.workbench.ui.AgentWorkbenchPopupStep
+import com.intellij.agent.workbench.ui.createAgentWorkbenchListPopup
 import com.intellij.icons.AllIcons
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.actionSystem.ActionUpdateThread
