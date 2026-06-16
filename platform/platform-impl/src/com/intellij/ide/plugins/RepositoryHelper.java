@@ -312,7 +312,7 @@ public final class RepositoryHelper {
   /**
    * Looks for the given plugins in the Marketplace and custom repositories. Only compatible plugins are returned.
    */
-  public static @NotNull Collection<PluginNode> loadPlugins(@NotNull Set<PluginId> pluginIds) {
+  public static @NotNull @Unmodifiable Collection<PluginNode> loadPlugins(@NotNull Set<PluginId> pluginIds) {
     @SuppressWarnings("deprecation") var mpPlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(pluginIds);
     var customPlugins = loadPluginsFromCustomRepositories(null).stream().filter(p -> pluginIds.contains(p.getPluginId())).toList();
     return mergePluginsFromRepositories(mpPlugins, customPlugins, true);

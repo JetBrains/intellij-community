@@ -44,6 +44,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -296,7 +297,7 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
       myCbSearchTextOccurrences.setVisible(false);
     }
 
-    List<AutomaticRenamerFactory> applicableAutoRenameFactories = ActionUtil.underModalProgress(
+    @Unmodifiable List<AutomaticRenamerFactory> applicableAutoRenameFactories = ActionUtil.underModalProgress(
       myProject,
       RefactoringBundle.message("rename.finding.auto.rename.options.modal.title"),
       () -> {

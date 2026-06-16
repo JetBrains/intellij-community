@@ -47,6 +47,7 @@ import com.intellij.util.ObjectUtils;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.uast.UBlockExpression;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UExpression;
@@ -464,7 +465,7 @@ public final class JavaI18nUtil {
     return elseStr.replaceAll("([<>|#])", "'$1'");
   }
 
-  static @NotNull String composeParametersText(@NotNull List<? extends UExpression> args) {
+  static @NotNull String composeParametersText(@NotNull @Unmodifiable List<? extends UExpression> args) {
     return args.stream().map(UExpression::getSourcePsi).filter(Objects::nonNull).map(psi -> psi.getText()).collect(Collectors.joining(","));
   }
 
