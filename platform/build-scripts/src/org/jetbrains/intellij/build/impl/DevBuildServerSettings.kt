@@ -80,8 +80,7 @@ data class DevBuildServerSettings(
       effectiveArg.replacePlaceholders(mainModule)
     })
 
-    val entryPointClass = System.getProperty("idea.dev.build.test.entry.point.class").nullize(nullizeSpaces = true) ?: mainClass
-    args.add("-Didea.dev.build.test.entry.point.class=$entryPointClass")
+    args.add("-Didea.dev.build.test.entry.point.class=$mainClass")
     args.add(this.mainClass)
   }
 

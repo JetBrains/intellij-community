@@ -22,6 +22,7 @@ import com.intellij.platform.util.coroutines.filterConcurrent
 import com.intellij.testFramework.SkipInHeadlessEnvironment
 import com.intellij.util.io.awaitExit
 import com.intellij.util.lang.UrlClassLoader
+import com.intellij.util.text.nullize
 import io.opentelemetry.api.trace.Span
 import jetbrains.buildServer.messages.serviceMessages.BlockClosed
 import jetbrains.buildServer.messages.serviceMessages.BlockOpened
@@ -1323,12 +1324,13 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     val environment: MutableMap<String, String> = HashMap(envVariables)
 
-    val mainClass = "com.intellij.tests.JUnit5TeamCityRunner"
+    val entryPointClass = System.getProperty("idea.test.entry.point.class").nullize(nullizeSpaces = true)
+                          ?: "com.intellij.tests.JUnit5TeamCityRunner"
     if (devBuildModeSettings == null) {
-      args.add(mainClass)
+      args.add(entryPointClass)
     }
     else {
-      devBuildModeSettings.apply(mainClass, mainModule, args, environment)
+      devBuildModeSettings.apply(entryPointClass, mainModule, args, environment)
     }
 
     args.add(suiteName)
