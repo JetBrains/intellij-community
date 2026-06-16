@@ -687,6 +687,7 @@ a:com.intellij.codeInsight.template.Expression
 - <init>():V
 - a:calculateLookupItems(com.intellij.codeInsight.template.ExpressionContext):com.intellij.codeInsight.lookup.LookupElement[]
 - a:calculateResult(com.intellij.codeInsight.template.ExpressionContext):com.intellij.codeInsight.template.Result
+- getStaticLookupStrings():java.util.List
 com.intellij.codeInsight.template.ExpressionContext
 - sf:SELECTION:com.intellij.openapi.util.Key
 - a:getEditor():com.intellij.openapi.editor.Editor
@@ -746,6 +747,7 @@ f:com.intellij.codeInsight.template.impl.ConstantNode
 - com.intellij.codeInsight.template.Expression
 - <init>(com.intellij.codeInsight.template.Result):V
 - <init>(java.lang.String):V
+- getStaticLookupStrings():java.util.List
 - withLookupItems(java.util.Collection):com.intellij.codeInsight.template.impl.ConstantNode
 - withLookupItems(com.intellij.codeInsight.lookup.LookupElement[]):com.intellij.codeInsight.template.impl.ConstantNode
 - withLookupStrings(java.util.Collection):com.intellij.codeInsight.template.impl.ConstantNode

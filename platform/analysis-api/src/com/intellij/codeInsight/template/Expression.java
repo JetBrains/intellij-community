@@ -6,6 +6,9 @@ import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
+
+import java.util.List;
 
 public abstract class Expression {
 
@@ -16,6 +19,13 @@ public abstract class Expression {
   }
 
   public abstract LookupElement @Nullable [] calculateLookupItems(ExpressionContext context);
+
+  /**
+   * @return the list of static lookup strings to display when UI is limited and full-fledged LookupElements are not supported.
+   */
+  public @Unmodifiable @NotNull List<@NotNull String> getStaticLookupStrings() {
+    return List.of();
+  }
 
   public @Nullable @NlsContexts.PopupAdvertisement String getAdvertisingText() {
     return null;
