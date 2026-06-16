@@ -15,7 +15,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.util.ui.RawSwingDispatcher
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 
 // TODO add trigger on dynamic plugin set change
@@ -65,10 +67,12 @@ internal class PluginInitializationErrorReporterStartupActivity : ApplicationAct
       actions += prepareDisableAction(pluginsToDisable)
     }
 
-    serviceAsync<NotificationGroupManager>().getNotificationGroup("Plugin Error")
-      .createNotification(title, content, NotificationType.ERROR)
-      .addActions(actions)
-      .notify(null)
+    withContext(RawSwingDispatcher) {
+      serviceAsync<NotificationGroupManager>().getNotificationGroup("Plugin Error")
+        .createNotification(title, content, NotificationType.ERROR)
+        .addActions(actions)
+        .notify(null)
+    }
   }
 
   internal fun prepareEnableAction(pluginsToEnable: Collection<String>): AnAction {
