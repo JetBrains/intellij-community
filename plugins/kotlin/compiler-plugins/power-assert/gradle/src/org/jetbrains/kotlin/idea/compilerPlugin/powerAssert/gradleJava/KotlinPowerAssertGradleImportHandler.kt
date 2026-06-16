@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.compilerPlugin.powerAssert.gradleJava
 
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
+import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.AbstractGradleImportHandler
 import org.jetbrains.kotlin.idea.gradleJava.compilerPlugin.MavenCoordinates
 import java.nio.file.Path
@@ -19,6 +20,8 @@ class KotlinPowerAssertGradleImportHandler : AbstractGradleImportHandler() {
     override val replacementJarFromPluginBundle: Path by lazy {
         KotlinArtifacts.powerAssertPluginPath
     }
+
+    override val availableSinceVersion: IdeKotlinVersion? = IdeKotlinVersion.opt("2.0.0")
 
     companion object {
         private const val POWER_ASSERT_COMPILER_PLUGIN_EMBEDDABLE_JAR_NAME = "kotlin-power-assert-compiler-plugin-embeddable"
