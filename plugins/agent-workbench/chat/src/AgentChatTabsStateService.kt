@@ -7,15 +7,6 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.sessions.core.isAgentSessionPendingThreadId
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryChannel
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryStatus
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptRecord
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
-import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageTimeoutPolicy
-import com.intellij.agent.workbench.sessions.core.providers.AgentTerminalPromptDispatch
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
@@ -33,7 +24,7 @@ import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import kotlin.time.Duration.Companion.minutes
 
-private const val AGENT_CHAT_TABS_STATE_VERSION = 10
+private const val AGENT_CHAT_TABS_STATE_VERSION = 11
 private const val AGENT_CHAT_TABS_STATE_TTL_MILLIS = 30L * 24 * 60 * 60 * 1000
 private const val AGENT_CHAT_LEGACY_METADATA_DIR_NAME = "agent-workbench-chat-frame"
 private const val AGENT_CHAT_LEGACY_METADATA_TABS_DIR_NAME = "tabs"
@@ -225,22 +216,7 @@ internal data class PersistedAgentChatTabState(
   @JvmField val launchMode: String? = null,
   @JvmField val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
   @JvmField val newThreadRebindRequestedAtMs: Long? = null,
-  @JvmField val initialPromptMessage: String? = null,
-  @JvmField val initialPromptMode: String = AgentInitialMessageMode.STANDARD.name,
-  @JvmField val initialPromptToken: String? = null,
-  @JvmField val initialPromptDeliveryStatus: String = AgentInitialPromptDeliveryStatus.PENDING.name,
-  @JvmField val initialPromptDeliveryChannel: String? = null,
-  @JvmField val terminalPromptDispatchSteps: List<PersistedAgentChatInitialMessageDispatchStep> = emptyList(),
-  @JvmField val terminalPromptDispatchStepIndex: Int = 0,
   @JvmField val updatedAt: Long,
-)
-
-@Serializable
-internal data class PersistedAgentChatInitialMessageDispatchStep(
-  @JvmField val text: String = "",
-  @JvmField val timeoutPolicy: String = AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK.name,
-  @JvmField val completionPolicy: String = AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE.name,
-  @JvmField val action: String = AgentInitialMessageDispatchAction.SEND_TEXT.name,
 )
 
 private fun deleteLegacyMetadataDirectory() {
@@ -278,20 +254,6 @@ private fun isExpired(updatedAt: Long, now: Long): Boolean {
 private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): AgentChatTabSnapshot {
   val resolvedPendingCreatedAtMs = pendingCreatedAtMs
                                    ?: updatedAt.takeIf { it > 0L && isPersistedPendingThreadIdentity(threadIdentity) }
-  val runtimeSteps = terminalPromptDispatchSteps.mapNotNull(PersistedAgentChatInitialMessageDispatchStep::toRuntime)
-  val initialPromptRecord = initialPromptMessage?.trim()?.takeIf { it.isNotEmpty() }?.let { message ->
-    AgentInitialPromptRecord(
-      message = message,
-      mode = parseInitialMessageMode(initialPromptMode),
-      token = initialPromptToken,
-      deliveryStatus = parseInitialPromptDeliveryStatus(initialPromptDeliveryStatus),
-      deliveryChannel = initialPromptDeliveryChannel?.let(::parseInitialPromptDeliveryChannel),
-    )
-  }
-  val terminalPromptDispatch = AgentTerminalPromptDispatch(
-    steps = runtimeSteps,
-    stepIndex = terminalPromptDispatchStepIndex,
-  ).normalized()
   return AgentChatTabSnapshot(
     tabKey = tabKey,
     identity = AgentChatTabIdentity(
@@ -310,15 +272,14 @@ private fun PersistedAgentChatTabState.toSnapshot(tabKey: AgentChatTabKey): Agen
       launchMode = normalizeAgentChatLaunchMode(launchMode),
       generationSettings = generationSettings,
       newThreadRebindRequestedAtMs = newThreadRebindRequestedAtMs,
-      initialPromptRecord = initialPromptRecord,
-      terminalPromptDispatch = terminalPromptDispatch,
+      // Prompt text, tokens, delivery state, and dispatch queues are live-session metadata and are intentionally not restored.
+      initialPromptRecord = null,
+      terminalPromptDispatch = null,
     ),
   )
 }
 
 private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentChatTabState {
-  val promptRecord = runtime.initialPromptRecord
-  val terminalDispatch = runtime.terminalPromptDispatch
   return PersistedAgentChatTabState(
     projectHash = identity.projectHash,
     projectPath = identity.projectPath,
@@ -333,37 +294,7 @@ private fun AgentChatTabSnapshot.toPersisted(updatedAt: Long): PersistedAgentCha
     launchMode = runtime.launchMode,
     generationSettings = runtime.generationSettings,
     newThreadRebindRequestedAtMs = runtime.newThreadRebindRequestedAtMs,
-    initialPromptMessage = promptRecord?.message,
-    initialPromptMode = promptRecord?.mode?.name ?: AgentInitialMessageMode.STANDARD.name,
-    initialPromptToken = promptRecord?.token,
-    initialPromptDeliveryStatus = promptRecord?.deliveryStatus?.name ?: AgentInitialPromptDeliveryStatus.PENDING.name,
-    initialPromptDeliveryChannel = promptRecord?.deliveryChannel?.name,
-    terminalPromptDispatchSteps = terminalDispatch?.steps.orEmpty().map(AgentInitialMessageDispatchStep::toPersisted),
-    terminalPromptDispatchStepIndex = terminalDispatch?.stepIndex ?: 0,
     updatedAt = updatedAt,
-  )
-}
-
-private fun PersistedAgentChatInitialMessageDispatchStep.toRuntime(): AgentInitialMessageDispatchStep? {
-  val parsedAction = parseInitialMessageDispatchAction(action)
-  val normalizedText = text.trim()
-  if (parsedAction == AgentInitialMessageDispatchAction.SEND_TEXT && normalizedText.isEmpty()) {
-    return null
-  }
-  return AgentInitialMessageDispatchStep(
-    text = normalizedText,
-    timeoutPolicy = parseInitialMessageTimeoutPolicy(timeoutPolicy),
-    completionPolicy = parseInitialMessageDispatchCompletionPolicy(completionPolicy),
-    action = parsedAction,
-  )
-}
-
-private fun AgentInitialMessageDispatchStep.toPersisted(): PersistedAgentChatInitialMessageDispatchStep {
-  return PersistedAgentChatInitialMessageDispatchStep(
-    text = text,
-    timeoutPolicy = timeoutPolicy.name,
-    completionPolicy = completionPolicy.name,
-    action = action.name,
   )
 }
 
@@ -378,37 +309,4 @@ private fun isPersistedPendingThreadIdentity(threadIdentity: String): Boolean {
 private fun parseThreadActivity(value: String): AgentThreadActivity {
   return runCatching { AgentThreadActivity.valueOf(value) }
     .getOrDefault(AgentThreadActivity.READY)
-}
-
-private fun parseInitialMessageTimeoutPolicy(value: String): AgentInitialMessageTimeoutPolicy {
-  return runCatching { AgentInitialMessageTimeoutPolicy.valueOf(value) }
-    .getOrDefault(AgentInitialMessageTimeoutPolicy.ALLOW_TIMEOUT_FALLBACK)
-}
-
-private fun parseInitialMessageMode(value: String): AgentInitialMessageMode {
-  return runCatching { AgentInitialMessageMode.valueOf(value) }
-    .getOrDefault(AgentInitialMessageMode.STANDARD)
-}
-
-private fun parseInitialPromptDeliveryStatus(value: String): AgentInitialPromptDeliveryStatus {
-  return runCatching { AgentInitialPromptDeliveryStatus.valueOf(value) }
-    .getOrDefault(AgentInitialPromptDeliveryStatus.PENDING)
-}
-
-private fun parseInitialPromptDeliveryChannel(value: String): AgentInitialPromptDeliveryChannel {
-  return runCatching { AgentInitialPromptDeliveryChannel.valueOf(value) }
-    .getOrDefault(AgentInitialPromptDeliveryChannel.TERMINAL)
-}
-
-private fun parseInitialMessageDispatchCompletionPolicy(value: String): AgentInitialMessageDispatchCompletionPolicy {
-  return runCatching { AgentInitialMessageDispatchCompletionPolicy.valueOf(value) }
-    .getOrDefault(AgentInitialMessageDispatchCompletionPolicy.IMMEDIATE)
-}
-
-private fun parseInitialMessageDispatchAction(value: String): AgentInitialMessageDispatchAction {
-  if (value == "ENSURE_CODEX_PLAN_MODE") {
-    return AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE
-  }
-  return runCatching { AgentInitialMessageDispatchAction.valueOf(value) }
-    .getOrDefault(AgentInitialMessageDispatchAction.SEND_TEXT)
 }

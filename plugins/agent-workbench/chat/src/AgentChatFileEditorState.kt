@@ -40,8 +40,8 @@ internal fun readAgentChatFileEditorState(sourceElement: Element, file: VirtualF
       pendingLaunchMode = sourceElement.getAttributeValue(ATTR_PENDING_LAUNCH_MODE),
       launchMode = normalizeAgentChatLaunchMode(sourceElement.getAttributeValue(ATTR_LAUNCH_MODE)),
       newThreadRebindRequestedAtMs = sourceElement.getAttributeLongValueOrNull(ATTR_NEW_THREAD_REBIND_REQUESTED_AT_MS),
-      // Initial prompt delivery is live/session-only state. Restoring stale terminal input after restart can duplicate prompts;
-      // rare in-flight prompts are intentionally dropped instead.
+      // Prompt text, tokens, delivery state, and dispatch queues are live-session metadata. Do not restore them from editor state:
+      // persisted prompt data is a privacy risk, and restoring queued terminal input can duplicate prompts.
       initialPromptRecord = null,
       terminalPromptDispatch = null,
     ),
@@ -75,7 +75,7 @@ internal fun writeAgentChatFileEditorState(state: AgentChatFileEditorState, targ
   targetElement.setNullableAttribute(ATTR_PENDING_LAUNCH_MODE, runtime.pendingLaunchMode)
   targetElement.setNullableAttribute(ATTR_LAUNCH_MODE, runtime.launchMode)
   targetElement.setNullableAttribute(ATTR_NEW_THREAD_REBIND_REQUESTED_AT_MS, runtime.newThreadRebindRequestedAtMs?.toString())
-  // Do not persist initial prompt delivery or terminal dispatch metadata in editor state. It is only valid for the live session.
+  // Prompt text, tokens, delivery state, and terminal dispatch metadata are live-session-only and must not be persisted.
   writeStartupIntent(state.startupIntent, targetElement)
 }
 
