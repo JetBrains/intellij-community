@@ -170,6 +170,11 @@ internal class AgentPromptLaunchProfileEditorDialog(
         handleEditorChanged()
       }
     }
+    effortCombo.addActionListener {
+      if (!isUpdatingEditor) {
+        handleEditorChanged()
+      }
+    }
     planEffortCombo.addActionListener {
       if (!isUpdatingEditor) {
         handleEditorChanged()
@@ -295,6 +300,13 @@ internal class AgentPromptLaunchProfileEditorDialog(
 
   fun planEffortOptionTextsForTest(): List<String> {
     return (0 until planEffortCombo.model.size).map { index -> planEffortCombo.model.getElementAt(index).displayName }
+  }
+
+  fun selectReasoningEffortForTest(reasoningEffort: AgentPromptReasoningEffort) {
+    effortCombo.selectedItem = (0 until effortCombo.model.size)
+      .asSequence()
+      .map { index -> effortCombo.model.getElementAt(index) }
+      .first { option -> option.effort == reasoningEffort }
   }
 
   fun selectPlanEffortForTest(planReasoningEffort: AgentPromptReasoningEffort?) {
