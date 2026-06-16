@@ -298,6 +298,9 @@ internal class AgentPromptPaletteSessionController(
   fun onProviderSelectionChanged() {
     generationSettingsController.refreshPresentation()
     updateProviderOptionsVisibility()
+    if (contextState.activeExtensionTab == null && currentTargetMode() == PromptTargetMode.EXISTING_TASK) {
+      reloadExistingTasks()
+    }
     updateSendAvailability()
     refreshFooterHintForCurrentState()
   }
@@ -597,7 +600,7 @@ internal class AgentPromptPaletteSessionController(
     val isNewTaskLaunch = isStandardTab && currentTargetMode() == PromptTargetMode.NEW_TASK
     providerSelector.setProviderOptionsVisible(isStandardTab)
     generationSettingsController.setControlsVisibility(
-      providerSelectorVisible = isNewTaskLaunch || extensionTab?.extension?.showsProviderSelector() == true,
+      providerSelectorVisible = extensionTab == null || extensionTab.extension.showsProviderSelector(),
       generationControlsVisible = isNewTaskLaunch || extensionTab?.extension?.showsGenerationControls() == true,
     )
     syncContainerModeState()
