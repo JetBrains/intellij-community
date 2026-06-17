@@ -158,6 +158,8 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       return emptyTask();
     }
 
+    awaitFileCodeStyleSettings(psiFile);
+
     List<Runnable> runnables = ReadAction.computeBlocking(() -> collectOptimizers(psiFile));
     runnables.addAll(OptimizeImportsSuspendHelper.collectSuspendOptimizers(psiFile));
 
