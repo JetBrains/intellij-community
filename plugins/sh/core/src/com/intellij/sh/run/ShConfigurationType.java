@@ -7,19 +7,12 @@ import com.intellij.execution.configurations.SimpleConfigurationType;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.platform.eel.EelDescriptor;
-import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
 import com.intellij.sh.ShBundle;
 import com.intellij.sh.ShLanguage;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.platform.eel.provider.EelProviderUtil.getEelDescriptor;
-import static com.intellij.platform.eel.provider.EelProviderUtil.toEelApiBlocking;
-import static com.intellij.platform.eel.provider.utils.EelPathUtils.getNioPath;
-import static com.intellij.platform.eel.provider.utils.EelUtilsKt.fetchLoginShellEnvVariablesBlocking;
-import static java.nio.file.Files.exists;
-import static java.nio.file.Files.isExecutable;
 
 public final class ShConfigurationType extends SimpleConfigurationType {
   ShConfigurationType() {
@@ -58,27 +51,7 @@ public final class ShConfigurationType extends SimpleConfigurationType {
       return shellPathProvider.getDefaultShell();
     }
     else {
-      return trivialDefaultShellDetection(eelDescriptor);
+      return ShShellDetection.detectDefaultShell(eelDescriptor).toString();
     }
-  }
-
-  private static @NotNull String trivialDefaultShellDetection(final @NotNull EelDescriptor eelDescriptor) {
-    final var eel = toEelApiBlocking(eelDescriptor);
-    final var shell = fetchLoginShellEnvVariablesBlocking(eel.getExec()).get("SHELL");
-
-    if (shell != null) {
-      final var shellPath = getNioPath(shell, eelDescriptor);
-      if (isExecutable(shellPath)) {
-        return shellPath.toString();
-      }
-    }
-    if (eel.getPlatform() instanceof EelPlatform.Linux) {
-      final var bashPath = getNioPath("/bin/bash", eelDescriptor);
-      if (exists(bashPath)) {
-        return bashPath.toString();
-      }
-      return getNioPath("/bin/sh", eelDescriptor).toString();
-    }
-    return "powershell.exe"; // TODO
   }
 }
