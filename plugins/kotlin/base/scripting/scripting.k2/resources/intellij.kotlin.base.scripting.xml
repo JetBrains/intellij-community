@@ -107,7 +107,7 @@
   <actions resource-bundle="messages.KotlinBaseScriptingBundle">
     <group id="KotlinScripts.ReloadConfigurationActionGroup"/>
     <action id="ReloadScriptConfiguration"
-            class="org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfiguration"
+            class="org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfigurationAction"
             icon="org.jetbrains.kotlin.idea.KotlinIcons.LOAD_SCRIPT_CONFIGURATION">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt shift R"/>
       <add-to-group group-id="RunContextGroup"/>

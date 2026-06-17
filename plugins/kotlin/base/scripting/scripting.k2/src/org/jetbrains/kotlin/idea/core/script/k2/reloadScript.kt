@@ -37,6 +37,8 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.core.script.k2.ReloadScriptConfigurationService.Companion.TOPIC
 import org.jetbrains.kotlin.idea.core.script.k2.configurations.KotlinScriptService
 import org.jetbrains.kotlin.idea.core.script.shared.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.core.script.shared.definition.kotlinScriptTemplate
+import org.jetbrains.kotlin.idea.core.script.shared.definition.reloadable
 import org.jetbrains.kotlin.idea.core.script.shared.scriptDiagnostics
 import org.jetbrains.kotlin.idea.core.script.v1.alwaysVirtualFile
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingDebugLog
@@ -44,7 +46,10 @@ import org.jetbrains.kotlin.idea.core.script.v1.scriptingInfoLog
 import org.jetbrains.kotlin.idea.core.script.v1.scriptingWarnLog
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
+import kotlin.script.experimental.api.ScriptCompilationConfiguration
+import kotlin.script.experimental.api.ide
 
 @Language("devkit-action-id")
 private const val ACTION_GROUP = "KotlinScripts.ReloadConfigurationActionGroup"
@@ -73,7 +78,7 @@ class ScriptConfigurationFloatingToolbarProvider : AbstractFloatingToolbarProvid
     }
 }
 
-internal class ReloadScriptConfiguration : AnAction() {
+internal class ReloadScriptConfigurationAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
         val ktFile = getProjectKtFile(e.dataContext) ?: return
@@ -83,7 +88,7 @@ internal class ReloadScriptConfiguration : AnAction() {
 
     override fun update(e: AnActionEvent) {
         val ktFile = getProjectKtFile(e.dataContext)
-        if (ktFile != null && ktFile.name.endsWith(".kts")) {
+        if (ktFile != null && ktFile.name.endsWith(".kts") && (ktFile.findScriptDefinition()?.compilationConfiguration?.get(ScriptCompilationConfiguration.ide.reloadable) ?: true)) {
             e.presentation.isEnabledAndVisible = true
             e.presentation.text = KotlinBaseScriptingBundle.message("reload.script.configuration.text", ktFile.name)
         } else {
