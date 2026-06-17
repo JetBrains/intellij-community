@@ -2,13 +2,13 @@
 package com.intellij.ui.webview.impl.rpc
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.ui.webview.api.WebViewInterop
 import com.intellij.ui.webview.api.WebViewMessageBus
 import com.intellij.ui.webview.api.WebViewMessageContext
 import com.intellij.ui.webview.api.WebViewMessageRegistration
 import com.intellij.ui.webview.api.WebViewNotification
 import com.intellij.ui.webview.api.WebViewNotificationHandler
 import com.intellij.ui.webview.api.WebViewRpcException
-import com.intellij.ui.webview.api.WebViewInterop
 import com.intellij.ui.webview.impl.WebViewEngineBridge
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName

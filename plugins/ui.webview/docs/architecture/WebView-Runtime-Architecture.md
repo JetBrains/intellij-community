@@ -59,7 +59,7 @@ webView.loadHtml("<html><body>Hello</body></html>")
 
 ## Engine Selection
 
-`WebViewRuntime` selects an internal `WebViewEngineProvider` by matching `WebViewEnginePreference` and `WebViewEngineRequirements` against provider capabilities and availability diagnostics.
+`WebViewRuntime` selects an internal `WebViewEngineProvider` by matching `WebViewEngineKind` and `WebViewEngineRequirements` against provider capabilities and availability diagnostics.
 
 Default providers:
 

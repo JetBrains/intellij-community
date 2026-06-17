@@ -5,18 +5,11 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.toNioPathOrNull
-import com.intellij.ui.webview.api.WebView
 import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetRoot
-import com.intellij.ui.webview.api.WebViewEngineAvailability
-import com.intellij.ui.webview.api.WebViewEngineCapabilities
-import com.intellij.ui.webview.api.WebViewEngineId
-import com.intellij.ui.webview.api.WebViewEnginePreference
 import com.intellij.ui.webview.api.WebViewInterop
 import com.intellij.ui.webview.api.WebViewMessageRegistration
 import com.intellij.ui.webview.api.WebViewNotification
-import com.intellij.ui.webview.api.WebViewRuntimeInfo
-import com.intellij.ui.webview.api.WebViewScriptResult
 import com.intellij.ui.webview.impl.SwingWebViewHostPanel
 import com.intellij.ui.webview.impl.WebViewEngineBridge
 import com.intellij.ui.webview.impl.WebViewLogger
@@ -42,7 +35,7 @@ interface WebViewEngineProvider {
   val displayName: String
   val capabilities: WebViewEngineCapabilities
 
-  fun selectionPriority(preference: WebViewEnginePreference): Int?
+  fun selectionPriority(preference: WebViewEngineKind): Int?
 
   suspend fun availability(): WebViewEngineAvailability = availabilityBlocking()
 

@@ -81,7 +81,7 @@ The dispatcher inside `WebViewMessageBusImpl` already implements call/response r
 
 - Entry: `createWebViewPanel(scope, options)`, `WebViewRuntime.createWebViewPanel(scope, options)`
 - Panel + view: `WebViewPanel`, `WebViewPanelOptions`, `WebView`, `WebViewScriptResult`, `SwingWebViewHost`
-- Engine selection: `WebViewEnginePreference`, `WebViewEngineCapabilities`, `WebViewEngineRequirements`, `WebViewEngineAvailability`, `WebViewEngineId`, `WebViewRuntimeInfo`, `WebViewCreationOptions`
+- Engine selection: `WebViewEngineKind`, `WebViewEngineCapabilities`, `WebViewEngineRequirements`, `WebViewEngineAvailability`, `WebViewEngineId`, `WebViewRuntimeInfo`, `WebViewCreationOptions`
 - Assets: `WebViewAssetRoot`, `WebViewAssetPath`, `WebViewAssetProvider`, `WebViewAssetProviderResult`, `WebViewScopedAssetProvider`, `WebViewAssetSource`, `WebViewAssetRootFactory`
 - Messaging level 1: `WebViewMessageBus`, `WebViewNotification<P>`, `WebViewCall<P, R>` (new), `WebViewNotificationHandler<P>`, `WebViewRpcException`, `WebViewMessageContext`
 - Messaging level 2: `WebViewInterop`, `WebViewApi`, `WebViewCallable`, `WebViewImplementable`, `WebViewApiId<T>`

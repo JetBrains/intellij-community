@@ -4,8 +4,8 @@ package com.intellij.ui.webview
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.webview.api.WebViewAssetRoot
-import com.intellij.ui.webview.api.WebViewEngine
-import com.intellij.ui.webview.api.WebViewEngineFactory
+import com.intellij.ui.webview.impl.engine.WebViewEngine
+import com.intellij.ui.webview.impl.engine.WebViewEngineFactory
 import com.intellij.ui.webview.api.WebViewNotification
 import com.intellij.ui.webview.impl.NativeBridgeLibraryAvailability
 import com.intellij.ui.webview.impl.SwingWebViewHostPanel

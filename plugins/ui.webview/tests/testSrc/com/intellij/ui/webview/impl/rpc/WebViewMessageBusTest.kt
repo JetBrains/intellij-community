@@ -3,8 +3,8 @@ package com.intellij.ui.webview.impl.rpc
 
 import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetRoot
-import com.intellij.ui.webview.api.WebViewNotification
 import com.intellij.ui.webview.api.WebViewApiId
+import com.intellij.ui.webview.api.WebViewNotification
 import com.intellij.ui.webview.api.WebViewCallable
 import com.intellij.ui.webview.api.WebViewImplementable
 import com.intellij.ui.webview.impl.WebViewEngineBridge

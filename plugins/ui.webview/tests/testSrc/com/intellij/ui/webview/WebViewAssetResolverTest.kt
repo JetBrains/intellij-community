@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -184,6 +185,35 @@ internal class WebViewAssetResolverTest {
 
     assertEquals(200, response!!.statusCode)
     assertTrue(response.bytes.toString(StandardCharsets.UTF_8).contains("React runtime is unavailable"))
+  }
+
+  @Test
+  fun forViewResolvesUnderWebViewViewsRoot() {
+    val resolver = WebViewAssetResolver(WebViewAssetRoot.forView("sample-panel"))
+    val response = resolveWebViewAssetUrl(webViewAssetHttpsUrl(WebViewAssetPath.indexHtml()), resolver)
+    assertNotNull(response)
+    assertEquals(200, response!!.statusCode)
+    assertEquals("text/html; charset=utf-8", response.contentType)
+  }
+
+  @Test
+  fun forViewRejectsInvalidViewId() {
+    assertThrows<IllegalArgumentException> {
+      WebViewAssetRoot.forView(WebViewAssetResolverTest::class.java, "nested/view")
+    }
+    assertThrows<IllegalArgumentException> {
+      WebViewAssetRoot.forView(WebViewAssetResolverTest::class.java, "   ")
+    }
+  }
+
+  @Test
+  fun forViewHonorsCustomViewsRoot() {
+    val resolver = WebViewAssetResolver(
+      WebViewAssetRoot.forView(WebViewAssetResolverTest::class.java, "sample-panel", "webview/other"),
+    )
+    val response = resolveWebViewAssetUrl(webViewAssetHttpsUrl(WebViewAssetPath.indexHtml()), resolver)
+    assertNotNull(response)
+    assertEquals(404, response!!.statusCode)
   }
 
   private fun withDevSourceFallbackEnabled(action: () -> Unit) {

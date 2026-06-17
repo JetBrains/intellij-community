@@ -1,10 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.impl.engine
 
-import com.intellij.ui.webview.api.WebViewFocusEntry
-import com.intellij.ui.webview.api.WebViewFocusExit
-import com.intellij.ui.webview.api.WebViewFocusHostApi
-import com.intellij.ui.webview.api.WebViewFocusPageApi
 import com.intellij.ui.webview.api.WebViewInterop
 import com.intellij.ui.webview.api.WebViewMessageRegistration
 import com.intellij.ui.webview.impl.SwingWebViewHostPanel

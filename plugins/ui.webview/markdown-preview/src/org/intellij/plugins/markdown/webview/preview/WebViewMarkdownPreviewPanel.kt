@@ -203,8 +203,7 @@ class WebViewMarkdownPreviewPanel(
   )
 
   private companion object {
-    private const val RESOURCE_ROOT = "webview/views/markdown-preview"
-    private val ASSET_ROOT = WebViewAssetRoot.fromClasspath(WebViewMarkdownPreviewPanel::class.java, WebViewAssetPath.of(RESOURCE_ROOT))
+    private val ASSET_ROOT = WebViewAssetRoot.forView("markdown-preview")
 
     private fun lineNumberAtOffset(text: String, offset: Int): Int {
       val targetOffset = offset.coerceIn(0, text.length)

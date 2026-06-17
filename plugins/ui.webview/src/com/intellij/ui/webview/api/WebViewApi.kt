@@ -71,30 +71,6 @@ class WebViewApiId<T : WebViewApi> private constructor(
   }
 }
 
-/**
- * Typed protocol facade for one WebView instance.
- */
-@ApiStatus.Experimental
-interface WebViewInterop {
-  /**
-   * Low-level JSON-RPC message bus used by this interop facade.
-   */
-  val messageBus: WebViewMessageBus
-
-  /**
-   * Registers [implementation] as the handler for incoming calls and notifications in [id]'s namespace.
-   */
-  fun <T : WebViewImplementable> implement(
-    id: WebViewApiId<T>,
-    implementation: T,
-  ): WebViewMessageRegistration
-
-  /**
-   * Creates a proxy that sends calls or notifications to the implementation identified by [id].
-   */
-  fun <T : WebViewCallable> callable(id: WebViewApiId<T>): T
-}
-
 internal fun validateWebViewApiNamespace(namespace: String): String {
   require(namespace.isNotBlank()) { "WebView API namespace must not be blank" }
   require(!namespace.startsWith('.') && !namespace.endsWith('.')) {

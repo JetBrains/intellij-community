@@ -2,10 +2,10 @@
 package com.intellij.ui.webview.impl.windows
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.ui.webview.api.WebViewEngineAvailability
-import com.intellij.ui.webview.api.WebViewEngineCapabilities
-import com.intellij.ui.webview.api.WebViewEngineId
-import com.intellij.ui.webview.api.WebViewEnginePreference
+import com.intellij.ui.webview.impl.engine.WebViewEngineAvailability
+import com.intellij.ui.webview.impl.engine.WebViewEngineCapabilities
+import com.intellij.ui.webview.impl.engine.WebViewEngineId
+import com.intellij.ui.webview.impl.engine.WebViewEngineKind
 import com.intellij.ui.webview.impl.NativeBridgeLibraryAvailability
 import com.intellij.ui.webview.impl.WebViewEngineBridge
 import com.intellij.ui.webview.impl.engine.WebViewEngineCreationOptions
@@ -20,10 +20,10 @@ internal class WindowsWebView2EngineProvider : WebViewEngineProvider {
   override val displayName: String = "WebView2"
   override val capabilities = WebViewEngineCapabilities(assetServing = true, messagePassing = true, swingEmbedding = true, interactiveInput = true)
 
-  override fun selectionPriority(preference: WebViewEnginePreference): Int? {
+  override fun selectionPriority(preference: WebViewEngineKind): Int? {
     return when (preference) {
-      WebViewEnginePreference.System -> PRIMARY_PRIORITY
-      WebViewEnginePreference.Jcef -> null
+      WebViewEngineKind.System -> PRIMARY_PRIORITY
+      WebViewEngineKind.Jcef -> null
     }
   }
 

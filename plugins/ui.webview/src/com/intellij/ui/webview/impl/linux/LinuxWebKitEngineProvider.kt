@@ -2,10 +2,10 @@
 package com.intellij.ui.webview.impl.linux
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.ui.webview.api.WebViewEngineAvailability
-import com.intellij.ui.webview.api.WebViewEngineCapabilities
-import com.intellij.ui.webview.api.WebViewEngineId
-import com.intellij.ui.webview.api.WebViewEnginePreference
+import com.intellij.ui.webview.impl.engine.WebViewEngineAvailability
+import com.intellij.ui.webview.impl.engine.WebViewEngineCapabilities
+import com.intellij.ui.webview.impl.engine.WebViewEngineId
+import com.intellij.ui.webview.impl.engine.WebViewEngineKind
 import com.intellij.ui.webview.impl.WebViewEngineBridge
 import com.intellij.ui.webview.impl.engine.WebViewEngineCreationOptions
 import com.intellij.ui.webview.impl.engine.WebViewEngineProvider
@@ -19,10 +19,10 @@ internal class LinuxWebKitEngineProvider : WebViewEngineProvider {
   override val displayName: String = "WebKit"
   override val capabilities = WebViewEngineCapabilities(assetServing = false, messagePassing = true, swingEmbedding = true, interactiveInput = false)
 
-  override fun selectionPriority(preference: WebViewEnginePreference): Int? {
+  override fun selectionPriority(preference: WebViewEngineKind): Int? {
     return when (preference) {
-      WebViewEnginePreference.System -> null
-      WebViewEnginePreference.Jcef -> null
+      WebViewEngineKind.System -> null
+      WebViewEngineKind.Jcef -> null
     }
   }
 

@@ -2,7 +2,7 @@
 package com.intellij.ui.webview.impl.jcef
 
 import com.intellij.ui.jcef.JBCefApp
-import com.intellij.ui.webview.api.WebViewEngineAvailability
+import com.intellij.ui.webview.impl.engine.WebViewEngineAvailability
 import com.intellij.ui.webview.impl.WebViewLogger
 import org.cef.CefApp
 

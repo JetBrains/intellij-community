@@ -4,7 +4,6 @@ package com.intellij.ui.webview.markdown.linkgraph
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetRoot
 import com.intellij.ui.webview.api.WebViewPanel
 import com.intellij.ui.webview.api.WebViewPanelOptions
@@ -68,8 +67,7 @@ internal class MarkdownLinkGraphPanel(
   }
 
   companion object {
-    private const val RESOURCE_ROOT = "webview/views/markdown-link-graph"
     private val LOG = logger<MarkdownLinkGraphPanel>()
-    private val ASSET_ROOT = WebViewAssetRoot.fromClasspath(MarkdownLinkGraphPanel::class.java, WebViewAssetPath.of(RESOURCE_ROOT))
+    private val ASSET_ROOT = WebViewAssetRoot.forView("markdown-link-graph")
   }
 }

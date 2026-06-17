@@ -1,25 +1,24 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview
 
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.ui.webview.api.WebView
-import com.intellij.ui.webview.api.WebViewPanelOptions
+import com.intellij.ui.webview.impl.engine.WebView
 import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetRoot
-import com.intellij.ui.webview.api.WebViewCreationOptions
-import com.intellij.ui.webview.api.WebViewEngineAvailability
-import com.intellij.ui.webview.api.WebViewEngineCapabilities
-import com.intellij.ui.webview.api.WebViewEngineId
-import com.intellij.ui.webview.api.WebViewEnginePreference
-import com.intellij.ui.webview.api.WebViewEngineRequirements
-import com.intellij.ui.webview.api.WebViewRuntime
-import com.intellij.ui.webview.api.WebViewRuntimeInfo
-import com.intellij.ui.webview.api.WebViewScriptResult
-import com.intellij.ui.webview.api.createWebViewPanel
+import com.intellij.ui.webview.impl.engine.WebViewCreationOptions
+import com.intellij.ui.webview.impl.engine.WebViewEngineAvailability
+import com.intellij.ui.webview.impl.engine.WebViewEngineCapabilities
+import com.intellij.ui.webview.impl.engine.WebViewEngineId
+import com.intellij.ui.webview.impl.engine.WebViewEngineKind
+import com.intellij.ui.webview.impl.engine.WebViewEngineRequirements
+import com.intellij.ui.webview.api.WebViewPanelOptions
+import com.intellij.ui.webview.impl.engine.WebViewRuntime
+import com.intellij.ui.webview.impl.engine.WebViewRuntimeInfo
+import com.intellij.ui.webview.impl.engine.WebViewScriptResult
 import com.intellij.ui.webview.impl.WebViewEngineBridge
 import com.intellij.ui.webview.impl.WebViewJsMessageReceiver
 import com.intellij.ui.webview.impl.engine.WebViewEngineCreationOptions
@@ -149,13 +148,13 @@ internal class WebViewRuntimeTest {
     val autoProvider = FakeProvider(
       id = WebViewEngineId.SYSTEM_MACOS,
       capabilities = capabilities(assetServing = true),
-      priorities = mapOf(WebViewEnginePreference.System to 10),
+      priorities = mapOf(WebViewEngineKind.System to 10),
     )
     val overrideProvider = FakeProvider(
       id = WebViewEngineId.JCEF,
       displayName = "JCEF",
       capabilities = capabilities(assetServing = true),
-      priorities = mapOf(WebViewEnginePreference.Jcef to 10),
+      priorities = mapOf(WebViewEngineKind.Jcef to 10),
     )
     val runtime = WebViewRuntime().apply { providers = listOf(autoProvider, overrideProvider) }
 
@@ -282,10 +281,9 @@ internal class WebViewRuntimeTest {
     val assetRoot = WebViewAssetRoot.fromClasspath(WebViewRuntimeTest::class.java, WebViewAssetPath.of("webview/views/smoke"))
 
     val panel = withContext(Dispatchers.EDT) {
-      createWebViewPanel(
+      runtime.createWebViewPanel(
         scope = testScope,
         options = WebViewPanelOptions(assetRoot = assetRoot),
-        runtime = runtime,
       )
     }
 
@@ -310,10 +308,9 @@ internal class WebViewRuntimeTest {
     val webViewScope = CoroutineScope(SupervisorJob())
     try {
       withContext(Dispatchers.EDT) {
-        createWebViewPanel(
+        runtime.createWebViewPanel(
           scope = webViewScope,
           options = WebViewPanelOptions(assetRoot = assetRoot),
-          runtime = runtime,
         )
       }
 
@@ -331,7 +328,7 @@ internal class WebViewRuntimeTest {
     override val displayName: String = id.value,
     override val capabilities: WebViewEngineCapabilities,
     private val priority: Int? = null,
-    private val priorities: Map<WebViewEnginePreference, Int> = emptyMap(),
+    private val priorities: Map<WebViewEngineKind, Int> = emptyMap(),
     private val availability: WebViewEngineAvailability = WebViewEngineAvailability.Available,
     private val availabilityFailure: LinkageError? = null,
   ) : WebViewEngineProvider {
@@ -340,7 +337,7 @@ internal class WebViewRuntimeTest {
     var hostComponentCount = 0
       private set
 
-    override fun selectionPriority(preference: WebViewEnginePreference): Int? = priorities[preference] ?: priority
+    override fun selectionPriority(preference: WebViewEngineKind): Int? = priorities[preference] ?: priority
 
     override fun availabilityBlocking(): WebViewEngineAvailability {
       availabilityFailure?.let { throw it }
@@ -380,9 +377,9 @@ internal class WebViewRuntimeTest {
   ) : WebViewEngineProvider {
     val engine = CapturingEngine(isHeavyweight)
 
-    override fun selectionPriority(preference: WebViewEnginePreference): Int? {
+    override fun selectionPriority(preference: WebViewEngineKind): Int? {
       return when (preference) {
-        WebViewEnginePreference.System, WebViewEnginePreference.Jcef -> 10
+        WebViewEngineKind.System, WebViewEngineKind.Jcef -> 10
         else -> null
       }
     }

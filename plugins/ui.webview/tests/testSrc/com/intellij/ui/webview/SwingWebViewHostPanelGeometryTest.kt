@@ -3,7 +3,7 @@ package com.intellij.ui.webview
 
 import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetRoot
-import com.intellij.ui.webview.api.WebViewFocusDirection
+import com.intellij.ui.webview.impl.engine.WebViewFocusDirection
 import com.intellij.ui.webview.impl.ComponentBackedWebViewEngine
 import com.intellij.ui.webview.impl.SwingWebViewHostPanel
 import com.intellij.ui.webview.impl.WebViewEngineBridge

@@ -12,11 +12,10 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
-import com.intellij.ui.webview.api.WebView
+import com.intellij.ui.webview.impl.engine.WebView
 import com.intellij.ui.webview.api.WebViewPanel
 import com.intellij.ui.webview.api.WebViewPanelOptions
-import com.intellij.ui.webview.api.WebViewAssetRootFactory
-import com.intellij.ui.webview.api.WebViewResourceDirectory
+import com.intellij.ui.webview.api.WebViewAssetRoot
 import com.intellij.ui.webview.api.createWebViewPanel
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -105,9 +104,7 @@ internal class WebViewInIdeSmokeTest {
   }
 
   private suspend fun createPanelOrSkip(scope: CoroutineScope): WebViewPanel {
-    val assetRoot = WebViewAssetRootFactory.getInstance().fromResourceDirectory(
-      WebViewResourceDirectory(WebViewInIdeSmokeTest::class.java, "webview/views/smoke"),
-    )
+    val assetRoot = WebViewAssetRoot.forView("smoke")
     return runCatching {
       withContext(Dispatchers.EDT) {
         createWebViewPanel(

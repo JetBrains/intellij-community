@@ -4,7 +4,6 @@ package com.intellij.ui.webview.demo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.webview.api.WebViewAssetPath
 import com.intellij.ui.webview.api.WebViewAssetRoot
 import com.intellij.ui.webview.api.WebViewPanel
 import com.intellij.ui.webview.api.WebViewPanelOptions
@@ -30,14 +29,14 @@ internal class WebViewDemoPanel(
   private val scope: CoroutineScope,
 ) {
   companion object {
-    private const val RESOURCE_ROOT = "webview/views/sample-panel"
+    private const val VIEW_ID = "sample-panel"
     private const val DEMO_PREFERRED_WIDTH = 900
     private const val DEMO_PREFERRED_HEIGHT = 520
     private const val DEMO_MINIMUM_WIDTH = 320
     private const val DEMO_MINIMUM_HEIGHT = 240
     private const val NO_ENGINE_MESSAGE_PREFIX = "No WebView engine satisfies"
     private val LOG = logger<WebViewDemoPanel>()
-    private val ASSET_ROOT = WebViewAssetRoot.fromClasspath(WebViewDemoPanel::class.java, WebViewAssetPath.of(RESOURCE_ROOT))
+    private val ASSET_ROOT = WebViewAssetRoot.forView(VIEW_ID)
 
     private fun demoPreferredSize(): Dimension = Dimension(DEMO_PREFERRED_WIDTH, DEMO_PREFERRED_HEIGHT)
 
@@ -65,7 +64,7 @@ internal class WebViewDemoPanel(
   private fun loadSampleFromResources() {
     scope.launch {
       try {
-        LOG.info("Loading WebView sample assets: $RESOURCE_ROOT")
+        LOG.info("Loading WebView sample assets: $VIEW_ID")
         val createdPanel = withContext(Dispatchers.EDT) {
           createWebViewPanel(
             scope = scope,

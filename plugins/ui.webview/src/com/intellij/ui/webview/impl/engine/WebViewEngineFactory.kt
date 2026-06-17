@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.webview.api
+package com.intellij.ui.webview.impl.engine
 
 import com.intellij.openapi.util.SystemInfo
 import kotlinx.coroutines.CoroutineScope
@@ -9,7 +9,7 @@ import java.nio.file.Path
 /**
  * Factory for creating platform-specific [WebViewEngine] instances.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 object WebViewEngineFactory {
   @JvmStatic
   @Suppress("unused")
@@ -29,7 +29,7 @@ object WebViewEngineFactory {
     check(SystemInfo.isMac) { "System WebView is supported only on macOS" }
     return WebViewRuntime.getInstance().createEngine(
       scope = scope,
-      preference = WebViewEnginePreference.System,
+      preference = WebViewEngineKind.System,
       strictPreference = true,
     )
   }
@@ -42,7 +42,7 @@ object WebViewEngineFactory {
     check(SystemInfo.isWindows) { "System WebView is supported only on Windows" }
     return WebViewRuntime.getInstance().createEngine(
       scope = scope,
-      preference = WebViewEnginePreference.System,
+      preference = WebViewEngineKind.System,
       strictPreference = true,
     )
   }
@@ -58,7 +58,7 @@ object WebViewEngineFactory {
     check(SystemInfo.isLinux) { "System WebView is supported only on Linux" }
     return WebViewRuntime.getInstance().createEngine(
       scope = scope,
-      preference = WebViewEnginePreference.System,
+      preference = WebViewEngineKind.System,
       strictPreference = true,
     )
   }

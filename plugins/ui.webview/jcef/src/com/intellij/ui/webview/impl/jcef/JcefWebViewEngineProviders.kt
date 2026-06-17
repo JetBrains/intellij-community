@@ -2,12 +2,12 @@
 package com.intellij.ui.webview.impl.jcef
 
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.ui.webview.api.WebViewEngineAvailability
-import com.intellij.ui.webview.api.WebViewEngineCapabilities
-import com.intellij.ui.webview.api.WebViewEngineId
-import com.intellij.ui.webview.api.WebViewEnginePreference
 import com.intellij.ui.webview.impl.WebViewEngineBridge
+import com.intellij.ui.webview.impl.engine.WebViewEngineAvailability
+import com.intellij.ui.webview.impl.engine.WebViewEngineCapabilities
 import com.intellij.ui.webview.impl.engine.WebViewEngineCreationOptions
+import com.intellij.ui.webview.impl.engine.WebViewEngineId
+import com.intellij.ui.webview.impl.engine.WebViewEngineKind
 import com.intellij.ui.webview.impl.engine.WebViewEngineProvider
 import kotlinx.coroutines.CoroutineScope
 
@@ -16,10 +16,10 @@ internal class JcefEngineProvider : WebViewEngineProvider {
   override val displayName: String = "JCEF"
   override val capabilities = JCEF_CAPABILITIES
 
-  override fun selectionPriority(preference: WebViewEnginePreference): Int? {
+  override fun selectionPriority(preference: WebViewEngineKind): Int? {
     return when (preference) {
-      WebViewEnginePreference.Jcef -> JCEF_EXPLICIT_PRIORITY
-      WebViewEnginePreference.System -> if (SystemInfo.isLinux) LINUX_DEFAULT_PRIORITY else SYSTEM_FALLBACK_PRIORITY
+      WebViewEngineKind.Jcef -> JCEF_EXPLICIT_PRIORITY
+      WebViewEngineKind.System -> if (SystemInfo.isLinux) LINUX_DEFAULT_PRIORITY else SYSTEM_FALLBACK_PRIORITY
     }
   }
 

@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.webview.api
+package com.intellij.ui.webview.impl.engine
 
+import com.intellij.ui.webview.api.WebViewAssetPath
+import com.intellij.ui.webview.api.WebViewAssetRoot
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -12,7 +14,7 @@ import java.nio.file.Path
  * unless documented otherwise. [evaluateJavaScript] is a suspend function that
  * internally dispatches to the native main thread.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 interface WebViewEngine {
   suspend fun loadFile(file: Path)
 

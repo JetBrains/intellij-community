@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.webview.api
+package com.intellij.ui.webview.impl.engine
 
+import com.intellij.ui.webview.api.WebViewApiId
+import com.intellij.ui.webview.api.WebViewCallable
+import com.intellij.ui.webview.api.WebViewImplementable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus

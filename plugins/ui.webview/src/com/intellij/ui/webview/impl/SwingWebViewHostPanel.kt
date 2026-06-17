@@ -4,8 +4,7 @@ package com.intellij.ui.webview.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.webview.api.SwingWebViewHost
-import com.intellij.ui.webview.api.WebViewFocusDirection
+import com.intellij.ui.webview.impl.engine.WebViewFocusDirection
 import com.intellij.ui.webview.impl.host.NativeWebViewHostPeer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT

@@ -71,10 +71,7 @@ The helper emits commit-friendly static files. The view entry is `view.js`, CSS 
 Create the Swing-hosted WebView through `createWebViewPanel(...)`. This creates the engine-neutral WebView, host component, message bus, platform bridge, and initial asset load.
 
 ```kotlin
-private val assetRoot = WebViewAssetRoot.fromClasspath(
-  MyPanel::class.java,
-  WebViewAssetPath.of("webview/views/my-view"),
-)
+private val assetRoot = WebViewAssetRoot.forView("my-view")
 
 private suspend fun createPanel(scope: CoroutineScope): WebViewPanel {
   return createWebViewPanel(

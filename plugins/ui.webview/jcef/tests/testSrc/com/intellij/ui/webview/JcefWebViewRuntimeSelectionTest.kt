@@ -10,10 +10,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.ui.jcef.JBCefApp
-import com.intellij.ui.webview.api.WebView
-import com.intellij.ui.webview.api.WebViewEngineId
-import com.intellij.ui.webview.api.WebViewEnginePreference
-import com.intellij.ui.webview.api.WebViewRuntime
+import com.intellij.ui.webview.impl.engine.WebView
+import com.intellij.ui.webview.impl.engine.WebViewEngineId
+import com.intellij.ui.webview.impl.engine.WebViewEngineKind
+import com.intellij.ui.webview.impl.engine.WebViewRuntime
 import com.intellij.ui.webview.impl.engine.WebViewEngineProvider
 import com.intellij.ui.webview.impl.jcef.JcefEngineProvider
 import kotlinx.coroutines.CoroutineScope
@@ -37,8 +37,8 @@ internal class JcefWebViewRuntimeSelectionTest {
   fun jcefProvider_participatesInSystemEngineSelectionWithPlatformPriority() {
     val provider = JcefEngineProvider()
 
-    assertEquals(10, provider.selectionPriority(WebViewEnginePreference.Jcef))
-    assertEquals(if (SystemInfo.isLinux) 0 else 100, provider.selectionPriority(WebViewEnginePreference.System))
+    assertEquals(10, provider.selectionPriority(WebViewEngineKind.Jcef))
+    assertEquals(if (SystemInfo.isLinux) 0 else 100, provider.selectionPriority(WebViewEngineKind.System))
   }
 
   @Test

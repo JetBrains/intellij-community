@@ -1,23 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.webview.api
+package com.intellij.ui.webview.impl.engine
 
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 data class WebViewCreationOptions(
-  val enginePreference: WebViewEnginePreference = WebViewEnginePreference.System,
+  val engineKind: WebViewEngineKind = WebViewEngineKind.System,
   val requirements: WebViewEngineRequirements = WebViewEngineRequirements(),
   val debugName: String? = null,
 )
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 data class WebViewRuntimeInfo(
   val engineId: WebViewEngineId,
   val capabilities: WebViewEngineCapabilities,
   val displayName: String,
 )
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 data class WebViewEngineRequirements(
   val assetServing: Boolean = false,
   val messagePassing: Boolean = false,
@@ -25,7 +25,7 @@ data class WebViewEngineRequirements(
   val interactiveInput: Boolean = false,
 )
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 data class WebViewEngineCapabilities(
   val assetServing: Boolean,
   val messagePassing: Boolean,
@@ -49,13 +49,7 @@ data class WebViewEngineCapabilities(
   }
 }
 
-@ApiStatus.Experimental
-enum class WebViewEnginePreference {
-  System,
-  Jcef,
-}
-
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @JvmInline
 value class WebViewEngineId(val value: String) {
   override fun toString(): String = value
@@ -68,7 +62,7 @@ value class WebViewEngineId(val value: String) {
   }
 }
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 sealed class WebViewEngineAvailability private constructor() {
   data object Available : WebViewEngineAvailability()
   data class Unavailable(val reason: String) : WebViewEngineAvailability()

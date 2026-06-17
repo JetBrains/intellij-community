@@ -1,13 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ui.webview.api
+package com.intellij.ui.webview.impl.engine
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.ui.webview.api.WebViewPanel
+import com.intellij.ui.webview.api.WebViewPanelOptions
 import com.intellij.ui.webview.impl.WebViewLogger
-import com.intellij.ui.webview.impl.engine.WebViewEngineCreationOptions
-import com.intellij.ui.webview.impl.engine.WebViewEngineProvider
-import com.intellij.ui.webview.impl.engine.defaultWebViewEngineProviders
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -16,7 +15,7 @@ import java.nio.file.Path
 import java.util.MissingResourceException
 import javax.swing.JPanel
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 class WebViewRuntime {
   private var providersOverride: List<WebViewEngineProvider>? = null
@@ -31,7 +30,7 @@ class WebViewRuntime {
     scope: CoroutineScope,
     options: WebViewCreationOptions = WebViewCreationOptions(),
   ): WebView {
-    val preference = resolveEnginePreference(options.enginePreference)
+    val preference = resolveEnginePreference(options.engineKind)
     val provider = selectProvider(
       preference = preference,
       requirements = options.requirements,
@@ -53,7 +52,7 @@ class WebViewRuntime {
   ): WebViewEngine {
     return createEngine(
       scope = scope,
-      preference = resolveEnginePreference(engineKind.toRuntimePreference()),
+      preference = resolveEnginePreference(engineKind),
       strictPreference = true,
       jcefNativeBundlePath = jcefNativeBundlePath,
     )
@@ -61,7 +60,7 @@ class WebViewRuntime {
 
   internal fun createEngine(
     scope: CoroutineScope,
-    preference: WebViewEnginePreference,
+    preference: WebViewEngineKind,
     strictPreference: Boolean,
     jcefNativeBundlePath: Path? = null,
   ): WebViewEngine {
@@ -86,10 +85,14 @@ class WebViewRuntime {
   ): WebViewPanel {
     var webView: WebView? = null
     try {
-      val preference = resolveEnginePreference(options.enginePreference)
+      val preference = resolveEnginePreference(WebViewEngineKind.System)
       val provider = selectProvider(
         preference = preference,
-        requirements = options.requirements.withWebViewPanelRequirements(),
+        requirements = WebViewEngineRequirements(
+          assetServing = true,
+          messagePassing = true,
+          swingEmbedding = true,
+        ),
       )
       val createdWebView = provider.createWebView(
         webViewScope = scope,
@@ -120,16 +123,8 @@ class WebViewRuntime {
     }
   }
 
-  private fun WebViewEngineRequirements.withWebViewPanelRequirements(): WebViewEngineRequirements {
-    return copy(
-      assetServing = true,
-      messagePassing = true,
-      swingEmbedding = true,
-    )
-  }
-
   private suspend fun selectProvider(
-    preference: WebViewEnginePreference,
+    preference: WebViewEngineKind,
     requirements: WebViewEngineRequirements,
   ): WebViewEngineProvider {
     val diagnostics = ArrayList<String>()
@@ -160,7 +155,7 @@ class WebViewRuntime {
   }
 
   private fun selectProviderBlocking(
-    preference: WebViewEnginePreference,
+    preference: WebViewEngineKind,
     requirements: WebViewEngineRequirements,
   ): WebViewEngineProvider {
     val diagnostics = ArrayList<String>()
@@ -191,7 +186,7 @@ class WebViewRuntime {
   }
 
   private fun failSelection(
-    preference: WebViewEnginePreference,
+    preference: WebViewEngineKind,
     requirements: WebViewEngineRequirements,
     diagnostics: List<String>,
   ): Nothing {
@@ -231,7 +226,7 @@ class WebViewRuntime {
     return WebViewEngineAvailability.Unavailable(reason)
   }
 
-  private fun candidateProviders(preference: WebViewEnginePreference): List<Pair<WebViewEngineProvider, Int>> {
+  private fun candidateProviders(preference: WebViewEngineKind): List<Pair<WebViewEngineProvider, Int>> {
     return providers.mapNotNull { provider ->
       val priority = provider.selectionPriority(preference) ?: return@mapNotNull null
       provider to priority
@@ -239,7 +234,7 @@ class WebViewRuntime {
   }
 
   private fun logSelectionStart(
-    preference: WebViewEnginePreference,
+    preference: WebViewEngineKind,
     requirements: WebViewEngineRequirements,
     candidates: List<Pair<WebViewEngineProvider, Int>>,
   ) {
@@ -250,7 +245,7 @@ class WebViewRuntime {
   }
 
   private fun logProviderRejected(
-    preference: WebViewEnginePreference,
+    preference: WebViewEngineKind,
     provider: WebViewEngineProvider,
     priority: Int,
     reason: String,
@@ -259,19 +254,19 @@ class WebViewRuntime {
   }
 
   private fun logProviderSelected(
-    preference: WebViewEnginePreference,
+    preference: WebViewEngineKind,
     provider: WebViewEngineProvider,
     priority: Int,
   ) {
     WebViewLogger.LOG.info("WebView engine applicability selected: preference=$preference, provider=${provider.id}, priority=$priority")
   }
 
-  private fun resolveEnginePreference(requestedPreference: WebViewEnginePreference): WebViewEnginePreference {
+  private fun resolveEnginePreference(requestedPreference: WebViewEngineKind): WebViewEngineKind {
     return readRegistryEnginePreference() ?: requestedPreference
   }
 
   private fun buildSelectionFailureMessage(
-    preference: WebViewEnginePreference,
+    preference: WebViewEngineKind,
     requirements: WebViewEngineRequirements,
     diagnostics: List<String>,
   ): String {
@@ -287,11 +282,11 @@ class WebViewRuntime {
     }
   }
 
-  private fun readRegistryEnginePreference(): WebViewEnginePreference? {
+  private fun readRegistryEnginePreference(): WebViewEngineKind? {
     val value = readRegistryEngineOverrideValue()?.trim() ?: return null
     return when (value.uppercase()) {
-      "", "SYSTEM" -> WebViewEnginePreference.System
-      "JCEF" -> WebViewEnginePreference.Jcef
+      "", "SYSTEM" -> WebViewEngineKind.System
+      "JCEF" -> WebViewEngineKind.Jcef
       else -> error("Unsupported $WEBVIEW_ENGINE_REGISTRY_KEY value '$value'. Expected SYSTEM or JCEF")
     }
   }
@@ -303,13 +298,6 @@ class WebViewRuntime {
     }
     catch (_: MissingResourceException) {
       null
-    }
-  }
-
-  private fun WebViewEngineKind.toRuntimePreference(): WebViewEnginePreference {
-    return when (this) {
-      WebViewEngineKind.System -> WebViewEnginePreference.System
-      WebViewEngineKind.Jcef -> WebViewEnginePreference.Jcef
     }
   }
 

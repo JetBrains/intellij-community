@@ -1,10 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.webview.api
 import org.jetbrains.annotations.ApiStatus
+import java.lang.invoke.MethodHandles
 import java.nio.file.Path
 
 /**
- * Asset bundle root for [WebViewEngine.loadAsset].
+ * Asset bundle root for `WebViewEngine.loadAsset`.
  *
  * The root describes where bytes come from. Loading still goes through a WebView asset handler and a virtual origin;
  * [fromDirectory] does not navigate to `file:` URLs.
@@ -25,8 +26,47 @@ class WebViewAssetRoot private constructor(
   }
 
   companion object {
+    @PublishedApi
+    internal const val VIEWS_ROOT: String = "webview/views"
+
     /**
-     * Uses assets packaged under [root] in [owner]'s classloader.
+     * Recommended way to create an asset root for a bundled WebView view, anchored to the **calling class**.
+     *
+     * Resolves assets under `webview/views/<viewId>` from the caller's classloader (the standard layout described in
+     * the WebView UI Authoring Guide). In development runs the matching source directory is derived automatically from
+     * the caller module's resource roots, so edits are picked up without rebuilding resources.
+     *
+     * The calling class is captured at the call site. Pass it explicitly via the `forView(Class, String)` overload when
+     * the root is created on behalf of a different module (or from Java).
+     *
+     * [viewsRoot] is the classpath prefix under which views live; it defaults to `webview/views`.
+     */
+    @JvmSynthetic
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun forView(viewId: String, viewsRoot: String = VIEWS_ROOT): WebViewAssetRoot {
+      return forView(MethodHandles.lookup().lookupClass(), viewId, viewsRoot)
+    }
+
+    /**
+     * Creates an asset root for a bundled WebView view under `webview/views/<viewId>`, anchored to [owner].
+     *
+     * Loads assets from [owner]'s classloader and, in development runs, derives the matching source directory from
+     * [owner]'s module resource roots. From Kotlin, prefer the no-class `forView(viewId)` overload.
+     *
+     * [viewsRoot] is the classpath prefix under which views live; it defaults to `webview/views`.
+     */
+    @JvmStatic
+    @JvmOverloads
+    fun forView(owner: Class<*>, viewId: String, viewsRoot: String = VIEWS_ROOT): WebViewAssetRoot {
+      return WebViewAssetRoot(
+        WebViewAssetSource.Classpath(owner, viewAssetPath(viewId, viewsRoot), devSourceRoot = null),
+        emptyList(),
+      )
+    }
+
+    /**
+     * Low-level: uses assets packaged under [root] in [owner]'s classloader. Prefer [forView] for the standard
+     * `webview/views/<viewId>` layout; use this only for non-standard asset locations.
      *
      * [devSourceRoot] is an explicit development-only asset directory matching [root]. It is an escape hatch for generated
      * or non-JPS layouts; normal source runs derive this directory automatically from module resource roots when possible.
@@ -34,15 +74,28 @@ class WebViewAssetRoot private constructor(
     @JvmStatic
     @JvmOverloads
     fun fromClasspath(owner: Class<*>, root: WebViewAssetPath, devSourceRoot: Path? = null): WebViewAssetRoot {
-      return WebViewAssetRoot(WebViewAssetSource.Classpath(owner, root, devSourceRoot?.toAbsolutePath()?.normalize()), emptyList())
+      return WebViewAssetRoot(
+        WebViewAssetSource.Classpath(owner, root, devSourceRoot?.toAbsolutePath()?.normalize()),
+        emptyList(),
+      )
     }
 
     /**
-     * Uses files under [root] as assets while keeping the same handler-backed loading path as classpath assets.
+     * Low-level: uses files under [root] as assets while keeping the same handler-backed loading path as classpath
+     * assets. Prefer [forView] for bundled views.
      */
     @JvmStatic
     fun fromDirectory(root: Path): WebViewAssetRoot {
       return WebViewAssetRoot(WebViewAssetSource.Directory(root.toAbsolutePath().normalize()), emptyList())
+    }
+
+    private fun viewAssetPath(viewId: String, viewsRoot: String): WebViewAssetPath {
+      val trimmedId = viewId.trim()
+      require(trimmedId.isNotEmpty()) { "WebView view id must not be blank" }
+      require('/' !in trimmedId && '\\' !in trimmedId) { "WebView view id must be a single path segment: $viewId" }
+      val trimmedRoot = viewsRoot.trim().trim('/')
+      require(trimmedRoot.isNotEmpty()) { "WebView views root must not be blank" }
+      return WebViewAssetPath.of("$trimmedRoot/$trimmedId")
     }
   }
 }

@@ -1,7 +1,7 @@
 ## WebView UI Authoring
 
 - For WebView UI work, start with [WebView UI Authoring Guide](docs/guides/WebView-UI-Authoring-Guide.md).
-- New UI code should load bundled assets through `createWebViewPanel(...)` and `WebViewAssetRoot`, not a local HTTP server.
+- New UI code should load bundled assets through `createWebViewPanel(...)` and `WebViewAssetRoot.forView(viewId)`, not a local HTTP server.
 - New bridge contracts should use typed `WebViewApi`, `WebViewApiId`, and `WebViewInterop` on the Kotlin side and `@jetbrains/intellij-webview` (`apiId`, `webView.callable`, `webView.implement`) on the TypeScript side.
 - Do not copy raw `WebViewMessageBus`, raw method string, or direct `window.__WVI__` usage into new feature code unless the task is explicitly about the low-level runtime.
 
