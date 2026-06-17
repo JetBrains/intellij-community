@@ -4,11 +4,11 @@ pub mod utils;
 
 #[cfg(test)]
 mod tests {
-    use std::{env, fs};
-    use std::collections::{HashMap, HashSet};
-    use std::path::{PathBuf, MAIN_SEPARATOR};
-    use xplat_launcher::{get_caches_home, jvm_property};
     use crate::utils::*;
+    use std::collections::{HashMap, HashSet};
+    use std::path::{MAIN_SEPARATOR, PathBuf};
+    use std::{env, fs};
+    use xplat_launcher::{get_caches_home, jvm_property};
 
     #[test]
     fn correct_launcher_startup_test() {

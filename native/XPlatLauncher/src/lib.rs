@@ -32,8 +32,8 @@ variant_size_differences
 use std::env;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, bail, Context, Result};
-use log::{debug, warn, LevelFilter};
+use anyhow::{Context, Result, anyhow, bail};
+use log::{LevelFilter, debug, warn};
 use serde::Deserialize;
 
 #[cfg(target_os = "windows")]
