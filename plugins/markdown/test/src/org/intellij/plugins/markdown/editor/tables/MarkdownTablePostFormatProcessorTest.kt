@@ -34,6 +34,9 @@ class MarkdownTablePostFormatProcessorTest: LightPlatformCodeInsightTestCase() {
   @Test
   fun `emoji sequence table`() = doTest()
 
+  @Test
+  fun `table inside list item`() = doTest()
+
   private fun doTest() {
     val before = getTestName(true) + ".before.md"
     val after = getTestName(true) + ".after.md"

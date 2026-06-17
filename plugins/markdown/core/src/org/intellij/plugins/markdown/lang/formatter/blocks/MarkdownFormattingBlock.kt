@@ -63,6 +63,10 @@ internal open class MarkdownFormattingBlock(
 
   override fun getIndent(): Indent? {
     if (node.elementType in MarkdownTokenTypeSets.LISTS && node.parents(withSelf = false).any { it.elementType == MarkdownElementTypes.LIST_ITEM }) {
+      val listItemParent = node.parents(withSelf = false).firstOrNull { it.elementType == MarkdownElementTypes.LIST_ITEM }
+      if (listItemParent != null && listItemParent.children().any { it.elementType == MarkdownElementTypes.TABLE }) {
+        return Indent.getNoneIndent()
+      }
       return Indent.getNormalIndent()
     }
     return Indent.getNoneIndent()
@@ -96,8 +100,10 @@ internal open class MarkdownFormattingBlock(
       MarkdownElementTypes.CODE_FENCE, MarkdownElementTypes.CODE_SPAN -> emptyList()
       MarkdownElementTypes.FRONT_MATTER_HEADER -> emptyList()
       MarkdownElementTypes.LIST_ITEM -> {
+        val hasTableChild = node.children().any { it.elementType == MarkdownElementTypes.TABLE }
+        val nonAlignable = if (hasTableChild) MarkdownTokenTypeSets.LIST_MARKERS else NON_ALIGNABLE_LIST_ELEMENTS
         MarkdownBlocks.create(node.children(), settings, spacing) {
-          if (it.elementType in NON_ALIGNABLE_LIST_ELEMENTS || it.isBlockQuoteContinuationWhitespace()) alignment else newAlignment
+          if (it.elementType in nonAlignable || it.isBlockQuoteContinuationWhitespace()) alignment else newAlignment
         }.toList()
       }
       MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.CODE_BLOCK, MarkdownElementTypes.BLOCK_QUOTE -> {
