@@ -10,6 +10,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.annotations.MultiRoutingFileSystemPath
+import com.intellij.platform.eel.channels.EelDelicateApi
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -84,7 +85,10 @@ fun Project.getEelDescriptor(): EelDescriptor {
  * Explicitly associates an [EelDescriptor] with this project.
  * This is useful for projects that are not backed by a real file path (e.g., the default project in RD thin client),
  * where the descriptor cannot be inferred from the project file path.
+ *
+ * Do not call it, unless you know exactly what you are doing.
  */
+@EelDelicateApi
 @ApiStatus.Internal
 fun Project.setEelDescriptor(descriptor: EelDescriptor) {
   putUserData(EEL_DESCRIPTOR_KEY, descriptor)
