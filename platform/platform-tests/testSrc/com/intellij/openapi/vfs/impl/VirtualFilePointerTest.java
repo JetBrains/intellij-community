@@ -1051,16 +1051,28 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
   public void testFileUrlNormalization() {
     assertEquals("file://", myVirtualFilePointerManager.create("file://", disposable, null).getUrl());
 
-    assertEquals("file:///", myVirtualFilePointerManager.create("file:///", disposable, null).getUrl());
-    assertEquals("file:///", myVirtualFilePointerManager.create("file:////", disposable, null).getUrl());
+    if (OS.CURRENT == OS.Windows) {
+      assertEquals("file://X:", myVirtualFilePointerManager.create("file://X:/", disposable, null).getUrl());
+      assertEquals("file://X:", myVirtualFilePointerManager.create("file://X://", disposable, null).getUrl());
 
-    assertEquals("file:///a", myVirtualFilePointerManager.create("file:////a/", disposable, null).getUrl());
-    assertEquals("file:///a", myVirtualFilePointerManager.create("file:////a//", disposable, null).getUrl());
-    assertEquals("file:///a", myVirtualFilePointerManager.create("file:////a///", disposable, null).getUrl());
+      assertEquals("file://X:/a", myVirtualFilePointerManager.create("file://X://a/", disposable, null).getUrl());
+      assertEquals("file://X:/a", myVirtualFilePointerManager.create("file://X://a//", disposable, null).getUrl());
+      assertEquals("file://X:/a", myVirtualFilePointerManager.create("file://X://a///", disposable, null).getUrl());
+    }
+    else {
+      assertEquals("file:///", myVirtualFilePointerManager.create("file:///", disposable, null).getUrl());
+      assertEquals("file:///", myVirtualFilePointerManager.create("file:////", disposable, null).getUrl());
+
+      assertEquals("file:///a", myVirtualFilePointerManager.create("file:////a/", disposable, null).getUrl());
+      assertEquals("file:///a", myVirtualFilePointerManager.create("file:////a//", disposable, null).getUrl());
+      assertEquals("file:///a", myVirtualFilePointerManager.create("file:////a///", disposable, null).getUrl());
+    }
   }
 
   @Test
   public void testCleanupPath() {
+    IoTestUtil.assumeUnix();
+
     assertEquals("/", VirtualFilePointerManagerImpl.cleanupPath("/"));
     assertEquals("/", VirtualFilePointerManagerImpl.cleanupPath("//"));
     assertEquals("/", VirtualFilePointerManagerImpl.cleanupPath("///"));
