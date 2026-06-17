@@ -11,6 +11,7 @@ import com.intellij.build.events.FileMessageEvent;
 import com.intellij.build.events.FileMessageEventResult;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,14 +36,15 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
     @Nullable @Description String description,
     @NotNull Kind kind,
     @Nullable @Title String group,
+    @Nullable Navigatable navigatable,
     @NotNull FilePosition filePosition
   ) {
-    super(id, parentId, time, message, hint, description, kind, group, null);
+    super(id, parentId, time, message, hint, description, kind, group, navigatable);
     myFilePosition = filePosition;
   }
 
   /**
-   * @deprecated Use {@link FileMessageEvent#builder} event builder instead.
+   * @deprecated Use {@link com.intellij.build.events.MessageEvent#builder} event builder instead.
    */
   @Deprecated
   public FileMessageEventImpl(
@@ -53,7 +55,7 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
     @Nullable @Description String detailedMessage,
     @NotNull FilePosition filePosition
   ) {
-    this(null, parentId, null, message, null, detailedMessage, kind, group, filePosition);
+    this(null, parentId, null, message, null, detailedMessage, kind, group, null, filePosition);
   }
 
   @Override
@@ -92,7 +94,7 @@ public class FileMessageEventImpl extends MessageEventImpl implements FileMessag
 
   @Override
   public @Nullable Navigatable getNavigatable(@NotNull Project project) {
-    return new FileNavigatable(project, myFilePosition);
+    return ObjectUtils.notNull(super.getNavigatable(project), () -> new FileNavigatable(project, myFilePosition));
   }
 
   @Override

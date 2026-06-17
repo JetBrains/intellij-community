@@ -17,6 +17,10 @@ public interface FileMessageEvent extends MessageEvent {
   @Override
   @NotNull FileMessageEventResult getResult();
 
+  /**
+   * @deprecated Use {@link MessageEvent#builder} instead.
+   */
+  @Deprecated
   @CheckReturnValue
   static @NotNull FileMessageEventBuilder builder(
     @NotNull @Message String message,
