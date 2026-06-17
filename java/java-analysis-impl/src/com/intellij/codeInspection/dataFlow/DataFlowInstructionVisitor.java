@@ -25,9 +25,6 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaTokenType;
@@ -72,7 +69,6 @@ import java.util.stream.Stream;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 final class DataFlowInstructionVisitor implements JavaDfaListener {
-  private static final Logger LOG = Logger.getInstance(DataFlowInstructionVisitor.class);
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
   private final Map<PsiTypeCastExpression, TypeConstraint> myRealOperandTypes = new HashMap<>();
@@ -86,7 +82,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
   private final Map<PsiReferenceExpression, ArgResultEquality> mySameArguments = new HashMap<>();
   private final Map<PsiCaseLabelElement, ThreeState> mySwitchLabelsReachability = new HashMap<>();
-  private final boolean myDebug;
   private boolean myAlwaysReturnsNotNull = true;
   private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
   private final Set<DfaAnchor> myPotentiallyRedundantInstanceOf = new HashSet<>();
@@ -106,8 +101,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
   DataFlowInstructionVisitor(boolean strictMode) {
     myStrictMode = strictMode;
-    Application application = ApplicationManager.getApplication();
-    myDebug = application.isEAP() || application.isInternal() || application.isUnitTestMode();
   }
 
   @Override
@@ -120,23 +113,17 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     if (assignment == null) return;
     PsiExpression left = assignment.getLExpression();
     if (!Boolean.FALSE.equals(mySameValueAssigned.get(left))) {
-      if (!DfaPsiUtil.isPhysicalOrAnalyzableCopy(left)) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("Non-physical element in assignment instruction: " + left.getParent().getText(), new Throwable());
-        }
-      } else {
-        DfType dfType = memState.getDfType(value);
-        // Reporting strings is skipped because string reassignment might be intentionally used to deduplicate the heap objects
-        // (we compare strings by contents)
-        if (memState.areEqual(value, target) &&
-            !isFloatingZero(dfType.getConstantOfType(Number.class)) &&
-            !(TypeUtils.isJavaLangString(left.getType()) && dfType != DfTypes.NULL) &&
-            !isAssignmentToDefaultValueInConstructor(target, assignment.getRExpression())) {
-          mySameValueAssigned.merge(left, Boolean.TRUE, Boolean::logicalAnd);
-        }
-        else {
-          mySameValueAssigned.put(left, Boolean.FALSE);
-        }
+      DfType dfType = memState.getDfType(value);
+      // Reporting strings is skipped because string reassignment might be intentionally used to deduplicate the heap objects
+      // (we compare strings by contents)
+      if (memState.areEqual(value, target) &&
+          !isFloatingZero(dfType.getConstantOfType(Number.class)) &&
+          !(TypeUtils.isJavaLangString(left.getType()) && dfType != DfTypes.NULL) &&
+          !isAssignmentToDefaultValueInConstructor(target, assignment.getRExpression())) {
+        mySameValueAssigned.merge(left, Boolean.TRUE, Boolean::logicalAnd);
+      }
+      else {
+        mySameValueAssigned.put(left, Boolean.FALSE);
       }
     }
   }
@@ -313,9 +300,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   public void beforeExpressionPush(@NotNull DfaValue value,
                                    @NotNull PsiExpression expression,
                                    @NotNull DfaMemoryState memState) {
-    if (myDebug && !DfaPsiUtil.isPhysicalOrAnalyzableCopy(expression)) {
-      throw new IllegalStateException("Non-physical expression is passed");
-    }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiTypeCastExpression cast) {
       TypeConstraint fact = TypeConstraint.fromDfType(memState.getDfType(value));

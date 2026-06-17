@@ -33,7 +33,9 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.java.codeserver.core.JavaPsiSwitchUtil;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -130,6 +132,7 @@ import java.util.function.Consumer;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(DataFlowInspectionBase.class);
   private static final @NonNls String SHORT_NAME = "DataFlowIssue";
   public boolean SUGGEST_NULLABLE_ANNOTATIONS;
   public boolean TREAT_UNKNOWN_MEMBERS_AS_NULLABLE;
@@ -1018,10 +1021,13 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     private final Set<PsiElement> myReportedAnchors = new HashSet<>();
     private final ProblemsHolder myHolder;
     private final PsiElement myScope;
+    private final boolean myDebug;
 
     ProblemReporter(ProblemsHolder holder, PsiElement scope) {
       myHolder = holder;
       myScope = scope;
+      Application application = ApplicationManager.getApplication();
+      myDebug = (application.isEAP() && application.isInternal()) || application.isUnitTestMode();
     }
 
     public void registerProblem(PsiElement element, @InspectionMessage String message, @NotNull LocalQuickFix @NotNull ... fixes) {
@@ -1031,6 +1037,14 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
 
     private boolean register(PsiElement element) {
+      if (!element.isPhysical()) {
+        String message = "Non-physical element in DataFlow problem reporting: " + element;
+        LOG.info(message);
+        if (myDebug) {
+          throw new IllegalStateException(message);
+        }
+        return false;
+      }
       // Suppress reporting for inlined simple methods
       if (!PsiTreeUtil.isAncestor(myScope, element, false)) return false;
       if (myScope instanceof PsiClass) {

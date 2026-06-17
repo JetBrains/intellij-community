@@ -177,10 +177,6 @@ final class ParametricNullableReturnChecker {
           }
         }
 
-        // The whole clone file is non-physical (it is a copy), so mark it to let the data flow treat its elements as
-        // physical. All methods were checked that they don't have any non-physical elements.
-        DfaPsiUtil.markFileAsAnalyzableCopy(javaFileClone);
-
         boolean changed = changeAnnotation(javaFileClone, originalCacheContext);
         if (!changed) return null;
         return new CloneFileContainer(javaFileClone, methods);
