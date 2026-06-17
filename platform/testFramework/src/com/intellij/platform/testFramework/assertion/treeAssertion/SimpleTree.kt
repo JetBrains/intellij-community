@@ -5,7 +5,7 @@ interface SimpleTree<T> {
 
   val roots: List<Node<T>>
 
-  interface Node<T> {
+  interface Node<out T> {
 
     val name: String
 
