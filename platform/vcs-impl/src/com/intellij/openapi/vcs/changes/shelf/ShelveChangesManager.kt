@@ -19,8 +19,10 @@ import com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder
 import com.intellij.openapi.diff.impl.patch.PatchEP
+import com.intellij.openapi.diff.impl.patch.PatchReader
 import com.intellij.openapi.diff.impl.patch.PatchSyntaxException
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
+import com.intellij.openapi.diff.impl.patch.UnifiedDiffWriter
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.NonLazySchemeProcessor
@@ -36,6 +38,7 @@ import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -60,7 +63,9 @@ import com.intellij.openapi.vcs.changes.ContentRevision
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.getChangeListNameForUnshelve
 import com.intellij.openapi.vcs.changes.getPredefinedChangeList
+import com.intellij.openapi.vcs.changes.patch.ApplyPatchDefaultExecutor
 import com.intellij.openapi.vcs.changes.patch.PatchFileType
+import com.intellij.openapi.vcs.changes.patch.PatchNameChecker
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker
@@ -82,6 +87,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.messages.Topic
+import com.intellij.util.text.CharArrayCharSequence
 import com.intellij.util.xmlb.XmlSerializer
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Attribute
@@ -108,6 +114,8 @@ import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
+import java.io.InputStreamReader
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -123,11 +131,13 @@ import kotlin.time.Duration.Companion.days
 
 private val LOG: Logger = Logger.getInstance(ShelveChangesManager::class.java)
 
+private const val DEFAULT_PATCH_NAME: @NonNls String = "shelved"
+
 @Service(Service.Level.PROJECT)
 @State(name = "ShelveChangesManager", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class ShelveChangesManager @Internal constructor(
   private val project: Project,
-  val coroutineScope: CoroutineScope,
+  internal val coroutineScope: CoroutineScope,
 ) : PersistentStateComponent<Element> {
   private val pathMacroSubstitutor: PathMacroManager = PathMacroManager.getInstance(project)
   private val SHELVED_FILES_LOCK: ReadWriteLock = ReentrantReadWriteLock(true)
@@ -1520,6 +1530,91 @@ class ShelveChangesManager @Internal constructor(
       return loadPatches(project, patchPath, commitContext, false)
     }
   }
+}
+
+private fun getPatchFileInConfigDir(schemePatchDir: Path): Path {
+  return schemePatchDir.resolve("$DEFAULT_PATCH_NAME.${VcsConfiguration.PATCH}")
+}
+
+private fun suggestPatchNamePath(project: Project, commitMessage: String?, directory: Path, extension: String?): Path {
+  @NonNls var defaultPath: @NonNls String = shortenAndSanitize(commitMessage)
+  val patchExtension = extension ?: VcsConfiguration.getInstance(project).patchFileExtension
+  while (true) {
+    val nonexistentFile = findSequentNonexistentFile(directory, defaultPath, patchExtension)
+    if (nonexistentFile.fileName.toString().length >= PatchNameChecker.MAX) {
+      defaultPath = defaultPath.substring(0, defaultPath.length - 1)
+      continue
+    }
+    return nonexistentFile
+  }
+}
+
+@Throws(IOException::class, PatchSyntaxException::class)
+private fun loadPatches(
+  project: Project,
+  patchPath: Path,
+  commitContext: CommitContext?,
+  loadContent: Boolean,
+): MutableList<TextFilePatch> {
+  val text: CharArray
+  InputStreamReader(Files.newInputStream(patchPath), StandardCharsets.UTF_8).use { reader ->
+    text = FileUtilRt.loadText(reader, Files.size(patchPath).toInt())
+  }
+  if (text.isEmpty()) return mutableListOf()
+
+  val reader = PatchReader(CharArrayCharSequence(text, 0, text.size), loadContent)
+  val textFilePatches = reader.readTextPatches()
+  ApplyPatchDefaultExecutor.applyAdditionalInfoBefore(project, reader.getAdditionalInfo(null), commitContext)
+  return textFilePatches
+}
+
+private fun writePatchesToFile(project: Project?, path: Path, patches: MutableList<out FilePatch>, commitContext: CommitContext?) {
+  Files.newBufferedWriter(path).use { writer ->
+    UnifiedDiffWriter.write(project, patches, writer, "\n", commitContext)
+  }
+}
+
+@Throws(IOException::class)
+private fun savePatchFile(
+  project: Project,
+  patchFile: Path,
+  patches: MutableList<out FilePatch>,
+  extensions: MutableList<out PatchEP>?,
+  context: CommitContext,
+) {
+  Files.newBufferedWriter(patchFile).use { writer ->
+    UnifiedDiffWriter.write(
+      project,
+      project.stateStore.projectBasePath,
+      patches,
+      writer,
+      "\n",
+      context,
+      extensions
+    )
+  }
+}
+
+private fun findSequentNonexistentFile(file: Path, fileName: String, extension: String): Path {
+  var candidate = file.resolve(if (extension.isEmpty()) fileName else "$fileName.$extension")
+  var index = 1
+  while (Files.exists(candidate)) {
+    val indexedName = if (extension.isEmpty()) "$fileName$index" else "$fileName$index.$extension"
+    candidate = file.resolve(indexedName)
+    index++
+  }
+  return candidate
+}
+
+private fun shortenAndSanitize(commitMessage: String?): String {
+  @NonNls var defaultPath: @NonNls String = PathUtil.suggestFileName(commitMessage.orEmpty())
+  if (defaultPath.isEmpty()) {
+    defaultPath = "unnamed"
+  }
+  if (defaultPath.length > PatchNameChecker.MAX - 10) {
+    defaultPath = defaultPath.substring(0, PatchNameChecker.MAX - 10)
+  }
+  return defaultPath
 }
 
 private fun buildFailedChangeListNamesHtml(failedChangeLists: List<String?>): String {
