@@ -51,6 +51,13 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     return withInlayAttributes(textWithoutBox)
   }
 
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun smallTextWithAttributes(text: String, textAttributesKey: TextAttributesKey): InlayPresentation {
+    val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, true, text), top = 1, down = 1)
+    return attributes(textWithoutBox, textAttributesKey)
+  }
+
   fun smallTextWithoutBackground(text: String): InlayPresentation {
     val textWithoutBox = InsetPresentation(TextInlayPresentation(textMetricsStorage, true, text), top = 1, down = 1)
     return WithAttributesPresentation(textWithoutBox, DefaultLanguageHighlighterColors.INLAY_TEXT_WITHOUT_BACKGROUND, editor,
