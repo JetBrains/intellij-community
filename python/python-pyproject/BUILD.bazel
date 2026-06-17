@@ -217,6 +217,14 @@ jvm_library(
         "//platform/indexing-api:indexing_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//python/python-test-env/junit5",
+        "//python/python-test-env/junit5:junit5_test_lib",
+        "//python/python-test-env/common",
+        "//python/python-test-env/common:common_test_lib",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.pyproject.tests` end

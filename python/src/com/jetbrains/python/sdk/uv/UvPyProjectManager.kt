@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.python.uv.backend
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.jetbrains.python.sdk.uv
 
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.getPathMatcher
@@ -8,14 +8,20 @@ import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
-import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
+import com.intellij.python.pyproject.model.spi.PyProjectCreator
 import com.intellij.python.pyproject.model.spi.PyProjectManager
+import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
 import com.intellij.python.pyproject.model.spi.TomlDependencySpecification
+import com.intellij.python.uv.backend.UV_TOOL
+import com.intellij.python.uv.backend.runtime.createUvToolRuntime
+import com.intellij.python.uv.backend.runtime.uvCli
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.python.uv.common.UV_UI_INFO
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.Result
 import com.jetbrains.python.packaging.PyPackageName
+import com.jetbrains.python.sdk.impl.ToolBasedProjectCreator
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,11 +33,19 @@ import java.nio.file.PathMatcher
 import kotlin.io.path.relativeTo
 
 
-internal class UvPyProjectManager : PyProjectManager {
+internal class UvPyProjectManager : PyProjectManager, PyProjectCreator by ToolBasedProjectCreator(
+  createRuntime = { fs, _ ->
+    val tool = UV_TOOL.getToolExecutableOrError(fs, null).getOr { return@ToolBasedProjectCreator it }
+    Result.success(createUvToolRuntime(tool.path))
+  },
+  createProject = { name, runtime -> runtime.uvCli().init(name) }
+) {
 
   override val id: ToolId = UV_TOOL_ID
 
   override val ui: PyToolUIInfo = UV_UI_INFO
+
+  override val additionalDataType: Class<UvSdkAdditionalData> get() = UvSdkAdditionalData::class.java
 
   override suspend fun getSrcRoots(toml: TomlTable, projectRoot: Directory): Set<Directory> = emptySet()
 
@@ -93,7 +107,8 @@ internal class UvPyProjectManager : PyProjectManager {
       // names in their normalized form so a member published under its normalized name (e.g. abc-rag)
       // still matches a dependency spelled with '.'/'_' (e.g. abc.rag) (PY-89677).
       val siblingsByNormalizedName = siblings.associateBy { PyPackageName.normalizeProjectName(it.name.substringBefore('@')) }
-      val resolvedWorkspaceDeps = workspaceDeps.mapNotNull { siblingsByNormalizedName[PyPackageName.normalizeProjectName(it.name)] }.toSet()
+      val resolvedWorkspaceDeps =
+        workspaceDeps.mapNotNull { siblingsByNormalizedName[PyPackageName.normalizeProjectName(it.name)] }.toSet()
       val brokenDeps = workspaceDeps.filter { PyPackageName.normalizeProjectName(it.name) !in siblingsByNormalizedName }.toSet()
       if (brokenDeps.isNotEmpty()) {
         logger.info("Deps are broken: ${brokenDeps.joinToString(", ")}")

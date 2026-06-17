@@ -13,6 +13,11 @@
   </dependencies>
 
   <resource-bundle>messages.PyProjectTomlBundle</resource-bundle>
+  <actions>
+    <action id="AddPyProject" class="com.intellij.python.pyproject.model.internal.addPyProject.AddPyProjectAction">
+      <add-to-group group-id="NewGroup" anchor="before" relative-to-action="NewFile"/>
+    </action>
+  </actions>
   <extensions defaultExtensionNs="com.intellij">
     <!-- "ask" means "ask user"-->
     <registryKey defaultValue="[off*|on|ask]" description="Load project structure from pyproject.toml" key="intellij.python.pyproject.model"

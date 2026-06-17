@@ -1,15 +1,34 @@
 package com.intellij.python.pyproject.model.spi
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.common.tools.ToolId
+import com.intellij.python.pyproject.model.internal.DefaultPyProjectManager
 import com.jetbrains.python.PyToolUIInfo
+import com.jetbrains.python.sdk.PythonSdkAdditionalData
+import com.jetbrains.python.sdk.pySdkAdditionalData
 import com.jetbrains.python.venvReader.Directory
 import org.apache.tuweni.toml.TomlTable
 
-interface PyProjectManager {
+/**
+ * Manager provides various specific extensions to `pyproject.toml` (i.e.: uv-specific) and coupled with python SDK with additional data.
+ * It can also be created by [forSdk].
+ */
+interface PyProjectManager : PyProjectCreator {
   companion object {
     internal val EP = ExtensionPointName.create<PyProjectManager>("com.intellij.python.pyproject.model.pyprojectmanager")
+
+    internal fun forSdk(sdk: Sdk): PyProjectManager {
+      val additionalData = sdk.pySdkAdditionalData
+      return EP.extensionList.firstOrNull { it.additionalDataType.isInstance(additionalData) } ?: DefaultPyProjectManager
+    }
   }
+
+  /**
+   * To be used by [forSdk]
+   */
+  val additionalDataType: Class<out PythonSdkAdditionalData>
+
 
   val id: ToolId
   val ui: PyToolUIInfo

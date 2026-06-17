@@ -7,6 +7,8 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.jetbrains.python.Result
+import com.jetbrains.python.errorProcessing.MessageError
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.isSuccess
 import com.jetbrains.python.sdk.add.v2.FileSystem
@@ -68,6 +70,16 @@ data class ToolCommandExecutor(
     if (toolPathFromSettings != null) return toolPathFromSettings
     return detectToolExecutable(fileSystem, filter)
   }
+
+  /**
+   * Same as [getToolExecutable] but returns user-reable error if tool can't be found
+   */
+  suspend fun <P : PathHolder> getToolExecutableOrError(
+    fileSystem: FileSystem<P>,
+    pathFromSdk: FullPathOnTarget?,
+    filter: (P) -> Boolean = { true },
+  ): Result<P, MessageError> = getToolExecutable(fileSystem, pathFromSdk, filter)?.let { PyResult.success(it) }
+                               ?: PyResult.localizedError(PySdkBundle.message("path.validation.file.not.found", toolName))
 
   suspend fun <P : PathHolder, T> runTool(
     fileSystem: FileSystem<P>,

@@ -8,6 +8,8 @@
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.indexing"/>
@@ -20,6 +22,8 @@
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.platform.testFramework.junit5.projectStructure"/>
     <module name="intellij.platform.util.ex"/>
+    <module name="intellij.python.test.env.common"/>
+    <module name="intellij.python.test.env.junit5"/>
     <module name="intellij.toml.core"/>
   </dependencies>
   <!-- endregion -->

@@ -1267,7 +1267,11 @@
       <add-to-group group-id="RunContextGroup"/>
     </group>
   </actions>
-
+  <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
+    <pyprojectmanager implementation="com.jetbrains.python.sdk.impl.hatch.HatchPyProjectManager"/>
+    <pyprojectmanager implementation="com.jetbrains.python.sdk.uv.UvPyProjectManager"/>
+    <pyprojectmanager implementation="com.jetbrains.python.sdk.impl.poetry.PoetryPyProjectManager"/>
+  </extensions>
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="Python" implementationClass="com.jetbrains.python.spellchecker.PythonSpellcheckerStrategy"/>
     <bundledDictionaryProvider implementation="com.jetbrains.python.spellchecker.PythonBundledDictionaryProvider"/>

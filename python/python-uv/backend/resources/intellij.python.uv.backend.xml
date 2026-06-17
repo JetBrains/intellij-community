@@ -15,7 +15,4 @@
     <!-- Uv -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.uv.UvSdkFlavorProvider"/>
   </extensions>
-  <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
-    <pyprojectmanager implementation="com.intellij.python.uv.backend.UvPyProjectManager"/>
-  </extensions>
 </idea-plugin>
