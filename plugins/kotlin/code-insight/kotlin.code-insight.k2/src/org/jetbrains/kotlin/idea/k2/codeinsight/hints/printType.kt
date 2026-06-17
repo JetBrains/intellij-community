@@ -34,12 +34,19 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.approximateAnonymousObjectToSupertypeOrSelf
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.isAnnotatedWithTypeUseOnly
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
+
+private val suppressedAnnotatedTypePackages =
+    listOf(
+        "kotlin",
+    ).mapTo(hashSetOf(), ::FqName)
 
 @OptIn(KaExperimentalApi::class)
 context(_: KaSession)
@@ -48,6 +55,19 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     type.abbreviation?.let { abbreviatedType ->
         printKtType(abbreviatedType)
         return
+    }
+
+    type.annotations.forEach { annotation ->
+        if (!annotation.isAnnotatedWithTypeUseOnly()) return@forEach
+
+        annotation.constructorSymbol?.returnType?.let {
+            val packageName = (it as? KaClassType)?.classId?.packageFqName
+            if (packageName in suppressedAnnotatedTypePackages) return@let
+
+            text("@")
+            printKtType(it)
+            text(" ")
+        }
     }
 
     var markedNullable = type.isMarkedNullable
