@@ -3,16 +3,22 @@ package org.jetbrains.idea.devkit.descriptor
 
 import com.intellij.devkit.core.icons.DevkitCoreIcons
 import com.intellij.icons.AllIcons.Nodes.Plugin
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.IntelliJProjectUtil
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.ui.DeferredIconImpl
 import com.intellij.ui.IconTestUtil
+import com.intellij.ui.RetrievableIcon
+import com.intellij.ui.icons.CompositeIcon
 import com.intellij.util.PsiIconUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.devkit.build.PluginBuildConfiguration
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.jps.model.java.JavaResourceRootType
@@ -33,6 +39,7 @@ internal class PluginDescriptorSplitModeIconsTest {
   @Test
   @RegistryKey(key = "devkit.plugin.directory.icons", value = "true")
   fun `descriptor and directory icons follow split mode kind`() {
+    Registry.get("devkit.split.mode.custom.icons").setValue(true)
     IntelliJProjectUtil.markAsIntelliJPlatformProject(project, true)
     try {
       createModuleDescriptor("module.shared", "module.shared.xml", """
@@ -66,6 +73,7 @@ internal class PluginDescriptorSplitModeIconsTest {
     }
     finally {
       IntelliJProjectUtil.markAsIntelliJPlatformProject(project, false)
+      Registry.get("devkit.split.mode.custom.icons").setValue(false)
     }
   }
 
@@ -106,11 +114,29 @@ internal class PluginDescriptorSplitModeIconsTest {
   }
 
   private fun assertIcon(expectedIcon: Icon, psiElementProvider: () -> com.intellij.psi.PsiElement) {
-    val unwrappedIcon = runReadActionBlocking {
-      val iconFromProviders = PsiIconUtil.getIconFromProviders(psiElementProvider(), 0)
-      checkNotNull(iconFromProviders)
+    val iconFromProviders = runReadActionBlocking {
+      PsiIconUtil.getIconFromProviders(psiElementProvider(), 0)
+    }
+    checkNotNull(iconFromProviders)
+    awaitDeferredIcons(iconFromProviders)
+    val unwrappedIcon = invokeAndWaitIfNeeded {
       IconTestUtil.unwrapIcon(iconFromProviders)
     }
     assertEquals(expectedIcon, unwrappedIcon)
+  }
+
+  private fun awaitDeferredIcons(icon: Icon) {
+    when (icon) {
+      is DeferredIconImpl<*> -> runBlocking {
+        icon.awaitEvaluation()
+      }
+      is RetrievableIcon -> awaitDeferredIcons(icon.retrieveIcon())
+      is CompositeIcon -> {
+        for (i in 0 until icon.iconCount) {
+          val nestedIcon = icon.getIcon(i) ?: continue
+          awaitDeferredIcons(nestedIcon)
+        }
+      }
+    }
   }
 }

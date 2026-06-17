@@ -5,15 +5,20 @@ import com.intellij.devkit.core.icons.DevkitCoreIcons.BackendModule
 import com.intellij.devkit.core.icons.DevkitCoreIcons.FrontendModule
 import com.intellij.devkit.core.icons.DevkitCoreIcons.SharedModule
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
 @ApiStatus.Internal
 object SplitModeModuleKindIcons {
+  @JvmStatic
+  fun isCustomIconsEnabled(): Boolean {
+    return Registry.`is`("devkit.split.mode.custom.icons", false)
+  }
+
   @JvmStatic
   fun getDescriptorIcon(descriptorFile: PsiFile): Icon? {
     if (DumbService.isDumb(descriptorFile.project)) return null

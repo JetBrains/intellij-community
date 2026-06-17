@@ -25,9 +25,11 @@ final class PluginDescriptorDomFileDescription extends DomFileDescription<IdeaPl
     IdeaPlugin ideaPlugin = DescriptorUtil.getIdeaPlugin(file);
     if (ideaPlugin == null) return null;
 
-    Icon splitModeIcon = SplitModeModuleKindIcons.getDescriptorIcon(file);
-    if (splitModeIcon != null) {
-      return splitModeIcon;
+    if (SplitModeModuleKindIcons.isCustomIconsEnabled()) {
+      Icon splitModeIcon = SplitModeModuleKindIcons.getDescriptorIcon(file);
+      if (splitModeIcon != null) {
+        return splitModeIcon;
+      }
     }
 
     if (ideaPlugin.isV2Descriptor()) {
