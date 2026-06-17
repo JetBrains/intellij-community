@@ -29,7 +29,7 @@ public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = fa
   }
 
   override fun findByUrl(uri: String): VirtualFileUrl? {
-    return findBySegments(splitNames(uri))
+    return findBySegments(splitNames(uri))?.getCachedVirtualFileUrl()
   }
 
   @Synchronized
@@ -61,7 +61,23 @@ public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = fa
    */
   public fun processChildrenRecursively(url: VirtualFileUrl, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
     val node = synchronized(this) { id2NodeMapping.get((url as VirtualFileUrlImpl).id) }
+    return processChildrenImpl(node, processor)
+  }
+
+  /**
+   * Processes children of [url] and their children recursively using [processor]. [url] itself isn't processed.
+   * @return `true` if processing finished normally, or `false` if [processor] returned [STOP][TreeNodeProcessingResult.STOP].
+   */
+  public fun processChildrenRecursively(url: String, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
+    val node = findBySegments(splitNames(url))
+    if (node == null) return true
+
+    return processChildrenImpl(node, processor)
+  }
+
+  private fun processChildrenImpl(node: FilePathNode, processor: (VirtualFileUrl) -> TreeNodeProcessingResult): Boolean {
     return node.processChildrenRecursively {
+      // MAYBE IM: take cached vfu. If none, skip the node
       val childUrl = synchronized(this) { it.getVirtualFileUrl(this) }
       processor(childUrl)
     }
@@ -161,14 +177,14 @@ public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = fa
     }
     return getEmptyUrl()
   }
-  
-  private fun findBySegments(segments: List<String>): VirtualFileUrl? {
+
+  private fun findBySegments(segments: List<String>): FilePathNode? {
     var currentNode = rootNode
     for (segment in segments) {
       val nameId = fileNameStore.getIdForName(segment) ?: return null
       currentNode = currentNode.findChild(nameId) ?: return null
     }
-    return currentNode.getCachedVirtualFileUrl()
+    return currentNode
   }
 
   internal fun remove(path: String) {
