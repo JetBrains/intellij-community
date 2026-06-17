@@ -22,13 +22,14 @@ sealed interface ShellName {
     val FISH: ShellName = of("fish")
     val POWERSHELL: ShellName = of("powershell")
     val PWSH: ShellName = of("pwsh")
+    val CMD: ShellName = of("cmd")
 
     fun isPowerShell(shellName: ShellName): Boolean {
       return shellName == POWERSHELL || shellName == PWSH
     }
 
     fun isCommandPrompt(shellName: ShellName): Boolean {
-      return shellName.value == "cmd" || shellName.value == "cmd.exe"
+      return shellName == CMD
     }
   }
 }
