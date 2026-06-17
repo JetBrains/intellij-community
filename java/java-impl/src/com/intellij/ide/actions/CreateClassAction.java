@@ -64,10 +64,14 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   protected boolean isAvailable(@NotNull DataContext dataContext) {
     if (!super.isAvailable(dataContext)) return false;
 
-    if (AdvancedSettings.getBoolean("java.show.new.class.in.irrelevant.java.source.roots")) return true;
+    return !isJavaFileActionSuppressed(dataContext);
+  }
+
+  public static boolean isJavaFileActionSuppressed(@NotNull DataContext dataContext) {
+    if (AdvancedSettings.getBoolean("java.show.new.file.in.irrelevant.java.source.roots")) return false;
 
     List<JavaClassActionSuppressor> suppressors = JavaClassActionSuppressor.EP_NAME.getExtensionList();
-    return !ContainerUtil.exists(suppressors,
+    return ContainerUtil.exists(suppressors,
                                  suppressor -> suppressor.isSuppressed(dataContext));
   }
 
