@@ -61,6 +61,7 @@ class ClaudeStoreSessionBackendTest {
           outputTokens = 1972,
           cacheReadTokens = 39560,
           cacheWriteTokens = 3721,
+          cacheWrite5mTokens = 3721,
           requestCount = 1,
         ),
         AgentSessionUsageSnapshot(
@@ -69,6 +70,7 @@ class ClaudeStoreSessionBackendTest {
           outputTokens = 266,
           cacheReadTokens = 19948,
           cacheWriteTokens = 19081,
+          cacheWrite5mTokens = 19081,
           requestCount = 2,
         ),
       )
