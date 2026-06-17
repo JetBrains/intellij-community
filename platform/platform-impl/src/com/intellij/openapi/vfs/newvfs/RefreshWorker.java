@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
@@ -42,7 +43,6 @@ import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImp
 import com.intellij.util.MathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
@@ -73,6 +73,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -663,27 +664,29 @@ final class RefreshWorker {
         return true;
       }
     }
-    return isInContent(child) || !contentRootsUnderExcluded(child).isEmpty();
+    return isIndexableFilesetRecursiveRoot(child) || !indexableRootsUnder(child).isEmpty();
   }
 
-  private static boolean isInContent(Path directoryOrFile) {
+  private static boolean isIndexableFilesetRecursiveRoot(Path directoryOrFile) {
+    if (!RegistryManager.getInstance().is("vfs.refresh.iterate.included.files.under.exclude")) return false;
+
     String url = toUrl(directoryOrFile);
     var openProjects = ProjectManager.getInstance().getOpenProjects();
     return ContainerUtil.exists(openProjects, project -> ReadAction.computeBlocking(
-      () -> WorkspaceFileIndexEx.getInstance(project).isUrlIndexable(url, false) == ThreeState.YES));
+      () -> WorkspaceFileIndexEx.getInstance(project).isUrlIndexableRecursiveFileSetRoot(url)));
   }
 
-  private static @Unmodifiable List<Path> contentRootsUnderExcluded(Path directory) {
+  private static @Unmodifiable List<Path> indexableRootsUnder(Path directory) {
+    if (!RegistryManager.getInstance().is("vfs.refresh.iterate.included.files.under.exclude")) return Collections.emptyList();
+
     var roots = new LinkedHashSet<Path>();
     String url = toUrl(directory);
     for (Project openProject : ProjectManager.getInstance().getOpenProjects()) {
       ReadAction.runBlocking(() -> {
         var workspaceFileIndex = WorkspaceFileIndexEx.getInstance(openProject);
         var vfuManager = (VirtualFileUrlManagerImpl)WorkspaceModel.getInstance(openProject).getVirtualFileUrlManager();
-        var vfu = vfuManager.findByUrl(url);
-        if (vfu == null) return;
-        vfuManager.processChildrenRecursively(vfu, child -> {
-          if (workspaceFileIndex.isUrlIndexable(child.getUrl(), false) == ThreeState.YES) {
+        vfuManager.processChildrenRecursively(url, child -> {
+          if (workspaceFileIndex.isUrlIndexableRecursiveFileSetRoot(child.getUrl())) {
             roots.add(VirtualFileUrlManagerUtil.toPath(child));
             return TreeNodeProcessingResult.SKIP_CHILDREN;
           }
@@ -740,8 +743,8 @@ final class RefreshWorker {
           return FileVisitResult.SKIP_SUBTREE;  // bypassing NTFS reparse points
         }
         // on average, this "excluded" array is small for any particular root, so linear search it is.
-        if (excluded.contains(dir) && !isInContent(dir)) {
-          List<Path> contentUnderExcluded = contentRootsUnderExcluded(dir);
+        if (excluded.contains(dir) && !isIndexableFilesetRecursiveRoot(dir)) {
+          List<Path> contentUnderExcluded = indexableRootsUnder(dir);
           if (contentUnderExcluded.isEmpty()) {
             return FileVisitResult.SKIP_SUBTREE;
           }
