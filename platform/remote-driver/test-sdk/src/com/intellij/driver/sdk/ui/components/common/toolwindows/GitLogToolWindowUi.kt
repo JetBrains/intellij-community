@@ -1,6 +1,7 @@
 package com.intellij.driver.sdk.ui.components.common.toolwindows
 
 import com.intellij.driver.sdk.ui.components.ComponentData
+import com.intellij.driver.sdk.ui.components.elements.actionButton
 import com.intellij.driver.sdk.ui.components.elements.PopupMenuUiComponent
 import com.intellij.driver.sdk.ui.components.elements.popupMenu
 import com.intellij.driver.sdk.ui.ui
@@ -35,5 +36,15 @@ class GitLogToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
     // Right-click on the originally selected commit row (still part of the multi-selection)
     table.rightClickCell(row, column)
     return driver.ui.popupMenu()
+  }
+
+  fun openTabActionsDropDown() {
+    val dropDown = actionButton {
+      and(byClass("ActionButton"),
+          or(byAttribute("myicon", "chevronDownLarge.svg"),
+             byAttribute("myicon", "expand.svg")))
+    }
+    dropDown.waitFound()
+    dropDown.click()
   }
 }

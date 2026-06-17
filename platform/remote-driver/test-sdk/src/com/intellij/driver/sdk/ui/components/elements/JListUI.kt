@@ -80,6 +80,13 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
     }
   }
 
+  fun rightClickItem(itemText: String, fullMatch: Boolean = true, trimmed: Boolean = false) {
+    findItemIndex(itemText, fullMatch, trimmed)?.let { index ->
+      val cellBounds = getCellBounds(index)
+      rightClick(Point(cellBounds.centerX.toInt(), cellBounds.centerY.toInt()))
+    } ?: throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
+  }
+
   fun hoverItem(itemText: String, fullMatch: Boolean = true, trimmed: Boolean = false, offset: Point? = null) {
     findItemIndex(itemText, fullMatch, trimmed)?.let { index ->
       if (offset == null) {

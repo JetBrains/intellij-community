@@ -271,6 +271,24 @@ object Git {
     ).start()
   }
 
+  fun createBranch(repositoryDirectory: Path, branchName: String, startPoint: String = "") {
+    val cmdName = "git-create-branch"
+    val stdout = ExecOutputRedirect.ToString()
+
+    val arguments = mutableListOf("git", "branch", branchName)
+    if (startPoint.isNotEmpty()) {
+      arguments.add(startPoint)
+    }
+    ProcessExecutor(
+      cmdName,
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = arguments,
+      stdoutRedirect = stdout,
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
   fun fetch(repositoryDirectory: Path, remote: String = "") {
     val cmdName = "git-fetch"
 
@@ -464,6 +482,53 @@ object Git {
       args = listOf("git", "worktree", "prune"),
       stdoutRedirect = stdout
     ).start()
+  }
+
+  fun worktreeAdd(workDir: Path, branchName: String, worktreePath: String, startPoint: String = "") {
+    val stdout = ExecOutputRedirect.ToString()
+
+    val arguments = mutableListOf("git", "worktree", "add", "-b", branchName, worktreePath)
+    if (startPoint.isNotEmpty()) {
+      arguments.add(startPoint)
+    }
+
+    ProcessExecutor(
+      "git-worktree-add",
+      workDir = workDir, timeout = 1.minutes,
+      args = arguments,
+      stdoutRedirect = stdout,
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
+  fun worktreeRemove(workDir: Path, worktreePath: String) {
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      "git-worktree-remove",
+      workDir = workDir,
+      timeout = 1.minutes,
+      args = listOf("git", "worktree", "remove", "--force", worktreePath),
+      stdoutRedirect = stdout,
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
+  fun worktreeListPorcelain(workDir: Path): String? {
+    val stdout = ExecOutputRedirect.ToString()
+    return try {
+      ProcessExecutor(
+        "git-worktree-list",
+        workDir = workDir,
+        timeout = 1.minutes,
+        args = listOf("git", "worktree", "list", "--porcelain"),
+        stdoutRedirect = stdout,
+        onlyEnrichExistedEnvVariables = true
+      ).start()
+      stdout.read()
+    }
+    catch (_: Exception) {
+      null
+    }
   }
 
   fun getStatus(pathToDir: Path): String {
