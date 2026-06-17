@@ -556,6 +556,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     val modulePath: List<String>?
     var testClasspath = buildList {
+      val runContextModule = if (runContextModule.name != "intellij.ml.llm.tests") runContextModule else mainModule  // TODO: switch to test module classpath by default
       addAll(context.getModuleRuntimeClasspath(runContextModule, forTests = true))
 
       //module with "com.intellij.TestCaseLoader" which output should be found in `testClasspath + modulePath`
