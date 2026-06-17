@@ -26,6 +26,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<AgentSessionVisibleCostHydrationSupport>()
 private val VISIBLE_COST_HYDRATION_DELAY = 750.milliseconds
+private const val WORKING_THREAD_COST_CACHE_TTL_MS = 60_000L
 
 internal class AgentSessionVisibleCostHydrationSupport(
   private val serviceScope: CoroutineScope,
@@ -71,9 +72,6 @@ internal class AgentSessionVisibleCostHydrationSupport(
       if (normalizeConcreteAgentSessionThreadId(visibleThread.threadId) == null) {
         continue
       }
-      if (visibleThread.activity.isWorking) {
-        continue
-      }
 
       val cacheKey = visibleThread.cacheKey
       val cacheEntry = costCache[cacheKey]
@@ -87,7 +85,7 @@ internal class AgentSessionVisibleCostHydrationSupport(
       }
 
       val effectiveCacheEntry = costCache[cacheKey]
-      if (effectiveCacheEntry != null && effectiveCacheEntry.updatedAt == visibleThread.updatedAt) {
+      if (effectiveCacheEntry != null && shouldReuseCachedCost(visibleThread, effectiveCacheEntry, now)) {
         if (visibleThread.cost != effectiveCacheEntry.cost) {
           cachedUpdatesByPath
             .getOrPut(visibleThread.path) { LinkedHashMap() }
@@ -204,6 +202,20 @@ internal class AgentSessionVisibleCostHydrationSupport(
         )
       }
   }
+}
+
+private fun shouldReuseCachedCost(
+  visibleThread: VisibleThreadSnapshot,
+  cacheEntry: ThreadCostCacheEntry,
+  nowMs: Long,
+): Boolean {
+  if (cacheEntry.updatedAt != visibleThread.updatedAt) {
+    return false
+  }
+  if (!visibleThread.activity.isWorking) {
+    return true
+  }
+  return nowMs - cacheEntry.refreshedAtMs < WORKING_THREAD_COST_CACHE_TTL_MS
 }
 
 internal data class ThreadCostUpdate(
