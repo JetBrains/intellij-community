@@ -53,7 +53,11 @@ class LanguageRef private constructor(
       return Language.getRegisteredLanguages()
         .filter { it !== Language.ANY && it !is DependentLanguage }
         .sortedWith(LanguageUtil.LANGUAGE_COMPARATOR)
-        .map { forLanguage(it) }
+        .mapNotNull {
+          runCatching {
+            forLanguage(it)
+          }.getOrLogException(LOG)
+        }
     }
   }
 
@@ -69,6 +73,8 @@ class LanguageRef private constructor(
   override fun hashCode(): Int {
     return id.hashCode()
   }
+
+  override fun toString(): String = "LanguageRef(id=$id, displayName=$displayName)"
 }
 
 class FileTypeRef private constructor(
@@ -94,7 +100,11 @@ class FileTypeRef private constructor(
     fun forAllFileTypes(): List<FileTypeRef> {
       return FileTypeManager.getInstance().registeredFileTypes
         .sortedWith(FileTypeComparator.INSTANCE)
-        .map { forFileType(it) }
+        .mapNotNull{
+          runCatching {
+            forFileType(it)
+          }.getOrLogException(LOG)
+        }
     }
   }
 
@@ -111,4 +121,5 @@ class FileTypeRef private constructor(
     return name.hashCode()
   }
 
+  override fun toString(): String = "FileTypeRef(name=$name, displayName=$displayName)"
 }
