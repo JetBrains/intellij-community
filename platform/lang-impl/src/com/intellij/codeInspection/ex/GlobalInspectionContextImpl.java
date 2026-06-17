@@ -121,6 +121,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.MathUtil;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
@@ -1171,7 +1172,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           }
 
           progressIndicator.setText(AbstractLayoutCodeProcessor.getPresentablePath(getProject(), psiFile));
-          progressIndicator.setFraction((double)++myCount / fileCount);
+          progressIndicator.setFraction(MathUtil.clamp( ++myCount*1.0/fileCount, 0, 1));
 
           if (isBinary(psiFile)) return;
           List<LocalInspectionToolWrapper> lTools = new ArrayList<>();
