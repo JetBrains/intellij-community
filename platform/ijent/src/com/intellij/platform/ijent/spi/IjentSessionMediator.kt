@@ -28,6 +28,5 @@ sealed interface IjentSessionMediator {
 class IjentConnectionContext(
   val mediator: IjentSessionMediator,
   val targetPlatform: EelPlatform,
-  val remoteBinaryPath: String,
   val connectionStrategy: IjentConnectionStrategy,
 )
