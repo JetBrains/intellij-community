@@ -9,16 +9,10 @@ import com.intellij.ide.starter.utils.getUpdateEnvVarsWithPrependedPath
 import com.intellij.ide.starter.utils.updatePathEnvVariable
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.system.CpuArch
-import com.intellij.util.system.OS
 import com.intellij.util.text.SemVer
-import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
-import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.minutes
-
-const val TSGO_VERSION: String = "v0.0.5"
 
 fun downloadAndConfigureNodejs(version: String): Path {
   val arch = when {
@@ -69,57 +63,6 @@ fun IDETestContext.updatePath(path: Path): IDETestContext = applyVMOptionsPatch 
   updatePathEnvVariable(path)
 }
 
-fun IDETestContext.setTSGOtypeEvaluator(value: Boolean): IDETestContext =
-  if (!value) this else applyVMOptionsPatch {
-    addSystemProperty("typescript.ts-go.type-evaluator.path", getTsGoExecutablePath())
-  }
-
-fun writeConfigWithEmbeddedTSGo(context: IDETestContext) {
-  val compilerXMLFilePath = context.resolvedProjectHome.resolve(".idea").resolve("compiler.xml")
-  compilerXMLFilePath.parent.createDirectories()
-  compilerXMLFilePath.writeText("""
-    <?xml version="1.0" encoding="UTF-8"?>
-    <project version="4">
-      <component name="TypeScriptCompiler">
-        <option name="versionType" value="EMBEDDED_TS_GO" />
-      </component>
-    </project>
-  """.trimIndent())
-}
-
-private fun getTsGoExecutablePath(): Path {
-  val tsGoBinOS = when (OS.CURRENT) {
-    OS.macOS if CpuArch.isArm64() -> "darwin-arm64"
-    OS.Linux if CpuArch.isIntel64() -> "linux-amd64"
-    else -> {
-      error(
-        "unsupported OS: ${OS.CURRENT}")
-    }
-  }
-
-  val tsGoBinName = "tsgo-$TSGO_VERSION-$tsGoBinOS"
-  val tsGoBinPath = GlobalPaths.instance.getCacheDirectoryFor("tsgo/bin").resolve(tsGoBinName)
-
-  if (tsGoBinPath.exists()) {
-    return tsGoBinPath
-  }
-
-  HttpClient.download("https://packages.jetbrains.team/files/p/ij/intellij-test-data-public/webstorm/tsgo/bin/$tsGoBinName", tsGoBinPath)
-
-  val process = ProcessBuilder("chmod", "a+x", tsGoBinPath.toString())
-    .redirectErrorStream(true)
-    .start()
-
-  val exitCode = process.waitFor()
-  if (exitCode == 0) {
-    println("chmode has been successfully executed for $tsGoBinPath")
-  } else {
-    error("error in executing chmode for $tsGoBinPath")
-  }
-
-  return tsGoBinPath
-}
-
 private fun buildNodePath(path: Path): Path {
   return if (SystemInfo.isWindows) path else path.resolve("bin")
 }
@@ -137,16 +80,4 @@ private fun enableCorepack(nodejsRoot: Path) {
                   args = listOf("$corePackPath", "--install-directory", ".", "enable"),
                   environmentVariables = getUpdateEnvVarsWithPrependedPath(nodejsRoot)
   ).start()
-}
-
-private fun getNodePathByVersion(version: String): Path {
-  val nodeJSDir = GlobalPaths.instance.getCacheDirectoryFor("nodejs")
-
-  val matchingFolder = Files.list(nodeJSDir)
-    .filter { Files.isDirectory(it) }
-    .filter { it.fileName.toString().contains("node-v$version") }
-    .toList()
-    .first()
-
-  return buildNodePath(matchingFolder)
 }
