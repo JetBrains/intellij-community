@@ -1,7 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.performancePlugin;
 
-import com.jetbrains.performancePlugin.commands.OptimizeImportsOnDirectoryCommand;
 import com.jetbrains.performancePlugin.commands.AcceptDecompileNotice;
 import com.jetbrains.performancePlugin.commands.AddContentRootToModule;
 import com.jetbrains.performancePlugin.commands.AddFileCommand;
@@ -72,6 +71,7 @@ import com.jetbrains.performancePlugin.commands.OpenProblemViewPanelCommand;
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand;
 import com.jetbrains.performancePlugin.commands.OpenProjectViewCommand;
 import com.jetbrains.performancePlugin.commands.OpenRandomFileCommand;
+import com.jetbrains.performancePlugin.commands.OptimizeImportsOnDirectoryCommand;
 import com.jetbrains.performancePlugin.commands.RecordCounterCollectorBaselinesCommand;
 import com.jetbrains.performancePlugin.commands.RecordStateCollectorsCommand;
 import com.jetbrains.performancePlugin.commands.ReformatCommand;
@@ -82,6 +82,7 @@ import com.jetbrains.performancePlugin.commands.RenameFileCommand;
 import com.jetbrains.performancePlugin.commands.RenameModuleCommand;
 import com.jetbrains.performancePlugin.commands.ReplaceBrowser;
 import com.jetbrains.performancePlugin.commands.ReplaceTextCommand;
+import com.jetbrains.performancePlugin.commands.RetypeFileCommand;
 import com.jetbrains.performancePlugin.commands.RunClassInPlugin;
 import com.jetbrains.performancePlugin.commands.RunClassInPluginModule;
 import com.jetbrains.performancePlugin.commands.RunConfigurationCommand;
@@ -111,11 +112,11 @@ import com.jetbrains.performancePlugin.commands.SystemGCCommand;
 import com.jetbrains.performancePlugin.commands.TakeScreenshotCommand;
 import com.jetbrains.performancePlugin.commands.TakeThreadDumpCommand;
 import com.jetbrains.performancePlugin.commands.WaitForCodeVisionCommand;
+import com.jetbrains.performancePlugin.commands.WaitForDebugSessionsEndCommand;
 import com.jetbrains.performancePlugin.commands.WaitForDumbCommand;
 import com.jetbrains.performancePlugin.commands.WaitForEDTQueueUnstuckCommand;
 import com.jetbrains.performancePlugin.commands.WaitForFinishedCodeAnalysis;
 import com.jetbrains.performancePlugin.commands.WaitForInitialRefreshCommand;
-import com.jetbrains.performancePlugin.commands.WaitForDebugSessionsEndCommand;
 import com.jetbrains.performancePlugin.commands.WaitForProjectViewCommand;
 import com.jetbrains.performancePlugin.commands.WaitForReOpenedFileCommand;
 import com.jetbrains.performancePlugin.commands.WaitForSmartCommand;
@@ -248,7 +249,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(WaitForReOpenedFileCommand.PREFIX, WaitForReOpenedFileCommand::new),
       Map.entry(WaitForCodeVisionCommand.PREFIX, WaitForCodeVisionCommand::new),
       Map.entry(WaitForDebugSessionsEndCommand.PREFIX, WaitForDebugSessionsEndCommand::new),
-      Map.entry(OptimizeImportsOnDirectoryCommand.PREFIX, OptimizeImportsOnDirectoryCommand::new)
+      Map.entry(OptimizeImportsOnDirectoryCommand.PREFIX, OptimizeImportsOnDirectoryCommand::new),
+      Map.entry(RetypeFileCommand.PREFIX, RetypeFileCommand::new)
     );
   }
 }

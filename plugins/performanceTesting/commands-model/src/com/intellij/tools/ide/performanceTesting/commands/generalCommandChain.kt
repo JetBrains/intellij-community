@@ -1404,3 +1404,7 @@ fun <T : CommandChain> T.optimizeImportsOnDirectory(directoryPath: String = ""):
   if (directoryPath.isEmpty()) addCommand("${CMD_PREFIX}optimizeImportsOnDirectory")
   else addCommand("${CMD_PREFIX}optimizeImportsOnDirectory $directoryPath")
 }
+
+fun <T : CommandChain> T.retypeFile(filePath: String, delayMs: Int = 20): T = apply {
+  addCommand("${CMD_PREFIX}retypeFile $filePath $delayMs")
+}
