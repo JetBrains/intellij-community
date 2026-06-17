@@ -29,10 +29,38 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rule-engine-0_3_221_http",
-    downloaded_file_path = "grazie-rule-engine-0.3.221.jar",
-    sha256 = "29c097698a3628ab6d45cf479158ffa37865af0a3d73555e053207c8a68785b8",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.221/grazie-rule-engine-0.3.221.jar",
+    name = "com_electronwill_night-config-toml-3_8_4_http",
+    downloaded_file_path = "toml-3.8.4.jar",
+    sha256 = "127bf8b025c341139145c55bc897f3188057eec19940f99d3eae624399e88f2a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar",
+)
+
+http_file(
+    name = "com_electronwill_night-config-core-3_8_4_http",
+    downloaded_file_path = "core-3.8.4.jar",
+    sha256 = "2d9532aa851742a6e2f3cb472a6a5b3c0e7e8b9da287c7d20a2963466f4aebb4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar",
+)
+
+http_file(
+    name = "com_electronwill_night-config-toml-3_8_4-sources_http",
+    downloaded_file_path = "toml-3.8.4-sources.jar",
+    sha256 = "ceeb3a90bde39a54a3ccb599b1cea25aaa6468bd036a98e50ddb6579d7d999b2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4-sources.jar",
+)
+
+http_file(
+    name = "com_electronwill_night-config-core-3_8_4-sources_http",
+    downloaded_file_path = "core-3.8.4-sources.jar",
+    sha256 = "f189eb4a6195c3a4719ace91c586d703702cbbf21b646bf5207c9699231eeac3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4-sources.jar",
+)
+
+http_file(
+    name = "ai_grazie-grazie-rule-engine-0_3_229_http",
+    downloaded_file_path = "grazie-rule-engine-0.3.229.jar",
+    sha256 = "f6899abb0fbac1d6738964fcd1ff7dc1ffc1c29fb796377902c260ced942f7eb",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.229/grazie-rule-engine-0.3.229.jar",
 )
 
 http_file(
@@ -43,10 +71,10 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rule-engine-0_3_221-sources_http",
-    downloaded_file_path = "grazie-rule-engine-0.3.221-sources.jar",
-    sha256 = "ee8da4a6562a619071b0ee5140d942ade3fe34653e03c6ba9713da0e863defa1",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.221/grazie-rule-engine-0.3.221-sources.jar",
+    name = "ai_grazie-grazie-rule-engine-0_3_229-sources_http",
+    downloaded_file_path = "grazie-rule-engine-0.3.229-sources.jar",
+    sha256 = "69c3dea404669b8575735d9ff25921985b44863b9d3329cf8861df99e7d3c827",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rule-engine/0.3.229/grazie-rule-engine-0.3.229-sources.jar",
 )
 
 http_file(
@@ -57,17 +85,17 @@ http_file(
 )
 
 http_file(
-    name = "ai_grazie-grazie-rules-llm-0_3_221_http",
-    downloaded_file_path = "grazie-rules-llm-0.3.221.jar",
-    sha256 = "40249815386555fb5f0068eb5af88734dc6c2375aa0d130694ff07df1b6f65d0",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.221/grazie-rules-llm-0.3.221.jar",
+    name = "ai_grazie-grazie-rules-llm-0_3_229_http",
+    downloaded_file_path = "grazie-rules-llm-0.3.229.jar",
+    sha256 = "bca48ae76344cef11a85e1c0297e6a16ea1471b52827ec5ab47d97defe2d506e",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.229/grazie-rules-llm-0.3.229.jar",
 )
 
 http_file(
-    name = "ai_grazie-grazie-rules-llm-0_3_221-sources_http",
-    downloaded_file_path = "grazie-rules-llm-0.3.221-sources.jar",
-    sha256 = "d4cc6e57e7346663cb4a9ec183511d868c6539ebd234883329e2ea19e06ffaa8",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.221/grazie-rules-llm-0.3.221-sources.jar",
+    name = "ai_grazie-grazie-rules-llm-0_3_229-sources_http",
+    downloaded_file_path = "grazie-rules-llm-0.3.229-sources.jar",
+    sha256 = "05623580be801809074bc3ae4504317391bac937ee45139cc38f3d06fd4c1a5c",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/grazie-rules-llm/0.3.229/grazie-rules-llm-0.3.229-sources.jar",
 )
 
 http_file(
@@ -3221,6 +3249,48 @@ http_file(
 )
 
 http_file(
+    name = "org_jetbrains_intellij_deps_languagetool-language-ja-6_8_27_http",
+    downloaded_file_path = "language-ja-6.8.27.jar",
+    sha256 = "9f5b6c42cfc8f57237ea622dd372df87cf6c01d23e7c50be42ff9c43125d35e5",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-ja/6.8.27/language-ja-6.8.27.jar",
+)
+
+http_file(
+    name = "com_github_lucene-gosen-lucene-gosen-6_2_1-ipadic_http",
+    downloaded_file_path = "lucene-gosen-6.2.1-ipadic.jar",
+    sha256 = "1e5cd3b8c26e73ac13ba56ef80c7edda711dd7b58c1f497a9876f79a8d5c2947",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/lucene-gosen/lucene-gosen/6.2.1/lucene-gosen-6.2.1-ipadic.jar",
+)
+
+http_file(
+    name = "com_ibm_icu-icu4j-77_1_http",
+    downloaded_file_path = "icu4j-77.1.jar",
+    sha256 = "b3640b9f416a4411fd33c59abbeea8fd57d024c23e1819bf9673220a97499fe3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/ibm/icu/icu4j/77.1/icu4j-77.1.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_languagetool-language-ja-6_8_27-sources_http",
+    downloaded_file_path = "language-ja-6.8.27-sources.jar",
+    sha256 = "49edab565ed8a9dd821d4bd17b254ed3423e5ef059f5a109bd72095b0b64ca76",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-ja/6.8.27/language-ja-6.8.27-sources.jar",
+)
+
+http_file(
+    name = "com_github_lucene-gosen-lucene-gosen-6_2_1-sources_http",
+    downloaded_file_path = "lucene-gosen-6.2.1-sources.jar",
+    sha256 = "671fb1e5c175880061d44e3bac5d9b441e091681b4224ce0bec39800a1e8baa6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/lucene-gosen/lucene-gosen/6.2.1/lucene-gosen-6.2.1-sources.jar",
+)
+
+http_file(
+    name = "com_ibm_icu-icu4j-77_1-sources_http",
+    downloaded_file_path = "icu4j-77.1-sources.jar",
+    sha256 = "2dd9da85182efca525aa269db573e0ed54943767d6af3afc50d0ede51e63d01a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/ibm/icu/icu4j/77.1/icu4j-77.1-sources.jar",
+)
+
+http_file(
     name = "org_jetbrains_intellij_deps_languagetool-language-uk-6_8_27_http",
     downloaded_file_path = "language-uk-6.8.27.jar",
     sha256 = "3515bb2a656805139916667d59743f418ee65f386ca0e58290f30b017ab5c7bc",
@@ -3351,6 +3421,48 @@ http_file(
     downloaded_file_path = "portuguese-pos-dict-1.2.0.jar",
     sha256 = "fe8da88bb31b6372855741fbd81ee1c7477b4f8a0624d3dafd20ee23e184650e",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/languagetool/portuguese-pos-dict/1.2.0/portuguese-pos-dict-1.2.0.jar",
+)
+
+http_file(
+    name = "ai_grazie_client-client-cbor-jvm-0_8_184_http",
+    downloaded_file_path = "client-cbor-jvm-0.8.184.jar",
+    sha256 = "6ffc70b63b1aebf27552b5acab83c882d88edf9e9be9b0ead4f6a13956e9fafe",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-cbor-jvm/0.8.184/client-cbor-jvm-0.8.184.jar",
+)
+
+http_file(
+    name = "ai_grazie_utils-utils-cbor-jvm-0_8_184_http",
+    downloaded_file_path = "utils-cbor-jvm-0.8.184.jar",
+    sha256 = "d68040a5ed1d2fefdb963182673b06b48678f8a285172f397d7bfca54244e0fd",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-cbor-jvm/0.8.184/utils-cbor-jvm-0.8.184.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3_http",
+    downloaded_file_path = "kotlinx-serialization-cbor-jvm-1.7.3.jar",
+    sha256 = "ec45d74e2293eacbc1f804f3ec55d4908f9905ac5053316b565f1b66326f1f70",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.7.3/kotlinx-serialization-cbor-jvm-1.7.3.jar",
+)
+
+http_file(
+    name = "ai_grazie_client-client-cbor-jvm-0_8_184-sources_http",
+    downloaded_file_path = "client-cbor-jvm-0.8.184-sources.jar",
+    sha256 = "b35a01ac2b476f267cf8b438d88a220df9dece5c0969d84c6962ac5913f7324a",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/client/client-cbor-jvm/0.8.184/client-cbor-jvm-0.8.184-sources.jar",
+)
+
+http_file(
+    name = "ai_grazie_utils-utils-cbor-jvm-0_8_184-sources_http",
+    downloaded_file_path = "utils-cbor-jvm-0.8.184-sources.jar",
+    sha256 = "d20b905b6b03389ca5192175640211051a35ef12dceccff7b4a646787749ede8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/grazi/grazie-platform-public/ai/grazie/utils/utils-cbor-jvm/0.8.184/utils-cbor-jvm-0.8.184-sources.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlinx-kotlinx-serialization-cbor-jvm-1_7_3-sources_http",
+    downloaded_file_path = "kotlinx-serialization-cbor-jvm-1.7.3-sources.jar",
+    sha256 = "91ac6c3b6539c6bbdfc1a3713c9068056f990a930fae192ac9d868fd0253586e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/kotlinx/kotlinx-serialization-cbor-jvm/1.7.3/kotlinx-serialization-cbor-jvm-1.7.3-sources.jar",
 )
 
 http_file(
@@ -5202,17 +5314,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-debugger-agent-1_191_http",
-    downloaded_file_path = "debugger-agent-1.191.jar",
-    sha256 = "37f0ebd285fad3e02b9f3000cf7088c96b3141121dadd6a205c78307f48073ca",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.191/debugger-agent-1.191.jar",
+    name = "org_jetbrains_intellij_deps-debugger-agent-1_187_http",
+    downloaded_file_path = "debugger-agent-1.187.jar",
+    sha256 = "c9c6cc7db33c4599bbbb9fd77dd5df4254d0bf3a2f5fb114d495c3f011fc3229",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.187/debugger-agent-1.187.jar",
 )
 
 http_file(
-    name = "org_jetbrains_intellij_deps-debugger-agent-1_191-sources_http",
-    downloaded_file_path = "debugger-agent-1.191-sources.jar",
-    sha256 = "0f76384b8bf3123d229dc3372e97bb670c5b0d32a182395b38bc32b92f80b719",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.191/debugger-agent-1.191-sources.jar",
+    name = "org_jetbrains_intellij_deps-debugger-agent-1_187-sources_http",
+    downloaded_file_path = "debugger-agent-1.187-sources.jar",
+    sha256 = "ac5d43932ab7d6409cc2d8e4e8a3b32980953957ca16cf55dad6d852c09b3a00",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/debugger-agent/1.187/debugger-agent-1.187-sources.jar",
 )
 
 http_file(
@@ -10522,59 +10634,59 @@ http_file(
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-core-2026_2_5_http",
-    downloaded_file_path = "rd-core-2026.2.5.jar",
-    sha256 = "0dc4da676b3e86f6fb30627aaea71f207b27ce268e794d8a7cb3ad76695295ab",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-core/2026.2.5/rd-core-2026.2.5.jar",
+    name = "com_jetbrains_rd-rd-core-2026_2_4_http",
+    downloaded_file_path = "rd-core-2026.2.4.jar",
+    sha256 = "30f55ee112c4f96cbe50b898196f7083a806a49a11d39820e8d5358dbcc7164f",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-core/2026.2.4/rd-core-2026.2.4.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-core-2026_2_5-sources_http",
-    downloaded_file_path = "rd-core-2026.2.5-sources.jar",
-    sha256 = "d1248b707c099ae8f9c10ab99d8ac69e8c18cf11e9036ebfd1472f4d3dd9fe81",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-core/2026.2.5/rd-core-2026.2.5-sources.jar",
+    name = "com_jetbrains_rd-rd-core-2026_2_4-sources_http",
+    downloaded_file_path = "rd-core-2026.2.4-sources.jar",
+    sha256 = "743c2b301879aec524b83ae492a87de3b54e6a73c383009791ca347b62c1ffe8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-core/2026.2.4/rd-core-2026.2.4-sources.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-framework-2026_2_5_http",
-    downloaded_file_path = "rd-framework-2026.2.5.jar",
-    sha256 = "f092bb7da6cfa7e316c7e9b135d143159d6feea653590c234c6a485aaecac49e",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-framework/2026.2.5/rd-framework-2026.2.5.jar",
+    name = "com_jetbrains_rd-rd-framework-2026_2_4_http",
+    downloaded_file_path = "rd-framework-2026.2.4.jar",
+    sha256 = "a6cd5546d4091397e8a1eef76a278a39df53b0c18c6d484fabae1e2b3c853637",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-framework/2026.2.4/rd-framework-2026.2.4.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-framework-2026_2_5-sources_http",
-    downloaded_file_path = "rd-framework-2026.2.5-sources.jar",
-    sha256 = "3e198bbebe2bb45704e4ddcca21a1b948776bd8a6519ec0c9e5cd41e80d496f5",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-framework/2026.2.5/rd-framework-2026.2.5-sources.jar",
+    name = "com_jetbrains_rd-rd-framework-2026_2_4-sources_http",
+    downloaded_file_path = "rd-framework-2026.2.4-sources.jar",
+    sha256 = "844cddadb4f03ec6cb0f2ced675c683700c58ace6ac650703c8643a8d4acd053",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-framework/2026.2.4/rd-framework-2026.2.4-sources.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-swing-2026_2_5_http",
-    downloaded_file_path = "rd-swing-2026.2.5.jar",
-    sha256 = "79d038eb2cb05e5122d204607ee2336d9ec40d21ed2a2cb665b0b112cbfed0e1",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-swing/2026.2.5/rd-swing-2026.2.5.jar",
+    name = "com_jetbrains_rd-rd-swing-2026_2_4_http",
+    downloaded_file_path = "rd-swing-2026.2.4.jar",
+    sha256 = "d9f7d186c1f9f5caf38b3be1cb9c151c0120847e5e71239afb5a29669afd553c",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-swing/2026.2.4/rd-swing-2026.2.4.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-swing-2026_2_5-sources_http",
-    downloaded_file_path = "rd-swing-2026.2.5-sources.jar",
-    sha256 = "053a3780820f0b45069aa783a9f4161ab2ae2d405fcb13187989a23df8aa5ee3",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-swing/2026.2.5/rd-swing-2026.2.5-sources.jar",
+    name = "com_jetbrains_rd-rd-swing-2026_2_4-sources_http",
+    downloaded_file_path = "rd-swing-2026.2.4-sources.jar",
+    sha256 = "a8059902a3023c1b4af13db1f12df39426566d789f1b21b18768be39cee690c4",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-swing/2026.2.4/rd-swing-2026.2.4-sources.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-text-2026_2_5_http",
-    downloaded_file_path = "rd-text-2026.2.5.jar",
-    sha256 = "37dd44e9414fc1fa25811832300dfa7d73ec28d495d0c73b43d13d2b53dc84c7",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-text/2026.2.5/rd-text-2026.2.5.jar",
+    name = "com_jetbrains_rd-rd-text-2026_2_4_http",
+    downloaded_file_path = "rd-text-2026.2.4.jar",
+    sha256 = "b4f08ea504f956891d0736cbca1238931dca83a9e67dc9567edbdda63b69acf3",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-text/2026.2.4/rd-text-2026.2.4.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-text-2026_2_5-sources_http",
-    downloaded_file_path = "rd-text-2026.2.5-sources.jar",
-    sha256 = "7616636a3ce122200e8916cfd0343a61ed7687b3a538da977e5e77c17f56f444",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-text/2026.2.5/rd-text-2026.2.5-sources.jar",
+    name = "com_jetbrains_rd-rd-text-2026_2_4-sources_http",
+    downloaded_file_path = "rd-text-2026.2.4-sources.jar",
+    sha256 = "a8d5ed5ad2aa3bac48293922ceb2ae3180d14d36f5d50fce7fcc404c9e2be12e",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-text/2026.2.4/rd-text-2026.2.4-sources.jar",
 )
 
 http_file(
@@ -14127,34 +14239,6 @@ http_file(
 )
 
 http_file(
-    name = "com_electronwill_night-config-toml-3_8_4_http",
-    downloaded_file_path = "toml-3.8.4.jar",
-    sha256 = "127bf8b025c341139145c55bc897f3188057eec19940f99d3eae624399e88f2a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar",
-)
-
-http_file(
-    name = "com_electronwill_night-config-core-3_8_4_http",
-    downloaded_file_path = "core-3.8.4.jar",
-    sha256 = "2d9532aa851742a6e2f3cb472a6a5b3c0e7e8b9da287c7d20a2963466f4aebb4",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar",
-)
-
-http_file(
-    name = "com_electronwill_night-config-toml-3_8_4-sources_http",
-    downloaded_file_path = "toml-3.8.4-sources.jar",
-    sha256 = "ceeb3a90bde39a54a3ccb599b1cea25aaa6468bd036a98e50ddb6579d7d999b2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4-sources.jar",
-)
-
-http_file(
-    name = "com_electronwill_night-config-core-3_8_4-sources_http",
-    downloaded_file_path = "core-3.8.4-sources.jar",
-    sha256 = "f189eb4a6195c3a4719ace91c586d703702cbbf21b646bf5207c9699231eeac3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4-sources.jar",
-)
-
-http_file(
     name = "com_github_marschall-memoryfilesystem-2_8_2_http",
     downloaded_file_path = "memoryfilesystem-2.8.2.jar",
     sha256 = "8b94840d71ad0caa36b3309425b2d23084bc8788ce84d71f2d805b0fc84d1f5a",
@@ -14813,20 +14897,6 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_compose_compiler-compiler-hosted-1_5_14_http",
-    downloaded_file_path = "compiler-hosted-1.5.14.jar",
-    sha256 = "1133b3191ec68f97cf326bf95cbe00cab5d2f39493812e8e36f0e42dad059f64",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/compiler/compiler-hosted/1.5.14/compiler-hosted-1.5.14.jar",
-)
-
-http_file(
-    name = "org_jetbrains_compose_compiler-compiler-hosted-1_5_14-sources_http",
-    downloaded_file_path = "compiler-hosted-1.5.14-sources.jar",
-    sha256 = "ad05e3b8d51509092e10e782df0ac8e1e04ccc4072313bb1403d398daf6a82a8",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/compose/compiler/compiler-hosted/1.5.14/compiler-hosted-1.5.14-sources.jar",
-)
-
-http_file(
     name = "com_github_hypfvieh-dbus-java-transport-native-unixsocket-4_2_1_http",
     downloaded_file_path = "dbus-java-transport-native-unixsocket-4.2.1.jar",
     sha256 = "bb67de9bd08148123b918458efc78055146bd5ae1538487cf4a018dd0f644837",
@@ -15184,17 +15254,17 @@ http_file(
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-gen-2026_2_5_http",
-    downloaded_file_path = "rd-gen-2026.2.5.jar",
-    sha256 = "b28993c1d9f286fac70d98f6dc19c4b0935e27547991bc1a3533befc84ef5e0a",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-gen/2026.2.5/rd-gen-2026.2.5.jar",
+    name = "com_jetbrains_rd-rd-gen-2026_2_4_http",
+    downloaded_file_path = "rd-gen-2026.2.4.jar",
+    sha256 = "e7b6054c1de5d574a069b48beea3e789bbbb3b37d3a6faf3d961988244c2d0bd",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-gen/2026.2.4/rd-gen-2026.2.4.jar",
 )
 
 http_file(
-    name = "com_jetbrains_rd-rd-gen-2026_2_5-sources_http",
-    downloaded_file_path = "rd-gen-2026.2.5-sources.jar",
-    sha256 = "1f4c3693aedc237e5ed8712a8ef0fbeeb7f2d1ca4d127ae2cfaad3e872595e3b",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-gen/2026.2.5/rd-gen-2026.2.5-sources.jar",
+    name = "com_jetbrains_rd-rd-gen-2026_2_4-sources_http",
+    downloaded_file_path = "rd-gen-2026.2.4-sources.jar",
+    sha256 = "b63524c08e941599084dba506ad07e77ae90e77d4b7949b107e83805f7be7a57",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/rd/rd-gen/2026.2.4/rd-gen-2026.2.4-sources.jar",
 )
 
 http_file(

@@ -4,11 +4,13 @@ package com.intellij.agent.workbench.codex.sessions
 import com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigProviderContributor
 
 /**
- * Codex's contribution to the AWB-managed MCP launch contract.
+ * Codex's contribution to the AWB-managed JSON MCP merge contract used by other
+ * providers.
  *
  * Codex's CLI doesn't accept `--mcp-config <file> --strict-mcp-config` semantics
- * compatible with Claude's, so this contributor inherits the default null `contribute`
- * and AWB falls through to the user's checked-in `.mcp.json` for Codex launches.
+ * compatible with Claude's, so this contributor inherits the default null
+ * `contribute`. Codex direct-HTTP launches are handled by
+ * [CodexMcpConfigLaunchContributor] via launch-scoped `-c` config overrides.
  *
  * What Codex *does* contribute is its bridge name [SERVER_NAME], so when **other**
  * providers (e.g. Claude) build a merged config that drops competing bridges, the

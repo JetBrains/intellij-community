@@ -21,6 +21,8 @@
       implementation="com.intellij.agent.workbench.codex.sessions.CodexAgentSessionProviderDescriptor"/>
     <agent.workbench.mcpConfigProviderContributor
       implementation="com.intellij.agent.workbench.codex.sessions.CodexAwbMcpConfigProviderContributor"/>
+    <agent.workbench.sessionLaunchContributor
+      implementation="com.intellij.agent.workbench.codex.sessions.CodexMcpConfigLaunchContributor"/>
     <advancedSetting
       id="agent.workbench.codex.prompt.suggestion.model"
       default="off"

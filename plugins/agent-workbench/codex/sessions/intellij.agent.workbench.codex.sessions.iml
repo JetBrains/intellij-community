@@ -31,6 +31,29 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="night-config-toml" type="repository">
+        <properties maven-id="com.electronwill.night-config:toml:3.8.4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar">
+              <sha256sum>127bf8b025c341139145c55bc897f3188057eec19940f99d3eae624399e88f2a</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar">
+              <sha256sum>2d9532aa851742a6e2f3cb472a6a5b3c0e7e8b9da287c7d20a2963466f4aebb4</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3.8.4/toml-3.8.4-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/electronwill/night-config/core/3.8.4/core-3.8.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.fastutil" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />

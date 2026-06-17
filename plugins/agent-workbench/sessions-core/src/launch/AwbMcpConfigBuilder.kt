@@ -1,15 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.core.launch
 
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.createJsonParser
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.registry.Registry
 import tools.jackson.core.JsonGenerator
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import tools.jackson.core.util.DefaultPrettyPrinter
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.registry.Registry
 import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.Path
@@ -55,7 +55,7 @@ object AwbMcpConfigBuilder {
    * out during merge — these aren't tied to any specific provider, so they don't
    * belong in a contributor.
    */
-  private val LEGACY_FILTERED_NAMES = setOf("ijproxy", "ij-proxy")
+  val LEGACY_FILTERED_NAMES: Set<String> = setOf("ijproxy", "ij-proxy")
 
   /**
    * Pins server-side project resolution to a specific project path. Read by
@@ -74,6 +74,12 @@ object AwbMcpConfigBuilder {
   )
 
   /**
+   * Returns true when AWB should prefer the local IDE streamable-HTTP MCP URL
+   * over provider-specific legacy MCP discovery/configuration.
+   */
+  fun isDirectHttpEnabled(): Boolean = Registry.`is`(REGISTRY_KEY, false)
+
+  /**
    * Returns true when AWB should manage the agent's MCP config via the merged
    * `--mcp-config <file>` route for [provider]. Two gates:
    *  - The registry key `agent.workbench.mcp.use.direct.http` must be on.
@@ -81,7 +87,7 @@ object AwbMcpConfigBuilder {
    *    CLI is known to support a compatible `--mcp-config <file>` invocation).
    */
   fun isEnabled(provider: AgentSessionProvider): Boolean =
-    Registry.`is`(REGISTRY_KEY, false) && findContribution(provider) != null
+    isDirectHttpEnabled() && findContribution(provider) != null
 
   /**
    * Returns a [LaunchConfig] when [isEnabled] holds for [provider] AND the local IDE
@@ -98,7 +104,7 @@ object AwbMcpConfigBuilder {
    * literal IDE MCP URL.
    */
   fun buildForLaunch(projectPath: Path, provider: AgentSessionProvider): LaunchConfig? {
-    if (!Registry.`is`(REGISTRY_KEY, false)) return null
+    if (!isDirectHttpEnabled()) return null
     val contribution = findContribution(provider) ?: return null
     val mcpUrl = McpStreamUrlProvider.resolve() ?: run {
       LOG.info("No MCP stream URL available for $projectPath; falling back to user's .mcp.json")
