@@ -57,19 +57,29 @@ fun providerItemMonochromeIconWithMode(item: AgentSessionProviderMenuItem): Icon
   return icon
 }
 
-fun setProviderItemLaunchProfileIcon(presentation: Presentation, item: AgentSessionProviderMenuItem, selected: Boolean) {
-  setLaunchProfileIcon(presentation, providerItemMonochromeIconWithMode(item), selected)
+fun setProviderItemLaunchProfileActiveMarker(presentation: Presentation, item: AgentSessionProviderMenuItem, active: Boolean) {
+  setLaunchProfileActiveMarker(presentation, providerItemMonochromeIconWithMode(item), active)
 }
 
 fun setLaunchProfileIcon(presentation: Presentation, baseIcon: Icon, selected: Boolean) {
   Toggleable.setSelected(presentation, selected)
+  setLaunchProfileActiveMarker(presentation, baseIcon, selected)
+}
+
+/**
+ * Marks the active launch profile with a trailing checkmark without turning the action into a selected
+ * [Toggleable]. A selected toggleable action that also carries an icon is rendered by the platform action
+ * menu with a `PoppedIcon` background behind the icon (the "selected toolbar button" look), which is
+ * redundant with the checkmark.
+ */
+fun setLaunchProfileActiveMarker(presentation: Presentation, baseIcon: Icon, active: Boolean) {
   presentation.icon = baseIcon
   presentation.selectedIcon = null
   presentation.disabledIcon = null
   presentation.putClientProperty(
     ActionUtil.SECONDARY_ICON,
     when {
-      !selected -> null
+      !active -> null
       presentation.isEnabled -> LafIconLookup.getIcon("checkmark")
       else -> LafIconLookup.getDisabledIcon("checkmark")
     },

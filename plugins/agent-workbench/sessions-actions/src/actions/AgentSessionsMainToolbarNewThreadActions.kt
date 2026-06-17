@@ -11,7 +11,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
-import com.intellij.agent.workbench.sessions.setProviderItemLaunchProfileIcon
+import com.intellij.agent.workbench.sessions.setProviderItemLaunchProfileActiveMarker
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
@@ -40,7 +40,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
@@ -937,9 +936,9 @@ private class ToolbarProfileLaunchAction(
   private val entryPoint: AgentWorkbenchEntryPoint,
   private val createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
   private val activeLaunchProfileId: String?,
-) : DumbAwareToggleAction(profileItem.profile.name, null, providerItemMonochromeIconWithMode(profileItem.menuItem)) {
+) : DumbAwareAction(profileItem.profile.name, null, providerItemMonochromeIconWithMode(profileItem.menuItem)) {
   init {
-    setProviderItemLaunchProfileIcon(templatePresentation, profileItem.menuItem, isActiveProfile())
+    setProviderItemLaunchProfileActiveMarker(templatePresentation, profileItem.menuItem, isActiveProfile())
     templatePresentation.description = profileActionDescription(
       profileItem = profileItem,
       projectLabel = projectLabelForPath(path),
@@ -950,20 +949,9 @@ private class ToolbarProfileLaunchAction(
     return profileItem.profile.id == activeLaunchProfileId
   }
 
-  override fun isSelected(e: AnActionEvent): Boolean {
-    return isActiveProfile()
-  }
-
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
-    if (state) {
-      performLaunch()
-    }
-  }
-
   override fun update(e: AnActionEvent) {
-    super.update(e)
     e.presentation.isEnabled = profileItem.menuItem.isEnabled
-    setProviderItemLaunchProfileIcon(e.presentation, profileItem.menuItem, isSelected(e))
+    setProviderItemLaunchProfileActiveMarker(e.presentation, profileItem.menuItem, isActiveProfile())
     e.presentation.description = profileActionDescription(
       profileItem = profileItem,
       projectLabel = projectLabelForPath(path),
