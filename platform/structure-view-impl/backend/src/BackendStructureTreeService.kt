@@ -6,6 +6,7 @@ import com.intellij.ide.structureView.StructureViewModel.ElementInfoProvider
 import com.intellij.ide.structureView.StructureViewModel.ExpandInfoProvider
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder
+import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement
 import com.intellij.ide.structureView.logical.PhysicalAndLogicalStructureViewBuilder
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.ide.structureView.newStructureView.StructureViewSelectVisitorState
@@ -458,7 +459,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
     return element.toDto(id,
                          -1,
                          0,
-                         expandInfoProvider?.isAutoExpand(element),
+                         shouldAutoExpand(element, expandInfoProvider),
                          elementInfoProvider?.isAlwaysShowsPlus(element),
                          elementInfoProvider?.isAlwaysLeaf(element),
                          StructureViewUtil.getSpeedSearchText(wrapper),
@@ -492,7 +493,7 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
       id,
       parentId,
       wrapper.index,
-      expandInfoProvider?.isAutoExpand(element),
+      shouldAutoExpand(element, expandInfoProvider),
       elementInfoProvider?.isAlwaysShowsPlus(element),
       elementInfoProvider?.isAlwaysLeaf(element),
       StructureViewUtil.getSpeedSearchText(wrapper),
@@ -552,6 +553,11 @@ internal class BackendStructureTreeService(private val session: ClientAppSession
       val wrapper = unwrapTreeElementWrapper(node) ?: return null
       val element = wrapper.value as? StructureViewTreeElement ?: return null
       return element.value
+    }
+
+    private fun shouldAutoExpand(element: StructureViewTreeElement, expandInfoProvider: ExpandInfoProvider?): Boolean {
+      // mirrors com.intellij.ide.structureView.newStructureView.StructureViewComponent.MyExpandListener.isAutoExpandNode
+      return element is CustomRegionTreeElement || expandInfoProvider?.isAutoExpand(element) == true
     }
 
     internal fun processStateToGetSelectedValue(state: StructureViewSelectVisitorState, entry: StructureViewEntry, currentEditorElement: Any?): Any? {
