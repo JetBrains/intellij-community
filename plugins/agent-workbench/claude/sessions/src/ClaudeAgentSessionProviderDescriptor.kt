@@ -6,9 +6,12 @@ import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.isClaudeMenuCommandPrompt
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
+import com.intellij.agent.workbench.prompt.core.withGroup
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
@@ -89,6 +92,9 @@ internal class ClaudeAgentSessionProviderDescriptor(
       AgentPromptReasoningEffort.MAX,
     )
 
+  override val supportsGenerationModelSelection: Boolean
+    get() = true
+
   override val editorTabActionIds: List<String>
     get() = listOf(AgentWorkbenchActionIds.Sessions.BIND_PENDING_AGENT_THREAD_FROM_EDITOR_TAB)
 
@@ -150,17 +156,28 @@ internal class ClaudeAgentSessionProviderDescriptor(
     return buildClaudeNewSessionLaunchSpec(mode, executableResolver())
   }
 
+  override suspend fun listAvailableGenerationModels(project: Project?): List<AgentPromptGenerationModel> {
+    return CLAUDE_CODE_GENERATION_MODELS
+  }
+
   override fun applyGenerationSettings(
     baseLaunchSpec: AgentSessionTerminalLaunchSpec,
     generationSettings: AgentPromptGenerationSettings,
     initialMessagePlan: AgentInitialMessagePlan,
   ): AgentSessionTerminalLaunchSpec {
     val settings = sanitizeGenerationSettings(generationSettings)
+    var command = baseLaunchSpec.command
+    settings.modelId?.let { modelId ->
+      command = replaceOrAddModel(command, modelId)
+    }
     val effort = settings.reasoningEffort
-    if (effort == AgentPromptReasoningEffort.AUTO) {
+    if (effort != AgentPromptReasoningEffort.AUTO) {
+      command = replaceOrAddEffort(command, effort.claudeCliValue())
+    }
+    if (command == baseLaunchSpec.command) {
       return baseLaunchSpec
     }
-    return baseLaunchSpec.copy(command = replaceOrAddEffort(baseLaunchSpec.command, effort.claudeCliValue()))
+    return baseLaunchSpec.copy(command = command)
   }
 
   override fun buildLaunchSpecWithInitialMessage(
@@ -214,15 +231,23 @@ internal fun replaceOrAddPermissionMode(command: List<String>, mode: String): Li
 }
 
 internal fun replaceOrAddEffort(command: List<String>, effort: String): List<String> {
+  return replaceOrAddOption(command, EFFORT_FLAG, effort)
+}
+
+internal fun replaceOrAddModel(command: List<String>, model: String): List<String> {
+  return replaceOrAddOption(command, MODEL_FLAG, model)
+}
+
+private fun replaceOrAddOption(command: List<String>, flag: String, value: String): List<String> {
   val result = command.toMutableList()
-  val index = result.indexOf(EFFORT_FLAG)
+  val index = result.indexOf(flag)
   if (index >= 0 && index + 1 < result.size) {
-    result[index + 1] = effort
+    result[index + 1] = value
     return result
   }
 
   val promptSeparatorIndex = result.indexOf("--").takeIf { it >= 0 } ?: result.size
-  result.addAll(promptSeparatorIndex, listOf(EFFORT_FLAG, effort))
+  result.addAll(promptSeparatorIndex, listOf(flag, value))
   return result
 }
 
@@ -277,3 +302,12 @@ internal fun buildClaudeLaunchSpecWithInitialMessage(
 
 private const val CLAUDE_DISABLE_AUTO_UPDATER_ENV: String = "DISABLE_AUTOUPDATER"
 private const val CLAUDE_DISABLE_AUTO_UPDATER_VALUE: String = "1"
+private const val MODEL_FLAG: String = "--model"
+
+private val CLAUDE_CODE_GENERATION_MODELS: List<AgentPromptGenerationModel> = listOf(
+  AgentPromptGenerationModel(id = "opus", displayName = "Opus"),
+  AgentPromptGenerationModel(id = "sonnet", displayName = "Sonnet", isDefault = true),
+  AgentPromptGenerationModel(id = "sonnet[1m]", displayName = "Sonnet (1M context)"),
+  AgentPromptGenerationModel(id = "haiku", displayName = "Haiku"),
+  AgentPromptGenerationModel(id = "fable", displayName = "Fable"),
+).map { model -> model.withGroup(AgentPromptGenerationModelGroup.CLAUDE_CODE) }

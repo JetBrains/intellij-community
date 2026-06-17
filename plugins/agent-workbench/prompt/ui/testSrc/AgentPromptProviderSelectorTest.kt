@@ -1674,6 +1674,37 @@ class AgentPromptProviderSelectorTest {
   }
 
   @Test
+  fun launchProfileEditorAllowsCustomModelId() {
+    runInEdtAndWait {
+      val profile = AgentPromptLaunchProfile(
+        id = "user:custom-model",
+        name = "Custom Model",
+        providerId = AgentSessionProvider.CODEX.value,
+      )
+      val updatedProfiles = ArrayList<AgentPromptLaunchProfile>()
+      val editor = createLaunchProfileEditorForTest(
+        profiles = listOf(profile),
+        activeProfileId = profile.id,
+        modelCatalog = listOf(
+          AgentPromptGenerationModel(id = "gpt-5.5", displayName = "GPT-5.5").withGroup(AgentPromptGenerationModelGroup.OPENAI),
+        ),
+        onUpdateProfile = { updatedProfile -> updatedProfiles += updatedProfile },
+      )
+      try {
+        editor.selectProfileForTest(profile.id)
+        editor.setSelectedProfileModelIdForTest("claude-future-6")
+
+        assertThat(editor.isModelComboEditableForTest()).isTrue()
+        assertThat(editor.selectedProfileModelIdForTest()).isEqualTo("claude-future-6")
+        assertThat(updatedProfiles.last().generationSettings.modelId).isEqualTo("claude-future-6")
+      }
+      finally {
+        editor.closeForTest()
+      }
+    }
+  }
+
+  @Test
   fun launchProfileEditorModelComboGroupsUnknownSelectedModelAsOther() {
     runInEdtAndWait {
       val profile = AgentPromptLaunchProfile(

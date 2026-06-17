@@ -34,7 +34,7 @@ Ask Agent launch controls let users choose a provider, launch mode, model, and n
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
-- Model and normal reasoning effort default to `Default`, which means provider-auto behavior and sends no CLI override. Codex model selection is populated from the shared Codex app-server `model/list` catalog; Claude Code model selection remains hidden until a reliable dynamic model catalog is available.
+- Model and normal reasoning effort default to `Default`, which means provider-auto behavior and sends no CLI override. Codex model selection is populated from the shared Codex app-server `model/list` catalog. Claude Code model selection uses a hardcoded alias catalog because Claude Code does not expose a reliable dynamic model catalog; explicit Claude selections must launch with `--model <id>` before the `--` prompt separator.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
   [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
@@ -46,10 +46,10 @@ Ask Agent launch controls let users choose a provider, launch mode, model, and n
   [@test] ../../codex/sessions/testSrc/CodexAgentSessionProviderDescriptorTest.kt
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- Provider model catalogs load on demand when either the global prompt model selector or the launch profile editor model combo is opened. After a catalog has loaded once, reopening either control within 30 seconds must show the cached catalog immediately without provider I/O. Older cached catalogs must still render immediately and refresh in the background. The background refresh status appears after 3 seconds to avoid flicker for fast refreshes; if refresh fails after cached data exists, keep the cached choices visible and show the refresh failure inline.
+- Provider model catalogs load on demand when either the global prompt model selector or the launch profile editor model combo is opened. After a catalog has loaded once, reopening either control within 30 seconds must show the cached catalog immediately without provider I/O. Older cached catalogs must still render immediately and refresh in the background. The background refresh status appears after 3 seconds to avoid flicker for fast refreshes; if refresh fails after cached data exists, keep the cached choices visible and show the refresh failure inline. Saved model ids that are absent from the current catalog must remain visible as custom choices instead of being dropped.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
-- Model selector rows must keep `Default` first, then group explicit models with separators in this order: local models, OpenAI/Codex models, Claude Code models, and other models. The same ordering, loading, retry, and cached refresh behavior applies in the launch profile editor's model combo.
+- Model selector rows must keep `Default` first, then group explicit models with separators in this order: local models, OpenAI/Codex models, Claude Code models, and other models. Claude Code explicit rows must follow Claude Code menu order: `Opus`, `Sonnet`, `Sonnet (1M context)`, `Haiku`; additional supported aliases such as `Fable` follow those menu-derived rows. The same ordering, loading, retry, cached refresh, and custom-id preservation behavior applies in the launch profile editor's model combo.
   [@test] ../../prompt/ui/testSrc/AgentPromptProviderSelectorTest.kt
 
 - Quick profile selection is transient for the current launch. It must not be saved on submit or popup close. The active profile label shows a modified state when the draft differs from the selected profile's provider, launch mode, model, or effort.
