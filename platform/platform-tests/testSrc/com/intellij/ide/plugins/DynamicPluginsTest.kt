@@ -49,6 +49,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.module.ModuleConfigurationEditor
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationEditorProvider
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState
 import com.intellij.openapi.util.Disposer
@@ -692,6 +693,33 @@ class DynamicPluginsTest {
       }
       assertThat(PluginManagerCore.getPlugin(PluginId.getId("bar"))).isNull()
       assertThat(application.getTestHandleService<MyPersistentComponent, _, _>(foo)).isNull()
+    }
+  }
+
+  @Test
+  fun `service registration from dynamic loading of optional depends for default project`() {
+    val pluginSet = buildPluginSet(pluginsDir) {
+      plugin("foo") {
+        includePackageClassFiles<MyPersistentComponent>()
+      }
+      plugin("bar") {
+        depends("foo", "foo.xml") {
+          extensions("""<projectService serviceInterface="${MyPersistentComponent::class.java.name}" serviceImplementation="${MyPersistentComponentImpl::class.java.name}"/>""")
+          includePackageClassFiles<MyPersistentComponentImpl>()
+        }
+      }
+    }
+    val (foo, bar) = pluginSet.getEnabledPlugins("foo", "bar")
+
+    val defaultProject = ProjectManager.getInstance().defaultProject
+    loadPluginInTest(foo) {
+      assertThat(defaultProject.getTestHandleService<MyPersistentComponent, _, _>(foo)).isNull()
+      loadPluginInTest(bar) {
+        assertThat(defaultProject.getTestHandleService<MyPersistentComponent, _, _>(foo)).isNotNull()
+        assertThat(PluginManagerCore.getPlugin(PluginId.getId("bar"))).isNotNull()
+      }
+      assertThat(PluginManagerCore.getPlugin(PluginId.getId("bar"))).isNull()
+      assertThat(defaultProject.getTestHandleService<MyPersistentComponent, _, _>(foo)).isNull()
     }
   }
 

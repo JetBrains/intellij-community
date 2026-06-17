@@ -1057,7 +1057,14 @@ internal object DynamicPluginsLegacyImpl {
     listenerCallbacks: MutableList<ExtensionPointDeferredListenersNotification>,
   ) {
     app.registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
-    for (openProject in getOpenedProjects()) {
+
+    val openedProjects = ProjectUtil.getOpenProjects().toMutableList()
+    @Suppress("TestOnlyProblems")
+    if (ProjectManagerEx.getInstanceEx().isDefaultProjectInitialized) {
+      openedProjects.add(ProjectManagerEx.getInstanceEx().defaultProject)
+    }
+
+    for (openProject in openedProjects) {
       openProject.getComponentManagerImpl().registerComponents(descriptors = descriptors, app = app, listenerCallbacks = listenerCallbacks)
 
       for (module in ModuleManager.getInstance(openProject).modules) {
