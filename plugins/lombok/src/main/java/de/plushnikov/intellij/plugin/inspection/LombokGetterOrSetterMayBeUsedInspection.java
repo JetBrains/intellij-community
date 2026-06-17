@@ -41,6 +41,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/// Shared base for inspections that replace explicit simple getter or setter methods with Lombok `@Getter` or `@Setter` annotations.
+///
+/// Reports matching methods or whole classes when Lombok can generate the accessors, and the quick fix adds the Lombok annotation,
+/// removes the explicit methods, and moves their Javadocs to the corresponding fields.
 public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJavaInspectionBase {
 
   @Override
