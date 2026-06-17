@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 @file:OptIn(FlowPreview::class)
 
@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader.Companion.isEditorLoaded
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl
@@ -205,11 +206,17 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
   override fun scheduleUpdateNotifications(editor: TextEditor) {
     ((editor as? TextEditorImpl)?.asyncLoader?.coroutineScope ?: coroutineScope).launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       if (editor.isValid) {
-        if (ApplicationManager.getApplication().isHeadlessEnvironment || AppMode.isRemoteDevHost() || UIUtil.isShowing(editor.component)) {
-          updateEditors(file = editor.file, fileEditors = listOf(editor))
+        // The async loader notifies us about the inner text editor, but when it is wrapped in a split
+        // editor (e.g. TextEditorWithPreview), the FileEditor registered in the composite - the one
+        // returned by getAllEditorList and the one top components attach to - is the wrapper, not the
+        // inner editor. Target the wrapper so the notification lands on (and PENDING_UPDATE is read
+        // from) the visible editor.
+        val fileEditor: FileEditor = TextEditorWithPreview.getParentSplitEditor(editor) ?: editor
+        if (ApplicationManager.getApplication().isHeadlessEnvironment || AppMode.isRemoteDevHost() || UIUtil.isShowing(fileEditor.component)) {
+          updateEditors(file = editor.file, fileEditors = listOf(fileEditor))
         }
         else {
-          editor.putUserData(PENDING_UPDATE, true)
+          fileEditor.putUserData(PENDING_UPDATE, true)
         }
       }
     }
