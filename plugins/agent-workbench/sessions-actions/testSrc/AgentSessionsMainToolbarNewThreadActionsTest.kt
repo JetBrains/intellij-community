@@ -613,7 +613,10 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     selectedAction.update(selectedPopupEvent)
     unselectedAction.update(unselectedPopupEvent)
 
-    assertThat(Toggleable.isSelected(selectedPopupEvent.presentation)).isTrue()
+    // The active profile is marked only by the trailing checkmark (SECONDARY_ICON); it must not be a
+    // selected Toggleable, otherwise the platform action menu paints a PoppedIcon background behind the icon.
+    assertThat(selectedAction).isNotInstanceOf(Toggleable::class.java)
+    assertThat(Toggleable.isSelected(selectedPopupEvent.presentation)).isFalse()
     assertThat(selectedPopupEvent.presentation.icon).isSameAs(providerIcon)
     assertThat(selectedPopupEvent.presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNotNull()
     assertThat(Toggleable.isSelected(unselectedPopupEvent.presentation)).isFalse()
@@ -805,7 +808,8 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
     selectedAction.update(selectedPopupEvent)
 
-    assertThat(Toggleable.isSelected(selectedPopupEvent.presentation)).isTrue()
+    assertThat(selectedAction).isNotInstanceOf(Toggleable::class.java)
+    assertThat(Toggleable.isSelected(selectedPopupEvent.presentation)).isFalse()
     assertThat(selectedPopupEvent.presentation.icon).isSameAs(providerIcon)
     assertThat(selectedPopupEvent.presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNotNull()
   }
