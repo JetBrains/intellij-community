@@ -1102,6 +1102,7 @@ Tool parameters:
 | `stripCoroutineDump` | `true`  | Strip coroutine dump frames with little diagnostic value.                                  |
 
 Use this tool for quick answers to "what is this IDE doing right now?" questions: high CPU, blocked threads, thread-state spikes, or a raw
-dump that should be attached to a performance investigation. It is not a replacement for JFR, async-profiler, or a long-running profiler
-recording. Per-thread CPU data is based on `ThreadMXBean` CPU-time deltas sampled inside the IDE process, and raw dumps are truncated when they
-exceed `maxDumpChars`.
+dump that should be attached to a performance investigation. Thread states are JVM `Thread.State` values: `RUNNABLE` includes Java execution
+and native calls, so use `topCpuThreads[].cpuDeltaNanos` together with `isInNative`, `nativeFrame`, and `nativeOperationHint` before treating a
+thread as CPU-bound. It is not a replacement for JFR, async-profiler, or a long-running profiler recording. Per-thread CPU data is based on
+`ThreadMXBean` CPU-time deltas sampled inside the IDE process, and raw dumps are truncated when they exceed `maxDumpChars`.

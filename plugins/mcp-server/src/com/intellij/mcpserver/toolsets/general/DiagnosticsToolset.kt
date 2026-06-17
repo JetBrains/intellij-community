@@ -34,6 +34,12 @@ private const val MAX_TOP_THREAD_COUNT = 200
 private const val DEFAULT_MAX_DUMP_CHARS = 200_000
 private const val MAX_DUMP_CHARS = 2_000_000
 private const val MAX_STACK_FRAMES_PER_THREAD = 16
+private const val JVM_THREAD_STATE_INTERPRETATION =
+  "JVM thread states come from ThreadMXBean. RUNNABLE includes Java execution and native calls; " +
+  "use cpuDeltaNanos together with isInNative/nativeOperationHint before treating a thread as CPU-bound."
+private const val THREAD_STATE_DESCRIPTION =
+  "JVM Thread.State name. RUNNABLE can mean Java execution or a native call; " +
+  "use cpuDeltaNanos and native hints for interpretation."
 
 class DiagnosticsToolset : McpToolset {
   override fun isEnabled(): Boolean = System.getProperty(DIAGNOSTICS_ENABLED_PROPERTY).toBoolean()
@@ -45,6 +51,7 @@ class DiagnosticsToolset : McpToolset {
     |Use this when the IDE feels slow or stuck and you need current JVM/process metrics, top CPU threads, thread states, and thread/coroutine dumps.
     |The toolset is disabled unless the IDE is started with `-D$DIAGNOSTICS_ENABLED_PROPERTY=true`.
     |CPU data is based on per-thread CPU-time deltas sampled inside the IDE process, not a full profiler recording.
+    |Thread states are JVM `Thread.State` values; `RUNNABLE` can also mean the thread is blocked inside a native call.
   """)
   suspend fun get_ide_diagnostics(
     @McpDescription("CPU sampling window in milliseconds. Values are clamped to 0..$MAX_SAMPLE_MILLIS. Use 0 for an immediate snapshot.")
@@ -71,7 +78,8 @@ class DiagnosticsToolset : McpToolset {
       }
       val after = collectThreadSamples(threadMxBean)
       val threadInfos = ThreadDumper.getThreadInfos(threadMxBean, true)
-      val rawDumpResult = if (includeRawDump) rawDump(threadInfos, stripCoroutineDump, normalizedMaxDumpChars) else RawDumpResult(null, false)
+      val rawDumpResult =
+        if (includeRawDump) rawDump(threadInfos, stripCoroutineDump, normalizedMaxDumpChars) else RawDumpResult(null, false)
       return IdeDiagnosticsResult(
         capturedAtEpochMillis = System.currentTimeMillis(),
         sampleMillis = normalizedSampleMillis,
@@ -162,6 +170,8 @@ class DiagnosticsToolset : McpToolset {
     val peakThreadCount: Int,
     val daemonThreadCount: Int,
     val totalStartedThreadCount: Long,
+    @property:McpDescription(JVM_THREAD_STATE_INTERPRETATION)
+    val stateInterpretation: String,
     val stateCounts: Map<String, Int>,
   )
 
@@ -169,6 +179,7 @@ class DiagnosticsToolset : McpToolset {
   data class ThreadCpuSample(
     val id: Long,
     val name: String,
+    @property:McpDescription(THREAD_STATE_DESCRIPTION)
     val state: String,
     val cpuDeltaNanos: Long,
     val userDeltaNanos: Long,
@@ -176,6 +187,14 @@ class DiagnosticsToolset : McpToolset {
     val waitedCountDelta: Long,
     @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
     val lockName: String? = null,
+    @property:McpDescription("Whether ThreadMXBean reports that the thread is currently executing native code.")
+    val isInNative: Boolean,
+    @property:McpDescription("First native stack frame, if one is present in the sampled stack trace.")
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val nativeFrame: String? = null,
+    @property:McpDescription("Best-effort hint for the first native frame: FILE_IO, SOCKET_IO, PARK, or UNKNOWN_NATIVE.")
+    @EncodeDefault(mode = EncodeDefault.Mode.NEVER)
+    val nativeOperationHint: String? = null,
     val stackTrace: List<String>,
   )
 }
@@ -191,6 +210,9 @@ private data class ThreadSample(
   val blockedCount: Long,
   val waitedCount: Long,
   val lockName: String?,
+  val isInNative: Boolean,
+  val nativeFrame: String?,
+  val nativeOperationHint: String?,
   val stackTrace: List<String>,
 )
 
@@ -205,6 +227,8 @@ private fun enableThreadCpuTimeIfPossible(threadMxBean: ThreadMXBean): Boolean? 
 
 private fun collectThreadSamples(threadMxBean: ThreadMXBean): Map<Long, ThreadSample> {
   return ThreadDumper.getThreadInfos(threadMxBean, false).associate { info ->
+    val stackTrace = info.stackTrace
+    val nativeFrame = stackTrace.firstOrNull { it.isNativeMethod }
     info.threadId to ThreadSample(
       id = info.threadId,
       name = info.threadName,
@@ -214,9 +238,43 @@ private fun collectThreadSamples(threadMxBean: ThreadMXBean): Map<Long, ThreadSa
       blockedCount = info.blockedCount,
       waitedCount = info.waitedCount,
       lockName = info.lockName,
-      stackTrace = info.stackTrace.take(MAX_STACK_FRAMES_PER_THREAD).map { it.toString() },
+      isInNative = info.isInNative,
+      nativeFrame = nativeFrame?.toString(),
+      nativeOperationHint = inferNativeOperationHint(nativeFrame),
+      stackTrace = stackTrace.take(MAX_STACK_FRAMES_PER_THREAD).map { it.toString() },
     )
   }
+}
+
+internal fun inferNativeOperationHint(nativeFrame: StackTraceElement?): String? {
+  if (nativeFrame == null) return null
+  val className = nativeFrame.className
+  val methodName = nativeFrame.methodName
+  return when {
+    isParkNativeFrame(className, methodName) -> "PARK"
+    isSocketNativeFrame(className, methodName) -> "SOCKET_IO"
+    isFileIoNativeFrame(className, methodName) -> "FILE_IO"
+    else -> "UNKNOWN_NATIVE"
+  }
+}
+
+private fun isParkNativeFrame(className: String, methodName: String): Boolean {
+  return methodName == "park" && (className == "jdk.internal.misc.Unsafe" || className == "sun.misc.Unsafe")
+}
+
+private fun isSocketNativeFrame(className: String, methodName: String): Boolean {
+  return className.startsWith("java.net.") ||
+         className.contains("Socket") ||
+         className.contains("Datagram") ||
+         className == "sun.nio.ch.Net" && methodName in setOf("poll", "pollConnect", "connect0")
+}
+
+private fun isFileIoNativeFrame(className: String, methodName: String): Boolean {
+  return className.startsWith("java.io.") ||
+         className.startsWith("java.nio.file.") ||
+         className.startsWith("sun.nio.fs.") ||
+         className.contains("FileDispatcher") ||
+         className.endsWith("FileSystem") && methodName.endsWith("0")
 }
 
 private fun threadCpuTime(threadMxBean: ThreadMXBean, threadId: Long): Long {
@@ -229,7 +287,11 @@ private fun threadUserTime(threadMxBean: ThreadMXBean, threadId: Long): Long {
   return threadMxBean.getThreadUserTime(threadId)
 }
 
-private fun topCpuThreads(before: Map<Long, ThreadSample>, after: Map<Long, ThreadSample>, limit: Int): List<DiagnosticsToolset.ThreadCpuSample> {
+private fun topCpuThreads(
+  before: Map<Long, ThreadSample>,
+  after: Map<Long, ThreadSample>,
+  limit: Int,
+): List<DiagnosticsToolset.ThreadCpuSample> {
   return after.values.map { current ->
     val previous = before[current.id]
     DiagnosticsToolset.ThreadCpuSample(
@@ -241,6 +303,9 @@ private fun topCpuThreads(before: Map<Long, ThreadSample>, after: Map<Long, Thre
       blockedCountDelta = positiveDelta(previous?.blockedCount, current.blockedCount),
       waitedCountDelta = positiveDelta(previous?.waitedCount, current.waitedCount),
       lockName = current.lockName,
+      isInNative = current.isInNative,
+      nativeFrame = current.nativeFrame,
+      nativeOperationHint = current.nativeOperationHint,
       stackTrace = current.stackTrace,
     )
   }.sortedWith(compareByDescending<DiagnosticsToolset.ThreadCpuSample> { it.cpuDeltaNanos }.thenBy { it.name }).take(limit)
@@ -322,6 +387,7 @@ private fun threadSummary(threadMxBean: ThreadMXBean, threadInfos: Array<ThreadI
     peakThreadCount = threadMxBean.peakThreadCount,
     daemonThreadCount = threadMxBean.daemonThreadCount,
     totalStartedThreadCount = threadMxBean.totalStartedThreadCount,
+    stateInterpretation = JVM_THREAD_STATE_INTERPRETATION,
     stateCounts = threadInfos.groupingBy { it.threadState.name }.eachCount().toSortedMap(),
   )
 }
