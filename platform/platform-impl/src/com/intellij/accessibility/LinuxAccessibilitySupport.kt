@@ -70,6 +70,10 @@ object LinuxAccessibilitySupport {
     if ((isSupportScreenReadersOverridden() || screenReaderDetected || magnifierDetected) && !atkWrapperEnabledInConfig) {
       configureAndTryActivateLinuxAtkWrapper()
     }
+
+    if (linuxAccessibilitySupportRequested) {
+      AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.LINUX_ACCESSIBILITY_SUPPORT_ENABLED)
+    }
   }
 
 
