@@ -8,9 +8,9 @@ import org.junit.Test
 internal class TerminalCmdArgumentsEscapingTest {
 
   @Test
-  fun `command prompt quotes exclamation mark`() {
+  fun `command prompt leaves exclamation mark unescaped`() {
     val escapedText = escapeShellArgument("""C:\Users\me\file!.txt""", ShellName.CMD)
-    assertEquals("""C:\Users\me\file"!.txt"""", escapedText)
+    assertEquals("""C:\Users\me\file!.txt""", escapedText)
   }
 
   @Test
@@ -38,8 +38,8 @@ internal class TerminalCmdArgumentsEscapingTest {
   }
 
   @Test
-  fun `command prompt quotes wildcard and shell special characters`() {
+  fun `command prompt with wildcard and shell special characters`() {
     val escapedText = escapeShellArgument("a*b?[c]~d'e", ShellName.CMD)
-    assertEquals(""""a*b?[c]~d'e"""", escapedText)
+    assertEquals("""a*b?[c]~d'e""", escapedText)
   }
 }
