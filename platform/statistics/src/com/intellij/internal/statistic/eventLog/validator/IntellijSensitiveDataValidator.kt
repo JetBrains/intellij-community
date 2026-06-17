@@ -24,6 +24,7 @@ import com.jetbrains.fus.reporting.api.IEventContext
 import com.jetbrains.fus.reporting.api.IEventGroupRules
 import com.jetbrains.fus.reporting.api.IEventGroupsFilterRules
 import com.jetbrains.fus.reporting.api.IGroupValidators
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.util.concurrent.ConcurrentHashMap
 
@@ -152,6 +153,10 @@ open class IntellijSensitiveDataValidator protected constructor(
 
   val remoteConfig: RemoteConfig
     get() = fusComponents!!.remoteConfig
+
+  @get:ApiStatus.Internal
+  val reportDispatcher: com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportDispatcher?
+    get() = fusComponents?.reportDispatcher
 
   open suspend fun isGroupAllowed(group: EventLogGroup): Boolean {
     if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {

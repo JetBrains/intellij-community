@@ -136,6 +136,7 @@ open class StatisticsFileEventLogger(
     }
   }
 
+  // TODO: move the event extension mechanism to dispatcher extension
   private fun logLastEvent() {
     lastEvent?.let {
       val event = it.validatedEvent.event

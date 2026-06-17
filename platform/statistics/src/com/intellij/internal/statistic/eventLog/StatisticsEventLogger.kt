@@ -4,7 +4,9 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.ide.plugins.ProductLoadingStrategy
 import com.intellij.idea.AppMode
 import com.intellij.internal.statistic.StatisticsServiceScope
+import com.intellij.internal.statistic.eventLog.dispatcher.DispatcherBackedEventLogWriter
 import com.intellij.internal.statistic.eventLog.logger.StatisticsEventLogThrottleWriter
+import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
@@ -50,7 +52,7 @@ abstract class StatisticsEventLoggerProvider(
   val recorderId: String,
   val version: Int,
   val sendFrequencyMs: Long,
-  private val maxFileSizeInBytes: Int,
+  @get:Internal val maxFileSizeInBytes: Int,
   val sendLogsOnIdeClose: Boolean = false,
   val isCharsEscapingRequired: Boolean = true,
   val useDefaultRecorderId: Boolean = false,
@@ -165,7 +167,6 @@ abstract class StatisticsEventLoggerProvider(
 
   private fun createLogger(): StatisticsEventLogger {
     val app = ApplicationManager.getApplication()
-    val isEap = app != null && app.isEAP
     val isHeadless = app != null && app.isHeadlessEnvironment
     // Use `String?` instead of boolean flag for future expansion with other IDE modes
     val ideMode = if (AppMode.isRemoteDevHost()) "RDH" else null
@@ -181,12 +182,11 @@ abstract class StatisticsEventLoggerProvider(
       recorderId = recorderId,
       alternativeRecorderId = if (useDefaultRecorderId) "FUS" else null,
     )
-    val writer = StatisticsEventLogFileWriter(
-      loggerProvider = this,
-      maxFileSizeInBytes = maxFileSizeInBytes,
-      isEap = isEap,
-      prefix = eventLogConfiguration.build,
-    )
+
+    val dispatcher = IntellijSensitiveDataValidator.getInstance(recorderId).reportDispatcher
+                     ?: error("FusComponents.reportDispatcher is null for recorder '$recorderId'; logger creation requires the production FusComponents path.")
+    val eventLogDir = eventLogConfiguration.getEventLogDataPath().resolve("logs").resolve(recorderId)
+    val writer = DispatcherBackedEventLogWriter(dispatcher, eventLogDir)
 
     val configService = EventLogConfigOptionsService.getInstance()
     val throttledWriter = StatisticsEventLogThrottleWriter(

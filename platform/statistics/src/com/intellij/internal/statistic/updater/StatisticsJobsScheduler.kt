@@ -10,7 +10,6 @@ import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploade
 import com.intellij.internal.statistic.eventLog.validator.IntellijSensitiveDataValidator
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider.listenToMetadataEvents
 import com.intellij.internal.statistic.eventLog.validator.storage.FusComponentProvider.listenToOptionsChanges
-import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.Service
@@ -27,12 +26,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -108,11 +105,10 @@ internal class StatisticsJobsScheduler : ApplicationActivity {
 
     val job = coroutineScope.launch {
       delay((5 * 60).seconds)
-
-      while (isActive) {
-        StatisticsUploadAssistant.getEventLogStatisticsService(provider.recorderId).send()
-        delay(provider.sendFrequencyMs.milliseconds)
-      }
+      val dispatcher = IntellijSensitiveDataValidator.getInstance(provider.recorderId).reportDispatcher ?: return@launch
+      // PersistentQueue paces itself based on the recorder's sendFrequencyMs (passed at construction time);
+      // a single scheduleSend kicks off the SDK's internal periodic loop.
+      dispatcher.scheduleSend()
     }
     sendJobs[provider.recorderId] = job
   }

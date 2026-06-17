@@ -51,10 +51,17 @@ import com.jetbrains.fus.reporting.defaults.DefaultMetadataStorage
 import com.jetbrains.fus.reporting.defaults.DefaultRemoteConfig
 import com.jetbrains.fus.reporting.defaults.MetadataUpdateDelay
 import com.jetbrains.fus.reporting.defaults.NoOpLoggerFactory
+import com.jetbrains.fus.reporting.defaults.dispatcher.EventLogBuildType
+import com.jetbrains.fus.reporting.defaults.dispatcher.PersistentQueue
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.connection.metadata.createJvmHttpClient
+import com.intellij.internal.statistic.eventLog.dispatcher.IntellijFusJsonSerializer
+import com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportDispatcher
+import com.intellij.internal.statistic.eventLog.dispatcher.IntellijReportValidator
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.jetbrains.fus.reporting.jvm.InMemoryJvmFileStorage
 import com.jetbrains.fus.reporting.jvm.JvmFileStorage
+import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.serialization.SerializationException
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -70,11 +77,16 @@ import tools.jackson.module.kotlin.kotlinModule
 import java.io.IOException
 import java.nio.file.Path
 import kotlin.reflect.KClass
+import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
 object FusComponentProvider {
   const val CUSTOM_FUS_SCHEMA_DIR_PROPERTY: String = "intellij.fus.custom.schema.dir"
   const val FUS_METADATA_DIR: String = "event-log-metadata"
+
+  // Mirrors the historical retention used by EventLogFileWriter; PersistentQueue deletes log files older than this.
+  private val MAX_LOG_FILE_AGE = 7.days
 
   @Throws(IOException::class)
   private fun getMetadataDir(recorderId: String): Path = getMetadataConfigRoot()
@@ -172,6 +184,12 @@ object FusComponentProvider {
     val metadataStorage: MetadataStorage<EventLogBuild>,
     val messageBus: MessageBus,
     val remoteConfig: RemoteConfig,
+    /**
+     * Null only on the blind/test path ([createBlindFusComponents]) — production [createFusComponents] always builds a real
+     * dispatcher. Callers in the IDE's event pipeline can `!!` it; unit tests typically route through
+     * `TestStatisticsEventLoggerProvider` and never touch this field.
+     */
+    val reportDispatcher: IntellijReportDispatcher? = null,
   )
 
   private class BlindMetadataStorage:  MetadataStorage<EventLogBuild> {
@@ -239,7 +257,7 @@ object FusComponentProvider {
       reduceInitialMetadataUpdateDelay = System.getProperty("fus.internal.reduce.initial.delay").toBoolean()
     )
 
-    val jsonSerializer = FusJacksonSerializer()
+    val jsonSerializer = IntellijFusJsonSerializer(FusJacksonSerializer())
 
     val httpClient = applicationInfo.connectionSettings.createJvmHttpClient()
     val loggerFactory = NoOpLoggerFactory()
@@ -252,7 +270,7 @@ object FusComponentProvider {
       httpClient
     )
 
-    val fileStorage = if (ApplicationManager.getApplication().isUnitTestMode()) {
+    val metadataFileStorage = if (ApplicationManager.getApplication().isUnitTestMode()) {
       InMemoryJvmFileStorage()
     } else {
       JvmFileStorage(getMetadataDir(recorderId))
@@ -265,7 +283,7 @@ object FusComponentProvider {
       remoteConfig,
       httpClient,
       jsonSerializer,
-      fileStorage,
+      metadataFileStorage,
       BundledJvmFileStorage(recorderId),
       MetadataUpdateDelay.LONG,
       { version -> EventLogBuild.fromString(version) },
@@ -273,19 +291,58 @@ object FusComponentProvider {
       utilRulesProducer = CustomRuleProducer(recorderId)
     )
 
-    return FusComponents(
+    val effectiveMetadataStorage: MetadataStorage<EventLogBuild> =
       if (ApplicationManager.getApplication().isInternal()) {
-        CompositeValidationRulesStorage(
-          metadataStorage,
-          ValidationTestRulesPersistedStorage(recorderId)
-        )
+        CompositeValidationRulesStorage(metadataStorage, ValidationTestRulesPersistedStorage(recorderId))
       } else {
         metadataStorage
-      },
-      messageBus,
-      remoteConfig
+      }
+
+    val eventLogFileStorage = if (ApplicationManager.getApplication().isUnitTestMode()) {
+      InMemoryJvmFileStorage()
+    } else {
+      JvmFileStorage(getEventLogDir(recorderId))
+    }
+    val buildType = if (applicationInfo.isEAP) EventLogBuildType.EAP else EventLogBuildType.RELEASE
+    val persistentQueue = PersistentQueue(
+      messageBus = messageBus,
+      fileStorage = eventLogFileStorage,
+      jsonSerializer = jsonSerializer,
+      loggerFactory = loggerFactory,
+      defaultDelay = eventLogProvider.sendFrequencyMs.milliseconds,
+      eventClass = LogEvent::class,
+      buildType = buildType,
+      maxFileBytes = eventLogProvider.maxFileSizeInBytes.toLong(),
+      maxFileAge = MAX_LOG_FILE_AGE,
+    )
+    val validator = IntellijReportValidator(recorderId)
+    val device = EventLogConfiguration.getInstance()
+      .getOrCreate(recorderId = recorderId, alternativeRecorderId = if (eventLogProvider.useDefaultRecorderId) "FUS" else null)
+      .deviceId
+    val reportDispatcher = IntellijReportDispatcher(
+      eventLogProvider = eventLogProvider,
+      messageBus = messageBus,
+      config = config,
+      remoteConfig = remoteConfig,
+      jsonSerializer = jsonSerializer,
+      httpClient = httpClient,
+      fusLoggerFactory = loggerFactory,
+      validator = validator,
+      eventQueue = persistentQueue,
+      device = device,
+      isInternal = applicationInfo.isInternal,
+    )
+
+    return FusComponents(
+      metadataStorage = effectiveMetadataStorage,
+      messageBus = messageBus,
+      remoteConfig = remoteConfig,
+      reportDispatcher = reportDispatcher,
     )
   }
+
+  private fun getEventLogDir(recorderId: String): Path =
+    EventLogConfiguration.getInstance().getEventLogDataPath().resolve("logs").resolve(recorderId)
 
   class BundledJvmFileStorage(private val recorderId: String) : FileStorage {
     private val bundledBasePath: String
