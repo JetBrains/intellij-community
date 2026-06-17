@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.time.Instant
@@ -247,6 +248,101 @@ class CodexRolloutSessionBackendTest {
           outputTokens = 1_939,
           cacheReadTokens = 11_392,
           reasoningTokens = 1_002,
+        )
+      )
+    }
+  }
+
+  @Test
+  fun ignoresTransientSecondPassReadFailureWhenParsingUsageSnapshots() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-usage-read-failure")
+      Files.createDirectories(projectDir)
+      val rollout = tempDir.resolve("sessions").resolve("2026").resolve("05").resolve("08")
+        .resolve("rollout-usage-read-failure.jsonl")
+      writeRollout(
+        file = rollout,
+        lines = listOf(
+          subAgentSessionMetaLine(
+            timestamp = "2026-05-08T09:00:00.000Z",
+            id = "usage-read-failure",
+            cwd = projectDir,
+            parentThreadId = "parent-usage-read-failure",
+          ),
+          tokenUsageLine(
+            timestamp = "2026-05-08T09:00:01.000Z",
+            model = "gpt-5",
+            totalInputTokens = 100,
+            cachedInputTokens = 20,
+            outputTokens = 7,
+          ),
+        ),
+      )
+
+      var openCount = 0
+      val parser = CodexRolloutParser(
+        openReader = { path ->
+          openCount += 1
+          if (openCount == 1) Files.newBufferedReader(path) else throw NoSuchFileException(path.toString())
+        }
+      )
+
+      val parsed = checkNotNull(parser.parse(rollout))
+
+      assertThat(parsed.thread.thread.id).isEqualTo("usage-read-failure")
+      assertThat(parsed.thread.usageSnapshots).isEmpty()
+    }
+  }
+
+  @Test
+  fun keepsFastSubAgentCumulativeUsageWhenOnlyTwoSnapshotsShareFirstSecond() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-subagent-fast-start")
+      Files.createDirectories(projectDir)
+      writeRollout(
+        file = tempDir.resolve("sessions").resolve("2026").resolve("05").resolve("08")
+          .resolve("rollout-subagent-fast-start.jsonl"),
+        lines = listOf(
+          subAgentSessionMetaLine(
+            timestamp = "2026-05-08T10:00:00.000Z",
+            id = "subagent-fast-start",
+            cwd = projectDir,
+            parentThreadId = "parent-fast-start",
+          ),
+          tokenUsageLine(
+            timestamp = "2026-05-08T10:00:01.100Z",
+            model = "gpt-5",
+            totalInputTokens = 100,
+            cachedInputTokens = 20,
+            outputTokens = 7,
+          ),
+          tokenUsageLine(
+            timestamp = "2026-05-08T10:00:01.900Z",
+            model = "gpt-5",
+            totalInputTokens = 220,
+            cachedInputTokens = 40,
+            outputTokens = 9,
+          ),
+          tokenUsageLine(
+            timestamp = "2026-05-08T10:00:02.100Z",
+            model = "gpt-5",
+            totalInputTokens = 260,
+            cachedInputTokens = 60,
+            outputTokens = 12,
+          ),
+        ),
+      )
+
+      val backend = CodexRolloutSessionBackend(codexHomeProvider = { tempDir })
+      val threads = backend.listThreads(path = projectDir.toString(), openProject = null)
+
+      assertThat(threads).hasSize(1)
+      assertThat(threads.single().usageSnapshots).containsExactly(
+        AgentSessionUsageSnapshot(
+          modelId = "gpt-5",
+          inputTokens = 200,
+          outputTokens = 12,
+          cacheReadTokens = 60,
         )
       )
     }

@@ -34,6 +34,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineI
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import java.io.BufferedReader
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
@@ -46,6 +47,7 @@ private const val TURN_ABORTED_OPEN_TAG = "<turn_aborted>"
 private const val CODEX_EXEC_HEADER = "OpenAI Codex"
 private const val CODEX_EXEC_WORKDIR_PREFIX = "workdir:"
 private const val CODEX_EXEC_SESSION_ID_PREFIX = "session id:"
+private const val MIN_SUB_AGENT_REPLAY_SNAPSHOTS = 3
 private val THREAD_TITLE_WHITESPACE = Regex("\\s+")
 private val CODEX_THREAD_ID = Regex("[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
 
@@ -53,6 +55,7 @@ private val LOG = logger<CodexRolloutParser>()
 
 internal class CodexRolloutParser(
   private val jsonFactory: JsonFactory = JsonFactory(),
+  private val openReader: (Path) -> BufferedReader = Files::newBufferedReader,
 ) {
   fun parse(path: Path): ParsedRolloutThread? {
     val state = try {
@@ -121,6 +124,7 @@ internal class CodexRolloutParser(
           path = path,
           fallbackModelId = state.modelId,
           isSubAgentThreadSpawn = state.parentThreadId != null,
+          openReader = openReader,
         ).ifEmpty { listOfNotNull(state.usageSnapshot) },
         hasExplicitTitle = !usedFallbackTitle,
       ),
@@ -161,71 +165,78 @@ private fun collectRolloutUsageSnapshots(
   path: Path,
   fallbackModelId: String?,
   isSubAgentThreadSpawn: Boolean,
+  openReader: (Path) -> BufferedReader,
 ): List<AgentSessionUsageSnapshot> {
-  val usageByModel = LinkedHashMap<String?, UsageTotals>()
-  val modelState = CodexUsageModelState(currentModel = fallbackModelId)
-  var previousTotalUsage: AgentSessionUsageSnapshot? = null
-  val replaySecond = if (isSubAgentThreadSpawn) detectSubAgentReplaySecond(path) else null
-  var skipReplay = replaySecond != null
-  val fallbackTimestamp = runCatching { Files.getLastModifiedTime(path).toInstant().toString() }.getOrDefault("1970-01-01T00:00:00Z")
+  return try {
+    val usageByModel = LinkedHashMap<String?, UsageTotals>()
+    val modelState = CodexUsageModelState(currentModel = fallbackModelId)
+    var previousTotalUsage: AgentSessionUsageSnapshot? = null
+    val replaySecond = if (isSubAgentThreadSpawn) detectSubAgentReplaySecond(path, openReader) else null
+    var skipReplay = replaySecond != null
+    val fallbackTimestamp = runCatching { Files.getLastModifiedTime(path).toInstant().toString() }.getOrDefault("1970-01-01T00:00:00Z")
 
-  Files.newBufferedReader(path).useLines { lines ->
-    for (line in lines) {
-      val parsed = parseUsageLine(line) ?: continue
-      if (parsed.isSessionUsageLine()) {
-        if (skipReplay && parsed.isTokenCountLine()) {
-          val matchesReplaySecond = replaySecond == parsed.timestampSecond
-          if (matchesReplaySecond) {
-            if (parsed.totalUsage != null) {
-              previousTotalUsage = parsed.totalUsage
-            }
-            continue
-          }
-          skipReplay = false
-        }
-        when {
-          parsed.topLevelType == "turn_context" -> {
-            parsed.eventModelId?.let {
-              modelState.currentModel = it
-              modelState.currentModelIsFallback = false
-            }
-          }
-          parsed.isTokenCountLine() -> {
-            val usage = parsed.lastUsage ?: parsed.totalUsage?.let { totalUsage ->
-              totalUsage.subtract(previousTotalUsage)
-            }
-            if (parsed.totalUsage != null) {
-              previousTotalUsage = parsed.totalUsage
-            }
-            if (usage == null || usage.isZeroUsage()) {
+    openReader(path).useLines { lines ->
+      for (line in lines) {
+        val parsed = parseUsageLine(line) ?: continue
+        if (parsed.isSessionUsageLine()) {
+          if (parsed.isTokenCountLine()) {
+            if (skipReplay && replaySecond == parsed.timestampSecond) {
+              if (parsed.totalUsage != null) {
+                previousTotalUsage = parsed.totalUsage
+              }
               continue
             }
+            if (skipReplay) {
+              skipReplay = false
+            }
+          }
+          when {
+            parsed.topLevelType == "turn_context" -> {
+              parsed.eventModelId?.let {
+                modelState.currentModel = it
+                modelState.currentModelIsFallback = false
+              }
+            }
+            parsed.isTokenCountLine() -> {
+              val usage = parsed.lastUsage ?: parsed.totalUsage?.let { totalUsage ->
+                totalUsage.subtract(previousTotalUsage)
+              }
+              if (parsed.totalUsage != null) {
+                previousTotalUsage = parsed.totalUsage
+              }
+              if (usage == null || usage.isZeroUsage()) {
+                continue
+              }
 
-            val resolvedModelId = resolveCodexUsageModel(
-              parsedModelId = parsed.eventModelId,
-              timestamp = parsed.eventTimestamp ?: parsed.timestampSecond,
-              modelState = modelState,
-            )
-            usageByModel.getOrPut(resolvedModelId) { UsageTotals(modelId = resolvedModelId) }
-              .add(usage.copy(modelId = resolvedModelId))
+              val resolvedModelId = resolveCodexUsageModel(
+                parsedModelId = parsed.eventModelId,
+                timestamp = parsed.eventTimestamp ?: parsed.timestampSecond,
+                modelState = modelState,
+              )
+              usageByModel.getOrPut(resolvedModelId) { UsageTotals(modelId = resolvedModelId) }
+                .add(usage.copy(modelId = resolvedModelId))
+            }
           }
         }
-      }
-      else if (parsed.execUsage != null) {
-        val resolvedModelId = resolveCodexUsageModel(
-          parsedModelId = parsed.execModelId,
-          timestamp = parsed.execTimestamp ?: parsed.eventTimestamp ?: fallbackTimestamp,
-          modelState = modelState,
-        )
-        usageByModel.getOrPut(resolvedModelId) { UsageTotals(modelId = resolvedModelId) }
-          .add(parsed.execUsage.copy(modelId = resolvedModelId))
+        else if (parsed.execUsage != null) {
+          val resolvedModelId = resolveCodexUsageModel(
+            parsedModelId = parsed.execModelId,
+            timestamp = parsed.execTimestamp ?: parsed.eventTimestamp ?: fallbackTimestamp,
+            modelState = modelState,
+          )
+          usageByModel.getOrPut(resolvedModelId) { UsageTotals(modelId = resolvedModelId) }
+            .add(parsed.execUsage.copy(modelId = resolvedModelId))
+        }
       }
     }
-  }
 
-  return usageByModel.values
-    .map(UsageTotals::toSnapshot)
-    .filterNot(AgentSessionUsageSnapshot::isZeroUsage)
+    usageByModel.values
+      .map(UsageTotals::toSnapshot)
+      .filterNot(AgentSessionUsageSnapshot::isZeroUsage)
+  }
+  catch (_: Throwable) {
+    emptyList()
+  }
 }
 
 private data class CodexUsageModelState(
@@ -270,28 +281,30 @@ private data class UsageTotals(
   }
 }
 
-private fun detectSubAgentReplaySecond(path: Path): String? {
+private fun detectSubAgentReplaySecond(path: Path, openReader: (Path) -> BufferedReader): String? {
   var firstSecond: String? = null
-  Files.newBufferedReader(path).useLines { lines ->
+  var firstSecondSnapshotCount = 0
+  openReader(path).useLines { lines ->
     for (line in lines) {
       val parsed = parseUsageLine(line) ?: continue
       if (!parsed.isTokenCountLine() || (parsed.lastUsage == null && parsed.totalUsage == null)) {
         continue
       }
       val timestampSecond = parsed.timestampSecond.takeIf(String::isNotEmpty) ?: continue
-      if (firstSecond == null) {
+      val first = firstSecond
+      if (first == null) {
         firstSecond = timestampSecond
+        firstSecondSnapshotCount = 1
         continue
       }
-      return if (firstSecond == timestampSecond) {
-        firstSecond
+      if (first == timestampSecond) {
+        firstSecondSnapshotCount += 1
+        continue
       }
-      else {
-        null
-      }
+      return first.takeIf { firstSecondSnapshotCount >= MIN_SUB_AGENT_REPLAY_SNAPSHOTS }
     }
   }
-  return null
+  return firstSecond?.takeIf { firstSecondSnapshotCount >= MIN_SUB_AGENT_REPLAY_SNAPSHOTS }
 }
 
 private data class ParsedUsageLine(
