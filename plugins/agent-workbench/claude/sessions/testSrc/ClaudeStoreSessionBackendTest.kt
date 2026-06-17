@@ -15,7 +15,6 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -745,84 +744,13 @@ class ClaudeStoreSessionBackendTest {
   }
 
   @Test
-  fun activeThreadUpdateSuppressesRepeatedUnchangedJsonlNotification() {
+  fun activeThreadUpdateEventsAreDisabledForClaudeStoreBackend() {
     runBlocking(Dispatchers.Default) {
-      val projectPath = "/work/project-active-unchanged"
-      val sessionId = "session-active-unchanged"
-      val encodedPath = "-work-project-active-unchanged"
-      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
-      Files.createDirectories(projectDir)
+      val backend = ClaudeStoreSessionBackend(claudeHomeProvider = { tempDir.resolve(".claude") })
 
-      val jsonl = projectDir.resolve("$sessionId.jsonl")
-      writeJsonl(
-        jsonl,
-        listOf(
-          claudeUserLine("2026-02-10T10:00:00.000Z", sessionId, projectPath, "Change files"),
-          claudeAssistantToolUseLine("2026-02-10T10:00:01.000Z", sessionId, projectPath, "editing"),
-        ),
-      )
+      val updates = backend.activeThreadUpdateEvents(path = "/work/project-active-watch", threadId = "session-active").toList()
 
-      val backend = ClaudeStoreSessionBackend(
-        claudeHomeProvider = { tempDir.resolve(".claude") },
-        immediateFileChangeFlow = { flowOf(jsonl, jsonl) },
-      )
-
-      val updates = backend.activeThreadUpdateEvents(projectPath, sessionId).toList()
-
-      assertThat(updates).hasSize(1)
-      val update = updates.single()
-      assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
-      assertThat(update.scopedPaths).containsExactly(projectPath)
-      assertThat(update.threadIds).isNull()
-      assertThat(update.activityUpdatesByThreadId.getValue(sessionId).activityReport)
-        .isEqualTo(AgentThreadActivityReport(AgentThreadActivity.PROCESSING))
-      assertThat(update.mayHaveChangedProjectFiles).isFalse()
-      assertThat(update.changedProjectFilePaths).isNull()
-    }
-  }
-
-  @Test
-  fun activeThreadUpdateKeepsProjectFileEvidence() {
-    runBlocking(Dispatchers.Default) {
-      val projectPath = "/work/project-active-write-tool-update"
-      val changedFile = "$projectPath/src/Main.kt"
-      val sessionId = "session-active-write-tool-update"
-      val encodedPath = "-work-project-active-write-tool-update"
-      val projectDir = tempDir.resolve(".claude").resolve("projects").resolve(encodedPath)
-      Files.createDirectories(projectDir)
-
-      val jsonl = projectDir.resolve("$sessionId.jsonl")
-      writeJsonl(
-        jsonl,
-        listOf(
-          claudeUserLine("2026-02-10T10:00:00.000Z", sessionId, projectPath, "Change files"),
-          claudeAssistantToolUseLine(
-            "2026-02-10T10:00:01.000Z",
-            sessionId,
-            projectPath,
-            "writing",
-            toolUseId = "tool-write-1",
-            toolName = "Write",
-            inputJson = """{"file_path":"$changedFile","content":"fun main() {}"}""",
-          ),
-          claudeToolResultLine("2026-02-10T10:00:02.000Z", sessionId, projectPath, "tool-write-1"),
-        ),
-      )
-
-      val backend = ClaudeStoreSessionBackend(
-        claudeHomeProvider = { tempDir.resolve(".claude") },
-        immediateFileChangeFlow = { flowOf(jsonl) },
-      )
-
-      val updates = backend.activeThreadUpdateEvents(projectPath, sessionId).toList()
-
-      assertThat(updates).hasSize(1)
-      val update = updates.single()
-      assertThat(update.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
-      assertThat(update.scopedPaths).containsExactly(projectPath)
-      assertThat(update.threadIds).isNull()
-      assertThat(update.mayHaveChangedProjectFiles).isTrue()
-      assertThat(update.changedProjectFilePaths).containsExactly(changedFile)
+      assertThat(updates).isEmpty()
     }
   }
 

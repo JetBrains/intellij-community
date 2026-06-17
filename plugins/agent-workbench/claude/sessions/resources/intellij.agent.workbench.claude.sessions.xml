@@ -20,6 +20,7 @@
     <agent.workbench.sessionProvider
       id="agentWorkbenchClaude"
       implementation="com.intellij.agent.workbench.claude.sessions.ClaudeAgentSessionProviderDescriptor"/>
+    <httpRequestHandler implementation="com.intellij.agent.workbench.claude.sessions.ClaudeHookHttpRequestHandler"/>
     <agent.workbench.mcpConfigProviderContributor
       implementation="com.intellij.agent.workbench.claude.sessions.ClaudeAwbMcpConfigProviderContributor"/>
     <statusBarWidgetFactory
