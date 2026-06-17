@@ -44,6 +44,10 @@ class GitMergeDialogUi(data: ComponentData) : DialogUiComponent(data) {
     getActiveOptions().forEach { it.x { byAccessibleName("Remove option") }.click() }
   }
 
+  fun getActiveOptionTexts(): List<String> {
+    return getActiveOptions().map { it.getAllTexts().joinToString(" ") { text -> text.text } }
+  }
+
   fun selectOption(optionFlag: String) {
     modifyOptionsLink.click()
     driver.ui.popup().list().clickItem(optionFlag, fullMatch = false)
