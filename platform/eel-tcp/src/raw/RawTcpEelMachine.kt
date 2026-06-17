@@ -20,7 +20,6 @@ class RawTcpEelMachine(
       override suspend fun deploy(): IjentConnectionContext {
         return IjentConnectionContext(
           targetPlatform = EelPlatform.getFor("linux", "x86-64")!!, // TODO,
-          remoteBinaryPath = "/it/doesnt/matter/its/dev/version",
           connectionStrategy = IjentConnectionStrategy.Tcp(deploy, null),
           mediator = IjentTcpSessionMediator(
             ijentProcessScope = coroutineScope,

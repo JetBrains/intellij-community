@@ -96,7 +96,6 @@ abstract class IjentControlledEnvironmentDeployingStrategy : IjentDeployingStrat
       provider.connect(IjentConnectionContext(
         mediator = mediator,
         targetPlatform = targetPlatform,
-        remoteBinaryPath = remotePathToBinary,
         connectionStrategy = connectionStrategy,
       )) as IjentSession.Posix
     }
