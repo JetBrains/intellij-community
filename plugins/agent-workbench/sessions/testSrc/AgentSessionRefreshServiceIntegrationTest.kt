@@ -294,10 +294,10 @@ class AgentSessionRefreshServiceIntegrationTest {
   }
 
   @Test
-  fun costHydrationWaitsForWorkingThreadToSettle() = runBlocking(Dispatchers.Default) {
-    val costLoadRequests = CopyOnWriteArrayList<List<String>>()
+  fun costHydrationRefreshesVisibleWorkingThreadWithTtl() = runBlocking(Dispatchers.Default) {
+    var nowMs = 1_000L
+    val costLoadCount = AtomicInteger(0)
     var activity = AgentThreadActivity.PROCESSING
-    var updatedAt = 100L
 
     withService(
       sessionSourcesProvider = {
@@ -308,17 +308,17 @@ class AgentSessionRefreshServiceIntegrationTest {
               listOf(
                 thread(
                   id = "codex-1",
-                  updatedAt = updatedAt,
+                  updatedAt = 100L,
                   provider = AgentSessionProvider.CODEX,
                   activity = activity,
                 )
               )
             },
             loadThreadCostsProvider = { _, requestedThreads ->
-              costLoadRequests += requestedThreads.map { thread -> thread.id }
+              val loadNumber = costLoadCount.incrementAndGet()
               requestedThreads.associate { thread ->
                 thread.id to AgentSessionCost(
-                  amountUsd = BigDecimal.ONE,
+                  amountUsd = BigDecimal(loadNumber),
                   kind = AgentSessionCostKind.ESTIMATED,
                 )
               }
@@ -329,6 +329,7 @@ class AgentSessionRefreshServiceIntegrationTest {
       projectEntriesProvider = {
         listOf(openProjectEntry(PROJECT_PATH, "Project A"))
       },
+      currentTimeMillis = { nowMs },
     ) { service ->
       service.refresh()
 
@@ -338,13 +339,6 @@ class AgentSessionRefreshServiceIntegrationTest {
           ?.singleOrNull()
           ?.activity == AgentThreadActivity.PROCESSING
       }
-      delay(1_000.milliseconds)
-
-      assertThat(costLoadRequests).isEmpty()
-
-      activity = AgentThreadActivity.READY
-      updatedAt = 200L
-      service.refresh()
 
       waitForCondition {
         service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
@@ -353,8 +347,32 @@ class AgentSessionRefreshServiceIntegrationTest {
           ?.cost
           ?.amountUsd == BigDecimal.ONE
       }
+      assertThat(costLoadCount.get()).isEqualTo(1)
 
-      assertThat(costLoadRequests).containsExactly(listOf("codex-1"))
+      service.refresh()
+      delay(300.milliseconds)
+      assertThat(costLoadCount.get()).isEqualTo(1)
+
+      nowMs += 59_000L
+      service.refresh()
+      delay(300.milliseconds)
+      assertThat(costLoadCount.get()).isEqualTo(1)
+
+      nowMs += 1_001L
+      service.refresh()
+      waitForCondition {
+        service.state.value.projects.firstOrNull { it.path == PROJECT_PATH }
+          ?.threads
+          ?.singleOrNull()
+          ?.cost
+          ?.amountUsd == BigDecimal.valueOf(2)
+      }
+      assertThat(costLoadCount.get()).isEqualTo(2)
+
+      activity = AgentThreadActivity.READY
+      service.refresh()
+      delay(300.milliseconds)
+      assertThat(costLoadCount.get()).isEqualTo(2)
     }
   }
 
