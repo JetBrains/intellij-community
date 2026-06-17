@@ -1,6 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -23,6 +26,8 @@ import java.util.List;
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
 
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyTypeParserTest extends PyTestCase {
   public void testClassType() {
     myFixture.configureByFile("typeParser/typeParser.py");

@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -9,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@Subsystems.CodeCompletion
+@Layers.Functional
 public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
   public void testQualifiedNamesAlwaysMatchedByFirstComponentOfQualifier() {
     myFixture.copyDirectoryToProject(getTestName(false), "");

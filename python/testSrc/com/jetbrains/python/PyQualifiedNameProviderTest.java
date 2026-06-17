@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.actions.PyQualifiedNameProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -23,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Mikhail Golubev
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyQualifiedNameProviderTest extends PyTestCase {
   public void testTopLevelFunctionReference() {
     doDirectoryTest("a/b/c/module.py", "a.b.c.module.func");

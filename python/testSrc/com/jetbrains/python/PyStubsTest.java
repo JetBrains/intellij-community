@@ -1,6 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.google.common.collect.ImmutableRangeSet;
 import com.google.common.collect.Range;
 import com.google.common.collect.RangeSet;
@@ -94,6 +98,9 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 
 @TestDataPath("$CONTENT_ROOT/../testData/stubs/")
+@Subsystems.CodeInsight
+@Components.Parsing
+@Layers.Functional
 public class PyStubsTest extends PyTestCase {
 
   @Override

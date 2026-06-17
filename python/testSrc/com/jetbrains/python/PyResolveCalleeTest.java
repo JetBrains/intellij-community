@@ -3,6 +3,9 @@
 // found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.ast.PyAstFunction;
@@ -15,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyResolveCalleeTest extends PyTestCase {
 
   @NotNull

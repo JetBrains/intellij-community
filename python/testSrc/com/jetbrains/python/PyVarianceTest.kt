@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.ReadAction
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -17,6 +20,8 @@ import org.intellij.lang.annotations.Language
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyVarianceTest : PyCodeInsightTestCase() {
 
   private fun doTestTypeVarVariance(variance: PyTypeParameterType.Variance?, @Language("Python") text: String) {

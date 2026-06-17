@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.lang.documentation.DocumentationProvider;
@@ -33,6 +36,8 @@ import org.jetbrains.annotations.NotNull;
 
 @SkipSlowTestLocally
 @PerformanceUnitTest
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyOverloadsProcessingPerformanceTest extends PyTestCase {
   private static final int NUMBER_OF_OVERLOADS = 1000;
 

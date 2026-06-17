@@ -50,10 +50,6 @@ object Subsystems {
   @Inherited
   annotation class Editing
 
-  @Subsystem("Parsing")
-  @Inherited
-  annotation class Parsing
-
   @Subsystem("Formatter")
   @Inherited
   annotation class Formatter
@@ -123,6 +119,10 @@ object Components {
   @Component("Feature Trainer")
   @Inherited
   annotation class FeatureTrainer
+
+  @Component("Parsing")
+  @Inherited
+  annotation class Parsing
 }
 
 object Layers {

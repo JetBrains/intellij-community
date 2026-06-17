@@ -1,9 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.openapi.actionSystem.IdeActions
 import com.jetbrains.python.fixtures.PyTestCase
 
+@Subsystems.Editing
+@Layers.Functional
 class PyMoveElementLeftRightTest : PyTestCase() {
 
   fun testListElement() {

@@ -2,10 +2,15 @@
 package com.jetbrains.python
 
 import com.intellij.idea.TestFor
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import org.junit.jupiter.api.Test
 
 
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyInferredVarianceJudgmentTest : PyCodeInsightTestCase() {
 
 

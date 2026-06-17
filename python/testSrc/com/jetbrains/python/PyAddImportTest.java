@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiReference;
@@ -24,6 +27,8 @@ import static com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPri
 import static com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority.THIRD_PARTY;
 
 
+@Subsystems.QuickFixes
+@Layers.Functional
 public class PyAddImportTest extends PyTestCase {
   public void testAddBuiltin() {
     runWithAdditionalFileInLibDir(

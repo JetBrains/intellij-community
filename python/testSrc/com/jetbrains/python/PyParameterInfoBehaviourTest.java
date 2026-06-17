@@ -1,6 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.hint.ParameterInfoControllerBase;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
@@ -12,6 +15,8 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyParameterInfoBehaviourTest extends PyTestCase {
 
   private EditorHintFixture myHintFixture;

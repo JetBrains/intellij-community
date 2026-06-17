@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.Pair;
@@ -27,6 +30,8 @@ import com.jetbrains.python.fixtures.PyTestCase;
 
 import java.util.List;
 
+@Subsystems.QuickDocumentation
+@Layers.Functional
 public class PyDocstringTest extends PyTestCase {
 
   @Override

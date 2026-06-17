@@ -1,11 +1,18 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Components;
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyTypeAliasStatement;
 
 import java.util.List;
 
+@Subsystems.CodeInsight
+@Components.Navigation
+@Layers.Functional
 public class PyGotoSymbolTest extends PyTestCase {
   @Override
   protected String getTestDataPath() {

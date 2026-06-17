@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.lang.LanguageASTFactory
 import com.intellij.testFramework.ParsingTestCase
 import com.jetbrains.python.ast.PyAstTypeParameter
@@ -22,6 +25,8 @@ import junit.framework.TestCase
 import java.io.IOException
 import org.junit.jupiter.api.assertInstanceOf as assertInstanceOfJunit5
 
+@Subsystems.CodeInsight
+@Layers.Functional
 class PyTypeRepresentationParsingTest : ParsingTestCase("typeRepresentation/parsing", "pythonTypeRepresentation",
                                                         PyTypeRepresentationParserDefinition(), PythonParserDefinition()) {
   @Throws(Exception::class)

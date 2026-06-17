@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.idea.TestFor;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
@@ -25,6 +28,8 @@ import java.util.List;
  * Tests for a type system based on mypy's typing module.
  *
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyTypingTest extends PyTestCase {
 
   public void testClassType() {

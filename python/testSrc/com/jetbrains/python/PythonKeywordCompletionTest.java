@@ -1,6 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
 import com.intellij.idea.TestFor;
@@ -9,6 +12,8 @@ import com.jetbrains.python.psi.LanguageLevel;
 
 import java.util.List;
 
+@Subsystems.CodeCompletion
+@Layers.Functional
 public class PythonKeywordCompletionTest extends PyTestCase {
   @Override
   protected void setUp() throws Exception {

@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.google.common.collect.ImmutableList;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.util.RecursionManager;
@@ -27,6 +30,8 @@ import java.util.Collections;
 import java.util.List;
 
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyTypeTest extends PyTestCase {
 
   @Override

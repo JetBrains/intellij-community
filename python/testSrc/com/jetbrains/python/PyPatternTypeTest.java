@@ -1,11 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.PyAssertTypeInspection;
 import com.jetbrains.python.inspections.PyInspection;
 import org.jetbrains.annotations.NotNull;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyPatternTypeTest extends PyInspectionTestCase {
 
   @Override

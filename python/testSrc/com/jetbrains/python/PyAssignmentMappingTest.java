@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -34,6 +37,8 @@ import java.util.stream.IntStream;
 /**
  * Tests assignment mapping.
  */
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyAssignmentMappingTest extends LightMarkedTestCase {
 
   @Override

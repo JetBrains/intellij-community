@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python
 
+import com.jetbrains.python.allure.Layers
+import com.jetbrains.python.allure.Subsystems
+
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyInspectionTestCase
@@ -9,6 +12,8 @@ import com.jetbrains.python.inspections.PyAssertTypeInspection
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
 
+@Subsystems.CodeInsight
+@Layers.Functional
 internal class PyConstructorTypeTest : PyInspectionTestCase() {
   override fun getInspectionClass(): Class<PyAssertTypeInspection> = PyAssertTypeInspection::class.java
 

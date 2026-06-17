@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.Property;
 import com.jetbrains.python.psi.PyCallable;
@@ -26,6 +29,8 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.toolbox.Maybe;
 
+@Subsystems.CodeInsight
+@Layers.Functional
 public class PyClassicPropertyTest extends PyTestCase {
   protected PyClass myClass;
 

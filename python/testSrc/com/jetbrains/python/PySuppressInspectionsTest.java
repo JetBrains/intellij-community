@@ -15,6 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.jetbrains.python.allure.Layers;
+import com.jetbrains.python.allure.Subsystems;
+
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.PyInspection;
@@ -23,6 +26,8 @@ import com.jetbrains.python.inspections.unusedLocal.PyUnusedLocalInspection;
 
 import java.util.List;
 
+@Subsystems.Inspections
+@Layers.Functional
 public class PySuppressInspectionsTest extends PyTestCase {
   public void testSuppressedForStatement() {
     doTestHighlighting(PyUnresolvedReferencesInspection.class);
