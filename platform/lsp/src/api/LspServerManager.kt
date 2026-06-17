@@ -4,7 +4,6 @@ package com.intellij.platform.lsp.api
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 
 @Deprecated("Use LspClientManager", ReplaceWith("LspClientManager", "com.intellij.platform.lsp.api.LspClientManager"))
 @Suppress("DEPRECATION")
@@ -45,12 +44,6 @@ interface LspServerManager : LspClientManager {
     fun getInstance(project: Project): LspServerManager =
       @Suppress("DEPRECATION") (LspClientManager.getInstance(project) as LspServerManager)
   }
-}
-
-@ApiStatus.Internal
-@TestOnly
-fun interface Lsp4jServerWrapper {
-  fun wrapLsp4jServer(lspServer: LspServer, lsp4jServer: Lsp4jServer): Lsp4jServer
 }
 
 @Deprecated("Use getClients", ReplaceWith("getClients<Provider>()", "com.intellij.platform.lsp.api.getClients"))
