@@ -9,6 +9,7 @@ import org.jetbrains.concurrency.Promise
 /**
  * @see SingleEventDispatcher
  */
+@ApiStatus.Internal
 @ApiStatus.NonExtendable
 interface SingleEventDispatcher0 {
   fun whenEventHappened(parentDisposable: Disposable?, listener: () -> Unit)

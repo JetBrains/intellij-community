@@ -7,6 +7,7 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * @see SingleEventDispatcher
  */
+@ApiStatus.Internal
 @ApiStatus.NonExtendable
 interface SingleEventDispatcher2<T1, T2> {
 
