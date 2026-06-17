@@ -396,18 +396,26 @@ mod tests {
     #[test]
     #[cfg(target_os = "macos")]
     fn macos_adjusting_current_dir() {
+        use std::ffi::{OsStr, OsString};
+
         let test = prepare_test_env(LauncherLocation::Standard);
 
-        let app_bundle_path_str = test.dist_root.parent().unwrap().to_str().unwrap();
-        let debug_mode_var = xplat_launcher::DEBUG_MODE_ENV_VAR.to_string() + "=1";
-        let stdout_path = test.project_dir.join("_stdout.txt");
-        let stdout_path_str = stdout_path.to_str().unwrap();
-        let args = vec!["-Wna", app_bundle_path_str, "--env", &debug_mode_var, "--stdout", stdout_path_str, "--args", "print-cwd"];
+        let app_bundle_path = test.dist_root.parent().unwrap();
+        let debug_mode_var = OsString::from(xplat_launcher::DEBUG_MODE_ENV_VAR.to_string() + "=1");
+        let stdout_file = test.project_dir.join("_stdout.txt");
+        let stderr_file = test.project_dir.join("_stderr.txt");
+        let args = vec![
+            OsStr::new("-Wna"), app_bundle_path.as_os_str(),
+            OsStr::new("--stdout"), stdout_file.as_os_str(), OsStr::new("--stderr"), stderr_file.as_os_str(),
+            OsStr::new("--env"), &debug_mode_var, OsStr::new("--args"), OsStr::new("print-cwd")
+        ];
         let open_res = std::process::Command::new("/usr/bin/open").args(&args)
-            .output().unwrap_or_else(|_| panic!("Failed: 'open {:?}'", args));
+            .output().unwrap_or_else(|e| panic!("Failed: 'open {:?}': {:?}", args, e));
         assert!(open_res.status.success(), "Failed: 'open {:?}':\n{:?}", args, open_res);
+        let stderr = fs::read_to_string(&stderr_file).unwrap_or_default();
+        assert!(stderr.is_empty(), "Failed: 'open {:?}':\nstderr:\n{:?}", args, stderr);
 
-        let stdout = fs::read_to_string(&stdout_path).unwrap_or_else(|_| panic!("Cannot read: {:?}", stdout_path));
+        let stdout = fs::read_to_string(&stdout_file).unwrap_or_else(|_| panic!("Cannot read: {:?}", stdout_file));
         let expected = format!("CWD={}", env::current_dir().unwrap().display());
         assert!(stdout.contains(&expected), "'{}' is not in the output:\n{}", expected, stdout);
     }
