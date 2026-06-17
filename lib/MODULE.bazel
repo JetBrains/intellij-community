@@ -3221,6 +3221,48 @@ http_file(
 )
 
 http_file(
+    name = "org_jetbrains_intellij_deps_languagetool-language-ja-6_8_27_http",
+    downloaded_file_path = "language-ja-6.8.27.jar",
+    sha256 = "9f5b6c42cfc8f57237ea622dd372df87cf6c01d23e7c50be42ff9c43125d35e5",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-ja/6.8.27/language-ja-6.8.27.jar",
+)
+
+http_file(
+    name = "com_github_lucene-gosen-lucene-gosen-6_2_1-ipadic_http",
+    downloaded_file_path = "lucene-gosen-6.2.1-ipadic.jar",
+    sha256 = "1e5cd3b8c26e73ac13ba56ef80c7edda711dd7b58c1f497a9876f79a8d5c2947",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/lucene-gosen/lucene-gosen/6.2.1/lucene-gosen-6.2.1-ipadic.jar",
+)
+
+http_file(
+    name = "com_ibm_icu-icu4j-77_1_http",
+    downloaded_file_path = "icu4j-77.1.jar",
+    sha256 = "b3640b9f416a4411fd33c59abbeea8fd57d024c23e1819bf9673220a97499fe3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/ibm/icu/icu4j/77.1/icu4j-77.1.jar",
+)
+
+http_file(
+    name = "org_jetbrains_intellij_deps_languagetool-language-ja-6_8_27-sources_http",
+    downloaded_file_path = "language-ja-6.8.27-sources.jar",
+    sha256 = "49edab565ed8a9dd821d4bd17b254ed3423e5ef059f5a109bd72095b0b64ca76",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/deps/languagetool/language-ja/6.8.27/language-ja-6.8.27-sources.jar",
+)
+
+http_file(
+    name = "com_github_lucene-gosen-lucene-gosen-6_2_1-sources_http",
+    downloaded_file_path = "lucene-gosen-6.2.1-sources.jar",
+    sha256 = "671fb1e5c175880061d44e3bac5d9b441e091681b4224ce0bec39800a1e8baa6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/lucene-gosen/lucene-gosen/6.2.1/lucene-gosen-6.2.1-sources.jar",
+)
+
+http_file(
+    name = "com_ibm_icu-icu4j-77_1-sources_http",
+    downloaded_file_path = "icu4j-77.1-sources.jar",
+    sha256 = "2dd9da85182efca525aa269db573e0ed54943767d6af3afc50d0ede51e63d01a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/ibm/icu/icu4j/77.1/icu4j-77.1-sources.jar",
+)
+
+http_file(
     name = "org_jetbrains_intellij_deps_languagetool-language-uk-6_8_27_http",
     downloaded_file_path = "language-uk-6.8.27.jar",
     sha256 = "3515bb2a656805139916667d59743f418ee65f386ca0e58290f30b017ab5c7bc",
