@@ -9,9 +9,11 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@TestDataPath("$CONTENT_ROOT/testData/codeInsight/joinLines")
 public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   @NotNull
   @Override
@@ -145,6 +147,7 @@ public class JoinLinesTest extends LightJavaCodeInsightTestCase {
   public void testSlashCommentFollowedByBlockComment() { doTest(); }
   public void testSlashCommentFollowedByBlockCommentAndCode() { doTest(); }
   public void testDocComment() { doTest(); }
+  public void testDocCommentMarkdown() { doTest(); }
 
   public void testOnEmptyLine() { doTest(); }
   public void testCollapseClass() { doTest(); }
