@@ -278,17 +278,20 @@ class WelcomeScreenRightTab(
   @Composable
   fun SwitchPanel() {
     val additionalButtons = contentProvider.getAdditionalInfoButtonModels(project).map { ButtonInfoPanelModel(it) }
-    val buttons = listOf(
-      ComboBoxInfoPanelModel(themeIconKey,
+    val buttons = buildList {
+      add(ComboBoxInfoPanelModel(themeIconKey,
                              "welcome.screen.right.tab.theme.switch.prefix",
-                             ThemeModel()),
-      ComboBoxInfoPanelModel(AllIconsKeys.General.Keyboard,
+                             ThemeModel()))
+      add(ComboBoxInfoPanelModel(AllIconsKeys.General.Keyboard,
                              "welcome.screen.right.tab.keymap.switch.prefix",
-                             KeymapModel()),
-      ComboBoxInfoPanelModel(AllIconsKeys.General.Settings,
-                             "welcome.screen.right.tab.startup.switch.prefix",
-                             StartupSwitchModel()),
-    ) + additionalButtons
+                             KeymapModel()))
+      if (contentProvider.isStartupSwitchPanelOptionVisible) {
+        add(ComboBoxInfoPanelModel(AllIconsKeys.General.Settings,
+                               "welcome.screen.right.tab.startup.switch.prefix",
+                               StartupSwitchModel()))
+      }
+      addAll(additionalButtons)
+    }
 
     val buttonsPerRow = contentProvider.buttonsPerRow
     val coroutineScope = contentProvider.coroutineScope
