@@ -218,8 +218,8 @@ private object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
       if (retryAttempt < CODEX_PLAN_MODE_CONFIRMATION_RETRY_LIMIT) {
         return AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(calculateCodexPlanModeRetryBackoffMs(retryAttempt))
       }
-      LOG.debug("Codex plan mode was not confirmed after ${retryAttempt + 1} attempts; continuing with prompt dispatch")
-      return AgentChatInitialMessageRetryDecision.ProceedAndResetReadiness
+      LOG.warn("Codex plan mode was not confirmed after ${retryAttempt + 1} attempts; stopping initial message dispatch")
+      return AgentChatInitialMessageRetryDecision.Stop
     }
     if (dispatch.completionPolicy != AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY) {
       return AgentChatInitialMessageRetryDecision.PROCEED
@@ -347,7 +347,7 @@ private fun stripCodexTerminalAnsi(text: String): String = CODEX_TERMINAL_ANSI_E
 
 private const val CODEX_PLAN_MODE_RETRY_BACKOFF_MS: Long = 250
 private const val CODEX_PLAN_MODE_MAX_RETRY_BACKOFF_MS: Long = 1_000
-private const val CODEX_PLAN_MODE_CONFIRMATION_RETRY_LIMIT: Int = 2
+private const val CODEX_PLAN_MODE_CONFIRMATION_RETRY_LIMIT: Int = 5
 private const val CODEX_TERMINAL_TAIL_LINE_SCAN_LIMIT: Int = 8
 private const val JUNIE_PROMPT_READINESS_RETRY_BACKOFF_MS: Long = 250
 private const val JUNIE_PROMPT_READINESS_MAX_RETRY_BACKOFF_MS: Long = 1_000
