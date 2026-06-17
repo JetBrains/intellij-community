@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 @Internal
-public final class BuildIssueEventImpl extends AbstractBuildEvent implements BuildIssueEvent {
+public class BuildIssueEventImpl extends AbstractBuildEvent implements BuildIssueEvent {
 
   private final @NotNull Kind myKind;
   private final @NotNull BuildIssue myIssue;
