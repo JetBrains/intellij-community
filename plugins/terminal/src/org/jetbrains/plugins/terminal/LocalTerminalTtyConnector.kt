@@ -21,8 +21,10 @@ import com.pty4j.unix.UnixPtyProcess
 import com.pty4j.windows.conpty.WinConPtyProcess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.util.ShellEelProcess
@@ -108,10 +110,16 @@ class LocalTerminalTtyConnector internal constructor(
     val shellPid = process.eelProcess.pid.value
     LOG.debug { "Sending SIGHUP to ${processInfo(process)}" }
     val killProcess = try {
-      process.eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.toString()).eelIt()
+      withTimeout(2.seconds) {
+        process.eelApi.exec.spawnProcess("kill").args("-HUP", shellPid.toString()).eelIt()
+      }
     }
     catch (e: ExecuteProcessException) {
-      LOG.warn("Unable to send SIGHUP to ${processInfo(process)}", e)
+      LOG.warn("Failed to send SIGHUP to ${processInfo(process)}", e)
+      return
+    }
+    catch (_: TimeoutCancellationException) {
+      LOG.warn("Failed to send SIGHUP to ${processInfo(process)}: timeout")
       return
     }
 
