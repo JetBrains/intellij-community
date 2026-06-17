@@ -163,6 +163,7 @@ jvm_library(
         ":junit5-tests",
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
     ],
     deps = [
         # do not sort,
@@ -221,6 +222,7 @@ jvm_library(
         "//platform/util-ex:util-ex_test_lib",
         "//platform/util/jdom",
         "//platform/util/jdom:jdom_test_lib",
+        "//platform/platform-util-io:ide-util-io",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.tests` end
