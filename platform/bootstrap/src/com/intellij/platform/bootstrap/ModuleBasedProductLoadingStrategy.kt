@@ -63,8 +63,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
   }
 
   private fun computeInitialModeId(): String {
-    val initialModeId = if (AppMode.isIjLight()) ProductMode.LIGHT.id
-                        else System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
+    val initialModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
     if (ProductMode.findById(initialModeId) == null) {
       error("Unknown mode '$initialModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
     }

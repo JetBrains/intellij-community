@@ -22,7 +22,6 @@ public final class AppMode {
   private static boolean isHeadless;
   private static boolean isCommandLine;
   private static boolean isLightEdit;
-  private static boolean isIjLight;
   private static boolean disableNonBundledPlugins;
   private static boolean dontReopenProjects;
   private static boolean isRemoteDevHost;
@@ -67,13 +66,6 @@ public final class AppMode {
     return !PlatformUtils.isJetBrainsClient() && !isRemoteDevHost();
   }
 
-  /**
-   * @return `true` if the IDE was started with the "ijLight" command
-   */
-  public static boolean isIjLight() {
-    return isIjLight;
-  }
-
   /// Returns `true` if the IDE is running from a development build, not a regular installation.
   /// The IDE can be started with the development build by running '\* (dev build)' configuration from source code,
   /// also some tests use this mode.
@@ -108,9 +100,6 @@ public final class AppMode {
     }
     if (ApplicationStartArguments.DONT_REOPEN_PROJECTS.isSet(args)) {
       dontReopenProjects = true;
-    }
-    if (!args.isEmpty() && args.get(0).equals("ijLight")) {
-      isIjLight = true;
     }
   }
 
