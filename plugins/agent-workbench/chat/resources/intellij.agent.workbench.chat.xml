@@ -58,5 +58,10 @@
       id="AgentWorkbenchSessions.EditorTab.NextProposedPlan"
       icon="AllIcons.Actions.NextOccurence"
       class="com.intellij.agent.workbench.chat.AgentChatNextProposedPlanAction"/>
+    <action
+      id="AgentWorkbenchSessions.StructureView.StartNewConversationFromHere"
+      class="com.intellij.agent.workbench.chat.AgentChatStructureViewForkAction">
+      <add-to-group group-id="StructureViewPopupMenu" anchor="last"/>
+    </action>
   </actions>
 </idea-plugin>

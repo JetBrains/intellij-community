@@ -508,6 +508,39 @@ class PiSessionSourceTest {
     assertThat(envConfigured).isEqualTo(envSessionDir)
   }
 
+  @Test
+  fun `outline fork action is shown only for concrete top level items`() {
+    val source = sourceFor(tempDir.resolve("sessions"))
+
+    assertThat(
+      source.canShowThreadOutlineForkAction(
+        path = "/work/project-a",
+        threadId = "thread-1",
+        itemId = "entry-1",
+        subAgentId = null,
+        tabKey = "tab-1",
+      )
+    ).isTrue()
+    assertThat(
+      source.canShowThreadOutlineForkAction(
+        path = "/work/project-a",
+        threadId = "thread-1",
+        itemId = " ",
+        subAgentId = null,
+        tabKey = "tab-1",
+      )
+    ).isFalse()
+    assertThat(
+      source.canShowThreadOutlineForkAction(
+        path = "/work/project-a",
+        threadId = "thread-1",
+        itemId = "entry-1",
+        subAgentId = "alpha",
+        tabKey = "tab-1",
+      )
+    ).isFalse()
+  }
+
   private fun sourceFor(sessionDir: Path): PiSessionSource {
     return PiSessionSource(sessionStore = PiSessionStore(sessionDirResolver = { sessionDir }))
   }

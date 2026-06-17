@@ -16,10 +16,13 @@ import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentation
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineItem
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineForkResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
 import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
@@ -28,25 +31,36 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewTreeElement
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
+import com.intellij.pom.Navigatable
+import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.ui.IconManager
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.text.DateFormatUtil
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
 import org.assertj.core.api.Assertions.assertThat
 import org.jdom.Element
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 
 @TestApplication
@@ -551,6 +565,146 @@ class AgentChatFileEditorProviderTest {
   }
 
   @Test
+  fun structureViewRefreshesLoadedOutlineOnActiveThreadUpdate() {
+    timeoutRunBlocking {
+      val project = ProjectManager.getInstance().defaultProject
+      val provider = AgentChatFileEditorProvider()
+      val file = AgentChatVirtualFile(
+        projectPath = "/work/project-a",
+        threadIdentity = "CODEX:thread-refresh",
+        shellCommand = emptyList(),
+        threadId = "thread-refresh",
+        threadTitle = "Refresh thread",
+        subAgentId = null,
+      )
+      val updateEvents = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 1)
+      var outline = testOutline(
+        threadId = "thread-refresh",
+        title = "Refresh thread",
+        updatedAt = 1L,
+        items = listOf(testOutlineItem(id = "prompt-1", title = "Initial prompt")),
+      )
+      val loadCalls = AtomicInteger()
+      val bridge = ChatTestProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        icon = EmptyIcon.create(18, 18),
+        outlineLoader = { path, threadId, subAgentId ->
+          assertThat(path).isEqualTo("/work/project-a")
+          assertThat(threadId).isEqualTo("thread-refresh")
+          assertThat(subAgentId).isNull()
+          loadCalls.incrementAndGet()
+          outline
+        },
+        activeThreadUpdateEventsProvider = { path, threadId ->
+          assertThat(path).isEqualTo("/work/project-a")
+          assertThat(threadId).isEqualTo("thread-refresh")
+          updateEvents
+        },
+      )
+
+      AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+        val builder = checkNotNull(provider.getStructureViewBuilder(project, file)) as TreeBasedStructureViewBuilder
+        val model = builder.createStructureViewModel(null)
+        try {
+          val root = model.root
+          var notifications = 0
+          model.addModelListener { notifications++ }
+
+          root.children
+          waitForCondition {
+            root.children.singleOrNull()?.presentation?.presentableText == "Initial prompt"
+          }
+          assertThat(loadCalls.get()).isEqualTo(1)
+          val initialNotifications = notifications
+          waitForCondition { updateEvents.subscriptionCount.value > 0 }
+
+          outline = testOutline(
+            threadId = "thread-refresh",
+            title = "Refresh thread",
+            updatedAt = 2L,
+            items = listOf(
+              testOutlineItem(id = "prompt-1", title = "Initial prompt"),
+              testOutlineItem(id = "assistant-1", kind = AgentSessionOutlineItemKind.ASSISTANT_RESPONSE, title = "Assistant reply"),
+            ),
+          )
+          assertThat(updateEvents.tryEmit(testUpdateEvent(threadId = "thread-refresh"))).isTrue()
+
+          waitForCondition {
+            root.children.map { it.presentation.presentableText } == listOf("Initial prompt", "Assistant reply")
+          }
+          assertThat(loadCalls.get()).isEqualTo(2)
+          assertThat(notifications).isGreaterThan(initialNotifications)
+        }
+        finally {
+          Disposer.dispose(model)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun structureViewActiveThreadUpdatesBeforeExpansionDoNotStartOutlineLoading() {
+    timeoutRunBlocking {
+      val project = ProjectManager.getInstance().defaultProject
+      val provider = AgentChatFileEditorProvider()
+      val file = AgentChatVirtualFile(
+        projectPath = "/work/project-a",
+        threadIdentity = "CODEX:thread-lazy-refresh",
+        shellCommand = emptyList(),
+        threadId = "thread-lazy-refresh",
+        threadTitle = "Lazy refresh thread",
+        subAgentId = null,
+      )
+      val updateEvents = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 1)
+      val updateObserved = CompletableDeferred<Unit>()
+      val loadCalls = AtomicInteger()
+      val latestOutline = testOutline(
+        threadId = "thread-lazy-refresh",
+        title = "Lazy refresh thread",
+        updatedAt = 2L,
+        items = listOf(testOutlineItem(id = "prompt-latest", title = "Latest prompt")),
+      )
+      val bridge = ChatTestProviderBridge(
+        provider = AgentSessionProvider.CODEX,
+        icon = EmptyIcon.create(18, 18),
+        outlineLoader = { _, _, _ ->
+          loadCalls.incrementAndGet()
+          latestOutline
+        },
+        activeThreadUpdateEventsProvider = { _, _ ->
+          flow {
+            updateEvents.collect { updateEvent ->
+              emit(updateEvent)
+              updateObserved.complete(Unit)
+            }
+          }
+        },
+      )
+
+      AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+        val builder = checkNotNull(provider.getStructureViewBuilder(project, file)) as TreeBasedStructureViewBuilder
+        val model = builder.createStructureViewModel(null)
+        try {
+          waitForCondition { updateEvents.subscriptionCount.value > 0 }
+
+          assertThat(updateEvents.tryEmit(testUpdateEvent(threadId = "thread-lazy-refresh"))).isTrue()
+          waitForCondition { updateObserved.isCompleted }
+          assertThat(loadCalls.get()).isEqualTo(0)
+
+          val root = model.root
+          root.children
+          waitForCondition {
+            loadCalls.get() == 1 && root.children.singleOrNull()?.presentation?.presentableText == "Latest prompt"
+          }
+        }
+        finally {
+          Disposer.dispose(model)
+        }
+      }
+    }
+  }
+
+  @Test
   fun structureViewShowsSingleTopLevelStatusRowsForFallbackOutlines() = timeoutRunBlocking {
     val project = ProjectManager.getInstance().defaultProject
     val provider = AgentChatFileEditorProvider()
@@ -599,6 +753,177 @@ class AgentChatFileEditorProviderTest {
         }
       }
     }
+  }
+
+  @Test
+  fun structureViewOutlineRowsDelegateLiveNavigationToProvider() {
+    timeoutRunBlocking {
+      val project = ProjectManager.getInstance().defaultProject
+      val provider = AgentChatFileEditorProvider()
+      val file = AgentChatVirtualFile(
+        projectPath = "/work/project-a",
+        threadIdentity = "PI:thread-nav",
+        shellCommand = emptyList(),
+        threadId = "thread-nav",
+        threadTitle = "Navigation thread",
+        subAgentId = null,
+      )
+      val outlineItem = AgentSessionOutlineItem(
+        id = "entry-nav",
+        kind = AgentSessionOutlineItemKind.USER_PROMPT,
+        title = "Open entry",
+        preview = "Jump to this entry",
+      )
+      val outline = AgentSessionThreadOutline(
+        provider = AgentSessionProvider.PI,
+        threadId = "thread-nav",
+        title = "Navigation thread",
+        updatedAt = 1L,
+        items = listOf(outlineItem),
+      )
+      val navigationCalls = LinkedBlockingQueue<OutlineNavigationCall>()
+      val bridge = ChatTestProviderBridge(
+        provider = AgentSessionProvider.PI,
+        icon = EmptyIcon.create(18, 18),
+        outlineLoader = { _, _, _ -> outline },
+        canNavigateOutlineItem = { path, threadId, itemId, subAgentId, tabKey ->
+          path == "/work/project-a" &&
+          threadId == "thread-nav" &&
+          itemId == "entry-nav" &&
+          subAgentId == null &&
+          tabKey == file.tabKey
+        },
+        navigateOutlineItem = { path, threadId, itemId, subAgentId, tabKey ->
+          navigationCalls.add(OutlineNavigationCall(path, threadId, itemId, subAgentId, tabKey))
+          true
+        },
+      )
+
+      AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(bridge))) {
+        val builder = checkNotNull(provider.getStructureViewBuilder(project, file)) as TreeBasedStructureViewBuilder
+        val model = builder.createStructureViewModel(null)
+        try {
+          val root = model.root
+          root.children.single()
+          waitForCondition {
+            root.children.single().presentation.presentableText == "Open entry"
+          }
+
+          val outlineElement = root.children.single() as StructureViewTreeElement
+          assertThat(outlineElement.value).isEqualTo(outlineItem)
+          assertThat(outlineElement.canNavigate()).isTrue()
+          assertThat(outlineElement.canNavigateToSource()).isTrue()
+
+          outlineElement.navigate(false)
+
+          assertThat(navigationCalls.poll(5, TimeUnit.SECONDS))
+            .isEqualTo(OutlineNavigationCall("/work/project-a", "thread-nav", "entry-nav", null, file.tabKey))
+        }
+        finally {
+          Disposer.dispose(model)
+        }
+      }
+    }
+  }
+
+  @Test
+  fun structureViewForkActionStaysVisibleWhenLiveForkUnavailable() {
+    val file = AgentChatVirtualFile(
+      projectPath = "/work/project-a",
+      threadIdentity = "PI:thread-fork",
+      shellCommand = emptyList(),
+      threadId = "thread-fork",
+      threadTitle = "Fork thread",
+      subAgentId = null,
+    )
+    val item = AgentSessionOutlineItem(
+      id = "entry-fork",
+      kind = AgentSessionOutlineItemKind.USER_PROMPT,
+      title = "Fork from here",
+    )
+    val bridge = ChatTestProviderBridge(
+      provider = AgentSessionProvider.PI,
+      icon = EmptyIcon.create(18, 18),
+      canShowForkOutlineItem = { path, threadId, itemId, subAgentId, tabKey ->
+        path == "/work/project-a" &&
+        threadId == "thread-fork" &&
+        itemId == "entry-fork" &&
+        subAgentId == null &&
+        tabKey == file.tabKey
+      },
+    )
+    val action = AgentChatStructureViewForkAction()
+    val event = structureViewForkActionEvent(action, structureViewForkElement(file, bridge.sessionSource, item))
+
+    action.update(event)
+
+    assertThat(event.presentation.isVisible).isTrue()
+    assertThat(event.presentation.isEnabled).isFalse()
+  }
+
+  @Test
+  fun structureViewForkActionEnablesWhenLiveForkAvailableFromNavigatableArray() {
+    val file = AgentChatVirtualFile(
+      projectPath = "/work/project-a",
+      threadIdentity = "PI:thread-fork",
+      shellCommand = emptyList(),
+      threadId = "thread-fork",
+      threadTitle = "Fork thread",
+      subAgentId = null,
+    )
+    val item = AgentSessionOutlineItem(
+      id = "entry-fork",
+      kind = AgentSessionOutlineItemKind.USER_PROMPT,
+      title = "Fork from here",
+    )
+    val bridge = ChatTestProviderBridge(
+      provider = AgentSessionProvider.PI,
+      icon = EmptyIcon.create(18, 18),
+      canShowForkOutlineItem = { _, _, _, _, _ -> true },
+      canForkOutlineItem = { path, threadId, itemId, subAgentId, tabKey ->
+        path == "/work/project-a" &&
+        threadId == "thread-fork" &&
+        itemId == "entry-fork" &&
+        subAgentId == null &&
+        tabKey == file.tabKey
+      },
+    )
+    val action = AgentChatStructureViewForkAction()
+    val event = structureViewForkActionEventFromNavigatableArray(action, structureViewForkElement(file, bridge.sessionSource, item))
+
+    action.update(event)
+
+    assertThat(event.presentation.isVisible).isTrue()
+    assertThat(event.presentation.isEnabled).isTrue()
+  }
+
+  @Test
+  fun structureViewForkActionStaysHiddenForProvidersWithoutStaticSupport() {
+    val file = AgentChatVirtualFile(
+      projectPath = "/work/project-a",
+      threadIdentity = "CODEX:thread-fork",
+      shellCommand = emptyList(),
+      threadId = "thread-fork",
+      threadTitle = "Fork thread",
+      subAgentId = null,
+    )
+    val item = AgentSessionOutlineItem(
+      id = "entry-fork",
+      kind = AgentSessionOutlineItemKind.USER_PROMPT,
+      title = "Fork from here",
+    )
+    val bridge = ChatTestProviderBridge(
+      provider = AgentSessionProvider.CODEX,
+      icon = EmptyIcon.create(18, 18),
+      canForkOutlineItem = { _, _, _, _, _ -> true },
+    )
+    val action = AgentChatStructureViewForkAction()
+    val event = structureViewForkActionEvent(action, structureViewForkElement(file, bridge.sessionSource, item))
+
+    action.update(event)
+
+    assertThat(event.presentation.isVisible).isFalse()
+    assertThat(event.presentation.isEnabled).isFalse()
   }
 
   @Test
@@ -1072,10 +1397,101 @@ private fun presentationKey(
   return checkNotNull(AgentSessionThreadPresentationKey.create(path, provider, threadId))
 }
 
+private fun structureViewForkElement(
+  file: AgentChatVirtualFile,
+  source: AgentSessionSource,
+  item: AgentSessionOutlineItem,
+): AgentChatStructureViewElement {
+  return AgentChatStructureViewElement(
+    value = item,
+    title = item.title,
+    location = item.preview,
+    outlineTarget = AgentChatStructureViewOutlineTarget(file = file, source = source, item = item),
+  )
+}
+
+private fun structureViewForkActionEvent(
+  action: AgentChatStructureViewForkAction,
+  element: AgentChatStructureViewElement,
+): AnActionEvent {
+  return TestActionEvent.createTestEvent(
+    action,
+    SimpleDataContext.builder()
+      .add(CommonDataKeys.NAVIGATABLE, element)
+      .build(),
+  )
+}
+
+private fun structureViewForkActionEventFromNavigatableArray(
+  action: AgentChatStructureViewForkAction,
+  element: AgentChatStructureViewElement,
+): AnActionEvent {
+  return TestActionEvent.createTestEvent(
+    action,
+    SimpleDataContext.builder()
+      .add(CommonDataKeys.NAVIGATABLE_ARRAY, arrayOf<Navigatable>(element))
+      .build(),
+  )
+}
+
+private data class OutlineNavigationCall(
+  @JvmField val path: String,
+  @JvmField val threadId: String,
+  @JvmField val itemId: String,
+  @JvmField val subAgentId: String?,
+  @JvmField val tabKey: String?,
+)
+
+private fun testOutline(
+  threadId: String,
+  title: String,
+  updatedAt: Long,
+  items: List<AgentSessionOutlineItem>,
+): AgentSessionThreadOutline {
+  return AgentSessionThreadOutline(
+    provider = AgentSessionProvider.CODEX,
+    threadId = threadId,
+    title = title,
+    updatedAt = updatedAt,
+    items = items,
+  )
+}
+
+private fun testOutlineItem(
+  id: String,
+  kind: AgentSessionOutlineItemKind = AgentSessionOutlineItemKind.USER_PROMPT,
+  title: String,
+): AgentSessionOutlineItem {
+  return AgentSessionOutlineItem(
+    id = id,
+    kind = kind,
+    title = title,
+  )
+}
+
+private fun testUpdateEvent(threadId: String): AgentSessionSourceUpdateEvent {
+  return AgentSessionSourceUpdateEvent(
+    type = AgentSessionSourceUpdate.THREADS_CHANGED,
+    scopedPaths = setOf("/work/project-a"),
+    threadIds = setOf(threadId),
+  )
+}
+
 private class ChatTestProviderBridge(
   override val provider: AgentSessionProvider,
   override val icon: Icon,
   private val outlineLoader: suspend (path: String, threadId: String, subAgentId: String?) -> AgentSessionThreadOutline? = { _, _, _ -> null },
+  private val activeThreadUpdateEventsProvider: (path: String, threadId: String) -> Flow<AgentSessionSourceUpdateEvent> = { _, _ -> emptyFlow() },
+  private val canNavigateOutlineItem: (path: String, threadId: String, itemId: String, subAgentId: String?, tabKey: String?) -> Boolean =
+    { _, _, _, _, _ -> false },
+  private val navigateOutlineItem: suspend (path: String, threadId: String, itemId: String, subAgentId: String?, tabKey: String?) -> Boolean =
+    { _, _, _, _, _ -> false },
+  private val canShowForkOutlineItem: (path: String, threadId: String, itemId: String, subAgentId: String?, tabKey: String?) -> Boolean =
+    { _, _, _, _, _ -> false },
+  private val canForkOutlineItem: (path: String, threadId: String, itemId: String, subAgentId: String?, tabKey: String?) -> Boolean =
+    { _, _, _, _, _ -> false },
+  private val forkOutlineItem: suspend (project: Project, path: String, threadId: String, itemId: String, subAgentId: String?, tabKey: String?) -> AgentSessionOutlineForkResult? =
+    { _, _, _, _, _, _ -> null },
 ) : AgentSessionProviderDescriptor {
   override val displayNameKey: String
     get() = provider.value
@@ -1093,6 +1509,61 @@ private class ChatTestProviderBridge(
 
     override suspend fun loadThreadOutline(path: String, threadId: String, subAgentId: String?): AgentSessionThreadOutline? {
       return outlineLoader(path, threadId, subAgentId)
+    }
+
+    override fun activeThreadUpdateEvents(path: String, threadId: String): Flow<AgentSessionSourceUpdateEvent> {
+      return activeThreadUpdateEventsProvider(path, threadId)
+    }
+
+    override fun canNavigateThreadOutlineItem(
+      path: String,
+      threadId: String,
+      itemId: String,
+      subAgentId: String?,
+      tabKey: String?,
+    ): Boolean {
+      return canNavigateOutlineItem(path, threadId, itemId, subAgentId, tabKey)
+    }
+
+    override suspend fun navigateThreadOutlineItem(
+      path: String,
+      threadId: String,
+      itemId: String,
+      subAgentId: String?,
+      tabKey: String?,
+    ): Boolean {
+      return navigateOutlineItem(path, threadId, itemId, subAgentId, tabKey)
+    }
+
+    override fun canShowThreadOutlineForkAction(
+      path: String,
+      threadId: String,
+      itemId: String,
+      subAgentId: String?,
+      tabKey: String?,
+    ): Boolean {
+      return canShowForkOutlineItem(path, threadId, itemId, subAgentId, tabKey)
+    }
+
+    override fun canForkThreadFromOutlineItem(
+      path: String,
+      threadId: String,
+      itemId: String,
+      subAgentId: String?,
+      tabKey: String?,
+    ): Boolean {
+      return canForkOutlineItem(path, threadId, itemId, subAgentId, tabKey)
+    }
+
+    override suspend fun forkThreadFromOutlineItem(
+      project: Project,
+      path: String,
+      threadId: String,
+      itemId: String,
+      subAgentId: String?,
+      tabKey: String?,
+    ): AgentSessionOutlineForkResult? {
+      return forkOutlineItem(project, path, threadId, itemId, subAgentId, tabKey)
     }
   }
 

@@ -39,6 +39,10 @@ data class AgentSessionRefreshHints(
   @JvmField val presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate> = emptyMap(),
 )
 
+data class AgentSessionOutlineForkResult(
+  @JvmField val thread: AgentSessionThread,
+)
+
 const val UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT: Long = -1L
 
 data class AgentSessionRefreshThreadSeed(
@@ -247,6 +251,47 @@ interface AgentSessionSource {
     threadId: String,
     subAgentId: String? = null,
   ): AgentSessionThreadOutline? = null
+
+  fun canNavigateThreadOutlineItem(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String? = null,
+    tabKey: String? = null,
+  ): Boolean = false
+
+  suspend fun navigateThreadOutlineItem(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String? = null,
+    tabKey: String? = null,
+  ): Boolean = false
+
+  fun canShowThreadOutlineForkAction(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String? = null,
+    tabKey: String? = null,
+  ): Boolean = false
+
+  fun canForkThreadFromOutlineItem(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String? = null,
+    tabKey: String? = null,
+  ): Boolean = false
+
+  suspend fun forkThreadFromOutlineItem(
+    project: Project,
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String? = null,
+    tabKey: String? = null,
+  ): AgentSessionOutlineForkResult? = null
 
   fun markThreadAsRead(threadId: String, updatedAt: Long) {}
 

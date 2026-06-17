@@ -32,6 +32,7 @@
       order="after agentWorkbenchJunie"
       implementation="com.intellij.agent.workbench.pi.sessions.PiAgentSessionProviderDescriptor"/>
     <httpRequestHandler implementation="com.intellij.agent.workbench.pi.sessions.PiExtensionStatusHttpRequestHandler"/>
+    <httpRequestHandler implementation="com.intellij.agent.workbench.pi.sessions.PiExtensionControlWebSocketHandler"/>
   </extensions>
 
   <applicationListeners>

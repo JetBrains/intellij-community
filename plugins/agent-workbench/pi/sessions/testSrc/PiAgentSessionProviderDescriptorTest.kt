@@ -42,6 +42,7 @@ class PiAgentSessionProviderDescriptorTest {
       mapOf(
         PI_STATUS_ENDPOINT_ENVIRONMENT_VARIABLE to "http://localhost:63342/agent-workbench/pi/status",
         PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE to "status-token-$sessionId",
+        PI_CONTROL_WS_ENDPOINT_ENVIRONMENT_VARIABLE to "ws://localhost:63342/agent-workbench/pi/control",
       )
     },
     omlxSupportEnabledResolver = { true },
@@ -302,6 +303,10 @@ class PiAgentSessionProviderDescriptorTest {
       "http://localhost:63342/agent-workbench/pi/status",
     )
     assertThat(launchSpec.envVariables).containsEntry(PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE, "status-token-pi-session-1")
+    assertThat(launchSpec.envVariables).containsEntry(
+      PI_CONTROL_WS_ENDPOINT_ENVIRONMENT_VARIABLE,
+      "ws://localhost:63342/agent-workbench/pi/control",
+    )
     assertThat(launchSpec.preallocatedSessionId).isEqualTo("pi-session-1")
   }
 
@@ -321,6 +326,10 @@ class PiAgentSessionProviderDescriptorTest {
       "http://localhost:63342/agent-workbench/pi/status",
     )
     assertThat(launchSpec.envVariables).containsEntry(PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE, "status-token-thread-1")
+    assertThat(launchSpec.envVariables).containsEntry(
+      PI_CONTROL_WS_ENDPOINT_ENVIRONMENT_VARIABLE,
+      "ws://localhost:63342/agent-workbench/pi/control",
+    )
   }
 
   @Test

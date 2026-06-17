@@ -23,6 +23,7 @@ import com.intellij.agent.workbench.json.forEachJsonObjectField
 import com.intellij.agent.workbench.json.readJsonLongOrNull
 import com.intellij.agent.workbench.json.readJsonStringOrNull
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineForkResult
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.resolveReadTrackedActivity
 import com.intellij.openapi.diagnostic.logger
@@ -330,6 +331,59 @@ internal class PiSessionSource(
   override suspend fun loadThreadOutline(path: String, threadId: String, subAgentId: String?): AgentSessionThreadOutline? {
     rememberSessionDirectory(path)
     return sessionStore.loadOutline(path, threadId)
+  }
+
+  override fun canNavigateThreadOutlineItem(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): Boolean {
+    return subAgentId == null && PiExtensionControlBridge.canNavigateThreadOutlineItem(path = path, threadId = threadId, itemId = itemId)
+  }
+
+  override suspend fun navigateThreadOutlineItem(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): Boolean {
+    return subAgentId == null && PiExtensionControlBridge.navigateThreadOutlineItem(path = path, threadId = threadId, itemId = itemId)
+  }
+
+  override fun canShowThreadOutlineForkAction(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): Boolean {
+    return subAgentId == null && itemId.isNotBlank()
+  }
+
+  override fun canForkThreadFromOutlineItem(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): Boolean {
+    return subAgentId == null && PiExtensionControlBridge.canForkThreadFromOutlineItem(path = path, threadId = threadId, itemId = itemId)
+  }
+
+  override suspend fun forkThreadFromOutlineItem(
+    project: Project,
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): AgentSessionOutlineForkResult? {
+    if (subAgentId != null) return null
+    val thread = PiExtensionControlBridge.forkThreadFromOutlineItem(path = path, threadId = threadId, itemId = itemId) ?: return null
+    return AgentSessionOutlineForkResult(thread = thread)
   }
 
   private fun rememberActiveWorkingThreadRead(entries: Iterable<PiSessionIndexEntry>) {
@@ -1062,6 +1116,7 @@ private fun readPiSettingsSessionDir(settingsPath: Path): String? {
   }
 }
 
+@Suppress("DuplicatedCode")
 private fun readJsonBooleanOrNull(parser: JsonParser): Boolean? {
   return when (parser.currentToken()) {
     JsonToken.VALUE_TRUE -> true

@@ -7,6 +7,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.structureView.FileEditorPositionListener
 import com.intellij.ide.structureView.ModelListener
@@ -26,6 +28,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -64,6 +67,10 @@ private class AgentChatStructureViewModel(
 
   @Volatile
   private var rootLoaded: Boolean = false
+
+  init {
+    startActiveThreadUpdateSubscription()
+  }
 
   override fun getRoot(): StructureViewTreeElement = root
 
@@ -115,6 +122,18 @@ private class AgentChatStructureViewModel(
     rootLoaded = true
     modelListeners.forEach(ModelListener::onModelChanged)
   }
+
+  private fun startActiveThreadUpdateSubscription() {
+    val provider = file.provider ?: return
+    val source = AgentSessionProviders.find(provider)?.sessionSource ?: return
+    val projectPath = file.projectPath.takeIf(String::isNotBlank) ?: return
+    val threadId = file.threadId.takeIf(String::isNotBlank) ?: return
+    cs.launch {
+      source.activeThreadUpdateEvents(path = projectPath, threadId = threadId).collect {
+        root.requestReload()
+      }
+    }
+  }
 }
 
 private class AgentChatLazyOutlineElement(
@@ -123,9 +142,13 @@ private class AgentChatLazyOutlineElement(
   private val notifyModelChanged: () -> Unit,
 ) : StructureViewTreeElement {
   private val loadStarted = AtomicBoolean(false)
+  private val reloadRequests = Channel<Unit>(Channel.CONFLATED)
 
   @Volatile
   private var delegate: AgentChatStructureViewElement = loadingElement()
+
+  @Volatile
+  private var currentFingerprint: AgentChatOutlineFingerprint? = null
 
   override fun getValue(): Any = this
 
@@ -142,20 +165,33 @@ private class AgentChatLazyOutlineElement(
 
   override fun canNavigateToSource(): Boolean = false
 
+  fun requestReload() {
+    if (!loadStarted.get()) {
+      return
+    }
+    reloadRequests.trySend(Unit)
+  }
+
   private fun startLoading() {
     if (!loadStarted.compareAndSet(false, true)) {
       return
     }
     cs.launch {
-      val loadedElement = loadElement()
-      withContext(Dispatchers.EDT) {
-        delegate = loadedElement
-        notifyModelChanged()
+      while (true) {
+        val loaded = loadElement()
+        withContext(Dispatchers.EDT) {
+          if (currentFingerprint != loaded.fingerprint) {
+            currentFingerprint = loaded.fingerprint
+            delegate = loaded.element
+            notifyModelChanged()
+          }
+        }
+        reloadRequests.receive()
       }
     }
   }
 
-  private suspend fun loadElement(): AgentChatStructureViewElement {
+  private suspend fun loadElement(): AgentChatOutlineLoadResult {
     val provider = file.provider ?: return unavailableElement()
     val source = AgentSessionProviders.find(provider)?.sessionSource ?: return unavailableElement()
     val outline = try {
@@ -173,14 +209,23 @@ private class AgentChatLazyOutlineElement(
         title = outline.title,
         status = AgentChatBundle.message("chat.structure.empty"),
         icon = providerIcon(provider = outline.provider),
+        fingerprint = outline.toStructureViewFingerprint(),
       )
     }
-    return AgentChatStructureViewElement.root(
-      title = outline.title,
-      icon = providerIcon(provider = outline.provider),
-      children = outline.items.mapIndexed { index, item ->
-        item.toStructureViewElement(autoExpand = outline.items.size == 1 && index == 0)
-      },
+    return AgentChatOutlineLoadResult(
+      element = AgentChatStructureViewElement.root(
+        title = outline.title,
+        icon = providerIcon(provider = outline.provider),
+        children = outline.items.mapIndexed { index, item ->
+          item.toStructureViewElement(
+            file = file,
+            source = source,
+            cs = cs,
+            autoExpand = outline.items.size == 1 && index == 0,
+          )
+        },
+      ),
+      fingerprint = outline.toStructureViewFingerprint(),
     )
   }
 
@@ -189,33 +234,123 @@ private class AgentChatLazyOutlineElement(
       title = file.threadTitle,
       status = AgentChatBundle.message("chat.structure.loading"),
       icon = providerIcon(provider = file.provider, threadActivity = file.threadActivity),
-    )
+    ).element
   }
 
-  private fun unavailableElement(): AgentChatStructureViewElement {
+  private fun unavailableElement(): AgentChatOutlineLoadResult {
+    val status = AgentChatBundle.message("chat.structure.unavailable")
     return statusRoot(
       title = file.threadTitle,
-      status = AgentChatBundle.message("chat.structure.unavailable"),
+      status = status,
       icon = providerIcon(provider = file.provider, threadActivity = file.threadActivity),
+      fingerprint = AgentChatOutlineFingerprint.status(
+        provider = file.provider?.value,
+        threadId = file.threadId,
+        title = file.threadTitle,
+        status = status,
+      ),
     )
   }
 
-  private fun statusRoot(title: String, status: String, icon: Icon?): AgentChatStructureViewElement {
-    return AgentChatStructureViewElement.root(
+  private fun statusRoot(
+    title: String,
+    status: String,
+    icon: Icon?,
+    fingerprint: AgentChatOutlineFingerprint = AgentChatOutlineFingerprint.status(
+      provider = file.provider?.value,
+      threadId = file.threadId,
       title = title,
-      icon = icon,
-      children = listOf(
-        AgentChatStructureViewElement.status(
-          title = title,
-          status = status,
-          icon = icon,
-        )
+      status = status,
+    ),
+  ): AgentChatOutlineLoadResult {
+    return AgentChatOutlineLoadResult(
+      element = AgentChatStructureViewElement.root(
+        title = title,
+        icon = icon,
+        children = listOf(
+          AgentChatStructureViewElement.status(
+            title = title,
+            status = status,
+            icon = icon,
+          )
+        ),
       ),
+      fingerprint = fingerprint,
     )
   }
 }
 
-private class AgentChatStructureViewElement(
+private data class AgentChatOutlineLoadResult(
+  val element: AgentChatStructureViewElement,
+  val fingerprint: AgentChatOutlineFingerprint,
+)
+
+private data class AgentChatOutlineFingerprint(
+  val provider: String?,
+  val threadId: String,
+  val title: String,
+  val updatedAt: Long?,
+  val status: String?,
+  val items: List<AgentChatOutlineItemFingerprint>,
+) {
+  companion object {
+    fun status(provider: String?, threadId: String, title: String, status: String): AgentChatOutlineFingerprint {
+      return AgentChatOutlineFingerprint(
+        provider = provider,
+        threadId = threadId,
+        title = title,
+        updatedAt = null,
+        status = status,
+        items = emptyList(),
+      )
+    }
+  }
+}
+
+private data class AgentChatOutlineItemFingerprint(
+  val id: String,
+  val kind: AgentSessionOutlineItemKind,
+  val title: String,
+  val preview: String?,
+  val timestampMs: Long?,
+  val childCount: Int,
+  val children: List<AgentChatOutlineItemFingerprint>,
+)
+
+private fun AgentSessionThreadOutline.toStructureViewFingerprint(): AgentChatOutlineFingerprint {
+  return AgentChatOutlineFingerprint(
+    provider = provider.value,
+    threadId = threadId,
+    title = title,
+    updatedAt = updatedAt,
+    status = null,
+    items = items.map(AgentSessionOutlineItem::toStructureViewFingerprint),
+  )
+}
+
+private fun AgentSessionOutlineItem.toStructureViewFingerprint(): AgentChatOutlineItemFingerprint {
+  return AgentChatOutlineItemFingerprint(
+    id = id,
+    kind = kind,
+    title = title,
+    preview = preview,
+    timestampMs = timestampMs,
+    childCount = children.size,
+    children = children.map(AgentSessionOutlineItem::toStructureViewFingerprint),
+  )
+}
+
+internal data class AgentChatStructureViewOutlineTarget(
+  @JvmField val file: AgentChatVirtualFile,
+  @JvmField val source: AgentSessionSource,
+  @JvmField val item: AgentSessionOutlineItem,
+)
+
+internal interface AgentChatStructureViewOutlineElement {
+  val outlineTarget: AgentChatStructureViewOutlineTarget?
+}
+
+internal class AgentChatStructureViewElement(
   private val value: Any,
   private val title: @NlsSafe String,
   private val location: @NlsSafe String?,
@@ -223,7 +358,9 @@ private class AgentChatStructureViewElement(
   private val icon: Icon? = null,
   private val childrenElements: List<StructureViewTreeElement> = emptyList(),
   val autoExpand: Boolean = false,
-) : StructureViewTreeElement {
+  private val cs: CoroutineScope? = null,
+  override val outlineTarget: AgentChatStructureViewOutlineTarget? = null,
+) : StructureViewTreeElement, AgentChatStructureViewOutlineElement {
   override fun getValue(): Any = value
 
   override fun getPresentation(): ItemPresentation {
@@ -240,12 +377,35 @@ private class AgentChatStructureViewElement(
 
   override fun getChildren(): Array<StructureViewTreeElement> = childrenElements.toTypedArray()
 
-  // Persisted outline items do not reliably map to live terminal TUI positions: providers can clear, redraw, or trim them.
-  override fun navigate(requestFocus: Boolean) = Unit
+  override fun navigate(requestFocus: Boolean) {
+    val target = outlineTarget ?: return
+    val scope = cs ?: return
+    if (!canNavigate()) {
+      return
+    }
+    scope.launch {
+      target.source.navigateThreadOutlineItem(
+        path = target.file.projectPath,
+        threadId = target.file.threadId,
+        itemId = target.item.id,
+        subAgentId = target.file.subAgentId,
+        tabKey = target.file.tabKey,
+      )
+    }
+  }
 
-  override fun canNavigate(): Boolean = false
+  override fun canNavigate(): Boolean {
+    val target = outlineTarget ?: return false
+    return target.source.canNavigateThreadOutlineItem(
+      path = target.file.projectPath,
+      threadId = target.file.threadId,
+      itemId = target.item.id,
+      subAgentId = target.file.subAgentId,
+      tabKey = target.file.tabKey,
+    )
+  }
 
-  override fun canNavigateToSource(): Boolean = false
+  override fun canNavigateToSource(): Boolean = canNavigate()
 
   companion object {
     fun root(title: String, icon: Icon?, children: List<StructureViewTreeElement>): AgentChatStructureViewElement {
@@ -270,7 +430,12 @@ private class AgentChatStructureViewElement(
   }
 }
 
-private fun AgentSessionOutlineItem.toStructureViewElement(autoExpand: Boolean = false): AgentChatStructureViewElement {
+private fun AgentSessionOutlineItem.toStructureViewElement(
+  file: AgentChatVirtualFile,
+  source: AgentSessionSource,
+  cs: CoroutineScope,
+  autoExpand: Boolean = false,
+): AgentChatStructureViewElement {
   val location = compactStructureViewLocation(preview ?: timestampMs?.let(::formatStructureViewTimestamp))
   return AgentChatStructureViewElement(
     value = this,
@@ -279,7 +444,11 @@ private fun AgentSessionOutlineItem.toStructureViewElement(autoExpand: Boolean =
     tooltip = preview ?: timestampMs?.let(::formatStructureViewTimestamp),
     icon = structureViewIcon(),
     autoExpand = autoExpand,
-    childrenElements = children.map { child -> child.toStructureViewElement() },
+    cs = cs,
+    outlineTarget = AgentChatStructureViewOutlineTarget(file = file, source = source, item = this),
+    childrenElements = children.map { child ->
+      child.toStructureViewElement(file = file, source = source, cs = cs)
+    },
   )
 }
 
