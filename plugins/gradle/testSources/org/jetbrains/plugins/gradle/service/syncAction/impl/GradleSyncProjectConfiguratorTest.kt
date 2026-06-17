@@ -2,29 +2,31 @@
 package org.jetbrains.plugins.gradle.service.syncAction.impl
 
 import com.intellij.build.FilePosition
+import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.FileMessageEvent
+import com.intellij.build.events.MessageEvent
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailure
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertion
 import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertion.Companion.assertCollectionOrdered
 import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.junit5.fixture.extensionPointFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.issue.ConfigurableGradleBuildIssue
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
 import org.jetbrains.plugins.gradle.issue.GradleIssueData
-import org.jetbrains.plugins.gradle.testFramework.util.buildEnvironment
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.fixtures.gradleFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.projectFixture
 import org.jetbrains.plugins.gradle.testFramework.projectModel.mock.GradleTestProjectResolverContext.Companion.projectResolverContext
+import org.jetbrains.plugins.gradle.testFramework.util.buildEnvironment
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertInstanceOf
 import org.junit.jupiter.params.ParameterizedClass
 
 @TestApplication
@@ -40,47 +42,50 @@ class GradleSyncProjectConfiguratorTest(gradleVersion: GradleVersion) {
 
   private val project by gradleFixture.projectFixture(testRootFixture, numProjectSyncs = 0)
 
-  @BeforeEach
-  fun setUpIssueChecker(@TestDisposable disposable: Disposable) {
-    GradleIssueChecker.EP_NAME.point.registerExtension(TestModelFetchFailureIssueChecker(), disposable)
+  private val issueChecker by extensionPointFixture(GradleIssueChecker.EP_NAME, ::TestModelFetchFailureIssueChecker)
+
+  @Test
+  fun `test sync failure handler reports message event`() {
+    val buildEvents = reportSyncFailures(
+      GradleModelFetchFailure("title", "description", emptyList()),
+    )
+
+    assertCollectionOrdered(buildEvents) {
+      messageEvent("title", "description", null)
+    }
+  }
+
+  @Test
+  fun `test sync failure handler reports message event with file filePosition`() {
+    val buildFile = testRoot.resolve("build.gradle")
+    val filePosition = FilePosition(buildFile, 12, 0)
+    val message = "title"
+    val description = stackTrace("description", filePosition)
+
+    val buildEvents = reportSyncFailures(
+      GradleModelFetchFailure(message, description, emptyList()),
+    )
+
+    assertCollectionOrdered(buildEvents) {
+      messageEvent(message, description, filePosition)
+    }
   }
 
   @Test
   fun `test sync failure handler deduplicates same issue events`() {
     val buildFile = testRoot.resolve("build.gradle")
     val filePosition = FilePosition(buildFile, 12, 0)
+    val message = issueChecker.markFailureMessage("title", "message")
+    val description = stackTrace("description", filePosition)
 
     val buildEvents = reportSyncFailures(
-      modelFetchFailure("title", "message", filePosition),
-      modelFetchFailure("title", "message", filePosition),
+      GradleModelFetchFailure(message, description, emptyList()),
+      GradleModelFetchFailure(message, description, emptyList()),
     )
 
     assertCollectionOrdered(buildEvents) {
-      assertElement { actual ->
-        assertEquals("title", actual.issue.title)
-        assertEquals("message\n", actual.issue.description)
-        assertEquals(filePosition, (actual as FileMessageEvent).filePosition)
-      }
-    }
-  }
-
-  @Test
-  fun `test sync failure handler keeps issue events with different descriptions`() {
-
-    val buildEvents = reportSyncFailures(
-      modelFetchFailure("title", "message (1)"),
-      modelFetchFailure("title", "message (2)"),
-    )
-
-    assertCollectionOrdered(buildEvents) {
-      assertElement { actual ->
-        assertEquals("title", actual.issue.title)
-        assertEquals("message (1)\n", actual.issue.description)
-      }
-      assertElement { actual ->
-        assertEquals("title", actual.issue.title)
-        assertEquals("message (2)\n", actual.issue.description)
-      }
+      messageEvent(message, description, filePosition)
+      issueEvent("title", "message\n", filePosition)
     }
   }
 
@@ -88,82 +93,123 @@ class GradleSyncProjectConfiguratorTest(gradleVersion: GradleVersion) {
   fun `test sync failure handler keeps issue events with different titles`() {
     val buildFile = testRoot.resolve("build.gradle")
     val filePosition = FilePosition(buildFile, 12, 0)
+    val message1 = issueChecker.markFailureMessage("title (1)", "message")
+    val message2 = issueChecker.markFailureMessage("title (2)", "message")
+    val description = stackTrace("description", filePosition)
 
     val buildEvents = reportSyncFailures(
-      modelFetchFailure("title (1)", "message", filePosition),
-      modelFetchFailure("title (2)", "message", filePosition),
+      GradleModelFetchFailure(message1, description, emptyList()),
+      GradleModelFetchFailure(message2, description, emptyList()),
     )
 
     assertCollectionOrdered(buildEvents) {
-      assertElement { actual ->
-        assertEquals("title (1)", actual.issue.title)
-        assertEquals("message\n", actual.issue.description)
-        assertEquals(filePosition, (actual as FileMessageEvent).filePosition)
-      }
-      assertElement { actual ->
-        assertEquals("title (2)", actual.issue.title)
-        assertEquals("message\n", actual.issue.description)
-        assertEquals(filePosition, (actual as FileMessageEvent).filePosition)
-      }
+      messageEvent(message1, description, filePosition)
+      issueEvent("title (1)", "message\n", filePosition)
+      messageEvent(message2, description, filePosition)
+      issueEvent("title (2)", "message\n", filePosition)
     }
   }
 
   @Test
-  fun `test sync failure handler keeps issue events with different file positions`() {
+  fun `test sync failure handler keeps issue events with different messages`() {
     val buildFile = testRoot.resolve("build.gradle")
-    val firstPosition = FilePosition(buildFile, 12, 0)
-    val secondPosition = FilePosition(buildFile, 34, 0)
+    val filePosition = FilePosition(buildFile, 12, 0)
+    val message1 = issueChecker.markFailureMessage("title", "message (1)")
+    val message2 = issueChecker.markFailureMessage("title", "message (2)")
+    val description = stackTrace("description", filePosition)
 
     val buildEvents = reportSyncFailures(
-      modelFetchFailure("title", "message", firstPosition),
-      modelFetchFailure("title", "message", secondPosition),
+      GradleModelFetchFailure(message1, description, emptyList()),
+      GradleModelFetchFailure(message2, description, emptyList()),
     )
 
     assertCollectionOrdered(buildEvents) {
-      assertElement { actual ->
-        assertEquals("title", actual.issue.title)
-        assertEquals("message\n", actual.issue.description)
-        assertEquals(firstPosition, (actual as FileMessageEvent).filePosition)
-      }
-      assertElement { actual ->
-        assertEquals("title", actual.issue.title)
-        assertEquals("message\n", actual.issue.description)
-        assertEquals(secondPosition, (actual as FileMessageEvent).filePosition)
-      }
+      messageEvent(message1, description, filePosition)
+      issueEvent("title", "message (1)\n", filePosition)
+      messageEvent(message2, description, filePosition)
+      issueEvent("title", "message (2)\n", filePosition)
     }
   }
 
   @Test
-  fun `test sync failure handler uses file position from nested failure stacktrace`() {
+  fun `test sync failure handler keeps issue events with different descriptions`() {
     val buildFile = testRoot.resolve("build.gradle")
-    val nestedPosition = FilePosition(buildFile, 42, 0)
+    val filePosition = FilePosition(buildFile, 12, 0)
+    val message = issueChecker.markFailureMessage("title", "message")
+    val description1 = stackTrace("description1", filePosition)
+    val description2 = stackTrace("description2", filePosition)
 
     val buildEvents = reportSyncFailures(
-      modelFetchFailure("title", "message", causes = listOf(modelFetchFailure("nested title", "nested message", nestedPosition))),
+      GradleModelFetchFailure(message, description1, emptyList()),
+      GradleModelFetchFailure(message, description2, emptyList()),
     )
 
     assertCollectionOrdered(buildEvents) {
-      assertElement { actual ->
-        assertEquals("title", actual.issue.title)
-        assertEquals("message\n", actual.issue.description)
-        assertEquals(nestedPosition, (actual as FileMessageEvent).filePosition)
-      }
+      messageEvent(message, description1, filePosition)
+      issueEvent("title", "message\n", filePosition)
+      messageEvent(message, description2, filePosition)
     }
   }
 
-  private fun reportSyncFailures(vararg failures: GradleModelFetchFailure): List<BuildIssueEvent> {
-    val events = ArrayList<BuildIssueEvent>()
+  @Test
+  fun `test sync failure handler keeps issue events with different file filePositions`() {
+    val buildFile = testRoot.resolve("build.gradle")
+    val filePosition1 = FilePosition(buildFile, 12, 0)
+    val filePosition2 = FilePosition(buildFile, 34, 0)
+    val message = issueChecker.markFailureMessage("title", "message")
+    val description1 = stackTrace("description", filePosition1)
+    val description2 = stackTrace("description", filePosition2)
+
+    val buildEvents = reportSyncFailures(
+      GradleModelFetchFailure(message, description1, emptyList()),
+      GradleModelFetchFailure(message, description2, emptyList()),
+    )
+
+    assertCollectionOrdered(buildEvents) {
+      messageEvent(message, description1, filePosition1)
+      issueEvent("title", "message\n", filePosition1)
+      messageEvent(message, description2, filePosition2)
+      issueEvent("title", "message\n", filePosition2)
+    }
+  }
+
+  @Test
+  fun `test sync failure handler uses file filePosition from nested failure stacktrace`() {
+    val buildFile = testRoot.resolve("build.gradle")
+    val nestedFilePosition = FilePosition(buildFile, 42, 0)
+    val message = issueChecker.markFailureMessage("title", "message")
+    val description = stackTrace("description", null)
+    val nestedDescription = stackTrace("nested description", nestedFilePosition)
+
+    val buildEvents = reportSyncFailures(
+      GradleModelFetchFailure(message, description, causes = listOf(
+        GradleModelFetchFailure("nested message", nestedDescription, emptyList())
+      )),
+    )
+
+    assertCollectionOrdered(buildEvents) {
+      messageEvent(message, description, nestedFilePosition)
+      issueEvent("title", "message\n", nestedFilePosition)
+    }
+  }
+
+  private fun stackTrace(message: String, filePosition: FilePosition?): String = buildString {
+    appendLine("java.lang.IllegalStateException: $message")
+    if (filePosition != null) {
+      appendLine(" at build_gradle.run(${filePosition.path}:${filePosition.startLine})")
+    }
+    appendLine(" at org.gradle.tooling.internal.consumer.DefaultBuildLauncher.run(DefaultBuildLauncher.java:89)")
+  }
+
+  private fun reportSyncFailures(vararg failures: GradleModelFetchFailure): List<BuildEvent> {
+    val events = ArrayList<BuildEvent>()
 
     val context = projectResolverContext(project) {
       it.buildEnvironment = gradle.buildEnvironment
       it.listener = object : ExternalSystemTaskNotificationListener {
         override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {
-          if (event is ExternalSystemBuildEvent) {
-            val buildEvent = event.buildEvent
-            if (buildEvent is BuildIssueEvent) {
-              events.add(buildEvent)
-            }
-          }
+          assertInstanceOf<ExternalSystemBuildEvent>(event)
+          events.add(event.buildEvent)
         }
       }
     }
@@ -173,27 +219,37 @@ class GradleSyncProjectConfiguratorTest(gradleVersion: GradleVersion) {
     return events
   }
 
-  private fun modelFetchFailure(
-    title: String,
-    message: String,
-    filePosition: FilePosition? = null,
-    causes: List<GradleModelFetchFailure> = emptyList(),
-  ): GradleModelFetchFailure {
-    val markedMessage = "$TEST_MODEL_FETCH_FAILURE_MARKER$title$TEST_MODEL_FETCH_FAILURE_PAYLOAD_SEPARATOR$message"
-    return GradleModelFetchFailure(
-      message = markedMessage,
-      description = buildString {
-        appendLine("java.lang.IllegalStateException: $markedMessage")
-        if (filePosition != null) {
-          appendLine(" at build_gradle.run(${filePosition.path}:${filePosition.startLine})")
-        }
-        appendLine(" at org.gradle.tooling.internal.consumer.DefaultBuildLauncher.run(DefaultBuildLauncher.java:89)")
-      },
-      causes = causes,
-    )
+  private fun CollectionAssertion<BuildEvent>.messageEvent(message: String, description: String, filePosition: FilePosition?) {
+    assertElement { actual ->
+      assertInstanceOf<MessageEvent>(actual)
+      assertEquals(MessageEvent.Kind.ERROR, actual.kind)
+      assertEquals(message, actual.message)
+      assertEquals(description, actual.description)
+      if (filePosition != null) {
+        assertInstanceOf<FileMessageEvent>(actual)
+        assertEquals(filePosition, actual.filePosition)
+      }
+    }
+  }
+
+  private fun CollectionAssertion<BuildEvent>.issueEvent(title: String, description: String, filePosition: FilePosition?) {
+    assertElement { actual ->
+      assertInstanceOf<BuildIssueEvent>(actual)
+      assertEquals(MessageEvent.Kind.ERROR, actual.kind)
+      assertEquals(title, actual.issue.title)
+      assertEquals(description, actual.issue.description)
+      if (filePosition != null) {
+        assertInstanceOf<FileMessageEvent>(actual)
+        assertEquals(filePosition, actual.filePosition)
+      }
+    }
   }
 
   private class TestModelFetchFailureIssueChecker : GradleIssueChecker {
+
+    fun markFailureMessage(issueTitle: String, issueMessage: String): String =
+      "$TEST_MODEL_FETCH_FAILURE_MARKER$issueTitle$TEST_MODEL_FETCH_FAILURE_PAYLOAD_SEPARATOR$issueMessage"
+
     override fun check(issueData: GradleIssueData): ConfigurableGradleBuildIssue? {
       val markedMessage = issueData.failure.message ?: return null
       if (!markedMessage.startsWith(TEST_MODEL_FETCH_FAILURE_MARKER)) return null
