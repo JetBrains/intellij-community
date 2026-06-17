@@ -10,7 +10,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEventDTO
-import com.intellij.platform.projectView.pane.SelectInRequest
+import com.intellij.platform.projectView.pane.SelectInRequestDTO
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
 import com.intellij.platform.rpc.backend.RemoteApiProvider
 import fleet.rpc.remoteApiDescriptor
@@ -54,8 +54,8 @@ internal class ProjectViewRpcImpl : ProjectViewRpc {
   }
 
   override suspend fun findNodeForSelectIn(
-    projectId: ProjectId,
-    selectInRequest: SelectInRequest,
+      projectId: ProjectId,
+      selectInRequest: SelectInRequestDTO,
   ): ProjectViewNodePath? {
     return BackendProjectViewPaneService.getInstanceSuspend(projectId.findProject()).findNodeForSelectIn(selectInRequest)
   }

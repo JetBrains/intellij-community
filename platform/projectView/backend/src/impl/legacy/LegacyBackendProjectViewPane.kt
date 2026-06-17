@@ -4,8 +4,6 @@
 
 package com.intellij.platform.projectView.backend.impl.legacy
 
-import com.intellij.ide.FileSelectInContext
-import com.intellij.ide.SelectInContext
 import com.intellij.ide.projectView.NodeSortKey
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane
 import com.intellij.ide.projectView.impl.IdeViewForProjectViewPane
@@ -15,7 +13,6 @@ import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor
-import com.intellij.ide.vfs.virtualFile
 import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DataSnapshot
@@ -58,9 +55,7 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionChanged
 import com.intellij.platform.projectView.pane.SUPER_ROOT_ID
-import com.intellij.platform.projectView.pane.SelectInContextDescriptor
 import com.intellij.platform.projectView.pane.SelectInRequest
-import com.intellij.platform.projectView.pane.SelectInTargetDescriptor
 import com.intellij.platform.projectView.pane.SuperRoot
 import com.intellij.platform.projectView.pane.projectViewNodePath
 import com.intellij.platform.projectView.pane.projectViewPaneId
@@ -123,18 +118,12 @@ private class LegacyBackendProjectViewPaneService(
   private fun createLegacyPanes(legacyPane: AbstractProjectViewPane): Iterable<BackendProjectViewPane> {
     val stateManager = AbstractProjectViewPaneStateManager(project, coroutineScope.childScope("LegacyBackendProjectViewPane: $legacyPane"), legacyPane)
     val subIds = legacyPane.subIds
-    val selectInTarget = stateManager.selectInTarget
-    val selectInTargetDescriptors = listOf(SelectInTargetDescriptor(
-      id = legacyPane.id, // For the PV it's the same as selectInTarget.minorViewId, but that one is declared nullable.
-      presentableName = selectInTarget.toString(),
-      weight = selectInTarget.weight
-    ))
     if (subIds.isEmpty()) {
       return listOf(LegacyBackendProjectViewPane(
         project = project,
         legacyPaneManager = stateManager,
         subId = null,
-        selectInTargetDescriptors = selectInTargetDescriptors
+        addSelectInTargetDescriptors = true,
       ))
     }
     else {
@@ -144,7 +133,7 @@ private class LegacyBackendProjectViewPaneService(
           legacyPaneManager = stateManager,
           subId = subId,
           // Scope panes share the common select in target, so we only return it once.
-          selectInTargetDescriptors = if (subId == subIds.first()) selectInTargetDescriptors else emptyList(),
+          addSelectInTargetDescriptors = subId == subIds.first(),
         )
       }
     }
@@ -155,7 +144,7 @@ private class LegacyBackendProjectViewPane(
   private val project: Project,
   private val legacyPaneManager: AbstractProjectViewPaneStateManager,
   private val subId: String?,
-  private val selectInTargetDescriptors: List<SelectInTargetDescriptor>,
+  private val addSelectInTargetDescriptors: Boolean,
 ) : BackendProjectViewPane {
   private val managerRequestChannel = legacyPaneManager.getRequestChannel()
 
@@ -167,8 +156,13 @@ private class LegacyBackendProjectViewPane(
     if (legacyPaneManager.legacyPane.isDefaultPane(project)) {
       setDefault(true)
     }
-    for (selectInTargetDescriptor in selectInTargetDescriptors) {
-      addSelectInTarget(selectInTargetDescriptor)
+    if (addSelectInTargetDescriptors) {
+      val selectInTarget = legacyPaneManager.selectInTarget
+      addSelectInTarget(
+        id = legacyPaneManager.id, // For the PV it's the same as selectInTarget.minorViewId, but that one is declared nullable.
+        presentableName = selectInTarget.toString(),
+        weight = selectInTarget.weight
+      )
     }
     build(
       id = id,
@@ -216,17 +210,12 @@ private class LegacyBackendProjectViewPane(
 
   override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
     val target = legacyPaneManager.selectInTarget
-    val context = selectInRequest.context ?: restoreSerializedContext(selectInRequest.contextDescriptor) ?: return null
+    val context = selectInRequest.context
     if (!readAction { target.canSelect(context) }) return null
     return selectAndGetPath {
       LOG.debug { "[$id] Selecting using the context $context" }
       target.selectIn(context, false) // requestFocus doesn't matter because it's backend code
     }
-  }
-
-  private fun restoreSerializedContext(contextDescriptor: SelectInContextDescriptor): SelectInContext? {
-    val file = contextDescriptor.fileId.virtualFile() ?: return null
-    return FileSelectInContext(project, file)
   }
 
   private suspend fun selectAndGetPath(select: () -> Unit): ProjectViewNodePath? {

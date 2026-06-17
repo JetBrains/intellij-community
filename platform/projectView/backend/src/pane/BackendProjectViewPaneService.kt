@@ -13,7 +13,8 @@ import com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorImpl
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
 import com.intellij.platform.projectView.pane.ProjectViewPaneRequest
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateEvent
-import com.intellij.platform.projectView.pane.SelectInRequest
+import com.intellij.platform.projectView.pane.SelectInRequestDTO
+import com.intellij.platform.projectView.pane.toSelectInRequest
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -98,13 +99,14 @@ internal class BackendProjectViewPaneService(
     return pane.findNodeForEditor(editorChoice)
   }
 
-  suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
+  suspend fun findNodeForSelectIn(selectInRequestDTO: SelectInRequestDTO): ProjectViewNodePath? {
     val managers = managers.load() ?: return null
     val manager = managers.values.firstOrNull { pane ->
       pane.descriptor.selectInTargetDescriptors.any { selectInTargetDescriptor ->
-        selectInTargetDescriptor.id == selectInRequest.targetId
+        selectInTargetDescriptor.id == selectInRequestDTO.targetId
       }
     } ?: return null
+    val selectInRequest = selectInRequestDTO.toSelectInRequest(project) ?: return null
     return manager.pane.findNodeForSelectIn(selectInRequest)
   }
 }

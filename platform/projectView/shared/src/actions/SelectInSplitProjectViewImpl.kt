@@ -17,8 +17,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.platform.project.projectId
 import com.intellij.platform.projectView.pane.ProjectViewNodePath
-import com.intellij.platform.projectView.pane.SelectInContextDescriptor
-import com.intellij.platform.projectView.pane.SelectInRequest
+import com.intellij.platform.projectView.pane.SelectInContextDTO
+import com.intellij.platform.projectView.pane.SelectInRequestDTO
 import com.intellij.platform.projectView.rpc.ProjectViewRpc
 import com.intellij.platform.projectView.window.ProjectViewToolWindowService
 import kotlinx.coroutines.CoroutineName
@@ -175,9 +175,9 @@ private data class SelectInTask(
     val rpc = ProjectViewRpc.getInstance()
     val nodePath = withTimeoutOrNull(15.seconds) {
       LOG.debug { "Looking for the node to select (on the backend) for $context" }
-      rpc.findNodeForSelectIn(project.projectId(), SelectInRequest(
+      rpc.findNodeForSelectIn(project.projectId(), SelectInRequestDTO(
         targetId = target.minorViewId,
-        contextDescriptor = serialize(context),
+        contextDTO = serialize(context),
         context = context,
       ))
     }
@@ -187,8 +187,8 @@ private data class SelectInTask(
     }
   }
 
-  private fun serialize(context: SelectInContext): SelectInContextDescriptor {
-    return SelectInContextDescriptor(context.virtualFile.rpcId())
+  private fun serialize(context: SelectInContext): SelectInContextDTO {
+    return SelectInContextDTO(context.virtualFile.rpcId())
   }
 }
 
