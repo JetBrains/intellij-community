@@ -421,6 +421,47 @@ mod tests {
     }
 
     #[test]
+    #[cfg(target_os = "macos")]
+    fn macos_adjusting_non_ascii_current_dir() {
+        use std::ffi::OsString;
+        use std::fs::OpenOptions;
+        use std::io::Write;
+        use std::os::unix::ffi::OsStrExt;
+
+        let test = prepare_test_env(LauncherLocation::Standard);
+        let non_ascii_dir = test.project_dir.join("한글_öß_фыр");
+        fs::create_dir_all(&non_ascii_dir).unwrap();
+
+        let app_bundle_path = test.dist_root.parent().unwrap();
+        let stdout_file = test.project_dir.join("_stdout.txt");
+        let stderr_file = test.project_dir.join("_stderr.txt");
+        let mut script = OsString::new();
+        script.push("/usr/bin/open -Wna ");
+        script.push(app_bundle_path);
+        script.push(" --stdout ");
+        script.push(&stdout_file);
+        script.push(" --stderr ");
+        script.push(&stderr_file);
+        script.push(" --env ");
+        script.push(xplat_launcher::DEBUG_MODE_ENV_VAR);
+        script.push("=1");
+        script.push(" --args print-cwd\n");
+        let script_file = test.project_dir.join("_test.sh");
+        OpenOptions::new().write(true).create_new(true)
+            .open(&script_file).unwrap_or_else(|_| panic!("Cannot create {:?}", &script_file))
+            .write_all(script.as_bytes()).unwrap_or_else(|_| panic!("Cannot write {:?}", &script_file));
+        let open_res = std::process::Command::new("/bin/sh").args([script_file]).current_dir(&non_ascii_dir)
+            .output().unwrap_or_else(|e| panic!("Failed: 'open': {:?}", e));
+        assert!(open_res.status.success(), "Failed: 'open':\n{:?}", open_res);
+        let stderr = fs::read_to_string(&stderr_file).unwrap_or_default();
+        assert!(stderr.is_empty(), "Failed: 'open':\nstderr:\n{:?}", stderr);
+
+        let stdout = fs::read_to_string(&stdout_file).unwrap_or_else(|_| panic!("Cannot read: {:?}", stdout_file));
+        let expected = format!("CWD={}", non_ascii_dir.display());
+        assert!(stdout.contains(&expected), "'{}' is not in the output:\n{}", expected, stdout);
+    }
+
+    #[test]
     fn launching_via_external_symlink() {
         let test = prepare_test_env(LauncherLocation::Standard);
 
