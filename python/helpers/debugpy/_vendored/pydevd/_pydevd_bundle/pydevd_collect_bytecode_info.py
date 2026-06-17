@@ -580,9 +580,13 @@ class _Disassembler(object):
         found = []
         fullrepr = None
 
-        # Collect all the load instructions
+        # Collect all the load instructions (include 3.12+ LOAD_SMALL_INT, LOAD_FAST_BORROW)
+        _load_ops = (
+            "LOAD_GLOBAL", "LOAD_FAST", "LOAD_CONST", "LOAD_NAME",
+            "LOAD_SMALL_INT", "LOAD_FAST_BORROW",
+        )
         for next_instruction in self.instructions:
-            if next_instruction.opname in ("LOAD_GLOBAL", "LOAD_FAST", "LOAD_CONST", "LOAD_NAME"):
+            if next_instruction.opname in _load_ops:
                 found.append(next_instruction)
             else:
                 break
@@ -721,16 +725,23 @@ class _Disassembler(object):
 
         return instruction_repr
 
+    def _get_display_argrepr(self, instruction):
+        argrepr = instruction.argrepr
+        if isinstance(argrepr, str) and argrepr.startswith("NULL + "):
+            argrepr = argrepr[7:]
+        if isinstance(argrepr, str) and argrepr.endswith(" + NULL"):
+            argrepr = argrepr[:-7]
+        # LOAD_SMALL_INT (3.12+) has no argrepr; use argval for display
+        if not argrepr and instruction.opname == "LOAD_SMALL_INT" and instruction.argval is not None:
+            return str(instruction.argval)
+        return argrepr
+
     def _create_msg_part(self, instruction, tok=None, line=None):
         dec = self._decorate_jump_target
         if line is None or line in (self.BIG_LINE_INT, self.SMALL_LINE_INT):
             line = self.op_offset_to_line[instruction.offset]
 
-        argrepr = instruction.argrepr
-        if isinstance(argrepr, str) and argrepr.startswith("NULL + "):
-            argrepr = argrepr[7:]
-        if isinstance(argrepr, str) and argrepr.endswith("+ NULL"):
-            argrepr = argrepr[:-7]
+        argrepr = self._get_display_argrepr(instruction)
         return _MsgPart(line, tok if tok is not None else dec(instruction, argrepr))
 
     def _next_instruction_to_str(self, line_to_contents):
@@ -754,7 +765,7 @@ class _Disassembler(object):
         if instruction.opname == "RETURN_CONST":
             return (msg(instruction, "return ", line=self.min_line(instruction)), msg(instruction))
 
-        if instruction.opname in ("LOAD_GLOBAL", "LOAD_FAST", "LOAD_CONST", "LOAD_NAME"):
+        if instruction.opname in ("LOAD_GLOBAL", "LOAD_FAST", "LOAD_CONST", "LOAD_NAME", "LOAD_SMALL_INT", "LOAD_FAST_BORROW"):
             next_instruction = self.instructions[0]
             if next_instruction.opname in ("STORE_FAST", "STORE_NAME"):
                 self.instructions.pop(0)
@@ -783,10 +794,10 @@ class _Disassembler(object):
                 return msg(instruction, "raise")
 
         if instruction.opname == "SETUP_FINALLY":
-            return msg(instruction, ("try(", instruction.argrepr, "):"))
+            return msg(instruction, ("try(", self._get_display_argrepr(instruction), "):"))
 
         if instruction.argrepr:
-            return msg(instruction, (instruction.opname, "(", instruction.argrepr, ")"))
+            return msg(instruction, (instruction.opname, "(", self._get_display_argrepr(instruction), ")"))
 
         if instruction.argval:
             return msg(

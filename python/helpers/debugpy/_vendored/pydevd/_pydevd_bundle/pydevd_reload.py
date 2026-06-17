@@ -148,9 +148,12 @@ def notify_error(*args):
 # =======================================================================================================================
 def code_objects_equal(code0, code1):
     for d in dir(code0):
-        if d.startswith("_") or "line" in d or d in ("replace", "co_positions", "co_qualname"):
+        if d.startswith("_") or "line" in d or d in ("replace", "co_positions", "co_qualname", "co_branches"):
             continue
-        if getattr(code0, d) != getattr(code1, d):
+        val0 = getattr(code0, d)
+        if callable(val0):
+            continue  # skip methods (e.g. co_branches in Python 3.14)
+        if val0 != getattr(code1, d):
             return False
     return True
 

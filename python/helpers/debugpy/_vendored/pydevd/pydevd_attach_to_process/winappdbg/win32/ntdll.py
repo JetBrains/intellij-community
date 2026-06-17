@@ -397,7 +397,7 @@ def NtSystemDebugControl(Command, InputBuffer=None, InputBufferLength=None, Outp
         if InputBufferLength is None:
             InputBufferLength = 0
         else:
-            raise ValueError("Invalid call to NtSystemDebugControl: " "input buffer length given but no input buffer!")
+            raise ValueError("Invalid call to NtSystemDebugControl: input buffer length given but no input buffer!")
     else:
         if InputBufferLength is None:
             InputBufferLength = sizeof(InputBuffer)

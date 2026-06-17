@@ -180,6 +180,7 @@ IS_PY314_OR_GREATER = sys.version_info >= (3, 14)
 # Bug affecting Python 3.13.0 specifically makes some tests crash the interpreter!
 # Hopefully it'll be fixed in 3.13.1.
 IS_PY313_0 = sys.version_info[:3] == (3, 13, 0)
+IS_PY313_1 = sys.version_info[:3] == (3, 13, 1)
 
 # Mark tests that need to be fixed with this.
 TODO_PY313_OR_GREATER = IS_PY313_OR_GREATER

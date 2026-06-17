@@ -66,19 +66,26 @@ _thread_local_info = threading.local()
 _get_ident = threading.get_ident
 _thread_active = threading._active  # noqa
 
-CMD_STEP_INTO: int = 107
-CMD_STEP_OVER: int = 108
-CMD_STEP_INTO_MY_CODE: int = 144
-CMD_STEP_INTO_COROUTINE: int = 206
-CMD_SMART_STEP_INTO: int = 128
-can_skip: bool = True
-CMD_STEP_RETURN: int = 109
-CMD_STEP_OVER_MY_CODE: int = 159
-CMD_STEP_RETURN_MY_CODE: int = 160
-CMD_SET_BREAK: int = 111
-CMD_SET_FUNCTION_BREAK: int = 208
-STATE_RUN: int = 1
-STATE_SUSPEND: int = 2
+
+# IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
+# ELSE
+# # Note: those are now inlined on cython.
+# 105: int = 105
+# 107: int = 107
+# 108: int = 108
+# 144: int = 144
+# 206: int = 206
+# 128: int = 128
+# True = True
+# 109: int = 109
+# 159: int = 159
+# 160: int = 160
+# 111: int = 111
+# 208: int = 208
+# 1: int = 1
+# 2: int = 2
+# ENDIF
+
 
 IGNORE_EXCEPTION_TAG = re.compile("[^#]*#.*@IgnoreException")
 DEBUG_START = ("pydevd.py", "run")
@@ -175,6 +182,13 @@ cdef _get_bootstrap_frame(depth):
         return f_bootstrap, is_bootstrap_frame_internal
 
 
+class UnhandledExceptionTag:
+    """
+    Tag that is attached to exceptions so we can compare the instance without a strong reference
+    See issue https://github.com/microsoft/debugpy/issues/1999
+    """
+
+
 # fmt: off
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 cdef _get_unhandled_exception_frame(exc, int depth):
@@ -183,12 +197,16 @@ cdef _get_unhandled_exception_frame(exc, int depth):
 # ENDIF
 # fmt: on
     try:
-        # Unhandled frame has to be from the same exception.
-        if _thread_local_info.f_unhandled_exc is exc:
+        tag = exc.__dict__.setdefault('__pydevd_tag__', UnhandledExceptionTag())
+    except:
+        tag = exc
+
+    try:
+        if _thread_local_info.f_unhandled_exc_tag is tag:
             return _thread_local_info.f_unhandled_frame
         else:
             del _thread_local_info.f_unhandled_frame
-            del _thread_local_info.f_unhandled_exc
+            del _thread_local_info.f_unhandled_exc_tag
             raise AttributeError('Not the same exception')
     except:
         f_unhandled = _getframe(depth)
@@ -228,7 +246,7 @@ cdef _get_unhandled_exception_frame(exc, int depth):
 
         if f_unhandled is not None:
             _thread_local_info.f_unhandled_frame = f_unhandled
-            _thread_local_info.f_unhandled_exc = exc
+            _thread_local_info.f_unhandled_exc_tag = tag
             return _thread_local_info.f_unhandled_frame
 
         return f_unhandled
@@ -242,12 +260,15 @@ cdef class ThreadInfo:
     thread: threading.Thread
     trace: bool
     _use_is_stopped: bool
+    _use_on_thread_handle: bool
 # ELSE
 # class ThreadInfo:
 #     additional_info: PyDBAdditionalThreadInfo
 #     thread_ident: int
 #     thread: threading.Thread
 #     trace: bool
+#     _use_is_stopped: bool
+#     _use_on_thread_handle: bool
 # ENDIF
 # fmt: on
 
@@ -263,6 +284,7 @@ cdef class ThreadInfo:
         self.additional_info = additional_info
         self.trace = trace
         self._use_is_stopped = hasattr(thread, '_is_stopped')
+        self._use_on_thread_handle = hasattr(thread, '_os_thread_handle')
         
     # fmt: off
     # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
@@ -271,7 +293,9 @@ cdef class ThreadInfo:
 #     def is_thread_alive(self):
     # ENDIF
     # fmt: on
-        if self._use_is_stopped:
+        if self._use_on_thread_handle:
+            return not self.thread._os_thread_handle.is_done()
+        elif self._use_is_stopped:
             return not self.thread._is_stopped
         else:
             return pydevd_is_thread_alive(self.thread)
@@ -416,7 +440,7 @@ cdef class FuncCodeInfo:
         # we may need to track this one).
         self.always_filtered_out: bool = False
 
-        # This should be used to filter code in a CMD_STEP_INTO_MY_CODE
+        # This should be used to filter code in a 144
         # (and other XXX_MY_CODE variants).
         self.filtered_out_force_checked: bool = False
 
@@ -796,7 +820,7 @@ cdef bint _enable_code_tracing(py_db, PyDBAdditionalThreadInfo additional_info, 
         if (
             warn_on_filtered_out
             and is_stepping
-            and additional_info.pydev_original_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE)
+            and additional_info.pydev_original_step_cmd in (107, 144)
             and not _global_notify_skipped_step_in
         ):
             _notify_skipped_step_in_because_of_filters(py_db, frame)
@@ -825,15 +849,15 @@ cdef _enable_step_tracing(py_db, code, step_cmd, PyDBAdditionalThreadInfo info, 
 # def _enable_step_tracing(py_db, code, step_cmd, info, frame):
 # ENDIF
 # fmt: on
-    if step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, CMD_SMART_STEP_INTO):
+    if step_cmd in (107, 144, 206, 128, 105):
         # Stepping (must have line/return tracing enabled).
         _enable_line_tracing(code)
         _enable_return_tracing(code)
 
-    elif step_cmd in (CMD_STEP_RETURN, CMD_STEP_RETURN_MY_CODE) and _is_same_frame(info, info.pydev_step_stop, frame):
+    elif step_cmd in (109, 160) and _is_same_frame(info, info.pydev_step_stop, frame):
         _enable_return_tracing(code)
 
-    elif step_cmd in (CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE):
+    elif step_cmd in (108, 159):
         if _is_same_frame(info, info.pydev_step_stop, frame):
             _enable_line_tracing(code)
 
@@ -1102,15 +1126,15 @@ cdef _return_event(code, instruction, retval):
             _plugin_stepping(py_db, step_cmd, "return", frame, thread_info)
         return
     
-    if info.pydev_state == STATE_SUSPEND:
+    if info.pydev_state == 2:
         # We're already suspended, don't handle any more events on this thread.
         _do_wait_suspend(py_db, thread_info, frame, "return", None)
         return
     
     # Python line stepping
     stop_frame = info.pydev_step_stop
-    if step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE):
-        force_check_project_scope = step_cmd == CMD_STEP_INTO_MY_CODE
+    if step_cmd in (107, 144, 206, 105):
+        force_check_project_scope = step_cmd == 144
         if frame.f_back is not None and not info.pydev_use_scoped_step_frame:
             back_func_code_info = _get_func_code_info(frame.f_back.f_code, frame.f_back)
             if (
@@ -1128,7 +1152,7 @@ cdef _return_event(code, instruction, retval):
                 _stop_on_return(py_db, thread_info, info, step_cmd, frame, retval)
                 return
 
-    if step_cmd in (CMD_STEP_RETURN, CMD_STEP_RETURN_MY_CODE) and _is_same_frame(info, stop_frame, frame):
+    if step_cmd in (109, 160) and _is_same_frame(info, stop_frame, frame):
         if py_db.show_return_values:
             _show_return_values(frame, retval)
 
@@ -1136,7 +1160,7 @@ cdef _return_event(code, instruction, retval):
         return
 
     elif (
-        step_cmd in (CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE)
+        step_cmd in (108, 159)
         and not info.pydev_use_scoped_step_frame
         and _is_same_frame(info, stop_frame, frame)
     ):
@@ -1146,7 +1170,7 @@ cdef _return_event(code, instruction, retval):
         f_back = frame.f_back
         if f_back is not None:
             back_func_code_info = _get_func_code_info(f_back.f_code, 2)
-            force_check_project_scope = step_cmd == CMD_STEP_OVER_MY_CODE
+            force_check_project_scope = step_cmd == 159
 
             if (
                 back_func_code_info is not None
@@ -1160,7 +1184,7 @@ cdef _return_event(code, instruction, retval):
                 _stop_on_return(py_db, thread_info, info, step_cmd, frame, retval)
                 return
 
-    elif step_cmd == CMD_SMART_STEP_INTO:
+    elif step_cmd == 128:
         if _is_same_frame(info, stop_frame, frame):
             # We're exiting the smart step into initial frame (so, we probably didn't find our target).
             if py_db.show_return_values:
@@ -1172,20 +1196,20 @@ cdef _return_event(code, instruction, retval):
     if py_db.show_return_values:
         if (
             (
-                info.pydev_step_cmd in (CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE, CMD_SMART_STEP_INTO)
+                info.pydev_step_cmd in (108, 159, 128)
                 and (_is_same_frame(info, stop_frame, frame.f_back))
             )
-            or (info.pydev_step_cmd in (CMD_STEP_RETURN, CMD_STEP_RETURN_MY_CODE) and (info, _is_same_frame(info, stop_frame, frame)))
-            or (info.pydev_step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_COROUTINE))
+            or (info.pydev_step_cmd in (109, 160) and (info, _is_same_frame(info, stop_frame, frame)))
+            or (info.pydev_step_cmd in (107, 206))
             or (
-                info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE
+                info.pydev_step_cmd == 144
                 and frame.f_back is not None
                 and not py_db.apply_files_filter(frame.f_back, frame.f_back.f_code.co_filename, True)
             )
         ):
             _show_return_values(frame, retval)
 
-    if step_cmd in (CMD_STEP_OVER, CMD_STEP_RETURN, CMD_STEP_OVER_MY_CODE, CMD_STEP_RETURN_MY_CODE, CMD_SMART_STEP_INTO):
+    if step_cmd in (108, 109, 159, 160, 128):
         # If we are in single step mode and something causes us to exit the current frame, we need to make sure we break
         # eventually.  Force the step mode to step into and the step stop frame to None.
         # I.e.: F6 in the end of a function should stop in the next possible position (instead of forcing the user
@@ -1194,10 +1218,10 @@ cdef _return_event(code, instruction, retval):
         # @DontTrace comment.
         stop_frame = info.pydev_step_stop
         if stop_frame is frame and not info.pydev_use_scoped_step_frame:
-            if step_cmd in (CMD_STEP_OVER, CMD_STEP_RETURN, CMD_SMART_STEP_INTO):
-                info.pydev_step_cmd = CMD_STEP_INTO
+            if step_cmd in (108, 109, 128):
+                info.pydev_step_cmd = 107
             else:
-                info.pydev_step_cmd = CMD_STEP_INTO_MY_CODE
+                info.pydev_step_cmd = 144
             info.pydev_step_stop = None
             _enable_code_tracing_for_frame_and_parents(thread_info, stop_frame.f_back)
             if py_db.show_return_values:
@@ -1266,7 +1290,7 @@ cdef _stop_on_return(py_db, ThreadInfo thread_info, PyDBAdditionalThreadInfo inf
         info.pydev_step_stop = None
         info.pydev_original_step_cmd = -1
         info.pydev_step_cmd = -1
-        info.pydev_state = STATE_RUN
+        info.pydev_state = 1
         info.update_stepping_info()
 
 
@@ -1326,7 +1350,7 @@ cdef _stop_on_breakpoint(py_db, ThreadInfo thread_info, int stop_reason, bp, fra
 
     elif stop_on_plugin_breakpoint:
         stop_at_frame = py_db.plugin.suspend(py_db, thread_info.thread, frame, bp_type)
-        if stop_at_frame and thread_info.additional_info.pydev_state == STATE_SUSPEND:
+        if stop_at_frame and thread_info.additional_info.pydev_state == 2:
             _do_wait_suspend(py_db, thread_info, stop_at_frame, "line", None)
         return
 
@@ -1344,9 +1368,9 @@ cdef _plugin_stepping(py_db, int step_cmd, event, frame, ThreadInfo thread_info)
 # fmt: on
     plugin_manager = py_db.plugin
     # Step return makes no sense for plugins (I guess?!?), so, just handle as step into.
-    if step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE, CMD_SMART_STEP_INTO) or step_cmd in (
-        CMD_STEP_RETURN,
-        CMD_STEP_RETURN_MY_CODE,
+    if step_cmd in (107, 144, 206, 128) or step_cmd in (
+        109,
+        160,
     ):
         stop_info = {}
         stop = False
@@ -1357,7 +1381,7 @@ cdef _plugin_stepping(py_db, int step_cmd, event, frame, ThreadInfo thread_info)
                 plugin_manager.stop(py_db, frame, event, thread_info.thread, stop_info, None, step_cmd)
                 return
 
-    elif step_cmd in (CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE):
+    elif step_cmd in (108, 159):
         if plugin_manager is not None:
             stop_info = {}
             stop = False
@@ -1511,7 +1535,7 @@ cdef _internal_line_event(FuncCodeInfo func_code_info, frame, int line):
         stop_on_plugin_breakpoint = False
 
         stop_info = {}
-        stop_reason = CMD_SET_BREAK
+        stop_reason = 111
         bp_type = None
 
         bp = func_code_info.bp_line_to_breakpoint.get(line)
@@ -1526,14 +1550,14 @@ cdef _internal_line_event(FuncCodeInfo func_code_info, frame, int line):
     if func_code_info.plugin_line_breakpoint_found:
         result = py_db.plugin.get_breakpoint(py_db, frame, "line", info)
         if result:
-            stop_reason = CMD_SET_BREAK
+            stop_reason = 111
             stop = False
             stop_on_plugin_breakpoint = True
             bp, new_frame, bp_type = result
             _stop_on_breakpoint(py_db, thread_info, stop_reason, bp, frame, new_frame, stop, stop_on_plugin_breakpoint, bp_type)
             return
 
-    if info.pydev_state == STATE_SUSPEND:
+    if info.pydev_state == 2:
         # Note: it's possible that it was suspended with a pause (and we'd stop here too).
         # print('suspend (pause)...')
         _do_wait_suspend(py_db, thread_info, frame, "line", None)
@@ -1554,8 +1578,8 @@ cdef _internal_line_event(FuncCodeInfo func_code_info, frame, int line):
         return
 
     # Python stepping now
-    if step_cmd in (CMD_STEP_INTO, CMD_STEP_INTO_MY_CODE, CMD_STEP_INTO_COROUTINE):
-        force_check_project_scope = step_cmd == CMD_STEP_INTO_MY_CODE
+    if step_cmd in (107, 144, 206):
+        force_check_project_scope = step_cmd == 144
         if not info.pydev_use_scoped_step_frame:
             if func_code_info.always_filtered_out or (force_check_project_scope and func_code_info.filtered_out_force_checked):
                 return
@@ -1593,7 +1617,7 @@ cdef _internal_line_event(FuncCodeInfo func_code_info, frame, int line):
         # afterwards anyways.
         return
 
-    elif step_cmd in (CMD_STEP_OVER, CMD_STEP_OVER_MY_CODE):
+    elif step_cmd in (108, 159):
         # Note: when dealing with a step over my code it's the same as a step over (the
         # difference is that when we return from a frame in one we go to regular step
         # into and in the other we go to a step into my code).
@@ -1602,7 +1626,12 @@ cdef _internal_line_event(FuncCodeInfo func_code_info, frame, int line):
             _do_wait_suspend(py_db, thread_info, frame, "line", None)
             return
 
-    elif step_cmd == CMD_SMART_STEP_INTO:
+    elif step_cmd == 105:
+        py_db.set_suspend(thread_info.thread, step_cmd, original_step_cmd=info.pydev_original_step_cmd)
+        _do_wait_suspend(py_db, thread_info, frame, "line", None)
+        return
+
+    elif step_cmd == 128:
         stop = False
         back = frame.f_back
         if _is_same_frame(info, stop_frame, back):
@@ -1722,7 +1751,7 @@ cdef _start_method_event(code, instruction_offset):
         bp = func_code_info.function_breakpoint
         stop = True
         new_frame = frame
-        stop_reason = CMD_SET_FUNCTION_BREAK
+        stop_reason = 208
         stop_on_plugin_breakpoint = False
 
         _stop_on_breakpoint(py_db, thread_info, stop_reason, bp, frame, new_frame, stop, stop_on_plugin_breakpoint, "python-function")
@@ -1736,7 +1765,7 @@ cdef _start_method_event(code, instruction_offset):
         if func_code_info.plugin_call_breakpoint_found:
             result = plugin_manager.get_breakpoint(py_db, frame, "call", info)
             if result:
-                stop_reason = CMD_SET_BREAK
+                stop_reason = 111
                 stop = False
                 stop_on_plugin_breakpoint = True
                 bp, new_frame, bp_type = result

@@ -146,7 +146,7 @@ cdef class PyDBAdditionalThreadInfo:
             return None
 
         if thread._ident is None:  # Can this happen?
-            pydev_log.critical("thread._ident is None in _get_related_thread!")
+            pydev_log.critical("thread._ident is None in _get_related_thread! - thread: %s", thread)
             return None
 
         if threading._active.get(thread._ident) is not thread:
@@ -362,6 +362,7 @@ except ImportError:
 # IFDEF CYTHON -- DONT EDIT THIS FILE (it is automatically generated)
 # ELSE
 # # Note: those are now inlined on cython.
+# 105 = 105
 # 107 = 107
 # 144 = 144
 # 109 = 109
@@ -1131,7 +1132,7 @@ cdef class PyDBFrame:
                 if should_skip:
                     stop = False
 
-                elif step_cmd in (107, 144, 206):
+                elif step_cmd in (107, 144, 206, 105):
                     force_check_project_scope = step_cmd == 144
                     if is_line:
                         if not info.pydev_use_scoped_step_frame:

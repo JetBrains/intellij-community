@@ -346,7 +346,7 @@ class Breakpoint(object):
                 return bool(condition(event))
             except Exception:
                 e = sys.exc_info()[1]
-                msg = "Breakpoint condition callback %r" " raised an exception: %s"
+                msg = "Breakpoint condition callback %r raised an exception: %s"
                 msg = msg % (condition, traceback.format_exc(e))
                 warnings.warn(msg, BreakpointCallbackWarning)
                 return False
@@ -399,7 +399,7 @@ class Breakpoint(object):
                 return bool(action(event))
             except Exception:
                 e = sys.exc_info()[1]
-                msg = "Breakpoint action callback %r" " raised an exception: %s"
+                msg = "Breakpoint action callback %r raised an exception: %s"
                 msg = msg % (action, traceback.format_exc(e))
                 warnings.warn(msg, BreakpointCallbackWarning)
                 return False
@@ -421,7 +421,7 @@ class Breakpoint(object):
         statemsg = ""
         oldState = self.stateNames[self.get_state()]
         newState = self.stateNames[state]
-        msg = "Invalid state transition (%s -> %s)" " for breakpoint at address %s"
+        msg = "Invalid state transition (%s -> %s) for breakpoint at address %s"
         msg = msg % (oldState, newState, HexDump.address(self.get_address()))
         raise AssertionError(msg)
 
@@ -547,7 +547,7 @@ class CodeBreakpoint(Breakpoint):
     typeName = "code breakpoint"
 
     if win32.arch in (win32.ARCH_I386, win32.ARCH_AMD64):
-        bpInstruction = "\xCC"  # int 3
+        bpInstruction = "\xcc"  # int 3
 
     def __init__(self, address, condition=True, action=None):
         """
@@ -683,7 +683,7 @@ class PageBreakpoint(Breakpoint):
         floordiv_align = long(address) // long(MemoryAddresses.pageSize)
         truediv_align = float(address) / float(MemoryAddresses.pageSize)
         if floordiv_align != truediv_align:
-            msg = "Address of page breakpoint " "must be aligned to a page size boundary " "(value %s received)" % HexDump.address(address)
+            msg = "Address of page breakpoint must be aligned to a page size boundary (value %s received)" % HexDump.address(address)
             raise ValueError(msg)
 
     def get_size_in_pages(self):
@@ -1203,7 +1203,7 @@ class Hook(object):
                 except Exception:
                     e = sys.exc_info()[1]
                     useHardwareBreakpoints = False
-                    msg = "Failed to set hardware breakpoint" " at address %s for thread ID %d"
+                    msg = "Failed to set hardware breakpoint at address %s for thread ID %d"
                     msg = msg % (HexDump.address(ra), dwThreadId)
                     warnings.warn(msg, BreakpointWarning)
 
@@ -1214,7 +1214,7 @@ class Hook(object):
                     bHookedReturn = True
                 except Exception:
                     e = sys.exc_info()[1]
-                    msg = "Failed to set code breakpoint" " at address %s for process ID %d"
+                    msg = "Failed to set code breakpoint at address %s for process ID %d"
                     msg = msg % (HexDump.address(ra), dwProcessId)
                     warnings.warn(msg, BreakpointWarning)
 
@@ -1485,7 +1485,7 @@ class _Hook_amd64(Hook):
                     reg_int_sig.append((name, arg))
                 else:
                     msg = (
-                        "Hook signatures don't support structures" " within the first 4 arguments of a function" " for the %s architecture"
+                        "Hook signatures don't support structures within the first 4 arguments of a function for the %s architecture"
                     ) % win32.arch
                     raise NotImplementedError(msg)
 
@@ -1882,7 +1882,7 @@ class _BufferWatchCondition(object):
                         action(event)
                     except Exception:
                         e = sys.exc_info()[1]
-                        msg = "Breakpoint action callback %r" " raised an exception: %s"
+                        msg = "Breakpoint action callback %r raised an exception: %s"
                         msg = msg % (action, traceback.format_exc(e))
                         warnings.warn(msg, BreakpointCallbackWarning)
                 else:
@@ -3762,7 +3762,7 @@ class _BreakpointContainer(object):
             except Exception:
                 ##                traceback.print_last()      # XXX DEBUG
                 if unknown:
-                    msg = "Can't clear unknown code breakpoint" " at %s in process ID %d"
+                    msg = "Can't clear unknown code breakpoint at %s in process ID %d"
                     msg = msg % (label, pid)
                     warnings.warn(msg, BreakpointWarning)
                 return

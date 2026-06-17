@@ -177,6 +177,36 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython, 
                 c_file_contents = c_file_contents.replace(r"_pydevd_bundle\\pydevd_cython.pxd", "_pydevd_bundle/pydevd_cython.pxd")
                 c_file_contents = c_file_contents.replace(r"_pydevd_bundle\\pydevd_cython.pyx", "_pydevd_bundle/pydevd_cython.pyx")
 
+                # Suppress Flawfinder false positive (CWE-120) in the Cython 3.x
+                # `__Pyx_PyUnicode_Join` boilerplate: the destination `result_uval` was just
+                # allocated via `PyUnicode_New(result_ulength, max_char)`, and the immediately
+                # preceding `(PY_SSIZE_T_MAX >> kind_shift) - ulength < char_pos` check guards
+                # against char_pos+ulength overflow before the memcpy. The size argument is
+                # `ulength << kind_shift` which is bounded by the pre-allocated buffer length.
+                c_file_contents = c_file_contents.replace(
+                    "            memcpy((char *)result_udata + (char_pos << kind_shift), udata, (size_t) (ulength << kind_shift));\n",
+                    "            memcpy((char *)result_udata + (char_pos << kind_shift), udata, (size_t) (ulength << kind_shift)); /* Flawfinder: ignore */\n",
+                )
+
+                # Suppress Flawfinder false positive (CWE-120) in the Cython 3.x
+                # CIntToPyUnicode boilerplate (`__Pyx____Pyx_PyUnicode_From_int`): the destination
+                # `dpos` is a stack buffer of size `sizeof(int)*3+2`, and `dpos -= 2` immediately
+                # precedes a 2-byte memcpy from the 128-byte constant table `DIGIT_PAIRS_8`
+                # indexed by `digit_pos * 2` where `digit_pos = abs(remaining % 64)`.
+                c_file_contents = c_file_contents.replace(
+                    "            memcpy(dpos, DIGIT_PAIRS_8 + digit_pos * 2, 2);\n",
+                    "            memcpy(dpos, DIGIT_PAIRS_8 + digit_pos * 2, 2); /* Flawfinder: ignore */\n",
+                )
+
+                # Suppress Flawfinder false positive (CWE-120/CWE-20) in the
+                # Cython 3.x ModuleStateLookup boilerplate (`__Pyx_State_ConvertFromInterpIdAsIndex`):
+                # `read` is a bounded pointer iterator (not POSIX read()), and the loop is
+                # guarded by `read < end` where `end = read + data->count`.
+                c_file_contents = c_file_contents.replace(
+                    "    for (; read<end; ++read) {\n",
+                    "    for (; read<end; ++read) { /* Flawfinder: ignore */\n",
+                )
+
                 with open(c_file, "w") as stream:
                     stream.write(c_file_contents)
 

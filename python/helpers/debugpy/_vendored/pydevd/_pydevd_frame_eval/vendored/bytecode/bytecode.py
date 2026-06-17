@@ -175,9 +175,7 @@ class Bytecode(_InstrList, _BaseBytecodeList):
 
     def _check_instr(self, instr):
         if not isinstance(instr, (Label, SetLineno, Instr)):
-            raise ValueError(
-                "Bytecode must only contain Label, " "SetLineno, and Instr objects, " "but %s was found" % type(instr).__name__
-            )
+            raise ValueError("Bytecode must only contain Label, SetLineno, and Instr objects, but %s was found" % type(instr).__name__)
 
     def _copy_attr_from(self, bytecode):
         super()._copy_attr_from(bytecode)

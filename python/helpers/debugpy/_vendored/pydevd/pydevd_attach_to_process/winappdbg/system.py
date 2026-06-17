@@ -685,7 +685,7 @@ class System(_ProcessContainer):
                     if not path.isdir(local_path):
                         local_path = path.abspath(".")
                 if remote:
-                    symbol_store_path = "cache*;SRV*" + local_path + "*" "http://msdl.microsoft.com/download/symbols"
+                    symbol_store_path = "cache*;SRV*" + local_path + "*http://msdl.microsoft.com/download/symbols"
                 else:
                     symbol_store_path = "cache*;SRV*" + local_path
             previous = os.environ.get("_NT_SYMBOL_PATH", None)

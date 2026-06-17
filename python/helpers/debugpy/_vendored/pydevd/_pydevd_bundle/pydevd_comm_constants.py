@@ -200,7 +200,6 @@ ID_TO_MEANING = {
     "502": "CMD_RETURN",
     "503": "CMD_SET_PROTOCOL",
     "901": "CMD_ERROR",
-
 }
 
 

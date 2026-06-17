@@ -60,7 +60,7 @@ def execute():
         import coverage  # @UnresolvedImport
     except:
         sys.stderr.write("Error: coverage module could not be imported\n")
-        sys.stderr.write("Please make sure that the coverage module " "(http://nedbatchelder.com/code/coverage/)\n")
+        sys.stderr.write("Please make sure that the coverage module (http://nedbatchelder.com/code/coverage/)\n")
         sys.stderr.write("is properly installed in your interpreter: %s\n" % (sys.executable,))
 
         import traceback
@@ -77,7 +77,7 @@ def execute():
             )
             sys.exit(1)
     else:
-        sys.stderr.write("Warning: Could not determine version of python module coverage." "\nEnsure coverage version is >= 4.3\n")
+        sys.stderr.write("Warning: Could not determine version of python module coverage.\nEnsure coverage version is >= 4.3\n")
 
     from coverage.cmdline import main  # @UnresolvedImport
 

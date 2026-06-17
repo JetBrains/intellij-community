@@ -297,9 +297,9 @@ class _DummyFrameWrapper(object):
     __repr__ = __str__
 
 
-_cause_message = "\nThe above exception was the direct cause " "of the following exception:\n\n"
+_cause_message = "\nThe above exception was the direct cause of the following exception:\n\n"
 
-_context_message = "\nDuring handling of the above exception, " "another exception occurred:\n\n"
+_context_message = "\nDuring handling of the above exception, another exception occurred:\n\n"
 
 
 def create_frames_list_from_exception_cause(trace_obj, frame, exc_type, exc_desc, memo):

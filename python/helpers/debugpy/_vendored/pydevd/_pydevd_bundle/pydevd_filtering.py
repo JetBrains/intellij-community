@@ -155,7 +155,8 @@ class FilesFiltering(object):
 
         # Make sure we always get at least the standard library location (based on the `os` and
         # `threading` modules -- it's a bit weird that it may be different on the ci, but it happens).
-        roots.append(os.path.dirname(os.__file__))
+        if hasattr(os, "__file__"):
+            roots.append(os.path.dirname(os.__file__))
         roots.append(os.path.dirname(threading.__file__))
         if IS_PYPY:
             # On PyPy 3.6 (7.3.1) it wrongly says that sysconfig.get_path('stdlib') is

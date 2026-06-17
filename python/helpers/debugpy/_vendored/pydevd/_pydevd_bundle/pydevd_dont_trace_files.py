@@ -18,6 +18,7 @@ DONT_TRACE_DIRS = {
     'pydevd_attach_to_process': PYDEV_FILE,
     'pydevd_concurrency_analyser': PYDEV_FILE,
     'pydevd_plugins': PYDEV_FILE,
+    'test_pydevd_reload': PYDEV_FILE,
 }
 
 LIB_FILES_IN_DONT_TRACE_DIRS = {
@@ -96,7 +97,6 @@ DONT_TRACE = {
     'pydevd_additional_thread_info.py': PYDEV_FILE,
     'pydevd_additional_thread_info_regular.py': PYDEV_FILE,
     'pydevd_api.py': PYDEV_FILE,
-    'pydevd_asyncio_provider.py': PYDEV_FILE,
     'pydevd_base_schema.py': PYDEV_FILE,
     'pydevd_breakpoints.py': PYDEV_FILE,
     'pydevd_bytecode_utils.py': PYDEV_FILE,
