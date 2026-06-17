@@ -33,6 +33,7 @@ Special handling applies to the directories below. If a file you touch lives und
 - **Toolbox** (`toolbox/`):
   - Tests: never use `./tests.cmd`; see `toolbox/.ai/index.md` for Gradle/Bazel test commands.
   - Build: use `./bazel.cmd build //toolbox/...` instead of `./bazel-build-all.cmd`.
+- **PyCharm** (`./python`): use `./python/.ai/index.md`.
 
 ## Mandatory Rules
 

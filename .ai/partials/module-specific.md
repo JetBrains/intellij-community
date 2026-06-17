@@ -17,3 +17,4 @@ Special handling applies to the directories below. If a file you touch lives und
 - **Toolbox** (`toolbox/`):
   - Tests: never use `./tests.cmd`; see `toolbox/.ai/index.md` for Gradle/Bazel test commands.
   - Build: use `./bazel.cmd build //toolbox/...` instead of `./bazel-build-all.cmd`.
+<!-- IF_EDITION:ULTIMATE -->- **PyCharm** (`python/` and `community/python/`): use `/community/python/.ai/index.md`.<!-- /IF_EDITION:ULTIMATE --><!-- IF_EDITION:COMMUNITY -->- **PyCharm** (`./python`): use `./python/.ai/index.md`.<!-- /IF_EDITION:COMMUNITY -->
