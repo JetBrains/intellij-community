@@ -313,7 +313,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
    */
   @ApiStatus.Internal
   @CheckReturnValue
-internal  abstract suspend fun installPackageCommand(
+  internal abstract suspend fun installPackageCommand(
     installRequest: PythonPackageInstallRequest,
     options: List<String>,
     module: Module? = null,
