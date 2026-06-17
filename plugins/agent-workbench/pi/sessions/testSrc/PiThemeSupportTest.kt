@@ -19,7 +19,7 @@ class PiThemeSupportTest {
   @Test
   fun materializesBundledExtensionManifestAndCurrentThemeState() {
     val support = supportFor(
-      PiBundledExtensionResource("agent-workbench-extension.ts", bytes("extension-v1")),
+      bundledExtension("extension-v1", "helper.ts" to "helper-v1"),
       themeSnapshotProvider = { snapshot("islands-dark", "Islands Dark", dark = true) },
     )
 
@@ -32,6 +32,7 @@ class PiThemeSupportTest {
       )
     )
     assertThat(Files.readString(resources!!.extensionPath)).isEqualTo("extension-v1")
+    assertThat(Files.readString(tempDir.resolve("extension").resolve("helper.ts"))).isEqualTo("helper-v1")
     assertThat(Files.readString(resources.stateFilePath))
       .contains("\"themeId\":\"islands-dark\"", "\"dark\":true")
     assertThat(tempDir.resolve(".awb-theme-manifest")).exists()
@@ -40,6 +41,7 @@ class PiThemeSupportTest {
         """
           formatVersion=4
           ${extensionFileName("extension-v1")}=${DigestUtil.sha256Hex(bytes("extension-v1"))}
+          helper.ts=${DigestUtil.sha256Hex(bytes("helper-v1"))}
         """.trimIndent() + "\n"
       )
   }
@@ -47,11 +49,11 @@ class PiThemeSupportTest {
   @Test
   fun rewritesStaleMaterializedExtensionWhenBundledHashChanges() {
     supportFor(
-      PiBundledExtensionResource("agent-workbench-extension.ts", bytes("extension-v1")),
+      singleFileBundledExtension("extension-v1"),
     ).launchResourcesOrNull()
 
     supportFor(
-      PiBundledExtensionResource("agent-workbench-extension.ts", bytes("extension-v2")),
+      singleFileBundledExtension("extension-v2"),
     ).launchResourcesOrNull()
 
     assertThat(tempDir.resolve("extension").resolve(extensionFileName("extension-v1"))).doesNotExist()
@@ -61,13 +63,29 @@ class PiThemeSupportTest {
   }
 
   @Test
+  fun rewritesStableMaterializedExtensionModuleWhenBundledHashChanges() {
+    supportFor(
+      bundledExtension("extension-v1", "helper.ts" to "helper-v1"),
+    ).launchResourcesOrNull()
+
+    supportFor(
+      bundledExtension("extension-v1", "helper.ts" to "helper-v2"),
+    ).launchResourcesOrNull()
+
+    assertThat(Files.readString(tempDir.resolve("extension").resolve(extensionFileName("extension-v1")))).isEqualTo("extension-v1")
+    assertThat(Files.readString(tempDir.resolve("extension").resolve("helper.ts"))).isEqualTo("helper-v2")
+    assertThat(Files.readString(tempDir.resolve(".awb-theme-manifest")))
+      .contains("helper.ts=${DigestUtil.sha256Hex(bytes("helper-v2"))}")
+  }
+
+  @Test
   fun removesUnexpectedFilesFromManagedExtensionDirectory() {
     val extensionDirectory = tempDir.resolve("extension")
     Files.createDirectories(extensionDirectory)
     Files.writeString(extensionDirectory.resolve("old.ts"), "stale")
 
     supportFor(
-      PiBundledExtensionResource("agent-workbench-extension.ts", bytes("extension-v1")),
+      singleFileBundledExtension("extension-v1"),
     ).launchResourcesOrNull()
 
     assertThat(extensionDirectory.resolve("old.ts")).doesNotExist()
@@ -82,7 +100,7 @@ class PiThemeSupportTest {
     Files.writeString(tempDir.resolve(".awb-theme-manifest"), "formatVersion=1\ndark.json=stale\n")
 
     supportFor(
-      PiBundledExtensionResource("agent-workbench-extension.ts", bytes("extension-v1")),
+      singleFileBundledExtension("extension-v1"),
     ).launchResourcesOrNull()
 
     assertThat(legacyThemeDirectory.resolve("dark.json")).doesNotExist()
@@ -96,7 +114,7 @@ class PiThemeSupportTest {
       rootDirectoryProvider = { tempDir },
       extensionResourceProvider = {
         loadCount++
-        PiBundledExtensionResource("agent-workbench-extension.ts", bytes("extension-v1"))
+        singleFileBundledExtension("extension-v1")
       },
       themeSnapshotProvider = { snapshot(themeId, themeId, dark = themeId != "islands-light") },
     )
@@ -119,7 +137,7 @@ class PiThemeSupportTest {
   @Test
   fun repairsCachedExtensionWhenMaterializedFileIsMissingOrTamperedWith() {
     val support = supportFor(
-      PiBundledExtensionResource("agent-workbench-extension.ts", bytes("extension-v1")),
+      singleFileBundledExtension("extension-v1"),
     )
     val first = support.launchResourcesOrNull()
 
@@ -140,7 +158,7 @@ class PiThemeSupportTest {
   fun syncCurrentThemeStateUsesMaterializedStateFile() {
     var themeId = "islands-dark"
     val support = supportFor(
-      PiBundledExtensionResource("agent-workbench-extension.ts", bytes("extension-v1")),
+      singleFileBundledExtension("extension-v1"),
       themeSnapshotProvider = { snapshot(themeId, themeId, dark = themeId != "islands-light") },
     )
     val resources = support.launchResourcesOrNull()
@@ -163,7 +181,7 @@ class PiThemeSupportTest {
 
   @Test
   fun bundledExtensionMarksJbCentralClaudeOpus48AsAdaptiveThinkingModel() {
-    val extension = readBundledPiExtensionText()
+    val extension = readBundledPiExtensionText("jbcentral.ts")
 
     assertThat(extension).contains(
       "JBCENTRAL_ADAPTIVE_THINKING_MODEL_MARKERS",
@@ -173,8 +191,20 @@ class PiThemeSupportTest {
     )
   }
 
+  @Test
+  fun bundledExtensionEntrypointImportsSplitModules() {
+    val extension = readBundledPiExtensionText("agent-workbench-extension.ts")
+
+    assertThat(extension).contains(
+      "from \"./jbcentral.ts\"",
+      "from \"./omlx.ts\"",
+      "from \"./status.ts\"",
+      "from \"./theme.ts\"",
+    )
+  }
+
   private fun supportFor(
-    extension: PiBundledExtensionResource,
+    extension: PiBundledExtensionResources,
     themeSnapshotProvider: () -> PiThemeSnapshot = { snapshot("islands-dark", "Islands Dark", dark = true) },
   ): PiThemeSupport {
     return PiThemeSupport(
@@ -186,8 +216,21 @@ class PiThemeSupportTest {
 
   private fun bytes(text: String): ByteArray = text.toByteArray(StandardCharsets.UTF_8)
 
-  private fun readBundledPiExtensionText(): String {
-    val resourcePath = "pi-extension/agent-workbench-extension.ts"
+  private fun singleFileBundledExtension(entryText: String): PiBundledExtensionResources {
+    return bundledExtension(entryText)
+  }
+
+  private fun bundledExtension(entryText: String, vararg extraFiles: Pair<String, String>): PiBundledExtensionResources {
+    val entryFileName = "agent-workbench-extension.ts"
+    return PiBundledExtensionResources(
+      entryFileName = entryFileName,
+      files = listOf(PiBundledExtensionResource(entryFileName, bytes(entryText))) +
+              extraFiles.map { (fileName, text) -> PiBundledExtensionResource(fileName, bytes(text)) },
+    )
+  }
+
+  private fun readBundledPiExtensionText(fileName: String): String {
+    val resourcePath = "pi-extension/$fileName"
     val bytes = PiThemeSupport::class.java.classLoader.getResourceAsStream(resourcePath)
                   ?.use { input -> input.readBytes() }
                 ?: error("Missing bundled Pi extension resource: $resourcePath")
