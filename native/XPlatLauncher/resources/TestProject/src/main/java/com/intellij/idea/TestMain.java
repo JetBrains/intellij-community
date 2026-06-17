@@ -130,6 +130,7 @@ public class TestMain {
     throw new UnsupportedOperationException("aw, snap");
   }
 
+  @SuppressWarnings({"removal", "RedundantSuppression"})
   private static void segmentationViolation() throws NoSuchFieldException, IllegalAccessException {
     var f = sun.misc.Unsafe.class.getDeclaredField("theUnsafe");
     f.setAccessible(true);
