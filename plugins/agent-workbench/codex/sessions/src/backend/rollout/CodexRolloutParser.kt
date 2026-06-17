@@ -120,12 +120,17 @@ internal class CodexRolloutParser(
         activity = activity,
         requiresResponse = activitySnapshot.activeFlags.isResponseRequired() || activitySnapshot.hasPendingPlan,
         summaryActivity = summaryActivity,
-        usageSnapshots = collectRolloutUsageSnapshots(
-          path = path,
-          fallbackModelId = state.modelId,
-          isSubAgentThreadSpawn = state.parentThreadId != null,
-          openReader = openReader,
-        ).ifEmpty { listOfNotNull(state.usageSnapshot) },
+        usageSnapshots = when (
+          val usageSnapshots = collectRolloutUsageSnapshots(
+            path = path,
+            fallbackModelId = state.modelId,
+            isSubAgentThreadSpawn = state.parentThreadId != null,
+            openReader = openReader,
+          )
+        ) {
+          null -> emptyList()
+          else -> usageSnapshots.ifEmpty { listOfNotNull(state.usageSnapshot) }
+        },
         hasExplicitTitle = !usedFallbackTitle,
       ),
     )
@@ -166,7 +171,7 @@ private fun collectRolloutUsageSnapshots(
   fallbackModelId: String?,
   isSubAgentThreadSpawn: Boolean,
   openReader: (Path) -> BufferedReader,
-): List<AgentSessionUsageSnapshot> {
+): List<AgentSessionUsageSnapshot>? {
   return try {
     val usageByModel = LinkedHashMap<String?, UsageTotals>()
     val modelState = CodexUsageModelState(currentModel = fallbackModelId)
@@ -235,7 +240,7 @@ private fun collectRolloutUsageSnapshots(
       .filterNot(AgentSessionUsageSnapshot::isZeroUsage)
   }
   catch (_: Throwable) {
-    emptyList()
+    null
   }
 }
 
