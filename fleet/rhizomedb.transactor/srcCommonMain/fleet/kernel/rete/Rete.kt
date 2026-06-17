@@ -24,14 +24,17 @@ import fleet.kernel.rete.impl.withObservableMatches
 import fleet.kernel.subscribe
 import fleet.kernel.timestamp
 import fleet.kernel.transactor
+import fleet.kernel.useEntity
 import fleet.kernel.waitForDbSourceToCatchUpWithTimestamp
+import fleet.openmap.merge
 import fleet.reporting.shared.tracing.spannedScope
+import fleet.util.async.Resource
 import fleet.util.async.conflateReduce
+import fleet.util.async.resource
 import fleet.util.async.use
 import fleet.util.channels.channels
 import fleet.util.logging.KLogger
 import fleet.util.logging.logger
-import fleet.openmap.merge
 import fleet.util.singleOrNullOrThrow
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
@@ -68,8 +71,8 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 sealed interface ReteState {
-  data class Db(val db: DB) : ReteState
-  data class Poison(val poison: Throwable) : ReteState
+  data class Db(val db: DB): ReteState
+  data class Poison(val poison: Throwable): ReteState
 }
 
 fun ReteState.dbOrThrow(): DB =
@@ -83,7 +86,7 @@ data class Rete internal constructor(
   internal val commands: SendChannel<Command>,
   internal val reteState: StateFlow<ReteState>,
   internal val dbSource: ReteDbSource,
-) : CoroutineContext.Element {
+): CoroutineContext.Element {
 
   class ObserverId
 
@@ -95,20 +98,20 @@ data class Rete internal constructor(
       val tracingKey: QueryTracingKey?,
       val observerId: ObserverId,
       val observer: QueryObserver<T>,
-    ) : Command
+    ): Command
 
-    data class RemoveObserver(val observerId: ObserverId) : Command
+    data class RemoveObserver(val observerId: ObserverId): Command
   }
 
-  companion object : CoroutineContext.Key<Rete> {
+  companion object: CoroutineContext.Key<Rete> {
     internal val logger = logger<Rete>()
   }
 
   override val key: CoroutineContext.Key<*> = Rete
 }
 
-data class ReteEntity(override val eid: EID) : Entity {
-  companion object : EntityType<ReteEntity>(ReteEntity::class, ::ReteEntity) {
+data class ReteEntity(override val eid: EID): Entity {
+  companion object: EntityType<ReteEntity>(ReteEntity::class, ::ReteEntity) {
     internal val ReteAttr = requiredTransient<Rete>("rete")
     internal val TransactorAttr = requiredTransient<Transactor>("kernel", Indexing.UNIQUE)
     fun forKernel(transactor: Transactor): Rete? = entity(TransactorAttr, transactor)?.get(ReteAttr)
@@ -136,10 +139,32 @@ suspend fun <T> withRete(
   performAdditionalChecks: Boolean = false,
   body: suspend CoroutineScope.() -> T,
 ): T {
-  val (commandsSender, commandsReceiver) = channels<Rete.Command>(Channel.UNLIMITED)
-  return spannedScope("withRete") {
-    val kernel = transactor()
-    kernel.subscribe(Channel.UNLIMITED) { db, changes ->
+  val transactor = transactor()
+  return rete(transactor, abortOnError, performAdditionalChecks).use { rete ->
+    change {
+      register(ReteEntity)
+      ReteEntity.new {
+        it[ReteEntity.ReteAttr] = rete
+        it[ReteEntity.TransactorAttr] = transactor
+      }
+    }.useEntity {
+      // if an application has several instances of rete, it might nest their contexts (accidentally or on purpose)
+      // if only the network is overriden, it will at some point receive current context matches as dependencies and be really confused about those coming from another network
+      withContext(rete + ContextMatches(persistentListOf())) {
+        body()
+      }
+    }
+  }
+}
+
+internal fun rete(
+  transactor: Transactor,
+  abortOnError: Boolean = false,
+  performAdditionalChecks: Boolean = false,
+): Resource<Rete> =
+  resource { cc ->
+    val (commandsSender, commandsReceiver) = channels<Rete.Command>(Channel.UNLIMITED)
+    transactor.subscribe(Channel.UNLIMITED) { db, changes ->
       val lastKnownDb = MutableStateFlow<ReteState>(ReteState.Db(db))
       coroutineScope {
         launch(CoroutineName("rete event loop")) {
@@ -195,27 +220,11 @@ suspend fun <T> withRete(
             abortOnError = abortOnError,
             dbSource = ReteDbSource(lastKnownDb)
           )
-          val reteEntity = change {
-            register(ReteEntity)
-            ReteEntity.new {
-              it[ReteEntity.ReteAttr] = rete
-              it[ReteEntity.TransactorAttr] = kernel
-            }
-          }
-          // if an application has several instances of rete, it might nest their contexts (accidentally or on purpose)
-          // if only the network is overriden, it will at some point receive current context matches as dependencies and be really confused about those coming from another network
-          withContext(rete + ContextMatches(persistentListOf())) {
-            body()
-          }.also {
-            change {
-              reteEntity.delete()
-            }
-          }
+          cc(rete)
         }
       }
     }
   }
-}
 
 /**
  * Runs [body] in a presence of [Match].
@@ -267,16 +276,16 @@ suspend fun waitForReteToCatchUp(targetDb: Q, cancellable: Boolean = true) {
  * */
 data class ContextMatches internal constructor(
   internal val matches: PersistentList<ObservableMatch<*>>,
-) : CoroutineContext.Element {
-  companion object : CoroutineContext.Key<ContextMatches>
+): CoroutineContext.Element {
+  companion object: CoroutineContext.Key<ContextMatches>
 
   override val key: CoroutineContext.Key<*> get() = ContextMatches
 }
 
 private sealed class ValidationResult {
-  data object Valid : ValidationResult()
-  data class Invalid(val marker: Match<*>) : ValidationResult()
-  data object Inconclusive : ValidationResult()
+  data object Valid: ValidationResult()
+  data class Invalid(val marker: Match<*>): ValidationResult()
+  data object Inconclusive: ValidationResult()
 
   fun and(other: () -> ValidationResult): ValidationResult =
     when (this) {
@@ -405,7 +414,8 @@ internal suspend fun <T> withReteDbSource(body: suspend CoroutineScope.() -> T):
     val currentDbSource = requireNotNull(currentCoroutineContext()[DbSource.ContextElement]).dbSource
     if (currentDbSource == rete.dbSource) {
       coroutineScope(body)
-    } else {
+    }
+    else {
       waitForReteToCatchUp(currentDbSource.latest)
       val (res, dbTimestamp) = withContext(DbSource.ContextElement(rete.dbSource) + ReteSpinChangeInterceptor) {
         val res = body()
@@ -425,7 +435,7 @@ internal suspend fun <T> withReteDbSource(body: suspend CoroutineScope.() -> T):
     }
   }
 
-internal data class ReteDbSource(val reteState: StateFlow<ReteState>) : DbSource {
+internal data class ReteDbSource(val reteState: StateFlow<ReteState>): DbSource {
   override val flow: Flow<DB>
     get() = reteState.map { it.dbOrThrow() }
   override val latest: DB
@@ -437,7 +447,8 @@ internal data class ReteDbSource(val reteState: StateFlow<ReteState>) : DbSource
 private inline fun <T> DisposableHandle.useInline(function: () -> T): T =
   try {
     function()
-  } finally {
+  }
+  finally {
     dispose()
   }
 
