@@ -49,12 +49,12 @@ public final class EditSettingsAction extends InspectionViewActionBase implement
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final InspectionResultsView view = getView(e);
+    InspectionResultsView view = getView(e);
     InspectionProfileImpl inspectionProfile = view.getCurrentProfile();
 
     if (view.isSingleInspectionRun()) {
       InspectionToolWrapper tool = getSingleTool(view);
-      final DialogBuilder builder = new DialogBuilder()
+      DialogBuilder builder = new DialogBuilder()
         .title(InspectionsBundle.message("inspection.tool.window.inspection.dialog.title", tool.getDisplayName()));
       JComponent panel = OptionPaneRenderer.createOptionsPanel(tool.getTool(), builder, e.getProject());
       LOG.assertTrue(panel != null, "Unexpectedly inspection '" + tool.getShortName() + "' didn't create an options panel");
@@ -77,16 +77,16 @@ public final class EditSettingsAction extends InspectionViewActionBase implement
       }
       builder.show();
     } else {
-      final InspectionToolWrapper toolWrapper = view.getTree().getSelectedToolWrapper(false);
+      InspectionToolWrapper toolWrapper = view.getTree().getSelectedToolWrapper(false);
       if (toolWrapper != null) {
-        final HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName()); //do not search for dead code entry point tool
+        HighlightDisplayKey key = HighlightDisplayKey.find(toolWrapper.getShortName()); //do not search for dead code entry point tool
         if (key != null) {
           new EditInspectionToolsSettingsAction(key).editToolSettings(view.getProject(), inspectionProfile);
           return;
         }
       }
 
-      final String[] path = view.getTree().getSelectedGroupPath();
+      String[] path = view.getTree().getSelectedGroupPath();
       EditInspectionToolsSettingsAction.editSettings(view.getProject(), inspectionProfile, (c) -> {
         if (path != null) {
           c.selectInspectionGroup(path);

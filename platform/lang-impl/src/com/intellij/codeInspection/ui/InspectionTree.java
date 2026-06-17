@@ -282,8 +282,8 @@ public final class InspectionTree extends Tree {
     if (!node.needCalculateTooltip()) return node.getToolTipText();
 
     Promise<@NlsContexts.Tooltip String> tooltipLazy = scheduledTooltipTasks.computeIfAbsent(node, key -> {
-      final var tooltipManager = IdeTooltipManager.getInstance();
-      final Component component = e.getComponent();
+      IdeTooltipManager tooltipManager = IdeTooltipManager.getInstance();
+      Component component = e.getComponent();
 
       return ReadAction.nonBlocking(() -> node.getToolTipText())
         .finishOnUiThread(ModalityState.any(), tooltipText -> tooltipManager.updateShownTooltip(component))
@@ -309,8 +309,8 @@ public final class InspectionTree extends Tree {
   }
 
   @Nullable RefEntity getCommonSelectedElement() {
-    final TreePath[] paths = getSelectionPaths();
-    final TreePath ancestor = TreePathUtil.findCommonAncestor(paths);
+    TreePath[] paths = getSelectionPaths();
+    TreePath ancestor = TreePathUtil.findCommonAncestor(paths);
     if (ancestor == null) return null;
     return ancestor.getLastPathComponent() instanceof RefElementNode n ? n.getElement() : null;
   }
@@ -334,7 +334,7 @@ public final class InspectionTree extends Tree {
     if (toolWrapper == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
     Set<RefEntity> result = new LinkedHashSet<>();
     for (TreePath selectionPath : selectionPaths) {
-      final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
+      InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
       addElementsInNode(node, result, allowResolved);
     }
     return ArrayUtil.reverseArray(result.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY));
@@ -415,7 +415,7 @@ public final class InspectionTree extends Tree {
         Object key = getVirtualFileOrEntity(node.getElement());
         parentToChildNode.putValue(key, node.getDescriptor());
       });
-    final List<CommonProblemDescriptor[]> descriptors = new ArrayList<>();
+    List<CommonProblemDescriptor[]> descriptors = new ArrayList<>();
     for (Map.Entry<Object, Collection<CommonProblemDescriptor>> entry : parentToChildNode.entrySet()) {
       Object key = entry.getKey();
       if (readOnlyFilesSink != null && key instanceof VirtualFile file && !file.isWritable()) {
@@ -479,7 +479,7 @@ public final class InspectionTree extends Tree {
   }
 
   boolean areDescriptorNodesSelected() {
-    final TreePath[] paths = getSelectionPaths();
+    TreePath[] paths = getSelectionPaths();
     if (paths == null) return false;
     for (TreePath path : paths) {
       if (!(path.getLastPathComponent() instanceof ProblemDescriptionNode)) {
@@ -533,7 +533,7 @@ public final class InspectionTree extends Tree {
 
     TreePath pathToSelect = null;
     if (selected.length == 1) {
-      final InspectionTreeNode nextNode = myModel
+      InspectionTreeNode nextNode = myModel
         .traverseFrom((InspectionTreeNode) selected[0].getLastPathComponent(), true)
         .filter(n -> !shouldDelete(n)).first();
       if (nextNode != null) pathToSelect = TreeUtil.getPathFromRoot(nextNode);
@@ -775,7 +775,7 @@ public final class InspectionTree extends Tree {
     private static @Nullable Navigatable createDescriptorForNode(@NotNull InspectionTreeNode node) {
       if (node.isExcluded()) return null;
       if (node instanceof RefElementNode refNode) {
-        final RefEntity element = refNode.getElement();
+        RefEntity element = refNode.getElement();
         if (element == null || !element.isValid()) return null;
         if (element instanceof RefElement ref) {
           return getOpenFileDescriptor(ref);
@@ -798,7 +798,7 @@ public final class InspectionTree extends Tree {
     private static @Nullable Navigatable getOpenFileDescriptor(@NotNull RefElement refElement) {
       PsiElement psiElement = refElement.getPsiElement();
       if (psiElement == null) return null;
-      final PsiFile containingFile = psiElement.getContainingFile();
+      PsiFile containingFile = psiElement.getContainingFile();
       if (containingFile == null) return null;
       VirtualFile file = containingFile.getVirtualFile();
       if (file == null) return null;

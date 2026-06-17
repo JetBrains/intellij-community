@@ -192,7 +192,7 @@ public final class NonAsciiCharactersInspection extends LocalInspectionTool {
         .mapToObj(b -> StringUtil.toUpperCase(Integer.toString(b & 0x00ff, 16)))
         .collect(Collectors.joining());
       Charset charsetFromBOM = CharsetToolkit.guessFromBOM(bom);
-      final String signature = charsetFromBOM == null
+      String signature = charsetFromBOM == null
                                ? ""
                                : CodeInsightBundle.message("non.ascii.chars.inspection.message.charset.signature", charsetFromBOM.displayName());
       holder.registerProblem(file, CodeInsightBundle.message("non.ascii.chars.inspection.message.file.contains.bom", hex, signature));

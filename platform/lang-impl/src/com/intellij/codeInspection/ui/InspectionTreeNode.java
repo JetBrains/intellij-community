@@ -138,7 +138,7 @@ public abstract class InspectionTreeNode implements TreeNode {
   public RefEntity getContainingFileLocalEntity() {
     RefEntity current = null;
     for (InspectionTreeNode child : getChildren()) {
-      final RefEntity entity = child.getContainingFileLocalEntity();
+      RefEntity entity = child.getContainingFileLocalEntity();
       if (entity == null || current != null) {
         return null;
       }

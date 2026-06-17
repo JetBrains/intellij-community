@@ -27,7 +27,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -59,8 +61,8 @@ public final class ViewOfflineResultsAction extends AnAction {
 
   @Override
   public void update(@NotNull AnActionEvent event) {
-    final Presentation presentation = event.getPresentation();
-    final Project project = event.getProject();
+    Presentation presentation = event.getPresentation();
+    Project project = event.getProject();
     presentation.setEnabled(project != null);
     presentation.setVisible(ActionPlaces.isMainMenuOrActionSearch(event.getPlace()));
   }
@@ -72,19 +74,19 @@ public final class ViewOfflineResultsAction extends AnAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {
-    final Project project = event.getProject();
+    Project project = event.getProject();
 
     LOG.assertTrue(project != null);
 
-    var xmlFileType = FileTypeManager.getInstance().getStdFileType("XML");
-    var descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(xmlFileType)
+    FileType xmlFileType = FileTypeManager.getInstance().getStdFileType("XML");
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(xmlFileType)
       .withTitle(InspectionsBundle.message("view.offline.inspections.select.path.title"))
       .withDescription(InspectionsBundle.message("view.offline.inspections.select.path.description"));
-    final VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
+    VirtualFile virtualFile = FileChooser.chooseFile(descriptor, project, null);
     if (virtualFile == null) return;
 
-    final Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap = new HashMap<>();
-    final String [] profileName = new String[1];
+    Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap = new HashMap<>();
+    String [] profileName = new String[1];
     ProgressManager.getInstance().run(new Task.Backgroundable(project,
                                                               InspectionsBundle.message("parsing.inspections.dump.progress.title"),
                                                               true,
@@ -93,12 +95,12 @@ public final class ViewOfflineResultsAction extends AnAction {
       public void run(@NotNull ProgressIndicator indicator) {
         //for non-project directories ensure refreshed directory
         VfsUtil.markDirtyAndRefresh(false, true, true, virtualFile);
-        final VirtualFile[] files = virtualFile.isDirectory() ? virtualFile.getChildren() : new VirtualFile[] {virtualFile};
+        VirtualFile[] files = virtualFile.isDirectory() ? virtualFile.getChildren() : new VirtualFile[] {virtualFile};
         try {
-          for (final VirtualFile inspectionFile : files) {
+          for (VirtualFile inspectionFile : files) {
             if (inspectionFile.isDirectory()) continue;
-            final String shortName = inspectionFile.getNameWithoutExtension();
-            final String extension = inspectionFile.getExtension();
+            String shortName = inspectionFile.getNameWithoutExtension();
+            String extension = inspectionFile.getExtension();
             Path inspectionIoFile = inspectionFile.toNioPath();
             try {
               if (shortName.equals(InspectionsResultUtil.DESCRIPTIONS)) {
@@ -116,7 +118,7 @@ public final class ViewOfflineResultsAction extends AnAction {
             profileName[0] = virtualFile.getNameWithoutExtension();
           }
         }
-        catch (final Exception e) {  //all parse exceptions
+        catch (Exception e) {  //all parse exceptions
           ApplicationManager.getApplication()
             .invokeLater(() -> Messages.showInfoMessage(ExceptionUtil.getThrowableText(e), InspectionsBundle.message("offline.view.parse.exception.title")));
           throw new ProcessCanceledException(e); //cancel process
@@ -127,7 +129,7 @@ public final class ViewOfflineResultsAction extends AnAction {
       public void onSuccess() {
         if (resMap.isEmpty()) return;
         DumbService.getInstance(project).smartInvokeLater(() -> {
-          final String name = profileName[0];
+          String name = profileName[0];
           LOG.assertTrue(name != null);
           showOfflineView(project, name, resMap, InspectionsBundle.message("offline.view.title") + " (" + name + ")");
         });
@@ -150,9 +152,9 @@ public final class ViewOfflineResultsAction extends AnAction {
     else {
       profile = null;
     }
-    final InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
+    InspectionProfileImpl inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
       @Override
-      public @NotNull HighlightDisplayLevel getErrorLevel(final @NotNull HighlightDisplayKey key, PsiElement element) {
+      public @NotNull HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, PsiElement element) {
         return InspectionProfileManager.getInstance().getCurrentProfile().getErrorLevel(key, element);
       }
     };
@@ -177,13 +179,13 @@ public final class ViewOfflineResultsAction extends AnAction {
                                                                @NotNull Map<String, Map<String, Set<OfflineProblemDescriptor>>> resMap,
                                                                @NotNull InspectionProfileImpl inspectionProfile,
                                                                @NotNull @NlsContexts.TabTitle String title) {
-    final AnalysisScope scope = new AnalysisScope(project);
-    final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final GlobalInspectionContextImpl context = managerEx.createNewGlobalContext();
+    AnalysisScope scope = new AnalysisScope(project);
+    InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
+    GlobalInspectionContextImpl context = managerEx.createNewGlobalContext();
     context.setExternalProfile(inspectionProfile);
     context.setCurrentScope(scope);
     context.initializeTools(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-    final InspectionResultsView view = new InspectionResultsView(context,
+    InspectionResultsView view = new InspectionResultsView(context,
                                                                  new OfflineInspectionRVContentProvider(resMap));
     ((RefManagerImpl)context.getRefManager()).startOfflineView();
     context.addView(view, title, true);

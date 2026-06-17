@@ -43,8 +43,8 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
 
   @Override
   public boolean checkReportedProblems(@NotNull GlobalInspectionContextImpl context,
-                                       final @NotNull InspectionToolWrapper toolWrapper) {
-    final Map<String, Set<OfflineProblemDescriptor>> content = getFilteredContent(context, toolWrapper);
+                                       @NotNull InspectionToolWrapper toolWrapper) {
+    Map<String, Set<OfflineProblemDescriptor>> content = getFilteredContent(context, toolWrapper);
     return content != null && !content.isEmpty();
   }
 
@@ -54,8 +54,8 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
   }
 
   @Override
-  public QuickFixAction @NotNull [] getCommonQuickFixes(final @NotNull InspectionToolWrapper toolWrapper,
-                                                        final @NotNull InspectionTree tree,
+  public QuickFixAction @NotNull [] getCommonQuickFixes(@NotNull InspectionToolWrapper toolWrapper,
+                                                        @NotNull InspectionTree tree,
                                                         CommonProblemDescriptor @NotNull [] descriptors,
                                                         RefEntity @NotNull [] refElements) {
     GlobalInspectionContextImpl context = tree.getContext();
@@ -74,17 +74,17 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
                                     @NotNull InspectionToolWrapper wrapper,
                                     @NotNull InspectionTreeNode parentNode,
                                     boolean showStructure,
-                                    boolean groupBySeverity, final @NotNull Map<String, Set<RefEntity>> contents,
+                                    boolean groupBySeverity, @NotNull Map<String, Set<RefEntity>> contents,
                                     @NotNull Function<? super RefEntity, CommonProblemDescriptor[]> problems) {
-    final Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, wrapper);
+    Map<String, Set<OfflineProblemDescriptor>> filteredContent = getFilteredContent(context, wrapper);
     InspectionResultsView view = context.getView();
     if (filteredContent != null && !filteredContent.isEmpty()) {
       buildTree(context, filteredContent, wrapper, descriptor -> {
-                  final RefEntity element = descriptor.getRefElement(context.getRefManager());
+                  RefEntity element = descriptor.getRefElement(context.getRefManager());
                   return new RefEntityContainer<OfflineProblemDescriptor>(element, new OfflineProblemDescriptor[] {descriptor}) {
                     @Override
                     protected @Nullable String getModuleName() {
-                      final String module = super.getModuleName();
+                      String module = super.getModuleName();
                       return module == null ? descriptor.getModuleName() : module;
                     }
                   };
@@ -99,7 +99,7 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
     Map<String, Set<OfflineProblemDescriptor>> content = myContent.get(toolWrapper.getShortName());
     if (content == null) return null;
     if (context.getUIOptions().FILTER_RESOLVED_ITEMS) {
-      final Map<String, Set<OfflineProblemDescriptor>> current = new HashMap<>(content);
+      Map<String, Set<OfflineProblemDescriptor>> current = new HashMap<>(content);
       content = null; //GC it
       Map<OfflineProblemDescriptor, OfflineDescriptorResolveResult> resolvedDescriptors = myResolvedDescriptor.get(toolWrapper.getShortName());
       resolvedDescriptors.forEach((descriptor, descriptorResolveResult) -> {
@@ -122,12 +122,12 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
     return content;
   }
 
-  private static void excludeProblem(final String externalName, final Map<String, Set<OfflineProblemDescriptor>> content) {
+  private static void excludeProblem(String externalName, Map<String, Set<OfflineProblemDescriptor>> content) {
     for (Iterator<String> iter = content.keySet().iterator(); iter.hasNext();) {
-      final String packageName = iter.next();
-      final Set<OfflineProblemDescriptor> excluded = new HashSet<>(content.get(packageName));
+      String packageName = iter.next();
+      Set<OfflineProblemDescriptor> excluded = new HashSet<>(content.get(packageName));
       for (Iterator<OfflineProblemDescriptor> it = excluded.iterator(); it.hasNext();) {
-        final OfflineProblemDescriptor ex = it.next();
+        OfflineProblemDescriptor ex = it.next();
         if (Comparing.strEqual(ex.getFQName(), externalName)) {
           it.remove();
         }
@@ -148,7 +148,7 @@ public final class OfflineInspectionRVContentProvider extends InspectionRVConten
     InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
     InspectionTreeModel model = context.getView().getTree().getInspectionTreeModel();
     for (OfflineProblemDescriptor descriptor : ((RefEntityContainer<OfflineProblemDescriptor>)container).getDescriptors()) {
-      final OfflineDescriptorResolveResult resolveResult = myResolvedDescriptor.get(toolWrapper.getShortName())
+      OfflineDescriptorResolveResult resolveResult = myResolvedDescriptor.get(toolWrapper.getShortName())
         .computeIfAbsent(descriptor, d -> OfflineDescriptorResolveResult.resolve(d, toolWrapper, presentation));
       RefEntity resolvedEntity = resolveResult.getResolvedEntity();
       CommonProblemDescriptor resolvedDescriptor = resolveResult.getResolvedDescriptor();

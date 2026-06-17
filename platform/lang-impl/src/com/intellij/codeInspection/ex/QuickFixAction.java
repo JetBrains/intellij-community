@@ -94,7 +94,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    final InspectionResultsView view = getInvoker(e);
+    InspectionResultsView view = getInvoker(e);
     if (view == null) {
       e.getPresentation().setEnabled(false);
       return;
@@ -105,7 +105,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     Object[] selectedNodes = e.getData(PlatformCoreDataKeys.SELECTED_ITEMS);
     if (selectedNodes == null) return;
 
-    final InspectionToolWrapper<?,?> toolWrapper = InspectionTree.findWrapper(selectedNodes);
+    InspectionToolWrapper<?,?> toolWrapper = InspectionTree.findWrapper(selectedNodes);
     if (toolWrapper == null || toolWrapper != myToolWrapper) {
       return;
     }
@@ -130,9 +130,9 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
   @Override
-  public void actionPerformed(final @NotNull AnActionEvent e) {
-    final InspectionResultsView view = getInvoker(e);
-    final InspectionTree tree = view.getTree();
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    InspectionResultsView view = getInvoker(e);
+    InspectionTree tree = view.getTree();
     try {
       Ref<List<CommonProblemDescriptor[]>> descriptors = Ref.create();
       Set<VirtualFile> readOnlyFiles = new HashSet<>();
@@ -142,7 +142,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
       }
       else {
         if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.runBlocking(() -> {
-          final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+          ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           indicator.setText(InspectionsBundle.message("quick.fix.action.checking.problem.progress"));
           descriptors.set(tree.getSelectedDescriptorPacks(true, readOnlyFiles, false, paths));
         }), InspectionsBundle.message("preparing.for.apply.fix"), true, e.getProject())) {
@@ -177,7 +177,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
                           @NotNull GlobalInspectionContextImpl context) {
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
 
-    final Set<PsiElement> resolvedElements = new HashSet<>();
+    Set<PsiElement> resolvedElements = new HashSet<>();
     performFixesInBatch(project, descriptors, context, resolvedElements);
 
     refreshViews(project, resolvedElements, myToolWrapper);
@@ -191,7 +191,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
                                      @NotNull List<CommonProblemDescriptor[]> descriptors,
                                      @NotNull GlobalInspectionContextImpl context,
                                      Set<? super PsiElement> ignoredElements) {
-    final String templatePresentationText = getTemplatePresentation().getText();
+    String templatePresentationText = getTemplatePresentation().getText();
     assert templatePresentationText != null;
     executeAndNotify(project, () -> {
       CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
@@ -203,7 +203,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
         return null;
       }
       else {
-        final SequentialModalProgressTask progressTask =
+        SequentialModalProgressTask progressTask =
           new SequentialModalProgressTask(project, templatePresentationText, true);
         progressTask.setMinIterationTime(200);
         progressTask.setTask(performFixesTask);
@@ -214,7 +214,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
   void executeAndNotify(@NotNull Project project, @NotNull Supplier<@Nls String> command) {
-    final String templatePresentationText = getTemplatePresentation().getText();
+    String templatePresentationText = getTemplatePresentation().getText();
     assert templatePresentationText != null;
     Ref<@Nls String> messageRef = Ref.create();
     CommandProcessor.getInstance().executeCommand(project, () -> messageRef.set(command.get()), templatePresentationText, null);
@@ -225,10 +225,10 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     }
   }
 
-  private void doApplyFix(final RefEntity @NotNull [] refElements, @NotNull InspectionResultsView view) {
-    final boolean[] refreshNeeded = {false};
+  private void doApplyFix(RefEntity @NotNull [] refElements, @NotNull InspectionResultsView view) {
+    boolean[] refreshNeeded = {false};
     if (refElements.length > 0) {
-      final Project project = refElements[0].getRefManager().getProject();
+      Project project = refElements[0].getRefManager().getProject();
       CommandProcessor.getInstance().executeCommand(project, () -> {
         CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
         ApplicationManager.getApplication().runWriteAction(() -> {
@@ -243,7 +243,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
 
   public static void removeElements(RefEntity @NotNull [] refElements, @NotNull Project project, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
     refreshViews(project, refElements, toolWrapper);
-    final ArrayList<RefElement> deletedRefs = new ArrayList<>(1);
+    ArrayList<RefElement> deletedRefs = new ArrayList<>(1);
     for (RefEntity refElement : refElements) {
       if (!(refElement instanceof RefElement)) continue;
       refElement.getRefManager().removeRefElement((RefElement)refElement, deletedRefs);
@@ -270,7 +270,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
 
   private static void refreshViews(@NotNull Project project, @NotNull Set<? extends PsiElement> resolvedElements, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
     InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
-    final Set<GlobalInspectionContextImpl> runningContexts = managerEx.getRunningContexts();
+    Set<GlobalInspectionContextImpl> runningContexts = managerEx.getRunningContexts();
     for (GlobalInspectionContextImpl context : runningContexts) {
       for (PsiElement element : resolvedElements) {
         context.resolveElement(toolWrapper.getTool(), element);
@@ -280,9 +280,9 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
   protected static void refreshViews(@NotNull Project project, RefEntity @NotNull [] resolvedElements, @NotNull InspectionToolWrapper<?,?> toolWrapper) {
-    final Set<PsiElement> ignoredElements = new HashSet<>();
+    Set<PsiElement> ignoredElements = new HashSet<>();
     for (RefEntity element : resolvedElements) {
-      final PsiElement psiElement = element instanceof RefElement ? ((RefElement)element).getPsiElement() : null;
+      PsiElement psiElement = element instanceof RefElement ? ((RefElement)element).getPsiElement() : null;
       if (psiElement != null && psiElement.isValid()) {
         ignoredElements.add(psiElement);
       }
@@ -296,8 +296,8 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   protected boolean applyFix(RefEntity @NotNull [] refElements) {
     Set<VirtualFile> readOnlyFiles = getReadOnlyFiles(refElements);
     if (!readOnlyFiles.isEmpty()) {
-      final Project project = refElements[0].getRefManager().getProject();
-      final ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles);
+      Project project = refElements[0].getRefManager().getProject();
+      ReadonlyStatusHandler.OperationStatus operationStatus = ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(readOnlyFiles);
       return !operationStatus.hasReadonlyFiles();
     }
     return true;
@@ -305,7 +305,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
 
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
-    final JButton button = new JButton(presentation.getText());
+    JButton button = new JButton(presentation.getText());
     Icon icon = presentation.getIcon();
     if (icon == null) {
       icon = AllIcons.Actions.IntentionBulb;

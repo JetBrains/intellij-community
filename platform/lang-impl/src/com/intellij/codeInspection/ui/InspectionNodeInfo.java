@@ -43,11 +43,11 @@ public final class InspectionNodeInfo extends JPanel {
   private static final Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
 
   @ApiStatus.Internal
-  public InspectionNodeInfo(final @NotNull InspectionTree tree,
-                            final @NotNull Project project) {
+  public InspectionNodeInfo(@NotNull InspectionTree tree,
+                            @NotNull Project project) {
     setLayout(new GridBagLayout());
     setBorder(JBUI.Borders.emptyTop(11));
-    final InspectionToolWrapper<?, ?> toolWrapper = tree.getSelectedToolWrapper(false);
+    InspectionToolWrapper<?, ?> toolWrapper = tree.getSelectedToolWrapper(false);
     LOG.assertTrue(toolWrapper != null);
     InspectionProfileImpl currentProfile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
     boolean enabled = currentProfile.getTools(toolWrapper.getShortName(), project).isEnabled();
@@ -76,7 +76,7 @@ public final class InspectionNodeInfo extends JPanel {
       InspectionEP extension = toolWrapper.getExtension();
       LOG.error(new PluginException("Inspection #" + toolWrapper.getShortName() + " has no description", extension != null ? extension.getPluginDescriptor().getPluginId() : null));
     }
-    final String toolDescription =
+    String toolDescription =
       stripUIRefsFromInspectionDescription(StringUtil.notNullize(descriptionText));
     DescriptionEditorPaneKt.readHTMLWithCodeHighlighting(description, toolDescription, toolWrapper.getLanguage());
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
@@ -128,7 +128,7 @@ public final class InspectionNodeInfo extends JPanel {
   }
 
   public static @InspectionMessage String stripUIRefsFromInspectionDescription(@InspectionMessage @NotNull String description) {
-    final int descriptionEnd = description.indexOf("<!-- tooltip end -->");
+    int descriptionEnd = description.indexOf("<!-- tooltip end -->");
     if (descriptionEnd >= 0) {
       return description.substring(0, descriptionEnd);
     }

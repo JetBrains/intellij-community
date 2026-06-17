@@ -41,7 +41,7 @@ final class FileFilterPanel {
     String text = (String)myFileMask.getSelectedItem();
     if (text == null) return null;
 
-    final Condition<CharSequence> patternCondition = FindInProjectUtil.createFileMaskCondition(text);
+    Condition<CharSequence> patternCondition = FindInProjectUtil.createFileMaskCondition(text);
     return new GlobalSearchScope() {
       @Override
       public boolean contains(@NotNull VirtualFile file) {

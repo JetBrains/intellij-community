@@ -36,7 +36,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
   private final NotNullLazyValue<ContentManager> myContentManager;
   private final Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<>();
 
-  public InspectionManagerEx(final Project project) {
+  public InspectionManagerEx(Project project) {
     super(project);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myContentManager = NotNullLazyValue.createValue(() -> {
@@ -57,10 +57,10 @@ public class InspectionManagerEx extends InspectionManagerBase {
     return contentManager;
   }
 
-  public @NotNull ProblemDescriptor createProblemDescriptor(final @NotNull PsiElement psiElement,
-                                                            final @NotNull @InspectionMessage String descriptionTemplate,
-                                                            final @NotNull ProblemHighlightType highlightType,
-                                                            final @Nullable HintAction hintAction,
+  public @NotNull ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
+                                                            @NotNull @InspectionMessage String descriptionTemplate,
+                                                            @NotNull ProblemHighlightType highlightType,
+                                                            @Nullable HintAction hintAction,
                                                             boolean onTheFly,
                                                             @NotNull LocalQuickFix @Nullable ... fixes) {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction, onTheFly);
@@ -73,7 +73,7 @@ public class InspectionManagerEx extends InspectionManagerBase {
 
   @Override
   public @NotNull GlobalInspectionContextImpl createNewGlobalContext() {
-    final GlobalInspectionContextImpl inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
+    GlobalInspectionContextImpl inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
     myRunningContexts.add(inspectionContext);
     return inspectionContext;
   }

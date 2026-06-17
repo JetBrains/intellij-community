@@ -41,11 +41,11 @@ public final class ProblemPreviewEditorPresentation {
       .filter(ProblemDescriptorBase.class::isInstance)
       .map(ProblemDescriptorBase.class::cast)
       .map(d -> {
-        final PsiElement psi = d.getPsiElement();
+        PsiElement psi = d.getPsiElement();
         if (psi == null) {
           return null;
         }
-        final TextRange range = d.getTextRangeInElement();
+        TextRange range = d.getTextRangeInElement();
         return range == null ? new UsageInfo(psi) : new UsageInfo(psi, range.getStartOffset(), range.getEndOffset());
       })
       .collect(Collectors.toList());
@@ -55,7 +55,7 @@ public final class ProblemPreviewEditorPresentation {
 
   public static void setupFoldingsAndHighlightProblems(@NotNull EditorEx editor, @NotNull Container editorContainer,
                                                        @NotNull List<? extends UsageInfo> usages, @NotNull Project project) {
-    final Document doc = editor.getDocument();
+    Document doc = editor.getDocument();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     if (documentManager.isUncommited(doc)) {
@@ -93,14 +93,14 @@ public final class ProblemPreviewEditorPresentation {
         UsagePreviewPanel.highlight(validUsages, editor, project, false, HighlighterLayer.SELECTION);
         if (validUsages.size() == 1) {
           UsageInfo usage = validUsages.get(0);
-          final PsiElement element = usage.getElement();
+          PsiElement element = usage.getElement();
           Segment range = usage.getNavigationRange();
           if (element != null && range != null) {
             if (injectedLanguageManager.getInjectionHost(element) != null) {
               range = injectedLanguageManager.injectedToHost(element, TextRange.create(range));
             }
-            final Document document = editor.getDocument();
-            final int offset = Math.min(range.getEndOffset() + VIEW_ADDITIONAL_OFFSET,
+            Document document = editor.getDocument();
+            int offset = Math.min(range.getEndOffset() + VIEW_ADDITIONAL_OFFSET,
                                         document.getLineEndOffset(document.getLineNumber(range.getEndOffset())));
             editor.getScrollingModel().scrollTo(editor.offsetToLogicalPosition(offset), ScrollType.CENTER);
             return;
@@ -135,11 +135,11 @@ public final class ProblemPreviewEditorPresentation {
   private static boolean makeVisible(SortedSet<PreviewEditorFoldingRegion> foldingRegions, Segment toShowRange, Document document) {
     if (toShowRange == null) return false;
     boolean isUpdated = false;
-    final int startLine = Math.max(0, document.getLineNumber(toShowRange.getStartOffset()) - SHOWN_LINES_COUNT);
-    final int endLine = Math.min(document.getLineCount(), document.getLineNumber(toShowRange.getEndOffset()) + SHOWN_LINES_COUNT + 1);
+    int startLine = Math.max(0, document.getLineNumber(toShowRange.getStartOffset()) - SHOWN_LINES_COUNT);
+    int endLine = Math.min(document.getLineCount(), document.getLineNumber(toShowRange.getEndOffset()) + SHOWN_LINES_COUNT + 1);
     for (PreviewEditorFoldingRegion range : new ArrayList<>(foldingRegions)) {
-      final boolean startInRegion = range.contain(startLine);
-      final boolean endInRegion = range.contain(endLine);
+      boolean startInRegion = range.contain(startLine);
+      boolean endInRegion = range.contain(endLine);
       if (startInRegion && endInRegion) {
         foldingRegions.remove(range);
         if (range.getStartLine() != startLine) {

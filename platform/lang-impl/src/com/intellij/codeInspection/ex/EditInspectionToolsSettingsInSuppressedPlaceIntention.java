@@ -36,7 +36,7 @@ public final class EditInspectionToolsSettingsInSuppressedPlaceIntention impleme
     PsiElement element = file.findElementAt(offset);
     while (element != null && !(element instanceof PsiFile)) {
       for (InspectionExtensionsFactory factory : InspectionExtensionsFactory.EP_NAME.getExtensionList()) {
-        final String suppressedIds = factory.getSuppressedInspectionIdsIn(element);
+        String suppressedIds = factory.getSuppressedInspectionIdsIn(element);
         if (suppressedIds != null) {
           for (String id : StringUtil.split(suppressedIds, ",")) {
             if (isCaretOnSuppressedId(file, offset, id)) {
@@ -68,10 +68,10 @@ public final class EditInspectionToolsSettingsInSuppressedPlaceIntention impleme
     return suppressedId != null;
   }
 
-  private static @Nullable InspectionToolWrapper getTool(final Project project, final PsiFile file, final String suppressId) {
+  private static @Nullable InspectionToolWrapper getTool(Project project, PsiFile file, String suppressId) {
     if (suppressId == null) return null;
-    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
+    InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
+    InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
     return inspectionProfile.getToolById(suppressId, file);
   }
 
@@ -79,8 +79,8 @@ public final class EditInspectionToolsSettingsInSuppressedPlaceIntention impleme
   public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
     InspectionToolWrapper toolWrapper = getTool(project, psiFile, getSuppressedId(editor, psiFile));
     if (toolWrapper == null) return;
-    final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
-    final InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
+    InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
+    InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
     EditInspectionToolsSettingsAction.editToolSettings(project, inspectionProfile, toolWrapper.getShortName());
   }
 
