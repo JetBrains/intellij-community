@@ -158,6 +158,8 @@
                  description="Keeps XML split-mode inspections enabled in plugin.xml files that are indirectly frontend-only, backend-only, or mixed."/>
     <registryKey key="devkit.split.mode.report.implicit.module.kind" defaultValue="true"
                  description="Enables reporting errors about modules that effectively work only on frontend or backend, but do not explicitly state that fact via platform dependency"/>
+    <registryKey key="devkit.split.mode.custom.icons" defaultValue="false"
+                 description="Enables custom file and directory icons for split-mode frontend/backend/shared modules in DevKit."/>
     <registryKey key="devkit.split.mode.run.jps.to.bazel.in.quick.fix" defaultValue="false"
                  description="Automatically run JPS to Bazel conversion after applying a fix that touches runtime/compile dependencies"/>
 

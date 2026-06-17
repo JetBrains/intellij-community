@@ -47,8 +47,7 @@ private val legacyPluginWithModuleIcon = DevkitCoreIcons.LegacyPluginModule
   .withTooltip(messagePointer("plugin.and.module.directory.tooltip"))
 
 private fun DirectoryKindInfo.toDirectoryIcon(fallbackIcon: Icon, tooltip: Supplier<String>): Icon {
-  val splitModeIcon = SplitModeModuleKindIcons.getDescriptorIcon(descriptorFile) ?: return fallbackIcon
-  return splitModeIcon.withTooltip(tooltip)
+  return SplitModeModuleKindIcons.getDescriptorIconForIconProvider(descriptorFile, fallbackIcon).withTooltip(tooltip)
 }
 
 private fun Icon.withTooltip(message: Supplier<String>): Icon {
