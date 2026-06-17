@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.serialization.updateCompilerArguments
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import java.nio.file.Path
 
 abstract class AbstractGradleImportHandler : GradleProjectImportHandler {
@@ -24,12 +25,19 @@ abstract class AbstractGradleImportHandler : GradleProjectImportHandler {
     open val availableSinceVersion: IdeKotlinVersion? = null
 
     override fun importByModule(facet: KotlinFacet, moduleNode: DataNode<ModuleData>) {
-        processCompilerPluginClasspath(facet)
+        if (shouldSubstitute(facet)) {
+            processCompilerPluginClasspath(facet)
+        }
     }
 
     override fun importBySourceSet(facet: KotlinFacet, sourceSetNode: DataNode<GradleSourceSetData>) {
-        processCompilerPluginClasspath(facet)
+        if (shouldSubstitute(facet)) {
+            processCompilerPluginClasspath(facet)
+        }
     }
+
+    private fun shouldSubstitute(facet: KotlinFacet): Boolean =
+        !GradleProjectSettings.isDelegatedBuildEnabled(facet.module)
 
     private fun processCompilerPluginClasspath(facet: KotlinFacet) {
         val project = facet.module.project
