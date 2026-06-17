@@ -115,6 +115,7 @@ dependencies {
     pluginModule(implementation(project(":claude-common")))
     pluginModule(implementation(project(":claude-sessions")))
     pluginModule(implementation(project(":codex-common")))
+    pluginModule(implementation(project(":codex-chat")))
     pluginModule(implementation(project(":codex-ide")))
     pluginModule(implementation(project(":codex-sessions")))
     pluginModule(implementation(project(":junie-sessions")))

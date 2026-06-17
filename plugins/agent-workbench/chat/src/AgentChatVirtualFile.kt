@@ -43,7 +43,7 @@ data class AgentChatDeferredStartState(
 internal class AgentChatVirtualFile internal constructor(
   private val fileSystem: AgentChatVirtualFileSystem,
   resolution: AgentChatTabResolution,
-) : LightVirtualFile(resolveFileName(resolution.tabKey.value)), EditorHistoryManager.IncludeInEditorHistoryFile {
+) : LightVirtualFile(resolveFileName(resolution.tabKey.value)), EditorHistoryManager.IncludeInEditorHistoryFile, AgentChatBehaviorFile {
   private val key: AgentChatTabKey = resolution.tabKey
 
   val tabKey: String
@@ -58,16 +58,16 @@ internal class AgentChatVirtualFile internal constructor(
   var threadIdentity: String = ""
     private set
 
-  var provider: AgentSessionProvider? = null
+  override var provider: AgentSessionProvider? = null
     private set
 
   var sessionId: String = ""
     private set
 
-  var isPendingThread: Boolean = false
+  override var isPendingThread: Boolean = false
     private set
 
-  var subAgentId: String? = null
+  override var subAgentId: String? = null
     private set
 
   @Volatile
@@ -95,13 +95,13 @@ internal class AgentChatVirtualFile internal constructor(
   val threadTitle: String
     get() = resolveAgentChatThreadPresentation(this).title
 
-  val threadActivity: AgentThreadActivity
+  override val threadActivity: AgentThreadActivity
     get() = resolveAgentChatThreadPresentation(this).activity
 
   var pendingCreatedAtMs: Long? = null
     private set
 
-  var pendingFirstInputAtMs: Long? = null
+  override var pendingFirstInputAtMs: Long? = null
     private set
 
   var pendingLaunchMode: String? = null
@@ -674,12 +674,12 @@ private fun buildInitialPromptRecord(
 }
 
 internal class AgentChatInitialMessageDispatch internal constructor(
-  val action: AgentInitialMessageDispatchAction,
+  override val action: AgentInitialMessageDispatchAction,
   val message: String,
   val token: String?,
   val stepIndex: Int,
-  val completionPolicy: AgentInitialMessageDispatchCompletionPolicy,
-)
+  override val completionPolicy: AgentInitialMessageDispatchCompletionPolicy,
+) : AgentChatInitialMessageDispatchContext
 
 private fun resolveFileName(tabKey: String): String {
   return "chat-$tabKey"

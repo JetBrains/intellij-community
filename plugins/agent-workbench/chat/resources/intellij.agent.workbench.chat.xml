@@ -16,6 +16,10 @@
       qualifiedName="com.intellij.agent.workbench.chatTerminalTitleThreadRebindContributor"
       interface="com.intellij.agent.workbench.chat.AgentChatTerminalTitleThreadRebindContributor"
       dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.chatProviderBehavior"
+      interface="com.intellij.agent.workbench.chat.AgentChatProviderBehaviorContributor"
+      dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

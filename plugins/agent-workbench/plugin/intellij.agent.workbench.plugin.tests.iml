@@ -33,6 +33,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.chat" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.codex.chat" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.junie.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" scope="TEST" />
@@ -61,6 +62,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.chat.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.codex.chat.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.sessions.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.ide.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.sessions.tests" scope="TEST" />

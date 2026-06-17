@@ -8,8 +8,7 @@ import com.intellij.agent.workbench.chat.AgentChatPendingTabRebindRequest
 import com.intellij.agent.workbench.chat.AgentChatPendingTabSnapshot
 import com.intellij.agent.workbench.chat.collectOpenConcreteAgentChatThreadIdentitiesByPath
 import com.intellij.agent.workbench.chat.collectOpenPendingAgentChatTabsByPath
-import com.intellij.agent.workbench.chat.collectOpenPendingCodexTabsByPath
-import com.intellij.agent.workbench.chat.rebindOpenPendingCodexTabs
+import com.intellij.agent.workbench.chat.rebindOpenPendingAgentChatTabs
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionCost
@@ -760,6 +759,19 @@ private fun defaultValue(returnType: Class<*>): Any? {
     returnType == Char::class.javaPrimitiveType -> '\u0000'
     else -> null
   }
+}
+
+private suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendingTabSnapshot>> {
+  return collectOpenPendingAgentChatTabsByPath(AgentSessionProvider.CODEX)
+}
+
+private suspend fun rebindOpenPendingCodexTabs(
+  requestsByProjectPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
+): AgentChatPendingTabRebindReport {
+  return rebindOpenPendingAgentChatTabs(
+    provider = AgentSessionProvider.CODEX,
+    requestsByProjectPath = requestsByProjectPath,
+  )
 }
 
 suspend fun waitForCondition(timeoutMs: Long = 5_000, condition: () -> Boolean) {

@@ -111,7 +111,7 @@ class AgentChatConcreteThreadRebindControllerTest {
       file = file,
       behavior = TestConcreteThreadRebindBehavior,
       tabSnapshotWriter = snapshots,
-      currentTimeProvider = { 1_000L + AgentSessionThreadRebindPolicy.CONCRETE_CODEX_NEW_THREAD_REBIND_MAX_AGE_MS },
+      currentTimeProvider = { 1_000L + AgentSessionThreadRebindPolicy.CONCRETE_NEW_THREAD_REBIND_MAX_AGE_MS },
       retryIntervalMs = 25L,
       notifyRefresh = { provider, projectPath -> signals += ConcreteRebindRefreshSignal(provider, projectPath) },
     )
@@ -204,7 +204,7 @@ class AgentChatConcreteThreadRebindControllerTest {
 
 private object TestConcreteThreadRebindBehavior : AgentChatProviderBehavior {
   override fun supportsConcreteNewThreadRebind(
-    file: AgentChatVirtualFile,
+    file: AgentChatBehaviorFile,
     descriptor: AgentSessionProviderDescriptor?,
   ): Boolean {
     return file.provider == AgentSessionProvider.CODEX && !file.isPendingThread && file.subAgentId == null

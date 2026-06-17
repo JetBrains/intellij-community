@@ -240,7 +240,7 @@ private class AgentChatStructureViewElement(
 
   override fun getChildren(): Array<StructureViewTreeElement> = childrenElements.toTypedArray()
 
-  // Persisted outline items do not reliably map to live terminal TUI positions: Codex can clear, redraw, or trim them.
+  // Persisted outline items do not reliably map to live terminal TUI positions: providers can clear, redraw, or trim them.
   override fun navigate(requestFocus: Boolean) = Unit
 
   override fun canNavigate(): Boolean = false
