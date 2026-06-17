@@ -180,9 +180,9 @@ class FlowDbSource(
 
 fun KernelContextElement(
   transactor: Transactor,
-  dbSource: DbSource = FlowDbSource(transactor.dbState, "kernel $transactor")
+  dbSource: DbSource = transactor.dbSource
 ): CoroutineContext =
-  transactor + DbSource.ContextElement(dbSource) + (asOf(transactor.dbState.value) { ReteEntity.forKernel(transactor) }
+  transactor + DbSource.ContextElement(dbSource) + (asOf(transactor.dbSource.latest) { ReteEntity.forKernel(transactor) }
                                                     ?: EmptyCoroutineContext)
 
 fun ConstantDbContext(db: DB): CoroutineContext =
