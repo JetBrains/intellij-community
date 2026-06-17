@@ -41,6 +41,12 @@ internal class CodexAppServerSessionBackend(
   private val readThread: suspend (String) -> CodexThread? = { threadId ->
     serviceAsync<SharedCodexAppServerService>().readThread(threadId)
   },
+  private val forkThreadRequest: suspend (String) -> CodexThread? = { threadId ->
+    serviceAsync<SharedCodexAppServerService>().forkThread(threadId)
+  },
+  private val rollbackThreadRequest: suspend (String, Int) -> CodexThread? = { threadId, rollbackTurns ->
+    serviceAsync<SharedCodexAppServerService>().rollbackThread(threadId = threadId, numTurns = rollbackTurns)
+  },
   private val archiveThread: suspend (String) -> Unit = { threadId ->
     serviceAsync<SharedCodexAppServerService>().archiveThread(threadId)
   },
@@ -115,6 +121,30 @@ internal class CodexAppServerSessionBackend(
       orphanArchiveAttemptRecorder = { false },
     )[cwdFilter].orEmpty()
     return CodexBackendThreadRefreshResult(threads = threads, isComplete = false)
+  }
+
+  override suspend fun forkThread(path: String, threadId: String, rollbackTurns: Int, openProject: Project?): CodexBackendThread? {
+    if (rollbackTurns < 1) {
+      return null
+    }
+    val workingDirectory = resolveProjectDirectoryFromPath(path) ?: return null
+    val cwdFilter = normalizeRootPath(workingDirectory.invariantSeparatorsPathString)
+    val forkedThread = forkThreadRequest(threadId) ?: return null
+    val rolledBackThread = rollbackThreadRequest(forkedThread.id, rollbackTurns)
+                           ?: readThread(forkedThread.id)
+                           ?: forkedThread
+    val rolledBackCwd = rolledBackThread.cwd
+    if (rolledBackCwd != null && normalizeRootPath(rolledBackCwd) != cwdFilter) {
+      return null
+    }
+    rememberThreadMetadata(listOf(rolledBackThread))
+    return buildThreadsByCwd(
+      threads = listOf(rolledBackThread),
+      targetCwds = setOf(cwdFilter),
+      archiveThread = {},
+      orphanArchiveAttemptRecorder = { false },
+      includeOrphanSubAgents = true,
+    )[cwdFilter].orEmpty().firstOrNull()
   }
 
   override suspend fun prefetchThreads(paths: List<String>): Map<String, List<CodexBackendThread>> {

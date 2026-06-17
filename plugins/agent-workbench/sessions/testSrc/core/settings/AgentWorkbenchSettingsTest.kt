@@ -164,6 +164,35 @@ class AgentWorkbenchSettingsTest {
   }
 
   @Test
+  fun openInDedicatedFrameChangeEventFiresOnlyWhenValueChanges(@TestDisposable disposable: Disposable) {
+    var events = 0
+    ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(
+      AgentWorkbenchSettingsListener.TOPIC,
+      object : AgentWorkbenchSettingsListener {
+        override fun openInDedicatedFrameChanged() {
+          events++
+        }
+      },
+    )
+
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
+    assertThat(events).isZero()
+
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+    assertThat(events).isEqualTo(1)
+
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(false)
+    assertThat(events).isEqualTo(1)
+
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
+    assertThat(events).isEqualTo(2)
+
+    AgentChatOpenModeSettings.setOpenInDedicatedFrame(true)
+    assertThat(events).isEqualTo(2)
+    assertThat(settings.openInDedicatedFrameOverride).isNull()
+  }
+
+  @Test
   fun showAgentActivityInMainToolbarIsDisabledByDefault() {
     assertThat(settings.showAgentActivityInMainToolbar).isFalse()
     assertThat(settings.showAgentActivityInMainToolbarOverride).isNull()

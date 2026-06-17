@@ -10,12 +10,12 @@ import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.cost.LiteLlmPriceCatalogService
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent

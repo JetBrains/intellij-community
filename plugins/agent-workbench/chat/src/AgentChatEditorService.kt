@@ -774,6 +774,7 @@ suspend fun rebindOpenConcreteAgentChatTabs(
 
     var reboundBindings = 0
     val changedFiles = LinkedHashSet<AgentChatVirtualFile>()
+    val restartLaunchSpecsByFile = LinkedHashMap<AgentChatVirtualFile, AgentSessionTerminalLaunchSpec>()
     val outcomesByPath = LinkedHashMap<String, MutableList<AgentChatConcreteTabRebindOutcome>>()
     for ((normalizedPath, requests) in normalizedRequestsByPath) {
       val outcomes = outcomesByPath.computeIfAbsent(normalizedPath) { ArrayList(requests.size) }
@@ -880,6 +881,7 @@ suspend fun rebindOpenConcreteAgentChatTabs(
 
         reboundBindings++
         changedFiles.add(concreteFile)
+        restartLaunchSpecsByFile[concreteFile] = launchSpec
         openTabsSnapshot.replaceConcreteThreadIdentity(
           normalizedPath = normalizedPath,
           managers = managers,
@@ -903,6 +905,9 @@ suspend fun rebindOpenConcreteAgentChatTabs(
       for (manager in managers) {
         manager.updateFilePresentation(changedFile)
         updatedPresentations++
+      }
+      restartLaunchSpecsByFile[changedFile]?.let { launchSpec ->
+        restartOpenEditors(managers = managers, file = changedFile, startupLaunchSpec = launchSpec)
       }
     }
 
@@ -1038,4 +1043,25 @@ private fun refreshOpenEditors(
     .forEach { editor ->
       editor.refreshForFileStateChange()
     }
+}
+
+private suspend fun restartOpenEditors(
+  managers: Set<FileEditorManagerEx>,
+  file: AgentChatVirtualFile,
+  startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+) {
+  var replaceRetainedTerminal = true
+  for (manager in managers) {
+    manager.getAllEditors(file)
+      .filterIsInstance<AgentChatFileEditor>()
+      .forEach { editor ->
+        val replaced = editor.restartForFileStateChange(
+          startupLaunchSpec = startupLaunchSpec,
+          replaceRetainedTerminal = replaceRetainedTerminal,
+        )
+        if (replaced) {
+          replaceRetainedTerminal = false
+        }
+      }
+  }
 }

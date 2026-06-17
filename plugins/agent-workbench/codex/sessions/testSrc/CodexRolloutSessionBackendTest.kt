@@ -6,10 +6,10 @@ import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutP
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivityReport
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
@@ -118,6 +118,7 @@ class CodexRolloutSessionBackendTest {
         AgentSessionOutlineItemKind.PLAN,
       )
       assertThat(turn.children[0].preview).isEqualTo("Fix flaky test")
+      assertThat(turn.children[0].id).isEqualTo(codexUserPromptOutlineItemId(0))
       assertThat(phase.children[0].title).isEqualTo("exec_command")
       assertThat(phase.children[1].preview).isEqualTo("ok")
     }

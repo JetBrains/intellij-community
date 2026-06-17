@@ -2,7 +2,6 @@
 package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-editor.spec.md
-// @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
 import com.intellij.CommonBundle
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
@@ -38,7 +37,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.wm.StatusBar
-import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.terminal.frontend.view.TerminalInputInterceptor
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.CancellationException
@@ -76,6 +74,7 @@ internal class AgentChatFileEditor(
   private val currentTimeProvider: () -> Long = System::currentTimeMillis,
   private val pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
   editorCoroutineScope: CoroutineScope? = null,
+  private val providerDescriptorResolver: (AgentSessionProvider) -> AgentSessionProviderDescriptor? = AgentSessionProviders::find,
   private val behaviorResolver: (AgentSessionProvider?) -> AgentChatProviderBehavior = ::resolveAgentChatProviderBehavior,
 ) : UserDataHolderBase(), FileEditor {
   private val ownedTerminalStartupJob = if (editorCoroutineScope == null) SupervisorJob() else null
@@ -127,7 +126,7 @@ internal class AgentChatFileEditor(
   private var crossProjectDockTargetRegistration: Disposable? = null
 
   private val providerDescriptor
-    get() = file.provider?.let(AgentSessionProviders::find)
+    get() = file.provider?.let(providerDescriptorResolver)
 
   override fun getComponent(): JComponent = component
 
@@ -145,10 +144,6 @@ internal class AgentChatFileEditor(
       cachedTabActionsInitialized = true
     }
     return cachedTabActions
-  }
-
-  override fun getStructureViewBuilder(): StructureViewBuilder? {
-    return createAgentChatStructureViewBuilder(file = file)
   }
 
   override fun getState(level: FileEditorStateLevel): FileEditorState {
@@ -212,27 +207,9 @@ internal class AgentChatFileEditor(
     component.cancelAwaitShowing()
     crossProjectDockTargetRegistration?.let(Disposer::dispose)
     crossProjectDockTargetRegistration = null
-    initialMessageDispatcher?.dispose()
-    initialMessageDispatcher = null
-    pendingThreadRefreshController?.dispose()
-    pendingThreadRefreshController = null
-    terminalTitleThreadRebindController?.dispose()
-    terminalTitleThreadRebindController = null
-    concreteThreadRebindController?.dispose()
-    concreteThreadRebindController = null
-    scopedTerminalRefreshController?.dispose()
-    scopedTerminalRefreshController = null
-    terminalRestoreContextController?.dispose()
-    terminalRestoreContextController = null
-    patchFoldController?.dispose()
-    patchFoldController = null
-    semanticRegionControllerJob?.cancel()
-    semanticRegionControllerJob = null
-    semanticRegionController?.dispose()
-    semanticRegionController = null
+    disposeTerminalAttachments(clearPendingContextPanel = true)
     pendingContextPanel = null
     pendingContextPanelInstalled = false
-    tab = null
     component.removeAll()
   }
 
@@ -534,6 +511,30 @@ internal class AgentChatFileEditor(
     ensureInitialized()
   }
 
+  internal suspend fun restartForFileStateChange(
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+    replaceRetainedTerminal: Boolean,
+  ): Boolean {
+    if (disposed) {
+      return false
+    }
+    val initializedTab = tab
+    if (initializedTab == null) {
+      file.setStartupLaunchSpecOverride(startupLaunchSpec)
+      refreshForFileStateChange()
+      return false
+    }
+    val resolvedRegistry = resolveLiveTerminalRegistry()
+    return if (this.liveTerminalRegistry == null) {
+      withContext(Dispatchers.EDT) {
+        restartTerminalOnEdt(resolvedRegistry, startupLaunchSpec, replaceRetainedTerminal)
+      }
+    }
+    else {
+      restartTerminalOnEdt(resolvedRegistry, startupLaunchSpec, replaceRetainedTerminal)
+    }
+  }
+
   internal fun flushPendingInitialMessageIfInitialized() {
     val initializedTab = tab ?: return
     initialMessageDispatcher?.schedule(initializedTab)
@@ -571,6 +572,57 @@ internal class AgentChatFileEditor(
     component.add(createDeferredStartComponent(state), BorderLayout.CENTER)
     component.revalidate()
     component.repaint()
+  }
+
+  private fun restartTerminalOnEdt(
+    liveTerminalRegistry: AgentChatLiveTerminalRegistry,
+    startupLaunchSpec: AgentSessionTerminalLaunchSpec,
+    replaceRetainedTerminal: Boolean,
+  ): Boolean {
+    if (disposed || tab == null) {
+      return false
+    }
+    disposeTerminalAttachments(clearPendingContextPanel = false)
+    val replaced = if (replaceRetainedTerminal) {
+      liveTerminalRegistry.replace(
+        file = file,
+        terminalTabs = terminalTabs,
+        startupLaunchSpec = startupLaunchSpec,
+      )
+      true
+    }
+    else {
+      false
+    }
+    attachTerminalOnEdt(liveTerminalRegistry, startupLaunchSpec)
+    return replaced
+  }
+
+  private fun disposeTerminalAttachments(clearPendingContextPanel: Boolean) {
+    initialMessageDispatcher?.dispose()
+    initialMessageDispatcher = null
+    pendingThreadRefreshController?.dispose()
+    pendingThreadRefreshController = null
+    terminalTitleThreadRebindController?.dispose()
+    terminalTitleThreadRebindController = null
+    concreteThreadRebindController?.dispose()
+    concreteThreadRebindController = null
+    scopedTerminalRefreshController?.dispose()
+    scopedTerminalRefreshController = null
+    terminalRestoreContextController?.dispose()
+    terminalRestoreContextController = null
+    patchFoldController?.dispose()
+    patchFoldController = null
+    semanticRegionControllerJob?.cancel()
+    semanticRegionControllerJob = null
+    semanticRegionController?.dispose()
+    semanticRegionController = null
+    tab = null
+    component.removeAll()
+    pendingContextPanelInstalled = false
+    if (clearPendingContextPanel) {
+      pendingContextPanel = null
+    }
   }
 
   private fun installPendingContextInterceptor(tab: AgentChatTerminalTab) {

@@ -14,10 +14,12 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItem
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
@@ -31,8 +33,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
 import java.util.concurrent.TimeUnit
 import java.math.BigDecimal
+import java.lang.reflect.InvocationHandler
 import java.nio.file.Files
 import java.nio.file.Path
+import java.lang.reflect.Proxy
 import org.junit.jupiter.api.io.TempDir
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
@@ -112,6 +116,84 @@ class CodexSessionSourceTest {
       assertThat(outline.title).isEqualTo("Load outline from rollout")
       assertThat(outline.items.single().kind).isEqualTo(AgentSessionOutlineItemKind.USER_PROMPT)
       assertThat(outline.items.single().preview).isEqualTo("Load outline from rollout")
+    }
+  }
+
+  @Test
+  fun forkThreadFromCodexUserPromptForksAndRollsBackFromSelectedPrompt() {
+    val forkRequests = mutableListOf<Pair<String, Int>>()
+    val source = CodexSessionSource(
+      backend = object : CodexSessionBackend {
+        override suspend fun listThreads(path: String, openProject: Project?): List<CodexBackendThread> = emptyList()
+
+        override suspend fun loadThreadOutline(path: String, threadId: String): AgentSessionThreadOutline {
+          return AgentSessionThreadOutline(
+            provider = AgentSessionProvider.CODEX,
+            threadId = threadId,
+            title = "Source thread",
+            updatedAt = 100L,
+            items = listOf(
+              AgentSessionOutlineItem(
+                id = "turn-1",
+                kind = AgentSessionOutlineItemKind.AGENT_WORK,
+                title = "Turn 1",
+                children = listOf(
+                  AgentSessionOutlineItem(
+                    id = codexUserPromptOutlineItemId(0),
+                    kind = AgentSessionOutlineItemKind.USER_PROMPT,
+                    title = "",
+                    preview = "First",
+                  ),
+                ),
+              ),
+              AgentSessionOutlineItem(
+                id = codexUserPromptOutlineItemId(1),
+                kind = AgentSessionOutlineItemKind.USER_PROMPT,
+                title = "",
+                preview = "Second",
+              ),
+              AgentSessionOutlineItem(
+                id = codexUserPromptOutlineItemId(2),
+                kind = AgentSessionOutlineItemKind.USER_PROMPT,
+                title = "",
+                preview = "Third",
+              ),
+            ),
+          )
+        }
+
+        override suspend fun forkThread(path: String, threadId: String, rollbackTurns: Int, openProject: Project?): CodexBackendThread {
+          forkRequests += threadId to rollbackTurns
+          return CodexBackendThread(
+            thread = CodexThread(
+              id = "forked-thread",
+              title = "Forked thread",
+              updatedAt = 200L,
+              archived = false,
+            )
+          )
+        }
+      },
+      appServerRefreshHintsProvider = staticHintsProvider(emptyMap()),
+      rolloutRefreshHintsProvider = staticHintsProvider(emptyMap()),
+    )
+
+    runBlocking(Dispatchers.Default) {
+      assertThat(source.canShowThreadOutlineForkAction(PROJECT_PATH, "source-thread", codexUserPromptOutlineItemId(1))).isTrue()
+      assertThat(source.canShowThreadOutlineForkAction(PROJECT_PATH, "source-thread", codexUserPromptOutlineItemId(1), subAgentId = "sub"))
+        .isFalse()
+      assertThat(source.canShowThreadOutlineForkAction(PROJECT_PATH, "source-thread", "call-1")).isFalse()
+
+      val result = source.forkThreadFromOutlineItem(
+        project = testProject(),
+        path = PROJECT_PATH,
+        threadId = "source-thread",
+        itemId = codexUserPromptOutlineItemId(1),
+      )
+
+      assertThat(forkRequests).containsExactly("source-thread" to 2)
+      assertThat(result?.thread?.id).isEqualTo("forked-thread")
+      assertThat(result?.thread?.provider).isEqualTo(AgentSessionProvider.CODEX)
     }
   }
 
@@ -1393,4 +1475,32 @@ private fun codexSubAgentSessionMetaLine(threadId: String, parentThreadId: Strin
 
 private fun codexTokenUsageLine(model: String, inputTokens: Long, outputTokens: Long): String {
   return """{"timestamp":"2026-05-28T10:00:01.000Z","type":"event_msg","payload":{"type":"token_count","model":"$model","info":{"total_token_usage":{"input_tokens":$inputTokens,"cached_input_tokens":0,"output_tokens":$outputTokens,"reasoning_output_tokens":0}}}}"""
+}
+
+private fun testProject(): Project {
+  val handler = InvocationHandler { proxy, method, args ->
+    when (method.name) {
+      "isDisposed" -> false
+      "toString" -> "Project(codex-session-source-test)"
+      "hashCode" -> System.identityHashCode(proxy)
+      "equals" -> proxy === args?.firstOrNull()
+      else -> defaultValue(method.returnType)
+    }
+  }
+  return Proxy.newProxyInstance(Project::class.java.classLoader, arrayOf(Project::class.java), handler) as Project
+}
+
+private fun defaultValue(returnType: Class<*>): Any? {
+  return when {
+    !returnType.isPrimitive -> null
+    returnType == Boolean::class.javaPrimitiveType -> false
+    returnType == Int::class.javaPrimitiveType -> 0
+    returnType == Long::class.javaPrimitiveType -> 0L
+    returnType == Short::class.javaPrimitiveType -> 0.toShort()
+    returnType == Byte::class.javaPrimitiveType -> 0.toByte()
+    returnType == Float::class.javaPrimitiveType -> 0f
+    returnType == Double::class.javaPrimitiveType -> 0.0
+    returnType == Char::class.javaPrimitiveType -> '\u0000'
+    else -> null
+  }
 }

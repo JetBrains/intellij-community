@@ -12,7 +12,7 @@ class AgentSessionOutlineTreeTest {
   fun `hidden bookkeeping records promote visible children`() {
     val items = buildAgentSessionOutlineTree(
       listOf(
-        record(id = "user", parentId = null, kind = AgentSessionOutlineItemKind.USER_PROMPT, title = "My prompt", timestampMs = 1_000L),
+        record(id = "user", parentId = null, kind = AgentSessionOutlineItemKind.USER_PROMPT, title = "User", timestampMs = 1_000L),
         record(id = "label", parentId = "user", visible = false, timestampMs = 2_000L),
         record(id = "assistant",
                parentId = "label",

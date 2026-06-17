@@ -26,16 +26,18 @@ import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.isWorking
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItem
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.cost.LiteLlmPriceCatalogService
 import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineForkResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
@@ -202,6 +204,64 @@ internal class CodexSessionSource internal constructor(
              ?.takeIf { fallbackBackend -> fallbackBackend !== backend }
              ?.let { fallbackBackend -> loadThreadOutlineFromBackend(fallbackBackend, path, threadId) }
            ?: loadIndexedRolloutThreadOutline(threadId)
+  }
+
+  override fun canShowThreadOutlineForkAction(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): Boolean {
+    return subAgentId == null && parseCodexUserPromptOutlineItemIndex(itemId) != null
+  }
+
+  override fun canForkThreadFromOutlineItem(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): Boolean {
+    return canShowThreadOutlineForkAction(
+      path = path,
+      threadId = threadId,
+      itemId = itemId,
+      subAgentId = subAgentId,
+      tabKey = tabKey,
+    )
+  }
+
+  override suspend fun forkThreadFromOutlineItem(
+    project: Project,
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): AgentSessionOutlineForkResult? {
+    if (!canForkThreadFromOutlineItem(path = path, threadId = threadId, itemId = itemId, subAgentId = subAgentId, tabKey = tabKey)) {
+      return null
+    }
+    val selectedUserPromptIndex = parseCodexUserPromptOutlineItemIndex(itemId) ?: return null
+    val outline = loadThreadOutline(path = path, threadId = threadId, subAgentId = subAgentId) ?: return null
+    val userPromptIndexes = outline.items.collectCodexUserPromptIndexes()
+    if (selectedUserPromptIndex !in userPromptIndexes) {
+      return null
+    }
+    val userPromptCount = (userPromptIndexes.maxOrNull() ?: return null) + 1
+    val rollbackTurns = userPromptCount - selectedUserPromptIndex
+    if (rollbackTurns < 1) {
+      return null
+    }
+    val forkedThread = backend.forkThread(
+      path = path,
+      threadId = threadId,
+      rollbackTurns = rollbackTurns,
+      openProject = project,
+    ) ?: return null
+    rememberThreadMetadata(listOf(forkedThread))
+    return AgentSessionOutlineForkResult(thread = toAgentSessionThread(forkedThread))
   }
 
   private suspend fun loadThreadOutlineFromBackend(
@@ -803,6 +863,18 @@ private fun RequestedCodexThreadCost.relatedThreadIds(): Set<String> {
     add(threadId)
     addAll(subAgentIds)
   }
+}
+
+private fun Iterable<AgentSessionOutlineItem>.collectCodexUserPromptIndexes(): Set<Int> {
+  val result = LinkedHashSet<Int>()
+  val stack = ArrayDeque<AgentSessionOutlineItem>()
+  forEach(stack::addLast)
+  while (!stack.isEmpty()) {
+    val item = stack.removeFirst()
+    parseCodexUserPromptOutlineItemIndex(item.id)?.let(result::add)
+    item.children.forEach(stack::addLast)
+  }
+  return result
 }
 
 private fun List<AgentSessionUsageSnapshot>?.toFrozenThreadCost(

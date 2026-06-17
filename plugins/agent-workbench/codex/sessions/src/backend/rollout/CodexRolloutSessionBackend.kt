@@ -22,7 +22,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
+import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project

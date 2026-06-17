@@ -42,8 +42,8 @@ internal object PiExtensionStatusBridge {
     val endpoints = try {
       val port = BuiltInServerManager.getInstance().waitForStart().port
       PiExtensionLaunchEndpoints(
-        statusEndpoint = "http://localhost:$port/$PI_STATUS_ENDPOINT_PREFIX",
-        controlEndpoint = "ws://localhost:$port/$PI_CONTROL_ENDPOINT_PREFIX",
+        statusEndpoint = "http://127.0.0.1:$port/$PI_STATUS_ENDPOINT_PREFIX",
+        controlEndpoint = "ws://127.0.0.1:$port/$PI_CONTROL_ENDPOINT_PREFIX",
       )
     }
     catch (e: Exception) {
