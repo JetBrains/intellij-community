@@ -1,293 +1,272 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.projectView;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.plugins.gradle.projectView
 
-import com.intellij.ide.projectView.PresentationData;
-import com.intellij.ide.projectView.TreeStructureProvider;
-import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleGroupNode;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode;
-import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode;
-import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
-import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleGrouper;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.util.SmartList;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
+import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.projectView.TreeStructureProvider
+import com.intellij.ide.projectView.ViewSettings
+import com.intellij.ide.projectView.impl.ProjectRootsUtil
+import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleGroupNode
+import com.intellij.ide.projectView.impl.nodes.ProjectViewModuleNode
+import com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
+import com.intellij.ide.projectView.impl.nodes.PsiFileSystemItemFilter
+import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleGrouper
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDirectory
+import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+import com.intellij.util.SmartList
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.util.GradleConstants
 
-import java.util.Collection;
-import java.util.List;
+class GradleTreeStructureProvider : TreeStructureProvider, DumbAware {
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalModuleType;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectId;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalProjectPath;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.getExternalRootProjectPath;
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.isExternalSystemAwareModule;
-import static com.intellij.ui.SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
-import static com.intellij.ui.SimpleTextAttributes.merge;
+    override fun modify(
+        parent: AbstractTreeNode<*>,
+        children: Collection<AbstractTreeNode<*>>,
+        settings: ViewSettings
+    ): Collection<AbstractTreeNode<*>> {
+        val project = parent.project ?: return children
 
-/**
- * @author Vladislav.Soroka
- */
-public final class GradleTreeStructureProvider implements TreeStructureProvider, DumbAware {
-  @Override
-  public @NotNull Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
-                                                         @NotNull Collection<AbstractTreeNode<?>> children,
-                                                         ViewSettings settings) {
-    Project project = parent.getProject();
-    if (project == null) return children;
-
-    if (parent instanceof ProjectViewProjectNode) {
-      return getProjectNodeChildren(project, children);
-    }
-
-    if (parent instanceof ProjectViewModuleGroupNode) {
-      Collection<AbstractTreeNode<?>> modifiedChildren = new SmartList<>();
-      for (AbstractTreeNode child : children) {
-        if (child instanceof ProjectViewModuleNode) {
-          Module module = ((ProjectViewModuleNode)child).getValue();
-          if (!showUnderModuleGroup(module)) continue;
-
-          GradleProjectViewModuleNode sourceSetNode = getGradleModuleNode(project, (ProjectViewModuleNode)child, settings);
-          child = sourceSetNode != null ? sourceSetNode : child;
-        }
-        else if (child instanceof PsiDirectoryNode) {
-          GradleModuleDirectoryNode sourceSetNode = getGradleModuleNode(project, (PsiDirectoryNode)child, settings);
-          if (sourceSetNode != null && !showUnderModuleGroup(sourceSetNode.myModule)) continue;
-          child = sourceSetNode != null ? sourceSetNode : child;
-        }
-        modifiedChildren.add(child);
-      }
-      return modifiedChildren;
-    }
-
-    if (parent instanceof GradleProjectViewModuleNode) {
-      Module module = ((GradleProjectViewModuleNode)parent).getValue();
-      String projectPath = getExternalProjectPath(module);
-      Collection<AbstractTreeNode<?>> modifiedChildren = new SmartList<>();
-      for (AbstractTreeNode child : children) {
-        if (child instanceof PsiDirectoryNode) {
-          PsiDirectory psiDirectory = ((PsiDirectoryNode)child).getValue();
-          if (psiDirectory != null) {
-            final VirtualFile virtualFile = psiDirectory.getVirtualFile();
-            if (projectPath != null && FileUtil.isAncestor(projectPath, virtualFile.getPath(), false)) {
-              continue;
+        return when (parent) {
+            is ProjectViewProjectNode -> getProjectNodeChildren(project, children)
+            is ProjectViewModuleGroupNode -> {
+                val modifiedChildren = SmartList<AbstractTreeNode<*>>()
+                for (child in children) {
+                    val newChild = when (child) {
+                        is ProjectViewModuleNode -> {
+                            val module = child.value
+                            if (showUnderModuleGroup(module)) {
+                                getGradleModuleNode(project, child, settings) ?: child
+                            } else {
+                                continue
+                            }
+                        }
+                        is PsiDirectoryNode -> {
+                            val sourceSetNode = getGradleModuleNode(project, child, settings)
+                            if (sourceSetNode != null && !showUnderModuleGroup(sourceSetNode.myModule)) {
+                                continue
+                            }
+                            sourceSetNode ?: child
+                        }
+                        else -> child
+                    }
+                    modifiedChildren.add(newChild)
+                }
+                modifiedChildren
             }
-          }
-        }
-        modifiedChildren.add(child);
-      }
-      return modifiedChildren;
-    }
-
-    if (parent instanceof PsiDirectoryNode) {
-      Collection<AbstractTreeNode<?>> modifiedChildren = new SmartList<>();
-      for (AbstractTreeNode child : children) {
-        if (child instanceof PsiDirectoryNode) {
-          GradleModuleDirectoryNode sourceSetNode = getGradleModuleNode(project, (PsiDirectoryNode)child, settings);
-          child = sourceSetNode != null ? sourceSetNode : child;
-        }
-        modifiedChildren.add(child);
-      }
-      return modifiedChildren;
-    }
-    return children;
-  }
-
-  private static boolean showUnderModuleGroup(Module module) {
-    if (isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
-      String projectPath = getExternalProjectPath(module);
-      for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
-        if (projectPath != null && !FileUtil.isAncestor(projectPath, root.getPath(), true)) {
-          return true;
-        }
-      }
-      return false;
-    }
-    return true;
-  }
-
-  private static @NotNull Collection<AbstractTreeNode<?>> getProjectNodeChildren(@NotNull Project project,
-                                                                                 @NotNull Collection<AbstractTreeNode<?>> children) {
-    Collection<AbstractTreeNode<?>> modifiedChildren = new SmartList<>();
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    for (AbstractTreeNode child : children) {
-      Pair<VirtualFile, PsiDirectoryNode> parentNodePair = null;
-      if (child instanceof ProjectViewModuleGroupNode groupNode) {
-        final Collection<AbstractTreeNode<?>> groupNodeChildren = groupNode.getChildren();
-        for (final AbstractTreeNode node : groupNodeChildren) {
-          if (node instanceof PsiDirectoryNode psiDirectoryNode) {
-            final PsiDirectory psiDirectory = psiDirectoryNode.getValue();
-            if (psiDirectory == null) {
-              parentNodePair = null;
-              break;
+            is GradleProjectViewModuleNode -> {
+                val module = parent.value
+                val projectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
+                val modifiedChildren = SmartList<AbstractTreeNode<*>>()
+                for (child in children) {
+                    if (child is PsiDirectoryNode) {
+                        val psiDirectory = child.value
+                        val virtualFile = psiDirectory?.virtualFile
+                        if (projectPath != null && virtualFile != null &&
+                            FileUtil.isAncestor(projectPath, virtualFile.path, false)
+                        ) {
+                            continue
+                        }
+                    }
+                    modifiedChildren.add(child)
+                }
+                modifiedChildren
             }
-
-            final VirtualFile virtualFile = psiDirectory.getVirtualFile();
-            final Module module = fileIndex.getModuleForFile(virtualFile);
-            if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
-              parentNodePair = null;
-              break;
+            is PsiDirectoryNode -> {
+                val modifiedChildren = SmartList<AbstractTreeNode<*>>()
+                for (child in children) {
+                    val newChild = if (child is PsiDirectoryNode) {
+                        getGradleModuleNode(project, child, settings) ?: child
+                    } else {
+                        child
+                    }
+                    modifiedChildren.add(newChild)
+                }
+                modifiedChildren
             }
+            else -> children
+        }
+    }
 
-            if (parentNodePair == null || VfsUtilCore.isAncestor(virtualFile, parentNodePair.first, false)) {
-              parentNodePair = Pair.pair(virtualFile, psiDirectoryNode);
+    private fun showUnderModuleGroup(module: Module): Boolean {
+        if (ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
+            val projectPath = ExternalSystemApiUtil.getExternalProjectPath(module)
+            for (root in ModuleRootManager.getInstance(module).contentRoots) {
+                if (projectPath != null && !FileUtil.isAncestor(projectPath, root.path, true)) {
+                    return true
+                }
             }
-            else if (!VfsUtilCore.isAncestor(parentNodePair.first, virtualFile, false)) {
-              parentNodePair = null;
-              break;
+            return false
+        }
+        return true
+    }
+
+    private fun getProjectNodeChildren(
+        project: Project,
+        children: Collection<AbstractTreeNode<*>>
+    ): Collection<AbstractTreeNode<*>> {
+        val modifiedChildren = SmartList<AbstractTreeNode<*>>()
+        val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+        for (child in children) {
+            var parentNodePair: Pair<VirtualFile, PsiDirectoryNode>? = null
+            when (child) {
+                is ProjectViewModuleGroupNode -> {
+                    for (node in child.children) {
+                        if (node is PsiDirectoryNode) {
+                            val psiDirectory = node.value ?: run {
+                                parentNodePair = null
+                                break
+                            }
+                            val virtualFile = psiDirectory.virtualFile
+                            val module = fileIndex.getModuleForFile(virtualFile)
+                            if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) {
+                                parentNodePair = null
+                                break
+                            }
+                            parentNodePair = when {
+                                parentNodePair == null -> Pair(virtualFile, node)
+                                VfsUtilCore.isAncestor(virtualFile, parentNodePair.first, false) -> parentNodePair
+                                !VfsUtilCore.isAncestor(parentNodePair.first, virtualFile, false) -> null
+                                else -> parentNodePair
+                            } ?: break
+                        } else {
+                            parentNodePair = null
+                            break
+                        }
+                    }
+                }
+                is PsiDirectoryNode -> {
+                    val psiDirectory = child.value
+                    val directoryFile = psiDirectory?.virtualFile
+                    val gradleModuleNode = getGradleModuleNode(
+                        project,
+                        child,
+                        child.settings
+                    )
+                    if (gradleModuleNode != null) {
+                        parentNodePair = Pair(directoryFile!!, gradleModuleNode)
+                    }
+                }
             }
-          }
-          else {
-            parentNodePair = null;
-            break;
-          }
+            modifiedChildren.add(parentNodePair?.second ?: child)
         }
-      }
-      else if (child instanceof PsiDirectoryNode && child.getParent() == null) {
-        PsiDirectory psiDirectory = ((PsiDirectoryNode)child).getValue();
-        if (psiDirectory != null) {
-          VirtualFile directoryFile = psiDirectory.getVirtualFile();
-          GradleModuleDirectoryNode gradleModuleNode = getGradleModuleNode(project, (PsiDirectoryNode)child,
-                                                                           ((PsiDirectoryNode)child).getSettings());
-          if (gradleModuleNode != null) {
-            parentNodePair = Pair.pair(directoryFile, gradleModuleNode);
-          }
+        return modifiedChildren
+    }
+
+    private fun getGradleModuleNode(
+        project: Project,
+        moduleNode: ProjectViewModuleNode,
+        settings: ViewSettings
+    ): GradleProjectViewModuleNode? {
+        val module = moduleNode.value ?: return null
+        val moduleShortName = getGradleModuleShortName(module) ?: return null
+        return GradleProjectViewModuleNode(project, module, settings, moduleShortName)
+    }
+
+    private fun getGradleModuleNode(
+        project: Project,
+        directoryNode: PsiDirectoryNode,
+        settings: ViewSettings
+    ): GradleModuleDirectoryNode? {
+        val psiDirectory = directoryNode.value ?: return null
+        val virtualFile = psiDirectory.virtualFile
+        if (!ProjectRootsUtil.isModuleContentRoot(virtualFile, project)) return null
+
+        val fileIndex = ProjectRootManager.getInstance(project).fileIndex
+        val module = fileIndex.getModuleForFile(virtualFile) ?: return null
+        val moduleShortName = getGradleModuleShortName(module) ?: return null
+        return GradleModuleDirectoryNode(
+            project,
+            psiDirectory,
+            settings,
+            module,
+            moduleShortName,
+            directoryNode.filter
+        )
+    }
+
+    private fun getGradleModuleShortName(module: Module): String? {
+        if (!ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null
+        val moduleShortName = when {
+            isSourceSetModule(module) -> GradleProjectResolverUtil.getSourceSetName(module)
+            else -> ExternalSystemApiUtil.getExternalProjectId(module)
         }
-      }
-      modifiedChildren.add(parentNodePair != null ? parentNodePair.second : child);
-    }
-    return modifiedChildren;
-  }
-
-
-  private static @Nullable GradleProjectViewModuleNode getGradleModuleNode(@NotNull Project project,
-                                                                           @NotNull ProjectViewModuleNode moduleNode,
-                                                                           ViewSettings settings) {
-    Module module = moduleNode.getValue();
-    final String moduleShortName = getGradleModuleShortName(module);
-    if (moduleShortName == null) return null;
-    return new GradleProjectViewModuleNode(project, module, settings, moduleShortName);
-  }
-
-  private static @Nullable GradleModuleDirectoryNode getGradleModuleNode(@NotNull Project project,
-                                                                         @NotNull PsiDirectoryNode directoryNode,
-                                                                         ViewSettings settings) {
-
-    PsiDirectory psiDirectory = directoryNode.getValue();
-    if (psiDirectory == null) return null;
-
-    final VirtualFile virtualFile = psiDirectory.getVirtualFile();
-    if (!ProjectRootsUtil.isModuleContentRoot(virtualFile, project)) return null;
-
-    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final Module module = fileIndex.getModuleForFile(virtualFile);
-    final String moduleShortName = getGradleModuleShortName(module);
-    if (moduleShortName == null) return null;
-    return new GradleModuleDirectoryNode(project, psiDirectory, settings, module, moduleShortName, directoryNode.getFilter());
-  }
-
-  private static @Nullable String getGradleModuleShortName(Module module) {
-    if (!isExternalSystemAwareModule(GradleConstants.SYSTEM_ID, module)) return null;
-
-    String moduleShortName;
-    if (isSourceSetModule(module)) {
-      return GradleProjectResolverUtil.getSourceSetName(module);
-    }
-    else {
-      moduleShortName = getExternalProjectId(module);
-    }
-
-    boolean isRootModule = StringUtil.equals(getExternalProjectPath(module), getExternalRootProjectPath(module));
-    if (isRootModule || moduleShortName == null) return moduleShortName;
-
-    moduleShortName = ModuleGrouper.instanceFor(module.getProject()).getShortenedNameByFullModuleName(moduleShortName);
-    return StringUtil.getShortName(moduleShortName, ':');
-  }
-
-  private static boolean isSourceSetModule(Module module) {
-    return GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY.equals(getExternalModuleType(module));
-  }
-
-  private static class GradleModuleDirectoryNode extends PsiDirectoryNode {
-    private final @NlsSafe String myModuleShortName;
-    private final Module myModule;
-    private final boolean appendModuleName;
-    private final boolean isSourceSetModule;
-
-    GradleModuleDirectoryNode(Project project,
-                              @NotNull PsiDirectory psiDirectory,
-                              ViewSettings settings,
-                              Module module,
-                              String moduleShortName,
-                              PsiFileSystemItemFilter filter) {
-      super(project, psiDirectory, settings, filter);
-      myModuleShortName = moduleShortName;
-      myModule = module;
-      VirtualFile directoryFile = psiDirectory.getVirtualFile();
-      appendModuleName = StringUtil.isNotEmpty(myModuleShortName) &&
-                         !StringUtil.equalsIgnoreCase(myModuleShortName.replace("-", ""), directoryFile.getName().replace("-", ""));
-      isSourceSetModule = isSourceSetModule(myModule);
-    }
-
-    @Override
-    protected boolean shouldShowModuleName() {
-      return !(appendModuleName || isSourceSetModule) || canRealModuleNameBeHidden();
-    }
-
-    @Override
-    protected void updateImpl(@NotNull PresentationData data) {
-      super.updateImpl(data);
-      if (appendModuleName) {
-        if (!canRealModuleNameBeHidden()) {
-          data.addText("[" + myModuleShortName + "]", REGULAR_BOLD_ATTRIBUTES);
+        val isRootModule = ExternalSystemApiUtil.getExternalProjectPath(module) == ExternalSystemApiUtil.getExternalRootProjectPath(module)
+        return if (isRootModule || moduleShortName == null) {
+            moduleShortName
+        } else {
+            val shortenedName = ModuleGrouper.instanceFor(module.project).getShortenedNameByFullModuleName(moduleShortName)
+            shortenedName.substringAfterLast(':')
         }
-      }
-      else if (isSourceSetModule) {
-        List<ColoredFragment> fragments = data.getColoredText();
-        if (fragments.size() == 1) {
-          ColoredFragment fragment = fragments.iterator().next();
-          data.clearText();
-          data.addText(fragment.getText().trim(), merge(fragment.getAttributes(), REGULAR_BOLD_ATTRIBUTES));
+    }
+
+    private fun isSourceSetModule(module: Module): Boolean {
+        return GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY == ExternalSystemApiUtil.getExternalModuleType(module)
+    }
+
+    inner class GradleModuleDirectoryNode(
+      project: Project,
+      psiDirectory: PsiDirectory,
+      settings: ViewSettings,
+      val myModule: Module,
+      private val myModuleShortName: String,
+      filter: PsiFileSystemItemFilter?
+    ) : PsiDirectoryNode(project, psiDirectory, settings, filter) {
+
+        private val appendModuleName: Boolean
+        private val isSourceSetModule: Boolean
+
+        init {
+            val directoryFile = psiDirectory.virtualFile
+            appendModuleName = myModuleShortName.isNotEmpty() &&
+                myModuleShortName.replace("-", "", true) != directoryFile.name.replace("-", "", true)
+            isSourceSetModule = isSourceSetModule(myModule)
         }
-      }
-    }
-  }
 
-  private static class GradleProjectViewModuleNode extends ProjectViewModuleNode {
-    private final @NotNull @NlsSafe String myModuleShortName;
+        override fun shouldShowModuleName(): Boolean {
+            return !(appendModuleName || isSourceSetModule) || canRealModuleNameBeHidden()
+        }
 
-    GradleProjectViewModuleNode(Project project, Module value, ViewSettings viewSettings, @NotNull String moduleShortName) {
-      super(project, value, viewSettings);
-      myModuleShortName = moduleShortName;
+        override fun updateImpl(data: PresentationData) {
+            super.updateImpl(data)
+            when {
+                appendModuleName && !canRealModuleNameBeHidden() -> data.addText("[$myModuleShortName]", REGULAR_BOLD_ATTRIBUTES)
+                isSourceSetModule -> {
+                    val fragments = data.coloredText
+                    if (fragments.size == 1) {
+                        val fragment = fragments.first()
+                        data.clearText()
+                        data.addText(fragment.text.trim(), SimpleTextAttributes.merge(fragment.attributes, REGULAR_BOLD_ATTRIBUTES))
+                    }
+                }
+            }
+        }
     }
 
-    @Override
-    public void update(@NotNull PresentationData presentation) {
-      super.update(presentation);
-      presentation.setPresentableText(myModuleShortName);
-      presentation.addText(myModuleShortName, REGULAR_BOLD_ATTRIBUTES);
-    }
+    private class GradleProjectViewModuleNode(
+        project: Project,
+        value: Module,
+        viewSettings: ViewSettings,
+        private val myModuleShortName: String
+    ) : ProjectViewModuleNode(project, value, viewSettings) {
 
-    @Override
-    protected boolean showModuleNameInBold() {
-      return false;
+        override fun update(presentation: PresentationData) {
+            super.update(presentation)
+            presentation.presentableText = myModuleShortName
+            presentation.addText(myModuleShortName, REGULAR_BOLD_ATTRIBUTES)
+        }
+
+        override fun showModuleNameInBold() = false
     }
-  }
 }
