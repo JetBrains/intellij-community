@@ -82,17 +82,17 @@ internal fun buildGenerationModelSelectorEntries(
     add(AgentPromptGenerationModelSelectorEntry.Model(null, AgentPromptBundle.message("popup.generation.model.popup.auto")))
     when (catalogState) {
       is AgentPromptGenerationModelCatalogState.Loaded -> {
-        addExplicitModelEntries(catalogState.models, selectedModelId, displayNameForSavedModel)
+        addExplicitModelEntries(providerId, catalogState.models, selectedModelId, displayNameForSavedModel)
       }
       is AgentPromptGenerationModelCatalogState.Refreshing -> {
-        addExplicitModelEntries(catalogState.models, selectedModelId, displayNameForSavedModel)
+        addExplicitModelEntries(providerId, catalogState.models, selectedModelId, displayNameForSavedModel)
         add(AgentPromptGenerationModelSelectorEntry.Status(
           AgentPromptBundle.message("popup.generation.model.refreshing"),
           AgentPromptGenerationModelSelectorEntry.Status.Kind.REFRESHING,
         ))
       }
       is AgentPromptGenerationModelCatalogState.RefreshFailed -> {
-        addExplicitModelEntries(catalogState.models, selectedModelId, displayNameForSavedModel)
+        addExplicitModelEntries(providerId, catalogState.models, selectedModelId, displayNameForSavedModel)
         add(AgentPromptGenerationModelSelectorEntry.Status(
           AgentPromptBundle.message("popup.generation.model.refresh.failed"),
           AgentPromptGenerationModelSelectorEntry.Status.Kind.REFRESH_FAILED,
@@ -122,6 +122,7 @@ internal fun buildGenerationModelSelectorEntries(
 }
 
 private fun MutableList<AgentPromptGenerationModelSelectorEntry>.addExplicitModelEntries(
+  providerId: String,
   models: List<AgentPromptGenerationModel>,
   selectedModelId: String?,
   displayNameForSavedModel: (String) -> @NlsSafe String,
@@ -136,12 +137,13 @@ private fun MutableList<AgentPromptGenerationModelSelectorEntry>.addExplicitMode
     ))
     return
   }
+  val hasMultipleGroups = models.map { it.group }.distinct().size > 1 || providerId == "pi" || providerId == "junie"
   explicitModels.groupedForModelSelector().forEach { section ->
     section.models.forEachIndexed { index, model ->
       add(AgentPromptGenerationModelSelectorEntry.Model(
         modelId = model.id,
         displayName = model.displayName,
-        separatorGroup = section.group.takeIf { index == 0 },
+        separatorGroup = section.group.takeIf { hasMultipleGroups && index == 0 },
       ))
     }
   }
