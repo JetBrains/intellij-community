@@ -43,9 +43,13 @@ sealed interface RpcLookupElementEvent {
    * the lookup is closed with completion
    */
   @Serializable
-  data class ItemSelected(val projectId: ProjectId) : RpcLookupElementEvent {
+  data class ItemSelected(
+    val projectId: ProjectId,
+    val selectedItemId: RpcCompletionItemId? = null,
+  ) : RpcLookupElementEvent {
     override fun toString(): String = buildToString("ItemSelected") {
       field("projectId", projectId)
+      fieldWithNullDefault("selectedItemId", selectedItemId)
     }
   }
 
