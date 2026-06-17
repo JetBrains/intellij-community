@@ -140,10 +140,10 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
     fun InlayTreeSink.addPresentation(inferredVariance: Variance?, element: PsiElement) {
       val position = InlineInlayPosition(element.textRange.startOffset, false)
       if (inferredVariance == Variance.COVARIANT) {
-        this.addPresentation(position = position, hintFormat = varianceHintFormat) { text("out") }
+        this.addPresentation(position, tooltip = "covariant: <code>${element.text}</code> only appears in output positions", hintFormat = varianceHintFormat) { text("out") }
       }
       if (inferredVariance == Variance.CONTRAVARIANT) {
-        this.addPresentation(position = position, hintFormat = varianceHintFormat) { text("in") }
+        this.addPresentation(position, tooltip = "contravariant: <code>${element.text}</code> only appears in input positions", hintFormat = varianceHintFormat) { text("in") }
       }
     }
 
