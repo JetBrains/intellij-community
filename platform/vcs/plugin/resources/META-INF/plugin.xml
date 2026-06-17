@@ -1,0 +1,26 @@
+<!--suppress SplitModeMixedDependencies -->
+<!--suppress PluginXmlPluginLogo -->
+<idea-plugin>
+  <id>intellij.vcs.plugin</id>
+  <name>VCS</name>
+  <description>Provides VCS platform modules for the IDE.</description>
+  <vendor>JetBrains</vendor>
+  <dependencies>
+    <module name="intellij.platform.backend"/>
+  </dependencies>
+  <content namespace="jetbrains">
+    <module name="intellij.platform.vcs.impl" loading="required"/>
+    <module name="intellij.platform.vcs.impl.exec"/>
+    <module name="intellij.platform.vcs.impl.debugger"/>
+    <module name="intellij.platform.vcs.impl.lang"/>
+    <module name="intellij.platform.vcs.impl.lang.actions"/>
+    <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
+    <!-- Keep public: this shared SQLite module is also depended on by VCS Log impl and Qodana. -->
+    <module name="intellij.platform.sqlite"/>
+    <module name="intellij.platform.vcs.log.graph"/>
+    <module name="intellij.platform.vcs.log.graph.impl"/>
+    <module name="intellij.platform.vcs.dvcs"/>
+    <module name="intellij.platform.vcs.dvcs.impl"/>
+  </content>
+</idea-plugin>

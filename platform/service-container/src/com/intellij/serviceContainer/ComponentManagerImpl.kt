@@ -1598,6 +1598,9 @@ val servicePreloadingAllowListForNonCorePlugin: Set<String> = java.util.Set.of(
   "com.intellij.clouds.docker.gateway.host.DockerDevcontainerHostInitializer",
   "com.intellij.ui.jcef.JBCefStartup",
 
+  // VCS
+  "com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl",
+
   // Remote Development
   "com.intellij.cwm.plugin.driver.RemoteDriverHostService",
   "com.intellij.cwm.plugin.driver.RobotHostServiceImpl",

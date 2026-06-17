@@ -38,27 +38,27 @@
   <!-- endregion -->
 
   <extensionPoints>
-    <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT" dynamic="true"/>
-    <extensionPoint name="logHighlighterFactory" interface="com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory" dynamic="true"/>
-    <extensionPoint name="customVcsLogUiFactoryProvider" interface="com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider"
+    <extensionPoint qualifiedName="com.intellij.logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.logHighlighterFactory" interface="com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.customVcsLogUiFactoryProvider" interface="com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider"
                     area="IDEA_PROJECT" dynamic="true"/>
-    <extensionPoint name="vcsLogCustomColumn"
+    <extensionPoint qualifiedName="com.intellij.vcsLogCustomColumn"
                     interface="com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn"
                     dynamic="true"/>
-    <extensionPoint name="vcsLogCommitStatusProvider"
+    <extensionPoint qualifiedName="com.intellij.vcsLogCommitStatusProvider"
                     interface="com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider"
                     dynamic="true"/>
-    <extensionPoint name="vcsLogFileHistoryHandler"
+    <extensionPoint qualifiedName="com.intellij.vcsLogFileHistoryHandler"
                     interface="com.intellij.vcs.log.VcsLogFileHistoryHandler"
                     area="IDEA_PROJECT"
                     dynamic="true"/>
-    <extensionPoint name="fileHistoryPerformanceListener"
+    <extensionPoint qualifiedName="com.intellij.fileHistoryPerformanceListener"
                     interface="com.intellij.vcs.log.history.FileHistoryPerformanceListener"
                     dynamic="true"/>
-    <extensionPoint name="vcsLogChangesTreeBuilder"
+    <extensionPoint qualifiedName="com.intellij.vcsLogChangesTreeBuilder"
                     interface="com.intellij.vcs.log.ui.frame.VcsLogChangesTreeModifier"
                     dynamic="true"/>
-    <extensionPoint name="vcsLogRefreshActionListener"
+    <extensionPoint qualifiedName="com.intellij.vcsLogRefreshActionListener"
                     interface="com.intellij.vcs.log.ui.actions.VcsLogRefreshActionListener"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.vcs.log.bookmarkSupport"

@@ -48,6 +48,7 @@ jvm_library(
         "//platform/navbar/plugin",
         "//platform/bookmarks/plugin",
         "//platform/problemsView/plugin",
+        "//platform/vcs/plugin",
     ],
 )
 
@@ -99,6 +100,7 @@ jvm_library(
         "//platform/navbar/plugin:plugin_test_lib",
         "//platform/bookmarks/plugin:plugin_test_lib",
         "//platform/problemsView/plugin:plugin_test_lib",
+        "//platform/vcs/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.moduleSet.plugin.main` end

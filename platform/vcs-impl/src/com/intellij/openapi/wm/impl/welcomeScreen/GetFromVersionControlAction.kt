@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.registry.Registry
@@ -60,6 +59,3 @@ internal open class GetFromVersionControlAction : DumbAwareAction() {
     }
   }
 }
-
-@InternalIgnoreDependencyViolation
-internal class ProjectFromVersionControlAction : GetFromVersionControlAction()

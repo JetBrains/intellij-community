@@ -1799,6 +1799,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/impl/intellij.platform.vcs.log.impl.iml" filepath="$PROJECT_DIR$/platform/vcs-log/impl/intellij.platform.vcs.log.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/impl/bookmarks/intellij.platform.vcs.log.impl.bookmarks.iml" filepath="$PROJECT_DIR$/platform/vcs-log/impl/bookmarks/intellij.platform.vcs.log.impl.bookmarks.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-log/impl/intellij.platform.vcs.log.impl.tests.iml" filepath="$PROJECT_DIR$/platform/vcs-log/impl/intellij.platform.vcs.log.impl.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/vcs/plugin/intellij.platform.vcs.plugin.iml" filepath="$PROJECT_DIR$/platform/vcs/plugin/intellij.platform.vcs.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-api/shared/intellij.platform.vcs.shared.iml" filepath="$PROJECT_DIR$/platform/vcs-api/shared/intellij.platform.vcs.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.testFramework.iml" filepath="$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.tests.iml" filepath="$PROJECT_DIR$/platform/vcs-tests/intellij.platform.vcs.tests.iml" />
