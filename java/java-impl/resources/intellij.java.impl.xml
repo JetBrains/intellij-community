@@ -106,7 +106,7 @@
       serviceImplementation="com.intellij.refactoring.introduceField.JavaIntroduceFieldService"/>
 
     <registryKey defaultValue="false" description="Enable postfix mod completion" key="postfix.template.mod.completion.enabled"/>
-    <advancedSetting id="java.show.new.class.in.irrelevant.java.source.roots" default="false"
+    <advancedSetting id="java.show.new.file.in.irrelevant.java.source.roots" default="false"
                      groupKey="advanced.settings.group.java" bundle="messages.JavaBundle"/>
     <applicationSettings service="com.intellij.codeInsight.hints.AnnotationInlaySettings"/>
     <projectSettings service="com.intellij.javadoc.JavadocGenerationManager"/>
