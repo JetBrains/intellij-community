@@ -1,0 +1,21 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.agent.workbench.chat"/>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.terminal.frontend"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <agent.workbench.chatProviderBehavior
+      implementation="com.intellij.agent.workbench.codex.chat.CodexAgentChatProviderBehaviorContributor"/>
+    <agent.workbench.chatTerminalTitleThreadRebindContributor
+      implementation="com.intellij.agent.workbench.codex.chat.CodexTerminalTitleThreadRebindContributor"/>
+    <registryKey key="agent.workbench.codex.tui.patch.folding"
+                 defaultValue="false"
+                 description="Collapse large Codex TUI patch transcripts in Agent Workbench chat tabs"/>
+  </extensions>
+</idea-plugin>

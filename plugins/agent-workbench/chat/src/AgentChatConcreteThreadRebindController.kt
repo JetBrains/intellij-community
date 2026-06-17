@@ -18,7 +18,7 @@ internal class AgentChatConcreteThreadRebindController(
   private val behavior: AgentChatProviderBehavior,
   private val tabSnapshotWriter: AgentChatTabSnapshotWriter,
   private val currentTimeProvider: () -> Long = System::currentTimeMillis,
-  private val retryIntervalMs: Long = AgentSessionThreadRebindPolicy.CONCRETE_CODEX_NEW_THREAD_REFRESH_RETRY_INTERVAL_MS,
+  private val retryIntervalMs: Long = AgentSessionThreadRebindPolicy.CONCRETE_NEW_THREAD_REFRESH_RETRY_INTERVAL_MS,
   private val notifyRefresh: (AgentSessionProvider, String) -> Unit = { provider, projectPath ->
     notifyAgentChatScopedRefresh(provider = provider, projectPath = projectPath)
   },
@@ -113,11 +113,11 @@ internal class AgentChatConcreteThreadRebindController(
     }
     val rebindRequestedAtMs = file.newThreadRebindRequestedAtMs ?: return null
     val currentTimeMs = currentTimeProvider()
-    if (!AgentSessionThreadRebindPolicy.isConcreteCodexNewThreadRebindAnchorActive(rebindRequestedAtMs, currentTimeMs)) {
+    if (!AgentSessionThreadRebindPolicy.isConcreteNewThreadRebindAnchorActive(rebindRequestedAtMs, currentTimeMs)) {
       clearConcreteScopedRefreshAnchor()
       return null
     }
-    return AgentSessionThreadRebindPolicy.concreteCodexNewThreadRefreshRetryDelayMs(
+    return AgentSessionThreadRebindPolicy.concreteNewThreadRefreshRetryDelayMs(
       rebindRequestedAtMs = rebindRequestedAtMs,
       currentTimeMs = currentTimeMs,
       retryIntervalMs = retryIntervalMs,

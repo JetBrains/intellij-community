@@ -1,6 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.chat
+package com.intellij.agent.workbench.codex.chat
 
+import com.intellij.agent.workbench.chat.AgentChatDisposableController
+import com.intellij.agent.workbench.chat.captureActiveTerminalSnapshot
+import com.intellij.agent.workbench.chat.lineText
+import com.intellij.agent.workbench.chat.resolveTerminalEditor
+import com.intellij.agent.workbench.chat.terminalOutputModelChangeFlow
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.editor.CustomFoldRegion
 import com.intellij.openapi.editor.Editor
@@ -17,6 +22,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
@@ -26,11 +32,9 @@ import org.jetbrains.plugins.terminal.view.TerminalLineIndex
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelSnapshot
 import kotlin.time.Duration.Companion.milliseconds
 
-internal const val CODEX_TUI_PATCH_FOLDING_REGISTRY_KEY: String = "agent.workbench.codex.tui.patch.folding"
-
 internal class CodexTuiPatchFoldController(
   private val terminalView: TerminalView,
-  private val sessionState: kotlinx.coroutines.flow.StateFlow<TerminalViewSessionState>,
+  private val sessionState: StateFlow<TerminalViewSessionState>,
   parentScope: CoroutineScope,
 ) : AgentChatDisposableController {
   private val foldState = CodexTuiPatchFoldState()
@@ -138,7 +142,6 @@ internal class CodexTuiPatchFoldController(
       foldState.apply(editor, matches)
     }
   }
-
 }
 
 internal class CodexTuiPatchFoldState {

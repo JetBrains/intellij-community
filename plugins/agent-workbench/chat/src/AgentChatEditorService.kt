@@ -471,32 +471,16 @@ fun agentChatScopedRefreshSignals(provider: AgentSessionProvider): Flow<AgentSes
   return AgentChatScopedRefreshSignalBus.signals(provider)
 }
 
-fun notifyCodexScopedRefresh(projectPath: String) {
-  notifyAgentChatScopedRefresh(provider = AgentSessionProvider.CODEX, projectPath = projectPath)
-}
-
-fun codexScopedRefreshSignals(): Flow<AgentSessionSourceUpdateEvent> {
-  return agentChatScopedRefreshSignals(AgentSessionProvider.CODEX)
-}
-
 suspend fun collectOpenPendingAgentChatTabsByPath(
   provider: AgentSessionProvider,
 ): Map<String, List<AgentChatPendingTabSnapshot>> {
   return collectOpenAgentChatTabsSnapshotOnUi().pendingTabsByPath(provider)
 }
 
-suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendingTabSnapshot>> {
-  return collectOpenPendingAgentChatTabsByPath(AgentSessionProvider.CODEX)
-}
-
 suspend fun collectOpenConcreteAgentChatTabsAwaitingNewThreadRebindByPath(
   provider: AgentSessionProvider,
 ): Map<String, List<AgentChatConcreteTabSnapshot>> {
   return collectOpenAgentChatTabsSnapshotOnUi().concreteTabsAwaitingNewThreadRebindByPath(provider)
-}
-
-suspend fun collectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath(): Map<String, List<AgentChatConcreteTabSnapshot>> {
-  return collectOpenConcreteAgentChatTabsAwaitingNewThreadRebindByPath(AgentSessionProvider.CODEX)
 }
 
 suspend fun collectOpenConcreteAgentChatThreadIdentitiesByPath(): Map<String, Set<String>> {
@@ -769,26 +753,17 @@ suspend fun rebindOpenPendingAgentChatTabs(
   return report
 }
 
-suspend fun rebindOpenPendingCodexTabs(
-  requestsByProjectPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
-): AgentChatPendingTabRebindReport {
-  return rebindOpenPendingAgentChatTabs(
-    provider = AgentSessionProvider.CODEX,
-    requestsByProjectPath = requestsByProjectPath,
-  )
-}
-
 suspend fun rebindOpenConcreteAgentChatTabs(
   provider: AgentSessionProvider,
   requestsByProjectPath: Map<String, List<AgentChatConcreteTabRebindRequest>>,
 ): AgentChatConcreteTabRebindReport {
   if (requestsByProjectPath.isEmpty()) {
-    return emptyConcreteCodexTabRebindReport()
+    return emptyConcreteTabRebindReport()
   }
 
   val normalizedRequestsByPath = normalizePathToListMap(requestsByProjectPath)
   if (normalizedRequestsByPath.isEmpty()) {
-    return emptyConcreteCodexTabRebindReport()
+    return emptyConcreteTabRebindReport()
   }
 
   val launchSpecsByTarget = resolveRebindLaunchSpecs(
@@ -941,16 +916,10 @@ suspend fun rebindOpenConcreteAgentChatTabs(
     )
   }
   LOG.debug {
-    "rebindOpenConcreteCodexTabs requestedBindings=${report.requestedBindings}, reboundBindings=${report.reboundBindings}, " +
+    "rebindOpenConcreteAgentChatTabs requestedBindings=${report.requestedBindings}, reboundBindings=${report.reboundBindings}, " +
     "reboundFiles=${report.reboundFiles}, updatedPresentations=${report.updatedPresentations}, paths=${report.outcomesByPath.size}"
   }
   return report
-}
-
-suspend fun rebindOpenConcreteCodexTabs(
-  requestsByProjectPath: Map<String, List<AgentChatConcreteTabRebindRequest>>,
-): AgentChatConcreteTabRebindReport {
-  return rebindOpenConcreteAgentChatTabs(AgentSessionProvider.CODEX, requestsByProjectPath)
 }
 
 fun clearOpenConcreteAgentChatNewThreadRebindAnchors(
@@ -1012,7 +981,7 @@ private fun emptyPendingTabRebindReport(): AgentChatPendingTabRebindReport {
   )
 }
 
-private fun emptyConcreteCodexTabRebindReport(): AgentChatConcreteTabRebindReport {
+private fun emptyConcreteTabRebindReport(): AgentChatConcreteTabRebindReport {
   return AgentChatConcreteTabRebindReport(
     requestedBindings = 0,
     reboundBindings = 0,

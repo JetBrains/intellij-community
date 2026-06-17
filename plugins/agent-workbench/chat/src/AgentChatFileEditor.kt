@@ -474,7 +474,7 @@ internal class AgentChatFileEditor(
       }
       withContext(Dispatchers.EDT) {
         if (!disposed && tab === createdTab && semanticRegionController == null) {
-          semanticRegionController = behavior.createSemanticRegionController(createdTab)
+          semanticRegionController = createAgentChatSemanticRegionController(behavior, createdTab)
         }
       }
     }

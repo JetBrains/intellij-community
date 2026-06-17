@@ -9,7 +9,7 @@ import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.isConcreteCodexNewThreadRebindAnchorActive
+import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.isConcreteNewThreadRebindAnchorActive
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_POST_WINDOW_MS
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_MATCH_PRE_WINDOW_MS
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy.PENDING_THREAD_NO_BASELINE_AUTO_BIND_MAX_AGE_MS
@@ -284,7 +284,7 @@ internal class AgentSessionThreadRebindSupport(
         continue
       }
       val staleTabs = tabs.filterNot { tab ->
-        isConcreteCodexNewThreadRebindAnchorActive(
+        isConcreteNewThreadRebindAnchorActive(
           rebindRequestedAtMs = tab.newThreadRebindRequestedAtMs,
           currentTimeMs = nowMs,
         )

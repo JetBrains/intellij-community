@@ -226,7 +226,7 @@ internal class AgentChatTerminalTitleThreadRebindController(
     }
 
     val newThreadRebindRequestedAtMs = file.newThreadRebindRequestedAtMs ?: return null
-    if (!AgentSessionThreadRebindPolicy.isConcreteCodexNewThreadRebindAnchorActive(newThreadRebindRequestedAtMs, currentTimeProvider())) {
+    if (!AgentSessionThreadRebindPolicy.isConcreteNewThreadRebindAnchorActive(newThreadRebindRequestedAtMs, currentTimeProvider())) {
       return null
     }
     if (threadId == file.threadId || threadId == file.sessionId) {

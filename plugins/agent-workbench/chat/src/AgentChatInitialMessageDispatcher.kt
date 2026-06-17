@@ -11,9 +11,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
+import org.jetbrains.annotations.ApiStatus
 import kotlin.time.Duration.Companion.milliseconds
 
-internal sealed interface AgentChatInitialMessageRetryDecision {
+@ApiStatus.Internal
+sealed interface AgentChatInitialMessageRetryDecision {
   data object Proceed : AgentChatInitialMessageRetryDecision
 
   data object ProceedAndResetReadiness : AgentChatInitialMessageRetryDecision

@@ -1713,7 +1713,7 @@ class AgentChatEditorServiceTest {
       }
     }
 
-    notifyCodexScopedRefresh(projectPath)
+    notifyAgentChatScopedRefresh(provider = AgentSessionProvider.CODEX, projectPath = projectPath)
 
     val signal = signalWaiter.await()
     assertThat(signal.scopedPaths).containsExactly("/work/project-scoped-refresh-delayed")
@@ -2391,4 +2391,32 @@ private suspend fun waitForCondition(timeoutMs: Long = 5_000, condition: suspend
     delay(20.milliseconds)
   }
   throw AssertionError("Condition was not satisfied within ${timeoutMs}ms")
+}
+
+private fun codexScopedRefreshSignals() = agentChatScopedRefreshSignals(AgentSessionProvider.CODEX)
+
+private suspend fun collectOpenPendingCodexTabsByPath(): Map<String, List<AgentChatPendingTabSnapshot>> {
+  return collectOpenPendingAgentChatTabsByPath(AgentSessionProvider.CODEX)
+}
+
+private suspend fun collectOpenConcreteCodexTabsAwaitingNewThreadRebindByPath(): Map<String, List<AgentChatConcreteTabSnapshot>> {
+  return collectOpenConcreteAgentChatTabsAwaitingNewThreadRebindByPath(AgentSessionProvider.CODEX)
+}
+
+private suspend fun rebindOpenPendingCodexTabs(
+  requestsByProjectPath: Map<String, List<AgentChatPendingTabRebindRequest>>,
+): AgentChatPendingTabRebindReport {
+  return rebindOpenPendingAgentChatTabs(
+    provider = AgentSessionProvider.CODEX,
+    requestsByProjectPath = requestsByProjectPath,
+  )
+}
+
+private suspend fun rebindOpenConcreteCodexTabs(
+  requestsByProjectPath: Map<String, List<AgentChatConcreteTabRebindRequest>>,
+): AgentChatConcreteTabRebindReport {
+  return rebindOpenConcreteAgentChatTabs(
+    provider = AgentSessionProvider.CODEX,
+    requestsByProjectPath = requestsByProjectPath,
+  )
 }

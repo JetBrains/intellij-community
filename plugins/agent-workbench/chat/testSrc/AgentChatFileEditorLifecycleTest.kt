@@ -569,7 +569,7 @@ class AgentChatFileEditorLifecycleTest {
       notifyRefresh = { _, _, refreshedThreadId, _ ->
         refreshThreadIds += refreshedThreadId
       },
-      currentTimeProvider = { 2_000L + AgentSessionThreadRebindPolicy.CONCRETE_CODEX_NEW_THREAD_REBIND_MAX_AGE_MS },
+      currentTimeProvider = { 2_000L + AgentSessionThreadRebindPolicy.CONCRETE_NEW_THREAD_REBIND_MAX_AGE_MS },
     )
 
     try {
@@ -2626,7 +2626,7 @@ private class CodexScopedRefreshSignalCollector {
   private val job = object : CoroutineScope {
     override val coroutineContext = Job() + Dispatchers.Default
   }.launch(start = CoroutineStart.UNDISPATCHED) {
-    codexScopedRefreshSignals().collect { signal ->
+    agentChatScopedRefreshSignals(AgentSessionProvider.CODEX).collect { signal ->
       codexSignals += signal.scopedPaths.orEmpty()
     }
   }

@@ -33,6 +33,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.chat" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.common" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.codex.chat" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.junie.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" scope="RUNTIME" />

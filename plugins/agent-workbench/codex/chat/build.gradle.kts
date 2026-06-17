@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
@@ -6,7 +6,6 @@ plugins {
   id("java")
   id("org.jetbrains.kotlin.jvm")
   id("org.jetbrains.intellij.platform.module")
-  kotlin("plugin.serialization")
 }
 
 repositories {
@@ -41,16 +40,19 @@ dependencies {
       intellijIdeaUltimate(platformVersion) { useInstaller = false }
     }
     jetbrainsRuntime()
+    if (platformLocalPath == null) {
+      bundledPlugins("org.jetbrains.plugins.terminal")
+    }
+  }
+
+  if (platformLocalPath != null) {
+    val ideDir = rootProject.file(platformLocalPath)
+    compileOnly(fileTree(ideDir.resolve("plugins/terminal/lib")) { include("**/*.jar") })
   }
 
   implementation(project(":common"))
-  implementation(project(":json"))
-  implementation(project(":filewatch"))
-  implementation(project(":codex-common"))
-  implementation(project(":prompt-core"))
+  implementation(project(":chat"))
   implementation(project(":sessions-core"))
-  implementation(project(":sessions"))
-  implementation(project(":sessions-actions"))
 }
 
 kotlin {

@@ -43,13 +43,13 @@ import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import kotlin.time.Duration.Companion.milliseconds
 
-internal interface AgentChatTerminalTab {
+internal interface AgentChatTerminalTab : AgentChatBehaviorTerminalTab {
   val component: JComponent
   val preferredFocusableComponent: JComponent
-  val coroutineScope: CoroutineScope
-  val sessionState: StateFlow<TerminalViewSessionState>
+  override val coroutineScope: CoroutineScope
+  override val sessionState: StateFlow<TerminalViewSessionState>
   val keyEventsFlow: Flow<TerminalKeyEvent>
-  val terminalView: TerminalView?
+  override val terminalView: TerminalView?
     get() = null
 
   suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint
@@ -66,7 +66,7 @@ internal interface AgentChatTerminalTab {
     checkpoint: AgentChatTerminalOutputCheckpoint? = null,
   ): AgentChatTerminalInputReadiness
 
-  suspend fun readRecentOutputTail(): String
+  override suspend fun readRecentOutputTail(): String
 
   fun sendText(text: String, shouldExecute: Boolean, useBracketedPasteMode: Boolean = true)
 
