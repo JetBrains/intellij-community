@@ -31,6 +31,13 @@ class CoverageTest {
     enableCoverage = true
     coveredClassesPatterns = coveredClass.packageName + ".*"
     testPatterns = CoverageTest::class.java.canonicalName
+    // The nested run must be driven solely by [testPatterns]. Clear the other selectors so an ambient
+    // 'intellij.build.test.groups'/'…configurations'/'…simple.patterns' system property (set, for example, when this
+    // test itself is launched from a test group such as BUILD_SCRIPTS_PLATFORM_TESTS) is not inherited by TestingOptions
+    // and does not trip the mutually-exclusive option check in TestingTasksImpl.checkOptions.
+    testGroups = null
+    testConfigurations = null
+    testSimplePatterns = null
     mainModule = "intellij.platform.buildScripts.tests"
     searchScope = JUnitRunConfigurationProperties.TestSearchScope.SINGLE_MODULE.serialized
   }
