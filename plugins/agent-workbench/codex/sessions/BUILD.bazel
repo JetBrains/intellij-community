@@ -21,6 +21,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
+        "@lib//:agent-workbench-codex-sessions-night-config-toml",
         "@lib//:kotlin-stdlib",
         "//libraries/fastutil",
         "//libraries/kotlinx/serialization/core",

@@ -29,6 +29,34 @@ http_file(
 )
 
 http_file(
+    name = "com_electronwill_night-config-toml-3_8_4_http",
+    downloaded_file_path = "toml-3.8.4.jar",
+    sha256 = "127bf8b025c341139145c55bc897f3188057eec19940f99d3eae624399e88f2a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar",
+)
+
+http_file(
+    name = "com_electronwill_night-config-core-3_8_4_http",
+    downloaded_file_path = "core-3.8.4.jar",
+    sha256 = "2d9532aa851742a6e2f3cb472a6a5b3c0e7e8b9da287c7d20a2963466f4aebb4",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar",
+)
+
+http_file(
+    name = "com_electronwill_night-config-toml-3_8_4-sources_http",
+    downloaded_file_path = "toml-3.8.4-sources.jar",
+    sha256 = "ceeb3a90bde39a54a3ccb599b1cea25aaa6468bd036a98e50ddb6579d7d999b2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4-sources.jar",
+)
+
+http_file(
+    name = "com_electronwill_night-config-core-3_8_4-sources_http",
+    downloaded_file_path = "core-3.8.4-sources.jar",
+    sha256 = "f189eb4a6195c3a4719ace91c586d703702cbbf21b646bf5207c9699231eeac3",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4-sources.jar",
+)
+
+http_file(
     name = "ai_grazie-grazie-rule-engine-0_3_229_http",
     downloaded_file_path = "grazie-rule-engine-0.3.229.jar",
     sha256 = "f6899abb0fbac1d6738964fcd1ff7dc1ffc1c29fb796377902c260ced942f7eb",
@@ -14208,34 +14236,6 @@ http_file(
     downloaded_file_path = "maven-wrapper-0.5.5-sources.jar",
     sha256 = "24f32dd1019cedff1c43da5009c4194ca1c31053a27ffd690c1f190fab5c102e",
     url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/io/takari/maven-wrapper/0.5.5/maven-wrapper-0.5.5-sources.jar",
-)
-
-http_file(
-    name = "com_electronwill_night-config-toml-3_8_4_http",
-    downloaded_file_path = "toml-3.8.4.jar",
-    sha256 = "127bf8b025c341139145c55bc897f3188057eec19940f99d3eae624399e88f2a",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4.jar",
-)
-
-http_file(
-    name = "com_electronwill_night-config-core-3_8_4_http",
-    downloaded_file_path = "core-3.8.4.jar",
-    sha256 = "2d9532aa851742a6e2f3cb472a6a5b3c0e7e8b9da287c7d20a2963466f4aebb4",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4.jar",
-)
-
-http_file(
-    name = "com_electronwill_night-config-toml-3_8_4-sources_http",
-    downloaded_file_path = "toml-3.8.4-sources.jar",
-    sha256 = "ceeb3a90bde39a54a3ccb599b1cea25aaa6468bd036a98e50ddb6579d7d999b2",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/toml/3.8.4/toml-3.8.4-sources.jar",
-)
-
-http_file(
-    name = "com_electronwill_night-config-core-3_8_4-sources_http",
-    downloaded_file_path = "core-3.8.4-sources.jar",
-    sha256 = "f189eb4a6195c3a4719ace91c586d703702cbbf21b646bf5207c9699231eeac3",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/electronwill/night-config/core/3.8.4/core-3.8.4-sources.jar",
 )
 
 http_file(

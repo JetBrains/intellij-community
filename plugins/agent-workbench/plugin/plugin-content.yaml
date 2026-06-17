@@ -34,6 +34,10 @@
 - name: lib/modules/intellij.agent.workbench.codex.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.codex.sessions
+    libraries:
+      night-config-toml:
+      - name: $MAVEN_REPOSITORY$/com/electronwill/night-config/toml/3/toml-3.jar
+      - name: $MAVEN_REPOSITORY$/com/electronwill/night-config/core/3/core-3.jar
 - name: lib/modules/intellij.agent.workbench.common.jar
   contentModules:
   - name: intellij.agent.workbench.common

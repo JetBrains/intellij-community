@@ -79,6 +79,44 @@ jvm_import(
 )
 
 copy_file(
+    name = "com.electronwill.night-config/toml-3.8.4.jar_copy",
+    src = "@com_electronwill_night-config-toml-3_8_4_http//file",
+    out = "com.electronwill.night-config/toml-3.8.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.electronwill.night-config/core-3.8.4.jar_copy",
+    src = "@com_electronwill_night-config-core-3_8_4_http//file",
+    out = "com.electronwill.night-config/core-3.8.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "agent-workbench-codex-sessions-night-config-toml",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":com_electronwill_night-config-toml-3_8_4_http_import",
+        ":com_electronwill_night-config-core-3_8_4_http_import",
+    ],
+)
+
+jvm_import(
+    name = "com_electronwill_night-config-toml-3_8_4_http_import",
+    jar = "@com_electronwill_night-config-toml-3_8_4_http//file",
+    source_jar = "@com_electronwill_night-config-toml-3_8_4-sources_http//file",
+)
+
+jvm_import(
+    name = "com_electronwill_night-config-core-3_8_4_http_import",
+    jar = "@com_electronwill_night-config-core-3_8_4_http//file",
+    source_jar = "@com_electronwill_night-config-core-3_8_4-sources_http//file",
+)
+
+copy_file(
     name = "ai.grazie/grazie-rule-engine-0.3.229.jar_copy",
     src = "@ai_grazie-grazie-rule-engine-0_3_229_http//file",
     out = "ai.grazie/grazie-rule-engine-0.3.229.jar",
@@ -18208,22 +18246,6 @@ jvm_import(
     visibility = ["//visibility:public"],
 )
 
-copy_file(
-    name = "com.electronwill.night-config/toml-3.8.4.jar_copy",
-    src = "@com_electronwill_night-config-toml-3_8_4_http//file",
-    out = "com.electronwill.night-config/toml-3.8.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
-    name = "com.electronwill.night-config/core-3.8.4.jar_copy",
-    src = "@com_electronwill_night-config-core-3_8_4_http//file",
-    out = "com.electronwill.night-config/core-3.8.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
 java_library(
     name = "mcpserver-night-config-toml",
     visibility = ["//visibility:public"],
@@ -18232,18 +18254,6 @@ java_library(
         ":com_electronwill_night-config-toml-3_8_4_http_import",
         ":com_electronwill_night-config-core-3_8_4_http_import",
     ],
-)
-
-jvm_import(
-    name = "com_electronwill_night-config-toml-3_8_4_http_import",
-    jar = "@com_electronwill_night-config-toml-3_8_4_http//file",
-    source_jar = "@com_electronwill_night-config-toml-3_8_4-sources_http//file",
-)
-
-jvm_import(
-    name = "com_electronwill_night-config-core-3_8_4_http_import",
-    jar = "@com_electronwill_night-config-core-3_8_4_http//file",
-    source_jar = "@com_electronwill_night-config-core-3_8_4-sources_http//file",
 )
 
 copy_file(
