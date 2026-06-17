@@ -69,8 +69,8 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
     scope.cancel()
   }
 
-  fun scheduleRemoteTodoFilesWatch(vararg constraints: ReadConstraint): CompletableFuture<*> {
-    System.out.println("TODO watch frontend: scheduleRemoteTodoFilesWatch start, builder=${treeBuilder.javaClass.name}")
+  fun scheduleRemoteTodoFilesWatch(watchedFile: VirtualFile?, vararg constraints: ReadConstraint): CompletableFuture<*> {
+    System.out.println("TODO watch frontend: scheduleRemoteTodoFilesWatch start, builder=${treeBuilder.javaClass.name}, watchedFile=${watchedFile?.path}")
     remoteTodoFilesWatchJob?.cancel()
     val initialScanCompleted = CompletableFuture<Unit>()
     remoteTodoFilesWatchJob = scope.launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
@@ -83,7 +83,7 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
         }
 
         System.out.println("TODO watch frontend: subscribing to backend watch")
-        collectWatchedTodoFiles(treeBuilder.project, treeBuilder.todoTreeStructure.todoFilter) { resolvedEvent ->
+        collectWatchedTodoFiles(treeBuilder.project, treeBuilder.todoTreeStructure.todoFilter, watchedFile) { resolvedEvent ->
           System.out.println(
             "TODO watch frontend: event=${resolvedEvent.event::class.simpleName}, fileId=${resolvedEvent.fileId}, hasFile=${resolvedEvent.file != null}"
           )
@@ -196,7 +196,23 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
 
     if (shouldUseSplitTodo() && treeBuilder is AllTodosTreeBuilder) {
       System.out.println("TODO watch frontend: using watcher for Project tab")
-      return scheduleRemoteTodoFilesWatch(*constraints)
+      return scheduleRemoteTodoFilesWatch(null, *constraints)
+    }
+
+    if (shouldUseSplitTodo() && treeBuilder is CurrentFileTodosTreeBuilder) {
+      val currentFile = treeBuilder.currentFile
+      if (currentFile == null) {
+        return scope.launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
+          treeBuilder.onUpdateStarted()
+          readAction {
+            treeBuilder.clearCache()
+            treeBuilder.validateCacheAndUpdateTree()
+          }
+          treeBuilder.onUpdateFinished()
+        }.asCompletableFuture()
+      }
+      System.out.println("TODO watch frontend: watcher for Current File tab, file=${currentFile.path}")
+      return scheduleRemoteTodoFilesWatch(currentFile, *constraints)
     }
 
     System.out.println("TODO watch frontend: using old cache update path")
@@ -236,7 +252,7 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
   }
 
   fun scheduleMarkFilesAsDirtyAndUpdateTree(files: List<VirtualFile>) {
-    if (shouldUseSplitTodo() && treeBuilder is AllTodosTreeBuilder && remoteTodoFilesWatchJob?.isActive == true) {
+    if (shouldUseSplitTodo() && (treeBuilder is AllTodosTreeBuilder || treeBuilder is CurrentFileTodosTreeBuilder) && remoteTodoFilesWatchJob?.isActive == true) {
       return
     }
 

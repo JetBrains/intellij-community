@@ -16,13 +16,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import static com.intellij.ide.todo.TodoImplementationChooserKt.shouldUseSplitTodo;
+
 @ApiStatus.Internal
 public final class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
-  private final TodoFileNode myFileNode;
+  private final AbstractTreeNode<?> myFileNode;
 
   public SingleFileToDoNode(Project project, @NotNull PsiFile value, TodoTreeBuilder builder) {
     super(project, value, builder);
-    myFileNode = new TodoFileNode(getProject(), value, myBuilder, true);
+    VirtualFile virtualFile = value.getVirtualFile();
+    myFileNode = shouldUseSplitTodo() && virtualFile != null
+                 ? new TodoRemoteFileNode(getProject(), new TodoRemoteFileNode.Value(virtualFile), myBuilder, true)
+                 : new TodoFileNode(getProject(), value, myBuilder, true);
   }
 
   @Override

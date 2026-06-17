@@ -3,9 +3,11 @@
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JTree;
 import java.util.function.Consumer;
@@ -23,6 +25,13 @@ public final class CurrentFileTodosTreeBuilder extends TodoTreeBuilder {
   @Override
   protected @NotNull TodoTreeStructure createTreeStructure() {
     return new CurrentFileTodosTreeStructure(myProject);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable VirtualFile getCurrentFile() {
+    CurrentFileTodosTreeStructure treeStructure = (CurrentFileTodosTreeStructure)getTodoTreeStructure();
+    PsiFile psiFile = treeStructure.getFile();
+    return psiFile == null ? null : psiFile.getVirtualFile();
   }
 
   @Override
