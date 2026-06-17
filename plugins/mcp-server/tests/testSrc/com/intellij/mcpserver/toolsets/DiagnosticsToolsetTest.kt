@@ -33,7 +33,7 @@ class DiagnosticsToolsetTest : GeneralMcpToolsetTestBase() {
 
   @Test
   fun get_ide_diagnostics_returns_snapshot_without_sampling_delay() = runBlocking(Dispatchers.Default) {
-    withDiagnosticsEnabled {
+    withRegisteredDiagnosticsTool {
       testMcpTool(
         DiagnosticsToolset::get_ide_diagnostics.name,
         buildJsonObject {
@@ -55,7 +55,7 @@ class DiagnosticsToolsetTest : GeneralMcpToolsetTestBase() {
 
   @Test
   fun get_ide_diagnostics_clamps_inputs_and_truncates_raw_dump() = runBlocking(Dispatchers.Default) {
-    withDiagnosticsEnabled {
+    withRegisteredDiagnosticsTool {
       testMcpTool(
         DiagnosticsToolset::get_ide_diagnostics.name,
         buildJsonObject {
@@ -76,7 +76,7 @@ class DiagnosticsToolsetTest : GeneralMcpToolsetTestBase() {
 
   @Test
   fun get_ide_diagnostics_samples_cpu_deltas() = runBlocking(Dispatchers.Default) {
-    withDiagnosticsEnabled {
+    withRegisteredDiagnosticsTool {
       testMcpTool(
         DiagnosticsToolset::get_ide_diagnostics.name,
         buildJsonObject {
@@ -94,13 +94,10 @@ class DiagnosticsToolsetTest : GeneralMcpToolsetTestBase() {
     }
   }
 
-  private suspend fun withDiagnosticsEnabled(action: suspend () -> Unit) {
-    System.setProperty(DIAGNOSTICS_ENABLED_PROPERTY, "true")
-    try {
+  private suspend fun withRegisteredDiagnosticsTool(action: suspend () -> Unit) {
+    val diagnosticsToolset = DiagnosticsToolset()
+    withRegisteredTestTools(diagnosticsToolset::get_ide_diagnostics) {
       action()
-    }
-    finally {
-      System.clearProperty(DIAGNOSTICS_ENABLED_PROPERTY)
     }
   }
 }
