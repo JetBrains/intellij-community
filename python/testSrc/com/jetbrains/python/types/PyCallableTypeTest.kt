@@ -736,6 +736,24 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
                 return x + y
         """,
     )
+
+    @Test
+    @TestFor(issues = ["PY-90348"])
+    fun `Concatenate-typed decorator keeps the receiver type`() = test("""
+      from typing import Any, Callable, Concatenate, ParamSpec, TypeVar
+
+      P = ParamSpec("P")
+      R = TypeVar("R")
+
+      def deco(fn: Callable[Concatenate[Any, P], R]) -> Callable[P, R]: ...
+
+      class C:
+        @deco
+        def m(self, a: int) -> int:
+          expr = self
+      #   └ TYPE Self@C
+          return a
+      """)
   }
 
   @Nested

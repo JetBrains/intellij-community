@@ -20,6 +20,8 @@ import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyConcatenateType;
+import com.jetbrains.python.psi.types.PyParamSpecType;
 import com.jetbrains.python.psi.types.PySyntheticCallHelper;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
@@ -73,6 +75,10 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
       if (paramPos < 0) return null;
 
       var type = ParamHelper.getExpectedTypeForPositionalParam(paramPos, expectedParams, context);
+      // A Concatenate/ParamSpec is a whole parameter list, not a single parameter's type; don't assign it to
+      // one parameter (e.g. `self` under @hybrid_method). Defer to regular inference (PY-90348).
+      if (type instanceof PyConcatenateType || type instanceof PyParamSpecType) return null;
+
       return type != null ? Ref.create(type) : null;
     }
     return null;
