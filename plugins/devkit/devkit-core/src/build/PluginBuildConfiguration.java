@@ -3,8 +3,7 @@ package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.CustomImlComponentService;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.Messages;
@@ -33,25 +32,32 @@ import org.jetbrains.idea.devkit.module.PluginModuleType;
 import java.io.File;
 import java.util.Objects;
 
-@State(name = "DevKit.ModuleBuildProperties")
-public final class PluginBuildConfiguration implements PersistentStateComponent<PluginBuildConfiguration.State> {
+public final class PluginBuildConfiguration {
+  static final String MODULE_STATE_COMPONENT = "DevKit.ModuleBuildProperties";
+
   private final Module module;
+  private final CustomImlComponentService componentService;
   private final ConfigFileContainer pluginXmlContainer;
   private VirtualFilePointer manifestFilePointer;
   private boolean useUserManifest = false;
   private static final @NonNls String META_INF = "META-INF";
   private static final @NonNls String PLUGIN_XML = "plugin.xml";
 
-  private State state = new State();
-
   public PluginBuildConfiguration(@NotNull Module module) {
     this.module = module;
+    this.componentService = CustomImlComponentService.getInstance(module.getProject());
     pluginXmlContainer = ConfigFileFactory.getInstance().createSingleFileContainer(this.module.getProject(), PluginDescriptorConstants.META_DATA);
     Disposer.register(module, pluginXmlContainer);
+    State persistedState = componentService.getComponentValue(module, MODULE_STATE_COMPONENT, State.class);
+    if (persistedState != null) {
+      applyState(persistedState);
+    }
   }
 
   public static @Nullable PluginBuildConfiguration getInstance(@NotNull Module module) {
-    return ModuleType.is(module, PluginModuleType.getInstance()) ? module.getService(PluginBuildConfiguration.class) : null;
+    return ModuleType.is(module, PluginModuleType.getInstance())
+           ? PluginBuildConfigurationFactory.getInstance(module.getProject()).getService(module)
+           : null;
   }
 
   public static final class State {
@@ -82,22 +88,24 @@ public final class PluginBuildConfiguration implements PersistentStateComponent<
     }
   }
 
-  @Override
-  public @Nullable State getState() {
+  private @NotNull State getCurrentState() {
+    State state = new State();
     state.url = getPluginXmlUrl();
     state.manifest = manifestFilePointer == null ? null : manifestFilePointer.getUrl();
     return state;
   }
 
-  @Override
-  public void loadState(@NotNull State state) {
-    this.state = state;
+  private void applyState(@NotNull State state) {
     if (state.url != null) {
       pluginXmlContainer.getConfiguration().replaceConfigFile(PluginDescriptorConstants.META_DATA, state.url);
     }
     if (state.manifest != null) {
-      setManifestPath(VfsUtilCore.urlToPath(state.manifest));
+      updateManifestPointer(VfsUtilCore.urlToPath(state.manifest), false);
     }
+  }
+
+  private void persistState() {
+    WriteAction.run(() -> componentService.setComponentValueBlocking(module, MODULE_STATE_COMPONENT, getCurrentState()));
   }
 
   @TestOnly
@@ -140,7 +148,10 @@ public final class PluginBuildConfiguration implements PersistentStateComponent<
 
   public void setPluginXmlPathAndCreateDescriptorIfDoesntExist(final String pluginXmlPath) {
     pluginXmlContainer.getConfiguration().removeConfigFiles(PluginDescriptorConstants.META_DATA);
-    WriteAction.runAndWait(() -> createDescriptor(VfsUtilCore.pathToUrl(pluginXmlPath)));
+    WriteAction.runAndWait(() -> {
+      createDescriptor(VfsUtilCore.pathToUrl(pluginXmlPath));
+      componentService.setComponentValueBlocking(module, MODULE_STATE_COMPONENT, getCurrentState());
+    });
   }
 
   public @Nullable @NlsSafe String getManifestPath() {
@@ -148,6 +159,11 @@ public final class PluginBuildConfiguration implements PersistentStateComponent<
   }
 
   public void setManifestPath(@Nullable String manifestPath) {
+    updateManifestPointer(manifestPath, true);
+    persistState();
+  }
+
+  private void updateManifestPointer(@Nullable String manifestPath, boolean reportMissingFile) {
     if (Strings.isEmpty(manifestPath)) {
       manifestFilePointer = null;
       return;
@@ -156,7 +172,9 @@ public final class PluginBuildConfiguration implements PersistentStateComponent<
     VirtualFile manifest = LocalFileSystem.getInstance().findFileByPath(manifestPath);
     VirtualFilePointerManager virtualFilePointerManager = VirtualFilePointerManager.getInstance();
     if (manifest == null) {
-      Messages.showErrorDialog(module.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
+      if (reportMissingFile) {
+        Messages.showErrorDialog(module.getProject(), DevKitBundle.message("error.file.not.found.message", manifestPath), DevKitBundle.message("error.file.not.found"));
+      }
       ReadAction.run(() -> {
         manifestFilePointer = virtualFilePointerManager.create(VfsUtilCore.pathToUrl(manifestPath), module, null);
       });

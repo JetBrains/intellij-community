@@ -794,7 +794,8 @@
                      shortName="PluginKeysAreProhibitedInPlatformRegistry"
                      implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesInspection"/>
 
-    <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
+    <workspaceModel.customImlComponentNameContributor
+      implementation="org.jetbrains.idea.devkit.build.PluginBuildConfigurationImlComponentNameContributor"/>
     <backgroundPostStartupActivity
       implementation="org.jetbrains.idea.devkit.inspections.missingApi.update.IntelliJSdkExternalAnnotationsUpdateStartupActivity"/>
     <java.externalAnnotation.locationProvider
