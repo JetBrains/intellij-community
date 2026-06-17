@@ -31,6 +31,7 @@ import org.jetbrains.plugins.terminal.util.ShellEelProcess
 import org.jetbrains.plugins.terminal.util.terminalApplicationScope
 import java.io.IOException
 import java.nio.charset.Charset
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -50,6 +51,8 @@ class LocalTerminalTtyConnector internal constructor(
       eelApi = shellProcessHolder.eelApi,
       ptyProcess = ptyProcess
     )
+
+  private val closingActivitiesStarted = AtomicBoolean(false)
 
   /**
    * Closes `TtyConnector` asynchronously in the application-level scope.
@@ -82,6 +85,10 @@ class LocalTerminalTtyConnector internal constructor(
    */
   @Throws(LocalTtyConnectorClosingException::class)
   suspend fun closeSafely(): Unit = withContext(Dispatchers.IO + NonCancellable) {
+    if (!closingActivitiesStarted.compareAndSet(false, true)) {
+      return@withContext
+    }
+
     if (!ptyProcess.isAlive) return@withContext
 
     when {
