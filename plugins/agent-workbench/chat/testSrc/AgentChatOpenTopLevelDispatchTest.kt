@@ -1,15 +1,27 @@
 package com.intellij.agent.workbench.chat
 
+import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.buildAgentThreadIdentity
+import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItem
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
+import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentOpenTopLevelThreadDispatchService
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineForkResult
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.components.service
@@ -32,6 +44,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.ui.InplaceButton
+import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -485,6 +498,67 @@ class AgentChatOpenTopLevelDispatchTest {
     assertThat(terminalTabs.tab.sentTexts).isEmpty()
   }
 
+  @Test
+  fun structureViewForkRebindsOpenPiChatTab() {
+    val terminalTabs = OpenTabDispatchFakeAgentChatTerminalTabs()
+    customFileEditorFactory = { editorProject, file ->
+      AgentChatFileEditor(
+        project = editorProject,
+        file = file,
+        terminalTabs = terminalTabs,
+        tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot ->
+          editorProject.service<AgentChatTabsService>().upsert(snapshot)
+        },
+      ).also { editor ->
+        editor.putUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY, true)
+      }
+    }
+    val source = OpenTabDispatchPiForkSource()
+    val descriptor = OpenTabDispatchPiProviderDescriptor(source)
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      timeoutRunBlocking {
+        openChatInModal(
+          threadIdentity = piThreadIdentity("thread-outline-fork"),
+          shellCommand = piResumeCommand("thread-outline-fork"),
+          threadId = "thread-outline-fork",
+          threadTitle = "Original Pi thread",
+          subAgentId = null,
+        )
+        val file = openedChatFiles().single { chatFile -> chatFile.threadId == "thread-outline-fork" }
+        val item = AgentSessionOutlineItem(
+          id = "entry-fork",
+          kind = AgentSessionOutlineItemKind.USER_PROMPT,
+          title = "Fork from here",
+        )
+
+        val forked = forkAgentChatThreadOutlineTarget(
+          project = project,
+          target = AgentChatThreadOutlineTarget(file = file, source = source, item = item),
+          rebindRequestedAtMs = 4_200L,
+        )
+
+        assertThat(forked).isTrue()
+        assertThat(source.forkCalls).containsExactly(
+          OpenTabDispatchPiForkCall(
+            path = projectPath,
+            threadId = "thread-outline-fork",
+            itemId = "entry-fork",
+            subAgentId = null,
+            tabKey = file.tabKey,
+          )
+        )
+        assertThat(file.threadIdentity).isEqualTo(piThreadIdentity("thread-outline-forked"))
+        assertThat(file.threadId).isEqualTo("thread-outline-forked")
+        assertThat(file.threadTitle).isEqualTo("Forked Pi thread")
+        assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.PROCESSING)
+        assertThat(file.newThreadRebindRequestedAtMs).isNull()
+        assertThat(service<AgentChatTabsService>().load(file.tabKey)?.identity?.threadIdentity)
+          .isEqualTo(piThreadIdentity("thread-outline-forked"))
+      }
+    }
+  }
+
   private suspend fun openedChatFiles(): List<AgentChatVirtualFile> {
     return runInUi {
       FileEditorManager.getInstance(project).openFiles.filterIsInstance<AgentChatVirtualFile>()
@@ -721,9 +795,107 @@ private fun codexThreadIdentity(threadId: String): String {
   return buildAgentThreadIdentity(providerId = AgentSessionProvider.CODEX.value, threadId = threadId)
 }
 
+private fun piThreadIdentity(threadId: String): String {
+  return buildAgentThreadIdentity(providerId = AgentSessionProvider.PI.value, threadId = threadId)
+}
+
 private fun codexResumeCommand(threadId: String): List<String> {
   return listOf("codex", "resume", threadId)
 }
+
+private fun piResumeCommand(threadId: String): List<String> {
+  return listOf("pi", "--session", threadId)
+}
+
+private class OpenTabDispatchPiProviderDescriptor(
+  override val sessionSource: AgentSessionSource,
+) : AgentSessionProviderDescriptor {
+  override val provider: AgentSessionProvider = AgentSessionProvider.PI
+  override val displayNameKey: String = "pi"
+  override val newSessionLabelKey: String = "pi"
+  override val icon = EmptyIcon.create(18, 18)
+  override val cliMissingMessageKey: String = "pi"
+
+  override suspend fun isCliAvailable(): Boolean = true
+
+  override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(command = piResumeCommand(sessionId))
+  }
+
+  override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {
+    return AgentSessionTerminalLaunchSpec(command = listOf("pi", "--session-id", "new-session"))
+  }
+
+  override fun buildInitialMessagePlan(request: AgentPromptInitialMessageRequest): AgentInitialMessagePlan {
+    return AgentInitialMessagePlan.composeDefault(request)
+  }
+}
+
+private class OpenTabDispatchPiForkSource : AgentSessionSource {
+  val forkCalls = ArrayList<OpenTabDispatchPiForkCall>()
+
+  override val provider: AgentSessionProvider = AgentSessionProvider.PI
+
+  override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+
+  override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
+
+  override fun canShowThreadOutlineForkAction(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): Boolean {
+    return itemId == "entry-fork" && subAgentId == null
+  }
+
+  override fun canForkThreadFromOutlineItem(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): Boolean {
+    return path == "/work/project-a" &&
+           threadId == "thread-outline-fork" &&
+           itemId == "entry-fork" &&
+           subAgentId == null &&
+           tabKey != null
+  }
+
+  override suspend fun forkThreadFromOutlineItem(
+    project: Project,
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): AgentSessionOutlineForkResult? {
+    if (!canForkThreadFromOutlineItem(path, threadId, itemId, subAgentId, tabKey)) {
+      return null
+    }
+    forkCalls += OpenTabDispatchPiForkCall(path, threadId, itemId, subAgentId, tabKey)
+    return AgentSessionOutlineForkResult(
+      thread = AgentSessionThread(
+        id = "thread-outline-forked",
+        title = "Forked Pi thread",
+        updatedAt = 5_000L,
+        archived = false,
+        activity = AgentThreadActivity.PROCESSING,
+        provider = AgentSessionProvider.PI,
+      )
+    )
+  }
+}
+
+private data class OpenTabDispatchPiForkCall(
+  @JvmField val path: String,
+  @JvmField val threadId: String,
+  @JvmField val itemId: String,
+  @JvmField val subAgentId: String?,
+  @JvmField val tabKey: String?,
+)
 
 private suspend fun <T> runInUi(action: suspend () -> T): T {
   return withContext(Dispatchers.UiWithModelAccess) {

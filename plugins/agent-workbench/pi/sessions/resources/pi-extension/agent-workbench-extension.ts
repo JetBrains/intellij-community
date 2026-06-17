@@ -1,4 +1,5 @@
 import {type ExtensionAPI, type ExtensionContext} from "@earendil-works/pi-coding-agent";
+import {startControlBridge} from "./control.ts";
 import {registerJbCentralProvider} from "./jbcentral.ts";
 import {parseModelCatalogMetadata} from "./modelCatalog.ts";
 import {registerOmlxProviders} from "./omlx.ts";
@@ -27,6 +28,7 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
   let scheduledApply: ReturnType<typeof setTimeout> | undefined;
   let scheduledDoneStatus: ReturnType<typeof setTimeout> | undefined;
   let terminalInputUnsubscribe: (() => void) | undefined;
+  let controlBridge: ReturnType<typeof startControlBridge> | undefined;
   let lastStatusSignature: string | undefined;
   let lastSessionInfoSignature: string | undefined;
   let lastSessionInfoLeafId: string | null | undefined;
@@ -105,6 +107,12 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
 
   pi.on("session_start", async (_event, ctx) => {
     ensureTerminalInputMapping(ctx);
+    if (controlBridge === undefined) {
+      controlBridge = startControlBridge(ctx);
+    }
+    else {
+      controlBridge.setContext(ctx);
+    }
     await applyCurrentTheme(ctx);
     clearScheduledDoneStatus();
     postStatusIfChanged(ctx, resolveStartupActivity(ctx), updateLastStatusSignature, lastStatusSignature);
@@ -118,6 +126,7 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
   (pi.on as AgentWorkbenchSessionInfoChangedOn)("session_info_changed", (event, ctx) => {
     postSessionInfoChangedIfChanged(ctx, event.name, updateLastSessionInfoSignature, lastSessionInfoSignature);
     rememberSessionInfoLeafId(ctx);
+    controlBridge?.setContext(ctx);
   });
 
   pi.on("agent_start", (_event, ctx) => {
@@ -158,6 +167,8 @@ export default async function agentWorkbenchTheme(pi: ExtensionAPI) {
     }
     lastSessionInfoSignature = undefined;
     lastSessionInfoLeafId = undefined;
+    controlBridge?.close();
+    controlBridge = undefined;
     themeWatcher?.close();
     themeWatcher = undefined;
   });

@@ -318,6 +318,7 @@ private const val PI_EXTENSION_RESOURCE_DIRECTORY: String = "pi-extension"
 private const val PI_EXTENSION_FILE_NAME: String = "agent-workbench-extension.ts"
 private val PI_EXTENSION_RESOURCE_FILE_NAMES: List<String> = listOf(
   PI_EXTENSION_FILE_NAME,
+  "control.ts",
   "jbcentral.ts",
   "metadata.ts",
   "modelCatalog.ts",

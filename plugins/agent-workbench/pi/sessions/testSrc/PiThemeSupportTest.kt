@@ -196,10 +196,12 @@ class PiThemeSupportTest {
     val extension = readBundledPiExtensionText("agent-workbench-extension.ts")
 
     assertThat(extension).contains(
+      "from \"./control.ts\"",
       "from \"./jbcentral.ts\"",
       "from \"./omlx.ts\"",
       "from \"./status.ts\"",
       "from \"./theme.ts\"",
+      "controlBridge = startControlBridge(ctx)",
     )
   }
 

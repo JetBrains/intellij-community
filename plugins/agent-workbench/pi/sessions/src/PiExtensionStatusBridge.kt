@@ -39,17 +39,22 @@ internal object PiExtensionStatusBridge {
     val token = DigestUtil.randomToken()
     sessionIdsByToken[token] = normalizedSessionId
     tokensBySessionId.computeIfAbsent(normalizedSessionId) { ConcurrentHashMap.newKeySet() }.add(token)
-    val endpoint = try {
-      "http://localhost:${BuiltInServerManager.getInstance().waitForStart().port}/$PI_STATUS_ENDPOINT_PREFIX"
+    val endpoints = try {
+      val port = BuiltInServerManager.getInstance().waitForStart().port
+      PiExtensionLaunchEndpoints(
+        statusEndpoint = "http://localhost:$port/$PI_STATUS_ENDPOINT_PREFIX",
+        controlEndpoint = "ws://localhost:$port/$PI_CONTROL_ENDPOINT_PREFIX",
+      )
     }
     catch (e: Exception) {
       removeToken(token)
-      STATUS_LOG.warn("Failed to resolve Pi status endpoint", e)
+      STATUS_LOG.warn("Failed to resolve Pi extension endpoints", e)
       return emptyMap()
     }
     return mapOf(
-      PI_STATUS_ENDPOINT_ENVIRONMENT_VARIABLE to endpoint,
+      PI_STATUS_ENDPOINT_ENVIRONMENT_VARIABLE to endpoints.statusEndpoint,
       PI_STATUS_TOKEN_ENVIRONMENT_VARIABLE to token,
+      PI_CONTROL_WS_ENDPOINT_ENVIRONMENT_VARIABLE to endpoints.controlEndpoint,
     )
   }
 
@@ -59,6 +64,34 @@ internal object PiExtensionStatusBridge {
     for (token in tokens) {
       sessionIdsByToken.remove(token, normalizedSessionId)
     }
+    PiExtensionControlBridge.invalidateSession(normalizedSessionId)
+  }
+
+  fun authenticateLaunchToken(token: String?, sessionId: String? = null): String? {
+    val normalizedToken = token?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val expectedSessionId = sessionIdsByToken[normalizedToken] ?: return null
+    val normalizedSessionId = sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return expectedSessionId
+    return expectedSessionId.takeIf { it == normalizedSessionId }
+  }
+
+  fun rebindLaunchToken(token: String, previousSessionId: String, sessionId: String): Boolean {
+    val normalizedToken = token.trim().takeIf { it.isNotEmpty() } ?: return false
+    val normalizedPreviousSessionId = previousSessionId.trim().takeIf { it.isNotEmpty() } ?: return false
+    val normalizedSessionId = sessionId.trim().takeIf { it.isNotEmpty() } ?: return false
+    if (normalizedPreviousSessionId == normalizedSessionId) {
+      return sessionIdsByToken[normalizedToken] == normalizedSessionId
+    }
+    if (!sessionIdsByToken.replace(normalizedToken, normalizedPreviousSessionId, normalizedSessionId)) {
+      return false
+    }
+    tokensBySessionId[normalizedPreviousSessionId]?.let { tokens ->
+      tokens.remove(normalizedToken)
+      if (tokens.isEmpty()) {
+        tokensBySessionId.remove(normalizedPreviousSessionId, tokens)
+      }
+    }
+    tokensBySessionId.computeIfAbsent(normalizedSessionId) { ConcurrentHashMap.newKeySet() }.add(normalizedToken)
+    return true
   }
 
   fun handleStatusRequest(
@@ -133,6 +166,11 @@ internal object PiExtensionStatusBridge {
   }
 }
 
+private data class PiExtensionLaunchEndpoints(
+  @JvmField val statusEndpoint: String,
+  @JvmField val controlEndpoint: String,
+)
+
 internal enum class PiExtensionStatusRequestResult {
   ACCEPTED,
   UNAUTHORIZED,
@@ -173,6 +211,7 @@ private fun readStatusPayload(parser: JsonParser): PiStatusPayload {
   )
 }
 
+@Suppress("DuplicatedCode")
 private fun parsePiStatusActivity(value: String): AgentThreadActivity? {
   return when (value.trim().lowercase().replace('-', '_')) {
     "ready" -> AgentThreadActivity.READY
