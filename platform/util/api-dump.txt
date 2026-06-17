@@ -202,6 +202,10 @@ f:com.intellij.openapi.diagnostic.LoggerKt
 - sf:currentClassLogger():com.intellij.openapi.diagnostic.Logger
 - sf:debug(com.intellij.openapi.diagnostic.Logger,java.lang.Throwable,kotlin.jvm.functions.Function0):V
 - bs:debug$default(com.intellij.openapi.diagnostic.Logger,java.lang.Throwable,kotlin.jvm.functions.Function0,I,java.lang.Object):V
+- sf:errorWithWarnDetails(com.intellij.openapi.diagnostic.Logger,java.lang.String,java.lang.String,java.lang.Throwable):V
+- bs:errorWithWarnDetails$default(com.intellij.openapi.diagnostic.Logger,java.lang.String,java.lang.String,java.lang.Throwable,I,java.lang.Object):V
+- sf:fatalErrorWithWarnDetails(com.intellij.openapi.diagnostic.Logger,java.lang.String,java.lang.String,java.lang.Throwable):java.lang.Void
+- bs:fatalErrorWithWarnDetails$default(com.intellij.openapi.diagnostic.Logger,java.lang.String,java.lang.String,java.lang.Throwable,I,java.lang.Object):java.lang.Void
 - sf:fileLogger():com.intellij.openapi.diagnostic.Logger
 - sf:getOrHandleException(java.lang.Object,kotlin.jvm.functions.Function1):java.lang.Object
 - sf:getOrLogException(java.lang.Object,com.intellij.openapi.diagnostic.Logger):java.lang.Object
