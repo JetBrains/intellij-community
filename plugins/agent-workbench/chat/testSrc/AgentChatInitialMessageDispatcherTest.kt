@@ -79,7 +79,7 @@ class AgentChatInitialMessageDispatcherTest {
   }
 
   @Test
-  fun codexPlanModeEnsureFailureFallsBackToPromptSubmission(): Unit = timeoutRunBlocking {
+  fun codexPlanModeEnsureFailureStopsDispatch(): Unit = timeoutRunBlocking {
     val file = createFile(
       listOf(
         terminalPlanModeStep(
@@ -98,6 +98,9 @@ class AgentChatInitialMessageDispatcherTest {
         AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Default mode"),
         AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Default mode"),
         AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Default mode"),
+        AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Default mode"),
+        AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Default mode"),
+        AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Default mode"),
       ),
     )
 
@@ -107,18 +110,15 @@ class AgentChatInitialMessageDispatcherTest {
       tabSnapshotWriter = AgentChatTabSnapshotWriter { snapshot -> snapshots.add(snapshot) },
     ).schedule(tab)
 
-    waitForCondition { file.initialMessageSent }
-    assertThat(tab.events).containsExactly("backtab", "backtab", "backtab", "text:Refactor this")
+    waitForCondition { file.initialMessageDispatchSteps.isEmpty() }
+    assertThat(tab.events).containsExactly("backtab", "backtab", "backtab", "backtab", "backtab", "backtab")
     assertThat(file.initialMessageDispatchSteps).isEmpty()
     assertThat(file.initialMessageDispatchStepIndex).isZero()
-    assertThat(file.initialMessageToken).isEqualTo("token")
-    assertThat(file.initialMessageSent).isTrue()
-    assertThat(snapshots).hasSize(2)
+    assertThat(file.initialMessageToken).isNull()
+    assertThat(file.initialMessageSent).isFalse()
+    assertThat(snapshots).hasSize(1)
     val promptRecord = snapshots.last().runtime.initialPromptRecord
-    assertThat(promptRecord?.message).isEqualTo("Refactor this")
-    assertThat(promptRecord?.token).isEqualTo("token")
-    assertThat(promptRecord?.deliveryStatus).isEqualTo(AgentInitialPromptDeliveryStatus.DELIVERED)
-    assertThat(promptRecord?.deliveryChannel).isEqualTo(AgentInitialPromptDeliveryChannel.TERMINAL)
+    assertThat(promptRecord).isNull()
     assertThat(snapshots.last().runtime.terminalPromptDispatch).isNull()
   }
 
