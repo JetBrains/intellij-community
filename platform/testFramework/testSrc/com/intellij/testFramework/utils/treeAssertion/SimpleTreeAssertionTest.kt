@@ -2,15 +2,18 @@
 package com.intellij.testFramework.utils.treeAssertion
 
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion.NodeMatcher
+import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion.NodeMatcher.Companion.or
 import com.intellij.platform.testFramework.assertion.treeAssertion.buildTree
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 class SimpleTreeAssertionTest {
 
   @Test
   fun `test SimpleTreeAssertion#assertTreeEquals for names`() {
-    val tree = buildTree<Int> {
+    val tree = buildTree {
       root("1", 1) {
         node("1.1", 2) {
           node("1.1.1", 3)
@@ -30,7 +33,7 @@ class SimpleTreeAssertionTest {
         }
       }
     }
-    val tree1 = buildTree<Int> {
+    val tree1 = buildTree {
       root("1", 1) {
         node("1.1", 2) {
           node("1.1.1", 3)
@@ -50,7 +53,7 @@ class SimpleTreeAssertionTest {
         }
       }
     }
-    val tree2 = buildTree<Int> {
+    val tree2 = buildTree {
       root("1", 1) {
         node("1.1", 2) {
           node("1.1.1", 3)
@@ -79,7 +82,7 @@ class SimpleTreeAssertionTest {
 
   @Test
   fun `test SimpleTreeAssertion#assertTreeEquals for values`() {
-    val tree = buildTree<Int> {
+    val tree = buildTree {
       root("1", 1) {
         node("1.1", 2) {
           node("1.1.1", 3)
@@ -99,7 +102,7 @@ class SimpleTreeAssertionTest {
         }
       }
     }
-    val tree1 = buildTree<Int> {
+    val tree1 = buildTree {
       root("1", 1) {
         node("1.1", 2) {
           node("1.1.1", 3)
@@ -119,7 +122,7 @@ class SimpleTreeAssertionTest {
         }
       }
     }
-    val tree2 = buildTree<Int> {
+    val tree2 = buildTree {
       root("1", 1) {
         node("1.1", 2) {
           node("1.1.1", 3)
@@ -155,7 +158,7 @@ class SimpleTreeAssertionTest {
 
   @Test
   fun `test SimpleTreeAssertion#assertUnorderedTreeEquals`() {
-    val tree = buildTree<Int> {
+    val tree = buildTree {
       root("1", 1) {
         node("1.1", 2) {
           node("1.1.1", 3)
@@ -175,7 +178,7 @@ class SimpleTreeAssertionTest {
         }
       }
     }
-    val tree1 = buildTree<Int> {
+    val tree1 = buildTree {
       root("1", 1) {
         node("1.2", 9) {
           node("1.2.1", 10)
@@ -195,7 +198,7 @@ class SimpleTreeAssertionTest {
         }
       }
     }
-    val tree2 = buildTree<Int> {
+    val tree2 = buildTree {
       root("1", 1) {
         node("1.1", 2) {
           node("1.1.1", 3)
@@ -219,6 +222,88 @@ class SimpleTreeAssertionTest {
     }
     Assertions.assertThrows(AssertionError::class.java) {
       SimpleTreeAssertion.assertTreeEquals(tree, tree2)
+    }
+  }
+
+  @Nested
+  inner class NodeMatcherTest {
+
+    @Test
+    fun `test name matcher`() {
+      val tree = buildTree { root("root", 1) }
+      SimpleTreeAssertion.assertTree(tree) {
+        assertNode(NodeMatcher.name("root"))
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        SimpleTreeAssertion.assertTree(tree) {
+          assertNode(NodeMatcher.name("other"))
+        }
+      }
+    }
+
+    @Test
+    fun `test regex matcher`() {
+      val tree = buildTree { root("root", 1) }
+      SimpleTreeAssertion.assertTree(tree) {
+        assertNode(NodeMatcher.regex("ro+t".toRegex()))
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        SimpleTreeAssertion.assertTree(tree) {
+          assertNode(NodeMatcher.regex("roo".toRegex()))
+        }
+      }
+    }
+
+    @Test
+    fun `test string or string matcher`() {
+      val tree = buildTree { root("root", 1) }
+      SimpleTreeAssertion.assertTree(tree) {
+        assertNode("other" or "root")
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        SimpleTreeAssertion.assertTree(tree) {
+          assertNode("other" or "fallback")
+        }
+      }
+    }
+
+    @Test
+    fun `test matcher or string matcher`() {
+      val tree = buildTree { root("root", 1) }
+      SimpleTreeAssertion.assertTree(tree) {
+        assertNode(NodeMatcher.name("other") or "root")
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        SimpleTreeAssertion.assertTree(tree) {
+          assertNode(NodeMatcher.name("other") or "fallback")
+        }
+      }
+    }
+
+    @Test
+    fun `test string or matcher matcher`() {
+      val tree = buildTree { root("root", 1) }
+      SimpleTreeAssertion.assertTree(tree) {
+        assertNode("other" or NodeMatcher.name("root"))
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        SimpleTreeAssertion.assertTree(tree) {
+          assertNode("other" or NodeMatcher.name("fallback"))
+        }
+      }
+    }
+
+    @Test
+    fun `test matcher or matcher matcher`() {
+      val tree = buildTree { root("root", 1) }
+      SimpleTreeAssertion.assertTree(tree) {
+        assertNode(NodeMatcher.name("other") or NodeMatcher.regex("ro+t".toRegex()))
+      }
+      Assertions.assertThrows(AssertionError::class.java) {
+        SimpleTreeAssertion.assertTree(tree) {
+          assertNode(NodeMatcher.name("other") or NodeMatcher.regex("fallback".toRegex()))
+        }
+      }
     }
   }
 }
