@@ -127,6 +127,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/jvmMain/kotlin/collections/A
      DeprecatedSinceKotlin
      DeprecationLevel
      DslMarker
+     EqualityBound
      ExperimentalContextParameters
      ExperimentalMultiplatform
      ExperimentalStdlibApi
