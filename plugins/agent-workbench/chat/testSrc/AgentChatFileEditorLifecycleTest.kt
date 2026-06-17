@@ -1607,30 +1607,34 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexTerminalPlanModeFallbackSendsPromptWhenPlanModeIsNotConfirmed() {
+  fun codexTerminalPlanModeStopsPromptWhenPlanModeIsNotConfirmed() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
     terminalTabs.tab.enqueuePostSendOutput("Default mode", "Default mode", "Default mode")
     val file = testFile().also {
       it.updateInitialMessageMetadata(
-        initialMessageDispatchSteps = codexTerminalPlanDispatchSteps("Send after plan fallback"),
+        initialMessageDispatchSteps = codexTerminalPlanDispatchSteps("Do not send without plan mode"),
         initialMessageDispatchStepIndex = 0,
-        initialMessageToken = "token-terminal-plan-fallback",
+        initialMessageToken = "token-terminal-plan-stop",
         initialMessageSent = false,
       )
     }
-    val editor = testEditor(file = file, terminalTabs = terminalTabs)
+    val editor = testEditor(
+      file = file,
+      terminalTabs = terminalTabs,
+      behaviorResolver = { TestCodexPlanModeStopBehavior },
+    )
 
     editor.selectNotify()
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
     terminalTabs.tab.emitMeaningfulOutput("Codex ready")
 
-    waitForCondition(timeoutMs = 5_000) { file.initialMessageSent }
+    waitForCondition(timeoutMs = 5_000) { file.initialMessageDispatchSteps.isEmpty() }
     assertThat(terminalTabs.tab.backTabCount.get()).isEqualTo(3)
+    assertThat(file.initialMessageSent).isFalse()
     assertThat(file.initialMessageDispatchStepIndex).isZero()
     assertThat(file.initialMessageDispatchSteps).isEmpty()
-    assertThat(terminalTabs.tab.sentTexts)
-      .containsExactly(SentTerminalText("Send after plan fallback", shouldExecute = true))
+    assertThat(terminalTabs.tab.sentTexts).isEmpty()
   }
 
   @Test
@@ -2475,6 +2479,7 @@ private fun testEditor(
   pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
   editorCoroutineScope: CoroutineScope? = unconfinedTestScope(),
   showComponent: Boolean = true,
+  behaviorResolver: (AgentSessionProvider?) -> AgentChatProviderBehavior = ::resolveAgentChatProviderBehavior,
 ): AgentChatFileEditor {
   return AgentChatFileEditor(
     project = project,
@@ -2485,11 +2490,36 @@ private fun testEditor(
     archivedRestoreHandler = archivedRestoreHandler,
     pendingScopedRefreshRetryIntervalMs = pendingScopedRefreshRetryIntervalMs,
     editorCoroutineScope = editorCoroutineScope,
+    behaviorResolver = behaviorResolver,
   ).also { editor ->
     if (showComponent) {
       editor.showComponentForTests()
     }
     editorsToDispose += editor
+  }
+}
+
+private object TestCodexPlanModeStopBehavior : AgentChatProviderBehavior {
+  override fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatchContext): Boolean {
+    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE
+  }
+
+  @Suppress("UNUSED_PARAMETER")
+  override fun afterInitialMessageSendObservation(
+    file: AgentChatBehaviorFile,
+    dispatch: AgentChatInitialMessageDispatchContext,
+    outputText: String,
+    retryAttempt: Int,
+  ): AgentChatInitialMessageRetryDecision {
+    if (dispatch.action != AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE) {
+      return AgentChatInitialMessageRetryDecision.PROCEED
+    }
+    return if (retryAttempt < 2) {
+      AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(backoffMs = 0)
+    }
+    else {
+      AgentChatInitialMessageRetryDecision.Stop
+    }
   }
 }
 

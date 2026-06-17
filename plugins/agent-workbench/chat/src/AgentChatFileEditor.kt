@@ -76,6 +76,7 @@ internal class AgentChatFileEditor(
   private val currentTimeProvider: () -> Long = System::currentTimeMillis,
   private val pendingScopedRefreshRetryIntervalMs: Long = AgentSessionThreadRebindPolicy.PENDING_THREAD_REFRESH_RETRY_INTERVAL_MS,
   editorCoroutineScope: CoroutineScope? = null,
+  private val behaviorResolver: (AgentSessionProvider?) -> AgentChatProviderBehavior = ::resolveAgentChatProviderBehavior,
 ) : UserDataHolderBase(), FileEditor {
   private val ownedTerminalStartupJob = if (editorCoroutineScope == null) SupervisorJob() else null
 
@@ -385,7 +386,7 @@ internal class AgentChatFileEditor(
     if (deferredStartState?.phase == AgentChatDeferredStartPhase.READY_TO_START) {
       file.updateDeferredStartState(null)
     }
-    val behavior = resolveAgentChatProviderBehavior(file.provider)
+    val behavior = behaviorResolver(file.provider)
     val createdTab = liveTerminalRegistry.acquireOrCreate(
       file = file,
       terminalTabs = terminalTabs,
@@ -415,6 +416,7 @@ internal class AgentChatFileEditor(
     )
     concreteThreadRebindController = concreteController
     val messageDispatcher = AgentChatInitialMessageDispatcher(
+      project = project,
       file = file,
       behavior = behavior,
       tabSnapshotWriter = tabSnapshotWriter,

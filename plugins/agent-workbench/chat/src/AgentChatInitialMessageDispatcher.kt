@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
@@ -34,9 +35,12 @@ private class AgentChatInitialMessageDispatcherLog
 private val LOG = logger<AgentChatInitialMessageDispatcherLog>()
 
 internal class AgentChatInitialMessageDispatcher(
+  private val project: Project,
   private val file: AgentChatVirtualFile,
   private val behavior: AgentChatProviderBehavior,
   private val tabSnapshotWriter: AgentChatTabSnapshotWriter,
+  private val planModeInitialPromptStopReporter: (Project, AgentChatVirtualFile) -> Unit =
+    AgentChatRestoreNotificationService::reportInitialPromptPlanModeFailure,
 ) : AgentChatDisposableController {
   private var pendingJob: Job? = null
 
@@ -215,6 +219,9 @@ internal class AgentChatInitialMessageDispatcher(
     LOG.debug("Stopped initial message dispatch at step ${dispatch.stepIndex}, action=${dispatch.action}")
     file.clearInitialMessageDispatchMetadata()
     tabSnapshotWriter.upsert(file.toSnapshot())
+    if (dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE) {
+      planModeInitialPromptStopReporter(project, file)
+    }
     return AgentChatInitialMessageSendResult(progressed = false, stopDispatching = true)
   }
 
