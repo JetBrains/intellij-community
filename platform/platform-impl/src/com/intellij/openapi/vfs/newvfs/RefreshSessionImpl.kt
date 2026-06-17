@@ -202,7 +202,7 @@ internal class RefreshSessionImpl internal constructor(
     if (LOG.isTraceEnabled) {
       LOG.trace((if (myCancelled) "cancelled, " else "done, ") + t + " ms, tries " + count + ", events " + events)
     }
-    else if (snapshot != null && t > DURATION_REPORT_THRESHOLD_MS) {
+    else if (snapshot != null && (t > DURATION_REPORT_THRESHOLD_MS || LOG.isDebugEnabled)) {
       snapshot.logResponsivenessSinceCreation(String.format(
         "Refresh session (queue size: %s, scanned: %s, result: %s, tries: %s, events: %d)",
         workQueue.size, types, if (myCancelled) "cancelled" else "done", count, events.size))
@@ -234,7 +234,7 @@ internal class RefreshSessionImpl internal constructor(
     try {
       val app = ApplicationManagerEx.getApplicationEx()
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
-        if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: $events")
+        if (LOG.isDebugEnabled()) LOG.debug("${events.size} events are about to fire: $events")
         app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeCoreBundle.message("progress.title.file.system.synchronization"),
                                                                      null, null, Consumer { indicator: ProgressIndicator? ->
             indicator!!.setText(IdeCoreBundle.message("progress.text.processing.detected.file.changes", events.size))
@@ -308,7 +308,7 @@ internal class RefreshSessionImpl internal constructor(
     try {
       val app = ApplicationManagerEx.getApplicationEx()
       if ((myFinishRunnable != null || !events.isEmpty()) && !app.isDisposed()) {
-        if (LOG.isDebugEnabled()) LOG.debug("events are about to fire: " + events)
+        if (LOG.isDebugEnabled()) LOG.debug("${events.size} events are about to fire: $events")
         withWriteActionTitle(IdeCoreBundle.message("progress.title.file.system.synchronization"), {
           doFireEvents(events, appliers, excludeAsyncListeners)
         })
