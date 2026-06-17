@@ -473,6 +473,9 @@
 
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
 
+    <action id="ResetSettingsNewBadges" internal="true"
+            class="com.intellij.openapi.options.newEditor.ResetSettingsNewBadgesAction"/>
+
     <action id="PluginManagerFiltersConfigureTrustOnlyJetBrainsDebugAction" internal="true"
             class="com.intellij.ide.plugins.org.PluginManagerFiltersConfigureTrustOnlyJetBrainsDebugAction"/>
     <action id="PluginManagerFiltersConfigureResetTrustDebugAction" internal="true"
