@@ -21,6 +21,7 @@
 - a:isShowFirstErrorInEditor():Z
 *:com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:build():com.intellij.build.events.BuildIssueEvent
+- a:withFilePosition(com.intellij.build.FilePosition):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withHint(java.lang.String):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withId(java.lang.Object):com.intellij.build.eventBuilders.BuildIssueEventBuilder
 - a:withParentId(java.lang.Object):com.intellij.build.eventBuilders.BuildIssueEventBuilder

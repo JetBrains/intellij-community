@@ -2,9 +2,8 @@
 package org.jetbrains.plugins.gradle.service.syncAction.impl
 
 import com.intellij.build.FilePosition
+import com.intellij.build.events.BuildIssueEvent
 import com.intellij.build.events.MessageEvent
-import com.intellij.build.events.impl.BuildIssueEventImpl
-import com.intellij.build.events.impl.FileBuildIssueEventImpl
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailure
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
@@ -184,10 +183,10 @@ class GradleSyncFailureHandler {
         for (issue in issues) {
           val issueKey = IssueKey(issue.title, issue.description, filePosition)
           if (processedIssueKeys.add(issueKey)) {
-            val issueEvent = when (filePosition) {
-                  null -> BuildIssueEventImpl(context.taskId, issue, MessageEvent.Kind.ERROR)
-                  else -> FileBuildIssueEventImpl(context.taskId, issue, MessageEvent.Kind.ERROR, filePosition)
-            }
+            val issueEvent = BuildIssueEvent.builder(issue, MessageEvent.Kind.ERROR)
+              .withParentId(context.taskId)
+              .withFilePosition(filePosition)
+              .build()
             context.listener.onStatusChange(ExternalSystemBuildEvent(context.taskId, issueEvent))
           }
         }
