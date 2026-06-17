@@ -161,6 +161,18 @@ class PiThemeSupportTest {
     assertThat(support.launchResourcesOrNull()).isNull()
   }
 
+  @Test
+  fun bundledExtensionMarksJbCentralClaudeOpus48AsAdaptiveThinkingModel() {
+    val extension = readBundledPiExtensionText()
+
+    assertThat(extension).contains(
+      "JBCENTRAL_ADAPTIVE_THINKING_MODEL_MARKERS",
+      "\"opus-4-8\"",
+      "\"opus-4.8\"",
+      "...(isJbCentralAdaptiveThinkingModel(model) ? {compat: {forceAdaptiveThinking: true}} : {})",
+    )
+  }
+
   private fun supportFor(
     extension: PiBundledExtensionResource,
     themeSnapshotProvider: () -> PiThemeSnapshot = { snapshot("islands-dark", "Islands Dark", dark = true) },
@@ -173,6 +185,14 @@ class PiThemeSupportTest {
   }
 
   private fun bytes(text: String): ByteArray = text.toByteArray(StandardCharsets.UTF_8)
+
+  private fun readBundledPiExtensionText(): String {
+    val resourcePath = "pi-extension/agent-workbench-extension.ts"
+    val bytes = PiThemeSupport::class.java.classLoader.getResourceAsStream(resourcePath)
+                  ?.use { input -> input.readBytes() }
+                ?: error("Missing bundled Pi extension resource: $resourcePath")
+    return String(bytes, StandardCharsets.UTF_8)
+  }
 
   private fun extensionFileName(text: String): String {
     return "agent-workbench-extension-${DigestUtil.sha256Hex(bytes(text)).take(16)}.ts"

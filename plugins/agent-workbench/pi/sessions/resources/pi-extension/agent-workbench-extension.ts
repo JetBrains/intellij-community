@@ -46,6 +46,16 @@ const JBCENTRAL_CODEX_FALLBACK_PROVIDER_NAME = "openai-codex";
 const JBCENTRAL_CLAUDE_FALLBACK_PROVIDER_NAME = "anthropic";
 const JBCENTRAL_CODEX_BASE_PATH = "codex/openai";
 const JBCENTRAL_CLAUDE_BASE_PATH = "claude-code/anthropic";
+const JBCENTRAL_ADAPTIVE_THINKING_MODEL_MARKERS = [
+  "opus-4-6",
+  "opus-4.6",
+  "opus-4-7",
+  "opus-4.7",
+  "opus-4-8",
+  "opus-4.8",
+  "sonnet-4-6",
+  "sonnet-4.6",
+];
 const JBCENTRAL_PROXY_START_ARGS = ["proxy", "start", "--return-key"];
 const execFileAsync = promisify(execFile);
 const DONE_STATUS_IDLE_RECHECK_MS = 150;
@@ -664,11 +674,20 @@ function toJbCentralProviderModel(model: AgentWorkbenchJbCentralProvider, proxyA
     cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0},
     contextWindow: model.contextWindow ?? DEFAULT_JBCENTRAL_CONTEXT_WINDOW,
     maxTokens: model.maxTokens ?? DEFAULT_JBCENTRAL_MAX_TOKENS,
+    ...(isJbCentralAdaptiveThinkingModel(model) ? {compat: {forceAdaptiveThinking: true}} : {}),
   };
 }
 
 function toJbCentralProviderApi(model: AgentWorkbenchJbCentralProvider): "anthropic-messages" | "openai-codex-responses" {
   return model.agent === "claude-code" ? "anthropic-messages" : "openai-codex-responses";
+}
+
+function isJbCentralAdaptiveThinkingModel(model: AgentWorkbenchJbCentralProvider): boolean {
+  if (model.agent !== "claude-code") {
+    return false;
+  }
+  const modelId = model.modelId.toLowerCase();
+  return JBCENTRAL_ADAPTIVE_THINKING_MODEL_MARKERS.some((marker) => modelId.includes(marker));
 }
 
 function buildJbCentralModelBaseUrl(model: AgentWorkbenchJbCentralProvider, proxyAccess: AgentWorkbenchJbCentralProxyAccess): string {
