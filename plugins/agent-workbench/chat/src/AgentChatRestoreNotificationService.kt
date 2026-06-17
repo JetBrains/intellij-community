@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.chat
 
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -10,19 +11,36 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.Nls
 import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
 internal object AgentChatRestoreNotificationService {
   fun reportRestoreFailure(project: Project, file: AgentChatVirtualFile, reason: String) {
-    reportWarning(project, file, reason)
+    reportWarning(
+      project = project,
+      deduplicationKey = "${project.locationHash}|${file.url}|restore|$reason",
+      title = AgentChatBundle.message("chat.restore.failed.title"),
+      content = AgentChatBundle.message("chat.restore.failed.body", file.threadTitle, reason),
+      failureLogMessage = "Failed to show Agent Chat restore warning notification",
+    )
+  }
+
+  fun reportInitialPromptPlanModeFailure(project: Project, file: AgentChatVirtualFile) {
+    reportWarning(
+      project = project,
+      deduplicationKey = "${project.locationHash}|${file.url}|initial-prompt-plan-mode",
+      title = AgentChatBundle.message("chat.initial.prompt.plan.mode.failed.title"),
+      content = AgentChatBundle.message("chat.initial.prompt.plan.mode.failed.body", file.threadTitle),
+      failureLogMessage = "Failed to show Agent Chat initial prompt warning notification",
+    )
   }
 
   suspend fun reportTerminalInitializationFailure(project: Project, file: AgentChatVirtualFile, throwable: Throwable) {
     logger<AgentChatRestoreNotificationService>().warn("Failed to initialize Agent Chat terminal tab for ${file.url}", throwable)
     forgetAgentChatTabMetadata(file.tabKey)
     val reason = buildTerminalInitializationReason(throwable)
-    reportWarning(project = project, file = file, reason = reason)
+    reportRestoreFailure(project = project, file = file, reason = reason)
     if (project.isDisposed) {
       return
     }
@@ -44,8 +62,16 @@ internal object AgentChatRestoreNotificationService {
 
 private val reportedWarnings = ConcurrentHashMap.newKeySet<String>()
 
-private fun reportWarning(project: Project, file: AgentChatVirtualFile, reason: String) {
-  val deduplicationKey = "${project.locationHash}|${file.url}|$reason"
+private fun reportWarning(
+  project: Project,
+  deduplicationKey: String,
+  title: @Nls String,
+  content: @Nls String,
+  failureLogMessage: String,
+) {
+  if (ApplicationManager.getApplication() == null) {
+    return
+  }
   if (!reportedWarnings.add(deduplicationKey)) {
     return
   }
@@ -54,13 +80,13 @@ private fun reportWarning(project: Project, file: AgentChatVirtualFile, reason: 
     NotificationGroupManager.getInstance()
       .getNotificationGroup(AGENT_CHAT_NOTIFICATION_GROUP_ID)
       .createNotification(
-        AgentChatBundle.message("chat.restore.failed.title"),
-        AgentChatBundle.message("chat.restore.failed.body", file.threadTitle, reason),
+        title,
+        content,
         NotificationType.WARNING,
       )
       .notify(project)
   }.onFailure { error ->
-    logger<AgentChatRestoreNotificationService>().warn("Failed to show Agent Chat restore warning notification", error)
+    logger<AgentChatRestoreNotificationService>().warn(failureLogMessage, error)
   }
 }
 

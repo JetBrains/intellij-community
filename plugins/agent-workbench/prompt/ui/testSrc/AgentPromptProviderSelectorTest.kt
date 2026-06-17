@@ -2298,7 +2298,7 @@ class AgentPromptProviderSelectorTest {
         val actions = actionGroup.getChildren(TestActionEvent.createTestEvent())
 
         assertThat(modelActionEntries(actions))
-          .containsExactly("model:Default", "separator:OpenAI", "model:GPT-5.1 Codex")
+          .containsExactly("model:Default", "model:GPT-5.1 Codex")
         assertThat(actions.filterNot { action -> action is Separator }.map { action -> action.templatePresentation.keepPopupOnPerform })
           .containsOnly(KeepPopupOnPerform.Never)
       }
