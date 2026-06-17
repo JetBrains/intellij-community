@@ -173,30 +173,52 @@ class GradleSyncFailureHandler {
   private val processedIssueKeys = HashSet<IssueKey>()
 
   fun reportSyncFailures(context: ProjectResolverContext, failures: List<GradleModelFetchFailure>) {
-    val projectRoot = Path.of(context.projectPath)
     for (failure in failures) {
       if (processedFailures.add(failure)) {
-        val issueFailure = failure.toIssueFailure()
-        val filePosition = getErrorFilePosition(issueFailure, projectRoot)
-        val issueData = GradleIssueData.createIssueData(projectRoot, issueFailure, context.buildEnvironment, filePosition)
-        val issues = GradleIssueChecker.getKnownIssuesCheckList().mapNotNull { it.check(issueData) }
-        for (issue in issues) {
-          val issueKey = IssueKey(issue.title, issue.description, filePosition)
-          if (processedIssueKeys.add(issueKey)) {
-            val issueEvent = BuildIssueEvent.builder(issue, MessageEvent.Kind.ERROR)
-              .withParentId(context.taskId)
-              .withFilePosition(filePosition)
-              .build()
-            context.listener.onStatusChange(ExternalSystemBuildEvent(context.taskId, issueEvent))
-          }
-        }
+        val issueData = createIssueData(context, failure)
+        reportMessageEvent(context, issueData)
+        reportBuildIssueEvent(context, issueData)
       }
     }
   }
 
-  private fun GradleModelFetchFailure.toIssueFailure(): GradleIssueFailure {
-    return GradleIssueFailure.createIssueFailure(message, description, causes.map { it.toIssueFailure() })
+  private fun reportMessageEvent(context: ProjectResolverContext, issueData: GradleIssueData) {
+    val failureMessage = issueData.failure.message ?: return
+    val failureEvent = MessageEvent.builder(failureMessage, MessageEvent.Kind.ERROR)
+      .withDescription(issueData.failure.description ?: failureMessage)
+      .withParentId(context.taskId)
+      .withFilePosition(issueData.filePosition)
+      .build()
+    context.listener.onStatusChange(ExternalSystemBuildEvent(context.taskId, failureEvent))
   }
+
+  private fun reportBuildIssueEvent(context: ProjectResolverContext, issueData: GradleIssueData) {
+    val issues = GradleIssueChecker.getKnownIssuesCheckList().mapNotNull { it.check(issueData) }
+    for (issue in issues) {
+      val issueKey = IssueKey(issue.title, issue.description, issueData.filePosition)
+      if (processedIssueKeys.add(issueKey)) {
+        val issueEvent = BuildIssueEvent.builder(issue, MessageEvent.Kind.ERROR)
+          .withParentId(context.taskId)
+          .withFilePosition(issueData.filePosition)
+          .build()
+        context.listener.onStatusChange(ExternalSystemBuildEvent(context.taskId, issueEvent))
+      }
+    }
+  }
+
+  private fun createIssueData(context: ProjectResolverContext, failure: GradleModelFetchFailure): GradleIssueData {
+    val projectRoot = Path.of(context.projectPath)
+    val issueFailure = createIssueFailure(failure)
+    val filePosition = getErrorFilePosition(issueFailure, projectRoot)
+    return GradleIssueData.createIssueData(projectRoot, issueFailure, context.buildEnvironment, filePosition)
+  }
+
+  private fun createIssueFailure(failure: GradleModelFetchFailure): GradleIssueFailure =
+    GradleIssueFailure.createIssueFailure(
+      message = failure.message,
+      description = failure.description,
+      causes = failure.causes.map { createIssueFailure(it) }
+    )
 
   private data class IssueKey(
     val title: String,
