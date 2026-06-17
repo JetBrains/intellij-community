@@ -206,11 +206,11 @@ class SeTabVmImpl(
             val essential = tab.essentialProviderIds().filter { it !in disabledProviderIds }.toSet()
             if (essential.isEmpty()) {
               if (shouldThrottle.load()) {
-                SeLog.log(SeLog.THROTTLING) { "Will throttle with accumulation (searchId = $searchId)" }
+                SeLog.log(SeLog.THROTTLING) { "Will throttle with accumulation (pattern = $searchPattern, searchId = $searchId)" }
                 resultsFlowWithAdaptedPresentations.throttledWithAccumulation(shouldPassItem = { item -> item !is SeResultEndEvent })
               }
               else {
-                SeLog.log(SeLog.THROTTLING) { "Will not throttle (searchId = $searchId)" }
+                SeLog.log(SeLog.THROTTLING) { "Will not throttle (pattern = $searchPattern, searchId = $searchId)" }
                 resultsFlowWithAdaptedPresentations.map { event -> ThrottledOneItem(event) }
               }
             }
@@ -225,7 +225,8 @@ class SeTabVmImpl(
             item
           }
 
-          shouldThrottle.store(true)
+          // Turn on throttling for non-essential contributors only if the previous search pattern wasn't empty
+          shouldThrottle.store(searchPattern.isNotEmpty())
           SeSearchContext(searchId, tabId, searchPattern, resultsFlow)
         }.collect {
           if (!isActiveFlow.value) return@collect
