@@ -160,15 +160,15 @@ class IdentifierHighlightingComputer(
   private fun isCacheableTarget(contextElement: PsiElement): Boolean {
     val textRange = contextElement.textRange
     var reference: PsiReference? = null
-    var symbols:Collection<Symbol>? = null
+    var objs: Collection<Any>? = null
 
     for (offset in textRange.startOffset..< textRange.endOffset) {
       ProgressManager.checkCanceled()
-      val smb = targetSymbols(myPsiFile, offset)
-      if (symbols != null && symbols.map{ PsiSymbolService.getInstance().extractElementFromSymbol(it) } != smb.map{ PsiSymbolService.getInstance().extractElementFromSymbol(it) }) {
+      val other = targetSymbols(myPsiFile, offset).map { PsiSymbolService.getInstance().extractElementFromSymbol(it) ?: it }
+      if (objs != null && objs != other) {
         return false
       }
-      symbols = smb
+      objs = other
       val ref = TargetElementUtil.findReference(myEditor, offset)
       if (reference != null && (ref == null || !referencesEqual(ref, reference))) {
         return false
