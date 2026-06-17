@@ -209,6 +209,7 @@ internal class McpSessionHandler(
           transportType = transportType,
           startTimeMs = System.currentTimeMillis(),
           localAgentId = sessionOptions.localAgentId,
+          toolsCount = mcpTools.value.size,
         )
       }
 
