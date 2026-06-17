@@ -6,9 +6,11 @@ import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelId
 import com.intellij.gradle.toolingExtension.impl.modelSerialization.ToolingSerializer
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.PathMapper
+import org.gradle.tooling.model.BuildIdentifier
 import org.gradle.tooling.model.BuildModel
 import org.gradle.tooling.model.ProjectModel
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.model.DefaultGradleLightBuild
 import org.jetbrains.plugins.gradle.model.GradleLightBuild
 import org.jetbrains.plugins.gradle.util.GradleObjectTraverser
 import java.io.File
@@ -123,12 +125,16 @@ class GradleIdeaModelHolder(
     val nestedBuilds = state.nestedBuilds
     val models = state.models
 
+    // this step should be done before any model conversion to prevent transitive buildIdentifier conversion in a scenario like A -> B -> C
+    // otherwise buildIdentifier for the C build will be silently converted as a part of B's conversion
+    associateBuildIdMapping(rootBuild, nestedBuilds)
+
     if (rootBuild != null) {
-      convertBuildModelPathsInPlace(rootBuild)
+      convertModelPathsInPlace(rootBuild)
       this.rootBuild = rootBuild
     }
     for (nestedBuild in nestedBuilds) {
-      convertBuildModelPathsInPlace(nestedBuild)
+      convertModelPathsInPlace(nestedBuild)
       this.nestedBuilds.add(nestedBuild)
     }
     this.models.putAll(models)
@@ -154,10 +160,19 @@ class GradleIdeaModelHolder(
     }
   }
 
-  private fun convertBuildModelPathsInPlace(build: GradleLightBuild) {
-    val originalBuildId = GradleModelId.createBuildId(build.buildIdentifier)
-    convertModelPathsInPlace(build)
-    val currentBuildId = GradleModelId.createBuildId(build.buildIdentifier)
+  private fun associateBuildIdMapping(rootBuild: DefaultGradleLightBuild?, nestedBuilds: Iterable<DefaultGradleLightBuild>) {
+    if (rootBuild != null) {
+      associateBuildIdMapping(rootBuild.buildIdentifier)
+    }
+    for (nestedBuild in nestedBuilds) {
+      associateBuildIdMapping(nestedBuild.buildIdentifier)
+    }
+  }
+
+  private fun associateBuildIdMapping(buildIdentifier: BuildIdentifier) {
+    val originalBuildId = GradleModelId.createBuildId(buildIdentifier)
+    convertModelPathsInPlace(buildIdentifier)
+    val currentBuildId = GradleModelId.createBuildId(buildIdentifier)
     if (originalBuildId != currentBuildId) {
       buildIdMapping[currentBuildId] = originalBuildId
     }
