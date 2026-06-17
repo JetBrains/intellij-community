@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModelGroup
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
@@ -106,6 +107,38 @@ class ClaudeAgentSessionProviderDescriptorTest {
   }
 
   @Test
+  fun applyGenerationSettingsAddsModelFlag(): Unit = runBlocking(Dispatchers.Default) {
+    val launchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+    val sessionId = assertValidUuid(launchSpec.preallocatedSessionId)
+
+    val updatedLaunchSpec = bridge.applyGenerationSettings(
+      launchSpec,
+      AgentPromptGenerationSettings(modelId = "sonnet"),
+      STANDARD_INITIAL_MESSAGE_PLAN,
+    )
+
+    assertThat(updatedLaunchSpec.command)
+      .containsExactly("claude", "--session-id", sessionId, "--model", "sonnet")
+    assertThat(updatedLaunchSpec.preallocatedSessionId).isEqualTo(sessionId)
+  }
+
+  @Test
+  fun applyGenerationSettingsAddsModelAndReasoningEffortFlags(): Unit = runBlocking(Dispatchers.Default) {
+    val launchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
+    val sessionId = assertValidUuid(launchSpec.preallocatedSessionId)
+
+    val updatedLaunchSpec = bridge.applyGenerationSettings(
+      launchSpec,
+      AgentPromptGenerationSettings(modelId = "opus", reasoningEffort = AgentPromptReasoningEffort.HIGH),
+      STANDARD_INITIAL_MESSAGE_PLAN,
+    )
+
+    assertThat(updatedLaunchSpec.command)
+      .containsExactly("claude", "--session-id", sessionId, "--model", "opus", "--effort", "high")
+    assertThat(updatedLaunchSpec.preallocatedSessionId).isEqualTo(sessionId)
+  }
+
+  @Test
   fun applyGenerationSettingsIgnoresPlanReasoningEffort(): Unit = runBlocking(Dispatchers.Default) {
     val launchSpec = bridge.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
     val sessionId = assertValidUuid(launchSpec.preallocatedSessionId)
@@ -131,6 +164,18 @@ class ClaudeAgentSessionProviderDescriptorTest {
   fun replaceOrAddEffortReplacesExistingFlag() {
     assertThat(replaceOrAddEffort(listOf("claude", "--effort", "low", "--session-id", "session-1"), "high"))
       .containsExactly("claude", "--effort", "high", "--session-id", "session-1")
+  }
+
+  @Test
+  fun replaceOrAddModelInsertsBeforePromptSeparator() {
+    assertThat(replaceOrAddModel(listOf("claude", "--", "Refactor this"), "sonnet"))
+      .containsExactly("claude", "--model", "sonnet", "--", "Refactor this")
+  }
+
+  @Test
+  fun replaceOrAddModelReplacesExistingFlag() {
+    assertThat(replaceOrAddModel(listOf("claude", "--model", "opus", "--session-id", "session-1"), "sonnet"))
+      .containsExactly("claude", "--model", "sonnet", "--session-id", "session-1")
   }
 
   @Test
@@ -339,6 +384,17 @@ class ClaudeAgentSessionProviderDescriptorTest {
   @Test
   fun promptOptionsUseSharedPlanModeOption() {
     assertThat(bridge.promptOptions).containsExactly(AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION)
+  }
+
+  @Test
+  fun generationModelCatalogUsesClaudeCodeAliases(): Unit = runBlocking(Dispatchers.Default) {
+    val models = bridge.listAvailableGenerationModels()
+
+    assertThat(bridge.supportsGenerationModelSelection).isTrue()
+    assertThat(models.map { model -> model.id }).containsExactly("opus", "sonnet", "sonnet[1m]", "haiku", "fable")
+    assertThat(models.map { model -> model.displayName }).containsExactly("Opus", "Sonnet", "Sonnet (1M context)", "Haiku", "Fable")
+    assertThat(models.map { model -> model.group }).containsOnly(AgentPromptGenerationModelGroup.CLAUDE_CODE)
+    assertThat(models.single { model -> model.id == "sonnet" }.isDefault).isTrue()
   }
 
   @Test
