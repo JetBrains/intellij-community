@@ -58,16 +58,29 @@ class LocalTerminalTtyConnector internal constructor(
    */
   override fun close() {
     terminalApplicationScope().launch(Dispatchers.IO) {
-      closeSafely()
+      try {
+        closeSafely()
+      }
+      catch (e: LocalTtyConnectorClosingException) {
+        LOG.warn(e.message, e.cause)
+      }
     }
   }
 
   /**
-   * Terminates the underlying [ptyProcess] and awaits its completion for some meaningful time.
-   * It is expected that process should exit before this function returns in most cases.
+   * Terminates the underlying [ptyProcess].
+   * It executes the closing activities depending on the process type and usually performs it in several steps:
+   * 1. Try to terminate the process gracefully
+   * 2. Wait for the process to exit some meaningful time
+   * 3. Destroys the process forcefully if it is still alive
+   *
+   * Note that there is no guarantee that the process will be terminated after this function returns.
    *
    * Uses [NonCancellable] to avoid being canceled in the middle in case of IDE closing.
+   *
+   * @throws LocalTtyConnectorClosingException if failed to perform the closing activities.
    */
+  @Throws(LocalTtyConnectorClosingException::class)
   suspend fun closeSafely(): Unit = withContext(Dispatchers.IO + NonCancellable) {
     if (!ptyProcess.isAlive) return@withContext
 
@@ -84,14 +97,6 @@ class LocalTerminalTtyConnector internal constructor(
         }
         ptyProcess.destroy()
       }
-    }
-
-    val exitCode = ptyProcess.awaitExit(2.seconds)
-    if (exitCode != null) {
-      LOG.info("${processInfo(shellEelProcess)} has been terminated with exit code $exitCode")
-    }
-    else {
-      LOG.warn("${processInfo(shellEelProcess)} has not been terminated!")
     }
   }
 
@@ -115,12 +120,10 @@ class LocalTerminalTtyConnector internal constructor(
       }
     }
     catch (e: ExecuteProcessException) {
-      LOG.warn("Failed to send SIGHUP to ${processInfo(process)}", e)
-      return
+      throw LocalTtyConnectorClosingException("Failed to send SIGHUP to ${processInfo(process)}", e)
     }
     catch (_: TimeoutCancellationException) {
-      LOG.warn("Failed to send SIGHUP to ${processInfo(process)}: timeout")
-      return
+      throw LocalTtyConnectorClosingException("Failed to send SIGHUP to ${processInfo(process)}: timeout exceeded")
     }
 
     if (ptyProcess.awaitExit(5.seconds) == null) {
@@ -184,3 +187,9 @@ class LocalTerminalTtyConnector internal constructor(
     private val LOG = Logger.getInstance(LocalTerminalTtyConnector::class.java)
   }
 }
+
+@ApiStatus.Internal
+class LocalTtyConnectorClosingException(
+  message: String,
+  cause: Throwable? = null,
+) : IllegalStateException(message, cause)
