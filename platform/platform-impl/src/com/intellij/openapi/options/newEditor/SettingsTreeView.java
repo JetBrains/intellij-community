@@ -416,7 +416,9 @@ public class SettingsTreeView extends JComponent implements Accessible, Disposab
   private static @Nullable Project findConfigurableProject(@NotNull MyNode node) {
     Configurable configurable = node.myConfigurable;
     Project project = node.getProject();
-    Configurable.VariableProjectAppLevel wrapped = ConfigurableWrapper.cast(Configurable.VariableProjectAppLevel.class, configurable);
+    // Do not instantiate a not-yet-created configurable here, as its construction may block the EDT
+    // (for example, on a persistent state read over IJent/WSL).
+    Configurable.VariableProjectAppLevel wrapped = ConfigurableWrapper.castIfCreated(Configurable.VariableProjectAppLevel.class, configurable);
     if (wrapped != null) return wrapped.isProjectLevel() ? project : null;
     if (configurable instanceof ConfigurableWrapper) return project;
     if (configurable instanceof SortedConfigurableGroup) return project;

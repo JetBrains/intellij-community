@@ -137,6 +137,23 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
     return type.isInstance(configurable) ? type.cast(configurable) : null;
   }
 
+  /**
+   * If the configurable behind a {@link ConfigurableWrapper} has not been created yet, returns {@code null}
+   * instead of forcing its construction. Intended for EDT-sensitive paths such as Settings tree rendering,
+   * where eager configurable construction may block the EDT (for example, on persistent state reads over
+   * IJent/WSL). See IJPL-246986.
+   */
+  @ApiStatus.Internal
+  public static @Nullable <T> T castIfCreated(@NotNull Class<T> type, @Nullable UnnamedConfigurable configurable) {
+    if (configurable instanceof ConfigurableWrapper wrapper) {
+      if (wrapper.myConfigurable == null) {
+        return null;
+      }
+      configurable = wrapper.myConfigurable;
+    }
+    return type.isInstance(configurable) ? type.cast(configurable) : null;
+  }
+
   private final ConfigurableEP<?> myEp;
   int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
 
