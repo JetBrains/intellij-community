@@ -141,10 +141,8 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   @Internal
-  fun incrementModificationCount(componentName: String) {
-    components.get(componentName)?.let { info ->
-      info.updateModificationCount(info.lastModificationCount + 1)
-    }
+  fun resetModificationCount(componentName: String) {
+    components.get(componentName)?.updateModificationCount(-1)
   }
 
   fun getComponentNames(): Set<String> = HashSet(components.keys)
