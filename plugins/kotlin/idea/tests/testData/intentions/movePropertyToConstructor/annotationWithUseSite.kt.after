@@ -1,4 +1,4 @@
-// K2_AFTER_ERROR: This annotation is not repeatable.
+// K2_AFTER_ERROR: REPEATED_ANNOTATION
 annotation class Annotation1(val a: Int = 0)
 annotation class Annotation2(val a: Int = 0)
 annotation class Annotation3(val a: Int = 0)

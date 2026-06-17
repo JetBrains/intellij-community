@@ -1,3 +1,4 @@
+// LANGUAGE_VERSION: 2.3
 import java.util.ArrayList;
 
 public class Foo {

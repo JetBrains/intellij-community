@@ -1,6 +1,5 @@
 // PROBLEM: none
-// COMPILER_ARGUMENTS: -Xcontext-receivers
-// K2_ERROR: CONTEXT_RECEIVERS_DEPRECATED
+// K2_ERROR: CONTEXT_PARAMETER_WITHOUT_NAME
 
 context(Int)
 fun other() {

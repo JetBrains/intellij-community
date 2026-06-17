@@ -1,4 +1,5 @@
 // "Change use-site target to 'all'" "true"
+// LANGUAGE_VERSION: 2.3
 // ACTION "Add use-site target 'param'"
 // ACTION "Change use-site target to 'field'"
 // COMPILER_ARGUMENTS: -Xannotation-target-all -XXLanguage:+AnnotationDefaultTargetMigrationWarning

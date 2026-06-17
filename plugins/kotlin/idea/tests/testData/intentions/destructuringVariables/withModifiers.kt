@@ -1,6 +1,5 @@
 // ERROR: This annotation is not applicable to target 'destructuring declaration'
 // SKIP_ERRORS_BEFORE
-// K2_AFTER_ERROR: WRONG_ANNOTATION_TARGET
 data class XY(val x: Int, val y: Int)
 
 fun create() = XY(1, 2)
