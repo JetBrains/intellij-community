@@ -21,6 +21,7 @@ import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfo.isMac
 import java.awt.event.KeyEvent
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
@@ -81,12 +82,12 @@ class PlatformDebugSteps(private val ideFrame: IdeaFrameUI) {
     return this
   }
 
-  fun clickStepButton(kindOfStep: String) {
+  fun clickStepButton(kindOfStep: String, timeout: Duration = 10.seconds) {
     step("Click $kindOfStep") {
       ideFrame.run {
         debugToolWindow {
           val button = xx { byAccessibleName(kindOfStep) }.list().last()
-          waitFor(message = "Step button is not enabled", timeout = 10.seconds) { button.isEnabled() }
+          waitFor(message = "Step button is not enabled", timeout = timeout) { button.isEnabled() }
           button.click()
         }
       }
