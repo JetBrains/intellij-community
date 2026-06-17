@@ -3,6 +3,7 @@ package com.intellij.platform.lsp.api.customization
 
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.eclipse.lsp4j.Command
@@ -34,6 +35,16 @@ open class LspCommandsSupport : LspCommandsCustomizer() {
    * a background thread, for example, using [Application.executeOnPooledThread]
    */
   @RequiresEdt
+  open fun executeCommand(lspClient: LspClient, contextFile: VirtualFile, command: Command): Unit =
+    @Suppress("DEPRECATION")
+    executeCommand(lspClient as LspServer, contextFile, command)
+
+  @Deprecated(
+    "Override or call executeCommand(lspClient, contextFile, command) — the LspClient overload",
+    ReplaceWith("executeCommand(server as LspClient, contextFile, command)", "com.intellij.platform.lsp.api.LspClient"),
+  )
+  @RequiresEdt
+  @Suppress("DEPRECATION")
   open fun executeCommand(server: LspServer, contextFile: VirtualFile, command: Command): Unit =
     server.sendNotification { it.workspaceService.executeCommand(ExecuteCommandParams(command.command, command.arguments)) }
 }

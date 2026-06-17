@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.lsp.api.Lsp4jClient
 import com.intellij.platform.lsp.api.Lsp4jServer
-import com.intellij.platform.lsp.api.LspServerDescriptor
+import com.intellij.platform.lsp.api.LspClientDescriptor
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.impl.LspServerImpl
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
 private val logger = logger<Lsp4jServerConnector>()
 
 internal abstract class Lsp4jServerConnector protected constructor(private val lspServer: LspServerImpl) {
-  private val descriptor: LspServerDescriptor = lspServer.descriptor
+  private val descriptor: LspClientDescriptor = lspServer.descriptor
   private val lsp4jClient: Lsp4jClient = descriptor.createLsp4jClient(lspServer.serverNotificationsHandler)
   lateinit var lsp4jServer: Lsp4jServer
 

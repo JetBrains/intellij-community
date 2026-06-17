@@ -41,7 +41,7 @@ internal class LspFormattingService : AsyncDocumentFormattingService() {
     val lspServer = when (goal) {
       LspFormattingGoal.FullFileFormatting -> findServerToFormatThisFile(psiFile, true)
       LspFormattingGoal.RangeFormatting -> findServerToFormatThisFile(psiFile, false)
-      LspFormattingGoal.OptimizeImports -> findServerToOptimizeImports(psiFile)
+      LspFormattingGoal.OptimizeImports -> findClientToOptimizeImports(psiFile)
     }
     return lspServer != null
   }

@@ -1,6 +1,6 @@
 package com.intellij.platform.lsp.impl.util
 
-import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -16,9 +16,9 @@ internal class LspWorkspaceEditApplier private constructor(private val intention
 
   companion object {
     @RequiresReadLock
-    fun create(lspServer: LspServer, workspaceEdit: WorkspaceEdit): LspWorkspaceEditApplier? {
+    fun create(lspClient: LspClient, workspaceEdit: WorkspaceEdit): LspWorkspaceEditApplier? {
       val codeAction = CodeAction().apply { edit = workspaceEdit }
-      val intentionAction = LspIntentionAction(lspServer, codeAction)
+      val intentionAction = LspIntentionAction(lspClient, codeAction)
       return if (intentionAction.isAvailable()) LspWorkspaceEditApplier(intentionAction) else null
     }
   }

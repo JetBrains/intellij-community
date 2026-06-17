@@ -18,7 +18,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspGoToDefinitionSupport
 import com.intellij.platform.lsp.api.customization.LspGoToTypeDefinitionDisabled
 import com.intellij.platform.lsp.impl.LspServerImpl
@@ -126,7 +126,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
           return@mapNotNull null
         }
         rangeInFile = rangeInFile?.union(textRange) ?: textRange
-        val targetFile = serverAndLocationLinks.lspServer.descriptor.findFileByUri(locationLink.targetUri)
+        val targetFile = serverAndLocationLinks.lspClient.descriptor.findFileByUri(locationLink.targetUri)
                          ?: return@mapNotNull null
         LspNavigatableSymbol(targetFile, locationLink.targetSelectionRange)
       }
@@ -139,7 +139,7 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
 }
 
 
-private data class LspServerAndLocationLinks(val lspServer: LspServer, val locationLinks: List<LocationLink>)
+private data class LspServerAndLocationLinks(val lspClient: LspClient, val locationLinks: List<LocationLink>)
 
 
 private class LspResolvedSymbolReference(

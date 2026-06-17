@@ -6,7 +6,7 @@ import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.lang.ImportOptimizer
 import com.intellij.lang.LanguageImportStatements
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
 import com.intellij.platform.lsp.api.customization.LspOptimizeImportsSupport
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
@@ -35,21 +35,21 @@ internal class LspImportOptimizer : ImportOptimizer {
 
   private val noResult = Runnable { }
 
-  override fun supports(psiFile: PsiFile): Boolean = findServerToOptimizeImports(psiFile) != null
+  override fun supports(psiFile: PsiFile): Boolean = findClientToOptimizeImports(psiFile) != null
 
   override fun processFile(psiFile: PsiFile): Runnable {
     val virtualFile = psiFile.virtualFile?.takeIf { it.isInLocalFileSystem && it !is VirtualFileWindow } ?: return noResult
-    val lspServer = findServerToOptimizeImports(psiFile) ?: return noResult
-    val codeAction = requestCodeAction(lspServer, virtualFile) ?: return noResult
-    val intentionAction = LspIntentionAction(lspServer, codeAction)
-    if (!intentionAction.isAvailable { isReasonableOrganizeImportsAction(lspServer, virtualFile, it) }) return noResult
+    val lspClient = findClientToOptimizeImports(psiFile) ?: return noResult
+    val codeAction = requestCodeAction(lspClient, virtualFile) ?: return noResult
+    val intentionAction = LspIntentionAction(lspClient, codeAction)
+    if (!intentionAction.isAvailable { isReasonableOrganizeImportsAction(lspClient, virtualFile, it) }) return noResult
 
     return Runnable {
       intentionAction.invoke(virtualFile)
     }
   }
 
-  private fun requestCodeAction(lspServer: LspServer, virtualFile: VirtualFile): CodeAction? {
+  private fun requestCodeAction(lspClient: LspClient, virtualFile: VirtualFile): CodeAction? {
     val codeActionContext = CodeActionContext().apply {
       diagnostics = emptyList()
       triggerKind = CodeActionTriggerKind.Invoked
@@ -57,7 +57,7 @@ internal class LspImportOptimizer : ImportOptimizer {
     }
 
     // Send code action request per document (cell). For regular files, there's one document.
-    val results = lspServer.documentMapping.getDocumentsInFileSync(virtualFile).mapNotNull { lspDocument ->
+    val results = lspClient.documentMapping.getDocumentsInFileSync(virtualFile).mapNotNull { lspDocument ->
       val params = CodeActionParams(
         lspDocument.id,
         Range(Position(0, 0), Position(0, 0)), // doesn't matter
@@ -66,14 +66,14 @@ internal class LspImportOptimizer : ImportOptimizer {
 
       // Only one code action supported as UI does not suppose selection of the one import
       // option from the list (like it is processed in VS Code)
-      lspServer.sendRequestSync { it.textDocumentService.codeAction(params) }?.singleOrNull()?.right
+      lspClient.sendRequestSync { it.textDocumentService.codeAction(params) }?.singleOrNull()?.right
     }
 
     return results.firstOrNull()
   }
 
-  private fun isReasonableOrganizeImportsAction(lspServer: LspServer, virtualFile: VirtualFile, codeAction: CodeAction): Boolean {
-    val currentFileUri = lspServer.descriptor.getFileUri(virtualFile)
+  private fun isReasonableOrganizeImportsAction(lspClient: LspClient, virtualFile: VirtualFile, codeAction: CodeAction): Boolean {
+    val currentFileUri = lspClient.descriptor.getFileUri(virtualFile)
     if (codeAction.kind != SourceOrganizeImports) return false
     if (codeAction.command != null) return false // not expected for the Optimize Imports action
     val edit = codeAction.edit ?: return false
@@ -87,18 +87,18 @@ internal class LspImportOptimizer : ImportOptimizer {
 }
 
 
-internal fun findServerToOptimizeImports(psiFile: PsiFile): LspServer? {
+internal fun findClientToOptimizeImports(psiFile: PsiFile): LspClient? {
   if (psiFile.project.isDefault) return null
   val virtualFile = psiFile.virtualFile?.takeIf { it.isInLocalFileSystem && it !is VirtualFileWindow } ?: return null
 
-  return LspServerManagerImpl.getInstanceImpl(psiFile.project).findRunningServer { lspServer ->
-    lspServer.descriptor.isSupportedFile(virtualFile) && canServerOptimizeImports(lspServer, psiFile, virtualFile)
+  return LspServerManagerImpl.getInstanceImpl(psiFile.project).findRunningServer { lspClient ->
+    lspClient.descriptor.isSupportedFile(virtualFile) && canClientOptimizeImports(lspClient, psiFile, virtualFile)
   }
 }
 
-private fun canServerOptimizeImports(lspServer: LspServer, psiFile: PsiFile, virtualFile: VirtualFile): Boolean {
+private fun canClientOptimizeImports(lspClient: LspClient, psiFile: PsiFile, virtualFile: VirtualFile): Boolean {
   val optimizeImportsSupport =
-    lspServer.descriptor.lspCustomization.optimizeImportsCustomizer as? LspOptimizeImportsSupport ?: return false
+    lspClient.descriptor.lspCustomization.optimizeImportsCustomizer as? LspOptimizeImportsSupport ?: return false
   // `LspImportOptimizer` should not come to the stage if any other `ImportOptimizer` wants to do its job for this file.
   // Need to check if there's any other `FormattingService`/`ImportOptimizer` that wants to handle this file.
   // `CoreFormattingService` is special, it is registered as the last one, and it iterates `ImportOptimizer` extensions.
@@ -107,7 +107,7 @@ private fun canServerOptimizeImports(lspServer: LspServer, psiFile: PsiFile, vir
   val ideCanOptimizeImportsInThisFileItself =
     doesOtherFormattingServiceWantToWork(psiFile) || doesOtherImportOptimizerWantToWork(psiFile)
   return optimizeImportsSupport
-    .shouldOptimizeImportsInThisFileExclusivelyByServer(lspServer, virtualFile, ideCanOptimizeImportsInThisFileItself)
+    .shouldOptimizeImportsInThisFileExclusivelyByServer(lspClient, virtualFile, ideCanOptimizeImportsInThisFileItself)
 }
 
 // The logic is similar to `OptimizeImportsProcessor.collectOptimizers()`,

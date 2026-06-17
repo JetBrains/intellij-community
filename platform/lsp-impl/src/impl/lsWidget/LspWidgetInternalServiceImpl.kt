@@ -13,7 +13,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.lang.lsWidget.impl.fus.LanguageServiceWidgetActionKind
 import com.intellij.platform.lang.lsWidget.impl.fus.LanguageServiceWidgetUsagesCollector
 import com.intellij.platform.lsp.api.LspBundle
-import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.lsWidget.LspWidgetInternalService
 import com.intellij.platform.lsp.impl.LspServerImpl
 import com.intellij.platform.lsp.impl.LspServerManagerImpl
@@ -25,36 +25,37 @@ import com.intellij.testFramework.LightVirtualFile
  * as well as to [LspServerImpl] and other classes that are not available in the public LSP API.
  */
 internal class LspWidgetInternalServiceImpl : LspWidgetInternalService() {
-  override fun createShowErrorOutputAction(lspServer: LspServer): AnAction? {
-    (lspServer as LspServerImpl).errorOutput ?: return null
+  override fun createShowErrorOutputAction(lspClient: LspClient): AnAction? {
+    val lspServer = lspClient as LspServerImpl
+    lspServer.errorOutput ?: return null
     return OpenLspErrorOutputAction(lspServer)
   }
 
-  override fun restartLspServer(lspServer: LspServer) {
+  override fun restartLspClient(lspClient: LspClient) {
     LanguageServiceWidgetUsagesCollector
-      .actionInvoked(lspServer.project, LanguageServiceWidgetActionKind.RestartService, lspServer.descriptor.javaClass)
-    val manager = LspServerManagerImpl.getInstanceImpl(lspServer.project)
-    manager.stopRunningServer(lspServer as LspServerImpl)
-    manager.startServersIfNeeded(lspServer.providerClass)
+      .actionInvoked(lspClient.project, LanguageServiceWidgetActionKind.RestartService, lspClient.descriptor.javaClass)
+    val manager = LspServerManagerImpl.getInstanceImpl(lspClient.project)
+    manager.stopRunningServer(lspClient as LspServerImpl)
+    manager.startClientsIfNeeded(lspClient.providerClass)
 
-    val title = LangBundle.message("language.services.0.server.restarted.notification.title", lspServer.descriptor.presentableName)
+    val title = LangBundle.message("language.services.0.server.restarted.notification.title", lspClient.descriptor.presentableName)
     NotificationGroupManager.getInstance()
       .getNotificationGroup("language.service.stopped.or.restarted")
       .createNotification(title, "", NotificationType.INFORMATION)
-      .notify(lspServer.project)
+      .notify(lspClient.project)
   }
 
-  override fun stopLspServer(lspServer: LspServer) {
+  override fun stopLspClient(lspClient: LspClient) {
     LanguageServiceWidgetUsagesCollector
-      .actionInvoked(lspServer.project, LanguageServiceWidgetActionKind.StopService, lspServer.descriptor.javaClass)
-    LspServerManagerImpl.getInstanceImpl(lspServer.project).stopRunningServer(lspServer as LspServerImpl)
+      .actionInvoked(lspClient.project, LanguageServiceWidgetActionKind.StopService, lspClient.descriptor.javaClass)
+    LspServerManagerImpl.getInstanceImpl(lspClient.project).stopRunningServer(lspClient as LspServerImpl)
 
-    val title = LangBundle.message("language.services.0.server.stopped.notification.title", lspServer.descriptor.presentableName)
+    val title = LangBundle.message("language.services.0.server.stopped.notification.title", lspClient.descriptor.presentableName)
     val content = LangBundle.message("language.services.server.stopped.notification.content")
     NotificationGroupManager.getInstance()
       .getNotificationGroup("language.service.stopped.or.restarted")
       .createNotification(title, content, NotificationType.INFORMATION)
-      .notify(lspServer.project)
+      .notify(lspClient.project)
   }
 }
 

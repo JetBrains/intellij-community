@@ -2,6 +2,7 @@
 package com.intellij.platform.lsp.api.customization
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.eclipse.lsp4j.CodeActionKind
@@ -40,7 +41,7 @@ open class LspOptimizeImportsSupport : LspOptimizeImportsCustomizer() {
    * Implementation may look like this:
    *
    *    override fun shouldOptimizeImportsInThisFileExclusivelyByServer(
-   *      lspServer: LspServer,
+   *      lspClient: LspClient,
    *      file: VirtualFile,
    *      ideCanOptimizeImportsInThisFileItself: Boolean,
    *    ): Boolean = file.extension == "foo"
@@ -49,6 +50,20 @@ open class LspOptimizeImportsSupport : LspOptimizeImportsCustomizer() {
    *        that supports the given file
    */
   @RequiresReadLock
+  open fun shouldOptimizeImportsInThisFileExclusivelyByServer(
+    lspClient: LspClient,
+    file: VirtualFile,
+    ideCanOptimizeImportsInThisFileItself: Boolean,
+  ): Boolean =
+    @Suppress("DEPRECATION")
+    shouldOptimizeImportsInThisFileExclusivelyByServer(lspClient as LspServer, file, ideCanOptimizeImportsInThisFileItself)
+
+  @Deprecated(
+    "Override or call shouldOptimizeImportsInThisFileExclusivelyByServer(lspClient, file, ideCanOptimizeImportsInThisFileItself) — the LspClient overload",
+    ReplaceWith("shouldOptimizeImportsInThisFileExclusivelyByServer(lspServer as LspClient, file, ideCanOptimizeImportsInThisFileItself)"),
+  )
+  @RequiresReadLock
+  @Suppress("DEPRECATION")
   open fun shouldOptimizeImportsInThisFileExclusivelyByServer(
     lspServer: LspServer,
     file: VirtualFile,

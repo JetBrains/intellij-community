@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.lsp.api.LspServer
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.util.getLsp4jRange
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -139,7 +139,7 @@ internal fun <T> List<List<T>?>.aggregatePerDocumentResults(): List<T>? {
 }
 
 /**
- * Internal accessor for [LspDocumentMapping] from [LspServer] references in internal code.
+ * Internal accessor for [LspDocumentMapping] from [LspClient] references in internal code.
  */
-internal val LspServer.documentMapping: LspDocumentMapping
+internal val LspClient.documentMapping: LspDocumentMapping
   get() = (this as LspServerImpl).documentMapping

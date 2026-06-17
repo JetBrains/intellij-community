@@ -6,6 +6,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.customization.LspCodeActionsSupport
 import com.intellij.platform.lsp.api.customization.LspIntentionAction
 import com.intellij.platform.lsp.impl.LspServerImpl
@@ -107,7 +108,7 @@ internal class LspQuickFixSet(
         break
       }
 
-      codeActionsSupport.createQuickFix(lspServer, codeAction)?.let {
+      codeActionsSupport.createQuickFix(lspServer as LspClient, codeAction)?.let {
         (quickFixes[i++] as LspQuickFixWrapper).lspIntentionAction = it
       }
     }

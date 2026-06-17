@@ -2,6 +2,7 @@
 package com.intellij.platform.lsp.api.customization
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServer
 import org.eclipse.lsp4j.CodeLens
 import org.eclipse.lsp4j.Command
@@ -41,7 +42,7 @@ open class LspCodeLensSupport : LspCodeLensCustomizer() {
    *
    * ```kotlin
    * override fun codeLensClicked(
-   *   server: LspServer,
+   *   lspClient: LspClient,
    *   contextFile: VirtualFile,
    *   command: Command,
    *   mouseEvent: MouseEvent?
@@ -50,28 +51,28 @@ open class LspCodeLensSupport : LspCodeLensCustomizer() {
    *     // Show references: display a popup with clickable locations
    *     "language.showReferences" -> {
    *       val locations = Lsp4jService.getInstance().extractLocationsFromJson(command.arguments) ?: return
-   *       navigateOrShowPopup(server, locations, "References", mouseEvent)
+   *       navigateOrShowPopup(lspClient, locations, "References", mouseEvent)
    *     }
    *
    *     // Run: execute a run configuration based on command arguments
    *     "language.run" -> {
    *       val runnableArgs = command.arguments[0] as? JsonObject
    *       val args = runnableArgs?.get("args")?.asJsonArray
-   *       executeRunConfiguration(server.project, args, isDebug = false)
+   *       executeRunConfiguration(lspClient.project, args, isDebug = false)
    *     }
    *
    *     // Test: run tests based on command arguments
    *     "language.test" -> {
    *       val testArgs = command.arguments[0] as? JsonObject
    *       val testName = testArgs?.get("testName")?.asString
-   *       executeTestConfiguration(server.project, testName)
+   *       executeTestConfiguration(lspClient.project, testName)
    *     }
    *   }
    * }
    * ```
    *
    *
-   * @param server The LSP server instance that provided this code lens
+   * @param lspClient The LSP client instance that provided this code lens
    * @param contextFile The file where the code lens appears
    * @param command The LSP command to execute, containing command name and arguments
    * @param mouseEvent The mouse event that triggered the click
@@ -80,10 +81,20 @@ open class LspCodeLensSupport : LspCodeLensCustomizer() {
    * @see com.intellij.platform.lsp.api.Lsp4jService.extractLocationsFromJson
    * @see com.intellij.platform.lsp.util.navigateOrShowPopup
    */
+  open fun codeLensClicked(lspClient: LspClient, contextFile: VirtualFile, command: Command, mouseEvent: MouseEvent?) {
+    @Suppress("DEPRECATION")
+    codeLensClicked(lspClient as LspServer, contextFile, command, mouseEvent)
+  }
+
+  @Deprecated(
+    "Override or call codeLensClicked(lspClient, …) — the LspClient overload",
+    ReplaceWith("codeLensClicked(server as LspClient, contextFile, command, mouseEvent)", "com.intellij.platform.lsp.api.LspClient"),
+  )
+  @Suppress("DEPRECATION")
   open fun codeLensClicked(server: LspServer, contextFile: VirtualFile, command: Command, mouseEvent: MouseEvent?) {
     val commandsCustomizer = server.descriptor.lspCustomization.commandsCustomizer
     if (commandsCustomizer is LspCommandsSupport) {
-      commandsCustomizer.executeCommand(server, contextFile, command)
+      commandsCustomizer.executeCommand(server as LspClient, contextFile, command)
     }
   }
 }
