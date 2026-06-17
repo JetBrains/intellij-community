@@ -38,7 +38,6 @@ val communityPluginValidationOptions: PluginValidationOptions = PluginValidation
     "intellij.platform.project.xml",
     "intellij.platform.ide.progress.xml",
     "intellij.platform.syntax.psi.xml",
-    "intellij.vcs.git.xml",
     "kotlin.plugin.k2.xml",
   ),
   referencedPluginIdsOfExternalPlugins = setOf(
