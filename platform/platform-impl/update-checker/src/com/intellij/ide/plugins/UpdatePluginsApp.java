@@ -90,6 +90,7 @@ final class UpdatePluginsApp implements ApplicationStarter {
     hotfixInstallDependency(pluginsToUpdate, "com.intellij.bigdatatools.core", "intellij.bigdatatools.awsBase");
     hotfixInstallDependency(pluginsToUpdate, "com.intellij.bigdatatools.rfs", "intellij.bigdatatools.gcloud");
     hotfixInstallDependency(pluginsToUpdate, "com.intellij.bigdatatools.rfs", "intellij.bigdatatools.azure");
+    hotfixInstallDependency(pluginsToUpdate, "com.jetbrains.rust", "com.intellij.nativeDebug");
 
     logInfo(
       "** Plugins to update: " +
