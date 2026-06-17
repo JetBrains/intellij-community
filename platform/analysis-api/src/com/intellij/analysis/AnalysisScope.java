@@ -389,7 +389,7 @@ public class AnalysisScope {
           .executeSynchronously();
       }
       else {
-        commitAndRunInSmartMode(() -> doProcessFile(visitor, psiManager, vFile), project);
+        commitAndRunInSmartMode(project, () -> doProcessFile(visitor, psiManager, vFile));
       }
     }
     else {
@@ -399,7 +399,7 @@ public class AnalysisScope {
     return indicator == null || !indicator.isCanceled();
   }
 
-  private static void commitAndRunInSmartMode(Runnable runnable, Project project) {
+  private static void commitAndRunInSmartMode(@NotNull Project project, @NotNull Runnable runnable) {
     while (true) {
       DumbService dumbService = DumbService.getInstance(project);
       dumbService.waitForSmartMode();

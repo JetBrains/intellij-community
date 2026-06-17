@@ -280,7 +280,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
   private static void resolveElementRecursively(@NotNull InspectionToolResultExporter presentation, @NotNull RefEntity refElement) {
     presentation.suppressProblem(refElement);
-    if (refElement instanceof RefElement) ((RefElement)refElement).initializeIfNeeded();
+    if (refElement instanceof RefElement ref) {
+      ref.initializeIfNeeded();
+    }
     List<RefEntity> children = refElement.getChildren();
     for (RefEntity child : children) {
       resolveElementRecursively(presentation, child);
@@ -557,31 +559,26 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   protected EnabledInspectionsProvider createEnabledInspectionsProvider(@NotNull List<? extends Tools> localTools,
                                                                         @NotNull List<? extends Tools> globalSimpleTools,
                                                                         @NotNull Project project) {
-    return new EnabledInspectionsProvider() {
-      @Override
-      public @NotNull ToolWrappers getEnabledTools(@Nullable PsiFile psiFile, boolean includeDoNotShow) {
-        return new ToolWrappers(
-          localTools.stream()
-            .map(tool -> tool.getEnabledTool(psiFile, includeDoNotShow))
-            .filter(wrapper -> wrapper instanceof LocalInspectionToolWrapper)
-            .map(wrapper -> (LocalInspectionToolWrapper)wrapper)
-            .toList(),
-          globalSimpleTools.stream()
-            .map(tool -> tool.getEnabledTool(psiFile, includeDoNotShow))
-            .filter(wrapper -> wrapper instanceof GlobalInspectionToolWrapper)
-            .map(wrapper -> (GlobalInspectionToolWrapper)wrapper)
-            .toList()
-        );
-      }
-    };
+    return (psiFile, includeDoNotShow) -> new EnabledInspectionsProvider.ToolWrappers(
+      localTools.stream()
+        .map(tool -> tool.getEnabledTool(psiFile, includeDoNotShow))
+        .filter(wrapper -> wrapper instanceof LocalInspectionToolWrapper)
+        .map(wrapper -> (LocalInspectionToolWrapper)wrapper)
+        .toList(),
+      globalSimpleTools.stream()
+        .map(tool -> tool.getEnabledTool(psiFile, includeDoNotShow))
+        .filter(wrapper -> wrapper instanceof GlobalInspectionToolWrapper)
+        .map(wrapper -> (GlobalInspectionToolWrapper)wrapper)
+        .toList()
+    );
   }
 
   protected void runExternalTools() { }
 
   private static @NotNull TextRange getEffectiveRange(@NotNull SearchScope searchScope, @NotNull PsiFile file) {
-    if (searchScope instanceof LocalSearchScope) {
+    if (searchScope instanceof LocalSearchScope local) {
       List<PsiElement> scopeFileElements =
-        ContainerUtil.filter(((LocalSearchScope)searchScope).getScope(), e -> e.getContainingFile() == file);
+        ContainerUtil.filter(local.getScope(), e -> e.getContainingFile() == file);
       if (!scopeFileElements.isEmpty()) {
         int start = -1;
         int end = -1;
@@ -615,7 +612,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     Document document = PsiDocumentManager.getInstance(getProject()).getDocument(psiFile);
     if (document == null) return;
     DaemonProgressIndicator progressIndicator = assertUnderDaemonProgress();
-    HighlightingSessionImpl.runInsideHighlightingSession(psiFile, null, new ProperTextRange(psiFile.getTextRange()), false, session -> {
+    HighlightingSessionImpl.runInsideHighlightingSession(psiFile, null, new ProperTextRange(psiFile.getTextRange()), false, _ -> {
       InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, _ -> new InspectionProfileWrapper(getCurrentProfile()), () -> {
         try {
           Map<LocalInspectionToolWrapper, List<ProblemDescriptor>> map =
@@ -983,13 +980,13 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       @Override
       public void addProblemElement(@Nullable RefEntity refEntity, CommonProblemDescriptor @NotNull ... commonProblemDescriptors) {
         for (CommonProblemDescriptor problemDescriptor : commonProblemDescriptors) {
-          if (!(problemDescriptor instanceof ProblemDescriptor)) {
+          if (!(problemDescriptor instanceof ProblemDescriptor problem)) {
             continue;
           }
-          if (SuppressionUtil.inspectionResultSuppressed(((ProblemDescriptor)problemDescriptor).getPsiElement(), toolWrapper.getTool())) {
+          if (SuppressionUtil.inspectionResultSuppressed(problem.getPsiElement(), toolWrapper.getTool())) {
             continue;
           }
-          ProblemGroup problemGroup = ((ProblemDescriptor)problemDescriptor).getProblemGroup();
+          ProblemGroup problemGroup = problem.getProblemGroup();
 
           InspectionToolWrapper<?, ?> targetWrapper = problemGroup == null ? toolWrapper : wrappersMap.get(problemGroup.getProblemName());
           if (targetWrapper != null) { // Else it's switched off
@@ -1012,7 +1009,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   }
 
   private static final TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext, RefElement> CONVERT =
-    (tool, elt, context) -> {
+    (_, elt, context) -> {
       PsiNamedElement problemElement = PsiTreeUtil.getNonStrictParentOfType(elt, PsiFile.class);
 
       RefElement refElement = context.getRefManager().getReference(problemElement);
@@ -1147,9 +1144,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     progressIndicator.setIndeterminate(false);
     SearchScope searchScope = ReadAction.computeBlocking(scope::toSearchScope);
     TextRange range;
-    if (searchScope instanceof LocalSearchScope) {
-      PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
-      range = elements.length == 1 ? ReadAction.computeBlocking(elements[0]::getTextRange) : null;
+    if (searchScope instanceof LocalSearchScope local) {
+      PsiElement[] elements = local.getScope();
+      range = elements.length == 1 ? ReadAction.computeBlocking(() -> elements[0].getTextRange()) : null;
     }
     else {
       range = null;
@@ -1182,14 +1179,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
               @NotNull Set<InspectionToolWrapper<?, ?>> other = new HashSet<>();
               profileImpl.collectDependentInspections(tool, other, getProject());
               for (InspectionToolWrapper<?, ?> wrapper : other) {
-                if (wrapper instanceof LocalInspectionToolWrapper) {
-                  lTools.add((LocalInspectionToolWrapper)wrapper);
+                if (wrapper instanceof LocalInspectionToolWrapper local) {
+                  lTools.add(local);
                   wrapper.initialize(GlobalInspectionContextImpl.this);
                 }
               }
             }
-            if (tool instanceof GlobalInspectionToolWrapper) {
-              tool = ((GlobalInspectionToolWrapper)tool).getSharedLocalInspectionToolWrapper();
+            if (tool instanceof GlobalInspectionToolWrapper global) {
+              tool = global.getSharedLocalInspectionToolWrapper();
             }
             if (tool != null) {
               lTools.add((LocalInspectionToolWrapper)tool);
@@ -1241,23 +1238,17 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         InspectionToolResultExporter toolPresentation =
           getPresentation(tool);
         for (CommonProblemDescriptor descriptor : toolPresentation.getProblemDescriptors()) {
-          if (descriptor instanceof ProblemDescriptor) {
-            localDescriptors.add((ProblemDescriptor)descriptor);
+          if (descriptor instanceof ProblemDescriptor problem) {
+            localDescriptors.add(problem);
           }
         }
       }
 
-      if (searchScope instanceof LocalSearchScope) {
-        for (Iterator<ProblemDescriptor> iterator =
-             localDescriptors.iterator(); iterator.hasNext(); ) {
+      if (searchScope instanceof LocalSearchScope local) {
+        for (Iterator<ProblemDescriptor> iterator = localDescriptors.iterator(); iterator.hasNext(); ) {
           ProblemDescriptor descriptor = iterator.next();
-          TextRange infoRange =
-            descriptor instanceof ProblemDescriptorBase
-            ? ((ProblemDescriptorBase)descriptor).getTextRange()
-            : null;
-          if (infoRange != null &&
-              !((LocalSearchScope)searchScope).containsRange(file,
-                                                             infoRange)) {
+          TextRange infoRange = descriptor instanceof ProblemDescriptorBase base ? base.getTextRange() : null;
+          if (infoRange != null && !local.containsRange(file, infoRange)) {
             iterator.remove();
           }
         }
