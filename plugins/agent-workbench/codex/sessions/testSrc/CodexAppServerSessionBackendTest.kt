@@ -198,6 +198,42 @@ class CodexAppServerSessionBackendTest {
   }
 
   @Test
+  fun forkThreadRollsBackForkedThreadAndMapsResult() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-fork")
+      Files.createDirectories(projectDir)
+      val cwd = normalizeRootPath(projectDir.invariantSeparatorsPathString)
+      val forkCalls = ArrayList<String>()
+      val rollbackCalls = ArrayList<Pair<String, Int>>()
+      val readCalls = ArrayList<String>()
+      val backend = CodexAppServerSessionBackend(
+        listThreadsForProject = { emptyList() },
+        readThread = { threadId ->
+          readCalls.add(threadId)
+          parentThread(id = threadId, cwd = cwd, updatedAt = 300L)
+        },
+        forkThreadRequest = { threadId ->
+          forkCalls.add(threadId)
+          parentThread(id = "forked-thread", cwd = cwd, updatedAt = 250L)
+        },
+        rollbackThreadRequest = { threadId, rollbackTurns ->
+          rollbackCalls.add(threadId to rollbackTurns)
+          parentThread(id = threadId, cwd = cwd, updatedAt = 260L)
+        },
+        archiveThread = {},
+      )
+
+      val result = backend.forkThread(path = projectDir.toString(), threadId = "source-thread", rollbackTurns = 2, openProject = null)
+
+      assertThat(forkCalls).containsExactly("source-thread")
+      assertThat(rollbackCalls).containsExactly("forked-thread" to 2)
+      assertThat(readCalls).isEmpty()
+      assertThat(result?.thread?.id).isEqualTo("forked-thread")
+      assertThat(result?.thread?.updatedAt).isEqualTo(260L)
+    }
+  }
+
+  @Test
   fun refreshThreadsRethrowsUnexpectedReadError() {
     val projectDir = tempDir.resolve("project-read-failure")
     Files.createDirectories(projectDir)

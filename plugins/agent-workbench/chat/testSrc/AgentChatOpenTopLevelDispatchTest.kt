@@ -499,7 +499,7 @@ class AgentChatOpenTopLevelDispatchTest {
   }
 
   @Test
-  fun structureViewForkRebindsOpenPiChatTab() {
+  fun structureViewForkOpensForkedPiChatTab() {
     val terminalTabs = OpenTabDispatchFakeAgentChatTerminalTabs()
     customFileEditorFactory = { editorProject, file ->
       AgentChatFileEditor(
@@ -535,7 +535,6 @@ class AgentChatOpenTopLevelDispatchTest {
         val forked = forkAgentChatThreadOutlineTarget(
           project = project,
           target = AgentChatThreadOutlineTarget(file = file, source = source, item = item),
-          rebindRequestedAtMs = 4_200L,
         )
 
         assertThat(forked).isTrue()
@@ -548,13 +547,31 @@ class AgentChatOpenTopLevelDispatchTest {
             tabKey = file.tabKey,
           )
         )
-        assertThat(file.threadIdentity).isEqualTo(piThreadIdentity("thread-outline-forked"))
-        assertThat(file.threadId).isEqualTo("thread-outline-forked")
-        assertThat(file.threadTitle).isEqualTo("Forked Pi thread")
-        assertThat(file.threadActivity).isEqualTo(AgentThreadActivity.PROCESSING)
+        assertThat(file.threadIdentity).isEqualTo(piThreadIdentity("thread-outline-fork"))
+        assertThat(file.threadId).isEqualTo("thread-outline-fork")
+        assertThat(file.threadTitle).isEqualTo("Original Pi thread")
         assertThat(file.newThreadRebindRequestedAtMs).isNull()
-        assertThat(service<AgentChatTabsService>().load(file.tabKey)?.identity?.threadIdentity)
-          .isEqualTo(piThreadIdentity("thread-outline-forked"))
+
+        val files = openedChatFiles()
+        assertThat(files.map { it.threadId }).containsExactlyInAnyOrder("thread-outline-fork", "thread-outline-forked")
+        val forkedFile = files.single { chatFile -> chatFile.threadId == "thread-outline-forked" }
+        assertThat(forkedFile.threadIdentity).isEqualTo(piThreadIdentity("thread-outline-forked"))
+        assertThat(forkedFile.threadTitle).isEqualTo("Forked Pi thread")
+        assertThat(forkedFile.threadActivity).isEqualTo(AgentThreadActivity.PROCESSING)
+        assertThat(forkedFile.newThreadRebindRequestedAtMs).isNull()
+        val selectedFile = runInUi {
+          FileEditorManager.getInstance(project).selectedFiles.singleOrNull()
+        }
+        assertThat(selectedFile).isSameAs(forkedFile)
+
+        val forkedAgain = forkAgentChatThreadOutlineTarget(
+          project = project,
+          target = AgentChatThreadOutlineTarget(file = file, source = source, item = item),
+        )
+
+        assertThat(forkedAgain).isTrue()
+        assertThat(openedChatFiles().map { it.threadId })
+          .containsExactlyInAnyOrder("thread-outline-fork", "thread-outline-forked")
       }
     }
   }

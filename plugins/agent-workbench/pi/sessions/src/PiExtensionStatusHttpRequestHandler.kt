@@ -33,13 +33,16 @@ internal class PiExtensionStatusHttpRequestHandler : HttpRequestHandler() {
     val token = bearerToken(request)
     val content = request.content().toString(StandardCharsets.UTF_8)
     val status = when (PiExtensionStatusBridge.handleStatusRequest(token = token, content = content)) {
-      PiExtensionStatusRequestResult.ACCEPTED -> HttpResponseStatus.OK
+      PiExtensionStatusRequestResult.ACCEPTED -> {
+        HTTP_STATUS_LOG.info("Accepted Pi extension status update")
+        HttpResponseStatus.OK
+      }
       PiExtensionStatusRequestResult.UNAUTHORIZED -> {
-        HTTP_STATUS_LOG.debug("Rejected unauthorized Pi extension status update")
+        HTTP_STATUS_LOG.info("Rejected unauthorized Pi extension status update")
         HttpResponseStatus.UNAUTHORIZED
       }
       PiExtensionStatusRequestResult.BAD_REQUEST -> {
-        HTTP_STATUS_LOG.debug("Rejected malformed Pi extension status update")
+        HTTP_STATUS_LOG.info("Rejected malformed Pi extension status update")
         HttpResponseStatus.BAD_REQUEST
       }
     }

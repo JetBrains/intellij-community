@@ -4,6 +4,8 @@ package com.intellij.agent.workbench.pi.sessions
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.agent.workbench.json.forEachJsonObjectField
@@ -19,6 +21,9 @@ import io.netty.handler.codec.http.HttpMethod
 import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.io.jsonRpc.Client
 import org.jetbrains.io.jsonRpc.MessageServer
@@ -39,6 +44,12 @@ private val PI_CONTROL_CONNECTION_KEY: Key<PiControlConnection> = Key.create("ag
 internal object PiExtensionControlBridge {
   private val jsonFactory = JsonFactory()
   private val connectionsBySessionId = ConcurrentHashMap<String, PiControlConnection>()
+  private val controlUpdates = MutableSharedFlow<AgentSessionSourceUpdateEvent>(
+    extraBufferCapacity = 64,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST,
+  )
+
+  val updateEvents: Flow<AgentSessionSourceUpdateEvent> = controlUpdates
 
   fun canNavigateThreadOutlineItem(path: String, threadId: String, itemId: String): Boolean {
     return resolveConnection(path = path, threadId = threadId, itemId = itemId)?.capabilities?.navigateTree == true
@@ -51,6 +62,13 @@ internal object PiExtensionControlBridge {
 
   fun canForkThreadFromOutlineItem(path: String, threadId: String, itemId: String): Boolean {
     return resolveConnection(path = path, threadId = threadId, itemId = itemId)?.capabilities?.fork == true
+  }
+
+  fun currentThreadUpdateEvent(path: String, threadId: String): AgentSessionSourceUpdateEvent? {
+    val normalizedPath = normalizePiProjectPath(path) ?: return null
+    val normalizedThreadId = threadId.trim().takeIf { it.isNotEmpty() } ?: return null
+    val connection = connectionsBySessionId[normalizedThreadId]?.takeIf { it.projectPath == normalizedPath } ?: return null
+    return buildControlUpdateEvent(projectPath = connection.projectPath, sessionId = connection.sessionId)
   }
 
   suspend fun forkThreadFromOutlineItem(path: String, threadId: String, itemId: String): AgentSessionThread? {
@@ -87,11 +105,12 @@ internal object PiExtensionControlBridge {
 
   fun handleDisconnected(client: Client) {
     val connection = client.getUserData(PI_CONTROL_CONNECTION_KEY) ?: return
-    CONTROL_LOG.debug(
+    CONTROL_LOG.info(
       "Pi control socket disconnected for session=${connection.sessionId}, projectPath=${connection.projectPath}, " +
       "capabilities=${connection.capabilities.describe()}"
     )
     unregisterConnection(connection)
+    emitControlUpdate(projectPath = connection.projectPath, sessionId = connection.sessionId)
     connection.completePending(PiControlResponse(ok = false, cancelled = true, error = "Control socket disconnected", thread = null))
   }
 
@@ -101,7 +120,7 @@ internal object PiExtensionControlBridge {
     val expectedSessionId = PiExtensionStatusBridge.authenticateLaunchToken(token = token, sessionId = sessionId)
     val projectPath = payload.cwd?.let(::normalizePiProjectPath)
     if (token == null || sessionId == null || expectedSessionId == null || projectPath == null) {
-      CONTROL_LOG.debug("Rejected unauthorized Pi extension control hello")
+      CONTROL_LOG.info("Rejected unauthorized Pi extension control hello for session=${sessionId != null}, cwd=${payload.cwd != null}")
       sendProtocolError(client, requestId = payload.requestId, error = "Unauthorized control hello")
       return
     }
@@ -115,9 +134,10 @@ internal object PiExtensionControlBridge {
     )
     client.putUserData(PI_CONTROL_CONNECTION_KEY, connection)
     registerConnection(connection)
-    CONTROL_LOG.debug(
+    CONTROL_LOG.info(
       "Registered Pi control socket for session=$sessionId, projectPath=$projectPath, capabilities=${connection.capabilities.describe()}"
     )
+    emitControlUpdate(projectPath = projectPath, sessionId = sessionId)
     sendControlText(client, buildHelloAcknowledgement(requestId = payload.requestId, sessionId = sessionId))
   }
 
@@ -207,7 +227,7 @@ internal object PiExtensionControlBridge {
   }
 
   private fun unregisterConnection(connection: PiControlConnection) {
-    CONTROL_LOG.debug("Unregistered Pi control socket for session=${connection.sessionId}, projectPath=${connection.projectPath}")
+    CONTROL_LOG.info("Unregistered Pi control socket for session=${connection.sessionId}, projectPath=${connection.projectPath}")
     connectionsBySessionId.remove(connection.sessionId, connection)
   }
 
@@ -229,12 +249,26 @@ internal object PiExtensionControlBridge {
     }
     connectionsBySessionId[sessionId] = connection
     if (previousSessionId != sessionId || previousProjectPath != projectPath || previousCapabilities != capabilities) {
-      CONTROL_LOG.debug(
+      CONTROL_LOG.info(
         "Updated Pi control socket from session=$previousSessionId, projectPath=$previousProjectPath, " +
         "capabilities=${previousCapabilities.describe()} to session=$sessionId, projectPath=$projectPath, " +
         "capabilities=${capabilities.describe()}"
       )
+      emitControlUpdate(projectPath = previousProjectPath, sessionId = previousSessionId)
+      emitControlUpdate(projectPath = projectPath, sessionId = sessionId)
     }
+  }
+
+  private fun emitControlUpdate(projectPath: String, sessionId: String) {
+    controlUpdates.tryEmit(buildControlUpdateEvent(projectPath = projectPath, sessionId = sessionId))
+  }
+
+  private fun buildControlUpdateEvent(projectPath: String, sessionId: String): AgentSessionSourceUpdateEvent {
+    return AgentSessionSourceUpdateEvent(
+      type = AgentSessionSourceUpdate.HINTS_CHANGED,
+      scopedPaths = setOf(projectPath),
+      threadIds = setOf(sessionId),
+    )
   }
 
   private fun parseControlPayload(content: String): PiControlPayload? {
@@ -267,10 +301,11 @@ internal class PiExtensionControlWebSocketHandler : WebSocketHandshakeHandler() 
   ): Boolean {
     val token = bearerToken(request)
     if (PiExtensionStatusBridge.authenticateLaunchToken(token = token) == null) {
-      CONTROL_LOG.debug("Rejected unauthorized Pi extension control WebSocket handshake")
+      CONTROL_LOG.info("Rejected unauthorized Pi extension control WebSocket handshake")
       HttpResponseStatus.UNAUTHORIZED.sendPlainText(context.channel(), request)
       return true
     }
+    CONTROL_LOG.info("Accepted Pi extension control WebSocket handshake")
     return super.process(urlDecoder, request, context)
   }
 

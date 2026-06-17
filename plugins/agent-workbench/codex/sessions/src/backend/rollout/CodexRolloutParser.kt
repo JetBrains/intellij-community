@@ -20,6 +20,7 @@ import com.intellij.agent.workbench.codex.common.readStringOrNull
 import com.intellij.agent.workbench.codex.sessions.backend.CodexBackendThread
 import com.intellij.agent.workbench.codex.sessions.backend.isResponseRequired
 import com.intellij.agent.workbench.codex.sessions.backend.toCodexSessionActivity
+import com.intellij.agent.workbench.codex.sessions.codexUserPromptOutlineItemId
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.agentSessionOutlinePhaseTitle
 import com.intellij.agent.workbench.common.session.compactAgentSessionOutlineText
@@ -29,9 +30,9 @@ import com.intellij.agent.workbench.common.session.summarizeAgentSessionOutlineC
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
 import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineItem
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineItemKind
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadOutline
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItem
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
+import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import java.io.BufferedReader
@@ -1028,6 +1029,7 @@ private data class RolloutOutlineParseState(
   @JvmField val seenConversationKeys: MutableSet<String> = HashSet(),
   @JvmField val seenToolCallKeys: MutableSet<String> = HashSet(),
   @JvmField var activeTurnId: String? = null,
+  @JvmField var nextUserPromptIndex: Int = 0,
 ) {
   fun noteTurnStarted(event: RolloutEvent) {
     val turnId = event.payloadTurnId?.takeIf { it.isNotBlank() } ?: return
@@ -1047,7 +1049,14 @@ private data class RolloutOutlineParseState(
     if (!isUsefulOutlineUserPrompt(normalizedPreview) || !seenConversationKeys.add("user:${dedupeOutlineText(normalizedPreview)}")) {
       return
     }
-    val item = newItem(event = event, kind = AgentSessionOutlineItemKind.USER_PROMPT, title = "My prompt", preview = normalizedPreview)
+    val userPromptIndex = nextUserPromptIndex++
+    val item = newItem(
+      event = event,
+      kind = AgentSessionOutlineItemKind.USER_PROMPT,
+      title = "",
+      preview = normalizedPreview,
+      idOverride = codexUserPromptOutlineItemId(userPromptIndex),
+    )
     val turn = turnFor(event)
     if (turn == null) {
       rootItems += item
@@ -1142,9 +1151,10 @@ private data class RolloutOutlineParseState(
     title: String,
     preview: String? = null,
     summarizesChildren: Boolean = false,
+    idOverride: String? = null,
   ): RolloutOutlineItemBuilder {
     val item = RolloutOutlineItemBuilder(
-      id = event.payloadCallId ?: event.payloadTurnId ?: "outline-${nextItemIndex}",
+      id = idOverride ?: event.payloadCallId ?: event.payloadTurnId ?: "outline-${nextItemIndex}",
       kind = kind,
       title = title,
       preview = normalizeOutlinePreview(preview),

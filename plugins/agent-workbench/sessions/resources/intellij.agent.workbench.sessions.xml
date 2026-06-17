@@ -1,6 +1,11 @@
 <idea-plugin>
   <resource-bundle>messages.AgentSessionsBundle</resource-bundle>
 
+  <applicationListeners>
+    <listener class="com.intellij.agent.workbench.sessions.frame.AgentChatThreadOutlineAvailabilitySettingsListener"
+              topic="com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsListener"/>
+  </applicationListeners>
+
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.agent.workbench.chat"/>
@@ -49,9 +54,18 @@
       groupKey="advanced.settings.agent.workbench"
       visible="false"/>
     <projectFrameCapabilitiesProvider implementation="com.intellij.agent.workbench.sessions.frame.AgentWorkbenchProjectFrameCapabilitiesProvider"/>
-    <projectFrameToolWindowLayout id="agent.workbench.dedicated" frameType="AGENT_DEDICATED" applyMode="forceOnce" migrationVersion="4">
+    <toolWindow
+      id="agent.workbench.chat.thread.outline"
+      anchor="left"
+                icon="AllIcons.Toolwindows.Task"
+      secondary="true"
+      canCloseContents="false"
+      factoryClass="com.intellij.agent.workbench.sessions.frame.AgentChatThreadOutlineToolWindowFactory"/>
+    <projectFrameToolWindowLayout id="agent.workbench.dedicated" frameType="AGENT_DEDICATED" applyMode="forceOnce" migrationVersion="5">
       <toolWindow id="Project" register="false"/>
+      <toolWindow id="Structure" register="false"/>
       <toolWindow id="agent.workbench.sessions" anchor="left" visible="true" showStripeButton="true" weight="0.25"/>
+      <toolWindow id="agent.workbench.chat.thread.outline" anchor="left" visible="true" showStripeButton="true" weight="0.25"/>
       <toolWindow id="Terminal" anchor="bottom" visible="false" showStripeButton="true"/>
     </projectFrameToolWindowLayout>
     <projectFrameActionExclusion frameType="AGENT_DEDICATED" place="MainToolbar" id="MainToolbarVCSGroup"/>

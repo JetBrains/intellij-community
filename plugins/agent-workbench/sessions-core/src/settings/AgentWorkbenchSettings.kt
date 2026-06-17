@@ -11,7 +11,9 @@ import com.intellij.util.messages.Topic
 import kotlinx.serialization.Serializable
 
 interface AgentWorkbenchSettingsListener {
-  fun colorTabsBySourceProjectChanged()
+  fun colorTabsBySourceProjectChanged(): Unit = Unit
+
+  fun openInDedicatedFrameChanged(): Unit = Unit
 
   companion object {
     @JvmField
@@ -66,9 +68,14 @@ class AgentWorkbenchSettings : SerializablePersistentStateComponent<AgentWorkben
   }
 
   fun setOpenInDedicatedFrame(enabled: Boolean) {
+    val previousValue = openInDedicatedFrame
     val storedValue = nonDefaultBooleanValue(enabled, OPEN_IN_DEDICATED_FRAME_DEFAULT)
     if (state.openInDedicatedFrame == storedValue) return
-    updateState { current -> current.copy(openInDedicatedFrame = storedValue) }
+    val updatedState = updateState { current -> current.copy(openInDedicatedFrame = storedValue) }
+    val updatedValue = updatedState.openInDedicatedFrame ?: OPEN_IN_DEDICATED_FRAME_DEFAULT
+    if (previousValue != updatedValue) {
+      ApplicationManager.getApplication().messageBus.syncPublisher(AgentWorkbenchSettingsListener.TOPIC).openInDedicatedFrameChanged()
+    }
   }
 
   fun setShowAgentActivityInMainToolbar(enabled: Boolean) {

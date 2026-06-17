@@ -59,9 +59,10 @@
       icon="AllIcons.Actions.NextOccurence"
       class="com.intellij.agent.workbench.chat.AgentChatNextProposedPlanAction"/>
     <action
-      id="AgentWorkbenchSessions.StructureView.StartNewConversationFromHere"
-      class="com.intellij.agent.workbench.chat.AgentChatStructureViewForkAction">
-      <add-to-group group-id="StructureViewPopupMenu" anchor="last"/>
-    </action>
+      id="AgentWorkbenchSessions.ThreadOutline.StartNewConversationFromHere"
+      class="com.intellij.agent.workbench.chat.AgentChatThreadOutlineForkAction"/>
+    <group id="AgentWorkbenchSessions.ThreadOutline.Popup" class="com.intellij.agent.workbench.chat.AgentChatThreadOutlinePopupGroup">
+      <reference ref="AgentWorkbenchSessions.ThreadOutline.StartNewConversationFromHere"/>
+    </group>
   </actions>
 </idea-plugin>

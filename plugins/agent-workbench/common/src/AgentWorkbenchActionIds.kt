@@ -28,5 +28,10 @@ object AgentWorkbenchActionIds {
       const val PREVIOUS_PROPOSED_PLAN: String = "AgentWorkbenchSessions.EditorTab.PreviousProposedPlan"
       const val NEXT_PROPOSED_PLAN: String = "AgentWorkbenchSessions.EditorTab.NextProposedPlan"
     }
+
+    object ThreadOutline {
+      const val POPUP_GROUP: String = "AgentWorkbenchSessions.ThreadOutline.Popup"
+      const val START_NEW_CONVERSATION_FROM_HERE: String = "AgentWorkbenchSessions.ThreadOutline.StartNewConversationFromHere"
+    }
   }
 }

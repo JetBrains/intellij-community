@@ -3,8 +3,8 @@ name: Agent Chat Structure View
 description: Requirements for the Agent Chat editor Structure View and provider-backed session history outline.
 targets:
   - ../../common/src/session/AgentSessionModels.kt
-  - ../../chat/src/AgentChatStructureView.kt
-  - ../../chat/src/AgentChatStructureViewForkAction.kt
+  - ../../chat/src/AgentChatThreadOutlineModel.kt
+  - ../../chat/src/AgentChatThreadOutlineForkAction.kt
   - ../../chat/src/AgentChatFileEditor.kt
   - ../../chat/src/AgentChatFileEditorProvider.kt
   - ../../chat/resources/messages/AgentChatBundle.properties
@@ -52,24 +52,38 @@ Agent Chat Structure View exposes an outline of persisted provider session histo
 - Pi outline rows may navigate to a live Pi tree entry when the bundled Pi extension is connected for the same project/thread and reports `navigateTree` support. Navigation must call the provider bridge for the selected outline item id; it must not launch Pi, scrape terminal output, or parse interactive `/tree` output.
   [@test] ../../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
-- Pi outline rows may expose `Start New Conversation From Here` from the Structure View popup for concrete top-level Pi thread entries with stable ids. The action is enabled only when the bundled Pi extension is connected for the same project/thread and reports `fork` support. When performed, it must call Pi `fork(entryId, { position: "at", withSession })`, mark the current concrete chat tab with a rebind anchor before the fork, and rebind that same tab to the replacement Pi thread returned from `withSession`. It must not open a second tab for the same terminal and must not fall back to polling or slash commands.
+- Pi outline rows may expose `Start New Conversation From Here` from the Structure View popup only for concrete top-level Pi thread entries with stable ids when the bundled Pi extension is connected for the same project/thread and reports executable `fork` support. The popup must not show a disabled fork action when live fork support is unavailable. When performed, it must call Pi `fork(entryId, { position: "at", withSession })`, keep the source chat tab unchanged, and open the replacement Pi thread returned from `withSession` in a focused Agent Chat tab. It must not create duplicate tabs for the same forked thread and must not fall back to polling or slash commands.
   [@test] ../../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - Codex outline items must not navigate to rollout JSONL records as a substitute for chat navigation. The outline is parsed from persisted history, while the editor renders a live terminal TUI that can clear, redraw, switch buffers, or trim scrollback. TUI navigation may be added only if the IDE can resolve a stable live TUI position for the item or Codex exposes a stable jump/anchor API.
 
+- Codex user-prompt outline rows may expose `Start New Conversation From Here` for top-level Codex chat tabs. The provider must fork the current thread through Codex app-server `thread/fork`, roll back only the forked thread through app-server `thread/rollback`, keep the source chat tab unchanged, and open the forked thread in a focused Agent Chat tab with a fresh `codex resume` terminal launch. It must not send `Esc`, scrape terminal scrollback, drive the live TUI selection, mutate the original thread, or expose the action for sub-agent rows or non-user-prompt outline items.
+  [@test] ../../codex/sessions/testSrc/CodexSessionSourceTest.kt
+  [@test] ../../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
+  [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
+
 - Outline items preserve provider order and hierarchy. The shared model supports user prompts, assistant responses, agent work groups, tool calls, tool results, plans, approval requests, input requests, summaries, and metadata; unknown provider records should be skipped or mapped to metadata rather than exposed as raw JSON.
 
+- Thread outline presentation uses neutral shared labels and icons across providers. User prompt rows without a provider title render with the localized `User` label, agent work group rows use the neutral External Tools icon, and concrete tool call rows such as bash invocations keep the console icon.
+  [@test] ../../chat/testSrc/AgentChatFileEditorProviderTest.kt
+
 - Codex outlines are parsed from rollout JSONL data and should group inferred agent work so tool-call and tool-result activity remains readable as a block-oriented history browser.
+  [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
+
+- Codex rollout user-prompt outline items should use stable provider ids that encode the visible user-prompt ordinal used for rollback math. Duplicate rollout representations of the same prompt should remain a single visible user-prompt row.
   [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
 - Claude outlines are parsed from transcript JSONL data and should group assistant/tool activity into readable blocks while preserving prompt and summary records.
   [@test] ../../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
 
-- Pi outlines are parsed from persisted Pi JSONL session entries using `/tree` semantics: `id`/`parentId` hierarchy, missing or self-parent roots, timestamp-ordered siblings, hidden bookkeeping nodes with visible descendants promoted, and leaf/bookkeeping records kept out of the visible Structure View. The implementation must not launch Pi or scrape the interactive `/tree` TUI.
+- Pi outlines are parsed from persisted Pi JSONL session entries using `/tree` display semantics: normal visible conversation/work rows are shown as a chronological top-level timeline, tool details may stay under their owning assistant/work row, hidden bookkeeping nodes are kept out of the visible Structure View, and leaf/bookkeeping records are not shown. The implementation must not launch Pi or scrape the interactive `/tree` TUI.
   [@test] ../../pi/sessions/testSrc/PiSessionSourceTest.kt
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFileEditorProviderTest`
+- `./tests.cmd --module intellij.agent.workbench.chat.tests --test com.intellij.agent.workbench.chat.AgentChatFileEditorLifecycleTest`
+- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexSessionSourceTest`
+- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexAppServerSessionBackendTest`
 - `./tests.cmd --module intellij.agent.workbench.pi.sessions.tests --test com.intellij.agent.workbench.pi.sessions.PiExtensionControlWebSocketHandlerTest`
 - `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackendTest`
 - `./tests.cmd --module intellij.agent.workbench.claude.sessions.tests --test com.intellij.agent.workbench.claude.sessions.ClaudeSessionsStoreTest`

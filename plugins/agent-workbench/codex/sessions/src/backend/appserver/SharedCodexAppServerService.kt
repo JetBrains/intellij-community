@@ -46,6 +46,14 @@ class SharedCodexAppServerService(serviceScope: CoroutineScope) {
     return client.readThread(threadId)
   }
 
+  internal suspend fun forkThread(threadId: String): CodexThread {
+    return client.forkThread(threadId).thread
+  }
+
+  internal suspend fun rollbackThread(threadId: String, numTurns: Int): CodexThread? {
+    return client.rollbackThread(threadId = threadId, numTurns = numTurns)
+  }
+
   internal suspend fun listSkills(projectPath: Path): List<CodexSkill> {
     return client.listSkills(cwd = projectPath.invariantSeparatorsPathString)
   }

@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.agent.workbench.json.forEachJsonObjectField
 import com.intellij.agent.workbench.json.readJsonStringOrNull
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.ExtensionTestUtil
@@ -12,6 +13,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.ide.HttpRequestHandler
@@ -147,6 +149,37 @@ class PiExtensionControlWebSocketHandlerTest {
 
         assertThat(source.canShowThreadOutlineForkAction(projectDir.toString(), sessionId, "entry-fork", null, null)).isTrue()
         assertThat(source.canForkThreadFromOutlineItem(projectDir.toString(), sessionId, "entry-fork", null, null)).isFalse()
+      }
+      finally {
+        webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "done").join()
+      }
+    }
+
+  @Test
+  fun `control hello exposes active thread update for structure view`(@TestDisposable disposable: Disposable): Unit =
+    runBlocking(Dispatchers.Default) {
+      registerControlHandler(disposable)
+      val source = PiSessionSource(sessionStore = PiSessionStore(sessionDirResolver = { tempDir.resolve("unused-sessions") }))
+      val sessionId = "session-ws-active-update"
+      val projectDir = tempDir.resolve("project-active-update")
+      val launchEnvironment = createControlLaunchEnvironment(sessionId)
+      val listener = PiControlTestWebSocketListener()
+      val webSocket = connectControlSocket(launchEnvironment, listener)
+      try {
+        webSocket.sendText(
+          controlHelloPayload(
+            token = launchEnvironment.token,
+            sessionId = sessionId,
+            cwd = projectDir.toString(),
+          ),
+          true,
+        ).join()
+        listener.nextMessage()
+
+        val event = source.activeThreadUpdateEvents(projectDir.toString(), sessionId).first()
+        assertThat(event.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
+        assertThat(event.scopedPaths).containsExactly(normalizePiProjectPath(projectDir.toString()))
+        assertThat(event.threadIds).containsExactly(sessionId)
       }
       finally {
         webSocket.sendClose(WebSocket.NORMAL_CLOSURE, "done").join()

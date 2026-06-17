@@ -999,7 +999,7 @@ private data class JsonlOutlineScanState(
     when (lineData.activityEvent) {
       ClaudeActivityEvent.USER_PROMPT -> {
         currentPhase = null
-        addRootItem(ClaudeSessionOutlineItemKind.USER_PROMPT, "My prompt", lineData.messageContent, lineData.timestampMillis)
+        addRootItem(ClaudeSessionOutlineItemKind.USER_PROMPT, "", lineData.messageContent, lineData.timestampMillis)
       }
       ClaudeActivityEvent.TOOL_CONTINUATION -> addPhaseDetail(ClaudeSessionOutlineItemKind.TOOL_RESULT,
                                                               "Tool result",
