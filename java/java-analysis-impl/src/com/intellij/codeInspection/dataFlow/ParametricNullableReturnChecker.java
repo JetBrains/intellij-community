@@ -2,8 +2,6 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExternalAnnotationsManager;
-import com.intellij.codeInsight.InferredAnnotationsManager;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
@@ -32,7 +30,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -75,9 +72,7 @@ final class ParametricNullableReturnChecker {
         !(classType.resolve() instanceof PsiTypeParameter typeParameter)) {
       return;
     }
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(method.getProject());
-    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(method);
-    if (info == null || info.isInferred()) info = DfaPsiUtil.getTypeNullabilityInfo(PsiTypesUtil.getMethodReturnType(body));
+    NullabilityAnnotationInfo info = classType.getNullability().toNullabilityAnnotationInfo();
 
     PsiAnnotation boundAnnotation;
     boolean optInOnly;
@@ -87,10 +82,9 @@ final class ParametricNullableReturnChecker {
       Nullability nullability = info.getNullability();
       if (nullability == Nullability.NOT_NULL) return;
       boundAnnotation = info.getAnnotation();
-      //check that it is really annotation
-      if (ExternalAnnotationsManager.isExternal(boundAnnotation)) return;
-      if (InferredAnnotationsManager.isInferredAnnotation(boundAnnotation)) return;
-      if (!(boundAnnotation.isPhysical() && PsiTreeUtil.getParentOfType(boundAnnotation, PsiTypeParameter.class) != null)) return;
+      if (!boundAnnotation.isPhysical() || PsiTreeUtil.getParentOfType(boundAnnotation, PsiTypeParameter.class) == null) {
+        return;
+      }
       optInOnly = nullability != Nullability.NULLABLE; //@NullnessUnspecified, only for option
     }
     else if (info == null) {
@@ -130,7 +124,8 @@ final class ParametricNullableReturnChecker {
     if (originalProblems.isEmpty()) return;
 
     myInspection.reportNullableReturnsProblems(new DataFlowInspectionBase.ProblemReporter(myHolder, body), originalProblems,
-                                               Nullability.NOT_NULL, true, boundAnnotation, manager);
+                                               Nullability.NOT_NULL, true, boundAnnotation,
+                                               NullableNotNullManager.getInstance(method.getProject()));
   }
 
   /**
