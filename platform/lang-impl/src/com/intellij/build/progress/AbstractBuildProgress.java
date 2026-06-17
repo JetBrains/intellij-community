@@ -8,7 +8,6 @@ import com.intellij.build.events.BuildEventPresentationData;
 import com.intellij.build.events.BuildEventsNls.Message;
 import com.intellij.build.events.BuildIssueEvent;
 import com.intellij.build.events.EventResult;
-import com.intellij.build.events.FileMessageEvent;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.OutputBuildEvent;
 import com.intellij.build.events.PresentableBuildEvent;
@@ -189,9 +188,10 @@ public abstract class AbstractBuildProgress implements BuildProgress<BuildProgre
     @NotNull FilePosition filePosition
   ) {
     return event(
-      FileMessageEvent.builder(title, kind, filePosition)
+      MessageEvent.builder(title, kind)
         .withParentId(getStartId())
         .withDescription(message)
+        .withFilePosition(filePosition)
         .build()
     );
   }
