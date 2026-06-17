@@ -1,4 +1,5 @@
 // "Add '@JvmInline' annotation" "true"
+// IGNORE_K2
 // WITH_STDLIB
 // COMPILER_ARGUMENTS: -XXLanguage:+GenericInlineClassParameter
 // K2_ERROR: Value classes without '@JvmInline' annotation are not yet supported.

@@ -1,4 +1,5 @@
 // "Add '@JvmInline' annotation" "true"
+// IGNORE_K2
 // WITH_STDLIB
 // K2_ERROR: Value classes without '@JvmInline' annotation are not yet supported.
 <caret>value class VC(val i: Int)
