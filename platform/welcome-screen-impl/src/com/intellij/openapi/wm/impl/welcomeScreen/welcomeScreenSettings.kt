@@ -14,7 +14,7 @@ fun isStationWelcomeScreenPromoEnabled(): Boolean {
  */
 @Internal
 fun getWelcomeScreenPrimaryButtonsNum(): Int {
-  if (isStationWelcomeScreenPromoEnabled()) {
+  if (isStationWelcomeScreenPromoEnabled() || Registry.`is`("jetbrainsd.new.connection.tabs.flow.enabled", false)) {
     return 4
   }
   return Registry.intValue("welcome.screen.primaryButtonsCount", 3)

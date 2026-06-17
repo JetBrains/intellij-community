@@ -100,6 +100,10 @@ internal class TreeWelcomeScreenLeftPanel : WelcomeScreenLeftPanel {
     return true
   }
 
+  override fun getTabCount(): Int {
+    return tree.rowCount
+  }
+
   override fun getTabByIndex(idx: Int): WelcomeScreenTab? {
     val tab = tree.getPathForRow(idx).lastPathComponent as? DefaultMutableTreeNode ?: return null
 

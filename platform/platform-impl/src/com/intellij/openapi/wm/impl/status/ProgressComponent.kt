@@ -61,10 +61,7 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
   private var isDisposed = false
 
   init {
-    progressModel.addOnChangeAction { queueProgressUpdate() }
-    progressModel.addOnFinishAction { onFinish() }
     indicatorModel = progressModel
-
     progress = JProgressBar(SwingConstants.HORIZONTAL)
     progress.setOpaque(false)
     UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, progress)
@@ -74,6 +71,9 @@ open class ProgressComponent(val isCompact: Boolean, val info: TaskInfo, progres
     processName = TextPanel()
     eastButtons = createEastButtons()
     component = createComponent()
+
+    progressModel.addOnChangeAction { queueProgressUpdate() }
+    progressModel.addOnFinishAction { onFinish() }
   }
 
   protected open fun createComponent(): JPanel {
