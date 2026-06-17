@@ -966,7 +966,29 @@ class PyDevJsonCommandProcessor(object):
         expression = None
         notify_on_first_raise_only = False
 
-        ignore_libraries = 1 if py_db.get_use_libraries_filter() else 0
+        # JetBrains extension: per-breakpoint "Ignore library files" toggle (PY-35844).
+        # IntelliJ encodes the flag as a `:ignoreLibraries` suffix on a filter id
+        # (e.g. "raised:ignoreLibraries"), since the standard DAP
+        # `setExceptionBreakpoints` request has no field for it.
+        _IGNORE_LIBS_SUFFIX = ":ignoreLibraries"
+
+        def _strip_pydev_suffix(filter_id):
+            if filter_id and filter_id.endswith(_IGNORE_LIBS_SUFFIX):
+                return filter_id[: -len(_IGNORE_LIBS_SUFFIX)], True
+            return filter_id, False
+
+        session_ignore_libraries = 1 if py_db.get_use_libraries_filter() else 0
+        ignore_libraries = session_ignore_libraries
+        if filters:
+            stripped = []
+            any_ignore = False
+            for f in filters:
+                base, has_flag = _strip_pydev_suffix(f)
+                stripped.append(base)
+                any_ignore = any_ignore or has_flag
+            filters = stripped
+            if any_ignore:
+                ignore_libraries = 1
 
         if exception_options:
             break_raised = False
