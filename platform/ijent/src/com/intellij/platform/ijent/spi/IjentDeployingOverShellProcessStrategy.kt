@@ -86,6 +86,7 @@ abstract class IjentDeployingOverShellProcessStrategy(
         process = processFacade,
         ijentLabel = ijentLabel,
         isExpectedProcessExit = ::isExpectedProcessExit,
+        exitsOnStdinEof = executionStrategy !is ExecutionStrategy.Tcp,
       )
       val shellProcess = ShellProcessWrapper(processFacade, mediator)
       createdShellProcess = shellProcess

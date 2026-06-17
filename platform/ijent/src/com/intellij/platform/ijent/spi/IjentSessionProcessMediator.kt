@@ -46,6 +46,7 @@ import kotlin.time.Duration.Companion.seconds
 class IjentSessionProcessMediator private constructor(
   override val ijentProcessScope: IjentScope,
   val process: ProcessFacade,
+  internal val exitsOnStdinEof: Boolean,
 ) : IjentSessionMediator {
   interface ProcessFacade {
     val stdin: EelSendChannel
@@ -132,6 +133,7 @@ class IjentSessionProcessMediator private constructor(
       process: Process,
       ijentLabel: String,
       isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 },
+      exitsOnStdinEof: Boolean = true,
     ): IjentSessionProcessMediator {
       val ijentProcessScope = IjentSessionMediatorUtils.createProcessScope(parentScope, ijentLabel, LOG)
       return create(
@@ -140,6 +142,7 @@ class IjentSessionProcessMediator private constructor(
         JavaProcessFacade(ijentProcessScope, process),
         ijentLabel,
         isExpectedProcessExit,
+        exitsOnStdinEof,
       )
     }
 
@@ -158,6 +161,7 @@ class IjentSessionProcessMediator private constructor(
       process: ProcessFacade,
       ijentLabel: String,
       isExpectedProcessExit: suspend (exitCode: Int) -> Boolean = { it == 0 },
+      exitsOnStdinEof: Boolean = true,
     ): IjentSessionProcessMediator {
       val context = IjentThreadPool.coroutineContext
 
@@ -174,7 +178,7 @@ class IjentSessionProcessMediator private constructor(
         IjentSessionMediatorUtils.ijentProcessStderrLogger(process.stderr, ijentLabel, lastStderrMessages, LOG)
       }
 
-      val mediator = IjentSessionProcessMediator(ijentProcessScope, process)
+      val mediator = IjentSessionProcessMediator(ijentProcessScope, process, exitsOnStdinEof)
 
       val awaiterScope = ijentProcessScope.s.launch(context = context + ijentProcessScope.s.coroutineNameAppended("exit awaiter scope")) {
         @Suppress("checkedExceptions") val exitCode = process.exitCode.await()
@@ -211,7 +215,8 @@ private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSes
     LOG.debug { "Closing stdin of $ijentLabel" }
     runCatching { process.stdin.close(null) }
 
-    if (SystemInfoRt.isWindows) {
+    // On Windows process.destroy() is an abrupt kill, so if ijent can react to stdin EOF, let's wait for a bit before destroying
+    if (SystemInfoRt.isWindows && mediator.exitsOnStdinEof) {
       awaitProcessExit(process, 1.5.seconds)
       if (!process.isAlive) return
     }
