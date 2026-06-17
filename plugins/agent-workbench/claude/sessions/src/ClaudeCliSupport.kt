@@ -83,6 +83,7 @@ object ClaudeCliSupport {
 
 internal const val PERMISSION_MODE_FLAG: String = "--permission-mode"
 internal const val EFFORT_FLAG: String = "--effort"
+internal const val SETTINGS_FLAG: String = "--settings"
 internal const val PERMISSION_MODE_DEFAULT: String = "default"
 internal const val PERMISSION_MODE_PLAN: String = "plan"
 private const val SESSION_ID_FLAG: String = "--session-id"

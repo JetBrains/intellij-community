@@ -42,6 +42,8 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.filewatch" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.common" />
@@ -56,6 +58,8 @@
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
     <orderEntry type="module" module-name="intellij.libraries.pty4j" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.junit5" scope="TEST" />
