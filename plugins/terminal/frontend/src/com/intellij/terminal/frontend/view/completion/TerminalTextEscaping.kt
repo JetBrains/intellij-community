@@ -5,18 +5,23 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.session.ShellName
 
 internal fun needsShellEscaping(shellName: ShellName, value: String): Boolean {
-  val charsToEscape = if (ShellName.isPowerShell(shellName)) POWERSHELL_CHARS_TO_ESCAPE else UNIX_SHELLS_CHARS_TO_ESCAPE
+  val charsToEscape = when {
+    ShellName.isPowerShell(shellName) -> POWERSHELL_CHARS_TO_ESCAPE
+    ShellName.isCommandPrompt(shellName) -> COMMAND_PROMPT_CHARS_TO_ESCAPE
+    else -> UNIX_SHELLS_CHARS_TO_ESCAPE
+  }
   return value.any { it in charsToEscape }
 }
 
 @ApiStatus.Internal
 fun escapeShellArgument(argument: String, shellName: ShellName): String {
-  if (ShellName.isCommandPrompt(shellName)) {
-    return CommandLineUtil.escapeParameterOnWindows(argument, true)
-  }
-
   if (!needsShellEscaping(shellName, argument)) return argument
-  return if (ShellName.isPowerShell(shellName)) quotePowerShellArgument(argument) else escapeUnixShellArgument(argument)
+
+  return when {
+    ShellName.isPowerShell(shellName) -> quotePowerShellArgument(argument)
+    ShellName.isCommandPrompt(shellName) -> CommandLineUtil.escapeParameterOnWindows(argument, true)
+    else -> escapeUnixShellArgument(argument)
+  }
 }
 
 private fun quotePowerShellArgument(argument: String): String {
@@ -39,5 +44,7 @@ internal fun escapeUnixShellArgument(argument: String): String {
 }
 
 private const val POWERSHELL_CHARS_TO_ESCAPE = " \n\t\r`$'\"(){}[]<>|;&,@#"
+
+private const val COMMAND_PROMPT_CHARS_TO_ESCAPE = " \n\t\r\"()<>|^&%"
 
 private const val UNIX_SHELLS_CHARS_TO_ESCAPE = " \n\t\r`$'\"(){}[]<>|;&!*?\\"
