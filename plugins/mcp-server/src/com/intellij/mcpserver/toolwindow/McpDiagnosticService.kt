@@ -7,6 +7,7 @@ import com.intellij.mcpserver.McpToolDescriptor
 import com.intellij.mcpserver.McpToolSideEffectEvent
 import com.intellij.mcpserver.ToolCallListener
 import com.intellij.mcpserver.services.McpServiceViewContributor
+import com.intellij.mcpserver.statistics.McpServerCounterUsagesCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -111,7 +112,14 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
     }
   }
 
-  fun sessionStarted(sessionId: String, clientInfo: ClientInfo?, transportType: TransportType, startTimeMs: Long, localAgentId: String?) {
+  fun sessionStarted(
+    sessionId: String,
+    clientInfo: ClientInfo?,
+    transportType: TransportType,
+    startTimeMs: Long,
+    localAgentId: String?,
+    toolsCount: Int,
+  ) {
     val info = McpSessionInfo(
       sessionId = sessionId,
       clientInfo = clientInfo,
@@ -120,10 +128,26 @@ internal class McpDiagnosticService(private val cs: CoroutineScope) {
       localAgentId = localAgentId,
     )
     _sessions.update { it + info }
+    McpServerCounterUsagesCollector.logSessionStarted(
+      clientName = clientInfo?.name ?: "unknown",
+      clientVersion = clientInfo?.version ?: "unknown",
+      transport = transportType,
+      hasLocalAgent = localAgentId != null,
+      toolsCount = toolsCount,
+    )
     fireServiceViewReset()
   }
 
   fun sessionEnded(sessionId: String) {
+    val ended = _sessions.value.firstOrNull { it.sessionId == sessionId }
+    if (ended != null) {
+      val durationMs = System.currentTimeMillis() - ended.startTimeMs
+      McpServerCounterUsagesCollector.logSessionFinished(
+        clientName = ended.clientInfo?.name ?: "unknown",
+        transport = ended.transportType,
+        durationMs = durationMs,
+      )
+    }
     _sessions.update { list ->
       list.filter { it.sessionId != sessionId }
     }
