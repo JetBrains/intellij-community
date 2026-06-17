@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.multiplatformTests
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.externalSystem.importing.ImportSpec
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.toCanonicalPath
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -226,6 +227,13 @@ abstract class AbstractKotlinMppGradleImportingTest : GradleImportingTestCase(),
         // @Parametrized
         (this as GradleImportingTestCase).gradleVersion = testGradleVersion.version.version
         super.setUp()
+
+        // KTIJ-39192: This window can block execution so the test will fail with timeout. Can be removed after fixing on the AS side
+        val previousSkipAgpUpgrade = System.setProperty("studio.skip.agp.upgrade", "true")
+        Disposer.register(testRootDisposable) {
+            if (previousSkipAgpUpgrade == null) System.clearProperty("studio.skip.agp.upgrade")
+            else System.setProperty("studio.skip.agp.upgrade", previousSkipAgpUpgrade)
+        }
 
         context.testProject = myProject
         context.testProjectRoot = myProjectRoot.toNioPath().toFile()
