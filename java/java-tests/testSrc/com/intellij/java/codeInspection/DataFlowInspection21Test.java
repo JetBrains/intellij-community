@@ -320,6 +320,12 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTestWith((insp, _) -> insp.REPORT_UNSPECIFIED_PARAMETRIC_RETURNS = true);
   }
 
+  public void testFlowMethodTests() {
+    addJSpecifyNullMarked(myFixture);
+    setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
+    doTest();
+  }
+
   public void testNullableArrayLocalVariable() {
     addJSpecifyNullMarked(myFixture);
     setupTypeUseAnnotations("org.jspecify.annotations", myFixture);
