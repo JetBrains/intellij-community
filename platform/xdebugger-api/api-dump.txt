@@ -335,6 +335,18 @@ com.intellij.xdebugger.breakpoints.XLineBreakpoint
 - a:getType():com.intellij.xdebugger.breakpoints.XLineBreakpointType
 - a:isTemporary():Z
 - a:setTemporary(Z):V
+f:com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo
+- f:getLogExpressionIfEnabled():java.lang.String
+- f:getSuspendPolicy():com.intellij.xdebugger.breakpoints.SuspendPolicy
+- f:getVerticalPlacement():com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
+- f:isTemporary():Z
+f:com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
+- <init>():V
+- f:build():com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo
+- f:setLogExpressionIfEnabled(java.lang.String):com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
+- f:setSuspendPolicy(com.intellij.xdebugger.breakpoints.SuspendPolicy):com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
+- f:setTemporary(Z):com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
+- f:setVerticalPlacement(com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement):com.intellij.xdebugger.breakpoints.XLineBreakpointAdditionalInfo$Builder
 a:com.intellij.xdebugger.breakpoints.XLineBreakpointType
 - com.intellij.xdebugger.breakpoints.XBreakpointType
 - p:<init>(java.lang.String,java.lang.String):V
