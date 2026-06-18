@@ -189,16 +189,3 @@ data class PythonRepositoryPackageSpecification(
   )
 }
 
-@Deprecated(
-  "Use RepositoryPythonPackageSpecification instead",
-  replaceWith = ReplaceWith("RepositoryPythonPackageSpecification"),
-  level = DeprecationLevel.ERROR
-)
-interface PythonPackageSpecification
-
-@Deprecated(
-  "Use RepositoryPythonPackageSpecification instead",
-  replaceWith = ReplaceWith("RepositoryPythonPackageSpecification"),
-  level = DeprecationLevel.ERROR
-)
-interface PythonSimplePackageSpecification
