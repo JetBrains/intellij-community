@@ -20,6 +20,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.openapi.projectRoots">
-    <externalJavaConfigurationMissingAction implementation="com.intellij.java.terminal.backend.ExternalJavaConfigurationDownloadInTerminalAction"/>
+    <externalJavaConfigurationMissingAction implementation="com.intellij.java.terminal.backend.ExternalJavaConfigurationDownloadInTerminalAction" order="first"/>
   </extensions>
 </idea-plugin>

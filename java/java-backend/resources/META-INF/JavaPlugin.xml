@@ -221,6 +221,7 @@
     <codeInsight.codeVisionProvider implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationCodeVision"/>
     <config.codeVisionGroupSettingProvider implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationGroupSettingProvider"/>
     <openapi.projectRoots.externalJavaConfigurationMissingAction implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationCopyCommandAction"/>
+    <openapi.projectRoots.externalJavaConfigurationMissingAction implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationJdkDownloaderAction"/>
     <openapi.projectRoots.externalJavaConfigurationMissingAction implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationRefreshAction"/>
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.ExternalJavaConfigurationActivity"/>
 
