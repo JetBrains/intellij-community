@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
@@ -374,7 +375,7 @@ public final class PlatformUpdateDialog extends AbstractUpdateDialog {
     IdeUpdateUsageTriggerCollector.UPDATE_STARTED.log();
     PropertiesComponent.getInstance().setValue(SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
     Restarter.setRestarterEnv(Map.of(ConfigImportHelper.IMPORT_FROM_ENV_VAR, PathManager.getConfigDir().toString()));
-    var app = (ApplicationEx)ApplicationManager.getApplication();
+    var app = ApplicationManagerEx.getApplicationEx();
     app.invokeLater(() -> app.restart(ApplicationEx.EXIT_CONFIRMED | ApplicationEx.SAVE, command));
   }
 

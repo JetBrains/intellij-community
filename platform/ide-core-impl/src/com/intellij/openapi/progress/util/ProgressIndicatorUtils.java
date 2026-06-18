@@ -134,7 +134,7 @@ public final class ProgressIndicatorUtils {
    */
   @Deprecated
   public static boolean runWithWriteActionPriority(@NotNull Runnable action, @NotNull ProgressIndicator progressIndicator) {
-    ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     application.assertIsNonDispatchThread();
     Runnable cancellation = indicatorCancellation(progressIndicator);
     if (isWriteActionRunningOrPending(application)) {

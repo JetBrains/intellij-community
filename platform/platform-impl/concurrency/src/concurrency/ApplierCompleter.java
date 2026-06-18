@@ -3,7 +3,6 @@ package com.intellij.concurrency;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -142,7 +141,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   }
   void wrapAndRun(final @NotNull Runnable process) {
     if (failFastOnAcquireReadAction) {
-      ((ApplicationEx)ApplicationManager.getApplication()).executeByImpatientReader(()-> wrapInReadActionAndIndicator(process));
+      ApplicationManagerEx.getApplicationEx().executeByImpatientReader(()-> wrapInReadActionAndIndicator(process));
     }
     else {
       wrapInReadActionAndIndicator(process);
