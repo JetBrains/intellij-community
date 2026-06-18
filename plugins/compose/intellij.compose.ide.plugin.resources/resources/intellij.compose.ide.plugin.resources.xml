@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.compose.ide.plugin.resources">
+<idea-plugin package="com.intellij.compose.ide.plugin.resources" visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <plugin id="com.intellij.modules.xml"/>
