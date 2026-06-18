@@ -7,6 +7,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceContributor
 import com.intellij.psi.PsiReferenceProvider
 import com.intellij.psi.PsiReferenceRegistrar
+import com.intellij.util.ArrayUtil
 import com.intellij.util.ProcessingContext
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeSpan
 
@@ -21,9 +22,11 @@ internal class BacktickReferenceContributor: PsiReferenceContributor() {
           val content = contentRange.substring(codeSpan.text)
           if (content.isBlank()) return PsiReference.EMPTY_ARRAY
 
-          val references = BacktickPathReferenceProvider.getReferences(codeSpan, contentRange, content)
-          if (references.isNotEmpty()) return references
-          return arrayOf(BacktickReference(codeSpan))
+          return ArrayUtil.append(
+            BacktickPathReferenceProvider.getReferences(codeSpan, contentRange, content),
+            BacktickReference(codeSpan, contentRange),
+            PsiReference::class.java
+          )
         }
       }
     )
