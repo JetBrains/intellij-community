@@ -51,6 +51,8 @@ import org.jetbrains.kotlin.psi.KtPsiUtil
 import org.jetbrains.kotlin.psi.KtTypeCodeFragment
 import org.jetbrains.kotlin.psi.KtVariableDeclaration
 import org.jetbrains.kotlin.types.Variance
+import java.util.Locale
+import java.util.Locale.getDefault
 
 @OptIn(KaAllowAnalysisOnEdt::class)
 internal class KotlinChangeSignatureDialog(
@@ -249,7 +251,7 @@ internal class KotlinChangeSignatureDialog(
             buffer.append(newName)
 
             if (isCustomizedVisibility) {
-                buffer.append(' ').append(visibility).append(" constructor ")
+                buffer.append(' ').append(visibility?.name?.lowercase(getDefault())).append(" constructor ")
             }
         } else {
             val contextParameters = getNonReceiverParameters().filter { it.isContextParameter }
@@ -260,7 +262,7 @@ internal class KotlinChangeSignatureDialog(
             }
 
             if (!KtPsiUtil.isLocal(methodDescriptor.method) && isCustomizedVisibility) {
-                buffer.append(visibility).append(' ')
+                buffer.append(visibility?.name?.lowercase(getDefault())).append(' ')
             }
 
             buffer.append(if (methodDescriptor.kind == Kind.SECONDARY_CONSTRUCTOR) KtTokens.CONSTRUCTOR_KEYWORD else KtTokens.FUN_KEYWORD).append(' ')
@@ -300,7 +302,8 @@ internal class KotlinChangeSignatureDialog(
             KaSymbolVisibility.PRIVATE,
             KaSymbolVisibility.PROTECTED,
             KaSymbolVisibility.PUBLIC
-        )
+        ),
+        arrayOf("internal", "private", "protected", "public")
     )
 }
 
