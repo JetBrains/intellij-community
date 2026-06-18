@@ -3,8 +3,11 @@ package com.intellij.lang.impl.modcommand;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.template.Expression;
+import com.intellij.codeInsight.template.RecalculatableResult;
 import com.intellij.codeInsight.template.Result;
+import com.intellij.codeInsight.template.impl.ModCommandAwareTemplateOptionalProcessor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
+import com.intellij.codeInsight.template.impl.TemplateOptionalProcessor;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.InjectionEditService;
 import com.intellij.lang.Language;
@@ -562,8 +565,23 @@ final class PsiUpdateImpl {
           if (result != null) {
             FileTracker tracker = requireNonNull(myTracker); // guarded by getRange call
             String fieldValue = result.toString();
-            tracker.myDocument.replaceString(rangeForTemplate.getStartOffset(), rangeForTemplate.getEndOffset(), fieldValue);
-            range = TextRange.from(range.getStartOffset(), fieldValue.length());
+            int start = rangeForTemplate.getStartOffset();
+            tracker.myDocument.replaceString(start, rangeForTemplate.getEndOffset(), fieldValue);
+            if (result instanceof RecalculatableResult recalc) {
+              // Mirror the interactive TemplateState path: shorten class references (and add imports) in the
+              // just-inserted field, then recalculate type bindings. Otherwise types end up fully qualified.
+              RangeMarker marker = tracker.myDocument.createRangeMarker(start, start + fieldValue.length());
+              try {
+                shortenAndRecalc(tracker, recalc, marker);
+                range = mapRange(marker.getTextRange());
+              }
+              finally {
+                marker.dispose();
+              }
+            }
+            else {
+              range = TextRange.from(range.getStartOffset(), fieldValue.length());
+            }
           }
           myTemplateFields.add(new ModStartTemplate.ExpressionField(range, varName, expression));
           return this;
@@ -906,6 +924,29 @@ final class PsiUpdateImpl {
     private @NotNull ModCommand getTemplateCommand() {
       if (myTemplateFields.isEmpty()) return nop();
       return new ModStartTemplate(navigationFile(), myTemplateFields, myTemplateOptional, myTemplateFinishFunction);
+    }
+
+    /**
+     * Mirrors {@code TemplateState.shortenReferences()} followed by {@link RecalculatableResult#handleRecalc} for a freshly
+     * inserted template field: runs the ModCommand-aware optional processors (e.g. FQN shortening and import insertion) over
+     * the field range, then recalculates type bindings. Without this step results such as {@code PsiTypeResult} keep their
+     * fully qualified canonical text in the resulting command (and in the IDEA preview).
+     */
+    private void shortenAndRecalc(@NotNull FileTracker tracker,
+                                  @NotNull RecalculatableResult recalc,
+                                  @NotNull RangeMarker marker) {
+      Document document = tracker.myDocument;
+      PsiFile psiFile = tracker.myCopyFile;
+      Project project = getProject();
+      TemplateImpl stubTemplate = new TemplateImpl("", "", "");
+      stubTemplate.setToShortenLongNames(true);
+      for (TemplateOptionalProcessor processor : TemplateOptionalProcessor.EP_NAME.getExtensionList()) {
+        if (processor instanceof ModCommandAwareTemplateOptionalProcessor modProcessor) {
+          modProcessor.processText(stubTemplate, this, marker);
+        }
+      }
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      recalc.handleRecalc(psiFile, document, marker.getStartOffset(), marker.getEndOffset());
     }
   }
 }
