@@ -595,7 +595,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
     if (EXTRACT_ROOTS_USING_NIO) {
-      final var normalizedPathRootString = Path.of(normalizedPath).getRoot().toString();
+      var pathObj = NioFiles.toPath(normalizedPath);
+      if (pathObj == null) return "";
+      var normalizedPathRootString = pathObj.getRoot().toString();
 
       for (var root : FileSystems.getDefault().getRootDirectories()) {
         var stringRoot = root.toString();
