@@ -2,8 +2,8 @@ package org.jetbrains.kotlin.idea.k2.refactoring.move.ui
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationD
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -44,20 +45,15 @@ internal fun runMoveToClassWithConversionCommand(
     var isSuccessful = false
     val commandName = KotlinBundle.message(
         "refactoring.move.to.class.command.name",
-        functionToMove.name ?: "<unnamed declaration>",
-        targetClass.name ?: "<unnamed class>",
+        functionToMove.name ?: SpecialNames.ANONYMOUS_STRING,
+        targetClass.name ?: SpecialNames.ANONYMOUS_STRING,
     )
     try {
-        CommandProcessor.getInstance().executeCommand(
-            project,
-            Runnable {
-                CommandProcessor.getInstance().runUndoTransparentAction {
-                    isSuccessful = moveToClassWithConversion(functionToMove, targetClass, targetClassCandidateParameter)
-                }
-            },
-            /* name = */ commandName, /* groupId = */ null,
-            UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION,
-        )
+        executeCommand(project, commandName) {
+            CommandProcessor.getInstance().runUndoTransparentAction {
+                isSuccessful = moveToClassWithConversion(functionToMove, targetClass, targetClassCandidateParameter)
+            }
+        }
     } finally {
         if (!isSuccessful) {
             undoMoveCommand(commandName, project, editor)
@@ -99,12 +95,16 @@ private fun moveToClassWithConversion(
     targetClassCandidateParameter: TargetClassCandidateParameter,
 ): Boolean {
     val isTopLevel = functionToMove.isTopLevel
-    val topLevelFunction = if (isTopLevel) functionToMove else moveToTopLevel(functionToMove)?.element ?: return false
-    val changeSignatureFunctionPointer = topLevelFunction.createSmartPointer()
+    val topLevelFunction = if (isTopLevel) functionToMove else moveToTopLevel(functionToMove) ?: return false
+
+    val functionPointer = topLevelFunction.createSmartPointer()
     convertTargetParameterToExtensionReceiver(topLevelFunction, targetClassCandidateParameter).ifFalse { return false }
-    val functionAfterConversion = changeSignatureFunctionPointer.element ?: return false
-    val movedFunction = moveToClass(functionAfterConversion, targetClass)?.element ?: return false
+    val functionAfterConversion = functionPointer.element ?: return false
+
+    val movedFunction = moveToClass(functionAfterConversion, targetClass) ?: return false
+
     removeReceiverTypeReference(movedFunction.project, movedFunction)
+
     return true
 }
 
@@ -120,20 +120,18 @@ private fun convertTargetParameterToExtensionReceiver(
     val changeInfo = KotlinChangeInfo(methodDescriptor)
 
     when (candidate.kind) {
-        TargetClassCandidateKind.VALUE_PARAMETER -> {
-            val parameterName = candidate.parameterName ?: return false
-            val changedParam = changeInfo.getNonReceiverParameters().find { it.oldName == parameterName }
-            changeInfo.receiverParameterInfo = changedParam
-        }
-
+        TargetClassCandidateKind.VALUE_PARAMETER,
         TargetClassCandidateKind.CONTEXT_PARAMETER -> {
             val parameterName = candidate.parameterName ?: return false
             val changedParam = changeInfo.getNonReceiverParameters().find { it.oldName == parameterName } ?: return false
-            changedParam.isContextParameter = false
             changeInfo.receiverParameterInfo = changedParam
+
+            if (candidate.kind == TargetClassCandidateKind.CONTEXT_PARAMETER) {
+                changedParam.isContextParameter = false
+            }
         }
 
-        TargetClassCandidateKind.EXTENSION_RECEIVER -> {}
+        TargetClassCandidateKind.EXTENSION_RECEIVER -> return true
     }
 
     var isSuccessful = false
@@ -151,15 +149,15 @@ private fun convertTargetParameterToExtensionReceiver(
  * Dispatch receiver is turned into the first parameter during such a move.
  * @return a pointer to the moved function.
  */
-private fun moveToTopLevel(functionToMove: KtNamedFunction): SmartPsiElementPointer<KtNamedFunction>? {
+private fun moveToTopLevel(functionToMove: KtNamedFunction): KtNamedFunction? {
     val moveDescriptor = K2MoveDescriptor.Declarations(
         project = functionToMove.project,
         source = K2MoveSourceDescriptor.ElementSource(setOf(functionToMove)),
         target = K2MoveTargetDescriptor.File(functionToMove.containingKtFile)
     )
     val descriptor = K2MoveOperationDescriptor.Declarations(
-        functionToMove.project,
-        listOf(moveDescriptor),
+        project = functionToMove.project,
+        moveDescriptors = listOf(moveDescriptor),
         searchForText = false,
         searchInComments = false,
         searchReferences = true,
@@ -170,12 +168,12 @@ private fun moveToTopLevel(functionToMove: KtNamedFunction): SmartPsiElementPoin
 
 /**
  * Runs the Move refactoring to put [functionToMove] into the [targetClass].
- * @return a pointer to the moved function
+ * @return the moved function or `null` if the move wasn't successful
  */
 internal fun moveToClass(
     functionToMove: KtNamedFunction,
     targetClass: KtClassOrObject
-): SmartPsiElementPointer<KtNamedFunction>? {
+): KtNamedFunction? {
     val moveDescriptor = K2MoveDescriptor.Declarations(
         project = functionToMove.project,
         source = K2MoveSourceDescriptor.ElementSource(setOf(functionToMove)),
@@ -200,7 +198,7 @@ internal fun moveToClass(
 private fun moveFunctionAndFindTheResult(
     functionToMove: KtNamedFunction,
     descriptor: K2MoveOperationDescriptor.Declarations
-): SmartPsiElementPointer<KtNamedFunction>? {
+): KtNamedFunction? {
     val functionName = functionToMove.name ?: return null
     var movedFunctionPointer: SmartPsiElementPointer<KtNamedFunction>? = null
     val processor = object: K2MoveDeclarationsRefactoringProcessor(descriptor) {
@@ -212,7 +210,7 @@ private fun moveFunctionAndFindTheResult(
     }
     processor.prepareSuccessfulSwingThreadCallback = Runnable {}
     processor.run()
-    return movedFunctionPointer
+    return movedFunctionPointer?.element
 }
 
 /**
