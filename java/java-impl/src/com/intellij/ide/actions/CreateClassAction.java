@@ -68,7 +68,7 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
   }
 
   public static boolean isJavaFileActionSuppressed(@NotNull DataContext dataContext) {
-    if (AdvancedSettings.getBoolean("java.show.new.file.in.irrelevant.java.source.roots")) return false;
+    if (AdvancedSettings.getBoolean("java.suggest.creating.java.sources.in.irrelevant.source.roots")) return false;
 
     List<JavaClassActionSuppressor> suppressors = JavaClassActionSuppressor.EP_NAME.getExtensionList();
     return ContainerUtil.exists(suppressors,
