@@ -9,17 +9,11 @@ import kotlinx.serialization.Serializable
 @Serializable
 sealed interface TodoFileEvent {
   @Serializable
-  data class Updated(
-    val file: TodoFileResult,
+  data class Changes(
+    val updated: List<TodoFileResult> = emptyList(),
+    val removed: List<VirtualFileId> = emptyList(),
+    val initialScanFinished: Boolean = false
   ) : TodoFileEvent
-
-  @Serializable
-  data class Removed(
-    val fileId: VirtualFileId
-  ) : TodoFileEvent
-
-  @Serializable
-  data object InitialScanFinished : TodoFileEvent
 
   @Serializable
   data object Reset : TodoFileEvent

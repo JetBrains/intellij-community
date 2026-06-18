@@ -2,7 +2,6 @@
 package com.intellij.ide.todo.rpc
 
 import com.intellij.ide.todo.TodoFilter
-import com.intellij.ide.vfs.VirtualFileId
 import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -16,22 +15,12 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.toList
 import org.jetbrains.annotations.ApiStatus
 
-
-@ApiStatus.Internal
-data class ResolvedTodoFileEvent(
-  val event: TodoFileEvent,
-  val fileId: VirtualFileId?,
-  val virtualFile: VirtualFile?,
-  val file: TodoFileResult?,
-)
-
-
 @ApiStatus.Internal
 suspend fun collectWatchedTodoFiles(
   project: Project,
   filter: TodoFilter?,
   file: VirtualFile? = null, // not null if scope is current file
-  collector: suspend (ResolvedTodoFileEvent) -> Unit,
+  collector: suspend (TodoFileEvent) -> Unit,
 ) {
     val projectId: ProjectId = project.projectId()
     val request = TodoFilesWatchRequest(
@@ -40,29 +29,7 @@ suspend fun collectWatchedTodoFiles(
     )
 
     TodoRemoteApi.getInstance().watchTodoFiles(projectId, request).collect { event ->
-      val eventFileId = when (event) {
-        is TodoFileEvent.Updated -> event.file.fileId
-        is TodoFileEvent.Removed -> event.fileId
-        TodoFileEvent.InitialScanFinished, TodoFileEvent.Reset -> null
-      }
-      val virtualFile = eventFileId?.virtualFile()
-      val todoFile = when (event) {
-        is TodoFileEvent.Updated -> event.file
-        is TodoFileEvent.Removed, TodoFileEvent.InitialScanFinished, TodoFileEvent.Reset -> null
-      }
-
-      System.out.println(
-        "TODO watch frontend helper: event=${event}, fileId=$eventFileId, virtualFile=${virtualFile?.path}, hasFile=${todoFile != null}"
-      )
-
-      collector(
-        ResolvedTodoFileEvent(
-          event = event,
-          fileId = eventFileId,
-          virtualFile = virtualFile,
-          file = todoFile,
-        )
-      )
+     collector(event)
     }
   }
 

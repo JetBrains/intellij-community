@@ -32,7 +32,6 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
-import com.intellij.psi.PsiTreeChangeListener
 import com.intellij.psi.search.PsiTodoSearchHelper
 import com.intellij.psi.search.TodoAttributesUtil
 import com.intellij.psi.search.TodoItem
@@ -43,10 +42,15 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 private val LOG: Logger = logger<TodoRemoteApiImpl>()
+
+private const val TODO_WATCH_BATCH_SIZE = 50
+private const val TODO_WATCH_INCREMENTAL_BATCH_SIZE = 20
+private const val TODO_WATCH_INCREMENTAL_BATCH_DELAY_MS = 100L
 
 internal class TodoRemoteApiImpl : TodoRemoteApi {
   override fun watchTodoFiles(
@@ -61,74 +65,107 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     val dirtyFiles = Channel<VirtualFile>(Channel.UNLIMITED)
 
     suspend fun collectInitialSnapshot() {
-      val initialResults : List<TodoFileResult> = readAction {
+      val updated = mutableListOf<TodoFileResult>()
+      val removed = mutableListOf<VirtualFileId>()
+
+      fun flushInitialBatchIfNeeded() {
+        if (updated.size + removed.size < TODO_WATCH_BATCH_SIZE) {
+          return
+        }
+
+        trySend(
+          TodoFileEvent.Changes(
+            updated = updated.toList(),
+            removed = removed.toList(),
+          )
+        )
+
+        updated.clear()
+        removed.clear()
+      }
+
+      readAction {
         blockingContextToIndicator {
+          System.out.println("TODO watch backend: started watchedFile=${watchedFile?.path}")
+
           if (watchedFile != null) {
-            val psiFile = PsiManager.getInstance(project).findFile(watchedFile) ?: return@blockingContextToIndicator emptyList()
+            val psiFile = PsiManager.getInstance(project).findFile(watchedFile) ?: return@blockingContextToIndicator
             val result = buildTodoFileResult(project, psiFile, watchedFile, resolvedFilter)
 
             if (result != null) {
-              listOf(result)
-            }
-            else {
-              emptyList()
+              cache[result.fileId] = result
+              updated.add(result)
             }
           }
           else {
             val helper = PsiTodoSearchHelper.getInstance(project)
-            val fileResults = mutableListOf<TodoFileResult>()
 
             helper.processFilesWithTodoItems { psiFile ->
-              val virtualFile = psiFile.virtualFile
-              if (virtualFile == null) {
-                System.out.println("TODO watch backend: psiFile without virtualFile=${psiFile.name}")
-                return@processFilesWithTodoItems true
-              }
-              val result = buildTodoFileResult(project, psiFile, virtualFile, resolvedFilter)
-              if (result != null) {
-                fileResults.add(result)
-              }
+              val virtualFile = psiFile.virtualFile ?: return@processFilesWithTodoItems true
+              val result = buildTodoFileResult(project, psiFile, virtualFile, resolvedFilter) ?: return@processFilesWithTodoItems true
+
+              cache[result.fileId] = result
+              updated.add(result)
+              flushInitialBatchIfNeeded()
+
               true
             }
-            fileResults
           }
         }
       }
 
-      for (result in initialResults) {
-        cache[result.fileId] = result
-        System.out.println("TODO watch backend: sending Updated fileId=${result.fileId}, todos=${result.todos.size}")
-        send(TodoFileEvent.Updated(result))
-      }
-      send(TodoFileEvent.InitialScanFinished)
+      send(
+        TodoFileEvent.Changes(
+          updated = updated.toList(),
+          removed = removed.toList(),
+          initialScanFinished = true,
+        )
+      )
+      System.out.println(
+        "TODO watch backend: initial batch sent watchedFile=${watchedFile?.path}, updated=${updated.size}, initialScanFinished=true"
+      )
     }
 
-    suspend fun updateFile(virtualFile: VirtualFile) {
-      if (!virtualFile.isValid) {
+    suspend fun updateFiles(files: Collection<VirtualFile>) {
+      val updated = mutableListOf<TodoFileResult>()
+      val removed = mutableListOf<VirtualFileId>()
+
+      for (virtualFile in files) {
+        if (!virtualFile.isValid) {
+          val fileId = virtualFile.rpcId()
+          if (cache.remove(fileId) != null) {
+            removed.add(fileId)
+          }
+          continue
+        }
+        if (watchedFile != null && watchedFile != virtualFile) {
+          continue
+        }
+
+        val result = readAction {
+          val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@readAction null
+          buildTodoFileResult(project, psiFile, virtualFile, resolvedFilter)
+        }
+
         val fileId = virtualFile.rpcId()
-        if (cache.remove(fileId) != null) {
-          send(TodoFileEvent.Removed(fileId))
+        if (result == null) {
+          if (cache.remove(fileId) != null) {
+            removed.add(fileId)
+          }
         }
-        return
-      }
-      if (watchedFile != null && watchedFile != virtualFile) {
-        return
-      }
-
-      val result = readAction {
-        val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return@readAction null
-        buildTodoFileResult(project, psiFile, virtualFile, resolvedFilter)
-      }
-
-      val fileId = virtualFile.rpcId()
-      if (result == null) {
-        if (cache.remove(fileId) != null) {
-          send(TodoFileEvent.Removed(fileId))
+        else {
+          cache[fileId] = result
+          updated.add(result)
         }
       }
-      else {
-        cache[fileId] = result
-        send(TodoFileEvent.Updated(result))
+
+      if (updated.isNotEmpty() || removed.isNotEmpty()) {
+        send(
+          TodoFileEvent.Changes(
+            updated = updated,
+            removed = removed,
+          )
+        )
       }
     }
 
@@ -157,8 +194,21 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     }, listenerDisposable)
 
     val updateJob = launch {
-      dirtyFiles.consumeAsFlow().collect { file ->
-        updateFile(file)
+      val pendingFiles = linkedSetOf<VirtualFile>()
+
+      while (isActive) {
+        pendingFiles.add(dirtyFiles.receive())
+
+        withTimeoutOrNull(TODO_WATCH_INCREMENTAL_BATCH_DELAY_MS) {
+          while (pendingFiles.size < TODO_WATCH_INCREMENTAL_BATCH_SIZE) {
+            pendingFiles.add(dirtyFiles.receive())
+          }
+        }
+
+        val filesToUpdate = pendingFiles.toList()
+        pendingFiles.clear()
+
+        updateFiles(filesToUpdate)
       }
     }
 
@@ -167,7 +217,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
       dirtyFiles.close()
       Disposer.dispose(listenerDisposable)
     }
-  }
+  }.buffer(Channel.UNLIMITED)
 
   private fun collectDirtyFile(event: PsiTreeChangeEvent): VirtualFile? {
     val eventFile = event.file?.virtualFile
@@ -184,7 +234,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     val project = projectId.findProjectOrNull() ?: return@channelFlow
     val resolvedFilter = resolveFilter(project, filter)
 
-    val results = readAction {
+    readAction {
       blockingContextToIndicator {
         val helper = PsiTodoSearchHelper.getInstance(project)
 
@@ -288,7 +338,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
     val project = projectId.findProjectOrNull() ?: return@channelFlow
     val resolvedFilter = resolveFilter(project, filter)
 
-    val results = readAction {
+    readAction {
       blockingContextToIndicator {
         val helper = PsiTodoSearchHelper.getInstance(project)
 
@@ -301,7 +351,7 @@ internal class TodoRemoteApiImpl : TodoRemoteApi {
             helper.getTodoItemsCount(psiFile) > 0
           }
 
-          if (matchesFilter) {
+          if (!matchesFilter) {
             return@processFilesWithTodoItems true
           }
           trySend(virtualFile.rpcId()).isSuccess

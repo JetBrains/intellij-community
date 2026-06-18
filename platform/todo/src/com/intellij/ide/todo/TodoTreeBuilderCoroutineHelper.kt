@@ -84,52 +84,42 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
 
         System.out.println("TODO watch frontend: subscribing to backend watch")
         collectWatchedTodoFiles(treeBuilder.project, treeBuilder.todoTreeStructure.todoFilter, watchedFile) { resolvedEvent ->
-          System.out.println(
-            "TODO watch frontend: event=${resolvedEvent.event::class.simpleName}, fileId=${resolvedEvent.fileId}, hasFile=${resolvedEvent.file != null}"
-          )
-
-          when (val event = resolvedEvent.event) {
-            is TodoFileEvent.Updated -> {
-              val result = event.file
-
-              val virtualFile = resolvedEvent.virtualFile
-              if (virtualFile == null) {
-                System.out.println("TODO watch frontend: Updated event has null resolved virtual file, fileId=${resolvedEvent.fileId}")
-                return@collectWatchedTodoFiles
-              }
-
+          when (val event = resolvedEvent) {
+            is TodoFileEvent.Changes -> {
               System.out.println(
-                "TODO watch frontend: update file=${virtualFile.path}, todos=${result.todos.size}, name=${result.name}, url=${result.presentableUrl}"
+                "TODO watch frontend: changes builder=${treeBuilder.javaClass.name}, watchedFile=${watchedFile?.path}, updated=${event.updated.size}, removed=${event.removed.size}, initialScanFinished=${event.initialScanFinished}"
               )
 
               readAction {
-                treeBuilder.cacheRemoteTodoFile(virtualFile, result)
-                treeBuilder.addRemoteTodoFileToTree(virtualFile)
-                System.out.println(
-                  "TODO watch frontend: cached and added file=${virtualFile.path}, cachedTodos=${treeBuilder.getCachedRemoteTodos(virtualFile).size}"
-                )
-              }
+                for (result in event.updated) {
+                  val virtualFile = watchedFile ?: result.fileId.virtualFile()
+                  if (virtualFile == null) {
+                    System.out.println("TODO watch frontend: Updated event has null resolved virtual file, fileId=${result.fileId}")
+                    continue
+                  }
 
-              if (initialScanCompleted.isDone) {
-                readAction {
-                  System.out.println("TODO watch frontend: update after initial scan, invalidating tree")
+                  treeBuilder.cacheRemoteTodoFile(virtualFile, result)
+                  treeBuilder.addRemoteTodoFileToTree(virtualFile)
+                }
+
+                for (fileId in event.removed) {
+                  val virtualFile = watchedFile ?: fileId.virtualFile()
+                  if (virtualFile == null) {
+                    System.out.println("TODO watch frontend: Removed event cannot resolve fileId=$fileId")
+                    continue
+                  }
+
+                  treeBuilder.removeRemoteTodoFileFromTree(virtualFile)
+                }
+
+                if (event.initialScanFinished || initialScanCompleted.isDone) {
                   treeBuilder.validateCacheAndUpdateTree()
                 }
               }
-            }
 
-            is TodoFileEvent.Removed -> {
-              val virtualFile = resolvedEvent.virtualFile
-              if (virtualFile == null) {
-                System.out.println("TODO watch frontend: Removed event cannot resolve fileId=${event.fileId}")
-                return@collectWatchedTodoFiles
-              }
-
-              System.out.println("TODO watch frontend: remove file=${virtualFile.path}")
-
-              readAction {
-                treeBuilder.removeRemoteTodoFileFromTree(virtualFile)
-                treeBuilder.validateCacheAndUpdateTree()
+              if (event.initialScanFinished) {
+                treeBuilder.onUpdateFinished()
+                initialScanCompleted.complete(Unit)
               }
             }
 
@@ -140,17 +130,6 @@ internal class TodoTreeBuilderCoroutineHelper(private val treeBuilder: TodoTreeB
                 treeBuilder.clearCache()
                 treeBuilder.validateCacheAndUpdateTree()
               }
-            }
-
-            TodoFileEvent.InitialScanFinished -> {
-              System.out.println("TODO watch frontend: initial scan finished; invalidating tree")
-
-              readAction {
-                treeBuilder.validateCacheAndUpdateTree()
-              }
-              treeBuilder.onUpdateFinished()
-
-              initialScanCompleted.complete(Unit)
             }
           }
         }
