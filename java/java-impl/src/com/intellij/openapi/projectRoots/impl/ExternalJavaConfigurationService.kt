@@ -134,34 +134,53 @@ public class ExternalJavaConfigurationService(public val project: Project, priva
   public fun <T: JdkReleaseData> findCandidate(releaseData: T, configProvider: ExternalJavaConfigurationProvider<T>): JdkCandidate<T>? {
     val configFile = configProvider.getConfigurationFilePath(project)
     val eelMachine = project.getEelMachine()
+    val candidates = mutableListOf<JdkCandidate<T>>()
 
     // Match against the project SDK
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
-    if (projectSdk != null && releaseData.matchAgainstSdk(projectSdk)) {
-      return JdkCandidate.Jdk(releaseData, projectSdk, true)
-    } else {
-      LOG.info("[${configFile.fileName}] $releaseData - Project JDK doesn't match (${projectSdk?.versionString})")
+    if (projectSdk != null) {
+      val candidate = JdkCandidate.Jdk(releaseData, projectSdk, true)
+      when (releaseData.matchAgainstSdk(projectSdk)) {
+        ReleaseDataMatching.EXACT_MATCH -> return candidate
+        ReleaseDataMatching.FEATURE_MATCH -> candidates.add(candidate)
+        ReleaseDataMatching.NO_MATCH -> LOG.info("[${configFile.fileName}] $releaseData - Project JDK doesn't match (${projectSdk.versionString})")
+      }
     }
 
     // Match against the project JDK table
     val jdks = ProjectJdkTable.getInstance(project).allJdks
     for (jdk in jdks) {
       if (!ProjectSdksModel.sdkMatchesEel(eelMachine, jdk)) continue
-      if (releaseData.matchAgainstSdk(jdk)) {
-        LOG.info("[$configFile.fileName] $releaseData - Candidate found: ${jdk.versionString}")
-        return JdkCandidate.Jdk(releaseData, jdk, false)
+      val candidate = JdkCandidate.Jdk(releaseData, jdk, false)
+      when (releaseData.matchAgainstSdk(jdk)) {
+        ReleaseDataMatching.EXACT_MATCH -> return proceedWithMatch(candidate, match = ReleaseDataMatching.EXACT_MATCH, configFile)
+        ReleaseDataMatching.FEATURE_MATCH -> candidates.add(candidate)
+        ReleaseDataMatching.NO_MATCH -> Unit
       }
     }
 
     // Match against JdkFinder
     JdkFinder.getInstance().suggestHomePaths(project).forEach { path ->
-      if (releaseData.matchAgainstPath(path) && ProjectSdksModel.sdkMatchesEel(eelMachine, path)) {
-        LOG.info("[$configFile.fileName] $releaseData - Candidate found to register")
-        return JdkCandidate.Path(releaseData, path)
+      if (ProjectSdksModel.sdkMatchesEel(eelMachine, path)) {
+        val candidate = JdkCandidate.Path(releaseData, path)
+        when (releaseData.matchAgainstPath(path)) {
+          ReleaseDataMatching.EXACT_MATCH -> return proceedWithMatch(candidate, match = ReleaseDataMatching.EXACT_MATCH, configFile)
+          ReleaseDataMatching.FEATURE_MATCH -> candidates.add(candidate)
+          ReleaseDataMatching.NO_MATCH -> Unit
+        }
       }
     }
 
-    return null
+    return candidates.firstOrNull()?.let { proceedWithMatch(it, match = ReleaseDataMatching.FEATURE_MATCH, configFile) }
+  }
+
+  private fun <T : JdkReleaseData> proceedWithMatch(candidate: JdkCandidate<T>, match: ReleaseDataMatching, configFile: Path): JdkCandidate<T> {
+    when (match) {
+      ReleaseDataMatching.EXACT_MATCH -> LOG.info("[$configFile.fileName] $candidate - Exact match found")
+      ReleaseDataMatching.FEATURE_MATCH -> LOG.info("[$configFile.fileName] $candidate - Match found for the feature version")
+      ReleaseDataMatching.NO_MATCH -> Unit
+    }
+    return candidate
   }
 
   private fun <T> configure(jdk: Sdk, filePath: Path, candidate: T) {
