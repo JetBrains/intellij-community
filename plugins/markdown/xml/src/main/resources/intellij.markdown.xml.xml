@@ -8,6 +8,9 @@
                                   order="before SingleRootMarkdownFileViewProviderFactory"
                                   implementationClass="org.intellij.plugins.markdown.xml.DefaultMarkdownFileViewProviderFactory"/>
   </extensions>
+  <extensions defaultExtensionNs="com.intellij">
+    <lang.inspectionSuppressor language="Markdown" implementationClass="org.intellij.plugins.markdown.xml.MarkdownSuppressionProvider"/>
+  </extensions>
   <extensions defaultExtensionNs="org.intellij.markdown">
     <additionalFenceLanguageSuggester implementation="org.intellij.plugins.markdown.xml.EmbeddedTokensSuggester"/>
   </extensions>

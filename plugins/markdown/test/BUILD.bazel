@@ -200,6 +200,8 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
+        "//plugins/grazie/src/test:grazie-tests",
+        "//plugins/grazie/src/test:grazie-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown.tests` end
