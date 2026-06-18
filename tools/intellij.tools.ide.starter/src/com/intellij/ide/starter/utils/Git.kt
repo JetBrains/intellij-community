@@ -3,6 +3,7 @@ package com.intellij.ide.starter.utils
 import com.intellij.ide.starter.process.exec.ExecOutputRedirect
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.runner.SetupException
+import com.intellij.ide.starter.utils.Git.setConfigProperty
 import com.intellij.openapi.application.PathManager
 import com.intellij.tools.ide.util.common.logError
 import com.intellij.tools.ide.util.common.logOutput
@@ -47,13 +48,19 @@ object Git {
 
   @Throws(IOException::class, InterruptedException::class)
   fun getLocalCurrentCommitHash(repositoryDirectory: Path): String {
+    return getCommitHash(repositoryDirectory, "HEAD")
+  }
+
+  @Throws(IOException::class, InterruptedException::class)
+  fun getCommitHash(repositoryDirectory: Path, branchName: String): String {
+    require(branchName.isNotEmpty()) { "Branch name must not be empty" }
     val stdout = ExecOutputRedirect.ToString()
 
     ProcessExecutor(
-      "git-local-current-commit-get",
+      "git-commit-get",
       workDir = repositoryDirectory.toAbsolutePath(),
       timeout = 1.minutes,
-      args = listOf("git", "rev-parse", "HEAD"),
+      args = listOf("git", "rev-parse", branchName),
       stdoutRedirect = stdout
     ).start()
 
@@ -225,11 +232,15 @@ object Git {
   }
 
 
-  fun checkout(repositoryDirectory: Path, branchName: String) {
+  fun checkout(repositoryDirectory: Path, branchName: String, isForce: Boolean = false) {
     require(branchName.isNotEmpty()) { "Branch name should not be empty" }
     val cmdName = "git-checkout"
 
-    val arguments = mutableListOf("git", "checkout", branchName)
+    val arguments = mutableListOf("git", "checkout")
+    if (isForce) {
+      arguments.add("-f")
+    }
+    arguments.add(branchName)
 
     ProcessExecutor(
       presentableName = cmdName,
@@ -523,6 +534,25 @@ object Git {
     ).start()
   }
 
+  fun getConfigProperty(repositoryDirectory: Path, propertyName: String): String {
+    require(propertyName.isNotEmpty()) { "Property name must not be empty" }
+    val propertyValue = ExecOutputRedirect.ToString()
+
+    runCatching {
+      ProcessExecutor(
+        propertyName,
+        workDir = repositoryDirectory.toAbsolutePath(),
+        timeout = 10.seconds,
+        args = listOf("git", "config", propertyName),
+        stdoutRedirect = propertyValue,
+        stderrRedirect = ExecOutputRedirect.ToString(),
+        onlyEnrichExistedEnvVariables = true
+      ).start()
+    }
+
+    return propertyValue.read().trim()
+  }
+
   fun buildDiff(dir: Path, file: Path, outputFile: Path) {
     ProcessExecutor(
       "git-build-diff",
@@ -572,4 +602,50 @@ object Git {
     return System.currentTimeMillis() - start
   }
 
+  /**
+   * Returns a list of tracked files modified since the last commit (both staged and unstaged).
+   * Untracked files (e.g. qodana.yaml added by the test framework) are not included.
+   */
+  @Throws(IOException::class, InterruptedException::class)
+  fun getModifiedTrackedFiles(repositoryDirectory: Path): List<String> {
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      "git-diff-name-only",
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = listOf("git", "diff", "--name-only", "HEAD"),
+      stdoutRedirect = stdout,
+      stderrRedirect = ExecOutputRedirect.ToStdOut("[git-diff-name-only]"),
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+    return stdout.read().trim().lines().filter { it.isNotBlank() }
+  }
+}
+
+/**
+ * Configures git user.name and user.email for the repository if not already set.
+ * Configuration is applied locally (repository-level, not global).
+ *
+ * @param repositoryDirectory path to the git repository
+ * @param userName the user name to set if not configured (default: "Test User")
+ * @param userEmail the user email to set if not configured (default: "test-user@jetbrains.com")
+ */
+fun Git.configureGitUserIfNotSet(
+  repositoryDirectory: Path,
+  userName: String = "Test User",
+  userEmail: String = "test-user@jetbrains.com",
+) {
+  val currentUserName = getConfigProperty(repositoryDirectory, "user.name")
+  val currentUserEmail = getConfigProperty(repositoryDirectory, "user.email")
+
+  setPropertyIfEmpty(repositoryDirectory, "user.name", currentUserName, userName)
+  setPropertyIfEmpty(repositoryDirectory, "user.email", currentUserEmail, userEmail)
+}
+
+private fun setPropertyIfEmpty(repositoryDirectory: Path, propertyName: String, currentValue: String, defaultValue: String) {
+  if (currentValue.isEmpty()) {
+    require(defaultValue.isNotEmpty()) { "defaultValue must not be empty" }
+    setConfigProperty(repositoryDirectory, propertyName, defaultValue)
+    logOutput("Git $propertyName set to '$defaultValue' for repository: $repositoryDirectory")
+  }
 }
