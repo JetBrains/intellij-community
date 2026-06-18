@@ -16,6 +16,7 @@ interface LayerPaintingContext {
     val slotWidth: Int?
     val slotHeight: Int?
     val scaling: ScalingContext
+    val alpha: Float?
 
     fun drawImage(
         image: ImageResource,
@@ -49,6 +50,7 @@ interface LayerPaintingContext {
         slotWidth: Int? = null,
         slotHeight: Int? = null,
         scale: Float = 1f,
+        alpha: Float = 1f,
         overrideColorFilter: ColorFilter? = null,
     ): LayerPaintingContext
 }

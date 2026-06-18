@@ -25,6 +25,7 @@ import com.intellij.platform.icons.modifiers.scale
 import com.intellij.platform.icons.rendering.IconRendererManager
 import com.intellij.platform.icons.scale.IconScale
 import com.intellij.platform.icons.swing.ScalableSwingIcon
+import com.intellij.ui.AnimatedIcon
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.Topic.BroadcastDirection
 import kotlinx.coroutines.Dispatchers
@@ -74,18 +75,9 @@ class IntelliJIconManager : DefaultIconManager() {
   override fun toNewIcon(swingIcon: javax.swing.Icon): Icon {
     if (swingIcon is SwingIcon && swingIcon.scale == null) return swingIcon.icon
     return if (swingIcon is SwingIcon) {
-      @Suppress("KotlinConstantConditions")
-      if (swingIcon.scale != null) {
-        icon {
-          addSwingLayer(
-            this,
-            swingIcon,
-            IconModifier.scale(swingIcon.scale)
-          )
-        }
-      } else swingIcon.icon
+      unpackSwingIcon(swingIcon)
     } else {
-      icon {
+      convertLegacyIcon(swingIcon) ?: icon {
         addSwingLayer(
           this,
           swingIcon,
@@ -93,6 +85,28 @@ class IntelliJIconManager : DefaultIconManager() {
         )
       }
     }
+  }
+
+  private fun convertLegacyIcon(swingIcon: javax.swing.Icon): Icon? {
+    return when (swingIcon) {
+        is AnimatedIcon -> {
+          swingIcon.extractAsNewIcon()
+        }
+      else -> null
+    }
+  }
+
+  private fun unpackSwingIcon(swingIcon: SwingIcon): Icon {
+    @Suppress("KotlinConstantConditions")
+    return if (swingIcon.scale != null) {
+      icon {
+        addSwingLayer(
+          this,
+          swingIcon,
+          IconModifier.scale(swingIcon.scale)
+        )
+      }
+    } else swingIcon.icon
   }
 
   override fun markDeferredIconUnused(id: IconIdentifier) {

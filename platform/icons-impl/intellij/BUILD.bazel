@@ -3,6 +3,11 @@ load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 ### auto-generated section `build intellij.platform.icons.impl.intellij` start
 
 jvm_provided_library(
+    name = "platform_core-ui_provided",
+    lib = "//platform/core-ui",
+)
+
+jvm_provided_library(
     name = "platform_icons-api_provided",
     lib = "//platform/icons-api",
 )
@@ -38,8 +43,8 @@ jvm_provided_library(
 )
 
 jvm_provided_library(
-    name = "platform_core-ui_provided",
-    lib = "//platform/core-ui",
+    name = "platform_ide-core_provided",
+    lib = "//platform/ide-core",
 )
 
 jvm_provided_library(
@@ -75,6 +80,7 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/serialization/core",
         "@lib//:jetbrains-annotations",
+        ":platform_core-ui_provided",
         ":platform_icons-api_provided",
         ":platform_icons-api_rendering_provided",
         ":platform_icons-impl_provided",
@@ -82,7 +88,7 @@ jvm_library(
         ":platform_util-ui_provided",
         ":platform_core_provided",
         ":platform_core-impl_provided",
-        ":platform_core-ui_provided",
+        ":platform_ide-core_provided",
         ":platform_ide-impl_provided",
     ],
 )
@@ -108,6 +114,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":intellij",
+        "//platform/core-ui",
+        "//platform/core-ui:core-ui_test_lib",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/icons-api",
@@ -124,8 +132,8 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
-        "//platform/core-ui",
-        "//platform/core-ui:core-ui_test_lib",
+        "//platform/ide-core",
+        "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/platform-impl:ide-impl_test_lib",
     ],

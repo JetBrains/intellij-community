@@ -5,9 +5,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.CoroutineSupport.UiDispatcherKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.platform.icons.modifiers.IconModifier;
 import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.containers.ContainerUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +27,9 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+
+import static com.intellij.platform.icons.IconManagerKt.icon;
+import static com.intellij.platform.icons.swing.SwingIconKt.swingIcon;
 
 public class AnimatedIcon implements Icon {
   private static final Logger LOG = Logger.getInstance(AnimatedIcon.class);
@@ -172,11 +177,16 @@ public class AnimatedIcon implements Icon {
 
   @ApiStatus.Internal
   public static final class Fading extends AnimatedIcon {
+    private final Icon icon;
+    private final int period;
+
     public Fading(@NotNull Icon icon) {
       this(1000, icon);
     }
 
     public Fading(int period, @NotNull Icon icon) {
+      this.period = period;
+      this.icon = icon;
       super(50, new Icon() {
         private final long time = System.currentTimeMillis();
 
@@ -213,9 +223,30 @@ public class AnimatedIcon implements Icon {
         }
       });
     }
+
+    @ApiStatus.Internal
+    @Override
+    public com.intellij.platform.icons.Icon extractAsNewIcon() {
+      final int fadeTime = Math.max(period / 2, 0);
+      return icon((designer) -> {
+        designer.animation(IconModifier.Companion, (animation) -> {
+          animation.frame(fadeTime, 0, fadeTime, (frameDesigner) -> {
+            swingIcon(frameDesigner, icon, IconModifier.Companion);
+            return Unit.INSTANCE;
+          });
+          animation.frame(fadeTime, 0, fadeTime, (frameDesigner) -> {
+            swingIcon(frameDesigner, icon, IconModifier.Companion);
+            return Unit.INSTANCE;
+          });
+          return Unit.INSTANCE;
+        });
+        return Unit.INSTANCE;
+      });
+    }
   }
 
-  final Frame[] frames;
+  @ApiStatus.Internal
+  public final Frame[] frames;
   private final Set<Component> requested = Collections.newSetFromMap(new IdentityHashMap<>());
   private long time;
   private int index;
@@ -340,5 +371,21 @@ public class AnimatedIcon implements Icon {
 
   protected @Nullable Component getRendererOwner(@Nullable Component component) {
     return ClientProperty.isTrue(component, ANIMATION_IN_RENDERER_ALLOWED) ? component : null;
+  }
+
+  @ApiStatus.Internal
+  public com.intellij.platform.icons.Icon extractAsNewIcon() {
+    return icon((designer) -> {
+      designer.animation(IconModifier.Companion, (animation) -> {
+        for (Frame frame : frames) {
+          animation.frame(frame.getDelay(), (frameDesigner) -> {
+            swingIcon(frameDesigner, frame.getIcon(), IconModifier.Companion);
+            return Unit.INSTANCE;
+          });
+        }
+        return Unit.INSTANCE;
+      });
+      return Unit.INSTANCE;
+    });
   }
 }

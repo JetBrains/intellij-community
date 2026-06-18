@@ -22,9 +22,14 @@ import com.intellij.platform.icons.scale.factor
 import com.intellij.platform.icons.scale.fitArea
 import com.intellij.platform.icons.swing.swingIcon
 import com.intellij.platform.icons.swing.toNewIcon
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.IconDeferrer
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.delay
+import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.JLabel
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 internal class IconsPanel : UISandboxPanel {
@@ -61,6 +66,22 @@ internal class IconsPanel : UISandboxPanel {
               }
               frame(1000) {
                 swingIcon(AllIcons.General.ChevronLeft)
+              }
+            }
+          }
+          icon {
+            animation {
+              frame(fadeIn = 500, stay = 500, fadeOut = 500) {
+                swingIcon(AllIcons.General.Add)
+              }
+              frame(fadeIn = 500, stay = 500, fadeOut = 500) {
+                swingIcon(AllIcons.General.Remove)
+              }
+              frame(fadeIn = 500, stay = 500, fadeOut = 500) {
+                swingIcon(AllIcons.General.ArrowUp)
+              }
+              frame(fadeIn = 500, stay = 500, fadeOut = 500) {
+                swingIcon(AllIcons.General.ArrowDown)
               }
             }
           }
@@ -118,6 +139,43 @@ internal class IconsPanel : UISandboxPanel {
               icon(AllIcons.FileTypes.Image.toNewIcon())
             }
           }
+        }
+      }
+
+      var i = 0
+      fun createDeferredIcon(): Icon {
+        return IconDeferrer.getInstance().deferAsync(AllIcons.FileTypes.Unknown, i++) {
+            delay(5000.milliseconds)
+            AllIcons.FileTypes.Bazel
+        }
+      }
+      group("Legacy Icon Support") {
+        lateinit var deferredIconLabel: JLabel
+        row {
+          icon(
+            AllIcons.General.GearPlain.toNewIcon()
+          )
+          icon(
+            AnimatedIcon.Default().toNewIcon()
+          )
+          deferredIconLabel = icon(
+            createDeferredIcon()
+          ).component
+        }
+        row {
+          button("Recreate Deferred Icon") {
+            deferredIconLabel.icon = createDeferredIcon()
+          }
+        }
+      }
+      group("Legacy Icon Tests") {
+        row {
+          icon(
+            AnimatedIcon.Blinking(AllIcons.General.Remove)
+          )
+          icon(
+            AnimatedIcon.Fading(AllIcons.General.Add)
+          )
         }
       }
     }
