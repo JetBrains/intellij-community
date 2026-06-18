@@ -1,54 +1,38 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl
 
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.text.Strings
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import com.intellij.platform.eel.provider.getEelMachine
 import com.intellij.workspaceModel.ide.JpsProjectLoadedListener
-import com.jetbrains.python.sdk.ModuleOrProject
+import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import com.jetbrains.python.sdk.PySdkFromEnvironmentVariable
-import com.jetbrains.python.sdk.runWithSdkConfigurationLock
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
+import com.jetbrains.python.sdk.getOrLog
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 
-private val LOGGER = logger<PySdkFromEnvironmentVariableConfigurator>()
 
-@ApiStatus.Internal
+/**
+ * Configures Python SDK from env variable, see [PySdkFromEnvironmentVariable]
+ */
 internal class PySdkFromEnvironmentVariableConfigurator(private val project: Project) : JpsProjectLoadedListener {
-  override fun loaded() {
-    val pycharmPythonPathEnvVariable = PySdkFromEnvironmentVariable.getPycharmPythonPathProperty()
-    if (Strings.isEmptyOrSpaces(pycharmPythonPathEnvVariable)) {
-      LOGGER.debug("$PySdkFromEnvironmentVariable.PYCHARM_PYTHON_PATH is null or empty")
-      return
-    }
-    LOGGER.info("Found $PySdkFromEnvironmentVariable.PYCHARM_PYTHON_PATH='${PySdkFromEnvironmentVariable.getPycharmPythonPathProperty()}' system property")
-
-    runInEdt {
-      checkAndSetSdk(project, pycharmPythonPathEnvVariable!!)
-    }
+  private companion object {
+    val log = fileLogger()
   }
 
-  private fun checkAndSetSdk(project: Project, pycharmPythonPathEnvVariable: String) = runWithSdkConfigurationLock(project) {
-    withContext(Dispatchers.EDT) {
-
-      val moduleOrProject = ModuleManager.getInstance(project).modules.firstOrNull()?.let { ModuleOrProject.ModuleAndProject(it) }
-                            ?: ModuleOrProject.ProjectOnly(project)
-
-      val sdk = PySdkFromEnvironmentVariable.findOrCreateSdkByPath(pycharmPythonPathEnvVariable, moduleOrProject).getOr {
-        LOGGER.warn("Failed to configure SDK: ${it.error}")
-        return@withContext
-      }
-
-      val projectSdk = ProjectRootManager.getInstance(project).projectSdk
-
-      ModuleManager.getInstance(project).modules.forEach {
-        PySdkFromEnvironmentVariable.setModuleSdk(it, projectSdk, sdk, pycharmPythonPathEnvVariable)
-      }
+  override fun loaded() {
+    project.service<MyService>().scope.launch {
+      GlobalWorkspaceModel.getInstance(project.getEelMachine()).awaitSynchronizationWithJpsModel()
+      @Suppress("UnsafeOpenServiceCast")
+      (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).awaitSynchronizationWithJpsModel()
+      PySdkFromEnvironmentVariable.create(project).getOrLog(log)?.configureSdkForModulesLogIfError(log)
     }
   }
 }
+
+@Service(Service.Level.PROJECT)
+private class MyService(val scope: CoroutineScope)
