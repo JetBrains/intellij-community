@@ -7,13 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.python.pytools.InstallInfo
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
-import com.intellij.python.pytools.lsp.executablePath
+import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.statistics.PyToolFusSnapshot
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 
 @ApiStatus.Internal
 class PyrightPyTool : PyTool {
@@ -27,14 +25,7 @@ class PyrightPyTool : PyTool {
     installHelp = PyrightBundle.message("basedpyright.help"),
   )
 
-  override fun legacyEnabled(project: Project): Boolean =
-    project.service<PyrightConfiguration>().enabled
-
-  override fun legacyDiscoveryMode(project: Project): ExecutableDiscoveryMode =
-    project.service<PyrightConfiguration>().executableDiscoveryMode
-
-  override fun legacyCustomPath(project: Project): Path? =
-    project.service<PyrightConfiguration>().executablePath
+  override fun migrateLegacyState(project: Project): PyToolsState.ToolEntry = project.service<PyrightConfiguration>().migrateToPyToolState()
 
   override val detailConfigurable: (Project) -> UnnamedConfigurable = ::PyrightConfigurable
 

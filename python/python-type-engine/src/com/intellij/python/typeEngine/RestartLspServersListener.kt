@@ -19,13 +19,12 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.pyrefly.PyreflyConfiguration
 import com.intellij.python.pyrefly.PyreflyPyTool
 import com.intellij.python.pyrefly.PyreflyUsageCollector
-import com.intellij.python.ty.TyConfiguration
-import com.jetbrains.python.extensions.getSdk
+import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
-import com.intellij.python.pytools.getState
 import com.intellij.python.pytools.isEnabledOn
 import com.intellij.python.pytools.ui.getInstalledToolPackage
 import com.intellij.python.ty.TyPyTool
+import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.packaging.PythonVersionValue
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
@@ -111,8 +110,10 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
           }
         }
       }
-      PyreflyPyTool.getInstance().getState(project).enabled = typeEngineProjectSettings.typeEngine == PyTypeEngineType.PYREFLY
-      TyPyTool.getInstance().getState(project).enabled  = typeEngineProjectSettings.typeEngine == PyTypeEngineType.TY
+      with(PyToolsState.getInstance(project)) {
+        setEnabled(PyreflyPyTool.getInstance(), typeEngineProjectSettings.typeEngine == PyTypeEngineType.PYREFLY)
+        setEnabled(TyPyTool.getInstance(), typeEngineProjectSettings.typeEngine == PyTypeEngineType.TY)
+      }
       updateLspServers()
     }
   }

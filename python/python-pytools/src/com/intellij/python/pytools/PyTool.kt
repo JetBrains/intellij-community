@@ -5,7 +5,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
 import com.intellij.python.pytools.statistics.PyToolFusSnapshot
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.Nls
@@ -47,14 +46,13 @@ interface PyTool {
    */
   val minimumSupportedVersion: PlatformVersion? get() = null
 
-  /** Pre-migration `enabled` value, used by [PyToolsState] on first read. */
-  fun legacyEnabled(project: Project): Boolean = false
-
-  /** Pre-migration discovery mode, used by [PyToolsState] on first read. */
-  fun legacyDiscoveryMode(project: Project): ExecutableDiscoveryMode = ExecutableDiscoveryMode.INTERPRETER
-
-  /** Pre-migration custom path, used by [PyToolsState] on first read. */
-  fun legacyCustomPath(project: Project): java.nio.file.Path? = null
+  /**
+   * One-time migration from this tool's pre-[PyToolsState] configuration. Called once per project by
+   * [PyToolsState] when it has no stored state yet. Implementations read their old settings, **reset those
+   * old settings to their defaults** (so the migration is one-way and re-running it can never resurrect the
+   * old values), and return the equivalent [PyToolsState.ToolEntry] — or `null` if there is nothing to migrate.
+   */
+  fun migrateLegacyState(project: Project): PyToolsState.ToolEntry? = null
 
   /**
    * Factory that builds the per-tool detail UI shown in the Edit dialog of the External Tools

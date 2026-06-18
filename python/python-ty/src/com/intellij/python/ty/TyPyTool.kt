@@ -6,13 +6,11 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
-import com.intellij.python.pytools.lsp.executablePath
+import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.statistics.PyToolFusSnapshot
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 
 @ApiStatus.Internal
 class TyPyTool : PyTool {
@@ -20,14 +18,7 @@ class TyPyTool : PyTool {
   override val description: String get() = TyBundle.message("ty.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("ty")
 
-  override fun legacyEnabled(project: Project): Boolean =
-    project.service<TyConfiguration>().enabled
-
-  override fun legacyCustomPath(project: Project): Path? =
-    project.service<TyConfiguration>().executablePath
-
-  override fun legacyDiscoveryMode(project: Project): ExecutableDiscoveryMode =
-    project.service<TyConfiguration>().executableDiscoveryMode
+  override fun migrateLegacyState(project: Project): PyToolsState.ToolEntry = project.service<TyConfiguration>().migrateToPyToolState()
 
   override val detailConfigurable: (Project) -> UnnamedConfigurable = ::TyConfigurable
 

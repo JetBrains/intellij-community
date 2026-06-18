@@ -9,13 +9,11 @@ import com.intellij.platform.lsp.api.stopAndRestartClientsIfNeeded
 import com.intellij.platform.lsp.api.stopClients
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
 import com.intellij.python.pytools.PyTool
-import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
-import com.intellij.python.pytools.lsp.executablePath
+import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.statistics.PyToolFusSnapshot
 import com.intellij.python.pytools.ui.PyToolsUiBundle
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 
 @ApiStatus.Internal
 class PyreflyPyTool : PyTool {
@@ -23,12 +21,7 @@ class PyreflyPyTool : PyTool {
   override val description: String get() = PyreflyBundle.message("pyrefly.tool.description")
   override val packageName: PyPackageName = PyPackageName.from("pyrefly")
 
-  override fun legacyEnabled(project: Project): Boolean =
-    project.service<PyreflyConfiguration>().enabled
-  override fun legacyDiscoveryMode(project: Project): ExecutableDiscoveryMode =
-    project.service<PyreflyConfiguration>().executableDiscoveryMode
-  override fun legacyCustomPath(project: Project): Path? =
-    project.service<PyreflyConfiguration>().executablePath
+  override fun migrateLegacyState(project: Project): PyToolsState.ToolEntry = project.service<PyreflyConfiguration>().migrateToPyToolState()
 
   override val detailConfigurable: (Project) -> UnnamedConfigurable = ::PyreflyDetailConfigurable
 
