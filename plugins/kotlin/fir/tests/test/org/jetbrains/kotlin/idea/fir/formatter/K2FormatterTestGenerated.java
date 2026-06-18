@@ -767,6 +767,31 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
                 runTest("../../idea/tests/testData/formatter/CommentInFunctionLiteral.after.kt");
             }
 
+            @TestMetadata("ContextParameterFunctionTypeMultipleReceivers.after.kt")
+            public void testContextParameterFunctionTypeMultipleReceivers() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterFunctionTypeMultipleReceivers.after.kt");
+            }
+
+            @TestMetadata("ContextParameterFunctionTypeReturnType.after.kt")
+            public void testContextParameterFunctionTypeReturnType() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterFunctionTypeReturnType.after.kt");
+            }
+
+            @TestMetadata("ContextParameterInFunctionTypeParameter.after.kt")
+            public void testContextParameterInFunctionTypeParameter() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterInFunctionTypeParameter.after.kt");
+            }
+
+            @TestMetadata("ContextParameterLineBreakBeforeParentheses.after.kt")
+            public void testContextParameterLineBreakBeforeParentheses() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterLineBreakBeforeParentheses.after.kt");
+            }
+
+            @TestMetadata("ContextParameterListSingleLineKept.after.kt")
+            public void testContextParameterListSingleLineKept() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterListSingleLineKept.after.kt");
+            }
+
             @TestMetadata("ContextParameterModifiers.after.kt")
             public void testContextParameterModifiers() throws Exception {
                 runTest("../../idea/tests/testData/formatter/ContextParameterModifiers.after.kt");
@@ -777,9 +802,59 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
                 runTest("../../idea/tests/testData/formatter/ContextParameterMultiline.after.kt");
             }
 
+            @TestMetadata("ContextParameterNested.after.kt")
+            public void testContextParameterNested() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterNested.after.kt");
+            }
+
+            @TestMetadata("ContextParameterOnProperty.after.kt")
+            public void testContextParameterOnProperty() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterOnProperty.after.kt");
+            }
+
+            @TestMetadata("ContextParameterRParenOnNextLine.after.kt")
+            public void testContextParameterRParenOnNextLine() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterRParenOnNextLine.after.kt");
+            }
+
+            @TestMetadata("ContextParameterRParenOnNextLineFunctionType.after.kt")
+            public void testContextParameterRParenOnNextLineFunctionType() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterRParenOnNextLineFunctionType.after.kt");
+            }
+
+            @TestMetadata("ContextParameterRParenOnNextLineProperty.after.kt")
+            public void testContextParameterRParenOnNextLineProperty() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterRParenOnNextLineProperty.after.kt");
+            }
+
+            @TestMetadata("ContextParameterReceiverFunctionType.after.kt")
+            public void testContextParameterReceiverFunctionType() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterReceiverFunctionType.after.kt");
+            }
+
+            @TestMetadata("ContextParameterRetainNewlineBeforeReceiver.after.kt")
+            public void testContextParameterRetainNewlineBeforeReceiver() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterRetainNewlineBeforeReceiver.after.kt");
+            }
+
+            @TestMetadata("ContextParameterRetainNewlineBeforeValueParameters.after.kt")
+            public void testContextParameterRetainNewlineBeforeValueParameters() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterRetainNewlineBeforeValueParameters.after.kt");
+            }
+
+            @TestMetadata("ContextParameterSpaceAfterListInFunctionType.after.kt")
+            public void testContextParameterSpaceAfterListInFunctionType() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterSpaceAfterListInFunctionType.after.kt");
+            }
+
             @TestMetadata("ContinuationIndentInAssigments.after.kt")
             public void testContinuationIndentInAssigments() throws Exception {
                 runTest("../../idea/tests/testData/formatter/ContinuationIndentInAssigments.after.kt");
+            }
+
+            @TestMetadata("ContinuationIndentInContextParameterLists.after.kt")
+            public void testContinuationIndentInContextParameterLists() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContinuationIndentInContextParameterLists.after.kt");
             }
 
             @TestMetadata("ContinuationIndentInParameterLists.after.kt")
@@ -2012,6 +2087,36 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
                 runTest("../../idea/tests/testData/formatter/ColonSpaces.after.inv.kt");
             }
 
+            @TestMetadata("ContextParameterInFunctionTypeParameter.after.inv.kt")
+            public void testContextParameterInFunctionTypeParameter() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterInFunctionTypeParameter.after.inv.kt");
+            }
+
+            @TestMetadata("ContextParameterRParenOnNextLine.after.inv.kt")
+            public void testContextParameterRParenOnNextLine() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterRParenOnNextLine.after.inv.kt");
+            }
+
+            @TestMetadata("ContextParameterRParenOnNextLineFunctionType.after.inv.kt")
+            public void testContextParameterRParenOnNextLineFunctionType() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterRParenOnNextLineFunctionType.after.inv.kt");
+            }
+
+            @TestMetadata("ContextParameterRParenOnNextLineProperty.after.inv.kt")
+            public void testContextParameterRParenOnNextLineProperty() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterRParenOnNextLineProperty.after.inv.kt");
+            }
+
+            @TestMetadata("ContextParameterReceiverFunctionType.after.inv.kt")
+            public void testContextParameterReceiverFunctionType() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterReceiverFunctionType.after.inv.kt");
+            }
+
+            @TestMetadata("ContextParameterSpaceAfterListInFunctionType.after.inv.kt")
+            public void testContextParameterSpaceAfterListInFunctionType() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContextParameterSpaceAfterListInFunctionType.after.inv.kt");
+            }
+
             @TestMetadata("ContinuationIndentForExpressionBodies.after.inv.kt")
             public void testContinuationIndentForExpressionBodies() throws Exception {
                 runTest("../../idea/tests/testData/formatter/ContinuationIndentForExpressionBodies.after.inv.kt");
@@ -2020,6 +2125,11 @@ public abstract class K2FormatterTestGenerated extends AbstractK2FormatterTest {
             @TestMetadata("ContinuationIndentInAssigments.after.inv.kt")
             public void testContinuationIndentInAssigments() throws Exception {
                 runTest("../../idea/tests/testData/formatter/ContinuationIndentInAssigments.after.inv.kt");
+            }
+
+            @TestMetadata("ContinuationIndentInContextParameterLists.after.inv.kt")
+            public void testContinuationIndentInContextParameterLists() throws Exception {
+                runTest("../../idea/tests/testData/formatter/ContinuationIndentInContextParameterLists.after.inv.kt");
             }
 
             @TestMetadata("DelegationList.after.inv.kt")
