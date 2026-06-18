@@ -45,21 +45,6 @@ public final class ExtensionScriptsUtil {
   private ExtensionScriptsUtil() {
   }
 
-  //public static @Nullable IdeScriptEngine getEngineFor(@Nullable Project project,
-  //                                                     @Nullable PluginId pluginId,
-  //                                                     @NotNull Path file,
-  //                                                     @Nullable BiConsumer<String, Project> installPlugin) {
-  //  return getEngineFor(project, pluginId, file, installPlugin, true);
-  //}
-
-  //public static @Nullable IdeScriptEngine getEngineFor(@Nullable Project project,
-  //                                                     @Nullable PluginId pluginId,
-  //                                                     @NotNull Path file,
-  //                                                     @Nullable BiConsumer<String, Project> installPlugin,
-  //                                                     boolean showBalloon) {
-  //  return getEngineFor(project, getDefaultClassLoader(pluginId), file, installPlugin, showBalloon);
-  //}
-
   public static @Nullable ClassLoader getDefaultClassLoader(@Nullable PluginId pluginId) {
     IdeaPluginDescriptor plugin = PluginManagerCore.getPlugin(pluginId);
     plugin = plugin != null ? plugin : PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID);
