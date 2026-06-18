@@ -60,25 +60,20 @@ fun findTargetClassCandidates(declaration: KtCallableDeclaration): List<TargetCl
                 )
             )
         }
-        declaration.contextParameters.mapNotNullTo(result) { contextParameter ->
-            contextParameter.typeReference?.let { typeReference ->
-                createCandidate(
-                    declaration = declaration,
-                    parameterName = contextParameter.name,
-                    typeReference = typeReference,
-                    kind = TargetClassCandidateKind.CONTEXT_PARAMETER,
-                    displayName = contextParameter.name ?: SpecialNames.ANONYMOUS_STRING,
-                )
-            }
-        }
-        declaration.valueParameters.mapNotNullTo(result) { valueParameter ->
-            valueParameter.typeReference?.let { typeReference ->
-                createCandidate(
-                    declaration = declaration,
-                    parameterName = valueParameter.name,
-                    typeReference = typeReference,
-                    kind = TargetClassCandidateKind.VALUE_PARAMETER,
-                    displayName = valueParameter.name ?: SpecialNames.ANONYMOUS_STRING,
+        for (ktParameter in declaration.contextParameters + declaration.valueParameters) {
+            val kind = if (ktParameter.isContextParameter)
+                TargetClassCandidateKind.CONTEXT_PARAMETER
+            else TargetClassCandidateKind.VALUE_PARAMETER
+
+            ktParameter.typeReference?.let { typeReference ->
+                result.addIfNotNull(
+                    createCandidate(
+                        declaration = declaration,
+                        parameterName = ktParameter.name,
+                        typeReference = typeReference,
+                        kind = kind,
+                        displayName = ktParameter.name ?: SpecialNames.ANONYMOUS_STRING,
+                    )
                 )
             }
         }
