@@ -102,14 +102,12 @@ class CodexRolloutSessionBackendTest {
       assertThat(outline.threadId).isEqualTo("session-outline")
       assertThat(outline.title).isEqualTo("Fix flaky test")
       assertThat(outline.updatedAt).isEqualTo(Instant.parse("2026-02-13T10:00:04.000Z").toEpochMilli())
-      val turn = outline.items.single()
-      assertThat(turn.kind).isEqualTo(AgentSessionOutlineItemKind.AGENT_WORK)
-      assertThat(turn.title).isEqualTo("Fix flaky test")
-      assertThat(turn.children.map { it.kind }).containsExactly(
+      assertThat(outline.items.map { it.kind }).containsExactly(
         AgentSessionOutlineItemKind.USER_PROMPT,
-        AgentSessionOutlineItemKind.AGENT_WORK,
+        AgentSessionOutlineItemKind.ASSISTANT_RESPONSE,
       )
-      val phase = turn.children[1]
+      val prompt = outline.items[0]
+      val phase = outline.items[1]
       assertThat(phase.title).isEqualTo("I will inspect the failure.")
       assertThat(phase.preview).isEqualTo("1 tool, 1 result, 1 plan")
       assertThat(phase.children.map { it.kind }).containsExactly(
@@ -117,8 +115,8 @@ class CodexRolloutSessionBackendTest {
         AgentSessionOutlineItemKind.TOOL_RESULT,
         AgentSessionOutlineItemKind.PLAN,
       )
-      assertThat(turn.children[0].preview).isEqualTo("Fix flaky test")
-      assertThat(turn.children[0].id).isEqualTo(codexUserPromptOutlineItemId(0))
+      assertThat(prompt.preview).isEqualTo("Fix flaky test")
+      assertThat(prompt.id).isEqualTo(codexUserPromptOutlineItemId(0))
       assertThat(phase.children[0].title).isEqualTo("exec_command")
       assertThat(phase.children[1].preview).isEqualTo("ok")
     }
@@ -179,16 +177,14 @@ class CodexRolloutSessionBackendTest {
       val outline = CodexRolloutParser().parseOutline(rollout)
 
       assertThat(outline).isNotNull
-      val turn = outline!!.items.single()
-      assertThat(turn.title).isEqualTo("Resolve current merge conflicts")
-      assertThat(turn.children.map { it.kind }).containsExactly(
+      assertThat(outline!!.items.map { it.kind }).containsExactly(
         AgentSessionOutlineItemKind.USER_PROMPT,
-        AgentSessionOutlineItemKind.AGENT_WORK,
-        AgentSessionOutlineItemKind.AGENT_WORK,
+        AgentSessionOutlineItemKind.ASSISTANT_RESPONSE,
+        AgentSessionOutlineItemKind.ASSISTANT_RESPONSE,
       )
-      assertThat(turn.children.mapNotNull { it.preview }).doesNotContain("<environment_context> <cwd>$projectDir</cwd> </environment_context>")
+      assertThat(outline.items.mapNotNull { it.preview }).doesNotContain("<environment_context> <cwd>$projectDir</cwd> </environment_context>")
 
-      val firstPhase = turn.children[1]
+      val firstPhase = outline.items[1]
       assertThat(firstPhase.title).isEqualTo("I will inspect the Git state.")
       assertThat(firstPhase.preview).isEqualTo("2 tools, 2 results")
       assertThat(firstPhase.children.map { it.title }).containsExactly(
@@ -198,7 +194,7 @@ class CodexRolloutSessionBackendTest {
         "Exit 0",
       )
 
-      val patchPhase = turn.children[2]
+      val patchPhase = outline.items[2]
       assertThat(patchPhase.title).isEqualTo("Conflict markers are removed.")
       assertThat(patchPhase.preview).isEqualTo("1 tool, 1 result")
       assertThat(patchPhase.children.map { it.title }).containsExactly("apply_patch", "apply patch finished")

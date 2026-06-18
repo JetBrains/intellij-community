@@ -191,8 +191,8 @@ private fun buildPromptRecord(
   deliveredByStartupCommand: Boolean,
 ): AgentInitialPromptRecord? {
   val message = steps.lastOrNull { step -> step.action == AgentInitialMessageDispatchAction.SEND_TEXT && step.text.isNotBlank() }
-    ?.text
-    ?: return null
+                  ?.text
+                ?: return null
   return AgentInitialPromptRecord(
     message = message,
     token = token,
@@ -301,6 +301,9 @@ interface AgentSessionProviderDescriptor {
   val supportsNewThreadRebind: Boolean
     get() = false
 
+  /**
+   * Whether [sessionSource] emits path/thread-scoped refresh events precise enough for active chat tabs and outlines.
+   */
   val emitsScopedRefreshSignals: Boolean
     get() = false
 
@@ -313,6 +316,12 @@ interface AgentSessionProviderDescriptor {
   val suppressArchivedThreadsDuringRefresh: Boolean
     get() = false
 
+  /**
+   * Provider-backed session source.
+   *
+   * Implementations that support thread outlines must follow the role-aware [AgentSessionSource.loadThreadOutline] contract so shared
+   * chat UI can render user prompts, assistant responses, and tool activity consistently across providers.
+   */
   val sessionSource: AgentSessionSource
   val cliMissingMessageKey: String
 

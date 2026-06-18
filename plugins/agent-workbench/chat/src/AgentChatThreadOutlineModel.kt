@@ -173,9 +173,10 @@ private fun AgentSessionOutlineItem.toAgentChatThreadOutlineNode(
   source: AgentSessionSource,
 ): AgentChatThreadOutlineNode.Item {
   val timestamp = timestampMs?.let(::formatThreadOutlineTimestamp)
-  val location = compactThreadOutlineLocation(preview)
+  val title = threadOutlineTitle()
+  val location = compactThreadOutlineLocation(preview).takeIf { location -> location != title.threadOutlineTitleContent() }
   return AgentChatThreadOutlineNode.Item(
-    title = title.takeIf { it.isNotBlank() } ?: kind.localizedThreadOutlineTitle(),
+    title = title,
     timestamp = timestamp,
     location = location,
     tooltip = buildThreadOutlineTooltip(
@@ -185,6 +186,17 @@ private fun AgentSessionOutlineItem.toAgentChatThreadOutlineNode(
     icon = threadOutlineIcon(),
     target = AgentChatThreadOutlineTarget(file = file, source = source, item = this),
   )
+}
+
+private fun AgentSessionOutlineItem.threadOutlineTitle(): String {
+  val primaryText = title.takeIf { it.isNotBlank() } ?: compactThreadOutlineLocation(preview)
+  val rolePrefix = kind.threadOutlineRolePrefix() ?: return primaryText ?: kind.localizedThreadOutlineTitle()
+  return primaryText?.let { text -> "$rolePrefix: $text" } ?: kind.localizedThreadOutlineTitle()
+}
+
+private fun String.threadOutlineTitleContent(): String {
+  val separatorIndex = indexOf(": ")
+  return if (separatorIndex >= 0) substring(separatorIndex + 2) else this
 }
 
 internal fun diffAgentChatThreadOutlineModels(
@@ -270,6 +282,22 @@ private fun buildThreadOutlineTooltip(preview: String?, timestamp: String?): Str
 private fun compactThreadOutlineLocation(value: String?): String? {
   val location = value?.trim()?.takeIf { it.isNotEmpty() } ?: return null
   return if (location.length <= 96) location else location.take(93).trimEnd() + "..."
+}
+
+private fun AgentSessionOutlineItemKind.threadOutlineRolePrefix(): String? {
+  return when (this) {
+    AgentSessionOutlineItemKind.USER_PROMPT -> AgentChatBundle.message("chat.thread.outline.role.user")
+    AgentSessionOutlineItemKind.ASSISTANT_RESPONSE -> AgentChatBundle.message("chat.thread.outline.role.assistant")
+    AgentSessionOutlineItemKind.AGENT_WORK,
+    AgentSessionOutlineItemKind.TOOL_CALL,
+    AgentSessionOutlineItemKind.TOOL_RESULT,
+    AgentSessionOutlineItemKind.PLAN,
+    AgentSessionOutlineItemKind.APPROVAL_REQUEST,
+    AgentSessionOutlineItemKind.INPUT_REQUEST,
+    AgentSessionOutlineItemKind.SUMMARY,
+    AgentSessionOutlineItemKind.METADATA,
+      -> null
+  }
 }
 
 private fun AgentSessionOutlineItemKind.localizedThreadOutlineTitle(): String {
