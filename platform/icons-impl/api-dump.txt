@@ -82,9 +82,12 @@ com.intellij.platform.icons.impl.DeferredIconResolver
 - a:resolve(kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.icons.impl.IconAnimationFrame
 - sf:Companion:com.intellij.platform.icons.impl.IconAnimationFrame$Companion
-- <init>(java.util.List,J):V
+- <init>(java.util.List,J,J,J):V
+- b:<init>(java.util.List,J,J,J,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - equals(java.lang.Object):Z
 - f:getDuration():J
+- f:getFadeIn():J
+- f:getFadeOut():J
 - f:getLayers():java.util.List
 - hashCode():I
 bf:com.intellij.platform.icons.impl.IconAnimationFrame$$serializer
@@ -226,6 +229,7 @@ f:com.intellij.platform.icons.impl.design.DefaultIconAnimationDesigner
 - com.intellij.platform.icons.design.IconAnimationDesigner
 - <init>(com.intellij.platform.icons.impl.design.DefaultIconDesigner):V
 - f:build():java.util.List
+- frame(J,J,J,kotlin.jvm.functions.Function1):V
 - frame(J,kotlin.jvm.functions.Function1):V
 - f:getRootDesigner():com.intellij.platform.icons.impl.design.DefaultIconDesigner
 a:com.intellij.platform.icons.impl.design.DefaultIconDesigner
@@ -814,6 +818,11 @@ f:com.intellij.platform.icons.impl.rendering.ResolvedScalingContext
 - f:getFinalDimensions():com.intellij.platform.icons.rendering.Dimensions
 f:com.intellij.platform.icons.impl.rendering.ScalingKt
 - sf:resolve(com.intellij.platform.icons.rendering.IconRenderer,F,com.intellij.platform.icons.scale.IconScale):com.intellij.platform.icons.impl.rendering.ResolvedScalingContext
+com.intellij.platform.icons.impl.rendering.layers.AnimatedIconFrameRenderer
+- a:getDuration():J
+- a:getLayout():com.intellij.platform.icons.impl.rendering.layers.LayerLayout
+- a:getRefreshDuration():J
+- a:render(com.intellij.platform.icons.rendering.LayerPaintingContext,J):V
 f:com.intellij.platform.icons.impl.rendering.layers.AnimatedIconLayerRenderer
 - com.intellij.platform.icons.impl.rendering.layers.IconLayerRenderer
 - <init>(com.intellij.platform.icons.impl.layers.AnimatedIconLayer,com.intellij.platform.icons.impl.rendering.DefaultRenderingContext):V

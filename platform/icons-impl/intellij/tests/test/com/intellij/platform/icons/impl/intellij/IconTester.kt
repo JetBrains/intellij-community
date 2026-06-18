@@ -176,6 +176,7 @@ class TestPaintingContext(
   override val offsetY: Int = 0,
   override val slotWidth: Int? = null,
   override val slotHeight: Int? = null,
+  override val alpha: Float = 1f
 ) : LayerPaintingContext {
   override fun drawImage(
     image: ImageResource,
@@ -222,6 +223,7 @@ class TestPaintingContext(
     slotWidth: Int?,
     slotHeight: Int?,
     scale: Float,
+    alpha: Float,
     overrideColorFilter: ColorFilter?,
   ): LayerPaintingContext {
     return TestPaintingContext(
@@ -230,7 +232,8 @@ class TestPaintingContext(
       x ?: offsetX,
       y ?: offsetY,
       slotWidth,
-      slotHeight
+      slotHeight,
+      alpha
     )
   }
 

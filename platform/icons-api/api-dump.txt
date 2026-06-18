@@ -55,6 +55,7 @@ f:com.intellij.platform.icons.design.IconAlign$Companion
 f:com.intellij.platform.icons.design.IconAlignKt
 - sf:iconAlign(com.intellij.platform.icons.design.IconVerticalAlign,com.intellij.platform.icons.design.IconHorizontalAlign):com.intellij.platform.icons.design.IconAlign
 com.intellij.platform.icons.design.IconAnimationDesigner
+- a:frame(J,J,J,kotlin.jvm.functions.Function1):V
 - a:frame(J,kotlin.jvm.functions.Function1):V
 com.intellij.platform.icons.design.IconDesigner
 - a:animation(com.intellij.platform.icons.modifiers.IconModifier,kotlin.jvm.functions.Function1):V
