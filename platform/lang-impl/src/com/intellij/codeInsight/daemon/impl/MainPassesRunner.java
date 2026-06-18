@@ -142,9 +142,10 @@ public final class MainPassesRunner {
             throw new ProcessCanceledException();
           }
         });
-
+        progress.checkCanceled(); // for data race if progress.cancel() happened before adding app listener
         AtomicInteger filesCompleted = new AtomicInteger();
         JobLauncher.getInstance().invokeConcurrentlyUnderProgress(daemonIndicators, wrapper, pair -> {
+          progress.checkCanceled();
           VirtualFile file = pair.getFirst();
           wrapper.setText(ReadAction.computeBlocking(() -> ProjectUtil.calcRelativeToProjectPath(file, myProject)));
           DaemonProgressIndicator daemonIndicator = pair.getSecond();
@@ -202,37 +203,16 @@ public final class MainPassesRunner {
                              @NotNull Document document) {
     Project project = psiFile.getProject();
     DaemonCodeAnalyzerImpl codeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
-    ProcessCanceledException exception = null;
     DaemonCodeAnalyzerSettings settings = DaemonCodeAnalyzerSettings.getInstance();
-    // repeat several times when accidental background activity cancels highlighting
-    int retries = 100;
-    for (int i = 0; i < retries; i++) {
-      try {
-        InspectionProfile currentProfile = myInspectionProfile;
-        Function<InspectionProfile, InspectionProfileWrapper> profileProvider =
-          p -> currentProfile == null
-               ? new InspectionProfileWrapper((InspectionProfileImpl)p)
-               : new InspectionProfileWrapper(currentProfile, ((InspectionProfileImpl)p).getProfileManager());
-        settings.forceUseZeroAutoReparseDelayIn(() -> {
-          InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, profileProvider, () -> {
-            List<HighlightInfo> infos = codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator);
-            result.put(document, infos);
-          });
-        });
-        break;
-      }
-      catch (ProcessCanceledException e) {
-        Throwable cause = e.getCause();
-        if (cause != null && cause.getClass() != Throwable.class) {
-          // canceled because of an exception, no need to repeat the same a lot of times
-          throw e;
-        }
-
-        exception = e;
-      }
-    }
-    if (exception != null) {
-      throw exception;
-    }
+    InspectionProfile currentProfile = myInspectionProfile;
+    Function<InspectionProfile, InspectionProfileWrapper> profileProvider =
+      p -> currentProfile == null
+           ? new InspectionProfileWrapper((InspectionProfileImpl)p)
+           : new InspectionProfileWrapper(currentProfile, ((InspectionProfileImpl)p).getProfileManager());
+    settings.forceUseZeroAutoReparseDelayIn(() ->
+      InspectionProfileWrapper.runWithCustomInspectionWrapper(psiFile, profileProvider, () ->
+        result.put(document, codeAnalyzer.runMainPasses(psiFile, document, daemonIndicator))
+      )
+    );
   }
 }

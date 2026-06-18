@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
 public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
@@ -115,7 +116,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   @RequiresBackgroundThread
   public abstract @NotNull List<@NotNull HighlightInfo> runMainPasses(@NotNull PsiFile psiFile,
                                                                       @NotNull Document document,
-                                                                      @NotNull ProgressIndicator progress);
+                                                                      @NotNull ProgressIndicator progress) throws CancellationException;
 
   public abstract boolean isErrorAnalyzingFinished(@NotNull PsiFile psiFile);
 
