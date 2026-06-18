@@ -11,7 +11,7 @@ import com.intellij.python.pyproject.model.spi.ProjectDependencies
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.ProjectStructureInfo
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
-import com.intellij.python.pyproject.model.spi.Tool
+import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.uv.common.UV_TOOL_ID
 import com.intellij.python.uv.common.UV_UI_INFO
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -27,7 +27,7 @@ import java.nio.file.PathMatcher
 import kotlin.io.path.relativeTo
 
 
-internal class UvTool : Tool {
+internal class UvPyProjectManager : PyProjectManager {
 
   override val id: ToolId = UV_TOOL_ID
 

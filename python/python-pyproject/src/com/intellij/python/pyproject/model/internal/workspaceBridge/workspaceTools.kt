@@ -39,7 +39,7 @@ import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfoWith
 import com.intellij.python.pyproject.model.internal.pyProjectToml.getDependenciesFromToml
 import com.intellij.python.pyproject.model.spi.ProjectName
 import com.intellij.python.pyproject.model.spi.PyProjectTomlProject
-import com.intellij.python.pyproject.model.spi.Tool
+import com.intellij.python.pyproject.model.spi.PyProjectManager
 import com.intellij.python.pyproject.model.spi.WorkspaceName
 import com.intellij.python.pyproject.model.spi.plus
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
@@ -59,7 +59,7 @@ private val logger = fileLogger()
 /** Collect all excluded folder paths from the workspace model. */
 internal fun collectExcludedPaths(project: Project): Set<Path> {
   return project.workspaceModel.currentSnapshot.entities<ContentRootEntity>()
-    .flatMap { cr -> cr.excludedUrls.asSequence().mapNotNull { it.url.toPath() } }
+    .flatMap { cr -> cr.excludedUrls.asSequence().map { it.url.toPath() } }
     .toSet()
 }
 
@@ -447,10 +447,10 @@ private suspend fun generatePyProjectTomlEntries(
   existingPythonNames: Map<Path, String>,
   allModuleNames: Set<String>,
 ): Set<PyProjectTomlBasedEntryImpl> = withContext(Dispatchers.Default) {
-  val tools = Tool.EP.extensionList
-  val rawEntries = parseRawEntries(fsInfo, tools)
+  val pyProjectManagers = PyProjectManager.EP.extensionList
+  val rawEntries = parseRawEntries(fsInfo, pyProjectManagers)
   val entries = assignNames(rawEntries, existingPythonNames, allModuleNames)
-  resolveDependencies(entries, tools)
+  resolveDependencies(entries, pyProjectManagers)
   return@withContext entries.toSet()
 }
 
@@ -465,44 +465,44 @@ private data class RawEntry(
 )
 
 /** Parse pyproject.toml files into raw entries with natural names (no dedup). */
-private suspend fun parseRawEntries(fsInfo: FSWalkInfoWithToml, tools: List<Tool>): List<RawEntry> {
+private suspend fun parseRawEntries(fsInfo: FSWalkInfoWithToml, pyProjectManagers: List<PyProjectManager>): List<RawEntry> {
   val rawEntries = ArrayList<RawEntry>()
   for ((tomlFile, toml) in fsInfo.tomlFiles.entries.sortedBy { it.key }) {
-    val participatedTools = mutableSetOf<ToolId>()
+    val participatedManagers = mutableSetOf<ToolId>()
     val root = tomlFile.parent
     var projectNameAsString = toml.project?.name
     if (projectNameAsString == null) {
-      val toolAndName = tools.getNameFromEP(toml)
-      if (toolAndName != null) {
-        projectNameAsString = toolAndName.second
-        participatedTools.add(toolAndName.first.id)
+      val managerAndName = pyProjectManagers.getNameFromEP(toml)
+      if (managerAndName != null) {
+        projectNameAsString = managerAndName.second
+        participatedManagers.add(managerAndName.first.id)
       }
     }
     if (projectNameAsString == null) {
       projectNameAsString = root.name
     }
-    val sourceRootsAndTools = tools.flatMap { tool -> tool.getSrcRoots(toml.toml, root).map { Pair(tool, it) } }.toSet()
+    val sourceRootsAndTools = pyProjectManagers.flatMap { tool -> tool.getSrcRoots(toml.toml, root).map { Pair(tool, it) } }.toSet()
     val sourceRoots = sourceRootsAndTools.map { it.second }.toSet() + findSrc(root)
-    participatedTools.addAll(sourceRootsAndTools.map { it.first.id })
-    if (participatedTools.isEmpty()) {
-      for (tool in tools) {
+    participatedManagers.addAll(sourceRootsAndTools.map { it.first.id })
+    if (participatedManagers.isEmpty()) {
+      for (tool in pyProjectManagers) {
         if (toml.toml.contains("tool.${tool.id.id}")) {
-          participatedTools.add(tool.id)
+          participatedManagers.add(tool.id)
         }
       }
     }
-    if (participatedTools.isEmpty()) {
+    if (participatedManagers.isEmpty()) {
       toml.toml.getString("build-system.build-backend")?.let { buildBackend ->
-        tools.firstOrNull { it.id.id in buildBackend }?.let { buildTool ->
-          participatedTools.add(buildTool.id)
+        pyProjectManagers.firstOrNull { it.id.id in buildBackend }?.let { buildTool ->
+          participatedManagers.add(buildTool.id)
         }
       }
     }
 
-    val relationsWithTools: MutableSet<PyProjectTomlToolRelation> = participatedTools.mapTo(mutableSetOf()) {
+    val relationsWithTools: MutableSet<PyProjectTomlToolRelation> = participatedManagers.mapTo(mutableSetOf()) {
       PyProjectTomlToolRelation.SimpleRelation(it)
     }
-    rawEntries.add(RawEntry(tomlFile, root, projectNameAsString, participatedTools, toml, sourceRoots, relationsWithTools))
+    rawEntries.add(RawEntry(tomlFile, root, projectNameAsString, participatedManagers, toml, sourceRoots, relationsWithTools))
   }
   return rawEntries
 }
@@ -576,25 +576,25 @@ private fun assignNames(
 }
 
 /** Resolve inter-module dependencies and workspace membership from tools. */
-private suspend fun resolveDependencies(entries: List<PyProjectTomlBasedEntryImpl>, tools: List<Tool>) {
+private suspend fun resolveDependencies(entries: List<PyProjectTomlBasedEntryImpl>, pyProjectManagers: List<PyProjectManager>) {
   val entriesByName = entries.associateBy { it.name }
   val namesByDir = entries.associate { Pair(it.root, it.name) }
   val allNames = entriesByName.keys
-  var dependencies = getDependenciesFromToml(entriesByName, namesByDir, tools.flatMap { it.getTomlDependencySpecifications() })
-  for (tool in tools) {
-    val toolSpecificInfo = tool.getProjectStructure(entriesByName, namesByDir)
+  var dependencies = getDependenciesFromToml(entriesByName, namesByDir, pyProjectManagers.flatMap { it.getTomlDependencySpecifications() })
+  for (pyProjectManager in pyProjectManagers) {
+    val toolSpecificInfo = pyProjectManager.getProjectStructure(entriesByName, namesByDir)
     if (toolSpecificInfo != null) {
       dependencies += toolSpecificInfo.dependencies
       for (entityName in toolSpecificInfo.dependencies.map.keys) {
         val entity = entriesByName[entityName] ?: error("returned broken name $entityName")
-        entity.relationsWithTools.add(PyProjectTomlToolRelation.SimpleRelation(tool.id))
+        entity.relationsWithTools.add(PyProjectTomlToolRelation.SimpleRelation(pyProjectManager.id))
       }
     }
     val workspaceMembers = toolSpecificInfo?.membersToWorkspace ?: emptyMap()
 
     for ((member, workspace) in workspaceMembers) {
-      entriesByName[member]!!.relationsWithTools.add(PyProjectTomlToolRelation.WorkspaceMember(tool.id, workspace))
-      entriesByName[workspace]!!.relationsWithTools.add(PyProjectTomlToolRelation.SimpleRelation(tool.id))
+      entriesByName[member]!!.relationsWithTools.add(PyProjectTomlToolRelation.WorkspaceMember(pyProjectManager.id, workspace))
+      entriesByName[workspace]!!.relationsWithTools.add(PyProjectTomlToolRelation.SimpleRelation(pyProjectManager.id))
     }
   }
   for ((name, deps) in dependencies.map) {
@@ -605,7 +605,7 @@ private suspend fun resolveDependencies(entries: List<PyProjectTomlBasedEntryImp
   }
 }
 
-private suspend fun Iterable<Tool>.getNameFromEP(projectToml: PyProjectToml): Pair<Tool, @NlsSafe String>? =
+private suspend fun Iterable<PyProjectManager>.getNameFromEP(projectToml: PyProjectToml): Pair<PyProjectManager, @NlsSafe String>? =
   withContext(Dispatchers.Default) {
     firstNotNullOfOrNull { tool -> tool.getProjectName(projectToml.toml)?.let { Pair(tool, it) } }
   }

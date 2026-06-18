@@ -33,7 +33,7 @@
   </extensions>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.python.pyproject.model.tool" interface="com.intellij.python.pyproject.model.spi.Tool"
+    <extensionPoint qualifiedName="com.intellij.python.pyproject.model.pyprojectmanager" interface="com.intellij.python.pyproject.model.spi.PyProjectManager"
                     dynamic="true"/>
   </extensionPoints>
 
