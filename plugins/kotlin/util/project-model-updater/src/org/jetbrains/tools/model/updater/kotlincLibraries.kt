@@ -20,29 +20,35 @@ private val INTELLIJ_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(
     "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies",
 )
 
-private class ArtifactCoordinates(private val originalVersion: String, val mode: ArtifactMode) {
+private val INTELLIJ_EXPERIMENTAL_DEPENDENCIES_REPOSITORY = JpsRemoteRepository(
+    "kotlin-experimental",
+    "https://packages.jetbrains.team/maven/p/kt/experimental",
+)
+
+internal class ArtifactCoordinates(private val originalVersion: String, val mode: ArtifactMode, val repository: JpsRemoteRepository) {
     val version: String
         get() = when (mode) {
-            ArtifactMode.MAVEN -> originalVersion
+            ArtifactMode.MAVEN, ArtifactMode.MAVEN_EXPERIMENTAL -> originalVersion
             ArtifactMode.BOOTSTRAP -> BOOTSTRAP_VERSION
         }
 }
 
-private val GeneratorPreferences.kotlincArtifactCoordinates: ArtifactCoordinates
-    get() = ArtifactCoordinates(kotlincVersion, kotlincArtifactsMode)
+internal val GeneratorPreferences.kotlincArtifactCoordinates: ArtifactCoordinates
+    get() = ArtifactCoordinates(kotlincVersion, kotlincArtifactsMode, kotlincRepository ?: INTELLIJ_DEPENDENCIES_REPOSITORY)
 
-private val GeneratorPreferences.jpsArtifactCoordinates: ArtifactCoordinates
+private val GeneratorPreferences.kotlincRepository: JpsRemoteRepository?
+    get() = when (kotlincArtifactsMode) {
+        ArtifactMode.MAVEN_EXPERIMENTAL -> INTELLIJ_EXPERIMENTAL_DEPENDENCIES_REPOSITORY
+        ArtifactMode.MAVEN -> INTELLIJ_DEPENDENCIES_REPOSITORY
+        ArtifactMode.BOOTSTRAP -> null
+    }
+
+internal val GeneratorPreferences.jpsArtifactCoordinates: ArtifactCoordinates
     get() = if (jpsPluginVersion != "dev") {
-        ArtifactCoordinates(jpsPluginVersion, jpsPluginArtifactsMode)
+        ArtifactCoordinates(jpsPluginVersion, jpsPluginArtifactsMode, INTELLIJ_DEPENDENCIES_REPOSITORY)
     } else {
         kotlincArtifactCoordinates
     }
-
-internal val GeneratorPreferences.kotlincArtifactVersion: String
-    get() = kotlincArtifactCoordinates.version
-
-internal val GeneratorPreferences.jpsArtifactVersion: String
-    get() = jpsArtifactCoordinates.version
 
 internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommunity: Boolean): List<JpsLibrary> {
     val kotlincCoordinates = preferences.kotlincArtifactCoordinates
@@ -91,9 +97,9 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincWithStandardNaming("kotlinc.kotlin-build-tools-impl", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-build-tools-cri-impl", kotlincCoordinates)
 
-        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates, repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
-        kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide", repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
-        kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates, repository = INTELLIJ_DEPENDENCIES_REPOSITORY)
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-plugin-tests", jpsPluginCoordinates)
+        kotlincWithStandardNaming("kotlinc.kotlin-dist", jpsPluginCoordinates, postfix = "-for-ide")
+        kotlincWithStandardNaming("kotlinc.kotlin-jps-plugin-classpath", jpsPluginCoordinates)
 
         // bootstrap version of kotlin-jps-plugin-classpath required for testing
         kotlincWithStandardNaming(
@@ -120,10 +126,9 @@ private fun buildLibraryList(isCommunity: Boolean, builder: LibraryListBuilder.(
 private fun LibraryListBuilder.kotlincForIdeWithStandardNaming(
     name: String,
     coordinates: ArtifactCoordinates,
-    includeSources: Boolean = true,
-    repository: JpsRemoteRepository = INTELLIJ_DEPENDENCIES_REPOSITORY,
+    includeSources: Boolean = true
 ) {
-    kotlincWithStandardNaming(name, coordinates, includeSources, "-for-ide", repository = repository)
+    kotlincWithStandardNaming(name, coordinates, includeSources, "-for-ide")
 }
 
 private fun LibraryListBuilder.kotlincWithStandardNaming(
@@ -133,7 +138,6 @@ private fun LibraryListBuilder.kotlincWithStandardNaming(
     postfix: String = "",
     transitive: Boolean = false,
     excludes: List<MavenId> = emptyList(),
-    repository: JpsRemoteRepository = INTELLIJ_DEPENDENCIES_REPOSITORY,
     jpsLibraryName: String = name,
 ) {
     require(name.startsWith("kotlinc."))
@@ -143,7 +147,7 @@ private fun LibraryListBuilder.kotlincWithStandardNaming(
         transitive = transitive,
         includeSources = includeSources,
         excludes = excludes,
-        repository = repository
+        repository = coordinates.repository
     )
     addLibrary(jpsLibrary.convertMavenUrlToCooperativeIfNeeded(coordinates.mode, isCommunity))
 }
@@ -177,7 +181,7 @@ private fun JpsLibrary.convertMavenUrlToCooperativeIfNeeded(artifactsMode: Artif
     }
 
     return when (artifactsMode) {
-        ArtifactMode.MAVEN -> this
+        ArtifactMode.MAVEN, ArtifactMode.MAVEN_EXPERIMENTAL -> this
         ArtifactMode.BOOTSTRAP -> JpsLibrary(
             name = name,
             type = JpsLibrary.LibraryType.Plain,

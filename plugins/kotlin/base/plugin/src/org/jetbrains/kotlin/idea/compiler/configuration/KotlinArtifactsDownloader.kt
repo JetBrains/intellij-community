@@ -348,16 +348,26 @@ suspend fun <T : Any> retryWithBackOff(
 }
 
 private fun openStream(artifactCoordinates: String): InputStream? {
-    val urls = listOf(
-        "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/$artifactCoordinates",
-        "https://cache-redirector.jetbrains.com/intellij-dependencies/$artifactCoordinates",
-        "https://repo1.maven.org/maven2/$artifactCoordinates"
-    )
+    val urls = kotlinArtifactRepositoryCoordinates
+        .map { "$it/$artifactCoordinates" }
 
     return urls.firstNotNullOfOrNull { urlString ->
         runCatching { URL(urlString).openStream() }
             .onFailure { if (it is CancellationException) throw it }
             .getOrNull()
+    }
+}
+
+private val kotlinArtifactRepositoryCoordinates: List<String> by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    buildList {
+        add("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
+        add("https://cache-redirector.jetbrains.com/intellij-dependencies")
+        add("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
+
+        if (KotlinPluginLayoutModeProvider.kotlinPluginLayoutMode == KotlinPluginLayoutMode.SOURCES) {
+            // Do not use the experimental repository in production
+            add("https://packages.jetbrains.team/maven/p/kt/experimental")
+        }
     }
 }
 

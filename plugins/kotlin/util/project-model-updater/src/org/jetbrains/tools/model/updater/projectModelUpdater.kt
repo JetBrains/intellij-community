@@ -19,9 +19,18 @@ internal fun updateProjectModel(preferences: GeneratorPreferences) {
 
     val resolverSettings = readJpsResolverSettings(communityRoot, monorepoRoot)
 
+    val kotlincArtifactCoordinates = preferences.kotlincArtifactCoordinates
+    val jpsArtifactCoordinates = preferences.jpsArtifactCoordinates
+
+    fun effectiveRepositoryUrl(coordinates: ArtifactCoordinates): String? {
+        return coordinates.takeIf { it.mode != GeneratorPreferences.ArtifactMode.BOOTSTRAP }?.repository?.url
+    }
+
     BazelKotlinDependencyFacade.update(
-        newKotlinCompilerCliVersion = preferences.kotlincArtifactVersion,
-        newKotlinJpsPluginTestsVersion = preferences.jpsArtifactVersion
+        newKotlincRepositoryUrl = effectiveRepositoryUrl(kotlincArtifactCoordinates),
+        newKotlinCompilerCliVersion = kotlincArtifactCoordinates.version,
+        newJpsPluginRepositoryUrl = effectiveRepositoryUrl(jpsArtifactCoordinates),
+        newKotlinJpsPluginTestsVersion = jpsArtifactCoordinates.version,
     )
 
     KotlinTestsDependenciesUtil.updateChecksums(isUpToDateCheck = false)

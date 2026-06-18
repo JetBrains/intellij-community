@@ -12,13 +12,15 @@ class BazelKotlinDependencyFacade(val communityRoot: Path) {
         private val FILE = KotlinTestsDependenciesUtil.communityRoot
             .resolve("plugins/kotlin/kotlin_test_dependencies.bzl")
 
+        private val KOTLINC_REPOSITORY_URL_CONST = DependencyConstant("kotlincRepositoryUrl")
         private val KOTLIN_COMPILER_CLI_VERSION_CONST = DependencyConstant("kotlinCompilerCliVersion")
+        private val JPS_PLUGIN_REPOSITORY_URL_CONST = DependencyConstant("jpsPluginRepositoryUrl")
         private val KOTLINC_KOTLIN_JPS_PLUGIN_TESTS_VERSION_CONST = DependencyConstant("kotlincKotlinJpsPluginTestsVersion")
 
         private val NAME_REGEX = Regex("""name\s*=\s*["']([^"']+)["']""")
         private val SHA256_REGEX = Regex("""sha256\s*=\s*["']([^"']+)["']""")
         private val SIMPLE_URL_REGEX = Regex("""url\s*=\s*["'](.+)["']""")
-        private val PARAMETRIZED_URL_REGEX = Regex("""url\s*=\s*["'](.+)["']\.format\((.+)\),""")
+        private val PARAMETRIZED_URL_REGEX = Regex("""url\s*=\s*["'](.+)["']\.format\((.+), (.+)\),""")
 
         fun write(newContent: String) {
             FILE.writeText(newContent)
@@ -27,11 +29,15 @@ class BazelKotlinDependencyFacade(val communityRoot: Path) {
         /**
          * Update the Bazel script, replacing values assigned to constants with the provided replacements.
          *
+         * @param newKotlincRepositoryUrl Repository URL for the main 'kotlinc.' artifacts (the compiler and the Analysis API).
          * @param newKotlinCompilerCliVersion Version of the main 'kotlinc.' artifacts.
+         * @param newJpsPluginRepositoryUrl Repository URL for the Kotlin JPS plugin artifacts.
          * @param newKotlinJpsPluginTestsVersion Version of the Kotlin JPS plugin artifacts.
          */
         fun update(
+            newKotlincRepositoryUrl: String?,
             newKotlinCompilerCliVersion: String,
+            newJpsPluginRepositoryUrl: String?,
             newKotlinJpsPluginTestsVersion: String,
         ) {
             var newContent = FILE.readText()
@@ -41,7 +47,9 @@ class BazelKotlinDependencyFacade(val communityRoot: Path) {
                 newContent = newContent.replace(const.regex, const.name + " = \"" + newValue + "\"")
             }
 
+            replace(KOTLINC_REPOSITORY_URL_CONST, newKotlincRepositoryUrl)
             replace(KOTLIN_COMPILER_CLI_VERSION_CONST, newKotlinCompilerCliVersion)
+            replace(JPS_PLUGIN_REPOSITORY_URL_CONST, newJpsPluginRepositoryUrl)
             replace(KOTLINC_KOTLIN_JPS_PLUGIN_TESTS_VERSION_CONST, newKotlinJpsPluginTestsVersion)
 
             FILE.writeText(newContent)
@@ -71,7 +79,9 @@ class BazelKotlinDependencyFacade(val communityRoot: Path) {
         }
 
         mapOf(
+            get(KOTLINC_REPOSITORY_URL_CONST),
             get(KOTLIN_COMPILER_CLI_VERSION_CONST),
+            get(JPS_PLUGIN_REPOSITORY_URL_CONST),
             get(KOTLINC_KOTLIN_JPS_PLUGIN_TESTS_VERSION_CONST),
         )
     }
@@ -117,12 +127,15 @@ class BazelKotlinDependencyFacade(val communityRoot: Path) {
 
                 val dependency = if (parametrizedMatchResult != null) {
                     val rawUrl = parametrizedMatchResult.groupValues[1]
-                    val versionName = parametrizedMatchResult.groupValues[2]
+                    val repositoryName = parametrizedMatchResult.groupValues[2]
+                    val versionName = parametrizedMatchResult.groupValues[3]
 
+                    val repository = constants[repositoryName] ?: error("Cannot find repository $repositoryName in $constants")
                     val version = constants[versionName] ?: error("Cannot find version $versionName in $constants")
 
                     val url = rawUrl
-                        .replace("{0}", version)
+                        .replace("{0}", repository)
+                        .replace("{1}", version)
 
                     Dependency(name, url, sha256, version)
                 } else {
