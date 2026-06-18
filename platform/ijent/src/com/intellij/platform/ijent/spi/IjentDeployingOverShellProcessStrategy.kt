@@ -39,11 +39,13 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import kotlin.io.path.fileSize
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.measureTime
 
 // The timeout is based on internal measurements done on CI (max: 21.5s, p98: 12.2s)
-private const val SHELL_INIT_TIMEOUT_MILLS = "30000"
+private val DEFAULT_SHELL_INITIALIZATION_TIMEOUT: Duration =
+  (System.getProperty("ijent.shell.initialization.timeout")?.toLongOrNull() ?: 30_000L).milliseconds
 
 abstract class IjentDeployingOverShellProcessStrategy(
   scope: ParentOfIjentScopes,
@@ -75,6 +77,17 @@ abstract class IjentDeployingOverShellProcessStrategy(
 
   protected open val executionStrategy: ExecutionStrategy = ExecutionStrategy.Default
 
+  /**
+   * Interruption strategy for the initial shell setup.
+   *
+   * Runs [block] (the `set -e` / banner-filtering handshake) and decides how/whether to abort it
+   * if the target shell never becomes responsive. The base implementation aborts after a fixed
+   * timeout; deployers may override to apply a different bound, a deployer-specific abort condition,
+   * or none at all. The timeout is an implementation detail and is intentionally NOT part of this contract.
+   */
+  protected open suspend fun <T> withShellInitializationInterruption(block: suspend () -> T): T =
+    withTimeout(DEFAULT_SHELL_INITIALIZATION_TIMEOUT) { block() }
+
   private val myContext: Deferred<DeployingContextAndShell> = run {
     var createdShellProcess: ShellProcessWrapper? = null
     val context = scope.s.async(currentDispatcher, start = CoroutineStart.LAZY) {
@@ -91,11 +104,10 @@ abstract class IjentDeployingOverShellProcessStrategy(
       val shellProcess = ShellProcessWrapper(processFacade, mediator)
       createdShellProcess = shellProcess
       createDeployingContext(shellProcess.apply {
-        val timeout = System.getProperty("ijent.shell.initialization.timeout", SHELL_INIT_TIMEOUT_MILLS).toInt()
-        withTimeout(timeout.milliseconds) {
+        withShellInitializationInterruption {
           val debugOption = if (LOG.isDebugEnabled) "x" else ""
           write("set -e$debugOption")
-          ensureActive()
+          currentCoroutineContext().ensureActive()
           filterOutBanners()
         }
       })
