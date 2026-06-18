@@ -7,6 +7,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncation
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReason
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
@@ -15,7 +16,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentDeferredNewSessionHandle
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
-import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
+import com.intellij.agent.workbench.sessions.state.AgentSessionLaunchProfileStateService
 import com.intellij.diff.DiffRequestFactory
 import com.intellij.diff.InvalidDiffRequestException
 import com.intellij.diff.merge.MergeRequest
@@ -65,6 +66,8 @@ internal data class AgentVcsMergeLaunchRequest(
   @JvmField val selectionHintFiles: List<VirtualFile>,
   val agentProvider: AgentSessionProvider,
   @JvmField val launchMode: AgentSessionLaunchMode,
+  @JvmField val launchProfileId: String? = null,
+  @JvmField val generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
 )
 
 private data class MergeProviderScope(
@@ -91,6 +94,7 @@ private data class ActiveAgentVcsMergeSession(
   @JvmField val iterativeDataHolder: MergeConflictIterativeDataHolder,
   val agentProvider: AgentSessionProvider,
   @JvmField val launchMode: AgentSessionLaunchMode,
+  @JvmField val launchProfileId: String?,
   @JvmField val disposable: CheckedDisposable,
   @JvmField val unresolvedFiles: MutableList<VirtualFile>,
   @JvmField val selectionHintFiles: List<VirtualFile>,
@@ -191,8 +195,7 @@ internal class AgentVcsMergeSessionService(
         openedChatHandler = { _, file ->
           session.threadFile = file
           pinThread(file)
-          serviceAsync<AgentSessionUiPreferencesStateService>()
-            .updateVcsMergeProviderPreferencesOnLaunch(session.agentProvider, session.launchMode)
+          recordActiveVcsMergeLaunchProfile(session.launchProfileId)
         },
       )
       if (deferredHandle == null) {
@@ -224,8 +227,7 @@ internal class AgentVcsMergeSessionService(
           projectPath = projectPath,
           request = request,
           openedChatHandler = { _, _ ->
-            serviceAsync<AgentSessionUiPreferencesStateService>()
-              .updateVcsMergeProviderPreferencesOnLaunch(request.agentProvider, request.launchMode)
+            recordActiveVcsMergeLaunchProfile(request.launchProfileId)
           },
         ) ?: return@launch
         deferredHandle.start(buildInitialMessageRequest(projectPath, request.selectionHintFiles))
@@ -247,6 +249,7 @@ internal class AgentVcsMergeSessionService(
         provider = request.agentProvider,
         mode = request.launchMode,
         entryPoint = AgentWorkbenchEntryPoint.TOOLBAR,
+        generationSettings = request.generationSettings,
         preferredDedicatedFrame = false,
         openedChatHandler = openedChatHandler,
         updateGeneralProviderPreferences = false,
@@ -280,6 +283,7 @@ internal class AgentVcsMergeSessionService(
       iterativeDataHolder = MergeConflictIterativeDataHolder(project, disposable),
       agentProvider = request.agentProvider,
       launchMode = request.launchMode,
+      launchProfileId = request.launchProfileId,
       disposable = disposable,
       unresolvedFiles = Collections.synchronizedList(ArrayList()),
       selectionHintFiles = request.selectionHintFiles,
@@ -395,11 +399,15 @@ internal class AgentVcsMergeSessionService(
   private fun focusSession(session: ActiveAgentVcsMergeSession) {
     val threadFile = session.threadFile ?: return
     coroutineScope.launch(Dispatchers.UiWithModelAccess) {
-      serviceAsync<AgentSessionUiPreferencesStateService>()
-        .updateVcsMergeProviderPreferencesOnLaunch(session.agentProvider, session.launchMode)
+      recordActiveVcsMergeLaunchProfile(session.launchProfileId)
       FileEditorManagerEx.getInstanceExAsync(project)
         .openFile(threadFile, options = FileEditorOpenOptions(requestFocus = true, reuseOpen = true))
     }
+  }
+
+  private suspend fun recordActiveVcsMergeLaunchProfile(profileId: String?) {
+    if (profileId == null) return
+    serviceAsync<AgentSessionLaunchProfileStateService>().setActiveVcsMergeLaunchProfileId(profileId)
   }
 
   private suspend fun pinThread(file: VirtualFile) {

@@ -218,20 +218,12 @@ class AgentSessionLaunchServiceTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    val uiPreferencesState = AgentSessionUiPreferencesStateService().also { preferences ->
-      preferences.updateProviderPreferencesOnLaunch(
-        provider = AgentSessionProvider.CODEX,
-        launchMode = AgentSessionLaunchMode.YOLO,
-        initialMessageRequest = null,
-      )
-    }
 
     AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
       runBlocking(Dispatchers.Default) {
         withTestServiceAndLaunch(
           sessionSourcesProvider = { listOf(sourceForActiveThreads(emptyList())) },
           projectEntriesProvider = { listOf(openTestProjectEntry(PROJECT_PATH, "Project A")) },
-          uiPreferencesState = uiPreferencesState,
           chatOpenExecutor = chatOpenExecutor,
         ) { _, launchService ->
           launchService.openChatThread(
@@ -381,7 +373,7 @@ class AgentSessionLaunchServiceTest {
   }
 
   @Test
-  fun createNewSessionDoesNotUpdateLastUsedProviderForProviderWithoutPromptLaunchSupport() {
+  fun createNewSessionDoesNotUpdateProviderOptionsForProviderWithoutPromptLaunchSupport() {
     val descriptor = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.TERMINAL,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -389,13 +381,7 @@ class AgentSessionLaunchServiceTest {
       supportsPromptLaunch = false,
     )
     val chatOpenExecutor = RecordingChatOpenExecutor()
-    val uiPreferencesState = AgentSessionUiPreferencesStateService().also { preferences ->
-      preferences.updateProviderPreferencesOnLaunch(
-        provider = AgentSessionProvider.CODEX,
-        launchMode = AgentSessionLaunchMode.STANDARD,
-        initialMessageRequest = null,
-      )
-    }
+    val uiPreferencesState = AgentSessionUiPreferencesStateService()
 
     AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
       runBlocking(Dispatchers.Default) {
@@ -413,8 +399,7 @@ class AgentSessionLaunchServiceTest {
 
           waitForCondition { chatOpenExecutor.openNewChatCalls.get() == 1 }
 
-          assertThat(uiPreferencesState.getLastUsedProvider()).isEqualTo(AgentSessionProvider.CODEX)
-          assertThat(uiPreferencesState.getLastUsedLaunchMode()).isEqualTo(AgentSessionLaunchMode.STANDARD)
+          assertThat(uiPreferencesState.getProviderPreferences().providerOptionsByProviderId).isEmpty()
         }
       }
     }

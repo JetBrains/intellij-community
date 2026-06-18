@@ -3,12 +3,17 @@ package com.intellij.agent.workbench.vcs.merge
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
+import com.intellij.agent.workbench.sessions.AgentSessionLaunchProfileMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
+import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfileId
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -67,12 +72,20 @@ internal class AgentResolveConflictsActionTest {
   fun launchAgentMergeResolutionClosesDialogBeforeStartingSession() {
     val events = mutableListOf<String>()
     var startedRequest: AgentVcsMergeLaunchRequest? = null
+    var activeProfileId: String? = null
+    val item = createProfileMenuItem(
+      provider = AgentSessionProvider.CLAUDE,
+      mode = AgentSessionLaunchMode.YOLO,
+      profileId = "user:claude-yolo",
+      generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
+    )
 
     launchAgentMergeResolution(
       project = ProjectManager.getInstance().defaultProject,
       request = createLaunchRequest(),
       closeDialog = { events += "close" },
-      item = createMenuItem(provider = AgentSessionProvider.CLAUDE, mode = AgentSessionLaunchMode.YOLO),
+      item = item,
+      setActiveVcsMergeLaunchProfileId = { profileId -> activeProfileId = profileId },
     ) { _, request ->
       events += "start"
       startedRequest = request
@@ -81,6 +94,9 @@ internal class AgentResolveConflictsActionTest {
     assertThat(events).containsExactly("close", "start")
     assertThat(startedRequest?.agentProvider).isEqualTo(AgentSessionProvider.CLAUDE)
     assertThat(startedRequest?.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
+    assertThat(startedRequest?.launchProfileId).isEqualTo("user:claude-yolo")
+    assertThat(startedRequest?.generationSettings).isEqualTo(AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH))
+    assertThat(activeProfileId).isEqualTo("user:claude-yolo")
   }
 
   @Test
@@ -91,7 +107,7 @@ internal class AgentResolveConflictsActionTest {
       project = ProjectManager.getInstance().defaultProject,
       request = createLaunchRequest(),
       closeDialog = null,
-      item = createMenuItem(provider = AgentSessionProvider.CODEX, mode = AgentSessionLaunchMode.STANDARD),
+      item = createProfileMenuItem(provider = AgentSessionProvider.CODEX, mode = AgentSessionLaunchMode.STANDARD),
     ) { _, _ ->
       events += "start"
     }
@@ -150,8 +166,7 @@ internal class AgentResolveConflictsActionTest {
           TestAgentSessionProviderDescriptor(AgentSessionProvider.CLAUDE, setOf(AgentSessionLaunchMode.STANDARD)),
         )
       },
-      lastUsedProvider = { AgentSessionProvider.CLAUDE },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      activeVcsMergeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
     )
 
     val component = createDialogComponent(action)
@@ -171,8 +186,7 @@ internal class AgentResolveConflictsActionTest {
           TestAgentSessionProviderDescriptor(AgentSessionProvider.CLAUDE, setOf(AgentSessionLaunchMode.STANDARD)),
         )
       },
-      lastUsedProvider = { null },
-      lastUsedLaunchMode = { null },
+      activeVcsMergeLaunchProfileId = { null },
     )
 
     val component = createDialogComponent(action)
@@ -191,8 +205,7 @@ internal class AgentResolveConflictsActionTest {
           TestAgentSessionProviderDescriptor(AgentSessionProvider.CLAUDE, setOf(AgentSessionLaunchMode.STANDARD)),
         )
       },
-      lastUsedProvider = { AgentSessionProvider.CLAUDE },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      activeVcsMergeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
     )
 
     val component = createDialogComponent(action) as JBOptionButton
@@ -215,8 +228,7 @@ internal class AgentResolveConflictsActionTest {
       allProviders = {
         listOf(TestAgentSessionProviderDescriptor(AgentSessionProvider.CODEX, setOf(AgentSessionLaunchMode.STANDARD)))
       },
-      lastUsedProvider = { null },
-      lastUsedLaunchMode = { null },
+      activeVcsMergeLaunchProfileId = { null },
     )
 
     val component = createDialogComponent(action)
@@ -236,8 +248,7 @@ internal class AgentResolveConflictsActionTest {
           TestAgentSessionProviderDescriptor(AgentSessionProvider.CLAUDE, setOf(AgentSessionLaunchMode.STANDARD)),
         )
       },
-      lastUsedProvider = { AgentSessionProvider.CLAUDE },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      activeVcsMergeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
     )
 
     val component = createDialogComponent(action, ITERATIVE_DIALOG_ACTION_PLACE)
@@ -278,12 +289,26 @@ internal class AgentResolveConflictsActionTest {
     )
   }
 
-  private fun createMenuItem(provider: AgentSessionProvider, mode: AgentSessionLaunchMode): AgentSessionProviderMenuItem {
-    return AgentSessionProviderMenuItem(
-      bridge = TestAgentSessionProviderDescriptor(provider),
-      mode = mode,
-      labelKey = "label.$provider.$mode",
-      isEnabled = true,
+  private fun createProfileMenuItem(
+    provider: AgentSessionProvider,
+    mode: AgentSessionLaunchMode,
+    profileId: String = builtInLaunchProfileId(provider, mode),
+    generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
+  ): AgentSessionLaunchProfileMenuItem {
+    return AgentSessionLaunchProfileMenuItem(
+      profile = AgentPromptLaunchProfile(
+        id = profileId,
+        name = "Profile $provider $mode",
+        providerId = provider.value,
+        launchMode = mode,
+        generationSettings = generationSettings,
+      ),
+      menuItem = AgentSessionProviderMenuItem(
+        bridge = TestAgentSessionProviderDescriptor(provider),
+        mode = mode,
+        labelKey = "label.$provider.$mode",
+        isEnabled = true,
+      ),
     )
   }
 

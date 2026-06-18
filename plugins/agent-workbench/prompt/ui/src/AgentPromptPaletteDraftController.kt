@@ -62,17 +62,9 @@ internal class AgentPromptPaletteDraftController(
     val draft = uiStateService.loadDraft()
     val providerPrefs = launcherProvider()?.loadProviderPreferences() ?: AgentPromptLauncherBridge.ProviderPreferences()
     val contextRestoreSnapshot = uiStateService.loadContextRestoreSnapshot()
-    val launcher = launcherProvider()
-
     setPromptAreaTextProgrammatically(draft.promptText)
     val effectiveProviderOptions = providerPrefs.providerOptionsByProviderId.ifEmpty { draft.providerOptionsByProviderId }
     providerSelector.restoreProviderOptionSelections(effectiveProviderOptions)
-    val persistedProvider = resolveRestoredPromptProvider(
-      draftProviderId = providerPrefs.providerId ?: draft.providerId,
-      preferredProvider = launcher?.preferredProvider(),
-      availableProviders = providerSelector.availableProviders,
-    )
-    providerSelector.selectProvider(persistedProvider, providerPrefs.launchMode)
     updateProviderOptionsVisibility()
 
     restoreContainerModeSelection(providerPrefs.containerModeEnabled || draft.containerModeEnabled)
@@ -120,18 +112,18 @@ internal class AgentPromptPaletteDraftController(
     val existingTaskKey = PromptTargetMode.EXISTING_TASK.name
     savedDrafts[existingTaskKey]?.let { draftState.taskPromptStates[existingTaskKey] = restoredTaskPromptDraftState(it) }
 
-    for (entry in contextState.activeExtensionTabs) {
+    for ((extension, _, taskKeyPrefix) in contextState.activeExtensionTabs) {
       var foundSavedDraft = false
       savedDrafts.forEach { (taskKey, savedText) ->
-        if (AgentPromptExtensionDraftDecisions.matchesTaskKey(entry.taskKeyPrefix, taskKey)) {
+        if (AgentPromptExtensionDraftDecisions.matchesTaskKey(taskKeyPrefix, taskKey)) {
           draftState.taskPromptStates[taskKey] = restoredTaskPromptDraftState(savedText)
           foundSavedDraft = true
         }
       }
       if (!foundSavedDraft) {
-        val initialPrompt = entry.extension.getInitialPrompt(invocationData.project)
+        val initialPrompt = extension.getInitialPrompt(invocationData.project)
         if (initialPrompt != null && initialPrompt.content.isNotBlank()) {
-          val taskKey = AgentPromptExtensionDraftDecisions.taskKey(entry.taskKeyPrefix, initialPrompt.kind)
+          val taskKey = AgentPromptExtensionDraftDecisions.taskKey(taskKeyPrefix, initialPrompt.kind)
           draftState.taskPromptStates[taskKey] = restoredTaskPromptDraftState(initialPrompt.content)
         }
       }
@@ -149,8 +141,6 @@ internal class AgentPromptPaletteDraftController(
     val currentPreferences = launcherProvider()?.loadProviderPreferences()
     launcherProvider()?.saveProviderPreferences(
       AgentPromptLauncherBridge.ProviderPreferences(
-        providerId = providerSelector.selectedProvider?.bridge?.provider?.value,
-        launchMode = providerSelector.selectedLaunchMode,
         providerOptionsByProviderId = providerSelector.providerOptionSelections(),
         containerModeEnabled = getContainerModeSelected(),
         launchProfiles = currentPreferences?.launchProfiles.orEmpty(),
@@ -172,12 +162,12 @@ internal class AgentPromptPaletteDraftController(
       allTaskDrafts[taskKey] = state.persistedUserText
     }
     val contextItems = contextState.contextEntries.map(ContextEntry::item)
-    for (entry in contextState.activeExtensionTabs) {
+    for ((extension, _, taskKeyPrefix) in contextState.activeExtensionTabs) {
       val extensionDrafts = AgentPromptPaletteExtensionContext.withContextItems(invocationData.project, contextItems) {
         AgentPromptExtensionDraftDecisions.persistTaskDrafts(
-          taskKeyPrefix = entry.taskKeyPrefix,
+          taskKeyPrefix = taskKeyPrefix,
           taskStates = draftState.taskPromptStates,
-          classifyPromptDraftKind = { promptText -> entry.extension.classifyPromptDraftKind(invocationData.project, promptText) },
+          classifyPromptDraftKind = { promptText -> extension.classifyPromptDraftKind(invocationData.project, promptText) },
         )
       }
       allTaskDrafts.putAll(extensionDrafts)
@@ -186,7 +176,6 @@ internal class AgentPromptPaletteDraftController(
     uiStateService.saveDraft(
       AgentPromptUiDraft(
         promptText = allTaskDrafts[PromptTargetMode.NEW_TASK.name] ?: "",
-        providerId = providerSelector.selectedProvider?.bridge?.provider?.value,
         targetMode = currentTargetMode,
         sendMode = PromptSendMode.SEND_NOW,
         existingTaskSearch = draftState.existingTaskSearchQuery,

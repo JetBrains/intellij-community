@@ -693,7 +693,7 @@ class AgentSessionPromptLauncherBridgeTest {
   }
 
   @Test
-  fun successfulLaunchUpdatesPreferredProvider() {
+  fun successfulLaunchUpdatesProviderOptions() {
     val providerBridge = RecordingPromptLaunchProviderBridge(
       provider = AgentSessionProvider.CLAUDE,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -710,17 +710,22 @@ class AgentSessionPromptLauncherBridgeTest {
           uiPreferencesState = uiPreferencesState,
           chatOpenExecutor = chatOpenExecutor,
         ) { service, launchService ->
-          val bridge = promptLauncherBridge(service, launchService, uiPreferencesState::getLastUsedProvider)
+          val bridge = promptLauncherBridge(service, launchService)
+          val request = promptLaunchRequest(provider = AgentSessionProvider.CLAUDE)
 
-          assertThat(bridge.preferredProvider()).isNull()
-
-          val result = bridge.launch(promptLaunchRequest(provider = AgentSessionProvider.CLAUDE))
+          val result = bridge.launch(
+            request.copy(
+              initialMessageRequest = request.initialMessageRequest.copy(
+                providerOptionIds = setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE),
+              )
+            )
+          )
 
           assertThat(result.launched).isTrue()
           waitForCondition {
-            uiPreferencesState.getLastUsedProvider() == AgentSessionProvider.CLAUDE
+            uiPreferencesState.getProviderPreferences().providerOptionsByProviderId[AgentSessionProvider.CLAUDE.value] ==
+            setOf(AGENT_PROMPT_PROVIDER_OPTION_PLAN_MODE)
           }
-          assertThat(bridge.preferredProvider()).isEqualTo(AgentSessionProvider.CLAUDE)
         }
       }
     }
@@ -832,7 +837,7 @@ class AgentSessionPromptLauncherBridgeTest {
   }
 
   @Test
-  fun createNewSessionCanSkipUpdatingGeneralProviderPreferences() {
+  fun createNewSessionCanSkipUpdatingGeneralProviderOptions() {
     val providerBridge = RecordingPromptLaunchProviderBridge(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -841,8 +846,7 @@ class AgentSessionPromptLauncherBridgeTest {
     val uiPreferencesState = AgentSessionUiPreferencesStateService().apply {
       setProviderPreferences(
         AgentPromptLauncherBridge.ProviderPreferences(
-          providerId = AgentSessionProvider.CLAUDE.value,
-          launchMode = AgentSessionLaunchMode.YOLO,
+          providerOptionsByProviderId = mapOf("claude" to setOf("plan_mode")),
         )
       )
     }
@@ -867,8 +871,8 @@ class AgentSessionPromptLauncherBridgeTest {
           waitForCondition {
             chatOpenExecutor.openNewChatCalls.get() == 1
           }
-          assertThat(uiPreferencesState.getLastUsedProvider()).isEqualTo(AgentSessionProvider.CLAUDE)
-          assertThat(uiPreferencesState.getLastUsedLaunchMode()).isEqualTo(AgentSessionLaunchMode.YOLO)
+          assertThat(uiPreferencesState.getProviderPreferences().providerOptionsByProviderId)
+            .isEqualTo(mapOf("claude" to setOf("plan_mode")))
         }
       }
     }
@@ -2073,7 +2077,6 @@ class AgentSessionPromptLauncherBridgeTest {
       pathStateResolver = ::resolveAgentSessionPathState,
       refreshCatalogAndLoadNewlyOpened = {},
       refreshProviderForPath = { _, _ -> },
-      preferredProviderProvider = { null },
       sourceProjectResolver = { path ->
         resolvedPaths.add(path)
         sourceProject.takeIf { path == selectedTreePath }
@@ -2127,7 +2130,6 @@ class AgentSessionPromptLauncherBridgeTest {
       pathStateResolver = ::resolveAgentSessionPathState,
       refreshCatalogAndLoadNewlyOpened = {},
       refreshProviderForPath = { _, _ -> },
-      preferredProviderProvider = { null },
       providerPreferencesLoader = { stored },
       providerPreferencesSaver = { prefs -> stored = prefs },
     )
@@ -2135,8 +2137,6 @@ class AgentSessionPromptLauncherBridgeTest {
     assertThat(bridge.loadProviderPreferences()).isEqualTo(AgentPromptLauncherBridge.ProviderPreferences())
 
     val prefs = AgentPromptLauncherBridge.ProviderPreferences(
-      providerId = AgentSessionProvider.CODEX.value,
-      launchMode = AgentSessionLaunchMode.STANDARD,
       providerOptionsByProviderId = mapOf("codex" to setOf("plan_mode")),
     )
     bridge.saveProviderPreferences(prefs)
@@ -2154,7 +2154,6 @@ class AgentSessionPromptLauncherBridgeTest {
       pathStateResolver = ::resolveAgentSessionPathState,
       refreshCatalogAndLoadNewlyOpened = {},
       refreshProviderForPath = { _, _ -> },
-      preferredProviderProvider = { null },
       addContextToOpenChatTarget = { request ->
         capturedRequest.set(request)
         AgentPromptAddContextToTargetResult.ADDED_TO_CHAT
@@ -2178,7 +2177,6 @@ class AgentSessionPromptLauncherBridgeTest {
       pathStateResolver = ::resolveAgentSessionPathState,
       refreshCatalogAndLoadNewlyOpened = {},
       refreshProviderForPath = { _, _ -> },
-      preferredProviderProvider = { null },
       addContextToOpenChatTarget = {
         AgentPromptAddContextToTargetResult.ALREADY_ADDED_TO_CHAT
       },
@@ -2253,7 +2251,6 @@ private fun containerPromptLauncherBridge(
     pathStateResolver = ::resolveAgentSessionPathState,
     refreshCatalogAndLoadNewlyOpened = {},
     refreshProviderForPath = { _, _ -> },
-    preferredProviderProvider = { null },
     sourceProjectResolver = sourceProjectResolver,
   )
 }
@@ -2298,7 +2295,6 @@ private class RecordingContainerLauncher(
 private fun promptLauncherBridge(
   service: AgentSessionStateSyncTestFacade,
   launchService: AgentSessionLaunchService,
-  preferredProviderProvider: () -> AgentSessionProvider? = { null },
   providerPreferencesLoader: () -> AgentPromptLauncherBridge.ProviderPreferences = { AgentPromptLauncherBridge.ProviderPreferences() },
   providerPreferencesSaver: (AgentPromptLauncherBridge.ProviderPreferences) -> Unit = {},
 ): AgentSessionPromptLauncherBridge {
@@ -2308,7 +2304,6 @@ private fun promptLauncherBridge(
     pathStateResolver = ::resolveAgentSessionPathState,
     refreshCatalogAndLoadNewlyOpened = { service.refreshCatalogAndLoadNewlyOpened() },
     refreshProviderForPath = { path, provider -> service.refreshProviderForPath(path = path, provider = provider) },
-    preferredProviderProvider = preferredProviderProvider,
     providerPreferencesLoader = providerPreferencesLoader,
     providerPreferencesSaver = providerPreferencesSaver,
   )

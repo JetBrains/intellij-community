@@ -15,7 +15,6 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsDirectPathNewT
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadContext
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsEditorTabNewThreadTarget
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsMainToolbarNewThreadAction
-import com.intellij.agent.workbench.sessions.actions.PickerActionGroup
 import com.intellij.agent.workbench.sessions.actions.ProfileQuickStartAction
 import com.intellij.agent.workbench.sessions.actions.resolveAgentSessionsMainToolbarNewThreadContext
 import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfileId
@@ -833,14 +832,14 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
       cliAvailable = true,
     )
-    val pickerGroup = PickerActionGroup(
+    val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge, claudeBridge) },
-      createNewSession = { _, _, _, _, _ -> },
+      createNewSession = { _, _, _, _ -> },
     )
-    val event = TestActionEvent.createTestEvent(pickerGroup)
+    val event = TestActionEvent.createTestEvent(action)
 
-    val children = pickerGroup.getChildren(event)
+    val children = action.actionGroup.getChildren(event)
 
     val texts = children.filter { it !is Separator }.map { it.templatePresentation.text }
     assertThat(texts).contains(
@@ -859,8 +858,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       ),
     )
     var launchedPath: String? = null
-    var launchedProvider: AgentSessionProvider? = null
-    var launchedMode: AgentSessionLaunchMode? = null
+    var launchedProfile: AgentPromptLaunchProfile? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
@@ -868,22 +866,22 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       cliAvailable = true,
       yoloSessionLabelKey = "toolwindow.action.new.session.codex.yolo",
     )
-    val pickerGroup = PickerActionGroup(
+    val action = AgentSessionsMainToolbarNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge) },
-      createNewSession = { capturedPath, provider, mode, _, capturedEntryPoint ->
+      createNewSession = { capturedPath, profile, _, capturedEntryPoint ->
         launchedPath = capturedPath
-        launchedProvider = provider
-        launchedMode = mode
+        launchedProfile = profile
         entryPoint = capturedEntryPoint
       },
     )
-    val event = TestActionEvent.createTestEvent(pickerGroup)
+    val event = TestActionEvent.createTestEvent(action)
 
-    val children = pickerGroup.getChildren(event)
+    val children = action.actionGroup.getChildren(event)
 
-    assertThat(children.map { it.templatePresentation.text }).containsExactly("Project A", "/tmp/repo-a")
-    val secondProjectGroup = children.last() as ActionGroup
+    val projectGroups = children.filterIsInstance<ActionGroup>()
+    assertThat(projectGroups.map { it.templatePresentation.text }).containsExactly("Project A", "/tmp/repo-a")
+    val secondProjectGroup = projectGroups.last()
     val secondProjectChildren = secondProjectGroup.getChildren(event)
     val yoloAction = secondProjectChildren.first { child ->
       child !is Separator && child.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo")
@@ -891,8 +889,8 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     yoloAction.actionPerformed(TestActionEvent.createTestEvent(yoloAction))
 
     assertThat(launchedPath).isEqualTo("/tmp/repo-a")
-    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.YOLO)
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TOOLBAR)
   }
 

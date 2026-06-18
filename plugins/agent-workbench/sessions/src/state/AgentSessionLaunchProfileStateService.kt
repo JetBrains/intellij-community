@@ -27,6 +27,10 @@ class AgentSessionLaunchProfileStateService
     return state.activeLaunchProfileId
   }
 
+  fun getActiveVcsMergeLaunchProfileId(): String? {
+    return state.activeVcsMergeLaunchProfileId
+  }
+
   fun setLaunchProfiles(profiles: List<AgentPromptLaunchProfile>, activeProfileId: String?) {
     updateState { current ->
       current.copy(
@@ -34,6 +38,11 @@ class AgentSessionLaunchProfileStateService
         activeLaunchProfileId = activeProfileId,
       )
     }
+    _launchProfileStateFlow.value = state
+  }
+
+  fun setActiveVcsMergeLaunchProfileId(profileId: String?) {
+    updateState { current -> current.copy(activeVcsMergeLaunchProfileId = profileId) }
     _launchProfileStateFlow.value = state
   }
 
@@ -46,5 +55,6 @@ class AgentSessionLaunchProfileStateService
   data class LaunchProfileState(
     @JvmField val launchProfiles: List<AgentPromptLaunchProfile> = emptyList(),
     @JvmField val activeLaunchProfileId: String? = null,
+    @JvmField val activeVcsMergeLaunchProfileId: String? = null,
   )
 }

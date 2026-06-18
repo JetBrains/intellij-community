@@ -217,18 +217,3 @@ internal fun reportPromptSubmitBlocked(
     launchMode = launchMode,
   )
 }
-
-internal fun resolveRestoredPromptProvider(
-  draftProviderId: String?,
-  preferredProvider: AgentSessionProvider?,
-  availableProviders: Iterable<AgentSessionProvider>,
-): AgentSessionProvider? {
-  val availableProviderSet = availableProviders.toSet()
-  val draftProvider = draftProviderId
-    ?.let(AgentSessionProvider::fromOrNull)
-    ?.takeIf { provider -> provider in availableProviderSet }
-  if (draftProvider != null) {
-    return draftProvider
-  }
-  return preferredProvider?.takeIf { provider -> provider in availableProviderSet }
-}

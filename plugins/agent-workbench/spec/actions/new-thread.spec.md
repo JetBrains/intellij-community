@@ -19,7 +19,7 @@ Status: Draft
 Date: 2026-05-09
 
 ## Summary
-New-thread actions let users start provider-backed threads from project/worktree rows, editor tabs, and the main toolbar. This spec owns action availability, provider/mode menus, target resolution, and launch deduplication. Codex pending/concrete rebind behavior is specified separately.
+New-thread actions let users start provider-backed threads from project/worktree rows, editor tabs, and the main toolbar. This spec owns action availability, launch-profile menus, target resolution, and launch deduplication. Codex pending/concrete rebind behavior is specified separately.
 
 ## Requirements
 - Project/worktree rows expose new-thread controls only while hovered or selected, and suppress them while the row is loading.
@@ -47,7 +47,7 @@ New-thread actions let users start provider-backed threads from project/worktree
 - Tree popup new-thread actions resolve context from tree rows only; editor-tab context uses editor-tab actions.
   [@test] ../../sessions-toolwindow/testSrc/AgentSessionsTreePopupActionsTest.kt
 
-- Editor-tab new-thread is contributed to `EditorTabsToolbarActions` as one split-button entry: primary click quick-launches when the source project and last provider/mode are eligible, and the chevron opens the provider/mode picker. It is visible in dedicated Agent frames and hidden in normal project frames when dedicated-frame mode is enabled.
+- Editor-tab new-thread is contributed to `EditorTabsToolbarActions` as one split-button entry: primary click quick-launches when the source project and active launch profile are eligible, and the chevron opens the launch-profile picker. It is visible in dedicated Agent frames and hidden in normal project frames when dedicated-frame mode is enabled.
   [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsGearActionsTest.kt
 
@@ -58,13 +58,13 @@ New-thread actions let users start provider-backed threads from project/worktree
   [@test] ../../sessions/testSrc/AgentSessionProjectCatalogTest.kt
   [@test] ../../sessions-actions/testSrc/AgentSessionsEditorTabActionsTest.kt
 
-- Main-toolbar new-thread is one split-button action on `MainToolbarRight`, after `NewUiRunWidget`. Icon click quick-launches only for a direct eligible target; otherwise it opens the same provider/mode picker as the chevron.
+- Main-toolbar new-thread is one split-button action on `MainToolbarRight`, after `NewUiRunWidget`. Icon click quick-launches only for a direct eligible target; otherwise it opens the same launch-profile picker as the chevron.
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
 - Main-toolbar target resolution prefers chat context path, selected chat source project path, then `project.basePath`; in dedicated Agent frames it uses the same lazy source-candidate path as editor-tab actions.
   [@test] ../../sessions-actions/testSrc/AgentSessionsMainToolbarNewThreadActionsTest.kt
 
-- Launching must go through `AgentSessionLaunchService.createNewSession(...)`, update shared provider preferences on accepted launches for prompt-capable providers, and deduplicate semantically identical in-flight launches with single-flight drop semantics.
+- Launching must go through `AgentSessionLaunchService.createNewSession(...)`, update persisted provider-option state on accepted prompt-capable launches, and deduplicate semantically identical in-flight launches with single-flight drop semantics.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
   [@test] ../../sessions/testSrc/AgentSessionLaunchServiceTest.kt
   [@test] ../../sessions/testSrc/AgentSessionRefreshCoordinatorTest.kt
@@ -75,8 +75,8 @@ New-thread actions let users start provider-backed threads from project/worktree
   [@test] ../../junie/sessions/testSrc/JunieAgentSessionProviderDescriptorTest.kt
 
 ## User Experience
-- Quick actions repeat the last successful provider/mode when that choice is still valid.
-- Provider pickers keep Standard and YOLO choices explicit.
+- Quick actions use the active launch profile when that profile is still launchable, otherwise they fall back to the first launchable built-in/user profile.
+- Launch-profile pickers keep Standard and YOLO choices explicit.
 - Dedicated-frame source selection appears only when the user invokes the action, not during toolbar update.
 
 ## Testing / Local Run
