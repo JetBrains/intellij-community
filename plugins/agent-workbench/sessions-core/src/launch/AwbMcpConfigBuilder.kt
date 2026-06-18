@@ -6,7 +6,7 @@ import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
-import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import tools.jackson.core.util.DefaultPrettyPrinter
@@ -29,9 +29,9 @@ import java.nio.file.StandardOpenOption
  * streamable-HTTP MCP URL even after IDE restarts that reassign the port.
  *
  * The merge keeps the user's other MCP servers (Glean, Context7, etc.) usable: we copy
- * each entry from the project's `.mcp.json` verbatim into our file, dropping any name
- * registered by an [AwbMcpConfigProviderContributor]. The Jackson streaming parser uses
- * [JsonGenerator.copyCurrentStructure] to preserve unknown fields exactly.
+ * entries from configured MCP files verbatim into our file, dropping any name registered
+ * by an [AwbMcpConfigProviderContributor]. The Jackson streaming parser preserves
+ * unknown fields exactly.
  *
  * **Per-provider details live in [AwbMcpConfigProviderContributor] implementations**
  * (registered by claude/codex/junie modules), not here. This class only orchestrates:
@@ -128,12 +128,17 @@ object AwbMcpConfigBuilder {
    * Writes the merged config to disk. Public so callers can pre-generate before
    * constructing a launch spec without going through [buildForLaunch].
    */
-  fun writeMergedConfigFile(projectPath: Path, mcpUrl: String, ourServerNames: Set<String>): Path {
+  fun writeMergedConfigFile(
+    projectPath: Path,
+    mcpUrl: String,
+    ourServerNames: Set<String>,
+    additionalMcpConfigFiles: List<Path> = emptyList(),
+  ): Path {
     val path = configFilePath(projectPath)
     Files.createDirectories(path.parent)
     Files.writeString(
       path,
-      buildMergedConfigJson(projectPath, mcpUrl, ourServerNames),
+      buildMergedConfigJson(projectPath, mcpUrl, ourServerNames, additionalMcpConfigFiles),
       StandardOpenOption.CREATE,
       StandardOpenOption.TRUNCATE_EXISTING,
     )
@@ -157,31 +162,33 @@ object AwbMcpConfigBuilder {
     return result
   }
 
-  private fun buildMergedConfigJson(projectPath: Path, mcpUrl: String, ourServerNames: Set<String>): String {
-    val filtered = filteredNames()
+  private fun buildMergedConfigJson(
+    projectPath: Path,
+    mcpUrl: String,
+    ourServerNames: Set<String>,
+    additionalMcpConfigFiles: List<Path>,
+  ): String {
+    val filtered = filteredNames() + ourServerNames
     val factory = JsonFactory()
+    val userServers = collectUserMcpServers(
+      factory = factory,
+      mcpConfigFiles = (additionalMcpConfigFiles + projectPath.resolve(USER_MCP_FILE)).distinct(),
+      filtered = filtered,
+    )
     val out = StringWriter()
     factory.createJsonGenerator(out, DefaultPrettyPrinter()).use { gen ->
       gen.writeStartObject()
       gen.writeName("mcpServers")
       gen.writeStartObject()
 
-      // Copy the user's other MCP servers verbatim, skipping filtered names.
-      val userMcp = projectPath.resolve(USER_MCP_FILE)
-      if (Files.isRegularFile(userMcp)) {
-        try {
-          copyUserMcpServers(factory, userMcp, gen, filtered)
-        }
-        catch (e: Exception) {
-          LOG.warn("Failed to merge $userMcp; continuing with our entry only", e)
-        }
+      for ((name, value) in userServers) {
+        gen.writeName(name)
+        gen.writeRawValue(value)
       }
 
-      // Our entries — written last, so name collisions in the user's file are
-      // overwritten by Claude Code's last-key-wins JSON semantics if our skip list
-      // ever misses one. All names point at the same IDE MCP URL (some agent tooling
-      // expects specific bridge names; declaring multiple aliases keeps every variant
-      // resolvable).
+      // Our entries are written last. All names point at the same IDE MCP URL; some
+      // agent tooling expects specific bridge names, so multiple aliases keep every
+      // variant resolvable.
       for (name in ourServerNames) {
         gen.writeName(name)
         gen.writeStartObject()
@@ -196,11 +203,29 @@ object AwbMcpConfigBuilder {
     return out.toString()
   }
 
-  private fun copyUserMcpServers(
+  private fun collectUserMcpServers(
+    factory: JsonFactory,
+    mcpConfigFiles: List<Path>,
+    filtered: Set<String>,
+  ): Map<String, String> {
+    val result = LinkedHashMap<String, String>()
+    for (userMcp in mcpConfigFiles) {
+      if (!Files.isRegularFile(userMcp)) continue
+      try {
+        collectUserMcpServers(factory, userMcp, filtered, result)
+      }
+      catch (e: Exception) {
+        LOG.warn("Failed to merge $userMcp; continuing with other MCP entries", e)
+      }
+    }
+    return result
+  }
+
+  private fun collectUserMcpServers(
     factory: JsonFactory,
     userMcp: Path,
-    target: JsonGenerator,
     filtered: Set<String>,
+    target: LinkedHashMap<String, String>,
   ) {
     factory.createJsonParser(Files.newBufferedReader(userMcp)).use { parser ->
       // Find the top-level "mcpServers" field.
@@ -216,12 +241,20 @@ object AwbMcpConfigBuilder {
               parser.skipChildren()
               continue
             }
-            target.writeName(serverName)
-            target.copyCurrentStructure(parser)
+            target.remove(serverName)
+            target[serverName] = copyJsonValue(factory, parser)
           }
           return
         }
       }
     }
+  }
+
+  private fun copyJsonValue(factory: JsonFactory, parser: JsonParser): String {
+    val out = StringWriter()
+    factory.createJsonGenerator(out).use { gen ->
+      gen.copyCurrentStructure(parser)
+    }
+    return out.toString()
   }
 }
