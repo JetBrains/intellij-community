@@ -261,6 +261,9 @@ public final class NumpyDocStringTypeProvider extends PyTypeProviderBase {
                                            @NotNull PyCallSiteExpression callSite,
                                            @NotNull TypeEvalContext context) {
     if (isApplicable(function)) {
+      if (PyTypingTypeProvider.getReturnTypeAnnotation(function, context) != null) {
+        return null;
+      }
       final PyExpression callee = callSite instanceof PyCallExpression ? ((PyCallExpression)callSite).getCallee() : null;
       final NumpyDocString docString = forFunction(function, callee);
       if (docString != null) {
