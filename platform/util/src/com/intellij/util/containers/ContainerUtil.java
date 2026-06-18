@@ -1167,13 +1167,31 @@ public final class ContainerUtil {
   }
 
   @Contract(pure=true)
-  public static <T> T @NotNull [] findAllAsArray(T @NotNull [] collection, @NotNull Condition<? super T> condition) {
-    List<? extends T> list = findAll(collection, condition);
-    if (list.size() == collection.length) {
-      return collection;
+  public static <T> T @NotNull [] findAllAsArray(T @NotNull [] array, @NotNull Condition<? super T> condition) {
+    int i;
+    for (i = 0; i < array.length; i++) {
+      T t = array[i];
+      if (!condition.value(t)) {
+        break;
+      }
     }
-    T[] array = ArrayUtil.newArray(ArrayUtil.getComponentType(collection), list.size());
-    return list.toArray(array);
+    if (i == array.length) {
+      return array;
+    }
+    ArrayList<T> result = new ArrayList<>(array.length-1);
+    //noinspection ManualArrayToCollectionCopy
+    for (int k = 0; k<i; k++) {
+      T t = array[k];
+      result.add(t);
+    }
+    for (i++; i < array.length; i++) {
+      T t = array[i];
+      if (condition.value(t)) {
+        result.add(t);
+      }
+    }
+    T[] resultArray = ArrayUtil.newArray(ArrayUtil.getComponentType(array), result.size());
+    return result.toArray(resultArray);
   }
 
   public static <T> boolean all(T @NotNull [] array, @NotNull Condition<? super T> condition) {
