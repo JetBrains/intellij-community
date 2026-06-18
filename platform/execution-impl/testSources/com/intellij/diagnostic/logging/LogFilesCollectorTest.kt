@@ -1,10 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logging
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.directoryContent
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.pathString
 
 class LogFilesCollectorTest {
   @Test
@@ -13,7 +14,7 @@ class LogFilesCollectorTest {
       file("main.log")
       file("main2.log")
     }.generateInTempDir()
-    val root = logDir.invariantSeparatorsPathString
+    val root = logDir.pathString
 
     assertLogs("*")
     assertLogs("**/**")
@@ -38,7 +39,7 @@ class LogFilesCollectorTest {
         file("file2.log")
       }
     }.generateInTempDir()
-    val root = logDir.invariantSeparatorsPathString
+    val root = logDir.pathString
 
     assertLogs("${root}/*/*.log", "${root}/subDir1/file1.log", "${root}/subDir2/file1.log", "${root}/subDir2/file2.log")
     assertLogs("${root}/*/file1.log", "${root}/subDir1/file1.log", "${root}/subDir2/file1.log")
@@ -46,6 +47,7 @@ class LogFilesCollectorTest {
   }
 
   private fun assertLogs(pathPattern: String, vararg expected: String) {
-    assertThat(collectLogPaths(pathPattern, includeAll = true)).containsExactlyInAnyOrder(*expected)
+    assertThat(collectLogPaths(FileUtil.toSystemDependentName(pathPattern), includeAll = true))
+      .containsExactlyInAnyOrderElementsOf(expected.map { FileUtil.toSystemDependentName(it) })
   }
 }
