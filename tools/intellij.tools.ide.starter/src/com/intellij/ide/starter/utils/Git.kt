@@ -680,7 +680,7 @@ object Git {
   /**
    * Returns the URL configured for [remote], or an empty string if the remote is not configured.
    */
-  fun getRemoteUrl(repositoryDirectory: Path, remote: String = "origin"): String {
+  fun getRemoteUrl(repositoryDirectory: Path, remote: String): String {
     val stdout = ExecOutputRedirect.ToString()
     runCatching {
       ProcessExecutor(
@@ -696,7 +696,7 @@ object Git {
     return stdout.read().trim()
   }
 
-  fun addRemote(repositoryDirectory: Path, url: String, remote: String = "origin") {
+  fun addRemote(repositoryDirectory: Path, remote: String, url: String) {
     val cmdName = "git-remote-add"
     ProcessExecutor(
       presentableName = cmdName,
@@ -709,7 +709,7 @@ object Git {
     ).start()
   }
 
-  fun setRemoteUrl(repositoryDirectory: Path, url: String, remote: String = "origin") {
+  fun setRemoteUrl(repositoryDirectory: Path, remote: String, url: String) {
     val cmdName = "git-remote-set-url"
     ProcessExecutor(
       presentableName = cmdName,
