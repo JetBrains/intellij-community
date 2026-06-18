@@ -1,6 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.jarRepository.RemoteRepositoriesConfiguration
+import com.intellij.jarRepository.RemoteRepositoryDescription
+import com.intellij.openapi.project.Project
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.tooling.core.isSnapshot
@@ -37,6 +40,21 @@ object GradleKotlinTestUtils {
             repositories.addUrl("https://cache-redirector.jetbrains.com/jcenter/")
         }
         return repositories.joinToString("\n")
+    }
+
+    fun setupRemoteRepositoriesForJps(project: Project) {
+        RemoteRepositoriesConfiguration.getInstance(project).repositories = listOf(
+            RemoteRepositoryDescription(
+                "central",
+                "Maven Central repository",
+                "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/"
+            ),
+            RemoteRepositoryDescription(
+                "bootstrap",
+                "Jetbrains Bootstrap Repository",
+                "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/bootstrap/"
+            )
+        )
     }
 
     private fun listKtsRepositoriesOptimized(gradleVersion: GradleVersion, kotlinVersion: KotlinToolingVersion): String {
