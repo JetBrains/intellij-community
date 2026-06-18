@@ -16,6 +16,7 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayFactory;
@@ -133,6 +134,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /// For [LocalFileSystem] it is an absolute file path with file separator characters (`File#separatorChar`)
   /// replaced with the forward slash (`'/'`).
   /// If you need to show the path in UI, use [#getPresentableUrl()] instead.
+  ///
+  /// **Performance note:** the operation is not cheap: e.g., the main implementation doesn't retain the path string
+  /// (to reduce memory usage) and rebuilds it from segments on each request.
+  /// Avoid its use in bulk operations – e.g., use methods from [VFileEvent#getPath()] instead.
   ///
   /// @see #getName the performance note
   /// @see #toNioPath()
