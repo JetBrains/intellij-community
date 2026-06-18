@@ -169,6 +169,7 @@ internal class PluginModelValidator(
   private val pluginIdToInfo = sourceCodeBasedPluginModel.pluginIdToInfo
   private val pluginAliases = sourceCodeBasedPluginModel.pluginAliases
   private val _errors = CopyOnWriteArrayList<PluginValidationError>()
+  private val existingPluginsToContentModulesWithoutDedicatedJpsModules = HashMap<String, MutableSet<String>>()
 
   init {
     sourceCodeBasedPluginModel.errors.forEach { reportError(it.message, it.sourceModule, it.params) }
@@ -303,6 +304,19 @@ internal class PluginModelValidator(
           moduleInfo.sourceModule,
           params = mapOf("descriptorFile" to moduleInfo.descriptorFile)
         )
+      }
+    }
+
+    for ((pluginId, moduleNames) in validationOptions.pluginsToContentModulesWithoutDedicatedJpsModules) {
+      val existing = existingPluginsToContentModulesWithoutDedicatedJpsModules[pluginId]
+      if (existing == null) {
+        println("Obsolete entry for plugin $pluginId in existingContentModulesWithoutDedicatedJpsModule")
+      }
+      else {
+        val obsoleteModules = moduleNames - existing
+        if (obsoleteModules.isNotEmpty()) {
+          println("Obsolete entries for plugin $pluginId in existingContentModulesWithoutDedicatedJpsModule: $obsoleteModules")
+        }
       }
     }
 
@@ -685,6 +699,9 @@ internal class PluginModelValidator(
               "referencingDescriptorFile" to referencingModuleInfo.descriptorFile,
             )
           )
+        }
+        else {
+          existingPluginsToContentModulesWithoutDedicatedJpsModules.getOrPut(referencingModuleInfo.pluginId!!, { HashSet()}).add(moduleName)
         }
       }
 
