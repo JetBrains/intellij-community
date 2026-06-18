@@ -19,7 +19,7 @@ import com.jetbrains.fus.reporting.api.ValidationResultType
 import kotlinx.coroutines.CoroutineScope
 
 internal object McpServerCounterUsagesCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("mcpserver.events", 3)
+  private val GROUP = EventLogGroup("mcpserver.events", 4)
 
   private val MCP_TOOL_CALL_EVENT: EventId1<String> = GROUP.registerEvent(
     "mcp.tool.call",
@@ -44,6 +44,7 @@ internal object McpServerCounterUsagesCollector : CounterUsagesCollector() {
     "codex",
     "codex-cli",
     "codex-acp",
+    "codex-mcp-client",
     "claude-code",
     "Copilot MCP Gateway",
     "claude-agent",
