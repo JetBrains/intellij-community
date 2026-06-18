@@ -27,7 +27,6 @@ jvm_library(
         "//java/idea-ui:ui",
         "//java/java-impl:impl",
         "//platform/testRunner",
-        "//notebooks/visualization",
     ],
     deps = [
         # do not sort,
@@ -64,7 +63,6 @@ jvm_library(
         "//java/idea-ui:ui_test_lib",
         "//java/java-impl:impl_test_lib",
         "//platform/testRunner:testRunner_test_lib",
-        "//notebooks/visualization:visualization_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/lang-core:lang-core_test_lib",
         "//libraries/junit5",
