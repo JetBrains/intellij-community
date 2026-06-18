@@ -6,6 +6,6 @@ import org.jetbrains.annotations.ApiStatus
 data class ProtocolVersion(val version: String) {
   companion object {
     val unspecified = ProtocolVersion("0")
-    val current = ProtocolVersion("0")
+    val current = ProtocolVersion("1")
   }
 }
