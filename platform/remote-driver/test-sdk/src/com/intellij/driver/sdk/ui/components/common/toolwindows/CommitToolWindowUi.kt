@@ -4,6 +4,8 @@ import com.intellij.driver.sdk.ui.components.ComponentData
 import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.components.common.JEditorUiComponent
 import com.intellij.driver.sdk.ui.components.vcs.JChangesListViewUi
+import com.intellij.driver.sdk.ui.shouldBe
+import com.intellij.driver.sdk.ui.xQuery
 
 class CommitToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
 
@@ -29,6 +31,20 @@ class CommitToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
 
   fun selectFile(fileName: String) {
     changeListView.addFileName(fileName)
+  }
+
+  fun shouldContainFile(fileName: String): CommitToolWindowUi {
+    changeListView.shouldBe("Commit changes tree should contain $fileName") {
+      pathExists("Changes", fileName)
+    }
+    return this
+  }
+
+  fun shouldNotContainFile(fileName: String): CommitToolWindowUi {
+    changeListView.shouldBe("Commit changes tree should not contain $fileName") {
+      !pathExists("Changes", fileName)
+    }
+    return this
   }
 
   fun openDiffForFile(fileName: String) {
