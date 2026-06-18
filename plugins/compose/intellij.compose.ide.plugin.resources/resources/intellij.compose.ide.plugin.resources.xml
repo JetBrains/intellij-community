@@ -1,4 +1,4 @@
-<idea-plugin package="com.intellij.compose.ide.plugin.resources">
+<idea-plugin package="com.intellij.compose.ide.plugin.resources" visibility="internal">
   <dependencies>
     <module name="intellij.gradle"/>
     <module name="intellij.kotlin.gradle.tooling"/>
@@ -14,12 +14,17 @@
       dynamic="true"
       qualifiedName="com.intellij.compose.ide.plugin.resources.drawablePreviewRenderer"
       interface="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.BaseVectorDrawablePreviewRenderer"/>
+    <extensionPoint
+      dynamic="true"
+      qualifiedName="com.intellij.compose.ide.plugin.resources.dataProvider"
+      interface="com.intellij.compose.ide.plugin.resources.ComposeResourcesDataProvider"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.compose.ide.plugin.resources">
     <drawablePreviewRenderer
       implementation="com.intellij.compose.ide.plugin.resources.vectorDrawable.preview.ComposeResourcesDrawablePreviewRenderer"
       order="last"/>
+    <dataProvider implementation="com.intellij.compose.ide.plugin.resources.gradle.GradleComposeResourcesDataProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -36,7 +41,7 @@
     <renameHandler implementation="com.intellij.compose.ide.plugin.resources.rename.ComposeResourcesXmlRenameHandler"/>
     <postStartupActivity
       implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesGenerationService$ComposeResourcesWatcherActivity"/>
-    <externalProjectDataService implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesDataService"/>
+    <externalProjectDataService implementation="com.intellij.compose.ide.plugin.resources.gradle.ComposeResourcesDataService"/>
     <usageTypeProvider implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesUsageTypeProvider" order="first"/>
     <!-- find usages -->
     <findUsagesHandlerFactory
@@ -49,11 +54,11 @@
   </extensions>
 
   <projectListeners>
-    <listener class="com.intellij.compose.ide.plugin.resources.ComposeResourcesManager$ComposeResourcesProjectDataImportListener"
+    <listener class="com.intellij.compose.ide.plugin.resources.gradle.GradleComposeResourcesManager$ComposeResourcesProjectDataImportListener"
               topic="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener"/>
   </projectListeners>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-    <projectResolve implementation="com.intellij.compose.ide.plugin.resources.ComposeResourcesProjectResolver"/>
+    <projectResolve implementation="com.intellij.compose.ide.plugin.resources.gradle.ComposeResourcesProjectResolver"/>
   </extensions>
 </idea-plugin>

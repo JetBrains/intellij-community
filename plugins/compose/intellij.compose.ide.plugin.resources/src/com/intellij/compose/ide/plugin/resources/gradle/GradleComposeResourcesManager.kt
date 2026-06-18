@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compose.ide.plugin.resources
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.compose.ide.plugin.resources.gradle
 
 import com.intellij.compose.ide.plugin.gradleTooling.rt.ComposeResourcesModel
 import com.intellij.compose.ide.plugin.shared.associateNotNull
@@ -23,20 +23,15 @@ import java.util.concurrent.atomic.AtomicReference
  * Provides a mechanism to retrieve and update Compose resource directories identified on a per-module basis.
  */
 @Service(Level.PROJECT)
-internal class ComposeResourcesManager(private val project: Project) {
-  private val myComposeResourcesByModulePath = AtomicReference<Map<String, ComposeResources>?>()
-  val composeResources: List<ComposeResourcesDir> get() = composeResourcesByModulePath.flatMap { it.value.directoriesBySourceSetName.values }
+internal class GradleComposeResourcesManager(private val project: Project) {
+  private val myComposeResourcesByModulePath = AtomicReference<Map<String, GradleComposeResources>?>()
 
-  val composeResourcesByModulePath: Map<String, ComposeResources>
+  val composeResourcesByModulePath: Map<String, GradleComposeResources>
     get() = myComposeResourcesByModulePath.updateAndGet { cached -> cached ?: loadComposeResources() }.orEmpty()
 
   fun refresh() {
     myComposeResourcesByModulePath.updateAndGet { loadComposeResources() }
   }
-
-  /** if the path is inside a composeResources dir, return the dir, otherwise null */
-  fun findComposeResourcesDirFor(path: Path): ComposeResourcesDir? =
-    composeResources.firstOrNull { path.startsWith(it.directoryPath) }
 
   /** Retrieves all `ComposeResourcesModel` data nodes associated with the current project
    * in case of multiple modules having compose resources */
@@ -53,16 +48,16 @@ internal class ComposeResourcesManager(private val project: Project) {
       return models
     }
 
-  private fun loadComposeResources(): Map<String, ComposeResources>? =
+  private fun loadComposeResources(): Map<String, GradleComposeResources>? =
     composeResourcesModels?.associateNotNull { node ->
       val moduleData = node.parent?.data as? ModuleData ?: return@associateNotNull null
       val moduleName = moduleData.moduleName
       val projectGroupName = moduleData.group.orEmpty()
       val dirs = node.data.customComposeResourcesDirs.mapValues { (sourceSetName, customDirectoryPath) ->
         val (directoryPath, isCustom) = customDirectoryPath
-        ComposeResourcesDir(moduleName, sourceSetName, Path.of(directoryPath), projectGroupName, isCustom)
+        GradleComposeResourcesDir(moduleName, sourceSetName, Path.of(directoryPath), projectGroupName, isCustom)
       }
-      moduleName to ComposeResources(
+      moduleName to GradleComposeResources(
         moduleName = moduleName,
         directoriesBySourceSetName = dirs,
         isPublicResClass = node.data.isPublicResClass,
@@ -74,7 +69,7 @@ internal class ComposeResourcesManager(private val project: Project) {
   /** Refresh Compose resources directories after project import */
   internal class ComposeResourcesProjectDataImportListener(private val project: Project) : ProjectDataImportListener {
     override fun onImportFinished(projectPath: String?) {
-      project.service<ComposeResourcesManager>().refresh()
+      project.service<GradleComposeResourcesManager>().refresh()
     }
   }
 

@@ -1,10 +1,11 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.compose.ide.plugin.resources
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.compose.ide.plugin.resources.gradle
 
 import com.intellij.compose.ide.plugin.gradleTooling.rt.ComposeResourcesExtension
 import com.intellij.compose.ide.plugin.gradleTooling.rt.ComposeResourcesModel
 import com.intellij.compose.ide.plugin.gradleTooling.rt.ComposeResourcesModelBuilder
 import com.intellij.compose.ide.plugin.gradleTooling.rt.ComposeResourcesModelImpl
+import com.intellij.compose.ide.plugin.resources.COMPOSE_RESOURCES_DIR
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData

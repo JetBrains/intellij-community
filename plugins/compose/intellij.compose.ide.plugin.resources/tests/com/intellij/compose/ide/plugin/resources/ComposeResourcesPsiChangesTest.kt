@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
 package com.intellij.compose.ide.plugin.resources
@@ -35,7 +35,8 @@ class ComposeResourcesPsiChangesTest : ComposeResourcesTestCase() {
     runWriteAction { composeResourcesDrawableDir.createChildData(dir, "test1.png") }
 
     assertEquals(1, values.size)
-    assertEquals("commonMain", values.first().sourceSetName)
+    // TODO: Not ideal assert
+    assertEquals("commonMain", values.first().accessorsQualifier)
 
     runWriteAction {
       composeResourcesDrawableDir.createChildData(dir, "test2.png")
@@ -86,7 +87,7 @@ class ComposeResourcesPsiChangesTest : ComposeResourcesTestCase() {
     assertEquals(2, values.size)
   }
 
-  private fun doMovingTest(body: TestScope.(MovingContext, List<ComposeResourcesDir>) -> Unit) =
+  private fun doMovingTest(body: TestScope.(MovingContext, List<ComposeResourcesData>) -> Unit) =
     doTest { files, fileManager, values ->
       val composeResourcesDrawableDir = files.find { it.name.endsWith("compose-multiplatform.xml") }!!.parent
       val composeResourcesDir = composeResourcesDrawableDir.parent
@@ -96,14 +97,14 @@ class ComposeResourcesPsiChangesTest : ComposeResourcesTestCase() {
       body(context, values)
     }
 
-  private fun doTest(body: suspend TestScope.(List<VirtualFile>, FileManager, List<ComposeResourcesDir>) -> Unit) = runTest {
+  private fun doTest(body: suspend TestScope.(List<VirtualFile>, FileManager, List<ComposeResourcesData>) -> Unit) = runTest {
     val files = importProjectFromTestData()
     val psiManager = PsiManagerEx.getInstanceEx(myProject)
     val fileManager = psiManager.fileManager
 
     psiManager.addPsiTreeChangeListener(ComposeResourcesPsiChangesListener(myProject), getTestRootDisposable())
 
-    val values: MutableList<ComposeResourcesDir> = mutableListOf()
+    val values: MutableList<ComposeResourcesData> = mutableListOf()
     val service = myProject.service<ComposeResourcesGenerationService>()
     backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
       service.composeResourcesPsiChanges.toList(values)
