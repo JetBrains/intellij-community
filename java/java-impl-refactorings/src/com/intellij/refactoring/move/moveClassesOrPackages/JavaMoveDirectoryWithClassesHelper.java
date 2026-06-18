@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -219,7 +219,7 @@ public class JavaMoveDirectoryWithClassesHelper extends MoveDirectoryWithClasses
     if (targetDirectory != null) {
       PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(targetDirectory);
       if (aPackage != null) {
-        MoveClassesOrPackagesProcessor.detectPackageLocalsUsed(conflicts, javaFiles.toArray(PsiElement.EMPTY_ARRAY), new PackageWrapper(aPackage));
+        MoveClassesOrPackagesUtil.detectPackageLocalsUsed(conflicts, javaFiles.toArray(PsiElement.EMPTY_ARRAY), new PackageWrapper(aPackage));
       }
     }
   }
