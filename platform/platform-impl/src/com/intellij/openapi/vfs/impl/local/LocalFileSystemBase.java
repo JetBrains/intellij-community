@@ -69,7 +69,7 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
-/** @deprecated do not use directly, access via {@link LocalFileSystem#getInstance} */
+/** @deprecated do not use directly; access via {@link LocalFileSystem#getInstance} */
 @ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public abstract class LocalFileSystemBase extends LocalFileSystem {
@@ -603,7 +603,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         var stringRoot = root.toString();
 
         if (normalizedPathRootString.equals(stringRoot)) {
-          // root path should be short. See com.intellij.openapi.vfs.newvfs.persistent.namecache.SLRUFileNameCache.assertShortFileName
+          // a root path should be short (see `SLRUFileNameCache.assertShortFileName`)
           if (stringRoot.length() > 1 && (stringRoot.endsWith("\\") || stringRoot.endsWith("/"))) {
             stringRoot = stringRoot.substring(0, stringRoot.length() - 1);
           }
