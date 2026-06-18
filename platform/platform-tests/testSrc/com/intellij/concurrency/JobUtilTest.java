@@ -222,7 +222,7 @@ public class JobUtilTest extends LightPlatformTestCase {
           }
       };
       if (runInReadAction) {
-        ReadAction.run(runnable);
+        ReadAction.runBlocking(runnable);
       }
       else {
         runnable.run();
@@ -760,7 +760,7 @@ public class JobUtilTest extends LightPlatformTestCase {
   }
   public void testPCEThrownFromProcessorMustPropagateOutwards() {
     List<Integer> ints = IntStream.range(1, 123_271).boxed().collect(Collectors.toList());
-    int N = 100;
+    int N = 1000;
     for (int i=0; i<N; i++) {
       assertThrows(ProcessCanceledException.class, () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(ints, new DaemonProgressIndicator(), _ -> {
         throw new ProcessCanceledException(new RuntimeException("xxx"));
