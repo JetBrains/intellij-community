@@ -8,10 +8,11 @@ import com.intellij.openapi.util.UserDataHolderEx
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.NonExtendable
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 
-@ApiStatus.NonExtendable
+@NonExtendable
 interface GradleExecutionContext: UserDataHolderEx {
 
   val project: Project
@@ -29,4 +30,7 @@ interface GradleExecutionContext: UserDataHolderEx {
   val buildEnvironment: BuildEnvironment
 
   val gradleVersion: GradleVersion
+
+  @get:Experimental
+  val reporter: GradleExecutionReporter
 }
