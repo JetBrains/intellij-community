@@ -5,10 +5,13 @@ import com.intellij.devkit.core.icons.DevkitCoreIcons.BackendModule
 import com.intellij.devkit.core.icons.DevkitCoreIcons.FrontendModule
 import com.intellij.devkit.core.icons.DevkitCoreIcons.SharedModule
 import com.intellij.icons.AllIcons
+import com.intellij.lang.xml.XMLLanguage
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiFile
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.xml.XmlFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.util.DescriptorUtil
@@ -24,7 +27,7 @@ object SplitModeModuleKindIcons {
   @JvmStatic
   fun getDescriptorIcon(descriptorFile: PsiFile): Icon? {
     if (!isCustomIconsEnabled() || DumbService.isDumb(descriptorFile.project)) return null
-    val kind = recognizeLightweightModuleKind(descriptorFile) ?: return null
+    val kind = getOrComputeModuleKindFast(descriptorFile) ?: return null
     return getKindIcon(kind, descriptorFile.name)
   }
 
@@ -52,6 +55,15 @@ object SplitModeModuleKindIcons {
       explicitDependencyKinds.size > 1 -> SplitModeApiRestrictionsService.ModuleKind.MIXED
       explicitDependencyKinds.size == 1 -> explicitDependencyKinds.single()
       else -> inferModuleKindFromFileName(descriptorFile.name)
+    }
+  }
+
+  private fun getOrComputeModuleKindFast(descriptorFile: PsiFile): SplitModeApiRestrictionsService.ModuleKind? {
+    return CachedValuesManager.getCachedValue(descriptorFile) {
+      CachedValueProvider.Result.create(
+        recognizeLightweightModuleKind(descriptorFile),
+        descriptorFile.manager.modificationTracker.forLanguage(XMLLanguage.INSTANCE),
+      )
     }
   }
 
