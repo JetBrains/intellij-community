@@ -250,8 +250,7 @@ class WorkspaceFileIndexImpl : WorkspaceFileIndexEx, Disposable.Default {
     /* there may be other file sets under this directory; their URLs must be registered in VirtualFileUrlManager,
        so it's enough to process VirtualFileUrls only. */
     val virtualFileUrlManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager() as VirtualFileUrlManagerImpl
-    val virtualFileUrl = virtualFileUrlManager.findByUrl(dir.url) ?: return VirtualFileVisitor.SKIP_CHILDREN
-    val processed = virtualFileUrlManager.processChildrenRecursively(virtualFileUrl) { childUrl ->
+    val processed = virtualFileUrlManager.processChildrenRecursively(dir.url) { childUrl ->
       val childFile = childUrl.virtualFile ?: return@processChildrenRecursively TreeNodeProcessingResult.SKIP_CHILDREN
       val isChildInContent = runReadActionBlocking {
         findFileSet(
