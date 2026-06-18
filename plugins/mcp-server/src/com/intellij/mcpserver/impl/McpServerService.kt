@@ -30,8 +30,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.util.asDisposable
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.call
 import io.ktor.server.cio.CIO
@@ -384,6 +386,9 @@ open class McpServerService(val cs: CoroutineScope) {
           elicitationKind = elicitationKind,
           useFiltersFromEP = useFiltersFromEP,
         )
+        // Process initial tools immediately to fix race condition
+        sessionToolsManager.updateTools()
+        FileDocumentManager.getInstance().overrideConflictsSolverEnabled(false, sessionToolsManager.sessionScope.asDisposable())
 
         val session = sessionToolsManager.createAndInitializeSession(transport, applicationCall)
 
