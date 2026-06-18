@@ -114,6 +114,16 @@ public class PyNumpyTypeTest extends PyTestCase {
     doTest();
   }
 
+  @TestFor(issues = {"PY-32793", "PY-89314"})
+  public void testReturnTypeWithBrackets() {
+    doTest();
+  }
+
+  @TestFor(issues = {"PY-32793", "PY-89314"})
+  public void testReturnTypeUnion() {
+    doTest();
+  }
+
   public void testUFunc() {
     doTest(false);
   }
