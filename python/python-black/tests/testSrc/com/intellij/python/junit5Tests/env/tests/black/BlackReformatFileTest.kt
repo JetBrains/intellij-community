@@ -12,16 +12,16 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
+import com.intellij.python.black.BlackPyTool
+import com.intellij.python.black.configuration.BlackFormatterConfiguration
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pySdkFixture
+import com.intellij.python.pytools.PyToolsState
 import com.intellij.python.pytools.configuration.ExecutableDiscoveryMode
-import com.intellij.python.pytools.getState
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
-import com.intellij.python.black.BlackPyTool
-import com.intellij.python.black.configuration.BlackFormatterConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -42,10 +42,7 @@ internal class BlackReformatFileTest {
     @JvmStatic
     @BeforeAll
     fun enableBlack() {
-      with (BlackPyTool.getInstance().getState(projectFixture.get())) {
-        enabled = true
-        discoveryMode = ExecutableDiscoveryMode.INTERPRETER
-      }
+      PyToolsState.getInstance(projectFixture.get()).setEnabled(BlackPyTool.getInstance(), true)
     }
   }
 
