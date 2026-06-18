@@ -108,7 +108,9 @@ class RpcExecutor private constructor(
               logger.trace { "Received $message" }
               when (message) {
                 is TransportMessage.Envelope -> {
-                  executor.processRpcMessage(message.origin, message.parseMessage())
+                  runCatching { message.parseMessage() }
+                    .onSuccess { executor.processRpcMessage(message.origin, it) }
+                    .onFailure { logger.error(it) { "Failed to deserialize envelope" } }
                 }
                 is TransportMessage.RouteClosed -> {
                   executor.cancelAllOngoingWork(message.address)
