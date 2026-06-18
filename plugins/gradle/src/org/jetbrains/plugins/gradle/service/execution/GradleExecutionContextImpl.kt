@@ -24,6 +24,10 @@ open class GradleExecutionContextImpl(
     get() = taskId.project
 
   private var _buildEnvironment: BuildEnvironment? = null
+
+  val buildEnvironmentOrNull: BuildEnvironment?
+    get() = _buildEnvironment
+
   override var buildEnvironment: BuildEnvironment
     get() = checkNotNull(_buildEnvironment) {
       "The Gradle Daemon connection wasn't acquired for $taskId.\n" +

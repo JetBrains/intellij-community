@@ -144,7 +144,7 @@ public final class GradleExecutionHelper {
 
       // do not use connection.getModel methods since it doesn't allow to handle progress events
       // and we can miss gradle tooling client side events like distribution download.
-      GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId, context.getProjectPath());
+      GradleProgressListener gradleProgressListener = new GradleProgressListener(context, context.getProjectPath());
       modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
       modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
       modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));
@@ -277,7 +277,7 @@ public final class GradleExecutionHelper {
 
     setupJavaHome(operation, settings, id, listener, buildEnvironment);
 
-    setupProgressListeners(operation, settings, id, listener, buildEnvironment);
+    setupProgressListeners(operation, settings, effectiveContext);
 
     setupStandardIO(operation, settings, id, listener);
 
@@ -305,12 +305,10 @@ public final class GradleExecutionHelper {
   private static void setupProgressListeners(
     @NotNull LongRunningOperation operation,
     @NotNull GradleExecutionSettings settings,
-    @NotNull ExternalSystemTaskId id,
-    @NotNull ExternalSystemTaskNotificationListener listener,
-    @NotNull BuildEnvironment buildEnvironment
+    @NotNull GradleExecutionContext context
   ) {
-    var buildRootDir = getBuildRoot(buildEnvironment);
-    var progressListener = new GradleProgressListener(listener, id, buildRootDir.toString());
+    var buildRootDir = getBuildRoot(context.getBuildEnvironment());
+    var progressListener = new GradleProgressListener(context, buildRootDir.toString());
     operation.addProgressListener((ProgressListener)progressListener);
     operation.addProgressListener(
       progressListener,
@@ -551,7 +549,7 @@ public final class GradleExecutionHelper {
 
         // do not use connection.getModel methods since it doesn't allow to handle progress events
         // and we can miss gradle tooling client side events like distribution download.
-        GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId, context.getProjectPath());
+        GradleProgressListener gradleProgressListener = new GradleProgressListener(context, context.getProjectPath());
         modelBuilder.addProgressListener((ProgressListener)gradleProgressListener);
         modelBuilder.addProgressListener((org.gradle.tooling.events.ProgressListener)gradleProgressListener);
         modelBuilder.setStandardOutput(new OutputWrapper(listener, taskId, true));

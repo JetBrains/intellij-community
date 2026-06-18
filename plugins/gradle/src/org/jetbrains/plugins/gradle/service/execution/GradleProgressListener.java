@@ -13,17 +13,17 @@ import com.intellij.build.events.impl.MessageEventImpl;
 import com.intellij.build.issue.BuildIssue;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.events.ProgressEvent;
 import org.gradle.tooling.events.ProgressListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.issue.GradleIssueChecker;
@@ -42,68 +42,53 @@ import static com.intellij.openapi.util.text.StringUtil.formatDuration;
 /**
  * @author Vladislav.Soroka
  */
-public class GradleProgressListener implements ProgressListener, org.gradle.tooling.ProgressListener {
+@ApiStatus.Internal
+final class GradleProgressListener implements ProgressListener, org.gradle.tooling.ProgressListener {
   private static final Logger LOG = Logger.getInstance(GradleProgressListener.class);
   public static final String SEND_PROGRESS_EVENTS_TO_OUTPUT_KEY = "gradle.output.sync.progress.events";
   private final GradleDownloadProgressMapper myDownloadProgressMapper;
-  private final ExternalSystemTaskNotificationListener myListener;
   private final GradleExecutionProgressMapper myProgressMapper;
-  private final ExternalSystemTaskId myTaskId;
   private final Map<Object, Long> myStatusEventIds = new HashMap<>();
   private final String myOperationId;
-  private final @NotNull Path myBuildRootDirPath;
+  private final @NotNull GradleExecutionContext myContext;
   private static final String EXECUTING_BUILD = "Build";
   private static final String STARTING_GRADLE_DAEMON_EVENT = "Starting Gradle Daemon";
   private ExternalSystemTaskNotificationEvent myLastStatusChange = null;
   private final boolean sendProgressEventsToOutput;
 
-  /**
-   * @deprecated the build root path is now required. Get one from a BuildEnvironment or a GradleExecutionSettings instance.
-   */
-  @Deprecated
-  public GradleProgressListener(
-    @NotNull ExternalSystemTaskNotificationListener listener,
-    @NotNull ExternalSystemTaskId taskId
-  ) {
-    this(listener, taskId, "");
-  }
-
-  public GradleProgressListener(
-    @NotNull ExternalSystemTaskNotificationListener listener,
-    @NotNull ExternalSystemTaskId taskId,
+  GradleProgressListener(
+    @NotNull GradleExecutionContext context,
     @NotNull String buildRootDir
   ) {
-    myListener = listener;
-    myTaskId = taskId;
-    myOperationId = taskId.hashCode() + ":" + FileUtil.pathHashCode(buildRootDir);
+    myContext = context;
+    myOperationId = context.getTaskId().hashCode() + ":" + FileUtil.pathHashCode(buildRootDir);
     myProgressMapper = new GradleExecutionProgressMapper();
     myDownloadProgressMapper = new GradleDownloadProgressMapper();
-    myBuildRootDirPath = Path.of(buildRootDir);
     sendProgressEventsToOutput = Registry.is(SEND_PROGRESS_EVENTS_TO_OUTPUT_KEY, true);
   }
 
   @Override
   public void statusChanged(ProgressEvent event) {
     if (myDownloadProgressMapper.canMap(event)) {
-      ExternalSystemTaskNotificationEvent downloadEvent = myDownloadProgressMapper.map(myTaskId, event);
+      ExternalSystemTaskNotificationEvent downloadEvent = myDownloadProgressMapper.map(myContext.getTaskId(), event);
       if (downloadEvent != null) {
-        myListener.onStatusChange(downloadEvent);
+        myContext.getListener().onStatusChange(downloadEvent);
         if (sendProgressEventsToOutput) {
           sendProgressEventToOutput(downloadEvent);
         }
         return;
       }
     }
-    ExternalSystemTaskNotificationEvent progressBuildEvent = myProgressMapper.map(myTaskId, event);
+    ExternalSystemTaskNotificationEvent progressBuildEvent = myProgressMapper.map(myContext.getTaskId(), event);
     if (progressBuildEvent != null) {
       if (!progressBuildEvent.equals(myLastStatusChange)) {
-        myListener.onStatusChange(progressBuildEvent);
+        myContext.getListener().onStatusChange(progressBuildEvent);
         myLastStatusChange = progressBuildEvent;
       }
     }
-    var taskNotificationEvent = GradleProgressEventConverter.createTaskNotificationEvent(myTaskId, myOperationId, event);
+    var taskNotificationEvent = GradleProgressEventConverter.createTaskNotificationEvent(myContext.getTaskId(), myOperationId, event);
     if (taskNotificationEvent != null) {
-      myListener.onStatusChange(taskNotificationEvent);
+      myContext.getListener().onStatusChange(taskNotificationEvent);
     }
   }
 
@@ -111,14 +96,14 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   public void statusChanged(org.gradle.tooling.ProgressEvent event) {
     var eventDescription = event.getDescription();
     if (!maybeReportModelBuilderMessage(eventDescription)) {
-      var progressBuildEvent = myProgressMapper.mapLegacyEvent(myTaskId, eventDescription);
+      var progressBuildEvent = myProgressMapper.mapLegacyEvent(myContext.getTaskId(), eventDescription);
       if (progressBuildEvent != null && !progressBuildEvent.equals(myLastStatusChange)) {
-        myListener.onStatusChange(progressBuildEvent);
+        myContext.getListener().onStatusChange(progressBuildEvent);
         myLastStatusChange = progressBuildEvent;
       }
 
-      var taskNotificationEvent = GradleProgressEventConverter.legacyConvertTaskNotificationEvent(myTaskId, eventDescription);
-      myListener.onStatusChange(taskNotificationEvent);
+      var taskNotificationEvent = GradleProgressEventConverter.legacyConvertTaskNotificationEvent(myContext.getTaskId(), eventDescription);
+      myContext.getListener().onStatusChange(taskNotificationEvent);
 
       if (sendProgressEventsToOutput) {
         reportGradleDaemonStartingEvent(eventDescription);
@@ -153,7 +138,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   }
 
   private void reportModelBuilderMessageToFus(@NotNull Message message) {
-    GradleModelBuilderMessageCollector.logModelBuilderMessage(myTaskId.findProject(), myTaskId.getId(), message);
+    GradleModelBuilderMessageCollector.logModelBuilderMessage(myContext.getTaskId().findProject(), myContext.getTaskId().getId(), message);
   }
 
   private static void reportModelBuilderMessageToLogger(@NotNull Message message) {
@@ -171,7 +156,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
   private void reportModelBuilderMessageToListener(@NotNull Message message) {
     if (!message.isInternal()) {
       BuildEvent messageEvent = getModelBuilderIssueOrMessage(message);
-      myListener.onStatusChange(new ExternalSystemBuildEvent(myTaskId, messageEvent));
+      myContext.getListener().onStatusChange(new ExternalSystemBuildEvent(myContext.getTaskId(), messageEvent));
     }
   }
 
@@ -184,7 +169,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
       messageFilePosition.getColumn()
     );
     return new MessageEventImpl(
-      myTaskId,
+      myContext.getTaskId(),
       kind,
       message.getGroup(),
       message.getTitle(),
@@ -210,10 +195,10 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
       BuildIssue buildIssue = checker.check(issueData);
       if (buildIssue != null) {
         MessageEvent.Kind kind = MessageEvent.Kind.valueOf(message.getKind().name());
-        return new BuildIssueEventImpl(myTaskId, buildIssue, kind);
+        return new BuildIssueEventImpl(myContext.getTaskId(), buildIssue, kind);
       }
     }
-    
+
     // Fallback to a regular message event if no issue checker matched
     return getModelBuilderMessage(message);
   }
@@ -227,7 +212,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
     );
 
     GradleIssueFailure failure = GradleIssueFailure.createIssueFailure(errorText);
-    return GradleIssueData.createIssueData(myBuildRootDirPath, failure, null, filePosition);
+    return GradleIssueData.createIssueData(getBuildRoot(myContext), failure, null, filePosition);
   }
 
   private void sendProgressEventToOutput(ExternalSystemTaskNotificationEvent event) {
@@ -237,7 +222,7 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         long duration = ((FileDownloadedEventImpl)buildEvent).getDuration();
         String operationName = buildEvent.getMessage();
         String text = String.format("%s, took %s", operationName, formatDuration(duration));
-        myListener.onTaskOutput(myTaskId, "\r" + text + "\n", ProcessOutputType.STDOUT);
+        myContext.getListener().onTaskOutput(myContext.getTaskId(), "\r" + text + "\n", ProcessOutputType.STDOUT);
       }
       if (buildEvent instanceof FileDownloadEventImpl) {
         long progress = ((FileDownloadEventImpl)buildEvent).getProgress();
@@ -245,10 +230,10 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
         String operationName = buildEvent.getMessage();
         String text = String.format("%s (%s / %s)", operationName, formatFileSize(progress), formatFileSize(total));
         if (((FileDownloadEventImpl)buildEvent).isFirstInGroup()) {
-          myListener.onTaskOutput(myTaskId, text, ProcessOutputType.STDOUT);
+          myContext.getListener().onTaskOutput(myContext.getTaskId(), text, ProcessOutputType.STDOUT);
         }
         else {
-          myListener.onTaskOutput(myTaskId, "\r" + text, ProcessOutputType.STDOUT);
+          myContext.getListener().onTaskOutput(myContext.getTaskId(), "\r" + text, ProcessOutputType.STDOUT);
         }
       }
     }
@@ -268,13 +253,18 @@ public class GradleProgressListener implements ProgressListener, org.gradle.tool
    */
   private void reportGradleDaemonStartingEvent(String eventDescription) {
     if (StringUtil.equals(STARTING_GRADLE_DAEMON_EVENT, eventDescription) && !myStatusEventIds.containsKey(STARTING_GRADLE_DAEMON_EVENT)) {
-      myListener.onTaskOutput(myTaskId, STARTING_GRADLE_DAEMON_EVENT + "...\n", ProcessOutputType.STDOUT);
+      myContext.getListener().onTaskOutput(myContext.getTaskId(), STARTING_GRADLE_DAEMON_EVENT + "...\n", ProcessOutputType.STDOUT);
       myStatusEventIds.put(STARTING_GRADLE_DAEMON_EVENT, System.currentTimeMillis());
     } else if (StringUtil.equals(EXECUTING_BUILD, eventDescription) && myStatusEventIds.containsKey(STARTING_GRADLE_DAEMON_EVENT)) {
       Long startTime = myStatusEventIds.remove(STARTING_GRADLE_DAEMON_EVENT);
       String duration = formatDuration(System.currentTimeMillis() - startTime);
-      myListener.onTaskOutput(myTaskId, "\rGradle Daemon started in " + duration + "\n", ProcessOutputType.STDOUT);
+      myContext.getListener().onTaskOutput(myContext.getTaskId(), "\rGradle Daemon started in " + duration + "\n", ProcessOutputType.STDOUT);
     }
+  }
+
+  private static @NotNull Path getBuildRoot(@NotNull GradleExecutionContextImpl context) {
+    BuildEnvironment buildEnvironment = context.getBuildEnvironmentOrNull();
+    return buildEnvironment == null ? Path.of(context.getProjectPath()) : buildEnvironment.getBuildIdentifier().getRootDir().toPath();
   }
 
   private static @NotNull String formatFileSize(@NotNull Long value) {
