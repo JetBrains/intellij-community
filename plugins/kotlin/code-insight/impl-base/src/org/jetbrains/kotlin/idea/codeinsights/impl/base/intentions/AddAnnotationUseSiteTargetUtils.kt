@@ -16,7 +16,9 @@ import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationTarget
 import org.jetbrains.kotlin.analysis.api.symbols.applicableAnnotationTargets
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.type
-import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiField
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget.ALL
@@ -52,6 +54,7 @@ object AddAnnotationUseSiteTargetUtils {
         return applicableUseSiteTargets(applicableTargets)
     }
 
+    context(_: KaSession)
     fun KtAnnotationEntry.applicableUseSiteTargets(applicableTargets: Set<KaAnnotationTarget>): List<AnnotationUseSiteTarget> {
         if (useSiteTarget != null) return emptyList()
         val annotationShortName = this.shortName ?: return emptyList()
@@ -77,7 +80,7 @@ object AddAnnotationUseSiteTargetUtils {
                 annotated.delegate != null -> listOf(PROPERTY, PROPERTY_GETTER, PROPERTY_DELEGATE_FIELD)
 
                 !annotated.isLocal -> {
-                    val backingField = LightClassUtil.getLightClassPropertyMethods(annotated).backingField
+                    val backingField = (annotated.symbol as? KaPropertySymbol)?.backingFieldSymbol?.asPsiField()
                     if (annotated.isVar) {
                         if (backingField != null) listOfNotNull(FIELD, PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER, SETTER_PARAMETER, allIfSupported)
                         else listOfNotNull(PROPERTY, PROPERTY_GETTER, PROPERTY_SETTER, SETTER_PARAMETER, allIfSupported)

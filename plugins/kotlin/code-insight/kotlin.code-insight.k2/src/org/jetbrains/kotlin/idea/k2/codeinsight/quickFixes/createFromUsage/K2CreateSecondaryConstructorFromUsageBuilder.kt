@@ -15,10 +15,11 @@ import org.jetbrains.kotlin.analysis.api.expressions.expectedType
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.type
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
-import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.refactoring.canRefactorElement
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtCallElement
@@ -38,7 +39,12 @@ object K2CreateSecondaryConstructorFromUsageBuilder {
 
         if (!analyze(call) { isExpectedTypeCompatible(call) }) return emptyList()
 
-        val lightClass = targetClass as? PsiClass ?: (targetClass as? KtClass)?.toLightClass() ?: return emptyList()
+        val lightClass = when (targetClass) {
+            is PsiClass -> targetClass
+            is KtClass -> analyze(targetClass) { targetClass.classSymbol?.asPsiClass() }
+            else -> null
+        } ?: return emptyList()
+
         val request = CreateConstructorFromKotlinUsageRequest(call, listOf(JvmModifier.PUBLIC))
 
         return EP_NAME.extensions.flatMap { ext ->

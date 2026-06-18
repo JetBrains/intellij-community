@@ -9,6 +9,3 @@ public class Testing {
 // EXIST: xLongPrefixGetter
 // EXIST: xLongPrefixSetter
 // NUMBER: 2
-
-// IGNORE_K2
-// Note: This test fails due to KT-87399, unmute once the issue is fixed

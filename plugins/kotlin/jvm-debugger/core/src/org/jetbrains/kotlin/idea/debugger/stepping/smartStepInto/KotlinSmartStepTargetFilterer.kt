@@ -12,10 +12,12 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.asPsiType
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiMethods
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -24,7 +26,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.api.types.arrayElementType
 import org.jetbrains.kotlin.analysis.api.types.isArrayOrPrimitiveArray
-import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
 import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.debugger.base.util.fqnToInternalName
@@ -127,7 +128,11 @@ class KotlinSmartStepTargetFilterer(
 
         if (!methodInfo.isInlineClassMember) {
             // Cannot create light class for functions with inline classes
-            val lightMethod = readAction { declaration.getLightClassMethod() }
+            val lightMethod = readAction {
+                analyze(declaration) {
+                    declaration.getLightClassMethod()
+                }
+            }
             // Do not match by name, as it was already checked
             val lightMethodMatch = runReadAction { lightMethod?.matches(owner, signature, debugProcess) }
             // Light method match still can fail in some Kotlin-specific cases (e.g., setter/getter signature)
@@ -264,10 +269,11 @@ private fun buildSignature(
     return "($arguments)${type.returnType.descriptor}"
 }
 
+context(_: KaSession)
 private fun KtDeclaration.getLightClassMethod(): PsiMethod? =
     when (this) {
-        is KtFunction -> LightClassUtil.getLightClassMethod(this)
-        is KtPropertyAccessor -> LightClassUtil.getLightClassPropertyMethods(property).getter
+        is KtFunction -> (symbol as? KaFunctionSymbol)?.asPsiMethods()?.singleOrNull()
+        is KtPropertyAccessor -> (property.symbol as? KaPropertySymbol)?.getter?.asPsiMethods()?.firstOrNull()
         else -> null
     }
 

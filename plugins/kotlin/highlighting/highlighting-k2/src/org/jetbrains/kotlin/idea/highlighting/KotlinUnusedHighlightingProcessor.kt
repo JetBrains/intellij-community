@@ -22,6 +22,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiClass
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiField
+import org.jetbrains.kotlin.analysis.api.javaInterop.asPsiMethods
 import org.jetbrains.kotlin.analysis.api.resolution.KaCompoundAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
@@ -34,11 +37,13 @@ import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaContextParameterSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaKotlinPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaLocalVariableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.asJava.LightClassUtil
-import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.isExplicitlyIgnoredByName
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isCalleeExpression
 import org.jetbrains.kotlin.idea.highlighting.analyzers.isConstructorCallReference
@@ -58,7 +63,6 @@ import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.kotlin.psi.KtModifierListOwner
@@ -255,12 +259,13 @@ internal class KotlinUnusedHighlightingProcessor(private val ktFile: KtFile) {
         holder.add(builder.create())
     }
 
+    context(_: KaSession)
     private fun isEntryPoint(declaration: KtNamedDeclaration): Boolean {
         val lightElement: PsiElement = when (declaration) {
-            is KtEnumEntry -> LightClassUtil.getLightClassBackingField(declaration)
-            is KtClassOrObject -> declaration.toLightClass()
-            is KtNamedFunction, is KtSecondaryConstructor -> LightClassUtil.getLightClassMethod(declaration as KtFunction)
-            is KtProperty -> LightClassUtil.getLightClassBackingField(declaration)
+            is KtEnumEntry -> declaration.symbol.asPsiField()
+            is KtClassOrObject -> declaration.classSymbol?.asPsiClass()
+            is KtNamedFunction, is KtSecondaryConstructor -> (declaration.symbol as? KaFunctionSymbol)?.asPsiMethods()?.firstOrNull()
+            is KtProperty -> (declaration.symbol as? KaPropertySymbol)?.backingFieldSymbol?.asPsiField()
             else -> null
         } ?: return false
         return javaInspection.isEntryPoint(lightElement)
