@@ -1,0 +1,54 @@
+name: Set up Kotlin
+description: >
+  Installs a pinned Kotlin compiler and exposes its bin directory. The download is cached per OS and version, so it is
+  only fetched on a cache miss (first run on a runner, or after a version bump) rather than on every run.
+
+inputs:
+  version:
+    description: The Kotlin version to install (e.g., 2.3.20).
+    required: true
+
+outputs:
+  bin-dir:
+    description: Absolute path to the installed Kotlin bin directory.
+    value: ${{ steps.expose.outputs.bin-dir }}
+
+runs:
+  using: composite
+  steps:
+    - name: Restore cached Kotlin ${{ inputs.version }}
+      id: cache
+      uses: actions/cache@v4
+      with:
+        key: kotlin-${{ runner.os }}-${{ inputs.version }}
+        path: ${{ runner.temp }}/kotlin-${{ inputs.version }}
+
+    - name: Install Kotlin ${{ inputs.version }}
+      shell: bash
+      run: |
+        KOTLIN_HOME="${RUNNER_TEMP}/kotlin-${{ inputs.version }}"
+        KOTLINC="${KOTLIN_HOME}/bin/kotlinc"
+
+        # Trust the restored cache only if the compiler is present and reports the expected version.
+        kotlin_cached_install_is_valid() {
+          [ -x "${KOTLINC}" ] || return 1
+          "${KOTLINC}" -version 2>&1 | grep -qF "kotlinc-jvm ${{ inputs.version }} "
+        }
+
+        # Self-healing: a missing, partial/corrupt, or version-mismatched cache falls through to (re)download.
+        if kotlin_cached_install_is_valid; then
+          echo "Kotlin ${{ inputs.version }} already present (cache hit), skipping download."
+          exit 0
+        fi
+        KOTLIN_ARCHIVE="${RUNNER_TEMP}/kotlin-compiler-${{ inputs.version }}.zip"
+        rm -rf "${KOTLIN_HOME}" "${RUNNER_TEMP}/kotlinc"
+        curl -fsSL --retry 3 --retry-all-errors \
+          -o "${KOTLIN_ARCHIVE}" \
+          "https://github.com/JetBrains/kotlin/releases/download/v${{ inputs.version }}/kotlin-compiler-${{ inputs.version }}.zip"
+        unzip -q "${KOTLIN_ARCHIVE}" -d "${RUNNER_TEMP}"
+        mv "${RUNNER_TEMP}/kotlinc" "${KOTLIN_HOME}"
+
+    - name: Expose Kotlin bin directory
+      id: expose
+      shell: bash
+      run: echo "bin-dir=${RUNNER_TEMP}/kotlin-${{ inputs.version }}/bin" >> "$GITHUB_OUTPUT"

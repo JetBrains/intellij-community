@@ -9,6 +9,15 @@ defaults:
   run:
     working-directory: platform/jewel
 
+# Kotlin used to run the .main.kts CI scripts (annotate/check API dumps, Metalava). It is pinned
+# here so the scripts do not depend on whatever Kotlin the runner image happens to ship.
+#
+# When Jewel's build Kotlin is updated, bump KOTLIN_VERSION to match so CI and the build stay aligned.
+# Keep it below 2.4.0 until the .main.kts cross-`@file:Import` regression is fixed (FIR crash
+# "Expected FirResolvedTypeRef ... but was FirUserTypeRefImpl"); see JEWEL-1339.
+env:
+  KOTLIN_VERSION: 2.3.20
+
 jobs:
   checks:
     name: CI code checks
@@ -110,14 +119,17 @@ jobs:
           fetch-depth: '2'
         name: Check out repository
 
-      - name: Grant execute permission to the validation script
-        run: chmod +x ./scripts/annotate-api-dump-changes.main.kts
+      - name: Set up Kotlin ${{ env.KOTLIN_VERSION }}
+        id: kotlin
+        uses: ./.github/actions/setup-kotlin
+        with:
+          version: ${{ env.KOTLIN_VERSION }}
 
       - name: Annotate breaking API changes
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ github.token }}
-        run: ./scripts/annotate-api-dump-changes.main.kts
+        run: ${{ steps.kotlin.outputs.bin-dir }}/kotlin ./scripts/annotate-api-dump-changes.main.kts
 
   check_ij_api_dumps:
     name: Check that the IJP API dumps are up-to-date
@@ -139,11 +151,14 @@ jobs:
             build/jps-bootstrap-work
             build/download
 
-      - name: Grant execute permission to the validation script
-        run: chmod +x platform/jewel/scripts/check-api-dumps.main.kts
+      - name: Set up Kotlin ${{ env.KOTLIN_VERSION }}
+        id: kotlin
+        uses: ./.github/actions/setup-kotlin
+        with:
+          version: ${{ env.KOTLIN_VERSION }}
 
       - name: Check that the IJP API dumps are up-to-date
-        run: ./scripts/check-api-dumps.main.kts
+        run: ${{ steps.kotlin.outputs.bin-dir }}/kotlin ./scripts/check-api-dumps.main.kts
         working-directory: platform/jewel
 
   check_bazel_build:
@@ -214,8 +229,11 @@ jobs:
           distribution: jetbrains
           cache: gradle
 
-      - name: Grant execute permission to the Metalava script
-        run: chmod +x ./scripts/metalava-signatures.main.kts
+      - name: Set up Kotlin ${{ env.KOTLIN_VERSION }}
+        id: kotlin
+        uses: ./.github/actions/setup-kotlin
+        with:
+          version: ${{ env.KOTLIN_VERSION }}
 
       - name: Grant execute permission to gradlew
         run: chmod +x gradlew
@@ -224,4 +242,4 @@ jobs:
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           GH_TOKEN: ${{ github.token }}
-        run: ./scripts/metalava-signatures.main.kts validate
+        run: ${{ steps.kotlin.outputs.bin-dir }}/kotlin ./scripts/metalava-signatures.main.kts validate
