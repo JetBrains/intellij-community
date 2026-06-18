@@ -108,6 +108,16 @@ public class FirLegacyUastTypesTestGenerated extends AbstractFirLegacyUastTypesT
         runTest("../../uast-kotlin/tests/testData/Constructors.kt");
     }
 
+    @TestMetadata("ContextProperties.kt")
+    public void testContextProperties() throws Exception {
+        runTest("../../uast-kotlin/tests/testData/ContextProperties.kt");
+    }
+
+    @TestMetadata("Contexts.kt")
+    public void testContexts() throws Exception {
+        runTest("../../uast-kotlin/tests/testData/Contexts.kt");
+    }
+
     @TestMetadata("CycleInTypeParameters.kt")
     public void testCycleInTypeParameters() throws Exception {
         runTest("../../uast-kotlin/tests/testData/CycleInTypeParameters.kt");
@@ -211,6 +221,11 @@ public class FirLegacyUastTypesTestGenerated extends AbstractFirLegacyUastTypesT
     @TestMetadata("Lambdas.kt")
     public void testLambdas() throws Exception {
         runTest("../../uast-kotlin/tests/testData/Lambdas.kt");
+    }
+
+    @TestMetadata("LocalContextFunction.kt")
+    public void testLocalContextFunction() throws Exception {
+        runTest("../../uast-kotlin/tests/testData/LocalContextFunction.kt");
     }
 
     @TestMetadata("LocalDeclarations.kt")

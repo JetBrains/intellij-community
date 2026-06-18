@@ -1,0 +1,43 @@
+public final class ContextsKt {
+    public static final fun topLevel(@org.jetbrains.annotations.NotNull context1: Type1, @org.jetbrains.annotations.NotNull context2: Type2, @org.jetbrains.annotations.NotNull $this$topLevel: Type3, @org.jetbrains.annotations.NotNull param1: Type4, @org.jetbrains.annotations.NotNull param2: Type5) : void {
+    }
+}
+
+public final class Type1 {
+    public fun Type1() = UastEmptyExpression
+}
+
+public final class Type2 {
+    public fun Type2() = UastEmptyExpression
+}
+
+public final class Type3 {
+    public fun Type3() = UastEmptyExpression
+}
+
+public final class Type4 {
+    public fun Type4() = UastEmptyExpression
+}
+
+public final class Type5 {
+    public fun Type5() = UastEmptyExpression
+}
+
+public final class Cls {
+    @null public static final var Companion: Cls.Companion
+    public final fun member(@org.jetbrains.annotations.NotNull context1: Type1, @org.jetbrains.annotations.NotNull context2: Type2, @org.jetbrains.annotations.NotNull $this$member: Type3, @org.jetbrains.annotations.NotNull param1: Type4, @org.jetbrains.annotations.NotNull param2: Type5) : void {
+    }
+    public fun Cls() = UastEmptyExpression
+    public static final class Companion {
+        public final fun companionObject(@org.jetbrains.annotations.NotNull context1: Type1, @org.jetbrains.annotations.NotNull context2: Type2, @org.jetbrains.annotations.NotNull $this$companionObject: Type3, @org.jetbrains.annotations.NotNull param1: Type4, @org.jetbrains.annotations.NotNull param2: Type5) : void {
+        }
+        private fun Companion() = UastEmptyExpression
+    }
+}
+
+public final class Obj {
+    @null public static final var INSTANCE: Obj
+    public final fun topLevelObject(@org.jetbrains.annotations.NotNull context1: Type1, @org.jetbrains.annotations.NotNull context2: Type2, @org.jetbrains.annotations.NotNull $this$topLevelObject: Type3, @org.jetbrains.annotations.NotNull param1: Type4, @org.jetbrains.annotations.NotNull param2: Type5) : void {
+    }
+    private fun Obj() = UastEmptyExpression
+}

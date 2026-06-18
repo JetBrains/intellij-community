@@ -1,0 +1,16 @@
+UFile (package = )
+    UClass (name = LocalContextFunctionKt)
+        UMethod (name = outer)
+            UBlockExpression
+                UDeclarationsExpression
+                    UVariable (name = local)
+                        ULambdaExpression
+                            UParameter (name = c3)
+                                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+                            UBlockExpression
+    UClass (name = C1)
+        UMethod (name = C1)
+    UClass (name = C2)
+        UMethod (name = C2)
+    UClass (name = C3)
+        UMethod (name = C3)

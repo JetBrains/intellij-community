@@ -7,6 +7,8 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
 import com.intellij.psi.PsiField
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiParameterList
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import org.jetbrains.annotations.ApiStatus
@@ -44,6 +46,7 @@ import org.jetbrains.kotlin.psi.KtCollectionLiteralExpression
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtConstructorDelegationCall
 import org.jetbrains.kotlin.psi.KtContainerNode
+import org.jetbrains.kotlin.psi.KtContextParameterList
 import org.jetbrains.kotlin.psi.KtContinueExpression
 import org.jetbrains.kotlin.psi.KtDeclarationModifierList
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
@@ -80,7 +83,6 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
-import org.jetbrains.kotlin.psi.KtSimpleNameStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
@@ -163,6 +165,7 @@ import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.internal.UElementAlternative
 import org.jetbrains.uast.internal.accommodate
 import org.jetbrains.uast.internal.alternative
+import org.jetbrains.uast.kotlin.declarations.KotlinContextUParameter
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightAccessor
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightDefaultAccessor
 import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightDefaultAccessorForConstructorParameter
@@ -504,6 +507,33 @@ interface BaseKotlinConverter {
         else emptyArray()
     }
 
+    private fun propertyAccessorsContextParameterAlternatives(
+        element: KtParameter,
+        givenParent: UElement?,
+    ): Array<UElementAlternative<KotlinContextUParameter>> {
+        if (element.parent !is KtContextParameterList) return emptyArray()
+        val ownerProperty = element.ownerDeclaration as? KtProperty ?: return emptyArray()
+        val lightAccessors = LightClassUtil.getLightClassPropertyMethods(ownerProperty)
+        val getter = lightAccessors.getter
+        val setter = lightAccessors.setter
+        if (getter == null && setter == null) return emptyArray()
+
+        return listOfNotNull(
+            getter?.let { alternative { convertAccessorContextParameterToUElement(element, getter, givenParent) } },
+            setter?.let { alternative { convertAccessorContextParameterToUElement(element, setter, givenParent) } },
+        ).toTypedArray()
+    }
+
+    private fun convertAccessorContextParameterToUElement(
+        ktParameter: KtParameter,
+        accessor: PsiMethod,
+        givenParent: UElement?,
+    ): KotlinContextUParameter? {
+        val lightParameter = accessor.parameters.firstOrNull { it.name == ktParameter.name } ?: return null
+        if (lightParameter !is PsiParameter) return null
+        return KotlinContextUParameter(lightParameter, ktParameter, givenParent)
+    }
+
     fun convertNonLocalProperty(
         property: KtProperty,
         givenParent: UElement?,
@@ -542,17 +572,21 @@ interface BaseKotlinConverter {
     ): Sequence<UElement> =
         requiredTypes.accommodate(
             alternative uParam@{
-                when (val ownerFunction = element.ownerFunction) {
-                    is KtFunction -> LightClassUtil.getLightClassMethod(ownerFunction)
-                        ?: getLightClassForFakeMethod(ownerFunction)
+                when (val ownerDeclaration = element.ownerDeclaration) {
+                    is KtFunction -> LightClassUtil.getLightClassMethod(ownerDeclaration)
+                        ?: getLightClassForFakeMethod(ownerDeclaration)
                             ?.takeIf { !it.isAnnotationType }
-                            ?.let { UastFakeSourceLightMethod(ownerFunction, it) }
+                            ?.let { UastFakeSourceLightMethod(ownerDeclaration, it) }
 
-                    is KtPropertyAccessor -> LightClassUtil.getLightClassAccessorMethod(ownerFunction)
+                    is KtPropertyAccessor -> LightClassUtil.getLightClassAccessorMethod(ownerDeclaration)
                     else -> null
                 }?.let { lightMethod ->
                     val lightParameter = lightMethod.parameterList.parameters.find { it.name == element.name } ?: return@uParam null
-                    KotlinUParameter(lightParameter, element, givenParent)
+                    if (element.isContextParameter) {
+                        KotlinContextUParameter(lightParameter, element, givenParent)
+                    } else {
+                        KotlinUParameter(lightParameter, element, givenParent)
+                    }
                 } ?:
                 // Of course, it is a hack to pick-up KotlinUParameter from another declaration
                 // instead of creating it directly with `givenParent`, but anyway better than have unexpected nulls here
@@ -564,7 +598,8 @@ interface BaseKotlinConverter {
                 val uCatchClause = element.parent?.parentAs<KtCatchClause>()?.toUElementOfType<UCatchClause>() ?: return@catch null
                 uCatchClause.parameters.firstOrNull { it.sourcePsi == element }
             },
-            *convertToPropertyAlternatives(LightClassUtil.getLightClassPropertyMethods(element), givenParent)
+            *convertToPropertyAlternatives(LightClassUtil.getLightClassPropertyMethods(element), givenParent),
+            *propertyAccessorsContextParameterAlternatives(element, givenParent),
         )
 
     private fun convertEnumEntry(original: KtEnumEntry, givenParent: UElement?): UElement? {
