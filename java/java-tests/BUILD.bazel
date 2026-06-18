@@ -61,6 +61,8 @@ jvm_library(
         "//platform/service-container",
         "//platform/searchEverywhere/testFramework",
         "//platform/forms_rt:java-guiForms-rt",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/json",
     ],
 )
 
@@ -383,6 +385,10 @@ jvm_library(
         "//java/java-copyright:copyright_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
+        "//libraries/kotlinx/serialization/core",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/locking-impl",
         "//platform/locking-impl:locking-impl_test_lib",
         "//platform/smRunner:smRunner-tests",

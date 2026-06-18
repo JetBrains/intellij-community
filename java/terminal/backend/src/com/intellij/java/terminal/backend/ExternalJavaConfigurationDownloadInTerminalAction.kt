@@ -19,7 +19,7 @@ import org.jetbrains.plugins.terminal.TerminalToolWindowManager
 class ExternalJavaConfigurationDownloadInTerminalAction : ExternalJavaConfigurationMissingAction {
   override fun <T: JdkReleaseData> createAction(project: Project, provider: ExternalJavaConfigurationProvider<T>, releaseData: T): AnAction? {
     val command = provider.getDownloadCommandFor(releaseData) ?: return null
-    return object : AnAction(JavaTerminalBundle.message("external.java.configuration.run.command", command), null, AllIcons.Actions.Download) {
+    return object : AnAction(JavaTerminalBundle.message("external.java.configuration.run.command", command), null, AllIcons.Nodes.Console) {
       override fun actionPerformed(e: AnActionEvent) {
         val session = TerminalToolWindowManager.getInstance(project).createNewSession()
         val service = project.service<ExternalJavaConfigurationService>()

@@ -42,7 +42,7 @@ private val LOG = logger<ExternalJavaConfigurationService>()
  * @see ExternalJavaConfigurationProvider
  */
 @Service(Service.Level.PROJECT)
-public class ExternalJavaConfigurationService(public val project: Project, private val scope: CoroutineScope) : Disposable {
+public class ExternalJavaConfigurationService(public val project: Project, internal val scope: CoroutineScope) : Disposable {
 
   internal sealed class JavaConfigurationStatus {
     object Unknown : JavaConfigurationStatus()
