@@ -21,7 +21,7 @@ object SplitModeModuleKindIcons {
 
   @JvmStatic
   fun getDescriptorIcon(descriptorFile: PsiFile): Icon? {
-    if (DumbService.isDumb(descriptorFile.project)) return null
+    if (!isCustomIconsEnabled() || DumbService.isDumb(descriptorFile.project)) return null
     val kind = recognizeSplitModeModuleKind(descriptorFile)?.kind ?: return null
     return getKindIcon(kind, descriptorFile.name)
   }
