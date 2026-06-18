@@ -8,16 +8,13 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilderImpl
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.codeInsight.template.TemplateManager
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesManager
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesDataProvider
 import com.intellij.compose.ide.plugin.resources.ResourceType
 import com.intellij.compose.ide.plugin.resources.STRINGS_XML_FILENAME
-import com.intellij.compose.ide.plugin.resources.findComposeResourcesDirFor
 import com.intellij.compose.ide.plugin.resources.intentions.hasSubTagWithName
-import com.intellij.compose.ide.plugin.resources.psi.getResourcePackageName
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
@@ -25,7 +22,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -75,10 +71,9 @@ internal class CreateStringResourceQuickFix(
     val virtualSourceKtFile = vfm.findFileByUrl(sourceKtFileUrl) ?: return
     val ktFile = psiManager.findFile(virtualSourceKtFile) as? KtFile ?: return
 
-    val path = stringsXmlFile.virtualFile.toNioPathOrNull() ?: return
-    val composeResourcesDir = project.findComposeResourcesDirFor(path) ?: return
-    val composeResources = project.service<ComposeResourcesManager>().composeResourcesByModulePath[composeResourcesDir.moduleName] ?: return
-    val resourcePackageName = composeResourcesDir.getResourcePackageName(project, composeResources.packageOfResClass)
+    val composeData = ComposeResourcesDataProvider.findProviderForProject(project)
+      ?.getComposeDataForResourceFile(stringsXmlFile) ?: return
+    val resourcePackageName = composeData.packageOfResClass
 
     val addedTag = WriteCommandAction.writeCommandAction(project, stringsXmlFile, ktFile)
                      .withName(text)

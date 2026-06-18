@@ -1,15 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.psi
 
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesDir
-import com.intellij.compose.ide.plugin.resources.ComposeResourcesManager
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesData
 import com.intellij.compose.ide.plugin.resources.ResourceType
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.createDocumentBuilder
 import org.w3c.dom.Node
 import org.xml.sax.InputSource
@@ -21,12 +16,9 @@ import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.relativeTo
 
-private const val RESOURCES_ACCESSORS_SUFFIX = "ResourceAccessors"
-private const val RESOURCES_COLLECTORS_SUFFIX = "ResourceCollectors"
-
-internal suspend fun Project.generateAccessorsFrom(changedComposeResourcesDirs: Set<ComposeResourcesDir>) {
-  for (changedComposeResourcesDir in changedComposeResourcesDirs) {
-    val composeResourcesDirectoryPath = changedComposeResourcesDir.directoryPath
+internal suspend fun Project.generateAccessorsFrom(changedComposeResourcesDataSet: Set<ComposeResourcesData>) {
+  for (changedComposeResourcesData in changedComposeResourcesDataSet) {
+    val composeResourcesDirectoryPath = changedComposeResourcesData.directoryPath
     val dirs = composeResourcesDirectoryPath.listNotHiddenFiles()
     dirs.forEach { dir ->
       if (!Files.isDirectory(dir)) {
@@ -43,41 +35,22 @@ internal suspend fun Project.generateAccessorsFrom(changedComposeResourcesDirs: 
       .groupBy { it.type }
       .mapValues { (_, items) -> items.groupBy { it.name } }
 
-    val moduleName = changedComposeResourcesDir.moduleName
-    val sourceSetName = changedComposeResourcesDir.sourceSetName
     // android's ResourceAccessors source root isn't created by default -- in that case we temporarily store them in the ResourceCollectors one
-    val resourcesAccessorsDir = readAction {
-      findResourcesDir(moduleName, "$sourceSetName$RESOURCES_ACCESSORS_SUFFIX")
-      ?: findResourcesDir(moduleName, "$sourceSetName$RESOURCES_COLLECTORS_SUFFIX")
-    } ?: return
-    val composeResourcesConfig = this.service<ComposeResourcesManager>().composeResourcesByModulePath[moduleName] ?: return
-    val packageOfResClass = composeResourcesConfig.packageOfResClass
-    val packageName = changedComposeResourcesDir.getResourcePackageName(this, packageOfResClass)
-    val moduleDir = resourcesAccessorsDir.findFileByRelativePath(packageName.replace('.', '/')) ?: return
-    val isPublicResClass = composeResourcesConfig.isPublicResClass
-    val nameOfResClass = composeResourcesConfig.nameOfResClass
+    val resourcesAccessorsDir = readAction { changedComposeResourcesData.accessorsDirectory } ?: return
+    val packageOfResClass = changedComposeResourcesData.packageOfResClass
+    val moduleDir = resourcesAccessorsDir.findFileByRelativePath(packageOfResClass.replace('.', '/')) ?: return
+    val isPublicResClass = changedComposeResourcesData.isPublicResClass
+    val nameOfResClass = changedComposeResourcesData.nameOfResClass
     getAccessorsSpecs(
       resources = resources,
-      packageName = packageName,
-      sourceSetName = changedComposeResourcesDir.sourceSetName,
+      packageName = packageOfResClass,
+      sourceSetName = changedComposeResourcesData.accessorsQualifier,
       moduleDir = moduleDir.path,
       isPublicResClass = isPublicResClass,
       nameOfResClass = nameOfResClass,
     )
   }
 }
-
-private fun Project.findResourcesDir(moduleName: String, name: String): VirtualFile? =
-  //TODO use .processFilesByName() to get the first matching file without collecting/resolving all them first
-  FilenameIndex.getVirtualFilesByName(name, GlobalSearchScope.allScope(this)).firstOrNull { it.path.contains(moduleName) }
-
-internal fun ComposeResourcesDir.getResourcePackageName(project: Project, packageOfResClass: String): String =
-  packageOfResClass.ifEmpty {
-    val groupName = projectGroupName.ifEmpty { project.name }.lowercase().asUnderscoredIdentifier()
-    val moduleName = moduleName.lowercase().asUnderscoredIdentifier()
-    val id = if (groupName.isNotEmpty()) "$groupName.$moduleName" else moduleName
-    "$id.generated.resources"
-  }
 
 private fun getItemRecord(node: Node): ValueResourceRecord {
   val type = ResourceType.fromString(node.nodeName)
