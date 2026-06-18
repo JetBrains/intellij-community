@@ -4,12 +4,16 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
+import com.intellij.openapi.project.Project
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
@@ -40,6 +44,44 @@ class AgentChatScopedTerminalRefreshControllerTest {
     )
 
     assertThat(resolveAgentChatScopedRefreshThreadId(file)).isEqualTo("parent-thread")
+  }
+
+  @Test
+  fun activeThreadUpdateResolverSkipsUnsupportedSource() {
+    val calls = AtomicInteger()
+
+    val updateEvents = resolveAgentChatActiveThreadUpdateEvents(
+      sessionSource = TestAgentSessionSource(
+        supportsActiveThreadUpdateEvents = false,
+        activeThreadUpdateEventsProvider = { _, _ ->
+          calls.incrementAndGet()
+          emptyFlow()
+        },
+      ),
+      projectPath = "/work/project",
+    )
+
+    assertThat(updateEvents).isNull()
+    assertThat(calls.get()).isZero()
+  }
+
+  @Test
+  fun activeThreadUpdateResolverUsesSupportedSource() {
+    val fileChanges = MutableSharedFlow<AgentSessionSourceUpdateEvent>(extraBufferCapacity = 16)
+    val watchRequests = LinkedBlockingQueue<Pair<String, String>>()
+    val updateEvents = checkNotNull(resolveAgentChatActiveThreadUpdateEvents(
+      sessionSource = TestAgentSessionSource(
+        supportsActiveThreadUpdateEvents = true,
+        activeThreadUpdateEventsProvider = { path, threadId ->
+          watchRequests.add(path to threadId)
+          fileChanges
+        },
+      ),
+      projectPath = "/work/project",
+    ))
+
+    assertThat(updateEvents("thread-a")).isSameAs(fileChanges)
+    assertThat(watchRequests.take()).isEqualTo("/work/project" to "thread-a")
   }
 
   @Test
@@ -283,6 +325,22 @@ private fun activeUpdate(threadId: String): AgentSessionSourceUpdateEvent {
     scopedPaths = setOf("/work/project"),
     activityUpdatesByThreadId = mapOf(threadId to AgentSessionThreadActivityUpdate(AgentThreadActivityReport(AgentThreadActivity.PROCESSING))),
   )
+}
+
+private class TestAgentSessionSource(
+  override val supportsActiveThreadUpdateEvents: Boolean,
+  private val activeThreadUpdateEventsProvider: (String, String) -> Flow<AgentSessionSourceUpdateEvent>,
+) : AgentSessionSource {
+  override val provider: AgentSessionProvider
+    get() = AgentSessionProvider.CODEX
+
+  override suspend fun listThreadsFromOpenProject(path: String, project: Project): List<AgentSessionThread> = emptyList()
+
+  override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> = emptyList()
+
+  override fun activeThreadUpdateEvents(path: String, threadId: String): Flow<AgentSessionSourceUpdateEvent> {
+    return activeThreadUpdateEventsProvider(path, threadId)
+  }
 }
 
 private suspend inline fun AgentChatScopedTerminalRefreshController.use(block: suspend (AgentChatScopedTerminalRefreshController) -> Unit) {

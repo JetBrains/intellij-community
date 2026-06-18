@@ -7,6 +7,10 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
+import com.intellij.agent.workbench.claude.common.CLAUDE_HOOK_PROJECT_MUTATING_TOOL_MATCHER
+import com.intellij.agent.workbench.claude.common.CLAUDE_USER_INTERACTION_TOOL_MATCHER
+import com.intellij.agent.workbench.claude.common.isClaudeHookProjectMutatingToolName
+import com.intellij.agent.workbench.claude.common.isClaudeUserInteractionToolName
 import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.agent.workbench.json.forEachJsonObjectField
@@ -15,6 +19,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.DigestUtil
 import kotlinx.coroutines.channels.BufferOverflow
@@ -73,7 +78,7 @@ internal object ClaudeHookBridge {
         StandardOpenOption.TRUNCATE_EXISTING,
       )
       settingsPathsByToken[token] = settingsPath
-      CLAUDE_HOOK_LOG.debug("Created Claude hook settings (sessionId=$normalizedSessionId, endpoint=$endpoint)")
+      CLAUDE_HOOK_LOG.debug { "Created Claude hook settings (sessionId=$normalizedSessionId, endpoint=$endpoint)" }
       return ClaudeHookLaunchSettings(
         endpoint = endpoint,
         token = token,
@@ -94,14 +99,23 @@ internal object ClaudeHookBridge {
     val sessionId = payload.sessionId?.trim()?.takeIf { it.isNotEmpty() } ?: return ClaudeHookRequestResult.BAD_REQUEST
     if (sessionId != expectedSessionId) return ClaudeHookRequestResult.UNAUTHORIZED
 
-    val updateEvent = createHookUpdate(payload = payload, sessionId = sessionId) ?: return ClaudeHookRequestResult.ACCEPTED
-    val activityReport = updateEvent.activityUpdatesByThreadId[sessionId]?.activityReport
-    CLAUDE_HOOK_LOG.debug(
+    val resolution = createHookUpdate(payload = payload, sessionId = sessionId)
+    if (resolution is ClaudeHookUpdateResolution.Ignored) {
+      CLAUDE_HOOK_LOG.debug {
+        "Ignored Claude hook update " +
+        "(sessionId=$sessionId, reason=${resolution.reason}, hookEvent=${payload.hookEventName}, tool=${payload.toolName}, cwd=${payload.cwd})"
+      }
+      return ClaudeHookRequestResult.ACCEPTED
+    }
+
+    val updateEvent = (resolution as ClaudeHookUpdateResolution.Emitted).updateEvent
+    CLAUDE_HOOK_LOG.debug {
+      val activityReport = updateEvent.activityUpdatesByThreadId[sessionId]?.activityReport
       "Accepted Claude hook update " +
       "(sessionId=$sessionId, hookEvent=${payload.hookEventName}, tool=${payload.toolName}, cwd=${payload.cwd}, " +
       "updateType=${updateEvent.type}, rowActivity=${activityReport?.rowActivity}, chromeActivity=${activityReport?.chromeActivity}, " +
       "mayHaveChangedProjectFiles=${updateEvent.mayHaveChangedProjectFiles}, changedProjectFilePaths=${updateEvent.changedProjectFilePaths?.size})"
-    )
+    }
     hookUpdates.tryEmit(updateEvent)
     return ClaudeHookRequestResult.ACCEPTED
   }
@@ -180,11 +194,11 @@ internal fun createClaudeHookSettingsText(endpoint: String, token: String): Stri
     generator.writeStartObject()
     generator.writeName("PreToolUse")
     generator.writeStartArray()
-    generator.writeHookEntry(matcher = CLAUDE_HOOK_USER_INTERACTION_MATCHER, endpoint = endpoint, token = token)
+    generator.writeHookEntry(matcher = CLAUDE_USER_INTERACTION_TOOL_MATCHER, endpoint = endpoint, token = token)
     generator.writeEndArray()
     generator.writeName("PostToolUse")
     generator.writeStartArray()
-    generator.writeHookEntry(matcher = CLAUDE_HOOK_PROJECT_MUTATING_MATCHER, endpoint = endpoint, token = token)
+    generator.writeHookEntry(matcher = CLAUDE_HOOK_PROJECT_MUTATING_TOOL_MATCHER, endpoint = endpoint, token = token)
     generator.writeEndArray()
     generator.writeEndObject()
     generator.writeEndObject()
@@ -253,42 +267,67 @@ private fun readToolInputProjectFilePaths(parser: JsonParser): Set<String> {
   return paths
 }
 
-private fun createHookUpdate(payload: ClaudeHookPayload, sessionId: String): AgentSessionSourceUpdateEvent? {
-  val hookEventName = payload.hookEventName?.normalizeHookEventName() ?: return null
-  val toolName = payload.toolName?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-  val scopedPath = payload.cwd?.let(::normalizeHookProjectPath) ?: return null
+private fun createHookUpdate(payload: ClaudeHookPayload, sessionId: String): ClaudeHookUpdateResolution {
+  val hookEventName = payload.hookEventName?.normalizeHookEventName()
+                      ?: return ClaudeHookUpdateResolution.Ignored(ClaudeHookUpdateIgnoredReason.MISSING_HOOK_EVENT)
   return when (hookEventName) {
-    "pretooluse" -> if (toolName.isClaudeUserInteractionTool()) {
-      AgentSessionSourceUpdateEvent(
-        type = AgentSessionSourceUpdate.HINTS_CHANGED,
-        scopedPaths = setOf(scopedPath),
-        activityUpdatesByThreadId = mapOf(
-          sessionId to AgentSessionThreadActivityUpdate(
-            activityReport = AgentThreadActivityReport(AgentThreadActivity.NEEDS_INPUT),
-          )
-        ),
+    "pretooluse" -> {
+      val toolName = payload.toolName?.trim()?.takeIf { it.isNotEmpty() }
+                     ?: return ClaudeHookUpdateResolution.Ignored(ClaudeHookUpdateIgnoredReason.MISSING_TOOL_NAME)
+      if (!isClaudeUserInteractionToolName(toolName)) {
+        return ClaudeHookUpdateResolution.Ignored(ClaudeHookUpdateIgnoredReason.UNSUPPORTED_PRE_TOOL)
+      }
+      val scopedPath = payload.cwd?.let(::normalizeHookProjectPath)
+                       ?: return ClaudeHookUpdateResolution.Ignored(ClaudeHookUpdateIgnoredReason.MISSING_OR_MALFORMED_CWD)
+      ClaudeHookUpdateResolution.Emitted(
+        AgentSessionSourceUpdateEvent(
+          type = AgentSessionSourceUpdate.HINTS_CHANGED,
+          scopedPaths = setOf(scopedPath),
+          activityUpdatesByThreadId = mapOf(
+            sessionId to AgentSessionThreadActivityUpdate(
+              activityReport = AgentThreadActivityReport(AgentThreadActivity.NEEDS_INPUT),
+            )
+          ),
+        )
       )
     }
-    else {
-      null
-    }
-    "posttooluse" -> if (toolName.isClaudeProjectMutatingHookTool()) {
-      AgentSessionSourceUpdateEvent(
-        type = AgentSessionSourceUpdate.HINTS_CHANGED,
-        scopedPaths = setOf(scopedPath),
-        threadIds = setOf(sessionId),
-        mayHaveChangedProjectFiles = true,
-        changedProjectFilePaths = resolveChangedProjectFilePaths(
-          paths = payload.toolInputProjectFilePaths,
-          projectPath = scopedPath,
-        ),
+    "posttooluse" -> {
+      val toolName = payload.toolName?.trim()?.takeIf { it.isNotEmpty() }
+                     ?: return ClaudeHookUpdateResolution.Ignored(ClaudeHookUpdateIgnoredReason.MISSING_TOOL_NAME)
+      if (!isClaudeHookProjectMutatingToolName(toolName)) {
+        return ClaudeHookUpdateResolution.Ignored(ClaudeHookUpdateIgnoredReason.UNSUPPORTED_POST_TOOL)
+      }
+      val scopedPath = payload.cwd?.let(::normalizeHookProjectPath)
+                       ?: return ClaudeHookUpdateResolution.Ignored(ClaudeHookUpdateIgnoredReason.MISSING_OR_MALFORMED_CWD)
+      ClaudeHookUpdateResolution.Emitted(
+        AgentSessionSourceUpdateEvent(
+          type = AgentSessionSourceUpdate.HINTS_CHANGED,
+          scopedPaths = setOf(scopedPath),
+          threadIds = setOf(sessionId),
+          mayHaveChangedProjectFiles = true,
+          changedProjectFilePaths = resolveChangedProjectFilePaths(
+            paths = payload.toolInputProjectFilePaths,
+            projectPath = scopedPath,
+          ),
+        )
       )
     }
-    else {
-      null
-    }
-    else -> null
+    else -> ClaudeHookUpdateResolution.Ignored(ClaudeHookUpdateIgnoredReason.UNSUPPORTED_HOOK_EVENT)
   }
+}
+
+private sealed interface ClaudeHookUpdateResolution {
+  data class Emitted(@JvmField val updateEvent: AgentSessionSourceUpdateEvent) : ClaudeHookUpdateResolution
+  data class Ignored(@JvmField val reason: ClaudeHookUpdateIgnoredReason) : ClaudeHookUpdateResolution
+}
+
+private enum class ClaudeHookUpdateIgnoredReason {
+  MISSING_HOOK_EVENT,
+  MISSING_TOOL_NAME,
+  MISSING_OR_MALFORMED_CWD,
+  UNSUPPORTED_HOOK_EVENT,
+  UNSUPPORTED_PRE_TOOL,
+  UNSUPPORTED_POST_TOOL,
 }
 
 private fun normalizeHookProjectPath(path: String): String? {
@@ -318,24 +357,8 @@ private fun resolveChangedProjectFilePath(path: String, projectPath: String): St
 
 private fun String.normalizeHookEventName(): String = trim().lowercase().replace("_", "").replace("-", "")
 
-private fun String.isClaudeUserInteractionTool(): Boolean {
-  return when (trim()) {
-    "AskUserQuestion", "ExitPlanMode" -> true
-    else -> false
-  }
-}
-
-private fun String.isClaudeProjectMutatingHookTool(): Boolean {
-  return when (trim()) {
-    "Write", "Edit", "MultiEdit", "NotebookEdit" -> true
-    else -> false
-  }
-}
-
 private fun String.toFileNameToken(): String {
   return filter(Char::isLetterOrDigit).take(24).ifEmpty { "token" }
 }
 
-private const val CLAUDE_HOOK_USER_INTERACTION_MATCHER: String = "AskUserQuestion|ExitPlanMode"
-private const val CLAUDE_HOOK_PROJECT_MUTATING_MATCHER: String = "Write|Edit|MultiEdit|NotebookEdit"
 private const val CLAUDE_HOOK_HTTP_TIMEOUT_SECONDS: Int = 1

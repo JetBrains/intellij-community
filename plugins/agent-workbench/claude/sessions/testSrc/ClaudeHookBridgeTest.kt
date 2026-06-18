@@ -107,6 +107,43 @@ class ClaudeHookBridgeTest {
   }
 
   @Test
+  fun preToolUseExitPlanModeEmitsNeedsInputHint() {
+    runBlocking(Dispatchers.Default) {
+      val sessionId = "session-plan-hook"
+      val projectPath = tempDir.resolve("plan-project")
+      val settings = checkNotNull(createLaunchSettings(sessionId))
+      val update = async(start = CoroutineStart.UNDISPATCHED) {
+        withTimeout(5.seconds) {
+          ClaudeHookBridge.updateEvents.first { event -> sessionId in event.activityUpdatesByThreadId }
+        }
+      }
+
+      try {
+        val result = ClaudeHookBridge.handleHookRequest(
+          token = settings.token,
+          content = hookPayload(
+            sessionId = sessionId,
+            cwd = projectPath.toString(),
+            hookEventName = "PreToolUse",
+            toolName = "ExitPlanMode",
+          ),
+        )
+
+        assertThat(result).isEqualTo(ClaudeHookRequestResult.ACCEPTED)
+        val event = update.await()
+        assertThat(event.type).isEqualTo(AgentSessionSourceUpdate.HINTS_CHANGED)
+        assertThat(event.scopedPaths).containsExactly(normalizeAgentWorkbenchPath(projectPath.toString()))
+        assertThat(event.activityUpdatesByThreadId.getValue(sessionId).activityReport)
+          .isEqualTo(AgentThreadActivityReport(AgentThreadActivity.NEEDS_INPUT))
+        assertThat(event.mayHaveChangedProjectFiles).isFalse()
+      }
+      finally {
+        ClaudeHookBridge.invalidateSession(sessionId)
+      }
+    }
+  }
+
+  @Test
   fun postToolUseEditEmitsExactProjectFileRefreshHint() {
     runBlocking(Dispatchers.Default) {
       val sessionId = "session-edit-hook"
@@ -141,6 +178,89 @@ class ClaudeHookBridgeTest {
         assertThat(event.threadIds).containsExactly(sessionId)
         assertThat(event.mayHaveChangedProjectFiles).isTrue()
         assertThat(event.changedProjectFilePaths).containsExactly(expectedChangedPath)
+      }
+      finally {
+        ClaudeHookBridge.invalidateSession(sessionId)
+      }
+    }
+  }
+
+  @Test
+  fun unsupportedPreToolUseIsAcceptedWithoutUpdate() {
+    runBlocking(Dispatchers.Default) {
+      val sessionId = "session-unsupported-pre-hook"
+      val projectPath = tempDir.resolve("unsupported-pre-project")
+      val settings = checkNotNull(createLaunchSettings(sessionId))
+
+      try {
+        val result = assertNoHookUpdateFor(sessionId) {
+          ClaudeHookBridge.handleHookRequest(
+            token = settings.token,
+            content = hookPayload(
+              sessionId = sessionId,
+              cwd = projectPath.toString(),
+              hookEventName = "PreToolUse",
+              toolName = "Read",
+            ),
+          )
+        }
+
+        assertThat(result).isEqualTo(ClaudeHookRequestResult.ACCEPTED)
+      }
+      finally {
+        ClaudeHookBridge.invalidateSession(sessionId)
+      }
+    }
+  }
+
+  @Test
+  fun unsupportedHookEventIsAcceptedWithoutUpdate() {
+    runBlocking(Dispatchers.Default) {
+      val sessionId = "session-unsupported-event-hook"
+      val projectPath = tempDir.resolve("unsupported-event-project")
+      val settings = checkNotNull(createLaunchSettings(sessionId))
+
+      try {
+        val result = assertNoHookUpdateFor(sessionId) {
+          ClaudeHookBridge.handleHookRequest(
+            token = settings.token,
+            content = hookPayload(
+              sessionId = sessionId,
+              cwd = projectPath.toString(),
+              hookEventName = "SessionStart",
+              toolName = "AskUserQuestion",
+            ),
+          )
+        }
+
+        assertThat(result).isEqualTo(ClaudeHookRequestResult.ACCEPTED)
+      }
+      finally {
+        ClaudeHookBridge.invalidateSession(sessionId)
+      }
+    }
+  }
+
+  @Test
+  fun preToolUseWithMalformedCwdIsAcceptedWithoutUpdate() {
+    runBlocking(Dispatchers.Default) {
+      val sessionId = "session-malformed-cwd-hook"
+      val settings = checkNotNull(createLaunchSettings(sessionId))
+
+      try {
+        val result = assertNoHookUpdateFor(sessionId) {
+          ClaudeHookBridge.handleHookRequest(
+            token = settings.token,
+            content = hookPayload(
+              sessionId = sessionId,
+              cwd = "relative/project",
+              hookEventName = "PreToolUse",
+              toolName = "ExitPlanMode",
+            ),
+          )
+        }
+
+        assertThat(result).isEqualTo(ClaudeHookRequestResult.ACCEPTED)
       }
       finally {
         ClaudeHookBridge.invalidateSession(sessionId)

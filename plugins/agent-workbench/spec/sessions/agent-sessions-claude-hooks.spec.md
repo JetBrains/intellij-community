@@ -53,6 +53,9 @@ Agent Workbench must use Claude Code hooks for immediate Claude session status a
 - `PostToolUse` events for `Write`, `Edit`, `MultiEdit`, or `NotebookEdit` must emit a path-scoped `HINTS_CHANGED` update with `mayHaveChangedProjectFiles=true`. When Claude provides a relative `file_path` or `notebook_path`, Agent Workbench must resolve it against the hook `cwd` and pass the exact changed project file path.
   [@test] ../../claude/sessions/testSrc/ClaudeHookBridgeTest.kt
 
+- Unsupported or incomplete hook events that pass authentication must be accepted without emitting an update. Debug logging must include the ignored reason, hook event name, tool name, and `cwd`.
+  [@test] ../../claude/sessions/testSrc/ClaudeHookBridgeTest.kt
+
 - The Claude store backend must merge hook update events into normal source updates, while the active-thread immediate file watch path remains disabled for Claude.
   [@test] ../../claude/sessions/testSrc/ClaudeStoreSessionBackendTest.kt
 
@@ -65,8 +68,8 @@ Agent Workbench must use Claude Code hooks for immediate Claude session status a
 ## Error Handling
 
 - Missing or invalid bearer tokens must be rejected with an unauthorized hook result.
-- Malformed JSON, missing session id, or malformed relevant hook payloads must be rejected as bad requests.
-- Hook forwarder failures must not block Claude Code; the generated forwarder exits successfully after swallowing local transport errors.
+- Malformed JSON or missing session id must be rejected as bad requests. Authenticated but unsupported or incomplete hook payloads must be accepted without emitting updates.
+- Hook delivery failures must not block Claude Code; the generated HTTP hook has a short timeout and the JSONL watcher remains the fallback.
 
 ## Testing / Local Run
 
@@ -75,4 +78,4 @@ Agent Workbench must use Claude Code hooks for immediate Claude session status a
 ## Open Questions / Risks
 
 - Claude Code does not hook arbitrary assistant text questions; only tool calls such as `AskUserQuestion` and `ExitPlanMode` are covered.
-- The generated hook command currently uses `python3` to forward stdin to the IDE. If Claude Code runs in an environment without `python3`, the hook will fail silently and the JSONL watcher remains the fallback.
+- If the IDE built-in server is unavailable or the HTTP hook times out, the JSONL watcher remains the fallback.
