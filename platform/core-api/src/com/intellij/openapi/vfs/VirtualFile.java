@@ -260,10 +260,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /// Checks whether this `VirtualFile` is valid. File can be invalidated either by deleting it or one of its
   /// parents with [#delete] method or by an external change.
-  /// If file is not valid only [#equals], [#hashCode],
+  /// If the file is not valid only [#equals], [#hashCode],
   /// [#getName()], [#getPath()], [#getUrl()], [#getPresentableUrl()] and methods from
   /// [UserDataHolder] can be called for it. Using any other methods for an invalid [VirtualFile] instance
-  /// produce unpredictable results.
+  /// produces unpredictable results, usually an exception.
   ///
   /// @return `true` if this is a valid file, `false` otherwise
   public abstract boolean isValid();
@@ -419,11 +419,14 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   /// @param requestor any object to control who called this method. Note that
   ///                  it is considered to be an external change if `requestor` is `null`.
   ///                  See [VirtualFileEvent#getRequestor]
-  /// @throws IOException if file failed to be deleted
+  /// @throws IOException if the file failed to be deleted
   @RequiresWriteLock
   public void delete(Object requestor) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    LOG.assertTrue(isValid(), "Deleting invalid file");
+    if (!isValid()) {
+      LOG.warn("Deleting invalid (already deleted?) file: " + this + " -> nothing to delete, skip");
+      return;
+    }
     getFileSystem().deleteFile(requestor, this);
   }
 

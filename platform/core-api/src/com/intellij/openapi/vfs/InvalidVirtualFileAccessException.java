@@ -23,7 +23,7 @@ public class InvalidVirtualFileAccessException extends RuntimeException {
 
   private static @NonNls String composeMessage(@NotNull VirtualFile file) {
     String url = file.getUrl();
-    @NonNls String message = "Accessing invalid virtual file: " + url;
+    @NonNls String message = "Accessing invalid (=!isValid) virtual file: " + url;
     String reason = getInvalidationReason(file);
     if (reason != null) {
       message += "; reason: " + reason;

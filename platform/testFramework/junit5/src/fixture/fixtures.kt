@@ -376,7 +376,9 @@ fun TestFixture<PsiDirectory>.virtualFileFixture(
   }
   initialized(file) {
     edtWriteAction {
-      file.delete(dirFixture)
+      if (file.isValid) {
+        file.delete(dirFixture)
+      }
     }
   }
 }

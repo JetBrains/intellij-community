@@ -497,6 +497,28 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public void delete(Object requestor) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
+
+    if (!isValid()) {
+      //We have a general rule "Accessing !valid VirtualFile is incorrect, except for a limited set of methods needed
+      // for identifying a VirtualFile, like id/path/toString" -- see VirtualFile.isValid jdocs.
+      // According to this rule, an attempt to _delete_ VirtualFile which is !valid -- should be an error.
+      // But it is a bit of unnatural behavior for .delete(): .delete()-like methods are _usually_ idempotent, i.e.,
+      // safe to be called repeatedly -- and people expect them to behave that way.
+      // And historically .delete() didn't throw an exception in this case -- and as a result, we have a number of
+      // usages in our codebase (and, probably, in plugins too) that don't expect .delete() to throw an exception
+      // if called on an already deleted file.
+      // So, for the sake of backward compatibility, we keep supporting that legacy behavior here: log warning (which
+      // should contain a stacktrace of an original deleter), and return unharmed.
+      // Luckily, the rule in VirtualFile.isValid() does specify that accessing an invalid file is "incorrect", but does
+      // NOT specify that kind of bad things will follow -- so just "warn" is pretty legit.
+
+      Logger.getInstance(VirtualFileSystemEntry.class).warn(
+        "Deleting invalid (already deleted?) file -> nothing to delete, skip",
+        new InvalidVirtualFileAccessException(this)
+      );
+      return;
+    }
+
     owningPersistentFS().deleteFile(requestor, this);
   }
 
@@ -504,6 +526,8 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @Override
   public void rename(Object requestor, @NotNull @NonNls String newName) throws IOException {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
+    failIfFileIsInvalid();
+
     if (getName().equals(newName)) return;
     validateName(newName);
     owningPersistentFS().renameFile(requestor, this, newName);
@@ -512,8 +536,15 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   @RequiresWriteLock
   @Override
   public @NotNull VirtualFile createChildData(Object requestor, @NotNull String name) throws IOException {
+    failIfFileIsInvalid();
     validateName(name);
     return owningPersistentFS().createChildFile(requestor, this, name);
+  }
+
+  private void failIfFileIsInvalid() {
+    if (!isValid()) {
+      throw new InvalidVirtualFileAccessException(this);
+    }
   }
 
   @Override
