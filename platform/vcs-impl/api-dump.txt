@@ -4329,14 +4329,6 @@ f:com.intellij.vcs.ui.ProgressStripe$DisposableLoadingDecorator
 - com.intellij.openapi.ui.LoadingDecorator
 - getDisposable():com.intellij.openapi.Disposable
 - startLoadingImmediately():V
-c:com.intellij.vcsUtil.AuthDialog
-- com.intellij.openapi.ui.DialogWrapper
-- <init>(com.intellij.openapi.project.Project,java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z):V
-- p:createCenterPanel():javax.swing.JComponent
-- getPassword():java.lang.String
-- getPreferredFocusedComponent():javax.swing.JComponent
-- getUsername():java.lang.String
-- isRememberPassword():Z
 f:com.intellij.vcsUtil.Delegates
 - sf:INSTANCE:com.intellij.vcsUtil.Delegates
 - f:equalVetoingObservable(java.lang.Object,kotlin.jvm.functions.Function1):kotlin.properties.ObservableProperty
