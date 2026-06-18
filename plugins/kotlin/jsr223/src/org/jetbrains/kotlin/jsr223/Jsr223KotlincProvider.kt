@@ -3,23 +3,23 @@
 package org.jetbrains.kotlin.jsr223
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.PluginManagerCore.isRunningFromSources
 import com.intellij.ide.plugins.getPluginDistDirByClass
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.util.io.Decompressor
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import java.io.IOException
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.downloadArtifactForIdeFromSources
 import java.net.URL
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.StandardCopyOption
 import kotlin.io.path.exists
 import kotlin.io.path.name
 
 object Jsr223KotlincProvider {
     private const val KOTLINC_DIR_NAME = "kotlinc"
     private const val KOTLIN_DIST_FOR_IDE_ARTIFACT_ID = "kotlin-dist-for-ide"
-    private const val KOTLIN_MAVEN_GROUP_PATH = "org/jetbrains/kotlin"
     private const val KOTLIN_DIST_LOCATION_PREFIX = "kotlin-dist-for-ide"
     private const val BUILD_TXT = "build.txt"
 
@@ -30,6 +30,11 @@ object Jsr223KotlincProvider {
     }
 
     private fun bundledKotlinc(): Path? {
+        if (isRunningFromSources()) {
+            /** [getPluginDistDirByClass] won't run for IntelliJ ran from sources as it requires plugins to be inside 'lib/' */
+            return null
+        }
+
         val pluginRoot = getPluginDistDirByClass(Jsr223KotlincProvider::class.java) ?: return null
         return pluginRoot.resolve(KOTLINC_DIR_NAME).takeIf(::isExpectedKotlincHome)
     }
@@ -59,7 +64,7 @@ object Jsr223KotlincProvider {
 
     private fun findKotlinDistForIdeJar(): Path? {
         return findKotlinDistForIdeJarInClassLoaders()
-            ?: downloadKotlinDistForIdeJar()
+            ?: runBlockingCancellable { downloadArtifactForIdeFromSources(KotlinCompilerVersion.VERSION) }
     }
 
     private fun findKotlinDistForIdeJarInClassLoaders(): Path? {
@@ -75,41 +80,6 @@ object Jsr223KotlincProvider {
 
     private fun isKotlinDistForIdeJar(path: Path): Boolean {
         return path.name == kotlinDistForIdeJarName() && path.exists()
-    }
-
-    private fun downloadKotlinDistForIdeJar(): Path? {
-        val target = PathManager.getSystemDir()
-            .resolve(KOTLIN_DIST_LOCATION_PREFIX)
-            .resolve("downloads")
-            .resolve(kotlinDistForIdeJarName())
-        if (target.exists()) return target
-
-        Files.createDirectories(target.parent)
-        val temp = target.resolveSibling("${target.name}.tmp")
-        for (url in kotlinDistForIdeUrls()) {
-            try {
-                URL(url).openStream().use { stream ->
-                    Files.copy(stream, temp, StandardCopyOption.REPLACE_EXISTING)
-                }
-                Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING)
-                return target
-            }
-            catch (_: IOException) {
-                Files.deleteIfExists(temp)
-            }
-        }
-        return null
-    }
-
-    private fun kotlinDistForIdeUrls(): List<String> {
-        val fileName = kotlinDistForIdeJarName()
-        val version = KotlinCompilerVersion.VERSION
-        val artifactPath = "$KOTLIN_MAVEN_GROUP_PATH/$KOTLIN_DIST_FOR_IDE_ARTIFACT_ID/$version/$fileName"
-        return listOf(
-            "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/$artifactPath",
-            "https://cache-redirector.jetbrains.com/intellij-dependencies/$artifactPath",
-            "https://repo1.maven.org/maven2/$artifactPath",
-        )
     }
 
     private fun kotlinDistForIdeJarName(): String {
