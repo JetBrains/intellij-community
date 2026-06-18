@@ -84,6 +84,9 @@
     <extensionPoint qualifiedName="org.intellij.markdown.actionPromoterExtension"
                     interface="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoterExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.markdownElementFactory"
+                    interface="org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
