@@ -46,6 +46,9 @@ private val EXPECTED_BINARIES: List<String> = listOf(
   //"serialver",
 )
 
+private const val MIN_LINE_LENGTH = 6
+private const val MAX_LINE_LENGTH = 150
+
 /**
  * Filter suggesting JDK configuration window when the user attempts to use a java command 
  * without a project SDK configured
@@ -80,8 +83,16 @@ class NoJavaExecutableFilter : ConsoleFilterProviderEx, Filter {
    * regardless of the locale and shell integration (PowerShell, sh, bash, zsh, fish...)
    */
   private fun isCommandNotFound(line: String): Boolean {
-    // most "not found" kind of messages have `:` in their structure
-    if (!line.endsWith('\n') || !line.contains(':') || line.length <= 5) return false
+    if (!line.endsWith('\n') || line.length < MIN_LINE_LENGTH || line.length > MAX_LINE_LENGTH) return false
+
+    if (!line.contains(':')) {
+      // Apple launcher stub, not localized from looking into the binary
+      if (line.contains("Unable") && line.contains("Java Runtime")) {
+        return true
+      }
+      // most "not found" kinds of messages have `:` in their structure
+      return false
+    }
 
     // bash/fish/zsh: not found
     val shellIndex = CharArrayUtil.indexOf(line, "sh", 0, 4)
