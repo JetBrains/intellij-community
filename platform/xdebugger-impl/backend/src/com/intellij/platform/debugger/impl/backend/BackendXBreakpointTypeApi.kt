@@ -171,38 +171,18 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
 
     if (request.placement == XLineBreakpointVerticalPlacement.INTER_LINE) {
-      val lineVariant = readAction { variants.firstOrNull { !it.isMultiVariant && it.highlightRange == null } }
-      if (lineVariant == null) {
+      val fullLineVariant = readAction { variants.firstOrNull { !it.isMultiVariant && it.highlightRange == null } }
+      if (fullLineVariant == null) {
         LOG.debug { "[$requestId] No full-line variant found for inter-line breakpoint, returning XNoBreakpointPossibleResponse" }
         return XNoBreakpointPossibleResponse
       }
 
-      val variantText = readAction { lineVariant.text }
-      LOG.debug { "[$requestId] Using full-line variant for inter-line breakpoint: $variantText" }
-
-      if (request.hasBreakpoints) {
-        LOG.debug { "[$requestId] Breakpoint exists, returning XRemoveBreakpointResponse" }
-        return XRemoveBreakpointResponse
-      }
-
-      val breakpoint = createBreakpointByVariant(project, lineVariant, position, request)
-      LOG.debug { "[$requestId] Created inter-line breakpoint: $breakpoint, returning XLineBreakpointInstalledResponse" }
-      return XLineBreakpointInstalledResponse(breakpoint.breakpointId)
+      return toggleSingleVariantBreakpoint(fullLineVariant, requestId, request, project, position)
     }
 
     val singleVariant = variants.singleOrNull()
     if (singleVariant != null) {
-      val variantText = readAction { singleVariant.text }
-      LOG.debug { "[$requestId] Single variant found: $variantText" }
-
-      if (request.hasBreakpoints) {
-        LOG.debug { "[$requestId] Breakpoint exists, returning XRemoveBreakpointResponse" }
-        return XRemoveBreakpointResponse
-      }
-
-      val breakpoint = createBreakpointByVariant(project, singleVariant, position, request)
-      LOG.debug { "[$requestId] Created breakpoint: $breakpoint, returning XLineBreakpointInstalledResponse" }
-      return XLineBreakpointInstalledResponse(breakpoint.breakpointId)
+      return toggleSingleVariantBreakpoint(singleVariant, requestId, request, project, position)
     }
 
     LOG.debug { "[$requestId] Multiple variants found (${variants.size}), creating selection dialog" }
@@ -236,6 +216,26 @@ internal class BackendXBreakpointTypeApi : XBreakpointTypeApi {
     }
 
     return XLineBreakpointMultipleVariantResponse(variantDtos, selectionCallback)
+  }
+
+  private suspend fun toggleSingleVariantBreakpoint(
+    singleVariant: XLineBreakpointType<XBreakpointProperties<*>>.XLineBreakpointVariant,
+    requestId: Int,
+    request: XLineBreakpointInstallationRequest,
+    project: Project,
+    position: XSourcePosition,
+  ): XToggleLineBreakpointResponse {
+    val variantText = readAction { singleVariant.text }
+    LOG.debug { "[$requestId] Single variant found: $variantText" }
+
+    if (request.hasBreakpoints) {
+      LOG.debug { "[$requestId] Breakpoint exists, returning XRemoveBreakpointResponse" }
+      return XRemoveBreakpointResponse
+    }
+
+    val breakpoint = createBreakpointByVariant(project, singleVariant, position, request)
+    LOG.debug { "[$requestId] Created breakpoint: $breakpoint, returning XLineBreakpointInstalledResponse" }
+    return XLineBreakpointInstalledResponse(breakpoint.breakpointId)
   }
 
   private suspend fun createBreakpointByVariant(
