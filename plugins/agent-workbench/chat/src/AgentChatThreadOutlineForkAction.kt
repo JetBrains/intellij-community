@@ -1,8 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.chat
 
-import com.intellij.agent.workbench.common.buildAgentThreadIdentity
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.agent.workbench.sessions.core.launch.resolveAgentSessionChatOpenPlan
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -81,8 +80,10 @@ internal suspend fun forkAgentChatThreadOutlineTarget(
       tabKey = file.tabKey,
     )
   }
-  catch (e: Throwable) {
-    if (e is CancellationException) throw e
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (_: Exception) {
     null
   }
   val forkedThread = forkResult?.thread
@@ -90,20 +91,33 @@ internal suspend fun forkAgentChatThreadOutlineTarget(
     return false
   }
 
-  val launchSpec = AgentSessionProviders.find(forkedThread.provider)
-    ?.buildResumeLaunchSpec(forkedThread.id)
-    ?: return false
+  val openPlan = try {
+    resolveAgentSessionChatOpenPlan(
+      projectPath = file.projectPath,
+      thread = forkedThread,
+      subAgent = null,
+      launchSpecOverride = null,
+      project = project,
+    )
+  }
+  catch (e: CancellationException) {
+    throw e
+  }
+  catch (_: Exception) {
+    return false
+  }
   openChat(
     project = project,
     projectPath = file.projectPath,
-    threadIdentity = buildAgentThreadIdentity(forkedThread.provider.value, forkedThread.id),
-    shellCommand = launchSpec.command,
-    shellEnvVariables = launchSpec.envVariables,
-    threadId = forkedThread.id,
-    threadTitle = forkedThread.title,
-    subAgentId = null,
+    threadIdentity = openPlan.threadIdentity,
+    shellCommand = openPlan.launchSpec.command,
+    shellEnvVariables = openPlan.launchSpec.envVariables,
+    threadId = openPlan.runtimeThreadId,
+    threadTitle = openPlan.threadTitle,
+    subAgentId = openPlan.subAgentId,
     threadActivity = forkedThread.activityReport.rowActivity,
-    startupLaunchSpec = launchSpec,
+    initialMessageDispatchPlan = openPlan.initialMessageDispatchPlan,
+    startupLaunchSpec = openPlan.launchSpec,
   )
   notifyAgentChatScopedRefresh(
     provider = provider,

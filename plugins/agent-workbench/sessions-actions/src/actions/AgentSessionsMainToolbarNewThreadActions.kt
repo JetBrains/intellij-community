@@ -4,35 +4,27 @@ package com.intellij.agent.workbench.sessions.actions
 // @spec community/plugins/agent-workbench/spec/sessions/agent-terminal-sessions.spec.md
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-task-cost-profiles.spec.md
 
-import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
-import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
-import com.intellij.agent.workbench.sessions.setProviderItemLaunchProfileActiveMarker
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionLaunchProfileSnapshot
-import com.intellij.agent.workbench.sessions.core.providers.buildBuiltInLaunchProfiles
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.ui.AgentWorkbenchPopupRow
 import com.intellij.agent.workbench.ui.createAgentWorkbenchListPopup
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
-import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.SplitButtonAction
 import com.intellij.openapi.actionSystem.UpdateSession
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -42,9 +34,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ClientProperty
-import com.intellij.util.ui.LafIconLookup
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.awt.Dimension
@@ -52,9 +42,9 @@ import javax.swing.JComponent
 
 /**
  * Single split-button entry on `MainToolbarRight` that exposes "New Thread":
- * the icon shows the last-used provider+mode badge (or a generic `+` when no default exists yet).
- * Click on the icon zone quick-launches with the last-used provider+mode; click on the chevron
- * opens the provider × launch-mode picker. Uses the `actionSystem.SplitButtonAction` widget,
+ * the icon shows the active launch profile provider+mode badge (or a generic `+` when no default exists yet).
+ * Click on the icon zone quick-launches with the active launch profile; click on the chevron
+ * opens the launch-profile picker. Uses the `actionSystem.SplitButtonAction` widget,
  * which paints the in-button separator only on hover/press — at rest the toolbar reads as a
  * single icon + chevron, no vertical line.
  */
@@ -110,7 +100,7 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
 
   public override fun getMainAction(e: AnActionEvent): AnAction? {
     val context = resolveContext(e) ?: return null
-    resolveToolbarProfileItem(allBridges(), context.project, userLaunchProfiles(), activeLaunchProfileId()) ?: return null
+    resolveNewThreadProfileItem(allBridges(), context.project, userLaunchProfiles(), activeLaunchProfileId()) ?: return null
     return quickStartAction
   }
 
@@ -129,9 +119,9 @@ internal class AgentSessionsMainToolbarNewThreadAction private constructor(
     if (e.updateSession !== UpdateSession.EMPTY) {
       super.update(e)
     }
-    val quickStart = resolveToolbarProfileItem(bridges, context.project, userLaunchProfiles(), activeLaunchProfileId(), menuModel)
+    val quickStart = resolveNewThreadProfileItem(bridges, context.project, userLaunchProfiles(), activeLaunchProfileId(), menuModel)
     e.presentation.icon = quickStart?.menuItem?.let(::providerItemMonochromeIconWithMode) ?: AllIcons.General.Add
-    e.presentation.text = quickStart?.let(::toolbarProfileActionText)
+    e.presentation.text = quickStart?.let(::newThreadProfileActionText)
                           ?: AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.text")
     e.presentation.description = describeProfileTooltip(quickStart, context.targetForUpdate)
     e.presentation.isEnabledAndVisible = true
@@ -195,11 +185,6 @@ internal class AgentSessionsEditorTabNewThreadAction private constructor(
   )
 }
 
-private data class ToolbarProfileItem(
-  @JvmField val profile: AgentPromptLaunchProfile,
-  @JvmField val menuItem: AgentSessionProviderMenuItem,
-)
-
 private class ProfilePickerActionGroup(
   private val resolveContext: (AnActionEvent) -> AgentSessionsEditorTabNewThreadContext?,
   private val allBridges: () -> List<AgentSessionProviderDescriptor>,
@@ -221,11 +206,11 @@ private class ProfilePickerActionGroup(
     val menuModel = buildNewThreadMenuModel(allBridges(), context.project)
     if (!menuModel.hasEntries()) return emptyArray()
     val activeProfileId = activeLaunchProfileId()
-    val profiles = resolveToolbarProfileItems(menuModel, userLaunchProfiles(), activeProfileId)
+    val profiles = resolveNewThreadProfileItems(menuModel, userLaunchProfiles(), activeProfileId)
     if (profiles.isEmpty()) return emptyArray()
-    val selectedProfileId = resolveToolbarProfileItem(profiles, activeProfileId)?.profile?.id
+    val selectedProfileId = resolveNewThreadProfileItem(profiles, activeProfileId)?.profile?.id
     return when (target) {
-      is AgentSessionsEditorTabNewThreadTarget.Direct -> buildProfileMenuActions(
+      is AgentSessionsEditorTabNewThreadTarget.Direct -> buildNewThreadProfileMenuActions(
         path = target.path,
         project = context.project,
         profiles = profiles,
@@ -235,7 +220,7 @@ private class ProfilePickerActionGroup(
       )
       is AgentSessionsEditorTabNewThreadTarget.Candidates -> target.candidates.mapTo(mutableListOf<AnAction>()) { candidate ->
         DefaultActionGroup(candidate.displayName, true).apply {
-          buildProfileMenuActions(
+          buildNewThreadProfileMenuActions(
             path = candidate.path,
             project = context.project,
             profiles = profiles,
@@ -245,20 +230,21 @@ private class ProfilePickerActionGroup(
             includeManageAction = false,
           ).forEach(::add)
         }
-      }.let(::appendManageLaunchProfilesAction).toTypedArray<AnAction>()
+      }.let { actions -> appendManageLaunchProfilesAction(actions) }.toTypedArray<AnAction>()
     }
   }
+
   fun createRows(e: AnActionEvent): List<AgentWorkbenchPopupRow> {
     val context = resolveContext(e) ?: return emptyList()
     val target = context.target ?: return emptyList()
     val menuModel = buildNewThreadMenuModel(allBridges(), context.project)
     if (!menuModel.hasEntries()) return emptyList()
     val activeProfileId = activeLaunchProfileId()
-    val profiles = resolveToolbarProfileItems(menuModel, userLaunchProfiles(), activeProfileId)
+    val profiles = resolveNewThreadProfileItems(menuModel, userLaunchProfiles(), activeProfileId)
     if (profiles.isEmpty()) return emptyList()
-    val selectedProfileId = resolveToolbarProfileItem(profiles, activeProfileId)?.profile?.id
+    val selectedProfileId = resolveNewThreadProfileItem(profiles, activeProfileId)?.profile?.id
     return when (target) {
-      is AgentSessionsEditorTabNewThreadTarget.Direct -> buildProfileMenuRows(
+      is AgentSessionsEditorTabNewThreadTarget.Direct -> buildNewThreadProfileMenuRows(
         path = target.path,
         project = context.project,
         profiles = profiles,
@@ -272,7 +258,7 @@ private class ProfilePickerActionGroup(
           text = candidate.displayName,
           tooltipText = candidate.path.takeIf { path -> path != candidate.displayName },
           secondaryIcon = AllIcons.General.ArrowRight,
-          subRows = buildProfileMenuRows(
+          subRows = buildNewThreadProfileMenuRows(
             path = candidate.path,
             project = context.project,
             profiles = profiles,
@@ -301,14 +287,14 @@ internal class ProfileQuickStartAction(
   override fun update(e: AnActionEvent) {
     val context = resolveContext(e)
     val quickStart = context?.let { currentContext ->
-      resolveToolbarProfileItem(allBridges(), currentContext.project, userLaunchProfiles(), activeLaunchProfileId())
+      resolveNewThreadProfileItem(allBridges(), currentContext.project, userLaunchProfiles(), activeLaunchProfileId())
     }
     if (context == null || quickStart == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
     e.presentation.isEnabledAndVisible = quickStart.menuItem.isEnabled
-    e.presentation.text = toolbarProfileActionText(quickStart)
+    e.presentation.text = newThreadProfileActionText(quickStart)
     e.presentation.description = describeProfileTooltip(quickStart, context.targetForUpdate)
     e.presentation.icon = providerItemMonochromeIconWithMode(quickStart.menuItem)
   }
@@ -317,7 +303,7 @@ internal class ProfileQuickStartAction(
     val context = resolveContext(e) ?: return
     when (val target = context.target) {
       is AgentSessionsEditorTabNewThreadTarget.Direct -> {
-        val quickStart = resolveToolbarProfileItem(allBridges(), context.project, userLaunchProfiles(), activeLaunchProfileId())
+        val quickStart = resolveNewThreadProfileItem(allBridges(), context.project, userLaunchProfiles(), activeLaunchProfileId())
         if (quickStart == null || !quickStart.menuItem.isEnabled) {
           showPicker(pickerGroup, e)
           return
@@ -335,9 +321,9 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
   private val project: Project,
   private val targetPath: () -> String?,
   private val allBridges: () -> List<AgentSessionProviderDescriptor>,
-  createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
-  private val lastUsedProvider: () -> AgentSessionProvider?,
-  private val lastUsedLaunchMode: () -> AgentSessionLaunchMode?,
+  createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
+  private val userLaunchProfiles: () -> List<AgentPromptLaunchProfile>,
+  private val activeLaunchProfileId: () -> String?,
   private val minimumButtonSize: (() -> Dimension)?,
   quickStartEntryPoint: AgentWorkbenchEntryPoint,
   beforeAction: () -> Unit,
@@ -351,15 +337,9 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
     quickStartEntryPoint: AgentWorkbenchEntryPoint,
     popupEntryPoint: AgentWorkbenchEntryPoint,
     allBridges: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
-    createNewSession: (
-      String,
-      AgentSessionProvider,
-      AgentSessionLaunchMode,
-      Project,
-      AgentWorkbenchEntryPoint,
-    ) -> Unit = ::createNewThreadViaService,
-    lastUsedProvider: () -> AgentSessionProvider? = { service<AgentSessionUiPreferencesStateService>().getLastUsedProvider() },
-    lastUsedLaunchMode: () -> AgentSessionLaunchMode? = { service<AgentSessionUiPreferencesStateService>().getLastUsedLaunchMode() },
+    createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
+    userLaunchProfiles: () -> List<AgentPromptLaunchProfile> = { service<AgentSessionUiPreferencesStateService>().getUserLaunchProfiles() },
+    activeLaunchProfileId: () -> String? = { service<AgentSessionUiPreferencesStateService>().getActiveLaunchProfileId() },
     minimumButtonSize: (() -> Dimension)? = null,
     beforeAction: () -> Unit = {},
   ) : this(
@@ -367,8 +347,8 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
     targetPath = targetPath,
     allBridges = allBridges,
     createNewSession = createNewSession,
-    lastUsedProvider = lastUsedProvider,
-    lastUsedLaunchMode = lastUsedLaunchMode,
+    userLaunchProfiles = userLaunchProfiles,
+    activeLaunchProfileId = activeLaunchProfileId,
     minimumButtonSize = minimumButtonSize,
     quickStartEntryPoint = quickStartEntryPoint,
     beforeAction = beforeAction,
@@ -377,8 +357,8 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
       targetPath = targetPath,
       allBridges = allBridges,
       createNewSession = createNewSession,
-      lastUsedProvider = lastUsedProvider,
-      lastUsedLaunchMode = lastUsedLaunchMode,
+      userLaunchProfiles = userLaunchProfiles,
+      activeLaunchProfileId = activeLaunchProfileId,
       popupEntryPoint = popupEntryPoint,
       beforeAction = beforeAction,
     ),
@@ -389,8 +369,8 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
     targetPath = targetPath,
     allBridges = allBridges,
     createNewSession = createNewSession,
-    lastUsedProvider = lastUsedProvider,
-    lastUsedLaunchMode = lastUsedLaunchMode,
+    userLaunchProfiles = userLaunchProfiles,
+    activeLaunchProfileId = activeLaunchProfileId,
     entryPoint = quickStartEntryPoint,
     beforeAction = beforeAction,
   )
@@ -409,9 +389,8 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
 
   public override fun getMainAction(e: AnActionEvent): AnAction? {
     if (targetPath() == null) return null
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), project)
-    if (!actionModel.menuModel.hasEntries()) return null
-    return if (actionModel.quickStartItem == null) null else quickStartAction
+    val quickStartItem = resolveDirectPathQuickStartItem()
+    return if (quickStartItem?.menuItem?.isEnabled == true) quickStartAction else null
   }
 
   override fun update(e: AnActionEvent) {
@@ -420,23 +399,31 @@ class AgentSessionsDirectPathNewThreadAction private constructor(
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), project)
-    if (!actionModel.menuModel.hasEntries()) {
+    val menuModel = buildNewThreadMenuModel(allBridges(), project)
+    if (!menuModel.hasEntries()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
     if (e.updateSession !== UpdateSession.EMPTY) {
       super.update(e)
     }
-    val quickStartItem = actionModel.quickStartItem
-    e.presentation.icon = quickStartItem?.let(::providerItemMonochromeIconWithMode) ?: AllIcons.General.Add
+    val quickStartItem = resolveDirectPathQuickStartItem(menuModel)
+    e.presentation.icon = quickStartItem?.menuItem?.let(::providerItemMonochromeIconWithMode) ?: AllIcons.General.Add
     e.presentation.text = quickStartItem
-                            ?.let(::quickStartActionText)
+                            ?.let(::newThreadProfileActionText)
                           ?: AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.text")
     e.presentation.description = quickStartItem
-                                   ?.let(::quickStartActionDescription)
+                                   ?.let { profileItem ->
+                                     newThreadProfileActionDescription(profileItem, projectLabelForPath(path))
+                                   }
                                  ?: AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.empty.description")
     e.presentation.isEnabledAndVisible = true
+  }
+
+  private fun resolveDirectPathQuickStartItem(
+    menuModel: AgentSessionProviderMenuModel = buildNewThreadMenuModel(allBridges(), project),
+  ): NewThreadProfileMenuItem? {
+    return resolveNewThreadProfileItem(menuModel, userLaunchProfiles(), activeLaunchProfileId())
   }
 }
 
@@ -444,9 +431,9 @@ private class DirectPathPickerActionGroup(
   private val project: Project,
   private val targetPath: () -> String?,
   private val allBridges: () -> List<AgentSessionProviderDescriptor>,
-  private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
-  private val lastUsedProvider: () -> AgentSessionProvider?,
-  private val lastUsedLaunchMode: () -> AgentSessionLaunchMode?,
+  private val createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
+  private val userLaunchProfiles: () -> List<AgentPromptLaunchProfile>,
+  private val activeLaunchProfileId: () -> String?,
   private val popupEntryPoint: AgentWorkbenchEntryPoint,
   private val beforeAction: () -> Unit,
 ) : ActionGroup(), DumbAware {
@@ -458,16 +445,22 @@ private class DirectPathPickerActionGroup(
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val path = targetPath() ?: return emptyArray()
-    val actionModel = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), project)
-    return buildNewThreadMenuActions(
+    val menuModel = buildNewThreadMenuModel(allBridges(), project)
+    val activeProfileId = activeLaunchProfileId()
+    val profiles = resolveNewThreadProfileItems(menuModel, userLaunchProfiles(), activeProfileId)
+    if (profiles.isEmpty()) return emptyArray()
+    val selectedProfileId = resolveNewThreadProfileItem(profiles, activeProfileId)?.profile?.id
+    return buildNewThreadProfileMenuActions(
       path = path,
       project = project,
-      menuModel = actionModel.menuModel,
+      profiles = profiles,
       entryPoint = popupEntryPoint,
-    ) { targetPath, provider, mode, currentProject, entryPoint ->
-      beforeAction()
-      createNewSession(targetPath, provider, mode, currentProject, entryPoint)
-    }
+      createNewSession = { targetPath, profile, currentProject, entryPoint ->
+        beforeAction()
+        createNewSession(targetPath, profile, currentProject, entryPoint)
+      },
+      activeLaunchProfileId = selectedProfileId,
+    )
   }
 }
 
@@ -475,32 +468,38 @@ private class DirectPathQuickStartAction(
   private val project: Project,
   private val targetPath: () -> String?,
   private val allBridges: () -> List<AgentSessionProviderDescriptor>,
-  private val createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
-  private val lastUsedProvider: () -> AgentSessionProvider?,
-  private val lastUsedLaunchMode: () -> AgentSessionLaunchMode?,
+  private val createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
+  private val userLaunchProfiles: () -> List<AgentPromptLaunchProfile>,
+  private val activeLaunchProfileId: () -> String?,
   private val entryPoint: AgentWorkbenchEntryPoint,
   private val beforeAction: () -> Unit,
 ) : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
-    val quickStartItem = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), project).quickStartItem
-    if (targetPath() == null || quickStartItem == null) {
+    val path = targetPath()
+    val quickStartItem = resolveReadyQuickStartItem()
+    if (path == null || quickStartItem == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
     e.presentation.isEnabledAndVisible = true
-    e.presentation.text = quickStartActionText(quickStartItem)
-    e.presentation.description = quickStartActionDescription(quickStartItem)
-    e.presentation.icon = providerItemMonochromeIconWithMode(quickStartItem)
+    e.presentation.text = newThreadProfileActionText(quickStartItem)
+    e.presentation.description = newThreadProfileActionDescription(quickStartItem, projectLabelForPath(path))
+    e.presentation.icon = providerItemMonochromeIconWithMode(quickStartItem.menuItem)
   }
 
   override fun actionPerformed(e: AnActionEvent) {
     val path = targetPath() ?: return
-    val quickStartItem = buildNewThreadActionModel(allBridges(), lastUsedProvider(), lastUsedLaunchMode(), project).quickStartItem ?: return
+    val quickStartItem = resolveReadyQuickStartItem() ?: return
     beforeAction()
     launchQuickStartThread(path, project, quickStartItem, entryPoint, createNewSession)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  private fun resolveReadyQuickStartItem(): NewThreadProfileMenuItem? {
+    return resolveNewThreadProfileItem(allBridges(), project, userLaunchProfiles(), activeLaunchProfileId())
+      ?.takeIf { profileItem -> profileItem.menuItem.isEnabled }
+  }
 }
 
 internal abstract class AgentSessionsNewThreadSplitButtonAction(
@@ -751,227 +750,8 @@ private fun resolveSplitButtonQuickStartItem(
   return preferredStandardItem ?: menuModel.standardItems.firstOrNull().takeIf { allowProviderFallback }
 }
 
-private fun resolveToolbarProfileItem(
-  bridges: List<AgentSessionProviderDescriptor>,
-  project: Project,
-  userProfiles: List<AgentPromptLaunchProfile>,
-  activeProfileId: String?,
-  menuModel: AgentSessionProviderMenuModel = buildNewThreadMenuModel(bridges, project),
-): ToolbarProfileItem? {
-  val profileItems = resolveToolbarProfileItems(menuModel, userProfiles, activeProfileId)
-  return resolveToolbarProfileItem(profileItems, activeProfileId)
-}
-
-private fun resolveToolbarProfileItem(
-  profileItems: List<ToolbarProfileItem>,
-  activeProfileId: String?,
-): ToolbarProfileItem? {
-  return profileItems.firstOrNull { item ->
-    activeProfileId == null || item.profile.id == activeProfileId
-  } ?: profileItems.firstOrNull()
-}
-
-private fun resolveToolbarProfileItems(
-  menuModel: AgentSessionProviderMenuModel,
-  userProfiles: List<AgentPromptLaunchProfile>,
-  activeProfileId: String?,
-): List<ToolbarProfileItem> {
-  val snapshot = AgentSessionLaunchProfileSnapshot(
-    builtInProfiles = buildBuiltInLaunchProfiles(menuModel, ::quickStartLabel),
-    userProfiles = userProfiles,
-    activeProfileId = activeProfileId,
-  )
-  val items = (menuModel.standardItems + menuModel.yoloItems)
-  return snapshot.allProfiles.mapNotNull { profile ->
-    val provider = AgentSessionProvider.fromOrNull(profile.providerId) ?: return@mapNotNull null
-    val menuItem = items.firstOrNull { item -> item.bridge.provider == provider && item.mode == profile.launchMode }
-                   ?: return@mapNotNull null
-    ToolbarProfileItem(profile, menuItem)
-  }
-}
-
-private fun buildProfileMenuActions(
-  path: String,
-  project: Project,
-  profiles: List<ToolbarProfileItem>,
-  entryPoint: AgentWorkbenchEntryPoint,
-  createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
-  activeLaunchProfileId: String?,
-  includeManageAction: Boolean = true,
-): Array<AnAction> {
-  val actions = mutableListOf<AnAction>()
-  val standardProfiles = profiles.filter { profileItem -> profileItem.profile.launchMode != AgentSessionLaunchMode.YOLO }
-  val yoloProfiles = profiles.filter { profileItem -> profileItem.profile.launchMode == AgentSessionLaunchMode.YOLO }
-  fun addProfileSection(title: @Nls String?, sectionProfiles: List<ToolbarProfileItem>) {
-    if (sectionProfiles.isEmpty()) return
-    if (actions.isNotEmpty()) {
-      actions.add(Separator.getInstance())
-    }
-    if (title != null) {
-      actions.add(Separator.create(title))
-    }
-    sectionProfiles.forEach { profileItem ->
-      actions.add(ToolbarProfileLaunchAction(
-        path = path,
-        project = project,
-        profileItem = profileItem,
-        entryPoint = entryPoint,
-        createNewSession = createNewSession,
-        activeLaunchProfileId = activeLaunchProfileId,
-      ))
-    }
-  }
-  addProfileSection(null, standardProfiles)
-  addProfileSection(AgentSessionsBundle.message("toolwindow.action.new.session.section.auto"), yoloProfiles)
-  if (includeManageAction) {
-    appendManageLaunchProfilesAction(actions)
-  }
-  return actions.toTypedArray()
-}
-
-private fun buildProfileMenuRows(
-  path: String,
-  project: Project,
-  profiles: List<ToolbarProfileItem>,
-  entryPoint: AgentWorkbenchEntryPoint,
-  createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
-  activeLaunchProfileId: String?,
-  includeManageAction: Boolean = true,
-  event: AnActionEvent,
-): List<AgentWorkbenchPopupRow> {
-  val rows = mutableListOf<AgentWorkbenchPopupRow>()
-  val standardProfiles = profiles.filter { profileItem -> profileItem.profile.launchMode != AgentSessionLaunchMode.YOLO }
-  val yoloProfiles = profiles.filter { profileItem -> profileItem.profile.launchMode == AgentSessionLaunchMode.YOLO }
-  fun addProfileSection(title: @Nls String?, sectionProfiles: List<ToolbarProfileItem>) {
-    if (sectionProfiles.isEmpty()) return
-    sectionProfiles.forEachIndexed { index, profileItem ->
-      rows.add(createProfileMenuRow(
-        path = path,
-        project = project,
-        profileItem = profileItem,
-        entryPoint = entryPoint,
-        createNewSession = createNewSession,
-        activeLaunchProfileId = activeLaunchProfileId,
-        separatorText = if (index == 0) title else null,
-      ))
-    }
-  }
-  addProfileSection(null, standardProfiles)
-  addProfileSection(AgentSessionsBundle.message("toolwindow.action.new.session.section.auto"), yoloProfiles)
-  if (includeManageAction) {
-    appendManageLaunchProfilesRow(rows, event)
-  }
-  return rows
-}
-
-private fun createProfileMenuRow(
-  path: String,
-  project: Project,
-  profileItem: ToolbarProfileItem,
-  entryPoint: AgentWorkbenchEntryPoint,
-  createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
-  activeLaunchProfileId: String?,
-  separatorText: @Nls String?,
-): AgentWorkbenchPopupRow {
-  val isActiveProfile = profileItem.profile.id == activeLaunchProfileId
-  val isEnabled = profileItem.menuItem.isEnabled
-  return AgentWorkbenchPopupRow(
-    text = profileItem.profile.name,
-    separatorText = separatorText,
-    primaryIcon = providerItemMonochromeIconWithMode(profileItem.menuItem),
-    secondaryIcon = when {
-      !isActiveProfile -> null
-      isEnabled -> LafIconLookup.getIcon("checkmark")
-      else -> LafIconLookup.getDisabledIcon("checkmark")
-    },
-    tooltipText = profileActionDescription(
-      profileItem = profileItem,
-      projectLabel = projectLabelForPath(path),
-    ),
-    selected = isActiveProfile,
-    selectable = isEnabled,
-    onChosen = {
-      if (isEnabled) {
-        createNewSession(path, profileItem.profile, project, entryPoint)
-      }
-    },
-  )
-}
-
-private fun appendManageLaunchProfilesAction(actions: MutableList<AnAction>): MutableList<AnAction> {
-  val manageAction = ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Prompt.MANAGE_LAUNCH_PROFILES) ?: return actions
-  if (actions.isNotEmpty()) {
-    actions.add(Separator.getInstance())
-  }
-  actions.add(manageAction)
-  return actions
-}
-
-private fun appendManageLaunchProfilesRow(rows: MutableList<AgentWorkbenchPopupRow>, event: AnActionEvent): List<AgentWorkbenchPopupRow> {
-  val manageAction = ActionManager.getInstance().getAction(AgentWorkbenchActionIds.Prompt.MANAGE_LAUNCH_PROFILES) ?: return rows
-  val text = manageAction.templatePresentation.text ?: return rows
-  rows.add(AgentWorkbenchPopupRow(
-    text = text,
-    separatorText = "",
-    tooltipText = manageAction.templatePresentation.description,
-    onChosen = {
-      val actionEvent = AnActionEvent.createEvent(manageAction, event.dataContext, null, event.place, ActionUiKind.POPUP, event.inputEvent)
-      ActionUtil.performAction(manageAction, actionEvent)
-    },
-  ))
-  return rows
-}
-
-private fun toolbarProfileActionText(item: ToolbarProfileItem): @Nls String {
-  if (item.profile.kind == AgentPromptLaunchProfileKind.BUILT_IN) {
-    return quickStartActionText(item.menuItem)
-  }
-  return AgentSessionsBundle.message("action.AgentWorkbenchSessions.NewThreadProfileQuick.text", item.profile.name)
-}
-
-private class ToolbarProfileLaunchAction(
-  private val path: String,
-  private val project: Project,
-  private val profileItem: ToolbarProfileItem,
-  private val entryPoint: AgentWorkbenchEntryPoint,
-  private val createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
-  private val activeLaunchProfileId: String?,
-) : DumbAwareAction(profileItem.profile.name, null, providerItemMonochromeIconWithMode(profileItem.menuItem)) {
-  init {
-    setProviderItemLaunchProfileActiveMarker(templatePresentation, profileItem.menuItem, isActiveProfile())
-    templatePresentation.description = profileActionDescription(
-      profileItem = profileItem,
-      projectLabel = projectLabelForPath(path),
-    )
-  }
-
-  private fun isActiveProfile(): Boolean {
-    return profileItem.profile.id == activeLaunchProfileId
-  }
-
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = profileItem.menuItem.isEnabled
-    setProviderItemLaunchProfileActiveMarker(e.presentation, profileItem.menuItem, isActiveProfile())
-    e.presentation.description = profileActionDescription(
-      profileItem = profileItem,
-      projectLabel = projectLabelForPath(path),
-    )
-  }
-
-  override fun actionPerformed(e: AnActionEvent) {
-    performLaunch()
-  }
-
-  private fun performLaunch() {
-    if (!profileItem.menuItem.isEnabled) return
-    createNewSession(path, profileItem.profile, project, entryPoint)
-  }
-
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
-}
-
 private fun describeProfileTooltip(
-  quickStart: ToolbarProfileItem?,
+  quickStart: NewThreadProfileMenuItem?,
   target: AgentSessionsEditorTabNewThreadTarget?,
 ): @Nls String {
   if (quickStart == null) {
@@ -982,33 +762,7 @@ private fun describeProfileTooltip(
     is AgentSessionsEditorTabNewThreadTarget.Candidates, null ->
       AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.target.choose")
   }
-  return profileActionDescription(quickStart, projectLabel)
-}
-
-private fun profileActionDescription(
-  profileItem: ToolbarProfileItem,
-  projectLabel: @Nls String,
-): @Nls String {
-  if (!profileItem.menuItem.isEnabled) {
-    return disabledProviderReason(profileItem.menuItem)
-  }
-  return AgentSessionsBundle.message(
-    "action.AgentWorkbenchSessions.MainToolbar.NewThread.profile.description",
-    profileItem.profile.name,
-    quickStartLabel(profileItem.menuItem),
-    projectLabel,
-  )
-}
-
-private fun disabledProviderReason(item: AgentSessionProviderMenuItem): @Nls String {
-  val reasonKey = item.disabledReasonKey
-  if (reasonKey != null) {
-    return AgentSessionsBundle.message(reasonKey)
-  }
-  return AgentSessionsBundle.message(
-    "toolwindow.action.new.session.unavailable",
-    AgentSessionsBundle.message(item.bridge.displayNameKey),
-  )
+  return newThreadProfileActionDescription(quickStart, projectLabel)
 }
 
 private fun showToolbarPicker(group: ActionGroup, e: AnActionEvent) {
@@ -1046,9 +800,4 @@ private fun showToolbarProfilePicker(group: ActionGroup, e: AnActionEvent) {
   else {
     popup.showInBestPositionFor(e.dataContext)
   }
-}
-
-private fun projectLabelForPath(path: String): @NlsSafe String {
-  val trimmed = path.trimEnd('/')
-  return trimmed.substringAfterLast('/').ifEmpty { trimmed }
 }

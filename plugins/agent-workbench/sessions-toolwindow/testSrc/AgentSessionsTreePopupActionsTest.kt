@@ -5,8 +5,13 @@ import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
+import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfileKind
+import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.TestAgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfileId
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
@@ -25,6 +30,7 @@ import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeNode
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -434,12 +440,18 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
-  fun newThreadGroupVisibilityAndDispatchUsesEligibleLastUsedProvider() {
+  fun newThreadGroupVisibilityAndDispatchUsesActiveLaunchProfile() {
     var launchedPath: String? = null
-    var launchedProvider: AgentSessionProvider? = null
-    var launchedMode: AgentSessionLaunchMode? = null
+    var launchedProfile: AgentPromptLaunchProfile? = null
     var launchedProject: Project? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
+    val activeProfile = AgentPromptLaunchProfile(
+      id = "user:careful-codex",
+      name = "Careful Codex",
+      providerId = AgentSessionProvider.CODEX.value,
+      launchMode = AgentSessionLaunchMode.STANDARD,
+      generationSettings = AgentPromptGenerationSettings(reasoningEffort = AgentPromptReasoningEffort.HIGH),
+    )
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
@@ -454,11 +466,11 @@ class AgentSessionsTreePopupActionsTest {
     val group = AgentSessionsTreePopupNewThreadGroup(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       allBridges = { listOf(codexBridge, claudeBridge) },
-      lastUsedProvider = { AgentSessionProvider.CLAUDE },
-      createNewSession = { path, provider, mode, project, capturedEntryPoint ->
+      userLaunchProfiles = { listOf(activeProfile) },
+      activeLaunchProfileId = { activeProfile.id },
+      createNewSession = { path, profile, project, capturedEntryPoint ->
         launchedPath = path
-        launchedProvider = provider
-        launchedMode = mode
+        launchedProfile = profile
         launchedProject = project
         entryPoint = capturedEntryPoint
       },
@@ -486,28 +498,32 @@ class AgentSessionsTreePopupActionsTest {
     assertThat(projectEvent.presentation.isPerformGroup).isTrue()
     assertThat(projectEvent.presentation.isPopupGroup).isTrue()
 
-    // Happy path: quick-start dispatches the eligible last-used provider.
     group.actionPerformed(projectEvent)
     assertThat(launchedPath).isEqualTo("/work/project-a")
-    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CLAUDE)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(launchedProfile).isEqualTo(activeProfile)
     assertThat(launchedProject).isEqualTo(projectContext.project)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
 
     launchedPath = null
-    launchedProvider = null
-    launchedMode = null
+    launchedProfile = null
     launchedProject = null
 
     val children = group.getChildren(projectEvent)
-    assertThat(children).hasSize(5)
+    val visibleActions = children.filterNot { action -> action is Separator }
+    assertThat(visibleActions).hasSize(5)
+    assertThat(visibleActions.map { action -> action.templatePresentation.text }).contains(
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex"),
+      AgentSessionsBundle.message("toolwindow.action.new.session.claude"),
+      activeProfile.name,
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo"),
+    )
 
-    val claudeAction = children.first { action ->
-      action.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.claude")
+    val activeProfileAction = children.first { action ->
+      action.templatePresentation.text == activeProfile.name
     }
-    val claudeEvent = popupEvent(claudeAction, projectContext)
-    claudeAction.update(claudeEvent)
-    assertThat(claudeEvent.presentation.isEnabled).isTrue()
+    val activeProfileEvent = popupEvent(activeProfileAction, projectContext)
+    activeProfileAction.update(activeProfileEvent)
+    assertThat(activeProfileEvent.presentation.isEnabled).isTrue()
 
     val yoloAction = children.first { action ->
       action.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex.yolo")
@@ -515,19 +531,25 @@ class AgentSessionsTreePopupActionsTest {
     yoloAction.actionPerformed(popupEvent(yoloAction, projectContext))
 
     assertThat(launchedPath).isEqualTo("/work/project-a")
-    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.YOLO)
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.YOLO)
+    assertThat(launchedProfile?.kind).isEqualTo(AgentPromptLaunchProfileKind.BUILT_IN)
     assertThat(launchedProject).isEqualTo(projectContext.project)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
   }
 
   @Test
-  fun newThreadGroupFallsBackQuickStartAndDisablesUnavailableProviderChild() {
+  fun newThreadGroupDoesNotPerformUnavailableActiveLaunchProfile() {
     var launchedPath: String? = null
-    var launchedProvider: AgentSessionProvider? = null
-    var launchedMode: AgentSessionLaunchMode? = null
+    var launchedProfile: AgentPromptLaunchProfile? = null
     var launchedProject: Project? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
+    val unavailableProfile = AgentPromptLaunchProfile(
+      id = "user:careful-claude",
+      name = "Careful Claude",
+      providerId = AgentSessionProvider.CLAUDE.value,
+      launchMode = AgentSessionLaunchMode.STANDARD,
+    )
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD, AgentSessionLaunchMode.YOLO),
@@ -542,11 +564,11 @@ class AgentSessionsTreePopupActionsTest {
     val group = AgentSessionsTreePopupNewThreadGroup(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       allBridges = { listOf(codexBridge, claudeBridge) },
-      lastUsedProvider = { AgentSessionProvider.CLAUDE },
-      createNewSession = { path, provider, mode, project, capturedEntryPoint ->
+      userLaunchProfiles = { listOf(unavailableProfile) },
+      activeLaunchProfileId = { unavailableProfile.id },
+      createNewSession = { path, profile, project, capturedEntryPoint ->
         launchedPath = path
-        launchedProvider = provider
-        launchedMode = mode
+        launchedProfile = profile
         launchedProject = project
         entryPoint = capturedEntryPoint
       },
@@ -565,25 +587,18 @@ class AgentSessionsTreePopupActionsTest {
 
     group.update(event)
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    assertThat(event.presentation.isPerformGroup).isTrue()
+    assertThat(event.presentation.isPerformGroup).isFalse()
 
-    // Fallback path: disabled last-used provider is skipped for quick-start.
     group.actionPerformed(event)
-    assertThat(launchedPath).isEqualTo("/work/project-a")
-    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
-    assertThat(launchedProject).isEqualTo(projectContext.project)
-    assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
-
-    launchedPath = null
-    launchedProvider = null
-    launchedMode = null
-    launchedProject = null
+    assertThat(launchedPath).isNull()
+    assertThat(launchedProfile).isNull()
+    assertThat(launchedProject).isNull()
+    assertThat(entryPoint).isNull()
 
     val children = group.getChildren(event)
 
     val claudeAction = children.first { action ->
-      action.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.claude")
+      action.templatePresentation.text == unavailableProfile.name
     }
     val claudeEvent = popupEvent(claudeAction, projectContext)
     claudeAction.update(claudeEvent)
@@ -592,15 +607,13 @@ class AgentSessionsTreePopupActionsTest {
 
     claudeAction.actionPerformed(claudeEvent)
     assertThat(launchedPath).isNull()
-    assertThat(launchedProvider).isNull()
-    assertThat(launchedMode).isNull()
+    assertThat(launchedProfile).isNull()
     assertThat(launchedProject).isNull()
   }
 
   @Test
-  fun newThreadGroupFallsBackToFirstStandardWhenLastUsedProviderIsNotEligibleForQuickStart() {
-    var launchedProvider: AgentSessionProvider? = null
-    var launchedMode: AgentSessionLaunchMode? = null
+  fun newThreadGroupDefaultsToFirstAvailableBuiltInLaunchProfile() {
+    var launchedProfile: AgentPromptLaunchProfile? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
     val fallbackProvider = AgentSessionProvider.from("fallback")
     val codexYoloOnlyBridge = TestAgentSessionProviderDescriptor(
@@ -617,10 +630,9 @@ class AgentSessionsTreePopupActionsTest {
     val group = AgentSessionsTreePopupNewThreadGroup(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       allBridges = { listOf(codexYoloOnlyBridge, fallbackBridge) },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      createNewSession = { _, provider, mode, _, capturedEntryPoint ->
-        launchedProvider = provider
-        launchedMode = mode
+      activeLaunchProfileId = { null },
+      createNewSession = { _, profile, _, capturedEntryPoint ->
+        launchedProfile = profile
         entryPoint = capturedEntryPoint
       },
     )
@@ -636,20 +648,23 @@ class AgentSessionsTreePopupActionsTest {
 
     group.actionPerformed(event)
 
-    assertThat(launchedProvider).isEqualTo(fallbackProvider)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(launchedProfile?.id).isEqualTo(builtInLaunchProfileId(fallbackProvider, AgentSessionLaunchMode.STANDARD))
+    assertThat(launchedProfile?.providerId).isEqualTo(fallbackProvider.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
 
     val children = group.getChildren(event)
-    assertThat(children).hasSize(4)
+    val visibleActions = children.filterNot { action -> action is Separator }
+    assertThat(visibleActions).hasSize(3)
 
-    val fallbackAction = children.first { action ->
+    val fallbackAction = visibleActions.first { action ->
       action.templatePresentation.text == AgentSessionsBundle.message("toolwindow.action.new.session.codex")
     }
     fallbackAction.actionPerformed(popupEvent(fallbackAction, projectContext))
 
-    assertThat(launchedProvider).isEqualTo(fallbackProvider)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(launchedProfile?.id).isEqualTo(builtInLaunchProfileId(fallbackProvider, AgentSessionLaunchMode.STANDARD))
+    assertThat(launchedProfile?.providerId).isEqualTo(fallbackProvider.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
   }
 

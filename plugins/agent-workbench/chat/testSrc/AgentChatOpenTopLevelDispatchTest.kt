@@ -10,6 +10,8 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
@@ -526,6 +528,7 @@ class AgentChatOpenTopLevelDispatchTest {
           subAgentId = null,
         )
         val file = openedChatFiles().single { chatFile -> chatFile.threadId == "thread-outline-fork" }
+        val startupLaunchSpecCountBeforeFork = terminalTabs.startupLaunchSpecs.size
         val item = AgentSessionOutlineItem(
           id = "entry-fork",
           kind = AgentSessionOutlineItemKind.USER_PROMPT,
@@ -559,6 +562,19 @@ class AgentChatOpenTopLevelDispatchTest {
         assertThat(forkedFile.threadTitle).isEqualTo("Forked Pi thread")
         assertThat(forkedFile.threadActivity).isEqualTo(AgentThreadActivity.PROCESSING)
         assertThat(forkedFile.newThreadRebindRequestedAtMs).isNull()
+        val forkedEditor = runInUi {
+          FileEditorManager.getInstance(project).getAllEditors(forkedFile)
+            .filterIsInstance<AgentChatFileEditor>()
+            .single { candidate -> candidate.getUserData(CUSTOM_AGENT_CHAT_EDITOR_KEY) == true }
+        }
+        activateEditorForTests(forkedEditor, terminalTabs)
+        waitForCondition {
+          terminalTabs.startupLaunchSpecs.size > startupLaunchSpecCountBeforeFork
+        }
+        val forkedLaunchSpec = terminalTabs.startupLaunchSpecs.last()
+        assertThat(forkedLaunchSpec.command)
+          .containsExactly("pi", "--session", "thread-outline-forked", "--models", "openai/gpt-5.4")
+        assertThat(forkedLaunchSpec.envVariables).containsEntry("MODEL_COUNT", "1")
         val selectedFile = runInUi {
           FileEditorManager.getInstance(project).selectedFiles.singleOrNull()
         }
@@ -664,12 +680,14 @@ class AgentChatOpenTopLevelDispatchTest {
 
 private class OpenTabDispatchFakeAgentChatTerminalTabs : AgentChatTerminalTabs {
   val tab = OpenTabDispatchFakeAgentChatTerminalTab()
+  val startupLaunchSpecs: MutableList<AgentSessionTerminalLaunchSpec> = mutableListOf()
 
   override fun createTab(
     project: Project,
     file: AgentChatVirtualFile,
     startupLaunchSpec: AgentSessionTerminalLaunchSpec,
   ): AgentChatTerminalTab {
+    startupLaunchSpecs += startupLaunchSpec
     return tab
   }
 
@@ -837,6 +855,30 @@ private class OpenTabDispatchPiProviderDescriptor(
 
   override suspend fun buildResumeLaunchSpec(sessionId: String): AgentSessionTerminalLaunchSpec {
     return AgentSessionTerminalLaunchSpec(command = piResumeCommand(sessionId))
+  }
+
+  override val supportsGenerationModelSelection: Boolean
+    get() = true
+
+  override val resolvesGenerationModelCatalogForAutoSettings: Boolean
+    get() = true
+
+  override suspend fun listAvailableGenerationModels(project: Project?): List<AgentPromptGenerationModel> {
+    return listOf(AgentPromptGenerationModel(id = "openai/gpt-5.4", displayName = "GPT 5.4"))
+  }
+
+  override fun applyGenerationModelCatalog(
+    baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+    generationSettings: AgentPromptGenerationSettings,
+    generationModelCatalog: List<AgentPromptGenerationModel>,
+  ): AgentSessionTerminalLaunchSpec {
+    if (generationModelCatalog.isEmpty()) {
+      return baseLaunchSpec
+    }
+    return baseLaunchSpec.copy(
+      command = baseLaunchSpec.command + listOf("--models", generationModelCatalog.joinToString(",") { model -> model.id }),
+      envVariables = baseLaunchSpec.envVariables + mapOf("MODEL_COUNT" to generationModelCatalog.size.toString()),
+    )
   }
 
   override suspend fun buildNewSessionLaunchSpec(mode: AgentSessionLaunchMode): AgentSessionTerminalLaunchSpec {

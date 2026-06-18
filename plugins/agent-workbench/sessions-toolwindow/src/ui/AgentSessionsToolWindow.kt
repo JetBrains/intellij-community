@@ -182,7 +182,7 @@ internal class AgentSessionsToolWindowPanel(
         service<AgentSessionCostHintStateService>().markEligible()
       }
     },
-    onLastUsedProviderChanged = {
+    onNewThreadProfileMenuChanged = {
       if (isModelUpdateVisible()) {
         tree.repaint()
       }

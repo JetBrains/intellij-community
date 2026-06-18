@@ -5,9 +5,15 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
+import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
+import com.intellij.agent.workbench.sessions.core.launch.resolveAgentSessionChatOpenPlan
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.agent.workbench.sessions.service.resolveAgentSessionChatOpenPayload
+import com.intellij.agent.workbench.sessions.core.providers.InMemoryAgentSessionProviderRegistry
 import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -18,7 +24,7 @@ import java.util.concurrent.TimeUnit
 
 @TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
-class AgentSessionChatOpenPayloadTest {
+class AgentSessionChatOpenPlanTest {
   @Test
   fun resolvesBaseThreadPayload() {
     runBlocking(Dispatchers.Default) {
@@ -30,7 +36,7 @@ class AgentSessionChatOpenPayloadTest {
         provider = AgentSessionProvider.CODEX,
       )
 
-      val payload = resolveAgentSessionChatOpenPayload(
+      val payload = resolveAgentSessionChatOpenPlan(
         projectPath = PROJECT_PATH,
         thread = thread,
         subAgent = null,
@@ -59,7 +65,7 @@ class AgentSessionChatOpenPayloadTest {
       )
       val subAgent = AgentSubAgent(id = "sub-1", name = "Sub-agent label")
 
-      val payload = resolveAgentSessionChatOpenPayload(
+      val payload = resolveAgentSessionChatOpenPlan(
         projectPath = PROJECT_PATH,
         thread = thread,
         subAgent = subAgent,
@@ -88,7 +94,7 @@ class AgentSessionChatOpenPayloadTest {
       )
       val subAgent = AgentSubAgent(id = "sub-1", name = "")
 
-      val payload = resolveAgentSessionChatOpenPayload(
+      val payload = resolveAgentSessionChatOpenPlan(
         projectPath = PROJECT_PATH,
         thread = thread,
         subAgent = subAgent,
@@ -112,7 +118,7 @@ class AgentSessionChatOpenPayloadTest {
       )
       val subAgent = AgentSubAgent(id = "sub-1", name = "Sub-agent label")
 
-      val payload = resolveAgentSessionChatOpenPayload(
+      val payload = resolveAgentSessionChatOpenPlan(
         projectPath = PROJECT_PATH,
         thread = thread,
         subAgent = subAgent,
@@ -138,7 +144,7 @@ class AgentSessionChatOpenPayloadTest {
         provider = AgentSessionProvider.CODEX,
       )
 
-      val payload = resolveAgentSessionChatOpenPayload(
+      val payload = resolveAgentSessionChatOpenPlan(
         projectPath = PROJECT_PATH,
         thread = thread,
         subAgent = null,
@@ -164,7 +170,7 @@ class AgentSessionChatOpenPayloadTest {
       )
 
       val payload = withTestLaunchSpecAugmenter {
-        resolveAgentSessionChatOpenPayload(
+        resolveAgentSessionChatOpenPlan(
           projectPath = PROJECT_PATH,
           thread = thread,
           subAgent = null,
@@ -198,7 +204,7 @@ class AgentSessionChatOpenPayloadTest {
         provider = AgentSessionProvider.CODEX,
       )
 
-      val payload = resolveAgentSessionChatOpenPayload(
+      val payload = resolveAgentSessionChatOpenPlan(
         projectPath = PROJECT_PATH,
         thread = thread,
         subAgent = null,
@@ -228,6 +234,68 @@ class AgentSessionChatOpenPayloadTest {
         "resume",
         "thread-1",
       )
+    }
+  }
+
+  @Test
+  fun resolvesAutoModelCatalogForResumeLaunchesWithProjectContext() {
+    val project = ProjectManager.getInstance().defaultProject
+    var catalogProject: Project? = null
+    val model = AgentPromptGenerationModel(id = "model-1", displayName = "Model 1")
+    val descriptor = object : TestAgentSessionProviderDescriptor(
+      provider = AgentSessionProvider.CODEX,
+      supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
+      cliAvailable = true,
+    ) {
+      override val supportsGenerationModelSelection: Boolean
+        get() = true
+
+      override val resolvesGenerationModelCatalogForAutoSettings: Boolean
+        get() = true
+
+      override suspend fun listAvailableGenerationModels(project: Project?): List<AgentPromptGenerationModel> {
+        catalogProject = project
+        return listOf(model)
+      }
+
+      override fun applyGenerationModelCatalog(
+        baseLaunchSpec: AgentSessionTerminalLaunchSpec,
+        generationSettings: AgentPromptGenerationSettings,
+        generationModelCatalog: List<AgentPromptGenerationModel>,
+      ): AgentSessionTerminalLaunchSpec {
+        if (generationModelCatalog.isEmpty()) {
+          return baseLaunchSpec
+        }
+        return baseLaunchSpec.copy(
+          command = baseLaunchSpec.command + "catalog:${generationModelCatalog.joinToString(",") { it.id }}",
+          envVariables = baseLaunchSpec.envVariables + mapOf("MODEL_COUNT" to generationModelCatalog.size.toString()),
+        )
+      }
+    }
+
+    AgentSessionProviders.withRegistryForTest(InMemoryAgentSessionProviderRegistry(listOf(descriptor))) {
+      runBlocking(Dispatchers.Default) {
+        val thread = AgentSessionThread(
+          id = "thread-1",
+          title = "Parent title",
+          updatedAt = 1,
+          archived = false,
+          provider = AgentSessionProvider.CODEX,
+        )
+
+        val payload = resolveAgentSessionChatOpenPlan(
+          projectPath = PROJECT_PATH,
+          thread = thread,
+          subAgent = null,
+          launchSpecOverride = null,
+          generationSettings = AgentPromptGenerationSettings.AUTO,
+          project = project,
+        )
+
+        assertThat(catalogProject).isSameAs(project)
+        assertThat(payload.launchSpec.command).containsExactly("test", "resume", "thread-1", "catalog:model-1")
+        assertThat(payload.launchSpec.envVariables).containsEntry("MODEL_COUNT", "1")
+      }
     }
   }
 }
