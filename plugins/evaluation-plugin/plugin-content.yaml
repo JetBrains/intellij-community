@@ -61,6 +61,13 @@
   - name: intellij.evaluationPlugin.languages.python
 - name: lib/modules/intellij.evaluationPlugin.llm.jar
   projectLibraries:
+  - name: io.modelcontextprotocol.kotlin.sdk
+    files:
+    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-jvm/0/kotlin-sdk-jvm-0.jar
+    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-client-jvm/0/kotlin-sdk-client-jvm-0.jar
+    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-server-jvm/0/kotlin-sdk-server-jvm-0.jar
+    - name: $MAVEN_REPOSITORY$/io/modelcontextprotocol/kotlin-sdk-core-jvm/0/kotlin-sdk-core-jvm-0.jar
+    reason: <- intellij.evaluationPlugin.llm
   - name: jerolba.carpet.record
     files:
     - name: $MAVEN_REPOSITORY$/com/jerolba/carpet-record/0/carpet-record-0.jar
