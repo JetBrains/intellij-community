@@ -13,6 +13,6 @@
     <!-- endregion -->
   </dependencies>
   <extensions defaultExtensionNs="com.intellij.python.pyproject.model">
-    <tool implementation="com.intellij.python.uv.backend.UvTool"/>
+    <pyprojectmanager implementation="com.intellij.python.uv.backend.UvPyProjectManager"/>
   </extensions>
 </idea-plugin>

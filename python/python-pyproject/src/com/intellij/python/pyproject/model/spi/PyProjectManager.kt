@@ -8,9 +8,9 @@ import com.jetbrains.python.PyToolUIInfo
 import com.jetbrains.python.venvReader.Directory
 import org.apache.tuweni.toml.TomlTable
 
-interface Tool {
+interface PyProjectManager {
   companion object {
-    internal val EP = ExtensionPointName.create<Tool>("com.intellij.python.pyproject.model.tool")
+    internal val EP = ExtensionPointName.create<PyProjectManager>("com.intellij.python.pyproject.model.pyprojectmanager")
   }
 
   val id: ToolId
