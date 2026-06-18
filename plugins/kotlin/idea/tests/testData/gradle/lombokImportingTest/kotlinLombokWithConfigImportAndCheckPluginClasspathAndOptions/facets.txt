@@ -2,11 +2,11 @@ MODULES
 project
 
 project.main
-    lombok-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    kotlin-lombok-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
     plugin:org.jetbrains.kotlin.lombok:config={{PROJECT_DIR}}/lombok.config
 
 project.test
-    lombok-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    kotlin-lombok-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
     plugin:org.jetbrains.kotlin.lombok:config={{PROJECT_DIR}}/lombok.config
 
 

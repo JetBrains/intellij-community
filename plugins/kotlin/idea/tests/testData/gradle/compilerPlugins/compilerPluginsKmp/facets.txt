@@ -2,40 +2,40 @@ MODULES
 project
 
 project.commonMain
-    kotlinx-serialization-compiler-plugin.jar, noarg-compiler-plugin.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, assignment-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    kotlin-serialization-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-noarg-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, kotlin-assignment-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
 
 project.commonTest
-    kotlinx-serialization-compiler-plugin.jar, noarg-compiler-plugin.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, assignment-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    kotlin-serialization-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-noarg-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, kotlin-assignment-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
 
 project.jvmMain
-    kotlinx-serialization-compiler-plugin.jar, noarg-compiler-plugin.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, lombok-compiler-plugin.jar, assignment-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    kotlin-serialization-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-noarg-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, kotlin-lombok-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-assignment-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
 
 project.jvmTest
-    kotlinx-serialization-compiler-plugin.jar, noarg-compiler-plugin.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, lombok-compiler-plugin.jar, assignment-compiler-plugin.jar, power-assert-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    kotlin-serialization-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-noarg-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, kotlin-lombok-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-assignment-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-power-assert-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
 
 project.linuxArm64Main
-    kotlinx-serialization-compiler-plugin.jar, noarg-compiler-plugin.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, assignment-compiler-plugin.jar
+    kotlin-serialization-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-noarg-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, kotlin-assignment-compiler-plugin-{{KGP_VERSION}}.jar
 
 project.linuxArm64Test
-    kotlinx-serialization-compiler-plugin.jar, noarg-compiler-plugin.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, assignment-compiler-plugin.jar, power-assert-compiler-plugin.jar
+    kotlin-serialization-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-noarg-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, kotlin-assignment-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-power-assert-compiler-plugin-{{KGP_VERSION}}.jar
 
 project.linuxMain
-    kotlinx-serialization-compiler-plugin.jar, noarg-compiler-plugin.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, assignment-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    kotlin-serialization-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-noarg-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, kotlin-assignment-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
 
 project.linuxTest
-    kotlinx-serialization-compiler-plugin.jar, noarg-compiler-plugin.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, assignment-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    kotlin-serialization-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-noarg-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, kotlin-assignment-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
 
 project.linuxX64Main
-    kotlinx-serialization-compiler-plugin.jar, noarg-compiler-plugin.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, assignment-compiler-plugin.jar
+    kotlin-serialization-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-noarg-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, kotlin-assignment-compiler-plugin-{{KGP_VERSION}}.jar
 
 project.linuxX64Test
-    kotlinx-serialization-compiler-plugin.jar, noarg-compiler-plugin.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, assignment-compiler-plugin.jar, power-assert-compiler-plugin.jar
+    kotlin-serialization-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-noarg-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, kotlin-assignment-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-power-assert-compiler-plugin-{{KGP_VERSION}}.jar
 
 project.nativeMain
-    kotlinx-serialization-compiler-plugin.jar, noarg-compiler-plugin.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, assignment-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    kotlin-serialization-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-noarg-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, kotlin-assignment-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
 
 project.nativeTest
-    kotlinx-serialization-compiler-plugin.jar, noarg-compiler-plugin.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, assignment-compiler-plugin.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
+    kotlin-serialization-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-noarg-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-allopen-compiler-plugin-embeddable-{{KGP_VERSION}}.jar, kotlin-assignment-compiler-plugin-{{KGP_VERSION}}.jar, kotlin-scripting-jvm-{{KGP_VERSION}}.jar, kotlin-scripting-common-{{KGP_VERSION}}.jar, kotlin-stdlib-{{KGP_VERSION}}.jar, kotlin-script-runtime-{{KGP_VERSION}}.jar, annotations-13.0.jar
 
 
 Test configuration:
