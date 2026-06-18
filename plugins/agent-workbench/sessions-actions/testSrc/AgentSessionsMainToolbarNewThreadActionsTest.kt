@@ -327,8 +327,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val project = ProjectManager.getInstance().defaultProject
     var beforeActionCount = 0
     var launchedPath: String? = null
-    var launchedProvider: AgentSessionProvider? = null
-    var launchedMode: AgentSessionLaunchMode? = null
+    var launchedProfile: AgentPromptLaunchProfile? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
@@ -341,14 +340,12 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       quickStartEntryPoint = AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY,
       popupEntryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
       allBridges = { listOf(codexBridge) },
-      createNewSession = { path, provider, mode, _, capturedEntryPoint ->
+      createNewSession = { path, profile, _, capturedEntryPoint ->
         launchedPath = path
-        launchedProvider = provider
-        launchedMode = mode
+        launchedProfile = profile
         entryPoint = capturedEntryPoint
       },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
       beforeAction = { beforeActionCount++ },
     )
     val mainAction = checkNotNull(action.getMainAction(TestActionEvent.createTestEvent(action)))
@@ -357,8 +354,8 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
     assertThat(beforeActionCount).isEqualTo(1)
     assertThat(launchedPath).isEqualTo("/work/project-a")
-    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY)
   }
 
@@ -367,8 +364,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val project = ProjectManager.getInstance().defaultProject
     var beforeActionCount = 0
     var launchedPath: String? = null
-    var launchedProvider: AgentSessionProvider? = null
-    var launchedMode: AgentSessionLaunchMode? = null
+    var launchedProfile: AgentPromptLaunchProfile? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
@@ -381,14 +377,12 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       quickStartEntryPoint = AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY,
       popupEntryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
       allBridges = { listOf(codexBridge) },
-      createNewSession = { path, provider, mode, _, capturedEntryPoint ->
+      createNewSession = { path, profile, _, capturedEntryPoint ->
         launchedPath = path
-        launchedProvider = provider
-        launchedMode = mode
+        launchedProfile = profile
         entryPoint = capturedEntryPoint
       },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
       beforeAction = { beforeActionCount++ },
     )
     val event = TestActionEvent.createTestEvent(action)
@@ -398,8 +392,8 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
     assertThat(beforeActionCount).isEqualTo(1)
     assertThat(launchedPath).isEqualTo("/work/project-a")
-    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
   }
 
@@ -407,8 +401,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   fun directPathPopupChildDispatchesWhenTransientSplitButtonIsHidden() {
     val project = ProjectManager.getInstance().defaultProject
     var launchedPath: String? = null
-    var launchedProvider: AgentSessionProvider? = null
-    var launchedMode: AgentSessionLaunchMode? = null
+    var launchedProfile: AgentPromptLaunchProfile? = null
     var entryPoint: AgentWorkbenchEntryPoint? = null
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
@@ -421,14 +414,12 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       quickStartEntryPoint = AgentWorkbenchEntryPoint.TREE_ROW_OVERLAY,
       popupEntryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
       allBridges = { listOf(codexBridge) },
-      createNewSession = { path, provider, mode, _, capturedEntryPoint ->
+      createNewSession = { path, profile, _, capturedEntryPoint ->
         launchedPath = path
-        launchedProvider = provider
-        launchedMode = mode
+        launchedProfile = profile
         entryPoint = capturedEntryPoint
       },
-      lastUsedProvider = { AgentSessionProvider.CODEX },
-      lastUsedLaunchMode = { AgentSessionLaunchMode.STANDARD },
+      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
     )
 
     val result = timeoutRunBlocking {
@@ -448,8 +439,8 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
 
     assertThat(result.isPerformed).isTrue()
     assertThat(launchedPath).isEqualTo("/work/project-a")
-    assertThat(launchedProvider).isEqualTo(AgentSessionProvider.CODEX)
-    assertThat(launchedMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
     assertThat(entryPoint).isEqualTo(AgentWorkbenchEntryPoint.TREE_POPUP)
   }
 

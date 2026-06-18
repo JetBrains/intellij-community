@@ -38,6 +38,7 @@ import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchInten
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchOperation
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchPlanner
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionPlannedLaunch
+import com.intellij.agent.workbench.sessions.core.launch.resolveAgentSessionChatOpenPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryChannel
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialPromptDeliveryStatus
@@ -1634,34 +1635,35 @@ private suspend fun openChatInProject(
   launchMode: AgentSessionLaunchMode? = null,
   generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
 ) {
-  val chatOpenPayload = resolveAgentSessionChatOpenPayload(
+  val chatOpenPlan = resolveAgentSessionChatOpenPlan(
     projectPath = projectPath,
     thread = thread,
     subAgent = subAgent,
     launchSpecOverride = launchSpecOverride,
     launchMode = launchMode ?: AgentSessionLaunchMode.STANDARD,
     generationSettings = generationSettings,
+    project = project,
   )
   val effectiveInitialMessageDispatchPlan = if (initialMessageDispatchPlan != AgentInitialMessageDispatchPlan.EMPTY) {
     initialMessageDispatchPlan
   }
   else {
-    chatOpenPayload.initialMessageDispatchPlan
+    chatOpenPlan.initialMessageDispatchPlan
   }
   openChat(
     project = project,
     projectPath = projectPath,
-    threadIdentity = chatOpenPayload.threadIdentity,
-    shellCommand = chatOpenPayload.launchSpec.command,
-    shellEnvVariables = chatOpenPayload.launchSpec.envVariables,
-    threadId = chatOpenPayload.runtimeThreadId,
-    threadTitle = chatOpenPayload.threadTitle,
-    subAgentId = chatOpenPayload.subAgentId,
+    threadIdentity = chatOpenPlan.threadIdentity,
+    shellCommand = chatOpenPlan.launchSpec.command,
+    shellEnvVariables = chatOpenPlan.launchSpec.envVariables,
+    threadId = chatOpenPlan.runtimeThreadId,
+    threadTitle = chatOpenPlan.threadTitle,
+    subAgentId = chatOpenPlan.subAgentId,
     threadActivity = thread.activity,
     launchMode = serializeAgentChatLaunchMode(launchMode),
     initialMessageDispatchPlan = effectiveInitialMessageDispatchPlan,
     generationSettings = generationSettings,
-    startupLaunchSpec = chatOpenPayload.launchSpec,
+    startupLaunchSpec = chatOpenPlan.launchSpec,
   )
 
   focusProjectWindow(project)

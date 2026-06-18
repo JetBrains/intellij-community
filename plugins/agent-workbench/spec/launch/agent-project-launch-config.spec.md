@@ -10,10 +10,10 @@ targets:
   - ../../sessions-core/resources/intellij.agent.workbench.sessions.core.xml
   - ../../sessions/src/service/AgentSessionRefreshCoordinator.kt
   - ../../sessions/src/service/AgentSessionLaunchService.kt
-  - ../../sessions/src/service/AgentSessionChatOpenPayload.kt
+  - ../../sessions-core/src/launch/AgentSessionChatOpenPlan.kt
   - ../../chat/src/AgentChatEditorService.kt
   - ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
-  - ../../sessions/testSrc/AgentSessionChatOpenPayloadTest.kt
+  - ../../sessions/testSrc/AgentSessionChatOpenPlanTest.kt
   - ../../chat/testSrc/AgentChatEditorServiceTest.kt
 ---
 
@@ -74,12 +74,12 @@ Shared provider command mapping remains owned by `../core/agent-core-contracts.s
   - prompt startup launch-spec overrides built from augmented base launch specs,
   - chat-tab rebind flows that resolve resume specs.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
-  [@test] ../../sessions/testSrc/AgentSessionChatOpenPayloadTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionChatOpenPlanTest.kt
   [@test] ../../chat/testSrc/AgentChatEditorServiceTest.kt
 
 - Canonical provider command mapping is provider-owned (`../core/agent-core-contracts.spec.md`). Project launch config must augment `PATH` lookup and shim lookup only; it must not redefine canonical provider commands. Provider bridges may pre-resolve the provider executable token to an absolute path via the shared `TerminalAgentResolver`; project launch config must not perform its own pre-resolution and must not depend on the resolved value being a bare command name.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
-  [@test] ../../sessions/testSrc/AgentSessionChatOpenPayloadTest.kt
+  [@test] ../../sessions/testSrc/AgentSessionChatOpenPlanTest.kt
 
 - `PATH` merge order is:
   - generated shim directory first when effective shims exist,
@@ -128,7 +128,7 @@ Shared provider command mapping remains owned by `../core/agent-core-contracts.s
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.sessions.launch.config.backend.tests --test com.intellij.agent.workbench.sessions.launch.config.backend.AgentWorkbenchProjectLaunchConfigTest`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionPromptLauncherBridgeTest`
-- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionChatOpenPayloadTest`
+- `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.AgentSessionChatOpenPlanTest`
 
 ## Open Questions / Risks
 - Current implementation caches parsed project launch config for the service lifetime and does not specify live reload semantics for `.agent-workbench.yaml` edits during the same IDE session.

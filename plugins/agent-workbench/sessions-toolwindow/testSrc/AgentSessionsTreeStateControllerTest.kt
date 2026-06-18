@@ -286,7 +286,7 @@ private class ControllerHarness {
     tree = Tree(),
     getSessionTreeModel = { model },
     setSessionTreeModel = { model = it },
-    onLastUsedProviderChanged = {},
+    onNewThreadProfileMenuChanged = {},
     onBeforeModelSwap = {},
     invalidateTreeModel = { diff ->
       invalidatedDiffs += diff

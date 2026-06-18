@@ -10,9 +10,9 @@ import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.model.AgentArchivedSessionsState
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
+import com.intellij.agent.workbench.sessions.state.AgentSessionLaunchProfileStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionTreeUiStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewState
-import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModel
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeModelDiff
@@ -49,7 +49,7 @@ internal class AgentSessionsTreeStateController(
   private val tree: Tree,
   private val getSessionTreeModel: () -> SessionTreeModel,
   private val setSessionTreeModel: (SessionTreeModel) -> Unit,
-  private val onLastUsedProviderChanged: (AgentSessionProvider?) -> Unit,
+  private val onNewThreadProfileMenuChanged: () -> Unit,
   private val onBeforeModelSwap: () -> Unit,
   private val invalidateTreeModel: (SessionTreeModelDiff) -> CompletableFuture<*>,
   private val expandNode: (SessionTreeId) -> Unit,
@@ -116,8 +116,8 @@ internal class AgentSessionsTreeStateController(
     }
 
     scope.launch {
-      serviceAsync<AgentSessionUiPreferencesStateService>().lastUsedProviderFlow.collect { provider ->
-        onLastUsedProviderChanged(provider)
+      serviceAsync<AgentSessionLaunchProfileStateService>().launchProfileStateFlow.collect {
+        onNewThreadProfileMenuChanged()
       }
     }
   }

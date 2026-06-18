@@ -6,12 +6,18 @@ import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.Serializable
 
 @Service(Service.Level.APP)
 @State(name = "AgentSessionLaunchProfileStateV2", storages = [Storage("agentWorkbenchLaunchProfilesV2.xml")])
 class AgentSessionLaunchProfileStateService
   : SerializablePersistentStateComponent<AgentSessionLaunchProfileStateService.LaunchProfileState>(LaunchProfileState()) {
+
+  private val _launchProfileStateFlow = MutableStateFlow(state)
+  val launchProfileStateFlow: StateFlow<LaunchProfileState> = _launchProfileStateFlow.asStateFlow()
 
   fun getUserLaunchProfiles(): List<AgentPromptLaunchProfile> {
     return state.launchProfiles
@@ -28,6 +34,12 @@ class AgentSessionLaunchProfileStateService
         activeLaunchProfileId = activeProfileId,
       )
     }
+    _launchProfileStateFlow.value = state
+  }
+
+  override fun loadState(state: LaunchProfileState) {
+    super.loadState(state)
+    _launchProfileStateFlow.value = state
   }
 
   @Serializable

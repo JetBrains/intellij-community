@@ -1,19 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.service
+package com.intellij.agent.workbench.sessions.core.launch
 
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.buildAgentThreadIdentity
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchIntent
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchOperation
-import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchPlanner
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
-import com.intellij.agent.workbench.sessions.util.buildAgentSessionIdentity
+import com.intellij.openapi.project.Project
 
-internal data class AgentSessionChatOpenPayload(
+data class AgentSessionChatOpenPlan(
   @JvmField val threadIdentity: String,
   @JvmField val launchSpec: AgentSessionTerminalLaunchSpec,
   @JvmField val runtimeThreadId: String,
@@ -22,16 +20,17 @@ internal data class AgentSessionChatOpenPayload(
   @JvmField val initialMessageDispatchPlan: AgentInitialMessageDispatchPlan = AgentInitialMessageDispatchPlan.EMPTY,
 )
 
-internal suspend fun resolveAgentSessionChatOpenPayload(
+suspend fun resolveAgentSessionChatOpenPlan(
   projectPath: String,
   thread: AgentSessionThread,
   subAgent: AgentSubAgent?,
   launchSpecOverride: AgentSessionTerminalLaunchSpec?,
   launchMode: AgentSessionLaunchMode = AgentSessionLaunchMode.STANDARD,
   generationSettings: AgentPromptGenerationSettings = AgentPromptGenerationSettings.AUTO,
+  project: Project? = null,
   resumeLaunchSpecProvider: (suspend (AgentSessionProvider, String, AgentSessionLaunchMode) -> AgentSessionTerminalLaunchSpec)? = null,
-): AgentSessionChatOpenPayload {
-  val threadIdentity = buildAgentSessionIdentity(provider = thread.provider, sessionId = thread.id)
+): AgentSessionChatOpenPlan {
+  val threadIdentity = buildAgentThreadIdentity(providerId = thread.provider.value, threadId = thread.id)
   val runtimeThreadId = subAgent?.id ?: thread.id
   val launchSpec = launchSpecOverride
                    ?: AgentSessionLaunchPlanner.plan(
@@ -43,10 +42,11 @@ internal suspend fun resolveAgentSessionChatOpenPayload(
                        launchMode = launchMode,
                        generationSettings = generationSettings,
                      ),
+                     project = project,
                      resumeLaunchSpecProvider = resumeLaunchSpecProvider,
                    ).launchSpec
   val threadTitle = subAgent?.name?.ifBlank { subAgent.id } ?: thread.title
-  return AgentSessionChatOpenPayload(
+  return AgentSessionChatOpenPlan(
     threadIdentity = threadIdentity,
     launchSpec = launchSpec,
     runtimeThreadId = runtimeThreadId,
