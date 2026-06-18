@@ -1,15 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.project.stateStore
+import com.intellij.util.lang.JavaVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import java.nio.file.Path
-
-private val LOG = logger<ToolVersionsConfigurationProvider>()
 
 public data class AsdfReleaseData(val name: String, val vendor: String, val version: String) : JdkReleaseData {
   public companion object {
@@ -25,9 +22,9 @@ public data class AsdfReleaseData(val name: String, val vendor: String, val vers
     }
   }
 
-  val normalizedVersion: String = version.split(".").take(3).joinToString(".")
+  override val javaVersion: JavaVersion? = JavaVersion.tryParse(version)
 
-  override fun getVariant(): JdkVersionDetector.Variant = when (vendor) {
+  override val variant: JdkVersionDetector.Variant = when (vendor) {
     "adoptopenjdk", "adoptopenjdk-jre" -> JdkVersionDetector.Variant.AdoptOpenJdk_HS
     "adoptopenjdk-jre-openj9", "adoptopenjdk-jre-openj9-large_heap",
     "adoptopenjdk-openj9", "adoptopenjdk-openj9-large_heap" -> JdkVersionDetector.Variant.AdoptOpenJdk_J9
@@ -46,15 +43,6 @@ public data class AsdfReleaseData(val name: String, val vendor: String, val vers
     "temurin", "temurin-jre" -> JdkVersionDetector.Variant.Temurin
     "zulu", "zulu-javafx", "zulu-jre", "zulu-jre-javafx" -> JdkVersionDetector.Variant.Zulu
     else -> JdkVersionDetector.Variant.Unknown
-  }
-
-  override fun matchVersionString(versionString: @NlsSafe String): Boolean {
-    LOG.info("Matching '$versionString'")
-    if (normalizedVersion !in versionString) return false
-
-    // Check vendor
-    val variantName = getVariant().displayName
-    return versionString.contains(variantName)
   }
 }
 
