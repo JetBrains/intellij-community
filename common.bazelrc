@@ -200,6 +200,10 @@ test --test_timeout=60,300,900,14400
 # A workaround for https://github.com/bazelbuild/rules_kotlin/issues/1352
 common --repo_env=ANDROID_HOME=
 
+# Forward NETRC so both Bazel's downloader and Coursier (maven_install use_credentials_from_home_netrc_file)
+# can authenticate to packages.jetbrains.team, e.g. on CI where NETRC points to a file outside $HOME.
+common --repo_env=NETRC
+
 # Use prebuilt protoc instead of building from source, https://protobuf.dev/news/2026-01-16/
 common --incompatible_enable_proto_toolchain_resolution
 common --@protobuf//bazel/toolchains:prefer_prebuilt_protoc=true
