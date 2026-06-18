@@ -2,6 +2,7 @@
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.util.NlsSafe
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus
  * [PluginUpdateSourceId] with `isMarketplace == true` may have various hosts and are considered interchangeable in terms of safety.
  * The use case is the Marketplace proxy provided by IDE Services.
  */
+@Serializable
 @ApiStatus.Internal
 sealed interface PluginUpdateSourceId {
   val host: @NlsSafe String

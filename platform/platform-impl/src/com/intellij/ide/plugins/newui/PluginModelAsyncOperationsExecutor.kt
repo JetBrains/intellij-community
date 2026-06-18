@@ -41,7 +41,7 @@ internal object PluginModelAsyncOperationsExecutor {
           return@withContext
         }
         val result = modelFacade.installOrUpdatePlugin(component, descriptor, null, stateForComponent)
-        pluginUpdateSourceApplier.revertIfNeeded(result)
+        pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
       }
     }.invokeOnCompletion (pluginUpdateSourceApplier::revertIfNeeded)
   }
@@ -115,7 +115,7 @@ internal object PluginModelAsyncOperationsExecutor {
         }
         else {
           val result = modelFacade.installOrUpdatePlugin(component, plugin, updateDescriptor, modalityState)
-          pluginUpdateSourceApplier.revertIfNeeded(result)
+          pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
         }
       }
     }.invokeOnCompletion(pluginUpdateSourceApplier::revertIfNeeded)

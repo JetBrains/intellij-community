@@ -557,6 +557,7 @@ object DefaultUiPluginManagerController : UiPluginManagerController {
           result.pluginsToDisable = pluginEnabler.pluginsToDisable
           result.pluginsToEnable = pluginEnabler.pluginsToEnable
         }
+        result.dependentPluginUpdateSourceIds = operation.dependentPluginUpdateSourceIds
       }
       catch (@Suppress("IncorrectCancellationExceptionHandling") _: ProcessCanceledException) {
         cancel = true
