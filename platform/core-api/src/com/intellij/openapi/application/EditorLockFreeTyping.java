@@ -59,7 +59,7 @@ public final class EditorLockFreeTyping {
   }
 
   public static boolean isReadAccessNeeded(@Nullable VirtualFile virtualFile) {
-    if (isEnabled()) {
+    if (EDT.isCurrentThreadEdt() && isEnabled()) {
       if (isInElfScope(virtualFile)) {
         return false;
       }
