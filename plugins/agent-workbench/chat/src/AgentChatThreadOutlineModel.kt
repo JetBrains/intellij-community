@@ -82,6 +82,7 @@ internal sealed interface AgentChatThreadOutlineId {
 
 internal sealed interface AgentChatThreadOutlineNode {
   val title: @NlsSafe String
+  val timestamp: @NlsSafe String?
   val location: @NlsSafe String?
   val tooltip: @NlsSafe String?
   val icon: Icon?
@@ -92,6 +93,7 @@ internal sealed interface AgentChatThreadOutlineNode {
     @JvmField val status: @NlsSafe String?,
     override val icon: Icon?,
   ) : AgentChatThreadOutlineNode {
+    override val timestamp: @NlsSafe String? get() = null
     override val location: @NlsSafe String? get() = status
     override val tooltip: @NlsSafe String? get() = status
     override val target: AgentChatThreadOutlineTarget? get() = null
@@ -99,6 +101,7 @@ internal sealed interface AgentChatThreadOutlineNode {
 
   data class Item(
     override val title: @NlsSafe String,
+    override val timestamp: @NlsSafe String?,
     override val location: @NlsSafe String?,
     override val tooltip: @NlsSafe String?,
     override val icon: Icon?,
@@ -169,11 +172,16 @@ private fun AgentSessionOutlineItem.toAgentChatThreadOutlineNode(
   file: AgentChatVirtualFile,
   source: AgentSessionSource,
 ): AgentChatThreadOutlineNode.Item {
-  val location = compactThreadOutlineLocation(preview ?: timestampMs?.let(::formatThreadOutlineTimestamp))
+  val timestamp = timestampMs?.let(::formatThreadOutlineTimestamp)
+  val location = compactThreadOutlineLocation(preview)
   return AgentChatThreadOutlineNode.Item(
     title = title.takeIf { it.isNotBlank() } ?: kind.localizedThreadOutlineTitle(),
+    timestamp = timestamp,
     location = location,
-    tooltip = preview ?: timestampMs?.let(::formatThreadOutlineTimestamp),
+    tooltip = buildThreadOutlineTooltip(
+      preview = preview,
+      timestamp = timestampMs?.let(::formatThreadOutlineTimestampTooltip),
+    ),
     icon = threadOutlineIcon(),
     target = AgentChatThreadOutlineTarget(file = file, source = source, item = this),
   )
@@ -209,6 +217,7 @@ internal fun AgentChatVirtualFile.canShowAgentChatThreadOutline(): Boolean {
 
 private data class AgentChatThreadOutlineNodePresentationFingerprint(
   @JvmField val title: String,
+  @JvmField val timestamp: String?,
   @JvmField val location: String?,
   @JvmField val tooltip: String?,
   @JvmField val icon: Icon?,
@@ -217,6 +226,7 @@ private data class AgentChatThreadOutlineNodePresentationFingerprint(
 private fun AgentChatThreadOutlineNode.presentationFingerprint(): AgentChatThreadOutlineNodePresentationFingerprint {
   return AgentChatThreadOutlineNodePresentationFingerprint(
     title = title,
+    timestamp = timestamp,
     location = location,
     tooltip = tooltip,
     icon = icon,
@@ -244,7 +254,17 @@ private fun AgentSessionOutlineItem.isSuccessfulToolResult(): Boolean {
 }
 
 private fun formatThreadOutlineTimestamp(timestamp: Long): String {
-  return AgentChatBundle.message("chat.thread.outline.timestamp", DateFormatUtil.formatPrettyDateTime(timestamp))
+  return DateFormatUtil.formatPrettyDateTime(timestamp)
+}
+
+private fun formatThreadOutlineTimestampTooltip(timestamp: Long): String {
+  return AgentChatBundle.message("chat.thread.outline.timestamp", formatThreadOutlineTimestamp(timestamp))
+}
+
+private fun buildThreadOutlineTooltip(preview: String?, timestamp: String?): String? {
+  return listOfNotNull(preview?.trim()?.takeIf { it.isNotEmpty() }, timestamp)
+    .joinToString("\n")
+    .takeIf { it.isNotEmpty() }
 }
 
 private fun compactThreadOutlineLocation(value: String?): String? {
