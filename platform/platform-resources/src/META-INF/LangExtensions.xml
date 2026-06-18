@@ -1496,6 +1496,9 @@
                  description="Action 'Insert Inline Completion Proposal Line' will also insert leading whitespaces of the next line"
                  defaultValue="true"/>
     <inline.completion.element.manipulator
+      implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionFragmentedElementManipulator"
+      order="first"/>
+    <inline.completion.element.manipulator
       implementation="com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElementManipulator"
       order="last"/>
     <inline.completion.element.manipulator
