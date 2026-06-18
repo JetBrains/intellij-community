@@ -57,10 +57,21 @@ internal class PluginDescriptorSplitModeIconsTest {
           </dependencies>
         </idea-plugin>
       """.trimIndent())
+      createModuleDescriptor("intellij.transitive.frontend", "intellij.transitive.frontend.xml", """
+        <idea-plugin>
+        </idea-plugin>
+      """.trimIndent())
       createModuleDescriptor("module.backend", "module.backend.xml", """
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.backend"/>
+          </dependencies>
+        </idea-plugin>
+      """.trimIndent())
+      createPluginDescriptor("transitive.consumer", """
+        <idea-plugin>
+          <dependencies>
+            <module name="intellij.transitive.frontend"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent())
@@ -69,7 +80,12 @@ internal class PluginDescriptorSplitModeIconsTest {
       assertFileIcon("shared.plugin/resources/META-INF/plugin.xml", Plugin)
       assertFileIcon("module.shared/resources/module.shared.xml", DevkitCoreIcons.SharedModule)
       assertFileIcon("frontend.plugin/resources/META-INF/plugin.xml", DevkitCoreIcons.FrontendModule)
+      assertFileIcon(
+        "intellij.transitive.frontend/resources/intellij.transitive.frontend.xml",
+        DevkitCoreIcons.FrontendModule,
+      )
       assertFileIcon("module.backend/resources/module.backend.xml", DevkitCoreIcons.BackendModule)
+      assertFileIcon("transitive.consumer/resources/META-INF/plugin.xml", Plugin)
     }
     finally {
       IntelliJProjectUtil.markAsIntelliJPlatformProject(project, false)
@@ -86,18 +102,14 @@ internal class PluginDescriptorSplitModeIconsTest {
   }
 
   private fun createFrontendPluginDescriptor(descriptorText: String) {
-    val moduleName = "frontend.plugin"
-    val moduleRoot = projectModel.baseProjectDir.newVirtualDirectory(moduleName)
-    val module = PsiTestUtil.addModule(project, PluginModuleType.getInstance(), moduleName, moduleRoot)
-    val resourcesRoot = projectModel.baseProjectDir.newVirtualDirectory("$moduleName/resources")
-    PsiTestUtil.addSourceRoot(module, resourcesRoot, JavaResourceRootType.RESOURCE)
-    val descriptorFile =
-      projectModel.baseProjectDir.newVirtualFile("$moduleName/resources/META-INF/plugin.xml", descriptorText.toByteArray())
-    PluginBuildConfiguration.getInstance(module)!!.setPluginXmlFromVirtualFile(descriptorFile)
+    createPluginDescriptor("frontend.plugin", descriptorText)
   }
 
   private fun createSharedPluginDescriptor(descriptorText: String) {
-    val moduleName = "shared.plugin"
+    createPluginDescriptor("shared.plugin", descriptorText)
+  }
+
+  private fun createPluginDescriptor(moduleName: String, descriptorText: String) {
     val moduleRoot = projectModel.baseProjectDir.newVirtualDirectory(moduleName)
     val module = PsiTestUtil.addModule(project, PluginModuleType.getInstance(), moduleName, moduleRoot)
     val resourcesRoot = projectModel.baseProjectDir.newVirtualDirectory("$moduleName/resources")
