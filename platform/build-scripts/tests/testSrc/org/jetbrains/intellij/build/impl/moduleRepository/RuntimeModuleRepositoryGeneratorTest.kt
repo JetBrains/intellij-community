@@ -106,6 +106,29 @@ class RuntimeModuleRepositoryGeneratorTest {
   }
 
   @Test
+  fun `plugin with project-level library in a content module`() {
+    addModule("foo.plugin")
+    val fooCore = addModule("foo.core")
+    val lib = project.libraryCollection.addLibrary("lib", JpsJavaLibraryType.INSTANCE)
+    fooCore.dependenciesList.addLibraryDependency(lib)
+    lib.addRoot(getUrl("project/lib"), JpsOrderRootType.COMPILED)
+    val plugin = createHeader("foo.plugin", "foo.core")
+    val distributionEntries = listOf(
+      moduleOutput("foo.plugin"),
+      moduleOutput("foo.core", relativeOutput = "modules/foo.core.jar"),
+      projectLibraryEntry("lib", tempDirectory.rootPath.resolve("lib/modules/foo.core.jar"), "modules/foo.core.jar"),
+    )
+    generateAndCheck(plugin, distributionEntries) {
+      descriptor(legacyJpsModule("foo.plugin"),listOf("../lib/foo.plugin.jar"), emptyList())
+      descriptor(contentModule("foo.core"),listOf("../lib/modules/foo.core.jar"), emptyList())
+      pluginHeader("com.foo.plugin", legacyJpsModule("foo.plugin"),
+                   includedJpsModule("foo.plugin"),
+                   includedContentModule("foo.core"),
+      )
+    }
+  }
+
+  @Test
   fun `two plugins include same project-level library`() {
     val foo = addModule("foo")
     val bar = addModule("bar")
