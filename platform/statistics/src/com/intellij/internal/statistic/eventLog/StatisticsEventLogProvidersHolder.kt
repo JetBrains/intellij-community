@@ -30,9 +30,15 @@ internal class StatisticsEventLogProvidersHolder(coroutineScope: CoroutineScope)
 
   init {
     if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(EP_NAME)) {
-      EP_NAME.addChangeListener(coroutineScope) { eventLoggerProviders.set(calculateEventLogProvider()) }
-      EP_NAME.addChangeListener(coroutineScope) { eventLoggerProvidersExt.set(calculateEventLogProviderExt()) }
+      EP_NAME.addChangeListener(coroutineScope) { updateProviders() }
     }
+    // Must be called after addChangeListener to avoid a race condition
+    updateProviders()
+  }
+
+  private fun updateProviders() {
+    eventLoggerProvidersExt.set(calculateEventLogProviderExt())
+    eventLoggerProviders.set(calculateEventLogProvider())
   }
 
   private fun getOrCreateEmptyProvider(recorderId: String): StatisticsEventLoggerProvider {
