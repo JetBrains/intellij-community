@@ -8,10 +8,12 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -23,6 +25,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
@@ -58,7 +61,6 @@ import javax.swing.JComponent
 import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JRootPane
-import javax.swing.KeyStroke
 import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.RootPaneContainer
 import kotlin.time.Duration.Companion.seconds
@@ -424,13 +426,23 @@ abstract class NonModalWindowWrapper(
     activeWindow.addWindowListener(adapter)
 
     // ESC / Cmd-W: ask the subclass whether it is safe to close.
-    val closeHandler = ActionListener { e ->
+    // Register ESC as an AnAction so that IdeGlassPaneImpl dispatches it before
+    // Swing component-level key bindings (e.g. combo box editor) can consume the event.
+    val escAction = object : AnAction() {
+      override fun actionPerformed(e: AnActionEvent) {
+        if (PopupUtil.handleEscKeyEvent()) return
+        val event = e.inputEvent ?: EventQueue.getCurrentEvent() ?: return
+        if (canClose(event)) close()
+      }
+    }
+    escAction.registerCustomShortcutSet(ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE), rootPane)
+
+    val cmdWHandler = ActionListener { e ->
+      if (PopupUtil.handleEscKeyEvent()) return@ActionListener
       val current = EventQueue.getCurrentEvent()
       if (canClose(current as? KeyEvent ?: e)) close()
     }
-    rootPane.registerKeyboardAction(
-      closeHandler, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW)
-    ActionUtil.registerForEveryKeyboardShortcut(rootPane, closeHandler, CommonShortcuts.getCloseActiveWindow())
+    ActionUtil.registerForEveryKeyboardShortcut(rootPane, cmdWHandler, CommonShortcuts.getCloseActiveWindow())
 
     installAdditionalShortcuts(rootPane)
   }
