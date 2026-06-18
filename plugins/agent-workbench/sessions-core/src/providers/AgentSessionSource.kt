@@ -152,6 +152,15 @@ interface AgentSessionSource {
   val supportsUpdates: Boolean
     get() = false
 
+  /**
+   * True when [activeThreadUpdateEvents] provides a meaningful live stream for the active terminal thread.
+   *
+   * UI consumers should use this gate before wiring active thread update streams so providers with no-op implementations do not
+   * start misleading watches.
+   */
+  val supportsActiveThreadUpdateEvents: Boolean
+    get() = false
+
   val supportsArchivedThreads: Boolean
     get() = false
 

@@ -768,10 +768,10 @@ private fun readFirstTextAndToolUseFromArray(parser: JsonParser): ParsedMessageC
     }
     if (itemType == "tool_use") {
       hasToolUse = true
-      if (isUserInteractionToolName(itemName)) {
+      if (isClaudeUserInteractionToolName(itemName)) {
         needsInputToolUse = true
       }
-      if (isProjectMutatingToolName(itemName)) {
+      if (isClaudeTranscriptProjectMutatingToolName(itemName)) {
         normalizeToolUseId(itemId)?.let { toolUseId ->
           projectMutatingToolUsesById[toolUseId] = preciseProjectFilePathsForToolUse(
             toolName = itemName,
@@ -798,20 +798,6 @@ private fun activityEventForAssistantStopReason(stopReason: String?): ClaudeActi
   return when (stopReason) {
     null, "tool_use", "pause_turn" -> ClaudeActivityEvent.ASSISTANT_IN_PROGRESS
     else -> ClaudeActivityEvent.ASSISTANT_TERMINAL
-  }
-}
-
-private fun isUserInteractionToolName(toolName: String?): Boolean {
-  return when (toolName?.trim()) {
-    "AskUserQuestion", "ExitPlanMode" -> true
-    else -> false
-  }
-}
-
-private fun isProjectMutatingToolName(toolName: String?): Boolean {
-  return when (toolName?.trim()?.lowercase()) {
-    "bash", "edit", "multiedit", "write", "notebookedit" -> true
-    else -> false
   }
 }
 

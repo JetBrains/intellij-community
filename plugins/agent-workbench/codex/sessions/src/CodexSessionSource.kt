@@ -90,6 +90,9 @@ internal class CodexSessionSource internal constructor(
   override val supportsUpdates: Boolean
     get() = true
 
+  override val supportsActiveThreadUpdateEvents: Boolean
+    get() = true
+
   override val supportsArchivedThreads: Boolean
     get() = true
 

@@ -413,6 +413,8 @@ internal class PiSessionSource(
 
   override val supportsUpdates: Boolean get() = true
 
+  override val supportsActiveThreadUpdateEvents: Boolean get() = true
+
   override val supportsArchivedThreads: Boolean get() = true
 
   override val updateEvents: Flow<AgentSessionSourceUpdateEvent> = merge(

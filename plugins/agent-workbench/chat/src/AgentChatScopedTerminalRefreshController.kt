@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -33,6 +34,7 @@ internal fun createAgentChatScopedTerminalRefreshController(
   if (descriptor?.emitsScopedRefreshSignals != true) {
     return null
   }
+  val sessionSource = descriptor.sessionSource
   return AgentChatScopedTerminalRefreshController(
     provider = provider,
     projectPath = file.projectPath,
@@ -41,9 +43,19 @@ internal fun createAgentChatScopedTerminalRefreshController(
     sessionState = tab.sessionState,
     parentScope = tab.coroutineScope,
     activeThreadIdProvider = { file.threadId.takeIf(String::isNotBlank) },
-    activeThreadUpdateEvents = { threadId -> descriptor.sessionSource.activeThreadUpdateEvents(file.projectPath, threadId) },
+    activeThreadUpdateEvents = resolveAgentChatActiveThreadUpdateEvents(sessionSource, file.projectPath),
     emitInitialRefresh = !file.isPendingThread,
   )
+}
+
+internal fun resolveAgentChatActiveThreadUpdateEvents(
+  sessionSource: AgentSessionSource,
+  projectPath: String,
+): ((String) -> Flow<AgentSessionSourceUpdateEvent>)? {
+  if (!sessionSource.supportsActiveThreadUpdateEvents) {
+    return null
+  }
+  return { threadId -> sessionSource.activeThreadUpdateEvents(projectPath, threadId) }
 }
 
 internal fun resolveAgentChatScopedRefreshThreadId(file: AgentChatVirtualFile): String? {
