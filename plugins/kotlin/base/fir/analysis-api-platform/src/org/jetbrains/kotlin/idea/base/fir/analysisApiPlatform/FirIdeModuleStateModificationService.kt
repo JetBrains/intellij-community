@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
@@ -111,9 +112,8 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
             // To ensure that no cached psi with stale stubs/virtual files,
             // it's required to clear caches manually,
             // otherwise opening file which referred the old builtins would let to PIEAE exceptions
-            val jarPath = URLUtil.splitJarUrl(file.path)?.first
-            //MAYBE RC: try (file.fileSystem as ArchiveFileSystem).getLocalByEntry(file) instead of expensive
-            //          file.path building and splitting
+            val rootByEntry = (file.fileSystem as? ArchiveFileSystem)?.getRootByEntry(file) ?: return
+            val jarPath = URLUtil.splitJarUrl(rootByEntry.path)?.first
             if (jarPath != null && jarPath in builtinsFiles) {
                 runWriteAction {
                     PsiManager.getInstance(project).dropPsiCaches()
