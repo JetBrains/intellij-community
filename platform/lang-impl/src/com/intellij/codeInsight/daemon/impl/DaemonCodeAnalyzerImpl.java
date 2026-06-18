@@ -1455,9 +1455,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             }
             // wait for heavy processing to stop, re-schedule daemon but not too soon
             if (heavyProcessIsRunning()) {
-              //noinspection SSBasedInspection
-              r = Registry.is("ide.dumb.mode.check.awareness") ? ContainerUtil.findAllAsArray(r, o -> DumbService.isDumbAware(o)) :
-                  ContainerUtil.findAllAsArray(r, o -> o.isDumbAware() || o instanceof DumbAware);
+              boolean checkAwareness = Registry.is("ide.dumb.mode.check.awareness");
+              r = ContainerUtil.findAllAsArray(r, o -> checkAwareness ? DumbService.isDumbAware(o) : o.isDumbAware() || o instanceof DumbAware);
               if (LOG.isDebugEnabled()) {
                 LOG.debug("submitInBackground: heavyProcessIsRunning=true, so only these passes are created: " + Arrays.toString(r));
               }
