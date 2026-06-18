@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
@@ -60,6 +59,7 @@ import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JRootPane
 import javax.swing.KeyStroke
+import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.RootPaneContainer
 import kotlin.time.Duration.Companion.seconds
 
@@ -304,7 +304,7 @@ abstract class NonModalWindowWrapper(
     init {
       defaultCloseOperation = DO_NOTHING_ON_CLOSE
       background = UIUtil.getPanelBackground()
-      focusTraversalPolicy = IdeFocusTraversalPolicy()
+      focusTraversalPolicy = LayoutFocusTraversalPolicy()
       UIUtil.markAsPossibleOwner(this)
     }
 
@@ -337,7 +337,7 @@ abstract class NonModalWindowWrapper(
     init {
       defaultCloseOperation = DO_NOTHING_ON_CLOSE
       background = UIUtil.getPanelBackground()
-      focusTraversalPolicy = IdeFocusTraversalPolicy()
+      focusTraversalPolicy = LayoutFocusTraversalPolicy()
     }
 
     override fun setSize(width: Int, height: Int) {
