@@ -1062,9 +1062,6 @@ private data class RolloutOutlineParseState(
       rootItems += item
     }
     else {
-      if (turn.title.startsWith("Turn ")) {
-        turn.title = normalizedPreview
-      }
       turn.children += item
       currentPhaseByTurnKey.remove(turn.id)
     }
@@ -1178,6 +1175,7 @@ private data class RolloutOutlineParseState(
         title = "Turn ${turnId.take(8)}",
         preview = null,
         timestampMs = event.timestampMs,
+        visible = false,
       ).also(rootItems::add)
     }
     return turn
@@ -1188,25 +1186,31 @@ private data class RolloutOutlineParseState(
     val turnKey = turn?.id ?: ROOT_OUTLINE_TURN_KEY
     val currentPhase = currentPhaseByTurnKey[turnKey]
     if (currentPhase != null) {
-      currentPhase.kind = AgentSessionOutlineItemKind.AGENT_WORK
       return currentPhase
     }
     if (turn != null) {
-      return turn
+      return newWorkPhase(event).also { work ->
+        turn.children += work
+        currentPhaseByTurnKey[turn.id] = work
+      }
     }
+    return newWorkPhase(event).also { work ->
+      rootItems += work
+      currentPhaseByTurnKey[ROOT_OUTLINE_TURN_KEY] = work
+    }
+  }
+
+  private fun newWorkPhase(event: RolloutEvent): RolloutOutlineItemBuilder {
     return RolloutOutlineItemBuilder(
       id = "work-${nextItemIndex++}",
       kind = AgentSessionOutlineItemKind.AGENT_WORK,
       title = "Agent work",
       preview = null,
       timestampMs = event.timestampMs,
-    ).also { work ->
-      rootItems += work
-      currentPhaseByTurnKey[ROOT_OUTLINE_TURN_KEY] = work
-    }
+    )
   }
 
-  fun buildItems(): List<AgentSessionOutlineItem> = rootItems.map(RolloutOutlineItemBuilder::build)
+  fun buildItems(): List<AgentSessionOutlineItem> = rootItems.flatMap(RolloutOutlineItemBuilder::buildVisible)
 }
 
 private data class RolloutOutlineItemBuilder(
@@ -1216,10 +1220,14 @@ private data class RolloutOutlineItemBuilder(
   @JvmField var preview: String?,
   @JvmField val timestampMs: Long?,
   @JvmField val summarizesChildren: Boolean = false,
+  @JvmField val visible: Boolean = true,
   @JvmField val children: MutableList<RolloutOutlineItemBuilder> = ArrayList(),
 ) {
-  fun build(): AgentSessionOutlineItem {
-    val builtChildren = children.map(RolloutOutlineItemBuilder::build)
+  fun buildVisible(): List<AgentSessionOutlineItem> {
+    val builtChildren = children.flatMap(RolloutOutlineItemBuilder::buildVisible)
+    if (!visible) {
+      return builtChildren
+    }
     return AgentSessionOutlineItem(
       id = id,
       kind = kind,
@@ -1227,7 +1235,7 @@ private data class RolloutOutlineItemBuilder(
       preview = if (summarizesChildren && builtChildren.isNotEmpty()) summarizeOutlineChildren(builtChildren) else preview,
       timestampMs = timestampMs,
       children = builtChildren,
-    )
+    ).let(::listOf)
   }
 }
 

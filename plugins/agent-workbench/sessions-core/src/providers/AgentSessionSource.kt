@@ -40,6 +40,7 @@ data class AgentSessionRefreshHints(
   @JvmField val presentationUpdatesByThreadId: Map<String, AgentSessionThreadPresentationUpdate> = emptyMap(),
 )
 
+/** Result of creating a new thread from an outline item. */
 data class AgentSessionOutlineForkResult(
   @JvmField val thread: AgentSessionThread,
 )
@@ -247,12 +248,25 @@ interface AgentSessionSource {
     threads: List<AgentSessionThread>,
   ): Map<String, AgentSessionCost?> = emptyMap()
 
+  /**
+   * Loads a read-only, role-aware outline for a persisted thread.
+   *
+   * Implementations should read provider history without restoring terminals, driving TUIs, or mutating provider state. Return `null`
+   * when outlines are unsupported or unavailable. Return an [AgentSessionThreadOutline] with an empty item list when the provider
+   * supports outlines but has no visible entries. Item ids must be stable provider anchors when navigation or fork actions are enabled.
+   */
   suspend fun loadThreadOutline(
     path: String,
     threadId: String,
     subAgentId: String? = null,
   ): AgentSessionThreadOutline? = null
 
+  /**
+   * Returns whether [itemId] has a stable live provider anchor that can be navigated to in the current thread context.
+   *
+   * This is not a fallback hook for launching a provider, scraping terminal output, or replaying a TUI selection. Providers that can
+   * only display persisted history should leave navigation unsupported.
+   */
   fun canNavigateThreadOutlineItem(
     path: String,
     threadId: String,
@@ -261,6 +275,7 @@ interface AgentSessionSource {
     tabKey: String? = null,
   ): Boolean = false
 
+  /** Navigates a live provider view to [itemId] when [canNavigateThreadOutlineItem] reports support. */
   suspend fun navigateThreadOutlineItem(
     path: String,
     threadId: String,
@@ -269,6 +284,12 @@ interface AgentSessionSource {
     tabKey: String? = null,
   ): Boolean = false
 
+  /**
+   * Static visibility gate for the outline fork action.
+   *
+   * Return `true` only for item roles that can conceptually be forked, even if the current live provider state may still make the
+   * action unavailable. [canForkThreadFromOutlineItem] is the runtime executable gate.
+   */
   fun canShowThreadOutlineForkAction(
     path: String,
     threadId: String,
@@ -277,6 +298,7 @@ interface AgentSessionSource {
     tabKey: String? = null,
   ): Boolean = false
 
+  /** Runtime gate for forking from [itemId] in the current provider state. */
   fun canForkThreadFromOutlineItem(
     path: String,
     threadId: String,
@@ -285,6 +307,12 @@ interface AgentSessionSource {
     tabKey: String? = null,
   ): Boolean = false
 
+  /**
+   * Creates and opens a provider-specific fork from [itemId].
+   *
+   * Implementations must not mutate the source thread. The returned [AgentSessionOutlineForkResult.thread] should describe the new
+   * thread that callers can select or refresh after the fork completes.
+   */
   suspend fun forkThreadFromOutlineItem(
     project: Project,
     path: String,

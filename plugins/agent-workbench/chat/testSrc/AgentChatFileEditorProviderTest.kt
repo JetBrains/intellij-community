@@ -458,7 +458,7 @@ class AgentChatFileEditorProviderTest {
               ),
               AgentSessionOutlineItem(
                 id = "work-1",
-                kind = AgentSessionOutlineItemKind.AGENT_WORK,
+                kind = AgentSessionOutlineItemKind.ASSISTANT_RESPONSE,
                 title = "I'll inspect the Git operation state",
                 timestampMs = 1_000L,
                 children = listOf(
@@ -504,18 +504,19 @@ class AgentChatFileEditorProviderTest {
           assertThat(model.entriesById.getValue(providerRootId).childIds)
             .containsExactly(AgentChatThreadOutlineId.Item("0/0"), AgentChatThreadOutlineId.Item("0/1"))
           val promptNode = model.entriesById.getValue(AgentChatThreadOutlineId.Item("0/0")).node
-          assertThat(promptNode.title).isEqualTo("User")
+          assertThat(promptNode.title).isEqualTo("user: Resolve the current merge conflicts")
           assertThat(promptNode.icon).isSameAs(AllIcons.General.User)
           assertThat(promptNode.timestamp).isEqualTo(DateFormatUtil.formatPrettyDateTime(2_000L))
-          assertThat(promptNode.location).isEqualTo("Resolve the current merge conflicts")
+          assertThat(promptNode.location).isNull()
           assertThat(promptNode.tooltip).isEqualTo(
             "Resolve the current merge conflicts\n" +
             AgentChatBundle.message("chat.thread.outline.timestamp", DateFormatUtil.formatPrettyDateTime(2_000L))
           )
-          val workNode = model.entriesById.getValue(AgentChatThreadOutlineId.Item("0/1")).node
-          assertThat(workNode.timestamp).isEqualTo(DateFormatUtil.formatPrettyDateTime(1_000L))
-          assertThat(workNode.location).isNull()
-          assertThat(workNode.tooltip)
+          val assistantNode = model.entriesById.getValue(AgentChatThreadOutlineId.Item("0/1")).node
+          assertThat(assistantNode.title).isEqualTo("assistant: I'll inspect the Git operation state")
+          assertThat(assistantNode.timestamp).isEqualTo(DateFormatUtil.formatPrettyDateTime(1_000L))
+          assertThat(assistantNode.location).isNull()
+          assertThat(assistantNode.tooltip)
             .isEqualTo(AgentChatBundle.message("chat.thread.outline.timestamp", DateFormatUtil.formatPrettyDateTime(1_000L)))
           assertThat(model.entriesById.getValue(AgentChatThreadOutlineId.Item("0/1")).childIds)
             .containsExactly(AgentChatThreadOutlineId.Item("0/1/0"))
@@ -566,7 +567,7 @@ class AgentChatFileEditorProviderTest {
         val panel = AgentChatThreadOutlinePanel(project, startSelectionSubscription = false)
         try {
           panel.selectFileForTests(file)
-          waitForCondition { panel.modelForTests().rootNodeTitles() == listOf("Initial prompt") }
+          waitForCondition { panel.modelForTests().rootNodeTitles() == listOf("user: Initial prompt") }
           assertThat(loadCalls.get()).isEqualTo(1)
           waitForCondition { updateEvents.subscriptionCount.value > 0 }
 
@@ -579,7 +580,7 @@ class AgentChatFileEditorProviderTest {
           )
           assertThat(updateEvents.tryEmit(testUpdateEvent())).isTrue()
 
-          waitForCondition { panel.modelForTests().rootNodeTitles() == listOf("Initial prompt", "Assistant reply") }
+          waitForCondition { panel.modelForTests().rootNodeTitles() == listOf("user: Initial prompt", "assistant: Assistant reply") }
           assertThat(loadCalls.get()).isEqualTo(2)
         }
         finally {
@@ -644,7 +645,7 @@ class AgentChatFileEditorProviderTest {
               projectPath = "/work/project-a",
               threadId = "thread-rebound",
             )
-            panel.modelForTests().rootNodeTitles() == listOf("Prompt after rebind")
+            panel.modelForTests().rootNodeTitles() == listOf("user: Prompt after rebind")
           }
           assertThat(loadCalls.get()).isGreaterThanOrEqualTo(1)
         }
@@ -748,7 +749,7 @@ class AgentChatFileEditorProviderTest {
         val panel = AgentChatThreadOutlinePanel(project, startSelectionSubscription = false)
         try {
           panel.selectFileForTests(file)
-          waitForCondition { panel.modelForTests().rootNodeTitles() == listOf("Open entry") }
+          waitForCondition { panel.modelForTests().rootNodeTitles() == listOf("user: Open entry") }
 
           assertThat(panel.navigateOutlineIdForTests(AgentChatThreadOutlineId.Item("0"))).isTrue()
 
@@ -894,7 +895,7 @@ class AgentChatFileEditorProviderTest {
         val panel = AgentChatThreadOutlinePanel(project, startSelectionSubscription = false)
         try {
           panel.selectFileForTests(file)
-          waitForCondition { panel.modelForTests().rootNodeTitles() == listOf("Fork from here") }
+          waitForCondition { panel.modelForTests().rootNodeTitles() == listOf("user: Fork from here") }
           waitForCondition { updateEvents.subscriptionCount.value > 0 }
           val outlineId = AgentChatThreadOutlineId.Item("0")
           assertThat(panel.canShowPopupForOutlineIdForTests(outlineId)).isFalse()

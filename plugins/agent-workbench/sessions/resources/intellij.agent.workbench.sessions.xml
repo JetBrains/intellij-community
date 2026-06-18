@@ -57,7 +57,7 @@
     <toolWindow
       id="agent.workbench.chat.thread.outline"
       anchor="left"
-                icon="AllIcons.Toolwindows.Task"
+      icon="com.intellij.agent.workbench.sessions.icons.AgentWorkbenchSessionsIcons.ThreadOutline"
       secondary="true"
       canCloseContents="false"
       factoryClass="com.intellij.agent.workbench.sessions.frame.AgentChatThreadOutlineToolWindowFactory"/>

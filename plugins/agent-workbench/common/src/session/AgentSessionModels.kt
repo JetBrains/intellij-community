@@ -93,6 +93,14 @@ data class AgentSessionThread(
     get() = activityReport.chromeActivity
 }
 
+/**
+ * Provider-neutral outline for a persisted agent thread.
+ *
+ * This is a role-aware conversation outline, not a dump of provider-specific log records. [items] are the visible roots in provider
+ * history order. Providers should hide bookkeeping containers and expose user prompts, assistant responses, tool activity, plans,
+ * approvals, and summaries with the closest [AgentSessionOutlineItemKind]. A `null` outline from a source means the provider cannot
+ * load an outline for the thread; an empty [items] list means the outline is supported but has no visible entries.
+ */
 data class AgentSessionThreadOutline(
   val provider: AgentSessionProvider,
   @JvmField val threadId: String,
@@ -104,6 +112,15 @@ data class AgentSessionThreadOutline(
     get() = threadId
 }
 
+/**
+ * Visible item in an [AgentSessionThreadOutline].
+ *
+ * [id] must be unique within the outline and stable across reloads for the same provider record. If navigation or fork actions are
+ * enabled for this item, [id] must be a provider/backend anchor rather than a UI ordinal. [kind] is semantic role data and should be
+ * mapped from native provider roles, not chosen for presentation only. [title] is the primary row label; [preview] is supporting text
+ * and may contain the message body when the title is intentionally blank. [children] describe ownership or causality, for example tool
+ * calls and results under the assistant/work item that produced them.
+ */
 data class AgentSessionOutlineItem(
   @JvmField val id: String,
   @JvmField val kind: AgentSessionOutlineItemKind,
@@ -116,6 +133,14 @@ data class AgentSessionOutlineItem(
     get() = timestampMs
 }
 
+/**
+ * Semantic role of an [AgentSessionOutlineItem].
+ *
+ * Providers should map native transcript roles to these values consistently so shared UI and actions can reason about the outline:
+ * user-authored prompts use [USER_PROMPT], assistant text uses [ASSISTANT_RESPONSE], provider processing phases use [AGENT_WORK],
+ * invocations use [TOOL_CALL], their outputs use [TOOL_RESULT], and internal or unknown records should be skipped or mapped to
+ * [METADATA] instead of leaking raw provider event names.
+ */
 enum class AgentSessionOutlineItemKind {
   USER_PROMPT,
   ASSISTANT_RESPONSE,
@@ -129,6 +154,7 @@ enum class AgentSessionOutlineItemKind {
   METADATA,
 }
 
+/** Mutable helper for constructing nested [AgentSessionOutlineItem] trees. */
 class AgentSessionOutlineItemBuilder(
   @JvmField val id: String,
   @JvmField var kind: AgentSessionOutlineItemKind,
@@ -151,6 +177,13 @@ class AgentSessionOutlineItemBuilder(
   }
 }
 
+/**
+ * Flat source record used by [buildAgentSessionOutlineTree].
+ *
+ * [parentId] links provider records before they are converted to visible outline items. Set [visible] to `false` for bookkeeping
+ * containers such as raw turns or sessions; their visible descendants are promoted to the nearest visible ancestor or to the root.
+ * Records with missing, blank, or self-referential parents become roots. Duplicate ids keep the first record.
+ */
 data class AgentSessionOutlineTreeRecord(
   @JvmField val id: String,
   @JvmField val parentId: String?,
@@ -161,6 +194,13 @@ data class AgentSessionOutlineTreeRecord(
   @JvmField val visible: Boolean = true,
 )
 
+/**
+ * Builds a visible outline tree from flat provider records.
+ *
+ * Returned roots and siblings are ordered by [AgentSessionOutlineTreeRecord.timestampMs] when present, then by input order. Invisible
+ * records are not returned, but their visible descendants are preserved and promoted. This lets providers keep raw parent/child
+ * relationships for future navigation while presenting a flat, role-aware conversation timeline.
+ */
 fun buildAgentSessionOutlineTree(records: List<AgentSessionOutlineTreeRecord>): List<AgentSessionOutlineItem> {
   if (records.isEmpty()) {
     return emptyList()
