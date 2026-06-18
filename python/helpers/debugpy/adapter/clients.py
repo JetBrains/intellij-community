@@ -145,6 +145,13 @@ class Client(components.Component):
         return self.server.channel.delegate(request)
 
     @message_handler
+    def setDebuggerProperty_request(self, request):
+        just_my_code = request("justMyCode", bool, optional=True)
+        if just_my_code != () and self.start_request is not None:
+            self.start_request.arguments["justMyCode"] = just_my_code
+        return self.server.channel.delegate(request)
+
+    @message_handler
     def initialize_request(self, request):
         if self._initialize_request is not None:
             raise request.isnt_valid("Session is already initialized")
