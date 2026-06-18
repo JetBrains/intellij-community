@@ -71,6 +71,7 @@
     <platform.rpc.projectRemoteTopicListener
       implementation="com.intellij.terminal.frontend.view.notification.TerminalEnvironmentChangedTopicListener"/>
     <editorAutoClosingHandler implementation="com.intellij.terminal.frontend.editor.TerminalViewEditorAutoClosingHandler"/>
+    <backgroundPostStartupActivity implementation="com.intellij.terminal.frontend.toolwindow.impl.TerminalProcessesClosingNotifierInstaller"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.terminal">
@@ -224,4 +225,8 @@
     <listener class="com.intellij.terminal.frontend.toolwindow.impl.ExperimentalTerminalMigrationNotifier"
               topic="com.intellij.terminal.frontend.toolwindow.TerminalTabsManagerListener"/>
   </projectListeners>
+  <applicationListeners>
+    <listener class="com.intellij.terminal.frontend.toolwindow.impl.TerminalProcessesClosingNotifierInstaller"
+              topic="com.intellij.ide.AppLifecycleListener"/>
+  </applicationListeners>
 </idea-plugin>

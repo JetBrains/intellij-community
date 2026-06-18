@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.terminal.frontend.toolwindow.TerminalToolWindowTabsManager
 import com.intellij.terminal.frontend.toolwindow.findTabByContent
+import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import com.intellij.ui.content.Content
 import org.jetbrains.plugins.terminal.TerminalTabCloseListener
@@ -19,19 +20,8 @@ internal class TerminalTabCloseListenerImpl private constructor(
   override fun shouldConfirmClosing(content: Content): Boolean {
     val terminalView = TerminalToolWindowTabsManager.getInstance(myProject).findTabByContent(content)?.view
                        ?: return false
-
-    if (terminalView.sessionState.value != TerminalViewSessionState.Running) {
-      return false
-    }
-
-    val startupOptions = terminalView.startupOptionsDeferred.getNow()
-    if (startupOptions?.processType == TerminalProcessType.NON_SHELL) {
-      // If some non-shell process is running, consider that confirmation for closing is required.
-      return true
-    }
-
     return runWithModalProgressBlocking(myProject, "") {
-      terminalView.hasChildProcesses()
+      shouldConfirmClosing(terminalView)
     }
   }
 
@@ -39,6 +29,18 @@ internal class TerminalTabCloseListenerImpl private constructor(
     @JvmStatic
     fun install(content: Content, project: Project, parentDisposable: Disposable) {
       TerminalTabCloseListenerImpl(content, project, parentDisposable)
+    }
+
+    suspend fun shouldConfirmClosing(view: TerminalView): Boolean {
+      if (view.sessionState.value != TerminalViewSessionState.Running) {
+        return false
+      }
+      val startupOptions = view.startupOptionsDeferred.getNow()
+      if (startupOptions?.processType == TerminalProcessType.NON_SHELL) {
+        // If some non-shell process is running, consider that confirmation for closing is required.
+        return true
+      }
+      return view.hasChildProcesses()
     }
   }
 }
