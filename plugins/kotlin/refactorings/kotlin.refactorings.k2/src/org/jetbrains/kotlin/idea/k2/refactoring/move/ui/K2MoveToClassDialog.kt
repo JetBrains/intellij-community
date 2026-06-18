@@ -59,19 +59,19 @@ class K2MoveToClassDialog(
         /**
          * Move without conversion: don't try to find an instance for the new dispatch receiver
          */
-        MOVE_TO_CLAS_UNCHANGED
+        MOVE_TO_CLASS_UNCHANGED
     }
 
     private val propertyGraph = PropertyGraph()
     private val modeProperty = propertyGraph.property(
-        initial = if (candidates.isEmpty()) Mode.MOVE_TO_CLAS_UNCHANGED else Mode.CONVERT_PARAMETER_TO_DISPATCH_RECEIVER
+        initial = if (candidates.isEmpty()) Mode.MOVE_TO_CLASS_UNCHANGED else Mode.CONVERT_PARAMETER_TO_DISPATCH_RECEIVER
     )
     private var mode: Mode by modeProperty
 
     /**
      * Class chooser is disabled and automatically filled for [Mode.CONVERT_PARAMETER_TO_DISPATCH_RECEIVER].
      */
-    private val classChooserPredicate = AtomicBooleanProperty(mode == Mode.MOVE_TO_CLAS_UNCHANGED)
+    private val classChooserPredicate = AtomicBooleanProperty(mode == Mode.MOVE_TO_CLASS_UNCHANGED)
 
     private val candidateList: JBList<TargetClassCandidateParameter> = object : JBList<TargetClassCandidateParameter>(candidates) {
         // A workaround for the empty list that doesn't react to `visibleRowCont` and shows the default 8 rows regardless
@@ -135,7 +135,7 @@ class K2MoveToClassDialog(
                 layout(RowLayout.LABEL_ALIGNED)
                 radioButton(
                     text = KotlinBundle.message("label.text.qualified.name"),
-                    value = Mode.MOVE_TO_CLAS_UNCHANGED,
+                    value = Mode.MOVE_TO_CLASS_UNCHANGED,
                 ).align(AlignY.TOP).applyToComponent {
                     border = JBUI.Borders.emptyTop(UIUtil.DEFAULT_VGAP)
                     addItemListener {
@@ -172,7 +172,7 @@ class K2MoveToClassDialog(
                 }
             }
 
-            Mode.MOVE_TO_CLAS_UNCHANGED -> moveToClass(functionToMove, targetClass)
+            Mode.MOVE_TO_CLASS_UNCHANGED -> moveToClass(functionToMove, targetClass)
         }
     }
 
