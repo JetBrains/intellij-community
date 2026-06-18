@@ -46,7 +46,15 @@ class ClaudeExistingThreadPromptLaunchIntegrationTest {
     val startupLaunchSpec = checkNotNull(observation.startupLaunchSpecOverride)
 
     assertThat(startupLaunchSpec.command).containsExactly(
-      "claude", "--resume", EXISTING_THREAD_ID, "--permission-mode", "plan", "--", observation.initialPromptMessage
+      "claude",
+      "--resume",
+      EXISTING_THREAD_ID,
+      "--settings",
+      testHookSettingsArgument(EXISTING_THREAD_ID),
+      "--permission-mode",
+      "plan",
+      "--",
+      observation.initialPromptMessage,
     )
   }
 }
@@ -66,8 +74,11 @@ private fun descriptor(): ClaudeAgentSessionProviderDescriptor {
     ),
     executableResolver = { ClaudeCliSupport.CLAUDE_COMMAND },
     cliAvailableProbe = { true },
+    hookSettingsProvider = ::testHookSettingsArgument,
   )
 }
+
+private fun testHookSettingsArgument(sessionId: String): String = "/tmp/agent-workbench-claude-hooks-$sessionId.json"
 
 private const val PROJECT_PATH: String = "/work/project-a"
 private const val EXISTING_THREAD_ID: String = "thread-existing"

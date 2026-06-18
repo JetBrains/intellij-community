@@ -21,6 +21,7 @@ class ClaudeNewThreadPromptLaunchIntegrationTest {
         sessionSource = ScriptedSessionSource(provider = AgentSessionProvider.CLAUDE),
         executableResolver = { ClaudeCliSupport.CLAUDE_COMMAND },
         cliAvailableProbe = { true },
+        hookSettingsProvider = ::testHookSettingsArgument,
       ),
       request = newThreadPromptLaunchRequest(
         provider = AgentSessionProvider.CLAUDE,
@@ -31,9 +32,19 @@ class ClaudeNewThreadPromptLaunchIntegrationTest {
     val sessionId = checkNotNull(observation.launchSpec.preallocatedSessionId)
 
     assertThat(observation.startupLaunchSpecOverride?.command).containsExactly(
-      "claude", "--session-id", sessionId, "--permission-mode", "plan", "--", observation.initialPromptMessage
+      "claude",
+      "--session-id",
+      sessionId,
+      "--settings",
+      testHookSettingsArgument(sessionId),
+      "--permission-mode",
+      "plan",
+      "--",
+      observation.initialPromptMessage,
     )
   }
 }
+
+private fun testHookSettingsArgument(sessionId: String): String = "/tmp/agent-workbench-claude-hooks-$sessionId.json"
 
 private const val PROJECT_PATH: String = "/work/project-a"
