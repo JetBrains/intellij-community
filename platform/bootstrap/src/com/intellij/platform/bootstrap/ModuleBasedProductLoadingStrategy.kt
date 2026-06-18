@@ -53,7 +53,10 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       error("'$PLATFORM_ROOT_MODULE_PROPERTY' system property is not specified")
     }
 
-    val rootModule = moduleRepository.getModule(RuntimeModuleId.legacyJpsModule(rootModuleId))
+    val rootModule = moduleRepository.findModuleHeader(RuntimeModuleId.legacyJpsModule(rootModuleId))
+    if (rootModule == null) {
+      error("Root module '$rootModuleId' is not found in the module repository")
+    }
     val productModulesPath = "META-INF/$rootModuleId/product-modules.xml"
     val moduleGroupStream = rootModule.readFile(productModulesPath)
     if (moduleGroupStream == null) {
