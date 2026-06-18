@@ -15,7 +15,7 @@ import java.awt.event.InputEvent
  * @param keyModifier a modifier key that is used to toggle the breakpoint on/off. When pressed,
  *   the IDE only suggests placement/removal of a breakpoint of that type.
  */
-@ApiStatus.Experimental
+@ApiStatus.Internal
 @Serializable
 enum class XLineBreakpointVerticalPlacement(val keyModifier: Int) {
   /**

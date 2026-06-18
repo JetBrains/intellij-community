@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.breakpoints
 
+import org.jetbrains.annotations.ApiStatus
+
 /**
  * Initial line breakpoint state that must be applied before the breakpoint is registered and
  * [XBreakpointListener.breakpointAdded] observers can see it.
@@ -13,7 +15,7 @@ package com.intellij.xdebugger.breakpoints
  * @param isTemporary whether the breakpoint should be removed once hit
  */
 class XLineBreakpointAdditionalInfo private constructor(
-  val verticalPlacement: XLineBreakpointVerticalPlacement,
+  @ApiStatus.Internal val verticalPlacement: XLineBreakpointVerticalPlacement,
   val suspendPolicy: SuspendPolicy?,
   val logExpressionIfEnabled: String?,
   val isTemporary: Boolean,
@@ -29,6 +31,7 @@ class XLineBreakpointAdditionalInfo private constructor(
       return XLineBreakpointAdditionalInfo(verticalPlacement, suspendPolicy, logExpressionIfEnabled, isTemporary)
     }
 
+    @ApiStatus.Internal
     fun setVerticalPlacement(verticalPlacement: XLineBreakpointVerticalPlacement): Builder {
       this@Builder.verticalPlacement = verticalPlacement
       return this

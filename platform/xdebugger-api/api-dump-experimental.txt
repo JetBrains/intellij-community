@@ -44,17 +44,6 @@ com.intellij.xdebugger.breakpoints.XBreakpointListener
 - java.util.EventListener
 - *:breakpointError(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.XDebugSession,com.intellij.xdebugger.BreakpointErrorData):V
 - *:breakpointLogMessage(com.intellij.xdebugger.breakpoints.XBreakpoint,com.intellij.xdebugger.XDebugSession,java.lang.String):V
-*e:com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
-- java.lang.Enum
-- *sf:Companion:com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement$Companion
-- sf:INTER_LINE:com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
-- sf:ON_LINE:com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
-- s:getEntries():kotlin.enums.EnumEntries
-- f:getKeyModifier():I
-- s:valueOf(java.lang.String):com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement
-- s:values():com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement[]
-*f:com.intellij.xdebugger.breakpoints.XLineBreakpointVerticalPlacement$Companion
-- f:serializer():kotlinx.serialization.KSerializer
 a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - *:isEvaluateExpressionFieldEnabled():Z
 *:com.intellij.xdebugger.frame.XDropFrameHandler
