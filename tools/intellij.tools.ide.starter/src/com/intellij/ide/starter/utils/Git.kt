@@ -225,11 +225,11 @@ object Git {
   }
 
 
-  fun checkout(repositoryDirectory: Path, branchName: String = "") {
+  fun checkout(repositoryDirectory: Path, branchName: String) {
+    require(branchName.isNotEmpty()) { "Branch name should not be empty" }
     val cmdName = "git-checkout"
 
-    val arguments = mutableListOf("git", "checkout")
-    if (branchName.isNotEmpty()) arguments.add(branchName)
+    val arguments = mutableListOf("git", "checkout", branchName)
 
     ProcessExecutor(
       presentableName = cmdName,
@@ -238,6 +238,24 @@ object Git {
       args = arguments,
       stdoutRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
       stderrRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
+  fun checkoutNewBranch(repositoryDirectory: Path, branchName: String) {
+    require(branchName.isNotEmpty()) { "Branch name should not be empty" }
+    val cmdName = "git-checkout-new-branch"
+    val stdout = ExecOutputRedirect.ToString()
+
+    val arguments = mutableListOf("git", "checkout", "-b", branchName)
+
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = repositoryDirectory.toAbsolutePath(),
+      timeout = 10.minutes,
+      args = arguments,
+      stdoutRedirect = stdout,
+      stderrRedirect = stdout,
       onlyEnrichExistedEnvVariables = true
     ).start()
   }
@@ -312,6 +330,45 @@ object Git {
       args = listOf("git", "add", "*"),
       stdoutRedirect = stdout
     ).start()
+  }
+
+  fun add(workDir: Path, filePath: String) {
+    require(filePath.isNotEmpty()) { "File path should not be empty" }
+
+    val cmdName = "git-add"
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = workDir,
+      timeout = 1.minutes,
+      args = buildList {
+        add("git")
+        add("add")
+        add(filePath)
+      },
+      stdoutRedirect = stdout,
+      stderrRedirect = stdout,
+    ).start()
+  }
+
+  fun commit(workDir: Path, message: String): String {
+    require(message.isNotEmpty()) { "Message should not be empty" }
+
+    val cmdName = "git-commit"
+    val stdout = ExecOutputRedirect.ToString()
+    val arguments = mutableListOf("git", "commit", "-m", message)
+
+    ProcessExecutor(
+      presentableName = cmdName,
+      workDir = workDir.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = arguments,
+      stdoutRedirect = stdout,
+      stderrRedirect = stdout,
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+
+    return getLocalCurrentCommitHash(workDir)
   }
 
   fun pruneWorktree(pathToDir: Path) {
@@ -516,4 +573,3 @@ object Git {
   }
 
 }
-
