@@ -19,7 +19,7 @@ import com.jetbrains.fus.reporting.api.ValidationResultType
 import kotlinx.coroutines.CoroutineScope
 
 internal object McpServerCounterUsagesCollector : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("mcpserver.events", 4)
+  private val GROUP = EventLogGroup("mcpserver.events", 5)
 
   private val MCP_TOOL_CALL_EVENT: EventId1<String> = GROUP.registerEvent(
     "mcp.tool.call",
@@ -62,7 +62,7 @@ internal object McpServerCounterUsagesCollector : CounterUsagesCollector() {
   private val CLIENT_VERSION = EventFields.StringValidatedByRegexpReference("client_version", "version")
   private val TRANSPORT_TYPE = EventFields.Enum<TransportType>("transport_type")
   private val HAS_LOCAL_AGENT = EventFields.Boolean("has_local_agent")
-  private val TOOLS_COUNT = EventFields.Int("tools_count")
+  private val TOOLS_COUNT = EventFields.RoundedInt("tools_count")
 
   private val SESSION_STARTED_EVENT: VarargEventId = GROUP.registerVarargEvent(
     "mcp.session.started",
