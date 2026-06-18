@@ -1,15 +1,11 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.syncAction.impl
 
-import com.intellij.build.FilePosition
-import com.intellij.build.events.BuildIssueEvent
-import com.intellij.build.events.MessageEvent
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailure
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
 import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeOrdered
 import com.intellij.openapi.externalSystem.autolink.mapExtensionSafe
-import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent
 import com.intellij.openapi.externalSystem.util.ExternalSystemTelemetryUtil
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.platform.backend.workspace.workspaceModel
@@ -20,19 +16,14 @@ import com.intellij.platform.workspace.storage.toBuilder
 import com.intellij.util.application
 import io.opentelemetry.api.trace.Tracer
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.plugins.gradle.issue.GradleIssueChecker
-import org.jetbrains.plugins.gradle.issue.GradleIssueData
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure
 import org.jetbrains.plugins.gradle.service.modelAction.GradleModelFetchActionListener
-import org.jetbrains.plugins.gradle.service.project.BaseProjectImportErrorHandler.getErrorFilePosition
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncExtension
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncListener
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import java.nio.file.Path
 import java.util.TreeSet
 
 private val TELEMETRY: Tracer
@@ -166,51 +157,17 @@ private class GradleSyncActionRunner {
 }
 
 @Internal
-@VisibleForTesting
-class GradleSyncFailureHandler {
+const val GRADLE_SYNC_FAILURE_GROUP: String = "gradle.sync.failure.group"
 
-  private val processedFailures = HashSet<GradleModelFetchFailure>()
-  private val processedIssueKeys = HashSet<IssueKey>()
+private class GradleSyncFailureHandler {
 
   fun reportSyncFailures(context: ProjectResolverContext, failures: List<GradleModelFetchFailure>) {
     for (failure in failures) {
-      if (processedFailures.add(failure)) {
-        val issueData = createIssueData(context, failure)
-        reportMessageEvent(context, issueData)
-        reportBuildIssueEvent(context, issueData)
-      }
+      context.reporter.failure(createIssueFailure(failure))
+        .withSuppressed(true)
+        .withGroup(GRADLE_SYNC_FAILURE_GROUP)
+        .report()
     }
-  }
-
-  private fun reportMessageEvent(context: ProjectResolverContext, issueData: GradleIssueData) {
-    val failureMessage = issueData.failure.message ?: return
-    val failureEvent = MessageEvent.builder(failureMessage, MessageEvent.Kind.ERROR)
-      .withDescription(issueData.failure.description ?: failureMessage)
-      .withParentId(context.taskId)
-      .withFilePosition(issueData.filePosition)
-      .build()
-    context.listener.onStatusChange(ExternalSystemBuildEvent(context.taskId, failureEvent))
-  }
-
-  private fun reportBuildIssueEvent(context: ProjectResolverContext, issueData: GradleIssueData) {
-    val issues = GradleIssueChecker.getKnownIssuesCheckList().mapNotNull { it.check(issueData) }
-    for (issue in issues) {
-      val issueKey = IssueKey(issue.title, issue.description, issueData.filePosition)
-      if (processedIssueKeys.add(issueKey)) {
-        val issueEvent = BuildIssueEvent.builder(issue, MessageEvent.Kind.ERROR)
-          .withParentId(context.taskId)
-          .withFilePosition(issueData.filePosition)
-          .build()
-        context.listener.onStatusChange(ExternalSystemBuildEvent(context.taskId, issueEvent))
-      }
-    }
-  }
-
-  private fun createIssueData(context: ProjectResolverContext, failure: GradleModelFetchFailure): GradleIssueData {
-    val projectRoot = Path.of(context.projectPath)
-    val issueFailure = createIssueFailure(failure)
-    val filePosition = getErrorFilePosition(issueFailure, projectRoot)
-    return GradleIssueData.createIssueData(projectRoot, issueFailure, context.buildEnvironment, filePosition)
   }
 
   private fun createIssueFailure(failure: GradleModelFetchFailure): GradleIssueFailure =
@@ -219,10 +176,4 @@ class GradleSyncFailureHandler {
       description = failure.description,
       causes = failure.causes.map { createIssueFailure(it) }
     )
-
-  private data class IssueKey(
-    val title: String,
-    val description: String,
-    val filePosition: FilePosition?,
-  )
 }

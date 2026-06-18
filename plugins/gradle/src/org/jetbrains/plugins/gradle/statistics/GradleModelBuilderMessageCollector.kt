@@ -6,16 +6,18 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
-import org.jetbrains.plugins.gradle.tooling.Message
+import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.plugins.gradle.service.syncAction.impl.GRADLE_SYNC_FAILURE_GROUP
 
+@Internal
 object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 20)
+  private val GROUP: EventLogGroup = EventLogGroup("build.gradle.errors", 21)
 
   private val ACTIVITY_ID = EventFields.Long("ide_activity_id")
-  private val MESSAGE_KIND = EventFields.Enum<Message.Kind>("message_kind")
+  private val MESSAGE_KIND = EventFields.Enum<FailureKind>("message_kind")
   private val MESSAGE_GROUP = EventFields.String("message_group", listOf(
     Messages.PROJECT_MODEL_GROUP,
 
@@ -65,12 +67,17 @@ object GradleModelBuilderMessageCollector : CounterUsagesCollector() {
     Messages.ANNOTATION_PROCESSOR_MODEL_GROUP,
     Messages.PROJECT_EXTENSION_MODEL_GROUP,
     Messages.VERSION_CATALOG_MODEL_GROUP,
+
+    GRADLE_SYNC_FAILURE_GROUP,
   ))
 
   private val MODEL_BUILDER_MESSAGE_RECEIVED_EVENT = GROUP.registerEvent("model.builder.message.received", ACTIVITY_ID, MESSAGE_KIND, MESSAGE_GROUP)
 
-  @JvmStatic
-  fun logModelBuilderMessage(project: Project?, activityId: Long, message: Message) {
-    MODEL_BUILDER_MESSAGE_RECEIVED_EVENT.log(project, activityId, message.kind, message.group)
+  fun logFailure(project: Project?, activityId: Long, kind: FailureKind, group: String) {
+    MODEL_BUILDER_MESSAGE_RECEIVED_EVENT.log(project, activityId, kind, group)
+  }
+
+  enum class FailureKind {
+    ERROR, WARNING, INFO
   }
 }

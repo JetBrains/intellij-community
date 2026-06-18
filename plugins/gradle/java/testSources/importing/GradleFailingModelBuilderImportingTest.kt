@@ -23,10 +23,12 @@ class GradleFailingModelBuilderImportingTest : BuildViewMessagesImportingTestCas
       }
     }
     assertSyncViewNode("root project 'project': Test import errors") {
-      assertThat(it).startsWith("Unable to import Test model\n" +
-                                "\n" +
-                                "java.lang.RuntimeException: Boom! '\"{}}\n\t\n" +
-                                "\tat org.jetbrains.plugins.gradle.tooling.builder.FailingTestModelBuilder.buildAll(FailingTestModelBuilder.java:")
+      assertThat(it).startsWith("""
+        |Unable to import Test model
+        |
+        |java.lang.RuntimeException: Boom! '"{}}${'\n'}${'\t'}
+        |${'\t'}at org.jetbrains.plugins.gradle.tooling.builder.FailingTestModelBuilder.buildAll(FailingTestModelBuilder.java:
+      """.trimMargin())
     }
   }
 

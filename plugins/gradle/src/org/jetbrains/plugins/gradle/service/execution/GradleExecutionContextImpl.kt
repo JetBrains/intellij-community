@@ -20,16 +20,11 @@ open class GradleExecutionContextImpl(
   override val cancellationToken: CancellationToken,
 ) : GradleExecutionContext, UserDataHolderBase() {
 
-  override val project: Project
-    get() = taskId.project
+  override val project: Project by taskId::project
 
   private var _buildEnvironment: BuildEnvironment? = null
-
-  val buildEnvironmentOrNull: BuildEnvironment?
-    get() = _buildEnvironment
-
   override var buildEnvironment: BuildEnvironment
-    get() = checkNotNull(_buildEnvironment) {
+    get() = checkNotNull(buildEnvironmentOrNull) {
       "The Gradle Daemon connection wasn't acquired for $taskId.\n" +
       "See [org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper#execute] from more details."
     }
@@ -37,8 +32,13 @@ open class GradleExecutionContextImpl(
       _buildEnvironment = value
     }
 
+  val buildEnvironmentOrNull: BuildEnvironment? by ::_buildEnvironment
+
   override val gradleVersion: GradleVersion
     get() = GradleVersion.version(buildEnvironment.gradle.gradleVersion)
+
+  private var _reporter: GradleExecutionReporter = GradleExecutionReporterImpl(this)
+  override val reporter: GradleExecutionReporter by ::_reporter
 
   constructor(context: GradleExecutionContextImpl) :
     this(context, context.projectPath, GradleExecutionSettings(context.settings))
@@ -51,6 +51,7 @@ open class GradleExecutionContextImpl(
     projectPath, context.taskId, settings, context.listener, context.cancellationToken
   ) {
     context.copyUserDataTo(this)
+    this._reporter = context._reporter
     this._buildEnvironment = context._buildEnvironment
   }
 }
