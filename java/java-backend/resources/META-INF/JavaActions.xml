@@ -1,5 +1,11 @@
 <idea-plugin visibility="public">
   <resource-bundle>messages.ActionsBundle</resource-bundle>
+  <dependencies>
+    <!-- ProjectFromVersionControl uses GetFromVersionControlAction from the VCS implementation module.
+         JavaActions defines product-specific placement for the action, so it must declare the VCS
+         content module directly instead of relying on a platform-level alias action. -->
+    <module name="intellij.platform.vcs.impl"/>
+  </dependencies>
   <actions>
     <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirAction"
             icon="AllIcons.Actions.ModuleDirectory">
@@ -22,7 +28,9 @@
           <add-to-group group-id="ProjectWidget.Actions" anchor="first"/>
         </action>
         <action id="ImportProject" class="com.intellij.ide.actions.ImportProjectAction"/>
-        <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.ProjectFromVersionControlAction">
+        <!-- Keep the product action definition here: Java customization owns this placement, while
+             the implementation class is supplied by intellij.platform.vcs.impl after VCS pluginization. -->
+        <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction">
           <override-text place="ProjectWidgetPopup"/>
           <add-to-group group-id="ProjectWidget.Actions"/>
         </action>
