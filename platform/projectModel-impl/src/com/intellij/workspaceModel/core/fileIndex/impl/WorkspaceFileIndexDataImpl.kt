@@ -33,6 +33,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.util.CollectionQuery
 import com.intellij.util.Query
+import com.intellij.util.SmartList
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.CollectionFactory
@@ -215,7 +216,7 @@ internal class WorkspaceFileIndexDataImpl(
             if (storedKindMask == StoredFileSetKindMask.ACCEPTED_FILE_SET) {
               return@addMeasuredTime storedFileSets as WorkspaceFileInternalInfo
             }
-            val acceptedFileSets = ArrayList<WorkspaceFileSetImpl>()
+            val acceptedFileSets = SmartList<WorkspaceFileSetImpl>()
             //copy a mutable variable used from lambda to a 'val' to ensure that kotlinc won't wrap it into IntRef
             val currentKindMask = acceptedKindsMask
             //this should be a rare case, so it's ok to use less optimal code here and check 'isUnloaded' again
