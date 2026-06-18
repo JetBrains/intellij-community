@@ -22,9 +22,14 @@ internal class PluginUpdateSourceApplier(private val pluginModel: PluginUiModel)
     }
   }
 
-  fun revertIfNeeded(result: InstallPluginResult?) {
+  fun applyPluginUpdateSourcesBasedOnResult(result: InstallPluginResult?) {
     if (result == null || !result.success) {
       revertApplyingPluginUpdateSourceId()
+    }
+    else {
+      result.dependentPluginUpdateSourceIds.filter { it.key != pluginModel.pluginId }.forEach { (id, sourceId) ->
+        PluginUpdateSourceService.getInstance().setPluginUpdateSourceId(id, sourceId)
+      }
     }
   }
 

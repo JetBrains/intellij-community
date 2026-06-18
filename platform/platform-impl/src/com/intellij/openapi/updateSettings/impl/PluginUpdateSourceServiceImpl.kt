@@ -43,14 +43,7 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
   }
 
   override fun setPluginUpdateSourceId(plugin: PluginUiModel) {
-    setPluginUpdateSourceId(plugin.pluginId, plugin.repositoryName)
-  }
-
-  private fun setPluginUpdateSourceId(pluginId: PluginId, host: String?) {
-    if (!isFunctionalitySupported()) {
-      return
-    }
-    setPluginUpdateSourceId(pluginId, createRepository(host))
+    setPluginUpdateSourceId(plugin.pluginId, createRepository(plugin))
   }
 
   override fun erasePluginUpdateSourceId(pluginId: PluginId) {
@@ -119,6 +112,10 @@ internal fun createRepository(initialHost: String?): PluginUpdateSourceId {
   var host = initialHost ?: MarketplaceCustomizationService.getInstance().getPluginDownloadUrl()
   host = UriUtil.trimParameters(host).trimEnd('/')
   return Repository(host, isMarketplace)
+}
+
+internal fun createRepository(model: PluginUiModel): PluginUpdateSourceId {
+  return createRepository(model.repositoryName)
 }
 
 private fun PluginUpdateSourceId.toRepository(): Repository {

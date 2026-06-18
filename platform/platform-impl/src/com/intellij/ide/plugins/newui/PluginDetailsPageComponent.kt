@@ -542,7 +542,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
             descriptorForActions!!, updateDescriptor,
             modalityState,
           )
-          pluginUpdateSourceApplier.revertIfNeeded(result)
+          pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
         }
       }
     }.invokeOnCompletion(pluginUpdateSourceApplier::revertIfNeeded)
@@ -1629,7 +1629,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       pluginUpdateSourceApplier.applyPluginUpdateSourceId()
       val modalityState = ModalityState.stateForComponent(installButton!!.getComponent())
       val result = pluginModel.installOrUpdatePlugin(this@PluginDetailsPageComponent, plugin!!, null, modalityState)
-      pluginUpdateSourceApplier.revertIfNeeded(result)
+      pluginUpdateSourceApplier.applyPluginUpdateSourcesBasedOnResult(result)
     }.invokeOnCompletion(pluginUpdateSourceApplier::revertIfNeeded)
   }
 
