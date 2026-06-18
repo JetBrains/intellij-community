@@ -12,7 +12,8 @@ class Ctx2
 context(
     a: A,
     b: B,
-    ctx2: Ctx2)
+    ctx2: Ctx2
+)
 fun f1() {
 }
 
