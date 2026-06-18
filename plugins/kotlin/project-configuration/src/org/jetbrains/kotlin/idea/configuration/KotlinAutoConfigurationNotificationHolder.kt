@@ -11,21 +11,19 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.vcs.changes.Change
-import org.jetbrains.kotlin.idea.configuration.ui.changes.KotlinConfiguratorChangesDialog
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import java.awt.Desktop
 import java.net.URI
 
 abstract class KotlinAutoConfigurationNotificationHolder(private val project: Project) : Disposable {
 
-    private class NotificationData(val changes: List<Change>)
+    private class NotificationData(val changes: List<KotlinConfiguratorChangedFile>)
 
     private var shownNotification: Notification? = null
     private var notificationData: NotificationData? = null
 
 
-    fun showAutoConfiguredNotification(moduleName: String?, changes: List<Change>?) {
+    fun showAutoConfiguredNotification(moduleName: String?, changes: List<KotlinConfiguratorChangedFile>?) {
         // shownNotification should never be non-null here as we should only ever have one notification at a time.
         // If more are shown then this is a leak of the notification somewhere in our code.
         shownNotification?.expire()
@@ -48,7 +46,7 @@ abstract class KotlinAutoConfigurationNotificationHolder(private val project: Pr
                 type = NotificationType.INFORMATION,
             )
         notification.addAction(undoAction(project))
-        if (changes != null) {
+        if (changes != null && KotlinConfiguratorChangesViewer.getInstance() != null) {
             notification.addAction(viewAppliedChangesAction(changes))
         }
         notification.notify(project)
@@ -138,10 +136,10 @@ abstract class KotlinAutoConfigurationNotificationHolder(private val project: Pr
         expireNotificationIfConfigured()
     }
 
-    private fun viewAppliedChangesAction(changes: List<Change>) = NotificationAction.create(
+    private fun viewAppliedChangesAction(changes: List<KotlinConfiguratorChangedFile>) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("view.code.differences.action")
     ) { _, _ ->
-        KotlinConfiguratorChangesDialog(project, changes)
+        KotlinConfiguratorChangesViewer.getInstance()?.showChanges(project, changes)
     }
 
 

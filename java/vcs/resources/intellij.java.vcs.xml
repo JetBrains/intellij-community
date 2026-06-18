@@ -1,14 +1,76 @@
 <idea-plugin>
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.platform.backend"/>
-    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+    <module name="intellij.java"/>
+    <module name="intellij.java.compiler.impl"/>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.java.debugger.impl"/>
     <module name="intellij.java.execution"/>
+    <module name="intellij.java.execution.impl"/>
+    <module name="intellij.java.frontback.psi"/>
+    <module name="intellij.java.impl"/>
+    <module name="intellij.java.indexing"/>
     <module name="intellij.java.psi"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.libraries.test.discovery"/>
+    <module name="intellij.platform.smRunner"/>
+    <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.vcs.impl"/>
-    <!-- endregion -->
+    <module name="intellij.platform.vcs.impl.lang"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
   </dependencies>
+  <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
+    <!--
+      The affected-unloaded-modules compiler check is a commit workflow integration. Keeping it in the Java VCS
+      content module preserves the full IDE check-in behavior without making Java Core Language Server load VCS UI.
+    -->
+    <checkinHandlerFactory implementation="com.intellij.compiler.impl.vcs.UnloadedModulesCompilationCheckinHandler$Factory"/>
     <exceptionFilter implementation="com.intellij.openapi.vcs.contentAnnotation.VcsContentAnnotationExceptionFilterFactory"/>
+    <!--
+      Java contributes VCS-aware usage grouping, path presentation, selection ranges, and affected-test
+      discovery only when the VCS plugin is present. Keeping these registrations in this content module
+      preserves the full IDE behavior while preventing Java Core Language Server from requiring VCS UI.
+    -->
+    <changesGroupingPolicy key="module" id="module" weight="20"
+                           implementationClass="com.intellij.openapi.vcs.changes.ui.ModuleChangesGroupingPolicy$Factory"/>
+    <projectService serviceInterface="com.intellij.openapi.vcs.impl.VcsPathPresenter"
+                    serviceImplementation="com.intellij.openapi.vcs.impl.ModuleVcsPathPresenter"
+                    overrides="true"/>
+    <vcsSelectionProvider implementation="com.intellij.vcsUtil.JavaVcsSelectionProvider"/>
+    <execution.testDiscoveryVcsHelper implementation="com.intellij.execution.testDiscovery.TestDiscoveryVcsHelperImpl"/>
+    <vcs.changeListDecorator implementation="com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter"/>
+    <vcs.codeVisionLanguageContext language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaVcsCodeVisionContext"/>
+    <codeInsight.codeVisionSettingsPreviewLanguage modelId="vcs.code.vision" language="JAVA"/>
   </extensions>
+  <actions>
+    <!--
+      The Java product owns the Project widget placement for Get from Version Control. The action class
+      itself lives in intellij.platform.vcs.impl, so the definition must be loaded only with Java VCS.
+    -->
+    <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction">
+      <override-text place="ProjectWidgetPopup"/>
+      <add-to-group group-id="JavaNewProjectGroup" anchor="after" relative-to-action="ImportProject"/>
+      <add-to-group group-id="ProjectWidget.Actions"/>
+    </action>
+
+    <!-- Module grouping is a Java-specific Changes view customization backed by VCS implementation code. -->
+    <action id="ChangesView.GroupBy.Module" class="com.intellij.openapi.vcs.changes.actions.SetModuleChangesGroupingAction">
+      <add-to-group group-id="ChangesView.GroupBy"/>
+    </action>
+
+    <!-- Affected-test actions operate on VCS changelists, so they are registered with the Java VCS content module. -->
+    <group id="ChangesViewPopupMenuRunGroup">
+      <reference ref="RunContextPopupGroup"/>
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="before" relative-to-action="ShowDiscoveredTests"/>
+    </group>
+
+    <action class="com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction" id="ShowDiscoveredTests">
+      <add-to-group group-id="RunTestGroup" anchor="last"/>
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

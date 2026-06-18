@@ -2,17 +2,12 @@
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -26,7 +21,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,7 +39,7 @@ public final class TestDiscoverySearchHelper {
     if (position != null) {
       collectPatterns(project, patterns, position.first, position.second, frameworkId);
     }
-    final List<VirtualFile> files = getAffectedFiles(changeList, project);
+    final List<VirtualFile> files = TestDiscoveryVcsHelper.collectAffectedFiles(project, changeList);
     final PsiManager psiManager = PsiManager.getInstance(project);
     final TestDiscoveryIndex discoveryIndex = TestDiscoveryIndex.getInstance(project);
     for (final VirtualFile file : files) {
@@ -56,7 +50,7 @@ public final class TestDiscoverySearchHelper {
             final PsiClass[] classes = ((PsiClassOwner)psiFile).getClasses();
             if (classes.length == 0 || TestFrameworks.detectFramework(classes[0]) == null) return;
           }
-          final List<TextRange> changedTextRanges = VcsFacade.getInstance().getChangedTextRanges(project, psiFile);
+          final List<TextRange> changedTextRanges = TestDiscoveryVcsHelper.collectChangedTextRanges(project, psiFile);
           for (TextRange textRange : changedTextRanges) {
             final PsiElement start = psiFile.findElementAt(textRange.getStartOffset());
             final PsiElement end = psiFile.findElementAt(textRange.getEndOffset());
@@ -102,29 +96,6 @@ public final class TestDiscoverySearchHelper {
       patterns.add(c + "," + m);
       return true;
     });
-  }
-
-  private static @NotNull @Unmodifiable List<VirtualFile> getAffectedFiles(String changeListName, Project project) {
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    if ("All".equals(changeListName)) {
-      return changeListManager.getAffectedFiles();
-    }
-    final LocalChangeList changeList = changeListManager.findChangeList(changeListName);
-    if (changeList != null) {
-      List<VirtualFile> files = new ArrayList<>();
-      for (Change change : changeList.getChanges()) {
-        final ContentRevision afterRevision = change.getAfterRevision();
-        if (afterRevision != null) {
-          final VirtualFile file = afterRevision.getFile().getVirtualFile();
-          if (file != null) {
-            files.add(file);
-          }
-        }
-      }
-      return files;
-    }
-
-    return Collections.emptyList();
   }
 
   private static @NotNull LinkedHashSet<String> collectPatterns(PsiMethod psiMethod, byte frameworkId) {

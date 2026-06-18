@@ -42,6 +42,16 @@
     <xi:fallback/>
   </xi:include>
 
+  <extensionPoints>
+    <!--
+      Core project configuration is also packaged into Kotlin Language Server, where VCS UI is intentionally absent.
+      This EP lets the full Kotlin plugin contribute the VCS-backed "view applied changes" dialog from a separate content module.
+    -->
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.configuratorChangesViewer"
+                    interface="org.jetbrains.kotlin.idea.configuration.KotlinConfiguratorChangesViewer"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <bundledFirCompilerPluginProvider
             implementation="org.jetbrains.kotlin.idea.fir.extensions.MainByRegistrarContentBundledFirCompilerPluginProvider"
@@ -188,6 +198,11 @@
     <module name="intellij.kotlin.analysis.platform"/>
     <module name="intellij.kotlin.codeInsight.base"/>
     <module name="intellij.kotlin.projectStructure"/>
+    <!--
+      Contains the VCS-backed diff browser for automatic project-configuration changes.
+      Keep it out of the Language Server plugin content: LS needs the configurator, not the VCS Changes UI implementation.
+    -->
+    <module name="intellij.kotlin.projectConfiguration.vcs"/>
     <module name="intellij.kotlin.scripting"/>
 
     <module name="intellij.kotlin.copyright"/>

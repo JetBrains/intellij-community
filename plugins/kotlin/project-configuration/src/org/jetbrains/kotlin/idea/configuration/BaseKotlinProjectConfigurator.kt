@@ -86,7 +86,7 @@ abstract class BaseKotlinProjectConfigurator : KotlinProjectConfigurator {
             FileDocumentManager.getInstance().saveAllDocuments()
             KotlinProjectConfigurationService.getInstance(project).queueSyncIfPossible()
 
-            val changes = readAction { result.changedFiles.calculateChanges() }
+            val changes = readAction { result.changedFiles.collectChangedFiles() }
             notificationHolder
                 .showAutoConfiguredNotification(module.name, changes)
 

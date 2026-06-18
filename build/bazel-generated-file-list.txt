@@ -1412,6 +1412,7 @@ plugins/kotlin/plugin/common
 plugins/kotlin/plugin/k2
 plugins/kotlin/preferences
 plugins/kotlin/project-configuration
+plugins/kotlin/project-configuration-vcs
 plugins/kotlin/project-wizard/cli
 plugins/kotlin/project-wizard/compose
 plugins/kotlin/project-wizard/core
@@ -1696,6 +1697,7 @@ python/terminal/shared
 python/testFramework
 python/tools
 spellchecker
+spellchecker/vcs
 spellchecker/xml
 tools/apiDump
 tools/apiDump/testData

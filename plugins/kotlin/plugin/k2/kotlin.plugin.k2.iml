@@ -73,6 +73,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.compose" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.preferences" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration.vcs" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerReferenceIndex" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.runConfigurations.jvm" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.scripting" scope="RUNTIME" />

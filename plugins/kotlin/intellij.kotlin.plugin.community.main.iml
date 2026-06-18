@@ -121,6 +121,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.plugin.updater" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.preferences" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration" exported="" />
+    <orderEntry type="module" module-name="intellij.kotlin.projectConfiguration.vcs" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.maven" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.projectWizard.gradle" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting" exported="" />

@@ -18,7 +18,8 @@
     <module name="intellij.platform.vcs.log.impl"/>
     <!-- Keep public: this shared SQLite module is also depended on by VCS Log impl and Qodana. -->
     <module name="intellij.platform.sqlite"/>
-    <module name="intellij.platform.vcs.log.graph"/>
+    <!-- Required because `intellij.platform.vcs.log` is required and has a compile dependency on the graph API module. -->
+    <module name="intellij.platform.vcs.log.graph" loading="required"/>
     <module name="intellij.platform.vcs.log.graph.impl"/>
     <module name="intellij.platform.vcs.dvcs"/>
     <module name="intellij.platform.vcs.dvcs.impl"/>

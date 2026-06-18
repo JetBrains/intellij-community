@@ -368,6 +368,7 @@ object CommunityModuleSets {
     module("intellij.platform.inspect")
     module("intellij.settingsSync.core")
     module("intellij.spellchecker")
+    module("intellij.spellchecker.vcs")
     module("intellij.spellchecker.xml")
     module("intellij.platform.buildView")
     module("intellij.platform.buildView.backend")

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.actions;
 
 import com.intellij.CommonBundle;
@@ -75,7 +75,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.rt.coverage.testDiscovery.instrumentation.TestDiscoveryInstrumentationUtils;
 import com.intellij.uast.UastMetaLanguage;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.usages.UsageView;
@@ -201,7 +200,7 @@ public final class ShowAffectedTestsAction extends AnAction {
   }
 
   private static void showDiscoveredTestsByPsiMethod(@NotNull Project project, @NotNull PsiMethod method, @NotNull AnActionEvent e) {
-    Couple<String> key = getMethodKey(method);
+    Couple<String> key = TestDiscoveryMethodUtil.getMethodKey(method);
     if (key == null) return;
     DataContext dataContext = DataManager.getInstance().getDataContext(e.getRequiredData(CommonDataKeys.EDITOR).getContentComponent());
     FeatureUsageTracker.getInstance().triggerFeatureUsed("test.discovery");
@@ -426,7 +425,7 @@ public final class ShowAffectedTestsAction extends AnAction {
                                     @NotNull TestDiscoveryProducer.PsiTestProcessor processor) {
     List<Couple<String>> classesAndMethods =
       ReadAction.nonBlocking(() -> Arrays.stream(methods)
-      .map(method -> getMethodKey(method)).filter(Objects::nonNull).collect(Collectors.toList())).executeSynchronously();
+      .map(method -> TestDiscoveryMethodUtil.getMethodKey(method)).filter(Objects::nonNull).collect(Collectors.toList())).executeSynchronously();
     processTestDiscovery(project, processor, classesAndMethods, filePaths);
   }
 
@@ -522,18 +521,6 @@ public final class ShowAffectedTestsAction extends AnAction {
           popup.cancel();
         }
       });
-  }
-
-  public static @Nullable Couple<String> getMethodKey(@NotNull PsiMethod method) {
-    if (DumbService.isDumb(method.getProject())) return null;
-    PsiClass c = method.isValid() ? method.getContainingClass() : null;
-    String fqn = c != null ? DiscoveredTestsTreeModel.getClassName(c) : null;
-    return fqn == null ? null : Couple.of(fqn, methodSignature(method));
-  }
-
-  private static @NotNull String methodSignature(@NotNull PsiMethod method) {
-    String tail = TestDiscoveryInstrumentationUtils.SEPARATOR + ClassUtil.getAsmMethodSignature(method);
-    return (method.isConstructor() ? "<init>" : method.getName()) + tail;
   }
 
   private static @Nullable KeyStroke findUsagesKeyStroke() {

@@ -172,6 +172,7 @@
   - name: intellij.kotlin.base.externalSystem
   - name: intellij.kotlin.codeInsight.base
   - name: intellij.kotlin.projectStructure
+  - name: intellij.kotlin.projectConfiguration.vcs
   - name: intellij.kotlin.scripting
   - name: intellij.kotlin.copyright
   - name: intellij.kotlin.coverage
