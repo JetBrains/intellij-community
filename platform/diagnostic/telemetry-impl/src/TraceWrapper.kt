@@ -8,23 +8,23 @@ import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
 
-internal fun wrapTracer(scopeName: String, tracer: Tracer, verbose: Boolean, verboseMode: Boolean, detailedTracers: Set<String>): IJTracer {
+internal fun wrapTracer(scopeName: String, tracer: Tracer, verbose: Boolean, verboseMode: Boolean, detailedScopes: Set<String>): IJTracer {
   if ((verbose && !verboseMode) || tracer == IJNoopTracer.noopTrace) {
     return IJNoopTracer
   }
   else {
-    return TraceWrapper(scopeName = scopeName, tracer = tracer, detailedTracers = detailedTracers, verbose = verbose)
+    return TraceWrapper(scopeName = scopeName, tracer = tracer, detailedScopes = detailedScopes, verbose = verbose)
   }
 }
 
 private class TraceWrapper(private val scopeName: String,
                            private val tracer: Tracer,
-                           private val detailedTracers: Set<String>,
+                           private val detailedScopes: Set<String>,
                            private val verbose: Boolean) : IJTracer {
   override fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)
 
   override fun spanBuilder(spanName: String, level: TracerLevel): SpanBuilder {
-    if (level == TracerLevel.DETAILED && !verbose && !detailedTracers.contains(scopeName)) {
+    if (level == TracerLevel.DETAILED && !verbose && !detailedScopes.contains(scopeName)) {
       return OpenTelemetry.noop().getTracer(scopeName).spanBuilder(spanName)
     }
     return spanBuilder(spanName)

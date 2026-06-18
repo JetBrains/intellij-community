@@ -154,7 +154,7 @@ class TelemetryManagerImpl(
     }
 
     val name = scope.toString()
-    return wrapTracer(scopeName = name, tracer = sdk.getTracer(name), verbose = scope.verbose, verboseMode = verboseMode, detailedTracers = detailedScopes)
+    return wrapTracer(scopeName = name, tracer = sdk.getTracer(name), verbose = scope.verbose, verboseMode = verboseMode, detailedScopes = detailedScopes)
   }
 
   override fun getSimpleTracer(scope: Scope): IntelliJTracer {
