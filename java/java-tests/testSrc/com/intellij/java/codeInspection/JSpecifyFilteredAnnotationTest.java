@@ -124,13 +124,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
 
         new Pair<>("NullnessUnspecifiedTypeParameter.java", 33), // see: IDEA-377683
         new Pair<>("TypeVariableMinusNullVsTypeVariable.java", 28), // see: IDEA-377683
-        new Pair<>("TypeVariableMinusNullVsTypeVariable.java", 30), // see: IDEA-377683
-
-        new Pair<>("ComplexParametric.java", 238), // see: IDEA-384752
-        new Pair<>("ComplexParametric.java", 243), // see: IDEA-384752
-        new Pair<>("ComplexParametric.java", 246), // see: IDEA-384752
-        new Pair<>("ComplexParametric.java", 261) // see: IDEA-384752
-
+        new Pair<>("TypeVariableMinusNullVsTypeVariable.java", 30) // see: IDEA-377683
       )
     ),
     new SkipIndividuallyFilter( //cases to investigate later (with unspecified annotation and complicated to understand). (line number starts from 0)
@@ -166,9 +160,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
 
     new SkipIndividuallyFilter( // after: IDEA-375132
       Set.of(
-        new Pair<>("NotNullMarkedUseOfWildcardAsTypeArgument.java", 30), //IDEA-380248
-        new Pair<>("SameTypeTypeVariable.java", 31), //IDEA-380143
-        new Pair<>("SameTypeTypeVariable.java", 51) //IDEA-380143
+        new Pair<>("NotNullMarkedUseOfWildcardAsTypeArgument.java", 30) //IDEA-380248
       )
     )
   );
@@ -236,6 +228,7 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       dfaInspection.REPORT_UNSPECIFIED_PARAMETRIC_RETURNS = true;
       var nullableStuffInspection = new JSpecifyNullableStuffInspection(actual);
       nullableStuffInspection.REPORT_NOT_NULL_TO_NULLABLE_CONFLICTS_IN_ASSIGNMENTS = true;
+      nullableStuffInspection.REPORT_UNSPECIFIED_BOUND_CONFLICTS = true;
       var notNullFieldNotInitializedInspection = new JSpecifyNotNullFieldNotInitializedInspection(actual);
       List<LocalInspectionTool> inspections = List.of(dfaInspection, nullableStuffInspection, notNullFieldNotInitializedInspection);
       ReadAction.run(() -> {

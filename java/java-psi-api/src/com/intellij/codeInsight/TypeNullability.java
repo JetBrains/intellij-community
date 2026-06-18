@@ -75,7 +75,13 @@ public final class TypeNullability {
    */
   public @NotNull TypeNullability instantiatedWith(@NotNull TypeNullability nullability) {
     if (this.nullability() == nullability.nullability()) {
-      return nullability;
+      //if we instantiate, let's try to get rid of ExtendsBound
+      if (this.source() instanceof NullabilitySource.ExtendsBound) {
+        return nullability;
+      }
+      else {
+        return this;
+      }
     }
     if (this.nullability() == Nullability.NOT_NULL) {
       return this;
