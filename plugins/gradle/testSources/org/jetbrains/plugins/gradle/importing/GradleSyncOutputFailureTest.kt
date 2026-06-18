@@ -25,6 +25,7 @@ import org.junit.jupiter.params.ParameterizedClass
 @AllGradleVersionsSource
 @TargetVersions("9.3+")
 @RegistryKey("gradle.use.resilient.model.fetch.unstable", true.toString())
+@RegistryKey("gradle.show.suppressed.failure.events", true.toString())
 class GradleSyncOutputFailureTest(private val gradleVersion: GradleVersion) {
 
   private val testRootFixture = tempPathFixture()

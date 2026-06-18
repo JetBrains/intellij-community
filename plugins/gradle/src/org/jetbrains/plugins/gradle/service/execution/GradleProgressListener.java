@@ -2,42 +2,29 @@
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.google.gson.GsonBuilder;
-import com.intellij.build.FileNavigatable;
-import com.intellij.build.FilePosition;
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.MessageEvent;
-import com.intellij.build.events.impl.BuildIssueEventImpl;
 import com.intellij.build.events.impl.FileDownloadEventImpl;
 import com.intellij.build.events.impl.FileDownloadedEventImpl;
-import com.intellij.build.events.impl.MessageEventImpl;
-import com.intellij.build.issue.BuildIssue;
 import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.Navigatable;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.events.ProgressEvent;
 import org.gradle.tooling.events.ProgressListener;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
-import org.jetbrains.plugins.gradle.issue.GradleIssueChecker;
-import org.jetbrains.plugins.gradle.issue.GradleIssueData;
 import org.jetbrains.plugins.gradle.issue.GradleIssueFailure;
-import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -122,9 +109,15 @@ public final class GradleProgressListener implements ProgressListener, org.gradl
       return false;
     }
 
-    reportModelBuilderMessageToFus(message);
-    reportModelBuilderMessageToLogger(message);
-    reportModelBuilderMessageToListener(message);
+    myContext.getReporter().failure(createGradleIssueFailure(message))
+      .withKind(MessageEvent.Kind.valueOf(message.getKind().name()))
+      .withInternal(message.isInternal() && message.getKind() == Message.Kind.ERROR)
+      .withSuppressed(message.isInternal())
+      .withGroup(message.getGroup())
+      .withTitle(message.getTitle())
+      .withText(message.getText())
+      .withTargetPath(ObjectUtils.doIfNotNull(message.getTargetPath(), it -> Path.of(it)))
+      .report();
     return true;
   }
 
@@ -140,83 +133,6 @@ public final class GradleProgressListener implements ProgressListener, org.gradl
       LOG.warn("Failed to report model builder message using event '" + eventDescription + "'", e);
       return null;
     }
-  }
-
-  private void reportModelBuilderMessageToFus(@NotNull Message message) {
-    GradleModelBuilderMessageCollector.logModelBuilderMessage(myContext.getTaskId().findProject(), myContext.getTaskId().getId(), message);
-  }
-
-  private static void reportModelBuilderMessageToLogger(@NotNull Message message) {
-    var text = message.getGroup() + "\n" +
-               message.getTitle() + "\n" +
-               message.getText();
-    if (message.isInternal() && message.getKind() == Message.Kind.ERROR) {
-      LOG.error(text, new Throwable());
-    }
-    else {
-      LOG.debug(text);
-    }
-  }
-
-  private void reportModelBuilderMessageToListener(@NotNull Message message) {
-    if (!message.isInternal()) {
-      BuildEvent messageEvent = getModelBuilderIssueOrMessage(message);
-      myContext.getListener().onStatusChange(new ExternalSystemBuildEvent(myContext.getTaskId(), messageEvent));
-    }
-  }
-
-  private @NotNull MessageEvent getModelBuilderMessage(@NotNull Message message) {
-    MessageEvent.Kind kind = MessageEvent.Kind.valueOf(message.getKind().name());
-    FilePosition filePosition = getModelBuilderMessagePosition(message);
-    return new MessageEventImpl(
-      myContext.getTaskId(),
-      kind,
-      message.getGroup(),
-      message.getTitle(),
-      message.getText()
-    ) {
-      @Override
-      public @Nullable Navigatable getNavigatable(@NotNull Project project) {
-        if (filePosition == null) return null;
-        return new FileNavigatable(project, filePosition);
-      }
-    };
-  }
-
-  private static @Nullable FilePosition getModelBuilderMessagePosition(@NotNull Message message) {
-    var targetPath = ObjectUtils.doIfNotNull(message.getTargetPath(), it -> it.toPath());
-    if (targetPath == null) return null;
-    var targetBuildFile = GradleConstants.KNOWN_GRADLE_FILES.stream()
-      .map(it -> targetPath.resolve(it))
-      .filter(it -> Files.isRegularFile(it))
-      .findFirst().orElse(null);
-    if (targetBuildFile == null) return null;
-    return new FilePosition(targetBuildFile, 0, 0);
-  }
-
-  /**
-   * Transforms a model builder message into a BuildIssue by delegating to known Gradle issue checkers.
-   * This allows issue checkers to provide quick fixes and internationalized descriptions for messages of any severity.
-   */
-  private @NotNull BuildEvent getModelBuilderIssueOrMessage(@NotNull Message message) {
-    // Build a synthetic GradleIssueData from the message
-    GradleIssueData issueData = createGradleIssueFailure(message);
-
-    for (var checker : GradleIssueChecker.getKnownIssuesCheckList()) {
-      BuildIssue buildIssue = checker.check(issueData);
-      if (buildIssue != null) {
-        MessageEvent.Kind kind = MessageEvent.Kind.valueOf(message.getKind().name());
-        return new BuildIssueEventImpl(myContext.getTaskId(), buildIssue, kind);
-      }
-    }
-
-    // Fallback to a regular message event if no issue checker matched
-    return getModelBuilderMessage(message);
-  }
-
-  private @NotNull GradleIssueData createGradleIssueData(@NotNull Message message) {
-    GradleIssueFailure failure = createGradleIssueFailure(message);
-    return GradleIssueData.createIssueData(getBuildRoot(myContext), failure, null, null);
   }
 
   @VisibleForTesting
@@ -281,11 +197,6 @@ public final class GradleProgressListener implements ProgressListener, org.gradl
       String duration = formatDuration(System.currentTimeMillis() - startTime);
       myContext.getListener().onTaskOutput(myContext.getTaskId(), "\rGradle Daemon started in " + duration + "\n", ProcessOutputType.STDOUT);
     }
-  }
-
-  private static @NotNull Path getBuildRoot(@NotNull GradleExecutionContextImpl context) {
-    BuildEnvironment buildEnvironment = context.getBuildEnvironmentOrNull();
-    return buildEnvironment == null ? Path.of(context.getProjectPath()) : buildEnvironment.getBuildIdentifier().getRootDir().toPath();
   }
 
   private static @NotNull String formatFileSize(@NotNull Long value) {

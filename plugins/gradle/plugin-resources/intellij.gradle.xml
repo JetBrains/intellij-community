@@ -235,6 +235,8 @@
                  description="Enable experimental support of version catalogs based on after-sync gradle models"/>
     <registryKey key="gradle.output.sync.progress.events" defaultValue="true"
                  description="Send progress information like files download during project import to `Build Output`"/>
+    <registryKey key="gradle.show.suppressed.failure.events" defaultValue="false"
+                 description="Show suppressed Gradle failure events in the build output"/>
     <registryKey key="gradle.daemon.opentelemetry.agent.enabled" defaultValue="false"
                  description="Enable performance trace collection in the Gradle daemon collected by OTLP java agent"/>
     <registryKey key="gradle.daemon.legacy.dependency.resolver" defaultValue="false"
