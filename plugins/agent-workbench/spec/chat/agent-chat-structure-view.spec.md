@@ -64,7 +64,7 @@ Agent Chat Structure View exposes an outline of persisted provider session histo
 
 - Outline items preserve provider order and hierarchy. The shared model supports user prompts, assistant responses, agent work groups, tool calls, tool results, plans, approval requests, input requests, summaries, and metadata; unknown provider records should be skipped or mapped to metadata rather than exposed as raw JSON.
 
-- Thread outline presentation uses neutral shared labels and icons across providers. User prompt rows without a provider title render with the localized `User` label, agent work group rows use the neutral External Tools icon, and concrete tool call rows such as bash invocations keep the console icon.
+- Thread outline presentation uses neutral shared labels, timestamps, and icons across providers. User prompt rows without a provider title render with the localized `User` label, item timestamps render as muted secondary metadata without replacing preview text, agent work group rows use the neutral External Tools icon, and concrete tool call rows such as bash invocations keep the console icon.
   [@test] ../../chat/testSrc/AgentChatFileEditorProviderTest.kt
 
 - Codex outlines are parsed from rollout JSONL data and should group inferred agent work so tool-call and tool-result activity remains readable as a block-oriented history browser.

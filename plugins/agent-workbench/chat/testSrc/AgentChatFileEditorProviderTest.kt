@@ -454,6 +454,7 @@ class AgentChatFileEditorProviderTest {
                 kind = AgentSessionOutlineItemKind.USER_PROMPT,
                 title = "",
                 preview = "Resolve the current merge conflicts",
+                timestampMs = 2_000L,
               ),
               AgentSessionOutlineItem(
                 id = "work-1",
@@ -505,10 +506,16 @@ class AgentChatFileEditorProviderTest {
           val promptNode = model.entriesById.getValue(AgentChatThreadOutlineId.Item("0/0")).node
           assertThat(promptNode.title).isEqualTo("User")
           assertThat(promptNode.icon).isSameAs(AllIcons.General.User)
+          assertThat(promptNode.timestamp).isEqualTo(DateFormatUtil.formatPrettyDateTime(2_000L))
           assertThat(promptNode.location).isEqualTo("Resolve the current merge conflicts")
-          assertThat(promptNode.tooltip).isEqualTo("Resolve the current merge conflicts")
+          assertThat(promptNode.tooltip).isEqualTo(
+            "Resolve the current merge conflicts\n" +
+            AgentChatBundle.message("chat.thread.outline.timestamp", DateFormatUtil.formatPrettyDateTime(2_000L))
+          )
           val workNode = model.entriesById.getValue(AgentChatThreadOutlineId.Item("0/1")).node
-          assertThat(workNode.location)
+          assertThat(workNode.timestamp).isEqualTo(DateFormatUtil.formatPrettyDateTime(1_000L))
+          assertThat(workNode.location).isNull()
+          assertThat(workNode.tooltip)
             .isEqualTo(AgentChatBundle.message("chat.thread.outline.timestamp", DateFormatUtil.formatPrettyDateTime(1_000L)))
           assertThat(model.entriesById.getValue(AgentChatThreadOutlineId.Item("0/1")).childIds)
             .containsExactly(AgentChatThreadOutlineId.Item("0/1/0"))

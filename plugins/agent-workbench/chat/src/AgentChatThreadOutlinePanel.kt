@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
@@ -616,7 +617,7 @@ private class AgentChatThreadOutlineNodeDescriptor(
   private fun computeName(): String {
     if (element !is AgentChatThreadOutlineId) return ""
     val node = modelProvider().entriesById[element]?.node ?: return ""
-    return listOfNotNull(node.title, node.location).joinToString(" ")
+    return listOfNotNull(node.title, node.timestamp, node.location).joinToString(" ")
   }
 }
 
@@ -637,12 +638,25 @@ private class AgentChatThreadOutlineTreeCellRenderer(
     icon = node.icon
     toolTipText = node.tooltip
     append(node.title, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    val statusParts = ArrayList<@NlsSafe String>(2)
+    val timestamp = node.timestamp
+    if (!timestamp.isNullOrBlank()) {
+      append("  $timestamp", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      statusParts += timestamp
+    }
     val location = node.location
     if (!location.isNullOrBlank()) {
       append("  $location", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      setAccessibleStatusText(location)
+      statusParts += location
+    }
+    if (statusParts.isNotEmpty()) {
+      setAccessibleStatusText(joinThreadOutlineAccessibleStatus(statusParts))
     }
   }
+}
+
+private fun joinThreadOutlineAccessibleStatus(parts: List<@NlsSafe String>): @NlsSafe String {
+  return parts.joinToString(" ")
 }
 
 private val AGENT_CHAT_THREAD_OUTLINE_CONTEXT_MENU_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_CONTEXT_MENU, 0)
