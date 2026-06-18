@@ -723,6 +723,12 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
    */
   @Deprecated
   public final @Nullable StubTree getGreenStubTree() {
+    assertReadAccessAllowed();
+
+    StubTree deref = derefStub();
+    if (deref != null) {
+      return deref;
+    }
     return getStubTreeOrFileElement().first;
   }
 
@@ -786,6 +792,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
    */
   @Override
   public @Nullable StubTree getStubTree() {
+    assertReadAccessAllowed();
+
+    if (getTreeElement() != null) {
+      return null;
+    }
+    StubTree deref = derefStub();
+    if (deref != null) {
+      return deref;
+    }
     Pair<StubTree, FileElement> result = getStubTreeOrFileElement();
     return result.second == null ? result.first : null;
   }
