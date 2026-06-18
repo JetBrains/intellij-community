@@ -1,6 +1,8 @@
 # Read more about project view files here:
 # https://www.jetbrains.com/help/idea/bazel-project-view.html
 
+dot_idea_directory_location: .idea.bazel
+
 targets:
   //...
   @rules_jvm//...
