@@ -30,7 +30,10 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.ui.jcef.JBCefPsiNavigationUtils
+import java.io.File
+import org.jetbrains.jewel.markdown.rendering.ImageSourceResolver
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -127,7 +130,17 @@ internal class MarkdownComposePanel(
         InlineMarkdownRenderer.create(allRenderingExtensions),
       )
     }
+    val imageSourceResolver = remember(virtualFile) {
+      val nioPath = virtualFile?.parent?.toNioPathOrNull()
+      if (nioPath != null) {
+        ImageSourceResolver.create(nioPath, logResolveFailure = true)
+      }
+      else {
+        ImageSourceResolver.create()
+      }
+    }
     ProvideMarkdownStyling(
+      imageSourceResolver = imageSourceResolver,
       markdownMode = markdownMode,
       markdownProcessor = processor,
       markdownStyling = markdownStyling,
