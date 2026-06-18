@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.idea.TestFor;
+
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -80,10 +82,12 @@ public class PyNumpyTypeTest extends PyTestCase {
     doTest();
   }
 
+  @TestFor(issues = "PY-88579")
   public void testDefaultNone() {
     doTest();
   }
 
+  @TestFor(issues = "PY-88579")
   public void testDefaultValueVariants() {
     doTest();
   }
@@ -96,7 +100,13 @@ public class PyNumpyTypeTest extends PyTestCase {
     doTest();
   }
 
+  @TestFor(issues = "PY-88579")
   public void testTypeHintHasPriority() {
+    doTest();
+  }
+
+  @TestFor(issues = "PY-32793")
+  public void testReturnTypeHintHasPriority() {
     doTest();
   }
 
