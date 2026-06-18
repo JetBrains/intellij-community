@@ -36,12 +36,6 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.PsiReturnStatement;
-import com.intellij.psi.PsiStatement;
-import com.intellij.psi.PsiSynchronizedStatement;
-import com.intellij.psi.PsiTypeElement;
-import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -97,7 +91,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
 
   private static final List<ErrorFilter> FILTERS = List.of(
     new SkipErrorFilter("jspecify_nullness_not_enough_information"), //it is useless for our goals
-    new ReturnSynchronizedWithUnspecifiedFilter(), // it looks like it is useless because @Unspecified is not supported
     new SkipIndividuallyFilter( //each case has its own reason (line number starts from 0)
       Set.of(
         new Pair<>("ContravariantReturns.java", 32),  // see: IDEA-377687
@@ -158,9 +151,22 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       }
     },
 
-    new SkipIndividuallyFilter( // after: IDEA-375132
+    new SkipIndividuallyFilter(
       Set.of(
         new Pair<>("NotNullMarkedUseOfWildcardAsTypeArgument.java", 30) //IDEA-380248
+      )
+    ),
+    new SkipIndividuallyFilter(
+      //unspecified
+      Set.of(
+        new Pair<>("CaptureConvertedUnspecToObject.java", 77),
+        new Pair<>("CaptureConvertedUnspecToOther.java", 77),
+        new Pair<>("NotNullMarkedUseOfTypeVariableAsTypeArgument.java", 74),
+        new Pair<>("UseOfTypeVariableAsTypeArgument.java", 67),
+        new Pair<>("UseOfTypeVariableUnspecAsTypeArgument.java", 45),
+        new Pair<>("UseOfTypeVariableUnspecAsTypeArgument.java", 60),
+        new Pair<>("UseOfTypeVariableUnspecAsTypeArgument.java", 70)
+
       )
     )
   );
@@ -416,57 +422,6 @@ public class JSpecifyFilteredAnnotationTest extends LightJavaCodeInsightFixtureT
       System.out.println("Some filters were unused; probably they are not actual anymore and should be excluded:\n"
                          + StringUtil.join(unusedPlaces, "\n"));
     }
-  }
-
-  private static class ReturnSynchronizedWithUnspecifiedFilter implements ErrorFilter {
-
-    @Override
-    public boolean shouldCount() {
-      return false;
-    }
-
-    @Override
-    public boolean filterActual(@NotNull PsiFile file,
-                                @NotNull String strippedText,
-                                int lineNumber,
-                                int startLineOffset,
-                                @NotNull String errorMessage) {
-      if (!errorMessage.contains("jspecify_nullness_mismatch")) return false;
-      PsiElement element = findElement(file, strippedText, lineNumber, startLineOffset);
-      return filterExpected(element, errorMessage);
-    }
-
-
-    @Override
-    public boolean filterExpected(@NotNull PsiElement psiElement, @NotNull String errorMessage) {
-      PsiStatement statement = PsiTreeUtil.getParentOfType(psiElement, PsiReturnStatement.class, PsiSynchronizedStatement.class);
-      if (statement == null) return false;
-      Collection<PsiReferenceExpression> children = PsiTreeUtil.findChildrenOfAnyType(statement, PsiReferenceExpression.class);
-      return ContainerUtil.exists(children, child -> {
-        PsiElement resolved = child.resolve();
-        if (resolved instanceof PsiVariable variable) {
-          PsiTypeElement typeElement = variable.getTypeElement();
-          return hasUnspecified(typeElement);
-        }
-        if (resolved instanceof PsiMethod method) {
-          return hasUnspecified(method.getReturnTypeElement());
-        }
-        return false;
-      });
-    }
-  }
-
-  private static boolean hasUnspecified(@Nullable PsiTypeElement element) {
-    if (element == null) return false;
-    return ContainerUtil.exists(PsiTreeUtil.findChildrenOfType(element, PsiAnnotation.class),
-                                a -> a.getText().contains("Unspecified"));
-  }
-
-  private static @Nullable PsiElement findElement(@NotNull PsiFile file,
-                                                  @NotNull String strippedText,
-                                                  int lineNumber,
-                                                  int startLineOffset) {
-    return file.findElementAt(StringUtil.lineColToOffset(strippedText, lineNumber + 1, startLineOffset) + 1);
   }
 
   private static class SkipErrorFilter implements ErrorFilter {
