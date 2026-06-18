@@ -73,6 +73,7 @@ internal object ClaudeHookBridge {
         StandardOpenOption.TRUNCATE_EXISTING,
       )
       settingsPathsByToken[token] = settingsPath
+      CLAUDE_HOOK_LOG.debug("Created Claude hook settings (sessionId=$normalizedSessionId, endpoint=$endpoint)")
       return ClaudeHookLaunchSettings(
         endpoint = endpoint,
         token = token,
@@ -94,6 +95,13 @@ internal object ClaudeHookBridge {
     if (sessionId != expectedSessionId) return ClaudeHookRequestResult.UNAUTHORIZED
 
     val updateEvent = createHookUpdate(payload = payload, sessionId = sessionId) ?: return ClaudeHookRequestResult.ACCEPTED
+    val activityReport = updateEvent.activityUpdatesByThreadId[sessionId]?.activityReport
+    CLAUDE_HOOK_LOG.debug(
+      "Accepted Claude hook update " +
+      "(sessionId=$sessionId, hookEvent=${payload.hookEventName}, tool=${payload.toolName}, cwd=${payload.cwd}, " +
+      "updateType=${updateEvent.type}, rowActivity=${activityReport?.rowActivity}, chromeActivity=${activityReport?.chromeActivity}, " +
+      "mayHaveChangedProjectFiles=${updateEvent.mayHaveChangedProjectFiles}, changedProjectFilePaths=${updateEvent.changedProjectFilePaths?.size})"
+    )
     hookUpdates.tryEmit(updateEvent)
     return ClaudeHookRequestResult.ACCEPTED
   }
