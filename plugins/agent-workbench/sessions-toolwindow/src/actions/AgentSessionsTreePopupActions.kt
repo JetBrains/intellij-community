@@ -5,12 +5,10 @@ import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.actions.buildNewThreadMenuModel
-import com.intellij.agent.workbench.sessions.actions.buildNewThreadProfileMenuActions
+import com.intellij.agent.workbench.sessions.buildAgentSessionLaunchProfileMenuActions
+import com.intellij.agent.workbench.sessions.buildAgentSessionLaunchProfileMenuModel
+import com.intellij.agent.workbench.sessions.launchQuickStartProfile
 import com.intellij.agent.workbench.sessions.actions.createNewThreadViaService
-import com.intellij.agent.workbench.sessions.actions.launchQuickStartThread
-import com.intellij.agent.workbench.sessions.actions.resolveNewThreadProfileItem
-import com.intellij.agent.workbench.sessions.actions.resolveNewThreadProfileItems
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
@@ -20,6 +18,8 @@ import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameP
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.agent.workbench.sessions.providerItemIconWithMode
+import com.intellij.agent.workbench.sessions.resolveAgentSessionLaunchProfileItem
+import com.intellij.agent.workbench.sessions.resolveAgentSessionLaunchProfileItems
 import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsService
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
@@ -199,14 +199,14 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
       return
     }
     val path = newThreadPathFromTarget(context.target)
-    val menuModel = buildNewThreadMenuModel(allBridges(), context.project)
+    val menuModel = buildAgentSessionLaunchProfileMenuModel(allBridges(), context.project)
     if (path == null || !menuModel.hasEntries()) {
       e.presentation.isEnabledAndVisible = false
       return
     }
     val activeProfileId = activeLaunchProfileId()
-    val profiles = resolveNewThreadProfileItems(menuModel, userLaunchProfiles(), activeProfileId)
-    val quickStartItem = resolveNewThreadProfileItem(profiles, activeProfileId)
+    val profiles = resolveAgentSessionLaunchProfileItems(menuModel, userLaunchProfiles(), activeProfileId)
+    val quickStartItem = resolveAgentSessionLaunchProfileItem(profiles, activeProfileId)
     if (quickStartItem == null) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -221,19 +221,19 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
     val path = newThreadPathFromTarget(context.target) ?: return
-    val quickStartItem = resolveNewThreadProfileItem(allBridges(), context.project, userLaunchProfiles(), activeLaunchProfileId())
-    launchQuickStartThread(path, context.project, quickStartItem, AgentWorkbenchEntryPoint.TREE_POPUP, createNewSession)
+    val quickStartItem = resolveAgentSessionLaunchProfileItem(allBridges(), context.project, userLaunchProfiles(), activeLaunchProfileId())
+    launchQuickStartProfile(path, context.project, quickStartItem, AgentWorkbenchEntryPoint.TREE_POPUP, createNewSession)
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val context = e?.let(resolveContext) ?: return emptyArray()
     val path = newThreadPathFromTarget(context.target) ?: return emptyArray()
-    val menuModel = buildNewThreadMenuModel(allBridges(), context.project)
+    val menuModel = buildAgentSessionLaunchProfileMenuModel(allBridges(), context.project)
     val activeProfileId = activeLaunchProfileId()
-    val profiles = resolveNewThreadProfileItems(menuModel, userLaunchProfiles(), activeProfileId)
+    val profiles = resolveAgentSessionLaunchProfileItems(menuModel, userLaunchProfiles(), activeProfileId)
     if (profiles.isEmpty()) return emptyArray()
-    val selectedProfileId = resolveNewThreadProfileItem(profiles, activeProfileId)?.profile?.id
-    return buildNewThreadProfileMenuActions(
+    val selectedProfileId = resolveAgentSessionLaunchProfileItem(profiles, activeProfileId)?.profile?.id
+    return buildAgentSessionLaunchProfileMenuActions(
       path = path,
       project = context.project,
       profiles = profiles,

@@ -16,7 +16,6 @@ class AgentPromptUiSessionStateServiceTest {
     val original = AgentPromptUiSessionStateService()
     val draft = AgentPromptUiDraft(
       promptText = "fix",
-      providerId = "codex",
       targetMode = PromptTargetMode.EXISTING_TASK,
       existingTaskSearch = "query",
       selectedExistingTaskId = "task-1",
@@ -59,7 +58,6 @@ class AgentPromptUiSessionStateServiceTest {
     service.saveDraft(
       AgentPromptUiDraft(
         promptText = "fix",
-        providerId = "codex",
         targetMode = PromptTargetMode.EXISTING_TASK,
         existingTaskSearch = "query",
         selectedExistingTaskId = "task-1",
@@ -94,7 +92,6 @@ class AgentPromptUiSessionStateServiceTest {
     service.saveDraft(
       AgentPromptUiDraft(
         promptText = "prompt",
-        providerId = "codex",
         targetMode = PromptTargetMode.NEW_TASK,
         existingTaskSearch = "",
         selectedExistingTaskId = null,

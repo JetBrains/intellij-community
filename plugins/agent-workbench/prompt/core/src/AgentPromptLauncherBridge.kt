@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.prompt.core
 
 import com.intellij.agent.workbench.common.extensions.OverridableValue
 import com.intellij.agent.workbench.common.extensions.SingleExtensionPointResolver
-import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -13,10 +12,6 @@ import kotlinx.coroutines.flow.flowOf
 
 interface AgentPromptLauncherBridge {
   fun launch(request: AgentPromptLaunchRequest): AgentPromptLaunchResult
-
-  fun preferredProvider(): AgentSessionProvider? {
-    return null
-  }
 
   fun loadProviderPreferences(): ProviderPreferences {
     return ProviderPreferences()
@@ -71,8 +66,6 @@ interface AgentPromptLauncherBridge {
   }
 
   data class ProviderPreferences(
-    @JvmField val providerId: String? = null,
-    @JvmField val launchMode: AgentSessionLaunchMode? = null,
     @JvmField val providerOptionsByProviderId: Map<String, Set<String>> = emptyMap(),
     @JvmField val containerModeEnabled: Boolean = false,
     @JvmField val launchProfiles: List<AgentPromptLaunchProfile> = emptyList(),
@@ -96,7 +89,7 @@ private val REGISTERED_PROMPT_LAUNCHER = SingleExtensionPointResolver(
 )
 
 object AgentPromptLaunchers {
-  private val launcherOverride = OverridableValue<AgentPromptLauncherBridge?> { REGISTERED_PROMPT_LAUNCHER.findFirstOrNull() }
+  private val launcherOverride = OverridableValue { REGISTERED_PROMPT_LAUNCHER.findFirstOrNull() }
 
   fun find(): AgentPromptLauncherBridge? {
     return launcherOverride.value()

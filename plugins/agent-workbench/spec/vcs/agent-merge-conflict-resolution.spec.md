@@ -96,11 +96,11 @@ Agent Workbench owns the only concrete contributed action today. Platform and `g
 - Prepared merge handoff must converge on a single active project-scoped merge session so repeated selected-file launches for the same worktree focus the existing thread instead of spawning duplicates.
   [@test] ../../sessions/testSrc/AgentSessionPromptLauncherBridgeTest.kt
 
-- `Resolve with Agent` must store the last used merge provider and launch mode in shared Agent Workbench UI preferences as soon as the user commits that launch, independently from general new-thread preferences, even if preparation later auto-resolves or fails before terminal startup.
+- `Resolve with Agent` must store the selected merge launch profile id in `AgentSessionLaunchProfileStateV2.activeVcsMergeLaunchProfileId` as soon as the user commits that launch, independently from the general active new-thread profile, even if preparation later auto-resolves or fails before terminal startup.
 - If exactly one enabled provider entry is available, the action may launch directly and should use that provider's icon.
 - If multiple enabled provider entries are available in the one-shot modal merge dialog, `Resolve with Agent` must render as a dialog-native compound button with a primary action and selector affordance.
-- If multiple enabled provider entries are available and a last used merge provider plus launch mode exists, the primary action must launch directly with that provider entry while the selector continues to expose the full provider list.
-- If multiple enabled provider entries are available and no merge-specific preference exists, primary activation must require an explicit provider choice and must reuse the same provider action list and sectioning model used by `New Thread`, including Standard and YOLO sections.
+- If multiple enabled launch profiles are available and an active merge profile exists, the primary action must launch directly with that profile while the selector continues to expose the full profile list.
+- If multiple enabled launch profiles are available and no merge-specific profile exists, primary activation must fall back to the built-in Codex Standard profile when launchable, then the first launchable profile, while the selector continues to reuse the same launch-profile action list and sectioning model used by `New Thread`, including Standard and YOLO sections.
 - Provider selection UI must open from the invoking control rather than a centered chooser.
 - If no provider is available, the action must be disabled and explain how to configure Agent Workbench.
   [@test] ../../../../platform/vcs-impl/shared/testSrc/com/intellij/openapi/vcs/changes/ui/ChangesBrowserConflictsNodeTest.kt

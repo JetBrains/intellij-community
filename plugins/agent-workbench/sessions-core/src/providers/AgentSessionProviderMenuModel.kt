@@ -9,11 +9,6 @@ data class AgentSessionProviderMenuModel(
   @JvmField val yoloItems: List<AgentSessionProviderMenuItem>,
 )
 
-data class AgentSessionProviderActionModel(
-  @JvmField val menuModel: AgentSessionProviderMenuModel,
-  @JvmField val quickStartItem: AgentSessionProviderMenuItem?,
-)
-
 data class AgentSessionProviderMenuItem(
   @JvmField val bridge: AgentSessionProviderDescriptor,
   @JvmField val mode: AgentSessionLaunchMode,
@@ -80,39 +75,4 @@ private fun appendMenuItems(
       disabledReasonKey = disabledReasonKey,
     )
   }
-}
-
-fun buildAgentSessionProviderActionModel(
-  bridges: List<AgentSessionProviderDescriptor>,
-  lastUsedProvider: AgentSessionProvider?,
-  lastUsedLaunchMode: AgentSessionLaunchMode? = null,
-  availabilityByProvider: Map<AgentSessionProvider, Boolean>,
-): AgentSessionProviderActionModel {
-  val menuModel = buildAgentSessionProviderMenuModel(bridges, availabilityByProvider)
-  return AgentSessionProviderActionModel(
-    menuModel = menuModel,
-    quickStartItem = resolveQuickStartProviderItem(menuModel, lastUsedProvider, lastUsedLaunchMode),
-  )
-}
-
-private fun resolveQuickStartProviderItem(
-  menuModel: AgentSessionProviderMenuModel,
-  lastUsedProvider: AgentSessionProvider?,
-  lastUsedLaunchMode: AgentSessionLaunchMode?,
-): AgentSessionProviderMenuItem? {
-  if (lastUsedLaunchMode == AgentSessionLaunchMode.YOLO) {
-    val yoloItems = menuModel.yoloItems.filter { it.isEnabled }
-    val preferredYoloItem = lastUsedProvider?.let { provider ->
-      yoloItems.firstOrNull { item -> item.bridge.provider == provider }
-    }
-    if (preferredYoloItem != null) return preferredYoloItem
-  }
-
-  val standardItems = menuModel.standardItems.filter { it.isEnabled }
-  if (standardItems.isEmpty()) return null
-
-  val preferredItem = lastUsedProvider?.let { provider ->
-    standardItems.firstOrNull { item -> item.bridge.provider == provider }
-  }
-  return preferredItem ?: standardItems.first()
 }

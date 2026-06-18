@@ -3,18 +3,13 @@ package com.intellij.agent.workbench.sessions.actions
 
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.resolveAgentChatEditorTabActionContext
-import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.buildAgentSessionProjectPathCandidates
 import com.intellij.agent.workbench.sessions.service.collectOpenAgentSessionProjectPaths
 import com.intellij.agent.workbench.sessions.service.normalizeOpenableSourceProjectPath
 import com.intellij.agent.workbench.sessions.service.selectedChatSourceProjectPath
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.project.Project
@@ -52,9 +47,11 @@ internal fun resolveAgentSessionsEditorTabNewThreadContext(
   val project = event.project ?: return null
   val chatContext = resolveChatContext(event)
   return when {
-    isDedicatedProject(project) -> AgentSessionsEditorTabNewThreadContext(project) {
-      resolveDedicatedFrameNewThreadTarget(chatContext, openProjectPaths)
-    }
+    isDedicatedProject(project) -> AgentSessionsEditorTabNewThreadContext(
+      project = project,
+      resolveTarget = { resolveDedicatedFrameNewThreadTarget(chatContext, openProjectPaths) },
+      resolveTargetForUpdate = { null },
+    )
     openInDedicatedFrame() -> null
     else -> {
       val target = resolveProjectFrameNewThreadTarget(project, chatContext) ?: return null
@@ -117,24 +114,6 @@ private fun resolveMainToolbarProjectFrameNewThreadTarget(
              ?: normalizeOpenableSourceProjectPath(project.basePath)
              ?: return null
   return AgentSessionsEditorTabNewThreadTarget.Direct(path)
-}
-
-internal fun buildProjectCandidatePopupGroup(
-  candidate: AgentPromptProjectPathCandidate,
-  project: Project,
-  menuModel: AgentSessionProviderMenuModel,
-  entryPoint: AgentWorkbenchEntryPoint,
-  createNewSession: (String, AgentSessionProvider, AgentSessionLaunchMode, Project, AgentWorkbenchEntryPoint) -> Unit,
-): ActionGroup {
-  val group = DumbAwareDefaultActionGroup(candidate.displayName, true)
-  buildNewThreadMenuActions(
-    path = candidate.path,
-    project = project,
-    menuModel = menuModel,
-    entryPoint = entryPoint,
-    createNewSession = createNewSession,
-  ).forEach(group::add)
-  return group
 }
 
 internal fun resolveQuickStartProjectPopupAnchor(e: AnActionEvent): JComponent? {

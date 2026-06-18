@@ -27,7 +27,6 @@ internal enum class PromptSendMode {
 @Serializable
 internal data class AgentPromptUiDraft(
   @JvmField val promptText: String = "",
-  @JvmField val providerId: String? = null,
   @JvmField val targetMode: PromptTargetMode = PromptTargetMode.NEW_TASK,
   @JvmField val sendMode: PromptSendMode = PromptSendMode.SEND_NOW,
   @JvmField val existingTaskSearch: String = "",
