@@ -79,6 +79,7 @@ class UnnecessaryConditionalExpression {
 
   void m(Boolean b) {
     m2(<warning descr="'b != null ? b : false' can be simplified to 'b != null && b'">b != null</warning> ? b : false);
+    m2(<warning descr="'b == null ? false : b' can be simplified to 'b!=null && b'">b == null</warning> ? false : b);
   }
 
   void m2(boolean b) {}
