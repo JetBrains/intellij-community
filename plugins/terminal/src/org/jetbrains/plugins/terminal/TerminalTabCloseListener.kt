@@ -6,6 +6,7 @@ import com.intellij.execution.process.NopProcessHandler
 import com.intellij.execution.ui.BaseContentCloseListener
 import com.intellij.execution.ui.RunContentManagerImpl
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.ui.content.Content
@@ -23,7 +24,7 @@ abstract class TerminalTabCloseListener(
   }
 
   override fun closeQuery(content: Content, projectClosing: Boolean): Boolean {
-    if (projectClosing) {
+    if (projectClosing || project.isDisposed || ApplicationManager.getApplication().isExitInProgress) {
       return true
     }
     if (content.getUserData(Content.TEMPORARY_REMOVED_KEY) == true) {
