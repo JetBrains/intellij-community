@@ -1,13 +1,12 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources.psi
 
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesData
+import com.intellij.compose.ide.plugin.resources.ComposeResourcesDataProvider
 import com.intellij.compose.ide.plugin.resources.ComposeResourcesGenerationService
-import com.intellij.compose.ide.plugin.resources.findComposeResourcesDirFor
 import com.intellij.compose.ide.plugin.resources.isValidInnerComposeResourcesDirName
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
@@ -15,13 +14,13 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import com.intellij.psi.xml.XmlAttribute
 import com.intellij.psi.xml.XmlAttributeValue
 import com.intellij.psi.xml.XmlComment
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlText
 import com.intellij.psi.xml.XmlToken
-import com.intellij.psi.impl.PsiTreeChangeEventImpl
 import org.jetbrains.kotlin.asJava.namedUnwrappedElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 
@@ -147,28 +146,30 @@ class ComposeResourcesPsiChangesListener(private val project: Project) : PsiTree
     if (project.isDisposed) return
     if (event.isIgnorable) return
 
-    val virtualFile = event.getVirtualFile() ?: return
-    val path = virtualFile.toNioPathOrNull() ?: return
-    val composeResourcesDir = project.findComposeResourcesDirFor(path) ?: return
-
-    composeResourcesGenerationService.tryEmit(composeResourcesDir)
+    val composeData = event.getComposeData() ?: return
+    composeResourcesGenerationService.tryEmit(composeData)
   }
 
-  private fun PsiTreeChangeEvent.getVirtualFile(): VirtualFile? {
+  private fun PsiTreeChangeEvent.getComposeData(): ComposeResourcesData? {
     val code = (this as? PsiTreeChangeEventImpl)?.code ?: return null
+    val composeDataProvider = ComposeResourcesDataProvider.findProviderForProject(project) ?: return null
+
     return when (code) {
       PsiTreeChangeEventImpl.PsiEventType.CHILD_MOVED -> {
-        oldParent.getComposeResourcesVirtualFile() ?: newParent.getComposeResourcesVirtualFile()
+        val directory = oldParent.asComposeResourceDir() ?: newParent.asComposeResourceDir() ?: return null
+        composeDataProvider.getComposeDataForResourceFolder(directory)
       }
       else -> {
-        file?.virtualFile /* for string values */ ?: (parent as? PsiDirectory)?.virtualFile /* for files */
+        /* for string values */
+        file?.let { composeDataProvider.getComposeDataForResourceFile(it) }
+        /* for files */
+        ?: (parent as? PsiDirectory)?.let { composeDataProvider.getComposeDataForResourceFolder(it) }
       }
     }
   }
 
-  private fun PsiElement.getComposeResourcesVirtualFile(): VirtualFile? = (this as? PsiDirectory)
-    ?.takeIf { it.name.isValidInnerComposeResourcesDirName }
-    ?.virtualFile
+  private fun PsiElement.asComposeResourceDir(): PsiDirectory? =
+    (this as? PsiDirectory)?.takeIf { it.name.isValidInnerComposeResourcesDirName }
 }
 
 private fun PsiTreeChangeEvent.getParentName(): String? = file?.parent?.name /* for string values */

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.compose.ide.plugin.resources.psi.asUnderscoredIdentifier
@@ -51,10 +51,7 @@ internal interface ComposeResourcesBase {
    */
   fun isComposeResourcesElement(element: PsiElement): Boolean {
     val psiFile = getPsiFile(element) ?: return false
-    val parentName = psiFile.parent?.name ?: return false
-    if (!parentName.isValidInnerComposeResourcesDirNameFor(validInnerComposeResourcesDirNames)) return false
-    val composeResourcesDir = psiFile.parent?.parent?.virtualFile?.toNioPathOrNull() ?: return false
-    return psiFile.project.getAllComposeResourcesDirs().any { it.directoryPath == composeResourcesDir }
+    return psiFile.isComposeResourcesFile(validInnerComposeResourcesDirNames)
   }
 
   /**
@@ -72,9 +69,11 @@ internal interface ComposeResourcesBase {
     val module = element.module ?: return null
     val project = element.project
     val composeResourcePath = element.containingFile.virtualFile.toNioPathOrNull() ?: return null
-    val composeResourcesDir = project.findComposeResourcesDirFor(composeResourcePath) ?: return null
-    // custom compose resources dirs can be anywhere, so we search in the whole project
-    val searchScope = if (composeResourcesDir.isCustom) GlobalSearchScope.projectScope(project) else GlobalSearchScope.moduleScope(module)
+    val composeData = ComposeResourcesDataProvider.findProviderForProject(project)
+                        ?.getComposeDataForResourceFile(element.containingFile) ?: return null
+    // Non-conventional compose resources dirs can be anywhere, so we search in the whole project
+    val searchScope =
+      if (composeData.isCustomDirectory) GlobalSearchScope.projectScope(project) else GlobalSearchScope.moduleScope(module)
     val typeReferenceText = ResourceType.fromPath(composeResourcePath).resourceName
     return KotlinPropertyShortNameIndex[name, project, searchScope]
       .filterIsInstance<KtProperty>() // even though it's called KotlinPropertyShortNameIndex it returns KtNamedDeclaration
