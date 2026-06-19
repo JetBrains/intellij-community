@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.codex.chat
 
 import com.intellij.agent.workbench.chat.AgentChatBehaviorFile
 import com.intellij.agent.workbench.chat.AgentChatBehaviorTerminalTab
-import com.intellij.agent.workbench.chat.AgentChatDisposableController
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageDispatchContext
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageRetryDecision
 import com.intellij.agent.workbench.chat.AgentChatProviderBehavior
@@ -14,9 +13,7 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageD
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.isBusyForExistingThreadPlanMode
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.registry.RegistryManager
 import kotlin.math.min
 
 private class CodexAgentChatProviderBehaviorLog
@@ -114,21 +111,6 @@ internal object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     }
   }
 
-  override fun shouldInstallPatchFolding(): Boolean {
-    return ApplicationManager.getApplication() != null && RegistryManager.getInstance().`is`(CODEX_TUI_PATCH_FOLDING_REGISTRY_KEY)
-  }
-
-  override fun createPatchFoldController(tab: AgentChatBehaviorTerminalTab): AgentChatDisposableController? {
-    if (!shouldInstallPatchFolding()) {
-      return null
-    }
-    val terminalView = tab.terminalView ?: return null
-    return CodexTuiPatchFoldController(
-      terminalView = terminalView,
-      sessionState = tab.sessionState,
-      parentScope = tab.coroutineScope,
-    )
-  }
 }
 
 private fun calculateCodexPlanModeRetryBackoffMs(retryAttempt: Int): Long {
@@ -198,8 +180,6 @@ private fun sanitizeCodexTerminalText(text: String): String {
 }
 
 private fun stripCodexTerminalAnsi(text: String): String = CODEX_TERMINAL_ANSI_ESCAPE_REGEX.replace(text, "")
-
-internal const val CODEX_TUI_PATCH_FOLDING_REGISTRY_KEY: String = "agent.workbench.codex.tui.patch.folding"
 
 private const val CODEX_PLAN_MODE_RETRY_BACKOFF_MS: Long = 250
 private const val CODEX_PLAN_MODE_MAX_RETRY_BACKOFF_MS: Long = 1_000

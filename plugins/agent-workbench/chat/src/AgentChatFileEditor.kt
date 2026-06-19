@@ -107,7 +107,6 @@ internal class AgentChatFileEditor(
   private var initialMessageDispatcher: AgentChatInitialMessageDispatcher? = null
   private var scopedTerminalRefreshController: AgentChatDisposableController? = null
   private var terminalRestoreContextController: AgentChatDisposableController? = null
-  private var patchFoldController: AgentChatDisposableController? = null
   private var crossProjectDockTargetRegistration: Disposable? = null
 
   private val providerDescriptor
@@ -402,7 +401,6 @@ internal class AgentChatFileEditor(
       tab = createdTab,
       tabSnapshotWriter = tabSnapshotWriter,
     )
-    patchFoldController = behavior.createPatchFoldController(createdTab)
     installPendingContextInterceptor(createdTab)
     component.removeAll()
     pendingContextPanelInstalled = false
@@ -566,8 +564,6 @@ internal class AgentChatFileEditor(
     scopedTerminalRefreshController = null
     terminalRestoreContextController?.dispose()
     terminalRestoreContextController = null
-    patchFoldController?.dispose()
-    patchFoldController = null
     tab = null
     component.removeAll()
     pendingContextPanelInstalled = false

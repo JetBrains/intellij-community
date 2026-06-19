@@ -40,14 +40,6 @@ dependencies {
       intellijIdeaUltimate(platformVersion) { useInstaller = false }
     }
     jetbrainsRuntime()
-    if (platformLocalPath == null) {
-      bundledPlugins("org.jetbrains.plugins.terminal")
-    }
-  }
-
-  if (platformLocalPath != null) {
-    val ideDir = rootProject.file(platformLocalPath)
-    compileOnly(fileTree(ideDir.resolve("plugins/terminal/lib")) { include("**/*.jar") })
   }
 
   implementation(project(":common"))

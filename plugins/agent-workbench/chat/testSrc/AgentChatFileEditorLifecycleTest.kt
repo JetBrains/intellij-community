@@ -113,11 +113,6 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexPatchFoldingIsNotInstalledWithoutApplication() {
-    assertThat(shouldInstallAgentChatPatchFolding(AgentSessionProvider.CODEX)).isFalse()
-  }
-
-  @Test
   fun terminalTitleRebindsPendingTabToObservedThreadId() {
     val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
     val file = pendingTestFile()

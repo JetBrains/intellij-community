@@ -248,6 +248,8 @@ jvm_library(
         "//plugins/agent-workbench/cli:agent-workbench-cli-tests_test_lib",
         "//plugins/agent-workbench/codex/prompt-suggestions:agent-workbench-codex-prompt-suggestions-tests",
         "//plugins/agent-workbench/codex/prompt-suggestions:agent-workbench-codex-prompt-suggestions-tests_test_lib",
+        "//plugins/agent-workbench/codex/common:agent-workbench-codex-common-tests",
+        "//plugins/agent-workbench/codex/common:agent-workbench-codex-common-tests_test_lib",
         "//plugins/agent-workbench/sessions-launch-config/backend:agent-workbench-sessions-launch-config-backend-tests",
         "//plugins/agent-workbench/sessions-launch-config/backend:agent-workbench-sessions-launch-config-backend-tests_test_lib",
     ],

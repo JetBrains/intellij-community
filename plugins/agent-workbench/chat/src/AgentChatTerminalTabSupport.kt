@@ -46,10 +46,10 @@ import kotlin.time.Duration.Companion.milliseconds
 internal interface AgentChatTerminalTab : AgentChatBehaviorTerminalTab {
   val component: JComponent
   val preferredFocusableComponent: JComponent
-  override val coroutineScope: CoroutineScope
-  override val sessionState: StateFlow<TerminalViewSessionState>
+  val coroutineScope: CoroutineScope
+  val sessionState: StateFlow<TerminalViewSessionState>
   val keyEventsFlow: Flow<TerminalKeyEvent>
-  override val terminalView: TerminalView?
+  val terminalView: TerminalView?
     get() = null
 
   suspend fun captureOutputCheckpoint(): AgentChatTerminalOutputCheckpoint

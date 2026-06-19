@@ -10,13 +10,7 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
-import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.TerminalViewSessionState
-import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
@@ -29,12 +23,6 @@ class CodexAgentChatProviderBehaviorTest {
   fun behaviorIsRegisteredForCodexProvider() {
     assertThat(AgentChatProviderBehaviors.find(AgentSessionProvider.CODEX))
       .isSameAs(CodexAgentChatProviderBehavior)
-  }
-
-  @Test
-  @RegistryKey(key = CODEX_TUI_PATCH_FOLDING_REGISTRY_KEY, value = "true")
-  fun patchFoldingInstallCheckHonorsRegistryKey() {
-    assertThat(CodexAgentChatProviderBehavior.shouldInstallPatchFolding()).isTrue()
   }
 
   @Test
@@ -100,11 +88,6 @@ private data class TestBehaviorFile(
 private class TestBehaviorTerminalTab(
   private val recentOutputTail: String,
 ) : AgentChatBehaviorTerminalTab {
-  override val coroutineScope: CoroutineScope
-    get() = error("Not used in behavior tests")
-  override val sessionState: StateFlow<TerminalViewSessionState> = MutableStateFlow(TerminalViewSessionState.Running)
-  override val terminalView: TerminalView? = null
-
   override suspend fun readRecentOutputTail(): String = recentOutputTail
 }
 
