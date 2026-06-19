@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.springloaded;
 
 import com.intellij.debugger.PositionManager;
@@ -6,6 +6,7 @@ import com.intellij.debugger.PositionManagerFactory;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
@@ -39,14 +40,16 @@ public final class SpringLoadedPositionManagerFactory extends PositionManagerFac
       SPRING_LOADED_IN_PROJECT_CACHE_KEY,
       () -> {
         boolean result = ReadAction.nonBlocking(() -> {
+          if (DumbService.getInstance(project).isDumb()) return false;
           JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
           return facade.findPackage("com.springsource.loaded") != null ||
                  facade.findPackage("org.springsource.loaded") != null;
-        }).inSmartMode(project).executeSynchronously();
+        }).executeSynchronously();
 
         return CachedValueProvider.Result.create(
           result,
-          ProjectRootModificationTracker.getInstance(project)
+          ProjectRootModificationTracker.getInstance(project),
+          DumbService.getInstance(project).getModificationTracker()
         );
       },
       false
