@@ -30,6 +30,7 @@
     <module name="intellij.devkit.core"/>
     <module name="intellij.devkit.compose"/>
     <module name="intellij.devkit.gradle"/>
+    <module name="intellij.devkit.gradle.tooling"/>
     <module name="intellij.devkit.i18n"/>
     <module name="intellij.devkit.intelliLang"/>
     <module name="intellij.devkit.themes"/>

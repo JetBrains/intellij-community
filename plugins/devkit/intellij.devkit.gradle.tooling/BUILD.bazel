@@ -1,0 +1,56 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.devkit.gradle.tooling` start
+
+jvm_library(
+    name = "gradle-tooling",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.devkit.gradle.tooling",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:jetbrains-annotations",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+        "@lib//:gradle-provided",
+    ],
+)
+
+jvm_library(
+    name = "gradle-tooling_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k8",
+    module_name = "intellij.devkit.gradle.tooling",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":gradle-tooling",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
+        "@lib//:gradle-provided",
+    ],
+)
+### auto-generated section `build intellij.devkit.gradle.tooling` end
+
+### auto-generated section `iml intellij.devkit.gradle.tooling` start
+exports_files(
+    [
+        "intellij.devkit.gradle.tooling.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.devkit.gradle.tooling` end
