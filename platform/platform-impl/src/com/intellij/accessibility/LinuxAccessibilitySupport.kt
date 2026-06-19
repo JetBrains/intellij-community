@@ -5,6 +5,7 @@ import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.isSupportScreenReadersOverridden
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.impl.LinuxUiUtil.isGnomeScreenReaderSettingEnabled
@@ -15,6 +16,8 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.util.ui.accessibility.ScreenReader
 import com.intellij.util.ui.accessibility.ScreenReader.ASSISTIVE_TECHNOLOGIES_PROPERTY
 import com.intellij.util.ui.accessibility.ScreenReader.ATK_WRAPPER
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<LinuxAccessibilitySupport>()
@@ -70,14 +73,10 @@ object LinuxAccessibilitySupport {
     if ((isSupportScreenReadersOverridden() || screenReaderDetected || magnifierDetected) && !atkWrapperEnabledInConfig) {
       configureAndTryActivateLinuxAtkWrapper()
     }
-
-    if (linuxAccessibilitySupportRequested) {
-      AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.LINUX_ACCESSIBILITY_SUPPORT_ENABLED)
-    }
   }
 
 
-  fun showLinuxAccessibilityDialog() {
+  suspend fun showLinuxAccessibilityDialog() {
     if (isSupportScreenReadersOverridden()) {
       AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED_VM)
 
@@ -148,23 +147,25 @@ object LinuxAccessibilitySupport {
            ScreenReader.isEnabled(ATK_WRAPPER)
   }
 
-  private fun askToEnableLinuxAccessibilitySupport(
+  private suspend fun askToEnableLinuxAccessibilitySupport(
     isScreenReaderDetected: Boolean,
   ): LinuxA11yChoice {
-    val dialogResultCode = Messages.showCheckboxMessageDialog(
-      ApplicationBundle.message("confirmation.linux.accessibility.enable", ApplicationInfoImpl.getShadowInstance().versionName),
-      ApplicationBundle.message("title.linux.accessibility.support"),
-      arrayOf(
-        ApplicationBundle.message("button.enable.linux.accessibility.support"),
-        Messages.getCancelButton(),
-      ),
-      ApplicationBundle.message("checkbox.enable.linux.screen.reader.support"),
-      isScreenReaderDetected,
-      ENABLE_ACCESSIBILITY_BUTTON_INDEX,
-      ENABLE_ACCESSIBILITY_BUTTON_INDEX,
-      Messages.getQuestionIcon(),
-    ) { exitCode, checkbox ->
-      LinuxA11yChoice.fromDialogResult(exitCode, ENABLE_ACCESSIBILITY_BUTTON_INDEX, checkbox.isSelected).toDialogCode()
+    val dialogResultCode = withContext(Dispatchers.EDT) {
+      Messages.showCheckboxMessageDialog(
+        ApplicationBundle.message("confirmation.linux.accessibility.enable", ApplicationInfoImpl.getShadowInstance().versionName),
+        ApplicationBundle.message("title.linux.accessibility.support"),
+        arrayOf(
+          ApplicationBundle.message("button.enable.linux.accessibility.support"),
+          Messages.getCancelButton(),
+        ),
+        ApplicationBundle.message("checkbox.enable.linux.screen.reader.support"),
+        isScreenReaderDetected,
+        ENABLE_ACCESSIBILITY_BUTTON_INDEX,
+        ENABLE_ACCESSIBILITY_BUTTON_INDEX,
+        Messages.getQuestionIcon(),
+      ) { exitCode, checkbox ->
+        LinuxA11yChoice.fromDialogResult(exitCode, ENABLE_ACCESSIBILITY_BUTTON_INDEX, checkbox.isSelected).toDialogCode()
+      }
     }
 
     return LinuxA11yChoice.fromDialogCode(dialogResultCode)
