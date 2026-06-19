@@ -339,9 +339,9 @@ public class PersistentFSTreeAccessor {
     }
 
     int header = -rangesCount;
-    // Header belongs to DIRECTORY_CHILDREN framing; RangesList serializes only diff-compressed range boundaries.
-    //TODO RC: use a checked int-size addition helper for header+payload and throw if the total does not fit into signed int.
-    int serializedSize = DataInputOutputUtil.sizeOfVarint(header) + ranges.serializedSize(parentId);
+    // Header belongs to DIRECTORY_CHILDREN binary format, while RangesList serializes only diff-compressed range boundaries:
+    //(Use int64 for header+payload to be safe against int32 overflow)
+    long serializedSize = DataInputOutputUtil.sizeOfVarint(header) + (long)ranges.serializedSize(parentId);
     if (serializedSize > VFSAttributesStorage.MAX_ATTRIBUTE_VALUE_SIZE) {
       throw new FileTooBigException(
         "Can't store children for parent #" + parentId + ": range-list is too large: " + serializedSize +
