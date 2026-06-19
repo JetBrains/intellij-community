@@ -192,6 +192,7 @@
             class="com.intellij.terminal.frontend.action.TerminalAgentsChevronSelectorAction"
             icon="AllIcons.Toolbar.Expand"/>
     <action id="Terminal.AiAgents.LaunchSelectedAgent" class="com.intellij.terminal.frontend.action.LaunchSelectedAgentAction"/>
+    <action id="Terminal.AiAgents.LaunchJunieCli" class="com.intellij.terminal.frontend.action.LaunchJunieCliAction"/>
     <action id="Terminal.AiAgents.ResetJunieNewBadgeCounter"
             class="com.intellij.terminal.frontend.action.ResetJunieNewBadgeCounterAction"
             internal="true"/>

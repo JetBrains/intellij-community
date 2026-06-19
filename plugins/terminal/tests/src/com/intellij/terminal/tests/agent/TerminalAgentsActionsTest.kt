@@ -73,6 +73,61 @@ internal class TerminalAgentsActionsTest : BasePlatformTestCase() {
     assertThat(isVisible("Terminal.AiAgents.LaunchSelectedAgent")).isFalse()
   }
 
+  @Test
+  fun `launch Junie CLI action is resolvable by id`() {
+    assertThat(ActionManager.getInstance().getAction("Terminal.AiAgents.LaunchJunieCli")).isNotNull()
+  }
+
+  @Test
+  fun `launch Junie CLI action is enabled when Junie is available`() {
+    setAvailableAgents(listOf(TerminalAvailableAgentDto(TerminalAgent.AgentKey("junie"), TerminalAgentMode.RUN)))
+
+    assertThat(isVisible("Terminal.AiAgents.LaunchJunieCli")).isTrue()
+  }
+
+  @Test
+  fun `launch Junie CLI action is enabled when Junie is available in install-and-run mode`() {
+    setAvailableAgents(listOf(TerminalAvailableAgentDto(TerminalAgent.AgentKey("junie"), TerminalAgentMode.INSTALL_AND_RUN)))
+
+    assertThat(isVisible("Terminal.AiAgents.LaunchJunieCli")).isTrue()
+  }
+
+  @Test
+  fun `launch Junie CLI action is disabled when only another agent is available`() {
+    setAvailableAgents(listOf(TerminalAvailableAgentDto(TerminalAgent.AgentKey("codex"), TerminalAgentMode.RUN)))
+
+    assertThat(isVisible("Terminal.AiAgents.LaunchJunieCli")).isFalse()
+  }
+
+  @Test
+  fun `launch Junie CLI action is disabled when no agents are available`() {
+    setAvailableAgents(emptyList())
+
+    assertThat(isVisible("Terminal.AiAgents.LaunchJunieCli")).isFalse()
+  }
+
+  @Test
+  fun `launch Junie CLI action is disabled when AI agents feature is off`() {
+    Registry.get(TERMINAL_AI_AGENTS_REGISTRY_KEY).setValue(false, testRootDisposable)
+    setAvailableAgents(listOf(TerminalAvailableAgentDto(TerminalAgent.AgentKey("junie"), TerminalAgentMode.RUN)))
+
+    assertThat(isVisible("Terminal.AiAgents.LaunchJunieCli")).isFalse()
+  }
+
+  @Test
+  fun `launch Junie CLI action does not launch when Junie is unavailable despite an enabled presentation`() {
+    // Simulate a TOCTOU between update() and actionPerformed(): the presentation is stale-enabled, but Junie
+    // is no longer among the available agents. The action's defensive re-check must then skip the launch.
+    setAvailableAgents(listOf(TerminalAvailableAgentDto(TerminalAgent.AgentKey("codex"), TerminalAgentMode.RUN)))
+    val action = ActionManager.getInstance().getAction("Terminal.AiAgents.LaunchJunieCli")
+    val event = TestActionEvent.createTestEvent(projectDataContext())
+    event.presentation.isEnabledAndVisible = true
+
+    ActionUtil.performAction(action, event)
+
+    assertThat(TerminalAgentsStateService.getInstance().lastLaunchedAgentKey).isNull()
+  }
+
   private fun secondaryIcon(action: AnAction): Any? {
     val event = TestActionEvent.createTestEvent(projectDataContext())
     action.update(event)
