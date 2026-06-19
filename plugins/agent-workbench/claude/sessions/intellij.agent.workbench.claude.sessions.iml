@@ -46,6 +46,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.netty" />
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.filewatch" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.cli" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.common" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common" />
     <orderEntry type="module" module-name="intellij.agent.workbench.json" />
@@ -53,10 +54,6 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.ui" />
-    <orderEntry type="module" module-name="intellij.terminal" />
-    <orderEntry type="module" module-name="intellij.terminal.backend" />
-    <orderEntry type="module" module-name="intellij.platform.eel" />
-    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
     <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />

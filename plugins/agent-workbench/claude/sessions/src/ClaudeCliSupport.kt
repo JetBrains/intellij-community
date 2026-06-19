@@ -1,18 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.toEelApi
-import org.jetbrains.plugins.terminal.agent.TerminalAgent
-import org.jetbrains.plugins.terminal.agent.TerminalAgentResolver
-import java.nio.file.Files
-import java.nio.file.Path
+import com.intellij.agent.workbench.cli.resolveExecutableFromPathOrLocalBin
+import com.intellij.agent.workbench.cli.resolveExecutableOrDefaultViaTerminalResolver as resolveCliExecutableOrDefaultViaTerminalResolver
+import com.intellij.agent.workbench.cli.resolveExecutableViaTerminalResolver as findCliExecutableViaTerminalResolver
 
-private val LOG = logger<ClaudeCliSupportLogCategory>()
-
-private class ClaudeCliSupportLogCategory
+private const val CLAUDE_MISSING_TERMINAL_AGENT_MESSAGE: String =
+  "Claude terminal agent extension is not registered; falling back to local PATH lookup"
 
 object ClaudeCliSupport {
   const val CLAUDE_COMMAND: String = "claude"
@@ -26,13 +20,11 @@ object ClaudeCliSupport {
    * Claude agent (e.g. an unusual test environment) or when the binary cannot be located at all.
    */
   suspend fun findExecutableViaTerminalResolver(): String? {
-    val claudeAgent = TerminalAgent.findByKey(TerminalAgent.AgentKey(CLAUDE_TERMINAL_AGENT_KEY))
-    if (claudeAgent == null) {
-      LOG.warn("Claude terminal agent extension is not registered; falling back to local PATH lookup")
-      return findExecutable()
-    }
-    val eelApi = LocalEelDescriptor.toEelApi()
-    return TerminalAgentResolver.findBinaryPath(claudeAgent, eelApi)
+    return findCliExecutableViaTerminalResolver(
+      terminalAgentKey = CLAUDE_TERMINAL_AGENT_KEY,
+      fallbackResolver = ::findExecutable,
+      missingAgentMessage = CLAUDE_MISSING_TERMINAL_AGENT_MESSAGE,
+    )
   }
 
   /**
@@ -44,7 +36,12 @@ object ClaudeCliSupport {
    * pty4j message `Exec_tty error: Unknown reason` when the binary is not on `PATH`.
    */
   suspend fun resolveExecutableOrDefaultViaTerminalResolver(): String =
-    findExecutableViaTerminalResolver() ?: CLAUDE_COMMAND
+    resolveCliExecutableOrDefaultViaTerminalResolver(
+      defaultCommand = CLAUDE_COMMAND,
+      terminalAgentKey = CLAUDE_TERMINAL_AGENT_KEY,
+      fallbackResolver = ::findExecutable,
+      missingAgentMessage = CLAUDE_MISSING_TERMINAL_AGENT_MESSAGE,
+    )
 
   fun buildNewSessionCommand(
     yolo: Boolean,
@@ -75,15 +72,7 @@ object ClaudeCliSupport {
   ): List<String> = listOf(executable, "--resume", sourceSessionId, "--fork-session", SESSION_ID_FLAG, forkSessionId)
 
   internal fun findExecutable(): String? {
-    val inPath = PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(CLAUDE_COMMAND)
-    @Suppress("IO_FILE_USAGE")
-    if (inPath != null) return inPath.toPath().toAbsolutePath().toString()
-
-    val homeDir = System.getProperty("user.home") ?: return null
-    val localBin = Path.of(homeDir, ".local", "bin", CLAUDE_COMMAND)
-    if (Files.exists(localBin)) return localBin.toAbsolutePath().toString()
-
-    return null
+    return resolveExecutableFromPathOrLocalBin(CLAUDE_COMMAND)
   }
 }
 
