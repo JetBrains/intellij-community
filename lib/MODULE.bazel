@@ -9507,6 +9507,20 @@ http_file(
 )
 
 http_file(
+    name = "javax_servlet_jsp-javax_servlet_jsp-api-2_2_1_http",
+    downloaded_file_path = "javax.servlet.jsp-api-2.2.1.jar",
+    sha256 = "e767061b539d6c686d643eee0ad8f22442922312fda04d4e336fe3a3cb9117a2",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/javax/servlet/jsp/javax.servlet.jsp-api/2.2.1/javax.servlet.jsp-api-2.2.1.jar",
+)
+
+http_file(
+    name = "javax_servlet_jsp-javax_servlet_jsp-api-2_2_1-sources_http",
+    downloaded_file_path = "javax.servlet.jsp-api-2.2.1-sources.jar",
+    sha256 = "d7a9ba1af77c874677a524f35d7fb446faddaad688b6f34e680a54d5dcb43394",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/javax/servlet/jsp/javax.servlet.jsp-api/2.2.1/javax.servlet.jsp-api-2.2.1-sources.jar",
+)
+
+http_file(
     name = "com_github_weisj-jsvg-2_1_0_http",
     downloaded_file_path = "jsvg-2.1.0.jar",
     sha256 = "a538142d27c57c55066da02a535cc8eee3afd0d37b3daff8eba6344bd0ffc1b6",

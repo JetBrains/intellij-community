@@ -12143,6 +12143,21 @@ jvm_import(
 )
 
 copy_file(
+    name = "javax.servlet.jsp/javax.servlet.jsp-api-2.2.1.jar_copy",
+    src = "@javax_servlet_jsp-javax_servlet_jsp-api-2_2_1_http//file",
+    out = "javax.servlet.jsp/javax.servlet.jsp-api-2.2.1.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-jsp-_j_s_p",
+    jar = "@javax_servlet_jsp-javax_servlet_jsp-api-2_2_1_http//file",
+    source_jar = "@javax_servlet_jsp-javax_servlet_jsp-api-2_2_1-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
     name = "com.github.weisj/jsvg-2.1.0.jar_copy",
     src = "@com_github_weisj-jsvg-2_1_0_http//file",
     out = "com.github.weisj/jsvg-2.1.0.jar",
