@@ -61,6 +61,7 @@ import javax.swing.JComponent
 import javax.swing.JDialog
 import javax.swing.JFrame
 import javax.swing.JRootPane
+import javax.swing.KeyStroke
 import javax.swing.LayoutFocusTraversalPolicy
 import javax.swing.RootPaneContainer
 import kotlin.time.Duration.Companion.seconds
@@ -117,13 +118,7 @@ abstract class NonModalWindowWrapper(
   private var windowListener: WindowAdapter? = null
   private var windowDisposable: Disposable? = null
 
-  /**
-   * The window that was focused when this non-modal window was first created.
-   * Captured once at [initWindow] time and reused as the Float-mode [JDialog] owner on every
-   * mode switch, so that switching Window→Float does not accidentally parent the dialog
-   * to the main IDE frame (which would bring it to the front, pushing a detached editor
-   * window to the back).
-   */
+  /** Captured at [initWindow] time; used as Float-mode [JDialog] owner across mode switches. */
   private var savedOwnerWindow: Window? = null
 
   protected var isFloat: Boolean
@@ -435,9 +430,11 @@ abstract class NonModalWindowWrapper(
     windowListener = adapter
     activeWindow.addWindowListener(adapter)
 
-    // ESC / Cmd-W: ask the subclass whether it is safe to close.
-    // Register ESC as an AnAction so that IdeGlassPaneImpl dispatches it before
-    // Swing component-level key bindings (e.g. combo box editor) can consume the event.
+    // Two-layer ESC close:
+    // Layer 1: AnAction — fires at IdeKeyEventDispatcher level, before Swing bindings.
+    //   Handles combo boxes, trees, tables whose ESC is a pure Swing InputMap entry.
+    // Layer 2: WHEN_IN_FOCUSED_WINDOW — Swing fallback when Layer 1 is shadowed
+    //   by a closer AnAction ancestor (e.g. ClearTextAction on SearchTextField).
     val escAction = object : AnAction() {
       override fun actionPerformed(e: AnActionEvent) {
         if (PopupUtil.handleEscKeyEvent()) return
@@ -446,6 +443,14 @@ abstract class NonModalWindowWrapper(
       }
     }
     escAction.registerCustomShortcutSet(ActionUtil.getShortcutSet(IdeActions.ACTION_EDITOR_ESCAPE), rootPane)
+
+    val escSwingHandler = ActionListener { e ->
+      if (PopupUtil.handleEscKeyEvent()) return@ActionListener
+      val current = EventQueue.getCurrentEvent()
+      if (canClose(current as? KeyEvent ?: e)) close()
+    }
+    rootPane.registerKeyboardAction(
+      escSwingHandler, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW)
 
     val cmdWHandler = ActionListener { e ->
       if (PopupUtil.handleEscKeyEvent()) return@ActionListener
