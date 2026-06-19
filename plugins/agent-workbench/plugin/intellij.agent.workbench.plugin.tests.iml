@@ -84,6 +84,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.cli.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.prompt.suggestions.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.codex.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.launch.config.backend.tests" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.agent.workbench.plugin" />

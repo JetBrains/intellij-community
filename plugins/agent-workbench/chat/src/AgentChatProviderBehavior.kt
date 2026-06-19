@@ -10,10 +10,6 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageD
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.terminal.frontend.view.TerminalView
-import com.intellij.terminal.frontend.view.TerminalViewSessionState
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 
 private class AgentChatProviderBehaviorRegistryLog
@@ -51,10 +47,6 @@ internal fun resolveAgentChatProviderBehavior(provider: AgentSessionProvider?): 
     AgentSessionProvider.JUNIE -> JunieAgentChatProviderBehavior
     else -> DefaultAgentChatProviderBehavior
   }
-}
-
-internal fun shouldInstallAgentChatPatchFolding(provider: AgentSessionProvider?): Boolean {
-  return resolveAgentChatProviderBehavior(provider).shouldInstallPatchFolding()
 }
 
 @ApiStatus.Internal
@@ -102,12 +94,6 @@ interface AgentChatBehaviorFile {
 
 @ApiStatus.Internal
 interface AgentChatBehaviorTerminalTab {
-  val coroutineScope: CoroutineScope
-
-  val sessionState: StateFlow<TerminalViewSessionState>
-
-  val terminalView: TerminalView?
-
   suspend fun readRecentOutputTail(): String
 }
 
@@ -153,10 +139,6 @@ interface AgentChatProviderBehavior {
     outputText: String,
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision = AgentChatInitialMessageRetryDecision.PROCEED
-
-  fun shouldInstallPatchFolding(): Boolean = false
-
-  fun createPatchFoldController(tab: AgentChatBehaviorTerminalTab): AgentChatDisposableController? = null
 }
 
 private object DefaultAgentChatProviderBehavior : AgentChatProviderBehavior

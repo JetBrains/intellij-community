@@ -12,28 +12,40 @@ import java.util.concurrent.TimeUnit
 class CodexSessionBackendSelectorTest {
   @Test
   fun defaultsToAppServerWhenOverrideMissing() {
-    val backend = CodexSessionBackendSelector.select(backendOverride = null)
+    val backend = CodexSessionBackendSelector.select(
+      backendOverride = null,
+      threadPathIndex = InMemoryCodexThreadPathIndex(),
+    )
 
     assertThat(backend).isInstanceOf(CodexAppServerSessionBackend::class.java)
   }
 
   @Test
   fun usesAppServerWhenOverrideIsAppServer() {
-    val backend = CodexSessionBackendSelector.select(backendOverride = "app-server")
+    val backend = CodexSessionBackendSelector.select(
+      backendOverride = "app-server",
+      threadPathIndex = InMemoryCodexThreadPathIndex(),
+    )
 
     assertThat(backend).isInstanceOf(CodexAppServerSessionBackend::class.java)
   }
 
   @Test
   fun keepsUsingAppServerWhenOverrideIsRollout() {
-    val backend = CodexSessionBackendSelector.select(backendOverride = "rollout")
+    val backend = CodexSessionBackendSelector.select(
+      backendOverride = "rollout",
+      threadPathIndex = InMemoryCodexThreadPathIndex(),
+    )
 
     assertThat(backend).isInstanceOf(CodexAppServerSessionBackend::class.java)
   }
 
   @Test
   fun fallsBackToAppServerWhenOverrideUnknown() {
-    val backend = CodexSessionBackendSelector.select(backendOverride = "unknown-backend")
+    val backend = CodexSessionBackendSelector.select(
+      backendOverride = "unknown-backend",
+      threadPathIndex = InMemoryCodexThreadPathIndex(),
+    )
 
     assertThat(backend).isInstanceOf(CodexAppServerSessionBackend::class.java)
   }
