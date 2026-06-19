@@ -137,4 +137,61 @@ public class PyDeprecationTest extends PyTestCase {
     myFixture.configureByFile("deprecation/abcDeprecatedAbstracts.py");
     myFixture.checkHighlighting(true, false, false);
   }
+
+  // PY-80625
+  public void testDeprecatedOverloadedCallee() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedOverloadedCallee.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedPropertyAugAssign() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedPropertyAugAssign.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedCallableInstance() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedCallableInstance.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedFunctionReference() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedFunctionReference.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedAugAssignAdd() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedAugAssignAdd.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedInDefiningModule() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedInDefiningModule.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80625
+  public void testDeprecatedProtocolMethod() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.configureByFile("deprecation/deprecatedProtocolMethod.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
+
+  // PY-80732
+  public void testDeprecatedOverloadWithArgs() {
+    myFixture.enableInspections(PyDeprecationInspection.class);
+    myFixture.copyDirectoryToProject("deprecation/deprecatedOverloadWithArgs", "");
+    myFixture.configureByFile("main.py");
+    myFixture.checkHighlighting(true, false, false);
+  }
 }

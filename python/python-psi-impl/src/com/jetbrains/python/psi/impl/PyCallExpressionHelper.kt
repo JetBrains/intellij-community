@@ -1718,6 +1718,7 @@ object PyCallExpressionHelper {
    * or null if no overload matches or overloads are unavailable in the current context.
    */
   @ApiStatus.Internal
+  @JvmStatic
   fun selectMatchingOverload(
     function: PyFunction,
     callExpression: PyCallExpression,
