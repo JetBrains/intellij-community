@@ -345,6 +345,22 @@ class SeSelectionListenerTest {
   }
 
   @Test
+  fun withProgrammaticSelectionChange_restoresFlagAfterException() {
+    val list = newList(newModel().apply { addItems(item()) })
+    assertFalse(list.isProgrammaticSelectionChange)
+
+    val exception = org.junit.jupiter.api.Assertions.assertThrows(IllegalStateException::class.java) {
+      list.withProgrammaticSelectionChange {
+        assertTrue(list.isProgrammaticSelectionChange)
+        throw IllegalStateException("boom")
+      }
+    }
+
+    assertEquals("boom", exception.message)
+    assertFalse(list.isProgrammaticSelectionChange)
+  }
+
+  @Test
   fun saveGuard_ignoresProgrammaticSelectionChange_butSavesUserSelectionChange() {
     val model = newModel()
     val userPicked = item()
