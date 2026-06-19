@@ -137,13 +137,11 @@ public class IntroduceFieldPostfixTemplate extends PostfixTemplateWithExpression
                                                            @NotNull PsiExpression virtualExpr,
                                                            @NotNull JavaIntroduceFieldService.InitializationPlace place,
                                                            @NotNull PostfixTemplateProvider provider) {
-    TextRange newSelection = new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset());
-    ActionContext updatedContext = ctx.withSelection(newSelection).withOffset(keyRange.getStartOffset());
     JavaIntroduceFieldService introduceFieldService = JavaIntroduceFieldService.getInstance();
     if (introduceFieldService == null) return ModCommand.error(JavaRefactoringBundle.message("selected.expression.cannot.be.extracted"));
-    return ModCommand.psiUpdate(updatedContext,
-                                document -> document.deleteString(ctx.selection().getStartOffset(), ctx.selection().getEndOffset()),
+    return ModCommand.psiUpdate(ctx, true,
                                 updater -> {
+                                  updater.select(TextRange.from(keyRange.getStartOffset(), 0));
                                   updater.getDocument()
                                     .deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()),
                                                   ctx.selection().getStartOffset());

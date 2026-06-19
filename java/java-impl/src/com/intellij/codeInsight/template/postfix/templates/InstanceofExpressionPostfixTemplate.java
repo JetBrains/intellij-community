@@ -82,10 +82,9 @@ public class InstanceofExpressionPostfixTemplate extends PostfixTemplate impleme
   public PostfixModExpander createModExpander() {
     return (ActionContext actionContext, PostfixTemplateProvider provider, TextRange keyRange) -> {
       TextRange selection = actionContext.selection();
-      return ModCommand.psiUpdate(actionContext.withSelection(new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset()))
-                                    .withOffset(keyRange.getStartOffset()),
-                                  document -> document.deleteString(selection.getStartOffset(), selection.getEndOffset()),
+      return ModCommand.psiUpdate(actionContext, true,
                                   updater -> {
+                                    updater.select(TextRange.from(keyRange.getStartOffset(), 0));
                                     updater.getDocument().deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()), selection.getStartOffset());
                                     PsiDocumentManager.getInstance(updater.getProject()).commitDocument(updater.getDocument());
                                     PsiElement context =

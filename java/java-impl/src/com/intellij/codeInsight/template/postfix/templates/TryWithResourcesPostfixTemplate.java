@@ -74,10 +74,9 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate implements 
   @Override
   public PostfixModExpander createModExpander() {
     return (ActionContext actionContext, PostfixTemplateProvider provider, TextRange keyRange) ->
-      ModCommand.psiUpdate(actionContext.withSelection(new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset()))
-                             .withOffset(keyRange.getStartOffset()),
-                           document -> document.deleteString(actionContext.selection().getStartOffset(), actionContext.selection().getEndOffset()),
+      ModCommand.psiUpdate(actionContext, true,
                            updater -> {
+                             updater.select(TextRange.from(keyRange.getStartOffset(), 0));
                              updater.getDocument().deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()), actionContext.selection().getStartOffset());
                              PsiDocumentManager.getInstance(actionContext.project()).commitDocument(updater.getDocument());
                              PsiFile file = updater.getPsiFile();

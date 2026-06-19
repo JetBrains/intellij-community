@@ -55,9 +55,7 @@ public class TryStatementPostfixTemplate extends PostfixTemplate implements Dumb
   @Override
   public PostfixModExpander createModExpander() {
     return (ActionContext actionContext, PostfixTemplateProvider provider, TextRange keyRange) ->
-      ModCommand.psiUpdate(actionContext.withSelection(new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset()))
-                             .withOffset(keyRange.getStartOffset()),
-                           document -> document.deleteString(actionContext.selection().getStartOffset(), actionContext.selection().getEndOffset()),
+      ModCommand.psiUpdate(actionContext, true,
                            updater -> expandModImpl(actionContext, provider, keyRange, updater));
   }
 
