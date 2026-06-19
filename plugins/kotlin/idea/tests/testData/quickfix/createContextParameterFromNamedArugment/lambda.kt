@@ -1,8 +1,6 @@
 // "Add context parameter to function" "true"
-// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters
+// COMPILER_ARGUMENTS: -XXLanguage:+ContextParameters -XXLanguage:+ExplicitContextArguments
 // K2_ERROR: No parameter with name 'callback' found.
-// K2_AFTER_ERROR: No context argument for 'callback: (Int) -> String' found.
-// K2_AFTER_ERROR: No parameter with name 'callback' found.
 
 fun f1() {}
 
