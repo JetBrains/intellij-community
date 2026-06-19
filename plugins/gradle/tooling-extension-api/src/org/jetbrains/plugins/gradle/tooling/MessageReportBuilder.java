@@ -29,9 +29,6 @@ public interface MessageReportBuilder {
   @CheckReturnValue
   @NotNull MessageReportBuilder withStackTrace();
 
-  @CheckReturnValue
-  @NotNull MessageReportBuilder withLocation(String filePath, int line, int column);
-
   @ApiStatus.Internal
   @CheckReturnValue
   @NotNull MessageReportBuilder withInternal();
