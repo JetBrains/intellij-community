@@ -189,7 +189,7 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
   private val allBridges: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
   private val createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit = ::createNewThreadViaService,
   private val userLaunchProfiles: () -> List<AgentPromptLaunchProfile> = { service<AgentSessionUiPreferencesStateService>().getUserLaunchProfiles() },
-  private val activeLaunchProfileId: () -> String? = { service<AgentSessionUiPreferencesStateService>().getActiveLaunchProfileId() },
+  private val defaultLaunchProfileId: () -> String? = { service<AgentSessionUiPreferencesStateService>().getDefaultLaunchProfileId() },
 ) : ActionGroup(), DumbAware {
 
   override fun update(e: AnActionEvent) {
@@ -204,9 +204,9 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val activeProfileId = activeLaunchProfileId()
-    val profiles = resolveAgentSessionLaunchProfileItems(menuModel, userLaunchProfiles(), activeProfileId)
-    val quickStartItem = resolveAgentSessionLaunchProfileItem(profiles, activeProfileId)
+    val defaultProfileId = defaultLaunchProfileId()
+    val profiles = resolveAgentSessionLaunchProfileItems(menuModel, userLaunchProfiles())
+    val quickStartItem = resolveAgentSessionLaunchProfileItem(profiles, defaultProfileId)
     if (quickStartItem == null) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -221,7 +221,7 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
   override fun actionPerformed(e: AnActionEvent) {
     val context = resolveContext(e) ?: return
     val path = newThreadPathFromTarget(context.target) ?: return
-    val quickStartItem = resolveAgentSessionLaunchProfileItem(allBridges(), context.project, userLaunchProfiles(), activeLaunchProfileId())
+    val quickStartItem = resolveAgentSessionLaunchProfileItem(allBridges(), context.project, userLaunchProfiles(), defaultLaunchProfileId())
     launchQuickStartProfile(path, context.project, quickStartItem, AgentWorkbenchEntryPoint.TREE_POPUP, createNewSession)
   }
 
@@ -229,16 +229,16 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
     val context = e?.let(resolveContext) ?: return emptyArray()
     val path = newThreadPathFromTarget(context.target) ?: return emptyArray()
     val menuModel = buildAgentSessionLaunchProfileMenuModel(allBridges(), context.project)
-    val activeProfileId = activeLaunchProfileId()
-    val profiles = resolveAgentSessionLaunchProfileItems(menuModel, userLaunchProfiles(), activeProfileId)
+    val defaultProfileId = defaultLaunchProfileId()
+    val profiles = resolveAgentSessionLaunchProfileItems(menuModel, userLaunchProfiles())
     if (profiles.isEmpty()) return emptyArray()
-    val selectedProfileId = resolveAgentSessionLaunchProfileItem(profiles, activeProfileId)?.profile?.id
+    val checkedProfileId = resolveAgentSessionLaunchProfileItem(profiles, defaultProfileId)?.profile?.id
     return buildAgentSessionLaunchProfileMenuActions(
       path = path,
       project = context.project,
       profiles = profiles,
       entryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
-      activeLaunchProfileId = selectedProfileId,
+      checkedLaunchProfileId = checkedProfileId,
       createNewSession = createNewSession,
     )
   }

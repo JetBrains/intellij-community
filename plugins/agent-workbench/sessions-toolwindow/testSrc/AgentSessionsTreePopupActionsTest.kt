@@ -440,7 +440,7 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
-  fun newThreadGroupVisibilityAndDispatchUsesActiveLaunchProfile() {
+  fun newThreadGroupVisibilityAndDispatchUsesDefaultLaunchProfile() {
     var launchedPath: String? = null
     var launchedProfile: AgentPromptLaunchProfile? = null
     var launchedProject: Project? = null
@@ -467,7 +467,7 @@ class AgentSessionsTreePopupActionsTest {
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       allBridges = { listOf(codexBridge, claudeBridge) },
       userLaunchProfiles = { listOf(activeProfile) },
-      activeLaunchProfileId = { activeProfile.id },
+      defaultLaunchProfileId = { activeProfile.id },
       createNewSession = { path, profile, project, capturedEntryPoint ->
         launchedPath = path
         launchedProfile = profile
@@ -539,7 +539,7 @@ class AgentSessionsTreePopupActionsTest {
   }
 
   @Test
-  fun newThreadGroupDoesNotPerformUnavailableActiveLaunchProfile() {
+  fun newThreadGroupDoesNotPerformUnavailableDefaultLaunchProfile() {
     var launchedPath: String? = null
     var launchedProfile: AgentPromptLaunchProfile? = null
     var launchedProject: Project? = null
@@ -565,7 +565,7 @@ class AgentSessionsTreePopupActionsTest {
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       allBridges = { listOf(codexBridge, claudeBridge) },
       userLaunchProfiles = { listOf(unavailableProfile) },
-      activeLaunchProfileId = { unavailableProfile.id },
+      defaultLaunchProfileId = { unavailableProfile.id },
       createNewSession = { path, profile, project, capturedEntryPoint ->
         launchedPath = path
         launchedProfile = profile
@@ -630,7 +630,7 @@ class AgentSessionsTreePopupActionsTest {
     val group = AgentSessionsTreePopupNewThreadGroup(
       resolveContext = { event -> resolveAgentSessionsTreePopupActionContext(event) },
       allBridges = { listOf(codexYoloOnlyBridge, fallbackBridge) },
-      activeLaunchProfileId = { null },
+      defaultLaunchProfileId = { null },
       createNewSession = { _, profile, _, capturedEntryPoint ->
         launchedProfile = profile
         entryPoint = capturedEntryPoint

@@ -90,7 +90,7 @@ internal class AgentPromptLaunchProfileStateTest {
     state.restore(
       preferences = AgentPromptLauncherBridge.ProviderPreferences(
         launchProfiles = listOf(carefulProfile),
-        activeLaunchProfileId = carefulProfile.id,
+        defaultLaunchProfileId = carefulProfile.id,
       ),
       implicitDefaultProfileId = standardBuiltInProfile.id,
     )
@@ -125,7 +125,7 @@ internal class AgentPromptLaunchProfileStateTest {
     state.restore(
       preferences = AgentPromptLauncherBridge.ProviderPreferences(
         launchProfiles = listOf(carefulProfile, fastProfile),
-        activeLaunchProfileId = carefulProfile.id,
+        defaultLaunchProfileId = carefulProfile.id,
       ),
       implicitDefaultProfileId = standardBuiltInProfile.id,
     )
@@ -153,7 +153,7 @@ internal class AgentPromptLaunchProfileStateTest {
     state.restore(
       preferences = AgentPromptLauncherBridge.ProviderPreferences(
         launchProfiles = listOf(carefulProfile, fastProfile),
-        activeLaunchProfileId = carefulProfile.id,
+        defaultLaunchProfileId = carefulProfile.id,
       ),
       implicitDefaultProfileId = standardBuiltInProfile.id,
     )

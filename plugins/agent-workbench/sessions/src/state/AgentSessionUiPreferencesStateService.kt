@@ -23,8 +23,8 @@ class AgentSessionUiPreferencesStateService(
     return launchProfileStateService.getUserLaunchProfiles()
   }
 
-  fun getActiveLaunchProfileId(): String? {
-    return launchProfileStateService.getActiveLaunchProfileId()
+  fun getDefaultLaunchProfileId(): String? {
+    return launchProfileStateService.getDefaultLaunchProfileId()
   }
 
   fun getProviderPreferences(): AgentPromptLauncherBridge.ProviderPreferences {
@@ -32,7 +32,7 @@ class AgentSessionUiPreferencesStateService(
       providerOptionsByProviderId = state.providerOptionsByProviderId,
       containerModeEnabled = state.containerModeEnabled,
       launchProfiles = getUserLaunchProfiles(),
-      activeLaunchProfileId = getActiveLaunchProfileId(),
+      defaultLaunchProfileId = getDefaultLaunchProfileId(),
     )
   }
 
@@ -45,7 +45,7 @@ class AgentSessionUiPreferencesStateService(
     }
     launchProfileStateService.setLaunchProfiles(
       profiles = preferences.launchProfiles,
-      activeProfileId = preferences.activeLaunchProfileId,
+      defaultProfileId = preferences.defaultLaunchProfileId,
     )
   }
 
@@ -64,7 +64,7 @@ class AgentSessionUiPreferencesStateService(
       providerOptionsByProviderId = updatedOptions,
       containerModeEnabled = state.containerModeEnabled,
       launchProfiles = getUserLaunchProfiles(),
-      activeLaunchProfileId = getActiveLaunchProfileId(),
+      defaultLaunchProfileId = getDefaultLaunchProfileId(),
     ))
   }
 

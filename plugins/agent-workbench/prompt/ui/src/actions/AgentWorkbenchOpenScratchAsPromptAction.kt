@@ -109,7 +109,7 @@ private fun resolveScratchPromptActionIcon(project: Project): Icon {
   val activeItem = resolveActivePromptProfileItem(
     menuModel = menuModel,
     userProfiles = launchProfileStateService.getUserLaunchProfiles(),
-    activeProfileId = launchProfileStateService.getActiveLaunchProfileId(),
+    activeProfileId = launchProfileStateService.getDefaultLaunchProfileId(),
   )
   return activeItem?.let(::providerItemMonochromeIconWithMode) ?: AllIcons.Actions.InlayGear
 }

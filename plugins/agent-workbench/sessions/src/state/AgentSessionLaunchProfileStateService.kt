@@ -23,7 +23,7 @@ class AgentSessionLaunchProfileStateService
     return state.launchProfiles
   }
 
-  fun getActiveLaunchProfileId(): String? {
+  fun getDefaultLaunchProfileId(): String? {
     return state.activeLaunchProfileId
   }
 
@@ -31,11 +31,11 @@ class AgentSessionLaunchProfileStateService
     return state.activeVcsMergeLaunchProfileId
   }
 
-  fun setLaunchProfiles(profiles: List<AgentPromptLaunchProfile>, activeProfileId: String?) {
+  fun setLaunchProfiles(profiles: List<AgentPromptLaunchProfile>, defaultProfileId: String?) {
     updateState { current ->
       current.copy(
         launchProfiles = profiles,
-        activeLaunchProfileId = activeProfileId,
+        activeLaunchProfileId = defaultProfileId,
       )
     }
     _launchProfileStateFlow.value = state
