@@ -3,12 +3,12 @@ package com.intellij.agent.workbench.codex.common
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 
-import tools.jackson.core.JsonGenerator
-import tools.jackson.core.JsonParser
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.awaitExit
+import tools.jackson.core.JsonGenerator
+import tools.jackson.core.JsonParser
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -33,11 +33,9 @@ import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import java.io.BufferedReader
 import java.io.BufferedWriter
-import java.io.IOException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
@@ -47,7 +45,7 @@ private const val REQUEST_TIMEOUT_MS = 30_000L
 private const val PROCESS_TERMINATION_TIMEOUT_MS = 2_000L
 private const val DEFAULT_IDLE_SHUTDOWN_TIMEOUT_MS = 60_000L
 private const val PAGE_LIMIT = 50
-private const val PROMPT_SUGGESTION_CLEANUP_TIMEOUT_MS = 500L
+private const val READ_ONLY_EPHEMERAL_TURN_CLEANUP_TIMEOUT_MS = 500L
 
 private val THREAD_LIST_SOURCE_KINDS: List<String> = listOf(
   "cli",
@@ -131,20 +129,7 @@ class CodexAppServerClient(
       ?.let(::normalizeRootPath)
     val response = request(
       method = "thread/list",
-      paramsWriter = { generator ->
-        generator.writeStartObject()
-        generator.writeNumberField("limit", resolvedLimit)
-        generator.writeStringField("order", "desc")
-        generator.writeStringField("sortKey", "updated_at")
-        generator.writeBooleanField("archived", archived)
-        cursor?.let { generator.writeStringField("cursor", it) }
-        normalizedCwdFilter?.let { generator.writeStringField("cwd", it) }
-        generator.writeFieldName("sourceKinds")
-        generator.writeStartArray()
-        THREAD_LIST_SOURCE_KINDS.forEach(generator::writeString)
-        generator.writeEndArray()
-        generator.writeEndObject()
-      },
+      paramsWriter = { generator -> generator.writeThreadListParams(resolvedLimit, archived, cursor, normalizedCwdFilter) },
       resultParser = { parser -> protocol.parseThreadListResult(parser, archived, normalizedCwdFilter) },
       defaultResult = ThreadListResult(emptyList(), null),
     )
@@ -158,45 +143,26 @@ class CodexAppServerClient(
     get() = notificationsFlow
 
   suspend fun listThreads(archived: Boolean, cwdFilter: String? = null): List<CodexThread> {
-    val threads = mutableListOf<CodexThread>()
-    var cursor: String? = null
-    val seenCursors = LinkedHashSet<String>()
-    while (true) {
-      val response = listThreadsPage(
-        archived = archived,
-        cursor = cursor,
-        limit = PAGE_LIMIT,
-        cwdFilter = cwdFilter,
-      )
-      threads.addAll(response.threads)
-      val nextCursor = response.nextCursor
-      if (nextCursor.isNullOrBlank()) {
-        break
-      }
-      if (!seenCursors.add(nextCursor)) {
-        LOG.warn("thread/list returned a repeating cursor '$nextCursor'; stopping pagination")
-        break
-      }
-      cursor = nextCursor
-    }
-    return threads.sortedByDescending { it.updatedAt }
+    return collectPaginated(
+      pageName = "thread/list",
+      loadPage = { cursor ->
+        listThreadsPage(
+          archived = archived,
+          cursor = cursor,
+          limit = PAGE_LIMIT,
+          cwdFilter = cwdFilter,
+        )
+      },
+      getItems = CodexThreadPage::threads,
+      getNextCursor = CodexThreadPage::nextCursor,
+    ).sortedByDescending { it.updatedAt }
   }
 
   suspend fun listSkills(cwd: String, forceReload: Boolean = false): List<CodexSkill> {
     val normalizedCwd = cwd.trim().takeIf(String::isNotEmpty) ?: return emptyList()
     return request(
       method = "skills/list",
-      paramsWriter = { generator ->
-        generator.writeStartObject()
-        generator.writeFieldName("cwds")
-        generator.writeStartArray()
-        generator.writeString(normalizedCwd)
-        generator.writeEndArray()
-        if (forceReload) {
-          generator.writeBooleanField("forceReload", true)
-        }
-        generator.writeEndObject()
-      },
+      paramsWriter = { generator -> generator.writeSkillsListParams(normalizedCwd, forceReload) },
       resultParser = { parser -> protocol.parseSkillsListResult(parser) },
       defaultResult = emptyList(),
     )
@@ -210,42 +176,50 @@ class CodexAppServerClient(
     val resolvedLimit = limit.coerceAtLeast(1)
     return request(
       method = "model/list",
-      paramsWriter = { generator ->
-        generator.writeStartObject()
-        generator.writeNumberField("limit", resolvedLimit)
-        cursor?.let { generator.writeStringField("cursor", it) }
-        if (includeHidden) {
-          generator.writeBooleanField("includeHidden", true)
-        }
-        generator.writeEndObject()
-      },
+      paramsWriter = { generator -> generator.writeModelListParams(resolvedLimit, cursor, includeHidden) },
       resultParser = { parser -> protocol.parseModelListResult(parser) },
       defaultResult = ModelListResult(emptyList(), null),
     )
   }
 
   suspend fun listModels(includeHidden: Boolean = false): List<CodexGenerationModel> {
-    val models = mutableListOf<CodexGenerationModel>()
+    return collectPaginated(
+      pageName = "model/list",
+      loadPage = { cursor ->
+        listModelsPage(
+          cursor = cursor,
+          limit = PAGE_LIMIT,
+          includeHidden = includeHidden,
+        )
+      },
+      getItems = ModelListResult::models,
+      getNextCursor = ModelListResult::nextCursor,
+    )
+  }
+
+  private suspend fun <T, P> collectPaginated(
+    pageName: String,
+    loadPage: suspend (String?) -> P,
+    getItems: (P) -> List<T>,
+    getNextCursor: (P) -> String?,
+  ): List<T> {
+    val items = mutableListOf<T>()
     var cursor: String? = null
     val seenCursors = LinkedHashSet<String>()
     while (true) {
-      val response = listModelsPage(
-        cursor = cursor,
-        limit = PAGE_LIMIT,
-        includeHidden = includeHidden,
-      )
-      models.addAll(response.models)
-      val nextCursor = response.nextCursor
+      val page = loadPage(cursor)
+      items.addAll(getItems(page))
+      val nextCursor = getNextCursor(page)
       if (nextCursor.isNullOrBlank()) {
         break
       }
       if (!seenCursors.add(nextCursor)) {
-        LOG.warn("model/list returned a repeating cursor '$nextCursor'; stopping pagination")
+        LOG.warn("$pageName returned a repeating cursor '$nextCursor'; stopping pagination")
         break
       }
       cursor = nextCursor
     }
-    return models
+    return items
   }
 
   suspend fun readThreadActivitySnapshot(threadId: String): CodexThreadActivitySnapshot? {
@@ -257,18 +231,13 @@ class CodexAppServerClient(
     return try {
       request(
         method = "thread/read",
-        paramsWriter = { generator ->
-          generator.writeStartObject()
-          generator.writeStringField("threadId", normalizedThreadId)
-          generator.writeBooleanField("includeTurns", true)
-          generator.writeEndObject()
-        },
+        paramsWriter = { generator -> generator.writeThreadReadParams(normalizedThreadId, includeTurns = true) },
         resultParser = { parser -> protocol.parseThreadReadActivityResult(parser) },
         defaultResult = null,
       )
     }
     catch (e: CodexAppServerException) {
-      if (e.isThreadReadIncludeTurnsFallback()) {
+      if (e.isCodexThreadReadIncludeTurnsFallback()) {
         LOG.debug { "thread/read includeTurns fallback for threadId=$normalizedThreadId: ${e.message}" }
         null
       }
@@ -287,24 +256,26 @@ class CodexAppServerClient(
 
     return request(
       method = "thread/read",
-      paramsWriter = { generator ->
-        generator.writeStartObject()
-        generator.writeStringField("threadId", normalizedThreadId)
-        generator.writeBooleanField("includeTurns", false)
-        generator.writeEndObject()
-      },
+      paramsWriter = { generator -> generator.writeThreadReadParams(normalizedThreadId, includeTurns = false) },
       resultParser = { parser -> protocol.parseThreadReadResult(parser) },
       defaultResult = null,
     )
   }
 
-  suspend fun suggestPrompt(request: CodexPromptSuggestionRequest): CodexPromptSuggestionResult? {
+  @ApiStatus.Internal
+  suspend fun runReadOnlyEphemeralTurn(
+    cwd: String?,
+    inputText: String,
+    model: String,
+    reasoningEffort: String? = null,
+    outputSchemaWriter: (JsonGenerator) -> Unit,
+  ): String? {
     check(parsedNotificationsChannel != null) {
-      "Codex prompt suggestions require parsed notification routing"
+      "Codex read-only ephemeral turns require parsed notification routing"
     }
 
     val session = startThread(
-      cwd = request.cwd,
+      cwd = cwd,
       approvalPolicy = "never",
       sandbox = "read-only",
       ephemeral = true,
@@ -316,33 +287,18 @@ class CodexAppServerClient(
     try {
       val turn = request(
         method = "turn/start",
-        paramsWriter = { generator ->
-          generator.writeStartObject()
-          generator.writeStringField("threadId", session.thread.id)
-          generator.writeFieldName("input")
-          generator.writeStartArray()
-          generator.writeStartObject()
-          generator.writeStringField("type", "text")
-          generator.writeStringField("text", buildPromptSuggestionTurnInput(request))
-          generator.writeEndObject()
-          generator.writeEndArray()
-          generator.writeStringField("model", request.model)
-          request.reasoningEffort?.let { generator.writeStringField("effort", it) }
-          generator.writeFieldName("outputSchema")
-          writePromptSuggestionOutputSchema(generator, request)
-          generator.writeEndObject()
-        },
+        paramsWriter = { generator -> generator.writeReadOnlyEphemeralTurnParams(session.thread.id, inputText, model, reasoningEffort, outputSchemaWriter) },
         resultParser = { parser -> protocol.parseTurnStartResult(parser) },
         defaultResult = null,
       ) ?: throw CodexAppServerException("Codex app-server returned empty turn/start result")
       turnId = turn.turnId
-      val completion = awaitPromptSuggestionTurnCompletion(threadId = session.thread.id, turnId = turn.turnId)
+      val completion = awaitReadOnlyEphemeralTurnCompletion(threadId = session.thread.id, turnId = turn.turnId)
       terminalObserved = true
-      return completion.toPromptSuggestionResult()
+      return completion.toAgentMessageText()
     }
     catch (t: Throwable) {
       if (turnId != null && !terminalObserved) {
-        cleanupPromptSuggestionTurn(threadId = session.thread.id, turnId = turnId)
+        cleanupReadOnlyEphemeralTurn(threadId = session.thread.id, turnId = turnId)
       }
       throw t
     }
@@ -376,44 +332,6 @@ class CodexAppServerClient(
     )
   }
 
-  suspend fun startTurn(
-    threadId: String,
-    promptText: String,
-    collaborationMode: CodexTurnCollaborationMode? = null,
-  ): String {
-    val turn = request(
-      method = "turn/start",
-      paramsWriter = { generator ->
-        generator.writeStartObject()
-        generator.writeStringField("threadId", threadId)
-        generator.writeFieldName("input")
-        generator.writeStartArray()
-        generator.writeStartObject()
-        generator.writeStringField("type", "text")
-        generator.writeStringField("text", promptText)
-        generator.writeEndObject()
-        generator.writeEndArray()
-        if (collaborationMode != null) {
-          generator.writeFieldName("collaborationMode")
-          generator.writeStartObject()
-          generator.writeStringField("mode", collaborationMode.mode)
-          generator.writeFieldName("settings")
-          generator.writeStartObject()
-          generator.writeStringField("model", collaborationMode.model)
-          collaborationMode.reasoningEffort?.let { generator.writeStringField("reasoning_effort", it) }
-          ?: generator.writeNullField("reasoning_effort")
-          generator.writeNullField("developer_instructions")
-          generator.writeEndObject()
-          generator.writeEndObject()
-        }
-        generator.writeEndObject()
-      },
-      resultParser = { parser -> protocol.parseTurnStartResult(parser) },
-      defaultResult = null,
-    )
-    return turn?.turnId ?: throw CodexAppServerException("Codex app-server returned empty turn/start result")
-  }
-
   private suspend fun startThread(
     cwd: String? = null,
     approvalPolicy: String? = null,
@@ -425,14 +343,14 @@ class CodexAppServerClient(
     val thread = request(
       method = "thread/start",
       paramsWriter = { generator ->
-        generator.writeStartObject()
-        cwd?.let { generator.writeStringField("cwd", it) }
-        approvalPolicy?.let { generator.writeStringField("approvalPolicy", it) }
-        sandbox?.let { generator.writeStringField("sandbox", it) }
-        ephemeral?.let { generator.writeBooleanField("ephemeral", it) }
-        experimentalRawEvents?.let { generator.writeBooleanField("experimentalRawEvents", it) }
-        persistExtendedHistory?.let { generator.writeBooleanField("persistExtendedHistory", it) }
-        generator.writeEndObject()
+        generator.writeThreadStartParams(
+          cwd = cwd,
+          approvalPolicy = approvalPolicy,
+          sandbox = sandbox,
+          ephemeral = ephemeral,
+          experimentalRawEvents = experimentalRawEvents,
+          persistExtendedHistory = persistExtendedHistory,
+        )
       },
       resultParser = { parser -> protocol.parseThreadStartResult(parser) },
       defaultResult = null,
@@ -443,56 +361,21 @@ class CodexAppServerClient(
   suspend fun archiveThread(threadId: String) {
     requestUnit(
       method = "thread/archive",
-      paramsWriter = { generator ->
-        generator.writeStartObject()
-        generator.writeStringField("threadId", threadId)
-        generator.writeEndObject()
-      },
+      paramsWriter = { generator -> generator.writeThreadIdParams(threadId) },
     )
   }
 
   suspend fun setThreadName(threadId: String, name: String) {
     requestUnit(
       method = "thread/name/set",
-      paramsWriter = { generator ->
-        generator.writeStartObject()
-        generator.writeStringField("threadId", threadId)
-        generator.writeStringField("name", name)
-        generator.writeEndObject()
-      },
+      paramsWriter = { generator -> generator.writeThreadNameParams(threadId, name) },
     )
   }
 
   suspend fun unarchiveThread(threadId: String) {
     requestUnit(
       method = "thread/unarchive",
-      paramsWriter = { generator ->
-        generator.writeStartObject()
-        generator.writeStringField("threadId", threadId)
-        generator.writeEndObject()
-      },
-    )
-  }
-
-  /**
-   * Sends a minimal [turn/start] for the given thread to force persistence so
-   * that `codex resume <id>` can discover it.
-   */
-  suspend fun persistThread(threadId: String) {
-    requestUnit(
-      method = "turn/start",
-      paramsWriter = { generator ->
-        generator.writeStartObject()
-        generator.writeStringField("threadId", threadId)
-        generator.writeFieldName("input")
-        generator.writeStartArray()
-        generator.writeStartObject()
-        generator.writeStringField("type", "text")
-        generator.writeStringField("text", "")
-        generator.writeEndObject()
-        generator.writeEndArray()
-        generator.writeEndObject()
-      },
+      paramsWriter = { generator -> generator.writeThreadIdParams(threadId) },
     )
   }
 
@@ -594,27 +477,20 @@ class CodexAppServerClient(
   }
 
   private suspend fun sendRequest(id: String, method: String, paramsWriter: ((JsonGenerator) -> Unit)?) {
-    send { generator ->
-      generator.writeStartObject()
-      generator.writeStringField("id", id)
-      generator.writeStringField("method", method)
-      if (paramsWriter != null) {
-        generator.writeFieldName("params")
-        paramsWriter(generator)
-      }
-      generator.writeEndObject()
-    }
+    sendProtocolMessage(id = id, method = method, paramsWriter = paramsWriter)
   }
 
   private suspend fun sendNotification(method: String, paramsWriter: ((JsonGenerator) -> Unit)? = null) {
+    sendProtocolMessage(id = null, method = method, paramsWriter = paramsWriter)
+  }
+
+  private suspend fun sendProtocolMessage(
+    id: String?,
+    method: String,
+    paramsWriter: ((JsonGenerator) -> Unit)?,
+  ) {
     send { generator ->
-      generator.writeStartObject()
-      generator.writeStringField("method", method)
-      if (paramsWriter != null) {
-        generator.writeFieldName("params")
-        paramsWriter(generator)
-      }
-      generator.writeEndObject()
+      generator.writeProtocolMessage(id = id, method = method, paramsWriter = paramsWriter)
     }
   }
 
@@ -636,19 +512,7 @@ class CodexAppServerClient(
       if (initialized) return
       requestUnit(
         method = "initialize",
-        paramsWriter = { generator ->
-          generator.writeStartObject()
-          generator.writeFieldName("clientInfo")
-          generator.writeStartObject()
-          generator.writeStringField("name", "IntelliJ Agent Workbench")
-          generator.writeStringField("version", "1.0")
-          generator.writeEndObject()
-          generator.writeFieldName("capabilities")
-          generator.writeStartObject()
-          generator.writeBooleanField("experimentalApi", true)
-          generator.writeEndObject()
-          generator.writeEndObject()
-        },
+        paramsWriter = { generator -> generator.writeInitializeParams() },
         ensureInitialized = false,
       )
       sendNotification("initialized")
@@ -684,7 +548,7 @@ class CodexAppServerClient(
         .createProcess()
     }
     catch (t: Throwable) {
-      if (configuredExecutable == null && isExecutableNotFound(t)) {
+      if (configuredExecutable == null && isCodexExecutableNotFound(t)) {
         throw CodexCliNotFoundException()
       }
       throw CodexAppServerException("Failed to start Codex app-server from $executable", t)
@@ -777,7 +641,7 @@ class CodexAppServerClient(
     if (parsedChannel != null) {
       val parsedResult = parsedChannel.trySend(notification)
       if (parsedResult.isFailure) {
-        LOG.warn("Failed to enqueue Codex app-server notification for prompt suggestions: ${notification.method}")
+        LOG.warn("Failed to enqueue Codex app-server parsed notification: ${notification.method}")
       }
     }
 
@@ -790,7 +654,7 @@ class CodexAppServerClient(
     }
   }
 
-  private suspend fun awaitPromptSuggestionTurnCompletion(threadId: String, turnId: String): PromptSuggestionTurnCompletion {
+  private suspend fun awaitReadOnlyEphemeralTurnCompletion(threadId: String, turnId: String): ReadOnlyEphemeralTurnCompletion {
     var agentMessageText: String? = null
     while (true) {
       val notification = try {
@@ -800,10 +664,10 @@ class CodexAppServerClient(
       }
       catch (t: TimeoutCancellationException) {
         currentCoroutineContext().ensureActive()
-        throw CodexAppServerException("Codex prompt suggestion turn timed out", t)
+        throw CodexAppServerException("Codex read-only ephemeral turn timed out", t)
       }
 
-      if (!notification.matchesPromptSuggestionTurn(threadId = threadId, turnId = turnId)) {
+      if (!notification.matchesTurn(threadId = threadId, turnId = turnId)) {
         continue
       }
 
@@ -815,7 +679,7 @@ class CodexAppServerClient(
         continue
       }
 
-      return PromptSuggestionTurnCompletion(
+      return ReadOnlyEphemeralTurnCompletion(
         turnStatus = notification.turnStatus,
         turnErrorMessage = notification.turnErrorMessage,
         agentMessageText = agentMessageText,
@@ -823,23 +687,23 @@ class CodexAppServerClient(
     }
   }
 
-  private suspend fun cleanupPromptSuggestionTurn(threadId: String, turnId: String) {
+  private suspend fun cleanupReadOnlyEphemeralTurn(threadId: String, turnId: String) {
     val cleanupConfirmed = withContext(NonCancellable) {
       try {
         sendInterruptTurnBestEffort(threadId = threadId, turnId = turnId)
-        withTimeout(PROMPT_SUGGESTION_CLEANUP_TIMEOUT_MS.milliseconds) {
-          awaitPromptSuggestionTurnCleanup(threadId = threadId, turnId = turnId)
+        withTimeout(READ_ONLY_EPHEMERAL_TURN_CLEANUP_TIMEOUT_MS.milliseconds) {
+          awaitReadOnlyEphemeralTurnCleanup(threadId = threadId, turnId = turnId)
         }
       }
       catch (_: TimeoutCancellationException) {
-        LOG.warn("Failed to clean up Codex prompt suggestion turn $threadId/$turnId; resetting client")
+        LOG.warn("Failed to clean up Codex read-only ephemeral turn $threadId/$turnId; resetting client")
         false
       }
       catch (t: Throwable) {
         if (t is CancellationException) {
           throw t
         }
-        LOG.warn("Failed to clean up Codex prompt suggestion turn $threadId/$turnId; resetting client", t)
+        LOG.warn("Failed to clean up Codex read-only ephemeral turn $threadId/$turnId; resetting client", t)
         false
       }
     }
@@ -857,25 +721,19 @@ class CodexAppServerClient(
       }
       val id = requestCounter.incrementAndGet().toString()
       protocol.writePayload(out) { generator ->
-        generator.writeStartObject()
-        generator.writeStringField("id", id)
-        generator.writeStringField("method", "turn/interrupt")
-        generator.writeFieldName("params")
-        generator.writeStartObject()
-        generator.writeStringField("threadId", threadId)
-        generator.writeStringField("turnId", turnId)
-        generator.writeEndObject()
-        generator.writeEndObject()
+        generator.writeProtocolMessage(id = id, method = "turn/interrupt") { paramsGenerator ->
+          paramsGenerator.writeTurnInterruptParams(threadId, turnId)
+        }
       }
       out.newLine()
       out.flush()
     }
   }
 
-  private suspend fun awaitPromptSuggestionTurnCleanup(threadId: String, turnId: String): Boolean {
+  private suspend fun awaitReadOnlyEphemeralTurnCleanup(threadId: String, turnId: String): Boolean {
     while (true) {
       val notification = receiveParsedNotification()
-      if (!notification.matchesPromptSuggestionTurn(threadId = threadId, turnId = turnId)) {
+      if (!notification.matchesTurn(threadId = threadId, turnId = turnId)) {
         continue
       }
       if (notification.method != "turn/completed") {
@@ -897,77 +755,180 @@ class CodexAppServerClient(
     val error = CodexAppServerException("Codex app-server terminated")
     pending.values.forEach { it.completeExceptionally(error) }
     pending.clear()
-    cancelIdleShutdownTimerLocked()
-    clearParsedNotificationsQueue()
-    process = null
-    writer = null
-    initialized = false
-    inFlightRequestCount = 0
+    clearProcessState()
   }
 
   private fun stopProcess() {
-    cancelIdleShutdownTimerLocked()
-    clearParsedNotificationsQueue()
     val current = process ?: return
-    process = null
-    initialized = false
-    inFlightRequestCount = 0
-    writer = null
+    clearProcessState()
     readerJob?.cancel()
     stderrJob?.cancel()
     waitJob?.cancel()
     stopCodexAppServerProcess(current, PROCESS_TERMINATION_TIMEOUT_MS, coroutineScope)
   }
+
+  private fun clearProcessState() {
+    cancelIdleShutdownTimerLocked()
+    clearParsedNotificationsQueue()
+    process = null
+    writer = null
+    initialized = false
+    inFlightRequestCount = 0
+  }
 }
 
 private const val CODEX_AUTO_UPDATE_CONFIG: String = "check_for_update_on_startup=false"
 
-private fun isExecutableNotFound(error: Throwable): Boolean {
-  return generateSequence(error) { it.cause }
-    .any { cause ->
-      when (cause) {
-        is NoSuchFileException -> true
-        is IOException -> {
-          val message = cause.message ?: return@any false
-          message.contains("error=2") ||
-          message.contains("no such file or directory", ignoreCase = true) ||
-          message.contains("cannot find the file", ignoreCase = true)
-        }
-        else -> false
-      }
+private fun JsonGenerator.writeThreadListParams(limit: Int, archived: Boolean, cursor: String?, cwdFilter: String?) {
+  writeObject {
+    writeNumberField("limit", limit)
+    writeStringField("order", "desc")
+    writeStringField("sortKey", "updated_at")
+    writeBooleanField("archived", archived)
+    cursor?.let { writeStringField("cursor", it) }
+    cwdFilter?.let { writeStringField("cwd", it) }
+    writeStringArrayField("sourceKinds", THREAD_LIST_SOURCE_KINDS)
+  }
+}
+
+private fun JsonGenerator.writeSkillsListParams(cwd: String, forceReload: Boolean) {
+  writeObject {
+    writeStringArrayField("cwds", cwd)
+    if (forceReload) {
+      writeBooleanField("forceReload", true)
     }
+  }
+}
+
+private fun JsonGenerator.writeModelListParams(limit: Int, cursor: String?, includeHidden: Boolean) {
+  writeObject {
+    writeNumberField("limit", limit)
+    cursor?.let { writeStringField("cursor", it) }
+    if (includeHidden) {
+      writeBooleanField("includeHidden", true)
+    }
+  }
+}
+
+private fun JsonGenerator.writeThreadReadParams(threadId: String, includeTurns: Boolean) {
+  writeObject {
+    writeStringField("threadId", threadId)
+    writeBooleanField("includeTurns", includeTurns)
+  }
+}
+
+private fun JsonGenerator.writeReadOnlyEphemeralTurnParams(
+  threadId: String,
+  inputText: String,
+  model: String,
+  reasoningEffort: String?,
+  outputSchemaWriter: (JsonGenerator) -> Unit,
+) {
+  writeObject {
+    writeStringField("threadId", threadId)
+    writeTurnTextInput(inputText)
+    writeStringField("model", model)
+    reasoningEffort?.let { writeStringField("effort", it) }
+    writeFieldName("outputSchema")
+    outputSchemaWriter(this)
+  }
+}
+
+private fun JsonGenerator.writeThreadStartParams(
+  cwd: String?,
+  approvalPolicy: String?,
+  sandbox: String?,
+  ephemeral: Boolean?,
+  experimentalRawEvents: Boolean?,
+  persistExtendedHistory: Boolean?,
+) {
+  writeObject {
+    cwd?.let { writeStringField("cwd", it) }
+    approvalPolicy?.let { writeStringField("approvalPolicy", it) }
+    sandbox?.let { writeStringField("sandbox", it) }
+    ephemeral?.let { writeBooleanField("ephemeral", it) }
+    experimentalRawEvents?.let { writeBooleanField("experimentalRawEvents", it) }
+    persistExtendedHistory?.let { writeBooleanField("persistExtendedHistory", it) }
+  }
+}
+
+private fun JsonGenerator.writeThreadIdParams(threadId: String) {
+  writeObject {
+    writeStringField("threadId", threadId)
+  }
+}
+
+private fun JsonGenerator.writeThreadNameParams(threadId: String, name: String) {
+  writeObject {
+    writeStringField("threadId", threadId)
+    writeStringField("name", name)
+  }
+}
+
+private fun JsonGenerator.writeInitializeParams() {
+  writeObject {
+    writeObjectField("clientInfo") {
+      writeStringField("name", "IntelliJ Agent Workbench")
+      writeStringField("version", "1.0")
+    }
+    writeObjectField("capabilities") {
+      writeBooleanField("experimentalApi", true)
+    }
+  }
+}
+
+private fun JsonGenerator.writeTurnInterruptParams(threadId: String, turnId: String) {
+  writeObject {
+    writeStringField("threadId", threadId)
+    writeStringField("turnId", turnId)
+  }
+}
+
+private fun JsonGenerator.writeProtocolMessage(
+  id: String?,
+  method: String,
+  paramsWriter: ((JsonGenerator) -> Unit)? = null,
+) {
+  writeObject {
+    id?.let { writeStringField("id", it) }
+    writeStringField("method", method)
+    if (paramsWriter != null) {
+      writeFieldName("params")
+      paramsWriter(this)
+    }
+  }
 }
 
 open class CodexAppServerException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
 
 class CodexCliNotFoundException : CodexAppServerException("Codex CLI not found")
 
-private fun Throwable.isThreadReadIncludeTurnsFallback(): Boolean {
-  return generateSequence(this) { it.cause }
-    .mapNotNull(Throwable::message)
-    .any { message ->
-      message.contains("includeTurns is unavailable before first user message") ||
-      message.contains("ephemeral threads do not support includeTurns")
-    }
-}
-
-private data class PromptSuggestionTurnCompletion(
+private data class ReadOnlyEphemeralTurnCompletion(
   @JvmField val turnStatus: String?,
   @JvmField val turnErrorMessage: String?,
   @JvmField val agentMessageText: String?,
 )
 
-private fun PromptSuggestionTurnCompletion.toPromptSuggestionResult(): CodexPromptSuggestionResult? {
+private fun ReadOnlyEphemeralTurnCompletion.toAgentMessageText(): String? {
   return when (turnStatus) {
-    "completed", null -> agentMessageText?.let(::parseCodexPromptSuggestionResult)
+    "completed", null -> agentMessageText
     "interrupted" -> null
-    "failed" -> throw CodexAppServerException(turnErrorMessage ?: "Codex prompt suggestion turn failed")
+    "failed" -> throw CodexAppServerException(turnErrorMessage ?: "Codex read-only ephemeral turn failed")
     else -> null
   }
 }
 
-private fun ParsedCodexAppServerNotification.matchesPromptSuggestionTurn(threadId: String, turnId: String): Boolean {
+private fun ParsedCodexAppServerNotification.matchesTurn(threadId: String, turnId: String): Boolean {
   return this.threadId == threadId && this.turnId == turnId
+}
+
+private fun JsonGenerator.writeTurnTextInput(text: String) {
+  writeArrayField("input") {
+    writeObject {
+      writeStringField("type", "text")
+      writeStringField("text", text)
+    }
+  }
 }
 
 private fun CodexAppServerNotificationRouting.includesPublicNotifications(): Boolean {

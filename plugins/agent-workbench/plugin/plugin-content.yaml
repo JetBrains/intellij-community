@@ -34,6 +34,9 @@
 - name: lib/modules/intellij.agent.workbench.codex.ide.jar
   contentModules:
   - name: intellij.agent.workbench.codex.ide
+- name: lib/modules/intellij.agent.workbench.codex.prompt.suggestions.jar
+  contentModules:
+  - name: intellij.agent.workbench.codex.prompt.suggestions
 - name: lib/modules/intellij.agent.workbench.codex.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.codex.sessions

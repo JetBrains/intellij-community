@@ -1,39 +1,51 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.codex.common
+package com.intellij.agent.workbench.codex.prompt.suggestions
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 
+import com.intellij.agent.workbench.codex.common.currentToken
+import com.intellij.agent.workbench.codex.common.forEachObjectField
+import com.intellij.agent.workbench.codex.common.readStringOrNull
+import com.intellij.agent.workbench.codex.common.writeBooleanField
+import com.intellij.agent.workbench.codex.common.writeFieldName
+import com.intellij.agent.workbench.codex.common.writeNumberField
+import com.intellij.agent.workbench.codex.common.writeObject
+import com.intellij.agent.workbench.codex.common.writeObjectField
+import com.intellij.agent.workbench.codex.common.writeStringArrayField
+import com.intellij.agent.workbench.codex.common.writeStringField
 import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.createJsonParser
+import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
+import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionAiCandidate
+import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionAiResult
 import tools.jackson.core.JsonGenerator
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
-import com.intellij.openapi.util.NlsSafe
 import java.io.StringWriter
 
-data class CodexPromptSuggestionRequest(
+internal data class CodexPromptSuggestionRequest(
   @JvmField val cwd: String?,
   @JvmField val targetMode: String,
   @JvmField val model: String,
   @JvmField val reasoningEffort: String? = null,
   @JvmField val maxCandidates: Int = 3,
   @JvmField val contextItems: List<CodexPromptSuggestionContextItem>,
-  @JvmField val seedCandidates: List<CodexPromptSuggestionCandidate> = emptyList(),
+  @JvmField val seedCandidates: List<AgentPromptSuggestionAiCandidate> = emptyList(),
 )
 
-data class CodexPromptSuggestionContextItem(
+internal data class CodexPromptSuggestionContextItem(
   @JvmField val rendererId: String,
   @JvmField val title: String?,
   @JvmField val body: String,
-  @JvmField val payload: CodexAppServerValue = CodexAppServerValue.Null,
+  @JvmField val payload: AgentPromptPayloadValue = AgentPromptPayloadValue.Obj.EMPTY,
   @JvmField val itemId: String? = null,
   @JvmField val parentItemId: String? = null,
   @JvmField val source: String = "unknown",
   @JvmField val truncation: CodexPromptSuggestionContextTruncation = CodexPromptSuggestionContextTruncation.none(body.length),
 )
 
-data class CodexPromptSuggestionContextTruncation(
+internal data class CodexPromptSuggestionContextTruncation(
   @JvmField val originalChars: Int,
   @JvmField val includedChars: Int,
   @JvmField val reason: String,
@@ -48,46 +60,6 @@ data class CodexPromptSuggestionContextTruncation(
       )
     }
   }
-}
-
-data class CodexPromptSuggestionCandidate(
-  @JvmField val id: String? = null,
-  @JvmField val label: @NlsSafe String,
-  @JvmField val promptText: @NlsSafe String,
-)
-
-sealed interface CodexPromptSuggestionResult {
-  data class PolishedSeeds(
-    @JvmField val candidates: List<CodexPromptSuggestionCandidate>,
-  ) : CodexPromptSuggestionResult
-
-  data class GeneratedCandidates(
-    @JvmField val candidates: List<CodexPromptSuggestionCandidate>,
-  ) : CodexPromptSuggestionResult
-}
-
-sealed interface CodexAppServerValue {
-  data class Obj(
-    @JvmField val fields: Map<String, CodexAppServerValue>,
-  ) : CodexAppServerValue
-
-  data class Arr(
-    @JvmField val items: List<CodexAppServerValue>,
-  ) : CodexAppServerValue
-
-  data class Str(
-    @JvmField val value: String,
-  ) : CodexAppServerValue
-
-  data class Num(
-    @JvmField val value: String,
-  ) : CodexAppServerValue
-
-  data class Bool(
-    @JvmField val value: Boolean,
-  ) : CodexAppServerValue
-
-  data object Null : CodexAppServerValue
 }
 
 private val PROMPT_SUGGESTION_JSON_FACTORY = JsonFactory()
@@ -126,7 +98,7 @@ internal fun buildPromptSuggestionTurnInput(request: CodexPromptSuggestionReques
         )
         appendLine("body:")
         appendIndentedBlock(item.body)
-        appendLine("payloadJson: ${renderAppServerValue(item.payload)}")
+        appendLine("payloadJson: ${renderPromptPayloadValue(item.payload)}")
         appendLine()
       }
     }
@@ -150,80 +122,49 @@ internal fun buildPromptSuggestionTurnInput(request: CodexPromptSuggestionReques
 internal fun writePromptSuggestionOutputSchema(generator: JsonGenerator, request: CodexPromptSuggestionRequest) {
   val maxCandidates = maxOf(request.maxCandidates.coerceAtLeast(1), request.seedCandidates.size)
 
-  generator.writeStartObject()
-  generator.writeStringField("type", "object")
-  generator.writeBooleanField("additionalProperties", false)
-  generator.writeFieldName("required")
-  generator.writeStartArray()
-  generator.writeString("kind")
-  generator.writeString("candidates")
-  generator.writeEndArray()
-  generator.writeFieldName("properties")
-  generator.writeStartObject()
+  generator.writeObject {
+    writeStringField("type", "object")
+    writeBooleanField("additionalProperties", false)
+    writeStringArrayField("required", "kind", "candidates")
+    writeObjectField("properties") {
+      writeObjectField("kind") {
+        writeStringField("type", "string")
+        writeStringArrayField("enum", "polishedSeeds", "generatedCandidates")
+      }
 
-  generator.writeFieldName("kind")
-  generator.writeStartObject()
-  generator.writeStringField("type", "string")
-  generator.writeFieldName("enum")
-  generator.writeStartArray()
-  generator.writeString("polishedSeeds")
-  generator.writeString("generatedCandidates")
-  generator.writeEndArray()
-  generator.writeEndObject()
-
-  generator.writeFieldName("candidates")
-  generator.writeStartObject()
-  generator.writeStringField("type", "array")
-  generator.writeNumberField("minItems", 0)
-  generator.writeNumberField("maxItems", maxCandidates)
-  generator.writeFieldName("items")
-  generator.writeStartObject()
-  generator.writeStringField("type", "object")
-  generator.writeBooleanField("additionalProperties", false)
-  generator.writeFieldName("required")
-  generator.writeStartArray()
-  generator.writeString("id")
-  generator.writeString("label")
-  generator.writeString("promptText")
-  generator.writeEndArray()
-  generator.writeFieldName("properties")
-  generator.writeStartObject()
-
-  generator.writeFieldName("id")
-  generator.writeStartObject()
-  generator.writeFieldName("type")
-  generator.writeStartArray()
-  generator.writeString("string")
-  generator.writeString("null")
-  generator.writeEndArray()
-  generator.writeEndObject()
-
-  generator.writeFieldName("label")
-  generator.writeStartObject()
-  generator.writeStringField("type", "string")
-  generator.writeEndObject()
-
-  generator.writeFieldName("promptText")
-  generator.writeStartObject()
-  generator.writeStringField("type", "string")
-  generator.writeEndObject()
-
-  generator.writeEndObject()
-  generator.writeEndObject()
-  generator.writeEndObject()
-
-  generator.writeEndObject()
-  generator.writeEndObject()
+      writeObjectField("candidates") {
+        writeStringField("type", "array")
+        writeNumberField("minItems", 0)
+        writeNumberField("maxItems", maxCandidates)
+        writeObjectField("items") {
+          writeStringField("type", "object")
+          writeBooleanField("additionalProperties", false)
+          writeStringArrayField("required", "id", "label", "promptText")
+          writeObjectField("properties") {
+            writeObjectField("id") {
+              writeStringArrayField("type", "string", "null")
+            }
+            writeObjectField("label") {
+              writeStringField("type", "string")
+            }
+            writeObjectField("promptText") {
+              writeStringField("type", "string")
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
-internal fun parseCodexPromptSuggestionResult(payload: String): CodexPromptSuggestionResult? {
+internal fun parseCodexPromptSuggestionResult(payload: String): AgentPromptSuggestionAiResult? {
   PROMPT_SUGGESTION_JSON_FACTORY.createJsonParser(payload).use { parser ->
     if (parser.nextToken() != JsonToken.START_OBJECT) {
       return null
     }
 
     var kind: String? = null
-    var candidates: List<CodexPromptSuggestionCandidate> = emptyList()
+    var candidates: List<AgentPromptSuggestionAiCandidate> = emptyList()
     forEachObjectField(parser) { fieldName ->
       when (fieldName) {
         "kind" -> kind = readStringOrNull(parser)
@@ -233,20 +174,20 @@ internal fun parseCodexPromptSuggestionResult(payload: String): CodexPromptSugge
       true
     }
     return when (kind?.trim()) {
-      "polishedSeeds" -> CodexPromptSuggestionResult.PolishedSeeds(candidates)
-      "generatedCandidates" -> CodexPromptSuggestionResult.GeneratedCandidates(candidates)
+      "polishedSeeds" -> AgentPromptSuggestionAiResult.PolishedSeeds(candidates)
+      "generatedCandidates" -> AgentPromptSuggestionAiResult.GeneratedCandidates(candidates)
       else -> null
     }
   }
 }
 
-private fun parsePromptSuggestionCandidates(parser: JsonParser): List<CodexPromptSuggestionCandidate> {
+private fun parsePromptSuggestionCandidates(parser: JsonParser): List<AgentPromptSuggestionAiCandidate> {
   if (parser.currentToken != JsonToken.START_ARRAY) {
     parser.skipChildren()
     return emptyList()
   }
 
-  val candidates = ArrayList<CodexPromptSuggestionCandidate>()
+  val candidates = ArrayList<AgentPromptSuggestionAiCandidate>()
   while (true) {
     val token = parser.nextToken() ?: break
     if (token == JsonToken.END_ARRAY) {
@@ -261,7 +202,7 @@ private fun parsePromptSuggestionCandidates(parser: JsonParser): List<CodexPromp
   return candidates
 }
 
-private fun parsePromptSuggestionCandidate(parser: JsonParser): CodexPromptSuggestionCandidate? {
+private fun parsePromptSuggestionCandidate(parser: JsonParser): AgentPromptSuggestionAiCandidate? {
   var id: String? = null
   var label: String? = null
   var promptText: String? = null
@@ -276,17 +217,17 @@ private fun parsePromptSuggestionCandidate(parser: JsonParser): CodexPromptSugge
   }
   val resolvedLabel = label?.takeIf { it.isNotBlank() } ?: return null
   val resolvedPromptText = promptText?.takeIf { it.isNotBlank() } ?: return null
-  return CodexPromptSuggestionCandidate(
+  return AgentPromptSuggestionAiCandidate(
     id = id?.trim()?.takeIf { it.isNotEmpty() },
     label = resolvedLabel,
     promptText = resolvedPromptText,
   )
 }
 
-private fun renderAppServerValue(value: CodexAppServerValue): String {
+private fun renderPromptPayloadValue(value: AgentPromptPayloadValue): String {
   val writer = StringWriter()
   val generator = PROMPT_SUGGESTION_JSON_FACTORY.createJsonGenerator(writer)
-  writeAppServerValue(generator, value)
+  writePromptPayloadValue(generator, value)
   generator.close()
   return writer.toString()
 }
@@ -300,25 +241,25 @@ private fun StringBuilder.appendIndentedBlock(text: String) {
     }
 }
 
-private fun writeAppServerValue(generator: JsonGenerator, value: CodexAppServerValue) {
+private fun writePromptPayloadValue(generator: JsonGenerator, value: AgentPromptPayloadValue) {
   when (value) {
-    is CodexAppServerValue.Arr -> {
+    is AgentPromptPayloadValue.Arr -> {
       generator.writeStartArray()
-      value.items.forEach { item -> writeAppServerValue(generator, item) }
+      value.items.forEach { item -> writePromptPayloadValue(generator, item) }
       generator.writeEndArray()
     }
-    is CodexAppServerValue.Bool -> generator.writeBoolean(value.value)
-    is CodexAppServerValue.Null -> generator.writeNull()
-    is CodexAppServerValue.Num -> writeNumericValue(generator, value.value)
-    is CodexAppServerValue.Obj -> {
+    is AgentPromptPayloadValue.Bool -> generator.writeBoolean(value.value)
+    AgentPromptPayloadValue.Null -> generator.writeNull()
+    is AgentPromptPayloadValue.Num -> writeNumericValue(generator, value.value)
+    is AgentPromptPayloadValue.Obj -> {
       generator.writeStartObject()
       value.fields.forEach { (name, fieldValue) ->
         generator.writeFieldName(name)
-        writeAppServerValue(generator, fieldValue)
+        writePromptPayloadValue(generator, fieldValue)
       }
       generator.writeEndObject()
     }
-    is CodexAppServerValue.Str -> generator.writeString(value.value)
+    is AgentPromptPayloadValue.Str -> generator.writeString(value.value)
   }
 }
 
