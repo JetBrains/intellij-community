@@ -169,6 +169,7 @@
     <pathMacroExpandableProtocol protocol="kotlin-js-meta"/>
 
     <projectPathMacroContributor implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledPathMacroContributor"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledMacroRefresher"/>
 
     <backgroundPostStartupActivity implementation="org.jetbrains.kotlin.idea.update.KotlinPluginUpdateCheckerStartActivity"/>
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.macros.KotlinBundledUsageDetector$MyStartupActivity"/>

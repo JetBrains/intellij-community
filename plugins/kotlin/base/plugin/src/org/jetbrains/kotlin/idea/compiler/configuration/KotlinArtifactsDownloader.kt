@@ -23,6 +23,7 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinBasePluginBundle
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_FOR_JPS_META_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_JPS_PLUGIN_PLUGIN_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.OLD_KOTLIN_DIST_ARTIFACT_ID
@@ -48,6 +49,10 @@ object KotlinArtifactsDownloader {
     fun getUnpackedKotlinDistPath(version: String): File =
         if (IdeKotlinVersion.get(version).isStandaloneCompilerVersion) KotlinPluginLayout.kotlinc
         else KOTLIN_DIST_LOCATION_PREFIX.resolve(version)
+
+    fun getUnpackedKotlinDist(version: String): Path =
+        if (IdeKotlinVersion.get(version).isStandaloneCompilerVersion) KotlinPluginLayout.kotlincPath
+        else KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve(version)
 
     fun getUnpackedKotlinDistPath(project: Project) = getUnpackedKotlinDistPath(KotlinJpsPluginSettings.jpsVersion(project))
 
