@@ -117,6 +117,15 @@ abstract class NonModalWindowWrapper(
   private var windowListener: WindowAdapter? = null
   private var windowDisposable: Disposable? = null
 
+  /**
+   * The window that was focused when this non-modal window was first created.
+   * Captured once at [initWindow] time and reused as the Float-mode [JDialog] owner on every
+   * mode switch, so that switching Window→Float does not accidentally parent the dialog
+   * to the main IDE frame (which would bring it to the front, pushing a detached editor
+   * window to the back).
+   */
+  private var savedOwnerWindow: Window? = null
+
   protected var isFloat: Boolean
     get() = PropertiesComponent.getInstance().getBoolean(floatModeKey, true)
     set(value) { PropertiesComponent.getInstance().setValue(floatModeKey, value, true) }
@@ -204,6 +213,7 @@ abstract class NonModalWindowWrapper(
   protected fun initWindow(content: JComponent, minSize: Dimension, initialSize: Dimension) {
     this.content = content
     this.minWindowSize = minSize
+    savedOwnerWindow = WindowManager.getInstance().suggestParentWindow(project) ?: getIdeJFrame()
     activeWindow = createAwtWindow(isFloat, content, minSize, initialSize)
     loadAndRegisterWindowState(activeWindow)
     fitWindowToScreen(activeWindow)
@@ -257,7 +267,7 @@ abstract class NonModalWindowWrapper(
   ): Window {
     val title = getWindowTitle()
     return if (float) {
-      FloatDialog(getIdeJFrame(), title).also { dialog ->
+      FloatDialog(savedOwnerWindow ?: getIdeJFrame(), title).also { dialog ->
         dialog.contentPane.layout = BorderLayout()
         val dialogContent = if (IdeFrameDecorator.isCustomDecorationActive())
           CustomFrameDialogContent.getCustomContentHolder(dialog, content, false) else content
@@ -302,7 +312,7 @@ abstract class NonModalWindowWrapper(
     }
   }
 
-  private inner class FloatDialog(owner: JFrame?, title: String) : JDialog(owner, title, false), UiDataProvider {
+  private inner class FloatDialog(owner: Window?, title: String) : JDialog(owner, title, ModalityType.MODELESS), UiDataProvider {
     init {
       defaultCloseOperation = DO_NOTHING_ON_CLOSE
       background = UIUtil.getPanelBackground()
@@ -513,7 +523,7 @@ abstract class NonModalWindowWrapper(
 
   // ── Utilities ────────────────────────────────────────────────────────────────
 
-  /** Returns the IDE's JFrame for [project]; used as the [JDialog] owner in Float mode. */
+  /** Returns the IDE's JFrame for [project]; used as a fallback [JDialog] owner in Float mode. */
   protected fun getIdeJFrame(): JFrame? =
     ComponentUtil.getWindow(WindowManager.getInstance().getIdeFrame(project)?.component) as? JFrame
 
