@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.gradle.service.modelAction
 
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchAction
-import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailureState
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailureResult
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderState
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import org.gradle.tooling.GradleConnectionException
@@ -22,8 +22,8 @@ class GradleModelFetchActionListenerAdapter(
     modelFetchActionListener.onModelFetchPhaseCompleted(phase)
   }
 
-  suspend fun onModelFetchFailures(state: GradleModelFetchFailureState) {
-    modelFetchActionListener.onModelFetchFailures(state.failures)
+  suspend fun onModelFetchFailures(failureResult: GradleModelFetchFailureResult) {
+    modelFetchActionListener.onModelFetchFailures(failureResult)
   }
 
   suspend fun onProjectLoaded(state: GradleModelHolderState) {

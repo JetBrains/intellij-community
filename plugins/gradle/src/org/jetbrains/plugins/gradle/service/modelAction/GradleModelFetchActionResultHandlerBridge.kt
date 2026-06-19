@@ -94,7 +94,7 @@ class GradleModelFetchActionResultHandlerBridge(
         modelFetchActionListener.onPhaseCompleted(value.phase!!, value)
       }
       is GradleModelFetchFailureState -> {
-        modelFetchActionListener.onModelFetchFailures(value)
+        modelFetchActionListener.onModelFetchFailures(value.failureResult)
       }
     }
   }
