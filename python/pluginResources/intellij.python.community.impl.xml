@@ -103,6 +103,12 @@
       <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.parameter.type.annotations" enabledByDefault="true"
               nameKey="INLAY.parameter.type.annotations"
               optionId="python.type.inlays.parameter.annotation"/>
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.solved.type.parameters.class.description" enabledByDefault="true"
+              nameKey="INLAY.solved.type.parameters.class"
+              optionId="python.type.inlays.solved.type.parameters.class"/>
+      <option bundle="messages.PyPsiBundle" descriptionKey="INLAY.solved.type.parameters.function.description" enabledByDefault="false"
+              nameKey="INLAY.solved.type.parameters.function"
+              optionId="python.type.inlays.solved.type.parameters.function"/>
     </codeInsight.declarativeInlayProvider>
 
     <codeInsight.declarativeInlayProvider group="TYPES_GROUP"
