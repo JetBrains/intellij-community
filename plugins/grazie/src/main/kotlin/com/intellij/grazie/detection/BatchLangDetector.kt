@@ -1,6 +1,6 @@
 package com.intellij.grazie.detection
 
-import ai.grazie.detector.ChainLanguageDetector
+import ai.grazie.detector.ChainLanguageDetector.ChainDetectionResult
 import ai.grazie.nlp.langs.Language
 import ai.grazie.nlp.tokenizer.word.StandardWordTokenizer.words
 import com.intellij.grazie.config.DetectionContext
@@ -17,10 +17,10 @@ import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 
-private typealias DetectionResults = Map<String, ChainLanguageDetector.ChainDetectionResult>
+private typealias DetectionResults = Map<String, ChainDetectionResult>
 
 object BatchLangDetector {
-  private val CACHE = Key.create<CachedValue<DetectionResults>>("grazie reliable language detection cache")
+  private val CACHE = Key.create<CachedValue<ResultHolder>>("grazie reliable language detection cache")
 
   fun getLanguage(content: TextContent, offset: Int): Language? {
     val text = content.substring(offset).take(LanguageDetectorHolder.LIMIT)
@@ -39,13 +39,26 @@ object BatchLangDetector {
   private fun detectForFile(file: PsiFile): DetectionResults =
     CachedValuesManager.getCachedValue(file, CACHE) {
       val texts = getCleanTexts(file)
-      val languages = LanguageDetectorHolder.get().detectWithDetails(texts,true) { ProgressManager.checkCanceled() }
-      CachedValueProvider.Result.create(texts.zip(languages).toMap(), file, grazieConfigTracker())
-    }
+      val languages = LanguageDetectorHolder.get().detectWithDetails(texts, true) { ProgressManager.checkCanceled() }
+      CachedValueProvider.Result.create(ResultHolder(file, texts, languages), file, grazieConfigTracker())
+    }.get()
 
   private fun getCleanTexts(file: PsiFile): List<String> =
     getCheckedFileTexts(file.viewProvider)
       .map { it.substring(HighlightingUtil.stripPrefix(it)) }
       .map { it.take(LanguageDetectorHolder.LIMIT) }
       .filter { NaturalTextDetector.seemsNatural(it) }
+
+  private data class ResultHolder(val psiFile: PsiFile, val texts: List<String>, val languages: List<ChainDetectionResult>) {
+    override fun toString(): String {
+      return "[fileType = ${psiFile.viewProvider.virtualFile.fileType}, " +
+             "fileLanguage = ${psiFile.language}, " +
+             "viewProviderLanguages = ${psiFile.viewProvider.allFiles.map { it.language }.toSet()}, " +
+             "detectedLanguages = ${languages.mapTo(HashSet()) { it.result.preferred }}," +
+             "isPhysical = ${psiFile.isPhysical}, " +
+             "contentLengths = ${texts.map { it.length }}]"
+    }
+
+    fun get(): DetectionResults = texts.zip(languages).toMap()
+  }
 }
