@@ -23,7 +23,7 @@ class AgentSessionUiPreferencesStateServiceTest {
       providerOptionsByProviderId = mapOf("claude" to setOf("plan_mode")),
       containerModeEnabled = true,
       launchProfiles = listOf(launchProfile("user:careful", "Careful", AgentSessionProvider.CLAUDE.value)),
-      activeLaunchProfileId = "user:careful",
+      defaultLaunchProfileId = "user:careful",
     )
     service.setProviderPreferences(prefs)
 
@@ -31,7 +31,7 @@ class AgentSessionUiPreferencesStateServiceTest {
     assertThat(loaded.providerOptionsByProviderId).isEqualTo(mapOf("claude" to setOf("plan_mode")))
     assertThat(loaded.containerModeEnabled).isTrue()
     assertThat(loaded.launchProfiles.map(AgentPromptLaunchProfile::id)).containsExactly("user:careful")
-    assertThat(loaded.activeLaunchProfileId).isEqualTo("user:careful")
+    assertThat(loaded.defaultLaunchProfileId).isEqualTo("user:careful")
   }
 
   @Test
@@ -54,7 +54,7 @@ class AgentSessionUiPreferencesStateServiceTest {
     service.setProviderPreferences(AgentPromptLauncherBridge.ProviderPreferences(
       providerOptionsByProviderId = mapOf("claude" to setOf("plan_mode")),
       launchProfiles = listOf(launchProfile("user:claude", "Claude Custom", AgentSessionProvider.CLAUDE.value)),
-      activeLaunchProfileId = "user:claude",
+      defaultLaunchProfileId = "user:claude",
     ))
 
     service.updateProviderOptionsOnLaunch(
@@ -66,7 +66,7 @@ class AgentSessionUiPreferencesStateServiceTest {
     assertThat(loaded.providerOptionsByProviderId).containsEntry("claude", setOf("plan_mode"))
     assertThat(loaded.providerOptionsByProviderId).containsEntry("codex", setOf("fast"))
     assertThat(loaded.launchProfiles.map(AgentPromptLaunchProfile::id)).containsExactly("user:claude")
-    assertThat(loaded.activeLaunchProfileId).isEqualTo("user:claude")
+    assertThat(loaded.defaultLaunchProfileId).isEqualTo("user:claude")
   }
 
   @Test
@@ -86,7 +86,7 @@ class AgentSessionUiPreferencesStateServiceTest {
       AgentSessionProvider.CLAUDE.value to setOf("plan_mode"),
     ))
     assertThat(loaded.launchProfiles).isEmpty()
-    assertThat(loaded.activeLaunchProfileId).isNull()
+    assertThat(loaded.defaultLaunchProfileId).isNull()
   }
 
   @Test
@@ -108,11 +108,11 @@ class AgentSessionUiPreferencesStateServiceTest {
 
     service.setLaunchProfiles(
       profiles = listOf(launchProfile("user:general", "General", AgentSessionProvider.CLAUDE.value)),
-      activeProfileId = "user:general",
+      defaultProfileId = "user:general",
     )
     service.setActiveVcsMergeLaunchProfileId("builtin:codex:standard")
 
-    assertThat(service.getActiveLaunchProfileId()).isEqualTo("user:general")
+    assertThat(service.getDefaultLaunchProfileId()).isEqualTo("user:general")
     assertThat(service.getActiveVcsMergeLaunchProfileId()).isEqualTo("builtin:codex:standard")
   }
 
@@ -123,7 +123,7 @@ class AgentSessionUiPreferencesStateServiceTest {
 
     uiPreferencesService.setProviderPreferences(AgentPromptLauncherBridge.ProviderPreferences(
       launchProfiles = listOf(launchProfile("user:fast", "Fast", AgentSessionProvider.CODEX.value)),
-      activeLaunchProfileId = "user:fast",
+      defaultLaunchProfileId = "user:fast",
     ))
 
     assertThat(uiPreferencesService.state).isEqualTo(AgentSessionUiPreferencesStateService.UiPreferencesState())
@@ -138,12 +138,12 @@ class AgentSessionUiPreferencesStateServiceTest {
 
     service.setLaunchProfiles(
       profiles = listOf(launchProfile("user:careful", "Careful", AgentSessionProvider.CLAUDE.value)),
-      activeProfileId = "user:careful",
+      defaultProfileId = "user:careful",
     )
 
     assertThat(service.getUserLaunchProfiles().map(AgentPromptLaunchProfile::id))
       .containsExactly("user:careful")
-    assertThat(service.getActiveLaunchProfileId()).isEqualTo("user:careful")
+    assertThat(service.getDefaultLaunchProfileId()).isEqualTo("user:careful")
   }
 
   @Test
@@ -153,11 +153,11 @@ class AgentSessionUiPreferencesStateServiceTest {
 
     service.setLaunchProfiles(
       profiles = listOf(profile),
-      activeProfileId = profile.id,
+      defaultProfileId = profile.id,
     )
 
     assertThat(service.getUserLaunchProfiles()).containsExactly(profile)
-    assertThat(service.getActiveLaunchProfileId()).isEqualTo(profile.id)
+    assertThat(service.getDefaultLaunchProfileId()).isEqualTo(profile.id)
   }
 
   private fun uiPreferencesService(): AgentSessionUiPreferencesStateService {

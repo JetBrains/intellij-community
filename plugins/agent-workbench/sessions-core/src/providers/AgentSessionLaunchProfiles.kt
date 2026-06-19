@@ -13,7 +13,6 @@ const val BUILT_IN_LAUNCH_PROFILE_PREFIX: String = "builtin:"
 data class AgentSessionLaunchProfileSnapshot(
   @JvmField val builtInProfiles: List<AgentPromptLaunchProfile>,
   @JvmField val userProfiles: List<AgentPromptLaunchProfile>,
-  @JvmField val activeProfileId: String?,
 ) {
   val allProfiles: List<AgentPromptLaunchProfile>
     get() = effectiveLaunchProfiles(builtInProfiles, userProfiles)

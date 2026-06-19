@@ -212,7 +212,7 @@ class AgentPromptProviderSelectorTest {
           controller.restoreLaunchProfiles(
             AgentPromptLauncherBridge.ProviderPreferences(
               launchProfiles = listOf(profile),
-              activeLaunchProfileId = profile.id,
+              defaultLaunchProfileId = profile.id,
             )
           )
         }
@@ -425,7 +425,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(profile),
-          activeLaunchProfileId = profile.id,
+          defaultLaunchProfileId = profile.id,
         )
       )
       val provider = testProviderBridge(
@@ -480,7 +480,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(defaultProfile),
-          activeLaunchProfileId = defaultProfile.id,
+          defaultLaunchProfileId = defaultProfile.id,
         )
       )
       val fixture = createSelectorFixture(listOf(provider))
@@ -705,7 +705,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(userProfile),
-          activeLaunchProfileId = activeProfileId,
+          defaultLaunchProfileId = activeProfileId,
         )
       )
       val provider = testProviderBridge(
@@ -782,7 +782,7 @@ class AgentPromptProviderSelectorTest {
       val selectedAction = profileActions.single { action -> action.templatePresentation.text == "Codex" }
       val selectedPopupEvent = popupEvent(selectedAction)
 
-      assertThat(launcher.preferences.activeLaunchProfileId).isNull()
+      assertThat(launcher.preferences.defaultLaunchProfileId).isNull()
       assertThat(selectedAction.templatePresentation.icon).isSameAs(providerIcon)
       assertThat(selectedAction.templatePresentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNotNull()
 
@@ -791,7 +791,7 @@ class AgentPromptProviderSelectorTest {
       assertThat(Toggleable.isSelected(selectedPopupEvent.presentation)).isTrue()
       assertThat(selectedPopupEvent.presentation.icon).isSameAs(providerIcon)
       assertThat(selectedPopupEvent.presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNotNull()
-      assertThat(launcher.preferences.activeLaunchProfileId).isNull()
+      assertThat(launcher.preferences.defaultLaunchProfileId).isNull()
     }
   }
 
@@ -807,7 +807,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(profile),
-          activeLaunchProfileId = profile.id,
+          defaultLaunchProfileId = profile.id,
         )
       )
       val provider = testProviderBridge(
@@ -837,7 +837,7 @@ class AgentPromptProviderSelectorTest {
       fixture.selector.setPlanModeSelected(true)
       builtInAction.actionPerformed(TestActionEvent.createTestEvent(builtInAction))
 
-      assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(profile.id)
+      assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(profile.id)
       assertThat(fixture.view.launchProfileLink.text).isEqualTo("Standard")
       assertThat(controller.currentSettings().reasoningEffort).isEqualTo(AgentPromptReasoningEffort.AUTO)
       assertThat(fixture.selector.isPlanModeSelected()).isTrue()
@@ -855,7 +855,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(codexProfile),
-          activeLaunchProfileId = codexProfile.id,
+          defaultLaunchProfileId = codexProfile.id,
         )
       )
       val claudeProvider = testProviderBridge(
@@ -928,7 +928,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(profile),
-          activeLaunchProfileId = profile.id,
+          defaultLaunchProfileId = profile.id,
         )
       )
       val provider = testProviderBridge(
@@ -982,7 +982,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(profile),
-          activeLaunchProfileId = profile.id,
+          defaultLaunchProfileId = profile.id,
         )
       )
       val provider = testProviderBridge(
@@ -1423,7 +1423,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(carefulProfile, fastProfile),
-          activeLaunchProfileId = carefulProfile.id,
+          defaultLaunchProfileId = carefulProfile.id,
         )
       )
       val provider = testProviderBridge(
@@ -1451,7 +1451,7 @@ class AgentPromptProviderSelectorTest {
 
         assertThat(fixture.view.launchProfileLink.text).isEqualTo("Careful")
         assertThat(controller.currentSettings().reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
-        assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(carefulProfile.id)
+        assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(carefulProfile.id)
       }
       finally {
         editor.closeForTest()
@@ -1933,7 +1933,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(carefulProfile, fastProfile),
-          activeLaunchProfileId = carefulProfile.id,
+          defaultLaunchProfileId = carefulProfile.id,
         )
       )
       val provider = testProviderBridge(
@@ -1965,7 +1965,7 @@ class AgentPromptProviderSelectorTest {
 
       assertThat(defaultSaved).isTrue()
       assertThat(statusMessage).isEqualTo("Default profile updated.")
-      assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(fastProfile.id)
+      assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(fastProfile.id)
       assertThat(launcher.preferences.launchProfiles).containsExactly(carefulProfile, fastProfile)
       assertThat(fixture.view.launchProfileLink.text).isEqualTo("Fast")
     }
@@ -1989,7 +1989,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(carefulProfile, fastProfile),
-          activeLaunchProfileId = carefulProfile.id,
+          defaultLaunchProfileId = carefulProfile.id,
         )
       )
       val provider = testProviderBridge(
@@ -2025,7 +2025,7 @@ class AgentPromptProviderSelectorTest {
       fixture.view.defaultProfileActionControl.component.doClick()
 
       assertThat(statusMessage).isEqualTo("Default profile updated.")
-      assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(fastProfile.id)
+      assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(fastProfile.id)
       assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
     }
   }
@@ -2098,7 +2098,7 @@ class AgentPromptProviderSelectorTest {
       fixture.view.defaultProfileActionControl.component.doClick()
 
       assertThat(statusMessage).isEqualTo("Default profile updated.")
-      assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(
+      assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(
         builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO)
       )
       assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
@@ -2146,7 +2146,7 @@ class AgentPromptProviderSelectorTest {
       assertThat(statusMessage).isEqualTo("Launch profile saved as default.")
       assertThat(savedProfile.name).isEqualTo("High")
       assertThat(savedProfile.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
-      assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(savedProfile.id)
+      assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(savedProfile.id)
       assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
     }
   }
@@ -2162,7 +2162,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(carefulProfile),
-          activeLaunchProfileId = carefulProfile.id,
+          defaultLaunchProfileId = carefulProfile.id,
         )
       )
       val provider = testProviderBridge(
@@ -2203,7 +2203,7 @@ class AgentPromptProviderSelectorTest {
       assertThat(savedProfile.id).isEqualTo(carefulProfile.id)
       assertThat(savedProfile.name).isEqualTo(carefulProfile.name)
       assertThat(savedProfile.generationSettings.reasoningEffort).isEqualTo(AgentPromptReasoningEffort.HIGH)
-      assertThat(launcher.preferences.activeLaunchProfileId).isEqualTo(carefulProfile.id)
+      assertThat(launcher.preferences.defaultLaunchProfileId).isEqualTo(carefulProfile.id)
       assertThat(fixture.view.launchProfileLink.text).isEqualTo("Careful")
       assertThat(fixture.view.defaultProfileActionControl.component.isVisible).isFalse()
     }
@@ -2221,7 +2221,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(profile),
-          activeLaunchProfileId = profile.id,
+          defaultLaunchProfileId = profile.id,
         )
       )
       val provider = testProviderBridge(
@@ -3028,7 +3028,7 @@ class AgentPromptProviderSelectorTest {
       val launcher = TestPromptLauncherBridge(
         AgentPromptLauncherBridge.ProviderPreferences(
           launchProfiles = listOf(profile),
-          activeLaunchProfileId = profile.id,
+          defaultLaunchProfileId = profile.id,
         )
       )
       val provider = testProviderBridge(

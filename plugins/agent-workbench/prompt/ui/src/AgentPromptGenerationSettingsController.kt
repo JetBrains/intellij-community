@@ -735,7 +735,7 @@ internal class AgentPromptGenerationSettingsController(
     launcher.saveProviderPreferences(
       currentPreferences.copy(
         launchProfiles = launchProfileState.userProfiles(),
-        activeLaunchProfileId = launchProfileState.persistedDefaultProfileId,
+        defaultLaunchProfileId = launchProfileState.persistedDefaultProfileId,
       )
     )
   }

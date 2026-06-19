@@ -69,7 +69,7 @@ interface AgentPromptLauncherBridge {
     @JvmField val providerOptionsByProviderId: Map<String, Set<String>> = emptyMap(),
     @JvmField val containerModeEnabled: Boolean = false,
     @JvmField val launchProfiles: List<AgentPromptLaunchProfile> = emptyList(),
-    @JvmField val activeLaunchProfileId: String? = null,
+    @JvmField val defaultLaunchProfileId: String? = null,
   )
 }
 

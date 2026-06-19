@@ -44,8 +44,8 @@ internal class AgentPromptLaunchProfileManager(
     return AgentPromptLaunchProfileEditorRequest(
       project = project,
       profiles = effectiveLaunchProfiles(builtInProfiles, launchProfileStateService.getUserLaunchProfiles()),
-      activeProfileId = launchProfileStateService.getActiveLaunchProfileId(),
-      defaultProfileId = launchProfileStateService.getActiveLaunchProfileId(),
+      activeProfileId = launchProfileStateService.getDefaultLaunchProfileId(),
+      defaultProfileId = launchProfileStateService.getDefaultLaunchProfileId(),
       builtInProfiles = builtInProfiles,
       providerEntries = providerEntries,
       modelCatalogProvider = ::loadedModelCatalog,
@@ -98,7 +98,7 @@ internal class AgentPromptLaunchProfileManager(
 
   private fun saveNewProfile(profile: AgentPromptLaunchProfile) {
     val profiles = launchProfileStateService.getUserLaunchProfiles() + normalizedUserLaunchProfile(profile)
-    launchProfileStateService.setLaunchProfiles(profiles, launchProfileStateService.getActiveLaunchProfileId())
+    launchProfileStateService.setLaunchProfiles(profiles, launchProfileStateService.getDefaultLaunchProfileId())
   }
 
   private fun saveProfile(profile: AgentPromptLaunchProfile, builtInProfiles: List<AgentPromptLaunchProfile>): Boolean {
@@ -114,7 +114,7 @@ internal class AgentPromptLaunchProfileManager(
       }
       else -> return false
     }
-    launchProfileStateService.setLaunchProfiles(updatedProfiles, launchProfileStateService.getActiveLaunchProfileId())
+    launchProfileStateService.setLaunchProfiles(updatedProfiles, launchProfileStateService.getDefaultLaunchProfileId())
     return true
   }
 
@@ -135,11 +135,11 @@ internal class AgentPromptLaunchProfileManager(
       return false
     }
 
-    val activeProfileId = launchProfileStateService.getActiveLaunchProfileId()
+    val defaultProfileId = launchProfileStateService.getDefaultLaunchProfileId()
       .takeUnless { profileId -> !resetsBuiltInProfile && profileId == profile.id }
     launchProfileStateService.setLaunchProfiles(
       profiles = currentProfiles.filterNot { item -> item.id == profile.id },
-      activeProfileId = activeProfileId,
+      defaultProfileId = defaultProfileId,
     )
     return true
   }

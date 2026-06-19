@@ -178,7 +178,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
         project = context.project,
         profiles = profileItems,
         entryPoint = AgentWorkbenchEntryPoint.TOOLBAR,
-        activeLaunchProfileId = selectedProfileId,
+        checkedLaunchProfileId = selectedProfileId,
         includeManageAction = false,
         createNewSession = { _, profile, _, _ ->
           val item = profileItems.firstOrNull { profileItem -> profileItem.profile.id == profile.id } ?: return@buildAgentSessionLaunchProfileMenuActions
@@ -246,13 +246,13 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
   }
 
   private fun resolveProfileItems(menuModel: AgentSessionProviderMenuModel): List<AgentSessionLaunchProfileMenuItem> {
-    return resolveAgentSessionLaunchProfileItems(menuModel, userLaunchProfiles(), activeVcsMergeLaunchProfileId())
+    return resolveAgentSessionLaunchProfileItems(menuModel, userLaunchProfiles())
   }
 
   private fun resolveVcsQuickStartProfile(profileItems: List<AgentSessionLaunchProfileMenuItem>): AgentSessionLaunchProfileMenuItem? {
     return resolveAgentSessionLaunchProfileItem(
       profileItems = enabledProfileItems(profileItems),
-      activeProfileId = activeVcsMergeLaunchProfileId(),
+      preferredProfileId = activeVcsMergeLaunchProfileId(),
       fallbackProfileIds = listOf(builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)),
     )
   }
@@ -337,7 +337,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
         project = project,
         profiles = profileItems,
         entryPoint = AgentWorkbenchEntryPoint.TOOLBAR,
-        activeLaunchProfileId = selectedProfileId,
+        checkedLaunchProfileId = selectedProfileId,
         includeManageAction = false,
         createNewSession = { _, profile, _, _ ->
           val resolvedContext =

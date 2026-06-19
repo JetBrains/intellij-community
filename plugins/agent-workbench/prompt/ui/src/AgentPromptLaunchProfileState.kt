@@ -31,7 +31,7 @@ internal class AgentPromptLaunchProfileState(
   ) {
     userProfilesById.clear()
     preferences.launchProfiles.forEach { profile -> userProfilesById[profile.id] = profile }
-    explicitDefaultProfileId = preferences.activeLaunchProfileId
+    explicitDefaultProfileId = preferences.defaultLaunchProfileId
     this.implicitDefaultProfileId = implicitDefaultProfileId
     selectedProfileId = effectiveDefaultProfileId
   }

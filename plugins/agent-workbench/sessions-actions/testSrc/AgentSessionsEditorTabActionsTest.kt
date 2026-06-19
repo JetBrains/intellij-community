@@ -53,7 +53,7 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
-  fun editorTabNewThreadUsesActiveLaunchProfileAndLaunchesStandardSessionFromPrimaryClick() {
+  fun editorTabNewThreadUsesDefaultLaunchProfileAndLaunchesStandardSessionFromPrimaryClick() {
     val path = "/tmp/editor-project"
     val context = newThreadContext(path = path)
     var launchedPath: String? = null
@@ -74,7 +74,7 @@ class AgentSessionsEditorTabActionsTest {
     val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge, claudeBridge) },
-      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
       createNewSession = { path, profile, project, capturedEntryPoint ->
         launchedPath = path
         launchedProfile = profile
@@ -111,7 +111,7 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
-  fun editorTabNewThreadUsesYoloModeWhenActiveLaunchProfileIsYolo() {
+  fun editorTabNewThreadUsesYoloModeWhenDefaultLaunchProfileIsYolo() {
     val path = "/tmp/editor-project"
     val context = newThreadContext(path = path)
     var launchedPath: String? = null
@@ -132,7 +132,7 @@ class AgentSessionsEditorTabActionsTest {
     val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge, claudeBridge) },
-      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO) },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.YOLO) },
       createNewSession = { path, profile, project, capturedEntryPoint ->
         launchedPath = path
         launchedProfile = profile
@@ -169,7 +169,7 @@ class AgentSessionsEditorTabActionsTest {
   }
 
   @Test
-  fun editorTabNewThreadFallsBackWhenActiveLaunchProfileIsNotEligible() {
+  fun editorTabNewThreadFallsBackWhenDefaultLaunchProfileIsNotEligible() {
     val context = newThreadContext()
     var launchedProfile: AgentPromptLaunchProfile? = null
     val codexYoloOnlyBridge = TestAgentSessionProviderDescriptor(
@@ -186,7 +186,7 @@ class AgentSessionsEditorTabActionsTest {
     val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexYoloOnlyBridge, fallbackBridge) },
-      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
       createNewSession = { _, profile, _, _ -> launchedProfile = profile },
     )
     val event = TestActionEvent.createTestEvent(action)
@@ -214,7 +214,7 @@ class AgentSessionsEditorTabActionsTest {
     val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(disabledBridge) },
-      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
       createNewSession = { _, _, _, _ -> launched = true },
       showPicker = { _, _ -> pickerShown++ },
     )
@@ -244,7 +244,7 @@ class AgentSessionsEditorTabActionsTest {
     val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(disabledBridge) },
-      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD) },
       createNewSession = { _, _, _, _ -> launched = true },
     )
     val event = TestActionEvent.createTestEvent(action)
@@ -275,7 +275,7 @@ class AgentSessionsEditorTabActionsTest {
     val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(claudeBridge) },
-      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
       createNewSession = { _, _, _, _ -> launched = true },
       showPicker = { _, _ -> pickerShown++ },
     )
@@ -312,7 +312,7 @@ class AgentSessionsEditorTabActionsTest {
     val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(claudeBridge) },
-      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
       showPicker = { _, _ -> pickerShown++ },
     )
     val event = TestActionEvent.createTestEvent(action)
@@ -514,7 +514,7 @@ class AgentSessionsEditorTabActionsTest {
     val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge, claudeBridge) },
-      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
       createNewSession = { path, profile, project, capturedEntryPoint ->
         launchedPath = path
         launchedProfile = profile
@@ -564,7 +564,7 @@ class AgentSessionsEditorTabActionsTest {
     val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(codexBridge, claudeBridge) },
-      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
       createNewSession = { path, profile, _, capturedEntryPoint ->
         launchedPath = path
         launchedProfile = profile
@@ -613,7 +613,7 @@ class AgentSessionsEditorTabActionsTest {
     val action = AgentSessionsEditorTabNewThreadAction(
       resolveContext = { context },
       allBridges = { listOf(claudeBridge) },
-      activeLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
+      defaultLaunchProfileId = { builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD) },
       createNewSession = { _, _, _, _ -> },
     )
     val event = TestActionEvent.createTestEvent(action)
