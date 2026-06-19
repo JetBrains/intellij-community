@@ -3,7 +3,6 @@ package com.jetbrains.python.inspections.dependencies
 
 import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.python.packaging.PyRequirement
@@ -12,13 +11,13 @@ import org.jetbrains.annotations.ApiStatus
 typealias DependenciesMap = Map<PyRequirement, PsiElement>
 
 @ApiStatus.Internal
-abstract class DependenciesInspectionProvider<T : PsiFile>(private val `class`: Class<T>) {
-  protected abstract fun provideDependencies(file: T, sdk: Sdk): DependenciesMap?
+abstract class DependenciesInspectionProvider<T : PsiFile>(internal val `class`: Class<T>) {
+  protected abstract fun provideDependencies(file: T): DependenciesMap?
   abstract val emptyFileInspectionMessage: @InspectionMessage String
 
-  fun getDependencies(file: PsiElement, sdk: Sdk): DependenciesMap? =
+  fun getDependencies(file: PsiFile): DependenciesMap? =
     @Suppress("UNCHECKED_CAST")
-    if (`class`.isInstance(file)) provideDependencies(file as T, sdk) else null
+    if (`class`.isInstance(file)) provideDependencies(file as T) else null
 }
 
 internal object DependenciesInspectionProviderData {

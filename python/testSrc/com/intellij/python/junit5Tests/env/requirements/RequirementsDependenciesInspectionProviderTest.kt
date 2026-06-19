@@ -32,8 +32,11 @@ import com.intellij.testFramework.junit5.fixture.testFixture
 import com.jetbrains.python.inspections.dependencies.DependenciesInspection
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
+import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
+import com.jetbrains.python.packaging.management.RequirementsProviderType
 import com.jetbrains.python.packaging.management.TestPackageManagerProvider
+import com.jetbrains.python.packaging.management.TestPythonPackageManager
 import com.jetbrains.python.packaging.management.TestPythonPackageManagerService
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -41,6 +44,7 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
+import kotlinx.coroutines.runBlocking
 import java.nio.file.Path as NioPath
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.copyToRecursively
@@ -62,7 +66,6 @@ internal class RequirementsDependenciesInspectionProviderTest {
   private val projectFixture = projectFixture(tempPathFixture, openAfterCreation = true)
   private val moduleFixture = projectFixture.moduleFixture(tempPathFixture, addPathToSourceRoot = true)
 
-  @Suppress("unused")
   private val venvFixture = pySdkFixture().pyVenvFixture(
     where = tempPathFixture,
     addToSdkTable = true,
@@ -73,6 +76,7 @@ internal class RequirementsDependenciesInspectionProviderTest {
 
   private val project by projectFixture
   private val fixture by codeInsightFixture
+  private val sdk by venvFixture
 
   private lateinit var testDataDir: NioPath
 
@@ -97,6 +101,7 @@ internal class RequirementsDependenciesInspectionProviderTest {
   @Test
   fun unsatisfiedRequirement() {
     setupPackageManager()
+    trackDependencyRoot(RequirementsProviderType.REQUIREMENTS_TXT)
     fixture.configureFromTempProjectFile("requirements.txt")
     fixture.checkHighlighting(true, false, true, false)
     assertTrue(fixture.availableIntentions.any { it.text == "Install package mypy" })
@@ -105,6 +110,7 @@ internal class RequirementsDependenciesInspectionProviderTest {
   @Test
   fun pyProjectTomlUnsatisfiedRequirement() {
     setupPackageManager()
+    trackDependencyRoot(RequirementsProviderType.PYPROJECT_TOML)
     fixture.configureFromTempProjectFile(PY_PROJECT_TOML)
     fixture.checkHighlighting(true, false, true, false)
     val warnings = fixture.doHighlighting(HighlightSeverity.WARNING)
@@ -129,6 +135,7 @@ internal class RequirementsDependenciesInspectionProviderTest {
     TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance(
       project, listOf(PythonPackage("uvicorn", "0.35.0", false))
     )
+    trackDependencyRoot(RequirementsProviderType.PYPROJECT_TOML)
     fixture.configureFromTempProjectFile(PY_PROJECT_TOML)
     val warnings = fixture.doHighlighting(HighlightSeverity.WARNING)
     assertTrue(
@@ -140,9 +147,10 @@ internal class RequirementsDependenciesInspectionProviderTest {
   @Test
   fun emptyRequirementsFile() {
     setupPackageManager()
+    trackDependencyRoot(RequirementsProviderType.REQUIREMENTS_TXT)
     fixture.configureFromTempProjectFile("requirements.txt")
     fixture.checkHighlighting(true, false, true, false)
-    assertTrue(fixture.availableIntentions.any { it.text == "Add imported packages to requirements…" })
+    assertTrue(fixture.availableIntentions.any { it.text == "Export packages" })
   }
 
   @Test
@@ -159,6 +167,7 @@ internal class RequirementsDependenciesInspectionProviderTest {
           PythonOutdatedPackage("flask", "1.0", "3.0.0"),
         )
     )
+    trackDependencyRoot(RequirementsProviderType.PYPROJECT_TOML)
     fixture.configureFromTempProjectFile(PY_PROJECT_TOML)
     fixture.checkHighlighting(true, false, true, false)
   }
@@ -169,6 +178,19 @@ internal class RequirementsDependenciesInspectionProviderTest {
       listOf(provider),
       fixture.testRootDisposable,
     )
+  }
+
+  /**
+   * Makes the venv SDK's package manager track the given dependency file (requirements.txt or
+   * pyproject.toml) in its cached dependency-file tree — the gate in
+   * [com.jetbrains.python.inspections.dependencies.DependenciesInspection] reads that cache. Real
+   * package managers expose their root unconditionally; the test manager keys this off SDK user data.
+   * Init is then forced so the cache is seeded before highlighting runs (production drives this via the
+   * package UI / sync / FUS paths).
+   */
+  private fun trackDependencyRoot(type: RequirementsProviderType) {
+    sdk.putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, type)
+    runBlocking { PythonPackageManager.forSdk(project, sdk).waitForInit() }
   }
 }
 
