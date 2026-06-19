@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
-import com.intellij.accessibility.enableScreenReaderSupportIfNeeded
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.diagnostic.EdtLockLoadMonitorService
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
@@ -320,6 +320,6 @@ private fun postOpenUiTasks(scope: CoroutineScope) {
   }
 
   scope.launch {
-    enableScreenReaderSupportIfNeeded()
+    AccessibilityUtils.enableScreenReaderSupportIfNeeded()
   }
 }

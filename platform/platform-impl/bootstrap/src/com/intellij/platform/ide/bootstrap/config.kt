@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.bootstrap
 
-import com.intellij.accessibility.enableScreenReaderSupportIfNecessary
+import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.CustomConfigMigrationOption
@@ -125,7 +125,7 @@ private suspend fun importConfig(
 
   span("screen reader checking") {
     runCatching {
-      enableScreenReaderSupportIfNecessary()
+      AccessibilityUtils.enableScreenReaderSupportIfNecessary()
     }.getOrLogException(log)
   }
 }

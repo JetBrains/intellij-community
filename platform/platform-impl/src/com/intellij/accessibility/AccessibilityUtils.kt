@@ -19,7 +19,6 @@ import com.intellij.util.system.OS
 import com.intellij.util.ui.RawSwingDispatcher
 import com.sun.jna.platform.win32.WinDef
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.accessibility.AccessibleRole
 
@@ -27,93 +26,83 @@ import javax.accessibility.AccessibleRole
 object AccessibilityUtils {
   @JvmField
   val GROUPED_ELEMENTS: AccessibleRole = if (OS.CURRENT == OS.macOS) AccessibleRole.AWT_COMPONENT else AccessibleRole.PANEL
-}
 
-@OptIn(LowLevelLocalMachineAccess::class)
-@ApiStatus.Internal
-suspend fun enableScreenReaderSupportIfNecessary() {
-  if (OS.CURRENT == OS.Linux) {
-    LinuxAccessibilitySupport.enableLinuxAtkWrapper()
-    return
-  }
+  @Volatile
+  private var enableScreenReaderSupport = false
 
-  if (isSupportScreenReadersOverridden()) {
-    AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED_VM)
-    return
-  }
-
-  if (!isScreenReaderDetected() && !System.getProperty("force.screen.reader.detection").toBoolean()) {
-    return
-  }
-
-  AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_DETECTED)
-  val appName = ApplicationInfoImpl.getShadowInstance().versionName
-  val answer = withContext(RawSwingDispatcher) {
-    @Suppress("TestOnlyProblems")
-    setEarlyUiLaF()
-
-    MessageDialogBuilder.yesNo(
-      title = ApplicationBundle.message("title.screen.reader.support"),
-      message = ApplicationBundle.message("confirmation.screen.reader.enable", appName)
-    )
-      .yesText(ApplicationBundle.message("button.enable"))
-      .noText(Messages.getCancelButton())
-      .ask(null as Component?)
-  }
-  if (answer) {
-    AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED)
-    enableScreenReaderSupport = true
-  }
-}
-
-@Volatile
-private var enableScreenReaderSupport = false
-
-@OptIn(LowLevelLocalMachineAccess::class)
-private fun isScreenReaderDetected(): Boolean = when (OS.CURRENT) {
-  OS.Windows -> JnaLoader.isLoaded() && isWindowsScreenReaderEnabled()
-  OS.macOS -> JnaLoader.isLoaded() && isMacVoiceOverEnabled()
-  OS.Linux -> JnaLoader.isLoaded() && LinuxAccessibilitySupport.isLinuxScreenReaderEnabled()
-  else -> false
-}
-
-/*
- * get macOS NSWorkspace.shared.isVoiceOverEnabled property (https://developer.apple.com/documentation/devicemanagement/accessibility)
- */
-private fun isMacVoiceOverEnabled(): Boolean {
-  val pool = NSAutoreleasePool()
-  var universalAccess: ID? = null
-  try {
-    universalAccess = Foundation.invoke(
-      Foundation.invoke("NSUserDefaults", "alloc"),
-      "initWithSuiteName:",
-      Foundation.nsString("com.apple.universalaccess")
-    )
-    val voiceOverEnabledKey = Foundation.invoke(universalAccess, "boolForKey:", Foundation.nsString("voiceOverOnOffKey"))
-    return voiceOverEnabledKey.booleanValue()
-  }
-  finally {
-    if (universalAccess != null) {
-      Foundation.cfRelease(universalAccess)
+  suspend fun enableScreenReaderSupportIfNecessary() {
+    if (OS.CURRENT == OS.Linux) {
+      LinuxAccessibilitySupport.enableLinuxAtkWrapper()
+      return
     }
-    pool.drain()
+
+    if (isSupportScreenReadersOverridden()) {
+      AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED_VM)
+      return
+    }
+
+    if (!isScreenReaderDetected() && !System.getProperty("force.screen.reader.detection").toBoolean()) {
+      return
+    }
+
+    AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_DETECTED)
+    val appName = ApplicationInfoImpl.getShadowInstance().versionName
+    val answer = withContext(RawSwingDispatcher) {
+      @Suppress("TestOnlyProblems")
+      setEarlyUiLaF()
+
+      MessageDialogBuilder.yesNo(
+        title = ApplicationBundle.message("title.screen.reader.support"),
+        message = ApplicationBundle.message("confirmation.screen.reader.enable", appName)
+      )
+        .yesText(ApplicationBundle.message("button.enable"))
+        .noText(Messages.getCancelButton())
+        .ask(null as Component?)
+    }
+    if (answer) {
+      AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED)
+      enableScreenReaderSupport = true
+    }
   }
-}
 
-/*
- * get Windows SPI_GETSCREENREADER system parameter
- * https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfoa#SPI_GETSCREENREADER
- */
-private fun isWindowsScreenReaderEnabled(): Boolean {
-  val isActive = WinDef.BOOLByReference()
-  val retValue = User32Ex.INSTANCE.SystemParametersInfo(WinDef.UINT(0x0046), WinDef.UINT(0), isActive, WinDef.UINT(0))
-  return retValue && isActive.value.booleanValue()
-}
+  private fun isScreenReaderDetected(): Boolean = when (OS.CURRENT) {
+    OS.Windows -> JnaLoader.isLoaded() && isWindowsScreenReaderEnabled()
+    OS.macOS -> JnaLoader.isLoaded() && isMacVoiceOverEnabled()
+    OS.Linux -> JnaLoader.isLoaded() && LinuxAccessibilitySupport.isLinuxScreenReaderEnabled()
+    else -> false
+  }
 
-@OptIn(LowLevelLocalMachineAccess::class)
-@ApiStatus.Internal
-suspend fun enableScreenReaderSupportIfNeeded() {
-  if (OS.CURRENT != OS.Linux && enableScreenReaderSupport) {
-    serviceAsync<GeneralSettings>().isSupportScreenReaders = true
+  // `NSWorkspace.shared.isVoiceOverEnabled` property (https://developer.apple.com/documentation/devicemanagement/accessibility)
+  private fun isMacVoiceOverEnabled(): Boolean {
+    val pool = NSAutoreleasePool()
+    var universalAccess: ID? = null
+    try {
+      universalAccess = Foundation.invoke(
+        Foundation.invoke("NSUserDefaults", "alloc"),
+        "initWithSuiteName:",
+        Foundation.nsString("com.apple.universalaccess")
+      )
+      val voiceOverEnabledKey = Foundation.invoke(universalAccess, "boolForKey:", Foundation.nsString("voiceOverOnOffKey"))
+      return voiceOverEnabledKey.booleanValue()
+    }
+    finally {
+      if (universalAccess != null) {
+        Foundation.cfRelease(universalAccess)
+      }
+      pool.drain()
+    }
+  }
+
+  // `SPI_GETSCREENREADER` system parameter (https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfoa#SPI_GETSCREENREADER)
+  private fun isWindowsScreenReaderEnabled(): Boolean {
+    val isActive = WinDef.BOOLByReference()
+    val retValue = User32Ex.INSTANCE.SystemParametersInfo(WinDef.UINT(0x0046), WinDef.UINT(0), isActive, WinDef.UINT(0))
+    return retValue && isActive.value.booleanValue()
+  }
+
+  suspend fun enableScreenReaderSupportIfNeeded() {
+    if (OS.CURRENT != OS.Linux && enableScreenReaderSupport) {
+      serviceAsync<GeneralSettings>().isSupportScreenReaders = true
+    }
   }
 }
