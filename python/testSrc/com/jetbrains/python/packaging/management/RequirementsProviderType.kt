@@ -7,5 +7,5 @@ import org.jetbrains.annotations.VisibleForTesting
 @ApiStatus.Internal
 @VisibleForTesting
 enum class RequirementsProviderType {
-  REQUIREMENTS_TXT, SETUP_PY, ENVIRONMENT_YML
+  REQUIREMENTS_TXT, SETUP_PY, ENVIRONMENT_YML, PYPROJECT_TOML
 }

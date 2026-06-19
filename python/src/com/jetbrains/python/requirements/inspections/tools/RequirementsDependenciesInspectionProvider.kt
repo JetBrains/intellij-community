@@ -2,14 +2,12 @@
 package com.jetbrains.python.requirements.inspections.tools
 
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import com.intellij.python.pyproject.PY_PROJECT_TOML_PROJECT
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.inspections.dependencies.DependenciesInspectionProvider
 import com.jetbrains.python.inspections.dependencies.DependenciesMap
-import com.jetbrains.python.isNonToolVirtualEnv
 import com.jetbrains.python.packaging.PyRequirement
 import com.jetbrains.python.packaging.PyRequirementParser
 import com.jetbrains.python.psi.injectionParent
@@ -45,17 +43,13 @@ private fun PsiElement.isInUninspectedTomlSection(): Boolean {
  * project interpreter.
  */
 internal class RequirementsDependenciesInspectionProvider : DependenciesInspectionProvider<RequirementsFile>(RequirementsFile::class.java) {
-  override fun provideDependencies(file: RequirementsFile, sdk: Sdk): DependenciesMap? {
+  override fun provideDependencies(file: RequirementsFile): DependenciesMap? {
     val injectionParent = file.injectionParent()
 
     if (injectionParent != null && injectionParent.isInUninspectedTomlSection()) {
       return null
     }
 
-    if (injectionParent == null && !sdk.isNonToolVirtualEnv) {
-      return null
-    }
-    
     val requirements = file.requirements()
     val dependenciesMap = mutableMapOf<PyRequirement, PsiElement>()
 

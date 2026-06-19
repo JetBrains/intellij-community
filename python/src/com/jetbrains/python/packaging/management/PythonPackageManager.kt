@@ -234,6 +234,18 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
   @ApiStatus.Experimental
   fun listDeclaredPackagesSnapshot(): List<PythonPackage>? = dependencyCache.snapshot.value
 
+  /**
+   * Whether [file] is one of the dependency files this manager currently tracks for the active
+   * interpreter — i.e. it is present in the cached dependency-file tree (the root plus, e.g., uv
+   * workspace members), not merely a file that happens to share a name. Non-blocking: reflects the
+   * last cache refresh and is `false` until the manager has been initialized.
+   */
+  @ApiStatus.Internal
+  fun tracksDependencyFile(file: PsiFile): Boolean {
+    val virtualFile = file.originalFile.virtualFile ?: return false
+    return dependencyCache.trackedFilesSnapshot().any { it.virtualFile == virtualFile }
+  }
+
   @ApiStatus.Experimental
   suspend fun listOutdatedPackages(): Map<String, PythonOutdatedPackage> {
     waitForInit()
@@ -517,6 +529,13 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
     /** Refreshes if needed and awaits the entry's deferred; `await()` starts the LAZY async on first call. */
     suspend fun awaitLatest(): PyResult<List<PythonPackage>>? = ensureFreshEntry().deferred.await()
+
+    /**
+     * Non-blocking view of the dependency files the latest cache entry tracks (root plus, e.g., uv
+     * workspace members). Empty until the cache has been seeded by [initInstalledPackages] or a
+     * [listDeclaredPackagesCached] refresh.
+     */
+    fun trackedFilesSnapshot(): List<PyDependenciesFile> = entry?.files?.keys?.toList().orEmpty()
 
     /**
      * [files] is the `(file -> modification stamp)` cache key; [deferred] is the

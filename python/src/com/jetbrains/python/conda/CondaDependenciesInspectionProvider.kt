@@ -2,14 +2,12 @@
 package com.jetbrains.python.conda
 
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiElement
 import com.intellij.python.community.impl.conda.PyCondaBundle
 import com.intellij.python.community.impl.conda.environmentYml.CondaEnvironmentYmlSdkUtils.envFileNames
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.inspections.dependencies.DependenciesInspectionProvider
 import com.jetbrains.python.inspections.dependencies.DependenciesMap
-import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.packaging.PyRequirement
 import org.jetbrains.yaml.psi.YAMLFile
 import org.jetbrains.yaml.psi.YAMLMapping
@@ -17,8 +15,8 @@ import org.jetbrains.yaml.psi.YAMLScalar
 import org.jetbrains.yaml.psi.YAMLSequence
 
 internal class CondaDependenciesInspectionProvider : DependenciesInspectionProvider<YAMLFile>(YAMLFile::class.java) {
-  override fun provideDependencies(file: YAMLFile, sdk: Sdk): DependenciesMap? {
-    if (file.name !in envFileNames || !sdk.isCondaVirtualEnv) {
+  override fun provideDependencies(file: YAMLFile): DependenciesMap? {
+    if (file.name !in envFileNames) {
       return null
     }
 

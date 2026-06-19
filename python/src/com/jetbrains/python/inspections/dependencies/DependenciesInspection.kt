@@ -6,9 +6,10 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.psi.HintedPsiElementVisitor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.conda.ExportDependenciesQuickFix
 import com.jetbrains.python.inspections.quickfix.UpdateLockedDependenciesQuickFix
@@ -36,70 +37,68 @@ import org.jetbrains.annotations.ApiStatus
  *  - A requirement names a package that **is installed but outdated** (a newer version is
  *    available in the configured repository) → "Requirement <name>=<v>, latest is <v>", with
  *    quick fixes [UpdateRequirementQuickFix] and [UpdateAllRequirementQuickFix].
- * 
- * An inspection for a specific PSI file should be specified via [DependenciesInspectionProvider] 
- * extension point. For an example, refer to 
+ *
+ * This is conceptually a file-level inspection: it analyses a whole dependency file (or an
+ * injected requirements fragment) against the active interpreter. The visitor is therefore
+ * driven only for the file element (see [HintedPsiElementVisitor]) and resolves the SDK and
+ * package manager once, instead of re-resolving them for every PSI element.
+ *
+ * An inspection for a specific PSI file should be specified via [DependenciesInspectionProvider]
+ * extension point. For an example, refer to
  * [com.jetbrains.python.requirements.inspections.tools.RequirementsDependenciesInspectionProvider].
  */
 @ApiStatus.Internal
 class DependenciesInspection : LocalInspectionTool() {
   override fun buildVisitor(
     holder: ProblemsHolder,
-    isnTheFly: Boolean,
+    isOnTheFly: Boolean,
     session: LocalInspectionToolSession,
-  ): PsiElementVisitor = object : PsiElementVisitor() {
+  ): PsiElementVisitor = object : PsiElementVisitor(), HintedPsiElementVisitor {
+    override fun getHintPsiElements(): List<Class<*>> = DependenciesInspectionProviderData.providers.map { it.`class` }
+
     override fun visitElement(element: PsiElement) {
-      super.visitElement(element)
+      val psiFile = element as? PsiFile ?: return
+      val sdk = getPythonSdk(psiFile)?.takeIf { !it.isReadOnly } ?: return
+      val packageManager = PythonPackageManager.forSdk(psiFile.project, sdk)
 
-      val psiFile = session.file
-      val sdk = getPythonSdk(psiFile) ?: return
-      var dependencies: DependenciesMap? = null
-      lateinit var provider: DependenciesInspectionProvider<*>
-
-      for (entry in DependenciesInspectionProviderData.providers) {
-        provider = entry
-        entry.getDependencies(element, sdk)?.also {
-          dependencies = it
-          break
-        }
-      }
-
-      if (dependencies == null) {
+      // The dependency file this PSI belongs to: for an injected requirements fragment (pyproject.toml's
+      // [project].dependencies, environment.yml's pip section) that's the host file; otherwise the file
+      // itself. Inspect only when the interpreter's package manager actually tracks that file in its
+      // cached dependency-file tree (the root plus, e.g., uv workspace members), not merely a file that
+      // shares the name. The cache is seeded only after installed packages load, so this also means the
+      // data we compare against is ready.
+      val dependencyFile = psiFile.injectionParent()?.containingFile ?: psiFile
+      if (!packageManager.tracksDependencyFile(dependencyFile)) {
         return
       }
 
-      val packageManager =
-        sdk
-          .takeIf { !it.isReadOnly }
-          ?.let { PythonPackageManager.forSdk(psiFile.project, it) }
-          ?.takeIf { it.isInstalledPackagesLoaded }
-        ?: return
-      val isInjection = psiFile.injectionParent() != null
+      val (provider, dependencies) = DependenciesInspectionProviderData.providers.firstNotNullOfOrNull { provider ->
+        provider.getDependencies(psiFile)?.let { provider to it }
+      } ?: return
 
-      if (!isInjection) {
-        verifyNonEmptyFile(provider, packageManager)
+      if (psiFile.injectionParent() == null) {
+        verifyNonEmptyFile(psiFile, provider, packageManager)
       }
 
-      packageManager.verifyPackageManager(dependencies, sdk, packageManager)
+      packageManager.verifyPackageManager(dependencies)
     }
 
-    fun verifyNonEmptyFile(provider: DependenciesInspectionProvider<*>, packageManager: PythonPackageManager) {
-      if (!session.file.text.isNullOrBlank()) {
+    private fun verifyNonEmptyFile(psiFile: PsiFile, provider: DependenciesInspectionProvider<*>, packageManager: PythonPackageManager) {
+      if (!psiFile.text.isNullOrBlank()) {
         return
       }
 
       val dependenciesExporter = packageManager.dependenciesExporter ?: return
-      val emptyFileInspectionMessage = provider.emptyFileInspectionMessage
-      
+
       holder.registerProblem(
-        session.file,
-        emptyFileInspectionMessage,
+        psiFile,
+        provider.emptyFileInspectionMessage,
         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
         ExportDependenciesQuickFix(dependenciesExporter),
       )
     }
 
-    fun PythonPackageManager.verifyPackageManager(dependencyMap: DependenciesMap, sdk: Sdk, packageManager: PythonPackageManager) {
+    private fun PythonPackageManager.verifyPackageManager(dependencyMap: DependenciesMap) {
       val installedPackages = listInstalledPackagesSnapshot()
       val outdatedPackages = listOutdatedPackagesSnapshot()
 
@@ -126,14 +125,12 @@ class DependenciesInspection : LocalInspectionTool() {
         }
       }
 
-      populateNotInstalledProblems(notInstalled, sdk, packageManager, updateLockedAction() != null)
+      populateNotInstalledProblems(notInstalled,  updateLockedAction() != null)
       populateOutdatedProblems(outdated)
     }
 
-    private fun populateNotInstalledProblems(
+    private fun PythonPackageManager.populateNotInstalledProblems(
       notInstalled: List<Pair<PyRequirement, PsiElement>>,
-      sdk: Sdk,
-      packageManager: PythonPackageManager,
       useUpdateLockFix: Boolean,
     ) {
       if (notInstalled.isEmpty()) {
@@ -142,7 +139,7 @@ class DependenciesInspection : LocalInspectionTool() {
 
       val updateLockedDependenciesQuickFix =
         if (useUpdateLockFix) {
-          UpdateLockedDependenciesQuickFix(sdk, packageManager)
+          UpdateLockedDependenciesQuickFix(this)
         }
         else {
           null

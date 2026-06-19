@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.python.community.impl.conda.environmentYml.format.CondaEnvironmentYmlParser
 import com.jetbrains.python.errorProcessing.PyResult
@@ -38,6 +39,12 @@ internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPack
       .withPackageNames(packageNames)
       .withPackageDetails(packageDetails)
       .withRepoPackagesVersions(packageVersions)
+
+  // Non-null so the empty-dependency-file inspection can offer its "export dependencies" quick fix in tests.
+  override val dependenciesExporter: DependenciesExporter =
+    object : DependenciesExporter {
+      override fun export(file: PsiFile) {}
+    }
 
   override suspend fun loadOutdatedPackagesCommand(): PyResult<List<PythonOutdatedPackage>> {
     return PyResult.success(emptyList())
@@ -95,6 +102,7 @@ internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPack
           RequirementsProviderType.REQUIREMENTS_TXT -> Path.of("requirements.txt")
           RequirementsProviderType.SETUP_PY -> Path.of("setup.py")
           RequirementsProviderType.ENVIRONMENT_YML -> Path.of("environment.yml")
+          RequirementsProviderType.PYPROJECT_TOML -> Path.of("pyproject.toml")
         }
       )
     }
@@ -115,6 +123,11 @@ internal class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPack
       RequirementsProviderType.ENVIRONMENT_YML -> {
         val environmentYmlFile = moduleDir.findChild("environment.yml") ?: return null
         extractFromEnvironmentYml(environmentYmlFile)
+      }
+      RequirementsProviderType.PYPROJECT_TOML -> {
+        // The dependencies inspection parses pyproject.toml's [project].dependencies via its own
+        // injection-aware provider, so the manager only needs to expose the file as tracked here.
+        PyResult.success(emptyList())
       }
     }
   }
