@@ -13,6 +13,10 @@ class CommitToolWindowUi(data: ComponentData) : ToolWindowUiComponent(data) {
   val commitButton: UiComponent = x("//div[@class='CommitActionsPanel']//div[@class='MainButton' and @visible_text='Commit']")
   val commitAndPushButton: UiComponent = x("//div[@class='CommitActionsPanel']//div[@visible_text='Commit and Push…']")
 
+  fun rightClickFile(fileName: String) {
+    changeListView.rightClickPath("Changes", fileName, fullMatch = false)
+  }
+
   fun commitEditor(block: JEditorUiComponent.() -> Unit = {}): JEditorUiComponent =
     x(xQuery { byAccessibleName("Commit Message") }, JEditorUiComponent::class.java).apply { block() }
 
