@@ -439,8 +439,7 @@ class SePopupContentPane(
               hintHelper.setRightExtensions(rightActions)
             }
           }
-        }
-        withContext(Dispatchers.EDT) {
+
           updateExtendedInfoContainer()
         }
       }
