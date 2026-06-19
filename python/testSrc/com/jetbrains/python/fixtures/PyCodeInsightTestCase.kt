@@ -215,8 +215,6 @@ abstract class PyCodeInsightTestCase {
 
   companion object {
     @JvmStatic
-    protected val ourPyLatestDescriptor = PyLightProjectDescriptor(LanguageLevel.getLatest())
-    @JvmStatic
     protected lateinit var myFixture: CodeInsightTestFixture // only one active fixture per JVM is possible
 
     @BeforeAll
@@ -224,7 +222,8 @@ abstract class PyCodeInsightTestCase {
     fun setUpFixture(testInfo: TestInfo) {
       val factory = IdeaTestFixtureFactory.getFixtureFactory()
       val testClass = testInfo.testClass.orElse(PyCodeInsightTestCase::class.java)!!
-      val builder = factory.createLightFixtureBuilder(ourPyLatestDescriptor, testClass.simpleName)
+      val projectDescriptor = PyLightProjectDescriptor(LanguageLevel.getLatest())
+      val builder = factory.createLightFixtureBuilder(projectDescriptor, testClass.simpleName)
       myFixture = factory.createCodeInsightFixture(builder.fixture, LightTempDirTestFixtureImpl(true))
       myFixture.testDataPath = PythonTestUtil.getTestDataPath()
       myFixture.setUp()
