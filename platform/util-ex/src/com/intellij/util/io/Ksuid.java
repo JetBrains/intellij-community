@@ -2,6 +2,7 @@
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -27,6 +28,28 @@ public final class Ksuid {
     ByteBuffer byteBuffer = generateCustom(PAYLOAD_LENGTH, DigestUtil.getRandom());
     String uid = new String(Base62.encode(byteBuffer.array()), StandardCharsets.UTF_8);
     return uid.length() > MAX_ENCODED_LENGTH ? uid.substring(0, MAX_ENCODED_LENGTH) : uid;
+  }
+
+  /**
+   * Checks whether the given string has the shape produced by {@link #generate()}:
+   * a non-empty Base62 string ({@code [0-9A-Za-z]}) no longer than {@link #MAX_ENCODED_LENGTH}.
+   */
+  public static boolean isValid(@Nullable String s) {
+    if (s == null) {
+      return false;
+    }
+    int len = s.length();
+    if (len == 0 || len > MAX_ENCODED_LENGTH) {
+      return false;
+    }
+    for (int i = 0; i < len; i++) {
+      char c = s.charAt(i);
+      boolean base62 = (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+      if (!base62) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static @NotNull ByteBuffer generateCustom(int payloadLength, @NotNull Random random) {

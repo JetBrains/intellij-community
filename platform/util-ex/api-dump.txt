@@ -89,6 +89,7 @@ f:com.intellij.util.io.Ksuid
 - <init>():V
 - s:generate():java.lang.String
 - s:generateCustom(I,java.util.Random):java.nio.ByteBuffer
+- s:isValid(java.lang.String):Z
 f:com.intellij.util.io.PathKt
 - sf:basicAttributesIfExists(java.nio.file.Path):java.nio.file.attribute.BasicFileAttributes
 - sf:copy(java.nio.file.Path,java.nio.file.Path):java.nio.file.Path
