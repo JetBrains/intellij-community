@@ -271,14 +271,17 @@ object Git {
     ).start()
   }
 
-  fun fetch(repositoryDirectory: Path) {
+  fun fetch(repositoryDirectory: Path, remote: String = "") {
     val cmdName = "git-fetch"
+
+    val arguments = mutableListOf("git", "fetch")
+    if (remote.isNotEmpty()) arguments.add(remote)
 
     ProcessExecutor(
       presentableName = cmdName,
       workDir = repositoryDirectory.toAbsolutePath(),
       timeout = 10.minutes,
-      args = listOf("git", "fetch"),
+      args = arguments,
       stdoutRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
       stderrRedirect = ExecOutputRedirect.ToStdOut("[$cmdName]"),
       onlyEnrichExistedEnvVariables = true
