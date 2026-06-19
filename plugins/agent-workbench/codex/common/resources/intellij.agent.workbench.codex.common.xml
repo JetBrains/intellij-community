@@ -3,7 +3,6 @@
   <dependencies>
     <module name="intellij.agent.workbench.cli"/>
     <module name="intellij.agent.workbench.json"/>
-    <module name="intellij.platform.compose"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

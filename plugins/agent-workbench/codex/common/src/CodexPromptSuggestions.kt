@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.codex.common
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 
-import androidx.compose.runtime.Immutable
 import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.createJsonParser
 import tools.jackson.core.JsonGenerator
@@ -13,7 +12,6 @@ import tools.jackson.core.json.JsonFactory
 import com.intellij.openapi.util.NlsSafe
 import java.io.StringWriter
 
-@Immutable
 data class CodexPromptSuggestionRequest(
   @JvmField val cwd: String?,
   @JvmField val targetMode: String,
@@ -24,7 +22,6 @@ data class CodexPromptSuggestionRequest(
   @JvmField val seedCandidates: List<CodexPromptSuggestionCandidate> = emptyList(),
 )
 
-@Immutable
 data class CodexPromptSuggestionContextItem(
   @JvmField val rendererId: String,
   @JvmField val title: String?,
@@ -36,7 +33,6 @@ data class CodexPromptSuggestionContextItem(
   @JvmField val truncation: CodexPromptSuggestionContextTruncation = CodexPromptSuggestionContextTruncation.none(body.length),
 )
 
-@Immutable
 data class CodexPromptSuggestionContextTruncation(
   @JvmField val originalChars: Int,
   @JvmField val includedChars: Int,
@@ -54,7 +50,6 @@ data class CodexPromptSuggestionContextTruncation(
   }
 }
 
-@Immutable
 data class CodexPromptSuggestionCandidate(
   @JvmField val id: String? = null,
   @JvmField val label: @NlsSafe String,
@@ -62,12 +57,10 @@ data class CodexPromptSuggestionCandidate(
 )
 
 sealed interface CodexPromptSuggestionResult {
-  @Immutable
   data class PolishedSeeds(
     @JvmField val candidates: List<CodexPromptSuggestionCandidate>,
   ) : CodexPromptSuggestionResult
 
-  @Immutable
   data class GeneratedCandidates(
     @JvmField val candidates: List<CodexPromptSuggestionCandidate>,
   ) : CodexPromptSuggestionResult

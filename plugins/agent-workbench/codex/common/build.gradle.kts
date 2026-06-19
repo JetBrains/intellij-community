@@ -43,8 +43,6 @@ dependencies {
     jetbrainsRuntime()
   }
 
-  compileOnly("androidx.compose.runtime:runtime-desktop:1.10.0")
-
   implementation(project(":json"))
 }
 
