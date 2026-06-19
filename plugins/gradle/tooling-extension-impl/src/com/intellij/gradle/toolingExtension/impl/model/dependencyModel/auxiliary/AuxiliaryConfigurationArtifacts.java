@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.model.dependencyModel.auxiliary;
 
 import org.gradle.api.artifacts.component.ComponentIdentifier;
@@ -9,7 +9,9 @@ import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.plugins.gradle.tooling.util.StringUtils;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -19,6 +21,9 @@ import java.util.regex.Pattern;
 
 @ApiStatus.Internal
 public class AuxiliaryConfigurationArtifacts {
+
+  public static final AuxiliaryConfigurationArtifacts EMPTY =
+    new AuxiliaryConfigurationArtifacts(Collections.emptyMap(), Collections.emptyMap());
 
   private static final Pattern PUNCTUATION_IN_SUFFIX_PATTERN = Pattern.compile("[\\p{Punct}\\s]+$");
 
@@ -116,5 +121,22 @@ public class AuxiliaryConfigurationArtifacts {
     }
 
     return shortlistedAuxiliariesBySuffixlessName.firstEntry().getValue();
+  }
+
+  /**
+   * Merges this instance with additional artifacts. Primary (this) results take precedence.
+   */
+  public @NotNull AuxiliaryConfigurationArtifacts mergeWith(@NotNull AuxiliaryConfigurationArtifacts other) {
+    if (other == EMPTY) return this;
+    if (this == EMPTY) return other;
+    Map<ComponentIdentifier, Set<File>> mergedSources = new HashMap<>(this.sources);
+    for (Map.Entry<ComponentIdentifier, Set<File>> entry : other.sources.entrySet()) {
+      mergedSources.putIfAbsent(entry.getKey(), entry.getValue());
+    }
+    Map<ComponentIdentifier, Set<File>> mergedJavadocs = new HashMap<>(this.javadocs);
+    for (Map.Entry<ComponentIdentifier, Set<File>> entry : other.javadocs.entrySet()) {
+      mergedJavadocs.putIfAbsent(entry.getKey(), entry.getValue());
+    }
+    return new AuxiliaryConfigurationArtifacts(mergedSources, mergedJavadocs);
   }
 }
