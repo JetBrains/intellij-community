@@ -2,6 +2,11 @@
 package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
+import com.intellij.agent.workbench.ui.AgentWorkbenchQuotaStatusBarPanel
+import com.intellij.agent.workbench.ui.AgentWorkbenchQuotaStatusBarRefreshLoop
+import com.intellij.agent.workbench.ui.AgentWorkbenchQuotaStatusBarUi
+import com.intellij.agent.workbench.ui.createAgentWorkbenchQuotaStatusBarProgressBar
+import com.intellij.agent.workbench.ui.setQuotaStatusBarForeground
 import com.intellij.ide.setToolTipText
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -10,14 +15,13 @@ import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.ui.ClickListener
-import com.intellij.ui.JBColor
 import com.intellij.util.LazyInitializer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
-import java.awt.Dimension
+import java.awt.Color
 import java.awt.event.MouseEvent
 import javax.swing.Box
 import javax.swing.BoxLayout
@@ -25,7 +29,6 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JProgressBar
-import javax.swing.Timer
 
 internal const val CLAUDE_QUOTA_WIDGET_ID = "claude.quota"
 private const val UI_REFRESH_INTERVAL_MS = 5_000
@@ -44,21 +47,20 @@ internal class ClaudeQuotaStatusBarWidgetFactory : StatusBarWidgetFactory {
 
 internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
   private val myComponent = LazyInitializer.create { ClaudeQuotaPanel() }
-  private var myTimer: Timer? = null
+  private val myRefreshLoop = AgentWorkbenchQuotaStatusBarRefreshLoop(
+    intervalMs = UI_REFRESH_INTERVAL_MS,
+    initialDelayMs = UI_REFRESH_INITIAL_DELAY_MS,
+  ) { myComponent.get().updateState() }
 
   override fun showNotify() {
     val component = myComponent.get()
     service<ClaudeQuotaService>().startPolling()
     component.updateState()
-    val timer = Timer(UI_REFRESH_INTERVAL_MS) { component.updateState() }
-    timer.initialDelay = UI_REFRESH_INITIAL_DELAY_MS
-    timer.start()
-    myTimer = timer
+    myRefreshLoop.start()
   }
 
   override fun hideNotify() {
-    myTimer?.stop()
-    myTimer = null
+    myRefreshLoop.stop()
   }
 
   override fun getPresentation(): StatusBarWidget.WidgetPresentation? = null
@@ -67,21 +69,17 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
 
   override fun getComponent(): JComponent = myComponent.get()
 
-  private inner class ClaudeQuotaPanel : JPanel(BorderLayout(JBUI.scale(4), 0)) {
-    private val sessionBarColor = JBColor(0xE8874B, 0xD4783E)
-    private val weeklyBarColor = JBColor(0x4A8FE2, 0x5B9BD5)
-    private val warningBarColor = JBColor(0xE8874B, 0xD4783E)
-
-    private val sessionBar = createBar(sessionBarColor)
-    private val weeklyBar = createBar(weeklyBarColor)
+  private inner class ClaudeQuotaPanel : AgentWorkbenchQuotaStatusBarPanel(AgentWorkbenchQuotaStatusBarUi.claudeLayout) {
+    private val sessionBar = createAgentWorkbenchQuotaStatusBarProgressBar().apply {
+      setQuotaStatusBarForeground(AgentWorkbenchQuotaStatusBarUi.claudeSessionBarColor)
+    }
+    private val weeklyBar = createAgentWorkbenchQuotaStatusBarProgressBar().apply {
+      setQuotaStatusBarForeground(AgentWorkbenchQuotaStatusBarUi.claudeWeeklyBarColor)
+    }
     private val iconLabel = JLabel(AgentWorkbenchCommonIcons.ClaudeGray)
     private val barsBox = JPanel()
-    private var shouldDisplay = false
 
     init {
-      isOpaque = false
-      isFocusable = false
-      border = JBUI.Borders.empty(0, 4)
       iconLabel.isVisible = false
 
       add(iconLabel, BorderLayout.WEST)
@@ -108,14 +106,6 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
       UiNotifyConnector.installOn(this, this@ClaudeQuotaStatusBarWidget)
     }
 
-    override fun getPreferredSize(): Dimension {
-      val sup = super.getPreferredSize()
-      if (!shouldDisplay) {
-        return Dimension(0, sup.height)
-      }
-      return Dimension(sup.width.coerceAtLeast(JBUI.scale(80)), sup.height)
-    }
-
     fun updateState() {
       if (!isDisplayable) return
 
@@ -127,12 +117,7 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
       val allNull = info != null && info.fiveHourPercent == null && info.sevenDayPercent == null
       val newShouldDisplay = !(noData || noCredentials || allNull)
 
-      if (shouldDisplay != newShouldDisplay) {
-        shouldDisplay = newShouldDisplay
-        iconLabel.isVisible = newShouldDisplay
-        barsBox.isVisible = newShouldDisplay
-        revalidate()
-      }
+      setQuotaStatusBarVisible(newShouldDisplay, iconLabel, barsBox)
 
       if (!newShouldDisplay) {
         toolTipText = null
@@ -154,34 +139,32 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
       sessionBar.isVisible = session != null
       weeklyBar.isVisible = weekly != null
       if (session != null) {
-        val clamped = session.coerceIn(0, 100)
-        sessionBar.value = clamped
-        sessionBar.foreground = if (isWarningQuota(clamped)) warningBarColor else sessionBarColor
+        updateBar(sessionBar, session, AgentWorkbenchQuotaStatusBarUi.claudeSessionBarColor)
       }
       if (weekly != null) {
-        val clamped = weekly.coerceIn(0, 100)
-        weeklyBar.value = clamped
-        weeklyBar.foreground = if (isWarningQuota(clamped)) warningBarColor else weeklyBarColor
+        updateBar(weeklyBar, weekly, AgentWorkbenchQuotaStatusBarUi.claudeWeeklyBarColor)
       }
 
       val now = System.currentTimeMillis()
       setToolTipText(HtmlChunk.raw(formatWidgetTooltip(info, now)))
       repaint()
     }
+
+    private fun updateBar(bar: JProgressBar, percent: Int, defaultColor: Color) {
+      val clamped = percent.coerceIn(0, 100)
+      bar.value = clamped
+      val color = if (isWarningQuota(clamped)) {
+        AgentWorkbenchQuotaStatusBarUi.warningBarColor
+      }
+      else {
+        defaultColor
+      }
+      bar.setQuotaStatusBarForeground(color)
+    }
   }
 }
 
 internal fun isWarningQuota(percent: Int): Boolean = percent > WARNING_QUOTA_PERCENT
-
-private fun createBar(color: JBColor): JProgressBar {
-  return JProgressBar(0, 100).apply {
-    value = 0
-    isOpaque = false
-    isStringPainted = false
-    foreground = color
-    putClientProperty("ProgressBar.stripeWidth", 4)
-  }
-}
 
 internal fun dominantPercent(info: ClaudeQuotaInfo): Int? {
   val session = info.fiveHourPercent
