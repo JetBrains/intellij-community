@@ -22,6 +22,9 @@
 - name: lib/modules/intellij.agent.workbench.claude.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.claude.sessions
+- name: lib/modules/intellij.agent.workbench.cli.jar
+  contentModules:
+  - name: intellij.agent.workbench.cli
 - name: lib/modules/intellij.agent.workbench.codex.chat.jar
   contentModules:
   - name: intellij.agent.workbench.codex.chat

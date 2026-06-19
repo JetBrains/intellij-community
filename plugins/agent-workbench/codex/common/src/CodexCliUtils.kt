@@ -1,18 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.codex.common
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.agent.workbench.cli.resolveExecutableFromPathOrLocalBin
+import com.intellij.agent.workbench.cli.resolveExecutableOrDefaultViaTerminalResolver as resolveCliExecutableOrDefaultViaTerminalResolver
+import com.intellij.agent.workbench.cli.resolveExecutableViaTerminalResolver as findCliExecutableViaTerminalResolver
+import com.intellij.agent.workbench.cli.terminalAgentBinaryNameOrDefault
 import com.intellij.util.SystemProperties
-import org.jetbrains.plugins.terminal.agent.TerminalAgent
-import org.jetbrains.plugins.terminal.agent.TerminalAgentResolver
 import java.nio.file.Path
 
-private val LOG = logger<CodexCliUtilsLogCategory>()
-
-private class CodexCliUtilsLogCategory
+private const val CODEX_MISSING_TERMINAL_AGENT_MESSAGE: String =
+  "Codex terminal agent extension is not registered; falling back to local PATH lookup"
 
 object CodexCliUtils {
   const val CODEX_COMMAND: String = "codex"
@@ -29,13 +26,11 @@ object CodexCliUtils {
    * Codex agent (e.g. an unusual test environment) or when the binary cannot be located at all.
    */
   suspend fun findExecutableViaTerminalResolver(): String? {
-    val codexAgent = codexTerminalAgent()
-    if (codexAgent == null) {
-      LOG.warn("Codex terminal agent extension is not registered; falling back to local PATH lookup")
-      return PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(CODEX_COMMAND)?.absolutePath
-    }
-    val eelApi = LocalEelDescriptor.toEelApi()
-    return TerminalAgentResolver.findBinaryPath(codexAgent, eelApi)
+    return findCliExecutableViaTerminalResolver(
+      terminalAgentKey = CODEX_TERMINAL_AGENT_KEY,
+      fallbackResolver = ::findExecutable,
+      missingAgentMessage = CODEX_MISSING_TERMINAL_AGENT_MESSAGE,
+    )
   }
 
   /**
@@ -45,7 +40,16 @@ object CodexCliUtils {
    * missing CLI when nothing can be resolved.
    */
   suspend fun resolveExecutableOrDefaultViaTerminalResolver(): String =
-    findExecutableViaTerminalResolver() ?: CODEX_COMMAND
+    resolveCliExecutableOrDefaultViaTerminalResolver(
+      defaultCommand = CODEX_COMMAND,
+      terminalAgentKey = CODEX_TERMINAL_AGENT_KEY,
+      fallbackResolver = ::findExecutable,
+      missingAgentMessage = CODEX_MISSING_TERMINAL_AGENT_MESSAGE,
+    )
+
+  fun findExecutable(): String? {
+    return resolveExecutableFromPathOrLocalBin(CODEX_COMMAND)
+  }
 
   fun codexConfigPath(): Path = codexHomePath().resolve(CODEX_CONFIG_FILE_NAME)
 
@@ -57,9 +61,5 @@ object CodexCliUtils {
     return codexHome?.let(Path::of) ?: userHomePath.resolve(".${codexBinaryName()}")
   }
 
-  private fun codexBinaryName(): String = codexTerminalAgent()?.binaryName ?: CODEX_COMMAND
-
-  private fun codexTerminalAgent(): TerminalAgent? {
-    return runCatching { TerminalAgent.findByKey(TerminalAgent.AgentKey(CODEX_TERMINAL_AGENT_KEY)) }.getOrNull()
-  }
+  private fun codexBinaryName(): String = terminalAgentBinaryNameOrDefault(CODEX_TERMINAL_AGENT_KEY, CODEX_COMMAND)
 }

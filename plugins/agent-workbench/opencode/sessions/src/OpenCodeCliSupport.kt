@@ -1,11 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.opencode.sessions
 
+import com.intellij.agent.workbench.cli.resolveExecutableOrDefaultViaTerminalResolver as resolveCliExecutableOrDefaultViaTerminalResolver
+import com.intellij.agent.workbench.cli.resolveExecutableViaTerminalResolver as findCliExecutableViaTerminalResolver
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.toEelApi
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
-import org.jetbrains.plugins.terminal.agent.TerminalAgentResolver
 import javax.swing.Icon
 
 internal object OpenCodeCliSupport {
@@ -13,12 +12,10 @@ internal object OpenCodeCliSupport {
   const val OPENCODE_TERMINAL_AGENT_KEY: String = "opencode"
   internal val resolverTerminalAgent: TerminalAgent = OpenCodeResolverTerminalAgent
 
-  suspend fun findExecutableViaTerminalResolver(): String? {
-    val eelApi = LocalEelDescriptor.toEelApi()
-    return TerminalAgentResolver.findBinaryPath(resolverTerminalAgent, eelApi)
-  }
+  suspend fun findExecutableViaTerminalResolver(): String? = findCliExecutableViaTerminalResolver(resolverTerminalAgent)
 
-  suspend fun resolveExecutableOrDefaultViaTerminalResolver(): String = findExecutableViaTerminalResolver() ?: OPENCODE_COMMAND
+  suspend fun resolveExecutableOrDefaultViaTerminalResolver(): String =
+    resolveCliExecutableOrDefaultViaTerminalResolver(OPENCODE_COMMAND, resolverTerminalAgent)
 }
 
 private object OpenCodeResolverTerminalAgent : TerminalAgent {

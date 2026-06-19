@@ -1,10 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.pi.sessions
 
-import com.intellij.platform.eel.provider.LocalEelDescriptor
-import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.agent.workbench.cli.resolveExecutableOrDefaultViaTerminalResolver as resolveCliExecutableOrDefaultViaTerminalResolver
+import com.intellij.agent.workbench.cli.resolveExecutableViaTerminalResolver as findCliExecutableViaTerminalResolver
 import org.jetbrains.plugins.terminal.agent.TerminalAgent
-import org.jetbrains.plugins.terminal.agent.TerminalAgentResolver
 import javax.swing.Icon
 
 internal object PiCliSupport {
@@ -12,12 +11,10 @@ internal object PiCliSupport {
   const val PI_TERMINAL_AGENT_KEY: String = "pi"
   internal val resolverTerminalAgent: TerminalAgent = PiResolverTerminalAgent
 
-  suspend fun findExecutableViaTerminalResolver(): String? {
-    val eelApi = LocalEelDescriptor.toEelApi()
-    return TerminalAgentResolver.findBinaryPath(resolverTerminalAgent, eelApi)
-  }
+  suspend fun findExecutableViaTerminalResolver(): String? = findCliExecutableViaTerminalResolver(resolverTerminalAgent)
 
-  suspend fun resolveExecutableOrDefaultViaTerminalResolver(): String = findExecutableViaTerminalResolver() ?: PI_COMMAND
+  suspend fun resolveExecutableOrDefaultViaTerminalResolver(): String =
+    resolveCliExecutableOrDefaultViaTerminalResolver(PI_COMMAND, resolverTerminalAgent)
 }
 
 private object PiResolverTerminalAgent : TerminalAgent {

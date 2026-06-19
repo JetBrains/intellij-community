@@ -3,26 +3,27 @@
 
 package com.intellij.agent.workbench.junie.common
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.agent.workbench.cli.resolveExecutableFromPathOrLocalBin
+import com.intellij.agent.workbench.cli.resolveExecutableOrDefaultViaTerminalResolver as resolveCliExecutableOrDefaultViaTerminalResolver
+import com.intellij.agent.workbench.cli.resolveExecutableViaTerminalResolver as findCliExecutableViaTerminalResolver
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.ExecuteProcessException
-import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.spawnProcess
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jetbrains.plugins.terminal.agent.TerminalAgent
-import org.jetbrains.plugins.terminal.agent.TerminalAgentResolver
-import java.nio.file.Files
-import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<JunieCliSupportLogCategory>()
 
 private class JunieCliSupportLogCategory
+
+private const val JUNIE_MISSING_TERMINAL_AGENT_MESSAGE: String =
+  "Junie terminal agent extension is not registered; falling back to local PATH lookup"
 
 object JunieCliSupport {
   const val JUNIE_COMMAND: String = "junie"
@@ -31,24 +32,15 @@ object JunieCliSupport {
   fun isAvailable(): Boolean = findExecutable() != null
 
   fun findExecutable(): String? {
-    PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(JUNIE_COMMAND)?.absolutePath?.let { return it }
-
-    val homeDir = System.getProperty("user.home") ?: return null
-    for (executableName in localExecutableNames()) {
-      val localBin = Path.of(homeDir, ".local", "bin", executableName)
-      if (Files.exists(localBin)) return localBin.toAbsolutePath().toString()
-    }
-    return null
+    return resolveExecutableFromPathOrLocalBin(JUNIE_COMMAND, localExecutableNames())
   }
 
   suspend fun findExecutableViaTerminalResolver(): String? {
-    val junieAgent = TerminalAgent.findByKey(TerminalAgent.AgentKey(JUNIE_TERMINAL_AGENT_KEY))
-    if (junieAgent == null) {
-      LOG.warn("Junie terminal agent extension is not registered; falling back to local PATH lookup")
-      return findExecutable()
-    }
-    val eelApi = LocalEelDescriptor.toEelApi()
-    return TerminalAgentResolver.findBinaryPath(junieAgent, eelApi)
+    return findCliExecutableViaTerminalResolver(
+      terminalAgentKey = JUNIE_TERMINAL_AGENT_KEY,
+      fallbackResolver = ::findExecutable,
+      missingAgentMessage = JUNIE_MISSING_TERMINAL_AGENT_MESSAGE,
+    )
   }
 
   suspend fun resolveCliInfoViaTerminalResolver(): JunieCliInfo? {
@@ -60,7 +52,12 @@ object JunieCliSupport {
   }
 
   suspend fun resolveExecutableOrDefaultViaTerminalResolver(): String =
-    findExecutableViaTerminalResolver() ?: JUNIE_COMMAND
+    resolveCliExecutableOrDefaultViaTerminalResolver(
+      defaultCommand = JUNIE_COMMAND,
+      terminalAgentKey = JUNIE_TERMINAL_AGENT_KEY,
+      fallbackResolver = ::findExecutable,
+      missingAgentMessage = JUNIE_MISSING_TERMINAL_AGENT_MESSAGE,
+    )
 
   fun buildNewSessionCommand(yolo: Boolean = false, executable: String = JUNIE_COMMAND): List<String> {
     return if (yolo) listOf(executable, SKIP_UPDATE_CHECK_FLAG, BRAVE_FLAG)
