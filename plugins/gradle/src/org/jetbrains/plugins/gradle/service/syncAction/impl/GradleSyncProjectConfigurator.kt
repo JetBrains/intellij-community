@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.syncAction.impl
 
 import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailure
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailureResult
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeAsync
 import com.intellij.openapi.externalSystem.autolink.forEachExtensionSafeOrdered
@@ -78,8 +79,8 @@ object GradleSyncProjectConfigurator {
         SYNC_LISTENER.onModelFetchFailed(context, exception)
       }
 
-      override suspend fun onModelFetchFailures(failures: List<GradleModelFetchFailure>) {
-        syncFailureHandler.reportSyncFailures(context, failures)
+      override suspend fun onModelFetchFailures(failureResult: GradleModelFetchFailureResult) {
+        syncFailureHandler.reportSyncFailures(context, failureResult)
       }
     }
   }
@@ -161,11 +162,12 @@ const val GRADLE_SYNC_FAILURE_GROUP: String = "gradle.sync.failure.group"
 
 private class GradleSyncFailureHandler {
 
-  fun reportSyncFailures(context: ProjectResolverContext, failures: List<GradleModelFetchFailure>) {
-    for (failure in failures) {
+  fun reportSyncFailures(context: ProjectResolverContext, failureResult: GradleModelFetchFailureResult) {
+    for (failure in failureResult.failures) {
       context.reporter.failure(createIssueFailure(failure))
         .withSuppressed(true)
         .withGroup(GRADLE_SYNC_FAILURE_GROUP)
+        .withTargetPath(failureResult.targetPath?.toPath())
         .report()
     }
   }

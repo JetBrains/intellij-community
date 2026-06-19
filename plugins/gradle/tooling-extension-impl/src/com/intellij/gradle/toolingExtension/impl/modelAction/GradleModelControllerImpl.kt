@@ -54,7 +54,7 @@ class GradleModelControllerImpl(
       error("Strict Gradle model fetch unexpectedly returned invalid model for ${modelClass.name}")
     }
 
-    sendModelFetchFailures(result)
+    sendModelFetchFailures(null, result)
     return model
   }
 
@@ -63,7 +63,7 @@ class GradleModelControllerImpl(
       return buildController.findModel(modelClass)
     }
     return buildController.fetch(modelClass)
-      .also { sendModelFetchFailures(it) }
+      .also { sendModelFetchFailures(null, it) }
       .getModel()
   }
 
@@ -86,7 +86,7 @@ class GradleModelControllerImpl(
       return buildController.findModel(target, modelClass)
     }
     return buildController.fetch(target, modelClass)
-      .also { sendModelFetchFailures(it) }
+      .also { sendModelFetchFailures(target, it) }
       .getModel()
   }
 
@@ -100,7 +100,7 @@ class GradleModelControllerImpl(
       return buildController.findModel(target, modelClass, modelParameterClass, modelParameterInitializer)
     }
     return buildController.fetch(target, modelClass, modelParameterClass, modelParameterInitializer)
-      .also { sendModelFetchFailures(it) }
+      .also { sendModelFetchFailures(target, it) }
       .getModel()
   }
 
@@ -196,9 +196,15 @@ class GradleModelControllerImpl(
     return buildModel.projects.filter { it.parent == null }
   }
 
-  private fun sendModelFetchFailures(result: FetchModelResult<*>) {
+  private fun sendModelFetchFailures(target: GradleModel?, result: FetchModelResult<*>) {
     val failures = result.failures.takeIf { it.isNotEmpty() } ?: return
-    buildController.send(GradleModelFetchFailureState(failures.map { GradleModelFetchFailure(it) }))
+    val targetPath = when (target) {
+      is BasicGradleProject -> target.projectDirectory
+      is GradleBuild -> target.buildIdentifier.rootDir
+      else -> null
+    }
+    val failureResult = GradleModelFetchFailureResult(targetPath, failures.map { GradleModelFetchFailure(it) })
+    buildController.send(GradleModelFetchFailureState(failureResult))
   }
 
   private data class GradleModelFetchRequestImpl<Model : Any>(

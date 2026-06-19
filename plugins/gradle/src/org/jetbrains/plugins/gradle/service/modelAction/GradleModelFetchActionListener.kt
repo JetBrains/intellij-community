@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.modelAction
 
-import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailure
+import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelFetchFailureResult
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import org.jetbrains.annotations.ApiStatus
 
@@ -34,5 +34,10 @@ interface GradleModelFetchActionListener {
    */
   suspend fun onModelFetchFailed(exception: Throwable)
 
-  suspend fun onModelFetchFailures(failures: List<GradleModelFetchFailure>)
+  /**
+   * Called when Gradle reports recoverable model fetch failures through the resilient model fetch API.
+   *
+   * @param failureResult the recoverable model fetch failure result with failures, the requested model class name, and the common target path.
+   */
+  suspend fun onModelFetchFailures(failureResult: GradleModelFetchFailureResult)
 }
