@@ -40,7 +40,6 @@ internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileS
       override fun environmentVariables(opts: EelExecApi.EnvironmentVariablesOptions): EelExecApi.EnvironmentVariablesDeferred =
         EelExecApi.EnvironmentVariablesDeferred(CompletableDeferred(emptyMap()))
       override suspend fun getUserLoginShell() = EelPath.parse("/bin/sh", descriptor)
-      override suspend fun spawnLoginShell(opts: EelExecApi.LoginShellOptions) = throw UnsupportedOperationException()
       override suspend fun findExeFilesInPath(binaryName: String) = TODO()
       override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelExecApi.ExternalCliEntrypoint = TODO()
     }

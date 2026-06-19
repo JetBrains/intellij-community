@@ -15,6 +15,7 @@ import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.ExecuteProcessException
+import com.intellij.platform.eel.LoginShellSpawner
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.environmentVariables
 import com.intellij.platform.eel.isPosix
@@ -88,17 +89,25 @@ internal class IjentDashboardConfigurable(val project: Project) : SearchableConf
                 terminalPlaceholder.component = JLabel(IdeBundle.message("progress.text.loading")).apply { border = JBUI.Borders.empty(8) }
               }
               val terminalDashboard = TerminalDashboard(project, sessionDisposable)
-              val eel = eelDescriptor.toEelApi()
-              val initialSize = TermSize(80, 24)
-              val handle = eel.exec.spawnLoginShell()
-                .pty(Pty(initialSize.columns, initialSize.rows, true))
-                .scope(this)
-                .workingDirectory(eel.userInfo.home)
-                .eelIt()
-              val ptyProcess = handle.process.convertToJavaProcess() as PtyProcess
-              val widget = terminalDashboard.createWidget(ptyProcess, initialSize)
-              withContext(Dispatchers.EDT) {
-                terminalPlaceholder.component = widget.component
+              val eelApi = eelDescriptor.toEelApi()
+              val execApi = eelApi.exec
+              if (execApi is LoginShellSpawner) {
+                val initialSize = TermSize(80, 24)
+                val handle = execApi.spawnLoginShell()
+                  .pty(Pty(initialSize.columns, initialSize.rows, true))
+                  .scope(this)
+                  .workingDirectory(eelApi.userInfo.home)
+                  .eelIt()
+                val ptyProcess = handle.process.convertToJavaProcess() as PtyProcess
+                val widget = terminalDashboard.createWidget(ptyProcess, initialSize)
+                withContext(Dispatchers.EDT) {
+                  terminalPlaceholder.component = widget.component
+                }
+              }
+              else {
+                withContext(Dispatchers.EDT) {
+                  terminalPlaceholder.component = null
+                }
               }
             }
             else {

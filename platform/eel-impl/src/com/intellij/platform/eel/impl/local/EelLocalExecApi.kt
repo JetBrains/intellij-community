@@ -220,12 +220,6 @@ class EelLocalExecPosixApi(
     return EelPath.parse(getUserShell(), descriptor)
   }
 
-  override suspend fun spawnLoginShell(opts: EelExecApi.LoginShellOptions): EelExecApi.LoginShellHandle {
-    throw UnsupportedOperationException(
-      "spawnLoginShell is not implemented for local Eel; use environmentVariables() for env-only queries"
-    )
-  }
-
   override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelExecApi.ExternalCliEntrypoint {
     TODO("Not yet implemented")
   }
@@ -265,12 +259,6 @@ class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
     }
     val systemRoot = System.getenv("SystemRoot") ?: "C:\\Windows"
     return EelPath.parse("$systemRoot\\System32\\cmd.exe", descriptor)
-  }
-
-  override suspend fun spawnLoginShell(opts: EelExecApi.LoginShellOptions): EelExecApi.LoginShellHandle {
-    throw UnsupportedOperationException(
-      "spawnLoginShell is not implemented for local Eel; use environmentVariables() for env-only queries"
-    )
   }
 
   override suspend fun createExternalCli(options: EelExecApi.ExternalCliOptions): EelExecApi.ExternalCliEntrypoint {

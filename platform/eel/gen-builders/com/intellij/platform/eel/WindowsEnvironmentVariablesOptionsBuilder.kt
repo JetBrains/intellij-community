@@ -54,7 +54,7 @@ class WindowsEnvironmentVariablesOptionsBuilder {
     mode(EnvironmentVariablesOptions.Mode.LOGIN_INTERACTIVE)
 
   /**
-   * Like [LOGIN_INTERACTIVE], but uses the unified [spawnLoginShell] pipeline.
+   * Like [LOGIN_INTERACTIVE], but uses the unified [LoginShellSpawner.spawnLoginShell] pipeline.
    *
    * **Notice:** MAY throw [EnvironmentVariablesException].
    */

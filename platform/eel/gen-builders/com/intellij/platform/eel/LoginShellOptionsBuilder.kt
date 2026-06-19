@@ -5,7 +5,8 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
-import com.intellij.platform.eel.EelExecApi.LoginShellOptions
+import com.intellij.platform.eel.EelExecApi.Pty
+import com.intellij.platform.eel.LoginShellSpawner.LoginShellOptions
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -19,7 +20,7 @@ class LoginShellOptionsBuilder {
 
   private var interactive: Boolean = true
 
-  private var pty: EelExecApi.Pty? = null
+  private var pty: Pty? = null
 
   private var scope: CoroutineScope? = null
 
@@ -47,7 +48,7 @@ class LoginShellOptionsBuilder {
    * PTY dimensions for the underlying shell session. If null, a default PTY is used.
    */
   @ApiStatus.Internal
-  fun pty(arg: EelExecApi.Pty?): LoginShellOptionsBuilder = apply {
+  fun pty(arg: Pty?): LoginShellOptionsBuilder = apply {
     this.pty = arg
   }
 
@@ -83,7 +84,7 @@ class LoginShellOptionsBuilder {
 internal class LoginShellOptionsImpl(
   override val env: Map<String, String>,
   override val interactive: Boolean,
-  override val pty: EelExecApi.Pty?,
+  override val pty: Pty?,
   override val scope: CoroutineScope?,
   override val workingDirectory: EelPath?,
 ) : LoginShellOptions
