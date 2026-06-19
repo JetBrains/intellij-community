@@ -32,6 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.text.Normalizer;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -442,6 +443,17 @@ public final class IoTestUtil {
   }
 
   public static void setCaseSensitivity(@NotNull Path dir, boolean caseSensitive) throws IOException {
+    try (Stream<Path> childrenStream = Files.list(dir)) {
+      Path[] children = childrenStream.toArray(Path[]::new);
+      if (children.length > 0) {
+        //https://learn.microsoft.com/en-us/windows/wsl/case-sensitivity:
+        // "A directory must be empty in order to change the case sensitivity flag attribute on that directory."
+        throw new IOException(
+          "Directory must be empty to change it's case-sensitivity: " +
+          "[" + dir.toAbsolutePath() + "].children: " + Arrays.toString(children)
+        );
+      }
+    }
     assertTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
     var changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.toString(), caseSensitive ? "enable" : "disable");
     var out = runCommand("fsutil", "file", "queryCaseSensitiveInfo", dir.toString());
