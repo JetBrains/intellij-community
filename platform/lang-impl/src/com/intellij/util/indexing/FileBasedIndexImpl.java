@@ -2369,8 +2369,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
 
   /**
-   * Legacy flushing implementation: do some basic precautions against contention. Wait for a period without modifications,
-   * use .tryLock() to avoid competing with other threads
+   * Legacy flushing implementation: do some basic precautions against contention.
+   * Wait for a period without modifications to avoid competing with other threads.
    */
   private final class SimpleFlusher implements Runnable, AutoCloseable {
 
@@ -2398,7 +2398,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         return;
       }
 
-      IndexingStamp.flushCaches();
+      if (IndexingStamp.isDirty()) {
+        IndexingStamp.flushCaches();
+      }
 
       IndexConfiguration state = getState();
       for (ID<?, ?> indexId : state.getIndexIDs()) {
@@ -2407,9 +2409,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
         try {
           UpdatableIndex<?, ?, FileContent, ?> index = state.getIndex(indexId);
-          if (index != null) {
+          if (index != null && index.isDirty()) {
             index.flush();
-            Thread.yield();//be nice to other wanting to use indexes
+            Thread.yield();//be nice to others wanting to use indexes
           }
         }
         catch (Throwable e) {
