@@ -30,7 +30,11 @@
   - name: intellij.libraries.clikt
     libraries:
       clikt:
-      - name: $MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/3/clikt-jvm-3.jar
+      - name: $MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/5/clikt-jvm-5.jar
+      - name: $MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-core-jvm/5/clikt-core-jvm-5.jar
+      - name: $MAVEN_REPOSITORY$/com/github/ajalt/mordant/mordant-jvm/3/mordant-jvm-3.jar
+      - name: $MAVEN_REPOSITORY$/com/github/ajalt/mordant/mordant-core-jvm/3/mordant-core-jvm-3.jar
+      - name: $MAVEN_REPOSITORY$/com/github/ajalt/colormath/colormath-jvm/3/colormath-jvm-3.jar
 - name: lib/modules/intellij.evaluationPlugin.agent.jar
   contentModules:
   - name: intellij.evaluationPlugin.agent

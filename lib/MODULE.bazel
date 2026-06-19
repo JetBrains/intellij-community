@@ -7960,17 +7960,59 @@ http_file(
 )
 
 http_file(
-    name = "com_github_ajalt_clikt-clikt-jvm-3_5_4_http",
-    downloaded_file_path = "clikt-jvm-3.5.4.jar",
-    sha256 = "b58b4d93fc1870b99b2adb3e16e9c483c8e73766b2944bc3cff805c0be47d19e",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ajalt/clikt/clikt-jvm/3.5.4/clikt-jvm-3.5.4.jar",
+    name = "com_github_ajalt_clikt-clikt-jvm-5_1_0_http",
+    downloaded_file_path = "clikt-jvm-5.1.0.jar",
+    sha256 = "75c330967db15a5c591fba69fc3b18ffb68271d54f90f21c1c9c52e86faeb9d6",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ajalt/clikt/clikt-jvm/5.1.0/clikt-jvm-5.1.0.jar",
 )
 
 http_file(
-    name = "com_github_ajalt_clikt-clikt-jvm-3_5_4-sources_http",
-    downloaded_file_path = "clikt-jvm-3.5.4-sources.jar",
-    sha256 = "0d781e6ded81e3b3bd4a0e8927de34c0c1f5f92e0b176a86a4469417b6729c3c",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ajalt/clikt/clikt-jvm/3.5.4/clikt-jvm-3.5.4-sources.jar",
+    name = "com_github_ajalt_clikt-clikt-core-jvm-5_1_0_http",
+    downloaded_file_path = "clikt-core-jvm-5.1.0.jar",
+    sha256 = "7f78049fa8159bac05ce09ddef4313248d4cad0014a744214c1150d14e3661e7",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ajalt/clikt/clikt-core-jvm/5.1.0/clikt-core-jvm-5.1.0.jar",
+)
+
+http_file(
+    name = "com_github_ajalt_mordant-mordant-jvm-3_0_2_http",
+    downloaded_file_path = "mordant-jvm-3.0.2.jar",
+    sha256 = "9ed3b976fcccc78da746d49866fa8ebb8f10530a93c544ea0420259a607dd95e",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ajalt/mordant/mordant-jvm/3.0.2/mordant-jvm-3.0.2.jar",
+)
+
+http_file(
+    name = "com_github_ajalt_mordant-mordant-core-jvm-3_0_2_http",
+    downloaded_file_path = "mordant-core-jvm-3.0.2.jar",
+    sha256 = "651c3bd74ff4e98db4d58e3dcf4b14e8099ee0d220e672f571f8cfeee4493905",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ajalt/mordant/mordant-core-jvm/3.0.2/mordant-core-jvm-3.0.2.jar",
+)
+
+http_file(
+    name = "com_github_ajalt_clikt-clikt-jvm-5_1_0-sources_http",
+    downloaded_file_path = "clikt-jvm-5.1.0-sources.jar",
+    sha256 = "02aac599b18946b19c07746781d3ccef1c31f65915e416d46e280e64b1c8e278",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ajalt/clikt/clikt-jvm/5.1.0/clikt-jvm-5.1.0-sources.jar",
+)
+
+http_file(
+    name = "com_github_ajalt_clikt-clikt-core-jvm-5_1_0-sources_http",
+    downloaded_file_path = "clikt-core-jvm-5.1.0-sources.jar",
+    sha256 = "1878a411994314b0838aad8a23ba4271535892e0ad5db3a86d68b10bfc94ff7a",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ajalt/clikt/clikt-core-jvm/5.1.0/clikt-core-jvm-5.1.0-sources.jar",
+)
+
+http_file(
+    name = "com_github_ajalt_mordant-mordant-jvm-3_0_2-sources_http",
+    downloaded_file_path = "mordant-jvm-3.0.2-sources.jar",
+    sha256 = "3aa71b91497d7a6e10947949ee91039186c181fda3cc5418e49ccd5cbee98b62",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ajalt/mordant/mordant-jvm/3.0.2/mordant-jvm-3.0.2-sources.jar",
+)
+
+http_file(
+    name = "com_github_ajalt_mordant-mordant-core-jvm-3_0_2-sources_http",
+    downloaded_file_path = "mordant-core-jvm-3.0.2-sources.jar",
+    sha256 = "c71b0c271e475972ed804f7abe0d22d62bc40e36fec8fdd49e2d15646c5b9c8b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/com/github/ajalt/mordant/mordant-core-jvm/3.0.2/mordant-core-jvm-3.0.2-sources.jar",
 )
 
 http_file(

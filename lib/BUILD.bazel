@@ -10358,18 +10358,72 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.github.ajalt.clikt/clikt-jvm-3.5.4.jar_copy",
-    src = "@com_github_ajalt_clikt-clikt-jvm-3_5_4_http//file",
-    out = "com.github.ajalt.clikt/clikt-jvm-3.5.4.jar",
+    name = "com.github.ajalt.clikt/clikt-jvm-5.1.0.jar_copy",
+    src = "@com_github_ajalt_clikt-clikt-jvm-5_1_0_http//file",
+    out = "com.github.ajalt.clikt/clikt-jvm-5.1.0.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
-jvm_import(
-    name = "libraries-clikt-clikt",
-    jar = "@com_github_ajalt_clikt-clikt-jvm-3_5_4_http//file",
-    source_jar = "@com_github_ajalt_clikt-clikt-jvm-3_5_4-sources_http//file",
+copy_file(
+    name = "com.github.ajalt.clikt/clikt-core-jvm-5.1.0.jar_copy",
+    src = "@com_github_ajalt_clikt-clikt-core-jvm-5_1_0_http//file",
+    out = "com.github.ajalt.clikt/clikt-core-jvm-5.1.0.jar",
+    allow_symlink = True,
     visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.ajalt.mordant/mordant-jvm-3.0.2.jar_copy",
+    src = "@com_github_ajalt_mordant-mordant-jvm-3_0_2_http//file",
+    out = "com.github.ajalt.mordant/mordant-jvm-3.0.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.ajalt.mordant/mordant-core-jvm-3.0.2.jar_copy",
+    src = "@com_github_ajalt_mordant-mordant-core-jvm-3_0_2_http//file",
+    out = "com.github.ajalt.mordant/mordant-core-jvm-3.0.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "libraries-clikt-clikt",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":com_github_ajalt_clikt-clikt-jvm-5_1_0_http_import",
+        ":com_github_ajalt_clikt-clikt-core-jvm-5_1_0_http_import",
+        ":com_github_ajalt_mordant-mordant-jvm-3_0_2_http_import",
+        ":com_github_ajalt_mordant-mordant-core-jvm-3_0_2_http_import",
+        ":com_github_ajalt_colormath-colormath-jvm-3_6_0_http_import",
+    ],
+)
+
+jvm_import(
+    name = "com_github_ajalt_clikt-clikt-jvm-5_1_0_http_import",
+    jar = "@com_github_ajalt_clikt-clikt-jvm-5_1_0_http//file",
+    source_jar = "@com_github_ajalt_clikt-clikt-jvm-5_1_0-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_ajalt_clikt-clikt-core-jvm-5_1_0_http_import",
+    jar = "@com_github_ajalt_clikt-clikt-core-jvm-5_1_0_http//file",
+    source_jar = "@com_github_ajalt_clikt-clikt-core-jvm-5_1_0-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_ajalt_mordant-mordant-jvm-3_0_2_http_import",
+    jar = "@com_github_ajalt_mordant-mordant-jvm-3_0_2_http//file",
+    source_jar = "@com_github_ajalt_mordant-mordant-jvm-3_0_2-sources_http//file",
+)
+
+jvm_import(
+    name = "com_github_ajalt_mordant-mordant-core-jvm-3_0_2_http_import",
+    jar = "@com_github_ajalt_mordant-mordant-core-jvm-3_0_2_http//file",
+    source_jar = "@com_github_ajalt_mordant-mordant-core-jvm-3_0_2-sources_http//file",
 )
 
 copy_file(
