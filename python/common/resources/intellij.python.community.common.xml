@@ -1,9 +1,10 @@
 <idea-plugin visibility="internal">
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.python.common.toolToIconMapper" dynamic="false" interface="com.intellij.python.common.tools.spi.ToolIdToIconMapper"/>
+    <extensionPoint qualifiedName="com.intellij.python.community.common.toolToIconMapper" dynamic="false"
+                    interface="com.intellij.python.community.common.tools.spi.ToolIdToIconMapper"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
-    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.python.common.sdk.PythonSdkAvailableTopicListener"/>
+    <platform.rpc.projectRemoteTopicListener implementation="com.intellij.python.community.common.sdk.PythonSdkAvailableTopicListener"/>
     <registryKey key="python.toolwindows.available.at.startup"
                  defaultValue="false"
                  restartRequired="false"

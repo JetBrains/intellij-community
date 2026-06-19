@@ -1,4 +1,4 @@
-package com.intellij.python.common.sdk
+package com.intellij.python.community.common.sdk
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service

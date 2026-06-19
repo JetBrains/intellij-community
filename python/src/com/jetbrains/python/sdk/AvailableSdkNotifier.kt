@@ -6,7 +6,7 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.python.common.sdk.sendPythonAvailableEvent
+import com.intellij.python.community.common.sdk.sendPythonAvailableEvent
 
 internal class AvailableSdkNotifier : ModuleRootListener {
   override fun rootsChanged(event: ModuleRootEvent) {

@@ -3,7 +3,7 @@ package com.jetbrains.python.sdk.configuration
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.sdk.baseDir
 import com.jetbrains.python.venvReader.VirtualEnvReader

@@ -2,7 +2,7 @@
 package com.intellij.python.hatch.impl
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.hatch.icons.PythonHatchIcons
 import com.intellij.python.pyproject.model.internal.pyProjectToml.TomlDependencySpecification
 import com.intellij.python.pyproject.model.spi.ProjectName

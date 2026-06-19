@@ -3,7 +3,7 @@ package com.intellij.python.community.impl.poetry.backend
 
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.python.common.tools.ToolId
+import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.POETRY_UI_INFO
 import com.intellij.python.pyproject.model.internal.pyProjectToml.TomlDependencySpecification

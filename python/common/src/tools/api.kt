@@ -1,6 +1,6 @@
-package com.intellij.python.common.tools
+package com.intellij.python.community.common.tools
 
-import com.intellij.python.common.tools.spi.ToolIdToIconMapper
+import com.intellij.python.community.common.tools.spi.ToolIdToIconMapper
 import javax.swing.Icon
 
 

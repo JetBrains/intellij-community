@@ -12,7 +12,7 @@
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.ui.jcef"/>
-    <module name="intellij.python.common"/>
+    <module name="intellij.python.community.common"/>
     <module name="intellij.python.community"/>
     <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.execService"/>

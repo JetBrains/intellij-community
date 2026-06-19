@@ -36,7 +36,7 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                                           valueType = ValueTypeMetadata.ParameterizedType(generics = listOf(
                                                                             ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
                                                                                                                     typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                                      fqName = "com.intellij.python.common.tools.ToolId",
+                                                                                                                      fqName = "com.intellij.python.community.common.tools.ToolId",
                                                                                                                       properties = listOf(
                                                                                                                         OwnPropertyMetadata(
                                                                                                                           isComputable = false,
@@ -100,8 +100,8 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
 
   override fun initializeMetadataHash() {
     addMetadataHash(typeFqn = "com.intellij.python.pyproject.model.internal.workspaceBridge.PyProjectTomlWorkspaceEntity",
-                    metadataHash = 86695699)
-    addMetadataHash(typeFqn = "com.intellij.python.common.tools.ToolId", metadataHash = -1193602517)
+                    metadataHash = -1990101490)
+    addMetadataHash(typeFqn = "com.intellij.python.community.common.tools.ToolId", metadataHash = -1960368624)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.jps.entities.ModuleId", metadataHash = 369441961)
   }
 }

@@ -185,7 +185,7 @@
     <orderEntry type="module" module-name="intellij.python.sdkConfigurator.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.uv.common" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.python.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.processOutput.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" scope="TEST" />
