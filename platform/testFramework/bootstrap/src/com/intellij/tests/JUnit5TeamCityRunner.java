@@ -47,6 +47,7 @@ import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -148,7 +149,7 @@ public final class JUnit5TeamCityRunner {
         .build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
 
-      listener = isUnderTeamCity() ? new TCExecutionListener() : new ConsoleTestExecutionListener();
+      listener = isUnderTeamCity() ? getTeamCityListener() : new ConsoleTestExecutionListener();
 
       if (LIST_CLASSES != null) {
         saveListOfTestClasses(testPlan);  // save only
@@ -212,6 +213,17 @@ public final class JUnit5TeamCityRunner {
     if (isUnderTeamCity()) {
       System.out.println(new TestFinished(testName, 0));
     }
+  }
+
+  private static TestExecutionListenerEx getTeamCityListener()
+    throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
+    String tcListenerClassName = System.getProperty("intellij.build.test.tc.listener.override");
+    if (tcListenerClassName == null)
+      return new TCExecutionListener();
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    //noinspection unchecked
+    Class<TestExecutionListenerEx> tcListenerClass = (Class<TestExecutionListenerEx>) Class.forName(tcListenerClassName, true, classLoader);
+    return tcListenerClass.getDeclaredConstructor().newInstance();
   }
 
   private static boolean assertNoUnhandledExceptions_isLeak(String testFailedServiceMessage) {
