@@ -56,6 +56,8 @@ class IjentSessionProcessMediator private constructor(
     suspend fun destroyForcibly()
     suspend fun destroy()
 
+    val destroyIsGraceful: Boolean
+
     val isAlive: Boolean
       get() = when (exitCode.state) {
         SafeDeferred.State.Active -> true
@@ -90,6 +92,9 @@ class IjentSessionProcessMediator private constructor(
       process.exitValue()
     })
     override val isAlive: Boolean get() = process.isAlive
+
+    override val destroyIsGraceful: Boolean =
+      runCatching { process.supportsNormalTermination() }.getOrDefault(!SystemInfoRt.isWindows)
 
     override suspend fun destroyForcibly() {
       withContext(blockingDispatcher) {
@@ -216,7 +221,7 @@ private suspend fun ijentProcessFinalizer(ijentLabel: String, mediator: IjentSes
     runCatching { process.stdin.close(null) }
 
     // On Windows process.destroy() is an abrupt kill, so if ijent can react to stdin EOF, let's wait for a bit before destroying
-    if (SystemInfoRt.isWindows && mediator.exitsOnStdinEof) {
+    if (!process.destroyIsGraceful && mediator.exitsOnStdinEof) {
       awaitProcessExit(process, 1.5.seconds)
       if (!process.isAlive) return
     }
