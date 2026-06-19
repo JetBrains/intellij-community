@@ -132,6 +132,34 @@ class SeSelectionListenerTest {
     assertNotNull(listener.getSelectionState())
   }
 
+  /**
+   * The user opens Search Everywhere and types a. The results include an item that the user selects manually,
+   * and that item is not the first one in the list. Then the user keeps typing and refines the query to ab.
+   *
+   * When the query changes, the results are not rebuilt instantly. First, an intermediate result state arrives where the previously selected
+   * item is not present yet. At that moment, the UI may temporarily keep the selection on the
+   * first item. But the system must not forget which item the user had selected before.
+   */
+  @Test
+  fun returnsMatchingIndex_afterPatternChanged_whenStateWasKeptForNonInitialPattern() {
+    val model = newModel()
+    val saved = item()
+    // Initial results for pattern "a": the previously selected item is not present yet.
+    model.addItems(item())
+    val listener = SeSelectionListener(SeSelectionState("a", saved), newList(model), model)
+
+    // Switching to pattern "ab" in a non-initial search update must keep the saved selection state.
+    assertEquals(0, listener.getIndexToSelect(maxVisibleRowCountLarge, "ab", isInitialSearchPattern = false, isEndEvent = false))
+    assertNotNull(listener.getSelectionState())
+
+    // More results for the same updated pattern arrive later, including the saved item reappearing.
+    val reappearedMatch = item().also { markEqual(it, saved) }
+    model.addItems(item(), reappearedMatch, item())
+
+    // The listener must still use the preserved state and return the reappeared item's index.
+    assertEquals(2, listener.getIndexToSelect(maxVisibleRowCountLarge, "ab", isInitialSearchPattern = false, isEndEvent = false))
+  }
+
   @Test
   fun returnsMatchingIndex_whenSavedItemFoundWithinVisibleRange() {
     val model = newModel()
