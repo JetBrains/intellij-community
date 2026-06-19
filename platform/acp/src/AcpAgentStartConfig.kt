@@ -3,6 +3,7 @@ package com.intellij.platform.acp
 
 import com.intellij.platform.acp.impl.AcpAgentStartConfigImpl
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 /**
  * Configuration for starting an ACP agent process.
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus
  * @property acpArgs The agent's own args that start it as an ACP server (e.g. `--acp`), taken from the registry distribution or an `acp.json` entry.
  * @property env Environment variables to set for the process
  * @property args [baseArgs] concatenated with the internal acp-mode arguments. This is what the launcher actually passes to the process.
+ * @property workingDir Optional working directory to launch the process in. When null, the launcher uses the project directory.
  */
 interface AcpAgentStartConfig {
   val command: String
@@ -23,6 +25,7 @@ interface AcpAgentStartConfig {
   val acpArgs: List<String>
   val env: Map<String, String>
   val args: List<String>
+  val workingDir: Path?
 
   companion object {
     /**
@@ -35,6 +38,7 @@ interface AcpAgentStartConfig {
       baseArgs: List<String>,
       acpArgs: List<String>,
       env: Map<String, String>,
-    ): AcpAgentStartConfig = AcpAgentStartConfigImpl(command, baseArgs, acpArgs, env)
+      workingDir: Path? = null,
+    ): AcpAgentStartConfig = AcpAgentStartConfigImpl(command, baseArgs, acpArgs, env, workingDir)
   }
 }

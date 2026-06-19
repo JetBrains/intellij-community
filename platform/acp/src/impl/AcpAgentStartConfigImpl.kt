@@ -2,12 +2,14 @@
 package com.intellij.platform.acp.impl
 
 import com.intellij.platform.acp.AcpAgentStartConfig
+import java.nio.file.Path
 
 internal class AcpAgentStartConfigImpl(
   override val command: String,
   override val baseArgs: List<String>,
   override val acpArgs: List<String>,
   override val env: Map<String, String>,
+  override val workingDir: Path? = null,
 ) : AcpAgentStartConfig {
   override val args: List<String> get() = baseArgs + acpArgs
 }
