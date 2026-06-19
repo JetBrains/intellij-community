@@ -206,7 +206,7 @@ internal class McpSessionHandler(
    * Creates and configures a new session with the given transport.
    * Sets up onClose handler, onInitialized handler and launches the tool updates collector.
    */
-  suspend fun createAndInitializeSession(transport: Transport, scope: CoroutineScope): ServerSession {
+  suspend fun createAndInitializeSession(transport: Transport): ServerSession {
     val session = mcpServer.createSession(transport)
     sessionAwaiter.complete(session)
     val sessionId = session.sessionId

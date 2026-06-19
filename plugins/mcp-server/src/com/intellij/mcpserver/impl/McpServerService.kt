@@ -390,7 +390,7 @@ open class McpServerService(val cs: CoroutineScope) {
         sessionToolsManager.updateTools()
         FileDocumentManager.getInstance().overrideConflictsSolverEnabled(false, sessionToolsManager.sessionScope.asDisposable())
 
-        val session = sessionToolsManager.createAndInitializeSession(transport, applicationCall)
+        val session = sessionToolsManager.createAndInitializeSession(transport)
 
         return@mcpPatched session to sessionToolsManager.sessionScope
       }
