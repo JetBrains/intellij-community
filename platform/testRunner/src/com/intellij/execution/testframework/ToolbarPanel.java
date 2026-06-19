@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.runners.RunTab;
+import com.intellij.execution.testframework.actions.ScrollToRunningTestAction;
 import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
 import com.intellij.execution.testframework.actions.TestFrameworkActions;
 import com.intellij.execution.testframework.actions.TestTreeExpander;
@@ -44,6 +45,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   private final TestTreeExpander myTreeExpander = new TestTreeExpander();
   private final FailedTestsNavigator myOccurenceNavigator;
   private final ScrollToTestSourceAction myScrollToSource;
+  private final ScrollToRunningTestAction myScrollToRunningTest = new ScrollToRunningTestAction();
   private @Nullable ExportTestResultsAction myExportAction;
 
   private final ArrayList<ToggleModelAction> myActions = new ArrayList<>();
@@ -117,6 +119,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     } else {
       actionGroup.addSeparator();
     }
+
+    actionGroup.add(myScrollToRunningTest);
+    actionGroup.addSeparator();
 
     DefaultActionGroup moreGroup = isNewLayout ? new MoreActionGroup() : actionGroup;
     AnAction action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, parent);
@@ -217,6 +222,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   public void setModel(TestFrameworkRunningModel model) {
     TestFrameworkActions.installFilterAction(model);
     myScrollToSource.setModel(model);
+    myScrollToRunningTest.setModel(model);
     myTreeExpander.setModel(model);
     myOccurenceNavigator.setModel(model);
     if (myExportAction != null) {
@@ -291,6 +297,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
   @Override
   public void dispose() {
     myScrollToSource.setModel(null);
+    myScrollToRunningTest.setModel(null);
     if (myExportAction != null) {
       myExportAction.setModel(null);
     }
