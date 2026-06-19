@@ -11,6 +11,7 @@ import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.awaitExit
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -149,6 +150,7 @@ internal class OpenCodeServerClient(
       parseBody(response.body())
     }
     catch (t: Throwable) {
+      if (t is CancellationException) throw t
       throw OpenCodeServerException("Failed to parse OpenCode server response from $pathAndQuery", t)
     }
   }
@@ -173,6 +175,7 @@ internal class OpenCodeServerClient(
       }
     }
     catch (t: Throwable) {
+      if (t is CancellationException) throw t
       currentCoroutineContext().ensureActive()
       stopProcess()
       throw OpenCodeServerException("Failed to send request to OpenCode server: ${request.method()} ${request.uri()}", t)
@@ -227,6 +230,7 @@ internal class OpenCodeServerClient(
         .createProcess()
     }
     catch (t: Throwable) {
+      if (t is CancellationException) throw t
       if (configuredExecutable == null && isExecutableNotFound(t)) {
         throw OpenCodeServerCliNotFoundException()
       }
