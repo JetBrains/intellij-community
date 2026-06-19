@@ -126,7 +126,10 @@ interface DeclarativeInlayRenderer {
 }
 
 @Remote("com.intellij.ui.SimpleColoredText")
-interface SimpleColoredText
+interface SimpleColoredText {
+  fun getTexts(): List<String>
+  fun getAttributes(): List<SimpleTextAttributes>
+}
 
 @Remote("com.intellij.xdebugger.impl.inline.InlineDebugRenderer")
 interface InlineDebugRenderer {

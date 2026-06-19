@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components.elements
 import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.client.impl.RefWrapper
+import com.intellij.driver.sdk.SimpleTextAttributes
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
@@ -264,6 +265,8 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
   fun getRootNode(): String {
     return collectExpandedPaths()[0].path.joinToString()
   }
+
+  fun getTextAttributesAt(row: Int): List<Pair<String, SimpleTextAttributes>>? = fixture.getTextAttributes(row)
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JTreeTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)
@@ -292,6 +295,7 @@ interface JTreeFixtureRef : Component {
   fun scrollToRowAndGetVisibleCenter(row: Int): Point
   fun collectIconsAtRow(row: Int): List<Icon>
   fun areTreeNodesLoaded(): Boolean
+  fun getTextAttributes(row: Int): List<Pair<String, SimpleTextAttributes>>?
 }
 
 @Remote("javax.swing.JTree")
