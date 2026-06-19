@@ -3592,6 +3592,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/noSurrounding.kt");
             }
 
+            @TestMetadata("notEnabledLanguageFeature.kt")
+            public void testNotEnabledLanguageFeature() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/notEnabledLanguageFeature.kt");
+            }
+
             @TestMetadata("nullableContext.kt")
             public void testNullableContext() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/contextParameter/addExplicitContextArguments/nullableContext.kt");
