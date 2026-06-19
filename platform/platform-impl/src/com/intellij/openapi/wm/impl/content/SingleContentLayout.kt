@@ -329,10 +329,7 @@ internal class SingleContentLayout(
     else if (tabs.size == 1) {
       label.icon = tabs[0].content.icon
       val displayName = tabs[0].content.displayName
-      label.text = createProcessName(
-        prefix = ui.window.stripeTitle,
-        title = displayName
-      )
+      label.text = ui.window.stripeTitle
       label.toolTipText = displayName
     }
     val icon = ui.window.component.getClientProperty(ToolWindowContentUi.HEADER_ICON) as? Icon
@@ -341,11 +338,6 @@ internal class SingleContentLayout(
       label.horizontalTextPosition = SwingConstants.LEFT
     }
   }
-
-  @NlsSafe
-  private fun createProcessName(title: String, prefix: String? = null) = prefix?.let {
-    if (isNewUI()) it else "$it:"
-  } ?: title
 
   internal inner class TabAdapter(
     val content: Content,
