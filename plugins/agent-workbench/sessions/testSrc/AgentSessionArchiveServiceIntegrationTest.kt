@@ -184,7 +184,7 @@ class AgentSessionArchiveServiceIntegrationTest {
 
   @Test
   fun archiveThreadRemovesThreadAndRefreshesState() = runBlocking(Dispatchers.Default) {
-    val cleanupCalls = mutableListOf<Pair<String, String>>()
+    val cleanupCalls = CopyOnWriteArrayList<Pair<String, String>>()
     val sourceThreads = mutableListOf(
       thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
       thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
@@ -231,8 +231,10 @@ class AgentSessionArchiveServiceIntegrationTest {
               threads.none { it.id == "codex-1" } && threads.any { it.id == "codex-2" }
             }
 
-            assertThat(cleanupCalls)
-              .containsExactly(PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1"))
+            waitForCondition { cleanupCalls.size == 1 }
+            val cleanupCall = cleanupCalls.single()
+            assertThat(cleanupCall.first).isEqualTo(PROJECT_PATH)
+            assertThat(cleanupCall.second).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1"))
             assertThat(telemetryEvents).contains(
               AgentWorkbenchTelemetryEvent(
                 id = AgentWorkbenchTelemetry.THREAD_ARCHIVE_REQUESTED_EVENT_ID,
@@ -251,7 +253,7 @@ class AgentSessionArchiveServiceIntegrationTest {
 
   @Test
   fun archiveThreadKeepsThreadHiddenWhenRefreshReturnsStaleData() = runBlocking(Dispatchers.Default) {
-    val cleanupCalls = mutableListOf<Pair<String, String>>()
+    val cleanupCalls = CopyOnWriteArrayList<Pair<String, String>>()
     val listCalls = AtomicInteger(0)
     val staleSourceThreads = listOf(
       thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
@@ -305,8 +307,10 @@ class AgentSessionArchiveServiceIntegrationTest {
             listCalls.get() > callsBeforeArchive && threads.none { it.id == "codex-1" } && threads.any { it.id == "codex-2" }
           }
 
-          assertThat(cleanupCalls)
-            .containsExactly(PROJECT_PATH to buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1"))
+          waitForCondition { cleanupCalls.size == 1 }
+          val cleanupCall = cleanupCalls.single()
+          assertThat(cleanupCall.first).isEqualTo(PROJECT_PATH)
+          assertThat(cleanupCall.second).isEqualTo(buildAgentSessionIdentity(AgentSessionProvider.CODEX, "codex-1"))
         }
       }
     }
@@ -452,7 +456,7 @@ class AgentSessionArchiveServiceIntegrationTest {
   @Test
   fun archiveThreadRestoresThreadWhenBackgroundArchiveFails() = runBlocking(Dispatchers.Default) {
     val backgroundRunner = PausedArchiveBackgroundTaskRunner()
-    val cleanupCalls = mutableListOf<Pair<String, String>>()
+    val cleanupCalls = CopyOnWriteArrayList<Pair<String, String>>()
     val normalizedProjectPath = normalizeAgentWorkbenchPath(PROJECT_PATH)
     val sourceThreads = mutableListOf(
       thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
@@ -576,7 +580,7 @@ class AgentSessionArchiveServiceIntegrationTest {
   @Test
   fun archiveThreadDoesNotCleanupChatMetadataWhenArchiveFails() = runBlocking(Dispatchers.Default) {
     val archiveCalls = AtomicInteger(0)
-    val cleanupCalls = mutableListOf<Pair<String, String>>()
+    val cleanupCalls = CopyOnWriteArrayList<Pair<String, String>>()
     val backgroundRunner = PausedArchiveBackgroundTaskRunner()
     val sourceThreads = mutableListOf(
       thread(id = "codex-1", updatedAt = 200, provider = AgentSessionProvider.CODEX),
@@ -633,7 +637,7 @@ class AgentSessionArchiveServiceIntegrationTest {
 
   @Test
   fun archivePendingCodexThreadPerformsLocalCleanupWithoutBackendArchiveCall() = runBlocking(Dispatchers.Default) {
-    val cleanupCalls = mutableListOf<Pair<String, String>>()
+    val cleanupCalls = CopyOnWriteArrayList<Pair<String, String>>()
     val archiveCalls = AtomicInteger(0)
     val sourceThreads = mutableListOf(
       thread(id = "codex-2", updatedAt = 100, provider = AgentSessionProvider.CODEX),
@@ -684,7 +688,7 @@ class AgentSessionArchiveServiceIntegrationTest {
 
   @Test
   fun archiveSubAgentKeepsSubAgentHiddenWhenRefreshReturnsStaleData() = runBlocking(Dispatchers.Default) {
-    val cleanupCalls = mutableListOf<Triple<String, String, String?>>()
+    val cleanupCalls = CopyOnWriteArrayList<Triple<String, String, String?>>()
     val archiveCalls = mutableListOf<String>()
     val listCalls = AtomicInteger(0)
     val warmState = InMemorySessionWarmState()

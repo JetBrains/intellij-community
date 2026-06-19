@@ -24,6 +24,7 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/util",
+        "//platform/execution-impl",
         "//platform/platform-api:ide",
         "//platform/editor-ui-api:editor-ui",
         "//plugins/agent-workbench/codex/common",
@@ -31,6 +32,7 @@ jvm_library(
         "//plugins/agent-workbench/json",
         "//plugins/agent-workbench/prompt/core",
         "//libraries/jackson3/jackson:libraries-jackson3",
+        "//platform/platform-util-io:ide-util-io",
     ],
 )
 
@@ -48,6 +50,7 @@ jvm_library(
         ":agent-workbench-codex-prompt-suggestions",
         "//platform/core-api:core_test_lib",
         "//platform/util:util_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//plugins/agent-workbench/codex/common:common_test_lib",
@@ -55,6 +58,7 @@ jvm_library(
         "//plugins/agent-workbench/json:json_test_lib",
         "//plugins/agent-workbench/prompt/core:core_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.codex.prompt.suggestions` end
@@ -96,7 +100,11 @@ jvm_library(
         "//plugins/agent-workbench/codex/prompt-suggestions:agent-workbench-codex-prompt-suggestions_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [":agent-workbench-codex-prompt-suggestions-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":agent-workbench-codex-prompt-suggestions-tests",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -106,6 +114,8 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
+        "//platform/execution-impl",
+        "//platform/execution-impl:execution-impl_test_lib",
         "//platform/platform-api:ide",
         "//platform/platform-api:ide_test_lib",
         "//platform/editor-ui-api:editor-ui",
@@ -128,6 +138,7 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
+        "//platform/platform-util-io:ide-util-io",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.codex.prompt.suggestions.tests` end
