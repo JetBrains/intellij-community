@@ -1336,8 +1336,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     val environment: MutableMap<String, String> = HashMap(envVariables)
 
-    val entryPointClass = System.getProperty("idea.test.entry.point.class").nullize(nullizeSpaces = true)
-                          ?: "com.intellij.tests.JUnit5TeamCityRunner"
+    val entryPointClass = "com.intellij.tests.JUnit5TeamCityRunner"
     if (devBuildModeSettings == null) {
       args.add(entryPointClass)
     }
