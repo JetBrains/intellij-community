@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.components.isVisibleInClass
 import org.jetbrains.kotlin.analysis.api.components.memberScope
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
-import org.jetbrains.kotlin.analysis.api.lifetime.validityAsserted
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -152,14 +151,14 @@ private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> 
 
     private class OverrideMember(
         private val backingSymbol: KaCallableSymbol,
-        bodyType: BodyType,
-        containingSymbol: KaClassSymbol?,
+        private val backingBodyType: BodyType,
+        private val backingContainingSymbol: KaClassSymbol?,
     ) : KaLifetimeOwner {
         override val token: KaLifetimeToken get() = backingSymbol.token
 
         val symbol: KaCallableSymbol get() = withValidityAssertion { backingSymbol }
-        val bodyType: BodyType by validityAsserted(bodyType)
-        val containingSymbol: KaClassSymbol? by validityAsserted(containingSymbol)
+        val bodyType: BodyType get() = withValidityAssertion { backingBodyType }
+        val containingSymbol: KaClassSymbol? get() = withValidityAssertion { backingContainingSymbol }
     }
 
     override fun getChooserTitle() = KotlinIdeaCoreBundle.message("override.members.handler.title")
