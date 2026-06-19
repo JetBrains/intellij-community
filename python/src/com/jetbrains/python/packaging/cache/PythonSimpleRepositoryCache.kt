@@ -46,7 +46,7 @@ internal class PythonSimpleRepositoryCacheService {
       val newCache = mutableMapOf<PyPackageRepository, PythonSimpleRepositoryCache>()
 
       withContext(Dispatchers.IO) {
-        for (repository in service.repositories) {
+        for (repository in service.repositories.toList()) {
           val cache = PythonSimpleRepositoryCache(repository)
 
           cache.reloadCache().getOr { error ->
@@ -119,6 +119,7 @@ internal class PythonSimpleRepositoryCache(private val repository: PyPackageRepo
         return@withContext Result.Failure(e)
       }
 
+      cache = packages
       Result.Success(Unit)
     }
   }
