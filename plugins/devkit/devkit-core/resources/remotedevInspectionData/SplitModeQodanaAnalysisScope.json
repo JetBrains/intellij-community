@@ -29,8 +29,6 @@
     "intellij.ml.llm.agents.acp.json",
     "intellij.ml.llm.agents.acp.tests",
     "intellij.ml.llm.agents.acp.view.tests",
-    "intellij.ml.llm.agents.claude.code",
-    "intellij.ml.llm.agents.claude.code.tests",
     "intellij.ml.llm.agents.codex",
     "intellij.ml.llm.agents.codex.tests",
     "intellij.ml.llm.agents.contrib",
