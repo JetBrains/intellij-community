@@ -172,6 +172,17 @@ class SeSelectionListenerTest {
   }
 
   @Test
+  fun returnsMatchingIndex_whenSavedItemFoundAtLastVisibleIndex() {
+    val model = newModel()
+    val saved = item()
+    val match = item().also { markEqual(it, saved) }
+    model.addItems(item(), item(), item(), item(), item(), item(), item(), item(), item(), match) // match at index 9
+    val listener = SeSelectionListener(SeSelectionState("p", saved), newList(model), model)
+
+    assertEquals(9, listener.getIndexToSelect(maxVisibleRowCountLarge, "p", isInitialSearchPattern = false, isEndEvent = false))
+  }
+
+  @Test
   fun returnsZero_andClearsState_whenNoMatch_andRangeExhausted() {
     val model = newModel()
     model.addItems(item(), item(), item()) // none equal to saved
