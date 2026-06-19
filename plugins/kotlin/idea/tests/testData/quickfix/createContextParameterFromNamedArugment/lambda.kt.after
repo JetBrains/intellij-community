@@ -3,8 +3,7 @@
 // K2_ERROR: No parameter with name 'callback' found.
 
 context(callback: (Int) -> String)
-fun f1() {
-}
+fun f1() {}
 
 fun fdemo() {
     f1(callback = { x: Int -> x.toString() })

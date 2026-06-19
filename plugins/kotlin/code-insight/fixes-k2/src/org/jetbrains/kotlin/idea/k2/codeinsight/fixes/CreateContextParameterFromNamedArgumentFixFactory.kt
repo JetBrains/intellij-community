@@ -34,7 +34,7 @@ internal object CreateContextParameterFromNamedArgumentFixFactory {
         val argumentType = argumentExpression.expressionType?.takeIf { it !is KaErrorType }
             ?: builtinTypes.any
         val renderedType = argumentType.render(
-            renderer = KaTypeRendererForSource.WITH_QUALIFIED_NAMES,
+            renderer = KaTypeRendererForSource.WITH_SHORT_NAMES,
             position = Variance.INVARIANT,
         )
 
