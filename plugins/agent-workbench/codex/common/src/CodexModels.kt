@@ -1,9 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.codex.common
 
-import androidx.compose.runtime.Immutable
-
-@Immutable
 data class CodexSubAgent(
   @JvmField val id: String,
   @JvmField val name: String,
@@ -35,7 +32,6 @@ enum class CodexThreadActiveFlag {
   WAITING_ON_USER_INPUT,
 }
 
-@Immutable
 data class CodexThread(
   @JvmField val id: String,
   @JvmField val title: String,
@@ -54,7 +50,6 @@ data class CodexThread(
   @JvmField val activeFlags: List<CodexThreadActiveFlag> = emptyList(),
 )
 
-@Immutable
 data class CodexStartedThreadSession(
   @JvmField val thread: CodexThread,
   @JvmField val model: String,
@@ -62,14 +57,12 @@ data class CodexStartedThreadSession(
   @JvmField val rolloutPath: String? = null,
 )
 
-@Immutable
 data class CodexTurnCollaborationMode(
   @JvmField val mode: String,
   @JvmField val model: String,
   @JvmField val reasoningEffort: String? = null,
 )
 
-@Immutable
 data class CodexGenerationModel(
   @JvmField val id: String,
   @JvmField val displayName: String? = null,
@@ -79,7 +72,6 @@ data class CodexGenerationModel(
   @JvmField val isDefault: Boolean = false,
 )
 
-@Immutable
 data class CodexThreadActivitySnapshot(
   @JvmField val threadId: String,
   @JvmField val updatedAt: Long,
@@ -92,7 +84,6 @@ data class CodexThreadActivitySnapshot(
   @JvmField val hasTurnActivity: Boolean = false,
 )
 
-@Immutable
 data class CodexThreadPage(
   @JvmField val threads: List<CodexThread>,
   @JvmField val nextCursor: String?,
@@ -109,7 +100,6 @@ enum class CodexAppServerNotificationKind {
   OTHER,
 }
 
-@Immutable
 data class CodexAppServerStartedThread(
   @JvmField val id: String,
   @JvmField val title: String,
@@ -119,7 +109,6 @@ data class CodexAppServerStartedThread(
   @JvmField val activeFlags: List<CodexThreadActiveFlag> = emptyList(),
 )
 
-@Immutable
 data class CodexAppServerNotification(
   @JvmField val method: String,
   @JvmField val kind: CodexAppServerNotificationKind,
