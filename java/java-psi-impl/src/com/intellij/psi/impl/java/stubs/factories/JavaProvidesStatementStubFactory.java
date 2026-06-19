@@ -5,6 +5,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiProvidesStatement;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.PsiProvidesStatementStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiProvidesStatementStubImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSourceUtil;
@@ -14,7 +15,7 @@ import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaProvidesStatementStubFactory implements LightStubElementFactory<PsiProvidesStatementStubImpl, PsiProvidesStatement> {
+public class JavaProvidesStatementStubFactory implements LightStubElementFactory<PsiProvidesStatementStub, PsiProvidesStatement> {
   @Override
   public @NotNull PsiProvidesStatementStubImpl createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     LighterASTNode ref = LightTreeUtil.firstChildOfType(tree, node, JavaElementType.JAVA_CODE_REFERENCE);
@@ -23,7 +24,7 @@ public class JavaProvidesStatementStubFactory implements LightStubElementFactory
   }
 
   @Override
-  public PsiProvidesStatement createPsi(@NotNull PsiProvidesStatementStubImpl stub) {
+  public PsiProvidesStatement createPsi(@NotNull PsiProvidesStatementStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createProvidesStatement(stub);
   }
   

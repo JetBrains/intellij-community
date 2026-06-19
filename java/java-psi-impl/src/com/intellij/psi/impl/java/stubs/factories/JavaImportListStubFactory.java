@@ -5,20 +5,21 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiImportList;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.PsiImportListStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiImportListStubImpl;
 import com.intellij.psi.stubs.LightStubElementFactory;
 import com.intellij.psi.stubs.StubElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaImportListStubFactory implements LightStubElementFactory<PsiImportListStubImpl, PsiImportList> {
+public class JavaImportListStubFactory implements LightStubElementFactory<PsiImportListStub, PsiImportList> {
   @Override
   public @NotNull PsiImportListStubImpl createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     return new PsiImportListStubImpl(parentStub);
   }
 
   @Override
-  public PsiImportList createPsi(@NotNull PsiImportListStubImpl stub) {
+  public PsiImportList createPsi(@NotNull PsiImportListStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createImportList(stub);
   }
   

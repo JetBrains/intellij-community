@@ -5,6 +5,7 @@ import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
 import com.intellij.psi.PsiPackageAccessibilityStatement;
 import com.intellij.psi.impl.java.stubs.JavaStubElementType;
+import com.intellij.psi.impl.java.stubs.PsiPackageAccessibilityStatementStub;
 import com.intellij.psi.impl.java.stubs.impl.PsiPackageAccessibilityStatementStubImpl;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.JavaSourceUtil;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JavaPackageAccessibilityStatementStubFactory implements LightStubElementFactory<PsiPackageAccessibilityStatementStubImpl, PsiPackageAccessibilityStatement> {
+public class JavaPackageAccessibilityStatementStubFactory implements LightStubElementFactory<PsiPackageAccessibilityStatementStub, PsiPackageAccessibilityStatement> {
   @Override
   public @NotNull PsiPackageAccessibilityStatementStubImpl createStub(@NotNull LighterAST tree, @NotNull LighterASTNode node, @NotNull StubElement<?> parentStub) {
     String refText = null;
@@ -34,7 +35,7 @@ public class JavaPackageAccessibilityStatementStubFactory implements LightStubEl
   }
 
   @Override
-  public PsiPackageAccessibilityStatement createPsi(@NotNull PsiPackageAccessibilityStatementStubImpl stub) {
+  public PsiPackageAccessibilityStatement createPsi(@NotNull PsiPackageAccessibilityStatementStub stub) {
     return JavaStubElementType.getFileStub(stub).getPsiFactory().createPackageAccessibilityStatement(stub);
   }
   
