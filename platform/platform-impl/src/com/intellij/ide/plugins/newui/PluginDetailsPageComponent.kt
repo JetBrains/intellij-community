@@ -161,6 +161,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
   private var myVersion1: JBLabel? = null
   private var myVersion2: JLabel? = null
   private var mySize: JLabel? = null
+  private var myPluginId: JLabel? = null
   private var requiredPlugins: JEditorPane? = null
   private var customRepoForDebug: JLabel? = null
 
@@ -795,6 +796,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     infoPanel.add(JLabel().also { myVersion2 = it })
     infoPanel.add(JLabel().also { date = it })
     infoPanel.add(JLabel().also { mySize = it })
+    infoPanel.add(JLabel().also { myPluginId = it })
     infoPanel.add(createRequiredPluginsComponent().also { requiredPlugins = it }, VerticalLayout.FILL_HORIZONTAL)
 
     rating!!.foreground = ListPluginComponent.GRAY_COLOR
@@ -802,6 +804,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     myVersion2!!.foreground = ListPluginComponent.GRAY_COLOR
     date!!.foreground = ListPluginComponent.GRAY_COLOR
     mySize!!.foreground = ListPluginComponent.GRAY_COLOR
+    myPluginId!!.foreground = ListPluginComponent.GRAY_COLOR
 
     if (isMarketplace && ApplicationManager.getApplication().isInternal) {
       infoPanel.add(JLabel().also { customRepoForDebug = it })
@@ -1038,6 +1041,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
       myVersion2!!.isVisible = isVersion
     }
 
+    if (myPluginId != null) {
+      myPluginId!!.text = IdeBundle.message("plugins.configurable.additional.info.plugin.id.label", pluginModel.pluginId)
+    }
+
     val tags = pluginModel.calculateTags(this@PluginDetailsPageComponent.pluginModel.getModel().sessionId)
 
     tagPanel!!.setTags(tags)
@@ -1049,9 +1056,7 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     else {
       val node = installedPluginMarketplaceNode
       updateMarketplaceTabsVisible(node != null)
-      if (node != null) {
-        showMarketplaceData(node)
-      }
+      showMarketplaceData(node)
       updateEnabledForProject()
     }
 
@@ -1163,13 +1168,6 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         updateReviews(model)
       }
 
-      updateUrlComponent(forumUrl, "plugins.configurable.forum.url", model.forumUrl)
-      updateUrlComponent(licenseUrl, "plugins.configurable.license.url", model.licenseUrl)
-      updateUrlComponent(bugtrackerUrl, "plugins.configurable.bugtracker.url", model.bugtrackerUrl)
-      updateUrlComponent(documentationUrl, "plugins.configurable.documentation.url", model.documentationUrl)
-      updateUrlComponent(sourceCodeUrl, "plugins.configurable.source.code", model.sourceCodeUrl)
-      updateUrlComponent(pluginReportUrl, "plugins.configurable.report.marketplace.plugin", model.reportPluginUrl)
-
       vendorInfoPanel!!.show(model)
 
       requiredPluginNames = model.dependencyNames ?: emptyList()
@@ -1180,6 +1178,16 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
         customRepoForDebug!!.isVisible = customRepo != null
       }
     }
+    else {
+      vendorInfoPanel!!.show(null)
+    }
+
+    updateUrlComponent(forumUrl, "plugins.configurable.forum.url", model?.forumUrl)
+    updateUrlComponent(licenseUrl, "plugins.configurable.license.url", model?.licenseUrl)
+    updateUrlComponent(bugtrackerUrl, "plugins.configurable.bugtracker.url", model?.bugtrackerUrl)
+    updateUrlComponent(documentationUrl, "plugins.configurable.documentation.url", model?.documentationUrl)
+    updateUrlComponent(sourceCodeUrl, "plugins.configurable.source.code", model?.sourceCodeUrl)
+    updateUrlComponent(pluginReportUrl, "plugins.configurable.report.marketplace.plugin", model?.reportPluginUrl)
 
     this.rating!!.text = IdeBundle.message("plugins.configurable.rate.0", rating)
     this.rating!!.isVisible = rating != null
@@ -1199,11 +1207,10 @@ class PluginDetailsPageComponent @JvmOverloads constructor(
     if (!show && reviewPanel != null) {
       reviewPanel!!.clear()
     }
-    if (!show && tabbedPane!!.selectedIndex > 1) {
+    if (!show && tabbedPane!!.selectedIndex == 2) {
       tabbedPane!!.selectedIndex = 0
     }
     tabbedPane!!.setEnabledAt(2, show) // review
-    tabbedPane!!.setEnabledAt(3, show) // additional info
   }
 
   private val installedPluginMarketplaceNode: PluginUiModel?
