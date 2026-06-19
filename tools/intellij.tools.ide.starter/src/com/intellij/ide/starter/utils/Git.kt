@@ -474,6 +474,21 @@ object Git {
     return getLocalCurrentCommitHash(workDir)
   }
 
+  fun move(workDir: Path, source: String, destination: String) {
+    require(source.isNotEmpty() && destination.isNotEmpty()) { "Source and destination must not be empty" }
+
+    val stdout = ExecOutputRedirect.ToString()
+    ProcessExecutor(
+      presentableName = "git-mv",
+      workDir = workDir.toAbsolutePath(),
+      timeout = 1.minutes,
+      args = listOf("git", "mv", source, destination),
+      stdoutRedirect = stdout,
+      stderrRedirect = stdout,
+      onlyEnrichExistedEnvVariables = true
+    ).start()
+  }
+
   fun pruneWorktree(pathToDir: Path) {
     val stdout = ExecOutputRedirect.ToString()
     ProcessExecutor(
