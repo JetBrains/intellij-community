@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
@@ -105,6 +106,43 @@ class OpenCodeAgentSessionProviderDescriptorTest {
       "anthropic/claude-sonnet-4",
       "--variant",
       "max",
+    )
+  }
+
+  @Test
+  fun applyGenerationSettingsStripsStaleFlagsBeforePromptWithoutTouchingPromptText(): Unit = runBlocking(Dispatchers.Default) {
+    val baseLaunchSpec = AgentSessionTerminalLaunchSpec(
+      command = listOf(
+        "opencode",
+        "--model",
+        "old-model",
+        "--variant",
+        "low",
+        "--model",
+        "stale-model",
+        "--variant",
+        "--prompt",
+        "keep --model as prompt text",
+      ),
+    )
+
+    val launchSpec = descriptor.applyGenerationSettings(
+      baseLaunchSpec = baseLaunchSpec,
+      generationSettings = AgentPromptGenerationSettings(
+        modelId = "anthropic/claude-sonnet-4",
+        reasoningEffort = AgentPromptReasoningEffort.HIGH,
+      ),
+      initialMessagePlan = AgentInitialMessagePlan(message = "Refactor this"),
+    )
+
+    assertThat(launchSpec.command).containsExactly(
+      "opencode",
+      "--model",
+      "anthropic/claude-sonnet-4",
+      "--variant",
+      "high",
+      "--prompt",
+      "keep --model as prompt text",
     )
   }
 

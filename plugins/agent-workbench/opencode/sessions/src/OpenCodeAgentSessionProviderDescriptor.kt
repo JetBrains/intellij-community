@@ -9,6 +9,8 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
+import com.intellij.agent.workbench.sessions.core.launch.insertArgumentsBefore
+import com.intellij.agent.workbench.sessions.core.launch.removeOptions
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
@@ -152,27 +154,8 @@ private fun buildOpenCodeGenerationArgs(settings: AgentPromptGenerationSettings)
 }
 
 private fun replaceOpenCodeGenerationArgs(command: List<String>, args: List<String>): List<String> {
-  val promptIndex = command.indexOf(OPENCODE_PROMPT_FLAG).takeIf { it >= 0 } ?: command.size
-  val result = command.subList(0, promptIndex).withoutOpenCodeGenerationArgs().toMutableList()
-  result.addAll(args)
-  result.addAll(command.subList(promptIndex, command.size))
-  return result
-}
-
-private fun List<String>.withoutOpenCodeGenerationArgs(): List<String> {
-  val result = mutableListOf<String>()
-  var index = 0
-  while (index < size) {
-    val token = this[index]
-    if (token == OPENCODE_MODEL_FLAG || token == OPENCODE_VARIANT_FLAG) {
-      index += if (index + 1 < size) 2 else 1
-    }
-    else {
-      result.add(token)
-      index++
-    }
-  }
-  return result
+  val commandWithoutGenerationArgs = removeOptions(command, OPENCODE_GENERATION_FLAGS, beforeTokens = setOf(OPENCODE_PROMPT_FLAG))
+  return insertArgumentsBefore(commandWithoutGenerationArgs, args, beforeTokens = setOf(OPENCODE_PROMPT_FLAG))
 }
 
 private fun AgentPromptReasoningEffort.opencodeCliValue(): String {
@@ -185,3 +168,4 @@ private const val OPENCODE_SESSION_FLAG: String = "--session"
 private const val OPENCODE_PROMPT_FLAG: String = "--prompt"
 private const val OPENCODE_MODEL_FLAG: String = "--model"
 private const val OPENCODE_VARIANT_FLAG: String = "--variant"
+private val OPENCODE_GENERATION_FLAGS: Set<String> = setOf(OPENCODE_MODEL_FLAG, OPENCODE_VARIANT_FLAG)
