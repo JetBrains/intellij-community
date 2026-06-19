@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexSto
  * KCRI provider that reads artifacts produced by Kotlin BTA directly from Gradle and Maven build dirs.
  *
  * For Gradle, the files are located under each module's build directory, in `build/kotlin/<compile task>/cacheable/cri/`.
- * For Maven, the files are located under each module's target directory, in `target/kotlin-ic/compile/cri/`.
+ * For Maven, the files are located under each module's target directory, in `target/kotlin-ic/<goal>/cri/`.
  * Specific filenames and paths are provided by the [org.jetbrains.kotlin.buildtools.api.cri.CriToolchain].
  */
 internal class BtaKotlinCompilerReferenceIndexStorageProvider : KotlinCompilerReferenceIndexStorageProvider {

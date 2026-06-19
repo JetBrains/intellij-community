@@ -33,7 +33,7 @@ import kotlin.time.Duration.Companion.seconds
  * and detects which modules were recompiled by comparing file timestamps.
  *
  * For Gradle, KCRI artifacts are located at `build/kotlin/<compile task>/cacheable/cri/` under each module directory.
- * For Maven, KCRI artifacts are located at `target/kotlin-ic/compile/cri/` under each module directory.
+ * For Maven, KCRI artifacts are located at `target/kotlin-ic/<goal>/cri/` under each module directory.
  *
  * Uses periodic polling via a coroutine with [delay] to check KCRI artifact timestamps.
  */
