@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.classSymbol
+import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
+import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
@@ -35,6 +37,10 @@ fun KtClassOrObject.toLightClassWithBuiltinMapping(): PsiClass? {
     val javaClassFqName = JavaToKotlinClassMap.mapKotlinToJava(fqName.toUnsafe())?.asSingleFqName() ?: return null
     val searchScope = useScope as? GlobalSearchScope ?: return null
     return JavaPsiFacade.getInstance(project).findClass(javaClassFqName.asString(), searchScope)
+}
+
+fun KtClassOrObject.asFakePsiClass(): KtFakeLightClass {
+    return KotlinAsJavaSupport.getInstance(project).getFakeLightClass(this)
 }
 
 context(_: KaSession)

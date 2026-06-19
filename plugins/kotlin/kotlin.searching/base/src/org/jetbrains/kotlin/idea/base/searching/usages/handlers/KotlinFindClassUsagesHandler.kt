@@ -14,7 +14,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.FilteredQuery
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.asJava.toFakeLightClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.base.psi.classIdIfNonLocal
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinClassFindUsagesOptions
@@ -38,6 +37,7 @@ import org.jetbrains.kotlin.psi.allConstructors
 import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.psi.psiUtil.effectiveDeclarations
 import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
+import org.jetbrains.kotlin.util.asFakePsiClass
 
 class KotlinFindClassUsagesHandler(
     ktClass: KtClassOrObject,
@@ -129,7 +129,7 @@ class KotlinFindClassUsagesHandler(
                     false
                 } else {
                     val ktClass = element as? KtClass
-                    val psiClass = runReadAction { (ktClass?.toLightClass() ?: ktClass?.toFakeLightClass())?.takeIf { LambdaUtil.isFunctionalClass(it) } }
+                    val psiClass = runReadAction { (ktClass?.toLightClass() ?: ktClass?.asFakePsiClass())?.takeIf { LambdaUtil.isFunctionalClass(it) } }
                     if (psiClass != null) {
                         FunctionalExpressionSearch.search(psiClass, options.searchScope).asIterable().all(processor)
                     } else {
