@@ -149,12 +149,12 @@ object StubBuildCachedValuesManager {
       { CachedValuesManager.getCachedValue(psiElement, provider) }
     )
 
-  class StubBuildCachedValueProvider<ResultType, ParameterType>(
+  open class StubBuildCachedValueProvider<ResultType, ParameterType>(
     key: String,
     val parametrizedCachedValueProvider: ParameterizedCachedValueProvider<ResultType, ParameterType>,
   ) {
-    val stubCacheKey: Key<StubBuildCachedValue<ResultType>> = Key.create("$key.stub.building")
-    val parametrizedCacheKey: Key<ParameterizedCachedValue<ResultType, ParameterType>> = Key.create(key)
+    open val stubCacheKey: Key<StubBuildCachedValue<ResultType>> = Key.create("$key.stub.building")
+    open val parametrizedCacheKey: Key<ParameterizedCachedValue<ResultType, ParameterType>> = Key.create(key)
   }
 
   class StubBuildCachedValue<T> internal constructor(internal val buildId: Long, internal val value: T)
