@@ -32,10 +32,6 @@ final public class ExecutionState {
     myUseSuiteDuration = useSuiteDuration;
   }
 
-  public boolean isUseSuiteDuration() {
-    return myUseSuiteDuration;
-  }
-
   public void setPlan(TestPlan plan) {
     myPlan = plan;
   }
@@ -96,10 +92,6 @@ final public class ExecutionState {
 
   public void onLeafTestStarted() {
     myCurrentTestStartNanos = System.nanoTime();
-  }
-
-  void setCurrentTestStartNanos(long nanos) {
-    myCurrentTestStartNanos = nanos;
   }
 
   public void onSuiteStarted(String id) {
