@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2026 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiBinaryExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionList;
 import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiLambdaExpression;
@@ -52,12 +53,10 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.ConstantExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CodeBlockSurrounder;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
@@ -522,40 +521,22 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
   /**
    * Analyzes a {@link PsiMethodCallExpression} to determine if the following two conditions are met:
    * <ul>
-   *   <li>it is a call to {@link Object#equals} on a static field of {@code java.lang.Boolean} class
-   *   (specifically: {@link Boolean#TRUE} or {@link Boolean#FALSE}).</li>
-   *   <li>the expression passed as argument to {@link Object#equals} is definitely not null. </li>
+   *   <li>it is a call to {@link Object#equals} on {@link Boolean#TRUE} or {@link Boolean#FALSE}</li>
+   *   <li>the expression passed as argument to {@link Object#equals} is of type {@code boolean}. </li>
    * </ul>
    *
-   * @param methodCallExpr the expression to analyze.
-   * @return If the conditions above are met, it returns a {@link Boolean} value on which {@link Object#equals} was called,
-   * i.e., either {@link Boolean#TRUE} or {@link Boolean#FALSE}.
-   * Otherwise, it returns null.
+   * @param call the method call expression to analyze.
+   * @return When the conditions above are met, it returns {@link Boolean#TRUE} or {@link Boolean#FALSE} 
+   * depending on which {@link Object#equals} was called. Otherwise, it returns null.
    */
-  private static Boolean staticCallOnBoolean(PsiMethodCallExpression methodCallExpr) {
-    PsiReferenceExpression methodExpr = methodCallExpr.getMethodExpression();
-    if (MethodCallUtils.isEqualsCall(methodCallExpr)) {
-      PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpr.getQualifierExpression());
-      if (!(qualifier instanceof PsiReferenceExpression qualifierReferenceExpr)) return null;
-
-      if (methodCallExpr.getArgumentList().isEmpty()) return null;
-      PsiExpression theOnlyArgument = PsiUtil.skipParenthesizedExprDown(methodCallExpr.getArgumentList().getExpressions()[0]);
-      if (theOnlyArgument == null) return null;
-      PsiType exprType = theOnlyArgument.getType();
-      if (exprType == null) return null;
-
-      if (!ClassUtils.isPrimitive(exprType)) {
-        if (!exprType.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
-          return null;
-        }
-        Nullability nullability = NullabilityUtil.getExpressionNullability(theOnlyArgument, true);
-        if (nullability != Nullability.NOT_NULL) {
-          return null;
-        }
-      }
-      return BoolUtils.fromBoxedConstantReference(qualifierReferenceExpr);
-    }
-    return null;
+  private static Boolean staticCallOnBoolean(PsiMethodCallExpression call) {
+    PsiReferenceExpression expression = call.getMethodExpression();
+    if (!MethodCallUtils.isEqualsCall(call)) return null;
+    PsiExpressionList list = call.getArgumentList();
+    if (list.isEmpty()) return null;
+    PsiExpression argument = list.getExpressions()[0];
+    if (argument == null || !PsiTypes.booleanType().equals(argument.getType())) return null;
+    return BoolUtils.fromBoxedConstantReference(expression.getQualifierExpression());
   }
 
   private @NotNull BooleanExpressionKind getPolyadicKind(PsiPolyadicExpression expression) {

@@ -10,4 +10,12 @@ class Boxed {
   public Boolean returnsBool(boolean value) {
     return Math.random() > 0.5;
   }
+
+  // just don't warn about boxed booleans at all
+  private static void yes() {
+    Boolean b = Boolean.TRUE;
+    if (Boolean.TRUE.equals(b)) {
+      System.out.println("no");
+    }
+  }
 }
