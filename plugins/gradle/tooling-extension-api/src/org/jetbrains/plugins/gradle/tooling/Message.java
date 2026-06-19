@@ -5,13 +5,15 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+
 @ApiStatus.Experimental
 public final class Message {
   private final @NotNull String myTitle;
   private final @NotNull String myText;
   private final @Nullable String myGroup;
   private final @NotNull Kind myKind;
-  private final @Nullable FilePosition myFilePosition;
+  private final @Nullable String myTargetPath;
 
   private final boolean myInternal;
 
@@ -20,7 +22,7 @@ public final class Message {
     @NotNull String text,
     @Nullable String group,
     @NotNull Kind kind,
-    @Nullable FilePosition filePosition,
+    @Nullable String targetPath,
     boolean isInternal
   ) {
     myTitle = title;
@@ -28,7 +30,7 @@ public final class Message {
     myGroup = group;
     myInternal = isInternal;
     myKind = kind;
-    myFilePosition = filePosition;
+    myTargetPath = targetPath;
   }
 
   public @NotNull String getTitle() {
@@ -47,36 +49,12 @@ public final class Message {
     return myKind;
   }
 
-  public @Nullable FilePosition getFilePosition() {
-    return myFilePosition;
+  public @Nullable String getTargetPath() {
+    return myTargetPath;
   }
 
   public boolean isInternal() {
     return myInternal;
-  }
-
-  public static class FilePosition {
-    private final @NotNull String myFilePath;
-    private final int myLine;
-    private final int myColumn;
-
-    public FilePosition(@NotNull String filePath, int line, int column) {
-      myFilePath = filePath;
-      myLine = line;
-      myColumn = column;
-    }
-
-    public @NotNull String getFilePath() {
-      return myFilePath;
-    }
-
-    public int getLine() {
-      return myLine;
-    }
-
-    public int getColumn() {
-      return myColumn;
-    }
   }
 
   public enum Kind {

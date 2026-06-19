@@ -44,7 +44,9 @@ abstract class MessageBuilderTestCase {
       else -> "project '$projectPath'"
     }
 
-    override fun getBuildFile(): File = File("build.gradle")
+    override fun getProjectDir(): File = File("project")
+
+    override fun getBuildFile(): File = File(getProjectDir(), "build.gradle")
 
     override fun getParent(): Project? = parent
 
