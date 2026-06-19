@@ -2,6 +2,7 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.devkit.core"/>
+    <module name="intellij.devkit.gradle.tooling"/>
     <module name="intellij.gradle.java"/>
     <module name="intellij.java.psi"/>
     <module name="intellij.java.ui"/>
