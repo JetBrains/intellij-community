@@ -4,8 +4,7 @@
 class Ctx
 
 context(ctx: Ctx)
-fun <T> f1() {
-}
+fun <T> f1() {}
 
 fun fdemo() {
     f1<String>(ctx = Ctx())

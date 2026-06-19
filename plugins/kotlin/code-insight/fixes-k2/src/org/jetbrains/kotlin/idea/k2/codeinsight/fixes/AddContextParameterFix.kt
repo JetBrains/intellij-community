@@ -6,7 +6,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -50,15 +49,15 @@ sealed class AddContextParameterFix(
             }
             contextClause.addBefore(psiFactory.createParameter(contextParameter.render()), rParen) as KtParameter
         } else {
-            val newFunction = psiFactory.createFunction(
-                "context(${contextParameter.render()})\n${targetFunction.text}"
+            val template = psiFactory.createFunction(
+                "context(${contextParameter.render()})\nfun stub() {}"
             )
-            val replaced = targetFunction.replace(newFunction) as KtNamedFunction
-            replaced.contextParameters.first()
+            val newContextClause  = template.contextParameters.firstOrNull()?.parent ?: return
+            val anchor = targetFunction.modifierList ?: targetFunction.funKeyword ?: return
+            val inserted = targetFunction.addBefore(newContextClause, anchor)
+            targetFunction.addBefore(psiFactory.createNewLine(), anchor)
+            PsiTreeUtil.findChildOfType(inserted, KtParameter::class.java) ?: return
         }
-
-        shortenReferences(addedParameter.containingFile as KtElement)
-
         if (updatesCaret) {
             updater.select(addedParameter.nameIdentifier ?: return)
         }

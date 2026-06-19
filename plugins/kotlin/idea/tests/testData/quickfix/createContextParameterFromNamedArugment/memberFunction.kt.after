@@ -6,8 +6,7 @@ class Ctx
 
 class Holder {
     context(ctx: Ctx)
-    fun f1() {
-    }
+    fun f1() {}
 }
 
 fun fdemo(h: Holder) {
