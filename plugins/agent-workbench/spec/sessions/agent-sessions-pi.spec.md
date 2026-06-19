@@ -79,14 +79,14 @@ Agent Workbench treats Pi as a first-class terminal-backed provider. Pi sessions
   `NEEDS_INPUT` from session JSONL until an explicit persisted status signal exists.
   [@test] ../../pi/sessions/testSrc/PiSessionSourceTest.kt
 
-- The bundled Pi extension must also post fast activity hints on Pi lifecycle events to the IDE-local status endpoint. Requests must be `POST` calls from an accessible local origin, authenticated with `Authorization: Bearer <token>`, and accepted only when the token is bound to the posted Pi `sessionId`. Accepted requests emit scoped, thread-scoped `HINTS_CHANGED` activity updates; `done` updates use the shared Done/read semantics. Malformed, oversized, unauthorized, or cross-session requests must not emit updates. JSONL file watching is an opt-in durable fallback for persisted session and archive-state changes, isolated in a separate content module and disabled by default behind `agent.workbench.pi.file.watch.fallback`.
+- The bundled Pi extension must also post fast activity hints on Pi lifecycle events to the IDE-local status endpoint. Requests must be `POST` calls from an accessible local origin, authenticated with `Authorization: Bearer <token>`, and accepted only when the token is bound to the posted Pi `sessionId`. Accepted requests emit scoped, thread-scoped `HINTS_CHANGED` activity updates; `done` updates use the shared Done/read semantics. Malformed, oversized, unauthorized, or cross-session requests must not emit updates. JSONL file watching is an opt-in durable fallback for persisted session changes, isolated in a separate content module and disabled by default behind `agent.workbench.pi.file.watch.fallback`.
   [@test] ../../pi/sessions/testSrc/PiExtensionStatusHttpRequestHandlerTest.kt
   [@test] ../../pi/sessions-filewatch/testSrc/PiSessionFileWatchUpdateEventsContributorTest.kt
 
 - The bundled Pi extension must open one private IDE-local WebSocket control connection for live Structure View actions. The WebSocket handshake must be authenticated with `Authorization: Bearer <launchToken>`, the first `hello` frame must bind the connection to the same launch-scoped token/session id/cwd, and every command must target the currently bound session id. The IDE may send `navigateTree` and `forkFromEntry` commands only when the live connection advertises those capabilities. Fork commands must use Pi `fork(entryId, { position: "at", withSession })` and return the fresh replacement session state captured from `withSession`; there is no long-polling, polling, slash-command, or unauthenticated fallback.
   [@test] ../../pi/sessions/testSrc/PiExtensionControlWebSocketHandlerTest.kt
 
-- Rename must append a Pi-compatible `session_info` entry to the session JSONL file. Archive and unarchive must persist Agent Workbench sidecar state keyed by normalized project path and session id.
+- Rename must append a Pi-compatible `session_info` entry to the session JSONL file while preserving the thread's current archive state. Archive and unarchive must use the same mechanism by writing a title with or without the shared `[archived] ` prefix; loaded Pi titles must strip that prefix for display and use it only as Agent Workbench archive state.
   [@test] ../../pi/sessions/testSrc/PiSessionSourceTest.kt
 
 ## Theme Mapping Notes

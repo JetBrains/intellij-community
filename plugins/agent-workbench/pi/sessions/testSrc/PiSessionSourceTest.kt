@@ -286,7 +286,11 @@ class PiSessionSourceTest {
       )
       val source = sourceFor(sessionDir)
 
-      assertThat(source.canForkThreadFromOutlineItem(projectDir.toString(), "session-local-fork", "assistant-first", null, "tab-1")).isTrue()
+      assertThat(source.canForkThreadFromOutlineItem(projectDir.toString(),
+                                                     "session-local-fork",
+                                                     "assistant-first",
+                                                     null,
+                                                     "tab-1")).isTrue()
 
       val forkResult = source.forkThreadFromOutlineItem(
         project = ProjectManager.getInstance().defaultProject,
@@ -340,7 +344,7 @@ class PiSessionSourceTest {
   }
 
   @Test
-  fun `archive and unarchive use sidecar state`() {
+  fun `archive and unarchive use session info title prefix`() {
     runBlocking(Dispatchers.Default) {
       val projectDir = tempDir.resolve("project-archive")
       val sessionDir = tempDir.resolve("archive-sessions")
@@ -358,16 +362,48 @@ class PiSessionSourceTest {
       assertThat(source.listThreadsFromClosedProject(projectDir.toString())).isEmpty()
       val archivedThread = source.listArchivedThreadsFromClosedProject(projectDir.toString()).single()
       assertThat(archivedThread.id).isEqualTo("session-archive")
+      assertThat(archivedThread.title).isEqualTo("Archive me")
       assertThat(archivedThread.archived).isTrue()
-      assertThat(archivedThread.updatedAt).isEqualTo(4_000L)
+      assertThat(archivedThread.updatedAt).isEqualTo(3_000L)
+      val sessionFile = sessionDir.resolve("2026-01-01T00-00-00-000Z_session-archive.jsonl")
+      assertThat(Files.readString(sessionFile)).contains("\"name\":\"[archived] Archive me\"")
 
       now = 5_000L
       assertThat(store.unarchiveThread(projectDir.toString(), "session-archive")).isTrue()
       val activeThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      assertThat(activeThread.title).isEqualTo("Archive me")
       assertThat(activeThread.archived).isFalse()
-      assertThat(activeThread.updatedAt).isEqualTo(5_000L)
+      assertThat(activeThread.updatedAt).isEqualTo(3_000L)
       assertThat(source.listArchivedThreadsFromClosedProject(projectDir.toString())).isEmpty()
-      assertThat(lineCount(sessionDir.resolve("agent-workbench-archive-state.jsonl"))).isEqualTo(2)
+      assertThat(Files.readString(sessionFile)).contains("\"name\":\"Archive me\"")
+      assertThat(Files.exists(sessionDir.resolve("agent-workbench-archive-state.jsonl"))).isFalse()
+    }
+  }
+
+  @Test
+  fun `archive and unarchive preserve processing activity`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-archive-processing")
+      val sessionDir = tempDir.resolve("archive-processing-sessions")
+      writePiSession(
+        sessionDir = sessionDir,
+        sessionId = "session-archive-processing",
+        cwd = projectDir,
+        piUserMessageEntry(id = "user-archive-processing", content = "Still running", timestamp = 3_000L),
+      )
+      var now = 4_000L
+      val store = PiSessionStore(sessionDirResolver = { sessionDir }, timeProvider = { now })
+      val source = PiSessionSource(sessionStore = store)
+
+      assertThat(source.listThreadsFromClosedProject(projectDir.toString()).single().activity).isEqualTo(AgentThreadActivity.PROCESSING)
+      assertThat(store.archiveThread(projectDir.toString(), "session-archive-processing")).isTrue()
+      val archivedThread = source.listArchivedThreadsFromClosedProject(projectDir.toString()).single()
+      assertThat(archivedThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+
+      now = 5_000L
+      assertThat(store.unarchiveThread(projectDir.toString(), "session-archive-processing")).isTrue()
+      val activeThread = source.listThreadsFromClosedProject(projectDir.toString()).single()
+      assertThat(activeThread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
     }
   }
 
@@ -393,6 +429,30 @@ class PiSessionSourceTest {
       assertThat(lines.last()).contains("\"type\":\"session_info\"")
       assertThat(lines.last()).contains("\"parentId\":\"user-rename\"")
       assertThat(lines.last()).contains("\"name\":\"New title\"")
+    }
+  }
+
+  @Test
+  fun `rename preserves pi archive title prefix`() {
+    runBlocking(Dispatchers.Default) {
+      val projectDir = tempDir.resolve("project-rename-archived")
+      val sessionDir = tempDir.resolve("rename-archived-sessions")
+      val sessionFile = writePiSession(
+        sessionDir = sessionDir,
+        sessionId = "session-rename-archived",
+        cwd = projectDir,
+        piUserMessageEntry(id = "user-rename-archived", content = "Old title", timestamp = 3_000L),
+      )
+      val store = PiSessionStore(sessionDirResolver = { sessionDir }, timeProvider = { 4_000L })
+      val source = PiSessionSource(sessionStore = store)
+
+      assertThat(store.archiveThread(projectDir.toString(), "session-rename-archived")).isTrue()
+      assertThat(store.renameThread(projectDir.toString(), "session-rename-archived", "New title")).isTrue()
+
+      val archivedThread = source.listArchivedThreadsFromClosedProject(projectDir.toString()).single()
+      assertThat(archivedThread.title).isEqualTo("New title")
+      assertThat(archivedThread.archived).isTrue()
+      assertThat(Files.readAllLines(sessionFile).last()).contains("\"name\":\"[archived] New title\"")
     }
   }
 
@@ -633,9 +693,6 @@ class PiSessionSourceTest {
     Files.writeString(sessionFile, entry + "\n", StandardOpenOption.APPEND)
   }
 
-  private fun lineCount(path: Path): Int {
-    return Files.readString(path).lineSequence().count { it.isNotBlank() }
-  }
 }
 
 private fun piUserMessageEntry(id: String, content: String, timestamp: Long, parentId: String? = null): String {
