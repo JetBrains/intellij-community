@@ -268,7 +268,8 @@ object UniversalFileChooser {
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
         override fun update(e: AnActionEvent) {
-          e.presentation.isVisible = getActiveFileView()?.contributor?.getDesktopPath() != null
+          e.presentation.isVisible = fileViews.any { it.contributor.getDesktopPath() != null }
+          e.presentation.isEnabled = true
         }
 
         override fun actionPerformed(e: AnActionEvent) {
@@ -544,13 +545,15 @@ object UniversalFileChooser {
     }
 
     private fun navigateToDesktop() {
-      val activeView = getActiveFileView() ?: return
-      activeView.topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
+      val targetView = getActiveFileView()?.takeIf { it.contributor.getDesktopPath() != null }
+                       ?: fileViews.firstOrNull { it.contributor.getDesktopPath() != null }
+                       ?: return
+      targetView.topComponent.cursor = Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR)
       scope.launch {
         withContext(Dispatchers.IO) {
-          activeView.contributor.getDesktopPath()?.let { desktopPath ->
+          targetView.contributor.getDesktopPath()?.let { desktopPath ->
             runOnEdt {
-              activeView.topComponent.cursor = Cursor.getDefaultCursor()
+              targetView.topComponent.cursor = Cursor.getDefaultCursor()
               navigateToFile(desktopPath)
             }
           }
