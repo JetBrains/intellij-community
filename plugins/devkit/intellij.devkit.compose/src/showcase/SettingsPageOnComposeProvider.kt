@@ -8,9 +8,8 @@ import com.intellij.openapi.util.registry.Registry
 /**
  * Provides [SettingsPageOnCompose] only when the registry key is enabled.
  */
-class SettingsPageOnComposeProvider : ConfigurableProvider() {
-  override fun canCreateConfigurable(): Boolean = Registry.`is`("devkit.compose.example.settings.page")
+internal class SettingsPageOnComposeProvider : ConfigurableProvider() {
+  override fun canCreateConfigurable(): Boolean = Registry.`is`("devkit.compose.example.settings.page", false)
 
-  override fun createConfigurable(): Configurable? =
-    if (canCreateConfigurable()) SettingsPageOnCompose() else null
+  override fun createConfigurable(): Configurable? = if (canCreateConfigurable()) SettingsPageOnCompose() else null
 }
