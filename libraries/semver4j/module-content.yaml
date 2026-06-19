@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.semver4j.jar
+  modules:
+  - name: intellij.libraries.semver4j
+    libraries:
+      semver4j:
+      - name: $MAVEN_REPOSITORY$/com/vdurmont/semver4j/3/semver4j-3.jar

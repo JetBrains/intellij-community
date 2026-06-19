@@ -536,6 +536,7 @@ libraries/rd/swing
 libraries/rd/text
 libraries/rhino
 libraries/semver
+libraries/semver4j
 libraries/skiko
 libraries/snakeyaml
 libraries/snakeyaml-engine
