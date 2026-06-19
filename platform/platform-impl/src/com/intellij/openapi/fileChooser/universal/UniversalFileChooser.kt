@@ -29,12 +29,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.getUserData
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.putUserData
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -48,16 +45,12 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.UIBundle
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBTabbedPane
-import com.intellij.ui.components.breadcrumbs.Breadcrumbs
-import com.intellij.ui.components.breadcrumbs.Crumb
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.Consumer
 import com.intellij.util.SystemProperties
@@ -103,7 +96,6 @@ import javax.swing.tree.TreePath
 import javax.swing.tree.TreeSelectionModel
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
-import kotlin.io.path.pathString
 import kotlin.time.Duration.Companion.seconds
 
 private const val leftPanel: Boolean = false
@@ -584,10 +576,6 @@ object UniversalFileChooser {
       private val environmentRestricted: Boolean = descriptor.isEnvironmentRestricted
 
       var fileToSelect: Path? = null
-      private val breadcrumbs = Breadcrumbs()
-      private var currentCrumbs: List<FileCrumb> = emptyList()
-      private val barCardLayout = CardLayout()
-      private val barPanel = JPanel(barCardLayout)
       private val pathTextField: NioPathTextField = NioPathTextField(scope)
 
       @Volatile
@@ -596,8 +584,6 @@ object UniversalFileChooser {
       companion object {
         private const val LOADING_CARD = "loading"
         private const val TREE_CARD = "tree"
-        private const val BREADCRUMBS_CARD = "breadcrumbs"
-        private const val PATH_CARD = "path"
       }
 
       private val cardLayout = CardLayout()
@@ -643,30 +629,12 @@ object UniversalFileChooser {
         fileTree.addOkAction(okAction)
         fileTree.addListener(object : NioFileSystemTree.Listener {
           override fun selectionChanged(selection: List<Path?>) {
-            updateBreadcrumbs(selection)
+            updatePathField(selection)
             okEnabledUpdater()
           }
         }, disposable)
         val scrollPane = ScrollPaneFactory.createScrollPane(fileTree.getTree())
 
-        barPanel.add(breadcrumbs, BREADCRUMBS_CARD)
-        barPanel.add(pathTextField, PATH_CARD)
-        breadcrumbs.onSelect { crumb, event ->
-          val fileCrumb = crumb as? FileCrumb ?: return@onSelect
-          if (fileCrumb == currentCrumbs.lastOrNull() && Files.isDirectory(fileCrumb.file)) {
-            showDirectoryPopup(fileCrumb.file, event as? MouseEvent ?: return@onSelect)
-          }
-          else {
-            fileTree.select(fileCrumb.file, null)
-          }
-        }
-        breadcrumbs.addMouseListener(object : MouseAdapter() {
-          override fun mouseClicked(e: MouseEvent) {
-            if (breadcrumbs.getCrumbAt(e.x, e.y) == null) {
-              switchToEditMode()
-            }
-          }
-        })
         pathTextField.showHiddenSupplier = BooleanSupplier { fileTree.areHiddensShown() }
         ComponentValidator(disposable)
           .withValidator(Supplier<ValidationInfo?> {
@@ -688,7 +656,10 @@ object UniversalFileChooser {
                 navigateToTextFieldPath(); e.consume()
               }
               KeyEvent.VK_ESCAPE -> {
-                setPathTextFieldError(false); switchToBreadcrumbs(); e.consume()
+                setPathTextFieldError(false)
+                updatePathField(fileTree.getSelectedFile()?.let { listOf(it) } ?: emptyList())
+                focusTree()
+                e.consume()
               }
             }
           }
@@ -720,7 +691,7 @@ object UniversalFileChooser {
 
         val mainPanel = panel {
           row {
-            cell(barPanel)
+            cell(pathTextField)
               .align(AlignX.FILL)
               .resizableColumn()
           }
@@ -907,16 +878,7 @@ object UniversalFileChooser {
         }
       }
 
-      private fun switchToEditMode() {
-        val selectedFile = fileTree.getSelectedFile()
-        pathTextField.text = selectedFile?.toString() ?: ""
-        barCardLayout.show(barPanel, PATH_CARD)
-        pathTextField.requestFocusInWindow()
-        pathTextField.caretPosition = pathTextField.text.length
-      }
-
-      private fun switchToBreadcrumbs() {
-        barCardLayout.show(barPanel, BREADCRUMBS_CARD)
+      private fun focusTree() {
         fileTree.getTree().requestFocusInWindow()
       }
 
@@ -924,7 +886,8 @@ object UniversalFileChooser {
         val text = pathTextField.text.trim()
         if (text.isEmpty()) {
           setPathTextFieldError(false)
-          switchToBreadcrumbs()
+          updatePathField(fileTree.getSelectedFile()?.let { listOf(it) } ?: emptyList())
+          focusTree()
           return
         }
         scope.launch {
@@ -934,8 +897,7 @@ object UniversalFileChooser {
             if (path == null || !exists) {
               runOnEdt {
                 setPathTextFieldError(true)
-                if (barPanel.isShowing) {
-                  barCardLayout.show(barPanel, PATH_CARD)
+                if (pathTextField.isShowing) {
                   pathTextField.requestFocusInWindow()
                 }
               }
@@ -944,7 +906,7 @@ object UniversalFileChooser {
             val forceShowHidden = !fileTree.areHiddensShown() && hasHiddenSegment(path)
             runOnEdt {
               setPathTextFieldError(false)
-              switchToBreadcrumbs()
+              focusTree()
               if (forceShowHidden) {
                 fileTree.showHiddens(true)
                 PropertiesComponent.getInstance().setValue(SHOW_HIDDEN_FILES_KEY, true)
@@ -973,49 +935,10 @@ object UniversalFileChooser {
         return false
       }
 
-      private fun updateBreadcrumbs(selection: List<Path?>) {
-        switchToBreadcrumbs()
+      private fun updatePathField(selection: List<Path?>) {
         val file = selection.firstOrNull()
-        if (file == null) {
-          currentCrumbs = emptyList()
-          breadcrumbs.setCrumbs(emptyList())
-          return
-        }
-        val crumbs = mutableListOf<FileCrumb>()
-        var current: Path? = file
-        while (current != null) {
-          crumbs.add(0, FileCrumb(current))
-          current = current.parent
-        }
-        currentCrumbs = crumbs
-        breadcrumbs.setCrumbs(crumbs)
-      }
-
-      private var currentDirectoryPopup: JBPopup? = null
-
-      private fun showDirectoryPopup(directory: Path, event: MouseEvent) {
-        if (currentDirectoryPopup?.isVisible == true) return
-        val showHidden = fileTree.areHiddensShown()
-        scope.launch {
-          withContext(Dispatchers.IO) {
-            val children = NioFileChooserUtil.safeGetChildren(directory, showHidden, false)
-            if (!children.isEmpty()) {
-              runOnEdt {
-                if (currentDirectoryPopup?.isVisible == true) return@runOnEdt
-                val popup = JBPopupFactory.getInstance()
-                  .createPopupChooserBuilder(children)
-                  .setRenderer(listCellRenderer("") {
-                    icon(AllIcons.Nodes.Folder)
-                    text(value.name)
-                  })
-                  .setItemChosenCallback { chosen -> fileTree.select(chosen) { fileTree.expand(chosen, null) } }
-                  .createPopup()
-                currentDirectoryPopup = popup
-                popup.show(RelativePoint(event))
-              }
-            }
-          }
-        }
+        pathTextField.text = file?.toString() ?: ""
+        pathTextField.caretPosition = pathTextField.text.length
       }
 
       fun mountVirtualRootAndReload(virtualRoot: UniversalFileChooserContributor.Root) {
@@ -1071,16 +994,6 @@ object UniversalFileChooser {
         }
       }
 
-      private class FileCrumb(val file: Path) : Crumb {
-        @NlsSafe
-        override fun getText(): String {
-          val contributor = UniversalFileChooserContributor.findOwner(file)
-          return contributor?.getFileName(file) ?: file.name.ifEmpty { file.pathString }
-        }
-
-        @NlsSafe
-        override fun getTooltip(): String = file.pathString
-      }
     }
   }
 
