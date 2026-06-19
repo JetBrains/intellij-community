@@ -45,6 +45,7 @@ interface RangeHighlighter {
   fun getEndOffset(): Int
   fun getTextAttributes(): TextAttributes?
   fun getTextAttributesKey(): TextAttributesKey?
+  fun getLayer(): Int
 }
 
 @Remote("com.intellij.openapi.editor.VisualPosition")
