@@ -11,6 +11,7 @@ jvm_library(
     ),
     module_name = "intellij.gradle.completion.kotlin.performanceTests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//plugins/kotlin/plugin/k2"],
 )
 
 jvm_library(
@@ -26,7 +27,11 @@ jvm_library(
     ),
     module_name = "intellij.gradle.completion.kotlin.performanceTests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":performanceTests"],
+    runtime_deps = [
+        # do not sort,
+        ":performanceTests",
+        "//plugins/kotlin/plugin/k2:k2_test_lib",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -61,8 +66,8 @@ jvm_library(
         "//plugins/gradle/completion:completion_test_lib",
         "//plugins/gradle/completion/kotlin",
         "//plugins/gradle/completion/kotlin:kotlin_test_lib",
-        "//plugins/gradle/completion/kotlin/tests",
-        "//plugins/gradle/completion/kotlin/tests:tests_test_lib",
+        "//plugins/repository-search",
+        "//plugins/repository-search:repository-search_test_lib",
         "//plugins/kotlin/gradle/gradle-java/tests.shared",
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
         "//plugins/groovy:groovy-tests",

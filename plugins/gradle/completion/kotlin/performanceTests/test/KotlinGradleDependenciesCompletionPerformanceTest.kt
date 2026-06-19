@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.gradle.completion.GradleLocalDependencyCompletionContributor
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexer
 import com.intellij.gradle.completion.indexer.GradleLocalRepositoryIndexerTestImpl
-import com.intellij.gradle.completion.kotlin.integrationTests.AbstractKotlinGradleCompletionTest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.RangeMarker
@@ -21,6 +20,7 @@ import com.intellij.testFramework.replaceService
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.asSafely
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.AbstractGradleCodeInsightTest
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
@@ -32,11 +32,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertNotNull
 import org.junit.jupiter.params.ParameterizedTest
 
-// TODO avoid inheritance on AbstractKotlinGradleCompletionTest, or move this parent class to another module.
-//  Currently, it brings dependencies on intellij.gradle.completion.kotlin.tests, kotlin.gradle.gradle-java.tests.shared, intellij.groovy.tests
 @PerformanceUnitTest
 @GradleProjectTestApplication
-internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractKotlinGradleCompletionTest() {
+internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractGradleCodeInsightTest() {
 
   @BeforeEach
   fun `set up local completion`() {
