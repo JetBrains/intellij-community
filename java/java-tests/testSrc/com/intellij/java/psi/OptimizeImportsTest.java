@@ -908,4 +908,64 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testUnresolvedReferenceAfterParenthesis() { doTest(); }
   public void testInvalidExtendsList() { doTest(); }
   public void testUnusedImportInBrokenAssignment() { doTest(); }
+  public void testNotCollapseIfThereIsFieldConflict() { doTest(); }
+  public void testCollapseIfThereIsMethodConflict() { doTest(); }
+
+  public void testNotCollapseWithImplicitConflict() {
+    myFixture.addClass("""
+                         package imports;
+                         
+                         public enum Values {
+                             String, Object, Objects, Double, Float, Integer
+                         }""");
+    doTest();
+  }
+
+  public void testCollapseWithoutConflict() {
+    //now it is collapsed, but it is under the question
+    myFixture.addClass("""
+      package imports;
+      
+      public enum Values {
+         Object, Objects, Double, Float, Integer
+      }""");
+    doTest();
+  }
+
+  public void testNotCollapseEvenWithoutConflict() {
+    //this behavior is conservative
+    myFixture.addClass("""
+    package imports
+    
+    public enum Values {
+        Object, Objects, Double, Float, Integer
+    }""");
+    doTest();
+  }
+
+  public void testNotCollapseAccessible() {
+    myFixture.addClass("""
+    package imports;
+    
+    public class Holder {
+        public static final int A = 1;
+        public static final int B = 2;
+        public static final int C = 3;
+        public static final int Files = 999;
+    }""");
+    doTest();
+  }
+
+  public void testCollapseNotAccessible() {
+    myFixture.addClass("""
+    package imports;
+    
+    public class Holder {
+        public static final int A = 1;
+        public static final int B = 2;
+        public static final int C = 3;
+        private static final int Files = 999;
+    }""");
+    doTest();
+  }
 }
