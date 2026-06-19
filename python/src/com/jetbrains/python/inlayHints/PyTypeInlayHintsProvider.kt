@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
+import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
 import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl.Companion.MAX_SEGMENT_TEXT_LENGTH
 import com.intellij.openapi.editor.Editor
@@ -23,13 +24,19 @@ import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.PySubscriptionExpression
 import com.jetbrains.python.psi.PyTupleExpression
 import com.jetbrains.python.psi.PyTypeParameter
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassLikeType
+import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyCollectionType
 import com.jetbrains.python.psi.types.PyInferredVarianceJudgment
+import com.jetbrains.python.psi.types.PyType
+import com.jetbrains.python.psi.types.PyTypeChecker
+import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeParameterType.Variance
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isUnknown
 
 class PyTypeInlayHintsProvider : InlayHintsProvider {
   companion object {
@@ -37,6 +44,8 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
     const val FUNCTION_RETURN_TYPE_OPTION_ID: String = "python.type.inlays.function.return"
     const val VARIANCE_OPTION_ID: String = "python.type.inlays.variance"
     const val PARAMETER_TYPE_ANNOTATION: String = "python.type.inlays.parameter.annotation"
+    const val SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID: String = "python.type.inlays.solved.type.parameters.class"
+    const val SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID: String = "python.type.inlays.solved.type.parameters.function"
   }
 
   override fun createCollector(file: PsiFile, editor: Editor): InlayHintsCollector = Collector()
@@ -45,6 +54,7 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
     val returnTypeHintFormat = HintFormat.default.withFontSize(HintFontSize.ABitSmallerThanInEditor)
     val revealTypeHintFormat = returnTypeHintFormat.withHorizontalMargin(HintMarginPadding.MarginAndSmallerPadding)
     val varianceHintFormat = returnTypeHintFormat.withHorizontalMargin(HintMarginPadding.MarginAndSmallerPadding)
+    val typeArgumentHintFormat = HintFormat.default
 
     override fun collectFromElement(element: PsiElement, sink: InlayTreeSink) {
       val typeEvalContext = TypeEvalContext.codeAnalysis(element.project, element.containingFile)
@@ -65,6 +75,14 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
 
       sink.whenOptionEnabled(PARAMETER_TYPE_ANNOTATION) {
         getInlaysForParameterAnnotations(element, sink, resolveContext)
+      }
+
+      sink.whenOptionEnabled(SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID) {
+        getInlaysForSolvedTypeParameters(element, sink, resolveContext, ::solveClassTypeArguments)
+      }
+
+      sink.whenOptionEnabled(SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID) {
+        getInlaysForSolvedTypeParameters(element, sink, resolveContext, ::solveFunctionTypeArguments)
       }
     }
 
@@ -102,15 +120,7 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
         sink.addPresentation(position = InlineInlayPosition(function.parameterList.textRange.endOffset, true),
                              hintFormat = returnTypeHintFormat) {
           text("-> ")
-          if (typeHint.length >= MAX_SEGMENT_TEXT_LENGTH) {
-            // Platform doesn't allow one text node to be more than 30 characters, but that might not be enough for some types,
-            // for example, 'Generator[str | int, None, int]' is already 31 chars long
-            text(typeHint.substring(0, MAX_SEGMENT_TEXT_LENGTH))
-            text(typeHint.substring(MAX_SEGMENT_TEXT_LENGTH))
-          }
-          else {
-            text(typeHint)
-          }
+          appendTypeHint(typeHint)
         }
       }
     }
@@ -175,6 +185,80 @@ class PyTypeInlayHintsProvider : InlayHintsProvider {
         hintFormat = HintFormat.default
       ) {
         text(": $typeHint")
+      }
+    }
+
+    private fun getInlaysForSolvedTypeParameters(
+      element: PsiElement,
+      sink: InlayTreeSink,
+      resolveContext: PyResolveContext,
+      solve: (PyCallExpression, PyReferenceExpression, PyResolveContext) -> List<PyType?>?,
+    ) {
+      val call = element as? PyCallExpression ?: return
+      // Skip explicitly parameterized calls like `A[int](1)`, where the callee is a subscription expression.
+      val callee = call.callee as? PyReferenceExpression ?: return
+
+      val typeArguments = solve(call, callee, resolveContext) ?: return
+      if (typeArguments.all { it.isUnknown }) return
+
+      val typeEvalContext = resolveContext.typeEvalContext
+      sink.addPresentation(position = InlineInlayPosition(callee.textRange.endOffset, true),
+                           hintFormat = typeArgumentHintFormat) {
+        text("[")
+        typeArguments.forEachIndexed { index, typeArgument ->
+          if (index > 0) text(", ")
+          // Use getTypeName (the same renderer as the "Type Info" tooltip), not getTypeHint: the PEP-484
+          // annotation format cannot express a ParamSpec's keyword-only/named parameters, so a solved
+          // `**P` would degrade from `[*, a: int]` to a misleading `[Any, int]`.
+          appendTypeHint(PythonDocumentationProvider.getTypeName(typeArgument, typeEvalContext))
+        }
+        text("]")
+      }
+    }
+
+    private fun solveClassTypeArguments(
+      call: PyCallExpression,
+      callee: PyReferenceExpression,
+      resolveContext: PyResolveContext,
+    ): List<PyType?>? {
+      val typeEvalContext = resolveContext.typeEvalContext
+      val calleeType = typeEvalContext.getType(callee)
+      if (calleeType !is PyClassType || !calleeType.isDefinition) return null
+      val callType = typeEvalContext.getType(call) as? PyCollectionType ?: return null
+      return callType.elementTypes
+    }
+
+    // Call of a generic function declaring its own type parameters, e.g. `f(1)` for `def f[T](t: T) -> T`.
+    private fun solveFunctionTypeArguments(
+      call: PyCallExpression,
+      callee: PyReferenceExpression,
+      resolveContext: PyResolveContext,
+    ): List<PyType?>? {
+      val typeEvalContext = resolveContext.typeEvalContext
+      // Generic class instantiations are handled by solveClassTypeArguments.
+      val calleeType = typeEvalContext.getType(callee)
+      if (calleeType is PyClassType && calleeType.isDefinition) return null
+
+      val mapping = PyCallExpressionHelper.mapArguments(call, resolveContext).singleOrNull() ?: return null
+      val callableType = mapping.callableType ?: return null
+      val typeParameters = callableType.getTypeParameters(typeEvalContext)?.takeIf { it.isNotEmpty() } ?: return null
+
+      val receiver = call.getReceiver(callableType.callable)
+      val substitutions = PyTypeInferenceCspFactory.unifyGenericCall(call, receiver, callableType, mapping.mappedParameters, typeEvalContext)
+                          ?: return null
+      return typeParameters.map { PyTypeChecker.substitute(it, substitutions, typeEvalContext) }
+    }
+
+    private fun PresentationTreeBuilder.appendTypeHint(typeHint: String) {
+      // A single text node longer than MAX_SEGMENT_TEXT_LENGTH is truncated by the platform with an ellipsis.
+      // Split into at most two segments so a moderately long type stays readable without producing an
+      // excessively long inlay.
+      if (typeHint.length > MAX_SEGMENT_TEXT_LENGTH) {
+        text(typeHint.substring(0, MAX_SEGMENT_TEXT_LENGTH))
+        text(typeHint.substring(MAX_SEGMENT_TEXT_LENGTH))
+      }
+      else {
+        text(typeHint)
       }
     }
   }
