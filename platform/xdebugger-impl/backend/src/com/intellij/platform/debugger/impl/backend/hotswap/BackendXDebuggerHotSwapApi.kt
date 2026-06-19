@@ -29,6 +29,11 @@ internal class BackendXDebuggerHotSwapApi : XDebuggerHotSwapApi {
     session.performHotSwap()
   }
 
+  override suspend fun restart(sessionId: XDebugHotSwapSessionId) {
+    val session = sessionId.findHotSwapSession() ?: return
+    session.restart()
+  }
+
   override suspend fun hide(projectId: ProjectId) {
     val project = projectId.findProject()
     HotSwapSessionManagerImpl.getInstance(project).hide()

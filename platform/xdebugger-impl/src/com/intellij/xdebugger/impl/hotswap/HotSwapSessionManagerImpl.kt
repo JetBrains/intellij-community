@@ -161,6 +161,7 @@ class HotSwapSessionImpl<T> internal constructor(
   }
 
   fun performHotSwap(): Unit = provider.performHotSwap(this)
+  fun restart(): Unit = provider.restart()
 
   override fun getChanges(): Set<T> = changesCollector.getChanges()
 
@@ -206,6 +207,10 @@ class HotSwapSessionImpl<T> internal constructor(
   private inner class SessionSourceFileChangesListener : SourceFileChangesListener {
     override fun onNewChanges() {
       setStatus(HotSwapVisibleStatus.ChangesReady)
+    }
+
+    override fun onIncompatibleChanges(reason: String) {
+      setStatus(HotSwapVisibleStatus.ChangesNotHotSwappable(reason))
     }
 
     override fun onChangesCanceled() {

@@ -17,6 +17,7 @@ import org.jetbrains.annotations.ApiStatus
 interface XDebuggerHotSwapApi : RemoteApi<Unit> {
   suspend fun currentSessionStatus(projectId: ProjectId): Flow<XDebugHotSwapCurrentSessionStatus?>
   suspend fun performHotSwap(sessionId: XDebugHotSwapSessionId, source: HotSwapSource)
+  suspend fun restart(sessionId: XDebugHotSwapSessionId)
   suspend fun hide(projectId: ProjectId)
 
   companion object {
@@ -43,6 +44,9 @@ sealed interface HotSwapVisibleStatus {
 
   @Serializable
   object ChangesReady : HotSwapVisibleStatus
+
+  @Serializable
+  data class ChangesNotHotSwappable(val reason: String) : HotSwapVisibleStatus
 
   @Serializable
   object InProgress : HotSwapVisibleStatus

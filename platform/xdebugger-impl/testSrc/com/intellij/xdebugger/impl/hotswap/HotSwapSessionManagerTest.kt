@@ -70,6 +70,43 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
     assertCompletedAndDispose(channel, disposable2)
   }
 
+  fun testOnIncompatibleChanges() = runBlocking {
+    val reason = "Method was added"
+    val manager = HotSwapSessionManager.getInstance(project)
+    val disposable1 = Disposer.newDisposable(testRootDisposable)
+    val disposable2 = Disposer.newDisposable(testRootDisposable)
+    val channel = addStatusListener(disposable2)
+    assertNull(channel.receive())
+    val provider = MockHotSwapProvider()
+    val hotSwapSession = manager.createSession(provider, disposable1)
+    assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
+    assertEmpty(hotSwapSession.getChanges())
+
+    provider.collector.addIncompatibleFile(MockVirtualFile("a.txt"), reason)
+
+    assertEquals(HotSwapVisibleStatus.ChangesNotHotSwappable(reason), channel.receive())
+    assertEquals(1, hotSwapSession.getChanges().size)
+
+    provider.collector.cancelChanges()
+    assertEquals(HotSwapVisibleStatus.NoChanges, channel.receive())
+    assertEmpty(hotSwapSession.getChanges())
+    Disposer.dispose(disposable1)
+    assertNull(channel.receive())
+    Disposer.dispose(disposable2)
+  }
+
+  fun testRestart() {
+    val manager = HotSwapSessionManager.getInstance(project)
+    val disposable = Disposer.newDisposable(testRootDisposable)
+    val provider = MockHotSwapProvider()
+    val hotSwapSession = manager.createSession(provider, disposable) as HotSwapSessionImpl<*>
+
+    hotSwapSession.restart()
+
+    assertEquals(1, provider.restartCount)
+    Disposer.dispose(disposable)
+  }
+
   fun testHotSwap() = runBlocking {
     val manager = HotSwapSessionManager.getInstance(project)
     val disposable1 = Disposer.newDisposable(testRootDisposable)
@@ -419,6 +456,7 @@ class HotSwapSessionManagerTest : HeavyPlatformTestCase() {
 
 internal class MockHotSwapProvider : HotSwapProvider<MockVirtualFile> {
   lateinit var collector: MockChangesCollector
+  var restartCount = 0
 
   override fun createChangesCollector(
     session: HotSwapSession<MockVirtualFile>,
@@ -430,6 +468,10 @@ internal class MockHotSwapProvider : HotSwapProvider<MockVirtualFile> {
   override fun performHotSwap(session: HotSwapSession<MockVirtualFile>) {
     error("Not supported")
   }
+
+  override fun restart() {
+    restartCount++
+  }
 }
 
 internal class MockChangesCollector(private val listener: SourceFileChangesListener) : SourceFileChangesCollector<MockVirtualFile> {
@@ -437,6 +479,16 @@ internal class MockChangesCollector(private val listener: SourceFileChangesListe
   fun addFile(file: MockVirtualFile) {
     files.add(file)
     listener.onNewChanges()
+  }
+
+  fun addIncompatibleFile(file: MockVirtualFile, reason: String) {
+    files.add(file)
+    listener.onIncompatibleChanges(reason)
+  }
+
+  fun cancelChanges() {
+    files.clear()
+    listener.onChangesCanceled()
   }
 
   override fun getChanges(): Set<MockVirtualFile> = files

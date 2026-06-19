@@ -51,6 +51,12 @@ internal class FrontendHotSwapManager(private val project: Project, val coroutin
     }
   }
 
+  fun performRestart(sessionId: XDebugHotSwapSessionId) {
+    sequentialExecutor.execute {
+      XDebuggerHotSwapApi.getInstance().restart(sessionId)
+    }
+  }
+
   fun notifyHidden() {
     // Hide locally
     currentStatusFlow.value = null

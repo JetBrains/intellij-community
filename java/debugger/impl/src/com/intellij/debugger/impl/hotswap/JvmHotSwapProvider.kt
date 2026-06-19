@@ -29,10 +29,9 @@ internal class JvmHotSwapProvider(private val debuggerSession: DebuggerSession) 
     val jvmExtensions = listJvmFileExtensions()
     val filtersFromProviders = HotSwapSourceFileFilterProvider.findSourceFiltersForSession(debuggerSession)
     return SourceFileChangesCollectorImpl(
-      coroutineScope, listener,
-      FileExtensionFilter(jvmExtensions),
-      InProjectFilter(session.project),
-      *filtersFromProviders.toTypedArray(),
+      coroutineScope,
+      listener,
+      listOf(FileExtensionFilter(jvmExtensions), InProjectFilter(session.project)) + filtersFromProviders,
     )
   }
 

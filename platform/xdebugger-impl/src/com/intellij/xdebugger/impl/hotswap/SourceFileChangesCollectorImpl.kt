@@ -22,7 +22,6 @@ import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.xdebugger.hotswap.SourceFileChangesCollector
 import com.intellij.xdebugger.hotswap.SourceFileChangesListener
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
@@ -43,7 +42,7 @@ private class ChangesProcessingService(coroutineScope: CoroutineScope) : Disposa
   private val listenersCount = AtomicInteger()
 
   private val events = Channel<ChangesProcessingEvent>(Channel.UNLIMITED)
-  private val allCache = Long2ObjectOpenHashMap<Object2IntOpenHashMap<VirtualFile>>()
+  private val allCache = Long2ObjectOpenHashMap<MutableMap<VirtualFile, FileContent?>>()
   private val queueSizeEstimate = AtomicInteger()
   private var lastSearchTimeNs = -1L
 
@@ -125,15 +124,15 @@ private class ChangesProcessingService(coroutineScope: CoroutineScope) : Disposa
     dropUnusedTimestamps(groupedByTimeStamp.keys)
 
     for ((timestamp, collectors) in groupedByTimeStamp) {
-      val cache = allCache.computeIfAbsent(timestamp) { Object2IntOpenHashMap() }
+      val cache = allCache.computeIfAbsent(timestamp) { hashMapOf() }
       val doLocalHistorySearch = canDoLocalHistorySearch()
       val timeStartNs = System.nanoTime()
-      val hasChanges = hasChangesSinceLastReset(virtualFile, timestamp, contentHash, doLocalHistorySearch, cache)
+      val changeState = getChangeStateSinceLastReset(virtualFile, timestamp, contentHash, doLocalHistorySearch, cache)
       if (doLocalHistorySearch) {
         lastSearchTimeNs = System.nanoTime() - timeStartNs
       }
       for (collector in collectors) {
-        collector.processDocumentChange(hasChanges, virtualFile)
+        collector.processDocumentChange(changeState)
       }
     }
   }
@@ -168,6 +167,40 @@ fun interface SourceFileChangeFilter<T> {
   suspend fun isApplicable(change: T): Boolean
 }
 
+@ApiStatus.Internal
+fun interface SourceFileChangeCompatibilityChecker {
+  suspend fun getCompatibility(change: SourceFileChange): HotSwapChangesCompatibility
+}
+
+@ApiStatus.Internal
+sealed interface HotSwapChangesCompatibility : Comparable<HotSwapChangesCompatibility> {
+  val order: Int
+
+  override fun compareTo(other: HotSwapChangesCompatibility): Int {
+    return order - other.order
+  }
+
+  data object Irrelevant : HotSwapChangesCompatibility {
+    override val order: Int
+      get() = 0
+  }
+
+  data object Compatible : HotSwapChangesCompatibility {
+    override val order: Int
+      get() = 10
+  }
+
+  data object Unknown : HotSwapChangesCompatibility {
+    override val order: Int
+      get() = 20
+  }
+
+  data class Incompatible(val reason: String) : HotSwapChangesCompatibility {
+    override val order: Int
+      get() = 30
+  }
+}
+
 private val logger = logger<SourceFileChangesCollectorImpl>()
 
 /**
@@ -176,15 +209,16 @@ private val logger = logger<SourceFileChangesCollectorImpl>()
 @ApiStatus.Internal
 class SourceFileChangesCollectorImpl(
   coroutineScope: CoroutineScope,
-  internal val listener: SourceFileChangesListener,
-  internal vararg val filters: SourceFileChangeFilter<VirtualFile>,
+  private val listener: SourceFileChangesListener,
+  internal val filters: List<SourceFileChangeFilter<VirtualFile>>,
+  private val compatibilityCheckers: List<SourceFileChangeCompatibilityChecker> = emptyList(),
 ) : SourceFileChangesCollector<VirtualFile>, Disposable {
-  private val events = Channel<SourceFileChangesCollectorEvent>(Channel.UNLIMITED)
+  private val events = Channel<ChangeState>(Channel.UNLIMITED)
   private val lock = ReentrantLock()
   private val cs = coroutineScope.childScope("SourceFileChangesCollectorImpl")
 
   @Volatile
-  private var currentChanges: MutableSet<VirtualFile> = hashSetOf()
+  private var currentChanges: MutableMap<VirtualFile, HotSwapChangesCompatibility> = hashMapOf()
 
   private val lastResetTimeStamp = AtomicLong(System.currentTimeMillis())
   val lastTimestamp: Long
@@ -192,9 +226,7 @@ class SourceFileChangesCollectorImpl(
 
   init {
     cs.launch {
-      events.consumeEach { (hasChanges, file) ->
-        processDocumentChangeInternal(hasChanges, file)
-      }
+      events.consumeEach { processDocumentChangeInternal(it) }
     }
     ChangesProcessingService.getInstance().addCollector(this)
   }
@@ -203,36 +235,63 @@ class SourceFileChangesCollectorImpl(
     cs.cancel()
   }
 
-  override fun getChanges(): Set<VirtualFile> = lock.withLock { currentChanges.toHashSet() }
+  override fun getChanges(): Set<VirtualFile> = lock.withLock { currentChanges.keys.toHashSet() }
   override fun resetChanges() {
     val previousTimeStamp = lastResetTimeStamp.getAndSet(System.currentTimeMillis())
-    currentChanges = hashSetOf()
+    currentChanges = hashMapOf()
     ChangesProcessingService.getInstance().dropTimestamp(previousTimeStamp)
   }
 
-  internal fun processDocumentChange(hasChangesSinceLastReset: Boolean, file: VirtualFile) {
-    events.trySend(SourceFileChangesCollectorEvent(hasChangesSinceLastReset, file))
+  internal fun processDocumentChange(change: ChangeState) {
+    events.trySend(change)
   }
 
-  private fun processDocumentChangeInternal(hasChangesSinceLastReset: Boolean, file: VirtualFile) {
+  private suspend fun processDocumentChangeInternal(change: ChangeState) {
+    val file = change.file
     val currentChanges = currentChanges
-    lock.withLock {
-      if (hasChangesSinceLastReset) {
-        currentChanges.add(file)
+    val status = if (change.hasChanges) {
+      val compatibility = getCompatibility(file, change.oldContent)
+      lock.withLock {
+        currentChanges[file] = compatibility
+        currentChanges.values.toSourceFileChangesStatus()
       }
-      else {
+    }
+    else {
+      lock.withLock {
         currentChanges.remove(file)
+        currentChanges.values.toSourceFileChangesStatus()
       }
     }
 
-    val isEmpty = currentChanges.isEmpty()
-    if (isEmpty) {
-      logger.debug { "Document change reverted previous changes: $file" }
-      listener.onChangesCanceled()
+    when (status) {
+      SourceFileChangesStatus.ChangesCanceled -> {
+        logger.debug { "Document change reverted previous changes: $file" }
+        listener.onChangesCanceled()
+      }
+      SourceFileChangesStatus.NewChanges -> {
+        logger.debug { "Document change active: $file" }
+        listener.onNewChanges()
+      }
+      is SourceFileChangesStatus.IncompatibleChanges -> {
+        logger.debug { "Document change incompatible: $file (${status.reason})" }
+        listener.onIncompatibleChanges(status.reason)
+      }
     }
-    else {
-      logger.debug { "Document change active: $file" }
-      listener.onNewChanges()
+  }
+
+  private suspend fun getCompatibility(file: VirtualFile, oldContent: CharSequence?): HotSwapChangesCompatibility {
+    if (compatibilityCheckers.isEmpty()) return HotSwapChangesCompatibility.Compatible
+    if (oldContent == null) return HotSwapChangesCompatibility.Unknown
+    val change = SourceFileChange(file, oldContent)
+    return compatibilityCheckers.maxOf { checker -> checker.getCompatibility(change) }
+  }
+
+  private fun Collection<HotSwapChangesCompatibility>.toSourceFileChangesStatus(): SourceFileChangesStatus {
+    val compatibility = maxOrNull()
+    return when (compatibility) {
+      null -> SourceFileChangesStatus.ChangesCanceled
+      is HotSwapChangesCompatibility.Incompatible -> SourceFileChangesStatus.IncompatibleChanges(compatibility.reason)
+      HotSwapChangesCompatibility.Compatible, HotSwapChangesCompatibility.Unknown, HotSwapChangesCompatibility.Irrelevant -> SourceFileChangesStatus.NewChanges
     }
   }
 
@@ -240,35 +299,50 @@ class SourceFileChangesCollectorImpl(
     @TestOnly
     internal var customLocalHistory: LocalHistory? = null
   }
-
-  private data class SourceFileChangesCollectorEvent(
-    val hasChangesSinceLastReset: Boolean,
-    val file: VirtualFile,
-  )
 }
 
-private fun hasChangesSinceLastReset(
+@ApiStatus.Internal
+data class SourceFileChange(val file: VirtualFile, val oldContent: CharSequence)
+
+private sealed interface SourceFileChangesStatus {
+  data object NewChanges : SourceFileChangesStatus
+  data class IncompatibleChanges(val reason: String) : SourceFileChangesStatus
+  data object ChangesCanceled : SourceFileChangesStatus
+}
+
+internal data class ChangeState(
+  val file: VirtualFile,
+  val hasChanges: Boolean,
+  val oldContent: CharSequence?,
+)
+
+private data class FileContent(
+  val content: CharSequence,
+  val contentHash: Int,
+)
+
+private fun getChangeStateSinceLastReset(
   file: VirtualFile, lastTimestamp: Long, contentHash: Int,
   doLocalHistorySearch: Boolean,
-  cache: Object2IntOpenHashMap<VirtualFile>,
-): Boolean {
-  val oldHash = run {
-    if (file in cache) return@run cache.getInt(file)
+  cache: MutableMap<VirtualFile, FileContent?>,
+): ChangeState {
+  val oldContent = run {
+    if (cache.containsKey(file)) return@run cache[file]
     // com.intellij.history.integration.LocalHistoryImpl.getByteContent is a heavyweight operation with blocking read lock access.
     // When there are massive changes in a project (e.g., a git branch switch), such workload becomes critical for the UI.
     // To avoid this, the local history check is skipped when the number of modified files is too large.
     // As a consequence, reverting these changes may be incorrectly detected by this filter (they will still be shown as available),
     // but this is a minor issue.
-    if (!doLocalHistorySearch) return true
-    getContentHashBeforeLastReset(file, lastTimestamp).also { cache.put(file, it) }
+    if (!doLocalHistorySearch) return ChangeState(file, hasChanges = true, oldContent = null)
+    getContentBeforeLastReset(file, lastTimestamp).also { cache[file] = it }
   }
-  if (oldHash == -1) return true
-  return contentHash != oldHash
+  if (oldContent == null) return ChangeState(file, hasChanges = true, oldContent = null)
+  return ChangeState(file, hasChanges = contentHash != oldContent.contentHash, oldContent.content)
 }
 
-private fun getContentHashBeforeLastReset(file: VirtualFile, lastTimestamp: Long): Int {
+private fun getContentBeforeLastReset(file: VirtualFile, lastTimestamp: Long): FileContent? {
   val localHistory = SourceFileChangesCollectorImpl.customLocalHistory ?: LocalHistory.getInstance()
-  val bytes = localHistory.getByteContent(file) { timestamp -> timestamp < lastTimestamp } ?: return -1
+  val bytes = localHistory.getByteContent(file) { timestamp -> timestamp < lastTimestamp } ?: return null
   val content = LoadTextUtil.getTextByBinaryPresentation(bytes, file, false, false)
-  return Strings.stringHashCode(content)
+  return FileContent(content, Strings.stringHashCode(content))
 }

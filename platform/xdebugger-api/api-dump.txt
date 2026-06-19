@@ -727,6 +727,7 @@ com.intellij.xdebugger.frame.presentation.XValuePresentation$XValueTextRenderer
 com.intellij.xdebugger.hotswap.HotSwapProvider
 - a:createChangesCollector(com.intellij.xdebugger.hotswap.HotSwapSession,kotlinx.coroutines.CoroutineScope,com.intellij.xdebugger.hotswap.SourceFileChangesListener):com.intellij.xdebugger.hotswap.SourceFileChangesCollector
 - a:performHotSwap(com.intellij.xdebugger.hotswap.HotSwapSession):V
+- restart():V
 com.intellij.xdebugger.hotswap.HotSwapResultListener
 - a:onCanceled():V
 - a:onFailure():V
@@ -746,6 +747,7 @@ com.intellij.xdebugger.hotswap.SourceFileChangesCollector
 - a:resetChanges():V
 com.intellij.xdebugger.hotswap.SourceFileChangesListener
 - a:onChangesCanceled():V
+- a:onIncompatibleChanges(java.lang.String):V
 - a:onNewChanges():V
 a:com.intellij.xdebugger.settings.DebuggerConfigurableProvider
 - sf:EXTENSION_POINT:com.intellij.openapi.extensions.ExtensionPointName
