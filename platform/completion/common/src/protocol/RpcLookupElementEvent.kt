@@ -33,9 +33,10 @@ sealed interface RpcLookupElementEvent {
    * the lookup is closed without completion
    */
   @Serializable
-  data class Cancel(val projectId: ProjectId) : RpcLookupElementEvent {
+  data class Cancel(val projectId: ProjectId, val requestId: RpcCompletionRequestId) : RpcLookupElementEvent {
     override fun toString(): String = buildToString("Cancel") {
       field("projectId", projectId)
+      field("requestId", requestId)
     }
   }
 
