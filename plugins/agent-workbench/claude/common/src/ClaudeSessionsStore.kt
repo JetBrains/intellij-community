@@ -445,6 +445,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
   return try {
     if (parser.currentToken() != JsonToken.START_OBJECT) return null
     var sessionId: String? = null
+    var uuid: String? = null
     var requestId: String? = null
     var isSidechain = false
     var timestampMillis: Long? = null
@@ -473,6 +474,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
     forEachJsonObjectField(parser) { fieldName ->
       when (fieldName) {
         "sessionId" -> sessionId = readJsonStringOrNull(parser)
+        "uuid" -> uuid = readJsonStringOrNull(parser)
         "requestId" -> requestId = readJsonStringOrNull(parser)
         "isSidechain" -> isSidechain = readBooleanOrFalse(parser)
         "timestamp" -> timestampMillis = parseIsoTimestamp(readJsonStringOrNull(parser))
@@ -549,6 +551,7 @@ private fun parseJsonlLine(parser: JsonParser): ParsedJsonlLine? {
     val hasConversationSignal = type == "user" || type == "assistant"
     return ParsedJsonlLine(
       sessionId = sessionId,
+      uuid = normalizeNonBlank(uuid),
       isSidechain = isSidechain,
       timestampMillis = timestampMillis,
       firstPrompt = firstPrompt,
@@ -947,6 +950,7 @@ private fun readLongOrZero(parser: JsonParser): Long {
 
 private data class ParsedJsonlLine(
   @JvmField val sessionId: String?,
+  @JvmField val uuid: String?,
   @JvmField val isSidechain: Boolean,
   @JvmField val timestampMillis: Long?,
   @JvmField val firstPrompt: String?,
@@ -985,28 +989,29 @@ private data class JsonlOutlineScanState(
     when (lineData.activityEvent) {
       ClaudeActivityEvent.USER_PROMPT -> {
         currentPhase = null
-        addRootItem(ClaudeSessionOutlineItemKind.USER_PROMPT, "", lineData.messageContent, lineData.timestampMillis)
+        addRootItem(ClaudeSessionOutlineItemKind.USER_PROMPT, "", lineData.messageContent, lineData.timestampMillis, lineData.uuid)
       }
       ClaudeActivityEvent.TOOL_CONTINUATION -> addPhaseDetail(ClaudeSessionOutlineItemKind.TOOL_RESULT,
                                                               "Tool result",
                                                               lineData.messageContent,
-                                                              lineData.timestampMillis)
+                                                              lineData.timestampMillis,
+                                                              lineData.uuid)
       ClaudeActivityEvent.ASSISTANT_NEEDS_INPUT -> {
         val phase = addAssistantResponse(lineData)
         phase.kind = ClaudeSessionOutlineItemKind.AGENT_WORK
-        phase.children += newItem(ClaudeSessionOutlineItemKind.INPUT_REQUEST, "Input requested", null, lineData.timestampMillis)
+        phase.children += newItem(ClaudeSessionOutlineItemKind.INPUT_REQUEST, "Input requested", null, lineData.timestampMillis, null)
       }
       ClaudeActivityEvent.ASSISTANT_IN_PROGRESS -> {
         val phase = addAssistantResponse(lineData)
         if (lineData.messageHasToolUse) {
           phase.kind = ClaudeSessionOutlineItemKind.AGENT_WORK
-          phase.children += newItem(ClaudeSessionOutlineItemKind.TOOL_CALL, "Tool call", null, lineData.timestampMillis)
+          phase.children += newItem(ClaudeSessionOutlineItemKind.TOOL_CALL, "Tool call", null, lineData.timestampMillis, null)
         }
       }
       ClaudeActivityEvent.ASSISTANT_TERMINAL -> addAssistantResponse(lineData)
       ClaudeActivityEvent.PROGRESS,
       ClaudeActivityEvent.QUEUE_OPERATION,
-        -> addPhaseDetail(ClaudeSessionOutlineItemKind.AGENT_WORK, "Agent work", null, lineData.timestampMillis)
+        -> addPhaseDetail(ClaudeSessionOutlineItemKind.AGENT_WORK, "Agent work", null, lineData.timestampMillis, lineData.uuid)
       ClaudeActivityEvent.OTHER -> Unit
     }
   }
@@ -1020,17 +1025,18 @@ private data class JsonlOutlineScanState(
         title = outlinePhaseTitle(lineData.messageContent) ?: "Assistant response",
         preview = lineData.messageContent,
         timestampMillis = lineData.timestampMillis,
+        stableId = lineData.uuid,
         summarizesChildren = true,
       )
       items += phase
       currentPhase = phase
       return phase
     }
-    return currentPhase ?: addRootItem(ClaudeSessionOutlineItemKind.AGENT_WORK, "Agent work", null, lineData.timestampMillis)
+    return currentPhase ?: addRootItem(ClaudeSessionOutlineItemKind.AGENT_WORK, "Agent work", null, lineData.timestampMillis, lineData.uuid)
   }
 
-  private fun addPhaseDetail(kind: ClaudeSessionOutlineItemKind, title: String, preview: String?, timestampMillis: Long?) {
-    val item = newItem(kind, title, preview, timestampMillis)
+  private fun addPhaseDetail(kind: ClaudeSessionOutlineItemKind, title: String, preview: String?, timestampMillis: Long?, stableId: String?) {
+    val item = newItem(kind, title, preview, timestampMillis, stableId)
     val phase = currentPhase
     if (phase == null) {
       items += item
@@ -1045,8 +1051,9 @@ private data class JsonlOutlineScanState(
     title: String,
     preview: String?,
     timestampMillis: Long?,
+    stableId: String?,
   ): ClaudeSessionOutlineItemBuilder {
-    return newItem(kind, title, preview, timestampMillis).also(items::add)
+    return newItem(kind, title, preview, timestampMillis, stableId).also(items::add)
   }
 
   private fun newItem(
@@ -1054,10 +1061,11 @@ private data class JsonlOutlineScanState(
     title: String,
     preview: String?,
     timestampMillis: Long?,
+    stableId: String?,
     summarizesChildren: Boolean = false,
   ): ClaudeSessionOutlineItemBuilder {
     return ClaudeSessionOutlineItemBuilder(
-      id = "outline-${nextItemIndex++}",
+      id = stableId ?: "outline-${nextItemIndex++}",
       kind = kind,
       title = title,
       preview = normalizeOutlinePreview(preview),

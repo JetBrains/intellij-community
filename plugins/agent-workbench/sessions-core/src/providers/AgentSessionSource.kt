@@ -43,6 +43,7 @@ data class AgentSessionRefreshHints(
 /** Result of creating a new thread from an outline item. */
 data class AgentSessionOutlineForkResult(
   @JvmField val thread: AgentSessionThread,
+  @JvmField val launchSpecOverride: AgentSessionTerminalLaunchSpec? = null,
 )
 
 const val UNKNOWN_AGENT_SESSION_REFRESH_THREAD_UPDATED_AT: Long = -1L

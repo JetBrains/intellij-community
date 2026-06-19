@@ -56,7 +56,7 @@ class ClaudeSessionsStoreTest {
     Files.writeString(
       transcript,
       """
-      {"type":"user","sessionId":"outline-session","cwd":"/work/project-outline","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Fix flaky test"}}
+      {"type":"user","sessionId":"outline-session","uuid":"11111111-1111-1111-1111-111111111111","cwd":"/work/project-outline","isSidechain":false,"timestamp":"2026-02-08T01:00:00.000Z","message":{"role":"user","content":"Fix flaky test"}}
       {"type":"assistant","sessionId":"outline-session","cwd":"/work/project-outline","isSidechain":false,"timestamp":"2026-02-08T01:00:01.000Z","message":{"role":"assistant","content":[{"type":"text","text":"I will edit the test"},{"type":"tool_use","id":"tool-1","name":"Edit","input":{"file_path":"src/Test.kt"}}]}}
       {"type":"user","sessionId":"outline-session","cwd":"/work/project-outline","isSidechain":false,"timestamp":"2026-02-08T01:00:02.000Z","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"tool-1","content":"ok"}]}}
       {"type":"assistant","sessionId":"outline-session","cwd":"/work/project-outline","isSidechain":false,"timestamp":"2026-02-08T01:00:03.000Z","message":{"role":"assistant","content":[{"type":"text","text":"Done"}]}}
@@ -76,6 +76,7 @@ class ClaudeSessionsStoreTest {
       ClaudeSessionOutlineItemKind.AGENT_WORK,
       ClaudeSessionOutlineItemKind.ASSISTANT_RESPONSE,
     )
+    assertThat(outline.items[0].id).isEqualTo("11111111-1111-1111-1111-111111111111")
     assertThat(outline.items[0].preview).isEqualTo("Fix flaky test")
     assertThat(outline.items[1].title).isEqualTo("I will edit the test")
     assertThat(outline.items[1].preview).isEqualTo("1 tool, 1 result")

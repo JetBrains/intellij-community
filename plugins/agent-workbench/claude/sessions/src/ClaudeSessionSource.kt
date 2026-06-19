@@ -9,10 +9,12 @@ import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.cost.LiteLlmPriceCatalogService
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineForkResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshThreadSeed
@@ -28,21 +30,27 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
 import java.math.BigDecimal
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
 class ClaudeSessionSource internal constructor(
   private val backend: ClaudeSessionBackend,
   private val calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost,
+  private val executableResolver: suspend () -> String = ClaudeCliSupport::resolveExecutableOrDefaultViaTerminalResolver,
+  private val hookSettingsProvider: (String) -> String? = ClaudeHookBridge::createLaunchSettingsArgument,
 ) : BaseAgentSessionSource(provider = AgentSessionProvider.CLAUDE) {
   constructor(
     backend: ClaudeSessionBackend = createDefaultClaudeSessionBackend(),
   ) : this(
     backend = backend,
     calculateCost = { usage -> service<LiteLlmPriceCatalogService>().calculateCost(usage) },
+    executableResolver = ClaudeCliSupport::resolveExecutableOrDefaultViaTerminalResolver,
+    hookSettingsProvider = ClaudeHookBridge::createLaunchSettingsArgument,
   )
 
   private val observedUpdatedAtByThreadId: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
   private val completedUnreadUpdatedAtByThreadId: ConcurrentHashMap<String, Long> = ConcurrentHashMap()
+  private val latestForkablePromptByThreadKey: ConcurrentHashMap<ClaudeThreadOutlineKey, ClaudeForkablePrompt> = ConcurrentHashMap()
 
   override val supportsUpdates: Boolean get() = true
 
@@ -217,7 +225,63 @@ class ClaudeSessionSource internal constructor(
   }
 
   override suspend fun loadThreadOutline(path: String, threadId: String, subAgentId: String?): AgentSessionThreadOutline? {
-    return backend.loadThreadOutline(path = path, threadId = threadId)
+    val outline = if (subAgentId == null) backend.loadThreadOutline(path = path, threadId = threadId) else null
+    rememberLatestForkablePrompt(path = path, threadId = threadId, outline = outline)
+    return outline
+  }
+
+  override fun canShowThreadOutlineForkAction(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): Boolean {
+    return canForkThreadFromOutlineItem(path = path, threadId = threadId, itemId = itemId, subAgentId = subAgentId, tabKey = tabKey)
+  }
+
+  override fun canForkThreadFromOutlineItem(
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): Boolean {
+    return subAgentId == null &&
+           itemId.isClaudeTranscriptUuid() &&
+           latestForkablePromptByThreadKey[ClaudeThreadOutlineKey(path, threadId)]?.itemId == itemId
+  }
+
+  override suspend fun forkThreadFromOutlineItem(
+    project: Project,
+    path: String,
+    threadId: String,
+    itemId: String,
+    subAgentId: String?,
+    tabKey: String?,
+  ): AgentSessionOutlineForkResult? {
+    if (!canForkThreadFromOutlineItem(path = path, threadId = threadId, itemId = itemId, subAgentId = subAgentId, tabKey = tabKey)) {
+      return null
+    }
+    val sourcePrompt = latestForkablePromptByThreadKey[ClaudeThreadOutlineKey(path, threadId)] ?: return null
+    val forkSessionId = UUID.randomUUID().toString()
+    val launchSpec = buildClaudeForkResumeLaunchSpec(
+      sourceSessionId = threadId,
+      forkSessionId = forkSessionId,
+      executable = executableResolver(),
+      hookSettingsArgument = hookSettingsProvider(forkSessionId),
+    )
+    return AgentSessionOutlineForkResult(
+      thread = AgentSessionThread(
+        id = forkSessionId,
+        title = sourcePrompt.threadTitle,
+        updatedAt = System.currentTimeMillis(),
+        archived = false,
+        activity = AgentThreadActivity.PROCESSING,
+        provider = AgentSessionProvider.CLAUDE,
+      ),
+      launchSpecOverride = launchSpec,
+    )
   }
 
   private fun rememberActiveNonReadyThreadRead(threads: Iterable<ClaudeBackendThread>) {
@@ -233,6 +297,39 @@ class ClaudeSessionSource internal constructor(
     for (thread in threads) {
       observedUpdatedAtByThreadId.merge(thread.id, thread.updatedAt, ::maxOf)
     }
+  }
+
+  private fun rememberLatestForkablePrompt(path: String, threadId: String, outline: AgentSessionThreadOutline?) {
+    val key = ClaudeThreadOutlineKey(path = path, threadId = threadId)
+    val latestPrompt = outline
+      ?.items
+      ?.asReversed()
+      ?.firstOrNull { item -> item.kind == AgentSessionOutlineItemKind.USER_PROMPT && item.id.isClaudeTranscriptUuid() }
+    if (latestPrompt == null) {
+      latestForkablePromptByThreadKey.remove(key)
+    }
+    else {
+      latestForkablePromptByThreadKey[key] = ClaudeForkablePrompt(itemId = latestPrompt.id, threadTitle = outline.title)
+    }
+  }
+}
+
+private data class ClaudeThreadOutlineKey(
+  @JvmField val path: String,
+  @JvmField val threadId: String,
+)
+
+private data class ClaudeForkablePrompt(
+  @JvmField val itemId: String,
+  @JvmField val threadTitle: String,
+)
+
+private fun String.isClaudeTranscriptUuid(): Boolean {
+  return try {
+    UUID.fromString(this).toString() == this
+  }
+  catch (_: IllegalArgumentException) {
+    false
   }
 }
 

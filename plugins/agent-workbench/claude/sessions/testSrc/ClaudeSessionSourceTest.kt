@@ -6,6 +6,10 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItem
+import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceRefreshRequest
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
@@ -13,6 +17,8 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUp
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadActivityUpdate
 import com.intellij.agent.workbench.sessions.core.providers.toAgentSessionRefreshThreadSeeds
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
@@ -26,11 +32,13 @@ import kotlinx.coroutines.withTimeoutOrNull
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.util.concurrent.TimeUnit
 import java.math.BigDecimal
+import java.util.UUID
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+@TestApplication
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class ClaudeSessionSourceTest {
   @Test
@@ -473,12 +481,148 @@ class ClaudeSessionSourceTest {
     assertThat(pathHints.rebindCandidates.map { it.threadId }).containsExactly("new-visible")
   }
 
+  @Test
+  fun forkActionIsAvailableOnlyForLatestUuidPromptAfterOutlineLoad() {
+    val olderPromptId = "11111111-1111-1111-1111-111111111111"
+    val latestPromptId = "22222222-2222-2222-2222-222222222222"
+    val outline = AgentSessionThreadOutline(
+      provider = AgentSessionProvider.CLAUDE,
+      threadId = "source-session",
+      title = "Source Claude thread",
+      updatedAt = 10_000L,
+      items = listOf(
+        AgentSessionOutlineItem(id = olderPromptId, kind = AgentSessionOutlineItemKind.USER_PROMPT, title = "First prompt"),
+        AgentSessionOutlineItem(id = "assistant-1", kind = AgentSessionOutlineItemKind.ASSISTANT_RESPONSE, title = "Assistant response"),
+        AgentSessionOutlineItem(id = latestPromptId, kind = AgentSessionOutlineItemKind.USER_PROMPT, title = "Latest prompt"),
+      ),
+    )
+    val source = ClaudeSessionSource(
+      backend = outlineBackend(outline),
+      calculateCost = { AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE) },
+      executableResolver = { "claude-test" },
+      hookSettingsProvider = { sessionId -> "settings-$sessionId.json" },
+    )
+
+    assertThat(source.canShowThreadOutlineForkAction(
+      path = "/any",
+      threadId = "source-session",
+      itemId = latestPromptId,
+      subAgentId = null,
+      tabKey = "tab-1",
+    )).isFalse()
+
+    val forkResult = runBlocking(Dispatchers.Default) {
+      assertThat(source.loadThreadOutline(path = "/any", threadId = "source-session", subAgentId = null)).isEqualTo(outline)
+      assertThat(source.canShowThreadOutlineForkAction(
+        path = "/any",
+        threadId = "source-session",
+        itemId = olderPromptId,
+        subAgentId = null,
+        tabKey = "tab-1",
+      )).isFalse()
+      assertThat(source.canShowThreadOutlineForkAction(
+        path = "/any",
+        threadId = "source-session",
+        itemId = "assistant-1",
+        subAgentId = null,
+        tabKey = "tab-1",
+      )).isFalse()
+      assertThat(source.canShowThreadOutlineForkAction(
+        path = "/any",
+        threadId = "source-session",
+        itemId = latestPromptId,
+        subAgentId = "sub-agent",
+        tabKey = "tab-1",
+      )).isFalse()
+      assertThat(source.canShowThreadOutlineForkAction(
+        path = "/any",
+        threadId = "source-session",
+        itemId = latestPromptId,
+        subAgentId = null,
+        tabKey = "tab-1",
+      )).isTrue()
+
+      source.forkThreadFromOutlineItem(
+        project = ProjectManager.getInstance().defaultProject,
+        path = "/any",
+        threadId = "source-session",
+        itemId = latestPromptId,
+        subAgentId = null,
+        tabKey = "tab-1",
+      )
+    }
+
+    requireNotNull(forkResult)
+    assertThat(UUID.fromString(forkResult.thread.id).toString()).isEqualTo(forkResult.thread.id)
+    assertThat(forkResult.thread.title).isEqualTo("Source Claude thread")
+    assertThat(forkResult.thread.provider).isEqualTo(AgentSessionProvider.CLAUDE)
+    assertThat(forkResult.thread.activity).isEqualTo(AgentThreadActivity.PROCESSING)
+    val launchSpec = requireNotNull(forkResult.launchSpecOverride)
+    assertThat(launchSpec.command).containsExactly(
+      "claude-test",
+      "--resume",
+      "source-session",
+      "--fork-session",
+      "--session-id",
+      forkResult.thread.id,
+      "--settings",
+      "settings-${forkResult.thread.id}.json",
+    )
+    assertThat(launchSpec.envVariables).containsEntry("DISABLE_AUTOUPDATER", "1")
+    assertThat(launchSpec.preallocatedSessionId).isEqualTo(forkResult.thread.id)
+  }
+
+  @Test
+  fun forkActionIgnoresSyntheticOutlineIds() {
+    val outline = AgentSessionThreadOutline(
+      provider = AgentSessionProvider.CLAUDE,
+      threadId = "source-session",
+      title = "Synthetic outline",
+      updatedAt = 10_000L,
+      items = listOf(
+        AgentSessionOutlineItem(id = "outline-0", kind = AgentSessionOutlineItemKind.USER_PROMPT, title = "Prompt"),
+      ),
+    )
+    val source = ClaudeSessionSource(
+      backend = outlineBackend(outline),
+      calculateCost = { AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE) },
+    )
+
+    val forkResult = runBlocking(Dispatchers.Default) {
+      source.loadThreadOutline(path = "/any", threadId = "source-session", subAgentId = null)
+      assertThat(source.canShowThreadOutlineForkAction(
+        path = "/any",
+        threadId = "source-session",
+        itemId = "outline-0",
+        subAgentId = null,
+        tabKey = "tab-1",
+      )).isFalse()
+      source.forkThreadFromOutlineItem(
+        project = ProjectManager.getInstance().defaultProject,
+        path = "/any",
+        threadId = "source-session",
+        itemId = "outline-0",
+        subAgentId = null,
+        tabKey = "tab-1",
+      )
+    }
+
+    assertThat(forkResult).isNull()
+  }
 
 }
 
 private fun staticBackend(threads: List<ClaudeBackendThread>): ClaudeSessionBackend {
   return object : ClaudeSessionBackend {
     override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = threads
+  }
+}
+
+private fun outlineBackend(outline: AgentSessionThreadOutline?): ClaudeSessionBackend {
+  return object : ClaudeSessionBackend {
+    override suspend fun listThreads(path: String, openProject: Project?): List<ClaudeBackendThread> = emptyList()
+
+    override suspend fun loadThreadOutline(path: String, threadId: String): AgentSessionThreadOutline? = outline
   }
 }
 

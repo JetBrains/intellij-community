@@ -296,6 +296,26 @@ internal fun buildClaudeResumeLaunchSpec(
   )
 }
 
+internal fun buildClaudeForkResumeLaunchSpec(
+  sourceSessionId: String,
+  forkSessionId: String,
+  executable: String = ClaudeCliSupport.CLAUDE_COMMAND,
+  hookSettingsArgument: String? = null,
+): AgentSessionTerminalLaunchSpec {
+  return AgentSessionTerminalLaunchSpec(
+    command = addClaudeHookSettings(
+      ClaudeCliSupport.buildForkResumeCommand(
+        sourceSessionId = sourceSessionId,
+        forkSessionId = forkSessionId,
+        executable = executable,
+      ),
+      hookSettingsArgument,
+    ),
+    envVariables = mapOf(CLAUDE_DISABLE_AUTO_UPDATER_ENV to CLAUDE_DISABLE_AUTO_UPDATER_VALUE),
+    preallocatedSessionId = forkSessionId,
+  )
+}
+
 internal fun buildClaudeNewSessionLaunchSpec(
   mode: AgentSessionLaunchMode,
   executable: String = ClaudeCliSupport.CLAUDE_COMMAND,
