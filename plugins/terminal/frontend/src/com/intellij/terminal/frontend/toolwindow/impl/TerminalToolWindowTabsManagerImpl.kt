@@ -1,5 +1,6 @@
 package com.intellij.terminal.frontend.toolwindow.impl
 
+import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -418,10 +419,12 @@ internal class TerminalToolWindowTabsManagerImpl(
     }
 
     private fun scheduleTabsRestoring(manager: TerminalToolWindowTabsManagerImpl) {
-      manager.tabsRestoredDeferred = manager.coroutineScope.async {
-        val tabs: List<TerminalSessionTab> = TerminalTabsManager.getInstance(manager.project).getTerminalTabs()
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          restoreTabs(tabs, manager)
+      if (TrustedProjects.isProjectTrusted(manager.project)) {
+        manager.tabsRestoredDeferred = manager.coroutineScope.async {
+          val tabs: List<TerminalSessionTab> = TerminalTabsManager.getInstance(manager.project).getTerminalTabs()
+          withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            restoreTabs(tabs, manager)
+          }
         }
       }
     }
