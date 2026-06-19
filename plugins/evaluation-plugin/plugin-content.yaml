@@ -1,8 +1,3 @@
-- name: lib/clikt.jar
-  library: clikt
-  files:
-  - name: $MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/3/clikt-jvm-3.jar
-  reason: <- intellij.evaluationPlugin
 - name: lib/evaluationPlugin.jar
   modules:
   - name: intellij.evaluationPlugin
@@ -30,6 +25,12 @@
   - name: intellij.evaluationPlugin.languages.xml
   - name: intellij.evaluationPlugin.languages.terminal
   - name: intellij.evaluationPlugin.languages.yaml
+- name: lib/intellij.libraries.clikt.jar
+  contentModules:
+  - name: intellij.libraries.clikt
+    libraries:
+      clikt:
+      - name: $MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/3/clikt-jvm-3.jar
 - name: lib/modules/intellij.evaluationPlugin.agent.jar
   contentModules:
   - name: intellij.evaluationPlugin.agent

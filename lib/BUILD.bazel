@@ -665,21 +665,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "com.github.ajalt.clikt/clikt-jvm-3.5.4.jar_copy",
-    src = "@com_github_ajalt_clikt-clikt-jvm-3_5_4_http//file",
-    out = "com.github.ajalt.clikt/clikt-jvm-3.5.4.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "clikt",
-    jar = "@com_github_ajalt_clikt-clikt-jvm-3_5_4_http//file",
-    source_jar = "@com_github_ajalt_clikt-clikt-jvm-3_5_4-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "com.jetbrains.cloudconfig/cloudconfig-2023.9.jar_copy",
     src = "@com_jetbrains_cloudconfig-cloudconfig-2023_9_http//file",
     out = "com.jetbrains.cloudconfig/cloudconfig-2023.9.jar",
@@ -10384,6 +10369,21 @@ jvm_import(
     name = "libraries-cli-parser-cli-parser",
     jar = "@com_github_spullara_cli-parser-cli-parser-1_1_6_http//file",
     source_jar = "@com_github_spullara_cli-parser-cli-parser-1_1_6-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "com.github.ajalt.clikt/clikt-jvm-3.5.4.jar_copy",
+    src = "@com_github_ajalt_clikt-clikt-jvm-3_5_4_http//file",
+    out = "com.github.ajalt.clikt/clikt-jvm-3.5.4.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-clikt-clikt",
+    jar = "@com_github_ajalt_clikt-clikt-jvm-3_5_4_http//file",
+    source_jar = "@com_github_ajalt_clikt-clikt-jvm-3_5_4-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

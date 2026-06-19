@@ -1,0 +1,6 @@
+- name: dist.all/lib/intellij.libraries.clikt.jar
+  modules:
+  - name: intellij.libraries.clikt
+    libraries:
+      clikt:
+      - name: $MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/3/clikt-jvm-3.jar

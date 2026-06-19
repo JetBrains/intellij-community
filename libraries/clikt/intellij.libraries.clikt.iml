@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="clikt" type="repository">
+        <properties include-transitive-deps="false" maven-id="com.github.ajalt.clikt:clikt-jvm:3.5.4">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/3.5.4/clikt-jvm-3.5.4.jar">
+              <sha256sum>b58b4d93fc1870b99b2adb3e16e9c483c8e73766b2944bc3cff805c0be47d19e</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/3.5.4/clikt-jvm-3.5.4.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/3.5.4/clikt-jvm-3.5.4-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/com/github/ajalt/clikt/clikt-jvm/3.5.4/clikt-jvm-3.5.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>
