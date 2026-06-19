@@ -51,14 +51,6 @@
 
   <actions resource-bundle="messages.AgentChatBundle">
     <action
-      id="AgentWorkbenchSessions.EditorTab.PreviousProposedPlan"
-      icon="AllIcons.Actions.PreviousOccurence"
-      class="com.intellij.agent.workbench.chat.AgentChatPreviousProposedPlanAction"/>
-    <action
-      id="AgentWorkbenchSessions.EditorTab.NextProposedPlan"
-      icon="AllIcons.Actions.NextOccurence"
-      class="com.intellij.agent.workbench.chat.AgentChatNextProposedPlanAction"/>
-    <action
       id="AgentWorkbenchSessions.ThreadOutline.StartNewConversationFromHere"
       class="com.intellij.agent.workbench.chat.AgentChatThreadOutlineForkAction"/>
     <group id="AgentWorkbenchSessions.ThreadOutline.Popup" class="com.intellij.agent.workbench.chat.AgentChatThreadOutlinePopupGroup">

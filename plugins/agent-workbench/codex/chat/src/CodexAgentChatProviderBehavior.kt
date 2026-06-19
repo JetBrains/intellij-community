@@ -8,7 +8,6 @@ import com.intellij.agent.workbench.chat.AgentChatInitialMessageDispatchContext
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageRetryDecision
 import com.intellij.agent.workbench.chat.AgentChatProviderBehavior
 import com.intellij.agent.workbench.chat.AgentChatProviderBehaviorContributor
-import com.intellij.agent.workbench.chat.AgentChatSemanticRegionDetector
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadRebindPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
@@ -33,9 +32,6 @@ internal class CodexAgentChatProviderBehaviorContributor : AgentChatProviderBeha
 }
 
 internal object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
-  override val semanticRegionDetector: AgentChatSemanticRegionDetector
-    get() = CodexSemanticRegionDetector
-
   override fun supportsPendingThreadRefreshRetry(file: AgentChatBehaviorFile): Boolean {
     return file.isPendingThread && file.subAgentId == null && file.provider == AgentSessionProvider.CODEX
   }

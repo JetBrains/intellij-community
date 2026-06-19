@@ -8,10 +8,8 @@ import com.intellij.agent.workbench.common.session.isClaudeMenuCommandPrompt
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchAction
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.TerminalViewSessionState
 import kotlinx.coroutines.CoroutineScope
@@ -122,9 +120,6 @@ interface AgentChatInitialMessageDispatchContext {
 
 @ApiStatus.Internal
 interface AgentChatProviderBehavior {
-  val semanticRegionDetector: AgentChatSemanticRegionDetector?
-    get() = null
-
   fun supportsPendingThreadRefreshRetry(file: AgentChatBehaviorFile): Boolean = false
 
   fun pendingThreadRefreshRetryDelayMs(file: AgentChatBehaviorFile, currentTimeMs: Long, retryIntervalMs: Long): Long? = null
@@ -159,33 +154,9 @@ interface AgentChatProviderBehavior {
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision = AgentChatInitialMessageRetryDecision.PROCEED
 
-  fun shouldInstallSemanticRegionNavigation(): Boolean {
-    if (semanticRegionDetector == null) {
-      return false
-    }
-    if (ApplicationManager.getApplication() == null) {
-      return false
-    }
-    return RegistryManager.getInstance().`is`(AGENT_CHAT_PROPOSED_PLAN_NAVIGATION_REGISTRY_KEY)
-  }
-
   fun shouldInstallPatchFolding(): Boolean = false
 
   fun createPatchFoldController(tab: AgentChatBehaviorTerminalTab): AgentChatDisposableController? = null
-}
-
-internal fun createAgentChatSemanticRegionController(
-  behavior: AgentChatProviderBehavior,
-  tab: AgentChatTerminalTab,
-): AgentChatSemanticRegionController? {
-  val detector = behavior.semanticRegionDetector?.takeIf { behavior.shouldInstallSemanticRegionNavigation() } ?: return null
-  val terminalView = tab.terminalView ?: return null
-  return AgentChatSemanticRegionController(
-    terminalView = terminalView,
-    sessionState = tab.sessionState,
-    detector = detector,
-    parentScope = tab.coroutineScope,
-  )
 }
 
 private object DefaultAgentChatProviderBehavior : AgentChatProviderBehavior
