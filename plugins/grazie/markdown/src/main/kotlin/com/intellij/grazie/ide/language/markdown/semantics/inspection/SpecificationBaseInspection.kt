@@ -56,6 +56,10 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
 
     return object : PsiElementVisitor() {
       override fun visitFile(file: PsiFile) {
+        // Markdown file has two PSI trees: HTML and Markdown
+        // We need to filter out HTML one otherwise it's going to be analyzed twice
+        if (file !is MarkdownFile) return
+
         if (!isAgentMarkdownFile(file)) {
           thisLogger().info("${file.name} is not agent-like")
           return
@@ -67,7 +71,7 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
     }
   }
 
-  private fun isAgentMarkdownFile(file: PsiFile): Boolean = file is MarkdownFile && AGENT_MARKDOWN_FILE_NAME_PATTERN.matches(file.name)
+  private fun isAgentMarkdownFile(file: PsiFile): Boolean = AGENT_MARKDOWN_FILE_NAME_PATTERN.matches(file.name)
 
   private fun validateAndGetClient(isOnTheFly: Boolean): SuspendableAPIGatewayClient? {
     if (!isOnTheFly) return null
