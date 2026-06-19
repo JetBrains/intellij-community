@@ -72,10 +72,6 @@
 - name: lib/modules/intellij.agent.workbench.opencode.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.opencode.sessions
-  library: sqlite
-  files:
-  - name: $MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3/sqlite-jdbc-3.jar
-  reason: <- intellij.agent.workbench.opencode.sessions
 - name: lib/modules/intellij.agent.workbench.pi.sessions.filewatch.jar
   contentModules:
   - name: intellij.agent.workbench.pi.sessions.filewatch

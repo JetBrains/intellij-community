@@ -4,136 +4,91 @@ package com.intellij.agent.workbench.opencode.sessions
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.opencode.sessions.server.SharedOpenCodeServerService
 import com.intellij.agent.workbench.sessions.core.providers.BaseAgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.resolveReadTrackedActivity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import java.nio.file.Files
-import java.nio.file.Path
-import java.sql.DriverManager
-import java.sql.ResultSet
+import kotlinx.coroutines.CancellationException
 
 private val LOG = logger<OpenCodeSessionSource>()
 
+internal interface OpenCodeSessionBackend {
+  suspend fun loadEntries(normalizedProjectPath: String, archived: Boolean): List<OpenCodeSessionIndexEntry>
+  suspend fun renameSession(normalizedProjectPath: String, sessionId: String, title: String): Boolean
+  suspend fun archiveSession(normalizedProjectPath: String, sessionId: String, nowMs: Long): Boolean
+  suspend fun unarchiveSession(normalizedProjectPath: String, sessionId: String): Boolean
+}
+
 internal class OpenCodeSessionStore(
-  private val dbPathResolver: () -> Path = ::resolveDefaultOpenCodeDatabasePath,
+  private val backendProvider: () -> OpenCodeSessionBackend = { SharedOpenCodeServerService.getInstance() },
   private val timeProvider: () -> Long = System::currentTimeMillis,
 ) {
-  fun loadEntries(projectPath: String, archived: Boolean): List<OpenCodeSessionIndexEntry> {
-    val normalizedProjectPath = normalizeOpenCodeProjectPath(projectPath) ?: return emptyList()
-    val dbPath = dbPathResolver()
-    if (!Files.isRegularFile(dbPath)) return emptyList()
+  constructor(
+    backend: OpenCodeSessionBackend,
+    timeProvider: () -> Long = System::currentTimeMillis,
+  ) : this(backendProvider = { backend }, timeProvider = timeProvider)
 
+  suspend fun loadEntries(projectPath: String, archived: Boolean): List<OpenCodeSessionIndexEntry> {
+    val normalizedProjectPath = normalizeOpenCodeProjectPath(projectPath) ?: return emptyList()
     return try {
-      Class.forName("org.sqlite.JDBC")
-      DriverManager.getConnection("jdbc:sqlite:${dbPath.toAbsolutePath().normalize()}").use { connection ->
-        connection.prepareStatement(OPEN_CODE_SESSIONS_QUERY).use { statement ->
-          statement.setBoolean(1, archived)
-          statement.setBoolean(2, archived)
-          statement.executeQuery().use { resultSet ->
-            val entries = ArrayList<OpenCodeSessionIndexEntry>()
-            while (resultSet.next()) {
-              resultSet.readOpenCodeSessionEntry(normalizedProjectPath)?.let(entries::add)
-            }
-            entries.sortedByDescending(OpenCodeSessionIndexEntry::updatedAt)
-          }
-        }
-      }
+      backendProvider().loadEntries(normalizedProjectPath, archived)
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
-      LOG.warn("Failed to load OpenCode sessions from $dbPath", e)
+      LOG.warn("Failed to load OpenCode sessions for $normalizedProjectPath", e)
       emptyList()
     }
   }
 
-  private fun ResultSet.readOpenCodeSessionEntry(normalizedProjectPath: String): OpenCodeSessionIndexEntry? {
-    val normalizedDirectory = getString("directory")?.let(::normalizeOpenCodeProjectPath)
-    val normalizedWorktree = getString("worktree")?.let(::normalizeOpenCodeProjectPath)
-    if (normalizedDirectory != normalizedProjectPath && normalizedWorktree != normalizedProjectPath) return null
-
-    val sessionId = getString("id")?.trim()?.takeIf { it.isNotEmpty() } ?: return null
-    val title = getString("title")?.normalizeOpenCodeSessionTitle() ?: sessionId
-    val updatedAt = getLong("time_updated")
-    return OpenCodeSessionIndexEntry(
-      sessionId = sessionId,
-      title = title,
-      updatedAt = updatedAt,
-      archived = getObject("time_archived") != null,
-    )
-  }
-
-  fun renameThread(path: String, threadId: String, normalizedName: String): Boolean {
-    val normalizedThreadId = threadId.trim().takeIf { it.isNotEmpty() } ?: return false
-    val title = normalizedName.normalizeOpenCodeSessionTitle() ?: return false
-    return updateSession(
-      path = path,
-      threadId = normalizedThreadId,
-      sql = "UPDATE \"session\" SET title = ?, time_updated = ? WHERE id = ? AND project_id IN (${OPEN_CODE_PROJECT_FILTER_QUERY})",
-    ) { statement ->
-      statement.setString(1, title)
-      statement.setLong(2, timeProvider())
-      statement.setString(3, normalizedThreadId)
-      4
-    }
-  }
-
-  fun archiveThread(path: String, threadId: String): Boolean {
-    val normalizedThreadId = threadId.trim().takeIf { it.isNotEmpty() } ?: return false
-    return updateSession(
-      path = path,
-      threadId = normalizedThreadId,
-      sql = "UPDATE \"session\" SET time_archived = ?, time_updated = ? WHERE id = ? AND project_id IN (${OPEN_CODE_PROJECT_FILTER_QUERY})",
-    ) { statement ->
-      val now = timeProvider()
-      statement.setLong(1, now)
-      statement.setLong(2, now)
-      statement.setString(3, normalizedThreadId)
-      4
-    }
-  }
-
-  fun unarchiveThread(path: String, threadId: String): Boolean {
-    val normalizedThreadId = threadId.trim().takeIf { it.isNotEmpty() } ?: return false
-    return updateSession(
-      path = path,
-      threadId = normalizedThreadId,
-      sql = "UPDATE \"session\" SET time_archived = NULL, time_updated = ? WHERE id = ? AND project_id IN (${OPEN_CODE_PROJECT_FILTER_QUERY})",
-    ) { statement ->
-      statement.setLong(1, timeProvider())
-      statement.setString(2, normalizedThreadId)
-      3
-    }
-  }
-
-  private fun updateSession(
-    path: String,
-    threadId: String,
-    sql: String,
-    bindSessionFields: (java.sql.PreparedStatement) -> Int,
-  ): Boolean {
+  suspend fun renameThread(path: String, threadId: String, normalizedName: String): Boolean {
     val normalizedProjectPath = normalizeOpenCodeProjectPath(path) ?: return false
     val normalizedThreadId = threadId.trim().takeIf { it.isNotEmpty() } ?: return false
-    val dbPath = dbPathResolver()
-
-    return openCodeDatabaseExists(dbPath) && try {
-      Class.forName("org.sqlite.JDBC")
-      DriverManager.getConnection("jdbc:sqlite:${dbPath.toAbsolutePath().normalize()}").use { connection ->
-        connection.prepareStatement(sql).use { statement ->
-          val nextParameterIndex = bindSessionFields(statement)
-          statement.setString(nextParameterIndex, normalizedProjectPath)
-          statement.setString(nextParameterIndex + 1, normalizedProjectPath)
-          statement.executeUpdate() > 0
-        }
-      }
+    val title = normalizedName.normalizeOpenCodeSessionTitle() ?: return false
+    return try {
+      backendProvider().renameSession(normalizedProjectPath, normalizedThreadId, title)
+    }
+    catch (e: CancellationException) {
+      throw e
     }
     catch (e: Exception) {
-      LOG.warn("Failed to update OpenCode session $normalizedThreadId in $dbPath", e)
+      LOG.warn("Failed to rename OpenCode session $normalizedThreadId for $normalizedProjectPath", e)
+      false
+    }
+  }
+
+  suspend fun archiveThread(path: String, threadId: String): Boolean {
+    val normalizedProjectPath = normalizeOpenCodeProjectPath(path) ?: return false
+    val normalizedThreadId = threadId.trim().takeIf { it.isNotEmpty() } ?: return false
+    return try {
+      backendProvider().archiveSession(normalizedProjectPath, normalizedThreadId, timeProvider())
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed to archive OpenCode session $normalizedThreadId for $normalizedProjectPath", e)
+      false
+    }
+  }
+
+  suspend fun unarchiveThread(path: String, threadId: String): Boolean {
+    val normalizedProjectPath = normalizeOpenCodeProjectPath(path) ?: return false
+    val normalizedThreadId = threadId.trim().takeIf { it.isNotEmpty() } ?: return false
+    return try {
+      backendProvider().unarchiveSession(normalizedProjectPath, normalizedThreadId)
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Exception) {
+      LOG.warn("Failed to unarchive OpenCode session $normalizedThreadId for $normalizedProjectPath", e)
       false
     }
   }
 }
-
-private fun openCodeDatabaseExists(dbPath: Path): Boolean = Files.isRegularFile(dbPath)
 
 internal class OpenCodeSessionSource(
   private val sessionStore: OpenCodeSessionStore = OpenCodeSessionStore(),
@@ -171,22 +126,13 @@ private fun OpenCodeSessionIndexEntry.toAgentSessionThread(readTracker: Map<Stri
   )
 }
 
-internal fun resolveDefaultOpenCodeDatabasePath(
-  environmentProvider: (String) -> String? = System::getenv,
-  homeDirProvider: () -> String = { System.getProperty("user.home") ?: "." },
-): Path {
-  val xdgDataHome = environmentProvider("XDG_DATA_HOME")?.trim()?.takeIf { it.isNotEmpty() }
-  if (xdgDataHome != null) return Path.of(xdgDataHome, "opencode", "opencode.db")
-  return Path.of(homeDirProvider(), ".local", "share", "opencode", "opencode.db")
-}
-
 internal fun normalizeOpenCodeProjectPath(path: String): String? {
   val trimmedPath = path.trim().takeIf { it.isNotEmpty() } ?: return null
   val normalizedPath = normalizeAgentWorkbenchPathOrNull(trimmedPath) ?: return null
   return normalizedPath.trimEnd('/').ifEmpty { "/" }
 }
 
-private fun String.normalizeOpenCodeSessionTitle(): String? {
+internal fun String.normalizeOpenCodeSessionTitle(): String? {
   return replace('\n', ' ')
     .replace('\r', ' ')
     .replace(OPEN_CODE_THREAD_TITLE_WHITESPACE, " ")
@@ -195,26 +141,3 @@ private fun String.normalizeOpenCodeSessionTitle(): String? {
 }
 
 private val OPEN_CODE_THREAD_TITLE_WHITESPACE = Regex("\\s+")
-
-private const val OPEN_CODE_SESSIONS_QUERY: String = """
-  SELECT
-    s.id,
-    s.title,
-    s.directory,
-    s.time_updated,
-    s.time_archived,
-    p.worktree
-  FROM "session" s
-  JOIN "project" p ON p.id = s.project_id
-  WHERE (? AND s.time_archived IS NOT NULL) OR (NOT ? AND s.time_archived IS NULL)
-"""
-
-private const val OPEN_CODE_PROJECT_FILTER_QUERY: String = """
-  SELECT id
-  FROM "project"
-  WHERE worktree = ?
-  UNION
-  SELECT project_id
-  FROM "session"
-  WHERE directory = ?
-"""
