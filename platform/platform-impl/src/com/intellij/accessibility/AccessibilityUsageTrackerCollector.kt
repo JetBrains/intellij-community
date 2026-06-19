@@ -24,14 +24,12 @@ internal object AccessibilityUsageTrackerCollector : CounterUsagesCollector() {
   }
 
   private val raisedEvents: Queue<EventId> = ConcurrentLinkedQueue()
-  private val GROUP = EventLogGroup("accessibility", 2)
+  private val GROUP = EventLogGroup("accessibility", 3)
 
   @JvmField
   val SCREEN_READER_DETECTED: EventId = GROUP.registerEvent("screen.reader.detected")
   @JvmField
   val SCREEN_READER_SUPPORT_ENABLED: EventId = GROUP.registerEvent("screen.reader.support.enabled")
-  @JvmField
-  val SCREEN_READER_SUPPORT_ENABLED_VM: EventId = GROUP.registerEvent("screen.reader.support.enabled.in.vmoptions")
   @JvmField
   val LINUX_ACCESSIBILITY_SUPPORT_ENABLED: EventId = GROUP.registerEvent("linux.accessibility.support.enabled")
 
