@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.refactoring.inline.codeInliner
 
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.parentOfType
-import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil.getExistingLabelName
-import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil.getUniqueLabelName
+import org.jetbrains.kotlin.idea.base.psi.AddLabelUtil.getExistingLabelName
+import org.jetbrains.kotlin.idea.base.psi.AddLabelUtil.getUniqueLabelName
 import org.jetbrains.kotlin.idea.base.util.reformat
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_CONVERTED_TO_FUNCTION_KEY
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.InlineDataKeys.WAS_FUNCTION_LITERAL_ARGUMENT_KEY
@@ -13,10 +13,12 @@ import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParenthes
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtDeclarationWithInitializer
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
+import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtLoopExpression
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -26,6 +28,7 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.PsiChildRange
 import org.jetbrains.kotlin.psi.psiUtil.forEachDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.unpackFunctionLiteral
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -79,6 +82,10 @@ abstract class AbstractInlinePostProcessor {
             }
 
             element.reformat(canChangeWhiteSpacesOnly = true)
+        }
+
+        for (pointer in pointers) {
+            cleanupInsertedLabels(pointer)
         }
 
         val childRange = if (newElements.isEmpty()) PsiChildRange.EMPTY else PsiChildRange(newElements.first(), newElements.last())
@@ -177,6 +184,17 @@ abstract class AbstractInlinePostProcessor {
             }
         } else {
             loopExpression
+        }
+    }
+
+    private fun cleanupInsertedLabels(pointer: SmartPsiElementPointer<KtElement>) {
+        val element = pointer.element ?: return
+        val decl = element.getParentOfType<KtDeclarationWithInitializer>(true) ?: return
+        decl.forEachDescendantOfType<KtLabeledExpression> { labeledExpression ->
+            if (labeledExpression.getCopyableUserData(InlineDataKeys.GENERATED_LABEL_KEY) != null) {
+                labeledExpression.putCopyableUserData(InlineDataKeys.GENERATED_LABEL_KEY, null)
+                labeledExpression.labelQualifier?.delete()
+            }
         }
     }
 }

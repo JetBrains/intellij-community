@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.AddLabelUtil
 import org.jetbrains.kotlin.idea.base.psi.imports.addImport
 import org.jetbrains.kotlin.idea.base.searching.usages.ReferencesSearchScopeHelper
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
@@ -85,6 +86,7 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtInstanceExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtLambdaExpression
+import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.kotlin.psi.KtLoopExpression
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -207,6 +209,8 @@ class CodeInliner(
 
         var receiver = usageExpression?.receiverExpression()
         receiver?.putCopyableUserData(USER_CODE_KEY, Unit)
+        val labelsToAdd = mutableListOf<Pair<KtLambdaExpression, String>>()
+        val labelsToReplace = mutableMapOf<String, String>()
 
         var receiverType =
             receiver?.let {
@@ -226,9 +230,14 @@ class CodeInliner(
                         symbol is KaClassSymbol && symbol.classKind.isObject && symbol.name != null -> symbol.name!!.asString()
                         symbol is KaClassifierSymbol && symbol !is KaAnonymousObjectSymbol -> "this@" + symbol.name!!.asString()
                         symbol is KaReceiverParameterSymbol -> {
-                            val name = (symbol.psi as? KtFunctionLiteral)?.findLabelAndCall()?.first
-                                ?: symbol.owningCallableSymbol.callableId?.callableName
-                            name?.asString()?.let { "this@$it" } ?: "this"
+                            val name = receiverLabelName(
+                                symbol.psi as? KtFunctionLiteral,
+                                symbol.owningCallableSymbol.callableId?.callableName,
+                                labelsToAdd,
+                                labelsToReplace
+                            )
+
+                            name?.let { "this@$it" } ?: "this"
                         }
 
                         else -> "this"
@@ -327,8 +336,14 @@ class CodeInliner(
             is KtSuperTypeCallEntry -> SuperTypeCallEntryReplacementPerformer(codeToInline, elementToBeReplaced)
             else -> error("Unsupported element: $elementToBeReplaced")
         }
+        val labelPointersToAdd = labelsToAdd.map { (expression, labelName) -> expression.createSmartPointer() to labelName }
         return performer.doIt { range ->
             val pointers = range.filterIsInstance<KtElement>().map { it.createSmartPointer() }.toList()
+            labelPointersToAdd.forEach { (pointer, labelName) ->
+                val expression = pointer.element ?: return@forEach
+                if (expression.parent is KtLabeledExpression) return@forEach
+                AddLabelUtil.addLabel(expression, labelName).putCopyableUserData(InlineDataKeys.GENERATED_LABEL_KEY, Unit)
+            }
             val declarations =
                 pointers.mapNotNull { pointer -> pointer.element?.takeIf { it.getCopyableUserData(NEW_DECLARATION_KEY) != null } as? KtNamedDeclaration }
             if (declarations.isNotEmpty()) {
@@ -337,6 +352,26 @@ class CodeInliner(
             }
             InlinePostProcessor.postProcessInsertedCode(pointers, commentSaver)
         }
+    }
+
+    private fun receiverLabelName(
+        functionLiteral: KtFunctionLiteral?,
+        callableName: Name?,
+        labelsToAdd: MutableList<Pair<KtLambdaExpression, String>>,
+        labelsToReplace: MutableMap<String, String>,
+    ): String? {
+        val lambdaExpression = functionLiteral?.parent as? KtLambdaExpression
+        (lambdaExpression?.parent as? KtLabeledExpression)?.getLabelName()?.let { return it }
+
+        val (labelName, callExpression) = functionLiteral?.findLabelAndCall() ?: (callableName to null)
+        val name = labelName?.asString() ?: callableName?.asString() ?: return null
+        if (callExpression == null || AddLabelUtil.isLabelNameUnique(callExpression, name)) return name
+        if (lambdaExpression == null) return name
+
+        val uniqueName = AddLabelUtil.getUniqueLabelName(callExpression, name)
+        labelsToAdd += lambdaExpression to uniqueName
+        labelsToReplace[name] = uniqueName
+        return uniqueName
     }
 
     private fun keepInfixFormIfPossible(importDescriptors: List<KtNamedDeclaration>) {

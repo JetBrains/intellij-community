@@ -2604,6 +2604,11 @@ public abstract class KotlinFirInlineTestGenerated extends AbstractKotlinFirInli
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/thisAsStatement.kt");
             }
 
+            @TestMetadata("thisQualifier.kt")
+            public void testThisQualifier() throws Exception {
+                runTest("../../idea/tests/testData/refactoring/inline/namedFunction/thisQualifier.kt");
+            }
+
             @TestMetadata("thisWithOperator.kt")
             public void testThisWithOperator() throws Exception {
                 runTest("../../idea/tests/testData/refactoring/inline/namedFunction/thisWithOperator.kt");

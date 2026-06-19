@@ -10,8 +10,8 @@ import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil.getExistingLabelName
-import org.jetbrains.kotlin.idea.base.psi.AddLoopLabelUtil.getUniqueLabelName
+import org.jetbrains.kotlin.idea.base.psi.AddLabelUtil.getExistingLabelName
+import org.jetbrains.kotlin.idea.base.psi.AddLabelUtil.getUniqueLabelName
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.util.reformat
