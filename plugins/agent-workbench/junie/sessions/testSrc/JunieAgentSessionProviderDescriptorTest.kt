@@ -476,6 +476,46 @@ class JunieAgentSessionProviderDescriptorTest {
   }
 
   @Test
+  fun `apply generation settings strips stale flags before prompt without touching prompt text`() {
+    val descriptor = JunieAgentSessionProviderDescriptor(executableResolver = { "junie-test" })
+    val baseLaunchSpec = AgentSessionTerminalLaunchSpec(
+      command = listOf(
+        "junie-test",
+        "--skip-update-check",
+        "--model",
+        "old-model",
+        "--effort",
+        "low",
+        "--model",
+        "stale-model",
+        "--effort",
+        "--prompt",
+        "keep --model as prompt text",
+      ),
+    )
+
+    val updatedLaunchSpec = descriptor.applyGenerationSettings(
+      baseLaunchSpec,
+      AgentPromptGenerationSettings(
+        modelId = "chatgpt-5.5",
+        reasoningEffort = AgentPromptReasoningEffort.XHIGH,
+      ),
+      STANDARD_INITIAL_MESSAGE_PLAN,
+    )
+
+    assertThat(updatedLaunchSpec.command).containsExactly(
+      "junie-test",
+      "--skip-update-check",
+      "--model",
+      "chatgpt-5.5",
+      "--effort",
+      "xhigh",
+      "--prompt",
+      "keep --model as prompt text",
+    )
+  }
+
+  @Test
   fun `descriptor delegates archive unarchive and backend rename to Junie index backend`(): Unit = runBlocking(Dispatchers.Default) {
     val backend = RecordingJunieThreadMutationBackend()
     val descriptor = JunieAgentSessionProviderDescriptor(

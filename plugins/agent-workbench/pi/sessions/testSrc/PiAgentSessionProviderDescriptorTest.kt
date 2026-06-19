@@ -515,6 +515,43 @@ class PiAgentSessionProviderDescriptorTest {
   }
 
   @Test
+  fun applyGenerationModelCatalogReplacesMalformedStalePiScopedModelArgs(): Unit = runBlocking(Dispatchers.Default) {
+    val modelId = PiOmlxModelCatalog.encodeGenerationModelId(omlxSelection())
+    val knownModelId = PiKnownModelCatalog.encodeGenerationModelId(knownSelection("openai", "gpt-5.4"))
+    val staleBaseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD).copy(
+      command = listOf(
+        "pi",
+        "--extension",
+        "/tmp/pi-extension/agent-workbench-extension.ts",
+        "--models",
+        "old-models",
+        "--models",
+        "--session-id",
+        "pi-session-1",
+      )
+    )
+
+    val launchSpec = descriptor.applyGenerationModelCatalog(
+      baseLaunchSpec = staleBaseLaunchSpec,
+      generationSettings = AgentPromptGenerationSettings.AUTO,
+      generationModelCatalog = listOf(
+        AgentPromptGenerationModel(id = modelId, displayName = "Qwen3.6-27B-MLX-8bit (oMLX)"),
+        AgentPromptGenerationModel(id = knownModelId, displayName = "gpt-5.4 (openai)"),
+      ),
+    )
+
+    assertThat(launchSpec.command).containsExactly(
+      "pi",
+      "--extension",
+      "/tmp/pi-extension/agent-workbench-extension.ts",
+      "--models",
+      "oMLX/Qwen3.6-27B-MLX-8bit,openai/gpt-5.4",
+      "--session-id",
+      "pi-session-1",
+    )
+  }
+
+  @Test
   fun applyGenerationModelCatalogLeavesAutoSettingsUnchangedWhenCatalogIsEmpty(): Unit = runBlocking(Dispatchers.Default) {
     val baseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD)
 
@@ -737,7 +774,7 @@ class PiAgentSessionProviderDescriptorTest {
   }
 
   @Test
-  fun applyGenerationSettingsReplacesStalePiGenerationArgs(): Unit = runBlocking(Dispatchers.Default) {
+  fun applyGenerationSettingsReplacesMalformedStalePiGenerationArgs(): Unit = runBlocking(Dispatchers.Default) {
     val modelId = PiOmlxModelCatalog.encodeGenerationModelId(omlxSelection())
     val staleBaseLaunchSpec = descriptor.buildNewSessionLaunchSpec(AgentSessionLaunchMode.STANDARD).copy(
       command = listOf(
@@ -750,6 +787,9 @@ class PiAgentSessionProviderDescriptorTest {
         "old-model",
         "--thinking",
         "high",
+        "--provider",
+        "stale-provider",
+        "--thinking",
         "--session-id",
         "pi-session-1",
       )

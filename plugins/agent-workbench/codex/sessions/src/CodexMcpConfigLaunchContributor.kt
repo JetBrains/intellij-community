@@ -11,6 +11,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributor
 import com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigBuilder
 import com.intellij.agent.workbench.sessions.core.launch.McpStreamUrlProvider
+import com.intellij.agent.workbench.sessions.core.launch.insertArgumentsBefore
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import java.net.URI
 import java.nio.file.Files
@@ -66,10 +67,7 @@ private fun buildCodexMcpConfigArgs(
 }
 
 private fun insertCodexMcpConfigArgs(command: List<String>, args: List<String>): List<String> {
-  val insertIndex = command.indexOfFirst { it == "resume" || it == "--" }.takeIf { it >= 0 } ?: command.size
-  return command.toMutableList().apply {
-    addAll(insertIndex, args)
-  }
+  return insertArgumentsBefore(command, args, beforeTokens = setOf("resume", "--"))
 }
 
 private fun tomlString(value: String): String {

@@ -12,6 +12,8 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.sessions.core.launch.insertArgumentsBefore
+import com.intellij.agent.workbench.sessions.core.launch.removeOptions
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
@@ -442,55 +444,13 @@ private fun logPiGenerationModelCatalog(
 }
 
 private fun insertPiGenerationArgs(command: List<String>, args: List<String>): List<String> {
-  val sessionFlagIndex = command.indexOfFirst { token -> token == PI_SESSION_FLAG || token == PI_SESSION_ID_FLAG }
-                           .takeIf { index -> index >= 0 }
-                         ?: command.size
-  val result = command.subList(0, sessionFlagIndex).withoutPiGenerationArgs().toMutableList()
-  result.addAll(args)
-  result.addAll(command.subList(sessionFlagIndex, command.size))
-  return result
+  val commandWithoutGenerationArgs = removeOptions(command, PI_GENERATION_FLAGS, beforeTokens = PI_SESSION_BOUNDARY_FLAGS)
+  return insertArgumentsBefore(commandWithoutGenerationArgs, args, beforeTokens = PI_SESSION_BOUNDARY_FLAGS)
 }
 
 private fun insertPiScopedModelArgs(command: List<String>, args: List<String>): List<String> {
-  val sessionFlagIndex = command.indexOfFirst { token -> token == PI_SESSION_FLAG || token == PI_SESSION_ID_FLAG }
-                           .takeIf { index -> index >= 0 }
-                         ?: command.size
-  val result = command.subList(0, sessionFlagIndex).withoutPiScopedModelArgs().toMutableList()
-  result.addAll(args)
-  result.addAll(command.subList(sessionFlagIndex, command.size))
-  return result
-}
-
-private fun List<String>.withoutPiScopedModelArgs(): List<String> {
-  val result = mutableListOf<String>()
-  var index = 0
-  while (index < size) {
-    val token = this[index]
-    if (token == PI_MODELS_FLAG) {
-      index += if (index + 1 < size) 2 else 1
-    }
-    else {
-      result.add(token)
-      index++
-    }
-  }
-  return result
-}
-
-private fun List<String>.withoutPiGenerationArgs(): List<String> {
-  val result = mutableListOf<String>()
-  var index = 0
-  while (index < size) {
-    val token = this[index]
-    if (token == PI_PROVIDER_FLAG || token == PI_MODEL_FLAG || token == PI_THINKING_FLAG) {
-      index += if (index + 1 < size) 2 else 1
-    }
-    else {
-      result.add(token)
-      index++
-    }
-  }
-  return result
+  val commandWithoutScopedModelArgs = removeOptions(command, PI_SCOPED_MODEL_FLAGS, beforeTokens = PI_SESSION_BOUNDARY_FLAGS)
+  return insertArgumentsBefore(commandWithoutScopedModelArgs, args, beforeTokens = PI_SESSION_BOUNDARY_FLAGS)
 }
 
 private fun buildPiReasoningArgs(reasoningEffort: AgentPromptReasoningEffort): List<String> {
@@ -511,6 +471,9 @@ private const val PI_MODELS_FLAG: String = "--models"
 private const val PI_THINKING_FLAG: String = "--thinking"
 private const val PI_SESSION_FLAG: String = "--session"
 private const val PI_SESSION_ID_FLAG: String = "--session-id"
+private val PI_GENERATION_FLAGS: Set<String> = setOf(PI_PROVIDER_FLAG, PI_MODEL_FLAG, PI_THINKING_FLAG)
+private val PI_SCOPED_MODEL_FLAGS: Set<String> = setOf(PI_MODELS_FLAG)
+private val PI_SESSION_BOUNDARY_FLAGS: Set<String> = setOf(PI_SESSION_FLAG, PI_SESSION_ID_FLAG)
 internal const val PI_MODEL_CATALOG_ENVIRONMENT_VARIABLE: String = "AGENT_WORKBENCH_PI_MODEL_CATALOG"
 
 internal fun buildPiModelCatalogEnvironmentValueForGenerationModels(generationModelCatalog: List<AgentPromptGenerationModel>): String? {

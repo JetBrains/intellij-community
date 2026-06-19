@@ -12,6 +12,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.prompt.core.withGroup
+import com.intellij.agent.workbench.sessions.core.launch.replaceOrAddOption
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
@@ -225,15 +226,7 @@ internal class ClaudeAgentSessionProviderDescriptor(
 }
 
 internal fun replaceOrAddPermissionMode(command: List<String>, mode: String): List<String> {
-  val result = command.toMutableList()
-  val index = result.indexOf(PERMISSION_MODE_FLAG)
-  if (index >= 0 && index + 1 < result.size) {
-    result[index + 1] = mode
-  }
-  else {
-    result.addAll(listOf(PERMISSION_MODE_FLAG, mode))
-  }
-  return result
+  return replaceOrAddOption(command, PERMISSION_MODE_FLAG, mode)
 }
 
 internal fun replaceOrAddEffort(command: List<String>, effort: String): List<String> {
@@ -249,28 +242,7 @@ internal fun addClaudeHookSettings(command: List<String>, settingsArgument: Stri
   if (command.any { it == CLAUDE_BARE_FLAG || it == CLAUDE_SAFE_MODE_FLAG }) {
     return command
   }
-  val result = command.toMutableList()
-  val existingIndex = result.indexOf(SETTINGS_FLAG)
-  if (existingIndex >= 0 && existingIndex + 1 < result.size && result[existingIndex + 1] == normalizedSettingsArgument) {
-    return result
-  }
-
-  val promptSeparatorIndex = result.indexOf("--").takeIf { it >= 0 } ?: result.size
-  result.addAll(promptSeparatorIndex, listOf(SETTINGS_FLAG, normalizedSettingsArgument))
-  return result
-}
-
-private fun replaceOrAddOption(command: List<String>, flag: String, value: String): List<String> {
-  val result = command.toMutableList()
-  val index = result.indexOf(flag)
-  if (index >= 0 && index + 1 < result.size) {
-    result[index + 1] = value
-    return result
-  }
-
-  val promptSeparatorIndex = result.indexOf("--").takeIf { it >= 0 } ?: result.size
-  result.addAll(promptSeparatorIndex, listOf(flag, value))
-  return result
+  return replaceOrAddOption(command, SETTINGS_FLAG, normalizedSettingsArgument)
 }
 
 private fun AgentPromptReasoningEffort.claudeCliValue(): String {

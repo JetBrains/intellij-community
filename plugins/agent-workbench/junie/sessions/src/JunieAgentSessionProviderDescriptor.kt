@@ -12,6 +12,8 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
+import com.intellij.agent.workbench.sessions.core.launch.insertArgumentsBefore
+import com.intellij.agent.workbench.sessions.core.launch.removeOptions
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageMode
@@ -237,27 +239,8 @@ private fun buildJunieGenerationArgs(
 }
 
 private fun replaceJunieGenerationArgs(command: List<String>, args: List<String>): List<String> {
-  val promptIndex = command.indexOf(PROMPT_FLAG).takeIf { it >= 0 } ?: command.size
-  val result = command.subList(0, promptIndex).withoutJunieGenerationArgs().toMutableList()
-  result.addAll(args)
-  result.addAll(command.subList(promptIndex, command.size))
-  return result
-}
-
-private fun List<String>.withoutJunieGenerationArgs(): List<String> {
-  val result = mutableListOf<String>()
-  var index = 0
-  while (index < size) {
-    val token = this[index]
-    if (token == MODEL_FLAG || token == EFFORT_FLAG) {
-      index += if (index + 1 < size) 2 else 1
-    }
-    else {
-      result.add(token)
-      index++
-    }
-  }
-  return result
+  val commandWithoutGenerationArgs = removeOptions(command, JUNIE_GENERATION_FLAGS, beforeTokens = setOf(PROMPT_FLAG))
+  return insertArgumentsBefore(commandWithoutGenerationArgs, args, beforeTokens = setOf(PROMPT_FLAG))
 }
 
 private fun AgentPromptReasoningEffort.junieCliValue(): String {
@@ -267,3 +250,4 @@ private fun AgentPromptReasoningEffort.junieCliValue(): String {
 private const val MODEL_FLAG: String = "--model"
 private const val EFFORT_FLAG: String = "--effort"
 private const val PROMPT_FLAG: String = "--prompt"
+private val JUNIE_GENERATION_FLAGS: Set<String> = setOf(MODEL_FLAG, EFFORT_FLAG)

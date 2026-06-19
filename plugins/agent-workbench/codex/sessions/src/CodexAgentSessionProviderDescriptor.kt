@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceKind
 import com.intellij.agent.workbench.prompt.core.withGroup
+import com.intellij.agent.workbench.sessions.core.launch.insertArgumentsBefore
 import com.intellij.agent.workbench.sessions.core.providers.AGENT_PROMPT_PROVIDER_PLAN_MODE_OPTION
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchCompletionPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
@@ -324,10 +325,7 @@ private fun buildCodexGenerationArgs(
 }
 
 private fun insertCodexGenerationArgs(command: List<String>, args: List<String>): List<String> {
-  val promptSeparatorIndex = command.indexOf("--").takeIf { it >= 0 } ?: command.size
-  return command.toMutableList().apply {
-    addAll(promptSeparatorIndex, args)
-  }
+  return insertArgumentsBefore(command, args, beforeTokens = setOf("--"))
 }
 
 private fun AgentPromptReasoningEffort.codexConfigValue(): String {

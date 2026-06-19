@@ -242,6 +242,20 @@ class ClaudeAgentSessionProviderDescriptorTest {
   }
 
   @Test
+  fun addClaudeHookSettingsReplacesExistingSettingsBeforePromptSeparator() {
+    assertThat(
+      addClaudeHookSettings(
+        listOf("claude", "--settings", "/tmp/old-settings.json", "--", "Refactor this"),
+        TEST_CLAUDE_HOOK_SETTINGS_ARGUMENT,
+      )
+    ).containsExactly("claude",
+                      "--settings",
+                      TEST_CLAUDE_HOOK_SETTINGS_ARGUMENT,
+                      "--",
+                      "Refactor this")
+  }
+
+  @Test
   fun addClaudeHookSettingsSkipsHookDisabledModes() {
     assertThat(
       addClaudeHookSettings(
