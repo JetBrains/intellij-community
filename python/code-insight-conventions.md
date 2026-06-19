@@ -37,7 +37,9 @@ To run one checker by hand: `uvx ty check test.py`, `uvx pyrefly check test.py`,
 `uvx basedpyright test.py` (file is positional), `uvx mypy test.py`,
 `uvx zuban check test.py`.
 
-## Tests: use `PyCodeInsightTestCase`
+## Tests
+
+### use `PyCodeInsightTestCase`
 
 - Write new inspection / code-insight tests against `PyCodeInsightTestCase`
   (Kotlin, JUnit5, inline assertion mini-language) — not the older
@@ -46,7 +48,35 @@ To run one checker by hand: `uvx ty check test.py`, `uvx pyrefly check test.py`,
   test needs, **enhance `PyCodeInsightTestCase` itself** rather than falling
   back to an older base class.
 
-## Tests: annotate with `@TestFor`
+### code-style
+
+- tests should use the latest language level and syntax features by default,
+  only using the older form when that is the explicit purpose of the test. e.g.:
+  ```kotlin
+  @Test
+  fun `type variable inference`() = test("""
+    def f[T](t: T) -> T: ...
+  
+    result = f(1)
+    # └ TYPE int
+    """)
+  
+  @Test
+  // this is needed due to special handling in the implementation, not because every test requires an old version
+  fun `type variable inference old style`() = test("""
+    from typing import TypeVar
+  
+    T = TypeVar("T")
+  
+    def f(t: T) -> T: ...
+  
+    result = f(1)
+    # └ TYPE int
+    """)
+  }
+  ```
+
+### annotate with `@TestFor`
 
 - Annotate new tests and test classes with `@TestFor`, binding each to what it
   covers — never a bare `// PY-XXXXX` comment.
@@ -58,7 +88,7 @@ To run one checker by hand: `uvx ty check test.py`, `uvx pyrefly check test.py`,
 - Both may be combined when a test covers an issue against a specific class:
   `@TestFor(issues = ["PY-XXXXX"], classes = [PySomething::class])`.
 
-## Running tests
+### Running tests
 
 - Code-insight tests live in module **`intellij.python.community.tests`**
   (sources under `community/python/testSrc/`).
