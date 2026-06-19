@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -180,6 +180,11 @@ class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
   @Override
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return super.shouldSkipIntention(actionText) || mayBreakCompilation(actionText);
+  }
+
+  @Override
+  protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
+    return mayBreakCompilation(familyName) || super.shouldSkipByFamilyName(familyName);
   }
 
   @Override
