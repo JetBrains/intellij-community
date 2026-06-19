@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
   override val defaultTestOptions =
-    TestOptions(enablePyAnyType = false, assertRecursionPrevention = false)
+    TestOptions(assertRecursionPrevention = false)
 
   @Nested
   inner class PropertyTypeInference {
@@ -164,7 +164,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       class Example:
           def __init__(self):
               expr = self.ins_class
-      #       └ TYPE Type mismatch for code analysis context ('Any') and user initiated context ('type[str]')
+      #       └ TYPE Type mismatch for code analysis context ('Unknown') and user initiated context ('type[str]')
           @property
           def ins_class(self):
               return get_class()
@@ -567,7 +567,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
               if self.attr is None:
                   self.attr = 42
               expr = self.attr
-      #       └ TYPE UnsafeUnion[None, Any] | Literal[42]
+      #       └ TYPE UnsafeUnion[None, Unknown] | Literal[42]
       """)
 
     @Test
@@ -621,7 +621,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       class B(A):
           pass
       expr = B().foo()
-      #└ TYPE Generator[B, Any, B]
+      #└ TYPE Generator[B, Unknown, B]
       """)
 
     @Test
@@ -694,7 +694,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
       from collections import defaultdict
       data = defaultdict(dict)
       expr = data['name']
-      #└ TYPE dict[Any, Any]
+      #└ TYPE dict[Unknown, Unknown]
       """)
 
     @Test
@@ -1271,12 +1271,10 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
       class MyDescriptor[T]:
           @overload
-          def __get__(self, instance: None, owner: Any) -> T: # access via class
-      #       ^^^^^^^ WARNING At least two @overload-decorated methods must be present
-      #       ^^^^^^^ WARNING Signature of this @overload-decorated method is not compatible with the implementation
-              ...
-          def __get__(self, instance: "Bar", owner: Any) -> Union[str, T]:
-              ...
+          def __get__(self, instance: None, owner: Any) -> T: ...  # access via class
+      #       ^^^^^^^ WARNING A series of @overload-decorated methods should always be followed by an implementation that is not @overload-ed
+          @overload
+          def __get__(self, instance: Bar, owner: Any) -> str | T: ...
 
       class Foo():
           x = MyDescriptor[int]()
@@ -1285,7 +1283,7 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
           x = MyDescriptor[int]()
 
       expr = Foo().x
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test

@@ -164,7 +164,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return pyType.get();
     }
     PyType type = getTypeFromDocString();
-    if (!isUnknown(type)) {
+    if (type != null) {
       return type;
     }
     if (!context.maySwitchToAST(this)) {
@@ -207,7 +207,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return PyUnionType.union(types);
     }
     type = getTypeFromComment(this);
-    if (!isUnknown(type)) {
+    if (type != null) {
       return type;
     }
     final PsiElement parent = PsiTreeUtil.skipParentsOfType(this, PyParenthesizedExpression.class);
@@ -393,7 +393,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     if (typeName != null) {
       return PyTypeParser.getTypeByName(this, typeName);
     }
-    return PyAnyType.getUnknown();
+    return null;
   }
 
   public static @Nullable PyType getTypeFromComment(PyTargetExpressionImpl targetExpression) {
@@ -408,7 +408,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         return PyTypeParser.getTypeByName(targetExpression, typeName);
       }
     }
-    return PyAnyType.getUnknown();
+    return null;
   }
 
   private @Nullable PyType getTypeFromIteration(@NotNull TypeEvalContext context) {
@@ -447,7 +447,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
         return type;
       }
     }
-    return PyAnyType.getUnknown();
+    return null;
   }
 
   private static @Nullable PyType getIterationType(@Nullable PyType iterableType,
@@ -507,9 +507,9 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
                                                       @NotNull TypeEvalContext context,
                                                       boolean async) {
     final Ref<PyType> nextMethodCallType = getNextMethodCallType(type, source, anchor, context, async);
-    if (nextMethodCallType != null && !nextMethodCallType.isNull()) {
+    if (nextMethodCallType != null && !isUnknown(nextMethodCallType.get())) {
       if (async) {
-        return Ref.deref(PyTypingTypeProvider.unwrapCoroutineReturnType(nextMethodCallType.get()));
+        return PyTypeUtil.derefOrUnknown(PyTypingTypeProvider.unwrapCoroutineReturnType(nextMethodCallType.get()));
       }
       return nextMethodCallType.get();
     }

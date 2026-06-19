@@ -357,7 +357,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     final ControlFlowTypeResult controlFlowResult = getQualifiedReferenceTypeByControlFlow(context);
     final PyType typeByControlFlow = controlFlowResult.type();
-    if (typeByControlFlow != null) {
+    if (!isUnknown(typeByControlFlow)) {
       if (controlFlowResult.foundPrefixCall()) {
         // A call with prefix as receiver/argument may or may not mutate it, so return UnsafeUnion of narrowed and declared types (PY-88265)
         PyType declaredType = Ref.deref(getTypeFromTargets(context));
@@ -441,7 +441,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         return getTypeByControlFlow(qname.toString(), context, qualifier, scopeOwner);
       }
     }
-    return new ControlFlowTypeResult(null, false);
+    return new ControlFlowTypeResult(PyAnyType.getUnknown(), false);
   }
 
   private @Nullable Ref<PyType> getTypeOfProperty(@Nullable PyType qualifierType, @NotNull String name, @NotNull TypeEvalContext context) {
@@ -644,7 +644,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
 
     final Instruction[] flow = ControlFlowCache.getControlFlow(scopeOwner).getInstructions();
     final int thisInstructionIdx = ControlFlowUtil.findInstructionNumberByElement(flow, element);
-    if (thisInstructionIdx == -1) return new ControlFlowTypeResult(null, false);
+    if (thisInstructionIdx == -1) return new ControlFlowTypeResult(PyAnyType.getUnknown(), false);
     final Instruction thisInstruction = flow[thisInstructionIdx];
 
     final PyDefUseUtil.LatestDefsResult defsResult = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true, false, context);

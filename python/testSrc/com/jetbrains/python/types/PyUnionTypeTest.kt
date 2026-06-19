@@ -15,8 +15,6 @@ import org.junit.jupiter.api.Test
  */
 class PyUnionTypeTest : PyCodeInsightTestCase() {
 
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
-
   @Nested
   inner class UnionInference {
     @Test
@@ -35,7 +33,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       class C:
           def __init__(self): self.foo = None
       expr = C().foo
-      # └ TYPE UnsafeUnion[None, Any]
+      # └ TYPE UnsafeUnion[None, Unknown]
       """)
 
     @Test
@@ -46,11 +44,10 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
           return x
       expr = f(1, g())
       # │         └ ERROR Unresolved reference 'g'
-      # └ TYPE Literal[1] | Any
+      # └ TYPE Literal[1] | Unknown
       """)
 
     @Test
-    @Disabled("PY-90332")
     fun `union iteration yields union of element types`() = test("""
       def f(c):
           if c < 0:
@@ -62,17 +59,15 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       
       def g(c):
           for expr in f(c):
-      #       │       ^^^^ WARNING Expected type 'collections.Iterable', got 'list[int] | float | str' instead
-      #       └ TYPE int | str | Any
+      #       │       ^^^^ WARNING Expected type 'collections.Iterable', got 'list[int] | float | Literal["foo"]' instead
+      #       └ TYPE int | LiteralString | Unknown
               pass
       """)
 
     @Test
     @TestFor(issues = ["PY-26973"])
-    @Disabled("PY-90332")
     fun `slice of union picks matching member`() = test(
       TestOptions(languageLevel = LanguageLevel.PYTHON36,
-                  enablePyAnyType = false,
                   enableWeakWarnings = false,
                   assertRecursionPrevention = false),
       """
@@ -97,7 +92,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       def f(c):
           o = Foo() if c else Bar()
           expr = o.x
-      #   └ TYPE list[Any] | int
+      #   └ TYPE list[Unknown] | int
       """)
 
     @Test
@@ -162,7 +157,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       x = 42 if True else 'spam'
       expr = x.foo
       #│       ^^^ WEAK-WARNING Member 'Literal[42]' of 'Literal[42, "spam"]' does not have attribute 'foo'
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
   }
 
@@ -186,7 +181,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `None literal`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON34, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON34, assertRecursionPrevention = false),
       """
       expr = None
       # └ TYPE None
@@ -253,7 +248,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       from typing import Union
       
       def foo(expr: Union[int, Union[str, list]]):
-      #       └ TYPE int | str | list[Any]
+      #       └ TYPE int | str | list[Unknown]
           pass
       """)
 
@@ -271,7 +266,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
     fun `union with partially unresolved member`() = test("""
       expr: int | asdf
       #│          ^^^^ ERROR Unresolved reference 'asdf'
-      #└ TYPE int | Any
+      #└ TYPE int | Unknown
       """)
   }
 
@@ -280,7 +275,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-44974"])
     fun `bitwise-or union from branches with from future import`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON39, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON39, assertRecursionPrevention = false),
       """
       from __future__ import annotations
       if something:
@@ -296,7 +291,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-44974"])
     fun `bitwise-or union from branches without from future import`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON39, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON39, assertRecursionPrevention = false),
       """
       if something:
       #  ^^^^^^^^^ ERROR Unresolved reference 'something'
@@ -313,7 +308,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
     fun `parenthesized bitwise-or union of unions`() = test("""
       bar: int | ((list | dict) | (float | str)) = ""
       expr = bar
-      #└ TYPE int | list[Any] | dict[Any, Any] | float | str
+      #└ TYPE int | list[Unknown] | dict[Unknown, Unknown] | float | str
       """)
 
     @Test
@@ -354,7 +349,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       Alias = Foo | None
       expr: Alias
       #│    ^^^^^ WARNING Invalid type annotation
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -371,7 +366,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       
       expr: Foo | None
       # │   ^^^^^^^^^^ WARNING Invalid type annotation
-      # └ TYPE Any
+      # └ TYPE Unknown
       """)
 
     @Test
@@ -387,7 +382,6 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    @Disabled("PY-90332")
     fun `union with LiteralString collapses on string concatenation`() = test("""
       from typing import LiteralString
       
@@ -438,7 +432,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-44974"])
     fun `assigning None to parenthesized bitwise-or union of unions is reported`() = test("""
-      bar: int | ((list | dict) | (float | str)) = None # WARNING Expected type 'int | list[Any] | dict[Any, Any] | float | str', got 'None' instead
+      bar: int | ((list | dict) | (float | str)) = None # WARNING Expected type 'int | list[Unknown] | dict[Unknown, Unknown] | float | str', got 'None' instead
       """)
 
     @Test
@@ -505,7 +499,7 @@ class PyUnionTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `bitwise-or union with not calculated generic from union`() = test(
-      TestOptions(enablePyAnyType = false, enableWeakWarnings = false, assertRecursionPrevention = false),
+      TestOptions(enableWeakWarnings = false, assertRecursionPrevention = false),
       """
       from typing import Union, TypeVar
 

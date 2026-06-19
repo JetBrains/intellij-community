@@ -35,34 +35,25 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    fun `io open default mode`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `io open default mode`() = test("""
       import io
       expr = io.open('foo')
       # └ TYPE TextIOWrapper[_WrappedBuffer]
-      """,
-    )
+      """)
 
     @Test
-    fun `io open text mode`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `io open text mode`() = test("""
       import io
       expr = io.open('foo', 'r')
       #└ TYPE TextIOWrapper[_WrappedBuffer]
-      """,
-    )
+      """)
 
     @Test
-    fun `io open binary mode`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `io open binary mode`() = test("""
       import io
       expr = io.open('foo', 'rb')
       #└ TYPE BufferedReader[_BufferedReaderStream]
-      """,
-    )
+      """)
   }
 
   @Nested
@@ -98,7 +89,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-20757"])
-    fun `min else None`() = test("""
+    fun `min else None`() = test(TestOptions(enablePyAnyType = false), """
       def get_value(v):
           if v:
               return min(v)
@@ -158,13 +149,10 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
   inner class FloatFromhex {
     @Test
     @TestFor(issues = ["PY-21083"])
-    fun `float fromhex`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `float fromhex`() = test("""
       expr = float.fromhex("0.5")
       #└ TYPE float
-      """,
-    )
+      """)
   }
 
   @Nested
@@ -206,116 +194,87 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
   @Nested
   inner class CollectionsStdlibTypes {
     @Test
-    fun `defaultdict from dict`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `defaultdict from dict`() = test("""
       from collections import defaultdict
       expr = defaultdict(dict)
-      #└ TYPE defaultdict[Any, dict[Any, Any]]
-      """,
-    )
+      #└ TYPE defaultdict[Unknown, dict[Unknown, Unknown]]
+      """)
   }
 
   @Nested
   inner class DictBuiltinMethodResults {
     @Test
     @TestFor(issues = ["PY-20409"])
-    fun `get from dict with default None value`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `get from dict with default None value`() = test("""
       d = {}
       expr = d.get("abc", None)
-      #└ TYPE Any | None
-      """,
-    )
+      #└ TYPE Unknown | None
+      """)
 
     @Test
     @TestFor(issues = ["PY-82818"])
-    fun `pop from dict with default None value`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `pop from dict with default None value`() = test("""
       d = {}
       expr = d.pop("abc", None)
-      #└ TYPE Any
-      """,
-    )
+      #└ TYPE Unknown
+      """)
 
     @Test
     @TestFor(issues = ["PY-83704"])
-    fun `pop from typed dict with default None value`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `pop from typed dict with default None value`() = test("""
       d: dict[str, int] = {"abc": 0, "1": 1}
       expr = d.pop("abc", None)
       #└ TYPE int | None
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-83704"])
-    fun `pop from Any-valued dict with default None value`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `pop from Any-valued dict with default None value`() = test("""
       from typing import Any
       d: dict[str, Any] = {"abc": "s", "1": 1}
       expr = d.pop("abc", None)
       #└ TYPE Any
-      """,
-    )
+      """)
   }
 
   @Nested
   inner class DocstringDerivedTypesReStructuredText {
     @Test
-    fun `type from method call comment`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `type from method call comment`() = test("""
       expr = ''.capitalize()
       #└ TYPE LiteralString
-      """,
-    )
+      """)
 
     @Test
-    fun `rest param type`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `rest param type`() = test("""
       def foo(limit):
         ''':param integer limit: maximum number of stack frames to show'''
         expr = limit
       #   └ TYPE int
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-3849"])
-    fun `rest class type`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `rest class type`() = test("""
       class Foo: pass
       def foo(limit):
         ''':param :class:`Foo` limit: maximum number of stack frames to show'''
         expr = limit
       #   └ TYPE Foo
-      """,
-    )
+      """)
 
     @Test
-    fun `rest ivar type`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `rest ivar type`() = test("""
       def foo(p):
           var = p.bar
           ''':type var: str'''
           expr = var
       #   └ TYPE str
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-6584"])
-    fun `class attribute type in class docstring via class`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `class attribute type in class docstring via class`() = test("""
       class C(object):
           '''
           :type foo: int
@@ -324,14 +283,11 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = C.foo
       #└ TYPE int
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-6584"])
-    fun `class attribute type in class docstring via instance`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `class attribute type in class docstring via instance`() = test("""
       class C(object):
           '''
           :type foo: int
@@ -340,14 +296,11 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       
       expr = C().foo
       #└ TYPE int
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-6584"])
-    fun `instance attribute type in class docstring`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `instance attribute type in class docstring`() = test("""
       class C(object):
           '''
           :type foo: int
@@ -358,14 +311,11 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       def f(x):
           expr = C(x).foo
       #   └ TYPE int
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-8953"])
-    fun `self type in docstring`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `self type in docstring`() = test("""
       class C(object):
           def foo(self):
               '''
@@ -373,14 +323,11 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
               '''
               expr = self
       #       └ TYPE int
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-7322"])
-    fun `namedtuple parameter type in docstring`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `namedtuple parameter type in docstring`() = test("""
       from collections import namedtuple
       Point = namedtuple('Point', ('x', 'y'))
       def takes_a_point(point):
@@ -389,14 +336,11 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           '''
           expr = point
       #   └ TYPE Point
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-4813"])
-    fun `parameter type inference in subclass from docstring`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `parameter type inference in subclass from docstring`() = test("""
       class Base:
           def test(self, param):
               '''
@@ -409,36 +353,29 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           def test(self, param):
               expr = param
       #       └ TYPE int
-      """,
-    )
+      """)
   }
 
   @Nested
   inner class DocstringDerivedTypesNumpyGoogle {
     @Test
     @TestFor(issues = ["PY-24923"])
-    fun `empty numpy function docstring`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `empty numpy function docstring`() = test("""
       def f(param):
           ''''''
           expr = param
-      #   └ TYPE Any
-      """,
-    )
+      #   └ TYPE Unknown
+      """)
 
     @Test
     @TestFor(issues = ["PY-24923"])
-    fun `empty numpy class docstring`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `empty numpy class docstring`() = test("""
       class C:
           ''''''
           def __init__(self, param):
               expr = param
-      #       └ TYPE Any
-      """,
-    )
+      #       └ TYPE Unknown
+      """)
 
     @Test
     fun `no type in google docstring param annotation`() = test("""
@@ -502,24 +439,19 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    fun `async function return type in docstring`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `async function return type in docstring`() = test("""
       async def f():
           '''
           :rtype: int
           '''
           pass
       expr = f()
-      #└ TYPE CoroutineType[Any, Any, int]
-      """,
-    )
+      #└ TYPE CoroutineType[Unknown, Unknown, int]
+      """)
 
     @Test
     @TestFor(issues = ["PY-27518"])
-    fun `async function return type in numpy docstring`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `async function return type in numpy docstring`() = test("""
       async def f():
           '''
           An integer.
@@ -531,9 +463,8 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
           '''
           pass
       expr = f()
-      #└ TYPE CoroutineType[Any, Any, int]
-      """,
-    )
+      #└ TYPE CoroutineType[Unknown, Unknown, int]
+      """)
   }
 
   @Nested
@@ -553,16 +484,13 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
   inner class DunderDocDunderClass {
     @Test
     @TestFor(issues = ["PY-35885"])
-    fun `function dunder doc`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `function dunder doc`() = test("""
       def example():
           '''Example Docstring'''
           return 0
       expr = example.__doc__
       #└ TYPE str
-      """,
-    )
+      """)
 
     @Test
     fun `dunder class on class object`() = test("""
@@ -1007,8 +935,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
               break
       expr = c
       #└ TYPE int
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -1110,8 +1037,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       #^^^^^ WARNING Expected type 'P | Q' for augmented assignment, got 'P | str' from operation instead
       expr = u
       #└ TYPE P | str
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -1145,8 +1071,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
       #^^^^^ WARNING Expected type 'A | B' for augmented assignment, got 'int | str' from operation instead
       expr = x
       #└ TYPE int | str
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-80622"])
@@ -1189,7 +1114,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-32205"])
-  fun `right shift operator accepts matching argument`() = test(TestOptions(enablePyAnyType = false), """
+  fun `right shift operator accepts matching argument`() = test("""
     class Bin:
         def __rshift__(self, other: int):
             pass
@@ -1199,7 +1124,7 @@ class PyBuiltinTypeTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-7757"])
-  fun `result of text open read is str`() = test(TestOptions(enablePyAnyType = false), """
+  fun `result of text open read is str`() = test("""
     def f(s: str):
         pass
 

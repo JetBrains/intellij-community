@@ -17,7 +17,6 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
 
   override val defaultTestOptions =
     TestOptions(
-      enablePyAnyType = false,
       assertRecursionPrevention = false,
       disableInspections = setOf(
         PyArgumentListInspection::class.java,
@@ -130,7 +129,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
           d: InitVar[int]
           def __post_init__(self, d):
               expr = d
-      #       └ TYPE Any
+      #       └ TYPE Unknown
       """)
 
     @Test
@@ -159,14 +158,14 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       @dataclass
       class A:
           a: InitVar[int]
-      
+
       @dataclass(init=False)
       class B(A):
           b: InitVar[str]
-      
+
           def __post_init__(self, a, b):
               expr = a
-      #       └ TYPE Any
+      #       └ TYPE Unknown
       """)
 
     @Test
@@ -195,14 +194,14 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       @dataclass(init=False)
       class A:
           a: InitVar[int]
-      
+
       @dataclass(init=False)
       class B(A):
           b: InitVar[str]
-      
+
           def __post_init__(self, a, b):
               expr = a
-      #       └ TYPE Any
+      #       └ TYPE Unknown
       """)
 
     @Test
@@ -230,13 +229,13 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       @dataclass
       class A:
           a: InitVar[int]
-      
+
       class B(A):
           b: InitVar[str]
-      
+
           def __post_init__(self, a, b):
               expr = a
-      #       └ TYPE Any
+      #       └ TYPE Unknown
       """)
   }
 
@@ -501,7 +500,7 @@ class PyDataclassTypeTest : PyCodeInsightTestCase() {
       def my_dataclass(cls): ...
       
       expr = my_dataclass
-      #└ TYPE (cls: Any) -> None
+      #└ TYPE (cls: Unknown) -> None
       """)
 
     @Test

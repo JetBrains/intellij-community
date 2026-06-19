@@ -3,7 +3,6 @@ package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -14,15 +13,13 @@ import org.junit.jupiter.api.Test
  */
 class PyCollectionTypeTest : PyCodeInsightTestCase() {
 
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
-
   @Nested
   inner class ListSetDictLiterals {
 
     @Test
     fun `list literal types`() = test("""
       expr = []
-      # └ TYPE list[Any]
+      # └ TYPE list[Unknown]
       """)
 
     @Test
@@ -40,7 +37,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `list literal of many mixed values`() = test("""
       expr = ['1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-      #└ TYPE list[UnsafeUnion[str | int, Any]]
+      #└ TYPE list[UnsafeUnion[str | int, Unknown]]
       """)
 
     @Test
@@ -58,13 +55,13 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `set literal of many mixed values`() = test("""
       expr = {'1', 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
-      #└ TYPE set[UnsafeUnion[str | int, Any]]
+      #└ TYPE set[UnsafeUnion[str | int, Unknown]]
       """)
 
     @Test
     fun `empty dict literal`() = test("""
       expr = {}
-      #└ TYPE dict[Any, Any]
+      #└ TYPE dict[Unknown, Unknown]
       """)
 
     @Test
@@ -82,7 +79,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
     @Test
     fun `dict literal of many mixed keys and values`() = test("""
       expr = {'1': 1, 1: '1', 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1, 1: 1}
-      #└ TYPE dict[str | int | Any, int | str | Any]
+      #└ TYPE dict[str | int | Unknown, int | str | Unknown]
       """)
   }
 
@@ -196,7 +193,7 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       def foo(x: List[List]):
           sublist = x[0]
           expr = sublist[0]
-      #   └ TYPE Any
+      #   └ TYPE Unknown
       """)
 
     @Test
@@ -260,49 +257,6 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
       """)
   }
 
-  @Nested
-  inner class PyAnyTypeMigrationMirrors {
-    //
-    // These mirror representative cases above but run with `enablePyAnyType = true`, asserting the
-    // expected post-migration types. They currently fail (inference degrades to `Unknown`, and some
-    // subscription cases raise the `PyAnyType` null-type assertion) and are disabled until the
-    // `python.type.any` migration is complete. Re-enable and drop the class-wide
-    // `enablePyAnyType = false` once that lands.
-
-    @Test
-    @Disabled("python.type.any: empty-dict literal inference degrades to Unknown until migration completes")
-    fun `empty dict literal (py-any)`() = test(
-      TestOptions(enablePyAnyType = true),
-      """
-      expr = {}
-      # └ TYPE Dict[Any, Any]
-      """,
-    )
-
-    @Test
-    @Disabled("python.type.any: dict.values() iteration inference degrades to Unknown until migration completes")
-    fun `dict values type (py-any)`() = test(
-      TestOptions(enablePyAnyType = true),
-      """
-      d = {'foo': 42}
-      for expr in d.values():
-      #   └ TYPE int
-          pass
-      """,
-    )
-
-    @Test
-    @Disabled("python.type.any: list-of-classes pop() inference degrades to Unknown until migration completes")
-    fun `list containing classes pop (py-any)`() = test(
-      TestOptions(enablePyAnyType = true),
-      """
-      xs = [str]
-      expr = xs.pop()
-      # └ TYPE type[str]
-      """,
-    )
-  }
-
   @Test
   @TestFor(issues = ["PY-6570"])
   fun `dict literal element type from indexing with unknown value`() = test("""
@@ -310,4 +264,19 @@ class PyCollectionTypeTest : PyCodeInsightTestCase() {
         d = {k1: v1}
         return 1 + d[k1]
     """)
+
+  @Nested
+  inner class PyAnyTypeMigrationMirrors {
+
+    val oldAny = TestOptions(enablePyAnyType = false)
+
+    @Test
+    fun `empty dict literal (old py-any)`() = test(
+      oldAny,
+      """
+      expr = {}
+      # └ TYPE dict[Any, Any]
+      """,
+    )
+  }
 }

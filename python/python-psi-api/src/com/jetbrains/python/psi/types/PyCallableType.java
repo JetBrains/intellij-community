@@ -75,6 +75,7 @@ public interface PyCallableType extends PyType {
    */
   @ApiStatus.Experimental
   default @Nullable PyCallableParameterVariadicType getParametersType(@NotNull TypeEvalContext context) {
+    // TODO: introduce a form for gradual variadic type to replace null here
     return null;
   }
 

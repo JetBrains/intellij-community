@@ -25,9 +25,12 @@ class PyTypedDictType(
   isDefinition: Boolean,
   private val declaration: PyQualifiedNameOwner,
   val isClosed: Boolean = false,
-  val extraItemsType: PyType? = null,
+  val extraItemsType: PyType? = PyAnyType.unknown,
   val extraItemsQualifiers: TypedDictFieldQualifiers = TypedDictFieldQualifiers(),
 ) : PyClassTypeImpl(dictClass, isDefinition) {
+  init {
+    PyAnyType.validate(extraItemsType)
+  }
   fun getElementType(key: String): PyType? {
     return fields[key]?.type
   }
@@ -150,17 +153,15 @@ class PyTypedDictType(
       val extraItemsType = expectedType.extraItemsType
       val isClosed = expectedType.isClosed
 
-      actualFields.forEach {
-        val key = it.key
-        val (actualFieldValue, actualFieldType) = it.value
-        if (expectedType.fields.containsKey(key)) {
+      actualFields.forEach { key, (actualFieldValue, actualFieldType) ->
+        if (key in expectedType.fields) {
           val expectedFieldType = expectedType.fields[key]?.type
           if (expectedFieldType is PyTypedDictType && actualFieldValue != null && isDictExpression(actualFieldValue, context)) {
             checkExpression(expectedFieldType, actualFieldValue, context, result)
           }
           else {
             val promotedType = if (actualFieldValue != null) {
-              PyLiteralType.promoteToLiteral(actualFieldValue, expectedFieldType, context, null) ?: context.getType(actualFieldValue)
+              PyLiteralType.promoteToLiteral(actualFieldValue, expectedFieldType, context, null).takeUnless { it.isUnknown } ?: context.getType(actualFieldValue)
             }
             else {
               actualFieldType
@@ -177,7 +178,7 @@ class PyTypedDictType(
             }
           }
         }
-        else if (extraItemsType != null && !isClosed) {
+        else if (!extraItemsType.isUnknown && !isClosed) {
           if (!match(extraItemsType, actualFieldType, actualFieldValue, context, result)) {
             result.valueTypeErrors.add(ValueTypeError(actualFieldValue, extraItemsType, actualFieldType))
           }

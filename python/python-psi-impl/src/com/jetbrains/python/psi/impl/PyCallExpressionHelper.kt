@@ -84,6 +84,7 @@ import com.jetbrains.python.psi.types.PyUnpackedTupleType
 import com.jetbrains.python.psi.types.PyUnsafeUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isAny
+import com.jetbrains.python.psi.types.isAnyOrUnknown
 import com.jetbrains.python.psi.types.isNoneType
 import com.jetbrains.python.psi.types.isUnknown
 import com.jetbrains.python.pyi.PyiUtil
@@ -547,7 +548,7 @@ object PyCallExpressionHelper {
             }
           }
           else {
-            return null
+            return PyAnyType.unknown
           }
         }
       }
@@ -698,7 +699,7 @@ object PyCallExpressionHelper {
       return matchingOverloads[0].getCallType(context, callSite)
     }
     val someArgumentsHaveUnknownType = arguments.any {
-      context.getType(it).isUnknown
+      context.getType(it).isAnyOrUnknown
     }
     if (someArgumentsHaveUnknownType) {
       return matchingOverloads

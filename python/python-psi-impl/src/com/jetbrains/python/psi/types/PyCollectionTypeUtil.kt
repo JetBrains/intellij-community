@@ -103,8 +103,8 @@ object PyCollectionTypeUtil {
       }
 
     if (elements.size > MAX_ANALYZED_ELEMENTS_OF_LITERALS) {
-      keyTypes.add(null)
-      valueTypes.add(null)
+      keyTypes.add(PyAnyType.unknown)
+      valueTypes.add(PyAnyType.unknown)
     }
 
     return Pair(PyUnionType.union(keyTypes), PyUnionType.union(valueTypes))

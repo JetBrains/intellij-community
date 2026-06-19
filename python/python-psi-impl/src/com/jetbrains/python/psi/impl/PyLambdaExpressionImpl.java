@@ -88,7 +88,7 @@ public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExp
       }
     }
     return new PyFunctionTypeImpl(
-      this, map(getParameterList().getParameters(), param -> PyCallableParameterImpl.psi(param, null))
+      this, map(getParameterList().getParameters(), param -> PyCallableParameterImpl.psi(param, PyAnyType.getUnknown()))
     );
   }
 

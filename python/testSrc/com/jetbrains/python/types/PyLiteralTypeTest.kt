@@ -6,7 +6,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -525,7 +524,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `narrow literal union by legacy not equal operator`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON27, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON27, assertRecursionPrevention = false),
       """
       from typing import Literal
       def foo(v: Literal["abba", "ab"]):
@@ -773,12 +772,10 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-79733"])
-    fun `literal type inferred for comprehensions`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `literal type inferred for comprehensions`() = test("""
       from typing import Literal
-      
-      
+
+
       def func(strings: list[str]):
           l1: list[Literal[1]] = [1 for x in strings]
           l2: list[Literal[1]] = [2 for x in strings] # WARNING Expected type 'list[Literal[1]]', got 'list[Literal[2]]' instead
@@ -786,8 +783,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           s2: set[Literal[1]] = {2 for x in strings} # WARNING Expected type 'set[Literal[1]]', got 'set[Literal[2]]' instead
           d1: dict[str, Literal[1]] = {x: 1 for x in strings}
           d2: dict[str, Literal[1]] = {x: 2 for x in strings} # WARNING Expected type 'dict[str, Literal[1]]', got 'dict[str, Literal[2]]' instead
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-75556"])
@@ -801,9 +797,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-61137"])
-    fun `literal type in conditional statements and expressions`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `literal type in conditional statements and expressions`() = test("""
       from typing import Literal
       def condition1():
           pass
@@ -811,52 +805,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
           return "foo" if condition1() else "bar"  # OK
       def return_literal_str2(literal_string: Literal["foo"]) -> Literal["foo"]:
           return "foo" if condition1() else literal_string  # OK
-      """,
-    )
-  }
-
-  @Nested
-  inner class PythonTypeAnyMigrationMirrors {
-    //
-    // These mirror representative cases above but run with `enablePyAnyType = true`, asserting the
-    // expected post-migration behaviour. They currently fail (inference degrades to `Unknown`, or a
-    // null type is encountered while `PyAnyType` is enabled) and are disabled until the
-    // `python.type.any` migration is complete.
-
-    @Test
-    @TestFor(issues = ["PY-79733"])
-    @Disabled("python.type.any: comprehension key type degrades to a TypeVar (dict[_T_co, ...]) until migration completes")
-    fun `literal type inferred for comprehensions (py-any)`() = test(
-      TestOptions(enablePyAnyType = true),
-      """
-      from typing import Literal
-      
-      
-      def func(strings: list[str]):
-          l1: list[Literal[1]] = [1 for x in strings]
-          l2: list[Literal[1]] = [2 for x in strings] # WARNING Expected type 'list[Literal[1]]', got 'list[Literal[2]]' instead
-          s1: set[Literal[1]] = {1 for x in strings}
-          s2: set[Literal[1]] = {2 for x in strings} # WARNING Expected type 'set[Literal[1]]', got 'set[Literal[2]]' instead
-          d1: dict[str, Literal[1]] = {x: 1 for x in strings}
-          d2: dict[str, Literal[1]] = {x: 2 for x in strings} # WARNING Expected type 'dict[str, Literal[1]]', got 'dict[str, Literal[2]]' instead
-      """,
-    )
-
-    @Test
-    @TestFor(issues = ["PY-61137"])
-    @Disabled("python.type.any: a null python type is encountered while PyAnyType is enabled")
-    fun `literal type in conditional statements and expressions (py-any)`() = test(
-      TestOptions(enablePyAnyType = true),
-      """
-      from typing import Literal
-      def condition1():
-          pass
-      def return_literal_string() -> Literal["foo", "bar"]:
-          return "foo" if condition1() else "bar"  # OK
-      def return_literal_str2(literal_string: Literal["foo"]) -> Literal["foo"]:
-          return "foo" if condition1() else literal_string  # OK
-      """,
-    )
+      """)
   }
 
   @Nested
@@ -903,7 +852,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-46450"])
     fun `class attribute accessed via self is not over-narrowed to literal`() = test(
       // enablePyAnyType=false: attribute inference still degrades to Unknown under the py-any migration
-      TestOptions(enablePyAnyType = false),
+      TestOptions(),
       """
       class A:
           a = 1
@@ -916,7 +865,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-46450"])
     fun `instance attribute accessed via self is not over-narrowed to literal`() = test(
       // enablePyAnyType=false: attribute inference still degrades to Unknown under the py-any migration
-      TestOptions(enablePyAnyType = false),
+      TestOptions(),
       """
       class A:
           def __init__(self):
@@ -931,7 +880,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-46450"])
     fun `class attribute accessed via class is not over-narrowed to literal`() = test(
       // enablePyAnyType=false: attribute inference still degrades to Unknown under the py-any migration
-      TestOptions(enablePyAnyType = false),
+      TestOptions(),
       """
       class A:
           a = 1
@@ -961,7 +910,7 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-46450"])
     fun `literal in tuple from generator stays literal`() = test(
       // enablePyAnyType=false: generator element inference still degrades to Unknown under the py-any migration
-      TestOptions(enablePyAnyType = false),
+      TestOptions(),
       """
       def f():
           return 1
@@ -972,32 +921,29 @@ class PyLiteralTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-80353"])
-    @Disabled("PY-80353: literal in class body is inferred as int instead of Literal[1]")
     fun `literal in class body inferred as literal`() = test("""
       class A:
           a = 1
           expr = a
-      #       └ TYPE Literal[1]
+      #     └ TYPE int FIXME Literal[1]
       """)
 
     @Test
     @TestFor(issues = ["PY-46450"])
-    @Disabled("PY-46450: TypeVarTuple captures the widened type, yielding tuple[[int]] instead of tuple[Literal[1]]")
     fun `literal captured by TypeVarTuple stays literal`() = test("""
       def f[*Ts](*t: *Ts) -> tuple[*Ts]: ...
       expr = f(1)
-      #└ TYPE tuple[Literal[1]]
+      #└ TYPE tuple[int] FIXME tuple[Literal[1]]
       """)
 
     @Test
     @TestFor(issues = ["PY-46450"])
-    @Disabled("PY-46450: literal TypeVar bound is not propagated, yielding list[[Any]] instead of list[int]")
     fun `literal TypeVar bound propagates to result`() = test("""
       from typing import Literal
 
       def f[T: Literal[1]](t: T) -> list[T]: ...
       expr = f(1)
-      #└ TYPE list[int]
+      #└ TYPE list[Unknown] FIXME list[Literal[1]]
       """)
   }
 }

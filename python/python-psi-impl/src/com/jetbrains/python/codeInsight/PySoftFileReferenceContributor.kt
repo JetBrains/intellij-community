@@ -37,6 +37,7 @@ import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.psi.types.isUnknown
 import java.util.Locale
 
 /**
@@ -129,7 +130,7 @@ open class PySoftFileReferenceContributor : PsiReferenceContributor() {
       // We can't use PyTypeChecker.match directly because the type `str | PathLike` is considered incompatible 
       // with neither str nor PathLike (strict union semantics).
       fun PyType.allowsValuesCompatibleWith(superType: PyType): Boolean =
-        this.toStream().anyMatch { it != null && PyTypeChecker.match(superType, it, typeEvalContext) }
+        this.toStream().anyMatch { !it.isUnknown && PyTypeChecker.match(superType, it, typeEvalContext) }
 
       return argumentTypes.any { it.allowsValuesCompatibleWith(bytesOrUnicodeType) } &&
              argumentTypes.any { it.allowsValuesCompatibleWith(osPathLikeType) }

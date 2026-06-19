@@ -38,7 +38,7 @@ public final class PySyntheticCallHelper {
    * @param context       TypeEvalContext
    * @return The resulting type of the function call.
    */
-  public static PyType getCallType(@NotNull PyFunction function,
+  public static @Nullable PyType getCallType(@NotNull PyFunction function,
                                    @Nullable PyType receiverType,
                                    @NotNull List<PyType> argumentTypes,
                                    @NotNull TypeEvalContext context) {

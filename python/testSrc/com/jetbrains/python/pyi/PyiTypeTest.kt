@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test
  */
 class PyiTypeTest : PyCodeInsightTestCase() {
 
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
-
   @Test
   fun `function parameter`() = test(
     "FunctionParameter.py",
@@ -47,7 +45,7 @@ class PyiTypeTest : PyCodeInsightTestCase() {
     "FunctionType.py",
     """
     def f(x):
-    #   └ TYPE (x: int) -> dict[Any, Any]
+    #   └ TYPE (x: int) -> dict[Unknown, Unknown]
         pass
     """,
     "FunctionType.pyi" to "def f(x: int) -> dict: ...",
@@ -71,7 +69,7 @@ class PyiTypeTest : PyCodeInsightTestCase() {
         return 42
     
     coroutine = f()
-    #\ TYPE CoroutineType[Any, Any, int]
+    #\ TYPE CoroutineType[Unknown, Unknown, int]
     """,
     "CoroutineType.pyi" to """
       async def f() -> int:
@@ -111,18 +109,16 @@ class PyiTypeTest : PyCodeInsightTestCase() {
     def f(x: Any):
         c = C()
         expr = c.foo(x)
-    #   └ TYPE list[Any] | Any
+    #   └ TYPE list[Unknown] | Unknown
     """,
     "m1.pyi" to """
-      from typing import TypeVar, Generic, overload, List
+      from typing import overload
       
-      _T = TypeVar('_T')
-      
-      class C(Generic[_T]):
+      class C[T]:
           @overload
-          def foo(self, i: int) -> _T: ...
+          def foo(self, i: int) -> T: ...
           @overload
-          def foo(self, s: slice) -> List[_T]: ...
+          def foo(self, s: slice) -> list[T]: ...
       """,
   )
 
@@ -137,7 +133,7 @@ class PyiTypeTest : PyCodeInsightTestCase() {
     c = C()
     #\ ERROR Indent expected
     expr = c.foo(non_existing=0) # ISSUES *
-    #\ TYPE dict[str, Any] | list[Any]
+    #└ TYPE dict[str, Unknown] | list[Unknown]
     """,
     "m1.pyi" to """
       from typing import TypeVar, Generic, overload, List, Dict

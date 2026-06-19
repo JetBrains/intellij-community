@@ -16,8 +16,6 @@ import org.junit.jupiter.api.Test
  */
 class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
 
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
-
   @Nested
   inner class VariableAndAssignmentTypeComments {
     @Test
@@ -62,7 +60,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
     fun `with type comment`() = test("""
       def foo(x):
           with x as expr:  # type: int
-      #        └ TYPE Any FIXME int
+      #        └ TYPE Unknown
               pass
       """)
   }
@@ -91,7 +89,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       expr = undefined()  # type: str, int
       #│     │                    ^^^^^^^^ WARNING Type comment cannot be matched with unpacked variables
       #│     ^^^^^^^^^ ERROR Unresolved reference 'undefined'
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -100,7 +98,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       _, (_, expr) = undefined()  # type: str, (str, str, int)
       #         │    │                    ^^^^^^^^^^^^^^^^^^^^ WARNING Type comment cannot be matched with unpacked variables
       #         │    ^^^^^^^^^ ERROR Unresolved reference 'undefined'
-      #         └ TYPE Any
+      #         └ TYPE Unknown
       """)
 
     @Test
@@ -109,7 +107,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       _, (_, expr) = undefined()  # type: (str, str), int
       #         │    │                    ^^^^^^^^^^^^^^^ WARNING Type comment cannot be matched with unpacked variables
       #         │    ^^^^^^^^^ ERROR Unresolved reference 'undefined'
-      #         └ TYPE Any
+      #         └ TYPE Unknown
       """)
 
     @Test
@@ -152,7 +150,6 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
       // daemon emits a non-deterministic number of times; the original test only inferred the
       // parameter type, so the type checker is disabled here to keep the focus on that.
       TestOptions(
-        enablePyAnyType = false,
         disableInspections = setOf(
           PyUnresolvedReferencesInspection::class.java,
           PyCallingNonCallableInspection::class.java,
@@ -177,7 +174,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = f
-      #└ TYPE (x: Any, y: Any, z: Any) -> int
+      #└ TYPE (x: Unknown, y: Unknown, z: Unknown) -> int
       """)
 
     @Test
@@ -203,7 +200,7 @@ class PyTypeCommentTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = f
-      #└ TYPE (x: int, y: bool, z: Any) -> str
+      #└ TYPE (x: int, y: bool, z: Unknown) -> str
       """)
 
     @Test

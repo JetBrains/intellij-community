@@ -15,8 +15,6 @@ import org.junit.jupiter.api.Test
  */
 class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
-
   @Nested
   inner class CollectionsNamedtuple {
 
@@ -26,7 +24,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       class User(namedtuple("User", "name age")):
           pass
       expr = User("name", 13).age
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -43,7 +41,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
       class User(namedtuple("User", "name ags")):
           pass
       y1, expr = User("name", 13)
-      #   └ TYPE Any
+      #   └ TYPE Unknown
       """)
 
     @Test
@@ -123,7 +121,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-27148"])
-    fun `collections namedtuple _replace called unbound`() = test("""
+    fun `collections namedtuple _replace called unbound`() = test(TestOptions(enablePyAnyType = false), """
       from collections import namedtuple
       class Cat(namedtuple("Cat", "name age")):
           pass
@@ -167,7 +165,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `function with different namedtuples as parameter and return types`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON35, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON35, assertRecursionPrevention = false),
       """
       from collections import namedtuple
       MyType1 = namedtuple('MyType1', 'x y')
@@ -319,7 +317,7 @@ class PyNamedTupleTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-27148"])
-    fun `typing NamedTuple class _replace called unbound`() = test("""
+    fun `typing NamedTuple class _replace called unbound`() = test(TestOptions(enablePyAnyType = false), """
       from typing import NamedTuple
       class Cat(NamedTuple):
           name: str

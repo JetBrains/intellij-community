@@ -12,8 +12,6 @@ import org.junit.jupiter.api.Test
  */
 class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
 
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
-
   @Nested
   inner class ConditionalAliases {
     @Test
@@ -131,8 +129,8 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       from other import MyType
 
       expr: MyType = ...
-      #│             ^^^ WARNING Expected type 'list[Any] | int', got 'EllipsisType' instead
-      #└ TYPE list[Any] | int
+      #│             ^^^ WARNING Expected type 'list[Unknown] | int', got 'EllipsisType' instead
+      #└ TYPE list[Unknown] | int
       """,
       "other.py" to """
         from typing import List, Union
@@ -160,7 +158,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       from other import alias
       
       expr: alias
-      #└ TYPE Any
+      #└ TYPE Unknown
       """,
       "other.py" to "alias = unresolved",
     )
@@ -173,7 +171,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
 
       expr: alias
       #│    ^^^^^ WARNING Invalid type annotation
-      #└ TYPE Any
+      #└ TYPE Unknown
       """,
       "other.py" to """
         alias2 = 'alias'
@@ -188,8 +186,8 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       from a import MyType
 
       expr: MyType = ...
-      #│             ^^^ WARNING Expected type 'list[Any] | int', got 'EllipsisType' instead
-      #└ TYPE list[Any] | int
+      #│             ^^^ WARNING Expected type 'list[Unknown] | int', got 'EllipsisType' instead
+      #└ TYPE list[Unknown] | int
       """,
       "a.py" to """
         from typing import List, Union
@@ -205,7 +203,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       from a import alias
       
       expr: alias
-      #└ TYPE Any
+      #└ TYPE Unknown
       """,
       "a.py" to """
         type alias2 = 'alias'
@@ -269,7 +267,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       Alias = dict[T1, T2]
       expr: Alias[str]
       #│          ^^^ WARNING Passed type arguments do not match type parameters of type alias 'Alias'
-      #└ TYPE dict[str, Any]
+      #└ TYPE dict[str, Unknown]
       """)
 
     @Test
@@ -281,18 +279,17 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       Alias = dict[T2, T1]
       expr: Alias[str]
       #│          ^^^ WARNING Passed type arguments do not match type parameters of type alias 'Alias'
-      #└ TYPE dict[str, Any]
+      #└ TYPE dict[str, Unknown]
       """)
 
     @Test
     @TestFor(issues = ["PY-29257"])
     fun `generic type alias parameterized with explicit Any`() = test("""
-      from typing import TypeVar
+      from typing import TypeVar, Any
       T1 = TypeVar('T1')
       T2 = TypeVar('T2')
       Alias = dict[T1, T2]
       expr: Alias[Any, str]
-      #│          ^^^ ERROR Unresolved reference 'Any'
       #└ TYPE dict[Any, str]
       """)
 
@@ -310,7 +307,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-44905"])
-    fun `generic type alias to Annotated`() = test("""
+    fun `generic type alias to Annotated`() = test(TestOptions(enablePyAnyType = false), """
       from typing import Annotated, TypeVar
       marker = object()
       T = TypeVar("T")
@@ -372,7 +369,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       class Bar(Generic[Z1, ListDefaultT]):
           def __init__(self, x: Z1, y: ListDefaultT): ...
       expr = Bar
-      #└ TYPE type[Bar[Any, list[Any]]]
+      #└ TYPE type[Bar[Unknown, list[Unknown]]]
       """)
 
     @Test
@@ -549,7 +546,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       class AllTheDefaults(Generic[T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT]): ...
       expr = AllTheDefaults[int]()
       #│                    ^^^ WARNING Passed type arguments do not match type parameters [T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT] of class 'AllTheDefaults'
-      #└ TYPE AllTheDefaults[int, Any, str, int, bool]
+      #└ TYPE AllTheDefaults[int, Unknown, str, int, bool]
       """)
 
     @Test
@@ -563,7 +560,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       DefaultBoolT = TypeVar("DefaultBoolT", default=bool)
       class AllTheDefaults(Generic[T1, T2, DefaultStrT, DefaultIntT, DefaultBoolT]): ...
       expr = AllTheDefaults()
-      #└ TYPE AllTheDefaults[Any, Any, str, int, bool]
+      #└ TYPE AllTheDefaults[Unknown, Unknown, str, int, bool]
       """)
   }
 
@@ -608,7 +605,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       class Box(Generic[T, T1, T2, T3, T4, T5, T6, T7, T8]):
           value: T8
       expr = Box[list]().value
-      #└ TYPE list[Any]
+      #└ TYPE list[Unknown]
       """)
 
     @Test
@@ -771,7 +768,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       B = TypeVar("B", default=float)
       Alias : TypeAlias = dict[T, U] | list[B]
       expr: Alias
-      #└ TYPE dict[Any, str] | list[float | int]
+      #└ TYPE dict[Unknown, str] | list[float | int]
       """)
 
     @Test
@@ -779,7 +776,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
     fun `new style type alias one without default`() = test("""
       type Alias[T, U = str, B = float] = dict[T, U] | list[B]
       expr: Alias
-      #└ TYPE dict[Any, str] | list[float | int]
+      #└ TYPE dict[Unknown, str] | list[float | int]
       """)
 
     @Test
@@ -970,7 +967,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-71002"])
-    fun `explicit Any not substituted by defaults`() = test("""
+    fun `explicit Any not substituted by defaults`() = test(TestOptions(enablePyAnyType = false), """
       class Test[T = str, T1 = int, T2 = bool]: ...
       expr = Test[Any, Any]()
       #│          │    ^^^ ERROR Unresolved reference 'Any'

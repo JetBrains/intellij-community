@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyNamedTupleStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.stubs.PyNamedTupleStub
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableType
@@ -273,7 +274,7 @@ private fun createUntypedNamedTupleReplaceType(
   }
   parameters.add(PyCallableParameterImpl.keywordOnlySeparatorNonPsi())
 
-  fields.keys.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it, null, PyNames.ELLIPSIS) }
+  fields.keys.mapTo(parameters) { PyCallableParameterImpl.nonPsi(it, PyAnyType.unknown, PyNames.ELLIPSIS) }
 
   return if (resultType is PyNamedTupleType && anchor is PyCallExpression) {
     val newFields = mutableMapOf<String?, PyType?>()
@@ -324,7 +325,7 @@ private fun parseNamedTupleFields(
 ): NTFields {
   return fields.entries.associateTo(NTFields()) { (name, typeAndDefault) ->
     val type = typeAndDefault.type()
-    val pyType = type?.let { Ref.deref(PyTypingTypeProvider.getStringBasedType(type, anchor, context)) }
+    val pyType = type?.let { Ref.deref(PyTypingTypeProvider.getStringBasedType(type, anchor, context)) } ?: PyAnyType.unknown
     val defaultValue = if (typeAndDefault.hasDefault()) PyElementGenerator.getInstance(anchor.project).createEllipsis() else null
     name to PyNamedTupleType.FieldTypeAndDefaultValue(pyType, defaultValue)
   }

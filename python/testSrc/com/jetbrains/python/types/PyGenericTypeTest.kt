@@ -4,7 +4,6 @@ package com.jetbrains.python.types
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.Test
  */
 class PyGenericTypeTest : PyCodeInsightTestCase() {
 
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false, assertRecursionPrevention = false)
+  override val defaultTestOptions = TestOptions(assertRecursionPrevention = false)
 
   @Nested
   inner class DocstringBasedGenerics {
@@ -51,6 +50,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `upper bound generic from docstring`() = test(
+      TestOptions(enablePyAnyType = false),
       """
       def foo(x):
           '''
@@ -276,7 +276,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
           return iter(xs)
       
       expr = f1([1, 2, 3])
-      #└ TYPE SupportsNext[Any] | Iterator[Any] FIXME Iterator[int]
+      #└ TYPE SupportsNext[Any] | Iterator[Unknown] FIXME Iterator[int]
       """)
 
     @Test
@@ -303,7 +303,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `homogeneous tuple substitution`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON35, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON35, assertRecursionPrevention = false),
       """
       from typing import TypeVar, Tuple
       T = TypeVar('T')
@@ -449,7 +449,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    fun `AnyStr for unknown`() = test("""
+    fun `AnyStr for unknown`() = test(TestOptions(enablePyAnyType = false), """
       from typing import AnyStr
       
       def foo(x: AnyStr) -> AnyStr:
@@ -487,7 +487,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       
       def f(a1: A[Any], a2: A):
           expr = a1.v, a2.v
-      #   └ TYPE tuple[Any, Any]
+      #   └ TYPE tuple[Any, Unknown]
       """)
 
     @Test
@@ -1069,7 +1069,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-36008"])
     fun `unresolved generic replacement`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON36, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON36, assertRecursionPrevention = false),
       """
       from typing import TypeVar, Generic
       
@@ -1084,7 +1084,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
           pass
       
       expr = C().f()
-      #└ TYPE Any
+      #└ TYPE Unknown
       """,
     )
 
@@ -1618,7 +1618,7 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       class Bar[Z1, ListDefaultT = list[Z1]]:
           def __init__(self, x: Z1, y: ListDefaultT): ...
       expr = Bar
-      #└ TYPE type[Bar[Any, list[Any]]]
+      #└ TYPE type[Bar[Unknown, list[Unknown]]]
       """)
 
     @Test
@@ -1748,68 +1748,6 @@ class PyGenericTypeTest : PyCodeInsightTestCase() {
       expr = Foo[bool, float]()
       #└ TYPE Foo[bool, float | int]
       """)
-  }
-
-  @Nested
-  inner class PythonTypeAnyMigrationMirrors {
-    //
-    // These mirror representative cases above but run with `enablePyAnyType = true`, asserting the
-    // expected post-migration types. They currently fail (generic inference degrades to `Unknown`)
-    // and are disabled until the `python.type.any` migration completes. Re-enable and drop the matching
-    // class-wide `enablePyAnyType = false` once that lands.
-
-    @Test
-    @Disabled("python.type.any: parameterized class inference degrades to Unknown until migration completes")
-    fun `parameterized class instance (py-any)`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
-      """
-      from typing import Generic, TypeVar
-
-      T = TypeVar('T')
-
-      class C(Generic[T]):
-          def __init__(self, x: T):
-              pass
-
-      expr = C(10)
-      #└ TYPE C[int]
-      """,
-    )
-
-    @Test
-    @Disabled("python.type.any: generic method call inference degrades to Unknown until migration completes")
-    fun `generic method call unification (py-any)`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
-      """
-      from typing import Generic, TypeVar
-      T = TypeVar("T")
-
-      class Box(Generic[T]):
-          def __init__(self, value: T) -> None:
-              self.value = value
-          def get(self) -> T:
-              return self.value
-
-      box = Box(42)
-      expr = box.get()
-      #└ TYPE int
-      """,
-    )
-
-    @Test
-    @Disabled("python.type.any: PEP695 generic class inference degrades to Unknown until migration completes")
-    fun `simple generic class with PEP695 type parameter syntax (py-any)`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
-      """
-      class MyStack[T]:
-          def pop(self) -> T:
-              pass
-
-      stack = MyStack[str]()
-      expr = stack.pop()
-      #└ TYPE str
-      """,
-    )
   }
 
   @Test

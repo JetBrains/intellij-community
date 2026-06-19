@@ -41,6 +41,7 @@ import com.jetbrains.python.psi.stubs.PyDataclassStub
 import com.jetbrains.python.psi.stubs.PyDataclassTransformDecoratorStub
 import com.jetbrains.python.psi.stubs.PydanticConfigFlags
 import com.jetbrains.python.psi.stubs.PydanticConfigFlagsImpl
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
@@ -250,12 +251,12 @@ private fun decoratorAndTypeAndMarkedCallee(project: Project): List<Triple<Quali
          DECORATOR_AND_TYPE_AND_PARAMETERS.map {
            if (it.second == PyDataclassParameters.PredefinedType.STD) {
              val parameters = mutableListOf(PyCallableParameterImpl.keywordOnlySeparatorNonPsi())
-             parameters.addAll(it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, PyNames.ELLIPSIS) })
+             parameters.addAll(it.third.map { name -> PyCallableParameterImpl.nonPsi(name, PyAnyType.unknown, PyNames.ELLIPSIS) })
 
              Triple(it.first.qualifiedName, it.second, parameters)
            }
            else {
-             Triple(it.first.qualifiedName, it.second, it.third.map { name -> PyCallableParameterImpl.nonPsi(name, null, PyNames.ELLIPSIS) })
+             Triple(it.first.qualifiedName, it.second, it.third.map { name -> PyCallableParameterImpl.nonPsi(name, PyAnyType.unknown, PyNames.ELLIPSIS) })
            }
          }
 }
@@ -309,8 +310,8 @@ private fun parseDataclassParametersFromAST(cls: PyClass, context: TypeEvalConte
         val decoratorAndTypeAndMarkedCallee = types.firstOrNull { it.first == decoratorQualifiedName } ?: continue
 
         val mapping = PyCallExpressionHelper.mapArguments(
-            decorator,
-            PyCallableTypeImpl(decoratorAndTypeAndMarkedCallee.third, null),
+          decorator,
+          PyCallableTypeImpl(decoratorAndTypeAndMarkedCallee.third, PyAnyType.unknown),
             context ?: TypeEvalContext.codeInsightFallback(cls.project)
         )
 

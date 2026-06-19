@@ -46,7 +46,9 @@ public final class PyTypeVarTypeImpl implements PyTypeVarType {
                     @Nullable PyQualifiedNameOwner declarationElement,
                     @Nullable PyQualifiedNameOwner scopeOwner) {
     myName = name;
+    constraints.forEach(PyAnyType::validate);
     myConstraints = constraints;
+    PyAnyType.validate(bound);
     myBound = bound;
     myDefaultType = defaultType;
     myVariance = variance;

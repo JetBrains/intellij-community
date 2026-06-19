@@ -42,6 +42,11 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
   private val myIsPositionalOnlySeparator: Boolean = false,
   private val myDeclarationElement: PsiElement? = null,
 ) : PyCallableParameter {
+  init {
+    if (myType != null) {
+      PyAnyType.validate(myType.get())
+    }
+  }
   @get:Nls
   override val name: @Nls String?
     get() = myName ?: parameter?.name
@@ -49,7 +54,7 @@ class PyCallableParameterImpl @JvmOverloads internal constructor(
   override fun getType(context: TypeEvalContext): PyType? = when {
     myType != null -> myType.get()
     parameter is PyNamedParameter -> context.getType(parameter)
-    else -> null
+    else -> PyAnyType.unknown
   }
 
   override val declarationElement: PsiElement?

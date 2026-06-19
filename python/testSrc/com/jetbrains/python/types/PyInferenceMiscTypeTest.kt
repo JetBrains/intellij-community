@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
 class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
   override val defaultTestOptions =
-    TestOptions(enablePyAnyType = false, assertRecursionPrevention = false)
+    TestOptions(assertRecursionPrevention = false)
 
   @Nested
   inner class ScopeAndConditionFlow {
@@ -56,7 +56,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           else:
               var = 'foo'
           expr = var
-      #   └ TYPE Literal["foo"] | Any
+      #   └ TYPE Literal["foo"] | Unknown
       """)
 
     @Test
@@ -123,7 +123,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-37755"])
     fun `global read sees module-level list`() = test("""
       expr = []
-      # └ TYPE list[Any]
+      # └ TYPE list[Unknown]
 
       def fun():
           global expr
@@ -134,7 +134,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-37755"])
     fun `global read from nested function sees module-level list`() = test("""
       expr = []
-      #└ TYPE list[Any]
+      #└ TYPE list[Unknown]
 
       def fun():
           def nuf():
@@ -146,7 +146,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @TestFor(issues = ["PY-37755"])
     fun `global declaration shadows local of same name`() = test("""
       expr = []
-      # └ TYPE list[Any]
+      # └ TYPE list[Unknown]
 
       def fun():
           expr = True
@@ -180,7 +180,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           def inner():
               global s
               expr = s
-      #       └ TYPE Any
+      #       └ TYPE Unknown
       """)
 
     @Test
@@ -318,22 +318,19 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    //@Disabled("Order/recursion-cache sensitive: yields List[Any] in isolation but List[List[Any]] " +
-    //          "under the full suite, since endless-recursion prevention engages at a different depth " +
-    //          "depending on the shared RecursionManager state. Not controllable via TestOptions.")
     @TestFor(issues = ["EA-40207"])
     fun `recursion through self-referential list`() = test("""
       def f():
           return [f()]
       expr = f()
-      #└ TYPE list[Any]
+      #└ TYPE list[Unknown]
       """)
 
     @Test
     fun `stack overflow prevented on recursive call`() = test("""
       def foo(x): return foo(x)
       expr = foo(1)
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -362,7 +359,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       def f():
           return lambda x: x + 1
       expr = f()
-      #└ TYPE (x: Any) -> UnsafeUnion[int, Any]
+      #└ TYPE (x: Unknown) -> UnsafeUnion[int, Unknown]
       """,
     )
 
@@ -376,7 +373,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       def f(fn): ...
 
       f(lambda expr: 42)
-      #        └ TYPE Any
+      #        └ TYPE Unknown
       """,
     )
 
@@ -387,7 +384,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """
       t = lambda x: x + 1
       expr = t
-      #└ TYPE (x: Any) -> UnsafeUnion[int, Any]
+      #└ TYPE (x: Unknown) -> UnsafeUnion[int, Unknown]
       """,
     )
 
@@ -397,7 +394,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       defaultTestOptions.copy(assertRecursionPrevention = true),
       """
       _ = lambda expr: expr
-      #          └ TYPE Any
+      #          └ TYPE Unknown
       """,
     )
 
@@ -506,7 +503,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       def f() -> "pkg.subpkg.mod.MyClass": ...
 
       expr = f()
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -517,7 +514,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       a = A()
       expr = a.b
-      #└ TYPE Any
+      #└ TYPE Unknown
       """,
       "mod.py" to """
         class dict:
@@ -724,22 +721,8 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           def __new__(cls, *args, **kwargs):
               expr = super().__new__(cls, *args, **kwargs)
               return expr
-      #              └ TYPE dict[Any, Any] FIXME Self@Subclass
+      #              └ TYPE dict[Unknown, Unknown] FIXME Self@Subclass
       """)
-
-    @Test
-    @Disabled("PyAnyType")
-    @TestFor(issues = ["PY-44470"])
-    fun `inferring and matching cls in __new__ (py-any)`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
-      """
-      class Subclass(dict):
-          def __new__(cls, *args, **kwargs):
-              expr = super().__new__(cls, *args, **kwargs)
-      #       └ TYPE Self@Subclass
-              return expr
-      """,
-    )
 
     @Test
     fun `constructing generic class with not filled generic value`() = test(
@@ -804,7 +787,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-27913"])
     fun `dunder class getitem first parameter`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON37, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON37, assertRecursionPrevention = false),
       """
       class Foo:
           def __class_getitem__(cls, item):
@@ -816,7 +799,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-25545"])
     fun `dunder init subclass first parameter`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON36, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON36, assertRecursionPrevention = false),
       """
       class Foo:
           def __init_subclass__(cls):
@@ -867,6 +850,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       def dec[T](f: Callable[[T, bool], bool]) -> Callable[[T, bool], bool]:
           def a(b: bool) -> bool:
               return f(A(), b)
+      #          └ WARNING Expected type '(T, bool) -> bool', got '(b: bool) -> bool' instead
           return a
       #          └ WARNING Expected type '(T, bool) -> bool', got '(b: bool) -> bool' instead
 
@@ -1012,7 +996,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     fun `static method qualified with unknown generics instance`() = test("""
       my_list = []
       expr = my_list.count
-      #└ TYPE (value: Any, /) -> int
+      #└ TYPE (value: Unknown, /) -> int
       """)
   }
 
@@ -1089,7 +1073,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `except type with python2 comma syntax`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON27, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON27, assertRecursionPrevention = false),
       """
       try:
           pass
@@ -1179,6 +1163,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     fun `structural type from attribute and call`() = test("""
       def f(x):
           x.foo + x.bar()
+      #         └ WARNING Cannot find reference '+' in 'Unknown'
           expr = x
       #   └ TYPE {foo, bar}
       """)
@@ -1209,6 +1194,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       def f(x, y):
           x.foo + g(y)
+      #         └ WARNING Cannot find reference '+' in 'Unknown'
           expr = x
       #   └ TYPE {foo}
       """)
@@ -1257,7 +1243,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           :type x: C | C.bar | foo
           '''
           expr = x
-      #   └ TYPE C | Any
+      #   └ TYPE C | Unknown
       """)
 
     @Test
@@ -1281,7 +1267,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           :type things: None | list[str]
           '''
           expr = things if things else []
-      #   └ TYPE list[str] | list[Any]
+      #   └ TYPE list[str] | list[Unknown]
       """)
   }
 
@@ -1353,7 +1339,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     fun `get from dict with default None value`() = test("""
       d = {}
       expr = d.get("abc", None)
-      #└ TYPE Any | None
+      #└ TYPE Unknown | None
       """)
 
     @Test
@@ -1430,7 +1416,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-9662"])
     fun `binary expression with annotated Any operand left`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON36, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(enablePyAnyType = false, assertRecursionPrevention = false),
       """
       from typing import Any
       x: Any
@@ -1442,7 +1428,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-9662"])
     fun `binary expression with annotated Any operand right`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON36, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(enablePyAnyType = false, assertRecursionPrevention = false),
       """
       from typing import Any
       x: Any
@@ -1454,22 +1440,22 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-9662"])
     fun `binary expression with unknown parameter operand left`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON35, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON35, assertRecursionPrevention = false),
       """
       def f(x):
           expr = x * 2
-      #   └ TYPE UnsafeUnion[int, Any]
+      #   └ TYPE UnsafeUnion[int, Unknown]
       """,
     )
 
     @Test
     @TestFor(issues = ["PY-9662"])
     fun `binary expression with unknown parameter operand right`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON35, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON35, assertRecursionPrevention = false),
       """
       def f(x):
           expr = 2 * x
-      #   └ TYPE UnsafeUnion[int, Any]
+      #   └ TYPE UnsafeUnion[int, Unknown]
       """,
     )
 
@@ -1504,7 +1490,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-29891"])
-    fun `context manager type from Type ContextManager annotation`() = test("""
+    fun `context manager type from Type ContextManager annotation`() = test(TestOptions(enablePyAnyType = false),"""
       from typing import Type, ContextManager
       def example():
         manager: Type[ContextManager[str]]
@@ -1548,7 +1534,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       def foo(p):
           assert p
       expr = foo
-      #└ TYPE (p: Any) -> None
+      #└ TYPE (p: Unknown) -> None
       """)
 
     @Test
@@ -1567,7 +1553,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     fun `default parameter None ignored`() = test("""
       def f(x=None):
           expr = x
-      #   └ TYPE Any
+      #   └ TYPE Unknown
       """)
 
     @Test
@@ -1596,7 +1582,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       expr = bar(dunno, 'sd')
       #│         ^^^^^ ERROR Unresolved reference 'dunno'
-      #└ TYPE (Any, str, Any) -> Any
+      #└ TYPE (Unknown, str, Unknown) -> Unknown
       """)
 
     @Test
@@ -1608,26 +1594,26 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           for entry in entries:
               yield entry
       expr = resort
-      #└ TYPE (entries: Any) -> Generator[Any, Any, None]
+      #└ TYPE (entries: Unknown) -> Generator[Unknown, Unknown, None]
       """)
 
     @Test
     fun `return type annotation overrides body`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON311, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON311, assertRecursionPrevention = false),
       """
       def foo(x) -> list:
           return x
       expr = foo(None)
-      #└ TYPE list[Any]
+      #└ TYPE list[Unknown]
       """,
     )
 
     @Test
     fun `type annotation on parameter`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON34, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON34, assertRecursionPrevention = false),
       """
       def foo(x: str) -> list:
-      #                  ^^^^ WARNING Expected type 'List[Any]', got 'None' instead
+      #                  ^^^^ WARNING Expected type 'List[Unknown]', got 'None' instead
           expr = x
       #   └ TYPE str
       """,
@@ -1636,7 +1622,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-26061"])
     fun `unresolved generic replacement is Any`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON36, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON36, assertRecursionPrevention = false),
       """
       from typing import TypeVar, Generic
 
@@ -1651,7 +1637,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
           pass
 
       expr = C().f()
-      #└ TYPE Any
+      #└ TYPE Unknown
       """,
     )
   }
@@ -1661,7 +1647,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-79967"])
     fun `interpolation expression type from template string`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON314, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON314, assertRecursionPrevention = false),
       """
       name = "John"
       expr = t"Hello, {name}!".interpolations[0].expression
@@ -1672,7 +1658,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-79967"])
     fun `template string inferred as str before python314`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON313, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false),
       """
       expr = t"template string"
       #│     └ ERROR Python version 3.13 does not support a 'T' prefix
@@ -1683,7 +1669,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-79967"])
     fun `template string inferred as Template at python314`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON314, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON314, assertRecursionPrevention = false),
       """
       expr = t"template string"
       #└ TYPE Template
@@ -1777,7 +1763,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       def func() -> type[str]: ...
       expr: func()
       #│    ^^^^^^ WARNING Invalid type annotation
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -1818,7 +1804,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       #                             │       ^^^^^^^^^^ ERROR Unresolved reference 'unresolved'
       #                             └ ERROR Expression expected
           expr = x
-      #   └ TYPE tuple[Any, Any, Any]
+      #   └ TYPE tuple[Unknown, Unknown, Unknown]
       """)
 
     @Test
@@ -1832,7 +1818,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       #│            ^^^^^^^^^ ERROR Unresolved reference 'undefined'
       #^^^^^^^^^^^^^^^^^^^^^^^^ ERROR A variable annotation cannot be used in assignment with multiple targets
       expr = (w, x, y, z)
-      #└ TYPE tuple[Any, int, Any, Any]
+      #└ TYPE tuple[Unknown, int, Unknown, Unknown]
       """)
 
     @Test
@@ -1909,7 +1895,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       #                  ^^^^^^^^^^ ERROR Unresolved reference 'Unresolved'
               ...
       expr = Sub().m()
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
   }
 
@@ -2127,7 +2113,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    fun `weak union type of generic method call receiver`() = test("""
+    fun `weak union type of generic method call receiver`() = test(TestOptions(),"""
       from typing import Any, Generic, TypeVar
 
       T = TypeVar("T")
@@ -2141,7 +2127,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
       receiver: Any | int | StrBox = ...
       expr = receiver.get()
-      #│              ^^^ WEAK-WARNING Member 'int' of 'int | StrBox | Any' does not have attribute 'get'
+      #│              ^^^ WEAK-WARNING Member 'int' of 'Any | int | StrBox' does not have attribute 'get'
       #└ TYPE str
       """)
   }
@@ -2448,7 +2434,9 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
   inner class NewAnyUnknownRendering {
     @Test
     @TestFor(issues = ["PY-81651"])
-    fun `eq with Any without new any`() = test("""
+    fun `eq with Any without new any`() = test(
+      TestOptions(enablePyAnyType = false),
+      """
       from typing import Any
 
       class A:
@@ -2461,9 +2449,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-81651"])
-    fun `eq with new any`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
-      """
+    fun `eq with new any`() = test("""
       from typing import Any
 
       class A:
@@ -2471,13 +2457,13 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
             return "hello :)"
 
       expr = A() == 1
-      #└ TYPE Any
+      # └ TYPE Any
       """,
     )
 
     @Test
     fun `new any unknown reference`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
+      TestOptions(assertRecursionPrevention = false),
       """
       expr = x
       #│     └ ERROR Unresolved reference 'x'
@@ -2487,7 +2473,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `new any unknown list`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
+      TestOptions(assertRecursionPrevention = false),
       """
       expr = [x]
       #│      └ ERROR Unresolved reference 'x'
@@ -2497,7 +2483,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `new any unknown generator`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
+      TestOptions(assertRecursionPrevention = false),
       """
       def f():
         a = yield x
@@ -2511,7 +2497,7 @@ class PyInferenceMiscTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `new any generic identity over unknown list`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
+      TestOptions(assertRecursionPrevention = false),
       """
       def f[T](t: T) -> T: ...
 

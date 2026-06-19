@@ -1542,7 +1542,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       if (resolved is PyListLiteralExpression) {
         val argumentTypes =
           resolved.elements.map {
-            Ref.deref(getType(it!!, context))
+            getType(it!!, context).derefOrUnknown()
           }
         return PyCallableParameterListTypeImpl(
           argumentTypes.map { PyCallableParameterImpl.nonPsi(it) }
@@ -2139,7 +2139,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val rightTypeRef = getType(right, context)
         if (leftTypeRef == null && rightTypeRef == null) return null
 
-        val union = PyUnionType.union(leftTypeRef?.get(), rightTypeRef?.get())
+        val union = PyUnionType.union(leftTypeRef.derefOrUnknown(), rightTypeRef.derefOrUnknown())
         return if (union != null) Ref(union) else null
       }
       return null
@@ -2190,7 +2190,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
           val constraints = arguments
             .drop(1)
             .takeWhile { it !is PyKeywordArgument }
-            .map { Ref.deref(getType(it, context)) }
+            .map { getType(it, context).derefOrUnknown() }
           val assignStmt = element.getParent() as? PyAssignmentStatement
           val mappingPair = assignStmt?.targetsToValuesMapping?.firstOrNull { pair -> pair.second == element }
           val declarationElement = mappingPair?.first as? PyQualifiedNameOwner
@@ -2541,7 +2541,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       if (classType is PyTypedDictType) return null
 
       if (type.classQName == PyNames.TUPLE && type !is PyTupleType) {
-        return PyTupleType.createHomogeneous(type.pyClass, null)
+        return PyTupleType.createHomogeneous(type.pyClass, PyAnyType.unknown)
       }
 
       val collected = type.collectGenerics(context)
@@ -2872,7 +2872,7 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return PyCollectionTypeImpl(
         targetClass,
         false,
-        listOf(null, null, this)
+        listOf(PyAnyType.unknown, PyAnyType.unknown, this)
       )
     }
 

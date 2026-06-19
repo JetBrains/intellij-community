@@ -219,7 +219,7 @@ open class TypeEvalContextImpl internal constructor(
       }
 
       assertValid(type, element)
-      PyAnyType.validate(type)
+      PyAnyType.validate(type, element)
       myEvaluated[element] = type ?: PyNullType
       type
     } ?: PyAnyType.unknown
@@ -328,6 +328,7 @@ open class TypeEvalContextImpl internal constructor(
     private val assumedType: PyType? = type
 
     init {
+      PyAnyType.validate(type)
       myEvaluated[element] = type ?: PyNullType
     }
 

@@ -4,7 +4,6 @@ package com.jetbrains.python.types
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -14,8 +13,6 @@ import org.junit.jupiter.api.Test
  * conditional expressions and comprehensions, and structural-type `isinstance` checks.
  */
 class PyNarrowingTypeTest : PyCodeInsightTestCase() {
-
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
 
   @Nested
   inner class IsinstanceNarrowing {
@@ -285,7 +282,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       def f(x):
           if isinstance(x, basestring): # ERROR Unresolved reference 'basestring'
               expr = x
-      #       └ TYPE Any
+      #       └ TYPE Unknown
       """)
 
     @Test
@@ -491,7 +488,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           print(c)
         else:
           expr = c
-      #   └ TYPE Any
+      #   └ TYPE Unknown
       """)
 
     @Test
@@ -502,7 +499,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           print(a)
         else:
           expr = a
-      #   └ TYPE Any
+      #   └ TYPE Unknown
       """)
 
     @Test
@@ -513,7 +510,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
               if x is not None:
                   pass
           expr = x
-      #   └ TYPE Any | None
+      #   └ TYPE Unknown | None
       """)
 
     @Test
@@ -549,7 +546,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-32113"])
     fun `assertion on variable from outer scope`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON35, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON35, assertRecursionPrevention = false),
       """
       class B: pass
 
@@ -569,7 +566,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-32113"])
     fun `assertion on function from outer scope`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON35, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON35, assertRecursionPrevention = false),
       """
       class B: pass
 
@@ -1080,7 +1077,7 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
               p = "foo"
           x = p.lower()
       expr = f
-      #└ TYPE (p: Any) -> None
+      #└ TYPE (p: Unknown) -> None
       """)
 
     @Test
@@ -1290,25 +1287,6 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    @Disabled("python.type.any: TypeGuard call presentation; with PyAnyType disabled it degrades to the function type, with it enabled inference hits a null-type guard")
-    fun `TypeGuard presentation (py-any)`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
-      """
-      from typing import List
-      from typing import TypeGuard
-
-
-      def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
-          return all(isinstance(x, str) for x in val)
-
-
-      def func1(val: List[object]):
-          expr = is_str_list(val)
-      #       └ TYPE TypeGuard[list[str]]
-      """,
-    )
-
-    @Test
     fun `TypeIs presentation`() = test("""
       from typing import List
       from typing_extensions import TypeIs
@@ -1322,25 +1300,6 @@ class PyNarrowingTypeTest : PyCodeInsightTestCase() {
           expr = is_str_list(val)
       #       └ TYPE (val: list[object]) -> None FIXME TypeIs[list[str]]
       """)
-
-    @Test
-    @Disabled("python.type.any: TypeIs call presentation; with PyAnyType disabled it degrades to the function type, with it enabled inference hits a null-type guard")
-    fun `TypeIs presentation (py-any)`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
-      """
-      from typing import List
-      from typing_extensions import TypeIs
-
-
-      def is_str_list(val: List[object]) -> TypeIs[List[str]]:
-          return all(isinstance(x, str) for x in val)
-
-
-      def func1(val: List[object]):
-          expr = is_str_list(val)
-      #       └ TYPE TypeIs[list[str]]
-      """,
-    )
 
     @Test
     fun `TypeGuard is erased on return`() = test("""

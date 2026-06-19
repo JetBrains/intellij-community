@@ -269,7 +269,7 @@ object PyTypeUtil {
   @JvmStatic
   fun toUnion(streamSource: PyType?): Collector<PyType?, *, PyType?> {
     return if (streamSource is PyUnsafeUnionType)
-      toUnion { PyUnsafeUnionType.unsafeUnion() }
+      toUnion { PyUnsafeUnionType.unsafeUnion(it) }
     else toUnion { members ->
       PyUnionType.union(members)
     }
@@ -384,6 +384,7 @@ object PyTypeUtil {
 
 @OptIn(ExperimentalContracts::class)
 val PyType?.isAnyOrUnknown: Boolean
+  @Contract("null -> true")
   get() {
   contract {
     returns(true) implies (this@isAnyOrUnknown is PyAnyType?)
@@ -395,34 +396,39 @@ val PyType?.isAnyOrUnknown: Boolean
 }
 
 @OptIn(ExperimentalContracts::class)
-val PyType?.isAny: Boolean get() {
-  contract {
-    returns(true) implies (this@isAny is PyAnyType.Any?)
-    returns(false) implies (this@isAny is PyType)
+val PyType?.isAny: Boolean
+  @Contract("null -> true")
+  get() {
+    contract {
+      returns(true) implies (this@isAny is PyAnyType.Any?)
+      returns(false) implies (this@isAny is PyType)
+    }
+    PyAnyType.validate(this)
+    return if (PyAnyType.isEnabled) this is PyAnyType.Any else this == null
   }
-  PyAnyType.validate(this)
-  return if (PyAnyType.isEnabled) this is PyAnyType.Any else this == null
-}
 
 @OptIn(ExperimentalContracts::class)
-val PyType?.isUnknown: Boolean get() {
-  contract {
-    returns(true) implies (this@isUnknown is PyAnyType.Unknown?)
-    returns(false) implies (this@isUnknown is PyType)
-  }
+val PyType?.isUnknown: Boolean
+  @Contract("null -> true")
+  get() {
+    contract {
+      returns(true) implies (this@isUnknown is PyAnyType.Unknown?)
+      returns(false) implies (this@isUnknown is PyType)
+    }
 
-  PyAnyType.validate(this)
-  return if (PyAnyType.isEnabled) this is PyAnyType.Unknown else this == null
-}
+    PyAnyType.validate(this)
+    return if (PyAnyType.isEnabled) this is PyAnyType.Unknown else this == null
+  }
 
 @OptIn(ExperimentalContracts::class)
-val PyType?.isObject: Boolean get() {
-  contract {
-    returns(true) implies (this@isObject is PyClassType)
-  }
+val PyType?.isObject: Boolean
+  get() {
+    contract {
+      returns(true) implies (this@isObject is PyClassType)
+    }
 
-  return this is PyClassType && isObjectClass(this.pyClass)
-}
+    return this is PyClassType && isObjectClass(this.pyClass)
+  }
 
 @ApiStatus.Internal
 fun PyExpression.getLiteralType(context: TypeEvalContext): PyType? =

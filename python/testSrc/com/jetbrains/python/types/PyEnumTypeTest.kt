@@ -4,7 +4,6 @@ package com.jetbrains.python.types
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -13,9 +12,6 @@ import org.junit.jupiter.api.Test
  * values, aliases and narrowing.
  */
 class PyEnumTypeTest : PyCodeInsightTestCase() {
-
-  override val defaultTestOptions =
-    TestOptions(enablePyAnyType = false)
 
   @Nested
   inner class MemberLiteralsAndDefinitions {
@@ -72,7 +68,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    fun `enum member and nonmember`() = test(TestOptions(enablePyAnyType = false, assertRecursionPrevention = false), """
+    fun `enum member and nonmember`() = test(TestOptions(assertRecursionPrevention = false), """
       from enum import Enum, member, nonmember
       
       def func(x: int) -> None: ...
@@ -91,7 +87,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `enum member and nonmember from another file`() = test(
-      TestOptions(enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(assertRecursionPrevention = false),
       """
       from enum_members import Example
       
@@ -327,7 +323,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-54503"])
-    fun `value type of enum item from __call__`() = test(TestOptions(enablePyAnyType = false, assertRecursionPrevention = false), """
+    fun `value type of enum item from __call__`() = test(TestOptions(assertRecursionPrevention = false), """
       import enum
       
       class MyEnum(enum.Enum):
@@ -416,7 +412,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87344"])
-    fun `set of StrEnum class inferred from values classmethod`() = test("""
+    fun `set of StrEnum class inferred from values classmethod`() = test(TestOptions(enablePyAnyType = false), """
       from enum import StrEnum
       from typing import Self
       
@@ -433,7 +429,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87344"])
-    fun `set of StrEnum via cls`() = test("""
+    fun `set of StrEnum via cls`() = test(TestOptions(enablePyAnyType = false), """
       from enum import StrEnum
       from typing import Self
       
@@ -543,7 +539,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     @Test
     fun `typing Literal of enum member`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON35, enablePyAnyType = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON35),
       """
       from typing_extensions import Literal
       
@@ -676,7 +672,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87344"])
-    fun `iterating an Enum type and instance`() = test("""
+    fun `iterating an Enum type and instance`() = test(TestOptions(enablePyAnyType = false), """
       from enum import Enum
       from typing import Self
       
@@ -694,7 +690,7 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-87344"])
-    fun `iterating a StrEnum type and instance`() = test("""
+    fun `iterating a StrEnum type and instance`() = test(TestOptions(enablePyAnyType = false), """
       from enum import StrEnum
       from typing import Self
       
@@ -710,69 +706,5 @@ class PyEnumTypeTest : PyCodeInsightTestCase() {
               # StrEnum inherits str which inherits Iterable[str], thus, iterable for both instance and definition
               return set(self) # OK
       """)
-  }
-
-  @Nested
-  inner class PythonTypeAnyMigrationMirrors {
-    //
-    // These mirror representative cases above but run with `enablePyAnyType = true`, asserting the
-    // expected post-migration types. They currently fail (inference degrades to `Unknown`) and are
-    // disabled until the `python.type.any` migration is complete. Re-enable and drop the matching
-    // `enablePyAnyType = false` once that lands.
-
-    @Test
-    @Disabled("python.type.any: enum .value inference degrades to Unknown until migration completes")
-    fun `enum value type (py-any)`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
-      """
-      from enum import IntEnum, auto
-      
-      class State(IntEnum):
-          A = auto()
-          B = auto()
-      
-      def foo(arg: State):
-          expr = arg.value
-      #   └ TYPE int
-      """,
-    )
-
-    @Test
-    @Disabled("python.type.any: enum member literal inference degrades to Unknown until migration completes")
-    fun `enum member literal (py-any)`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
-      """
-      from enum import Enum
-      
-      class CustomEnum(Enum):
-          pass
-      
-      class Color(CustomEnum):
-          RED = 1
-      
-      expr = Color.RED
-      # └ TYPE Literal[Color.RED]
-      """,
-    )
-
-    @Test
-    @Disabled("python.type.any: StrEnum set inference degrades to Unknown until migration completes")
-    fun `set of StrEnum class inferred from values classmethod (py-any)`() = test(
-      TestOptions(enablePyAnyType = true, assertRecursionPrevention = false),
-      """
-      from enum import StrEnum
-      from typing import Self
-      
-      class Variant(StrEnum):
-          CREATED = "created"
-      
-          @classmethod
-          def values(cls) -> set[Self]:
-              return set(cls)
-      
-      expr = set(Variant)
-      # └ TYPE set[Variant]
-      """,
-    )
   }
 }

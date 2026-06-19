@@ -14,8 +14,6 @@ import org.junit.jupiter.api.Test
  */
 class PyCallableTypeTest : PyCodeInsightTestCase() {
 
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
-
   @Nested
   inner class CallableTypeInference {
     @Test
@@ -60,7 +58,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       def f() -> Callable:
           pass
       expr = f()
-      #└ TYPE (...) -> Any
+      #└ TYPE (...) -> Unknown
       """)
 
     @Test
@@ -372,7 +370,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
     fun `dict comprehension from kwargs`() = test("""
       def test(**kwargs):
           expr = {k: v for k, v in kwargs.items()}
-      #   └ TYPE dict[str, Any]
+      #   └ TYPE dict[str, Unknown]
       """)
 
     @Test
@@ -383,7 +381,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
           pass
       def foo(**x: Unpack[Movie]):
           expr = x
-      #   └ TYPE dict[str, Any]
+      #   └ TYPE dict[str, Unknown]
       """)
   }
 
@@ -632,7 +630,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       @d
       def f(*args):
           expr = args[100]
-      #   └ TYPE Any FIXME int
+      #   └ TYPE Unknown FIXME int
       """)
 
     @Test
@@ -648,7 +646,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       @d
       def f(**kwargs):
           expr = kwargs["100"]
-      #   └ TYPE Any FIXME int
+      #   └ TYPE Unknown FIXME int
       """)
 
     @Test
@@ -664,7 +662,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       @d
       def f(*, y, x):
           expr = x
-      #   └ TYPE Any FIXME int
+      #   └ TYPE Unknown FIXME int
       """)
 
     @Test
@@ -1283,7 +1281,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
       expr = deco(unresolved)
       #│          ^^^^^^^^^^ ERROR Unresolved reference 'unresolved'
-      #└ TYPE (*args: Any, **kwargs: Any) -> str
+      #└ TYPE (*args: Unknown, **kwargs: Unknown) -> str
       """)
 
     @Test
@@ -1639,7 +1637,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-71002"])
-    fun `ParamSpec default type refers to another ParamSpec with ellipsis`() = test("""
+    fun `ParamSpec default type refers to another ParamSpec with ellipsis`() = test(TestOptions(enablePyAnyType = false), """
       class Clazz[**P1, **P2 = P1, **P3 = P2]: ...
       expr = Clazz[..., [float]]()
       #└ TYPE Clazz[Any, [float | int], [float | int]]
@@ -1699,8 +1697,8 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       cllbl_c(1, 2) # WARNING Expected type 'str', got 'Literal[2]' instead
       cllbl_c("1", "2") # WARNING Expected type 'int', got 'Literal["1"]' instead
       cllbl_c([], [])
-      #       │   ^^ WARNING Expected type 'str', got 'list[Any]' instead
-      #       ^^ WARNING Expected type 'int', got 'list[Any]' instead
+      #       │   ^^ WARNING Expected type 'str', got 'list[Unknown]' instead
+      #       ^^ WARNING Expected type 'int', got 'list[Unknown]' instead
       """)
 
     @Test
@@ -1844,7 +1842,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-74277"])
     fun `passing TypeIs callable`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON312, enablePyAnyType = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON312),
       """
       from typing_extensions import TypeIs, Callable
 
@@ -2085,7 +2083,7 @@ class PyCallableTypeTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    fun `wildcard signatures`() = test("""
+    fun `wildcard signatures`() = test(TestOptions(enablePyAnyType = false), """
       from typing import Protocol
 
       class Expected(Protocol):
