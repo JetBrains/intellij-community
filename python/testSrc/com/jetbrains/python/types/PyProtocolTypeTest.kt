@@ -5,7 +5,6 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.util.StackOverflowPreventedException
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.fixtures.PyTestCase.fixme
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -1162,7 +1161,6 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-85997"])
-    @Disabled("PY-90332")
     fun `recursive protocol and implementation using Self`() =
       fixme("Recursive protocol definitions cause infinite recursion during matching",
             StackOverflowPreventedException::class.java,
@@ -1187,7 +1185,6 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-85997"])
-    @Disabled("PY-90332")
     fun `recursive protocol and implementation referring to itself`() =
       fixme("Recursive protocol definitions cause infinite recursion during matching",
             StackOverflowPreventedException::class.java,
