@@ -12,6 +12,7 @@
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
     <frameworkSupport implementation="org.jetbrains.idea.devkit.gradle.GradleIntellijPluginFrameworkSupportProvider"/>
     <kotlinDslFrameworkSupport implementation="org.jetbrains.idea.devkit.gradle.KdslGradleIntellijPluginFrameworkSupportProvider"/>
+    <projectResolve implementation="org.jetbrains.idea.devkit.gradle.DevKitGradleProjectResolverExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
