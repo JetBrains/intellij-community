@@ -3082,7 +3082,7 @@ f:com.intellij.ide.hierarchy.HierarchyBrowserScopes
 - sf:SCOPE_TEST:java.lang.String
 - <init>():V
 a:com.intellij.ide.hierarchy.HierarchyNodeDescriptor
-- com.intellij.ide.util.treeView.NodeDescriptor
+- com.intellij.ide.util.treeView.SmartElementDescriptor
 - p:baseColorAttributes():com.intellij.openapi.editor.markup.TextAttributes
 - p:getBaseMarkerIcon(javax.swing.Icon):javax.swing.Icon
 - f:getCachedChildren():java.lang.Object[]
@@ -3932,6 +3932,15 @@ a:com.intellij.ide.util.treeView.AbstractTreeStructureBase
 - getParentElement(java.lang.Object):java.lang.Object
 - a:getProviders():java.util.List
 - isValid(java.lang.Object):Z
+c:com.intellij.ide.util.treeView.SmartElementDescriptor
+- com.intellij.ide.util.treeView.NodeDescriptor
+- <init>(com.intellij.openapi.project.Project,com.intellij.ide.util.treeView.NodeDescriptor,com.intellij.psi.PsiElement):V
+- getElement():java.lang.Object
+- p:getIcon(com.intellij.psi.PsiElement):javax.swing.Icon
+- f:getPsiElement():com.intellij.psi.PsiElement
+- p:isMarkModified():Z
+- p:isMarkReadOnly():Z
+- update():Z
 f:com.intellij.internal.ImageDuplicateResultsDialog
 - com.intellij.openapi.ui.DialogWrapper
 a:com.intellij.lang.SmartEnterProcessorWithFixers
