@@ -2,6 +2,7 @@
 package com.intellij.platform.acp
 
 import com.intellij.platform.acp.impl.AcpAgentStartConfigImpl
+import java.nio.file.Path
 
 /**
  * Configuration for starting an ACP agent process.
@@ -13,15 +14,18 @@ import com.intellij.platform.acp.impl.AcpAgentStartConfigImpl
  * @property baseArgs Command-line arguments to pass to run the agent, d.i. this will contain the package name when run with npx or uvx
  * @property env Environment variables to set for the process
  * @property args [baseArgs] concatenated with the internal acp-mode arguments. This is what the launcher actually passes to the process.
+ * @property workingDir Optional working directory to launch the process in. When null, the launcher uses the project directory.
  */
 interface AcpAgentStartConfig {
   val command: String
   val baseArgs: List<String>
   val env: Map<String, String>
   val args: List<String>
+  val workingDir: Path?
 
   fun withCommand(command: String): AcpAgentStartConfig
   fun withBaseArgs(baseArgs: List<String>): AcpAgentStartConfig
+  fun withWorkingDir(workingDir: Path): AcpAgentStartConfig
 
   companion object {
     /**
@@ -32,6 +36,7 @@ interface AcpAgentStartConfig {
       baseArgs: List<String>,
       acpArgs: List<String>,
       env: Map<String, String>,
-    ): AcpAgentStartConfig = AcpAgentStartConfigImpl(command, baseArgs, acpArgs, env)
+      workingDir: Path? = null,
+    ): AcpAgentStartConfig = AcpAgentStartConfigImpl(command, baseArgs, acpArgs, env, workingDir)
   }
 }
