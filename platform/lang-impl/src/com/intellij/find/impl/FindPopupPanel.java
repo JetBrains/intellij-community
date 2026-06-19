@@ -1813,6 +1813,11 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
     }
 
     @Override
+    public boolean hasValidationError() {
+      return myComponentValidator.getValidationInfo() != null;
+    }
+
+    @Override
     public void refreshTableRenderer() {
       TableCellRenderer renderer = FindAndReplaceExecutor.getInstance().createTableCellRenderer();
       if (renderer == null) renderer = new UsageTableCellRenderer();

@@ -14,6 +14,7 @@ import com.intellij.ide.vfs.rpcId
 import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
@@ -62,53 +63,66 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
   ) {
     if (FindKey.isEnabled) {
       findUsagesJob?.cancel("new find request is started")
-      findUsagesJob = coroutineScope.launch {
-        selectScopeJob?.join()
-        val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
-        currentSearchDisposable?.let { Disposer.dispose(it) }
-        currentSearchDisposable = Disposer.newCheckedDisposable( "Find in Project Search").also {
-          if (!Disposer.tryRegister(disposableParent, it)) {
-            Disposer.dispose(it)
-            LOG.warn("Failed to register disposable for search. Looks like FindPopup is already closed. Search will be canceled.")
-            return@launch
+      val job = coroutineScope.launch {
+        try {
+          selectScopeJob?.join()
+          val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfoModel)?.model?.fileId?.virtualFile() }.toSet()
+          currentSearchDisposable?.let { Disposer.dispose(it) }
+          currentSearchDisposable = Disposer.newCheckedDisposable( "Find in Project Search").also {
+            if (!Disposer.tryRegister(disposableParent, it)) {
+              Disposer.dispose(it)
+              LOG.warn("Failed to register disposable for search. Looks like FindPopup is already closed. Search will be canceled.")
+              return@launch
+            }
           }
-        }
-        val searchDisposable = currentSearchDisposable
-        val initScope = this.childScope("FindAndReplaceExecutorImpl.UsageInit")
-        if (searchDisposable != null && !searchDisposable.isDisposed) {
-          Disposer.register(searchDisposable) {
-            initScope.cancel("search disposed")
+          val searchDisposable = currentSearchDisposable
+          val initScope = this.childScope("FindAndReplaceExecutorImpl.UsageInit")
+          if (searchDisposable != null && !searchDisposable.isDisposed) {
+            Disposer.register(searchDisposable) {
+              initScope.cancel("search disposed")
+            }
           }
-        }
-        FindRemoteApi.getInstance().findByModel(
-          findModel = findModel,
-          projectId = project.projectId(),
-          filesToScanInitially = filesToScanInitially.map { it.rpcId() },
-          maxUsagesCount = maxUsages
-        ).take(maxUsages)
-          .let {
-            if (shouldThrottle) it.throttledWithAccumulation()
-            else it.map { event -> ThrottledOneItem(event) }
-          }
-          .collect { throttledItems ->
-          if (searchDisposable?.isDisposed == true) {
-            return@collect
-          }
-          throttledItems.items.forEach { item ->
-            val usage = UsageInfoModel.createUsageInfoModel(project, item, initScope, onUpdateModelCallback)
-            if (searchDisposable == null || !Disposer.tryRegister(searchDisposable, usage)) {
-              Disposer.dispose(usage)
+          FindRemoteApi.getInstance().findByModel(
+            findModel = findModel,
+            projectId = project.projectId(),
+            filesToScanInitially = filesToScanInitially.map { it.rpcId() },
+            maxUsagesCount = maxUsages
+          ).take(maxUsages)
+            .let {
+              if (shouldThrottle) it.throttledWithAccumulation()
+              else it.map { event -> ThrottledOneItem(event) }
+            }
+            .collect { throttledItems ->
+            if (searchDisposable?.isDisposed == true) {
               return@collect
             }
+            throttledItems.items.forEach { item ->
+              val usage = UsageInfoModel.createUsageInfoModel(project, item, initScope, onUpdateModelCallback)
+              if (searchDisposable == null || !Disposer.tryRegister(searchDisposable, usage)) {
+                Disposer.dispose(usage)
+                return@collect
+              }
 
-            val shouldContinue = onResult(usage)
-            if (!shouldContinue) {
-              return@collect
+              val shouldContinue = onResult(usage)
+              if (!shouldContinue) {
+                return@collect
+              }
             }
           }
         }
-        onFinish()
+        finally {
+          // Always notify that this search generation has finished — including on cancellation or an
+          // early return above — so the Find popup is never left stuck showing "Searching..." with no
+          // results. The callback is generation-guarded on the caller side, so a superseded search
+          // becomes a no-op there.
+          onFinish()
+        }
       }
+      findUsagesJob = job
+      // A canceled search progress indicator (superseded search, popup-level cancel, ...) must abort
+      // the collection promptly. Otherwise the coroutine can stay suspended on the backend result flow
+      // indefinitely and this search generation would never terminate (the popup stays on "Searching...").
+      cancelJobWhenIndicatorIsCanceled(progressIndicator, job)
     }
     else {
       val filesToScanInitially = previousUsages.mapNotNull { (it as? UsageInfo2UsageAdapter)?.file }.toSet()
@@ -170,5 +184,18 @@ open class FindAndReplaceExecutorImpl(val coroutineScope: CoroutineScope) : Find
     validationJob?.cancel(message)
     findUsagesJob?.cancel(message)
     selectScopeJob?.cancel(message)
+  }
+
+  private fun cancelJobWhenIndicatorIsCanceled(indicator: ProgressIndicatorEx, job: Job) {
+    indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+      override fun cancel() {
+        super.cancel()
+        job.cancel("find search progress indicator is canceled")
+      }
+    })
+    // The indicator may already be canceled by the time the delegate above is attached.
+    if (indicator.isCanceled) {
+      job.cancel("find search progress indicator is canceled")
+    }
   }
 }

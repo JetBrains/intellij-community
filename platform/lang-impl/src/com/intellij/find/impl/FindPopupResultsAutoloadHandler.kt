@@ -453,6 +453,17 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
           }
         }, modality)
       }
+      else if (FindKey.isEnabled && !loadMore && progressIndicatorWhenSearchStarted === progress && host.isDialogVisible) {
+        // The current search was canceled before producing a terminal result (e.g. its progress
+        // indicator was canceled during a burst of rapid query edits) and nothing superseded it
+        // (it is still the latest generation). Without this, the popup would stay stuck on
+        // "Searching..." with no results. Re-run the latest query so it is actually searched.
+        // Skip when the model is invalid (e.g. a directory-validation failure intentionally
+        // canceled the search) to avoid re-running a query that cannot produce results.
+        if (!host.hasValidationError()) {
+          host.scheduleResultsUpdate()
+        }
+      }
       if (!loadMore) {
         // Report search finished only for the initial request
         FindUsagesCollector.recordSearchFinished(
@@ -494,7 +505,12 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
   }
 
   private fun searchStoppedProcessing(hashCode: Int) {
+    val wasCurrentSearch = hashCode == loadingHash
     onStop(hashCode)
+    // Only the current search may clear leftover results. A superseded search's termination (which
+    // now always fires, even on cancellation) must not wipe the table of the fresh search that
+    // replaced it.
+    if (!wasCurrentSearch) return
     ApplicationManager.getApplication().invokeLater {
       // Nothing is found, let's clear previous results.
       if (state.consumeNeedReset()) {
@@ -557,6 +573,7 @@ internal class FindPopupResultsAutoloadHandler(private val host: Host) {
     fun validate(model: FindModel): ValidationInfo?
     fun applyValidationResult(info: ValidationInfo?)
     fun isValidationOnReplaceComponent(info: ValidationInfo): Boolean
+    fun hasValidationError(): Boolean
     fun refreshTableRenderer()
     val usageViewPresentation: com.intellij.usages.UsageViewPresentation
 
