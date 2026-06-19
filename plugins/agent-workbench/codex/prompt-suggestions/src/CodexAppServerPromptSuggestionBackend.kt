@@ -3,9 +3,7 @@ package com.intellij.agent.workbench.codex.prompt.suggestions
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 
-import com.intellij.agent.workbench.codex.common.CodexAppServerClient
 import com.intellij.agent.workbench.codex.common.CodexAppServerException
-import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationRouting
 import com.intellij.agent.workbench.codex.common.CodexCliNotFoundException
 import com.intellij.agent.workbench.codex.common.invokeOnCompletionOrWarn
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
@@ -101,14 +99,13 @@ class CodexPromptSuggestionAppServerService internal constructor(
   @Suppress("unused")
   constructor(serviceScope: CoroutineScope) : this(
     serviceScope = serviceScope,
-    client = CodexAppServerClient(
+    client = CodexPromptSuggestionAppServerClient(
       coroutineScope = serviceScope,
-      notificationRouting = CodexAppServerNotificationRouting.PARSED_ONLY,
     ),
   )
 
   @Suppress("unused")
-  private constructor(serviceScope: CoroutineScope, client: CodexAppServerClient) : this(
+  private constructor(serviceScope: CoroutineScope, client: CodexPromptSuggestionAppServerClient) : this(
     serviceScope = serviceScope,
     suggestWithClient = client::suggestPrompt,
     shutdownClient = client::shutdown,
@@ -162,17 +159,6 @@ internal object CodexPromptSuggestionModelSettings {
   private fun readConfiguredValue(): String {
     return configuredValueProvider.value()
   }
-}
-
-private suspend fun CodexAppServerClient.suggestPrompt(request: CodexPromptSuggestionRequest): AgentPromptSuggestionAiResult? {
-  val payload = runReadOnlyEphemeralTurn(
-    cwd = request.cwd,
-    inputText = buildPromptSuggestionTurnInput(request),
-    model = request.model,
-    reasoningEffort = request.reasoningEffort,
-    outputSchemaWriter = { generator -> writePromptSuggestionOutputSchema(generator, request) },
-  )
-  return payload?.let(::parseCodexPromptSuggestionResult)
 }
 
 private fun AgentPromptSuggestionAiRequest.toCodexPromptSuggestionRequest(
