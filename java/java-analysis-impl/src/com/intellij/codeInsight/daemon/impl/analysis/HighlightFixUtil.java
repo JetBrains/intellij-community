@@ -121,6 +121,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.JavaPsiPatternUtil;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -808,14 +809,16 @@ public final class HighlightFixUtil {
     return CachedValuesManager.getCachedValue(method, () -> {
       PsiManager manager = method.getManager();
       PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(method);
-      if (returnStatements.length == 0) return CachedValueProvider.Result.create(PsiTypes.voidType(), method);
+      if (returnStatements.length == 0) {
+        return CachedValueProvider.Result.create(PsiTypes.voidType(), PsiModificationTracker.MODIFICATION_COUNT);
+      }
       PsiType expectedType = null;
       for (PsiReturnStatement returnStatement : returnStatements) {
         ReturnModel returnModel = ReturnModel.create(returnStatement);
-        if (returnModel == null) return CachedValueProvider.Result.create(null, method);
+        if (returnModel == null) return CachedValueProvider.Result.create(null, PsiModificationTracker.MODIFICATION_COUNT);
         expectedType = lub(expectedType, returnModel.myLeastType, returnModel.myType, method, manager);
       }
-      return CachedValueProvider.Result.create(expectedType, method);
+      return CachedValueProvider.Result.create(expectedType, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
