@@ -41,6 +41,7 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcompletion.ModCompletionItem;
@@ -749,6 +750,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     ModCompletionItem.InsertionContext insertionContext = new ModCompletionItem.InsertionContext(
       completionChar == REPLACE_SELECT_CHAR ? ModCompletionItem.InsertionMode.OVERWRITE : ModCompletionItem.InsertionMode.INSERT,
       completionChar);
+    PsiFile topLevelFile = InjectedLanguageManager.getInstance(psiFile.getProject()).getTopLevelFile(psiFile);
+    psiFile = topLevelFile == null ? psiFile : topLevelFile;
     ActionContext actionContext = ActionContext.from(editor, psiFile);
     ActionContext finalActionContext = actionContext
       .withOffset(start)
@@ -1302,6 +1305,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         // templates whose matcher prefix is "" right after the dot). At that moment the
         // "prefix length" is logically meaningless
         if (prefixLength < 0) return;
+        PsiFile topLevelFile = InjectedLanguageManager.getInstance(getProject()).getTopLevelFile(file);
+        file = topLevelFile == null ? file : topLevelFile;
         ActionContext actionContext = ActionContext.from(editor, file);
         int start = actionContext.offset() - prefixLength;
         // it can happen when an external change

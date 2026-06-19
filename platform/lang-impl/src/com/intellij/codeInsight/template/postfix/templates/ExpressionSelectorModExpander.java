@@ -117,16 +117,15 @@ public class ExpressionSelectorModExpander implements PostfixModExpander {
                                                                      @NotNull TextRange key,
                                                                      @NotNull PsiElement virtualExpression,
                                                                      @NotNull PostfixTemplateProvider provider) {
-    TextRange selection = new TextRange(key.getStartOffset(), key.getStartOffset());
-    ActionContext updatedContext = ctx.withSelection(selection).withOffset(key.getStartOffset());
-    return ModCommand.psiUpdate(updatedContext,
-                                document -> document.deleteString(ctx.selection().getStartOffset(), ctx.selection().getEndOffset()),
+    return ModCommand.psiUpdate(ctx,
+                                true,
                                 updater -> {
+                                  updater.select(TextRange.from(key.getStartOffset(), 0));
                                   updater.getDocument().deleteString(PostfixLiveTemplate.positiveOffset(key.getStartOffset()), ctx.selection().getStartOffset());
                                   PsiDocumentManager.getInstance(ctx.project()).commitDocument(updater.getDocument());
                                   provider.prepareCopyForModCommand(updater.getPsiFile(), PostfixLiveTemplate.positiveOffset(key.getStartOffset()));
                                   PsiElement elementInCopy = PsiTreeUtil.findSameElementInCopy(virtualExpression, updater.getPsiFile());
-                                  myExpandAction.expand(updatedContext, updater, elementInCopy);
+                                  myExpandAction.expand(ctx, updater, elementInCopy);
                                 });
   }
 }

@@ -82,14 +82,14 @@ final class PsiUpdateImpl {
   private static final Key<PsiFile> ORIGINAL_FILE_FOR_INJECTION = Key.create("ORIGINAL_FILE_FOR_INJECTION");
 
   static @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
-                                       @NotNull Consumer<@NotNull Document> copyCleaner,
+                                       boolean deleteSelection,
                                        @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
     var runnable = new Runnable() {
       private ModPsiUpdaterImpl myUpdater;
 
       @Override
       public void run() {
-        myUpdater = new ModPsiUpdaterImpl(context, copyCleaner);
+        myUpdater = new ModPsiUpdaterImpl(context, deleteSelection);
         updater.accept(myUpdater);
       }
 
@@ -121,15 +121,13 @@ final class PsiUpdateImpl {
     private boolean myDeleted;
     private boolean myGuardModification;
 
-    FileTracker(@NotNull PsiFile origFile, @NotNull Map<PsiFile, FileTracker> changedFiles, @NotNull Consumer<@NotNull Document> copyCleaner) {
+    FileTracker(@NotNull PsiFile origFile, @NotNull Map<PsiFile, FileTracker> changedFiles, @Nullable TextRange selectionToDelete) {
       Project project = origFile.getProject();
       myCopyFile = copyFile(project, origFile);
-      PsiFileImplUtil.setNonPhysicalFileDeleteHandler(myCopyFile, f -> myDeleted = true);
+      PsiFileImplUtil.setNonPhysicalFileDeleteHandler(myCopyFile, _ -> myDeleted = true);
       assert !myCopyFile.getViewProvider().isEventSystemEnabled() : "Event system for " + myCopyFile.getName();
       myManager = PsiDocumentManager.getInstance(project);
       myDocument = myCopyFile.getFileDocument();
-      copyCleaner.accept(myDocument);
-      myManager.commitDocument(myDocument);
       InjectedLanguageManager injectionManager = InjectedLanguageManager.getInstance(project);
       boolean injected = injectionManager.isInjectedFragment(origFile);
       if (injected) {
@@ -151,6 +149,16 @@ final class PsiUpdateImpl {
           }
         }, this);
         Disposer.register(this, disposable);
+        if (selectionToDelete != null) {
+          // The supplied selection is in host-document coordinates (completion uses the top-level editor);
+          // map it into the injected copy's coordinate space, as myDocument is the copy of the injected file here.
+          Document injectedDocument = origFile.getFileDocument();
+          if (injectedDocument instanceof DocumentWindow window) {
+            int start = injectionManager.mapInjectedOffsetToUnescaped(origFile, window.hostToInjected(selectionToDelete.getStartOffset()));
+            int end = injectionManager.mapInjectedOffsetToUnescaped(origFile, window.hostToInjected(selectionToDelete.getEndOffset()));
+            selectionToDelete = TextRange.create(start, end);
+          }
+        }
         myTargetFile = hostFileCopy;
         origFile = hostFile;
         myPositionDocument = hostFileCopy.getViewProvider().getDocument();
@@ -159,6 +167,10 @@ final class PsiUpdateImpl {
         myInjectionHost = null;
         myTargetFile = myCopyFile;
         myPositionDocument = myDocument;
+      }
+      if (selectionToDelete != null) {
+        myDocument.deleteString(selectionToDelete.getStartOffset(), selectionToDelete.getEndOffset());
+        myManager.commitDocument(myDocument);
       }
       myPositionDocument.addDocumentListener(this, this);
       myOrigText = myTargetFile.getText();
@@ -308,12 +320,12 @@ final class PsiUpdateImpl {
     private int myCaretVirtualEnd;
     private @NotNull TextRange mySelection;
     private final @NotNull List<@NotNull ModRegisterTabOut> myTabOutCommands = new ArrayList<>();
-    private final Consumer<@NotNull Document> myCopyCleaner;
+    private final boolean myDeleteSelection;
     private final List<ModHighlight.HighlightInfo> myHighlightInfos = new ArrayList<>();
     private final List<ModStartTemplate.TemplateField> myTemplateFields = new ArrayList<>();
     private final Map<String, Result> myTemplateValues = new HashMap<>();
     private final List<ModLaunchEditorAction> myLaunchEditorActions = new ArrayList<>();
-    private @NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> myTemplateFinishFunction = f -> nop();
+    private @NotNull Function<? super @NotNull PsiFile, ? extends @NotNull ModCommand> myTemplateFinishFunction = _ -> nop();
     private @Nullable ModStartRename myRenameSymbol;
     private final List<ModUpdateReferences> myTrackedDeclarations = new ArrayList<>();
     private boolean myPositionUpdated = false;
@@ -356,11 +368,11 @@ final class PsiUpdateImpl {
       }
     }
 
-    private ModPsiUpdaterImpl(@NotNull ActionContext actionContext, @NotNull Consumer<@NotNull Document> copyCleaner) {
+    private ModPsiUpdaterImpl(@NotNull ActionContext actionContext, boolean deleteSelection) {
       myActionContext = actionContext;
       myCaretOffset = myCaretVirtualEnd = actionContext.offset();
       mySelection = actionContext.selection();
-      myCopyCleaner = copyCleaner;
+      myDeleteSelection = deleteSelection;
     }
 
     private @NotNull FileTracker tracker() {
@@ -391,7 +403,15 @@ final class PsiUpdateImpl {
 
     private @NotNull FileTracker tracker(@NotNull PsiFile file) {
       FileTracker result = myChangedFiles.computeIfAbsent(file, origFile -> {
-        var tracker = new FileTracker(origFile, myChangedFiles, myActionContext.file() == file ? myCopyCleaner : doc -> {});
+        FileTracker tracker;
+        if (myDeleteSelection && myActionContext.file() == file && mySelection.getLength() > 0) {
+          tracker = new FileTracker(origFile, myChangedFiles, mySelection);
+          myCaretOffset = mySelection.getStartOffset();
+          mySelection = TextRange.from(myCaretOffset, 0);
+        }
+        else {
+          tracker = new FileTracker(origFile, myChangedFiles, null);
+        }
         Disposer.register(this, tracker);
         return tracker;
       });
@@ -417,7 +437,7 @@ final class PsiUpdateImpl {
       if (element instanceof PsiDirectory dir) {
         VirtualFile file = dir.getVirtualFile();
         if (file instanceof ChangedVirtualDirectory) return element;
-        ChangedDirectoryInfo directory = myChangedDirectories.computeIfAbsent(file, f -> ChangedDirectoryInfo.create(dir));
+        ChangedDirectoryInfo directory = myChangedDirectories.computeIfAbsent(file, _ -> ChangedDirectoryInfo.create(dir));
         @SuppressWarnings("unchecked") E result = (E)directory.psiDirectory;
         return result;
       }
@@ -557,7 +577,7 @@ final class PsiUpdateImpl {
           TemplateImpl.DummyContext context = new TemplateImpl.DummyContext(range, element, getPsiFile());
           Result result = varName == null
                           ? expression.calculateResult(context)
-                          : myTemplateValues.computeIfAbsent(varName, v -> expression.calculateResult(context));
+                          : myTemplateValues.computeIfAbsent(varName, _ -> expression.calculateResult(context));
 
           if (result != null) {
             FileTracker tracker = requireNonNull(myTracker); // guarded by getRange call

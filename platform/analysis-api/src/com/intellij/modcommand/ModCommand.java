@@ -241,23 +241,21 @@ public sealed interface ModCommand
    */
   static @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
                                        @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
-    return ModCommandService.getInstance().psiUpdate(context, doc -> {}, updater);
+    return ModCommandService.getInstance().psiUpdate(context, false, updater);
   }
 
   /**
-   * @param context     a context of the original action
-   * @param copyCleaner a function that updates the document to ignore intermittent changes in the original.
-   *                    This could be useful for completion when the prefix is already inserted to the original document,
-   *                    but the final command should be applied to the document without the prefix.
-   * @param updater     a function that accepts an updater, so it can query writable copies from it and perform modifications;
-   *                    also additional editor operation like caret positioning could be performed
+   * @param context         a context of the original action
+   * @param deleteSelection if true, a text selected in the action context will be deleted prior to execution
+   * @param updater         a function that accepts an updater, so it can query writable copies from it and perform modifications;
+   *                        also additional editor operation like caret positioning could be performed
    * @return a command that will perform the corresponding update to the original elements and the editor
    */
   @ApiStatus.Internal
   static @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
-                                       @NotNull Consumer<@NotNull Document> copyCleaner,
+                                       boolean deleteSelection,
                                        @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
-    return ModCommandService.getInstance().psiUpdate(context, copyCleaner, updater);
+    return ModCommandService.getInstance().psiUpdate(context, deleteSelection, updater);
   }
 
   /**
@@ -267,7 +265,7 @@ public sealed interface ModCommand
    * @return a command that will perform the corresponding update to the original element
    */
   static <E extends PsiElement> @NotNull ModCommand psiUpdate(@NotNull E orig, @NotNull Consumer<@NotNull E> updater) {
-    return psiUpdate(orig, (e, ctx) -> updater.accept(e));
+    return psiUpdate(orig, (e, _) -> updater.accept(e));
   }
 
   /**
@@ -310,7 +308,7 @@ public sealed interface ModCommand
     final @NotNull @IntentionName String title,
     @NotNull Function<@NotNull T, @NotNull ModCommand> function,
     @NotNull Function<@NotNull T, @NotNull TextRange> range) {
-    return new PsiBasedModCommandAction<T>(element) {
+    return new PsiBasedModCommandAction<>(element) {
       @Override
       protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull T element) {
         return function.apply(element);
@@ -343,7 +341,7 @@ public sealed interface ModCommand
     final @NotNull @IntentionName String title,
     @NotNull BiConsumer<@NotNull T, @NotNull ModPsiUpdater> action,
     @NotNull Function<@NotNull T, @NotNull TextRange> range) {
-    return new PsiUpdateModCommandAction<T>(element) {
+    return new PsiUpdateModCommandAction<>(element) {
       @Override
       protected void invoke(@NotNull ActionContext context, @NotNull T element, @NotNull ModPsiUpdater updater) {
         action.accept(element, updater);
@@ -387,7 +385,7 @@ public sealed interface ModCommand
    * @param file      a file where we want to navigate
    * @param offset    an offset in the file before the command is executed
    * @param leanRight if true, lean to the right side when the text was inserted right at the caret position
-   * @return an updated command which tries to navigate inside the specified file, taking into account the modifications inside that file
+   * @return an updated command that tries to navigate inside the specified file, taking into account the modifications inside that file
    */
   @ApiStatus.Experimental
   static @NotNull ModCommand moveCaretAfter(@NotNull ModCommand command, @NotNull PsiFile file, int offset, boolean leanRight) {

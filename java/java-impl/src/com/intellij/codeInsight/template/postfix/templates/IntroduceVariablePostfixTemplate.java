@@ -130,13 +130,10 @@ public class IntroduceVariablePostfixTemplate extends PostfixTemplateWithExpress
                                                             @NotNull PsiElement virtualExpr,
                                                             boolean replaceAll,
                                                             @NotNull PostfixTemplateProvider provider) {
-    TextRange newSelection = new TextRange(keyRange.getStartOffset(), keyRange.getStartOffset());
-    ActionContext updatedContext = ctx.withSelection(newSelection).withOffset(keyRange.getStartOffset());
-    ModCommand command = ModCommand.psiUpdate(updatedContext,
-                                              document -> {
-                                                document.deleteString(ctx.selection().getStartOffset(), ctx.selection().getEndOffset());
-                                              },
+    ModCommand command = ModCommand.psiUpdate(ctx,
+                                              true,
                                               updater -> {
+                                                updater.select(TextRange.from(keyRange.getStartOffset(), 0));
                                                 updater.getDocument()
                                                   .deleteString(PostfixLiveTemplate.positiveOffset(keyRange.getStartOffset()), ctx.selection().getStartOffset());
                                                 PsiDocumentManager.getInstance(ctx.project()).commitDocument(updater.getDocument());

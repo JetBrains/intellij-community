@@ -109,9 +109,9 @@ public class EditableTemplateModExpander implements PostfixModExpander {
   private @NotNull ModCommand createModCommand(@NotNull ActionContext ctx, @NotNull TextRange key,
                                                @NotNull PsiElement virtualExpression,
                                                @NotNull PostfixTemplateProvider provider) {
-    return ModCommand.psiUpdate(ctx.withSelection(new TextRange(key.getStartOffset(), key.getStartOffset())).withOffset(key.getStartOffset()),
-                                document -> document.deleteString(ctx.selection().getStartOffset(), ctx.selection().getEndOffset()),
+    return ModCommand.psiUpdate(ctx, true,
                                 updater -> {
+                                  updater.select(TextRange.from(key.getStartOffset(), 0));
                                   updater.getDocument().deleteString(PostfixLiveTemplate.positiveOffset(key.getStartOffset()), ctx.selection().getStartOffset());
                                   PsiDocumentManager.getInstance(ctx.project()).commitDocument(updater.getDocument());
                                   provider.prepareCopyForModCommand(updater.getPsiFile(), PostfixLiveTemplate.positiveOffset(key.getStartOffset()));
