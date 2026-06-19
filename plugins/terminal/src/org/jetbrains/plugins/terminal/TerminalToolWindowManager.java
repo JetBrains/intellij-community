@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.idea.AppMode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -133,6 +134,10 @@ public final class TerminalToolWindowManager implements Disposable {
 
   /** Restores tabs for Classic Terminal and New Terminal Gen1. */
   void restoreTabsLocal(@Nullable TerminalArrangementState arrangementState) {
+    if (!TrustedProjects.isProjectTrusted(myProject)) {
+      return;
+    }
+
     ContentManager contentManager = myToolWindow.getContentManager();
 
     if (arrangementState != null) {
