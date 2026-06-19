@@ -104,10 +104,9 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
   public @NotNull String buildErrorString(Object... infos) {
     final String replacement = (String)infos[1];
     final PsiExpression expression = (PsiExpression)infos[0];
-    if (replacement.isEmpty() && expression instanceof PsiAssignmentExpression) {
-      return InspectionGadgetsBundle.message("boolean.expression.does.not.modify.problem.descriptor", expression.getText());
-    }
-    return InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor", replacement);
+    return replacement.isEmpty() && expression instanceof PsiAssignmentExpression
+           ? InspectionGadgetsBundle.message("boolean.expression.does.not.modify.problem.descriptor", expression.getText())
+           : InspectionGadgetsBundle.message("boolean.expression.can.be.simplified.problem.descriptor", replacement);
   }
 
   private StringBuilder buildSimplifiedExpression(@Nullable PsiExpression expression, StringBuilder out, CommentTracker tracker) {
@@ -198,12 +197,7 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
         expressions.add(operand);
       }
       if (expressions.isEmpty()) {
-        if (negate) {
-          out.append(JavaKeywords.TRUE);
-        }
-        else {
-          out.append(JavaKeywords.FALSE);
-        }
+        out.append(negate ? JavaKeywords.TRUE : JavaKeywords.FALSE);
         return;
       }
       buildSimplifiedExpression(expressions, tokenType.equals(JavaTokenType.XOR) ? "^" : "!=", negate, out, tracker);
@@ -221,12 +215,7 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
         expressions.add(operand);
       }
       if (expressions.isEmpty()) {
-        if (negate) {
-          out.append(JavaKeywords.FALSE);
-        }
-        else {
-          out.append(JavaKeywords.TRUE);
-        }
+        out.append(negate ? JavaKeywords.FALSE : JavaKeywords.TRUE);
         return;
       }
       buildSimplifiedExpression(expressions, "==", negate, out, tracker);
@@ -242,7 +231,7 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
                                          StringBuilder out,
                                          CommentTracker tracker) {
     if (expressions.size() == 1) {
-      final PsiExpression expression = expressions.get(0);
+      final PsiExpression expression = expressions.getFirst();
       if (!negate) {
         out.append(tracker.text(expression));
         return;
@@ -483,14 +472,14 @@ public final class PointlessBooleanExpressionInspection extends BaseInspection i
         return;
       }
       final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
-      if (parent instanceof PsiExpression && getExpressionKind((PsiExpression)parent) != BooleanExpressionKind.UNKNOWN) {
+      if (parent instanceof PsiExpression exp && getExpressionKind(exp) != BooleanExpressionKind.UNKNOWN) {
         return;
       }
 
       final String replacement = buildSimplifiedExpression(expression, new StringBuilder(), new CommentTracker()).toString();
       final Supplier<PsiElement> newBodySupplier =
         () -> JavaPsiFacade.getElementFactory(expression.getProject()).createExpressionFromText(replacement, expression);
-      if (parent instanceof PsiLambdaExpression && !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)parent, newBodySupplier)) {
+      if (parent instanceof PsiLambdaExpression lambda && !LambdaUtil.isSafeLambdaBodyReplacement(lambda, newBodySupplier)) {
         return;
       }
 
