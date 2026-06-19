@@ -12,9 +12,11 @@ import com.intellij.openapi.observable.util.setSystemProperty
 import com.intellij.testFramework.common.mock.notImplemented
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestDisposable
+import org.gradle.tooling.model.BuildIdentifier
 import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet
+import java.io.File
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -131,8 +133,8 @@ class GradleModelControllerTest(val isResilientSyncEnabled: Boolean) {
 
   @Test
   fun `fetch models can target builds`() {
-    val buildModel1 = MockGradleBuild(MockGradleProject("root-1"), emptyList())
-    val buildModel2 = MockGradleBuild(MockGradleProject("root-2"), emptyList())
+    val buildModel1 = MockGradleBuild(MockGradleProject("root-1"))
+    val buildModel2 = MockGradleBuild(MockGradleProject("root-2"))
     val buildModels = listOf(buildModel1, buildModel2)
 
     val buildController = TestBuildController().apply {
@@ -281,23 +283,79 @@ class GradleModelControllerTest(val isResilientSyncEnabled: Boolean) {
     modelConsumer.assertProjectModels(emptyList())
   }
 
+  @Test
+  fun `resilient model fetch api propagates project directory as target path in failure result`() {
+    val projectDirectory = File("root-dir")
+    val rootProject = MockGradleProject("root", projectDirectory = projectDirectory)
+    val buildModel = MockGradleBuild(rootProject)
+
+    val buildController = TestBuildController().apply {
+      registerModelFailure(rootProject, TestModel::class.java, TestModelFetchException())
+    }
+
+    val modelRequest = GradleModelControllerImpl(buildController)
+      .fetchRequest(listOf(buildModel), TestModel::class.java)
+
+    when (isResilientSyncEnabled) {
+      true -> modelRequest.execute(TestModelConsumer())
+      else -> assertThrows<TestModelFetchException> {
+        modelRequest.execute(TestModelConsumer())
+      }
+    }
+
+    if (isResilientSyncEnabled) {
+      buildController.assertSentFailureTargetPaths(listOf(projectDirectory))
+    }
+  }
+
+  @Test
+  fun `resilient model fetch api propagates build root directory as target path in failure result`() {
+    val buildRootDir = File("build-root-dir")
+    val rootProject = MockGradleProject("root")
+    val buildModel = MockGradleBuild(rootProject, buildRootDir = buildRootDir)
+
+    val buildController = TestBuildController().apply {
+      registerModelFailure(buildModel, TestModel::class.java, TestModelFetchException())
+    }
+
+    val modelRequest = GradleModelControllerImpl(buildController)
+      .fetchRequest(listOf(buildModel), TestModel::class.java)
+      .modelLevel(GradleModelLevel.BUILD)
+
+    when (isResilientSyncEnabled) {
+      true -> modelRequest.execute(TestModelConsumer())
+      else -> assertThrows<TestModelFetchException> {
+        modelRequest.execute(TestModelConsumer())
+      }
+    }
+
+    if (isResilientSyncEnabled) {
+      buildController.assertSentFailureTargetPaths(listOf(buildRootDir))
+    }
+  }
+
   private class MockGradleBuild(
     private val rootProject: MockGradleProject?,
-    private val projects: Collection<MockGradleProject>,
+    private val projects: Collection<MockGradleProject> = listOf(rootProject!!),
+    private val buildRootDir: File = rootProject?.projectDirectory ?: File("build"),
   ) : GradleBuild by notImplemented(GradleBuild::class.java) {
     override fun getRootProject() = rootProject
     override fun getProjects() = ImmutableDomainObjectSet.of(projects)!!
+    override fun getBuildIdentifier() = BuildIdentifier { buildRootDir }
     override fun toString(): String = rootProject?.name.toString()
   }
 
   private class MockGradleProject(
     private val name: String,
     private val parent: MockGradleProject? = null,
-    private val children: MutableList<MockGradleProject> = ArrayList(),
+    private val projectDirectory: File = File(name),
   ) : BasicGradleProject by notImplemented(BasicGradleProject::class.java) {
+    private val children = ArrayList<MockGradleProject>()
+
     override fun getName() = name
     override fun getParent() = parent
     override fun getChildren() = ImmutableDomainObjectSet.of(children)!!
+    override fun getProjectDirectory() = projectDirectory
     override fun toString(): String = name
 
     init {

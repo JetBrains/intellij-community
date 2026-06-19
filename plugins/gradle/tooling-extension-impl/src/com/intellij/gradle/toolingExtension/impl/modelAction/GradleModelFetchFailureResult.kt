@@ -2,9 +2,11 @@
 package com.intellij.gradle.toolingExtension.impl.modelAction
 
 import org.jetbrains.annotations.ApiStatus
+import java.io.File
 import java.io.Serializable
 
 @ApiStatus.Internal
-class GradleModelFetchFailureState(
-  val failureResult: GradleModelFetchFailureResult,
+class GradleModelFetchFailureResult(
+  val targetPath: File?,
+  val failures: List<GradleModelFetchFailure>,
 ) : Serializable

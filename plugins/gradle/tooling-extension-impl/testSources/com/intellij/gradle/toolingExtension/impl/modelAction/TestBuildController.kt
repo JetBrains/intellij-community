@@ -9,11 +9,13 @@ import org.gradle.tooling.BuildController
 import org.gradle.tooling.FetchModelResult
 import org.gradle.tooling.internal.consumer.DefaultFetchModelResult
 import org.gradle.tooling.model.Model
+import java.io.File
 
 internal class TestBuildController : BuildController by notImplemented(BuildController::class.java) {
 
   private val modelRequests = ArrayList<TestModelRequest>()
   private val runActionCounts = ArrayList<Int>()
+  private val sentValues = ArrayList<Any>()
   private val models = HashMap<Pair<Model?, Class<*>>, Any>()
   private val modelFailures = HashMap<Pair<Model?, Class<*>>, Exception>()
   private val parameterFactories = HashMap<Class<*>, (() -> Any)>()
@@ -42,6 +44,13 @@ internal class TestBuildController : BuildController by notImplemented(BuildCont
 
   fun assertRunActionCounts(expectedRunActionCounts: List<Int>) {
     assertEqualsOrdered(expectedRunActionCounts, runActionCounts)
+  }
+
+  fun assertSentFailureTargetPaths(expectedTargetPaths: List<File?>) {
+    val actualTargetPaths = sentValues
+      .filterIsInstance<GradleModelFetchFailureState>()
+      .map { it.failureResult.targetPath }
+    assertEqualsOrdered(expectedTargetPaths, actualTargetPaths)
   }
 
   override fun <T> findModel(target: Model?, modelType: Class<T>): T? {
@@ -104,7 +113,9 @@ internal class TestBuildController : BuildController by notImplemented(BuildCont
     return actions.map { it.execute(this) }
   }
 
-  override fun send(value: Any?) = Unit
+  override fun send(value: Any?) {
+    if (value != null) sentValues.add(value)
+  }
 
   private fun <T : Any> fetchModelResult(modelProvider: () -> T?): FetchModelResult<T> {
     return try {
