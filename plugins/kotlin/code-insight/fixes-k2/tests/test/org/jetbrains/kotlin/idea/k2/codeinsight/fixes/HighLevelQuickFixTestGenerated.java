@@ -17679,6 +17679,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
                 runTest("../../../idea/tests/testData/quickfix/when/notRedundantBranch.kt");
             }
 
+            @TestMetadata("removeDuplicateBranchClass.kt")
+            public void testRemoveDuplicateBranchClass() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/when/removeDuplicateBranchClass.kt");
+            }
+
+            @TestMetadata("removeDuplicateBranchEnums.kt")
+            public void testRemoveDuplicateBranchEnums() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/when/removeDuplicateBranchEnums.kt");
+            }
+
             @TestMetadata("removeRedundantBranch.kt")
             public void testRemoveRedundantBranch() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/when/removeRedundantBranch.kt");
