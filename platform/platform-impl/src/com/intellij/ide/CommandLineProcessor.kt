@@ -33,6 +33,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFocusManager
@@ -191,9 +192,9 @@ object CommandLineProcessor {
       CliResult(0, IdeBundle.message("ide.protocol.exception", e.javaClass.simpleName, e.message))
     }
 
-    if (cliResult.message != null) {
+    cliResult.message?.let { message ->
       val title = IdeBundle.message("ide.protocol.cannot.title")
-      Notification("System Messages", title, cliResult.message!!, NotificationType.WARNING)
+      Notification("System Messages", title, Strings.escapeXmlEntities(message), NotificationType.WARNING)
         .addAction(ShowLogAction.notificationAction())
         .notify(null)
     }
