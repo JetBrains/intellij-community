@@ -31,7 +31,7 @@
 
     <!-- ProjectFromVersionControl is intentionally not defined in this shared core descriptor.
          Its implementation lives in the backend-only VCS module and is registered from
-         intellij.pycharm.community.ide.impl, so JetBrains Client can load PyCharm core
+         intellij.pycharm.community.customization.backend, so JetBrains Client can load PyCharm core
          customization without pulling backend VCS into the shared plugin. -->
     <group id="PyCharm.MarkRootGroup">
       <action id="MarkSourceRoot" class="com.intellij.ide.projectView.actions.MarkJavaSourceRootAction"/>

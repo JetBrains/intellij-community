@@ -173,6 +173,8 @@ jvm_library(
         "//platform/vcs-api:vcs_test_lib",
         "//platform/vcs-impl",
         "//platform/vcs-impl:vcs-impl_test_lib",
+        "//platform/vcs/plugin",
+        "//platform/vcs/plugin:plugin_test_lib",
         "//platform/lvcs-api:lvcs",
         "//platform/lvcs-api:lvcs_test_lib",
         "//platform/lang-api:lang",

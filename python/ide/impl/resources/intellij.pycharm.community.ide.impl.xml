@@ -1,9 +1,5 @@
 <idea-plugin visibility="internal">
   <!--Customization code for both Community and Pro PyCharms-->
-  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
-  <!-- ProjectFromVersionControl uses GetFromVersionControlAction from the VCS implementation module.
-     Keep this dependency in the PyCharm IDE implementation descriptor rather than pycharm-core.xml,
-     because shared core customization must not load backend-only VCS in JetBrains Client layouts. -->
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <plugin id="com.intellij.modules.python"/>
@@ -16,8 +12,8 @@
     <module name="intellij.python.sdk.ui"/>
     <module name="intellij.python.sdkConfigurator.common"/>
     <module name="intellij.python.uv.common"/>
+    <!-- endregion -->
   </dependencies>
-  <!-- endregion -->
 
   <projectListeners>
     <listener class="com.intellij.pycharm.community.ide.impl.PyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
@@ -167,14 +163,6 @@
     <action id="PySwitchSdkAction" class="com.intellij.pycharm.community.ide.impl.configuration.PySwitchSdkAction"/>
     <action id="NewDirectoryProject" class="com.intellij.pycharm.community.ide.impl.newProjectWizard.PyCharmNewProjectAction">
       <add-to-group group-id="NewProjectOrModuleGroup"/>
-    </action>
-    <!-- PyCharm owns the action id, text overrides, and placement. The implementation class is supplied
-         by intellij.platform.vcs.impl, so the action is defined in this descriptor instead of referenced
-         from the shared core customization descriptor. -->
-    <action id="ProjectFromVersionControl" class="com.intellij.openapi.wm.impl.welcomeScreen.GetFromVersionControlAction">
-      <override-text place="ProjectWidgetPopup"/>
-      <add-to-group group-id="PlatformOpenProjectGroup" relative-to-action="NewProjectOrModuleGroup" anchor="after"/>
-      <add-to-group group-id="ProjectWidget.Actions" anchor="after" relative-to-action="OpenFile"/>
     </action>
 
     <group id="WelcomeScreen.Platform.NewProject">

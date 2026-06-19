@@ -52,9 +52,12 @@ public abstract class BaseFocusWatcher implements ContainerListener, FocusListen
     }
 
     if (component instanceof Container container) {
-      int componentCount = container.getComponentCount();
-      for (int i = 0; i < componentCount; i++) {
-        deinstall(container.getComponent(i));
+      Component[] children;
+      synchronized (container.getTreeLock()) {
+        children = container.getComponents();
+      }
+      for (Component child : children) {
+        deinstall(child);
       }
       container.removeContainerListener(this);
     }
