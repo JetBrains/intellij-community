@@ -573,8 +573,8 @@ class AgentChatOpenTopLevelDispatchTest {
         }
         val forkedLaunchSpec = terminalTabs.startupLaunchSpecs.last()
         assertThat(forkedLaunchSpec.command)
-          .containsExactly("pi", "--session", "thread-outline-forked", "--models", "openai/gpt-5.4")
-        assertThat(forkedLaunchSpec.envVariables).containsEntry("MODEL_COUNT", "1")
+          .containsExactly("pi", "--session", "thread-outline-forked", "--from-outline-fork")
+        assertThat(forkedLaunchSpec.envVariables).containsEntry("FORK_OVERRIDE", "1")
         val selectedFile = runInUi {
           FileEditorManager.getInstance(project).selectedFiles.singleOrNull()
         }
@@ -943,7 +943,11 @@ private class OpenTabDispatchPiForkSource : AgentSessionSource {
         archived = false,
         activity = AgentThreadActivity.PROCESSING,
         provider = AgentSessionProvider.PI,
-      )
+      ),
+      launchSpecOverride = AgentSessionTerminalLaunchSpec(
+        command = listOf("pi", "--session", "thread-outline-forked", "--from-outline-fork"),
+        envVariables = mapOf("FORK_OVERRIDE" to "1"),
+      ),
     )
   }
 }

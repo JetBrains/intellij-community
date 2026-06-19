@@ -59,6 +59,29 @@ class ClaudeAgentSessionProviderDescriptorTest {
   }
 
   @Test
+  fun buildForkResumeLaunchSpec() {
+    val launchSpec = buildClaudeForkResumeLaunchSpec(
+      sourceSessionId = "source-session",
+      forkSessionId = "fork-session",
+      executable = "claude",
+      hookSettingsArgument = TEST_CLAUDE_HOOK_SETTINGS_ARGUMENT,
+    )
+
+    assertThat(launchSpec.command)
+      .containsExactly("claude",
+                       "--resume",
+                       "source-session",
+                       "--fork-session",
+                       "--session-id",
+                       "fork-session",
+                       "--settings",
+                       TEST_CLAUDE_HOOK_SETTINGS_ARGUMENT)
+    assertThat(launchSpec.envVariables)
+      .containsExactlyEntriesOf(mapOf("DISABLE_AUTOUPDATER" to "1"))
+    assertThat(launchSpec.preallocatedSessionId).isEqualTo("fork-session")
+  }
+
+  @Test
   fun buildYoloResumeLaunchSpec(): Unit = runBlocking(Dispatchers.Default) {
     assertThat(bridge.buildResumeLaunchSpec("session-1", AgentSessionLaunchMode.YOLO).command)
       .containsExactly("claude",

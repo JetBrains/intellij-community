@@ -16,8 +16,11 @@ targets:
   - ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
   - ../../claude/common/src/ClaudeSessionsStore.kt
   - ../../claude/sessions/src/ClaudeSessionBackend.kt
+  - ../../claude/sessions/src/ClaudeAgentSessionProviderDescriptor.kt
   - ../../claude/sessions/src/ClaudeSessionSource.kt
   - ../../claude/sessions/src/backend/store/ClaudeStoreSessionBackend.kt
+  - ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+  - ../../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
   - ../../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
   - ../../pi/sessions/src/PiSessionSource.kt
   - ../../pi/sessions/testSrc/PiSessionSourceTest.kt
@@ -62,6 +65,10 @@ Agent Chat Structure View exposes an outline of persisted provider session histo
   [@test] ../../codex/sessions/testSrc/CodexAppServerSessionBackendTest.kt
   [@test] ../../chat/testSrc/AgentChatFileEditorLifecycleTest.kt
 
+- Claude Code outline rows may expose `Start New Conversation From Here` only for the latest top-level user-prompt row whose outline id is a persisted Claude transcript `uuid`. Claude Code does not expose a noninteractive API to fork at an arbitrary transcript UUID; older prompt rows must not show the action. The partial Claude implementation must open the fork through Claude CLI `--resume <sourceSessionId> --fork-session --session-id <newSessionId>` with Agent Workbench hook settings bound to the new session id, keep the source tab unchanged, and must not drive `/rewind`, double-Esc, terminal selection, or JSONL truncation.
+  [@test] ../../claude/sessions/testSrc/ClaudeSessionSourceTest.kt
+  [@test] ../../claude/sessions/testSrc/ClaudeAgentSessionProviderDescriptorTest.kt
+
 - Outline items preserve provider order and hierarchy. The shared model supports user prompts, assistant responses, agent work groups, tool calls, tool results, plans, approval requests, input requests, summaries, and metadata; unknown provider records should be skipped or mapped to metadata rather than exposed as raw JSON.
 
 - Thread outline presentation uses neutral shared labels, timestamps, and icons across providers. User prompt rows without a provider title render with the localized `User` label, item timestamps render as muted secondary metadata without replacing preview text, agent work group rows use the neutral External Tools icon, and concrete tool call rows such as bash invocations keep the console icon.
@@ -73,7 +80,7 @@ Agent Chat Structure View exposes an outline of persisted provider session histo
 - Codex rollout user-prompt outline items should use stable provider ids that encode the visible user-prompt ordinal used for rollback math. Duplicate rollout representations of the same prompt should remain a single visible user-prompt row.
   [@test] ../../codex/sessions/testSrc/CodexRolloutSessionBackendTest.kt
 
-- Claude outlines are parsed from transcript JSONL data and should group assistant/tool activity into readable blocks while preserving prompt and summary records.
+- Claude outlines are parsed from transcript JSONL data and should group assistant/tool activity into readable blocks while preserving prompt and summary records. When transcript `uuid` fields are present, outline item ids should use those stable provider anchors rather than synthetic UI ordinals.
   [@test] ../../claude/sessions/testSrc/ClaudeSessionsStoreTest.kt
 
 - Pi outlines are parsed from persisted Pi JSONL session entries using `/tree` display semantics: normal visible conversation/work rows are shown as a chronological top-level timeline, tool details may stay under their owning assistant/work row, hidden bookkeeping nodes are kept out of the visible Structure View, and leaf/bookkeeping records are not shown. The implementation must not launch Pi or scrape the interactive `/tree` TUI.
@@ -86,6 +93,8 @@ Agent Chat Structure View exposes an outline of persisted provider session histo
 - `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexAppServerSessionBackendTest`
 - `./tests.cmd --module intellij.agent.workbench.pi.sessions.tests --test com.intellij.agent.workbench.pi.sessions.PiExtensionControlWebSocketHandlerTest`
 - `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test com.intellij.agent.workbench.codex.sessions.CodexRolloutSessionBackendTest`
+- `./tests.cmd --module intellij.agent.workbench.claude.sessions.tests --test com.intellij.agent.workbench.claude.sessions.ClaudeAgentSessionProviderDescriptorTest`
+- `./tests.cmd --module intellij.agent.workbench.claude.sessions.tests --test com.intellij.agent.workbench.claude.sessions.ClaudeSessionSourceTest`
 - `./tests.cmd --module intellij.agent.workbench.claude.sessions.tests --test com.intellij.agent.workbench.claude.sessions.ClaudeSessionsStoreTest`
 - `./tests.cmd --module intellij.agent.workbench.pi.sessions.tests --test com.intellij.agent.workbench.pi.sessions.PiSessionSourceTest`
 

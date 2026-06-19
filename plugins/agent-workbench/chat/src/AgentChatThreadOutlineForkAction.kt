@@ -96,7 +96,7 @@ internal suspend fun forkAgentChatThreadOutlineTarget(
       projectPath = file.projectPath,
       thread = forkedThread,
       subAgent = null,
-      launchSpecOverride = null,
+      launchSpecOverride = forkResult.launchSpecOverride,
       project = project,
     )
   }

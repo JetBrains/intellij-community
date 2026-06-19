@@ -68,6 +68,12 @@ object ClaudeCliSupport {
     listOf(executable, "--resume", sessionId)
   }
 
+  fun buildForkResumeCommand(
+    sourceSessionId: String,
+    forkSessionId: String,
+    executable: String = CLAUDE_COMMAND,
+  ): List<String> = listOf(executable, "--resume", sourceSessionId, "--fork-session", SESSION_ID_FLAG, forkSessionId)
+
   internal fun findExecutable(): String? {
     val inPath = PathEnvironmentVariableUtil.findExecutableInPathOnAnyOS(CLAUDE_COMMAND)
     @Suppress("IO_FILE_USAGE")
