@@ -1079,20 +1079,6 @@ http_file(
 )
 
 http_file(
-    name = "org_ec4j_core-ec4j-core-0_3_0_http",
-    downloaded_file_path = "ec4j-core-0.3.0.jar",
-    sha256 = "cadef0207077074b11a12be442f89ab6cf93fbc2f848702d9371a9611414d558",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ec4j/core/ec4j-core/0.3.0/ec4j-core-0.3.0.jar",
-)
-
-http_file(
-    name = "org_ec4j_core-ec4j-core-0_3_0-sources_http",
-    downloaded_file_path = "ec4j-core-0.3.0-sources.jar",
-    sha256 = "68091d2dc8e872b2f4b34c74cf506dc02ad9f8454d3a64adccc8621de1ef1d2b",
-    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ec4j/core/ec4j-core/0.3.0/ec4j-core-0.3.0-sources.jar",
-)
-
-http_file(
     name = "org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0_http",
     downloaded_file_path = "org.eclipse.lsp4j-0.24.0.jar",
     sha256 = "2caea31ffa2abd13c6f5d13489be071ad08f108eae83a34473ac72d96cf72922",
@@ -8741,6 +8727,20 @@ http_file(
     downloaded_file_path = "download-pgp-verifier-1.1.4-sources.jar",
     sha256 = "a74a11f703331f9e36f7554fde6ce6703e680d64000c688bf116d41aa149a466",
     url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/com/jetbrains/infra/download-pgp-verifier/1.1.4/download-pgp-verifier-1.1.4-sources.jar",
+)
+
+http_file(
+    name = "org_ec4j_core-ec4j-core-0_3_0_http",
+    downloaded_file_path = "ec4j-core-0.3.0.jar",
+    sha256 = "cadef0207077074b11a12be442f89ab6cf93fbc2f848702d9371a9611414d558",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ec4j/core/ec4j-core/0.3.0/ec4j-core-0.3.0.jar",
+)
+
+http_file(
+    name = "org_ec4j_core-ec4j-core-0_3_0-sources_http",
+    downloaded_file_path = "ec4j-core-0.3.0-sources.jar",
+    sha256 = "68091d2dc8e872b2f4b34c74cf506dc02ad9f8454d3a64adccc8621de1ef1d2b",
+    url = "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/ec4j/core/ec4j-core/0.3.0/ec4j-core-0.3.0-sources.jar",
 )
 
 http_file(

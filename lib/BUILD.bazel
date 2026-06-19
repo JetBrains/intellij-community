@@ -1591,21 +1591,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.ec4j.core/ec4j-core-0.3.0.jar_copy",
-    src = "@org_ec4j_core-ec4j-core-0_3_0_http//file",
-    out = "org.ec4j.core/ec4j-core-0.3.0.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "ec4j-core",
-    jar = "@org_ec4j_core-ec4j-core-0_3_0_http//file",
-    source_jar = "@org_ec4j_core-ec4j-core-0_3_0-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-copy_file(
     name = "org.eclipse.lsp4j/org.eclipse.lsp4j-0.24.0.jar_copy",
     src = "@org_eclipse_lsp4j-org_eclipse_lsp4j-0_24_0_http//file",
     out = "org.eclipse.lsp4j/org.eclipse.lsp4j-0.24.0.jar",
@@ -11273,6 +11258,21 @@ jvm_import(
     name = "libraries-download-pgp-verifier-download-pgp-verifier",
     jar = "@com_jetbrains_infra-download-pgp-verifier-1_1_4_http//file",
     source_jar = "@com_jetbrains_infra-download-pgp-verifier-1_1_4-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "org.ec4j.core/ec4j-core-0.3.0.jar_copy",
+    src = "@org_ec4j_core-ec4j-core-0_3_0_http//file",
+    out = "org.ec4j.core/ec4j-core-0.3.0.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-ec4j-core-ec4j-core",
+    jar = "@org_ec4j_core-ec4j-core-0_3_0_http//file",
+    source_jar = "@org_ec4j_core-ec4j-core-0_3_0-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

@@ -408,6 +408,7 @@ libraries/compose-foundation-desktop-junit
 libraries/compose-runtime-desktop
 libraries/dokka
 libraries/download-pgp-verifier
+libraries/ec4j/core
 libraries/fastutil
 libraries/groovy
 libraries/groovy/ant
