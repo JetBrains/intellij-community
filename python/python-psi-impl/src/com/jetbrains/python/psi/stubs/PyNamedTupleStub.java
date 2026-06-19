@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.stubs;
 
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
+import com.jetbrains.python.psi.types.PyAnyType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

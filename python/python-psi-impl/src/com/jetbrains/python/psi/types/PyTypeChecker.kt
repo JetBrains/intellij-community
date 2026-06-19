@@ -533,7 +533,7 @@ object PyTypeChecker {
   }
 
   private fun match(expected: PyParamSpecType, actual: PyType?, context: MatchContext): Boolean {
-    if (actual == null) return true
+    if (actual.isAnyOrUnknown) return true
     if (actual !is PyCallableParameterVariadicType) return false
 
     val bound = expected.bound
@@ -890,9 +890,9 @@ object PyTypeChecker {
     }
 
     if (PyUnionType.isStrictSemanticsEnabled()) {
-      val pyClass: PyClass = checkNotNull(function.containingClass)
-      val classType: PyClassLikeType = context.getType(pyClass) as PyClassLikeType
-      val superType: PyClassLikeType =
+      val pyClass = function.containingClass!!
+      val classType = context.getType(pyClass) as PyClassLikeType
+      val superType =
         (if (function.modifier == PyAstFunction.Modifier.CLASSMETHOD || PyUtil.isNewMethod(function)) classType else classType.toInstance())
       // In a union receiver type, leave only members that actually have this function
       // TODO how does it work with qualified calls, e.g. SomeClass.method(receiver, arg1, arg2)
@@ -1503,7 +1503,7 @@ object PyTypeChecker {
           existingSubstitutions.putTypeVar(typeVar, typeVar.defaultType as Ref<PyType?>?, KeyImpl)
         }
         else {
-          existingSubstitutions.putTypeVar(typeVar, Ref.create<PyType?>(null), KeyImpl)
+          existingSubstitutions.putTypeVar(typeVar, Ref.create<PyType?>(PyAnyType.unknown), KeyImpl)
         }
       }
     }
@@ -1516,8 +1516,8 @@ object PyTypeChecker {
         }
         else {
           existingSubstitutions.putParamSpec(paramSpecType, PyCallableParameterListTypeImpl(
-            listOf(PyCallableParameterImpl.positionalContainerNonPsi("args", null),
-                              PyCallableParameterImpl.keywordContainerNonPsi("kwargs", null))), KeyImpl
+            listOf(PyCallableParameterImpl.positionalContainerNonPsi("args", PyAnyType.unknown),
+            PyCallableParameterImpl.keywordContainerNonPsi("kwargs", PyAnyType.unknown))), KeyImpl
           )
         }
       }
@@ -1741,7 +1741,14 @@ object PyTypeChecker {
       }
 
       override fun visitPyCallableType(callableType: PyCallableType): PyType {
-        val substitutedParams = clone<PyCallableParameterVariadicType?>(callableType.getParametersType(context))
+        val substitutedParams = callableType.getParametersType(context)?.let { parametersType ->
+          when (val it = clone<PyType?>(parametersType)) {
+            is PyCallableParameterVariadicType -> it
+            else if it.isUnknown -> null
+            else -> error("Unexpected type: ${it.javaClass.simpleName}")
+          }
+        }
+
         return PyCallableTypeImpl(
           callableType.getTypeParameters(context),
           substitutedParams,
@@ -1800,11 +1807,17 @@ object PyTypeChecker {
         return PyCallableParameterListTypeImpl(substitutedParams)
       }
 
-      override fun visitPyConcatenateType(concatenateType: PyConcatenateType): PyCallableParameterVariadicType? {
+      override fun visitPyConcatenateType(concatenateType: PyConcatenateType): PyType? {
         val firstParamTypeSubs = concatenateType.firstTypes.flatMap {
           flattenUnpackedTuple(clone(it))
         }
-        return when (val paramSpecSubs = clone<PyCallableParameterVariadicType>(concatenateType.paramSpec)) {
+        val paramSpecSubs = when (val it = clone<PyType?>(concatenateType.paramSpec)) {
+          is PyCallableParameterVariadicType -> it
+          else if it.isUnknown -> null
+          else -> error("Unexpected type for paramSpec: ${it::class.java.simpleName}")
+        }
+
+        return when (paramSpecSubs) {
           is PyCallableParameterListType -> {
             PyCallableParameterListTypeImpl(
               firstParamTypeSubs.map { PyCallableParameterImpl.nonPsi(it) } + paramSpecSubs.parameters
@@ -1817,7 +1830,7 @@ object PyTypeChecker {
               paramSpecSubs.paramSpec
             )
           }
-          else -> null
+          else -> PyAnyType.unknown
         }
       }
     })
@@ -1837,7 +1850,7 @@ object PyTypeChecker {
     for ((key, paramWrapper) in PyCallExpressionHelper.getRegularMappedParameters(arguments).entries) {
       val expectedType = paramWrapper.getArgumentType(context)
       val promotedToLiteral = PyLiteralType.promoteToLiteral(key, expectedType, context, substitutions)
-      val actualType = promotedToLiteral ?: context.getType(key)
+      val actualType = promotedToLiteral.takeUnless { it.isUnknown } ?: context.getType(key)
       // Matching with the type of "self" is necessary in particular for choosing the most specific overloads, e.g.
       // LiteralString-specific methods of str, or for instantiating the type parameters of the containing class
       // when it's not possible to infer them by other means, e.g. as in the following overload of dict[_KT, _VT].__init__:
@@ -1875,7 +1888,7 @@ object PyTypeChecker {
     val substitutions = unifyReceiver(receiverType, context)
     for ((key, paramWrapper) in PyCallExpressionHelper.getRegularMappedParameters(arguments)) {
       val expectedType = paramWrapper.getArgumentType(context)
-      val actualType = Ref.deref(key)
+      val actualType = key.derefOrUnknown()
       val matchedByTypes = matchParameterArgumentTypes(paramWrapper, expectedType, actualType, substitutions, context)
       if (!matchedByTypes) {
         return null
@@ -1936,7 +1949,8 @@ object PyTypeChecker {
         }
         else expectedType.scopeClassType
       }
-      actualType = processSelfParameter(paramWrapper, expectedType, actualType, substitutions, context) ?: return false
+      actualType = processSelfParameter(paramWrapper, expectedType, actualType, substitutions, context)
+      if (actualType.isUnknown) return false
     }
     return match(expectedType, actualType, context, substitutions)
   }
@@ -2041,7 +2055,7 @@ object PyTypeChecker {
   @JvmStatic
   fun isCallable(type: PyType?): Boolean? {
     return when (type) {
-      null -> null
+      null, is PyAnyType -> null
       is PyUnionType -> isUnionCallable(type)
       is PyCallableType -> type.isCallable
       is PyStructuralType if type.isInferredFromUsages -> true

@@ -61,7 +61,7 @@ class PyNewTypeTypeTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-21302"])
-  fun `NewType via module qualifier`() = test(TestOptions(enablePyAnyType = false), """
+  fun `NewType via module qualifier`() = test("""
       import typing
       UserId = typing.NewType('UserId', int)
       expr = UserId(12)
@@ -70,7 +70,7 @@ class PyNewTypeTypeTest : PyCodeInsightTestCase() {
 
   @Test
   @TestFor(issues = ["PY-21302"])
-  fun `NewType via aliased module qualifier`() = test(TestOptions(enablePyAnyType = false), """
+  fun `NewType via aliased module qualifier`() = test("""
       import typing as t
       UserId = t.NewType('UserId', int)
       expr = UserId(12)
@@ -97,7 +97,7 @@ class PyNewTypeTypeTest : PyCodeInsightTestCase() {
 
   @Test
   fun `NewType factory type before 310`() = test(
-    TestOptions(languageLevel = LanguageLevel.PYTHON39, enablePyAnyType = false, assertRecursionPrevention = false),
+    TestOptions(languageLevel = LanguageLevel.PYTHON39, assertRecursionPrevention = false),
     """
       from typing import NewType
       UserId = NewType('UserId', int)

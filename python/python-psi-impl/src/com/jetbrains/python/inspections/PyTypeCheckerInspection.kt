@@ -728,7 +728,7 @@ open class PyTypeCheckerInspection : PyInspection() {
 
     private fun tryPromotingType(expr: PyExpression, expected: PyType?): PyType? {
       val promotedToLiteral = promoteToLiteral(expr, expected, myTypeEvalContext, null)
-      if (promotedToLiteral != null) return promotedToLiteral
+      if (!isUnknown(promotedToLiteral, myTypeEvalContext)) return promotedToLiteral
       return myTypeEvalContext.getType(expr)
     }
 
@@ -1111,7 +1111,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         val parameter: PyCallableParameter = entry.value
         val expected = parameter.getArgumentType(myTypeEvalContext)
         val promotedToLiteral = promoteToLiteral(argument, expected, myTypeEvalContext, substitutions)
-        val actual = promotedToLiteral ?: myTypeEvalContext.getType(argument)
+        val actual = promotedToLiteral.takeUnless { isUnknown(it, myTypeEvalContext) } ?: myTypeEvalContext.getType(argument)
 
         if (expected is PyParamSpecType) {
           val allArguments = callSite.getArguments(callableType.callable)
@@ -1352,7 +1352,7 @@ open class PyTypeCheckerInspection : PyInspection() {
         return arguments.map { argument ->
           val promotedToLiteral =
             promoteToLiteral(argument, expected, myTypeEvalContext, substitutions)
-          val actual = promotedToLiteral ?: myTypeEvalContext.getType(argument)
+          val actual = promotedToLiteral.takeUnless { isUnknown(it, myTypeEvalContext) } ?: myTypeEvalContext.getType(argument)
           val matched = matchParameterAndArgument(expected, actual, argument, substitutions)
           val expectedWithSubstitutions = substituteGenerics(expected, substitutions)
           AnalyzeArgumentResult(argument, container, expected, expectedWithSubstitutions, actual, matched)

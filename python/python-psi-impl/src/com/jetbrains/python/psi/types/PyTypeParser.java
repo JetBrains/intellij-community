@@ -85,6 +85,9 @@ public final class PyTypeParser {
     }
 
     public @Nullable PyType getType() {
+      if (this == EMPTY_RESULT) {
+        return PyAnyType.getUnknown();
+      }
       return myType;
     }
 
@@ -221,7 +224,7 @@ public final class PyTypeParser {
             final ParseResult result = new ParseResult(type1, range);
             return result.merge(boundResult).withType(type1);
           }
-          return new ParseResult(new PyTypeVarTypeImpl(name, null), range);
+          return new ParseResult(new PyTypeVarTypeImpl(name, PyAnyType.getUnknown()), range);
         })
         .named("type-parameter");
 

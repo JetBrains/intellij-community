@@ -352,7 +352,7 @@ class PyLiteralType private constructor(
     ): PyType? {
       val substitution = if (substitutions != null) PyTypeChecker.substitute(expected, substitutions, context) else expected
       val substitutionOrBound = if (substitution is PyTypeVarType) substitution.effectiveBound else substitution
-      if (substitutionOrBound == null) return PyAnyType.unknown
+      if (substitutionOrBound.isUnknown) return PyAnyType.unknown
       return TypePromoter(context, containsLiteral(substitutionOrBound)).promoteToType(substitutionOrBound, expression)
     }
 
@@ -388,7 +388,7 @@ class PyLiteralType private constructor(
       if (expression is PyConditionalExpression) {
         return PyUnionType.union(
           listOf(expression.truePart, expression.falsePart).map {
-            it?.let { getLiteralType(it, context) }
+            it?.let { getLiteralType(it, context) } ?: PyAnyType.unknown
           }
         )
       }

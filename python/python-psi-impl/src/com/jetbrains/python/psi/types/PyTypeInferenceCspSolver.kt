@@ -1419,7 +1419,7 @@ private object TypeBoundResolver {
       }
       // It may happen that inference variables depend on each other, hence create a cycle
       // In this case it is necessary to substitute these inference variables by Any type
-      val substitutedBoundType = substituteInferenceVariablesBy(boundType, context) { Ref(null) }
+      val substitutedBoundType = substituteInferenceVariablesBy(boundType, context) { Ref(PyAnyType.unknown) }
       result.add(substitutedBoundType)
     }
     return result.toTypedArray()

@@ -32,6 +32,7 @@ import com.jetbrains.python.psi.PyTypeParameterList
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyElementImpl
 import com.jetbrains.python.psi.resolve.PyResolveUtil.resolveFullyQualifiedName
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableTypeImpl
@@ -193,7 +194,7 @@ class PyFunctionTypeRepresentation(astNode: ASTNode) : PyElementImpl(astNode), P
           val paramType = resolveTypeExpression(param, context, typeVarMap)
           PyCallableParameterImpl.nonPsi(paramType)
         }
-        else -> PyCallableParameterImpl.nonPsi(null)
+        else -> PyCallableParameterImpl.nonPsi(PyAnyType.unknown)
       }
     }
   }

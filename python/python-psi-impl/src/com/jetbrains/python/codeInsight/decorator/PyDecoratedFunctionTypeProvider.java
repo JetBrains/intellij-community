@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyTypedElement;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import com.jetbrains.python.psi.types.PyAnyType;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyCallableTypeImpl;
@@ -84,7 +85,7 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
    */
   private static @Nullable List<PyCallableParameter> getExpectedFunctionParameters(@NotNull PyDecorator decorator,
                                                                                    @NotNull TypeEvalContext context) {
-    var decoratorCallableType = getDecoratorType(decorator, null, context);
+    var decoratorCallableType = getDecoratorType(decorator, PyAnyType.getUnknown(), context);
     if (decoratorCallableType == null) return null;
 
     var decoratorParams = decoratorCallableType.getParameters(context);
@@ -287,7 +288,7 @@ public final class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
         resolvedElements = List.of(resolvedFunction);
       }
       else {
-        resolvedElements = PySyntheticCallHelper.matchOverloadsByArgumentTypes(overloads, decoratorArgumentTypes, null, context);
+        resolvedElements = PySyntheticCallHelper.matchOverloadsByArgumentTypes(overloads, decoratorArgumentTypes, PyAnyType.getUnknown(), context);
       }
     }
     else {

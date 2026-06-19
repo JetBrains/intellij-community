@@ -11,8 +11,6 @@ import org.junit.jupiter.api.Test
  */
 class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
-
   @Nested
   inner class InferenceBasicForms {
 
@@ -329,7 +327,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       
       
       expr = foo(1, '', [], {}, True, '')
-      #└ TYPE tuple[str, list[Any], dict[Any, Any], bool, int]
+      #└ TYPE tuple[str, list[Unknown], dict[Unknown, Unknown], bool, int]
       """)
 
     @Test
@@ -717,7 +715,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
       expr = expect_variadic_arrays(a, a)
       #│                               └ WARNING Expected type 'Array[int, float | int, bool, list[str], str]', got 'Array[int, float | int, *Shape, list[str], str]' instead
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -747,7 +745,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
       expr = expect_variadic_arrays(a, a)
       #│                               └ WARNING Expected type 'Array[int, float | int, float | int, *Shape, list[str], list[str], str]' (matched generic type 'Array[int, float | int, *Shape1, list[str], str]'), got 'Array[int, float | int, *Shape, list[str], str]' instead
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -777,7 +775,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
       expr = expect_variadic_arrays(a, a)
       #│                               └ WARNING Expected type 'Array[int, float | int, *Shape, bool, list[str], str]', got 'Array[int, float | int, *Shape, list[str], str]' instead
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -807,7 +805,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
       expr = expect_variadic_array(y)
       #│                           └ WARNING Expected type 'Array[int, float | int, *Shape1, str]', got 'Array[int, *Shape, list[str], str]' instead
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -837,7 +835,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
       expr = expect_variadic_array(y)
       #│                           └ WARNING Expected type 'Array[int, *Shape1, int, str]', got 'Array[int, float | int, *Shape, str]' instead
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -867,7 +865,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
 
       expr = expect_variadic_array(y)
       #│                           └ WARNING Expected type 'Array[int, *Shape1, str]', got 'Array[*Shape]' instead
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
   }
 
@@ -1012,7 +1010,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       DefaultTs = TypeVarTuple("DefaultTs", default=Unpack[tuple[T, int]])
       class Foo(Generic[T, *DefaultTs]): ...
       expr = Foo()
-      #└ TYPE Foo[list[Any], list[Any], int]
+      #└ TYPE Foo[list[Unknown], list[Unknown], int]
       """)
   }
 
@@ -1290,7 +1288,7 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-53105"])
     fun `variadic generic star args tuple and unpacked tuple`() = test("""
-      from typing import Tuple, TypeVarTuple
+      from typing import Tuple, TypeVarTuple, Any
 
       Ts = TypeVarTuple('Ts')
 
@@ -1325,9 +1323,9 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       #       │   ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
       #       ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
       foo(([], {}), '', [], {}, b='')
-      #             │   │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
-      #             │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
-      #             ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
+      #             │   │   ^^ WARNING Expected type '*tuple[str, list[Unknown], dict[Unknown, Unknown], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Unknown], dict[Unknown, Unknown]]' instead
+      #             │   ^^ WARNING Expected type '*tuple[str, list[Unknown], dict[Unknown, Unknown], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Unknown], dict[Unknown, Unknown]]' instead
+      #             ^^ WARNING Expected type '*tuple[str, list[Unknown], dict[Unknown, Unknown], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Unknown], dict[Unknown, Unknown]]' instead
       """)
 
     @Test
@@ -1378,19 +1376,19 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       x: Any
       #  ^^^ ERROR Unresolved reference 'Any'
       foo((), '', 42, x, b='')
-      #       │   │   └ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
-      #       │   ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
-      #       ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
+      #       │   │   └ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Unknown]' instead
+      #       │   ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Unknown]' instead
+      #       ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Unknown]' instead
       foo(([], {}), '', [], {}, b='')
-      #             │   │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
-      #             │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
-      #             ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
+      #             │   │   ^^ WARNING Expected type '*tuple[str, list[Unknown], dict[Unknown, Unknown], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Unknown], dict[Unknown, Unknown]]' instead
+      #             │   ^^ WARNING Expected type '*tuple[str, list[Unknown], dict[Unknown, Unknown], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Unknown], dict[Unknown, Unknown]]' instead
+      #             ^^ WARNING Expected type '*tuple[str, list[Unknown], dict[Unknown, Unknown], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Unknown], dict[Unknown, Unknown]]' instead
       """)
 
     @Test
     @TestFor(issues = ["PY-53105"])
     fun `variadic generic star args prefix suffix`() = test("""
-      from typing import Tuple, TypeVarTuple
+      from typing import Tuple, TypeVarTuple, Any
 
       Ts = TypeVarTuple('Ts')
 
@@ -1425,9 +1423,9 @@ class PyVariadicGenericTypeTest : PyCodeInsightTestCase() {
       #       │   ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
       #       ^^ WARNING Expected type '*tuple[str, int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], Literal[42], Any]' instead
       foo(([], {}), '', [], {}, b='')
-      #             │   │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
-      #             │   ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
-      #             ^^ WARNING Expected type '*tuple[str, list[Any], dict[Any, Any], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Any], dict[Any, Any]]' instead
+      #             │   │   ^^ WARNING Expected type '*tuple[str, list[Unknown], dict[Unknown, Unknown], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Unknown], dict[Unknown, Unknown]]' instead
+      #             │   ^^ WARNING Expected type '*tuple[str, list[Unknown], dict[Unknown, Unknown], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Unknown], dict[Unknown, Unknown]]' instead
+      #             ^^ WARNING Expected type '*tuple[str, list[Unknown], dict[Unknown, Unknown], int]' (matched generic type '*tuple[str, *Ts, int]'), got '*tuple[Literal[""], list[Unknown], dict[Unknown, Unknown]]' instead
       """)
 
     @Test

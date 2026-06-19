@@ -30,6 +30,7 @@ import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.impl.stubs.PyTypedDictStubImpl
 import com.jetbrains.python.psi.stubs.PyTypedDictFieldStub
 import com.jetbrains.python.psi.stubs.PyTypedDictStub
+import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableParameter
 import com.jetbrains.python.psi.types.PyCallableParameterImpl
 import com.jetbrains.python.psi.types.PyCallableType
@@ -40,6 +41,7 @@ import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeProviderBase
+import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.notNullToRef
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypedDictType.Companion.TYPED_DICT_CLOSED_PARAMETER
@@ -205,7 +207,7 @@ private fun buildGetMethodType(
   val parameters = mutableListOf<PyCallableParameter>()
   val builtinCache = PyBuiltinCache.getInstance(referenceTarget)
   parameters.add(PyCallableParameterImpl.nonPsi("key", builtinCache.strType))
-  parameters.add(PyCallableParameterImpl.nonPsi("default", null, PyNames.NONE))
+  parameters.add(PyCallableParameterImpl.nonPsi("default", PyAnyType.any, PyNames.NONE))
   val key = PyEvaluator.evaluate(callExpression.getArgument(0, "key", PyExpression::class.java), String::class.java)
   val defaultArgument = callExpression.getArgument(1, "default", PyExpression::class.java)
   val default = if (defaultArgument != null) context.getType(defaultArgument) else builtinCache.noneType
@@ -266,7 +268,7 @@ private fun getTypedDictTypeForCallee(referenceExpression: PyReferenceExpression
       )
     )
 
-    return PyCallableTypeImpl(parameters, null)
+    return PyCallableTypeImpl(parameters, PyAnyType.unknown)
   }
 
   return null
@@ -297,7 +299,7 @@ private fun getTypedDictTypeForClass(
   val closedText = getSuperClassKeywordArgumentText(cls, TYPED_DICT_CLOSED_PARAMETER)
 
   val parsedExtraItems = extraItemsText?.let { getStringBasedTypeForTypedDict(it, cls, context) }
-  val extraItemsType = parsedExtraItems?.first?.get() ?: inheritedExtraItemsType
+  val extraItemsType = parsedExtraItems?.first?.get() ?: inheritedExtraItemsType ?: PyAnyType.unknown
   val extraItemsQualifiers = parsedExtraItems?.second ?: PyTypedDictType.TypedDictFieldQualifiers()
 
   val closed = when (closedText) {
@@ -460,7 +462,7 @@ private fun getTypedDictTypeFromStub(
   val extraItemsInfo = stub.extraItemsType?.let { typeString ->
     getStringBasedTypeForTypedDict(typeString, target, context)
   }
-  val extraItemsType = extraItemsInfo?.first?.get()
+  val extraItemsType = extraItemsInfo?.first.derefOrUnknown()
   val extraItemsQualifiers = extraItemsInfo?.second ?: PyTypedDictType.TypedDictFieldQualifiers()
 
   val typedDictFields = parseTypedDictFields(target, stub.fields, context, stub.isRequired)

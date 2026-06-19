@@ -17,12 +17,13 @@ import java.util.stream.Stream;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
-  public static final PyUnpackedTupleType UNSPECIFIED = new PyUnpackedTupleTypeImpl(Collections.singletonList(null), true);
+  public static final PyUnpackedTupleType UNSPECIFIED = new PyUnpackedTupleTypeImpl(Collections.singletonList(PyAnyType.getUnknown()), true);
 
   private final List<PyType> myElementTypes;
   private final boolean myIsHomogeneous;
 
   public PyUnpackedTupleTypeImpl(@NotNull List<? extends PyType> elementTypes, boolean isUnbound) {
+    elementTypes.forEach(PyAnyType::validate);
     if (isUnbound) {
       if (elementTypes.size() != 1) {
         throw new IllegalArgumentException("Unbounded unpacked tuple type can have only one type parameter");
@@ -70,7 +71,9 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
 
   @Override
   public @NotNull List<PyType> getElementTypes() {
-    return Collections.unmodifiableList(myElementTypes);
+    return this == UNSPECIFIED
+           ? Collections.singletonList(PyAnyType.getUnknown())
+           : Collections.unmodifiableList(myElementTypes);
   }
 
   @Override
@@ -111,12 +114,12 @@ public final class PyUnpackedTupleTypeImpl implements PyUnpackedTupleType {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PyUnpackedTupleTypeImpl type = (PyUnpackedTupleTypeImpl)o;
-    return myIsHomogeneous == type.myIsHomogeneous && Objects.equals(myElementTypes, type.myElementTypes);
+    return myIsHomogeneous == type.myIsHomogeneous && Objects.equals(getElementTypes(), type.getElementTypes());
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myElementTypes, myIsHomogeneous);
+    return Objects.hash(getElementTypes(), myIsHomogeneous);
   }
 
   @Override

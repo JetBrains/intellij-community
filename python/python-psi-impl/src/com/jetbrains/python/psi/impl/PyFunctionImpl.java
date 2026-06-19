@@ -409,7 +409,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       if (PyUtil.isInitMethod(this)) {
         return PyBuiltinCache.getInstance(this).getNoneType();
       }
-      return null;
+      return PyAnyType.getUnknown();
     }
     return PyUnionType.unionOrNever(types);
   }

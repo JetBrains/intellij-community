@@ -14,8 +14,6 @@ import org.junit.jupiter.api.Test
  */
 class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
-
   @Nested
   inner class GenericProtocolStructuralConformanceAndUnification {
 
@@ -1161,12 +1159,9 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-85997"])
-    fun `recursive protocol and implementation using Self`() =
-      fixme("Recursive protocol definitions cause infinite recursion during matching",
-            StackOverflowPreventedException::class.java,
-            "Endless recursion prevention occurred on") {
-        test(
-          """
+    fun `recursive protocol and implementation using Self`() = test(
+      TestOptions(enablePyAnyType = false, assertRecursionPrevention = false),
+      """
           from typing import Self, Protocol
     
           class MyProtocol[T](Protocol):
@@ -1180,8 +1175,7 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
           ys: MyIterable[str] = MyIterable[str]()
           xs: MyProtocol[str] = ys
           """,
-        )
-      }
+    )
 
     @Test
     @TestFor(issues = ["PY-85997"])

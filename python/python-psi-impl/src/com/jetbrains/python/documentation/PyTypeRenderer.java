@@ -66,6 +66,7 @@ import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.hi
 import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.styledSpan;
 import static com.jetbrains.python.psi.types.PyInferredVarianceJudgment.isEffectivelyInvariant;
 import static com.jetbrains.python.psi.types.PyNoneTypeKt.isNoneType;
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isUnknown;
 
 // TODO visitPyConcatenateType
 public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk> {
@@ -386,9 +387,9 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     if (ContainerUtil.all(unionType.getMembers(), t -> t instanceof PyClassType ct && ct.isDefinition())) {
       return wrapInTypingType(render(unionType.map(type -> type != null ? ((PyClassType)type).toInstance() : null)));
     }
-    if (unionType.getMembers().contains(null)) {
-      // Always put Any at the end of the union
-      return renderUnion(List.of(render(PyUnionType.union(ContainerUtil.skipNulls(unionType.getMembers()))), visitUnknownType()));
+    if (unionType.getMembers().stream().anyMatch(it -> isUnknown(it))) {
+      // Always put Unknown at the end of the union
+      return renderUnion(List.of(render(PyUnionType.union(ContainerUtil.filter(unionType.getMembers(), it -> !isUnknown(it)))), visitUnknownType()));
     }
     return renderUnion(ContainerUtil.map(unionType.getMembers(), this::renderUnionMember));
   }
@@ -765,7 +766,7 @@ public abstract class PyTypeRenderer extends PyTypeVisitorExt<@NotNull HtmlChunk
     result.append(escaped(getTypeName(typeParameterType)));
     if (isRenderingTypeVarBounds()) {
       var effectiveBound = typeParameterType.getEffectiveBound();
-      if (effectiveBound != null) {
+      if (!isUnknown(effectiveBound)) {
         result.append(escaped(" ≤: "));
         result.append(render(effectiveBound));
       }

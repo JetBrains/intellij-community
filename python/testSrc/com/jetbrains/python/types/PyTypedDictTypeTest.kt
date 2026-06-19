@@ -4,7 +4,6 @@ package com.jetbrains.python.types
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -29,15 +28,12 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-36008"])
-    fun `TypedDict alternative syntax yields a type`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `TypedDict alternative syntax yields a type`() = test("""
       from typing import TypedDict
       A = TypedDict('A', {'x': int}, total=False)
       expr = A
       # └ TYPE type[A]
-      """,
-    )
+      """)
   }
 
   @Nested
@@ -114,31 +110,25 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-36008"])
-    fun `get with default of the same value type`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `get with default of the same value type`() = test("""
       from typing import TypedDict
       class A(TypedDict, total=False):
           x: int
       a: A = {'x': 42}
       expr = a.get('x', 42)
       #└ TYPE int | Literal[42]
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-36008"])
-    fun `get with default of a different value type`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `get with default of a different value type`() = test("""
       from typing import TypedDict
       class A(TypedDict, total=False):
           x: int
       a: A = {'x': 42}
       expr = a.get('x', '')
       #└ TYPE int | Literal[""]
-      """,
-    )
+      """)
   }
 
   @Nested
@@ -245,13 +235,13 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-85421"])
     fun `extra_items reflected in items`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON313, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false),
       """
       from typing_extensions import TypedDict
-      
+
       class MovieExtraInt(TypedDict, extra_items=int):
           name: str
-      
+
       def foo(movie: MovieExtraInt) -> None:
           expr = list(movie.items())
       #   └ TYPE list[tuple[str, str | int]]
@@ -261,13 +251,13 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-85421"])
     fun `extra_items reflected in values`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON313, enablePyAnyType = false, assertRecursionPrevention = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON313, assertRecursionPrevention = false),
       """
       from typing_extensions import TypedDict
-      
+
       class MovieExtraInt(TypedDict, extra_items=int):
           name: str
-      
+
       def foo(movie: MovieExtraInt) -> None:
           expr = list(movie.values())
       #   └ TYPE list[str | int]
@@ -358,9 +348,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-53611"])
-    fun `Required and NotRequired keys`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `Required and NotRequired keys`() = test("""
       from typing import TypedDict
       from typing_extensions import Required, NotRequired
       class WithTotalFalse(TypedDict, total=False):
@@ -380,8 +368,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       without_total_with_explicit_required: WithoutTotalWithExplicitRequired = {}
       #                                                                        ^^ WARNING TypedDict 'WithoutTotalWithExplicitRequired' has missing key: 'x'
       alternative_syntax: AlternativeSyntax = {}
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-53611"])
@@ -509,7 +496,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
   inner class InspectionsDictLiteralKeysAndValues {
     @Test
     @TestFor(issues = ["PY-78126"])
-    fun `variable key in dict literal`() = test("""
+    fun `variable key in dict literal`() = test(TestOptions(enablePyAnyType = false), """
       from typing import TypedDict, Literal
       class Movie(TypedDict):
           name: str
@@ -527,9 +514,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-38873"])
-    fun `value access through list field`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `value access through list field`() = test("""
       from typing import TypedDict, List, LiteralString
       Movie = TypedDict('Movie', {'address': List[str]}, total=False)
       class Movie2(TypedDict, total=False):
@@ -540,8 +525,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       #                   ^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'LiteralString', got 'str' instead
       s2: LiteralString = movie2['address'][0]
       #                   ^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'LiteralString', got 'str' instead
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-79733"])
@@ -556,13 +540,13 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       foo: Foo = {"foo": "bar"}
       foo_list1: list[Foo] = [{"foo": bar} for bar in ["bar"]]
       foo_list2: list[Foo] = [{"foo": bar, "buz": "qux"} for bar in ["bar"]]
-      #                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'list[Foo]', got 'list[dict[Literal["foo", "buz"], _T_co | Literal["qux"]]]' instead
+      #                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'list[Foo]', got 'list[dict[Literal["foo", "buz"], str | Literal["qux"]]]' instead
       foo_set1: set[Foo] = {{"foo": bar} for bar in ["bar"]}
       foo_set2: set[Foo] = {{"foo": bar, "buz": "qux"} for bar in ["bar"]}
-      #                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'set[Foo]', got 'set[dict[Literal["foo", "buz"], _T_co | Literal["qux"]]]' instead
+      #                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'set[Foo]', got 'set[dict[Literal["foo", "buz"], str | Literal["qux"]]]' instead
       foo_dict1: dict[str, Foo] = {bar: {"foo": bar} for bar in ["bar"]}
       foo_dict2: dict[str, Foo] = {bar: {"foo": bar, "buz": "qux"} for bar in ["bar"]}
-      #                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, Foo]', got 'dict[_T_co, dict[Literal["foo", "buz"], _T_co | Literal["qux"]]]' instead
+      #                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING Expected type 'dict[str, Foo]', got 'dict[str, dict[Literal["foo", "buz"], str | Literal["qux"]]]' instead
       """)
   }
 
@@ -732,7 +716,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-76847"])
-    fun `dict unpack vs Unpack TypedDict parameter`() = test("""
+    fun `dict unpack vs Unpack TypedDict parameter`() = test(TestOptions(enablePyAnyType = false), """
       from typing import TypedDict, NotRequired, Required, Unpack
       
       class TD1(TypedDict):
@@ -753,7 +737,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-76847"])
-    fun `dict unpack vs unpacked dict literal`() = test("""
+    fun `dict unpack vs unpacked dict literal`() = test(TestOptions(enablePyAnyType = false), """
       from typing import TypedDict, NotRequired, Required, Unpack
       
       class TD1(TypedDict):
@@ -772,7 +756,7 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-76847"])
-    fun `unpacked TypedDict vs signature without TypedDict`() = test("""
+    fun `unpacked TypedDict vs signature without TypedDict`() = test(TestOptions(enablePyAnyType = false), """
       from typing import Protocol, TypedDict, NotRequired, Required, Unpack
       
       class TD1(TypedDict):
@@ -833,33 +817,30 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-76847"])
-    fun `ParamSpec substituted with Unpack TypedDict kwargs in class`() = test(
-      TestOptions(enablePyAnyType = false),
-      """
+    fun `ParamSpec substituted with Unpack TypedDict kwargs in class`() = test("""
       from typing import Callable, TypedDict, Unpack
-      
-      
+
+
       class Person(TypedDict):
           name: str
           age: int
-      
+
       class Factory[**P]:
           fn: Callable[P, None]
-      
+
           def __init__(self, fn: Callable[P, None]):
               self.fn = fn
-      
-      
+
+
       def create_person(**kwargs: Unpack[Person]):
           pass
-      
-      
+
+
       Factory(create_person).fn(**{"name": ""})
       #                           ^^^^^^^^^^^^ WARNING TypedDict 'Person' has missing key: 'age'
       Factory(create_person).fn(name="")
       #                                └ WARNING Parameter 'age' unfilled (from ParamSpec 'P')
-      """,
-    )
+      """)
 
     @Test
     @TestFor(issues = ["PY-76847"])
@@ -902,87 +883,5 @@ class PyTypedDictTypeTest : PyCodeInsightTestCase() {
       foo(1, "hello", name=42)
       #               ^^^^^^^ WARNING Expected type 'str', got 'Literal[42]' instead
       """)
-  }
-
-  /**
-   * These mirror representative type cases above but run with `enablePyAnyType = true`, asserting the
-   * expected post-migration types. They currently fail (inference either degrades to a null/`Unknown`
-   * type which trips the `PyAnyType` consistency assertion, or engages endless-recursion prevention)
-   * and are disabled until the `python.type.any` migration is complete. Re-enable and drop the matching
-   * `enablePyAnyType = false` once that lands.
-   */
-  @Nested
-  inner class PythonTypeAnyMigrationMirrors {
-    @Test
-    @Disabled("python.type.any: TypedDict.get() with default degrades and trips the PyAnyType null assertion")
-    fun `get with default of the same value type (py-any)`() = test(
-      TestOptions(enablePyAnyType = true),
-      """
-      from typing import TypedDict
-      class A(TypedDict, total=False):
-          x: int
-      a: A = {'x': 42}
-      expr = a.get('x', 42)
-      #└ TYPE int
-      """,
-    )
-
-    @Test
-    @Disabled("python.type.any: TypedDict.get() with default degrades and trips the PyAnyType null assertion")
-    fun `get with default of a different value type (py-any)`() = test(
-      TestOptions(enablePyAnyType = true),
-      """
-      from typing import TypedDict
-      class A(TypedDict, total=False):
-          x: int
-      a: A = {'x': 42}
-      expr = a.get('x', '')
-      # └ TYPE int | str
-      """,
-    )
-
-    @Test
-    @Disabled("python.type.any: TypedDict alternative-syntax class type trips the PyAnyType null assertion")
-    fun `TypedDict alternative syntax yields a type (py-any)`() = test(
-      TestOptions(enablePyAnyType = true),
-      """
-      from typing import TypedDict
-      A = TypedDict('A', {'x': int}, total=False)
-      expr = A
-      #└ TYPE type[A]
-      """,
-    )
-
-    @Test
-    @Disabled("python.type.any: extra_items items() view inference trips the PyAnyType null assertion")
-    fun `extra_items reflected in items (py-any)`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON313, enablePyAnyType = true, assertRecursionPrevention = false),
-      """
-      from typing_extensions import TypedDict
-      
-      class MovieExtraInt(TypedDict, extra_items=int):
-          name: str
-      
-      def foo(movie: MovieExtraInt) -> None:
-          expr = list(movie.items())
-      #   └ TYPE list[tuple[str, str | int]]
-      """,
-    )
-
-    @Test
-    @Disabled("python.type.any: extra_items values() view inference trips the PyAnyType null assertion")
-    fun `extra_items reflected in values (py-any)`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON313, enablePyAnyType = true, assertRecursionPrevention = false),
-      """
-      from typing_extensions import TypedDict
-      
-      class MovieExtraInt(TypedDict, extra_items=int):
-          name: str
-      
-      def foo(movie: MovieExtraInt) -> None:
-          expr = list(movie.values())
-      #   └ TYPE list[str | int]
-      """,
-    )
   }
 }

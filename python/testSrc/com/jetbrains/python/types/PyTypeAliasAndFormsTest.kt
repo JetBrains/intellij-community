@@ -4,7 +4,6 @@ package com.jetbrains.python.types
 import com.intellij.idea.TestFor
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.LanguageLevel
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -15,8 +14,6 @@ import org.junit.jupiter.api.Test
  * attribute types and the `Final`/`ClassVar`/`type[...]` type forms.
  */
 class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
-
-  override val defaultTestOptions = TestOptions(enablePyAnyType = false)
 
   @Nested
   inner class TypeObjectForms {
@@ -47,11 +44,11 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-7058"])
-    fun `type of an unknown value is Any`() = test(
+    fun `type of an unknown value is Unknown`() = test(
       """
       def f(x):
           expr = type(x)
-      #   └ TYPE Any
+      #   └ TYPE Unknown
       """,
     )
 
@@ -333,7 +330,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       Alias = Foo | None
       expr: Alias # WARNING Invalid type annotation
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
   }
 
@@ -359,15 +356,13 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
       """)
 
     @Test
-    fun `quoted forward reference in type comment`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON27, enablePyAnyType = false),
-      """
+    fun `quoted forward reference in type comment`() = test("""
       def foo(x):
-          # type: (MyClass) -> None
+          # type: ("MyClass") -> None
           expr = x
       #   └ TYPE MyClass
 
-      class MyClass: ... # ERROR Python version 2.7 does not support '...' outside of sequence slicings
+      class MyClass: ...
       """,
     )
 
@@ -437,7 +432,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-84430"])
-    fun `quoted Any`() = test("""
+    fun `quoted Any`() = test(TestOptions(enablePyAnyType = false), """
       from typing import Any
 
       any: "Any" = 1
@@ -531,15 +526,13 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-53612"])
-    fun `LiteralString format with str argument`() = test(TestOptions(assertRecursionPrevention = false), """
+    fun `LiteralString format with str argument`() = test(TestOptions( assertRecursionPrevention = false), """
       from typing_extensions import LiteralString
       name: LiteralString = "foo"
       age = str(42)
       string: LiteralString = "Hello, {name}. You are {age}"
       expr = string.format(name=name.capitalize(), age=age)
-      #│     │                  ^^^^^^^^^^^^^^^^^ WARNING 'capitalize' is not callable
-      #│     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ WARNING 'format' is not callable
-      #└ TYPE Unknown
+      #└ TYPE str
       """)
 
     @Test
@@ -713,7 +706,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-61137"])
     fun `LiteralString does not get captured inside generics`() =
-      test(TestOptions(enablePyAnyType = false, assertRecursionPrevention = false), """
+      test(TestOptions(assertRecursionPrevention = false), """
       import typing
       T = typing.TypeVar('T')
       class Box(typing.Generic[T]):
@@ -803,7 +796,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-34617"])
     fun `top-level function under version check`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON310, enablePyAnyType = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON310),
       """
       from mod import foo
       expr = foo()
@@ -824,7 +817,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-34617"])
     fun `class method under version check`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON34, enablePyAnyType = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON34),
       """
       from mod import Foo
       expr = Foo().foo()
@@ -975,7 +968,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-33886"])
     fun `assignment expression in list literal`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON38, enablePyAnyType = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON38),
       """
       [expr := 1]
       # └ TYPE Literal[1]
@@ -985,7 +978,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-33886"])
     fun `assignment expression with parenthesized value`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON38, enablePyAnyType = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON38),
       """
       [expr := (1)]
       # └ TYPE Literal[1]
@@ -995,7 +988,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-33886"])
     fun `nested assignment expression`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON38, enablePyAnyType = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON38),
       """
       expr = (e := 1)
       #└ TYPE Literal[1]
@@ -1005,7 +998,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-33886"])
     fun `assignment expression in call argument`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON38, enablePyAnyType = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON38),
       """
       foo(expr := 1)
       #│  └ TYPE Literal[1]
@@ -1016,7 +1009,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-33886"])
     fun `assignment expression imported member`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON38, enablePyAnyType = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON38),
       """
       from a import member
       expr = member
@@ -1032,7 +1025,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
     @Test
     fun `super() with another type`() = test(
-      TestOptions(languageLevel = LanguageLevel.PYTHON34, enablePyAnyType = false),
+      TestOptions(languageLevel = LanguageLevel.PYTHON34),
       """
       class A:
           def f(self):
@@ -1128,7 +1121,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
     @Test
     @TestFor(issues = ["PY-53104"])
     fun `Self method called on union receiver`() = test(
-      TestOptions(enablePyAnyType = false, assertRecursionPrevention = false, enableWeakWarnings = false),
+      TestOptions( assertRecursionPrevention = false, enableWeakWarnings = false),
       """
       from typing import Self
 
@@ -1251,7 +1244,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       b: Box[int]
       expr = b.create("foo") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal["foo"]' instead
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -1264,7 +1257,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
 
       b: Box[int]
       expr = b.m("foo") # WARNING Expected type 'int' (matched generic type 'T'), got 'Literal["foo"]' instead
-      #└ TYPE Any
+      #└ TYPE Unknown
       """)
 
     @Test
@@ -1383,8 +1376,7 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
           pass
 
       expr = C.method(D())
-      #│     ^^^^^^^^^^^^^ WARNING 'method' is not callable
-      #└ TYPE Unknown
+      #└ TYPE D
       """)
 
     @Test
@@ -1882,58 +1874,6 @@ class PyTypeAliasAndFormsTest : PyCodeInsightTestCase() {
         else:
             x: str
         """,
-    )
-  }
-
-  @Nested
-  inner class PyAnyMigrationMirrors {
-    @Test
-    @Disabled("PyAnyType")
-    fun `classmethod returning Self (py-any)`() = test(
-      TestOptions(enablePyAnyType = true),
-      """
-      from typing import Self
-
-
-      class Shape:
-          @classmethod
-          def from_config(cls, config: dict[str, float]) -> Self:
-              return cls(config["scale"])
-
-
-      class Circle(Shape):
-          pass
-
-
-      expr = Circle.from_config({})
-      #└ TYPE Circle
-      """,
-    )
-
-    @Test
-    @Disabled("PyAnyType")
-    fun `LiteralString join on plain str receiver (py-any)`() = test(
-      TestOptions(enablePyAnyType = true),
-      """
-      from typing_extensions import LiteralString
-      x: str
-      xs: list[LiteralString]
-      expr = x.join(xs)
-      #└ TYPE str
-      """,
-    )
-
-    @Test
-    @Disabled("PyAnyType")
-    fun `ClassVar type resolved from annotation (py-any)`() = test(
-      TestOptions(enablePyAnyType = true),
-      """
-      from typing import ClassVar
-      class A:
-          x: ClassVar[int] = 1
-      expr = A.x
-      #└ TYPE int
-      """,
     )
   }
 }

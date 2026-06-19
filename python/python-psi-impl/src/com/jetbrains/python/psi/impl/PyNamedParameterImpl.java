@@ -260,7 +260,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           }
         }
         // Guess the type under an assumed type to prevent recursion
-        final PyType assumedResult = context.assumeType(this, null, ctx -> {
+        final PyType assumedResult = context.assumeType(this, PyAnyType.getUnknown(), ctx -> {
           // Guess the type from file-local calls
           if (ctx.allowCallContext(this)) {
             final List<PyType> types = new ArrayList<>();
