@@ -55,6 +55,8 @@ define_kt_toolchain(
     btapi_kotlin_daemon_client = ":kotlin-daemon-client_import",
     btapi_kotlin_reflect = ":kotlin-reflect_import",
     btapi_kotlin_stdlib = ":kotlin-stdlib_import",
+    # Run the BTA Kotlin worker in multiplex mode (concurrency-safe), on par with the JPS JvmCompile path.
+    experimental_multiplex_workers = True,
     experimental_remove_private_classes_in_abi_jars = True,
     jvm_runtime = [
         ":kotlin-stdlib_import",
