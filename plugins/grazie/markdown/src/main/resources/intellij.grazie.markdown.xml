@@ -12,20 +12,20 @@
     <registryKey key="grazie.specification.semantics.enabled" defaultValue="false" description="Whether to enable semantic agentic Markdown checks"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.contradiction.name"
-                     shortName="SpecificationContradiction" level="WARNING" enabledByDefault="true" language="Markdown"
+                     shortName="SpecificationContradiction" level="WARNING" enabledByDefault="true" language="Markdown" isInternal="true"
                      implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationContradictionInspection"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.security.name"
-                     shortName="SpecificationSecurity" level="WARNING" enabledByDefault="true" language="Markdown"
+                     shortName="SpecificationSecurity" level="WARNING" enabledByDefault="true" language="Markdown" isInternal="true"
                      implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationSecurityInspection"/>
 
 
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.semanticCoverage.name"
-                     shortName="SpecificationSemanticCoverage" level="WARNING" enabledByDefault="true" language="Markdown"
+                     shortName="SpecificationSemanticCoverage" level="WARNING" enabledByDefault="true" language="Markdown" isInternal="true"
                      implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationSematicCoverageInspection"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.ambiguity.name"
-                     shortName="SpecificationAmbiguity" level="WARNING" enabledByDefault="true" language="Markdown"
+                     shortName="SpecificationAmbiguity" level="WARNING" enabledByDefault="true" language="Markdown" isInternal="true"
                      implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationAmbiguityInspection"/>
   </extensions>
 
