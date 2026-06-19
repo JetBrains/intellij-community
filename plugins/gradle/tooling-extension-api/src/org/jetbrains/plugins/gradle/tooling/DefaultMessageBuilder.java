@@ -8,6 +8,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
@@ -21,7 +22,6 @@ public final class DefaultMessageBuilder implements MessageBuilder {
   private @Nullable String myGroup = null;
   private @Nullable Exception myException = null;
   private @Nullable Message.Kind myKind = null;
-  private @Nullable Message.FilePosition myFilePosition = null;
   private @Nullable Project myProject = null;
 
   private boolean myInternal = false;
@@ -57,17 +57,6 @@ public final class DefaultMessageBuilder implements MessageBuilder {
   }
 
   @Override
-  public @NotNull MessageBuilder withLocation(Message.FilePosition filePosition) {
-    myFilePosition = filePosition;
-    return this;
-  }
-
-  @Override
-  public @NotNull MessageBuilder withLocation(String filePath, int line, int column) {
-    return withLocation(new Message.FilePosition(filePath, line, column));
-  }
-
-  @Override
   public @NotNull MessageBuilder withProject(Project project) {
     myProject = project;
     return this;
@@ -85,8 +74,8 @@ public final class DefaultMessageBuilder implements MessageBuilder {
     String text = buildText();
     String group = buildGroup();
     Message.Kind kind = buildKind();
-    Message.FilePosition filePosition = buildFilePosition();
-    return new Message(title, text, group, kind, filePosition, myInternal);
+    String targetPath = buildTargetPath();
+    return new Message(title, text, group, kind, targetPath, myInternal);
   }
 
   private @NotNull String buildTitle() {
@@ -141,13 +130,8 @@ public final class DefaultMessageBuilder implements MessageBuilder {
     return kind;
   }
 
-  private @Nullable Message.FilePosition buildFilePosition() {
-    Message.FilePosition filePosition = myFilePosition;
-    if (filePosition == null && myProject != null) {
-      String buildScriptPath = myProject.getBuildFile().getPath();
-      filePosition = new Message.FilePosition(buildScriptPath, 0, 0);
-    }
-    return filePosition;
+  private @Nullable String buildTargetPath() {
+    return myProject == null ? null : myProject.getProjectDir().getAbsolutePath();
   }
 
   private static @NotNull String buildExceptionStacktrace(@NotNull Throwable exception) {

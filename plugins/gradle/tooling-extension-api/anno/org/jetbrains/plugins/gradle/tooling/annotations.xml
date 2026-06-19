@@ -8,7 +8,4 @@
   <item name='org.jetbrains.plugins.gradle.tooling.Message java.lang.String getTitle()'>
     <annotation name='com.intellij.openapi.util.NlsSafe'/>
   </item>
-  <item name='org.jetbrains.plugins.gradle.tooling.Message.FilePosition java.lang.String getFilePath()'>
-    <annotation name='com.intellij.openapi.util.NlsSafe'/>
-  </item>
 </root>

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.ObjectUtils;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.events.ProgressEvent;
 import org.gradle.tooling.events.ProgressListener;
@@ -32,7 +33,9 @@ import org.jetbrains.plugins.gradle.issue.GradleIssueFailure;
 import org.jetbrains.plugins.gradle.statistics.GradleModelBuilderMessageCollector;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.MessageReporter;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -162,12 +165,7 @@ final class GradleProgressListener implements ProgressListener, org.gradle.tooli
 
   private @NotNull MessageEvent getModelBuilderMessage(@NotNull Message message) {
     MessageEvent.Kind kind = MessageEvent.Kind.valueOf(message.getKind().name());
-    Message.FilePosition messageFilePosition = message.getFilePosition();
-    FilePosition filePosition = messageFilePosition == null ? null : new FilePosition(
-      Path.of(messageFilePosition.getFilePath()),
-      messageFilePosition.getLine(),
-      messageFilePosition.getColumn()
-    );
+    FilePosition filePosition = getModelBuilderMessagePosition(message);
     return new MessageEventImpl(
       myContext.getTaskId(),
       kind,
@@ -181,6 +179,17 @@ final class GradleProgressListener implements ProgressListener, org.gradle.tooli
         return new FileNavigatable(project, filePosition);
       }
     };
+  }
+
+  private static @Nullable FilePosition getModelBuilderMessagePosition(@NotNull Message message) {
+    var targetPath = ObjectUtils.doIfNotNull(message.getTargetPath(), it -> it.toPath());
+    if (targetPath == null) return null;
+    var targetBuildFile = GradleConstants.KNOWN_GRADLE_FILES.stream()
+      .map(it -> targetPath.resolve(it))
+      .filter(it -> Files.isRegularFile(it))
+      .findFirst().orElse(null);
+    if (targetBuildFile == null) return null;
+    return new FilePosition(targetBuildFile, 0, 0);
   }
 
   /**
@@ -205,14 +214,8 @@ final class GradleProgressListener implements ProgressListener, org.gradle.tooli
 
   private @NotNull GradleIssueData getGradleIssueData(@NotNull Message message) {
     String errorText = StringUtil.notNullize(message.getText(), message.getTitle());
-
-    Message.FilePosition position = message.getFilePosition();
-    FilePosition filePosition = position == null ? null : new FilePosition(
-      Path.of(position.getFilePath()), position.getLine(), position.getColumn()
-    );
-
     GradleIssueFailure failure = GradleIssueFailure.createIssueFailure(errorText);
-    return GradleIssueData.createIssueData(getBuildRoot(myContext), failure, null, filePosition);
+    return GradleIssueData.createIssueData(getBuildRoot(myContext), failure, null, null);
   }
 
   private void sendProgressEventToOutput(ExternalSystemTaskNotificationEvent event) {
