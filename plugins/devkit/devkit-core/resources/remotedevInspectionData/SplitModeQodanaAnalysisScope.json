@@ -334,7 +334,6 @@
     "intellij.ml.llm.sandbox.build",
     "intellij.ml.llm.sandbox.selfReviewDaemon",
     "intellij.ml.llm.sandbox.spec",
-    "intellij.ml.llm.sandbox.spec.claude",
     "intellij.ml.llm.sandbox.spec.mcp",
     "intellij.ml.llm.sandbox.spec.wysiwyg",
     "intellij.ml.llm.searchEverywhere",
