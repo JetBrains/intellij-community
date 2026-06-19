@@ -265,6 +265,29 @@ class SeSelectionListenerTest {
   }
 
   @Test
+  fun saveSelectionState_restoresMatchingItem_afterResultsAreRebuiltForAnotherTab() {
+    val model = newModel()
+    val selectedInFirstTab = item()
+    val list = newList(model)
+    model.addItems(item(), item(), selectedInFirstTab)
+    list.selectedIndex = 2
+    val listener = SeSelectionListener(null, list, model)
+
+    // Simulate that the user explicitly selected a non-first item in the first tab.
+    listener.saveSelectionState("query")
+
+    // Switching to another tab clears the old results and loads a different list for the same query.
+    list.withProgrammaticSelectionChange { model.reset() }
+
+    // The second tab contains the same logical item again, but as a different object.
+    val matchingItemInSecondTab = item().also { markEqual(it, selectedInFirstTab) }
+    model.addItems(item(), matchingItemInSecondTab, item())
+
+    // The preserved selection must be restored to the matching item in the second tab.
+    assertEquals(1, listener.getIndexToSelect(maxVisibleRowCountLarge, "query", isInitialSearchPattern = false, isEndEvent = false))
+  }
+
+  @Test
   fun saveSelectionState_noOp_whenSelectedRowIsMoreRow() {
     val model = newModel()
     model.addItems(item())
