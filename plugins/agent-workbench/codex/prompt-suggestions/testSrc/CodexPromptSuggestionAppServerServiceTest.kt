@@ -1,10 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package com.intellij.agent.workbench.codex.sessions.backend.appserver
+package com.intellij.agent.workbench.codex.prompt.suggestions
 
-import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionContextItem
-import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionRequest
-import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionResult
+import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionAiResult
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -36,7 +34,7 @@ class CodexPromptSuggestionAppServerServiceTest {
       val firstStarted = CompletableDeferred<Unit>()
       val releaseFirst = CompletableDeferred<Unit>()
       val observedTitles = mutableListOf<String>()
-      val expectedResult = CodexPromptSuggestionResult.GeneratedCandidates(emptyList())
+      val expectedResult = AgentPromptSuggestionAiResult.GeneratedCandidates(emptyList())
       val service = CodexPromptSuggestionAppServerService(
         serviceScope = serviceScope,
         suggestWithClient = { request ->

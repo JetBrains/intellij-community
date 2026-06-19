@@ -1,0 +1,22 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.codex.common"/>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.json"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.CodexPromptSuggestionsBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <advancedSetting
+      id="agent.workbench.codex.prompt.suggestion.model"
+      default="off"
+      bundle="messages.CodexPromptSuggestionsBundle"
+      groupKey="advanced.settings.agent.workbench"/>
+    <agent.workbench.promptSuggestionAiBackend
+      implementation="com.intellij.agent.workbench.codex.prompt.suggestions.CodexAppServerPromptSuggestionBackend"/>
+  </extensions>
+</idea-plugin>

@@ -57,12 +57,6 @@ data class CodexStartedThreadSession(
   @JvmField val rolloutPath: String? = null,
 )
 
-data class CodexTurnCollaborationMode(
-  @JvmField val mode: String,
-  @JvmField val model: String,
-  @JvmField val reasoningEffort: String? = null,
-)
-
 data class CodexGenerationModel(
   @JvmField val id: String,
   @JvmField val displayName: String? = null,

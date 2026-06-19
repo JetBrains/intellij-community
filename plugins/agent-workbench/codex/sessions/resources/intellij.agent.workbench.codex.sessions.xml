@@ -12,8 +12,6 @@
   </dependencies>
   <!-- endregion -->
 
-  <resource-bundle>messages.CodexSessionsBundle</resource-bundle>
-
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.sessionProvider
       id="agentWorkbenchCodex"
@@ -23,13 +21,6 @@
       implementation="com.intellij.agent.workbench.codex.sessions.CodexAwbMcpConfigProviderContributor"/>
     <agent.workbench.sessionLaunchContributor
       implementation="com.intellij.agent.workbench.codex.sessions.CodexMcpConfigLaunchContributor"/>
-    <advancedSetting
-      id="agent.workbench.codex.prompt.suggestion.model"
-      default="off"
-      bundle="messages.CodexSessionsBundle"
-      groupKey="advanced.settings.agent.workbench"/>
-    <agent.workbench.promptSuggestionAiBackend
-      implementation="com.intellij.agent.workbench.codex.sessions.backend.appserver.CodexAppServerPromptSuggestionBackend"/>
   </extensions>
 
 </idea-plugin>

@@ -5,17 +5,13 @@ import com.intellij.agent.workbench.codex.common.CodexAppServerClient
 import com.intellij.agent.workbench.codex.common.CodexAppServerException
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationKind
 import com.intellij.agent.workbench.codex.common.CodexAppServerNotificationRouting
-import com.intellij.agent.workbench.codex.common.CodexAppServerValue
 import com.intellij.agent.workbench.codex.common.CodexCliNotFoundException
-import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionCandidate
-import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionContextItem
-import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionContextTruncation
-import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionRequest
-import com.intellij.agent.workbench.codex.common.CodexPromptSuggestionResult
 import com.intellij.agent.workbench.codex.common.CodexThreadActiveFlag
 import com.intellij.agent.workbench.codex.common.CodexThreadSourceKind
 import com.intellij.agent.workbench.codex.common.CodexThreadStatusKind
-import com.intellij.agent.workbench.codex.common.CodexTurnCollaborationMode
+import com.intellij.agent.workbench.codex.common.writeObject
+import com.intellij.agent.workbench.codex.common.writeObjectField
+import com.intellij.agent.workbench.codex.common.writeStringArrayField
 import com.intellij.openapi.application.PathManager
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -32,12 +28,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.fail
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.util.concurrent.TimeUnit
 import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import tools.jackson.core.JsonGenerator
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
@@ -1429,89 +1426,6 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun startTurnPassesPlanModePromptThrough(): Unit = runBlocking(Dispatchers.Default) {
-    val workingDir = tempDir.resolve("project-turn-start")
-    Files.createDirectories(workingDir)
-    val configPath = workingDir.resolve("codex-config.json")
-    writeConfig(path = configPath, threads = emptyList())
-
-    val backendDir = tempDir.resolve("backend-turn-start")
-    Files.createDirectories(backendDir)
-    val requestPayloadLogPath = backendDir.resolve("turn-start-requests.log")
-    val client = createMockClient(
-      scope = this,
-      tempDir = backendDir,
-      configPath = configPath,
-      environmentOverrides = mapOf(
-        "CODEX_TEST_REQUEST_PAYLOAD_LOG" to requestPayloadLogPath.toString(),
-      ),
-    )
-    try {
-      val created = client.createThreadSession(cwd = workingDir.toString())
-      val turnId = client.startTurn(
-        threadId = created.thread.id,
-        promptText = "Refactor this",
-        collaborationMode = CodexTurnCollaborationMode(
-          mode = "plan",
-          model = created.model,
-          reasoningEffort = created.reasoningEffort,
-        ),
-      )
-
-      assertThat(turnId).startsWith("turn-")
-
-      val payloadLog = Files.readString(requestPayloadLogPath)
-      assertThat(payloadLog).contains("\"method\":\"initialize\"")
-      assertThat(payloadLog).contains("\"capabilities\":{\"experimentalApi\":true}")
-      assertThat(payloadLog).contains("\"method\":\"turn/start\"")
-      assertThat(payloadLog).contains("\"threadId\":\"${created.thread.id}\"")
-      assertThat(payloadLog).contains("\"type\":\"text\"")
-      assertThat(payloadLog).contains("\"text\":\"Refactor this\"")
-      assertThat(payloadLog).contains("\"collaborationMode\":{\"mode\":\"plan\"")
-      assertThat(payloadLog).contains("\"settings\":{\"model\":\"${created.model}\"")
-      assertThat(payloadLog).contains("\"reasoning_effort\":\"${created.reasoningEffort}\"")
-      assertThat(payloadLog).contains("\"developer_instructions\":null")
-    }
-    finally {
-      client.shutdown()
-    }
-  }
-
-  @Test
-  fun startTurnWithPlanModeUsesRealCodexAppServer(): Unit = runBlocking(Dispatchers.Default) {
-    val backendDir = tempDir.resolve("backend-turn-start-real")
-    Files.createDirectories(backendDir)
-    createRealMockResponsesHarness(
-      scope = this,
-      tempDir = backendDir,
-      responsePlans = listOf(MockResponsesPlan.completedAssistantMessage("Done")),
-    ).use { harness ->
-      val created = harness.client.createThreadSession(cwd = harness.projectDir.toString())
-      assertThat(created.rolloutPath).isNotBlank()
-
-      val turnId = harness.client.startTurn(
-        threadId = created.thread.id,
-        promptText = "Refactor this",
-        collaborationMode = CodexTurnCollaborationMode(
-          mode = "plan",
-          model = created.model,
-          reasoningEffort = created.reasoningEffort,
-        ),
-      )
-
-      assertThat(turnId).isNotBlank()
-      withTimeout(5.seconds) {
-        while (harness.responsesServer.requests().isEmpty()) {
-          delay(10.milliseconds)
-        }
-      }
-      val requests = harness.responsesServer.requests()
-      assertThat(requests).hasSize(1)
-      assertThat(requests.single()).contains("Refactor this")
-    }
-  }
-
-  @Test
   fun archiveThreadMovesThreadFromActiveToArchivedList(): Unit = runBlocking(Dispatchers.Default) {
     val workingDir = tempDir.resolve("project-archive")
     Files.createDirectories(workingDir)
@@ -1735,36 +1649,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun persistThreadSendsTurnStartWithoutInterrupt(): Unit = runBlocking(Dispatchers.Default) {
-    val configPath = tempDir.resolve("codex-config.json")
-    writeConfig(path = configPath, threads = emptyList())
-
-    val backendDir = tempDir.resolve("backend-persist")
-    Files.createDirectories(backendDir)
-    val requestLogPath = backendDir.resolve("requests.log")
-    val client = createMockClient(
-      scope = this,
-      tempDir = backendDir,
-      configPath = configPath,
-      environmentOverrides = mapOf(
-        "CODEX_TEST_REQUEST_LOG" to requestLogPath.toString(),
-      ),
-    )
-    try {
-      val created = client.createThread()
-      client.persistThread(created.id)
-
-      val methods = Files.readAllLines(requestLogPath)
-      assertThat(methods).contains("turn/start")
-      assertThat(methods).doesNotContain("turn/interrupt")
-    }
-    finally {
-      client.shutdown()
-    }
-  }
-
-  @Test
-  fun suggestPromptUsesRealTurnFlowAndReturnsGeneratedCandidates(): Unit = runBlocking(Dispatchers.Default) {
+  fun readOnlyEphemeralTurnUsesRealTurnFlowAndReturnsAssistantMessage(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(path = configPath, threads = emptyList())
 
@@ -1781,9 +1666,9 @@ class CodexAppServerClientTest {
       ),
     )
     try {
-      val candidates = client.suggestPrompt(createPromptSuggestionRequest())
+      val payload = client.runTestReadOnlyEphemeralTurn()
 
-      assertThat(candidates).isEqualTo(expectedGeneratedPromptSuggestionResult())
+      assertGeneratedPromptSuggestionPayload(payload)
 
       val payloadLog = Files.readString(requestPayloadLogPath)
       assertThat(payloadLog).contains("\"method\":\"thread/start\"")
@@ -1797,19 +1682,7 @@ class CodexAppServerClientTest {
       assertThat(payloadLog).contains("\"model\":\"gpt-5.4\"")
       assertThat(payloadLog).contains("\"effort\":\"low\"")
       assertThat(payloadLog).contains("\"outputSchema\":{\"type\":\"object\"")
-      assertThat(payloadLog).contains("\"required\":[\"id\",\"label\",\"promptText\"]")
-      assertThat(payloadLog).contains("\"id\":{\"type\":[\"string\",\"null\"]}")
-      assertThat(payloadLog).contains("Target mode: new_task")
-      assertThat(payloadLog).contains("Visible context items (1):")
-      assertThat(payloadLog).contains("rendererId: testFailures")
-      assertThat(payloadLog).contains("itemId: failure-1")
-      assertThat(payloadLog).contains("parentItemId: suite-1")
-      assertThat(payloadLog).contains("source: testRunner")
-      assertThat(payloadLog).contains("truncation: reason=source_limit, includedChars=480, originalChars=1200")
-      assertThat(payloadLog).contains("Fallback seed candidates (3):")
-      assertThat(payloadLog).contains("id: tests.fix")
-      assertThat(payloadLog).contains("id: tests.explain")
-      assertThat(payloadLog).contains("id: tests.bisect")
+      assertThat(payloadLog).contains("Run a read-only ephemeral test turn.")
       assertThat(payloadLog).doesNotContain("\"method\":\"prompt/suggest\"")
     }
     finally {
@@ -1818,7 +1691,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun suggestPromptUsesRealCodexAppServerWithStrictOutputSchema(): Unit = runBlocking(Dispatchers.Default) {
+  fun readOnlyEphemeralTurnUsesRealCodexAppServerWithStrictOutputSchema(): Unit = runBlocking(Dispatchers.Default) {
     val backendDir = tempDir.resolve("backend-prompt-suggest-real")
     Files.createDirectories(backendDir)
     createRealPromptSuggestionHarness(
@@ -1828,23 +1701,20 @@ class CodexAppServerClientTest {
         MockResponsesPlan.completedAssistantMessage(renderGeneratedPromptSuggestionPayload())
       ),
     ).use { harness ->
-      val suggestions = harness.client.suggestPrompt(
-        createPromptSuggestionRequest(
-          cwd = harness.projectDir.toString(),
-          model = "mock-model",
-        )
+      val payload = harness.client.runTestReadOnlyEphemeralTurn(
+        cwd = harness.projectDir.toString(),
+        model = "mock-model",
       )
 
-      assertThat(suggestions).isEqualTo(expectedGeneratedPromptSuggestionResult())
+      assertGeneratedPromptSuggestionPayload(payload)
       val requestBody = harness.responsesServer.requests().single()
       assertThat(requestBody).contains("\"strict\":true")
-      assertThat(requestBody).contains("\"required\":[\"id\",\"label\",\"promptText\"]")
-      assertThat(requestBody).contains("\"id\":{\"type\":[\"string\",\"null\"]}")
+      assertThat(requestBody).contains("\"type\":\"object\"")
     }
   }
 
   @Test
-  fun suggestPromptParsesPolishedSeedResponses(): Unit = runBlocking(Dispatchers.Default) {
+  fun readOnlyEphemeralTurnReturnsAssistantMessageText(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(path = configPath, threads = emptyList())
 
@@ -1860,27 +1730,11 @@ class CodexAppServerClientTest {
       ),
     )
     try {
-      assertThat(client.suggestPrompt(createPromptSuggestionRequest())).isEqualTo(
-        CodexPromptSuggestionResult.PolishedSeeds(
-          listOf(
-            CodexPromptSuggestionCandidate(
-              id = "tests.fix",
-              label = "AI: Fix the ParserTest failure",
-              promptText = "Investigate ParserTest, identify the root cause, and implement the minimal fix.",
-            ),
-            CodexPromptSuggestionCandidate(
-              id = "tests.explain",
-              label = "AI: Explain the ParserTest failure",
-              promptText = "Explain why ParserTest is failing and point out the relevant code path.",
-            ),
-            CodexPromptSuggestionCandidate(
-              id = "tests.bisect",
-              label = "AI: Bisect the ParserTest regression",
-              promptText = "Identify the commit that broke ParserTest by reading recent diffs of the test and its production paths.",
-            ),
-          )
-        )
-      )
+      val payload = client.runTestReadOnlyEphemeralTurn()
+
+      assertThat(payload).contains("\"kind\":\"polishedSeeds\"")
+      assertThat(payload).contains("AI: Fix the ParserTest failure")
+      assertThat(payload).contains("AI: Explain the ParserTest failure")
     }
     finally {
       client.shutdown()
@@ -1918,7 +1772,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun suggestPromptSendsInterruptWhenCancelledBeforeTerminalCompletion(): Unit = runBlocking(Dispatchers.Default) {
+  fun readOnlyEphemeralTurnSendsInterruptWhenCancelledBeforeTerminalCompletion(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(path = configPath, threads = emptyList())
 
@@ -1937,7 +1791,7 @@ class CodexAppServerClientTest {
     )
     try {
       val suggestion = async(start = CoroutineStart.UNDISPATCHED) {
-        client.suggestPrompt(createPromptSuggestionRequest())
+        client.runTestReadOnlyEphemeralTurn()
       }
 
       waitForRequestLogMethod(requestLogPath, method = "turn/start")
@@ -1959,7 +1813,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun suggestPromptReturnsNullWhenParentTimeoutCancelsGeneration(): Unit = runBlocking(Dispatchers.Default) {
+  fun readOnlyEphemeralTurnReturnsNullWhenParentTimeoutCancelsGeneration(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(path = configPath, threads = emptyList())
 
@@ -1980,7 +1834,7 @@ class CodexAppServerClientTest {
       assertThat(client.listThreads(archived = false)).isEmpty()
 
       assertThat(withTimeoutOrNull(500.milliseconds) {
-        client.suggestPrompt(createPromptSuggestionRequest())
+        client.runTestReadOnlyEphemeralTurn()
       }).isNull()
 
       assertThat(Files.readAllLines(requestLogPath)).contains("turn/interrupt")
@@ -1991,43 +1845,44 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun suggestPromptKeepsClientWhenInterruptResponseIsMissingButTerminalCompletionArrives(): Unit = runBlocking(Dispatchers.Default) {
-    val configPath = tempDir.resolve("codex-config.json")
-    writeConfig(path = configPath, threads = emptyList())
+  fun readOnlyEphemeralTurnKeepsClientWhenInterruptResponseIsMissingButTerminalCompletionArrives(): Unit =
+    runBlocking(Dispatchers.Default) {
+      val configPath = tempDir.resolve("codex-config.json")
+      writeConfig(path = configPath, threads = emptyList())
 
-    val backendDir = tempDir.resolve("backend-prompt-suggest-missing-interrupt-response")
-    Files.createDirectories(backendDir)
-    val requestLogPath = backendDir.resolve("prompt-suggest-missing-interrupt-response-requests.log")
-    val client = createMockClient(
-      scope = this,
-      tempDir = backendDir,
-      configPath = configPath,
-      notificationRouting = CodexAppServerNotificationRouting.PARSED_ONLY,
-      environmentOverrides = mapOf(
-        "CODEX_TEST_REQUEST_LOG" to requestLogPath.toString(),
-        "CODEX_TEST_PROMPT_SUGGEST_LIFECYCLE" to "wait_for_interrupt_without_response,completed",
-      ),
-    )
-    try {
-      assertThat(client.listThreads(archived = false)).isEmpty()
+      val backendDir = tempDir.resolve("backend-prompt-suggest-missing-interrupt-response")
+      Files.createDirectories(backendDir)
+      val requestLogPath = backendDir.resolve("prompt-suggest-missing-interrupt-response-requests.log")
+      val client = createMockClient(
+        scope = this,
+        tempDir = backendDir,
+        configPath = configPath,
+        notificationRouting = CodexAppServerNotificationRouting.PARSED_ONLY,
+        environmentOverrides = mapOf(
+          "CODEX_TEST_REQUEST_LOG" to requestLogPath.toString(),
+          "CODEX_TEST_PROMPT_SUGGEST_LIFECYCLE" to "wait_for_interrupt_without_response,completed",
+        ),
+      )
+      try {
+        assertThat(client.listThreads(archived = false)).isEmpty()
 
-      assertThat(withTimeoutOrNull(500.milliseconds) {
-        client.suggestPrompt(createPromptSuggestionRequest())
-      }).isNull()
+        assertThat(withTimeoutOrNull(500.milliseconds) {
+          client.runTestReadOnlyEphemeralTurn()
+        }).isNull()
 
-      assertThat(client.suggestPrompt(createPromptSuggestionRequest())).isEqualTo(expectedGeneratedPromptSuggestionResult())
+        assertGeneratedPromptSuggestionPayload(client.runTestReadOnlyEphemeralTurn())
 
-      val methods = Files.readAllLines(requestLogPath)
-      assertThat(methods).contains("turn/interrupt")
-      assertThat(methods.count { it == "initialize" }).isEqualTo(1)
+        val methods = Files.readAllLines(requestLogPath)
+        assertThat(methods).contains("turn/interrupt")
+        assertThat(methods.count { it == "initialize" }).isEqualTo(1)
+      }
+      finally {
+        client.shutdown()
+      }
     }
-    finally {
-      client.shutdown()
-    }
-  }
 
   @Test
-  fun suggestPromptResetsClientWhenInterruptDoesNotReachTerminalCompletion(): Unit = runBlocking(Dispatchers.Default) {
+  fun readOnlyEphemeralTurnResetsClientWhenInterruptDoesNotReachTerminalCompletion(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(path = configPath, threads = emptyList())
 
@@ -2050,10 +1905,10 @@ class CodexAppServerClientTest {
       assertThat(client.listThreads(archived = false)).isEmpty()
 
       assertThat(withTimeoutOrNull(500.milliseconds) {
-        client.suggestPrompt(createPromptSuggestionRequest())
+        client.runTestReadOnlyEphemeralTurn()
       }).isNull()
 
-      assertThat(client.suggestPrompt(createPromptSuggestionRequest())).isEqualTo(expectedGeneratedPromptSuggestionResult())
+      assertGeneratedPromptSuggestionPayload(client.runTestReadOnlyEphemeralTurn())
 
       val methods = Files.readAllLines(requestLogPath)
       assertThat(methods).contains("turn/interrupt")
@@ -2065,7 +1920,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun suggestPromptReturnsNullWhenTurnCompletesAsInterrupted(): Unit = runBlocking(Dispatchers.Default) {
+  fun readOnlyEphemeralTurnReturnsNullWhenTurnCompletesAsInterrupted(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(path = configPath, threads = emptyList())
 
@@ -2083,7 +1938,7 @@ class CodexAppServerClientTest {
       ),
     )
     try {
-      assertThat(client.suggestPrompt(createPromptSuggestionRequest())).isNull()
+      assertThat(client.runTestReadOnlyEphemeralTurn()).isNull()
       assertThat(Files.readAllLines(requestLogPath)).doesNotContain("turn/interrupt")
     }
     finally {
@@ -2092,7 +1947,7 @@ class CodexAppServerClientTest {
   }
 
   @Test
-  fun suggestPromptRealParentTimeoutDoesNotPoisonClient(): Unit = runBlocking(Dispatchers.Default) {
+  fun readOnlyEphemeralTurnRealParentTimeoutDoesNotPoisonClient(): Unit = runBlocking(Dispatchers.Default) {
     val backendDir = tempDir.resolve("backend-prompt-suggest-real-timeout")
     Files.createDirectories(backendDir)
     createRealPromptSuggestionHarness(
@@ -2104,28 +1959,24 @@ class CodexAppServerClientTest {
       ),
     ).use { harness ->
       assertThat(withTimeoutOrNull(1500.milliseconds) {
-        harness.client.suggestPrompt(
-          createPromptSuggestionRequest(
-            cwd = harness.projectDir.toString(),
-            model = "mock-model",
-          )
+        harness.client.runTestReadOnlyEphemeralTurn(
+          cwd = harness.projectDir.toString(),
+          model = "mock-model",
         )
       }).isNull()
 
-      assertThat(
-        harness.client.suggestPrompt(
-          createPromptSuggestionRequest(
-            cwd = harness.projectDir.toString(),
-            model = "mock-model",
-          )
+      assertGeneratedPromptSuggestionPayload(
+        harness.client.runTestReadOnlyEphemeralTurn(
+          cwd = harness.projectDir.toString(),
+          model = "mock-model",
         )
-      ).isEqualTo(expectedGeneratedPromptSuggestionResult())
+      )
       assertThat(harness.responsesServer.requests()).hasSize(2)
     }
   }
 
   @Test
-  fun suggestPromptSurfacesFailedTurnErrors(): Unit = runBlocking(Dispatchers.Default) {
+  fun readOnlyEphemeralTurnSurfacesFailedTurnErrors(): Unit = runBlocking(Dispatchers.Default) {
     val configPath = tempDir.resolve("codex-config.json")
     writeConfig(path = configPath, threads = emptyList())
 
@@ -2143,7 +1994,7 @@ class CodexAppServerClientTest {
     )
     try {
       try {
-        client.suggestPrompt(createPromptSuggestionRequest())
+        client.runTestReadOnlyEphemeralTurn()
         fail("Expected CodexAppServerException")
       }
       catch (e: CodexAppServerException) {
@@ -2255,74 +2106,57 @@ class CodexAppServerClientTest {
     }
   }
 
-  private fun createPromptSuggestionRequest(
+  private suspend fun CodexAppServerClient.runTestReadOnlyEphemeralTurn(
     cwd: String = "/work/project",
     model: String = "gpt-5.4",
-  ): CodexPromptSuggestionRequest {
-    return CodexPromptSuggestionRequest(
+  ): String? {
+    return runReadOnlyEphemeralTurn(
       cwd = cwd,
-      targetMode = "new_task",
+      inputText = "Run a read-only ephemeral test turn.",
       model = model,
       reasoningEffort = "low",
-      maxCandidates = 3,
-      contextItems = listOf(
-        CodexPromptSuggestionContextItem(
-          rendererId = "testFailures",
-          title = "Failing tests",
-          body = "failed: ParserTest",
-          payload = CodexAppServerValue.Obj(
-            linkedMapOf(
-              "statusCounts" to CodexAppServerValue.Obj(
-                linkedMapOf(
-                  "failed" to CodexAppServerValue.Num("2"),
-                )
-              ),
-              "focus" to CodexAppServerValue.Str("tests"),
-            )
-          ),
-          itemId = "failure-1",
-          parentItemId = "suite-1",
-          source = "testRunner",
-          truncation = CodexPromptSuggestionContextTruncation(
-            originalChars = 1200,
-            includedChars = 480,
-            reason = "source_limit",
-          ),
-        )
-      ),
-      seedCandidates = listOf(
-        CodexPromptSuggestionCandidate(
-          id = "tests.fix",
-          label = "Fix failing tests",
-          promptText = "Investigate the failing tests and implement the minimal fix.",
-        ),
-        CodexPromptSuggestionCandidate(
-          id = "tests.explain",
-          label = "Explain failures",
-          promptText = "Explain why the selected tests are failing.",
-        ),
-        CodexPromptSuggestionCandidate(
-          id = "tests.bisect",
-          label = "Bisect failures",
-          promptText = "Find the commit that introduced these failures by reading recent diffs.",
-        ),
-      ),
+      outputSchemaWriter = ::writeTestReadOnlyEphemeralTurnOutputSchema,
     )
   }
 
-  private fun expectedGeneratedPromptSuggestionResult(): CodexPromptSuggestionResult.GeneratedCandidates {
-    return CodexPromptSuggestionResult.GeneratedCandidates(
-      listOf(
-        CodexPromptSuggestionCandidate(
-          label = "AI: Investigate provided context",
-          promptText = "Investigate the provided context and explain the next steps.",
-        ),
-        CodexPromptSuggestionCandidate(
-          label = "AI: Summarize provided context",
-          promptText = "Summarize the relevant context before making changes.",
-        ),
-      )
-    )
+  private fun writeTestReadOnlyEphemeralTurnOutputSchema(generator: JsonGenerator) {
+    generator.writeObject {
+      writeStringProperty("type", "object")
+      writeBooleanProperty("additionalProperties", false)
+      writeStringArrayField("required", "kind", "candidates")
+      writeObjectField("properties") {
+        writeObjectField("kind") {
+          writeStringProperty("type", "string")
+          writeStringArrayField("enum", "generatedCandidates")
+        }
+
+        writeObjectField("candidates") {
+          writeStringProperty("type", "array")
+          writeObjectField("items") {
+            writeStringProperty("type", "object")
+            writeBooleanProperty("additionalProperties", false)
+            writeStringArrayField("required", "id", "label", "promptText")
+            writeObjectField("properties") {
+              writeObjectField("id") {
+                writeStringArrayField("type", "string", "null")
+              }
+              writeObjectField("label") {
+                writeStringProperty("type", "string")
+              }
+              writeObjectField("promptText") {
+                writeStringProperty("type", "string")
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private fun assertGeneratedPromptSuggestionPayload(payload: String?) {
+    assertThat(payload).contains("\"kind\":\"generatedCandidates\"")
+    assertThat(payload).contains("AI: Investigate provided context")
+    assertThat(payload).contains("AI: Summarize provided context")
   }
 
   private fun renderGeneratedPromptSuggestionPayload(): String {

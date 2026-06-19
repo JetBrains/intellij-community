@@ -994,6 +994,7 @@ plugins/agent-workbench/cli
 plugins/agent-workbench/codex/chat
 plugins/agent-workbench/codex/common
 plugins/agent-workbench/codex/ide
+plugins/agent-workbench/codex/prompt-suggestions
 plugins/agent-workbench/codex/sessions
 plugins/agent-workbench/common
 plugins/agent-workbench/filewatch

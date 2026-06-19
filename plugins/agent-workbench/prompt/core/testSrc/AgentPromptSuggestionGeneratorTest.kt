@@ -17,13 +17,13 @@ class AgentPromptSuggestionGeneratorTest {
   @Test
   fun defaultGeneratorEmitsFallbackSuggestionsBeforePolishedAiUpdate() {
     val updates = AgentPromptSuggestionAiBackends.withBackendForTest(
-      AgentPromptSuggestionAiBackend { _, fallbackCandidates ->
-        AgentPromptSuggestionUpdate(
-          fallbackCandidates.map { candidate ->
-            candidate.copy(
+      AgentPromptSuggestionAiBackend { request ->
+        AgentPromptSuggestionAiResult.PolishedSeeds(
+          request.seedCandidates.map { candidate ->
+            AgentPromptSuggestionAiCandidate(
+              id = candidate.id,
               label = "AI ${candidate.label}",
               promptText = "${candidate.promptText} Keep the answer concise.",
-              provenance = AgentPromptSuggestionProvenance.AI_POLISHED,
             )
           }
         )
@@ -50,14 +50,12 @@ class AgentPromptSuggestionGeneratorTest {
   @Test
   fun defaultGeneratorAllowsAiGeneratedSuggestionsWithoutFallbackSeeds() {
     val updates = AgentPromptSuggestionAiBackends.withBackendForTest(
-      AgentPromptSuggestionAiBackend { _, _ ->
-        AgentPromptSuggestionUpdate(
+      AgentPromptSuggestionAiBackend {
+        AgentPromptSuggestionAiResult.GeneratedCandidates(
           listOf(
-            AgentPromptSuggestionCandidate(
-              id = "context.generated.summary.1",
+            AgentPromptSuggestionAiCandidate(
               label = "Summarize the custom context",
               promptText = "Summarize the custom context and highlight what needs attention.",
-              provenance = AgentPromptSuggestionProvenance.AI_GENERATED,
             )
           )
         )
@@ -73,7 +71,72 @@ class AgentPromptSuggestionGeneratorTest {
     assertThat(updates).hasSize(2)
     assertThat(updates.first().candidates).isEmpty()
     assertThat(updates.last().candidates.single().provenance).isEqualTo(AgentPromptSuggestionProvenance.AI_GENERATED)
-    assertThat(updates.last().candidates.single().id).isEqualTo("context.generated.summary.1")
+    assertThat(updates.last().candidates.single().id).isEqualTo("context.generated.summarize-the-custom-context.1")
+  }
+
+  @Test
+  fun defaultGeneratorKeepsFallbackWhenPolishedCandidatesDoNotMatchFallbackSlots() {
+    val updates = AgentPromptSuggestionAiBackends.withBackendForTest(
+      AgentPromptSuggestionAiBackend {
+        AgentPromptSuggestionAiResult.PolishedSeeds(
+          listOf(
+            AgentPromptSuggestionAiCandidate(
+              id = "tests.fix",
+              label = "AI: Fix the ParserTest failure",
+              promptText = "Investigate ParserTest, identify the root cause, and implement the minimal fix.",
+            ),
+            AgentPromptSuggestionAiCandidate(
+              id = "tests.other",
+              label = "AI: Explain the ParserTest failure",
+              promptText = "Explain why ParserTest is failing and point out the relevant code path.",
+            ),
+            AgentPromptSuggestionAiCandidate(
+              id = "tests.bisect",
+              label = "AI: Bisect the ParserTest regression",
+              promptText = "Identify the commit that broke ParserTest by reading recent diffs of the test and its production paths.",
+            ),
+          )
+        )
+      }
+    ) {
+      runBlocking(Dispatchers.Default) {
+        checkNotNull(AgentPromptSuggestionGenerators.find())
+          .generateSuggestions(failedTestRequest())
+          .toList()
+      }
+    }
+
+    assertThat(updates).hasSize(1)
+    assertThat(updates.single().candidates.map(AgentPromptSuggestionCandidate::provenance))
+      .containsOnly(AgentPromptSuggestionProvenance.TEMPLATE)
+  }
+
+  @Test
+  fun defaultGeneratorFiltersInvalidAndDuplicateGeneratedCandidatesBeforeReplacingFallback() {
+    val updates = AgentPromptSuggestionAiBackends.withBackendForTest(
+      AgentPromptSuggestionAiBackend {
+        AgentPromptSuggestionAiResult.GeneratedCandidates(
+          listOf(
+            AgentPromptSuggestionAiCandidate(label = "   ", promptText = "ignored"),
+            AgentPromptSuggestionAiCandidate(label = "Explain the failure", promptText = "Explain the failing test and likely root cause."),
+            AgentPromptSuggestionAiCandidate(label = "Explain the failure", promptText = "Explain the failing test and likely root cause."),
+            AgentPromptSuggestionAiCandidate(label = "Draft a fix plan", promptText = "Draft a concrete plan to fix the failing test."),
+          )
+        )
+      }
+    ) {
+      runBlocking(Dispatchers.Default) {
+        checkNotNull(AgentPromptSuggestionGenerators.find())
+          .generateSuggestions(failedTestRequest())
+          .toList()
+      }
+    }
+
+    assertThat(updates).hasSize(2)
+    assertThat(updates.last().candidates.map(AgentPromptSuggestionCandidate::label))
+      .containsExactly("Explain the failure", "Draft a fix plan")
+    assertThat(updates.last().candidates.map(AgentPromptSuggestionCandidate::provenance))
+      .containsOnly(AgentPromptSuggestionProvenance.AI_GENERATED)
   }
 
   @Test

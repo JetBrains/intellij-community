@@ -9,8 +9,8 @@ targets:
   - ../../prompt/ui/resources/messages/AgentPromptBundle.properties
   - ../../prompt/core/testSrc/AgentPrompt*Suggestion*Test.kt
   - ../../prompt/ui/testSrc/AgentPrompt*Suggestion*Test.kt
-  - ../../codex/sessions/src/backend/appserver/CodexAppServerPromptSuggestionBackend.kt
-  - ../../codex/sessions/testSrc/backend/appserver/Codex*Suggestion*Test.kt
+  - ../../codex/prompt-suggestions/src/Codex*Suggestion*.kt
+  - ../../codex/prompt-suggestions/testSrc/Codex*Suggestion*Test.kt
   - ../../sessions/testSrc/CodexAppServerClientTest.kt
 ---
 
@@ -36,19 +36,19 @@ The prompt popup can show context-aware suggestions before the user types. Sugge
   [@test] ../../prompt/ui/testSrc/AgentPromptDraftPersistenceDecisionsTest.kt
 
 - Codex-refined suggestions use app-server prompt-suggestion transport and map generated/refined candidates to the expected UI suggestion kind.
-  [@test] ../../codex/sessions/testSrc/backend/appserver/CodexAppServerPromptSuggestionGeneratorTest.kt
+  [@test] ../../codex/prompt-suggestions/testSrc/CodexAppServerPromptSuggestionBackendTest.kt
   [@test] ../../sessions/testSrc/CodexAppServerClientTest.kt
 
 - Invalid AI responses are filtered candidate-by-candidate; duplicate/empty candidates are ignored without hiding valid fallback suggestions.
-  [@test] ../../codex/sessions/testSrc/backend/appserver/CodexAppServerPromptSuggestionGeneratorTest.kt
+  [@test] ../../prompt/core/testSrc/AgentPromptSuggestionGeneratorTest.kt
 
 - Abandoned Codex suggestion turns are interrupted or the dedicated suggestion client is reset before reuse; unrelated notifications must not confirm cleanup for the active turn.
-  [@test] ../../codex/sessions/testSrc/backend/appserver/CodexPromptSuggestionAppServerServiceTest.kt
+  [@test] ../../sessions/testSrc/CodexAppServerClientTest.kt
 
 ## Testing / Local Run
 - `./tests.cmd --module intellij.agent.workbench.prompt.core.tests --test "com.intellij.agent.workbench.prompt.core.AgentPrompt*Suggestion*Test"`
 - `./tests.cmd --module intellij.agent.workbench.prompt.ui.tests --test "com.intellij.agent.workbench.prompt.ui.AgentPrompt*Suggestion*Test"`
-- `./tests.cmd --module intellij.agent.workbench.codex.sessions.tests --test "com.intellij.agent.workbench.codex.sessions.backend.appserver.Codex*Suggestion*Test"`
+- `./tests.cmd --module intellij.agent.workbench.codex.prompt.suggestions.tests --test "com.intellij.agent.workbench.codex.prompt.suggestions.Codex*Suggestion*Test"`
 - `./tests.cmd --module intellij.agent.workbench.sessions.tests --test com.intellij.agent.workbench.sessions.CodexAppServerClientTest`
 
 ## References

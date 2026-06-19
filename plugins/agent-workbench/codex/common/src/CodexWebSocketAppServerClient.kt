@@ -26,7 +26,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus
 import java.io.BufferedReader
-import java.io.IOException
 import java.io.InputStreamReader
 import java.io.StringWriter
 import java.net.URI
@@ -35,7 +34,6 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.net.http.WebSocket
 import java.nio.charset.StandardCharsets
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
@@ -247,7 +245,7 @@ class CodexWebSocketAppServerClient(
       )
     }
     catch (e: CodexAppServerException) {
-      if (e.isWebSocketThreadReadIncludeTurnsFallback()) {
+      if (e.isCodexThreadReadIncludeTurnsFallback()) {
         LOG.debug { "thread/read includeTurns fallback for threadId=$normalizedThreadId: ${e.message}" }
         null
       }
@@ -549,7 +547,7 @@ class CodexWebSocketAppServerClient(
         .createProcess()
     }
     catch (t: Throwable) {
-      if (configuredExecutable == null && isExecutableNotFoundForWebSocket(t)) {
+      if (configuredExecutable == null && isCodexExecutableNotFound(t)) {
         throw CodexCliNotFoundException()
       }
       throw CodexAppServerException("Failed to start Codex app-server from $executable", t)
@@ -578,7 +576,7 @@ class CodexWebSocketAppServerClient(
     }
     catch (t: Throwable) {
       stopProcess()
-      throw if (t is CodexAppServerException) t else CodexAppServerException("Failed to connect to Codex websocket app-server", t)
+      throw t as? CodexAppServerException ?: CodexAppServerException("Failed to connect to Codex websocket app-server", t)
     }
   }
 
@@ -793,29 +791,4 @@ private fun stripAnsiEscapes(text: String): String {
     stripped.append(ch)
   }
   return stripped.toString()
-}
-
-private fun isExecutableNotFoundForWebSocket(error: Throwable): Boolean {
-  return generateSequence(error) { it.cause }
-    .any { cause ->
-      when (cause) {
-        is NoSuchFileException -> true
-        is IOException -> {
-          val message = cause.message ?: return@any false
-          message.contains("error=2") ||
-          message.contains("no such file or directory", ignoreCase = true) ||
-          message.contains("cannot find the file", ignoreCase = true)
-        }
-        else -> false
-      }
-    }
-}
-
-private fun Throwable.isWebSocketThreadReadIncludeTurnsFallback(): Boolean {
-  return generateSequence(this) { it.cause }
-    .mapNotNull(Throwable::message)
-    .any { message ->
-      message.contains("includeTurns is unavailable before first user message") ||
-      message.contains("ephemeral threads do not support includeTurns")
-    }
 }
