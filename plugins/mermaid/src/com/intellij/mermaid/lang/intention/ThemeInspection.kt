@@ -71,7 +71,7 @@ class ThemeInspection : LocalInspectionTool() {
                 .createProblemDescriptor(
                   directiveValue,
                   TextRange.create(theme.startOffset + 1, theme.endOffset - 1),
-                  MermaidBundle.message("theme.inspection.non.dark.theme.display.name"),
+                  MermaidBundle.message("theme.inspection.light.theme.display.name"),
                   ProblemHighlightType.WARNING,
                   isOnTheFly,
                   ReplaceThemeQuickFix()
