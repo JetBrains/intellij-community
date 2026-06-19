@@ -3,10 +3,45 @@ package com.intellij.configurationStore
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.util.io.Ksuid
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+
+/**
+ * Only the [Ksuid] form is accepted, so a value is always safe to use as a file name (it cannot contain path separators or `..`).
+ * Construct it via [generate] or [parseOrNull] only.
+ */
+@Internal
+class ProjectWorkspaceId private constructor(val value: String) {
+  override fun toString(): String {
+    return value
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as ProjectWorkspaceId
+
+    return value == other.value
+  }
+
+  override fun hashCode(): Int {
+    return value.hashCode()
+  }
+
+  companion object {
+    /** Generates a new id in the [Ksuid] form. */
+    fun generate(): ProjectWorkspaceId = ProjectWorkspaceId(Ksuid.generate())
+
+    /** Accepts only a valid [Ksuid]. Returns null otherwise. */
+    fun parseOrNull(value: String): ProjectWorkspaceId? {
+      return if (Ksuid.isValid(value)) ProjectWorkspaceId(value) else null
+    }
+  }
+}
 
 @Internal
 interface ProjectIdManager {
@@ -14,24 +49,38 @@ interface ProjectIdManager {
     fun getInstance(project: Project): ProjectIdManager = project.service()
   }
 
-  var id: @NonNls String?
+  var id: ProjectWorkspaceId?
 }
 
 @State(name = "ProjectId", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))], reportStatistic = false)
 private class ProjectIdManagerImpl : SimplePersistentStateComponent<ProjectIdManagerImpl.State>(State()), ProjectIdManager {
-  override var id: @NonNls String?
-    get() = state.id
+  override var id: ProjectWorkspaceId?
+    get() = state.id?.let(ProjectWorkspaceId::parseOrNull)
     set(value) {
-      state.id = value
+      state.id = value?.value
     }
+
+  // Drop a tampered/invalid persisted id at the load boundary, so a fresh valid one is generated on demand.
+  override fun loadState(state: State) {
+    val raw = state.id
+    if (raw != null && ProjectWorkspaceId.parseOrNull(raw) == null) {
+      LOG.warn("Ignoring invalid project id from workspace.xml: $raw")
+      state.id = null
+    }
+    super.loadState(state)
+  }
 
   class State : BaseState() {
     @get:Attribute
     var id by string()
   }
+
+  companion object {
+    private val LOG = logger<ProjectIdManagerImpl>()
+  }
 }
 
 @TestOnly
 private class MockProjectIdManager : ProjectIdManager {
-  override var id: String? = null
+  override var id: ProjectWorkspaceId? = null
 }

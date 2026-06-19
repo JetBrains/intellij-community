@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.settings.SettingsController
 import com.intellij.serviceContainer.ComponentManagerImpl
-import com.intellij.util.io.Ksuid
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -162,7 +161,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     var projectWorkspaceId = projectIdManager.id
     if (projectWorkspaceId == null) {
       // do not use the project name as part of id, to ensure a project dir rename does not cause data loss
-      projectWorkspaceId = Ksuid.generate()
+      projectWorkspaceId = ProjectWorkspaceId.generate()
       projectIdManager.id = projectWorkspaceId
     }
 
@@ -174,7 +173,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
       else {
         PathManager.getConfigDir()
       }
-      val productWorkspaceFile = basePath.resolve("workspace/$projectWorkspaceId.xml")
+      val productWorkspaceFile = basePath.resolve("workspace/${projectWorkspaceId.value}.xml")
       macros.add(Macro(StoragePathMacros.PRODUCT_WORKSPACE_FILE, productWorkspaceFile))
       storageManager.setMacros(macros)
     }
@@ -238,7 +237,7 @@ open class ProjectStoreImpl(final override val project: Project) : ComponentStor
     }
 
   override val projectWorkspaceId: String?
-    get() = ProjectIdManager.getInstance(project).id
+    get() = ProjectIdManager.getInstance(project).id?.value
 
   final override fun <T> getStorageSpecs(
     component: PersistentStateComponent<T>,
