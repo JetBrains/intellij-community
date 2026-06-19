@@ -155,11 +155,10 @@ fun buildJdkDownloaderModel(allItems: List<JdkItem>, eel: EelApi, itemFilter: (J
 
       val includedProducts = groupItems.map { it.product }.toHashSet()
 
-      val excludedItems = allItems
+      val excludedItems = availableItems
         .asSequence()
         .filter { it.product !in includedProducts }
         .filter { it !in groupItems }
-        .filter { EelPlatform.resolveArch(it.arch) == eel.platform.arch || Registry.`is`("jdk.downloader.show.other.arch", false) }
         .groupBy { it.product }
         .mapValues { (_, jdkItems) ->
           val comparator = Comparator.comparing(Function<JdkItem, String> { it.jdkVersion }, VersionComparatorUtil.COMPARATOR)
