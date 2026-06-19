@@ -46,6 +46,14 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+/// Represents an abstract base class for handling actions aimed at "delomboking" Java files.
+/// The term "delomboking" refers to the process of removing Lombok annotations
+/// from Java source code and replacing them with their corresponding expanded code.
+///
+/// Provides boilerplate functionality for updating action state,
+/// processing Java files or directories, and executing commands in a project context.
+/// Subclasses are expected to define specific "delomboking" behavior through the implementation
+/// of the abstract `createHandler()` method.
 public abstract class AbstractDelombokAction extends AnAction {
   private DelombokHandler myHandler;
 

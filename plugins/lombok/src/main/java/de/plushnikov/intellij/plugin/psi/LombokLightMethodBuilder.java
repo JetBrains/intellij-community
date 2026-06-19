@@ -45,9 +45,15 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-/**
- * @author Plushnikov Michail
- */
+/// Lightweight PSI method used by Lombok processors to expose methods generated from annotations.
+///
+/// The builder adds Lombok-specific behavior on top of IntelliJ light methods:
+/// - fluent `with...` methods for configuring generated signatures, bodies, annotations, contracts, and navigation
+/// - lazy materialization of an AST-backed `PsiMethod` when callers need text, children, copy, or node information
+/// - tracking of related source members so generated methods can be connected back to the Lombok declaration that produced them
+///
+/// Instances are synthetic PSI elements. Source-changing operations are intentionally limited: `replace` delegates insertion to the
+/// containing class, while `setName`, `delete`, and `checkDelete` leave the generated element unchanged.
 public class LombokLightMethodBuilder extends LightMethodBuilder implements SyntheticElement {
   private PsiMethod myMethod;
   private ASTNode myASTNode;
