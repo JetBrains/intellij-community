@@ -8,6 +8,8 @@ import com.jetbrains.python.fixtures.PyLightProjectDescriptor
 import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.FUNCTION_RETURN_TYPE_OPTION_ID
 import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.PARAMETER_TYPE_ANNOTATION
 import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.REVEAL_TYPE_OPTION_ID
+import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID
+import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID
 import com.jetbrains.python.inlayHints.PyTypeInlayHintsProvider.Companion.VARIANCE_OPTION_ID
 import com.jetbrains.python.psi.LanguageLevel
 
@@ -211,11 +213,122 @@ class PyTypeInlayHintsProviderTest : DeclarativeInlayHintsProviderTestCase() {
     """, PARAMETER_TYPE_ANNOTATION)
   }
 
+  @TestFor(issues = ["PY-90411"])
+  fun `test solved type parameters of generic class`() {
+    doTest("""
+      class A[T]:
+          def __init__(self, t: T):
+              self.t = t
+
+      A/*<# [int] #>*/(1)
+    """, SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID)
+  }
+
+  @TestFor(issues = ["PY-90411"])
+  fun `test solved type parameters of generic function`() {
+    doTest("""
+      def f[T](t: T) -> T: ...
+
+      f/*<# [int] #>*/(1)
+    """, SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID)
+  }
+
+  @TestFor(issues = ["PY-90411"])
+  fun `test solved type parameters with multiple type parameters`() {
+    doTest("""
+      def f[K, V](k: K, v: V) -> None: ...
+
+      f/*<# [str, int] #>*/("a", 1)
+    """, SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID)
+  }
+
+  @TestFor(issues = ["PY-90411"])
+  fun `test solved type parameters with param spec`() {
+    doTest("""
+      from typing import Callable
+
+      def f(*, a: int) -> int: ...
+
+      class A[**P]:
+          def __init__(self, fn: Callable[P, object]): ...
+
+      A/*<# [[*, a: int]] #>*/(fn=f)
+    """, SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID)
+  }
+
+  @TestFor(issues = ["PY-90411"])
+  fun `test solved type parameters with type var tuple`() {
+    doTest("""
+      class A[*Ts]:
+          def __init__(self, *args: *Ts): ...
+
+      A/*<# [int, str] #>*/(1, "a")
+    """, SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID)
+  }
+
+  @TestFor(issues = ["PY-90411"])
+  fun `test solved type parameters from enclosing scope type parameter`() {
+    doTest("""
+      class Box[T]:
+          def __init__(self, value: T): ...
+
+      def f[T](x: T, y: int):
+          Box/*<# [T] #>*/(x)
+          Box/*<# [int] #>*/(y)
+    """, SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID)
+  }
+
+  @TestFor(issues = ["PY-90411"])
+  fun `test generic function type argument after constraint solving`() {
+    doTest("""
+      def select[T](x: T, y: T):
+          return x
+
+      select/*<# [str | int] #>*/("foo", 42)
+    """, SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID)
+  }
+
+  @TestFor(issues = ["PY-90411"])
+  fun `test no solved type parameters hint for non generic call`() {
+    doTest("""
+      def f(t: int) -> int: ...
+
+      class A:
+          pass
+
+      f(1)
+      A()
+    """, false, SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID, SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID)
+  }
+
+  @TestFor(issues = ["PY-90411"])
+  fun `test solved type parameters hint when new returns unrelated type`() {
+    doTest("""
+      class A[T]:
+          def __new__(cls, t: T) -> list[T]: ...
+
+      A/*<# [int] #>*/(1)
+    """, false, SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID)
+  }
+
+  @TestFor(issues = ["PY-90411"])
+  fun `test no solved type parameters hint when explicitly parameterized`() {
+    doTest("""
+      class A[T]:
+          def __init__(self, t: T):
+              self.t = t
+
+      A[int](1)
+    """, false, SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID)
+  }
+
   private val allOptions = mapOf(
     REVEAL_TYPE_OPTION_ID to true,
     FUNCTION_RETURN_TYPE_OPTION_ID to true,
     VARIANCE_OPTION_ID to true,
     PARAMETER_TYPE_ANNOTATION to true,
+    SOLVED_CLASS_TYPE_PARAMETERS_OPTION_ID to true,
+    SOLVED_FUNCTION_TYPE_PARAMETERS_OPTION_ID to true,
   )
 
   private fun doTest(text: String, vararg enabledOptions: String) {
