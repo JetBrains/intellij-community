@@ -42,8 +42,7 @@ public class EnvironmentUtilTest {
   }
 
   @Test void testPath() {
-    var escaped = File.pathSeparator.equals(";") ? "\\;" : File.pathSeparator;
-    var list = substitute("PATH=/foo/bar" + escaped + "$PATH$", "PATH=/hey");
+    var list = substitute("PATH=\"/foo/bar" + File.pathSeparator + "$PATH$\"", "PATH=/hey");
     assertEquals("/foo/bar" + File.pathSeparator + "/hey", list.getFirst());
   }
 
