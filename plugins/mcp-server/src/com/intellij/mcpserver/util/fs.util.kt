@@ -200,8 +200,7 @@ private fun resolveArchiveEntryFile(archiveEntryPath: String): VirtualFile? {
 
 fun looksLikeVfsUrl(filePath: String): Boolean {
   val schemeSeparator = filePath.indexOf("://")
-  if (schemeSeparator <= 0) return false
-  return filePath.substring(0, schemeSeparator).all { it.isLetterOrDigit() || it == '+' || it == '-' || it == '.' }
+  return schemeSeparator > 0 && filePath.substring(0, schemeSeparator).all { it.isLetterOrDigit() || it == '+' || it == '-' || it == '.' }
 }
 
 // TODO: this must be unified with resolveInProject and made more flexible to support multiple source roots, also MCP client roots and so on

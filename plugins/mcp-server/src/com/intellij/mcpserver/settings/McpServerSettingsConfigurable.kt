@@ -401,7 +401,7 @@ private class CheckboxWithValidation(@Nls checkboxText: String, var validator: C
 
 private object ConsentValidator : CheckboxValidator {
   override fun isValidNewValue(isSelected: Boolean, project: Project?): Boolean =
-    if (isSelected) getConsentDialog(project) else true
+    !isSelected || getConsentDialog(project)
 }
 
 private interface CheckboxValidator {
