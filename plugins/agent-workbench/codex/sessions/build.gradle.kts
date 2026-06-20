@@ -49,6 +49,7 @@ dependencies {
   implementation(project(":codex-common"))
   implementation(project(":prompt-core"))
   implementation(project(":sessions-core"))
+  implementation(project(":sessions-cost"))
   implementation(project(":sessions"))
   implementation(project(":sessions-actions"))
 }

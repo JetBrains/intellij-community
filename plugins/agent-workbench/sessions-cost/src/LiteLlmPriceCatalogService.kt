@@ -1,12 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.core.cost
+package com.intellij.agent.workbench.sessions.cost
 
 import com.intellij.agent.workbench.common.session.AgentSessionCost
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
-import java.math.BigDecimal
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest

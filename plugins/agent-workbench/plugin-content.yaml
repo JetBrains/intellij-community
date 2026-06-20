@@ -17,6 +17,7 @@
   - name: intellij.agent.workbench.pi.sessions
   - name: intellij.agent.workbench.terminal.sessions
   - name: intellij.agent.workbench.sessions.core
+  - name: intellij.agent.workbench.sessions.cost
   - name: intellij.agent.workbench.sessions.launch.config.backend
   - name: intellij.agent.workbench.prompt.core
   - name: intellij.agent.workbench.prompt.context

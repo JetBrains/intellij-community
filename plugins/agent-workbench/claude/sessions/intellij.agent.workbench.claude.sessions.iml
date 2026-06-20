@@ -53,6 +53,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.cost" />
     <orderEntry type="module" module-name="intellij.agent.workbench.ui" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" />
     <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />

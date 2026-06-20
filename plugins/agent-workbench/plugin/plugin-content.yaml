@@ -108,6 +108,9 @@
 - name: lib/modules/intellij.agent.workbench.sessions.core.jar
   contentModules:
   - name: intellij.agent.workbench.sessions.core
+- name: lib/modules/intellij.agent.workbench.sessions.cost.jar
+  contentModules:
+  - name: intellij.agent.workbench.sessions.cost
 - name: lib/modules/intellij.agent.workbench.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.sessions

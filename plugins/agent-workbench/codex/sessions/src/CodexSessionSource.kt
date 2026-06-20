@@ -31,9 +31,9 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
 import com.intellij.agent.workbench.common.session.AgentSubAgent
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
-import com.intellij.agent.workbench.sessions.core.cost.LiteLlmPriceCatalogService
-import com.intellij.agent.workbench.sessions.core.cost.aggregateAgentSessionUsageCost
+import com.intellij.agent.workbench.sessions.cost.AgentSessionUsageSnapshot
+import com.intellij.agent.workbench.sessions.cost.LiteLlmPriceCatalogService
+import com.intellij.agent.workbench.sessions.cost.aggregateAgentSessionUsageCost
 import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
