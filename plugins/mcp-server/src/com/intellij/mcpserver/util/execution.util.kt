@@ -90,7 +90,7 @@ suspend fun checkUserConfirmationIfNeeded(@NlsContexts.Label notificationText: S
 
   fun rejected(): McpExpectedError = McpExpectedError("User rejected command execution")
 
-  val commandExecutionMode = currentCoroutineContext().mcpCallInfo.mcpSessionOptions?.commandExecutionMode
+  val commandExecutionMode = currentCoroutineContext().mcpCallInfo.mcpSessionOptions.commandExecutionMode
   when (commandExecutionMode) {
     McpServerService.AskCommandExecutionMode.ASK -> {
       if (!askConfirmation(project, notificationText, command)) throw rejected()

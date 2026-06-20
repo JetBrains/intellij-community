@@ -126,7 +126,6 @@ class UniversalToolset : McpToolset {
     val sessionHandler = currentCoroutineContext().mcpCallInfo.sessionHandler
                          ?: mcpFail("Session handler not available")
     val routerToolsProvider = sessionHandler.routerToolsProvider
-                              ?: mcpFail("Router tools provider not available")
     return routerToolsProvider.mcpTools.value
   }
 
