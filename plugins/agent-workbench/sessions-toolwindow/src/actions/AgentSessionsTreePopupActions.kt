@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.actions
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
+import com.intellij.agent.workbench.sessions.AgentSessionLaunchProfileSelection
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.buildAgentSessionLaunchProfileMenuActions
 import com.intellij.agent.workbench.sessions.buildAgentSessionLaunchProfileMenuModel
@@ -18,8 +19,7 @@ import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameP
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.agent.workbench.sessions.providerItemIconWithMode
-import com.intellij.agent.workbench.sessions.resolveAgentSessionLaunchProfileItem
-import com.intellij.agent.workbench.sessions.resolveAgentSessionLaunchProfileItems
+import com.intellij.agent.workbench.sessions.resolveAgentSessionLaunchProfileSelection
 import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsService
 import com.intellij.agent.workbench.sessions.service.AgentSessionLaunchService
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
@@ -193,20 +193,12 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
 ) : ActionGroup(), DumbAware {
 
   override fun update(e: AnActionEvent) {
-    val context = resolveContext(e)
-    if (context == null) {
+    val menu = resolveNewThreadMenu(e)
+    if (menu == null) {
       e.presentation.isEnabledAndVisible = false
       return
     }
-    val path = newThreadPathFromTarget(context.target)
-    val menuModel = buildAgentSessionLaunchProfileMenuModel(allBridges(), context.project)
-    if (path == null || !menuModel.hasEntries()) {
-      e.presentation.isEnabledAndVisible = false
-      return
-    }
-    val defaultProfileId = defaultLaunchProfileId()
-    val profiles = resolveAgentSessionLaunchProfileItems(menuModel, userLaunchProfiles())
-    val quickStartItem = resolveAgentSessionLaunchProfileItem(profiles, defaultProfileId)
+    val quickStartItem = menu.selection.quickStartItem
     if (quickStartItem == null) {
       e.presentation.isEnabledAndVisible = false
       return
@@ -219,31 +211,44 @@ internal class AgentSessionsTreePopupNewThreadGroup @JvmOverloads constructor(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val context = resolveContext(e) ?: return
-    val path = newThreadPathFromTarget(context.target) ?: return
-    val quickStartItem = resolveAgentSessionLaunchProfileItem(allBridges(), context.project, userLaunchProfiles(), defaultLaunchProfileId())
-    launchQuickStartProfile(path, context.project, quickStartItem, AgentWorkbenchEntryPoint.TREE_POPUP, createNewSession)
+    val menu = resolveNewThreadMenu(e) ?: return
+    launchQuickStartProfile(
+      path = menu.path,
+      project = menu.context.project,
+      quickStartItem = menu.selection.quickStartItem,
+      entryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
+      createNewSession = createNewSession,
+    )
   }
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
-    val context = e?.let(resolveContext) ?: return emptyArray()
-    val path = newThreadPathFromTarget(context.target) ?: return emptyArray()
-    val menuModel = buildAgentSessionLaunchProfileMenuModel(allBridges(), context.project)
-    val defaultProfileId = defaultLaunchProfileId()
-    val profiles = resolveAgentSessionLaunchProfileItems(menuModel, userLaunchProfiles())
-    if (profiles.isEmpty()) return emptyArray()
-    val checkedProfileId = resolveAgentSessionLaunchProfileItem(profiles, defaultProfileId)?.profile?.id
+    val menu = e?.let(::resolveNewThreadMenu) ?: return emptyArray()
     return buildAgentSessionLaunchProfileMenuActions(
-      path = path,
-      project = context.project,
-      profiles = profiles,
+      path = menu.path,
+      project = menu.context.project,
+      selection = menu.selection,
       entryPoint = AgentWorkbenchEntryPoint.TREE_POPUP,
-      checkedLaunchProfileId = checkedProfileId,
       createNewSession = createNewSession,
     )
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  private fun resolveNewThreadMenu(e: AnActionEvent): NewThreadMenu? {
+    val context = resolveContext(e) ?: return null
+    val path = newThreadPathFromTarget(context.target) ?: return null
+    val menuModel = buildAgentSessionLaunchProfileMenuModel(allBridges(), context.project)
+    if (!menuModel.hasEntries()) return null
+    val selection = resolveAgentSessionLaunchProfileSelection(menuModel, userLaunchProfiles(), defaultLaunchProfileId())
+    if (selection.profiles.isEmpty()) return null
+    return NewThreadMenu(context, path, selection)
+  }
+
+  private data class NewThreadMenu(
+    val context: AgentSessionsTreePopupActionContext,
+    val path: String,
+    val selection: AgentSessionLaunchProfileSelection,
+  )
 }
 
 private fun newThreadPathFromTarget(target: SessionActionTarget): String? {

@@ -22,7 +22,6 @@ import com.intellij.agent.workbench.sessions.core.providers.initialMessageReques
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.ui.AgentWorkbenchPopupStep
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -95,7 +94,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
-  fun updateUsesGenericIconWhenNoDefaultProfile() {
+  fun updateUsesEffectiveDefaultProviderIconWhenNoDefaultProfile() {
     val context = newThreadContext()
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
@@ -112,10 +111,13 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     action.update(event)
 
     assertThat(event.presentation.isEnabledAndVisible).isTrue()
-    assertThat(event.presentation.icon).isEqualTo(AllIcons.General.Add)
-    assertThat(event.presentation.text).isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.text"))
+    assertThat(event.presentation.icon).isEqualTo(codexBridge.icon)
+    assertThat(event.presentation.text).isEqualTo(AgentSessionsBundle.message(
+      "action.AgentWorkbenchSessions.NewThreadQuick.text",
+      AgentSessionsBundle.message(codexBridge.quickStartLabelKey),
+    ))
     assertThat(event.presentation.description)
-      .isEqualTo(AgentSessionsBundle.message("action.AgentWorkbenchSessions.MainToolbar.NewThread.default.missing.description"))
+      .contains(AgentSessionsBundle.message(codexBridge.quickStartLabelKey))
   }
 
   @Test
@@ -296,10 +298,9 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
-  fun getMainActionShowsPickerWhenNoDefaultProfile() {
+  fun getMainActionUsesEffectiveDefaultProviderWhenNoDefaultProfile() {
     val context = newThreadContext()
     var launchedProfile: AgentPromptLaunchProfile? = null
-    var pickerShown = 0
     val codexBridge = TestAgentSessionProviderDescriptor(
       provider = AgentSessionProvider.CODEX,
       supportedModes = setOf(AgentSessionLaunchMode.STANDARD),
@@ -311,14 +312,13 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
       createNewSession = { _, profile, _, _ ->
         launchedProfile = profile
       },
-      showPicker = { _, _ -> pickerShown++ },
     )
     val mainAction = checkNotNull(action.getMainAction(TestActionEvent.createTestEvent(action)))
 
     mainAction.actionPerformed(TestActionEvent.createTestEvent(mainAction))
 
-    assertThat(launchedProfile).isNull()
-    assertThat(pickerShown).isEqualTo(1)
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.CODEX.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
   }
 
   @Test
@@ -507,7 +507,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
-  fun primaryClickUsesCachedProviderAvailabilityBeforeQuickLaunchAndShowsPickerWhenDefaultUnavailable() {
+  fun primaryClickUsesCachedProviderAvailabilityBeforeQuickLaunchAndFallsBackWhenDefaultUnavailable() {
     val context = newThreadContext(path = "/tmp/toolbar-project")
     var cliChecks = 0
     var launchedProfile: AgentPromptLaunchProfile? = null
@@ -542,8 +542,9 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     checkNotNull(mainAction).actionPerformed(TestActionEvent.createTestEvent(mainAction))
 
     assertThat(cliChecks).isZero()
-    assertThat(launchedProfile).isNull()
-    assertThat(pickerShown).isEqualTo(1)
+    assertThat(launchedProfile?.providerId).isEqualTo(AgentSessionProvider.CLAUDE.value)
+    assertThat(launchedProfile?.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(pickerShown).isZero()
   }
 
   @Test
@@ -804,7 +805,7 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
   }
 
   @Test
-  fun mainToolbarPickerDoesNotMarkImplicitDefaultWhenNoDefaultProfileStored() {
+  fun mainToolbarPickerMarksEffectiveDefaultWhenNoDefaultProfileStored() {
     val context = newThreadContext(path = "/tmp/repo-direct")
     val providerIcon = EmptyIcon.create(17)
     val codexBridge = TestAgentSessionProviderDescriptor(
@@ -828,14 +829,14 @@ class AgentSessionsMainToolbarNewThreadActionsTest {
     val selectedPopupEvent = popupEvent(selectedAction)
 
     assertThat(selectedAction.templatePresentation.icon).isSameAs(providerIcon)
-    assertThat(selectedAction.templatePresentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNull()
+    assertThat(selectedAction.templatePresentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNotNull()
 
     selectedAction.update(selectedPopupEvent)
 
     assertThat(selectedAction).isNotInstanceOf(Toggleable::class.java)
     assertThat(Toggleable.isSelected(selectedPopupEvent.presentation)).isFalse()
     assertThat(selectedPopupEvent.presentation.icon).isSameAs(providerIcon)
-    assertThat(selectedPopupEvent.presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNull()
+    assertThat(selectedPopupEvent.presentation.getClientProperty(ActionUtil.SECONDARY_ICON)).isNotNull()
   }
 
   @Test

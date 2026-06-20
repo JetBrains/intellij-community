@@ -38,6 +38,14 @@ data class AgentSessionLaunchProfileMenuItem(
   @JvmField val menuItem: AgentSessionProviderMenuItem,
 )
 
+data class AgentSessionLaunchProfileSelection(
+  @JvmField val profiles: List<AgentSessionLaunchProfileMenuItem>,
+  @JvmField val quickStartItem: AgentSessionLaunchProfileMenuItem?,
+) {
+  val checkedLaunchProfileId: String?
+    get() = quickStartItem?.profile?.id
+}
+
 fun buildAgentSessionLaunchProfileMenuModel(
   bridges: List<AgentSessionProviderDescriptor>,
   project: Project,
@@ -73,29 +81,35 @@ fun launchQuickStartProfile(
   createNewSession(path, item.profile, project, entryPoint)
 }
 
-fun resolveAgentSessionLaunchProfileItem(
-  bridges: List<AgentSessionProviderDescriptor>,
-  project: Project,
-  userProfiles: List<AgentPromptLaunchProfile>,
-  preferredProfileId: String?,
-  menuModel: AgentSessionProviderMenuModel = buildAgentSessionLaunchProfileMenuModel(bridges, project),
-  fallbackProfileIds: List<String> = emptyList(),
-): AgentSessionLaunchProfileMenuItem? {
-  val profileItems = resolveAgentSessionLaunchProfileItems(menuModel, userProfiles)
-  return resolveAgentSessionLaunchProfileItem(profileItems, preferredProfileId, fallbackProfileIds)
-}
-
-fun resolveAgentSessionLaunchProfileItem(
+fun resolveAgentSessionLaunchProfileSelection(
   menuModel: AgentSessionProviderMenuModel,
   userProfiles: List<AgentPromptLaunchProfile>,
   preferredProfileId: String?,
   fallbackProfileIds: List<String> = emptyList(),
-): AgentSessionLaunchProfileMenuItem? {
-  val profileItems = resolveAgentSessionLaunchProfileItems(menuModel, userProfiles)
-  return resolveAgentSessionLaunchProfileItem(profileItems, preferredProfileId, fallbackProfileIds)
+  quickStartItemFilter: (AgentSessionLaunchProfileMenuItem) -> Boolean = { true },
+): AgentSessionLaunchProfileSelection {
+  val profiles = resolveAgentSessionLaunchProfileItems(menuModel, userProfiles)
+  return resolveAgentSessionLaunchProfileSelection(
+    profiles = profiles,
+    preferredProfileId = preferredProfileId,
+    fallbackProfileIds = fallbackProfileIds,
+    quickStartItemFilter = quickStartItemFilter,
+  )
 }
 
-fun resolveAgentSessionLaunchProfileItem(
+fun resolveAgentSessionLaunchProfileSelection(
+  profiles: List<AgentSessionLaunchProfileMenuItem>,
+  preferredProfileId: String?,
+  fallbackProfileIds: List<String> = emptyList(),
+  quickStartItemFilter: (AgentSessionLaunchProfileMenuItem) -> Boolean = { true },
+): AgentSessionLaunchProfileSelection {
+  return AgentSessionLaunchProfileSelection(
+    profiles = profiles,
+    quickStartItem = resolveAgentSessionLaunchProfileItem(profiles.filter(quickStartItemFilter), preferredProfileId, fallbackProfileIds),
+  )
+}
+
+private fun resolveAgentSessionLaunchProfileItem(
   profileItems: List<AgentSessionLaunchProfileMenuItem>,
   preferredProfileId: String?,
   fallbackProfileIds: List<String> = emptyList(),
@@ -109,13 +123,6 @@ fun resolveAgentSessionLaunchProfileItem(
   }
 
   return profileItems.firstOrNull()
-}
-
-fun resolveExplicitAgentSessionLaunchProfileItem(
-  profileItems: List<AgentSessionLaunchProfileMenuItem>,
-  profileId: String?,
-): AgentSessionLaunchProfileMenuItem? {
-  return profileId?.let { id -> profileItems.firstOrNull { item -> item.profile.id == id } }
 }
 
 fun resolveAgentSessionLaunchProfileItems(
@@ -138,14 +145,13 @@ fun resolveAgentSessionLaunchProfileItems(
 fun buildAgentSessionLaunchProfileMenuActions(
   path: String,
   project: Project,
-  profiles: List<AgentSessionLaunchProfileMenuItem>,
+  selection: AgentSessionLaunchProfileSelection,
   entryPoint: AgentWorkbenchEntryPoint,
   createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
-  checkedLaunchProfileId: String?,
   includeManageAction: Boolean = true,
 ): Array<AnAction> {
   val actions = mutableListOf<AnAction>()
-  forEachLaunchProfileSection(profiles) { title, sectionProfiles ->
+  forEachLaunchProfileSection(selection.profiles) { title, sectionProfiles ->
     if (sectionProfiles.isNotEmpty()) {
       if (actions.isNotEmpty()) {
         actions.add(Separator.getInstance())
@@ -160,7 +166,7 @@ fun buildAgentSessionLaunchProfileMenuActions(
           profileItem = profileItem,
           entryPoint = entryPoint,
           createNewSession = createNewSession,
-          checkedLaunchProfileId = checkedLaunchProfileId,
+          checkedLaunchProfileId = selection.checkedLaunchProfileId,
         ))
       }
     }
@@ -174,15 +180,14 @@ fun buildAgentSessionLaunchProfileMenuActions(
 fun buildAgentSessionLaunchProfileMenuRows(
   path: String,
   project: Project,
-  profiles: List<AgentSessionLaunchProfileMenuItem>,
+  selection: AgentSessionLaunchProfileSelection,
   entryPoint: AgentWorkbenchEntryPoint,
   createNewSession: (String, AgentPromptLaunchProfile, Project, AgentWorkbenchEntryPoint) -> Unit,
-  checkedLaunchProfileId: String?,
   includeManageAction: Boolean = true,
   event: AnActionEvent,
 ): List<AgentWorkbenchPopupRow> {
   val rows = mutableListOf<AgentWorkbenchPopupRow>()
-  forEachLaunchProfileSection(profiles) { title, sectionProfiles ->
+  forEachLaunchProfileSection(selection.profiles) { title, sectionProfiles ->
     if (sectionProfiles.isNotEmpty()) {
       sectionProfiles.forEachIndexed { index, profileItem ->
         rows.add(createLaunchProfileMenuRow(
@@ -191,7 +196,7 @@ fun buildAgentSessionLaunchProfileMenuRows(
           profileItem = profileItem,
           entryPoint = entryPoint,
           createNewSession = createNewSession,
-          checkedLaunchProfileId = checkedLaunchProfileId,
+          checkedLaunchProfileId = selection.checkedLaunchProfileId,
           separatorText = if (index == 0) title else null,
         ))
       }

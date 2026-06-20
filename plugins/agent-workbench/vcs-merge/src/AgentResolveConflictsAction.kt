@@ -4,6 +4,7 @@ package com.intellij.agent.workbench.vcs.merge
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
+import com.intellij.agent.workbench.sessions.AgentSessionLaunchProfileSelection
 import com.intellij.agent.workbench.sessions.AgentSessionLaunchProfileMenuItem
 import com.intellij.agent.workbench.sessions.buildAgentSessionLaunchProfileMenuActions
 import com.intellij.agent.workbench.sessions.buildAgentSessionLaunchProfileMenuModel
@@ -16,21 +17,16 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.providerMenuItemDisabledReason
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
-import com.intellij.agent.workbench.sessions.resolveAgentSessionLaunchProfileItem
-import com.intellij.agent.workbench.sessions.resolveAgentSessionLaunchProfileItems
+import com.intellij.agent.workbench.sessions.resolveAgentSessionLaunchProfileSelection
 import com.intellij.agent.workbench.sessions.state.AgentSessionLaunchProfileStateService
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.setToolTipText
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPopupMenu
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -59,16 +55,10 @@ private sealed interface QuickLaunchResult {
   data object NoContext : QuickLaunchResult
   data object NoProvidersShown : QuickLaunchResult
   data object Launched : QuickLaunchResult
-  data class ShowPopup(
-    val context: ResolveWithAgentContext,
-    val profileItems: List<AgentSessionLaunchProfileMenuItem>,
-    val selectedProfileId: String?,
-  ) : QuickLaunchResult
 }
 
 private const val ONE_SHOT_DIALOG_ACTION_PLACE: String = "Merge.OneShotDialog"
 private const val ITERATIVE_DIALOG_ACTION_PLACE: String = "Merge.Dialog.Iterative"
-private const val PROVIDER_POPUP_PLACE: String = "Merge.ResolveWithAgent.ProviderPopup"
 
 internal class AgentResolveConflictsAction @JvmOverloads constructor(
   private val allProviders: () -> List<AgentSessionProviderDescriptor> = AgentSessionProviders::allProviders,
@@ -79,6 +69,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
   private val setActiveVcsMergeLaunchProfileId: (String?) -> Unit = { profileId ->
     service<AgentSessionLaunchProfileStateService>().setActiveVcsMergeLaunchProfileId(profileId)
   },
+  private val startSession: (Project, AgentVcsMergeLaunchRequest) -> Unit = ::startAgentMergeSession,
 ) : DumbAwareAction(), CustomComponentAction {
   // Captured during update(); reused by ResolveWithAgentOptionButton.buildOptionActions when its
   // freshly-resolved data context lacks the merge context (e.g. when the button is not yet attached
@@ -101,9 +92,9 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
     latestUpdateProject.set(context.project)
 
     val menuModel = buildProviderMenuModel(context.project)
-    val profileItems = resolveProfileItems(menuModel)
-    val enabledProfileItems = enabledProfileItems(profileItems)
-    val quickStartItem = resolveVcsQuickStartProfile(profileItems)
+    val selection = resolveVcsLaunchProfileSelection(menuModel)
+    val enabledProfileItems = enabledProfileItems(selection.profiles)
+    val quickStartItem = selection.quickStartItem
 
     presentation.isEnabled = enabledProfileItems.isNotEmpty()
     presentation.description = when {
@@ -118,10 +109,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    performAction(
-      dataContext = e.dataContext,
-      popupAnchor = resolvePopupAnchor(e),
-    )
+    resolveAndQuickLaunch(e.dataContext)
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
@@ -139,58 +127,6 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
     }
   }
 
-  private fun performAction(
-    dataContext: DataContext,
-    popupAnchor: JComponent?,
-  ): Boolean {
-    return when (val result = resolveAndQuickLaunch(dataContext)) {
-      QuickLaunchResult.NoContext, QuickLaunchResult.NoProvidersShown -> false
-      QuickLaunchResult.Launched -> true
-      is QuickLaunchResult.ShowPopup -> {
-        showProviderPopup(result.context, result.profileItems, result.selectedProfileId, dataContext, popupAnchor)
-        true
-      }
-    }
-  }
-
-  private fun showProviderPopup(
-    context: ResolveWithAgentContext,
-    profileItems: List<AgentSessionLaunchProfileMenuItem>,
-    selectedProfileId: String?,
-    dataContext: DataContext,
-    popupAnchor: JComponent?,
-  ) {
-    val anchor = popupAnchor ?: (PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext) as? JComponent) ?: return
-    val popupMenu = createProviderPopup(context, profileItems, selectedProfileId, dataContext)
-    popupMenu.setTargetComponent(anchor)
-    popupMenu.component.show(anchor, 0, anchor.height)
-  }
-
-  private fun createProviderPopup(
-    context: ResolveWithAgentContext,
-    profileItems: List<AgentSessionLaunchProfileMenuItem>,
-    selectedProfileId: String?,
-    dataContext: DataContext,
-  ): ActionPopupMenu {
-    val popupGroup = DefaultActionGroup().apply {
-      buildAgentSessionLaunchProfileMenuActions(
-        path = context.project.basePath.orEmpty(),
-        project = context.project,
-        profiles = profileItems,
-        entryPoint = AgentWorkbenchEntryPoint.TOOLBAR,
-        checkedLaunchProfileId = selectedProfileId,
-        includeManageAction = false,
-        createNewSession = { _, profile, _, _ ->
-          val item = profileItems.firstOrNull { profileItem -> profileItem.profile.id == profile.id } ?: return@buildAgentSessionLaunchProfileMenuActions
-          launchResolution(context, item)
-        },
-      ).forEach(::add)
-    }
-    return ActionManager.getInstance().createActionPopupMenu(PROVIDER_POPUP_PLACE, popupGroup).apply {
-      setDataContext { dataContext }
-    }
-  }
-
   private fun launchResolution(context: ResolveWithAgentContext, item: AgentSessionLaunchProfileMenuItem) {
     launchAgentMergeResolution(
       project = context.project,
@@ -198,14 +134,15 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
       closeDialog = context.closeDialog,
       item = item,
       setActiveVcsMergeLaunchProfileId = setActiveVcsMergeLaunchProfileId,
+      startSession = startSession,
     )
   }
 
   private fun resolveAndQuickLaunch(dataContext: DataContext): QuickLaunchResult {
     val context = resolveContext(dataContext) ?: return QuickLaunchResult.NoContext
     val menuModel = buildProviderMenuModel(context.project)
-    val profileItems = resolveProfileItems(menuModel)
-    val enabledProfileItems = enabledProfileItems(profileItems)
+    val selection = resolveVcsLaunchProfileSelection(menuModel)
+    val enabledProfileItems = enabledProfileItems(selection.profiles)
     if (enabledProfileItems.isEmpty()) {
       Messages.showErrorDialog(
         context.project,
@@ -215,10 +152,7 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
       return QuickLaunchResult.NoProvidersShown
     }
 
-    val quickStartItem = resolveVcsQuickStartProfile(profileItems)
-    if (quickStartItem == null) {
-      return QuickLaunchResult.ShowPopup(context, profileItems, null)
-    }
+    val quickStartItem = selection.quickStartItem ?: return QuickLaunchResult.NoProvidersShown
     launchResolution(context, quickStartItem)
     return QuickLaunchResult.Launched
   }
@@ -245,15 +179,13 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
     return buildAgentSessionLaunchProfileMenuModel(allProviders(), project)
   }
 
-  private fun resolveProfileItems(menuModel: AgentSessionProviderMenuModel): List<AgentSessionLaunchProfileMenuItem> {
-    return resolveAgentSessionLaunchProfileItems(menuModel, userLaunchProfiles())
-  }
-
-  private fun resolveVcsQuickStartProfile(profileItems: List<AgentSessionLaunchProfileMenuItem>): AgentSessionLaunchProfileMenuItem? {
-    return resolveAgentSessionLaunchProfileItem(
-      profileItems = enabledProfileItems(profileItems),
+  private fun resolveVcsLaunchProfileSelection(menuModel: AgentSessionProviderMenuModel): AgentSessionLaunchProfileSelection {
+    return resolveAgentSessionLaunchProfileSelection(
+      menuModel = menuModel,
+      userProfiles = userLaunchProfiles(),
       preferredProfileId = activeVcsMergeLaunchProfileId(),
       fallbackProfileIds = listOf(builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)),
+      quickStartItemFilter = { item -> item.menuItem.isEnabled },
     )
   }
 
@@ -270,11 +202,6 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
       return null
     }
     return providerMenuItemDisabledReason(item)
-  }
-
-  private fun resolvePopupAnchor(e: AnActionEvent): JComponent? {
-    return (e.inputEvent?.component as? JComponent)
-           ?: (e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as? JComponent)
   }
 
   private inner class ResolveWithAgentOptionButton(
@@ -317,7 +244,6 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
         QuickLaunchResult.NoProvidersShown,
         QuickLaunchResult.Launched,
           -> return
-        is QuickLaunchResult.ShowPopup -> showPopup()
       }
     }
 
@@ -325,24 +251,22 @@ internal class AgentResolveConflictsAction @JvmOverloads constructor(
       val dataContext = DataManager.getInstance().getDataContext(this)
       val context = resolveContext(dataContext)
       val project = context?.project ?: latestUpdateProject.get() ?: return null
-      val profileItems = resolveProfileItems(buildProviderMenuModel(project))
-      val enabledProfileItems = enabledProfileItems(profileItems)
+      val selection = resolveVcsLaunchProfileSelection(buildProviderMenuModel(project))
+      val enabledProfileItems = enabledProfileItems(selection.profiles)
       if (enabledProfileItems.size <= 1) {
         return null
       }
-      val selectedProfileId = resolveVcsQuickStartProfile(profileItems)?.profile?.id
 
       return buildAgentSessionLaunchProfileMenuActions(
         path = project.basePath.orEmpty(),
         project = project,
-        profiles = profileItems,
+        selection = selection,
         entryPoint = AgentWorkbenchEntryPoint.TOOLBAR,
-        checkedLaunchProfileId = selectedProfileId,
         includeManageAction = false,
         createNewSession = { _, profile, _, _ ->
           val resolvedContext =
             context ?: resolveContext(DataManager.getInstance().getDataContext(this)) ?: return@buildAgentSessionLaunchProfileMenuActions
-          val item = profileItems.firstOrNull { profileItem -> profileItem.profile.id == profile.id }
+          val item = selection.profiles.firstOrNull { profileItem -> profileItem.profile.id == profile.id }
                      ?: return@buildAgentSessionLaunchProfileMenuActions
           launchResolution(resolvedContext, item)
         },
