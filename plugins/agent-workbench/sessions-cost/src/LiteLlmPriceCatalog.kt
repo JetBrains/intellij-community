@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.core.cost
+package com.intellij.agent.workbench.sessions.cost
 
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
@@ -223,7 +223,7 @@ object LiteLlmPriceCatalog {
     val candidates = LinkedHashMap<String, Int?>()
     entries.forEachIndexed { index, entry ->
       normalizedAliases(entry).forEach { alias ->
-        candidates[alias] = when (val existing = candidates[alias]) {
+        candidates[alias] = when (candidates[alias]) {
           null -> index
           index -> index
           else -> null

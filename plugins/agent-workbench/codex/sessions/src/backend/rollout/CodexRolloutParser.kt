@@ -29,7 +29,7 @@ import com.intellij.agent.workbench.common.session.normalizeAgentSessionOutlineP
 import com.intellij.agent.workbench.common.session.summarizeAgentSessionOutlineChildren
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
 import com.intellij.agent.workbench.json.createJsonParser
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.agent.workbench.sessions.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.common.session.AgentSessionOutlineItem
 import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline

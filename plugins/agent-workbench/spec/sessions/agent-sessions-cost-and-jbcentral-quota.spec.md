@@ -3,7 +3,8 @@ name: Agent Sessions Cost and JBCentral Quota
 description: Requirements for per-session cost presentation, OpenRouter-backed price snapshots, and JBCentral quota status display.
 targets:
   - ../../common/src/session/*.kt
-  - ../../sessions-core/src/**/*.kt
+  - ../../sessions-cost/src/**/*.kt
+  - ../../sessions-cost/testSrc/**/*.kt
   - ../../sessions-toolwindow/src/ui/*.kt
   - ../../sessions-toolwindow/testSrc/*.kt
   - ../../codex/sessions/src/**/*.kt

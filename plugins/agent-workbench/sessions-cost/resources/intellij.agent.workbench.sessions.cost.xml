@@ -1,0 +1,11 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.common"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <postStartupActivity implementation="com.intellij.agent.workbench.sessions.cost.LiteLlmPriceCatalogStartupActivity"/>
+  </extensions>
+</idea-plugin>

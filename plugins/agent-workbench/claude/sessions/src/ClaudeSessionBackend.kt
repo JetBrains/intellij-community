@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.claude.sessions
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.agent.workbench.sessions.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent

@@ -14,7 +14,7 @@ import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionFileStat
 import com.intellij.agent.workbench.json.filebacked.buildFileBackedSessionFileStat
 import com.intellij.agent.workbench.json.filebacked.toFileBackedSessionPathKey
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.agent.workbench.sessions.cost.AgentSessionUsageSnapshot
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap

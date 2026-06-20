@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.core.cost
+package com.intellij.agent.workbench.sessions.cost
 
 import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import org.assertj.core.api.Assertions.assertThat
@@ -25,7 +25,7 @@ class LiteLlmPriceCatalogServiceTest {
         fetchCount.incrementAndGet()
         minimalCatalogJson()
       },
-      clock = fixedClock("2026-06-16T10:15:30Z"),
+      clock = fixedClock(),
     )
 
     service.refreshAtStartup()
@@ -55,7 +55,7 @@ class LiteLlmPriceCatalogServiceTest {
 
     val snapshot = LiteLlmPriceCatalog.resolveCatalog(
       configDir = tempDir,
-      clock = fixedClock("2026-06-16T10:15:30Z"),
+      clock = fixedClock(),
       refreshMissingCache = true,
       fetchPricingJson = { error("fresh cache should be reused") },
     )
@@ -70,7 +70,7 @@ class LiteLlmPriceCatalogServiceTest {
     val service = LiteLlmPriceCatalogService(
       configDirProvider = { null },
       fetchPricingJson = { minimalCatalogJson() },
-      clock = fixedClock("2026-06-16T10:15:30Z"),
+      clock = fixedClock(),
     )
     service.refreshAtStartup()
 
@@ -101,7 +101,7 @@ class LiteLlmPriceCatalogServiceTest {
     assertThat(exact.amountUsd).isEqualByComparingTo(BigDecimal("1.23"))
   }
 
-  private fun fixedClock(instant: String): Clock = Clock.fixed(Instant.parse(instant), ZoneOffset.UTC)
+  private fun fixedClock(): Clock = Clock.fixed(Instant.parse("2026-06-16T10:15:30Z"), ZoneOffset.UTC)
 
   private fun minimalCatalogJson(): String {
     return """

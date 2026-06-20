@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.codex.sessions.backend
 
 import com.intellij.agent.workbench.codex.common.CodexThread
-import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.agent.workbench.sessions.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
