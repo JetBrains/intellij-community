@@ -44,6 +44,7 @@ dependencies {
   }
 
   implementation(project(":common"))
+  implementation(project(":core"))
   implementation(project(":json"))
   implementation(project(":filewatch"))
   implementation(project(":claude-common"))

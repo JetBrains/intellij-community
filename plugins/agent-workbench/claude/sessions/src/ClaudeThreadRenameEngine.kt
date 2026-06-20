@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.claude.sessions
 import com.intellij.agent.workbench.claude.common.buildClaudeArchivedThreadTitle
 import com.intellij.agent.workbench.claude.common.normalizeClaudeStoredThreadTitle
 import com.intellij.agent.workbench.claude.common.resolveClaudeThreadTitleState
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchPlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessageDispatchStep
 import com.intellij.agent.workbench.sessions.core.providers.AgentOpenTopLevelThreadDispatchService

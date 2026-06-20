@@ -6,10 +6,11 @@
     <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.core"/>
     <module name="intellij.agent.workbench.prompt.core"/>
-    <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.agent.workbench.sessions"/>
     <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.agent.workbench.ui"/>
     <module name="intellij.terminal.frontend"/>
   </dependencies>

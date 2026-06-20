@@ -4,8 +4,8 @@ package com.intellij.agent.workbench.codex.sessions
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshActivityHint
 import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHints
 import com.intellij.agent.workbench.codex.sessions.backend.toAgentSessionRefreshHints
-import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.common.AgentThreadActivityReport
+import com.intellij.agent.workbench.core.AgentThreadActivity
+import com.intellij.agent.workbench.core.AgentThreadActivityReport
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionThreadPresentationUpdate
 import org.assertj.core.api.Assertions.assertThat

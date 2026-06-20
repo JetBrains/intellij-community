@@ -3,9 +3,9 @@ package com.intellij.agent.workbench.chat
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
-import com.intellij.agent.workbench.common.session.AgentSessionOutlineItem
-import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
-import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
+import com.intellij.agent.workbench.core.session.AgentSessionOutlineItem
+import com.intellij.agent.workbench.core.session.AgentSessionOutlineItemKind
+import com.intellij.agent.workbench.core.session.AgentSessionThreadOutline
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.DataKey

@@ -97,6 +97,7 @@ dependencies {
       localPlugin(spacePluginDir)
     }
 
+    pluginModule(implementation(project(":core")))
     pluginModule(implementation(project(":common")))
     pluginModule(implementation(project(":json")))
     pluginModule(implementation(project(":filewatch")))

@@ -3,7 +3,7 @@ package com.intellij.agent.workbench.sessions.sleep
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-sleep-prevention.spec.md
 
-import com.intellij.agent.workbench.common.isWorking
+import com.intellij.agent.workbench.core.isWorking
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.ide.PowerSaveMode

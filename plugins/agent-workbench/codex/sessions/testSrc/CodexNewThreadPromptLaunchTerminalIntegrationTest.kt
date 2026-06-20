@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.codex.sessions
 import com.intellij.agent.workbench.codex.common.CodexCliUtils
 import com.intellij.agent.workbench.chat.RecordingAgentChatTerminalHarness
 import com.intellij.agent.workbench.chat.RecordingTerminalSentText
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.ui.captureNewTaskPromptLaunchRequest
 import com.intellij.agent.workbench.sessions.ScriptedSessionSource
 import com.intellij.agent.workbench.sessions.launchNewThreadPromptRequestWithDefaultChatOpenExecutor

@@ -4,11 +4,12 @@
     <plugin id="org.jetbrains.plugins.terminal"/>
     <module name="intellij.agent.workbench.cli"/>
     <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.core"/>
     <module name="intellij.agent.workbench.json"/>
     <module name="intellij.agent.workbench.prompt.core"/>
     <module name="intellij.agent.workbench.sessions"/>
-    <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.terminal.backend"/>
   </dependencies>
   <!-- endregion -->

@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.junie.sessions
 
 import tools.jackson.core.json.JsonFactory
-import com.intellij.agent.workbench.common.session.AgentSessionCost
+import com.intellij.agent.workbench.core.session.AgentSessionCost
 import com.intellij.util.SystemProperties
 import java.nio.file.Path
 

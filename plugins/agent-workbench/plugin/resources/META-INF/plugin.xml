@@ -20,6 +20,7 @@
   <vendor>Vladimir Krivosheev</vendor>
   <content namespace="agent-workbench">
     <module name="intellij.agent.workbench.cli"/>
+    <module name="intellij.agent.workbench.core"/>
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.json"/>
     <module name="intellij.agent.workbench.claude.common"/>

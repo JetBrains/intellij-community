@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.common
 
-import com.intellij.agent.workbench.common.session.AGENT_SESSION_ARCHIVED_THREAD_TITLE_PREFIX
-import com.intellij.agent.workbench.common.session.AgentSessionArchivedTitleState
-import com.intellij.agent.workbench.common.session.buildAgentSessionArchivedThreadTitle
-import com.intellij.agent.workbench.common.session.isAgentSessionArchivedThreadTitle
-import com.intellij.agent.workbench.common.session.normalizeAgentSessionStoredThreadTitle
-import com.intellij.agent.workbench.common.session.resolveAgentSessionArchivedTitleState
-import com.intellij.agent.workbench.common.session.stripAgentSessionArchivedThreadTitlePrefix
+import com.intellij.agent.workbench.core.session.AGENT_SESSION_ARCHIVED_THREAD_TITLE_PREFIX
+import com.intellij.agent.workbench.core.session.AgentSessionArchivedTitleState
+import com.intellij.agent.workbench.core.session.buildAgentSessionArchivedThreadTitle
+import com.intellij.agent.workbench.core.session.isAgentSessionArchivedThreadTitle
+import com.intellij.agent.workbench.core.session.normalizeAgentSessionStoredThreadTitle
+import com.intellij.agent.workbench.core.session.resolveAgentSessionArchivedTitleState
+import com.intellij.agent.workbench.core.session.stripAgentSessionArchivedThreadTitlePrefix
 
 @Suppress("unused")
 const val CLAUDE_ARCHIVED_THREAD_TITLE_PREFIX: String = AGENT_SESSION_ARCHIVED_THREAD_TITLE_PREFIX

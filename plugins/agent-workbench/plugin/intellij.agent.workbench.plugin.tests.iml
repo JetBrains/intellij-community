@@ -31,6 +31,7 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.agent.workbench.cli" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.chat" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.claude.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.common" scope="RUNTIME" />
@@ -84,6 +85,9 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.ui.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.cli.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.prompt.suggestions.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.core.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.settings.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.sessions.cost.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.codex.common.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.launch.config.backend.tests" scope="TEST" />
   </component>

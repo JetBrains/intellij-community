@@ -6,8 +6,8 @@ import com.electronwill.nightconfig.core.UnmodifiableConfig
 import com.electronwill.nightconfig.core.io.ParsingMode
 import com.electronwill.nightconfig.toml.TomlFormat
 import com.intellij.agent.workbench.codex.common.CodexCliUtils
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPathOrNull
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributor
 import com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigBuilder
 import com.intellij.agent.workbench.sessions.core.launch.McpStreamUrlProvider

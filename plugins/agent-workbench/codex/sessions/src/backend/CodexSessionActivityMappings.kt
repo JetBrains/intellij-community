@@ -2,7 +2,7 @@
 
 package com.intellij.agent.workbench.codex.sessions.backend
 
-import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.core.AgentThreadActivity
 
 internal fun CodexSessionActivity.toAgentThreadActivity(): AgentThreadActivity {
   return when (this) {
