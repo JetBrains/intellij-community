@@ -115,11 +115,19 @@ private class TestHintBanner : AgentWorkbenchHintBanner(
   }
 
   override fun shouldAcknowledge(state: AgentWorkbenchHintBannerState): Boolean {
-    return state.eligible && !state.acknowledged && state.featureEnabled
+    return shouldAcknowledgeAgentWorkbenchHintBanner(
+      eligible = state.eligible,
+      acknowledged = state.acknowledged,
+      featureEnabled = state.featureEnabled,
+    )
   }
 
   override fun shouldShow(state: AgentWorkbenchHintBannerState): Boolean {
-    return state.eligible && !state.acknowledged && !state.featureEnabled
+    return shouldShowAgentWorkbenchHintBanner(
+      eligible = state.eligible,
+      acknowledged = state.acknowledged,
+      featureEnabled = state.featureEnabled,
+    )
   }
 }
 

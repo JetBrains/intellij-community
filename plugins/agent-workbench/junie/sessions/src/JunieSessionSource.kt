@@ -6,7 +6,8 @@ import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionCost
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
+import com.intellij.agent.workbench.common.normalizeAgentSessionProjectPath
+import com.intellij.agent.workbench.common.normalizeAgentSessionTitle
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.json.createJsonGenerator
@@ -506,20 +507,12 @@ private fun JunieSessionIndexEntry.effectiveActivity(
 }
 
 internal fun normalizeJunieProjectPath(path: String): String? {
-  val trimmedPath = path.trim().takeIf { it.isNotEmpty() } ?: return null
-  val normalizedPath = normalizeAgentWorkbenchPathOrNull(trimmedPath) ?: return null
-  return normalizedPath.trimEnd('/').ifEmpty { "/" }
+  return normalizeAgentSessionProjectPath(path)
 }
 
 private fun String.normalizeJunieSessionTitle(): String? {
-  return replace('\n', ' ')
-    .replace('\r', ' ')
-    .replace(THREAD_TITLE_WHITESPACE, " ")
-    .trim()
-    .takeIf { it.isNotEmpty() }
+  return normalizeAgentSessionTitle(this)
 }
-
-private val THREAD_TITLE_WHITESPACE = Regex("\\s+")
 
 internal const val JUNIE_INDEX_FILE_NAME = "index.jsonl"
 internal const val JUNIE_AGENT_WORKBENCH_ARCHIVE_STATE_FILE = "agent-workbench-archive-state.jsonl"

@@ -166,35 +166,6 @@ internal class ClaudeQuotaStatusBarWidget : CustomStatusBarWidget, Activatable {
 
 internal fun isWarningQuota(percent: Int): Boolean = percent > WARNING_QUOTA_PERCENT
 
-internal fun dominantPercent(info: ClaudeQuotaInfo): Int? {
-  val session = info.fiveHourPercent
-  val weekly = info.sevenDayPercent
-  return when {
-    session != null && weekly != null -> maxOf(session, weekly)
-    session != null -> session
-    weekly != null -> weekly
-    else -> null
-  }
-}
-
-internal fun formatWidgetText(info: ClaudeQuotaInfo): String {
-  val session = info.fiveHourPercent
-  val weekly = info.sevenDayPercent
-  return when {
-    session != null && weekly != null -> {
-      if (session >= weekly) {
-        ClaudeSessionsBundle.message("status.bar.claude.quota.text", session, "5h")
-      }
-      else {
-        ClaudeSessionsBundle.message("status.bar.claude.quota.text", weekly, "7d")
-      }
-    }
-    session != null -> ClaudeSessionsBundle.message("status.bar.claude.quota.text", session, "5h")
-    weekly != null -> ClaudeSessionsBundle.message("status.bar.claude.quota.text", weekly, "7d")
-    else -> ""
-  }
-}
-
 @Suppress("HardCodedStringLiteral")
 internal fun formatWidgetTooltip(info: ClaudeQuotaInfo, now: Long): @Nls String {
   val parts = mutableListOf<String>()

@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.ui.AgentWorkbenchHintBanner
 import com.intellij.agent.workbench.ui.AgentWorkbenchHintBannerState
+import com.intellij.agent.workbench.ui.shouldAcknowledgeAgentWorkbenchHintBanner
+import com.intellij.agent.workbench.ui.shouldShowAgentWorkbenchHintBanner
 import com.intellij.openapi.components.service
 
 internal class ClaudeQuotaHintBanner(
@@ -31,18 +33,18 @@ internal class ClaudeQuotaHintBanner(
   }
 
   override fun shouldAcknowledge(state: AgentWorkbenchHintBannerState): Boolean {
-    return shouldAcknowledgeClaudeQuotaHint(
+    return shouldAcknowledgeAgentWorkbenchHintBanner(
       eligible = state.eligible,
       acknowledged = state.acknowledged,
-      widgetEnabled = state.featureEnabled,
+      featureEnabled = state.featureEnabled,
     )
   }
 
   override fun shouldShow(state: AgentWorkbenchHintBannerState): Boolean {
-    return shouldShowClaudeQuotaHint(
+    return shouldShowAgentWorkbenchHintBanner(
       eligible = state.eligible,
       acknowledged = state.acknowledged,
-      widgetEnabled = state.featureEnabled,
+      featureEnabled = state.featureEnabled,
     )
   }
 }

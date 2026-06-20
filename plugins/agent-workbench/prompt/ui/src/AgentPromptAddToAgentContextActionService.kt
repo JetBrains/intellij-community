@@ -9,7 +9,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextResolverServic
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchers
-import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
+import com.intellij.agent.workbench.prompt.core.dataContextOrNull
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -138,7 +138,6 @@ internal class AgentPromptAddToAgentContextActionService(
     }
   }
 
-  @Suppress("SplitModeApiUsage")
   private fun showTargetChooser(
     invocationData: AgentPromptInvocationData,
     contextItems: List<AgentPromptContextItem>,

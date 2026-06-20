@@ -18,7 +18,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceKind
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionRequest
-import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
+import com.intellij.agent.workbench.prompt.core.dataContextOrNull
 import com.intellij.codeInsight.completion.CodeCompletionHandlerBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupManager

@@ -7,13 +7,13 @@ import com.intellij.agent.workbench.claude.common.ClaudeSessionActivity
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentThreadActivityReport
 import com.intellij.agent.workbench.common.session.AgentSessionCost
-import com.intellij.agent.workbench.common.session.AgentSessionCostKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.cost.LiteLlmPriceCatalogService
+import com.intellij.agent.workbench.sessions.core.cost.aggregateAgentSessionUsageCost
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionOutlineForkResult
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.merge
-import java.math.BigDecimal
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
@@ -220,7 +219,7 @@ class ClaudeSessionSource internal constructor(
       .filterNot(ClaudeBackendThread::archived)
       .filter { thread -> thread.id in requestedThreadIds }
       .associate { thread ->
-        thread.id to thread.usageSnapshots.toAgentSessionCost(calculateCost)
+        thread.id to thread.usageSnapshots.aggregateAgentSessionUsageCost(calculateCost)
       }
   }
 
@@ -294,8 +293,8 @@ class ClaudeSessionSource internal constructor(
   }
 
   private fun rememberObservedThreadUpdates(threads: Iterable<ClaudeBackendThread>) {
-    for (thread in threads) {
-      observedUpdatedAtByThreadId.merge(thread.id, thread.updatedAt, ::maxOf)
+    for ((id, _, _, updatedAt) in threads) {
+      observedUpdatedAtByThreadId.merge(id, updatedAt, ::maxOf)
     }
   }
 
@@ -352,31 +351,8 @@ private fun ClaudeBackendThread.toAgentSessionThread(
       completedUnreadUpdatedAtByThreadId = completedUnreadUpdatedAtByThreadId,
       observedUpdatedAtByThreadId = observedUpdatedAtByThreadId,
     ),
-    cost = if (includeCost) usageSnapshots.toAgentSessionCost(calculateCost) else null,
+    cost = if (includeCost) usageSnapshots.aggregateAgentSessionUsageCost(calculateCost) else null,
   )
-}
-
-private fun List<AgentSessionUsageSnapshot>.toAgentSessionCost(
-  calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost,
-): AgentSessionCost? {
-  if (isEmpty()) return null
-
-  val componentCosts = map(calculateCost)
-  if (componentCosts.any { it.amountUsd == null }) {
-    return AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
-  }
-
-  val totalAmount = componentCosts.fold(BigDecimal.ZERO) { acc, cost ->
-    acc + checkNotNull(cost.amountUsd)
-  }
-  val kind = if (componentCosts.all { it.kind == AgentSessionCostKind.EXACT }) {
-    AgentSessionCostKind.EXACT
-  }
-  else {
-    AgentSessionCostKind.ESTIMATED
-  }
-  val matchedModelId = componentCosts.mapNotNull(AgentSessionCost::matchedModelId).distinct().singleOrNull()
-  return AgentSessionCost(amountUsd = totalAmount, kind = kind, matchedModelId = matchedModelId)
 }
 
 private fun ClaudeBackendThread.effectiveActivity(

@@ -75,9 +75,6 @@ class ClaudeQuotaServiceE2eTest {
 
     soft.assertAll()
 
-    val text = formatWidgetText(info)
-    assertThat(text).describedAs("Widget text").isNotEmpty()
-
     val tooltip = formatWidgetTooltip(info, System.currentTimeMillis())
     assertThat(tooltip).describedAs("Widget tooltip").isNotEmpty()
   }

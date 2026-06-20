@@ -1,7 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.opencode.sessions
 
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
+import com.intellij.agent.workbench.common.normalizeAgentSessionProjectPath
+import com.intellij.agent.workbench.common.normalizeAgentSessionTitle
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.agent.workbench.opencode.sessions.server.SharedOpenCodeServerService
@@ -127,17 +128,9 @@ private fun OpenCodeSessionIndexEntry.toAgentSessionThread(readTracker: Map<Stri
 }
 
 internal fun normalizeOpenCodeProjectPath(path: String): String? {
-  val trimmedPath = path.trim().takeIf { it.isNotEmpty() } ?: return null
-  val normalizedPath = normalizeAgentWorkbenchPathOrNull(trimmedPath) ?: return null
-  return normalizedPath.trimEnd('/').ifEmpty { "/" }
+  return normalizeAgentSessionProjectPath(path)
 }
 
 internal fun String.normalizeOpenCodeSessionTitle(): String? {
-  return replace('\n', ' ')
-    .replace('\r', ' ')
-    .replace(OPEN_CODE_THREAD_TITLE_WHITESPACE, " ")
-    .trim()
-    .takeIf { it.isNotEmpty() }
+  return normalizeAgentSessionTitle(this)
 }
-
-private val OPEN_CODE_THREAD_TITLE_WHITESPACE = Regex("\\s+")

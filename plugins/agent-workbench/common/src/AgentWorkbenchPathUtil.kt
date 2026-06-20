@@ -21,3 +21,20 @@ fun normalizeAgentWorkbenchPath(path: String): String {
 fun normalizeAgentWorkbenchPathOrNull(path: String): String? {
   return parseAgentWorkbenchPathOrNull(path)?.invariantSeparatorsPathString
 }
+
+fun normalizeAgentSessionProjectPath(path: String): String? {
+  val trimmedPath = path.trim().takeIf { it.isNotEmpty() } ?: return null
+  val normalizedPath = normalizeAgentWorkbenchPathOrNull(trimmedPath) ?: return null
+  return normalizedPath.trimEnd('/').ifEmpty { "/" }
+}
+
+fun normalizeAgentSessionTitle(title: String?): String? {
+  return title
+    ?.replace('\n', ' ')
+    ?.replace('\r', ' ')
+    ?.replace(AGENT_SESSION_TITLE_WHITESPACE, " ")
+    ?.trim()
+    ?.takeIf { it.isNotEmpty() }
+}
+
+private val AGENT_SESSION_TITLE_WHITESPACE = Regex("\\s+")

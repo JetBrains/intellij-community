@@ -8,7 +8,8 @@ import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
+import com.intellij.agent.workbench.common.normalizeAgentSessionProjectPath
+import com.intellij.agent.workbench.common.normalizeAgentSessionTitle
 import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
@@ -1268,17 +1269,11 @@ private fun PiSessionIndexEntry.resolveCompletedPiActivity(
 }
 
 internal fun normalizePiProjectPath(path: String): String? {
-  val trimmedPath = path.trim().takeIf { it.isNotEmpty() } ?: return null
-  val normalizedPath = normalizeAgentWorkbenchPathOrNull(trimmedPath) ?: return null
-  return normalizedPath.trimEnd('/').ifEmpty { "/" }
+  return normalizeAgentSessionProjectPath(path)
 }
 
 private fun String.normalizePiSessionTitle(): String? {
-  return replace('\n', ' ')
-    .replace('\r', ' ')
-    .replace(PI_THREAD_TITLE_WHITESPACE, " ")
-    .trim()
-    .takeIf { it.isNotEmpty() }
+  return normalizeAgentSessionTitle(this)
 }
 
 private fun parseIsoTimestamp(timestamp: String): Long? {
@@ -1318,7 +1313,6 @@ private fun generatePiEntryId(existingIds: Set<String>): String {
   return UUID.randomUUID().toString()
 }
 
-private val PI_THREAD_TITLE_WHITESPACE = Regex("\\s+")
 private val PI_LEADING_SEPARATOR = Regex("^[/\\\\]+")
 private val PI_SESSION_DIR_UNSAFE_CHARS = Regex("[/\\\\:]")
 

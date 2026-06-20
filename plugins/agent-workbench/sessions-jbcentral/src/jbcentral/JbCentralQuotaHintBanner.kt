@@ -4,6 +4,8 @@ package com.intellij.agent.workbench.sessions.jbcentral
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.ui.AgentWorkbenchHintBanner
 import com.intellij.agent.workbench.ui.AgentWorkbenchHintBannerState
+import com.intellij.agent.workbench.ui.shouldAcknowledgeAgentWorkbenchHintBanner
+import com.intellij.agent.workbench.ui.shouldShowAgentWorkbenchHintBanner
 import com.intellij.openapi.components.service
 
 class JbCentralQuotaHintBanner(
@@ -33,18 +35,18 @@ class JbCentralQuotaHintBanner(
   }
 
   override fun shouldAcknowledge(state: AgentWorkbenchHintBannerState): Boolean {
-    return shouldAcknowledgeJbCentralQuotaHint(
+    return shouldAcknowledgeAgentWorkbenchHintBanner(
       eligible = state.eligible,
       acknowledged = state.acknowledged,
-      widgetEnabled = state.featureEnabled,
+      featureEnabled = state.featureEnabled,
     )
   }
 
   override fun shouldShow(state: AgentWorkbenchHintBannerState): Boolean {
-    return shouldShowJbCentralQuotaHint(
+    return shouldShowAgentWorkbenchHintBanner(
       eligible = state.eligible,
       acknowledged = state.acknowledged,
-      widgetEnabled = state.featureEnabled,
+      featureEnabled = state.featureEnabled,
     )
   }
 }

@@ -3,6 +3,8 @@ package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.ui.AgentWorkbenchHintBanner
 import com.intellij.agent.workbench.ui.AgentWorkbenchHintBannerState
+import com.intellij.agent.workbench.ui.shouldAcknowledgeAgentWorkbenchHintBanner
+import com.intellij.agent.workbench.ui.shouldShowAgentWorkbenchHintBanner
 import com.intellij.openapi.components.service
 
 class AgentSessionCostHintBanner(
@@ -31,18 +33,18 @@ class AgentSessionCostHintBanner(
   }
 
   override fun shouldAcknowledge(state: AgentWorkbenchHintBannerState): Boolean {
-    return shouldAcknowledgeAgentSessionCostHint(
+    return shouldAcknowledgeAgentWorkbenchHintBanner(
       eligible = state.eligible,
       acknowledged = state.acknowledged,
-      settingEnabled = state.featureEnabled,
+      featureEnabled = state.featureEnabled,
     )
   }
 
   override fun shouldShow(state: AgentWorkbenchHintBannerState): Boolean {
-    return shouldShowAgentSessionCostHint(
+    return shouldShowAgentWorkbenchHintBanner(
       eligible = state.eligible,
       acknowledged = state.acknowledged,
-      settingEnabled = state.featureEnabled,
+      featureEnabled = state.featureEnabled,
     )
   }
 }
