@@ -3,6 +3,7 @@
   <dependencies>
     <plugin id="Git4Idea"/>
     <module name="intellij.platform.vcs.log"/>
+    <module name="intellij.platform.vcs.log.impl"/>
     <module name="intellij.vcs.git.backend"/>
     <module name="intellij.vcs.git.shared"/>
   </dependencies>
