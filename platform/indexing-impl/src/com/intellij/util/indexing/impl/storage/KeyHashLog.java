@@ -18,6 +18,7 @@ import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -27,6 +28,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.BufferedInputStream;
@@ -44,6 +46,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectMap;
+
 /**
  * A data structure to store key hashes to virtual file id mappings.
  */
@@ -54,31 +58,45 @@ public final class KeyHashLog<Key> implements Closeable {
 
   private final @NotNull KeyDescriptor<Key> myKeyDescriptor;
   private final @NotNull Path myBaseStorageFile;
+  private final @Nullable StorageLockContext myStorageLockContext;
   private final @NotNull AppendableObjectStorage<int[]> myKeyHashToVirtualFileMapping;
-  private final @NotNull ConcurrentIntObjectMap<Boolean> myInvalidatedSessionIds = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final @NotNull ConcurrentIntObjectMap<Boolean> myInvalidatedSessionIds = createConcurrentIntObjectMap();
 
   private volatile int myLastScannedId;
 
   public KeyHashLog(@NotNull KeyDescriptor<Key> descriptor, @NotNull Path baseStorageFile) throws IOException {
-    this(descriptor, baseStorageFile, true);
+    this(descriptor, baseStorageFile, null);
   }
 
-  private KeyHashLog(@NotNull KeyDescriptor<Key> descriptor, @NotNull Path baseStorageFile, boolean compact) throws IOException {
+  /** Shares the index storage lock context with key-hash mapping files opened next to the main index storage. */
+  public KeyHashLog(@NotNull KeyDescriptor<Key> descriptor,
+                    @NotNull Path baseStorageFile,
+                    @Nullable StorageLockContext storageLockContext) throws IOException {
+    this(descriptor, baseStorageFile, storageLockContext, /*compact: */true);
+  }
+
+  private KeyHashLog(@NotNull KeyDescriptor<Key> descriptor,
+                     @NotNull Path baseStorageFile,
+                     @Nullable StorageLockContext storageLockContext,
+                     boolean compact) throws IOException {
     myKeyDescriptor = descriptor;
     myBaseStorageFile = baseStorageFile;
+    myStorageLockContext = storageLockContext;
     if (compact && isRequiresCompaction()) {
       performCompaction();
     }
-    myKeyHashToVirtualFileMapping =
-      openMapping(getDataFile(), 4096);
+    myKeyHashToVirtualFileMapping = openMapping(getDataFile(), /*size: */ 4096, myStorageLockContext);
   }
 
-  private static @NotNull AppendableStorageBackedByResizableMappedFile<int[]> openMapping(@NotNull Path dataFile, int size) throws IOException {
+  private static @NotNull AppendableStorageBackedByResizableMappedFile<int[]> openMapping(@NotNull Path dataFile,
+                                                                                          int size,
+                                                                                          @Nullable StorageLockContext storageLockContext)
+    throws IOException {
     return new AppendableStorageBackedByResizableMappedFile<>(dataFile,
                                                               size,
-                                                              null,
-                                                              IOUtil.MiB,
-                                                              true,
+                                                              storageLockContext,
+                                                              /*pageSize: */ IOUtil.MiB,
+                                                              /*valuesAreAligned: */ true,
                                                               IntPairInArrayKeyDescriptor.INSTANCE);
   }
 
@@ -218,7 +236,7 @@ public final class KeyHashLog<Key> implements Closeable {
     Int2ObjectMap<IntSet> data = new Int2ObjectOpenHashMap<>();
     Path oldDataFile = getDataFile();
 
-    AppendableStorageBackedByResizableMappedFile<int[]> oldMapping = openMapping(oldDataFile, 0);
+    AppendableStorageBackedByResizableMappedFile<int[]> oldMapping = openMapping(oldDataFile, 0, myStorageLockContext);
     try {
       oldMapping.processAll((offset, key) -> {
         int inputId = key[1];
@@ -250,7 +268,7 @@ public final class KeyHashLog<Key> implements Closeable {
     String dataFileName = oldDataFile.getFileName().toString();
     String newDataFileName = "new." + dataFileName;
     Path newDataFile = oldDataFile.resolveSibling(newDataFileName);
-    AppendableStorageBackedByResizableMappedFile<int[]> newMapping = openMapping(newDataFile, 32 * 2 * data.size());
+    AppendableStorageBackedByResizableMappedFile<int[]> newMapping = openMapping(newDataFile, 32 * 2 * data.size(), myStorageLockContext);
 
     newMapping.lockWrite();
     try {
@@ -303,11 +321,15 @@ public final class KeyHashLog<Key> implements Closeable {
     }
   }
 
-  private void saveHashedIds(@NotNull IntSet hashMaskSet, int largestId, @NotNull IdFilter.FilterScopeType scopeType, @NotNull Project project) {
+  private void saveHashedIds(@NotNull IntSet hashMaskSet,
+                             int largestId,
+                             @NotNull IdFilter.FilterScopeType scopeType,
+                             @NotNull Project project) {
     @NotNull Path newFileWithCaches = getSavedProjectFileValueIds(largestId, scopeType, project);
 
     boolean savedSuccessfully = true;
-    try (com.intellij.util.io.DataOutputStream stream = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(newFileWithCaches)))) {
+    try (com.intellij.util.io.DataOutputStream stream = new DataOutputStream(
+      new BufferedOutputStream(Files.newOutputStream(newFileWithCaches)))) {
       DataInputOutputUtil.writeINT(stream, hashMaskSet.size());
       IntIterator iterator = hashMaskSet.iterator();
       while (iterator.hasNext()) {
@@ -426,7 +448,7 @@ public final class KeyHashLog<Key> implements Closeable {
     String indexPath = args[0];
     EnumeratorStringDescriptor enumeratorStringDescriptor = EnumeratorStringDescriptor.INSTANCE;
 
-    try (KeyHashLog<String> keyHashLog = new KeyHashLog<>(enumeratorStringDescriptor, Path.of(indexPath), false)) {
+    try (KeyHashLog<String> keyHashLog = new KeyHashLog<>(enumeratorStringDescriptor, Path.of(indexPath), null, false)) {
       IntSet allHashes = keyHashLog.getSuitableKeyHashes(IdFilter.ACCEPT_ALL);
 
       for (Integer hash : allHashes) {

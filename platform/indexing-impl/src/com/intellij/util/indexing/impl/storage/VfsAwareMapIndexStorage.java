@@ -11,6 +11,7 @@ import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.StorageLockContext;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -44,6 +45,27 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
                                  boolean keyIsUniqueForIndexedFile,
                                  boolean buildKeyHashToVirtualFileMapping,
                                  boolean enableWal) throws IOException {
+    this(storageFile,
+         keyDescriptor,
+         valueExternalizer,
+         cacheSize,
+         keyIsUniqueForIndexedFile,
+         buildKeyHashToVirtualFileMapping,
+         enableWal,
+         null);
+  }
+
+  /**
+   * Uses the supplied lock context for all persistent map files owned by this index storage.
+   */
+  public VfsAwareMapIndexStorage(@NotNull Path storageFile,
+                                 @NotNull KeyDescriptor<Key> keyDescriptor,
+                                 @NotNull DataExternalizer<Value> valueExternalizer,
+                                 int cacheSize,
+                                 boolean keyIsUniqueForIndexedFile,
+                                 boolean buildKeyHashToVirtualFileMapping,
+                                 boolean enableWal,
+                                 @Nullable StorageLockContext storageLockContext) throws IOException {
     super(storageFile,
           keyDescriptor,
           valueExternalizer,
@@ -52,7 +74,8 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
           /* initialize: */ false,
           /* readOnly: */   false,
           enableWal,
-          /*inputRemapping: */null
+          /* inputRemapping: */ null,
+          storageLockContext
     );
     myBuildKeyHashToVirtualFileMapping = buildKeyHashToVirtualFileMapping;
     initMapAndCache();
@@ -65,7 +88,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
       if (myBuildKeyHashToVirtualFileMapping && myBaseStorageFile != null) {
         FileSystem projectFileFS = myBaseStorageFile.getFileSystem();
         assert !projectFileFS.isReadOnly() : "File system " + projectFileFS + " is read only";
-        myKeyHashToVirtualFileMapping = new KeyHashLog<>(myKeyDescriptor, myBaseStorageFile);
+        myKeyHashToVirtualFileMapping = new KeyHashLog<>(myKeyDescriptor, myBaseStorageFile, storageLockContext());
       }
       else {
         myKeyHashToVirtualFileMapping = null;

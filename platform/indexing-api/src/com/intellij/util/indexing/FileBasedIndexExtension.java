@@ -138,6 +138,9 @@ public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V,
     return true;
   }
 
+  /** @deprecated globally disabled (MapIndexStorage.ENABLE_WAL=false), superseded by generic WAL in FilePageCache -- to be removed */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   @ApiStatus.Internal
   public boolean enableWal() {
     return false;
