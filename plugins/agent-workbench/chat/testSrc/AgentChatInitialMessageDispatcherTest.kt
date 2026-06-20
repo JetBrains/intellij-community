@@ -78,6 +78,60 @@ class AgentChatInitialMessageDispatcherTest {
   }
 
   @Test
+  fun planModePreSendRetriesDoNotConsumePostSendConfirmationBudget(): Unit = timeoutRunBlocking {
+    val behavior = DelayedPlanModeBehavior(preSendRetryCount = 6)
+    val file = createFile(
+      provider = AgentSessionProvider.CODEX,
+      steps = listOf(
+        terminalPlanModeStep(),
+        AgentInitialMessageDispatchStep(
+          text = "Refactor this",
+          timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+        ),
+      )
+    )
+    val tab = FakeTerminalTab(
+      coroutineScope = this,
+      outputObservations = listOf(AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Plan Mode")),
+    )
+
+    createDispatcher(file, behavior = behavior).schedule(tab)
+
+    waitForCondition { file.initialMessageSent }
+    assertThat(tab.events).containsExactly("backtab", "text:Refactor this")
+    assertThat(behavior.afterSendRetryAttempts).containsExactly(0)
+  }
+
+  @Test
+  fun transientBusyRetriesDoNotConsumePostSendConfirmationBudget(): Unit = timeoutRunBlocking {
+    val behavior = TransientBusyPlanModeBehavior(transientBusyRetryCount = 2)
+    val file = createFile(
+      provider = AgentSessionProvider.CODEX,
+      steps = listOf(
+        terminalPlanModeStep(),
+        AgentInitialMessageDispatchStep(
+          text = "Refactor this",
+          timeoutPolicy = AgentInitialMessageTimeoutPolicy.REQUIRE_EXPLICIT_READINESS,
+        ),
+      )
+    )
+    val tab = FakeTerminalTab(
+      coroutineScope = this,
+      outputObservations = listOf(
+        AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Working"),
+        AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Working"),
+        AgentChatTerminalOutputObservation(AgentChatTerminalInputReadiness.READY, "Plan Mode"),
+      ),
+    )
+
+    createDispatcher(file, behavior = behavior).schedule(tab)
+
+    waitForCondition { file.initialMessageSent }
+    assertThat(tab.events).containsExactly("backtab", "backtab", "backtab", "text:Refactor this")
+    assertThat(behavior.afterSendRetryAttempts).containsExactly(0, 0, 0)
+  }
+
+  @Test
   fun persistedPromptDataIsNotRestoredForDispatch() {
     val identity = AgentChatTabIdentity(
       projectHash = "hash",
@@ -143,6 +197,72 @@ class AgentChatInitialMessageDispatcherTest {
   }
 }
 
+private class DelayedPlanModeBehavior(
+  private val preSendRetryCount: Int,
+) : AgentChatProviderBehavior {
+  val afterSendRetryAttempts: MutableList<Int> = mutableListOf()
+  private var beforeSendCalls: Int = 0
+
+  override suspend fun beforeInitialMessageSend(
+    file: AgentChatBehaviorFile,
+    tab: AgentChatBehaviorTerminalTab,
+    dispatch: AgentChatInitialMessageDispatchContext,
+    retryAttempt: Int,
+  ): AgentChatInitialMessageRetryDecision {
+    if (beforeSendCalls < preSendRetryCount) {
+      beforeSendCalls++
+      return AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(backoffMs = 1)
+    }
+    beforeSendCalls++
+    return AgentChatInitialMessageRetryDecision.PROCEED
+  }
+
+  override fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatchContext): Boolean {
+    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE
+  }
+
+  override fun afterInitialMessageSendObservation(
+    file: AgentChatBehaviorFile,
+    dispatch: AgentChatInitialMessageDispatchContext,
+    observation: AgentChatInitialMessageSendObservation,
+    retryAttempt: Int,
+  ): AgentChatInitialMessageRetryDecision {
+    afterSendRetryAttempts += retryAttempt
+    return if (retryAttempt == 0) {
+      AgentChatInitialMessageRetryDecision.PROCEED
+    }
+    else {
+      AgentChatInitialMessageRetryDecision.Stop
+    }
+  }
+}
+
+private class TransientBusyPlanModeBehavior(
+  private val transientBusyRetryCount: Int,
+) : AgentChatProviderBehavior {
+  val afterSendRetryAttempts: MutableList<Int> = mutableListOf()
+  private var afterSendCalls: Int = 0
+
+  override fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatchContext): Boolean {
+    return dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE
+  }
+
+  override fun afterInitialMessageSendObservation(
+    file: AgentChatBehaviorFile,
+    dispatch: AgentChatInitialMessageDispatchContext,
+    observation: AgentChatInitialMessageSendObservation,
+    retryAttempt: Int,
+  ): AgentChatInitialMessageRetryDecision {
+    afterSendRetryAttempts += retryAttempt
+    if (afterSendCalls < transientBusyRetryCount) {
+      afterSendCalls++
+      return AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness(backoffMs = 1)
+    }
+    afterSendCalls++
+    return AgentChatInitialMessageRetryDecision.PROCEED
+  }
+}
+
 private fun createDispatcher(
   file: AgentChatVirtualFile,
   provider: AgentSessionProvider = AgentSessionProvider.JUNIE,
@@ -166,7 +286,7 @@ private object StopPlanModeBehavior : AgentChatProviderBehavior {
   override fun afterInitialMessageSendObservation(
     file: AgentChatBehaviorFile,
     dispatch: AgentChatInitialMessageDispatchContext,
-    outputText: String,
+    observation: AgentChatInitialMessageSendObservation,
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision {
     return if (dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE) {

@@ -5,6 +5,7 @@ import com.intellij.agent.workbench.chat.AgentChatBehaviorFile
 import com.intellij.agent.workbench.chat.AgentChatBehaviorTerminalTab
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageDispatchContext
 import com.intellij.agent.workbench.chat.AgentChatInitialMessageRetryDecision
+import com.intellij.agent.workbench.chat.AgentChatInitialMessageSendObservation
 import com.intellij.agent.workbench.chat.AgentChatProviderBehaviors
 import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
@@ -38,16 +39,25 @@ class CodexAgentChatProviderBehaviorTest {
     val dispatch = ensurePlanModeDispatch()
     val file = TestBehaviorFile()
 
-    assertThat(CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(file, dispatch, "Default mode", retryAttempt = 0))
+    assertThat(CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(file,
+                                                                                 dispatch,
+                                                                                 observation("Default mode"),
+                                                                                 retryAttempt = 0))
       .isInstanceOf(AgentChatInitialMessageRetryDecision.RetryWithoutReadiness::class.java)
-    assertThat(CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(file, dispatch, "Plan mode", retryAttempt = 0))
+    assertThat(CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(file,
+                                                                                 dispatch,
+                                                                                 observation("Plan mode"),
+                                                                                 retryAttempt = 0))
       .isSameAs(AgentChatInitialMessageRetryDecision.PROCEED)
-    assertThat(CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(file, dispatch, "Default mode", retryAttempt = 5))
+    assertThat(CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(file,
+                                                                                 dispatch,
+                                                                                 observation("Default mode"),
+                                                                                 retryAttempt = 5))
       .isSameAs(AgentChatInitialMessageRetryDecision.Stop)
   }
 
   @Test
-  fun planModeRetryWaitsWhileThreadOrTerminalTailIsUnsafe(): Unit = kotlinx.coroutines.runBlocking {
+  fun planModeRetryWaitsWhileThreadIsBusy(): Unit = kotlinx.coroutines.runBlocking {
     val dispatch = ensurePlanModeDispatch()
 
     assertThat(
@@ -66,8 +76,69 @@ class CodexAgentChatProviderBehaviorTest {
         dispatch = dispatch,
         retryAttempt = 0,
       )
+    ).isSameAs(AgentChatInitialMessageRetryDecision.PROCEED)
+  }
+
+  @Test
+  fun planModeRetryTreatsFreshSessionStartHookAsTransientBusy(): Unit = kotlinx.coroutines.runBlocking {
+    val dispatch = ensurePlanModeDispatch()
+    val outputText = buildString {
+      appendLine("Running SessionStart hook:")
+      repeat(12) { lineIndex ->
+        appendLine("hook output $lineIndex")
+      }
+    }
+
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = dispatch,
+        observation = observation(outputText),
+        retryAttempt = 0,
+      )
+    ).isInstanceOf(AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness::class.java)
+  }
+
+  @Test
+  fun planModeRetryDoesNotTreatStaleSessionStartHookTailAsTransientBusy(): Unit = kotlinx.coroutines.runBlocking {
+    val dispatch = ensurePlanModeDispatch()
+    val terminalTail = """
+      Running SessionStart hook:
+      hook output
+    """.trimIndent()
+
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = dispatch,
+        observation = observation(outputText = "", recentOutputTail = terminalTail),
+        retryAttempt = 0,
+      )
     ).isInstanceOf(AgentChatInitialMessageRetryDecision.RetryWithoutReadiness::class.java)
   }
+
+  @Test
+  fun planModeRetryContinuesAfterFreshSessionStartHookCompletes(): Unit = kotlinx.coroutines.runBlocking {
+    val dispatch = ensurePlanModeDispatch()
+    val outputText = """
+      Running SessionStart hook:
+      SessionStart hook (completed)
+      Type your prompt
+    """.trimIndent()
+
+    assertThat(
+      CodexAgentChatProviderBehavior.afterInitialMessageSendObservation(
+        file = TestBehaviorFile(),
+        dispatch = dispatch,
+        observation = observation(outputText),
+        retryAttempt = 0,
+      )
+    ).isInstanceOf(AgentChatInitialMessageRetryDecision.RetryWithoutReadiness::class.java)
+  }
+}
+
+private fun observation(outputText: String, recentOutputTail: String = ""): AgentChatInitialMessageSendObservation {
+  return AgentChatInitialMessageSendObservation(outputText = outputText, recentOutputTail = recentOutputTail)
 }
 
 private fun ensurePlanModeDispatch(): TestDispatch {

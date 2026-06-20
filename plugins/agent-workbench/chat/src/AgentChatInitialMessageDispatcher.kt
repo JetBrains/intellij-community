@@ -23,6 +23,8 @@ sealed interface AgentChatInitialMessageRetryDecision {
 
   data class RetryWithoutReadiness(@JvmField val backoffMs: Long) : AgentChatInitialMessageRetryDecision
 
+  data class RetryTransientBusyWithoutReadiness(@JvmField val backoffMs: Long) : AgentChatInitialMessageRetryDecision
+
   data object Stop : AgentChatInitialMessageRetryDecision
 
   companion object {
@@ -61,7 +63,9 @@ internal class AgentChatInitialMessageDispatcher(
       }
       var readinessCheckpoint: AgentChatTerminalOutputCheckpoint? = null
       var retryCurrentStepWithoutReadiness = false
-      var retryAttempt = 0
+      var beforeSendRetryAttempt = 0
+      var afterSendObservationRetryAttempt = 0
+      var transientBusyRetryStartedAtMs: Long? = null
       while (true) {
         if (!retryCurrentStepWithoutReadiness) {
           when (tab.awaitInitialMessageReadiness(
@@ -81,7 +85,12 @@ internal class AgentChatInitialMessageDispatcher(
           }
         }
 
-        val sendResult = sendInitialMessageIfReady(tab, retryAttempt)
+        val sendResult = sendInitialMessageIfReady(
+          tab = tab,
+          beforeSendRetryAttempt = beforeSendRetryAttempt,
+          afterSendObservationRetryAttempt = afterSendObservationRetryAttempt,
+          transientBusyRetryStartedAtMs = transientBusyRetryStartedAtMs,
+        )
         if (sendResult.stopDispatching) {
           return@launch
         }
@@ -91,8 +100,29 @@ internal class AgentChatInitialMessageDispatcher(
         else if (sendResult.nextReadinessCheckpoint != null) {
           readinessCheckpoint = sendResult.nextReadinessCheckpoint
         }
-        retryCurrentStepWithoutReadiness = sendResult.retryCurrentStepWithoutReadiness
-        retryAttempt = if (sendResult.retryCurrentStepWithoutReadiness) retryAttempt + 1 else 0
+        retryCurrentStepWithoutReadiness = sendResult.retryStage != null
+        when (sendResult.retryStage) {
+          AgentChatInitialMessageRetryStage.BEFORE_SEND -> {
+            beforeSendRetryAttempt++
+            afterSendObservationRetryAttempt = 0
+            transientBusyRetryStartedAtMs = null
+          }
+          AgentChatInitialMessageRetryStage.AFTER_SEND_OBSERVATION -> {
+            beforeSendRetryAttempt = 0
+            afterSendObservationRetryAttempt++
+            transientBusyRetryStartedAtMs = null
+          }
+          AgentChatInitialMessageRetryStage.TRANSIENT_BUSY -> {
+            beforeSendRetryAttempt = 0
+            afterSendObservationRetryAttempt = 0
+            transientBusyRetryStartedAtMs = sendResult.transientBusyRetryStartedAtMs
+          }
+          null -> {
+            beforeSendRetryAttempt = 0
+            afterSendObservationRetryAttempt = 0
+            transientBusyRetryStartedAtMs = null
+          }
+        }
         if (!sendResult.progressed) {
           if (tab.sessionState.value != TerminalViewSessionState.Running || !file.hasPendingInitialMessageForDispatch()) {
             return@launch
@@ -121,13 +151,15 @@ internal class AgentChatInitialMessageDispatcher(
 
   private suspend fun sendInitialMessageIfReady(
     tab: AgentChatTerminalTab,
-    retryAttempt: Int,
+    beforeSendRetryAttempt: Int,
+    afterSendObservationRetryAttempt: Int,
+    transientBusyRetryStartedAtMs: Long?,
   ): AgentChatInitialMessageSendResult {
     if (tab.sessionState.value != TerminalViewSessionState.Running) {
       return AgentChatInitialMessageSendResult.NO_PROGRESS
     }
     val dispatch = file.acquireInitialMessageDispatch() ?: return AgentChatInitialMessageSendResult.NO_PROGRESS
-    when (val decision = behavior.beforeInitialMessageSend(file, tab, dispatch, retryAttempt)) {
+    when (val decision = behavior.beforeInitialMessageSend(file, tab, dispatch, beforeSendRetryAttempt)) {
       AgentChatInitialMessageRetryDecision.Proceed,
       AgentChatInitialMessageRetryDecision.ProceedAndResetReadiness -> Unit
       AgentChatInitialMessageRetryDecision.Stop -> {
@@ -138,8 +170,11 @@ internal class AgentChatInitialMessageDispatcher(
         delay(decision.backoffMs.milliseconds)
         return AgentChatInitialMessageSendResult(
           progressed = false,
-          retryCurrentStepWithoutReadiness = true,
+          retryStage = AgentChatInitialMessageRetryStage.BEFORE_SEND,
         )
+      }
+      is AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness -> {
+        return retryAfterTransientBusy(dispatch, decision.backoffMs, transientBusyRetryStartedAtMs)
       }
     }
     if (behavior.isInitialMessageDispatchAlreadySatisfied(tab, dispatch)) {
@@ -170,8 +205,11 @@ internal class AgentChatInitialMessageDispatcher(
         file.cancelInitialMessageDispatch(dispatch)
         return AgentChatInitialMessageSendResult.NO_PROGRESS
       }
-      val observedText = observation.text + "\n" + tab.readRecentOutputTail()
-      when (val decision = behavior.afterInitialMessageSendObservation(file, dispatch, observedText, retryAttempt)) {
+      val sendObservation = AgentChatInitialMessageSendObservation(
+        outputText = observation.text,
+        recentOutputTail = tab.readRecentOutputTail(),
+      )
+      when (val decision = behavior.afterInitialMessageSendObservation(file, dispatch, sendObservation, afterSendObservationRetryAttempt)) {
         AgentChatInitialMessageRetryDecision.Proceed -> Unit
         AgentChatInitialMessageRetryDecision.ProceedAndResetReadiness -> {
           return completeInitialMessageDispatch(dispatch, readinessCheckpoint = null, clearReadinessCheckpoint = true)
@@ -184,8 +222,11 @@ internal class AgentChatInitialMessageDispatcher(
           delay(decision.backoffMs.milliseconds)
           return AgentChatInitialMessageSendResult(
             progressed = false,
-            retryCurrentStepWithoutReadiness = true,
+            retryStage = AgentChatInitialMessageRetryStage.AFTER_SEND_OBSERVATION,
           )
+        }
+        is AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness -> {
+          return retryAfterTransientBusy(dispatch, decision.backoffMs, transientBusyRetryStartedAtMs)
         }
       }
     }
@@ -213,6 +254,26 @@ internal class AgentChatInitialMessageDispatcher(
 
       AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE -> tab.sendBackTab()
     }
+  }
+
+  private suspend fun retryAfterTransientBusy(
+    dispatch: AgentChatInitialMessageDispatch,
+    backoffMs: Long,
+    transientBusyRetryStartedAtMs: Long?,
+  ): AgentChatInitialMessageSendResult {
+    val nowMs = System.currentTimeMillis()
+    val startedAtMs = transientBusyRetryStartedAtMs ?: nowMs
+    if (nowMs - startedAtMs >= INITIAL_MESSAGE_TRANSIENT_BUSY_TIMEOUT_MS) {
+      LOG.warn("Initial message dispatch stayed transient-busy for ${nowMs - startedAtMs}ms; stopping at step ${dispatch.stepIndex}")
+      return stopInitialMessageDispatch(dispatch)
+    }
+    file.cancelInitialMessageDispatch(dispatch)
+    delay(backoffMs.milliseconds)
+    return AgentChatInitialMessageSendResult(
+      progressed = false,
+      retryStage = AgentChatInitialMessageRetryStage.TRANSIENT_BUSY,
+      transientBusyRetryStartedAtMs = startedAtMs,
+    )
   }
 
   private suspend fun stopInitialMessageDispatch(dispatch: AgentChatInitialMessageDispatch): AgentChatInitialMessageSendResult {
@@ -246,14 +307,23 @@ internal class AgentChatInitialMessageDispatcher(
   }
 }
 
+private enum class AgentChatInitialMessageRetryStage {
+  BEFORE_SEND,
+  AFTER_SEND_OBSERVATION,
+  TRANSIENT_BUSY,
+}
+
 private data class AgentChatInitialMessageSendResult(
   @JvmField val progressed: Boolean,
   @JvmField val nextReadinessCheckpoint: AgentChatTerminalOutputCheckpoint? = null,
   @JvmField val clearReadinessCheckpoint: Boolean = false,
-  @JvmField val retryCurrentStepWithoutReadiness: Boolean = false,
+  @JvmField val retryStage: AgentChatInitialMessageRetryStage? = null,
+  @JvmField val transientBusyRetryStartedAtMs: Long? = null,
   @JvmField val stopDispatching: Boolean = false,
 ) {
   companion object {
     val NO_PROGRESS: AgentChatInitialMessageSendResult = AgentChatInitialMessageSendResult(progressed = false)
   }
 }
+
+private const val INITIAL_MESSAGE_TRANSIENT_BUSY_TIMEOUT_MS: Long = 120_000
