@@ -9,9 +9,9 @@ import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsServic
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityListener
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
-import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsListener
-import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
-import com.intellij.agent.workbench.sessions.settings.AGENT_WORKBENCH_SETTINGS_CONFIGURABLE_ID
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsListener
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
+import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_SETTINGS_CONFIGURABLE_ID
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
@@ -83,7 +83,7 @@ internal class AgentProviderCliStatusBanner(
   }
 
   private fun missingEnabledProviders(): List<AgentSessionProviderDescriptor> {
-    val providers = providerSettingsService.enabledProviders(AgentSessionProviders.allProviders())
+    val providers = AgentSessionProviders.allProviders().filter { provider -> providerSettingsService.isProviderEnabled(provider.provider) }
     val availability = providerAvailabilityService.availabilitySnapshot(providers)
     return providers.filter { provider ->
       provider.cliVisibilityPolicy == AgentSessionProviderCliVisibilityPolicy.PROMINENT && availability[provider.provider] == false
@@ -149,7 +149,10 @@ internal class AgentProviderCliStatusBanner(
   }
 
   private fun retryProviderAvailability() {
-    providerAvailabilityService.requestRefresh(providerSettingsService.enabledProviders(AgentSessionProviders.allProviders()), force = true)
+    providerAvailabilityService.requestRefresh(
+      AgentSessionProviders.allProviders().filter { provider -> providerSettingsService.isProviderEnabled(provider.provider) },
+      force = true,
+    )
     refreshSessions()
   }
 

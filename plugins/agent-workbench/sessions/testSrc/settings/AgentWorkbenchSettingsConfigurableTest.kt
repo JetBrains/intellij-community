@@ -14,6 +14,7 @@ import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsComponent
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributor
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributors
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.sleep.PREVENT_SYSTEM_SLEEP_WHILE_WORKING_SETTING_ID
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
@@ -67,7 +68,6 @@ class AgentWorkbenchSettingsConfigurableTest {
       .contains("id=\"${AgentWorkbenchProvidersSettingsConfigurable.ID}\"")
       .contains("key=\"settings.agent.workbench.providers.name\"")
       .contains("parentId=\"${AgentWorkbenchSettingsConfigurable.ID}\"")
-      .contains("<applicationSettings service=\"com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService\"/>")
   }
 
   @Test

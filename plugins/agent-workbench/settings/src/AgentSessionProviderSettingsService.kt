@@ -1,9 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.settings
+package com.intellij.agent.workbench.settings
 
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SerializablePersistentStateComponent
@@ -61,14 +59,6 @@ class AgentSessionProviderSettingsService
     if (updated == disabledFeatureIds) return
     updateState { current -> current.copy(disabledProviderFeatureIds = updated) }
     publishChanged()
-  }
-
-  fun enabledProviders(providers: List<AgentSessionProviderDescriptor>): List<AgentSessionProviderDescriptor> {
-    return providers.filter { provider -> isProviderEnabled(provider.provider) }
-  }
-
-  fun enabledSessionSources(sources: List<AgentSessionSource>): List<AgentSessionSource> {
-    return sources.filter { source -> isProviderEnabled(source.provider) }
   }
 
   private fun publishChanged() {

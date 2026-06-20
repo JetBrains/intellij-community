@@ -15,7 +15,7 @@ import com.intellij.agent.workbench.sessions.core.providers.buildBuiltInLaunchPr
 import com.intellij.agent.workbench.sessions.core.providers.hasEntries
 import com.intellij.agent.workbench.sessions.providerItemIconWithMode
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
-import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
@@ -66,7 +66,9 @@ internal class AgentPromptProviderSelector(
   }
 
   fun refresh() {
-    val bridges = providerSettingsService.enabledProviders(providersProvider().filter { provider -> provider.supportsPromptLaunch })
+    val bridges = providersProvider().filter { provider ->
+      provider.supportsPromptLaunch && providerSettingsService.isProviderEnabled(provider.provider)
+    }
     val (resolvedMenuModel, resolvedEntries) = resolveProviderState(bridges, providerAvailabilityService.availabilitySnapshot(bridges))
     applyResolvedState(resolvedMenuModel, resolvedEntries)
     asyncRefreshScope?.launch { refreshProviderAvailability(bridges) }

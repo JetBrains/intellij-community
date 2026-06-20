@@ -14,8 +14,8 @@ import com.intellij.agent.workbench.sessions.model.AgentProjectSessions
 import com.intellij.agent.workbench.sessions.model.AgentSessionProviderLoadState
 import com.intellij.agent.workbench.sessions.model.AgentWorktree
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
-import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsListener
-import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsListener
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_CLOSED_PROJECT_COUNT
 import com.intellij.agent.workbench.sessions.state.DEFAULT_VISIBLE_THREAD_COUNT
 import com.intellij.agent.workbench.sessions.util.agentSessionCliMissingMessageKey
@@ -56,7 +56,8 @@ class AgentArchivedSessionsService internal constructor(
   constructor(serviceScope: CoroutineScope) : this(
     serviceScope = serviceScope,
     sessionSourcesProvider = {
-      service<AgentSessionProviderSettingsService>().enabledSessionSources(AgentSessionProviders.sessionSources())
+      val providerSettings = service<AgentSessionProviderSettingsService>()
+      AgentSessionProviders.sessionSources().filter { source -> providerSettings.isProviderEnabled(source.provider) }
     },
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
   )

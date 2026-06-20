@@ -5,7 +5,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderCliVisibilityPolicy
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
 import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -83,7 +83,8 @@ class AgentSessionProviderAvailabilityService(
     force: Boolean = false,
   ) {
     if (project.isDisposed) return
-    val enabledProviders = service<AgentSessionProviderSettingsService>().enabledProviders(providers)
+    val providerSettings = service<AgentSessionProviderSettingsService>()
+    val enabledProviders = providers.filter { provider -> providerSettings.isProviderEnabled(provider.provider) }
     val providersToRefresh = providersNeedingRefresh(enabledProviders, force = force)
     if (providersToRefresh.isEmpty()) return
     val shouldLaunch = synchronized(lock) {
@@ -109,7 +110,7 @@ class AgentSessionProviderAvailabilityService(
   ): Map<AgentSessionProvider, Boolean> {
     if (project.isDisposed) return emptyMap()
     val providerSettings = serviceAsync<AgentSessionProviderSettingsService>()
-    val enabledProviders = providerSettings.enabledProviders(providers)
+    val enabledProviders = providers.filter { provider -> providerSettings.isProviderEnabled(provider.provider) }
     val providersToRefresh = providersNeedingRefresh(enabledProviders, force = force)
     if (providersToRefresh.isNotEmpty()) {
       val resolvedAvailability = withContext(Dispatchers.IO) {

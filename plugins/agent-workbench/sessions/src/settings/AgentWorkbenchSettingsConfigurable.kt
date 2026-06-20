@@ -4,11 +4,14 @@ package com.intellij.agent.workbench.sessions.settings
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
 import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
+import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_PROVIDERS_SETTINGS_CONFIGURABLE_ID
+import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_SETTINGS_CONFIGURABLE_ID
 import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
 import com.intellij.agent.workbench.settings.AgentWorkbenchCheckboxSetting
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsComponent
 import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributors
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.sleep.AgentSleepPreventionSettings
 import com.intellij.ide.ActivityTracker
@@ -21,9 +24,6 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import javax.swing.AbstractButton
-
-const val AGENT_WORKBENCH_SETTINGS_CONFIGURABLE_ID: String = "com.intellij.agent.workbench.settings"
-const val AGENT_WORKBENCH_PROVIDERS_SETTINGS_CONFIGURABLE_ID: String = "com.intellij.agent.workbench.settings.providers"
 
 internal class AgentWorkbenchSettingsConfigurable : BoundSearchableConfigurable(
   displayName = AgentSessionsBundle.message("settings.agent.workbench.name"),
