@@ -95,6 +95,7 @@ public final class ThreadLeakTracker {
       FilePageCacheLockFree.DEFAULT_HOUSEKEEPER_THREAD_NAME,
       "Finalizer",
       FlushingDaemon.NAME,
+      "FrontendToBackend",
       "grpc-default-worker-",  // grpc_netty_shaded
       "grpc-nio-worker-",
       "HttpClient-",  // JRE's HttpClient thread pool is not supposed to be disposed - to reuse connections
