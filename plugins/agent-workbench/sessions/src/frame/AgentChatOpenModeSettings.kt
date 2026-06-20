@@ -3,7 +3,7 @@ package com.intellij.agent.workbench.sessions.frame
 
 // @spec community/plugins/agent-workbench/spec/frame/agent-dedicated-frame.spec.md
 
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
 import com.intellij.openapi.options.advanced.AdvancedSettings
 
 internal const val OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID: String = "agent.workbench.chat.open.in.dedicated.frame"

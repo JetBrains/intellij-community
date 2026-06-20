@@ -5,6 +5,7 @@
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.prompt.context"/>
     <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.terminal.frontend"/>
   </dependencies>
@@ -39,7 +40,7 @@
     <listener class="com.intellij.agent.workbench.chat.AgentChatProjectColorChangeListener"
               topic="com.intellij.ide.ProjectColorChangeListener"/>
     <listener class="com.intellij.agent.workbench.chat.AgentChatSettingsChangeListener"
-              topic="com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsListener"/>
+              topic="com.intellij.agent.workbench.settings.AgentWorkbenchSettingsListener"/>
     <listener class="com.intellij.agent.workbench.chat.AgentChatThreadPresentationStartupListener" activeInTestMode="true"
               activeInHeadlessMode="true"
               topic="com.intellij.ide.AppLifecycleListener"/>

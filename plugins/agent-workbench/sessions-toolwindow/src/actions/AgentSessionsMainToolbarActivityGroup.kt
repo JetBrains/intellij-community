@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.toolwindow.actions
 
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.normalizeOpenableSourceProjectPath
@@ -28,7 +28,8 @@ internal class AgentSessionsMainToolbarActivityGroup @JvmOverloads constructor(
   private val sourceProjectPath: (Project) -> String? = { project -> normalizeOpenableSourceProjectPath(project.basePath) },
   private val isToolbarActivityEnabled: () -> Boolean = { AgentWorkbenchSettings.getInstance().showAgentActivityInMainToolbar },
   private val activitySummary: (Project) -> AgentSessionsActivitySummary = { project ->
-    if (project.isInitialized) project.service<AgentSessionsActivityService>().latestMainToolbarSummary() else AgentSessionsActivitySummary.EMPTY
+    if (project.isInitialized) project.service<AgentSessionsActivityService>().latestMainToolbarSummary()
+    else AgentSessionsActivitySummary.EMPTY
   },
   private val chromeActivitySummary: (Project) -> AgentSessionsActivitySummary = { project ->
     if (project.isInitialized) project.service<AgentSessionsActivityService>().latestChromeSummary() else AgentSessionsActivitySummary.EMPTY

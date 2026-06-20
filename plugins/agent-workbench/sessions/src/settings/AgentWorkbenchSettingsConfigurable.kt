@@ -3,12 +3,12 @@ package com.intellij.agent.workbench.sessions.settings
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.core.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
-import com.intellij.agent.workbench.sessions.core.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchCheckboxSetting
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsComponent
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributors
+import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_CHAT_SETTINGS_COMPONENT_ID
+import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
+import com.intellij.agent.workbench.settings.AgentWorkbenchCheckboxSetting
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsComponent
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributors
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.sleep.AgentSleepPreventionSettings
 import com.intellij.ide.ActivityTracker
@@ -71,7 +71,8 @@ internal class AgentWorkbenchProvidersSettingsConfigurable : BoundSearchableConf
               { enabled -> providerSettings.setProviderEnabled(provider.provider, enabled) },
             )
         }
-        renderProviderCheckboxSettings(provider.providerSettings, providerEnabledCheckbox)
+        renderProviderCheckboxSettings(AgentWorkbenchSettingsContributors.providerCheckboxSettings(provider.provider),
+                                       providerEnabledCheckbox)
       }
     }
   }

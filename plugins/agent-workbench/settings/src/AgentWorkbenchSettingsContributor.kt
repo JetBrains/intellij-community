@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.core.settings
+package com.intellij.agent.workbench.settings
 
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.Nls
 
@@ -24,6 +25,8 @@ interface AgentWorkbenchSettingsContributor {
   fun checkboxSettings(): List<AgentWorkbenchCheckboxSetting> = emptyList()
 
   fun components(): List<AgentWorkbenchSettingsComponent> = emptyList()
+
+  fun providerCheckboxSettings(provider: AgentSessionProvider): List<AgentWorkbenchCheckboxSetting> = emptyList()
 }
 
 object AgentWorkbenchSettingsContributors {
@@ -35,4 +38,8 @@ object AgentWorkbenchSettingsContributors {
   fun checkboxSettings(): List<AgentWorkbenchCheckboxSetting> = all().flatMap { it.checkboxSettings() }
 
   fun components(): List<AgentWorkbenchSettingsComponent> = all().flatMap { it.components() }
+
+  fun providerCheckboxSettings(provider: AgentSessionProvider): List<AgentWorkbenchCheckboxSetting> {
+    return all().flatMap { contributor -> contributor.providerCheckboxSettings(provider) }
+  }
 }

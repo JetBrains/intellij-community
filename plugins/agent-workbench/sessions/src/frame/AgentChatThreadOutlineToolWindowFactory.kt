@@ -6,7 +6,7 @@ package com.intellij.agent.workbench.sessions.frame
 import com.intellij.agent.workbench.chat.AGENT_CHAT_THREAD_OUTLINE_TOOL_WINDOW_ID
 import com.intellij.agent.workbench.chat.AgentChatThreadOutlinePanel
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsListener
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsListener
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager

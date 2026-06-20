@@ -48,6 +48,7 @@ dependencies {
   implementation(project(":filewatch"))
   implementation(project(":claude-common"))
   implementation(project(":prompt-core"))
+  implementation(project(":settings"))
   implementation(project(":sessions-core"))
   implementation(project(":sessions-cost"))
   implementation(project(":ui"))

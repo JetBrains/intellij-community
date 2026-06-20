@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.sessions
 
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributors
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributors
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.fileEditor.impl.EditorTabColorProvider
 import com.intellij.openapi.vfs.VirtualFileManager

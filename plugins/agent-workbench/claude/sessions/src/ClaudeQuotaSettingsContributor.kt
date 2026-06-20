@@ -1,10 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.claude.sessions
 
-import com.intellij.agent.workbench.sessions.core.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchCheckboxSetting
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsComponent
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributor
+import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
+import com.intellij.agent.workbench.settings.AgentWorkbenchCheckboxSetting
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsComponent
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributor
 
 internal class ClaudeQuotaSettingsContributor : AgentWorkbenchSettingsContributor {
   override fun components(): List<AgentWorkbenchSettingsComponent> {

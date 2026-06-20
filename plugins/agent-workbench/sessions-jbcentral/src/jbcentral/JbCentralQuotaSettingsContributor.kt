@@ -2,10 +2,10 @@
 package com.intellij.agent.workbench.sessions.jbcentral
 
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchCheckboxSetting
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsComponent
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributor
+import com.intellij.agent.workbench.settings.AGENT_WORKBENCH_STATUS_BAR_WIDGETS_SETTINGS_COMPONENT_ID
+import com.intellij.agent.workbench.settings.AgentWorkbenchCheckboxSetting
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsComponent
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributor
 
 internal class JbCentralQuotaSettingsContributor : AgentWorkbenchSettingsContributor {
   override fun components(): List<AgentWorkbenchSettingsComponent> {

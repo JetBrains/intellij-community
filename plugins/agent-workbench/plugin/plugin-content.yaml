@@ -123,6 +123,9 @@
 - name: lib/modules/intellij.agent.workbench.sessions.toolwindow.jar
   contentModules:
   - name: intellij.agent.workbench.sessions.toolwindow
+- name: lib/modules/intellij.agent.workbench.settings.jar
+  contentModules:
+  - name: intellij.agent.workbench.settings
 - name: lib/modules/intellij.agent.workbench.terminal.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.terminal.sessions

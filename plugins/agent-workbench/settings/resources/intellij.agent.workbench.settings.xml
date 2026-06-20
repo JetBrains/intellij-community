@@ -1,0 +1,18 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.common"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.settingsContributor"
+      interface="com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributor"
+      dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationSettings service="com.intellij.agent.workbench.settings.AgentWorkbenchSettings"/>
+  </extensions>
+</idea-plugin>
