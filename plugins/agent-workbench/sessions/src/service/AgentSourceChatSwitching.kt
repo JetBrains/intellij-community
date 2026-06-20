@@ -2,8 +2,8 @@
 package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.AgentChatFocusService
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
+import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetry
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.ide.impl.ProjectUtilService
 import com.intellij.openapi.components.service

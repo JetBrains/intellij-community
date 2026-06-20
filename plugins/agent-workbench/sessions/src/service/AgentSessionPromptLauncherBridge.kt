@@ -23,7 +23,7 @@ import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameP
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
 import com.intellij.agent.workbench.sessions.model.sortAgentSessionThreadsForDisplay
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
+import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetry
 import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStateService
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.ide.RecentProjectsManager

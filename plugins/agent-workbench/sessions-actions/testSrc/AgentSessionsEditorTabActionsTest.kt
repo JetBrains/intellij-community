@@ -21,7 +21,7 @@ import com.intellij.agent.workbench.sessions.actions.resolveAgentSessionsEditorT
 import com.intellij.agent.workbench.sessions.actions.resolveQuickStartProjectPopupAnchor
 import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfileId
 import com.intellij.agent.workbench.sessions.core.SessionActionTarget
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.openapi.actionSystem.ActionGroup
