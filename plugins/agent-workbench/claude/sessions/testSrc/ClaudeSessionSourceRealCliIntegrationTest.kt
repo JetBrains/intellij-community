@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.claude.common.ClaudeSessionsStore
 import com.intellij.agent.workbench.claude.sessions.backend.store.ClaudeStoreSessionBackend
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.common.session.AgentSessionThread
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.session.AgentSessionThread
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.testFramework.junit5.TestApplication

@@ -3,6 +3,7 @@
   - name: intellij.agent.workbench.plugin
   contentModules:
   - name: intellij.agent.workbench.cli
+  - name: intellij.agent.workbench.core
   - name: intellij.agent.workbench.common
   - name: intellij.agent.workbench.json
   - name: intellij.agent.workbench.claude.common

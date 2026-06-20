@@ -28,6 +28,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
         "//platform/util",
         "//plugins/agent-workbench/common",
+        "//plugins/agent-workbench/core",
     ],
 )
 
@@ -49,6 +50,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util:util_test_lib",
         "//plugins/agent-workbench/common:common_test_lib",
+        "//plugins/agent-workbench/core:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.agent.workbench.settings` end
@@ -106,6 +108,8 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//plugins/agent-workbench/common",
         "//plugins/agent-workbench/common:common_test_lib",
+        "//plugins/agent-workbench/core",
+        "//plugins/agent-workbench/core:core_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/testFramework",

@@ -4,8 +4,8 @@ package com.intellij.agent.workbench.junie.sessions
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
-import com.intellij.agent.workbench.common.session.AgentSessionCost
-import com.intellij.agent.workbench.common.session.AgentSessionCostKind
+import com.intellij.agent.workbench.core.session.AgentSessionCost
+import com.intellij.agent.workbench.core.session.AgentSessionCostKind
 import com.intellij.agent.workbench.json.WorkbenchJsonlScanner
 import com.intellij.agent.workbench.json.forEachJsonObjectField
 import com.intellij.agent.workbench.json.readJsonStringOrNull

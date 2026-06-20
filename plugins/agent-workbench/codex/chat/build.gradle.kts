@@ -43,6 +43,7 @@ dependencies {
   }
 
   implementation(project(":common"))
+  implementation(project(":core"))
   implementation(project(":chat"))
   implementation(project(":sessions-core"))
 }

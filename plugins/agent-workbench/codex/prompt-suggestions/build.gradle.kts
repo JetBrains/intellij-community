@@ -44,6 +44,7 @@ dependencies {
   }
 
   implementation(project(":common"))
+  implementation(project(":core"))
   implementation(project(":json"))
   implementation(project(":codex-common"))
   implementation(project(":prompt-core"))

@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.prompt.core
 
 // @spec community/plugins/agent-workbench/spec/actions/global-prompt-suggestions.spec.md
 
-import com.intellij.agent.workbench.common.extensions.OverridableValue
-import com.intellij.agent.workbench.common.extensions.SingleExtensionPointResolver
+import com.intellij.agent.workbench.core.extensions.OverridableValue
+import com.intellij.agent.workbench.core.extensions.SingleExtensionPointResolver
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project

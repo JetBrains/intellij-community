@@ -7,7 +7,7 @@ import com.intellij.agent.workbench.codex.common.CodexAppServerException
 import com.intellij.agent.workbench.codex.common.CodexCliNotFoundException
 import com.intellij.agent.workbench.codex.common.invokeOnCompletionOrWarn
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
-import com.intellij.agent.workbench.common.extensions.OverridableValue
+import com.intellij.agent.workbench.core.extensions.OverridableValue
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncation
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionAiBackend

@@ -14,13 +14,13 @@ import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThread
 import com.intellij.agent.workbench.claude.sessions.ClaudeBackendThreadRefreshResult
 import com.intellij.agent.workbench.claude.sessions.ClaudeHookBridge
 import com.intellij.agent.workbench.claude.sessions.ClaudeSessionBackend
-import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.common.AgentThreadActivityReport
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
-import com.intellij.agent.workbench.common.session.AgentSessionOutlineItem
-import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
-import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
+import com.intellij.agent.workbench.core.AgentThreadActivity
+import com.intellij.agent.workbench.core.AgentThreadActivityReport
+import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.core.parseAgentWorkbenchPathOrNull
+import com.intellij.agent.workbench.core.session.AgentSessionOutlineItem
+import com.intellij.agent.workbench.core.session.AgentSessionOutlineItemKind
+import com.intellij.agent.workbench.core.session.AgentSessionThreadOutline
 import com.intellij.agent.workbench.json.filebacked.FileBackedSessionChangeSet
 import com.intellij.agent.workbench.json.filebacked.createFileBackedSessionChangeFlow
 import com.intellij.agent.workbench.json.filebacked.toFileBackedSessionPathKey
@@ -325,7 +325,7 @@ private fun ClaudeSessionThread.toAgentThreadActivityHint(): AgentThreadActivity
 
 private fun ClaudeSessionOutline.toAgentSessionThreadOutline(): AgentSessionThreadOutline {
   return AgentSessionThreadOutline(
-    provider = com.intellij.agent.workbench.common.session.AgentSessionProvider.CLAUDE,
+    provider = com.intellij.agent.workbench.core.session.AgentSessionProvider.CLAUDE,
     threadId = sessionId,
     title = title,
     updatedAt = updatedAt,

@@ -8,7 +8,7 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 import com.intellij.agent.workbench.chat.AgentChatTabSelectionService
 import com.intellij.agent.workbench.chat.AgentChatOpenPendingTabsStateService
 import com.intellij.agent.workbench.chat.AgentChatPendingEditorLifecycleService
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintBanner
 import com.intellij.agent.workbench.sessions.AgentSessionCostHintStateService
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle

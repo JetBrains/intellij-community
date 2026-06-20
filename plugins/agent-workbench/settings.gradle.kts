@@ -26,6 +26,7 @@ buildscript {
 rootProject.name = "agent-workbench"
 
 include(":common")
+include(":core")
 include(":json")
 include(":filewatch")
 include(":chat")

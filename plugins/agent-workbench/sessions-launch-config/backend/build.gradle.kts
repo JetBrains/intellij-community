@@ -47,6 +47,7 @@ dependencies {
   }
 
   implementation(project(":common"))
+  implementation(project(":core"))
   implementation(project(":sessions-core"))
 }
 

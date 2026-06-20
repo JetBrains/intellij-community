@@ -3,10 +3,10 @@ package com.intellij.agent.workbench.sessions.toolwindow.ui
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-tree.spec.md
 
-import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.core.AgentThreadActivity
 import com.intellij.agent.workbench.common.statusColor
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.providers.agentSessionThreadStatusIcon
+import com.intellij.agent.workbench.ui.agentSessionThreadStatusIcon
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.model.AgentSessionArchivedRangePreset
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode

@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.sessions.service
 
 import com.intellij.agent.workbench.chat.addContextToOpenTopLevelAgentChat
 import com.intellij.agent.workbench.chat.collectOpenAgentChatAddContextTargetCandidates
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextTargetCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult

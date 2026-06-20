@@ -9,9 +9,9 @@ import com.intellij.agent.workbench.codex.sessions.backend.CodexRefreshHintsProv
 import com.intellij.agent.workbench.codex.sessions.backend.CodexSessionBackend
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutRefreshHintsProvider
 import com.intellij.agent.workbench.codex.sessions.backend.rollout.CodexRolloutSessionBackend
-import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.common.session.AgentSessionCost
-import com.intellij.agent.workbench.common.session.AgentSessionCostKind
+import com.intellij.agent.workbench.core.AgentThreadActivity
+import com.intellij.agent.workbench.core.session.AgentSessionCost
+import com.intellij.agent.workbench.core.session.AgentSessionCostKind
 import com.intellij.agent.workbench.sessions.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSourceUpdateEvent

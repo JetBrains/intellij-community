@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.codex.chat
 
 import com.intellij.agent.workbench.chat.AgentChatTerminalTitleThreadRebindContributors
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

@@ -6,13 +6,14 @@
     <module name="intellij.agent.workbench.claude.common"/>
     <module name="intellij.agent.workbench.cli"/>
     <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.core"/>
     <module name="intellij.agent.workbench.filewatch"/>
     <module name="intellij.agent.workbench.json"/>
     <module name="intellij.agent.workbench.prompt.core"/>
     <module name="intellij.agent.workbench.sessions.actions"/>
-    <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.agent.workbench.sessions.cost"/>
+    <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.agent.workbench.ui"/>
   </dependencies>
   <!-- endregion -->

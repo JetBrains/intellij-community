@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.junie.sessions
 
 import com.intellij.agent.workbench.common.icons.AgentWorkbenchCommonIcons
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
-import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.junie.common.BRAVE_FLAG
 import com.intellij.agent.workbench.junie.common.JunieCliInfo
 import com.intellij.agent.workbench.junie.common.JunieCliSupport

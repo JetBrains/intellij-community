@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.prompt.ui
 
 import com.dynatrace.hash4j.hashing.HashValue128
-import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.core.AgentThreadActivity
 import com.intellij.agent.workbench.prompt.core.AgentPromptChipRenderInput
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextEnvelopeFormatter
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItem

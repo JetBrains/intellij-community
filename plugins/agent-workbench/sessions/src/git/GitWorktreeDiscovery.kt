@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.git
 
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
+import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPathOrNull
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
 import com.intellij.execution.process.CapturingProcessHandler

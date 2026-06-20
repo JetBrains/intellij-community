@@ -41,6 +41,8 @@ dependencies {
     }
     jetbrainsRuntime()
   }
+
+  implementation(project(":core"))
 }
 
 kotlin {

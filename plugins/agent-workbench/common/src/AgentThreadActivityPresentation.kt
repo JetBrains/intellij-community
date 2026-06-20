@@ -3,6 +3,7 @@
 
 package com.intellij.agent.workbench.common
 
+import com.intellij.agent.workbench.core.AgentThreadActivity
 import com.intellij.ui.JBColor
 import java.awt.Color
 

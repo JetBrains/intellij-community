@@ -3,13 +3,13 @@ package com.intellij.agent.workbench.claude.common
 
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-structure-view.spec.md
 
-import com.intellij.agent.workbench.common.session.AgentSessionOutlineItem
-import com.intellij.agent.workbench.common.session.AgentSessionOutlineItemKind
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
-import com.intellij.agent.workbench.common.session.agentSessionOutlinePhaseTitle
-import com.intellij.agent.workbench.common.session.normalizeAgentSessionOutlinePreview
-import com.intellij.agent.workbench.common.session.summarizeAgentSessionOutlineChildren
+import com.intellij.agent.workbench.core.session.AgentSessionOutlineItem
+import com.intellij.agent.workbench.core.session.AgentSessionOutlineItemKind
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.session.AgentSessionThreadOutline
+import com.intellij.agent.workbench.core.session.agentSessionOutlinePhaseTitle
+import com.intellij.agent.workbench.core.session.normalizeAgentSessionOutlinePreview
+import com.intellij.agent.workbench.core.session.summarizeAgentSessionOutlineChildren
 import com.intellij.agent.workbench.json.createJsonParser
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken

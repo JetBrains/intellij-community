@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.vcs.merge
 
-import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.session.AgentSessionLaunchMode
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
@@ -466,10 +466,10 @@ private class TestAgentSessionProviderDescriptor(
       get() = this@TestAgentSessionProviderDescriptor.provider
 
     override suspend fun listThreadsFromOpenProject(path: String, project: Project) =
-      emptyList<com.intellij.agent.workbench.common.session.AgentSessionThread>()
+      emptyList<com.intellij.agent.workbench.core.session.AgentSessionThread>()
 
     override suspend fun listThreadsFromClosedProject(path: String) =
-      emptyList<com.intellij.agent.workbench.common.session.AgentSessionThread>()
+      emptyList<com.intellij.agent.workbench.core.session.AgentSessionThread>()
   }
 
   override val cliMissingMessageKey: String

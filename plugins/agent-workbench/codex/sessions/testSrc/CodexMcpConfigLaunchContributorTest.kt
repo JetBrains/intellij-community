@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.codex.common.CodexCliUtils
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat

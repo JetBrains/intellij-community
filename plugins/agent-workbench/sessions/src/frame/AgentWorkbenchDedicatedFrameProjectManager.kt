@@ -3,7 +3,7 @@ package com.intellij.agent.workbench.sessions.frame
 
 // @spec community/plugins/agent-workbench/spec/frame/agent-dedicated-frame.spec.md
 
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
 import com.intellij.diagnostic.WindowsDefenderChecker
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase

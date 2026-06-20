@@ -4,8 +4,8 @@ package com.intellij.agent.workbench.sessions.launch.config.backend
 import tools.jackson.databind.JsonNode
 import tools.jackson.databind.ObjectMapper
 import tools.jackson.dataformat.yaml.YAMLFactory
-import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.parseAgentWorkbenchPathOrNull
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.openapi.diagnostic.debug
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files

@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.codex.sessions
 
 import com.intellij.agent.workbench.codex.common.CodexThread
 import com.intellij.agent.workbench.codex.common.normalizeRootPath
-import com.intellij.agent.workbench.common.session.AgentSessionCost
-import com.intellij.agent.workbench.common.session.AgentSessionCostKind
+import com.intellij.agent.workbench.core.session.AgentSessionCost
+import com.intellij.agent.workbench.core.session.AgentSessionCostKind
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State

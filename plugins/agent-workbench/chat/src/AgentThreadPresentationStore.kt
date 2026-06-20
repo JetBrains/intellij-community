@@ -3,8 +3,8 @@
 // @spec community/plugins/agent-workbench/spec/chat/agent-chat-editor.spec.md
 package com.intellij.agent.workbench.chat
 
-import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.AgentThreadActivity
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentation
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationKey
 import com.intellij.agent.workbench.sessions.core.AgentSessionThreadPresentationModel

@@ -4,10 +4,10 @@ package com.intellij.agent.workbench.sessions.actions
 import com.intellij.agent.workbench.chat.AgentChatEditorTabActionContext
 import com.intellij.agent.workbench.chat.AgentChatTabRebindTarget
 import com.intellij.agent.workbench.chat.AgentChatThreadCoordinates
-import com.intellij.agent.workbench.common.AgentThreadActivity
+import com.intellij.agent.workbench.core.AgentThreadActivity
 import com.intellij.agent.workbench.common.AgentWorkbenchActionIds
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.core.session.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.EDITOR_TAB_POPUP_MENU_ID
 import com.intellij.agent.workbench.sessions.EDITOR_TAB_POPUP_SEPARATOR_BEFORE_CLOSE_ACTIONS_ID
 import com.intellij.agent.workbench.sessions.childActionIds

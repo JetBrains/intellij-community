@@ -1,11 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.common
 
+import com.intellij.agent.workbench.core.AgentThreadActivity
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.util.concurrent.TimeUnit
 import java.awt.Color
+import java.util.concurrent.TimeUnit
 import javax.swing.UIManager
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)

@@ -44,6 +44,7 @@ dependencies {
 
   implementation(project(":junie-common"))
   implementation(project(":common"))
+  implementation(project(":core"))
   implementation(project(":prompt-core"))
   implementation(project(":sessions-core"))
 }

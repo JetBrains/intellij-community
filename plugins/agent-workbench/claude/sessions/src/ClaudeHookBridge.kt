@@ -3,10 +3,10 @@ package com.intellij.agent.workbench.claude.sessions
 
 // @spec community/plugins/agent-workbench/spec/sessions/agent-sessions-claude-hooks.spec.md
 
-import com.intellij.agent.workbench.common.AgentThreadActivity
-import com.intellij.agent.workbench.common.AgentThreadActivityReport
-import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
+import com.intellij.agent.workbench.core.AgentThreadActivity
+import com.intellij.agent.workbench.core.AgentThreadActivityReport
+import com.intellij.agent.workbench.core.normalizeAgentWorkbenchPath
+import com.intellij.agent.workbench.core.parseAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.claude.common.CLAUDE_HOOK_PROJECT_MUTATING_TOOL_MATCHER
 import com.intellij.agent.workbench.claude.common.CLAUDE_USER_INTERACTION_TOOL_MATCHER
 import com.intellij.agent.workbench.claude.common.isClaudeHookProjectMutatingToolName
