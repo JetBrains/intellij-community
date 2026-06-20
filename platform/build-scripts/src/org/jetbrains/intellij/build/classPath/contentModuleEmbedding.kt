@@ -125,51 +125,6 @@ fun deprecatedResolveDescriptorForEmbeddedProduct(
   relativePath: String,
   additionalSearchModules: Collection<String> = emptyList(),
 ) {
-  suspend fun embedContentModules(
-    xml: Element,
-    platformLayout: PlatformLayout,
-    platformDescriptorContainer: ScopedCachedDescriptorContainer,
-    pluginLayout: PluginLayout,
-    pluginDescriptorContainer: ScopedCachedDescriptorContainer,
-    context: BuildContext,
-  ): ByteArray {
-    val xIncludeResolver = XIncludeElementResolverImpl(
-      searchPath = listOf(
-        DescriptorSearchScope(listOf(clientModuleName), pluginDescriptorContainer),
-        DescriptorSearchScope(additionalSearchModules, pluginDescriptorContainer),
-        DescriptorSearchScope(
-          modules = platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName },
-          descriptorCache = platformDescriptorContainer
-        ),
-      ),
-      context = context
-    )
-
-    withContext(Dispatchers.IO) {
-      resolveIncludes(element = xml, elementResolver = xIncludeResolver)
-
-      for (contentElement in xml.getChildren("content")) {
-        for (moduleElement in contentElement.getChildren("module")) {
-          val moduleName = moduleElement.getAttributeValue("name") ?: continue
-          embedContentModule(
-            moduleElement = moduleElement,
-            pluginDescriptorContainer = pluginDescriptorContainer,
-            xIncludeResolver = xIncludeResolver,
-            moduleName = moduleName,
-            dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
-            pluginLayout = pluginLayout,
-            frontendModuleFilter = context.getFrontendModuleFilter(),
-            outputProvider = context.outputProvider,
-          )
-        }
-      }
-    }
-    val patchedContent = JDOMUtil.write(xml).encodeToByteArray()
-    val frontendPluginContainer = platformLayout.descriptorCacheContainer.forPlugin(getEmbeddedProductTempPluginDir(context, clientModuleName))
-    frontendPluginContainer.put(PLUGIN_XML_RELATIVE_PATH, patchedContent)
-    return patchedContent
-  }
-
   val layoutPatcherIfNoScrambling: LayoutPatcher = { moduleOutputPatcher, platformLayout, context ->
     val file = context.findFileInModuleSources(clientModuleName, relativePath)
     if (file != null) {
@@ -177,7 +132,17 @@ fun deprecatedResolveDescriptorForEmbeddedProduct(
       val descriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(getEmbeddedProductTempPluginDir(context, clientModuleName))
 
       val xml = JDOMUtil.load(file)
-      val patchedXmlContent = embedContentModules(xml, platformLayout, descriptorContainer, pluginLayout, descriptorContainer, context)
+      val patchedXmlContent = resolveAndCacheDescriptorForEmbeddedProduct(
+        xml = xml,
+        clientModuleName = clientModuleName,
+        additionalSearchModules = additionalSearchModules,
+        platformLayout = platformLayout,
+        platformDescriptorContainer = descriptorContainer,
+        pluginLayout = pluginLayout,
+        pluginDescriptorContainer = descriptorContainer,
+        targetPluginDescriptorContainer = descriptorContainer,
+        context = context,
+      )
       moduleOutputPatcher.patchModuleOutput(moduleName = clientModuleName, path = relativePath, content = patchedXmlContent)
     }
   }
@@ -189,8 +154,65 @@ fun deprecatedResolveDescriptorForEmbeddedProduct(
 
     val xml = JDOMUtil.load(data)
     val platformDescriptorContainer = platformLayout.descriptorCacheContainer.forPlatform(platformLayout)
-    embedContentModules(xml, platformLayout, platformDescriptorContainer, pluginLayout, pluginDescriptorContainer, context)
+    resolveAndCacheDescriptorForEmbeddedProduct(
+      xml = xml,
+      clientModuleName = clientModuleName,
+      additionalSearchModules = additionalSearchModules,
+      platformLayout = platformLayout,
+      platformDescriptorContainer = platformDescriptorContainer,
+      pluginLayout = pluginLayout,
+      pluginDescriptorContainer = pluginDescriptorContainer,
+      targetPluginDescriptorContainer = platformLayout.descriptorCacheContainer.forPlugin(getEmbeddedProductTempPluginDir(context, clientModuleName)),
+      context = context,
+    )
   }
+}
+
+internal suspend fun resolveAndCacheDescriptorForEmbeddedProduct(
+  xml: Element,
+  clientModuleName: String,
+  additionalSearchModules: Collection<String>,
+  platformLayout: PlatformLayout,
+  platformDescriptorContainer: ScopedCachedDescriptorContainer,
+  pluginLayout: PluginLayout,
+  pluginDescriptorContainer: ScopedCachedDescriptorContainer,
+  targetPluginDescriptorContainer: ScopedCachedDescriptorContainer,
+  context: BuildContext,
+): ByteArray {
+  val xIncludeResolver = XIncludeElementResolverImpl(
+    searchPath = listOf(
+      DescriptorSearchScope(listOf(clientModuleName), pluginDescriptorContainer),
+      DescriptorSearchScope(additionalSearchModules, pluginDescriptorContainer),
+      DescriptorSearchScope(
+        modules = platformLayout.includedModules.mapTo(LinkedHashSet()) { it.moduleName },
+        descriptorCache = platformDescriptorContainer
+      ),
+    ),
+    context = context
+  )
+
+  withContext(Dispatchers.IO) {
+    resolveIncludes(element = xml, elementResolver = xIncludeResolver)
+
+    for (contentElement in xml.getChildren("content")) {
+      for (moduleElement in contentElement.getChildren("module")) {
+        val moduleName = moduleElement.getAttributeValue("name") ?: continue
+        embedContentModule(
+          moduleElement = moduleElement,
+          pluginDescriptorContainer = pluginDescriptorContainer,
+          xIncludeResolver = xIncludeResolver,
+          moduleName = moduleName,
+          dependencyHelper = (context as BuildContextImpl).jarPackagerDependencyHelper,
+          pluginLayout = pluginLayout,
+          frontendModuleFilter = context.getFrontendModuleFilter(),
+          outputProvider = context.outputProvider,
+        )
+      }
+    }
+  }
+  val patchedContent = JDOMUtil.write(xml).encodeToByteArray()
+  targetPluginDescriptorContainer.put(PLUGIN_XML_RELATIVE_PATH, patchedContent)
+  return patchedContent
 }
 
 /**
