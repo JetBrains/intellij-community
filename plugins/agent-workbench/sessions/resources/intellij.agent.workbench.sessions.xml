@@ -18,6 +18,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <agent.workbench.promptLauncher implementation="com.intellij.agent.workbench.sessions.service.AgentSessionPromptLauncherBridge"/>
+    <statistics.counterUsagesCollector
+      implementationClass="com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchFusCollector"/>
     <postStartupActivity implementation="com.intellij.agent.workbench.sessions.service.LiteLlmPriceCatalogStartupActivity"/>
     <postStartupActivity implementation="com.intellij.agent.workbench.sessions.sleep.AgentSessionSleepPreventionStartupActivity"/>
     <notificationGroup id="Agent Workbench Sessions" displayType="BALLOON" bundle="messages.AgentSessionsBundle"

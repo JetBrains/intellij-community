@@ -2,8 +2,8 @@
 name: Agent Workbench Telemetry
 description: Requirements for Agent Workbench custom IntelliJ Feature Usage Statistics events.
 targets:
-  - ../../sessions-core/src/statistics/AgentWorkbenchTelemetry.kt
-  - ../../sessions-core/resources/intellij.agent.workbench.sessions.core.xml
+  - ../../sessions/src/statistics/AgentWorkbenchTelemetry.kt
+  - ../../sessions/resources/intellij.agent.workbench.sessions.xml
   - ../../prompt/core/src/AgentPromptModels.kt
   - ../../prompt/ui/src/AgentPromptPaletteSubmitController.kt
   - ../../sessions/src/service/AgentSessionLaunchService.kt
@@ -22,7 +22,7 @@ Date: 2026-05-09
 Agent Workbench custom telemetry records semantic workflow outcomes that platform action telemetry cannot infer. It must stay content-free, allowlisted, and centralized behind the shared telemetry facade.
 
 ## Requirements
-- Custom telemetry uses one event-only `CounterUsagesCollector` in `sessions-core` with FUS group `agent.workbench` version `5`.
+- Custom telemetry uses one event-only `CounterUsagesCollector` in `sessions` with FUS group `agent.workbench` version `5`.
 
 - Custom events must not duplicate ordinary `AnAction` invocation counting already covered by the platform `actions` group.
 

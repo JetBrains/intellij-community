@@ -40,8 +40,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationSettings service="com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings"/>
-    <statistics.counterUsagesCollector
-      implementationClass="com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchFusCollector"/>
     <registryKey key="agent.workbench.mcp.use.direct.http"
                  defaultValue="false"
                  description="When enabled, AWB writes a merged `&lt;projectPath&gt;/.awb/awb-mcp.json` containing the IDE's current streamable-HTTP MCP URL plus the user's other servers, and launches the agent CLI with `--mcp-config &lt;file&gt; --strict-mcp-config`. When disabled, AWB falls through to whatever the user's checked-in `.mcp.json` does (commonly the legacy ij-proxy stdio path)."/>

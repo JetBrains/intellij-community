@@ -3,10 +3,10 @@ package com.intellij.agent.workbench.prompt.ui
 
 import com.intellij.agent.workbench.common.session.AgentSessionLaunchMode
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchPromptBlockedReason
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetry
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetryEvent
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchTelemetryProvider
+import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchPromptBlockedReason
+import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetry
+import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetryEvent
+import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchTelemetryProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout

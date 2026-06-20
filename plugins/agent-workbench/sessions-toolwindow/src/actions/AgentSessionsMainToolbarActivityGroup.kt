@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.sessions.toolwindow.actions
 
 import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings
-import com.intellij.agent.workbench.sessions.core.statistics.AgentWorkbenchEntryPoint
+import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.service.normalizeOpenableSourceProjectPath
 import com.intellij.agent.workbench.sessions.toolwindow.ui.AgentSessionsActivityBucket
