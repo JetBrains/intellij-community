@@ -189,6 +189,7 @@ private suspend fun findFrontendCustomizationPluginId(clientContext: BuildContex
     it != rootModule && (it.endsWith(".frontend.split.customization") || it.endsWith(".frontend.customization") || it.endsWith(".customization.plugin"))
   }
   if (candidates.isEmpty() && rootModule == "intellij.frontend.split.customization") {
+    //TODO Remove after IJPL-168955
     return null
   }
   if (candidates.size != 1) {
