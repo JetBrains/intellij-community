@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.prompt.vcs.context
 
+import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextItemIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReason
@@ -51,7 +52,7 @@ class AgentPromptChangesTreeContextContributorTest {
   @Test
   fun collectsEmptyChangelist() {
     val dataContext = SimpleDataContext.builder()
-      .add(VcsDataKeys.CHANGE_LISTS, arrayOf<ChangeList>(emptyChangeList("Fix login bug", isDefault = true)))
+      .add(VcsDataKeys.CHANGE_LISTS, arrayOf(emptyChangeList("Fix login bug", isDefault = true)))
       .build()
 
     val result = contributor.collect(invocationData(dataContext))
@@ -80,7 +81,7 @@ class AgentPromptChangesTreeContextContributorTest {
   @Test
   fun collectsChangelistWithComment() {
     val dataContext = SimpleDataContext.builder()
-      .add(VcsDataKeys.CHANGE_LISTS, arrayOf<ChangeList>(emptyChangeList("My CL", isDefault = false, comment = "Refactoring auth")))
+      .add(VcsDataKeys.CHANGE_LISTS, arrayOf(emptyChangeList("My CL", isDefault = false, comment = "Refactoring auth")))
       .build()
 
     val result = contributor.collect(invocationData(dataContext))
@@ -104,7 +105,7 @@ class AgentPromptChangesTreeContextContributorTest {
       deletion("/project/src/OldAuth.kt"),
     )
     val dataContext = SimpleDataContext.builder()
-      .add(VcsDataKeys.CHANGE_LISTS, arrayOf<ChangeList>(changeListWithChanges("Fix", changes, isDefault = true)))
+      .add(VcsDataKeys.CHANGE_LISTS, arrayOf(changeListWithChanges("Fix", changes, isDefault = true)))
       .build()
 
     val result = contributor.collect(invocationData(dataContext))
@@ -128,7 +129,7 @@ class AgentPromptChangesTreeContextContributorTest {
   @Test
   fun collectsMultipleChangelists() {
     val dataContext = SimpleDataContext.builder()
-      .add(VcsDataKeys.CHANGE_LISTS, arrayOf<ChangeList>(
+      .add(VcsDataKeys.CHANGE_LISTS, arrayOf(
         emptyChangeList("Default", isDefault = true),
         changeListWithChanges("Feature", listOf(modification("/project/f.kt")), isDefault = false),
       ))
@@ -206,7 +207,7 @@ class AgentPromptChangesTreeContextContributorTest {
   @Test
   fun changeListsTakePriorityOverChanges() {
     val dataContext = SimpleDataContext.builder()
-      .add(VcsDataKeys.CHANGE_LISTS, arrayOf<ChangeList>(emptyChangeList("MyCL", isDefault = true)))
+      .add(VcsDataKeys.CHANGE_LISTS, arrayOf(emptyChangeList("MyCL", isDefault = true)))
       .add(VcsDataKeys.CHANGE_LEAD_SELECTION, arrayOf(modification("/project/file.kt")))
       .build()
 
@@ -238,7 +239,7 @@ class AgentPromptChangesTreeContextContributorTest {
 
   @Test
   fun movedChangeType() {
-    val change = moved("/project/old/File.kt", "/project/new/File.kt")
+    val change = movedChange()
     val dataContext = SimpleDataContext.builder()
       .add(VcsDataKeys.CHANGE_LEAD_SELECTION, arrayOf(change))
       .build()
@@ -252,7 +253,7 @@ class AgentPromptChangesTreeContextContributorTest {
   @Test
   fun nonDefaultChangelistDoesNotShowActive() {
     val dataContext = SimpleDataContext.builder()
-      .add(VcsDataKeys.CHANGE_LISTS, arrayOf<ChangeList>(emptyChangeList("Experiment", isDefault = false)))
+      .add(VcsDataKeys.CHANGE_LISTS, arrayOf(emptyChangeList("Experiment", isDefault = false)))
       .build()
 
     val result = contributor.collect(invocationData(dataContext))
@@ -268,7 +269,7 @@ class AgentPromptChangesTreeContextContributorTest {
       emptyMap()
     }
     else {
-      mapOf(AGENT_PROMPT_VCS_INVOCATION_DATA_CONTEXT_KEY to dataContext)
+      mapOf(AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY to dataContext)
     }
     return AgentPromptInvocationData(
       project = project,
@@ -309,8 +310,8 @@ class AgentPromptChangesTreeContextContributorTest {
     return Change(testRevision(LocalFilePath(path, false)), null)
   }
 
-  private fun moved(oldPath: String, newPath: String): Change {
-    return Change(testRevision(LocalFilePath(oldPath, false)), testRevision(LocalFilePath(newPath, false)))
+  private fun movedChange(): Change {
+    return Change(testRevision(LocalFilePath("/project/old/File.kt", false)), testRevision(LocalFilePath("/project/new/File.kt", false)))
   }
 
   private fun testRevision(filePath: com.intellij.openapi.vcs.FilePath): ContentRevision {

@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.prompt.vcs.context
 
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextRendererIds
 import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReason
+import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.array
 import com.intellij.agent.workbench.prompt.core.number
@@ -199,7 +200,7 @@ class AgentPromptVcsLogSelectionContextContributorTest {
       emptyMap()
     }
     else {
-      mapOf(AGENT_PROMPT_VCS_INVOCATION_DATA_CONTEXT_KEY to dataContext)
+      mapOf(AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY to dataContext)
     }
     return AgentPromptInvocationData(
       project = project,

@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReas
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
+import com.intellij.agent.workbench.prompt.core.dataContextOrNull
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys

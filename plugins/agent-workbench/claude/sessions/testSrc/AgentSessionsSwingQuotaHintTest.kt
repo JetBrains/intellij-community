@@ -2,6 +2,8 @@
 package com.intellij.agent.workbench.claude.sessions
 
 import com.intellij.agent.workbench.sessions.waitForCondition
+import com.intellij.agent.workbench.ui.shouldAcknowledgeAgentWorkbenchHintBanner
+import com.intellij.agent.workbench.ui.shouldShowAgentWorkbenchHintBanner
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import javax.swing.JPanel
@@ -16,18 +18,18 @@ import java.util.concurrent.TimeUnit
 class AgentSessionsSwingQuotaHintTest {
   @Test
   fun hintVisibilityRequiresEligibleUnacknowledgedAndDisabledWidget() {
-    assertThat(shouldShowClaudeQuotaHint(eligible = true, acknowledged = false, widgetEnabled = false)).isTrue()
-    assertThat(shouldShowClaudeQuotaHint(eligible = false, acknowledged = false, widgetEnabled = false)).isFalse()
-    assertThat(shouldShowClaudeQuotaHint(eligible = true, acknowledged = true, widgetEnabled = false)).isFalse()
-    assertThat(shouldShowClaudeQuotaHint(eligible = true, acknowledged = false, widgetEnabled = true)).isFalse()
+    assertThat(shouldShowAgentWorkbenchHintBanner(eligible = true, acknowledged = false, featureEnabled = false)).isTrue()
+    assertThat(shouldShowAgentWorkbenchHintBanner(eligible = false, acknowledged = false, featureEnabled = false)).isFalse()
+    assertThat(shouldShowAgentWorkbenchHintBanner(eligible = true, acknowledged = true, featureEnabled = false)).isFalse()
+    assertThat(shouldShowAgentWorkbenchHintBanner(eligible = true, acknowledged = false, featureEnabled = true)).isFalse()
   }
 
   @Test
   fun acknowledgementRequiresEligibleUnacknowledgedAndEnabledWidget() {
-    assertThat(shouldAcknowledgeClaudeQuotaHint(eligible = true, acknowledged = false, widgetEnabled = true)).isTrue()
-    assertThat(shouldAcknowledgeClaudeQuotaHint(eligible = false, acknowledged = false, widgetEnabled = true)).isFalse()
-    assertThat(shouldAcknowledgeClaudeQuotaHint(eligible = true, acknowledged = true, widgetEnabled = true)).isFalse()
-    assertThat(shouldAcknowledgeClaudeQuotaHint(eligible = true, acknowledged = false, widgetEnabled = false)).isFalse()
+    assertThat(shouldAcknowledgeAgentWorkbenchHintBanner(eligible = true, acknowledged = false, featureEnabled = true)).isTrue()
+    assertThat(shouldAcknowledgeAgentWorkbenchHintBanner(eligible = false, acknowledged = false, featureEnabled = true)).isFalse()
+    assertThat(shouldAcknowledgeAgentWorkbenchHintBanner(eligible = true, acknowledged = true, featureEnabled = true)).isFalse()
+    assertThat(shouldAcknowledgeAgentWorkbenchHintBanner(eligible = true, acknowledged = false, featureEnabled = false)).isFalse()
   }
 
   @Test

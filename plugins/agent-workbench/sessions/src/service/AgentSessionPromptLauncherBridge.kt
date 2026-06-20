@@ -5,7 +5,6 @@ import com.intellij.agent.workbench.chat.addContextToOpenTopLevelAgentChat
 import com.intellij.agent.workbench.chat.collectOpenAgentChatAddContextTargetCandidates
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
-import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextTargetCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptAddContextToTargetResult
@@ -18,6 +17,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchResult
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
 import com.intellij.agent.workbench.prompt.core.AgentPromptReusableSourceEntry
+import com.intellij.agent.workbench.prompt.core.dataContextOrNull
 import com.intellij.agent.workbench.prompt.core.getAgentPromptProjectPathContext
 import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameProjectManager
 import com.intellij.agent.workbench.sessions.model.AgentSessionsState
@@ -28,7 +28,6 @@ import com.intellij.agent.workbench.sessions.state.AgentSessionUiPreferencesStat
 import com.intellij.agent.workbench.sessions.util.isAgentSessionNewSessionId
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import kotlinx.coroutines.flow.Flow
@@ -254,10 +253,6 @@ private suspend fun addContextItemsToOpenChatTarget(
     threadId = target.threadId,
     contextItems = request.contextItems,
   )
-}
-
-private fun AgentPromptInvocationData.dataContextOrNull(): DataContext? {
-  return attributes[AGENT_PROMPT_INVOCATION_DATA_CONTEXT_KEY] as? DataContext
 }
 
 private fun buildSnapshot(pathState: AgentSessionPathState?, provider: AgentSessionProvider): AgentPromptExistingThreadsSnapshot {

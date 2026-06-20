@@ -22,6 +22,7 @@ import javax.swing.BoxLayout
 import javax.swing.JButton
 import javax.swing.JLabel
 import javax.swing.JPanel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -31,6 +32,16 @@ data class AgentWorkbenchHintBannerState(
   val acknowledged: Boolean = false,
   val featureEnabled: Boolean = false,
 )
+
+@ApiStatus.Internal
+fun shouldAcknowledgeAgentWorkbenchHintBanner(eligible: Boolean, acknowledged: Boolean, featureEnabled: Boolean): Boolean {
+  return eligible && !acknowledged && featureEnabled
+}
+
+@ApiStatus.Internal
+fun shouldShowAgentWorkbenchHintBanner(eligible: Boolean, acknowledged: Boolean, featureEnabled: Boolean): Boolean {
+  return eligible && !acknowledged && !featureEnabled
+}
 
 abstract class AgentWorkbenchHintBanner protected constructor(
   titleText: @Nls String,

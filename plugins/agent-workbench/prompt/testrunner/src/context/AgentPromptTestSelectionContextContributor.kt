@@ -10,6 +10,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptContextTruncationReas
 import com.intellij.agent.workbench.prompt.core.AgentPromptInvocationData
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayload
 import com.intellij.agent.workbench.prompt.core.AgentPromptPayloadValue
+import com.intellij.agent.workbench.prompt.core.dataContextOrNull
 import com.intellij.agent.workbench.prompt.testrunner.AgentPromptTestRunnerBundle
 import com.intellij.agent.workbench.prompt.testrunner.computeTestStatusCounts
 import com.intellij.agent.workbench.prompt.testrunner.formatTestReference
@@ -84,7 +85,7 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
       }
       AgentPromptPayloadValue.Obj(fields)
     }
-    val payloadFields = linkedMapOf<String, AgentPromptPayloadValue>(
+    val payloadFields = linkedMapOf(
       "entries" to AgentPromptPayloadValue.Arr(payloadEntries),
       "selectedCount" to AgentPromptPayload.num(normalizedSelection.size),
       "candidateCount" to AgentPromptPayload.num(normalizedSelection.size),
@@ -169,10 +170,10 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
       ?.trim()
       ?.takeIf { it.isNotEmpty() }
     val normalizedName = testProxy.name
-      .trim()
-      .takeIf { it.isNotEmpty() }
-      ?: locationUrl
-      ?: "<unnamed test>"
+                           .trim()
+                           .takeIf { it.isNotEmpty() }
+                         ?: locationUrl
+                         ?: "<unnamed test>"
     return SelectedTestContext(
       name = normalizedName,
       locationUrl = locationUrl,
@@ -186,11 +187,11 @@ internal class AgentPromptTestSelectionContextContributor : AgentPromptContextCo
   private fun resolveStatus(testProxy: AbstractTestProxy): String {
     return normalizeTestStatus(
       when {
-      testProxy.isDefect -> "failed"
-      testProxy.isIgnored -> "ignored"
-      testProxy.isPassed -> "passed"
-      testProxy.isInProgress -> "inProgress"
-      else -> "unknown"
+        testProxy.isDefect -> "failed"
+        testProxy.isIgnored -> "ignored"
+        testProxy.isPassed -> "passed"
+        testProxy.isInProgress -> "inProgress"
+        else -> "unknown"
       }
     )
   }

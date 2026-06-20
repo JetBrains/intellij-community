@@ -33,6 +33,7 @@ import com.intellij.agent.workbench.common.session.AgentSessionThreadOutline
 import com.intellij.agent.workbench.common.session.AgentSubAgent
 import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.agent.workbench.sessions.core.cost.LiteLlmPriceCatalogService
+import com.intellij.agent.workbench.sessions.core.cost.aggregateAgentSessionUsageCost
 import com.intellij.agent.workbench.sessions.core.normalizeConcreteAgentSessionThreadId
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRebindCandidate
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionRefreshHints
@@ -53,7 +54,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
-import java.math.BigDecimal
 import java.nio.file.Path
 
 private val LOG = logger<CodexSessionSource>()
@@ -563,7 +563,9 @@ internal class CodexSessionSource internal constructor(
       .filter { thread -> thread.subAgentIds.isNotEmpty() }
       .mapTo(LinkedHashSet()) { thread -> thread.threadId }
     val cwdFilter = resolveProjectDirectoryFromPath(path)
-      ?.let { workingDirectory -> com.intellij.agent.workbench.codex.common.normalizeRootPath(workingDirectory.toString().replace('\\', '/')) }
+      ?.let { workingDirectory ->
+        com.intellij.agent.workbench.codex.common.normalizeRootPath(workingDirectory.toString().replace('\\', '/'))
+      }
     return exactRolloutThreadLoader.loadThreads(
       cwdFilter = cwdFilter,
       threadIds = fullyMappedThreads.mapTo(LinkedHashSet()) { thread -> thread.threadId },
@@ -887,7 +889,7 @@ private fun List<AgentSessionUsageSnapshot>?.toFrozenThreadCost(
   threadPathIndex: CodexThreadPathIndex,
 ): AgentSessionCost? {
   val usageSnapshots = this?.takeIf(List<AgentSessionUsageSnapshot>::isNotEmpty) ?: return null
-  val cost = usageSnapshots.toAgentSessionCost(calculateCost)
+  val cost = usageSnapshots.aggregateAgentSessionUsageCost(calculateCost)
              ?: AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
   threadPathIndex.recordFrozenCost(threadId, updatedAt, cost)
   return cost
@@ -901,29 +903,6 @@ private fun toAgentSessionThread(thread: CodexBackendThread, cost: AgentSessionC
     subAgentActivitiesById = thread.subAgentActivitiesById,
     cost = cost,
   )
-}
-
-private fun List<AgentSessionUsageSnapshot>.toAgentSessionCost(
-  calculateCost: (AgentSessionUsageSnapshot) -> AgentSessionCost,
-): AgentSessionCost? {
-  if (isEmpty()) return null
-
-  val componentCosts = map(calculateCost)
-  if (componentCosts.any { it.amountUsd == null }) {
-    return AgentSessionCost(amountUsd = null, kind = AgentSessionCostKind.UNAVAILABLE)
-  }
-
-  val totalAmount = componentCosts.fold(BigDecimal.ZERO) { acc, cost ->
-    acc + checkNotNull(cost.amountUsd)
-  }
-  val kind = if (componentCosts.all { it.kind == AgentSessionCostKind.EXACT }) {
-    AgentSessionCostKind.EXACT
-  }
-  else {
-    AgentSessionCostKind.ESTIMATED
-  }
-  val matchedModelId = componentCosts.mapNotNull(AgentSessionCost::matchedModelId).distinct().singleOrNull()
-  return AgentSessionCost(amountUsd = totalAmount, kind = kind, matchedModelId = matchedModelId)
 }
 
 private fun toAgentSessionThread(

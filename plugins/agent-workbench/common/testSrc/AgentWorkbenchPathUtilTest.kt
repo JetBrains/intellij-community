@@ -4,8 +4,8 @@ package com.intellij.agent.workbench.common
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Timeout
-import java.util.concurrent.TimeUnit
 import java.nio.file.Path
+import java.util.concurrent.TimeUnit
 
 @Timeout(value = 2, unit = TimeUnit.MINUTES)
 class AgentWorkbenchPathUtilTest {
@@ -25,5 +25,22 @@ class AgentWorkbenchPathUtilTest {
     assertThat(parseAgentWorkbenchPathOrNull(invalidPath)).isNull()
     assertThat(normalizeAgentWorkbenchPath(invalidPath)).isEqualTo(invalidPath)
     assertThat(normalizeAgentWorkbenchPathOrNull(invalidPath)).isNull()
+  }
+
+  @Test
+  fun normalizesAgentSessionProjectPaths() {
+    val nativePath = Path.of("workspace", "child").toString()
+
+    assertThat(normalizeAgentSessionProjectPath("  $nativePath/  ")).isEqualTo("workspace/child")
+    assertThat(normalizeAgentSessionProjectPath("/")).isEqualTo("/")
+    assertThat(normalizeAgentSessionProjectPath("   ")).isNull()
+    assertThat(normalizeAgentSessionProjectPath("bad" + '\u0000' + "path")).isNull()
+  }
+
+  @Test
+  fun normalizesAgentSessionTitles() {
+    assertThat(normalizeAgentSessionTitle("  first\nsecond\tthird\r  ")).isEqualTo("first second third")
+    assertThat(normalizeAgentSessionTitle("   ")).isNull()
+    assertThat(normalizeAgentSessionTitle(null)).isNull()
   }
 }

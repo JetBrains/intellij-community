@@ -5,7 +5,6 @@ import com.intellij.agent.workbench.common.AgentThreadActivity
 import com.intellij.agent.workbench.common.session.AgentSessionProvider
 import com.intellij.agent.workbench.common.session.AgentSessionThread
 import com.intellij.openapi.project.Project
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import java.util.concurrent.ConcurrentHashMap
@@ -81,40 +80,6 @@ abstract class BaseAgentSessionSource(
 
   final override suspend fun listThreadsFromClosedProject(path: String): List<AgentSessionThread> {
     return listThreads(path = path, openProject = null)
-  }
-
-  override suspend fun refreshThreads(request: AgentSessionSourceRefreshRequest): AgentSessionSourceRefreshResult {
-    if (request.paths.isEmpty()) {
-      return AgentSessionSourceRefreshResult()
-    }
-
-    val prefetched = try {
-      prefetchThreads(request.paths)
-    }
-    catch (e: Throwable) {
-      if (e is CancellationException) throw e
-      emptyMap()
-    }
-    val completeThreadsByPath = LinkedHashMap<String, List<AgentSessionThread>>(request.paths.size)
-    val failuresByPath = LinkedHashMap<String, Throwable>()
-    for (path in request.paths) {
-      val prefetchedThreads = prefetched[path]
-      if (prefetchedThreads != null) {
-        completeThreadsByPath[path] = prefetchedThreads
-        continue
-      }
-      try {
-        completeThreadsByPath[path] = listThreads(path = path, openProject = null)
-      }
-      catch (e: Throwable) {
-        if (e is CancellationException) throw e
-        failuresByPath[path] = e
-      }
-    }
-    return AgentSessionSourceRefreshResult(
-      completeThreadsByPath = completeThreadsByPath,
-      failuresByPath = failuresByPath,
-    )
   }
 
   protected abstract suspend fun listThreads(path: String, openProject: Project?): List<AgentSessionThread>

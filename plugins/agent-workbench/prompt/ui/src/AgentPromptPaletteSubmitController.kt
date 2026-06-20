@@ -14,8 +14,8 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchError
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLauncherBridge
 import com.intellij.agent.workbench.prompt.core.AgentPromptProjectPathCandidate
+import com.intellij.agent.workbench.prompt.core.dataContextOrNull
 import com.intellij.agent.workbench.prompt.ui.context.buildExtensionActionDataContext
-import com.intellij.agent.workbench.prompt.ui.context.dataContextOrNull
 import com.intellij.agent.workbench.sessions.core.providers.AgentPromptProviderOptionTarget
 import com.intellij.agent.workbench.sessions.core.providers.isPlanModeBlockedForExistingThread
 import com.intellij.agent.workbench.sessions.core.providers.resolveEffectiveProviderOptionIds
