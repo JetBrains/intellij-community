@@ -7,6 +7,7 @@
     <module name="intellij.agent.workbench.json"/>
     <module name="intellij.agent.workbench.prompt.core"/>
     <module name="intellij.agent.workbench.sessions"/>
+    <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.terminal.backend"/>
   </dependencies>
@@ -34,6 +35,10 @@
       implementation="com.intellij.agent.workbench.pi.sessions.PiAgentSessionProviderDescriptor"/>
     <httpRequestHandler implementation="com.intellij.agent.workbench.pi.sessions.PiExtensionStatusHttpRequestHandler"/>
     <httpRequestHandler implementation="com.intellij.agent.workbench.pi.sessions.PiExtensionControlWebSocketHandler"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.agent.workbench">
+    <settingsContributor implementation="com.intellij.agent.workbench.pi.sessions.PiProviderSettingsContributor"/>
   </extensions>
 
   <applicationListeners>

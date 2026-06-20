@@ -4,7 +4,7 @@ package com.intellij.agent.workbench.chat
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPathOrNull
 import com.intellij.agent.workbench.common.parseAgentWorkbenchPathOrNull
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
 import com.intellij.ide.RecentProjectColorPalette
 import com.intellij.ide.RecentProjectColorInfo
 import com.intellij.ide.RecentProjectsManagerBase

@@ -11,7 +11,6 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationModel
 import com.intellij.agent.workbench.prompt.core.AgentPromptGenerationSettings
 import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
-import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.launch.insertArgumentsBefore
 import com.intellij.agent.workbench.sessions.core.launch.removeOptions
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
@@ -20,7 +19,6 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAction
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchCheckboxSetting
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -101,22 +99,6 @@ internal class PiAgentSessionProviderDescriptor(
 
   override val resolvesGenerationModelCatalogForAutoSettings: Boolean
     get() = true
-
-  override val providerSettings: List<AgentWorkbenchCheckboxSetting>
-    get() = listOf(
-      AgentWorkbenchCheckboxSetting(
-        text = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.omlx.models"),
-        description = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.omlx.models.description"),
-        isSelected = PiOmlxSupportSettings::isEnabled,
-        setSelected = PiOmlxSupportSettings::setEnabled,
-      ),
-      AgentWorkbenchCheckboxSetting(
-        text = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.jbcentral.models"),
-        description = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.jbcentral.models.description"),
-        isSelected = PiJbCentralSupportSettings::isEnabled,
-        setSelected = PiJbCentralSupportSettings::setEnabled,
-      )
-    )
 
   override val archiveRefreshDelayMs: Long
     get() = 1_000L

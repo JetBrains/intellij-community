@@ -12,7 +12,6 @@ import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProvider
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionSource
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionTerminalLaunchSpec
 import com.intellij.agent.workbench.sessions.core.providers.AgentThreadRenameAction
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchCheckboxSetting
 import com.intellij.openapi.project.Project
 import javax.swing.Icon
 
@@ -36,7 +35,6 @@ open class TestAgentSessionProviderDescriptor(
   override val suppressArchivedThreadsDuringRefresh: Boolean = false,
   override val supportsArchiveThread: Boolean = false,
   override val supportsUnarchiveThread: Boolean = false,
-  override val providerSettings: List<AgentWorkbenchCheckboxSetting> = emptyList(),
   private val newSessionLabelKeyOverride: String? = null,
   override val quickStartActionTextKey: String = "action.AgentWorkbenchSessions.NewThreadQuick.text",
   override val quickStartActionDescriptionKey: String = "action.AgentWorkbenchSessions.NewThreadQuick.description",

@@ -2,7 +2,7 @@
 package com.intellij.agent.workbench.chat
 
 import com.intellij.agent.workbench.common.normalizeAgentWorkbenchPath
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsListener
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsListener
 import com.intellij.ide.ProjectColorChangeListener
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project

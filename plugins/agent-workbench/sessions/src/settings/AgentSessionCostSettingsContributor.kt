@@ -3,8 +3,8 @@ package com.intellij.agent.workbench.sessions.settings
 
 import com.intellij.agent.workbench.sessions.AgentSessionCostPresentationSettings
 import com.intellij.agent.workbench.sessions.AgentSessionsBundle
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchCheckboxSetting
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsContributor
+import com.intellij.agent.workbench.settings.AgentWorkbenchCheckboxSetting
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributor
 
 internal class AgentSessionCostSettingsContributor : AgentWorkbenchSettingsContributor {
   override fun checkboxSettings(): List<AgentWorkbenchCheckboxSetting> {

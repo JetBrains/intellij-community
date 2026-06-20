@@ -3,7 +3,7 @@
 
   <applicationListeners>
     <listener class="com.intellij.agent.workbench.sessions.frame.AgentChatThreadOutlineAvailabilitySettingsListener"
-              topic="com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettingsListener"/>
+              topic="com.intellij.agent.workbench.settings.AgentWorkbenchSettingsListener"/>
   </applicationListeners>
 
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
@@ -11,6 +11,7 @@
     <module name="intellij.agent.workbench.chat"/>
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.agent.workbench.ui"/>
   </dependencies>

@@ -44,6 +44,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.settings" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.agent.workbench.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" scope="TEST" />

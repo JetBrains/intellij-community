@@ -35,6 +35,7 @@
     <module name="intellij.agent.workbench.pi.sessions"/>
     <module name="intellij.agent.workbench.pi.sessions.filewatch"/>
     <module name="intellij.agent.workbench.terminal.sessions"/>
+    <module name="intellij.agent.workbench.settings"/>
     <module name="intellij.agent.workbench.sessions.core"/>
     <module name="intellij.agent.workbench.sessions.cost"/>
     <module name="intellij.agent.workbench.sessions.launch.config.backend"/>

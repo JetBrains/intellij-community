@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.agent.workbench.sessions.core.settings
+package com.intellij.agent.workbench.sessions.settings
 
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsListener
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.frame.OPEN_CHAT_IN_DEDICATED_FRAME_SETTING_ID
 import com.intellij.openapi.Disposable

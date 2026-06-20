@@ -1009,6 +1009,7 @@ plugins/agent-workbench/sessions-cost
 plugins/agent-workbench/sessions-jbcentral
 plugins/agent-workbench/sessions-launch-config/backend
 plugins/agent-workbench/sessions-toolwindow
+plugins/agent-workbench/settings
 plugins/agent-workbench/terminal/sessions
 plugins/agent-workbench/ui
 plugins/agent-workbench/vcs-merge

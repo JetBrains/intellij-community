@@ -19,7 +19,7 @@ import com.intellij.agent.workbench.sessions.actions.AgentSessionsSelectThreadIn
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsShowArchivedThreadsAction
 import com.intellij.agent.workbench.sessions.actions.AgentSessionsSwitchSourceAndChatAction
 import com.intellij.agent.workbench.sessions.actions.DumbAwareDefaultActionGroup
-import com.intellij.agent.workbench.sessions.core.settings.AgentWorkbenchSettings
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettings
 import com.intellij.agent.workbench.sessions.frame.AgentChatOpenModeSettings
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.icons.AllIcons

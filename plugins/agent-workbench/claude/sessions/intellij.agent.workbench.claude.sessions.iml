@@ -52,6 +52,7 @@
     <orderEntry type="module" module-name="intellij.agent.workbench.json" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.actions" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.settings" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.cost" />
     <orderEntry type="module" module-name="intellij.agent.workbench.ui" />

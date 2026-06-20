@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
@@ -37,21 +37,14 @@ dependencies {
   intellijPlatform {
     if (platformLocalPath != null) {
       local(platformLocalPath)
-    } else {
+    }
+    else {
       intellijIdeaUltimate(platformVersion) { useInstaller = false }
     }
     jetbrainsRuntime()
   }
 
   implementation(project(":common"))
-  implementation(project(":prompt-core"))
-  implementation(project(":sessions-core"))
-  implementation(project(":ui"))
-  implementation(project(":chat"))
-  implementation(project(":sessions"))
-  implementation(project(":sessions-jbcentral"))
-  implementation(project(":sessions-actions"))
-  implementation(project(":settings"))
 }
 
 kotlin {

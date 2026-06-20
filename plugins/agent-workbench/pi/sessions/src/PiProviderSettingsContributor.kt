@@ -1,0 +1,29 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.agent.workbench.pi.sessions
+
+import com.intellij.agent.workbench.common.session.AgentSessionProvider
+import com.intellij.agent.workbench.sessions.AgentSessionsBundle
+import com.intellij.agent.workbench.settings.AgentWorkbenchCheckboxSetting
+import com.intellij.agent.workbench.settings.AgentWorkbenchSettingsContributor
+
+internal class PiProviderSettingsContributor : AgentWorkbenchSettingsContributor {
+  override fun providerCheckboxSettings(provider: AgentSessionProvider): List<AgentWorkbenchCheckboxSetting> {
+    if (provider != AgentSessionProvider.PI) {
+      return emptyList()
+    }
+    return listOf(
+      AgentWorkbenchCheckboxSetting(
+        text = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.omlx.models"),
+        description = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.omlx.models.description"),
+        isSelected = PiOmlxSupportSettings::isEnabled,
+        setSelected = PiOmlxSupportSettings::setEnabled,
+      ),
+      AgentWorkbenchCheckboxSetting(
+        text = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.jbcentral.models"),
+        description = AgentSessionsBundle.message("settings.agent.workbench.provider.pi.jbcentral.models.description"),
+        isSelected = PiJbCentralSupportSettings::isEnabled,
+        setSelected = PiJbCentralSupportSettings::setEnabled,
+      )
+    )
+  }
+}
