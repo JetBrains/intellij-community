@@ -15,7 +15,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:slf4j-api",
-        "@lib//:joni",
+        "//libraries/joni",
         "//libraries/opentelemetry",
     ],
 )
@@ -46,7 +46,8 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:slf4j-api",
-        "@lib//:joni",
+        "//libraries/joni",
+        "//libraries/joni:joni_test_lib",
         "//libraries/opentelemetry",
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//json/networknt.wrapper",

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="joni" type="repository">
+        <properties maven-id="org.jruby.joni:joni:2.2.7">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.7/joni-2.2.7.jar">
+              <sha256sum>6054ab5bbf2dcc633fe62a359f1b39518e591fa76c90f9d50c7abb987d1f6774</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.64/jcodings-1.0.64.jar">
+              <sha256sum>0b4d0b0c1e2f1bdf17f4c30ecf5261bf62763af6f18b0fd1e743226c994ccf96</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.7/joni-2.2.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.64/jcodings-1.0.64.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jruby/joni/joni/2.2.7/joni-2.2.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1.0.64/jcodings-1.0.64-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

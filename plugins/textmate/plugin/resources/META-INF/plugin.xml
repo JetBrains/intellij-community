@@ -22,4 +22,8 @@
     <module name="intellij.textmate.frontend.split"/>
   </content>
 
+  <content>
+    <module name="intellij.libraries.joni" loading="embedded"/>
+  </content>
+
 </idea-plugin>
