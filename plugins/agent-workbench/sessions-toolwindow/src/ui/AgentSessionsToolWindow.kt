@@ -23,7 +23,7 @@ import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailab
 import com.intellij.agent.workbench.sessions.service.AgentSessionReadService
 import com.intellij.agent.workbench.sessions.service.AgentSessionRefreshService
 import com.intellij.agent.workbench.sessions.service.AgentSessionsToolWindowVisibilityService
-import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsListener
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsListener
 import com.intellij.agent.workbench.sessions.state.AgentSessionThreadViewStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.toolwindow.tree.SessionTreeId

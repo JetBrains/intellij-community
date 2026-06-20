@@ -24,8 +24,8 @@ import com.intellij.agent.workbench.sessions.frame.AgentWorkbenchDedicatedFrameP
 import com.intellij.agent.workbench.sessions.model.ArchiveThreadTarget
 import com.intellij.agent.workbench.sessions.model.ProjectEntry
 import com.intellij.agent.workbench.sessions.model.hasAnyProviderSnapshot
-import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsListener
-import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsListener
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionWarmStateService
 import com.intellij.agent.workbench.sessions.state.AgentSessionsStateStore
 import com.intellij.agent.workbench.sessions.state.SessionWarmState
@@ -84,7 +84,8 @@ class AgentSessionRefreshService internal constructor(
   constructor(serviceScope: CoroutineScope) : this(
     serviceScope = serviceScope,
     sessionSourcesProvider = {
-      service<AgentSessionProviderSettingsService>().enabledSessionSources(AgentSessionProviders.sessionSources())
+      val providerSettings = service<AgentSessionProviderSettingsService>()
+      AgentSessionProviders.sessionSources().filter { source -> providerSettings.isProviderEnabled(source.provider) }
     },
     projectEntriesProvider = AgentSessionProjectCatalog()::collectProjects,
     stateStore = service<AgentSessionsStateStore>(),

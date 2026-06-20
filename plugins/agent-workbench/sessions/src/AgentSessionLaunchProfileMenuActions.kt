@@ -17,7 +17,7 @@ import com.intellij.agent.workbench.sessions.core.providers.buildAgentSessionPro
 import com.intellij.agent.workbench.sessions.core.providers.buildBuiltInLaunchProfiles
 import com.intellij.agent.workbench.sessions.statistics.AgentWorkbenchEntryPoint
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
-import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.ui.AgentWorkbenchPopupRow
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUiKind
@@ -50,7 +50,8 @@ fun buildAgentSessionLaunchProfileMenuModel(
   bridges: List<AgentSessionProviderDescriptor>,
   project: Project,
 ): AgentSessionProviderMenuModel {
-  val enabledBridges = service<AgentSessionProviderSettingsService>().enabledProviders(bridges)
+  val providerSettings = service<AgentSessionProviderSettingsService>()
+  val enabledBridges = bridges.filter { bridge -> providerSettings.isProviderEnabled(bridge.provider) }
   return buildAgentSessionProviderMenuModel(enabledBridges, providerAvailabilitySnapshot(enabledBridges, project))
 }
 

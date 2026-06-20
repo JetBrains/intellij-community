@@ -46,6 +46,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.common" />
     <orderEntry type="module" module-name="intellij.agent.workbench.prompt.core" />
+    <orderEntry type="module" module-name="intellij.agent.workbench.settings" />
     <orderEntry type="module" module-name="intellij.agent.workbench.sessions.core" />
     <orderEntry type="module" module-name="intellij.agent.workbench.ui" />
     <orderEntry type="module" module-name="intellij.terminal" />

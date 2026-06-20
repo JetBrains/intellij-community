@@ -3,7 +3,6 @@ package com.intellij.agent.workbench.prompt.ui.actions
 
 import com.intellij.agent.workbench.prompt.core.AGENT_PROMPT_INITIAL_TEXT_DATA_KEY
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
-import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuModel
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
@@ -12,7 +11,7 @@ import com.intellij.agent.workbench.sessions.core.providers.buildBuiltInLaunchPr
 import com.intellij.agent.workbench.sessions.core.providers.effectiveLaunchProfiles
 import com.intellij.agent.workbench.sessions.providerItemMonochromeIconWithMode
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
-import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
+import com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService
 import com.intellij.agent.workbench.sessions.state.AgentSessionLaunchProfileStateService
 import com.intellij.icons.AllIcons
 import com.intellij.ide.scratch.ScratchUtil
@@ -99,9 +98,10 @@ private fun openGlobalPromptWithInitialText(e: AnActionEvent, promptText: String
 }
 
 private fun resolveScratchPromptActionIcon(project: Project): Icon {
-  val providers = service<AgentSessionProviderSettingsService>().enabledProviders(
-    AgentSessionProviders.allProviders().filter(AgentSessionProviderDescriptor::supportsPromptLaunch)
-  )
+  val providerSettings = service<AgentSessionProviderSettingsService>()
+  val providers = AgentSessionProviders.allProviders().filter { provider ->
+    provider.supportsPromptLaunch && providerSettings.isProviderEnabled(provider.provider)
+  }
   val availabilityService = project.service<AgentSessionProviderAvailabilityService>()
   availabilityService.requestRefresh(providers)
   val menuModel = buildAgentSessionProviderMenuModel(providers, availabilityService.availabilitySnapshot(providers))

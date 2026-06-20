@@ -14,5 +14,6 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationSettings service="com.intellij.agent.workbench.settings.AgentWorkbenchSettings"/>
+    <applicationSettings service="com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService"/>
   </extensions>
 </idea-plugin>
