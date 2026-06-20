@@ -8,6 +8,7 @@ import com.intellij.agent.workbench.prompt.core.AgentPromptInitialMessageRequest
 import com.intellij.agent.workbench.prompt.core.AgentPromptLaunchProfile
 import com.intellij.agent.workbench.prompt.core.AgentPromptReasoningEffort
 import com.intellij.agent.workbench.sessions.AgentSessionLaunchProfileMenuItem
+import com.intellij.agent.workbench.sessions.AgentSessionsBundle
 import com.intellij.agent.workbench.sessions.core.providers.AgentInitialMessagePlan
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderMenuItem
@@ -17,13 +18,16 @@ import com.intellij.agent.workbench.sessions.core.providers.builtInLaunchProfile
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityService
 import com.intellij.agent.workbench.sessions.settings.AgentSessionProviderSettingsService
 import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.vcs.merge.MergeResolveActionContext
 import com.intellij.openapi.vcs.merge.MergeResolveActionSupport
 import com.intellij.testFramework.LightVirtualFile
@@ -240,6 +244,88 @@ internal class AgentResolveConflictsActionTest {
   }
 
   @Test
+  fun primaryActionFallsBackToCodexStandardWhenNoMergeProfileIsRemembered() {
+    var activeProfileId: String? = null
+    var startedRequest: AgentVcsMergeLaunchRequest? = null
+    val action = AgentResolveConflictsAction(
+      allProviders = {
+        listOf(
+          TestAgentSessionProviderDescriptor(AgentSessionProvider.CLAUDE, setOf(AgentSessionLaunchMode.STANDARD)),
+          TestAgentSessionProviderDescriptor(AgentSessionProvider.CODEX, setOf(AgentSessionLaunchMode.STANDARD)),
+        )
+      },
+      activeVcsMergeLaunchProfileId = { null },
+      setActiveVcsMergeLaunchProfileId = { profileId -> activeProfileId = profileId },
+      startSession = { _, request -> startedRequest = request },
+    )
+
+    action.actionPerformed(createActionEvent(action))
+
+    val expectedProfileId = builtInLaunchProfileId(AgentSessionProvider.CODEX, AgentSessionLaunchMode.STANDARD)
+    assertThat(startedRequest?.agentProvider).isEqualTo(AgentSessionProvider.CODEX)
+    assertThat(startedRequest?.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(startedRequest?.launchProfileId).isEqualTo(expectedProfileId)
+    assertThat(activeProfileId).isEqualTo(expectedProfileId)
+  }
+
+  @Test
+  fun primaryActionFallsBackToFirstEnabledProfileWhenCodexStandardIsUnavailable() {
+    val project = ProjectManager.getInstance().defaultProject
+    project.service<AgentSessionProviderAvailabilityService>().setAvailabilityForTest(
+      mapOf(
+        AgentSessionProvider.CODEX to false,
+        AgentSessionProvider.CLAUDE to true,
+      ),
+    )
+    var startedRequest: AgentVcsMergeLaunchRequest? = null
+    val action = AgentResolveConflictsAction(
+      allProviders = {
+        listOf(
+          TestAgentSessionProviderDescriptor(AgentSessionProvider.CODEX, setOf(AgentSessionLaunchMode.STANDARD)),
+          TestAgentSessionProviderDescriptor(AgentSessionProvider.CLAUDE, setOf(AgentSessionLaunchMode.STANDARD)),
+        )
+      },
+      activeVcsMergeLaunchProfileId = { null },
+      startSession = { _, request -> startedRequest = request },
+    )
+
+    action.actionPerformed(createActionEvent(action))
+
+    assertThat(startedRequest?.agentProvider).isEqualTo(AgentSessionProvider.CLAUDE)
+    assertThat(startedRequest?.launchMode).isEqualTo(AgentSessionLaunchMode.STANDARD)
+    assertThat(startedRequest?.launchProfileId)
+      .isEqualTo(builtInLaunchProfileId(AgentSessionProvider.CLAUDE, AgentSessionLaunchMode.STANDARD))
+  }
+
+  @Test
+  fun oneShotDialogSelectorMarksSameFallbackProfileAsPrimaryAction() {
+    val action = AgentResolveConflictsAction(
+      allProviders = {
+        listOf(
+          TestAgentSessionProviderDescriptor(AgentSessionProvider.CLAUDE, setOf(AgentSessionLaunchMode.STANDARD)),
+          TestAgentSessionProviderDescriptor(AgentSessionProvider.CODEX, setOf(AgentSessionLaunchMode.STANDARD)),
+        )
+      },
+      activeVcsMergeLaunchProfileId = { null },
+    )
+
+    val component = createDialogComponent(action) as JBOptionButton
+    val optionActions = checkNotNull(component.options).map { option ->
+      option.getValue(OptionAction.AN_ACTION) as AnAction
+    }
+    val selectedAction = optionActions.single { option ->
+      option.templatePresentation.getClientProperty(ActionUtil.SECONDARY_ICON) != null
+    }
+
+    assertThat(optionActions.map { option -> option.templatePresentation.text }).containsExactly(
+      AgentSessionsBundle.message("toolwindow.action.new.session.claude"),
+      AgentSessionsBundle.message("toolwindow.action.new.session.codex"),
+    )
+    assertThat(selectedAction.templatePresentation.text)
+      .isEqualTo(AgentSessionsBundle.message("toolwindow.action.new.session.codex"))
+  }
+
+  @Test
   fun iterativeDialogUsesOptionButtonWhenSeveralProviderEntriesAreAvailable() {
     val action = AgentResolveConflictsAction(
       allProviders = {
@@ -313,23 +399,35 @@ internal class AgentResolveConflictsActionTest {
   }
 
   private fun createDialogComponent(action: AgentResolveConflictsAction, place: String = ONE_SHOT_DIALOG_ACTION_PLACE): JComponent {
-    val project = ProjectManager.getInstance().defaultProject
-    val file = LightVirtualFile("conflicts.txt", "content")
-    val mergeContext = MergeResolveActionContext(
-      project = project,
-      selectionHintFilesProvider = { listOf(file) },
-    )
     action.templatePresentation.text = "Resolve with Agent"
-    val dataContext = SimpleDataContext.builder()
-      .add(CommonDataKeys.PROJECT, project)
-      .add(MergeResolveActionContext.KEY, mergeContext)
-      .build()
+    val dataContext = createMergeDataContext()
     val presentation = action.templatePresentation.clone()
     action.update(AnActionEvent.createEvent(dataContext, presentation, place, ActionUiKind.NONE, null))
 
     return action.createCustomComponent(presentation, place).also { component ->
       action.updateCustomComponent(component, presentation)
     }
+  }
+
+  private fun createActionEvent(action: AgentResolveConflictsAction): AnActionEvent {
+    return AnActionEvent.createEvent(createMergeDataContext(),
+                                     action.templatePresentation.clone(),
+                                     ONE_SHOT_DIALOG_ACTION_PLACE,
+                                     ActionUiKind.NONE,
+                                     null)
+  }
+
+  private fun createMergeDataContext(): DataContext {
+    val project = ProjectManager.getInstance().defaultProject
+    val file = LightVirtualFile("conflicts.txt", "content")
+    val mergeContext = MergeResolveActionContext(
+      project = project,
+      selectionHintFilesProvider = { listOf(file) },
+    )
+    return SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(MergeResolveActionContext.KEY, mergeContext)
+      .build()
   }
 
   private fun resolveRequest(action: AgentResolveConflictsAction, dataContext: DataContext): AgentVcsMergeLaunchRequest {
