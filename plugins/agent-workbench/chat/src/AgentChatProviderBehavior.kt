@@ -105,6 +105,15 @@ interface AgentChatInitialMessageDispatchContext {
 }
 
 @ApiStatus.Internal
+data class AgentChatInitialMessageSendObservation(
+  @JvmField val outputText: String,
+  @JvmField val recentOutputTail: String,
+) {
+  val textWithRecentOutputTail: String
+    get() = listOf(outputText, recentOutputTail).filter(String::isNotEmpty).joinToString(separator = "\n")
+}
+
+@ApiStatus.Internal
 interface AgentChatProviderBehavior {
   fun supportsPendingThreadRefreshRetry(file: AgentChatBehaviorFile): Boolean = false
 
@@ -136,7 +145,7 @@ interface AgentChatProviderBehavior {
   fun afterInitialMessageSendObservation(
     file: AgentChatBehaviorFile,
     dispatch: AgentChatInitialMessageDispatchContext,
-    outputText: String,
+    observation: AgentChatInitialMessageSendObservation,
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision = AgentChatInitialMessageRetryDecision.PROCEED
 }
@@ -178,13 +187,13 @@ private object JunieAgentChatProviderBehavior : AgentChatProviderBehavior {
   override fun afterInitialMessageSendObservation(
     file: AgentChatBehaviorFile,
     dispatch: AgentChatInitialMessageDispatchContext,
-    outputText: String,
+    observation: AgentChatInitialMessageSendObservation,
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision {
     if (dispatch.action != AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE) {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
-    return if (isJuniePlanModeVisible(outputText)) {
+    return if (isJuniePlanModeVisible(observation.textWithRecentOutputTail)) {
       AgentChatInitialMessageRetryDecision.PROCEED
     }
     else {

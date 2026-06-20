@@ -1542,9 +1542,10 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexPlanModeWaitsForMcpStartupTailToClearBeforeFirstPlanSend() {
+  fun codexPlanModeMcpStartupPostSendOutputRetriesPlanStepBeforePrompt() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
+    terminalTabs.tab.enqueuePostSendOutput(codexMcpStartupTerminalSnapshot())
     val file = testFile().also {
       it.updateInitialMessageMetadata(
         initialMessageDispatchSteps = codexPlanDispatchSteps("Retry after MCP startup"),
@@ -1557,33 +1558,38 @@ class AgentChatFileEditorLifecycleTest {
 
     editor.selectNotify()
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
-    terminalTabs.tab.emitMeaningfulOutput(codexMcpStartupTerminalSnapshot())
-    Thread.sleep(350)
-
-    assertThat(file.initialMessageDispatchStepIndex).isZero()
-    assertThat(terminalTabs.tab.sentTexts).isEmpty()
-
-    terminalTabs.tab.emitMeaningfulOutput(codexIdleTerminalSnapshot())
+    terminalTabs.tab.emitMeaningfulOutput("ready for first /plan")
     waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
 
+    terminalTabs.tab.emitMeaningfulOutput(codexIdleTerminalSnapshot())
+    waitForCondition(timeoutMs = 5_000) {
+      file.initialMessageDispatchStepIndex == 1 &&
+      terminalTabs.tab.sentTexts.size == 2
+    }
+
     assertThat(terminalTabs.tab.sentTexts)
-      .containsExactly(SentTerminalText("/plan", shouldExecute = true))
+      .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("/plan", shouldExecute = true),
+      )
 
     terminalTabs.tab.emitMeaningfulOutput("ready for prompt")
-    waitForCondition { terminalTabs.tab.sentTexts.size == 2 }
+    waitForCondition { terminalTabs.tab.sentTexts.size == 3 }
 
     assertThat(file.initialMessageSent).isTrue()
     assertThat(terminalTabs.tab.sentTexts)
       .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
         SentTerminalText("/plan", shouldExecute = true),
         SentTerminalText("Retry after MCP startup", shouldExecute = true),
       )
   }
 
   @Test
-  fun codexPlanModeWaitsForQueueHintTailToClearBeforeFirstPlanSend() {
+  fun codexPlanModeQueueHintPostSendOutputRetriesPlanStepBeforePrompt() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
+    terminalTabs.tab.enqueuePostSendOutput(codexQueueHintTerminalSnapshot())
     val file = testFile().also {
       it.updateInitialMessageMetadata(
         initialMessageDispatchSteps = codexPlanDispatchSteps("Retry after queue hint"),
@@ -1596,33 +1602,38 @@ class AgentChatFileEditorLifecycleTest {
 
     editor.selectNotify()
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
-    terminalTabs.tab.emitMeaningfulOutput(codexQueueHintTerminalSnapshot())
-    Thread.sleep(350)
-
-    assertThat(file.initialMessageDispatchStepIndex).isZero()
-    assertThat(terminalTabs.tab.sentTexts).isEmpty()
-
-    terminalTabs.tab.emitMeaningfulOutput(codexIdleTerminalSnapshot())
+    terminalTabs.tab.emitMeaningfulOutput("ready for first /plan")
     waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
 
+    terminalTabs.tab.emitMeaningfulOutput(codexIdleTerminalSnapshot())
+    waitForCondition(timeoutMs = 5_000) {
+      file.initialMessageDispatchStepIndex == 1 &&
+      terminalTabs.tab.sentTexts.size == 2
+    }
+
     assertThat(terminalTabs.tab.sentTexts)
-      .containsExactly(SentTerminalText("/plan", shouldExecute = true))
+      .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("/plan", shouldExecute = true),
+      )
 
     terminalTabs.tab.emitMeaningfulOutput("ready for prompt")
-    waitForCondition { terminalTabs.tab.sentTexts.size == 2 }
+    waitForCondition { terminalTabs.tab.sentTexts.size == 3 }
 
     assertThat(file.initialMessageSent).isTrue()
     assertThat(terminalTabs.tab.sentTexts)
       .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
         SentTerminalText("/plan", shouldExecute = true),
         SentTerminalText("Retry after queue hint", shouldExecute = true),
       )
   }
 
   @Test
-  fun codexPlanModeWaitsForRunningHookTailToClearBeforeFirstPlanSend() {
+  fun codexPlanModeRunningHookPostSendOutputRetriesPlanStepBeforePrompt() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
+    terminalTabs.tab.enqueuePostSendOutput(codexRunningHookTerminalSnapshot())
     val file = testFile().also {
       it.updateInitialMessageMetadata(
         initialMessageDispatchSteps = codexPlanDispatchSteps("Retry after SessionStart hook"),
@@ -1635,24 +1646,28 @@ class AgentChatFileEditorLifecycleTest {
 
     editor.selectNotify()
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
-    terminalTabs.tab.emitMeaningfulOutput(codexRunningHookTerminalSnapshot())
-    Thread.sleep(350)
-
-    assertThat(file.initialMessageDispatchStepIndex).isZero()
-    assertThat(terminalTabs.tab.sentTexts).isEmpty()
-
-    terminalTabs.tab.emitMeaningfulOutput(codexCompletedHookTerminalSnapshot())
+    terminalTabs.tab.emitMeaningfulOutput("ready for first /plan")
     waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
 
+    terminalTabs.tab.emitMeaningfulOutput(codexCompletedHookTerminalSnapshot())
+    waitForCondition(timeoutMs = 5_000) {
+      file.initialMessageDispatchStepIndex == 1 &&
+      terminalTabs.tab.sentTexts.size == 2
+    }
+
     assertThat(terminalTabs.tab.sentTexts)
-      .containsExactly(SentTerminalText("/plan", shouldExecute = true))
+      .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
+        SentTerminalText("/plan", shouldExecute = true),
+      )
 
     terminalTabs.tab.emitMeaningfulOutput("ready for prompt")
-    waitForCondition { terminalTabs.tab.sentTexts.size == 2 }
+    waitForCondition { terminalTabs.tab.sentTexts.size == 3 }
 
     assertThat(file.initialMessageSent).isTrue()
     assertThat(terminalTabs.tab.sentTexts)
       .containsExactly(
+        SentTerminalText("/plan", shouldExecute = true),
         SentTerminalText("/plan", shouldExecute = true),
         SentTerminalText("Retry after SessionStart hook", shouldExecute = true),
       )
@@ -1690,7 +1705,7 @@ class AgentChatFileEditorLifecycleTest {
   }
 
   @Test
-  fun codexPlanModeOldBusyOutputDoesNotBlockOnceLatestTailIsIdle() {
+  fun codexPlanModeOldBusyOutputTailDoesNotDelayFirstPlanSend() {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
     val file = testFile().also {
@@ -1706,19 +1721,13 @@ class AgentChatFileEditorLifecycleTest {
     editor.selectNotify()
     terminalTabs.tab.setSessionState(TerminalViewSessionState.Running)
     terminalTabs.tab.emitMeaningfulOutput("'/plan' is disabled while a task is in progress.")
-    Thread.sleep(350)
-
-    assertThat(file.initialMessageDispatchStepIndex).isZero()
-    assertThat(terminalTabs.tab.sentTexts).isEmpty()
-
-    terminalTabs.tab.emitMeaningfulOutput(codexIdleTerminalSnapshot())
     waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
 
     assertThat(terminalTabs.tab.sentTexts)
       .containsExactly(SentTerminalText("/plan", shouldExecute = true))
 
     terminalTabs.tab.emitMeaningfulOutput("ready for prompt")
-    waitForCondition { terminalTabs.tab.sentTexts.size == 2 }
+    waitForCondition(timeoutMs = 5_000) { terminalTabs.tab.sentTexts.size == 2 }
 
     assertThat(file.initialMessageSent).isTrue()
     assertThat(terminalTabs.tab.sentTexts)
@@ -1787,7 +1796,7 @@ class AgentChatFileEditorLifecycleTest {
     val terminalTabs = FakeAgentChatTerminalTabs()
     terminalTabs.tab.readinessResult = AgentChatTerminalInputReadiness.TIMEOUT
     terminalTabs.tab.enqueueDelayedPostSendOutput(
-      delayMs = 900,
+      delayMs = 100,
       output = "'/plan' is disabled while a task is in progress.",
     )
     val file = testFile().also {
@@ -1805,13 +1814,7 @@ class AgentChatFileEditorLifecycleTest {
     terminalTabs.tab.emitMeaningfulOutput("ready for first /plan")
 
     waitForCondition { terminalTabs.tab.sentTexts.size == 1 }
-    Thread.sleep(1_300)
-
-    terminalTabs.tab.emitMeaningfulOutput(codexIdleTerminalSnapshot())
-    waitForCondition(timeoutMs = 6_000) {
-      file.initialMessageDispatchStepIndex == 1 &&
-      terminalTabs.tab.sentTexts.size == 2
-    }
+    waitForCondition(timeoutMs = 5_000) { terminalTabs.tab.sentTexts.size == 2 }
 
     assertThat(file.initialMessageSent).isFalse()
     assertThat(terminalTabs.tab.sentTexts)
@@ -1820,8 +1823,10 @@ class AgentChatFileEditorLifecycleTest {
         SentTerminalText("/plan", shouldExecute = true),
       )
 
-    terminalTabs.tab.emitMeaningfulOutput("ready for prompt")
-    waitForCondition { terminalTabs.tab.sentTexts.size == 3 }
+    terminalTabs.tab.emitMeaningfulOutput(codexIdleTerminalSnapshot())
+    waitForCondition(timeoutMs = 6_000) {
+      file.initialMessageSent && terminalTabs.tab.sentTexts.size == 3
+    }
 
     assertThat(file.initialMessageSent).isTrue()
     assertThat(terminalTabs.tab.sentTexts)
@@ -2605,13 +2610,13 @@ private object TestJunieAgentChatProviderBehavior : AgentChatProviderBehavior {
   override fun afterInitialMessageSendObservation(
     file: AgentChatBehaviorFile,
     dispatch: AgentChatInitialMessageDispatchContext,
-    outputText: String,
+    observation: AgentChatInitialMessageSendObservation,
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision {
     if (dispatch.action != AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE) {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
-    return if (testJuniePlanModeVisible(outputText)) {
+    return if (testJuniePlanModeVisible(observation.textWithRecentOutputTail)) {
       AgentChatInitialMessageRetryDecision.PROCEED
     }
     else {
@@ -2656,7 +2661,7 @@ private object TestCodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     if (dispatch.completionPolicy != AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY) {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
-    return if (file.threadActivity.isBusyForExistingThreadPlanMode() || testCodexPlanModeUnsafeTerminalTail(tab.readRecentOutputTail())) {
+    return if (file.threadActivity.isBusyForExistingThreadPlanMode()) {
       AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(testProviderRetryBackoffMs(retryAttempt))
     }
     else {
@@ -2680,12 +2685,15 @@ private object TestCodexAgentChatProviderBehavior : AgentChatProviderBehavior {
   override fun afterInitialMessageSendObservation(
     file: AgentChatBehaviorFile,
     dispatch: AgentChatInitialMessageDispatchContext,
-    outputText: String,
+    observation: AgentChatInitialMessageSendObservation,
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision {
     if (dispatch.action == AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE) {
-      if (testCodexPlanModeVisible(outputText)) {
+      if (testCodexPlanModeVisible(observation.textWithRecentOutputTail)) {
         return AgentChatInitialMessageRetryDecision.PROCEED
+      }
+      if (testCodexPlanModeTransientBusyOutput(observation.outputText)) {
+        return AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness(testProviderRetryBackoffMs(retryAttempt))
       }
       if (retryAttempt < TEST_CODEX_PLAN_MODE_CONFIRMATION_RETRY_LIMIT) {
         return AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(testProviderRetryBackoffMs(retryAttempt))
@@ -2695,8 +2703,8 @@ private object TestCodexAgentChatProviderBehavior : AgentChatProviderBehavior {
     if (dispatch.completionPolicy != AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY) {
       return AgentChatInitialMessageRetryDecision.PROCEED
     }
-    return if (testCodexPlanModeBusyOutput(outputText)) {
-      AgentChatInitialMessageRetryDecision.RetryWithoutReadiness(testProviderRetryBackoffMs(retryAttempt))
+    return if (testCodexPlanModeTransientBusyOutput(observation.outputText)) {
+      AgentChatInitialMessageRetryDecision.RetryTransientBusyWithoutReadiness(testProviderRetryBackoffMs(retryAttempt))
     }
     else {
       AgentChatInitialMessageRetryDecision.PROCEED
@@ -2718,24 +2726,16 @@ private fun testJuniePlanModeVisible(text: String): Boolean {
   return testSanitizeTerminalText(text).contains("Plan Mode", ignoreCase = true)
 }
 
-private fun testCodexPlanModeBusyOutput(text: String): Boolean {
-  return testNormalizeCodexTerminalOutput(text).contains(TEST_CODEX_PLAN_MODE_BUSY_MESSAGE, ignoreCase = true)
-}
-
 private fun testCodexPlanModeVisible(text: String): Boolean {
   return testNormalizeCodexTerminalOutput(text).contains(TEST_CODEX_PLAN_MODE_VISIBLE_MARKER, ignoreCase = true)
 }
 
-private fun testCodexPlanModeUnsafeTerminalTail(text: String): Boolean {
-  val tailLines = testCodexTerminalTailLines(text)
-  val latestLine = tailLines.lastOrNull() ?: return false
-  if (latestLine.contains(TEST_CODEX_PLAN_MODE_BUSY_MESSAGE, ignoreCase = true)) {
+private fun testCodexPlanModeTransientBusyOutput(text: String): Boolean {
+  if (TEST_CODEX_PLAN_MODE_BUSY_MESSAGE_REGEX.containsMatchIn(testNormalizeCodexTerminalOutput(text))) {
     return true
   }
-  if (testCodexHookRunningInTerminalTail(tailLines)) {
-    return true
-  }
-  return tailLines.any { line ->
+  val lines = testCodexTerminalTailLines(text)
+  return testCodexHookRunningInOutput(lines) || lines.any { line ->
     line.contains("Booting MCP server:", ignoreCase = true) ||
     line.contains("Starting MCP servers", ignoreCase = true) ||
     line.contains("tab to queue", ignoreCase = true) ||
@@ -2743,8 +2743,8 @@ private fun testCodexPlanModeUnsafeTerminalTail(text: String): Boolean {
   }
 }
 
-private fun testCodexHookRunningInTerminalTail(tailLines: List<String>): Boolean {
-  val latestHookStatusLine = tailLines.lastOrNull { line ->
+private fun testCodexHookRunningInOutput(lines: List<String>): Boolean {
+  val latestHookStatusLine = lines.lastOrNull { line ->
     TEST_CODEX_HOOK_RUNNING_STATUS_REGEX.containsMatchIn(line) || TEST_CODEX_HOOK_TERMINAL_STATUS_REGEX.containsMatchIn(line)
   }
   return latestHookStatusLine?.let(TEST_CODEX_HOOK_RUNNING_STATUS_REGEX::containsMatchIn) == true
@@ -2784,7 +2784,8 @@ private const val TEST_PROVIDER_RETRY_BACKOFF_MS: Long = 250
 private const val TEST_PROVIDER_MAX_RETRY_BACKOFF_MS: Long = 1_000
 private const val TEST_CODEX_PLAN_MODE_CONFIRMATION_RETRY_LIMIT: Int = 5
 private const val TEST_CODEX_TERMINAL_TAIL_LINE_SCAN_LIMIT: Int = 8
-private const val TEST_CODEX_PLAN_MODE_BUSY_MESSAGE: String = "'/plan' is disabled while a task is in progress."
+private val TEST_CODEX_PLAN_MODE_BUSY_MESSAGE_REGEX: Regex =
+  Regex("'\\s*/plan\\s*'\\s+is disabled while a task is in progress\\.", RegexOption.IGNORE_CASE)
 private const val TEST_CODEX_PLAN_MODE_VISIBLE_MARKER: String = "Plan mode"
 private val TEST_CODEX_HOOK_RUNNING_STATUS_REGEX: Regex = Regex("(?:^| )Running .+ hook(?::|$)", RegexOption.IGNORE_CASE)
 private val TEST_CODEX_HOOK_TERMINAL_STATUS_REGEX: Regex = Regex(
@@ -2803,7 +2804,7 @@ private object TestCodexPlanModeStopBehavior : AgentChatProviderBehavior {
   override fun afterInitialMessageSendObservation(
     file: AgentChatBehaviorFile,
     dispatch: AgentChatInitialMessageDispatchContext,
-    outputText: String,
+    observation: AgentChatInitialMessageSendObservation,
     retryAttempt: Int,
   ): AgentChatInitialMessageRetryDecision {
     if (dispatch.action != AgentInitialMessageDispatchAction.ENSURE_TERMINAL_PLAN_MODE) {
