@@ -67,7 +67,7 @@ import static com.intellij.vcs.log.ui.table.column.VcsLogDefaultColumnKt.getDefa
 
 @ApiStatus.Internal
 public @NonNls class VcsLogFeaturesCollector extends ProjectUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 9);
+  private static final EventLogGroup GROUP = new EventLogGroup("vcs.log.ui", 10);
   private static final EventId UI_INITIALIZED = GROUP.registerEvent("uiInitialized");
   private static final EventId MAIN_UI_INITIALIZED = GROUP.registerEvent("mainUiInitialized");
   private static final VarargEventId DETAILS = GROUP.registerVarargEvent("details", EventFields.Enabled);

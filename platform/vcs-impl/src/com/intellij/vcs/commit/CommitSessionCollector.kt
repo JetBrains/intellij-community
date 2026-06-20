@@ -38,7 +38,7 @@ import java.util.WeakHashMap
 import javax.swing.JTree
 
 internal object CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
-  val GROUP = EventLogGroup("commit.interactions", 6)
+  val GROUP = EventLogGroup("commit.interactions", 7)
 
   val FILES_TOTAL = EventFields.RoundedInt("files_total")
   val FILES_INCLUDED = EventFields.RoundedInt("files_included")
