@@ -14,8 +14,8 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["@lib//:jbr-api"],
-    runtime_deps = ["@lib//:jbr-api"],
+    exports = ["@lib//:libraries-jbr-jbr-api"],
+    runtime_deps = ["@lib//:libraries-jbr-jbr-api"],
 )
 
 jvm_library(
@@ -28,7 +28,7 @@ jvm_library(
     kotlinc_opts = "@community//:k8",
     module_name = "intellij.libraries.jbr",
     visibility = ["//visibility:public"],
-    exports = ["@lib//:jbr-api"],
+    exports = ["@lib//:libraries-jbr-jbr-api"],
     runtime_deps = [":jbr"],
 )
 ### auto-generated section `build intellij.libraries.jbr` end
