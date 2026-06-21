@@ -213,11 +213,15 @@ object FileSystem {
    */
   @OptIn(ExperimentalPathApi::class)
   fun Path.deleteRecursivelyQuietly(): Boolean {
-    val result = runCatching { deleteRecursively() }
-    result.onFailure { error ->
-      logError("Failed to delete $this", error)
+    val attempts = 10
+    repeat(attempts) { attempt ->
+      runCatching { deleteRecursively() }
+        .onSuccess { return true }
+        .onFailure { error ->
+          if (attempt == attempts - 1) logError("Failed to delete $this after $attempts attempts", error)
+        }
     }
-    return result.isSuccess
+    return false
   }
 
   fun Path.listDirectoryEntriesQuietly(): List<Path>? = runCatching { listDirectoryEntries() }.getOrNull()
