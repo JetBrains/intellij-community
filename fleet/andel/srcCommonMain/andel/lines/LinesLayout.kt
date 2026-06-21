@@ -58,6 +58,9 @@ interface Fold {
   val hasWidget: Boolean
   val defaultFolded: Boolean
   val focusable: Boolean
+
+  val showInGutter: Boolean
+    get() = true
 }
 
 /*
