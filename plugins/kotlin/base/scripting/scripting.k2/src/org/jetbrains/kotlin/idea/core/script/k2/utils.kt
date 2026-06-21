@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigu
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptCompilationConfigurationId
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptEvaluationConfigurationEntity
 import org.jetbrains.kotlin.idea.core.script.k2.modules.ScriptingHostConfigurationEntity
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
@@ -18,6 +20,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
+import kotlin.script.experimental.api.KotlinType
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
@@ -152,3 +155,8 @@ fun getVirtualFile(scriptSourceCode: SourceCode): VirtualFile? = when (scriptSou
     is FileScriptSource -> VfsUtil.findFileByIoFile(scriptSourceCode.file, false)
     else -> null
 }?.takeIf { !it.isNonScript() }
+
+fun KtFile.isMainKtsScript(): Boolean {
+    val definition = findScriptDefinition() ?: return false
+    return definition.baseClassType == KotlinType("org.jetbrains.kotlin.mainKts.MainKtsScript")
+}
