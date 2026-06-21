@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.trace
@@ -445,30 +446,39 @@ sealed class CompletionPhase @ApiStatus.Internal constructor(
       cancelOnEditorLoseFocus(indicator)
     }
 
+    @RequiresEdt
     private fun restartOnWriteAction() {
+      if (ApplicationManagerEx.getApplicationEx().isWriteActionPending) {
+        doRestartBecauseOfWriteAction()
+        return
+      }
       ApplicationManager.getApplication().addApplicationListener(object : ApplicationListener {
         override fun beforeWriteActionStart(action: Any) {
-          if (!indicator!!.lookup.isLookupDisposed && !indicator.isCanceled) {
-            withExplicitClientId(ownerId) {
-              indicator.cancel()
-              if (EDT.isCurrentThreadEdt()) {
-                indicator.scheduleRestart()
-              }
-              else {
-                // this branch is possible because completion can be canceled on background write action
-                ApplicationManager.getApplication().invokeLater(
-                  /* runnable = */ { indicator.scheduleRestart() },
-
-                  // since we break the synchronous execution here, it is possible that some other EDT event finishes completion before us
-                  // in this case, the current indicator becomes obsolete, and we don't need to reschedule the session anymore
-
-                  /* expired = */ { CompletionServiceImpl.currentCompletionProgressIndicator != indicator }
-                )
-              }
-            }
-          }
+          doRestartBecauseOfWriteAction()
         }
       }, this)
+    }
+
+    private fun doRestartBecauseOfWriteAction() {
+      if (!indicator!!.lookup.isLookupDisposed && !indicator.isCanceled) {
+        withExplicitClientId(ownerId) {
+          indicator.cancel()
+          if (EDT.isCurrentThreadEdt()) {
+            indicator.scheduleRestart()
+          }
+          else {
+            // this branch is possible because completion can be canceled on background write action
+            ApplicationManager.getApplication().invokeLater(
+              /* runnable = */ { indicator.scheduleRestart() },
+
+              // since we break the synchronous execution here, it is possible that some other EDT event finishes completion before us
+              // in this case, the current indicator becomes obsolete, and we don't need to reschedule the session anymore
+
+              /* expired = */ { CompletionServiceImpl.currentCompletionProgressIndicator != indicator }
+            )
+          }
+        }
+      }
     }
 
     private fun cancelOnEditorLoseFocus(indicator: CompletionProgressIndicator) {
