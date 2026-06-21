@@ -2,6 +2,8 @@
 
 Agent Workbench specs follow `community/.ai/spec/SPEC_GUIDE.md`. Each spec must keep frontmatter `targets` and adjacent `[@test]` links current with the implementation it describes.
 
+For an overview of Agent Workbench content modules and dependency layers, see [Module Architecture](../README.md#module-architecture).
+
 ## Directory Layout
 
 - `core/` - shared provider contracts, state storage, and telemetry.

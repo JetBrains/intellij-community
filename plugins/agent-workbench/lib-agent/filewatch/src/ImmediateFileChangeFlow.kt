@@ -12,6 +12,7 @@ import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_NOTE_REVOK
 import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_NOTE_WRITE
 import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.K_QUEUE_OPEN_EVENT_ONLY
 import com.intellij.agent.workbench.filewatch.impl.watchservice.jna.macKQueueApi
+import com.intellij.openapi.util.SystemInfoRt.isMac
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -20,7 +21,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 fun agentWorkbenchImmediateFileChangeFlow(paths: Collection<Path>): Flow<Path> {
-  if (!isMacOS() || paths.isEmpty()) {
+  if (!isMac || paths.isEmpty()) {
     return emptyFlow()
   }
   val normalizedPaths = paths.asSequence()
@@ -211,7 +212,7 @@ private class MacOSXImmediateFileChangeWatcher private constructor(
     }
   }
 
-  private data class WatchedFile(val path: Path, val fd: Int)
+  private data class WatchedFile(@JvmField val path: Path, @JvmField val fd: Int)
 }
 
 private fun normalizeImmediateWatchPath(path: Path): Path {
@@ -220,8 +221,4 @@ private fun normalizeImmediateWatchPath(path: Path): Path {
   }.getOrElse {
     path.normalize()
   }
-}
-
-private fun isMacOS(): Boolean {
-  return System.getProperty("os.name").contains("mac", ignoreCase = true)
 }
