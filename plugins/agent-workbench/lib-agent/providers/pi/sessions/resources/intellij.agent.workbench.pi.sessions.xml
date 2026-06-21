@@ -1,0 +1,45 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="org.jetbrains.plugins.terminal"/>
+    <module name="intellij.agent.workbench.cli"/>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.core"/>
+    <module name="intellij.agent.workbench.json"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.terminal.backend"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.pi.sessionUpdateEventsContributor"
+      interface="com.intellij.agent.workbench.pi.sessions.PiSessionUpdateEventsContributor"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.pi.jbCentralModelContributor"
+      interface="com.intellij.agent.workbench.pi.sessions.PiJbCentralModelContributor"
+      dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="agent.workbench.pi.file.watch.fallback"
+                 defaultValue="false"
+                 description="Enable JSONL file watching as a fallback source of Pi session updates"
+                 restartRequired="true"/>
+    <agent.workbench.sessionProvider
+      id="agentWorkbenchPi"
+      order="after agentWorkbenchJunie"
+      implementation="com.intellij.agent.workbench.pi.sessions.PiAgentSessionProviderDescriptor"/>
+    <httpRequestHandler implementation="com.intellij.agent.workbench.pi.sessions.PiExtensionStatusHttpRequestHandler"/>
+    <httpRequestHandler implementation="com.intellij.agent.workbench.pi.sessions.PiExtensionControlWebSocketHandler"/>
+  </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.agent.workbench.pi.sessions.PiThemeChangeListener"
+              topic="com.intellij.openapi.editor.colors.EditorColorsListener"/>
+    <listener class="com.intellij.agent.workbench.pi.sessions.PiThemeChangeListener"
+              topic="com.intellij.ide.ui.LafManagerListener"/>
+  </applicationListeners>
+</idea-plugin>

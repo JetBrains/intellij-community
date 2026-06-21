@@ -3,6 +3,7 @@
   <dependencies>
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.core"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
   </dependencies>
   <!-- endregion -->
 
@@ -16,5 +17,9 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationSettings service="com.intellij.agent.workbench.settings.AgentWorkbenchSettings"/>
     <applicationSettings service="com.intellij.agent.workbench.settings.AgentSessionProviderSettingsService"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.agent.workbench">
+    <sessionProviderFeatureSettings implementation="com.intellij.agent.workbench.settings.AgentWorkbenchProviderFeatureSettings"/>
   </extensions>
 </idea-plugin>

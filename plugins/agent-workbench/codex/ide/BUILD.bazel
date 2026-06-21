@@ -31,7 +31,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
         "//plugins/agent-workbench/prompt/context",
         "//libraries/jackson3/jackson:libraries-jackson3",
-        "//plugins/agent-workbench/json",
+        "//plugins/agent-workbench/lib-agent/json",
         "@lib//:jna",
     ],
 )
@@ -57,7 +57,7 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui_test_lib",
         "//plugins/agent-workbench/prompt/context:context_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//plugins/agent-workbench/json:json_test_lib",
+        "//plugins/agent-workbench/lib-agent/json:json_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/testFramework",

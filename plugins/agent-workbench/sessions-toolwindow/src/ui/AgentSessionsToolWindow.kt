@@ -16,6 +16,7 @@ import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaCliSupport
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintBanner
 import com.intellij.agent.workbench.sessions.jbcentral.JbCentralQuotaHintStateService
 import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviders
+import com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderUiContributors
 import com.intellij.agent.workbench.sessions.model.AgentSessionThreadViewMode
 import com.intellij.agent.workbench.sessions.service.AgentArchivedSessionsService
 import com.intellij.agent.workbench.sessions.service.AgentSessionProviderAvailabilityListener
@@ -66,8 +67,14 @@ internal fun createAgentSessionsNorthComponents(
   parentDisposable: Disposable,
   refreshSessions: () -> Unit,
 ): List<JComponent> {
-  val providerContributions = AgentSessionProviders.allProvidersById()
-    .mapNotNull { provider -> provider.createToolWindowNorthComponent(project) }
+  val providerContributions = AgentSessionProviders.allProvidersById().flatMap { provider ->
+    buildList {
+      provider.createToolWindowNorthComponent(project)?.let(::add)
+      AgentSessionProviderUiContributors.forProvider(provider.provider).mapNotNullTo(this) { contributor ->
+        contributor.createToolWindowNorthComponent(project)
+      }
+    }
+  }
   service<JbCentralQuotaHintStateService>().setEligible(JbCentralQuotaCliSupport.isAvailable())
   return buildList {
     add(AgentProviderCliStatusBanner(project, parentDisposable, refreshSessions = refreshSessions))
