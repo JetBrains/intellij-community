@@ -16,6 +16,9 @@
 - name: lib/modules/intellij.agent.workbench.chat.jar
   contentModules:
   - name: intellij.agent.workbench.chat
+- name: lib/modules/intellij.agent.workbench.claude.awb.jar
+  contentModules:
+  - name: intellij.agent.workbench.claude.awb
 - name: lib/modules/intellij.agent.workbench.claude.common.jar
   contentModules:
   - name: intellij.agent.workbench.claude.common
@@ -81,6 +84,9 @@
 - name: lib/modules/intellij.agent.workbench.opencode.sessions.jar
   contentModules:
   - name: intellij.agent.workbench.opencode.sessions
+- name: lib/modules/intellij.agent.workbench.pi.awb.jar
+  contentModules:
+  - name: intellij.agent.workbench.pi.awb
 - name: lib/modules/intellij.agent.workbench.pi.sessions.filewatch.jar
   contentModules:
   - name: intellij.agent.workbench.pi.sessions.filewatch

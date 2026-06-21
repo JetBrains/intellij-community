@@ -37,7 +37,7 @@ jvm_library(
         "//platform/util",
         "//platform/util:util-ui",
         "//platform/editor-ui-api:editor-ui",
-        "//plugins/agent-workbench/core",
+        "//plugins/agent-workbench/lib-agent/core",
     ],
 )
 
@@ -68,7 +68,7 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
-        "//plugins/agent-workbench/core:core_test_lib",
+        "//plugins/agent-workbench/lib-agent/core:core_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/testFramework",
@@ -155,8 +155,8 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
-        "//plugins/agent-workbench/core",
-        "//plugins/agent-workbench/core:core_test_lib",
+        "//plugins/agent-workbench/lib-agent/core",
+        "//plugins/agent-workbench/lib-agent/core:core_test_lib",
         "//libraries/junit5",
         "//libraries/junit5:junit5_test_lib",
         "//platform/testFramework",

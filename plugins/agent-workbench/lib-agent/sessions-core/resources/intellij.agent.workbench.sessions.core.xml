@@ -1,0 +1,58 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.core"/>
+    <module name="intellij.agent.workbench.json"/>
+    <module name="intellij.agent.workbench.prompt.core"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensionPoints>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionProvider"
+      interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderDescriptor"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionLaunchSpecAugmenter"
+      interface="com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchSpecAugmenter"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.projectRuntimeConfigProvider"
+      interface="com.intellij.agent.workbench.sessions.core.config.AgentWorkbenchProjectRuntimeConfigProvider"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionLaunchContributor"
+      interface="com.intellij.agent.workbench.sessions.core.launch.AgentSessionLaunchContributor"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.mcpStreamUrlProvider"
+      interface="com.intellij.agent.workbench.sessions.core.launch.McpStreamUrlProvider"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.mcpConfigProviderContributor"
+      interface="com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigProviderContributor"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionUsageCostCalculator"
+      interface="com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageCostCalculator"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionProviderFeatureSettings"
+      interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderFeatureSettings"
+      dynamic="true"/>
+    <extensionPoint
+      qualifiedName="com.intellij.agent.workbench.sessionProviderUiContributor"
+      interface="com.intellij.agent.workbench.sessions.core.providers.AgentSessionProviderUiContributor"
+      dynamic="true"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="agent.workbench.mcp.use.direct.http"
+                 defaultValue="false"
+                 description="When enabled, AWB writes a merged `&lt;projectPath&gt;/.awb/awb-mcp.json` containing the IDE's current streamable-HTTP MCP URL plus the user's other servers, and launches the agent CLI with `--mcp-config &lt;file&gt; --strict-mcp-config`. When disabled, AWB falls through to whatever the user's checked-in `.mcp.json` does (commonly the legacy ij-proxy stdio path)."/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.agent.workbench">
+    <sessionLaunchContributor implementation="com.intellij.agent.workbench.sessions.core.launch.AwbMcpConfigContributor"/>
+  </extensions>
+</idea-plugin>

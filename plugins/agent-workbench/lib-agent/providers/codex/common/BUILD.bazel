@@ -1,0 +1,140 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+### auto-generated section `build intellij.agent.workbench.codex.common` start
+
+jvm_library(
+    name = "common",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.codex.common",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/execution-impl",
+        "//plugins/agent-workbench/lib-agent/cli",
+        "//plugins/agent-workbench/lib-agent/json",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//platform/platform-util-io:ide-util-io",
+    ],
+)
+
+jvm_library(
+    name = "common_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.codex.common",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":common",
+        "//platform/core-api:core_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//plugins/agent-workbench/lib-agent/cli:cli_test_lib",
+        "//plugins/agent-workbench/lib-agent/json:json_test_lib",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+    ],
+)
+### auto-generated section `build intellij.agent.workbench.codex.common` end
+
+### auto-generated section `iml intellij.agent.workbench.codex.common` start
+exports_files(
+    [
+        "intellij.agent.workbench.codex.common.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.agent.workbench.codex.common` end
+
+### auto-generated section `build intellij.agent.workbench.codex.common.tests` start
+
+jvm_library(
+    name = "agent-workbench-codex-common-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.agent.workbench.codex.common.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "agent-workbench-codex-common-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//plugins/agent-workbench/lib-agent/providers/codex/common",
+        "//plugins/agent-workbench/lib-agent/providers/codex/common:common_test_lib",
+    ],
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":agent-workbench-codex-common-tests",
+        "//platform/platform-util-io:ide-util-io_test_lib",
+    ],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/core-api:core_test_lib",
+        "//platform/util",
+        "//platform/util:util_test_lib",
+        "//platform/execution-impl",
+        "//platform/execution-impl:execution-impl_test_lib",
+        "//plugins/agent-workbench/lib-agent/cli",
+        "//plugins/agent-workbench/lib-agent/cli:cli_test_lib",
+        "//plugins/agent-workbench/lib-agent/json",
+        "//plugins/agent-workbench/lib-agent/json:json_test_lib",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
+        "//platform/platform-util-io:ide-util-io",
+        "//libraries/junit5",
+        "//libraries/junit5:junit5_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.agent.workbench.codex.common.tests` end
+
+### auto-generated section `iml intellij.agent.workbench.codex.common.tests` start
+exports_files(
+    [
+        "intellij.agent.workbench.codex.common.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.agent.workbench.codex.common.tests` end
+
+### auto-generated section `test intellij.agent.workbench.codex.common.tests` start
+
+jps_test(
+    name = "agent-workbench-codex-common-tests_test",
+    runtime_deps = [":agent-workbench-codex-common-tests_test_lib"],
+)
+### auto-generated section `test intellij.agent.workbench.codex.common.tests` end

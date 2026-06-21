@@ -3,10 +3,15 @@
   <dependencies>
     <module name="intellij.agent.workbench.common"/>
     <module name="intellij.agent.workbench.core"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
   </dependencies>
   <!-- endregion -->
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.agent.workbench.sessions.cost.LiteLlmPriceCatalogStartupActivity"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.agent.workbench">
+    <sessionUsageCostCalculator implementation="com.intellij.agent.workbench.sessions.cost.LiteLlmAgentSessionUsageCostCalculator"/>
   </extensions>
 </idea-plugin>

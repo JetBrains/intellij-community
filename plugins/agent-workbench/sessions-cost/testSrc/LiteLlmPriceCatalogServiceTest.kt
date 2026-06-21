@@ -2,6 +2,7 @@
 package com.intellij.agent.workbench.sessions.cost
 
 import com.intellij.agent.workbench.core.session.AgentSessionCostKind
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir

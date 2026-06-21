@@ -3,6 +3,7 @@ package com.intellij.agent.workbench.sessions.cost
 
 import com.intellij.agent.workbench.core.session.AgentSessionCost
 import com.intellij.agent.workbench.core.session.AgentSessionCostKind
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger

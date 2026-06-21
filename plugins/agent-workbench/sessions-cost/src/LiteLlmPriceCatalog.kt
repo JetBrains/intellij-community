@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.agent.workbench.sessions.cost
 
+import com.intellij.agent.workbench.sessions.core.cost.AgentSessionUsageSnapshot
+import com.intellij.platform.eel.fs.EelFiles
 import tools.jackson.core.JsonParser
 import tools.jackson.core.JsonToken
 import tools.jackson.core.ObjectReadContext
@@ -372,7 +374,7 @@ object LiteLlmPriceCatalog {
   fun cachePath(configDir: Path): Path = configDir.resolve("session_costs_pricing").resolve(ONLINE_CACHE_FILE_NAME)
 
   fun readCachedSnapshot(path: Path): LiteLlmCachedPricingSnapshot? {
-    val text = runCatching { Files.readString(path) }.getOrNull() ?: return null
+    val text = runCatching { EelFiles.readString(path) }.getOrNull() ?: return null
     var fetchedAt: String? = null
     var body: String? = null
 

@@ -1,0 +1,35 @@
+<idea-plugin>
+  <resource-bundle>messages.ClaudeSessionsBundle</resource-bundle>
+
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.agent.workbench.common"/>
+    <module name="intellij.agent.workbench.core"/>
+    <module name="intellij.agent.workbench.json"/>
+    <module name="intellij.agent.workbench.sessions.actions"/>
+    <module name="intellij.agent.workbench.sessions.core"/>
+    <module name="intellij.agent.workbench.settings"/>
+    <module name="intellij.agent.workbench.ui"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <statusBarWidgetFactory
+      id="claude.quota"
+      implementation="com.intellij.agent.workbench.claude.sessions.ClaudeQuotaStatusBarWidgetFactory"/>
+    <applicationSettings service="com.intellij.agent.workbench.claude.sessions.ClaudeQuotaHintStateService"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.agent.workbench">
+    <settingsContributor implementation="com.intellij.agent.workbench.claude.sessions.ClaudeQuotaSettingsContributor"/>
+    <sessionProviderUiContributor implementation="com.intellij.agent.workbench.claude.sessions.ClaudeQuotaSessionProviderUiContributor"/>
+  </extensions>
+
+  <actions resource-bundle="messages.ClaudeSessionsBundle">
+    <action
+      id="AgentWorkbenchSessions.ToggleClaudeQuotaWidget"
+      class="com.intellij.agent.workbench.claude.sessions.AgentSessionsToggleClaudeQuotaWidgetAction">
+      <add-to-group group-id="AgentWorkbenchSessions.ToolWindow.GearActions" anchor="before" relative-to-action="AgentWorkbenchSessions.ToggleDedicatedFrame"/>
+    </action>
+  </actions>
+</idea-plugin>
