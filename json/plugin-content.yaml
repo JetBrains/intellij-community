@@ -4,13 +4,6 @@
 - name: lib/intellij.json.syntax.jar
   contentModules:
   - name: intellij.json.syntax
-- name: lib/intellij.libraries.joni.jar
-  contentModules:
-  - name: intellij.libraries.joni
-    libraries:
-      joni:
-      - name: $MAVEN_REPOSITORY$/org/jruby/joni/joni/2/joni-2.jar
-      - name: $MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1/jcodings-1.jar
 - name: lib/modules/intellij.json.backend.jar
   contentModules:
   - name: intellij.json.backend
@@ -33,3 +26,10 @@
 - name: lib/modules/intellij.json.structureView.jar
   contentModules:
   - name: intellij.json.structureView
+- name: lib/modules/intellij.libraries.joni.jar
+  contentModules:
+  - name: intellij.libraries.joni
+    libraries:
+      joni:
+      - name: $MAVEN_REPOSITORY$/org/jruby/joni/joni/2/joni-2.jar
+      - name: $MAVEN_REPOSITORY$/org/jruby/jcodings/jcodings/1/jcodings-1.jar

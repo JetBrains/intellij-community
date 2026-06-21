@@ -26,6 +26,6 @@
   </content>  
 
   <content>
-    <module name="intellij.libraries.joni" loading="embedded"/>
+    <module name="intellij.libraries.joni" loading="required"/>
   </content>
 </idea-plugin>

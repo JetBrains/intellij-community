@@ -66,8 +66,8 @@ class PluginSetBuilder(
     for (incompletePlugin in incompletePlugins) {
       incompletePlugin.contentModules.associateByTo(disabledModuleToProblematicPlugin, { it.moduleId }, { incompletePlugin.pluginId })
     }
-    val usedPackagePrefixes = HashMap<String, IdeaPluginDescriptorImpl>()
-    val isDisabledDueToPackagePrefixConflict = HashMap<PluginModuleId, IdeaPluginDescriptorImpl>()
+    val usedPackagePrefixes = HashMap<String, PluginModuleDescriptor>()
+    val isDisabledDueToPackagePrefixConflict = HashMap<PluginModuleId, PluginModuleDescriptor>()
 
     fun registerDependencyIsNotInstalledError(plugin: IdeaPluginDescriptorImpl, disabledModule: ContentModuleDescriptor) {
       loadingErrors.add(PluginDependencyIsNotInstalled(
@@ -156,8 +156,10 @@ class PluginSetBuilder(
           if (module is ContentModuleDescriptor) {
             isDisabledDueToPackagePrefixConflict.put(module.moduleId, alreadyRegistered)
           }
-          logMessages.add("Module ${module.contentModuleName ?: module.pluginId} is not enabled because package prefix ${module.packagePrefix} is already used by " +
-                          "${alreadyRegistered.contentModuleName ?: alreadyRegistered.pluginId}")
+          logMessages.add("Module ${getPackagePrefixConflictModuleId(module)} is not enabled because package prefix ${module.packagePrefix} " +
+                          "is already used by ${getPackagePrefixConflictModuleId(alreadyRegistered)}: " +
+                          "${formatPackagePrefixConflictDetails(module)} conflicts with " +
+                          formatPackagePrefixConflictDetails(alreadyRegistered))
           loadingErrors.add(PluginPackagePrefixConflict(module, module, alreadyRegistered))
           continue@m
         }

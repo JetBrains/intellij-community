@@ -258,7 +258,56 @@ class PluginSetLoadingTest {
     val pluginSet = buildPluginSet()
     assertThat(pluginSet).hasExactlyEnabledPlugins("foo")
     assertThat(loadingErrors).hasSizeGreaterThan(0)
-    assertThat(loadingErrors[0].htmlMessage.toString()).contains("conflicts with", "bar.module", "foo.module", "package prefix")
+    val fooImplicitNamespace = "foo_" + '$' + "implicit"
+    val barImplicitNamespace = "bar_" + '$' + "implicit"
+    assertThat(loadingErrors[0].htmlMessage.toString()).contains(
+      "conflicts with",
+      "bar.module",
+      "foo.module",
+      fooImplicitNamespace,
+      barImplicitNamespace,
+      "common.module",
+      "package prefix",
+    )
+  }
+
+  @Test
+  fun `private content modules with the same name do not conflict without package prefix`() {
+    plugin("json") {
+      content {
+        module("intellij.libraries.joni", loadingRule = ModuleLoadingRuleValue.REQUIRED) {}
+      }
+    }.installAt(pluginsDirPath)
+    plugin("textmate") {
+      content {
+        module("intellij.libraries.joni", loadingRule = ModuleLoadingRuleValue.REQUIRED) {}
+      }
+    }.installAt(pluginsDirPath)
+
+    val pluginSet = buildPluginSet()
+    assertThat(pluginSet).hasExactlyEnabledPlugins("json", "textmate")
+    assertThat(loadingErrors).isEmpty()
+  }
+
+  @Test
+  fun `unresolved content module descriptor does not declare package prefix`() {
+    val dataLoader = object : DataLoader {
+      override val emptyDescriptorIfCannotResolve: Boolean
+        get() = true
+
+      override fun load(path: String, pluginDescriptorSourceOnly: Boolean): ByteArray? = null
+      override fun toString(): String = "test"
+    }
+
+    val raw = ClassPathXmlPathResolver(javaClass.classLoader, isRunningFromSourcesWithoutDevBuild = true)
+      .resolveModuleFile(
+        readContext = PluginDescriptorLoadingContext().readContext,
+        dataLoader = dataLoader,
+        path = "intellij.missing.private.library.xml",
+      )
+      .build()
+
+    assertThat(raw.`package`).isNull()
   }
   
   @Test

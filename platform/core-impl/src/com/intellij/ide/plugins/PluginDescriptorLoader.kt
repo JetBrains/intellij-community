@@ -1024,12 +1024,10 @@ private fun loadProductModule(
   xIncludeLoader: XIncludeLoader,
   containerDescriptor: PluginMainDescriptor,
 ): Boolean {
-  val moduleId = module.moduleId
   val moduleRaw: PluginDescriptorBuilder = if (jarFile == null) {
     // do not log - the severity of the error is determined by the loadingStrategy, the default strategy does not return null at all
     PluginDescriptorBuilder.builder().apply {
       visibility = ModuleVisibilityValue.PUBLIC
-      `package` = "unresolved.${moduleId.name}"
     }
   }
   else {

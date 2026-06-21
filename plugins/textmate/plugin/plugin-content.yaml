@@ -1,4 +1,4 @@
-- name: lib/intellij.libraries.joni.jar
+- name: lib/modules/intellij.libraries.joni.jar
   contentModules:
   - name: intellij.libraries.joni
     libraries:

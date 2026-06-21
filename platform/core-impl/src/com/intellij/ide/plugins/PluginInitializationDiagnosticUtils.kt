@@ -147,7 +147,10 @@ object PluginInitializationDiagnosticUtils {
       is DependencyIsNotVisible -> "$logDescr depends on ${dependencyModule.shortLogDescription} which is not visible"
       is ExcludedByEnvironmentConfiguration -> "$logDescr is excluded: ${reason.logMessage}"
       is IncompatibleWithAnotherModule -> "$logDescr is incompatible with ${preferredIncompatibleModule.shortLogDescription}"
-      is PackagePrefixConflictWithAnotherModule -> "$logDescr declares the same package prefix as in ${preferredConflictingModule.shortLogDescription}"
+      is PackagePrefixConflictWithAnotherModule -> "$logDescr declares the same package prefix as in " +
+                                                   "${preferredConflictingModule.shortLogDescription}: " +
+                                                   "${formatPackagePrefixConflictDetails(descriptor)} conflicts with " +
+                                                   formatPackagePrefixConflictDetails(preferredConflictingModule)
       is PartOfDependencyCycle -> buildString {
         appendLine("The following modules form a dependency cycle:")
         explainCycle(dependencyCycle, fmtNode = { it.shortLogDescription })
