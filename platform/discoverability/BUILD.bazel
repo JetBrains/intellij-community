@@ -103,7 +103,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/discoverability",
         "//platform/discoverability:discoverability_test_lib",
         "//platform/core-api:core",

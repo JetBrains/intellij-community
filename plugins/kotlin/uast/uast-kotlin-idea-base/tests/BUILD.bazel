@@ -34,7 +34,8 @@ jvm_library(
     runtime_deps = [":tests"],
     deps = [
         # do not sort,
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "@lib//:kotlinc-kotlin-compiler-common",
         "@lib//:kotlin-test",
         "//platform/core-api:core",

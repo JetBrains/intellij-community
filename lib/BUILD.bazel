@@ -62,6 +62,12 @@ exports_files(
 
 ### auto-generated section `local-libs` end
 
+alias(
+    name = "junit4",
+    actual = ":libraries-junit4-_j_unit4",
+    visibility = ["//visibility:public"],
+)
+
 ### auto-generated section `maven libs` start
 
 copy_file(
@@ -7691,28 +7697,6 @@ jvm_import(
 )
 
 copy_file(
-    name = "junit/junit-4.13.2.jar_copy",
-    src = "@junit-junit-4_13_2_http//file",
-    out = "junit/junit-4.13.2.jar",
-    allow_symlink = True,
-    visibility = ["//visibility:public"],
-)
-
-jvm_import(
-    name = "junit4",
-    jar = "@junit-junit-4_13_2_http//file",
-    source_jar = "@junit-junit-4_13_2-sources_http//file",
-    visibility = ["//visibility:public"],
-)
-
-java_library(
-    name = "junit4-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":junit4"],
-)
-
-copy_file(
     name = "org.jetbrains.nativecerts/jvm-native-trusted-roots-1.1.7.jar_copy",
     src = "@org_jetbrains_nativecerts-jvm-native-trusted-roots-1_1_7_http//file",
     out = "org.jetbrains.nativecerts/jvm-native-trusted-roots-1.1.7.jar",
@@ -12238,6 +12222,21 @@ jvm_import(
     name = "libraries-jsvg-jsvg",
     jar = "@com_github_weisj-jsvg-2_1_0_http//file",
     source_jar = "@com_github_weisj-jsvg-2_1_0-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+copy_file(
+    name = "junit/junit-4.13.2.jar_copy",
+    src = "@junit-junit-4_13_2_http//file",
+    out = "junit/junit-4.13.2.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "libraries-junit4-_j_unit4",
+    jar = "@junit-junit-4_13_2_http//file",
+    source_jar = "@junit-junit-4_13_2-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

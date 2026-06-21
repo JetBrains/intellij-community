@@ -285,7 +285,8 @@ jvm_library(
     runtime_deps = [":python-commonTests"],
     deps = [
         # do not sort,
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//python/python-psi-api:psi",
         "//python/python-psi-api:psi_test_lib",
         "//platform/core-api:core",

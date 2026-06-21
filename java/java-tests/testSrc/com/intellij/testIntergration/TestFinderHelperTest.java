@@ -34,7 +34,7 @@ public class TestFinderHelperTest extends JavaPsiTestCase {
 
     myContentRootDir = getTempDir().createVirtualDir();
     PsiTestUtil.addSourceRoot(myModule, myContentRootDir);
-    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getProjectLibrary("JUnit4");
+    IntelliJProjectConfiguration.LibraryRoots junit4Library = IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4");
     ModuleRootModificationUtil.addModuleLibrary(myModule, "JUnit4", junit4Library.getClassesUrls(), junit4Library.getSourcesUrls());
     IndexingTestUtil.waitUntilIndexesAreReady(getProject());
   }

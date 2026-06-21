@@ -115,7 +115,7 @@ class MPSProperties : JetBrainsProductProperties() {
 
             layout.withModule("intellij.java.rt", "idea_rt.jar")
             layout.withProjectLibrary("Eclipse", LibraryPackMode.MERGED)
-            layout.withProjectLibrary("JUnit4", LibraryPackMode.STANDALONE_MERGED)
+            layout.withModule("intellij.libraries.junit4", "junit4.jar")
             layout.withProjectLibrary("http-client", LibraryPackMode.MERGED)
             layout.withModuleLibrary("hamcrest", "intellij.libraries.hamcrest", "hamcrest.jar")
             layout.withoutProjectLibrary("Ant")

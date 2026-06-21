@@ -1,6 +1,11 @@
-load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 
 ### auto-generated section `build intellij.cucumber.jvmFormatter` start
+
+jvm_provided_library(
+    name = "libraries_junit4_provided",
+    lib = "//libraries/junit4",
+)
 
 jvm_library(
     name = "cucumber-jvmFormatter",
@@ -21,7 +26,7 @@ jvm_library(
         "@lib//:cucumber-core-2-provided",
         "//plugins/junit_rt:junit-rt",
         "//java/java-runtime:rt",
-        "@lib//:junit4-provided",
+        ":libraries_junit4_provided",
     ],
 )
 
@@ -42,7 +47,8 @@ jvm_library(
         "@lib//:cucumber-core-2-provided",
         "//plugins/junit_rt:junit-rt_test_lib",
         "//java/java-runtime:rt_test_lib",
-        "@lib//:junit4-provided",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.cucumber.jvmFormatter` end

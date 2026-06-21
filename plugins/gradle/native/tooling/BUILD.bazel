@@ -97,7 +97,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//plugins/gradle/native/tooling",
         "//plugins/gradle/native/tooling:tooling_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",

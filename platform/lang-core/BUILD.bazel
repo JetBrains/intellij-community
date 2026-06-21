@@ -55,7 +55,8 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":lang-core",
-        "@lib//:junit4",
+        "//libraries/junit4",
+        "//libraries/junit4:junit4_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/execution:execution_test_lib",
         "//platform/platform-util-io:ide-util-io_test_lib",

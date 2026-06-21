@@ -16,6 +16,10 @@
   <category>Test Tools</category>
   <depends optional="true" config-file="junit-properties.xml">com.intellij.properties</depends>
   <vendor>JetBrains</vendor>
+  <content>
+    <module name="intellij.libraries.hamcrest" loading="embedded"/>
+    <module name="intellij.libraries.junit4" loading="embedded"/>
+  </content>
   <dependencies>
     <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="intellij.java"/>
