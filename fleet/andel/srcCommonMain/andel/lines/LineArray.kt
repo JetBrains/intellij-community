@@ -12,12 +12,13 @@ value class LineArray internal constructor(val ints: IntArray) {
   companion object {
     fun fromLines(data: List<LineData>): LineArray =
       LineArray(
-        IntArray(4 * data.size).also { ints ->
+        IntArray(Fields * data.size).also { ints ->
           data.forEachIndexed { i, d ->
-            ints[i * 4 + LengthField] = d.length.toInt()
-            ints[i * 4 + InterlineHeightAboveField] = d.interlineHeightAbove.ratio.toInt()
-            ints[i * 4 + InterlineHeightBelowField] = d.interlineHeightBelow.ratio.toInt()
-            ints[i * 4 + WidthField] = d.width.toInt()
+            ints[i * Fields + LengthField] = d.length.toInt()
+            ints[i * Fields + InterlineHeightAboveField] = d.interlineHeightAbove.ratio.toInt()
+            ints[i * Fields + InterlineHeightBelowField] = d.interlineHeightBelow.ratio.toInt()
+            ints[i * Fields + OwnHeightField] = d.ownHeight.ratio.toInt()
+            ints[i * Fields + WidthField] = d.width.toInt()
           }
         }
       )
@@ -25,22 +26,25 @@ value class LineArray internal constructor(val ints: IntArray) {
     const val LengthField = 0
     const val InterlineHeightAboveField = 1
     const val InterlineHeightBelowField = 2
-    const val WidthField = 3
+    const val OwnHeightField = 3
+    const val WidthField = 4
+
+    internal const val Fields = 5
 
     val Empty: LineArray = LineArray(intArrayOf())
   }
-  
+
   fun metric(i: Int, metric: Metric): Int =
     when (metric) {
       LinesMonoid.CountMetric -> 1
       LinesMonoid.HeightMetric -> totalHeight(i)
       LinesMonoid.LengthMetric -> length(i)
       LinesMonoid.WidthMetric -> width(i)
-      else -> error("metric is not defined")       
+      else -> error("metric is not defined")
     }
 
   private fun field(i: Int, field: Int): Int =
-    ints[i * 4 + field]
+    ints[i * Fields + field]
 
   fun length(i: Int): Int =
     field(i, LengthField)
@@ -50,21 +54,28 @@ value class LineArray internal constructor(val ints: IntArray) {
 
   fun interlineHeightBelow(i: Int): Int =
     field(i, InterlineHeightBelowField)
-  
-  fun totalHeight(i: Int): Int = 
-    interlineHeightAbove(i) + LineBasedHeight.ONE_LINE.ratio.toInt() + interlineHeightBelow(i)
+
+  /**
+   * Height of the line itself (without interlines), [LineBasedHeight.ONE_LINE] unless the line is scaled
+   * by a [LineScale].
+   */
+  fun ownHeight(i: Int): Int =
+    field(i, OwnHeightField)
+
+  fun totalHeight(i: Int): Int =
+    interlineHeightAbove(i) + ownHeight(i) + interlineHeightBelow(i)
 
   fun width(i: Int): Int =
     field(i, WidthField)
 
   val size: Int
-    get() = ints.size / 4
+    get() = ints.size / Fields
 
   fun merge(rhs: LineArray): LineArray =
     LineArray(ints + rhs.ints)
 
   fun chunked(chunk: Int): List<LineArray> =
-    ints.chunked(chunk * 4).map(::LineArray)
+    ints.chunked(chunk * Fields).map(::LineArray)
 
   fun metrics(): LineArrayMetrics {
     var length = 0
@@ -82,10 +93,10 @@ value class LineArray internal constructor(val ints: IntArray) {
       width = width
     )
   }
-    
+
 
   fun replaceLines(fromIndex: Int, toIndex: Int, newLines: LineArray): LineArray =
-    LineArray(ints.replace(fromIndex * 4, toIndex * 4, newLines.ints))
+    LineArray(ints.replace(fromIndex * Fields, toIndex * Fields, newLines.ints))
 }
 
 data class LineArrayMetrics(

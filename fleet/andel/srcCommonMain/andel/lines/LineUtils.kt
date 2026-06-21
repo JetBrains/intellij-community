@@ -145,6 +145,30 @@ internal fun computeInterlineHeights(
   return interlineHeightAbove to interlineHeightBelow
 }
 
+/**
+ * Maximum [LineScale] intersecting the given hard line range, 1f when the line is not scaled.
+ * Intervals merely touching the range boundaries (e.g. a scale starting exactly at the next
+ * line's start) do not affect the line.
+ */
+private fun lineScaleAt(lineScales: IntervalsQuery<*, LineScale>, from: Long, to: Long): Float {
+  var scale = 1f
+  lineScales.query(from, to).forEach { interval ->
+    if (interval.from < to && interval.to > from && interval.data.scale > scale) {
+      scale = interval.data.scale
+    }
+  }
+  return scale
+}
+
+private fun List<LineData>.withScale(scale: Float): List<LineData> =
+  when (scale) {
+    1f -> this
+    else -> {
+      val ownHeight = LineBasedHeight.fromRatio(scale)
+      map { it.copy(ownHeight = ownHeight) }
+    }
+  }
+
 fun buildLines(
   text: CharSequence,
   foldings: IntervalsQuery<*, Fold>,
@@ -154,6 +178,7 @@ fun buildLines(
   interlines: IntervalsQuery<*, Interline>,
   softWrapBuilder: SoftWrapBuilder,
   cancellationToken: CancellationToken,
+  lineScales: IntervalsQuery<*, LineScale> = IntervalsQuery.empty<Any?, LineScale>(),
 ): List<LineData> {
   val lines = ArrayList<LineData>()
   var offsetChanged: Boolean
@@ -174,6 +199,7 @@ fun buildLines(
     }
     if (offset < length && text[offset.toInt()] == '\n') {
       cancellationToken.checkCancelled()
+      val scale = lineScaleAt(lineScales, lineOffset, offset + 1)
       lines.addAll(
         softWrapBuilder.buildSoftLines(
           text = text,
@@ -183,8 +209,9 @@ fun buildLines(
           buildRange = TextRange(lineOffset, offset + 1),
           foldRanges = folds,
           foldsMeasurer = foldsMeasurer,
-          lastLine = false
-        )
+          lastLine = false,
+          scale = scale,
+        ).withScale(scale)
       )
       folds.clear()
       lineOffset = offset + 1
@@ -195,6 +222,7 @@ fun buildLines(
       offset++
     }
   }
+  val endScale = lineScaleAt(lineScales, lineOffset, length)
   val endLines = softWrapBuilder.buildSoftLines(
     text = text,
     inlays = inlays,
@@ -203,8 +231,9 @@ fun buildLines(
     buildRange = TextRange(lineOffset, length),
     foldRanges = folds,
     foldsMeasurer = foldsMeasurer,
-    lastLine = true
-  )
+    lastLine = true,
+    scale = endScale,
+  ).withScale(endScale)
   lines.addAll(endLines)
   return lines
 }
@@ -296,6 +325,7 @@ fun LinesCache.edit(
   newInlays: IntervalsQuery<*, Inlay>,
   newInterlines: IntervalsQuery<*, Interline>,
   newFolds: IntervalsQuery<*, Fold>,
+  newLineScales: IntervalsQuery<*, LineScale> = IntervalsQuery.empty<Any?, LineScale>(),
 ): LinesCache {
   if (edit.isIdentity()) return this
   val (lineRanges, beforeRanges, afterRanges) = operationToRanges(
@@ -313,7 +343,8 @@ fun LinesCache.edit(
     afterRanges = afterRanges,
     newInlays = newInlays,
     newInterlines = newInterlines,
-    newFolds = newFolds
+    newFolds = newFolds,
+    newLineScales = newLineScales
   )
 }
 
@@ -344,7 +375,8 @@ fun updateHeights(
           length = line.to - line.from,
           interlineHeightAbove = interlineHeightAbove,
           interlineHeightBelow = interlineHeightBelow,
-          width = line.width
+          width = line.width,
+          ownHeight = line.ownHeight
         )
       )
     )
@@ -359,6 +391,7 @@ fun updateInlayHints(
   newInlays: IntervalsQuery<*, Inlay>,
   newInterlines: IntervalsQuery<*, Interline>,
   newFolds: IntervalsQuery<*, Fold>,
+  newLineScales: IntervalsQuery<*, LineScale> = IntervalsQuery.empty<Any?, LineScale>(),
 ): LinesCache {
   val linesLayout = linesCache.linesLayout()
   val lineRanges = invalidatedOffsets.map { linesLayout.line(it).let { l -> TextRange(l.from, l.to) } }.distinct()
@@ -374,7 +407,8 @@ fun updateInlayHints(
     afterRanges = ranges,
     newInlays = newInlays,
     newInterlines = newInterlines,
-    newFolds = newFolds
+    newFolds = newFolds,
+    newLineScales = newLineScales
   )
 }
 
@@ -389,6 +423,7 @@ private fun rebuildLines(
   newInlays: IntervalsQuery<*, Inlay>,
   newInterlines: IntervalsQuery<*, Interline>,
   newFolds: IntervalsQuery<*, Fold>,
+  newLineScales: IntervalsQuery<*, LineScale> = IntervalsQuery.empty<Any?, LineScale>(),
 ): LinesCache {
   var cache = linesCache
   val textBefore = before.view()
@@ -420,6 +455,9 @@ private fun rebuildLines(
     ).flatten()
     val lineInterlines = Intervals.keepingCollapsed().fromIntervals(adjustIntervals(filteredInterlines, adjustedRange.start, adjustedRange.end) as ArrayList<Interval<Long, Interline>>)
 
+    val intersectingLineScales = newLineScales.query(adjustedRange.start, adjustedRange.end)
+    val localLineScales = Intervals.droppingCollapsed().fromIntervals(adjustIntervals(intersectingLineScales, adjustedRange.start, adjustedRange.end) as ArrayList<Interval<Long, LineScale>>)
+
     val newText = prefix + insert + suffix
     val lines = buildLines(
       text = newText,
@@ -429,7 +467,8 @@ private fun rebuildLines(
       inlayMeasurer = linesCache.inlayMeasurer,
       interlines = lineInterlines,
       softWrapBuilder = linesCache.softWrapBuilder,
-      cancellationToken = CancellationToken.NonCancellable
+      cancellationToken = CancellationToken.NonCancellable,
+      lineScales = localLineScales
     )
     val nonEmptyLines = when {
       newText.endsWith('\n') && suffix.endsWith('\n') && lines.last().length == 0L -> lines.take(lines.size - 1)
