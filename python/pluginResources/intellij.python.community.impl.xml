@@ -2,7 +2,6 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.regexp"/>
-    <module name="intellij.libraries.kotlinx.io"/>
     <module name="intellij.platform.debugger.impl"/>
     <module name="intellij.platform.externalSystem.impl"/>
     <module name="intellij.json"/>
@@ -12,8 +11,8 @@
     <module name="intellij.platform.structureView"/>
     <module name="intellij.platform.testRunner"/>
     <module name="intellij.platform.ui.jcef"/>
-    <module name="intellij.python.community.common"/>
     <module name="intellij.python.community"/>
+    <module name="intellij.python.community.common"/>
     <module name="intellij.python.community.core.impl"/>
     <module name="intellij.python.community.execService"/>
     <module name="intellij.python.community.execService.python"/>

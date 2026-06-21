@@ -3,13 +3,14 @@
   <dependencies>
     <module name="intellij.libraries.junit5.pioneer"/>
     <module name="intellij.python.venv.tests._test"/>
-    <module name="intellij.python.terminal.backend"/>
+    <module name="intellij.libraries.hamcrest"/>
     <module name="intellij.libraries.junit5"/>
     <module name="intellij.libraries.junit5.params"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.lang"/>
     <module name="intellij.platform.projectModel"/>
+    <module name="intellij.python.terminal.backend"/>
     <module name="intellij.python.test.env.junit5"/>
   </dependencies>
   <!-- endregion -->
