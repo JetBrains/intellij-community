@@ -1,24 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.resources
 
-import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.Test
-import org.junit.runners.Parameterized.Parameters
+import org.junit.jupiter.api.Test
 
-class ComposeResourcesDrawableXmlSchemaProviderTest : ComposeResourcesTestCase() {
+@ComposeResourcesCommonMainOnly
+class ComposeResourcesDrawableXmlSchemaProviderTest : ComposeResourcesCodeInsightTestCase() {
 
-  companion object {
-    @JvmStatic
-    @Suppress("ACCIDENTAL_OVERRIDE")
-    @Parameters(name = "{index}: source set {1} with Gradle-{0}")
-    // XML schema handling is source-set agnostic, test data is in commonMain to avoid duplication
-    fun data(): Collection<Any> = listOf(arrayOf(TARGET_GRADLE_VERSION, COMMON_MAIN))
-  }
-
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
   fun `test vector drawable highlighting has no unresolved tag errors`() = checkHighlightingWarnings(
     xmlContent = """
       <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -45,9 +33,7 @@ class ComposeResourcesDrawableXmlSchemaProviderTest : ComposeResourcesTestCase()
     resourceType = ResourceType.DRAWABLE
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
   fun `test vector drawable highlighting reports errors for unexpected namespace uri`() = checkHighlightingWarnings(
     xmlContent = """
       <vector xmlns:android="<error descr="URI is not registered (Settings | Languages & Frameworks | Schemas and DTDs)">https://example.invalid/not-android</error>"
@@ -73,9 +59,7 @@ class ComposeResourcesDrawableXmlSchemaProviderTest : ComposeResourcesTestCase()
     resourceType = ResourceType.DRAWABLE
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
   fun `test vector drawable highlighting accepts tools namespace`() = checkHighlightingWarnings(
     xmlContent = """
       <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -92,9 +76,7 @@ class ComposeResourcesDrawableXmlSchemaProviderTest : ComposeResourcesTestCase()
     resourceType = ResourceType.DRAWABLE
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
   fun `test vector drawable highlighting accepts auto namespace`() = checkHighlightingWarnings(
     xmlContent = """
       <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -111,9 +93,7 @@ class ComposeResourcesDrawableXmlSchemaProviderTest : ComposeResourcesTestCase()
     resourceType = ResourceType.DRAWABLE
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
   fun `test vector drawable highlighting reports error for res package namespace`() = checkHighlightingWarnings(
     xmlContent = """
       <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -130,9 +110,7 @@ class ComposeResourcesDrawableXmlSchemaProviderTest : ComposeResourcesTestCase()
     resourceType = ResourceType.DRAWABLE
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
   fun `test values resources highlighting accepts xliff and standard namespaces`() = checkHighlightingWarnings(
     xmlContent = """
       <resources
@@ -147,9 +125,7 @@ class ComposeResourcesDrawableXmlSchemaProviderTest : ComposeResourcesTestCase()
     resourceType = ResourceType.STRING
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
   fun `test values resources highlighting reports error for res package namespace`() = checkHighlightingWarnings(
     xmlContent = """
       <resources 
@@ -161,9 +137,7 @@ class ComposeResourcesDrawableXmlSchemaProviderTest : ComposeResourcesTestCase()
     resourceType = ResourceType.STRING
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
   fun `test string array resources highlighting accepts xliff namespace`() = checkHighlightingWarnings(
     xmlContent = """
       <resources
@@ -178,9 +152,7 @@ class ComposeResourcesDrawableXmlSchemaProviderTest : ComposeResourcesTestCase()
     resourceType = ResourceType.STRING_ARRAY
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
   fun `test plurals resources highlighting accepts xliff namespace`() = checkHighlightingWarnings(
     xmlContent = """
       <resources
@@ -195,19 +167,16 @@ class ComposeResourcesDrawableXmlSchemaProviderTest : ComposeResourcesTestCase()
     resourceType = ResourceType.PLURAL_STRING
   )
 
-  private fun checkHighlightingWarnings(xmlContent: String, resourceType: ResourceType) {
-    val files = importProjectFromTestData()
-    val expectedDirName = resourceType.dirName
+  private fun checkHighlightingWarnings(xmlContent: String, resourceType: ResourceType) = testComposeResourcesProject {
+    val targetFile = writeTextAndCommit(
+      "composeApp/src/$COMMON_MAIN/composeResources/${resourceType.dirName}/${getXmlFileName(resourceType)}",
+      xmlContent.trimIndent()
+    )
 
-    val targetFile = files.find {
-      it.path.contains("/$sourceSetName/composeResources/$expectedDirName") && it.name.endsWith(".xml")
-    } ?: error("Could not find any XML asset file inside '$sourceSetName/composeResources/$expectedDirName'")
-
-    runWriteAction {
-      codeInsightTestFixture.saveText(targetFile, xmlContent.trimIndent())
-    }
-
-    codeInsightTestFixture.configureFromExistingVirtualFile(targetFile)
-    codeInsightTestFixture.checkHighlighting(true, false, false)
+    codeInsightFixture.configureFromExistingVirtualFile(targetFile)
+    codeInsightFixture.checkHighlighting(true, false, false)
   }
+
+  private fun getXmlFileName(resourceType: ResourceType): String =
+    if (resourceType.isStringType) STRINGS_XML_FILENAME else "compose-multiplatform.xml"
 }
