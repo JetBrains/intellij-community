@@ -465,6 +465,7 @@ class AgentChatFileEditorLifecycleTest {
   @Test
   fun terminalTitleRebindsConcreteTabAfterNewThreadCommand() {
     val threadId = "018f4b30-f1b2-7000-9b4d-abcdef123456"
+    val threadTitle = "Fresh /new thread"
     val file = testFile()
     file.updateNewThreadRebindRequestedAtMs(2_000L)
     val title = TerminalTitle()
@@ -502,7 +503,7 @@ class AgentChatFileEditorLifecycleTest {
 
     try {
       controller.attach(terminalTitle = title, parentScope = controllerScope)
-      title.change { applicationTitle = terminalTitle(threadId) }
+      title.change { applicationTitle = terminalTitle(threadId, threadTitle) }
 
       assertThat(requests).hasSize(1)
       val request = requests.single()
@@ -510,8 +511,10 @@ class AgentChatFileEditorLifecycleTest {
       assertThat(request.currentThreadIdentity).isEqualTo("CODEX:thread-1")
       assertThat(request.newThreadRebindRequestedAtMs).isEqualTo(2_000L)
       assertThat(request.target.threadIdentity).isEqualTo("codex:$threadId")
+      assertThat(request.target.threadTitle).isEqualTo(threadTitle)
       assertThat(file.threadIdentity).isEqualTo("codex:$threadId")
       assertThat(file.threadId).isEqualTo(threadId)
+      assertThat(file.threadTitle).isEqualTo(threadTitle)
       assertThat(file.newThreadRebindRequestedAtMs).isNull()
       assertThat(snapshotWriter.snapshots.single().identity.threadIdentity).isEqualTo("codex:$threadId")
       assertThat(refreshThreadIds).containsExactly(threadId)
@@ -2685,7 +2688,9 @@ private fun unconfinedTestScope(): CoroutineScope {
 }
 
 @Suppress("SameParameterValue")
-private fun terminalTitle(threadId: String): String = "thread:$threadId"
+private fun terminalTitle(threadId: String, threadTitle: String? = null): String {
+  return listOfNotNull("thread:$threadId", threadTitle).joinToString(" | ")
+}
 
 private fun terminalTitleThreadRebindContributor(providerId: AgentSessionProvider): AgentChatTerminalTitleThreadRebindContributor {
   return object : AgentChatTerminalTitleThreadRebindContributor {
@@ -2694,6 +2699,15 @@ private fun terminalTitleThreadRebindContributor(providerId: AgentSessionProvide
 
     override fun extractThreadId(applicationTitle: String?): String? {
       return applicationTitle?.substringAfter("thread:", missingDelimiterValue = "")?.takeIf { it.isNotBlank() }
+    }
+
+    override fun extractThreadSignal(applicationTitle: String?): AgentChatTerminalTitleThreadRebindSignal? {
+      val value = applicationTitle?.substringAfter("thread:", missingDelimiterValue = "")?.takeIf { it.isNotBlank() } ?: return null
+      val parts = value.split(" | ", limit = 2)
+      return AgentChatTerminalTitleThreadRebindSignal(
+        threadId = parts[0],
+        threadTitle = parts.getOrNull(1),
+      )
     }
   }
 }

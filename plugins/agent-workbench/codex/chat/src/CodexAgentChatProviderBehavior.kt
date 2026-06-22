@@ -48,6 +48,10 @@ internal object CodexAgentChatProviderBehavior : AgentChatProviderBehavior {
 
   override fun isConcreteNewThreadRebindCommand(command: String): Boolean = command == "/new"
 
+  override fun shouldUseBracketedPasteMode(text: String): Boolean {
+    return text.trim() != CODEX_PLAN_COMMAND
+  }
+
   override fun requiresPostSendObservation(dispatch: AgentChatInitialMessageDispatchContext): Boolean {
     return dispatch.completionPolicy == AgentInitialMessageDispatchCompletionPolicy.RETRY_ON_CODEX_PLAN_BUSY
   }

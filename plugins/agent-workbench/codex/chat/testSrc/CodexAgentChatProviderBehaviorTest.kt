@@ -54,6 +54,14 @@ class CodexAgentChatProviderBehaviorTest {
   }
 
   @Test
+  fun planCommandIsSentWithoutBracketedPasteMode() {
+    assertThat(CodexAgentChatProviderBehavior.shouldUseBracketedPasteMode("/plan")).isFalse()
+    assertThat(CodexAgentChatProviderBehavior.shouldUseBracketedPasteMode("  /plan  ")).isFalse()
+    assertThat(CodexAgentChatProviderBehavior.shouldUseBracketedPasteMode("/plan Refactor this")).isTrue()
+    assertThat(CodexAgentChatProviderBehavior.shouldUseBracketedPasteMode("Refactor this")).isTrue()
+  }
+
+  @Test
   fun planCommandRetryTreatsDisabledPlanCommandAsTransientBusy(): Unit = kotlinx.coroutines.runBlocking {
     val dispatch = planCommandDispatch()
 

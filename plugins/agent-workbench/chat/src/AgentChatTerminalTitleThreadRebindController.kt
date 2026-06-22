@@ -21,10 +21,20 @@ import org.jetbrains.annotations.ApiStatus
 private val LOG = logger<AgentChatTerminalTitleThreadRebindController>()
 
 @ApiStatus.Internal
+data class AgentChatTerminalTitleThreadRebindSignal(
+  @JvmField val threadId: String,
+  @JvmField val threadTitle: String? = null,
+)
+
+@ApiStatus.Internal
 interface AgentChatTerminalTitleThreadRebindContributor {
   val provider: AgentSessionProvider
 
   fun extractThreadId(applicationTitle: String?): String?
+
+  fun extractThreadSignal(applicationTitle: String?): AgentChatTerminalTitleThreadRebindSignal? {
+    return extractThreadId(applicationTitle)?.let { threadId -> AgentChatTerminalTitleThreadRebindSignal(threadId = threadId) }
+  }
 }
 
 private class AgentChatTerminalTitleThreadRebindContributorRegistryLog
@@ -158,13 +168,19 @@ internal class AgentChatTerminalTitleThreadRebindController(
     if (provider != contributor.provider || file.subAgentId != null || file.projectPath.isBlank()) {
       return false
     }
-    val threadId = contributor.extractThreadId(applicationTitle) ?: return false
+    val signal = contributor.extractThreadSignal(applicationTitle) ?: return false
+    val threadId = signal.threadId
     if (reboundThreadId == threadId || rebindJob?.isActive == true) {
       return false
     }
 
     val projectPath = file.projectPath
-    val request = buildRebindRequest(provider = provider, projectPath = projectPath, threadId = threadId) ?: return false
+    val request = buildRebindRequest(
+      provider = provider,
+      projectPath = projectPath,
+      threadId = threadId,
+      threadTitle = signal.threadTitle,
+    ) ?: return false
 
     val job = parentScope.launch {
       val rebindResult = when (request) {
@@ -206,13 +222,14 @@ internal class AgentChatTerminalTitleThreadRebindController(
     provider: AgentSessionProvider,
     projectPath: String,
     threadId: String,
+    threadTitle: String?,
   ): AgentChatTerminalTitleRebindRequest? {
     val target = AgentChatTabRebindTarget(
       projectPath = projectPath,
       provider = provider,
       threadIdentity = buildAgentThreadIdentity(provider.value, threadId),
       threadId = threadId,
-      threadTitle = file.threadTitle,
+      threadTitle = threadTitle?.takeIf { it.isNotBlank() } ?: file.threadTitle,
       threadActivity = file.threadActivity,
     )
     if (file.isPendingThread) {
