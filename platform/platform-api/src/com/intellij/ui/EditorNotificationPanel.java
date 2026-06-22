@@ -507,7 +507,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   public void clear() {
-    myTextLabel.setText("");
+    this.setText("");
     myLinksPanel.removeAll();
   }
 
