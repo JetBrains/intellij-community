@@ -9,6 +9,8 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey key="grazie.specification.semantics.enabled" defaultValue="false" description="Whether to enable semantic agentic Markdown checks"/>
+    <registryKey key="grazie.specification.verification.enabled" defaultValue="true"
+                 description="Whether to enable verification of semantic checks"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.contradiction.name"
                      shortName="SpecificationContradiction" level="WARNING" enabledByDefault="true" language="Markdown" isInternal="true"
@@ -26,6 +28,10 @@
     <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.ambiguity.name"
                      shortName="SpecificationAmbiguity" level="WARNING" enabledByDefault="true" language="Markdown" isInternal="true"
                      implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationAmbiguityInspection"/>
+
+    <localInspection bundle="messages.GrazieBundle" groupKey="specification.group.name" key="specification.inspection.cognitiveLoad.name"
+                     shortName="SpecificationCognitiveLoad" level="WARNING" enabledByDefault="true" language="Markdown" isInternal="true"
+                     implementationClass="com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationCognitiveLoadInspection"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">

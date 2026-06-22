@@ -3,7 +3,6 @@ package com.intellij.grazie.pro
 import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
-import ai.grazie.utils.mpp.number.FixedPrecisionFloat
 import com.google.gson.JsonObject
 import com.intellij.grazie.ide.language.markdown.semantics.inspection.SpecificationBaseInspection
 import com.intellij.openapi.util.registry.Registry
@@ -65,12 +64,8 @@ internal class SpecificationInspectionTest : BaseTestCase() {
   }
 
   internal class TestLlmAnalyzer(private val issues: List<LlmIssue<TestIssue>>): LlmAnalyzer<TestIssue>() {
-    override fun analyze(
-      text: String,
-      client: SuspendableAPIGatewayClient,
-    ): WithSpending<List<LlmIssue<TestIssue>>> {
-      return WithSpending(issues, FixedPrecisionFloat(0))
-    }
+    override fun analyze(text: String, client: SuspendableAPIGatewayClient): WithSpending<List<LlmIssue<TestIssue>>> =
+      WithSpending(issues, 0.0)
 
     // Those methods are not required because `analyze` is overridden
     override fun getAnalysisPrompt(): String = TODO("Not used")

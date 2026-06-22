@@ -9,10 +9,9 @@ import com.intellij.codeInspection.ProblemDescriptorBase
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.cloud.GrazieCloudConnector
-import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.hasAdditionalConnectors
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.hasQuota
 import com.intellij.grazie.cloud.GrazieCloudConnector.Companion.seemsCloudConnected
-import com.intellij.grazie.ide.language.markdown.semantics.analyzer.Analyzer
+import com.intellij.grazie.ide.language.markdown.semantics.analyzer.SpecificationAnalyzer
 import com.intellij.grazie.ide.language.markdown.semantics.inspection.quickfix.ReplacementQuickFix
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.TextRange
@@ -65,7 +64,7 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
           return
         }
         val analyzer = getAnalyzer(file) ?: return
-        Analyzer.analyze(analyzer, file, client)
+        SpecificationAnalyzer.analyze(analyzer, file, client)
           .forEach { problem -> reportProblem(holder, file, problem) }
       }
     }
@@ -75,15 +74,8 @@ abstract class SpecificationBaseInspection<T> : LocalInspectionTool() {
 
   private fun validateAndGetClient(isOnTheFly: Boolean): SuspendableAPIGatewayClient? {
     if (!isOnTheFly) return null
-    if (!Registry.`is`("grazie.specification.semantics.enabled")) {
-      thisLogger().debug("Specification semantics inspection is disabled")
-      return null
-    }
-    if (!seemsCloudConnected() || !hasQuota()) {
-      thisLogger().warn("Additional connectors = ${hasAdditionalConnectors()}, seemsCloudConnected = ${seemsCloudConnected()}, hasQuota = ${hasQuota()}")
-      return null
-    }
-    return GrazieCloudConnector.api()?.also { thisLogger().info("API client is not null") }
+    if (!Registry.`is`("grazie.specification.semantics.enabled") || !seemsCloudConnected() || !hasQuota()) return null
+    return GrazieCloudConnector.api()
   }
 
   companion object {

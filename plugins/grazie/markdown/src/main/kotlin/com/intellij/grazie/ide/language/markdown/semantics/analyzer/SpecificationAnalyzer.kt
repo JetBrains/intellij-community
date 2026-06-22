@@ -3,6 +3,7 @@ package com.intellij.grazie.ide.language.markdown.semantics.analyzer
 import ai.grazie.api.gateway.client.SuspendableAPIGatewayClient
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer
 import ai.grazie.rules.promptAnalysis.LlmAnalyzer.LlmIssue
+import ai.grazie.rules.promptAnalysis.LlmAnalyzer.Specification
 import com.intellij.grazie.cloud.APIQueries
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -21,9 +22,9 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 
 private typealias AnalyzerCacheKey<T> = Key<CachedValue<AtomicReference<Cached<LlmIssue<T>>>>>
-private val log = Logger.getInstance(Analyzer::class.java)
+private val log = Logger.getInstance(SpecificationAnalyzer::class.java)
 
-internal object Analyzer {
+internal object SpecificationAnalyzer {
   private val mutexKeys = ConcurrentHashMap<String, Key<Mutex>>()
   private val cacheKeys = ConcurrentHashMap<String, AnalyzerCacheKey<LlmIssue<*>>>()
 
@@ -44,7 +45,7 @@ internal object Analyzer {
           if (cached != null && cached.text == text) return@executeRequestWithLock cached.data
           val start = System.currentTimeMillis()
           log.info("${analyzer::class.simpleName} starts executing request with lock")
-          val analysis = analyzer.analyze(text, client)
+          val analysis = analyzer.analyze(getSpecification(cached, text), client)
           val done = System.currentTimeMillis()
           log.info("""
             Analyzing text with ${analyzer::class.simpleName} took ${done - start}ms on
@@ -64,6 +65,9 @@ internal object Analyzer {
       throw e
     }
   }
+
+  private fun <T> getSpecification(cache: Cached<LlmIssue<T>>?, text: String): Specification<T> =
+    if (cache == null) Specification(text) else Specification(text, cache.text, cache.data)
 
   private fun <T> executeRequestWithLock(analyzer: LlmAnalyzer<T>, file: PsiFile, action: suspend () -> List<LlmIssue<T>>): List<LlmIssue<T>> {
     val mutexKey = mutexKeys.computeIfAbsent(analyzer.javaClass.name) { Key.create("mutex key for ${analyzer.javaClass.name}") }
