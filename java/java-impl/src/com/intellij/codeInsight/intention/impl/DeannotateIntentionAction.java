@@ -90,7 +90,11 @@ public class DeannotateIntentionAction implements ModCommandAction {
     final PsiAnnotation[] externalAnnotations = getAnnotations(annotationsManager, listOwner);
     if (externalAnnotations.length == 0) return ModCommand.nop();
     List<DeannotateIntentionAction> map =
-      ContainerUtil.map(externalAnnotations, anno -> new DeannotateIntentionAction(Objects.requireNonNull(anno.getQualifiedName())));
+      StreamEx.of(externalAnnotations).map(PsiAnnotation::getQualifiedName)
+        .nonNull()
+        .sorted()
+        .map(DeannotateIntentionAction::new)
+        .toList();
     return ModCommand.chooseAction(JavaBundle.message("deannotate.intention.chooser.title"), map);
   }
 }
