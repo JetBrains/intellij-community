@@ -299,6 +299,7 @@ public abstract class MergeRequestProcessor implements Disposable {
                               @Nullable List<? extends AnAction> rightViewerActions) {
     ActionGroup group = collectToolbarActions(viewerActions);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, group, true);
+    toolbar.getComponent().setOpaque(false);
     toolbar.setShowSeparatorTitles(true);
 
     toolbar.setTargetComponent(myContentPanel.getTargetComponent());
@@ -311,6 +312,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     DiffUtil.addActionBlock(rightGroup, rightViewerActions, false);
     ActionToolbar rightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, rightGroup, true);
     rightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
+    rightToolbar.getComponent().setOpaque(false);
     myRightToolbarPanel.setContent(rightToolbar.getComponent());
   }
 
