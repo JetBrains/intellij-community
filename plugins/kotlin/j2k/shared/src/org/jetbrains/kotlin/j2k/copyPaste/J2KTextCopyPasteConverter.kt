@@ -11,7 +11,6 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.application
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_OLD
 import org.jetbrains.kotlin.nj2k.KotlinNJ2KBundle
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -25,19 +24,18 @@ internal class J2KTextCopyPasteConverter(
     private val editor: Editor,
     private val conversionData: ConversionData,
     private val targetData: TargetData,
-    private val j2kKind: J2kConverterExtension.Kind,
 ) {
     fun convert() {
         val additionalImports = tryToResolveImports(conversionData, targetData.file)
         ProgressManager.checkCanceled()
 
         val importsInsertOffset = targetData.file.importList?.endOffset ?: 0
-        var convertedImportsText = additionalImports.convertCodeToKotlin(project, targetData.file, j2kKind).text
+        var convertedImportsText = additionalImports.convertCodeToKotlin(project, targetData.file).text
         if (targetData.file.importDirectives.isEmpty() && importsInsertOffset > 0) {
             convertedImportsText = "\n" + convertedImportsText
         }
 
-        val conversionResult = conversionData.elementsAndTexts.convertCodeToKotlin(project, targetData.file, j2kKind)
+        val conversionResult = conversionData.elementsAndTexts.convertCodeToKotlin(project, targetData.file)
         val convertedText = conversionResult.text
         ProgressManager.checkCanceled()
 
@@ -55,22 +53,20 @@ internal class J2KTextCopyPasteConverter(
 
         PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-        if (j2kKind != K1_OLD) {
-            val postProcessor = J2kConverterExtension.extension(j2kKind).createPostProcessor()
-            for (fqName in conversionResult.importsToAdd) {
-                postProcessor.insertImport(targetData.file, fqName)
-            }
+        val postProcessor = J2kConverterExtension.extension().createPostProcessor()
+        for (fqName in conversionResult.importsToAdd) {
+            postProcessor.insertImport(targetData.file, fqName)
         }
 
         ProgressManager.checkCanceled()
-        runPostProcessing(project, targetData.file, boundsAfterReplace.asTextRange, conversionResult.converterContext, j2kKind)
+        runPostProcessing(project, targetData.file, boundsAfterReplace.asTextRange, conversionResult.converterContext)
     }
 
     private fun tryToResolveImports(conversionData: ConversionData, targetFile: KtFile): ElementAndTextList {
         return ProgressManager.getInstance().runProcessWithProgressSynchronously(
             ThrowableComputable {
                 val resolver = application.runReadAction(Computable {
-                    J2kConverterExtension.extension(j2kKind).createPlainTextPasteImportResolver(conversionData, targetFile)
+                    J2kConverterExtension.extension().createPlainTextPasteImportResolver(conversionData, targetFile)
                 })
                 val imports = resolver.generateRequiredImports()
                 val newlineSeparatedImports = imports.flatMap { importStatement ->

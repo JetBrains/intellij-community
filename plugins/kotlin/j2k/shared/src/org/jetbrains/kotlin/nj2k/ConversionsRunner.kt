@@ -13,8 +13,7 @@ object ConversionsRunner {
         trees: List<JKTreeRoot>,
         context: ConverterContext,
     ) {
-        val j2kKind = K2
-        val conversions = J2kConverterExtension.extension(j2kKind).getConversions(context)
+        val conversions = J2kConverterExtension.extension().getConversions(context)
 
         for (conversion in conversions) {
             if (context.settings.basicMode && !conversion.isEnabledInBasicMode()) continue

@@ -114,7 +114,7 @@ private fun JavaToKotlinConverter.convertToKotlinNamedDeclaration(
     referenced: PsiMember,
     context: PsiElement,
 ): KtNamedDeclaration {
-    val converterExtension = J2kConverterExtension.extension(kind = J2kConverterExtension.Kind.K2)
+    val converterExtension = J2kConverterExtension.extension()
     val postProcessor = converterExtension.createPostProcessor()
     val processor = converterExtension.createWithProgressProcessor(
         progress = ProgressManager.getInstance().progressIndicator,

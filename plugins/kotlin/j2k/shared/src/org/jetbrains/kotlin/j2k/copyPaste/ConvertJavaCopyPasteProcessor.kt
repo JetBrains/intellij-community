@@ -17,7 +17,6 @@ import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.statistics.ConversionType
 import org.jetbrains.kotlin.idea.statistics.J2KFusCollector
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
-import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
 import java.awt.datatransfer.Transferable
 import kotlin.system.measureTimeMillis
 
@@ -70,9 +69,8 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
 
         val copiedJavaCode = values.single() as CopiedJavaCode
         val conversionData = ConversionData.prepare(copiedJavaCode, project)
-        val j2kKind = getJ2kKind()
 
-        val converter = J2kConverterExtension.extension(j2kKind)
+        val converter = J2kConverterExtension.extension()
             .createCopyPasteConverter(project, editor, conversionData, targetData)
 
         val textLength = copiedJavaCode.startOffsets.indices.sumOf { copiedJavaCode.endOffsets[it] - copiedJavaCode.startOffsets[it] }
@@ -87,7 +85,6 @@ class ConvertJavaCopyPasteProcessor : CopyPastePostProcessor<TextBlockTransferab
         val conversionTime = measureTimeMillis { converter.convert() }
         J2KFusCollector.log(
             type = ConversionType.PSI_EXPRESSION,
-            isNewJ2k = j2kKind == K1_NEW,
             conversionTime,
             linesCount = conversionData.elementsAndTexts.lineCount(),
             filesCount = 1
