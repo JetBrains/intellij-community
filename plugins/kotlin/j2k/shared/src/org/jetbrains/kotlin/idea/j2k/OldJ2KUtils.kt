@@ -26,7 +26,7 @@ fun PsiElement.convertToKotlin(settings: ConverterSettings = defaultSettings): R
     val extension = J2kConverterExtension.extension(kind = K1_OLD)
     extension.createJavaToKotlinConverter(project, targetModule = null, settings)
     val j2kConverter = extension.createJavaToKotlinConverter(project, targetModule = null, settings)
-    return j2kConverter.elementsToKotlin(listOf(this))
+    return j2kConverter.elementsToKotlin(listOf(this), null)
 }
 
 fun PsiExpression.j2k(settings: ConverterSettings = defaultSettings): KtExpression? {

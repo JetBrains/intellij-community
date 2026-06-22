@@ -40,8 +40,8 @@ import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.PostProcessingTarget
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter
-import org.jetbrains.kotlin.nj2k.NewJavaToKotlinConverter.Companion.addImports
+import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
+import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter.Companion.addImports
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile
@@ -110,7 +110,7 @@ private fun validate(referenced: PsiMember, reference: PsiElement): String? = wh
 }
 
 @OptIn(KaAllowAnalysisOnEdt::class)
-private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
+private fun JavaToKotlinConverter.convertToKotlinNamedDeclaration(
     referenced: PsiMember,
     context: PsiElement,
 ): KtNamedDeclaration {
@@ -190,7 +190,7 @@ class J2KInlineCache(private val strategy: UsageReplacementStrategy, private val
         internal fun findOrCreateUsageReplacementStrategy(javaMember: PsiMember, context: PsiElement): UsageReplacementStrategy? {
             javaMember.findUsageReplacementStrategy(withValidation = true)?.let { return it }
 
-            val converter = NewJavaToKotlinConverter(
+            val converter = JavaToKotlinConverter(
                 javaMember.project,
                 javaMember.module,
                 ConverterSettings.defaultSettings,

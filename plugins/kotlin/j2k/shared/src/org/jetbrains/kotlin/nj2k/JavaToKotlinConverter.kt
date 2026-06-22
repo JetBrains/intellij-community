@@ -29,14 +29,12 @@ import org.jetbrains.kotlin.j2k.ElementResult
 import org.jetbrains.kotlin.j2k.IdeaReferenceSearcher
 import org.jetbrains.kotlin.j2k.J2kPostprocessorExtension
 import org.jetbrains.kotlin.j2k.J2kPreprocessorExtension
-import org.jetbrains.kotlin.j2k.JavaToKotlinConverter
 import org.jetbrains.kotlin.j2k.ParseContext.CODE_BLOCK
 import org.jetbrains.kotlin.j2k.ParseContext.TOP_LEVEL
 import org.jetbrains.kotlin.j2k.PostProcessingTarget.MultipleFilesPostProcessingTarget
 import org.jetbrains.kotlin.j2k.PostProcessor
 import org.jetbrains.kotlin.j2k.ReferenceSearcher
 import org.jetbrains.kotlin.j2k.Result
-import org.jetbrains.kotlin.j2k.WithProgressProcessor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.NewExternalCodeProcessing
 import org.jetbrains.kotlin.nj2k.printing.JKCodeBuilder
@@ -50,16 +48,16 @@ import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.resolve.ImportPath
 
 @ApiStatus.Internal
-class NewJavaToKotlinConverter(
+class JavaToKotlinConverter(
     val project: Project,
     val targetModule: Module?,
     val settings: ConverterSettings,
     val targetFile: KtFile? = null
-) : JavaToKotlinConverter() {
+) {
     val phasesCount: Int = J2KConversionPhase.entries.size
     val referenceSearcher: ReferenceSearcher = IdeaReferenceSearcher
 
-    override suspend fun filesToKotlin(
+    suspend fun filesToKotlin(
         files: List<PsiJavaFile>,
         postProcessor: PostProcessor,
         bodyFilter: ((PsiElement) -> Boolean)?,
@@ -182,14 +180,6 @@ class NewJavaToKotlinConverter(
         )
     }
 
-    override fun elementsToKotlin(inputElements: List<PsiElement>): Result {
-        return elementsToKotlin(inputElements, NewJ2kWithProgressProcessor.DEFAULT)
-    }
-
-    override fun elementsToKotlin(inputElements: List<PsiElement>, processor: WithProgressProcessor): Result {
-        return elementsToKotlin(inputElements, null)
-    }
-
     companion object {
         fun KtFile.addImports(imports: Collection<FqName>) {
             if (imports.isEmpty()) return
@@ -242,10 +232,10 @@ class NewJavaToKotlinConverter(
     }
 }
 
-private enum class J2KConversionPhase() {
-    PREPROCESSING(),
-    BUILD_AST(),
-    RUN_CONVERSIONS(),
-    PRINT_CODE(),
-    CREATE_FILES()
+private enum class J2KConversionPhase {
+    PREPROCESSING,
+    BUILD_AST,
+    RUN_CONVERSIONS,
+    PRINT_CODE,
+    CREATE_FILES
 }

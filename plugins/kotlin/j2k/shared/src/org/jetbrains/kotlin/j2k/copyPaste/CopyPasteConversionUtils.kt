@@ -56,7 +56,7 @@ fun ElementAndTextList.convertCodeToKotlin(
             // A non-blocking read action is essential here 
             // to be able to show a modal progress window right away
             ReadAction.nonBlocking(Callable {
-                converter.elementsToKotlin(inputElements)
+                converter.elementsToKotlin(inputElements, null)
             }).executeSynchronously()
         },
         KotlinNJ2KBundle.message("copy.text.convert.java.to.kotlin.title"),

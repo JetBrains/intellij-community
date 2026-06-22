@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.j2k.copyPaste.J2KCopyPasteConverter
 import org.jetbrains.kotlin.j2k.copyPaste.PlainTextPasteImportResolver
 import org.jetbrains.kotlin.j2k.copyPaste.TargetData
 import org.jetbrains.kotlin.nj2k.Conversion
+import org.jetbrains.kotlin.nj2k.JavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class J2kConverterExtension {
