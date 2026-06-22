@@ -7,7 +7,9 @@ import com.intellij.notebooks.visualization.UpdateContext
 import com.intellij.notebooks.visualization.ui.EditorEmbeddedComponentLayoutManager.CustomFoldingConstraint
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.CustomFoldRegion
+import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.markup.TextAttributes
 import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent.MOUSE_EVENT_MASK
@@ -109,8 +111,7 @@ open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, 
       }
 
       val lines = cell.interval.lines
-      val newFolding = foldingModel.addCustomLinesFolding(lines.first, lines.last,
-                                                          CellCustomFoldingRender(mainComponent) { gutterActionRenderer })
+      val newFolding = createCellFolding(foldingModel, lines)
       if (newFolding == null) {
         error("Folding for $lines, cannot be created (e.g., due to unsupported overlapping with already existing regions.\n" +
               "Existing regions:\n ${foldingModel.allFoldRegions.joinToString(separator = "\n") { it.toString() }}")
@@ -119,6 +120,34 @@ open class CustomFoldingEditorCellViewComponent(protected val cell: EditorCell, 
       foldingRegion = newFolding
       editor.componentContainer.add(mainComponent, CustomFoldingConstraint(newFolding, true))
     }
+  }
+
+  private fun createCellFolding(foldingModel: FoldingModelEx, lines: IntRange): CustomFoldRegion? {
+    val renderer = CellCustomFoldingRender(mainComponent) { gutterActionRenderer }
+    return foldingModel.addCustomLinesFolding(lines.first, lines.last, renderer)
+           ?: run {
+             removeConflictingRegularFoldRegions(foldingModel, lines)
+             foldingModel.addCustomLinesFolding(lines.first, lines.last, renderer)
+           }
+  }
+
+  private fun removeConflictingRegularFoldRegions(foldingModel: FoldingModelEx, lines: IntRange) {
+    val document = editor.document
+    val maxLine = (document.lineCount - 1).coerceAtLeast(0)
+    val startLine = lines.first.coerceIn(0, maxLine)
+    val endLine = lines.last.coerceIn(startLine, maxLine)
+    val startOffset = document.getLineStartOffset(startLine)
+    val endOffset = document.getLineEndOffset(endLine)
+
+    foldingModel.getRegionsOverlappingWith(startOffset, endOffset)
+      .filter { it !is CustomFoldRegion && it.conflictsWithCustomFolding(startOffset, endOffset) }
+      .forEach { foldingModel.removeFoldRegion(it) }
+  }
+
+  private fun FoldRegion.conflictsWithCustomFolding(customStartOffset: Int, customEndOffset: Int): Boolean {
+    val customContainsRegion = customStartOffset <= startOffset && endOffset <= customEndOffset
+    val regionContainsCustom = startOffset <= customStartOffset && customEndOffset <= endOffset
+    return !customContainsRegion && !regionContainsCustom
   }
 
   override fun addInlayBelow(presentation: InlayPresentation) {
