@@ -19,6 +19,7 @@ import org.jetbrains.plugins.terminal.block.ui.sanitizeLineSeparators
 import org.jetbrains.plugins.terminal.fus.BatchLatencyReporter
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 import org.jetbrains.plugins.terminal.fus.percentile
 import org.jetbrains.plugins.terminal.fus.secondLargest
 import org.jetbrains.plugins.terminal.fus.totalDuration
@@ -73,10 +74,10 @@ internal class TerminalInput(
     val job = coroutineScope.launch {
       val targetChannel = inputChannelDeferred.await()
 
-      if (startupFusInfo != null) {
+      if (startupFusInfo?.triggerTime != null) {
         // Report it only after receiving the input channel.
         // Only now we can consider that the shell is fully started, se we can send the input to it.
-        reportShellStartingLatency(startupFusInfo)
+        reportShellStartingLatency(startupFusInfo.triggerTime!!, startupFusInfo.way)
       }
 
       try {
@@ -199,9 +200,9 @@ internal class TerminalInput(
     }
   }
 
-  private fun reportShellStartingLatency(startupFusInfo: TerminalStartupFusInfo) {
-    val latency = startupFusInfo.triggerTime.elapsedNow()
-    ReworkedTerminalUsageCollector.logStartupShellStartingLatency(startupFusInfo.way, latency)
+  private fun reportShellStartingLatency(triggerTime: TimeMark, openingWay: TerminalTabOpeningWay) {
+    val latency = triggerTime.elapsedNow()
+    ReworkedTerminalUsageCollector.logStartupShellStartingLatency(openingWay, latency)
     LOG.info("Reworked terminal startup shell starting latency: ${latency.inWholeMilliseconds} ms")
   }
 

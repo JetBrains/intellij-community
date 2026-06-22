@@ -205,8 +205,14 @@ class TerminalViewImpl(
     // Usually, the cursor is painted or output received first in the output editor
     // because it is shown by default on a new session opening.
     // But in the case of session restoration in RemDev, there can be an alternate buffer.
-    val fusCursorPaintingListener = startupFusInfo?.let { TerminalFusCursorPainterListener(it) }
-    val fusFirstOutputListener = startupFusInfo?.let { TerminalFusFirstOutputListener(it) }
+    val fusCursorPaintingListener = if (startupFusInfo?.triggerTime != null) {
+      TerminalFusCursorPainterListener(startupFusInfo.triggerTime!!, startupFusInfo.way)
+    }
+    else null
+    val fusFirstOutputListener = if (startupFusInfo?.triggerTime != null) {
+      TerminalFusFirstOutputListener(startupFusInfo.triggerTime!!, startupFusInfo.way)
+    }
+    else null
 
     alternateBufferEditor = TerminalEditorFactory.createAlternateBufferEditor(
       project,
