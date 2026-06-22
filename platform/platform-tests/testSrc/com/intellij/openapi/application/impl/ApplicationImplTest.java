@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -592,6 +593,22 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     readAction2.get();
     readAction1.get();
     if (exception != null) throw exception;
+  }
+
+  public void testReadActionInImpatientModeMustBeReentrant() throws Throwable {
+    ApplicationEx app = ApplicationManagerEx.getApplicationEx();
+    Future<?> f = app.executeOnPooledThread(() -> {
+      assertFalse(app.isInImpatientReader());
+      app.executeByImpatientReader(() -> {
+        assertTrue(app.isInImpatientReader());
+        app.executeByImpatientReader(() -> {
+          assertTrue(app.isInImpatientReader());
+        });
+        assertTrue(app.isInImpatientReader());
+      });
+      assertFalse(app.isInImpatientReader());
+    });
+    f.get();
   }
 
   public void testReadActionInImpatientModeMustNotThrowWhenThereIsAPendingWriteAndWeAreUnderNonCancelableSection() throws Throwable {
