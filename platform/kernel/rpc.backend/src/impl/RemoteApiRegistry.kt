@@ -25,6 +25,8 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
 
   private fun registerRemoteApi(apiDescriptor: RemoteApiDescriptor<*>, apiImplementation: RemoteApi<*>) {
     val apiFqn = apiDescriptor.getApiFqn()
+    LOG.debug("Registering remote api $apiFqn - $apiDescriptor")
+
     val serviceImplementation = ServiceImplementation(apiDescriptor, apiImplementation, serviceScope = null)
 
     val previous = remoteApis.putIfAbsent(apiFqn, serviceImplementation)
