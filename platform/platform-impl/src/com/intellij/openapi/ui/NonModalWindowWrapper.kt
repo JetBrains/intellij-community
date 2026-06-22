@@ -57,6 +57,7 @@ import java.awt.event.ActionListener
 import java.awt.event.KeyEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 import javax.swing.JDialog
 import javax.swing.JFrame
@@ -469,12 +470,28 @@ abstract class NonModalWindowWrapper(
       withContext(ModalityState.any().asContextElement()) {
         val globallyActiveWindow = MutableStateFlow<Window?>(null)
 
+        // Track whether a child dialog of our window was recently active.
+        // When a child is activated, this flag is set immediately — before any debounce.
+        // The child dialog may then redirect focus elsewhere (e.g. to a browser for OAuth),
+        // and after the debounce, the globally active window would be null (or the browser),
+        // not the child. Without this flag, we'd incorrectly treat it as an app-switch and
+        // reset the configurable. The flag is cleared when our own window is re-activated.
+        // This approach does NOT rely on WindowEvent.oppositeWindow, so it works on Wayland.
+        val deactivatedToChild = AtomicBoolean(false)
+
         launch {
           val toolkit = Toolkit.getDefaultToolkit()
           val listener = AWTEventListener { event ->
             when (event.id) {
               WindowEvent.WINDOW_ACTIVATED -> {
-                globallyActiveWindow.value = event.source as Window
+                val activated = event.source as Window
+                if (activated !== activeWindow && activated.isSameOrOwnedBy(activeWindow)) {
+                  // A child dialog of our window just got focus.
+                  // Remember this so that if the child redirects focus elsewhere (e.g. browser),
+                  // we don't treat it as a genuine app-switch.
+                  deactivatedToChild.set(true)
+                }
+                globallyActiveWindow.value = activated
               }
               WindowEvent.WINDOW_DEACTIVATED -> {
                 // Guesswork: if the app lost focus for good, this will be the last value for a while.
@@ -505,12 +522,29 @@ abstract class NonModalWindowWrapper(
             if (globallyActiveWindow == null) 1.seconds else 0.seconds
           }
           .map { globallyActiveWindow ->
-            LOG.debug { "Active window changed: $globallyActiveWindow" }
+            LOG.debug { "Active window changed: $globallyActiveWindow, deactivatedToChild=$deactivatedToChild" }
             // Don't trigger "deactivate" when focus moves to an owned child dialog (e.g. a file chooser opened
             // by a configurable): changes made there are intentional and should not be rolled back.
             // Don't trigger "activate" when returning from an owned child dialog.
             // All other cases — including null (another OS app) and unrelated windows — are genuine app-switches.
-            globallyActiveWindow != null && globallyActiveWindow.isSameOrOwnedBy(activeWindow)
+            if (globallyActiveWindow != null && globallyActiveWindow.isSameOrOwnedBy(activeWindow)) {
+              // Our window or a child has focus — clear the child flag only when it's the main window itself,
+              // not a child: we need the flag to survive while a child is active, in case the child
+              // redirects focus to an external app (e.g. browser for OAuth) before the debounce fires again.
+              if (globallyActiveWindow === activeWindow) {
+                deactivatedToChild.set(false)
+              }
+              true
+            }
+            else if (deactivatedToChild.get()) {
+              // We lost focus to a child dialog initially, but by the time the debounce fired,
+              // the active window is something else (e.g. a browser opened by the child for OAuth).
+              // Treat this as still being in child interaction — don't reset.
+              true
+            }
+            else {
+              false
+            }
           }
           .distinctUntilChanged()
           .collect { isOurWindowActive ->
