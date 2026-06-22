@@ -7,8 +7,17 @@
   <!-- endregion -->
 
   <actions>
-    <action id="JBCefTestApp" class="com.intellij.internal.jcef.test.JBCefTestApp"/>
-    <action id="ShowGotItDemo" internal="true" class="com.intellij.internal.ui.ShowGotItDemoAction"/>
-    <action id="JBCefOsrMeasureFps" class="com.intellij.internal.jcef.JBCefOsrBrowserMeasureFpsAction"/>
+    <!--suppress PluginXmlI18n -->
+    <action id="JBCefTestApp" text="JBCef TestApp" class="com.intellij.internal.jcef.test.JBCefTestApp" internal="true">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <!--suppress PluginXmlI18n -->
+    <action id="ShowGotItDemo" text="Show GotIt Demo" internal="true" class="com.intellij.internal.ui.ShowGotItDemoAction">
+      <add-to-group group-id="Internal.UI.Demos"/>
+    </action>
+    <!--suppress PluginXmlI18n -->
+    <action id="JBCefOsrMeasureFps" text="JBCef OSR Measure FPS" class="com.intellij.internal.jcef.JBCefOsrBrowserMeasureFpsAction" internal="true">
+      <add-to-group group-id="Internal.UI"/>
+    </action>
   </actions>
 </idea-plugin>
