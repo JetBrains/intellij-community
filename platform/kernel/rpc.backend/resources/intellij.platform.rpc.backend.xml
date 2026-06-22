@@ -1,8 +1,11 @@
 <idea-plugin visibility="public">
   <dependencies>
     <module name="intellij.platform.backend"/>
-    <module name="intellij.platform.rpc"/>
+    <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
     <module name="fleet.rpc.server"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.rpc"/>
+    <!-- endregion -->
   </dependencies>
 
   <extensionPoints>
