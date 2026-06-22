@@ -202,7 +202,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       myDisposed = true;
     });
     myDaemonListenerPublisher = project.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC);
-    myListeners = new DaemonListeners(project, this);
+    myListeners = new DaemonListeners(project, this, coroutineScope);
     Disposer.register(this, myListeners);
     repaintIconHelper = new DaemonCodeAnalyzerRepaintIconHelper(coroutineScope);
   }
