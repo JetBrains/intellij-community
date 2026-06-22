@@ -9,8 +9,6 @@ import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
 import fleet.rpc.RemoteApi
-import fleet.rpc.RemoteApiDescriptor
-import fleet.rpc.remoteApiDescriptorOf
 
 /**
  * Registers the backend implementation of an [Rpc][fleet.rpc.Rpc] interface, by naming the interface and
@@ -37,11 +35,7 @@ internal class RemoteApiRegistration : PluginAware {
     this.pluginDescriptor = pluginDescriptor
   }
 
-  fun loadApiDescriptor(): RemoteApiDescriptor<*> {
-    return remoteApiDescriptorOf(loadApiInterface())
-  }
-
-  private fun loadApiInterface(): Class<*> {
+  fun loadApiInterface(): Class<*> {
     return ApplicationManager.getApplication().loadClass<Any>(apiInterface, pluginDescriptor)
   }
 

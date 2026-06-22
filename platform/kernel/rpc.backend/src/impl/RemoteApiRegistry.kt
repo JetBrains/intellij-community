@@ -103,13 +103,13 @@ internal class RemoteApiRegistry(coroutineScope: CoroutineScope) : RemoteApiProv
 
   private fun register(registration: RemoteApiRegistration) {
     registerRemoteApi(
-      apiDescriptor = registration.loadApiDescriptor(),
+      apiDescriptor = remoteApiDescriptorOf(registration.loadApiInterface()),
       apiImplementation = registration.createImplementation()
     )
   }
 
   private fun unregister(registration: RemoteApiRegistration) {
-    unregisterRemoteApi(descriptor = registration.loadApiDescriptor())
+    unregisterRemoteApi(descriptor = remoteApiDescriptorOf(registration.loadApiInterface()))
   }
 
   override suspend fun <T : RemoteApi<Unit>> resolve(descriptor: RemoteApiDescriptor<T>): T {
