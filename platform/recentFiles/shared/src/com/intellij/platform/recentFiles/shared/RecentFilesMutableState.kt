@@ -18,7 +18,7 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
   protected val recentlyEditedFilesState: MutableStateFlow<RecentFilesState<T>> = MutableStateFlow(RecentFilesState())
   protected val recentlyOpenedPinnedFilesState: MutableStateFlow<RecentFilesState<T>> = MutableStateFlow(RecentFilesState())
 
-  abstract fun checkValidity(model: T): Boolean
+  abstract fun isAllowedInModel(targetFilesKind: RecentFileKind, model: T): Boolean
 
   fun chooseStateToWriteTo(targetFilesKind: RecentFileKind): MutableStateFlow<RecentFilesState<T>> {
     return when (targetFilesKind) {
@@ -34,7 +34,7 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
     LOG.debug("Adding ${batch.size} items to $targetFilesKind frontend model")
     targetModel.update { oldList ->
       val updatedState = toAdd + (oldList.entries - toAdd.toSet())
-      RecentFilesState(updatedState.filter(::checkValidity))
+      RecentFilesState(updatedState.filter { isAllowedInModel(targetFilesKind, it) })
     }
   }
 
@@ -49,11 +49,11 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
         val newValuesToPutIntoFirstPosition = oldList.entries.mapNotNull { oldItem -> itemsToMergeWithExisting[oldItem] }
         val restOfExistingValues = oldList.entries - newValuesToPutIntoFirstPosition.toSet()
         val updatedState = newValuesToPutIntoFirstPosition + restOfExistingValues
-        RecentFilesState(updatedState.filter(::checkValidity))
+        RecentFilesState(updatedState.filter { isAllowedInModel(targetFilesKind, it) })
       }
       else {
         val effectiveModelsToInsert = oldList.entries.map { oldItem -> itemsToMergeWithExisting[oldItem] ?: oldItem }
-        RecentFilesState(effectiveModelsToInsert.filter(::checkValidity))
+        RecentFilesState(effectiveModelsToInsert.filter { isAllowedInModel(targetFilesKind, it) })
       }
     }
   }
@@ -63,7 +63,7 @@ abstract class RecentFilesMutableState<T>(protected val project: Project) {
     LOG.debug("Removing ${batch.size} items from $targetFilesKind frontend model")
     targetModel.update { oldList ->
       val updatedState = oldList.entries - batch.toSet()
-      RecentFilesState(updatedState.filter(::checkValidity))
+      RecentFilesState(updatedState.filter { isAllowedInModel(targetFilesKind, it) })
     }
   }
 

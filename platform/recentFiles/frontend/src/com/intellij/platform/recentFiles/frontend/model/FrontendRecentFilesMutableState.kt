@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.recentFiles.frontend.SwitcherVirtualFile
+import com.intellij.platform.recentFiles.frontend.isExcludedFromRecentFiles
 import com.intellij.platform.recentFiles.shared.RecentFileKind
 import com.intellij.platform.recentFiles.shared.RecentFilesMutableState
 import com.intellij.platform.recentFiles.shared.RecentFilesState
@@ -14,8 +15,9 @@ import com.intellij.util.IconUtil
 import kotlinx.coroutines.flow.MutableStateFlow
 
 internal class FrontendRecentFilesMutableState(project: Project) : RecentFilesMutableState<SwitcherVirtualFile>(project) {
-  override fun checkValidity(model: SwitcherVirtualFile): Boolean {
-    return model.virtualFile?.isValid != false
+  override fun isAllowedInModel(targetFilesKind: RecentFileKind, model: SwitcherVirtualFile): Boolean {
+    val file = model.virtualFile ?: return true
+    return file.isValid && !isExcludedFromRecentFiles(project, targetFilesKind, file)
   }
 
   fun chooseStateToReadFrom(filesKind: RecentFileKind): MutableStateFlow<RecentFilesState<SwitcherVirtualFile>> {

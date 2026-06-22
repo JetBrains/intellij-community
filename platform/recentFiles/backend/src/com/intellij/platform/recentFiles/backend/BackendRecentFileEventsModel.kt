@@ -114,6 +114,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
     val metadata =
       metadataRequest.frontendRecentFiles
         .mapNotNull { frontendFileId -> frontendFileId.virtualFile() }
+        .filter { isAllowedInRecentFilesModel(project, it) }
         .map { frontendFile ->
           readAction {
             createRecentFileViewModel(frontendFile, project)
@@ -183,7 +184,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
   private suspend fun processOrderChangeEvent(event: OrderChangeEvent) {
     when (event.changeKind) {
       FileChangeKind.ADDED -> {
-        val models = createRecentFilesViewModels(event.files)
+        val models = createRecentFilesViewModels(event.files.filter { isAllowedInRecentFilesModel(project, it) })
         val fileEvent = BackendRecentFilesEvent.ItemsAdded(models)
 
         for (fileKind in RecentFileKind.entries) {
@@ -212,7 +213,9 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
       BackendRecentFilesModel.getInstance(project).getFilesByKind(fileKind).toSet()
     }
 
-    val filesToUpdate = files.filter { file -> knownFilesByKind.values.any { known -> known.contains(file) } }
+    val filesToUpdate = files.filter { file ->
+      isAllowedInRecentFilesModel(project, file) && knownFilesByKind.values.any { known -> known.contains(file) }
+    }
 
     val models = createRecentFilesViewModels(filesToUpdate)
     assert(models.size == filesToUpdate.size)
@@ -266,6 +269,7 @@ internal class BackendRecentFileEventsModel(private val project: Project, corout
       getFilesToShow(project = project,
                      recentFileKind = filter.filesKind,
                      filesFromFrontendEditorSelectionHistory = filter.frontendEditorSelectionHistory.mapNotNull(VirtualFileId::virtualFile))
+        .filter { isAllowedInRecentFilesModel(project, it) }
         .map {
           readAction {
             createRecentFileViewModel(it, project)
