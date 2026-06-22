@@ -12,19 +12,19 @@ import org.jetbrains.yaml.psi.YAMLMapping;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class YamlComposedTypeBase extends YamlMetaType {
   private final List<YamlMetaType> myTypes;
-  private final Map<String, Field> myFields = new HashMap<>();
+  private final Map<String, Field> myFields = new ConcurrentHashMap<>();
 
   protected static List<YamlMetaType> flattenTypes(YamlMetaType... types) {
     if (types.length == 0) {
@@ -59,26 +59,31 @@ public abstract class YamlComposedTypeBase extends YamlMetaType {
 
   @Override
   public @Nullable Field findFeatureByName(@NotNull String name) {
-    if (!myFields.containsKey(name)) {
-      List<Pair<Field, YamlMetaType>> fields = new SmartList<>();
-      for (YamlMetaType nextSubType : myTypes) {
-        if (nextSubType instanceof YamlScalarType) {
-          continue;
-        }
-        Field nextField = nextSubType.findFeatureByName(name);
-        if (nextField != null && !name.equals(nextField.getName())) {
-          // any name?
-          continue;
-        }
-        if (nextField != null) {
-          fields.add(Pair.create(nextField, nextSubType));
-        }
-      }
+    Field cached = myFields.get(name);
+    if (cached != null) {
+      return cached;
+    }
 
-      Field result = mergeFields(fields);
+    List<Pair<Field, YamlMetaType>> fields = new SmartList<>();
+    for (YamlMetaType nextSubType : myTypes) {
+      if (nextSubType instanceof YamlScalarType) {
+        continue;
+      }
+      Field nextField = nextSubType.findFeatureByName(name);
+      if (nextField != null && !name.equals(nextField.getName())) {
+        // any name?
+        continue;
+      }
+      if (nextField != null) {
+        fields.add(Pair.create(nextField, nextSubType));
+      }
+    }
+
+    Field result = mergeFields(fields);
+    if (result != null) {
       myFields.put(name, result);
     }
-    return myFields.get(name);
+    return result;
   }
 
   @Override
