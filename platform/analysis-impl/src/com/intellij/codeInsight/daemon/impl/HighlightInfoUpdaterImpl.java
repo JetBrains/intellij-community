@@ -1106,7 +1106,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                                         @NotNull WhatTool toolIdPredicate,
                                         @NotNull Consumer<? super ManagedHighlighterRecycler> invalidPsiRecyclerConsumer) {
     ManagedHighlighterRecycler.runWithRecycler(session, "runWithInvalidPsiRecycler", invalidPsiRecycler -> {
-      processQueues(session.getDocument());
       ProgressManager.checkCanceled();
       recycleInvalidPsiElements(session.getPsiFile(), session, invalidPsiRecycler, toolIdPredicate);
       ScheduledFuture<?> future;
@@ -1130,6 +1129,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
               }
             });
           }, session.getProgressIndicator());
+          processQueues(session.getDocument());
         }, Registry.intValue("highlighting.delay.invalid.psi.info.kill.ms"), TimeUnit.MILLISECONDS);
       }
 
