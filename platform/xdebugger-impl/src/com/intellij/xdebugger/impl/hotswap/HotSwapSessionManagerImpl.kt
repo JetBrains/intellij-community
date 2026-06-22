@@ -78,11 +78,11 @@ class HotSwapSessionManagerImpl private constructor(private val project: Project
   }
 
   /**
-   * Resets status to [HotSwapVisibleStatus.HIDDEN], so that the next update will be reported to listeners.
+   * Resets status to [HotSwapVisibleStatus.Hidden], so that the next update will be reported to listeners.
    */
   fun hide() {
     val currentState = _currentStatusFlow.value ?: return
-    _currentStatusFlow.compareAndSet(currentState, currentState.copy(status = HotSwapVisibleStatus.HIDDEN))
+    _currentStatusFlow.compareAndSet(currentState, currentState.copy(status = HotSwapVisibleStatus.Hidden))
   }
 
   internal val currentSession: HotSwapSessionImpl<*>?
@@ -131,8 +131,8 @@ class HotSwapSessionImpl<T> internal constructor(
   val id: XDebugHotSwapSessionId = storeValueGlobally(coroutineScope, this, HowSwapSessionValueIdType)
   private lateinit var changesCollector: SourceFileChangesCollector<T>
 
-  internal val currentStatus: HotSwapVisibleStatus get() = _currentStatus.get() ?: HotSwapVisibleStatus.NO_CHANGES
-  private val _currentStatus = AtomicReference(HotSwapVisibleStatus.NO_CHANGES as HotSwapVisibleStatus?)
+  internal val currentStatus: HotSwapVisibleStatus get() = _currentStatus.get() ?: HotSwapVisibleStatus.NoChanges
+  private val _currentStatus = AtomicReference(HotSwapVisibleStatus.NoChanges as HotSwapVisibleStatus?)
 
   private fun setStatus(status: HotSwapVisibleStatus?, fireUpdate: Boolean = true) {
     while (true) {
@@ -167,19 +167,19 @@ class HotSwapSessionImpl<T> internal constructor(
   override fun startHotSwapListening(showSuccessNotification: Boolean): HotSwapResultListener {
     HotSwapStatusNotificationManager.getInstance(project).clearNotifications()
     val statusBefore = currentStatus
-    setStatus(HotSwapVisibleStatus.IN_PROGRESS)
+    setStatus(HotSwapVisibleStatus.InProgress)
     val completed = AtomicBoolean()
     return object : HotSwapResultListener {
       override fun onSuccessfulReload() {
-        completeHotSwap(true, HotSwapVisibleStatus.NO_CHANGES, HotSwapVisibleStatus.SUCCESS)
+        completeHotSwap(true, HotSwapVisibleStatus.NoChanges, HotSwapVisibleStatus.Success)
       }
 
       override fun onFinish() {
-        completeHotSwap(true, HotSwapVisibleStatus.NO_CHANGES)
+        completeHotSwap(true, HotSwapVisibleStatus.NoChanges)
       }
 
       override fun onFailure() {
-        completeHotSwap(resetChanges = false, HotSwapVisibleStatus.NO_CHANGES)
+        completeHotSwap(resetChanges = false, HotSwapVisibleStatus.NoChanges)
       }
 
       override fun onCanceled() {
@@ -196,7 +196,7 @@ class HotSwapSessionImpl<T> internal constructor(
         if (customFire) {
           HotSwapSessionManagerImpl.getInstance(project).fireStatusChanged(this@HotSwapSessionImpl, forceStatus)
         }
-        if (forceStatus == HotSwapVisibleStatus.SUCCESS && showSuccessNotification) {
+        if (forceStatus == HotSwapVisibleStatus.Success && showSuccessNotification) {
           HotSwapStatusNotificationManager.getInstance(project).showSuccessNotification(coroutineScope)
         }
       }
@@ -205,11 +205,11 @@ class HotSwapSessionImpl<T> internal constructor(
 
   private inner class SessionSourceFileChangesListener : SourceFileChangesListener {
     override fun onNewChanges() {
-      setStatus(HotSwapVisibleStatus.CHANGES_READY)
+      setStatus(HotSwapVisibleStatus.ChangesReady)
     }
 
     override fun onChangesCanceled() {
-      setStatus(HotSwapVisibleStatus.NO_CHANGES)
+      setStatus(HotSwapVisibleStatus.NoChanges)
     }
   }
 }

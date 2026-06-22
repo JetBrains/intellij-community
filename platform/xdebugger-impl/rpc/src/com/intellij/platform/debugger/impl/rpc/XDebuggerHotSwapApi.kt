@@ -36,8 +36,22 @@ data class XDebugHotSwapSessionId(override val uid: UID) : Id
 data class XDebugHotSwapCurrentSessionStatus(val sessionId: XDebugHotSwapSessionId, val status: HotSwapVisibleStatus)
 
 @ApiStatus.Internal
-enum class HotSwapVisibleStatus {
-  NO_CHANGES, CHANGES_READY, IN_PROGRESS, SUCCESS, HIDDEN
+@Serializable
+sealed interface HotSwapVisibleStatus {
+  @Serializable
+  object NoChanges : HotSwapVisibleStatus
+
+  @Serializable
+  object ChangesReady : HotSwapVisibleStatus
+
+  @Serializable
+  object InProgress : HotSwapVisibleStatus
+
+  @Serializable
+  object Success : HotSwapVisibleStatus
+
+  @Serializable
+  object Hidden : HotSwapVisibleStatus
 }
 
 @ApiStatus.Internal

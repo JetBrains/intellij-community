@@ -100,7 +100,7 @@ internal class HotSwapModifiedFilesAction : AnAction(), DumbAware {
 private fun getCurrentStatus(project: Project) = FrontendHotSwapManager.getInstance(project).currentStatus
 
 internal class HotSwapWithRebuildAction : AnAction(), CustomComponentAction, DumbAware {
-  var status: HotSwapVisibleStatus = HotSwapVisibleStatus.NO_CHANGES
+  var status: HotSwapVisibleStatus = HotSwapVisibleStatus.NoChanges
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
@@ -148,11 +148,11 @@ private class HotSwapToolbarComponent(action: AnAction, presentation: Presentati
   }
 
   fun update(status: HotSwapVisibleStatus, presentation: Presentation) {
-    presentation.isEnabled = status == HotSwapVisibleStatus.CHANGES_READY
+    presentation.isEnabled = status == HotSwapVisibleStatus.ChangesReady
     val icon = when (status) {
-      HotSwapVisibleStatus.CHANGES_READY -> hotSwapIcon
-      HotSwapVisibleStatus.IN_PROGRESS -> AnimatedIcon.Default.INSTANCE
-      HotSwapVisibleStatus.SUCCESS -> AllIcons.Status.Success
+      HotSwapVisibleStatus.ChangesReady -> hotSwapIcon
+      HotSwapVisibleStatus.InProgress -> AnimatedIcon.Default.INSTANCE
+      HotSwapVisibleStatus.Success -> AllIcons.Status.Success
       else -> null
     }
     if (icon != null) {
@@ -229,7 +229,7 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     val manager = FrontendHotSwapManager.getInstance(project)
     val job = manager.coroutineScope.launch(Dispatchers.EDT) {
       manager.currentStatusFlow.collectLatest { state ->
-        val status = state?.status ?: HotSwapVisibleStatus.HIDDEN
+        val status = state?.status ?: HotSwapVisibleStatus.Hidden
         onStatusChanged(component, status, editorTag, project)
       }
     }
@@ -259,17 +259,17 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
     HotSwapUiExtension.computeSafeIfAvailable { it.announceHotSwapStatus(project, status) }
     hotSwapAction.status = status
     when (status) {
-      HotSwapVisibleStatus.IN_PROGRESS, HotSwapVisibleStatus.SUCCESS -> {
+      HotSwapVisibleStatus.InProgress, HotSwapVisibleStatus.Success -> {
         updateActions()
       }
-      HotSwapVisibleStatus.NO_CHANGES -> {
+      HotSwapVisibleStatus.NoChanges -> {
         component.scheduleHide()
       }
-      HotSwapVisibleStatus.CHANGES_READY -> {
+      HotSwapVisibleStatus.ChangesReady -> {
         updateActions()
         component.scheduleShow()
       }
-      HotSwapVisibleStatus.HIDDEN -> {
+      HotSwapVisibleStatus.Hidden -> {
         component.hideImmediately()
       }
     }
@@ -299,4 +299,4 @@ internal class HideAction : AnAction() {
 
 private val DataContext.editorTag: String? get() = getData(PlatformCoreDataKeys.FILE_EDITOR)?.file?.path
 
-private val XDebugHotSwapCurrentSessionStatus.hasChanges get() = status == HotSwapVisibleStatus.CHANGES_READY
+private val XDebugHotSwapCurrentSessionStatus.hasChanges get() = status == HotSwapVisibleStatus.ChangesReady

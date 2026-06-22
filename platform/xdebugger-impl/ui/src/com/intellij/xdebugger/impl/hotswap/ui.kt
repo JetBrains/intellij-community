@@ -39,7 +39,7 @@ interface HotSwapUiExtension {
   val toolbarAccessibleName: String? get() = XDebuggerBundle.message("xdebugger.hotswap.toolbar.accessible.name")
 
   fun announceHotSwapStatus(project: Project, status: HotSwapVisibleStatus) {
-    if (status == HotSwapVisibleStatus.SUCCESS) {
+    if (status == HotSwapVisibleStatus.Success) {
       AccessibleAnnouncerUtil.announce(null, XDebuggerBundle.message("xdebugger.hotswap.status.success.announcement"), true)
     }
   }
