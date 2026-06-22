@@ -62,20 +62,19 @@ abstract class DialogAction(
   dynamicText: Supplier<@NlsActions.ActionText String>,
   val icon: Icon,
   val target: @Nls String,
+  private val project: Project,
 ) : AnAction(dynamicText, icon) {
   abstract fun createDialog(): DialogWrapper?
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val project = e.project ?: return
     if (e.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) == true) {
       e.presentation.isEnabled = !project.isSdkConfigurationInProgress.value
     }
   }
 
   final override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
     if (e.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) == true && project.isSdkConfigurationInProgress.value) return
     FileDocumentManager.getInstance().saveAllDocuments()
     createDialog()?.show()
@@ -118,6 +117,7 @@ internal class AddLocalInterpreterAction(
   dynamicText = PyBundle.messagePointer("python.sdk.action.add.local.interpreter.text"),
   icon = AllIcons.Nodes.HomeFolder,
   target = PyBundle.message("sdk.create.targets.local"),
+  project = moduleOrProject.project,
 ), DumbAware {
   override fun createDialog(): PythonAddLocalInterpreterDialog {
     val dialogPresenter = PythonAddLocalInterpreterPresenter(
@@ -138,6 +138,7 @@ internal class AddInterpreterOnTargetAction(
   dynamicText = PyBundle.messagePointer("python.sdk.action.add.interpreter.based.on.target.text", targetType.displayName),
   icon = targetType.icon,
   target = targetType.displayName,
+  project = project,
 ), DumbAware {
   override fun createDialog(): TargetEnvironmentWizard? {
     val wizard = TargetEnvironmentWizard.createWizard(project, targetType, PythonLanguageRuntimeType.Helper.getInstance())
