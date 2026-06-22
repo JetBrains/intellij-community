@@ -1190,6 +1190,38 @@ class PyAttributeAndDescriptorTypeTest : PyCodeInsightTestCase() {
 
     @Test
     @TestFor(issues = ["PY-63737"])
+    fun `generic descriptor with own type parameter in get binds the return type variable on instance access`() = test("""
+      from typing import Callable, TypeVar, Generic
+      T = TypeVar("T")
+      T_co = TypeVar("T_co", covariant=True)
+      class CachedSlotProperty(Generic[T, T_co]):
+          def __init__(self, f: Callable[[T], T_co]) -> None:
+              self.f = f
+          def __get__(self, instance: T, owner: type[T]) -> T_co:
+              return self.f(instance) + 1
+      class Foo:
+          @CachedSlotProperty
+          def bar(self) -> int:
+              return 42
+      expr = Foo().bar
+      #└ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-63737"])
+    fun `instance access passes the owner class so a get typed with type T does not drop other bindings`() = test("""
+      from typing import Callable
+      class CachedSlotProperty[T, V]:
+          def __init__(self, f: Callable[[T], V]) -> None: ...
+          def __get__(self, instance: T, owner: type[T]) -> V: ...
+      class Foo:
+          bar: CachedSlotProperty[Foo, int]
+      expr = Foo().bar
+      #└ TYPE int
+      """)
+
+    @Test
+    @TestFor(issues = ["PY-63737"])
     fun `generic descriptor subclass used as decorator accessed on instance`() = test("""
       from typing import Any, Callable, Generic, TypeVar, Union, overload
 
