@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -92,6 +94,16 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   public @NotNull Iterable<? extends Wrapper> iterateAllChanges() {
     return JBIterable.from(getAllChanges().collect(Collectors.toList()));
+  }
+
+  /**
+   * Changes that belong to the same group (e.g. changelist) as the given change.
+   * Used to scope the diff file counter / "Go to change" popup to the current change's group.
+   * Defaults to all changes; overridden where the tree exposes grouping (e.g. changelists).
+   */
+  @ApiStatus.Internal
+  public @NotNull Iterable<? extends Wrapper> iterateChangesInSameGroup(@NotNull Wrapper change) {
+    return iterateAllChanges();
   }
 
   /**
@@ -246,7 +258,11 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   @Override
   protected @Nullable AnAction createGoToChangeAction() {
-    return PresentableGoToChangePopupAction.create(this::getChanges, new MyGoToChangePopupController());
+    Supplier<ListSelection<? extends Wrapper>> changesSupplier =
+      Registry.is("vcs.diff.preview.scope.navigation.to.group")
+      ? this::getCurrentGroupListSelection
+      : this::getChanges;
+    return PresentableGoToChangePopupAction.create(changesSupplier::get, new MyGoToChangePopupController());
   }
 
   protected @NotNull List<AnAction> getGoToChangeToolbarActions() {
@@ -255,6 +271,18 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   protected @NotNull List<AnAction> getGoToChangePopupMenuActions() {
     return Collections.emptyList();
+  }
+
+  private @NotNull ListSelection<? extends Wrapper> getCurrentGroupListSelection() {
+    Wrapper currentChange = getCurrentChange();
+    if (currentChange == null) {
+      return ListSelection.empty();
+    }
+    List<? extends Wrapper> groupChanges = toListIfNotMany(iterateChangesInSameGroup(currentChange), true);
+    if (groupChanges == null) {
+      return ListSelection.empty();
+    }
+    return ListSelection.create(groupChanges, currentChange);
   }
 
   private @NotNull ListSelection<? extends Wrapper> getChanges() {
