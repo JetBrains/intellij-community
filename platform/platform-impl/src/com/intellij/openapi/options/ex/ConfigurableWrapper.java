@@ -429,7 +429,8 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
         if (index >= 0) {
           logColliding(configurable, index);
         }
-        myKids = ArrayUtil.insert(myKids, -1 - index, configurable);
+        int insertionIndex = index >= 0 ? index : -1 - index;
+        myKids = ArrayUtil.insert(myKids, insertionIndex, configurable);
       }
       else {
         myKids = ArrayUtil.append(myKids, configurable);
