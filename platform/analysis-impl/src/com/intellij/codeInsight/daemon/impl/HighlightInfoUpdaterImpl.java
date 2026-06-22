@@ -1106,7 +1106,6 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                                         @NotNull WhatTool toolIdPredicate,
                                         @NotNull Consumer<? super ManagedHighlighterRecycler> invalidPsiRecyclerConsumer) {
     ManagedHighlighterRecycler.runWithRecycler(session, "runWithInvalidPsiRecycler", invalidPsiRecycler -> {
-      processQueues(session.getDocument());
       ProgressManager.checkCanceled();
       recycleInvalidPsiElements(session.getPsiFile(), session, invalidPsiRecycler, toolIdPredicate);
       ScheduledFuture<?> future;
@@ -1115,7 +1114,7 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
       }
       else {
         // after some time kill highlighters for invalid elements automatically, because it seems they are not going to be reused
-        future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() ->
+        future = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
           ProgressManager.getInstance().executeProcessUnderProgress(() -> {
             // grab RA first, to avoid deadlock when InvalidPsi.toString() tries to obtain RA again from within this monitor
             ApplicationManagerEx.getApplicationEx().tryRunReadAction(() -> {
@@ -1129,8 +1128,9 @@ public final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater impleme
                 incinerateAndRemoveFromDataAtomically(invalidPsiRecycler, "(invalidPsiRecycler session timed-out)");
               }
             });
-          }, session.getProgressIndicator())
-          , Registry.intValue("highlighting.delay.invalid.psi.info.kill.ms"), TimeUnit.MILLISECONDS);
+          }, session.getProgressIndicator());
+          processQueues(session.getDocument());
+        }, Registry.intValue("highlighting.delay.invalid.psi.info.kill.ms"), TimeUnit.MILLISECONDS);
       }
 
       try {
