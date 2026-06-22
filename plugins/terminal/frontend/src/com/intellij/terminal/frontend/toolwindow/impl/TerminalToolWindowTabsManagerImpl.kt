@@ -447,6 +447,8 @@ internal class TerminalToolWindowTabsManagerImpl(
           backendTabId(tab.id)
           sessionId(tab.sessionId)
           requestFocus(false)  // Otherwise it may trigger the tool window showing
+          // Pass null as a trigger time because we don't need to track latency in this case.
+          startupFusInfo(TerminalStartupFusInfo(TerminalTabOpeningWay.TABS_RESTORE, triggerTime = null))
         }
         builder.createTab()
       }

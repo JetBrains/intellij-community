@@ -2,12 +2,16 @@ package com.intellij.terminal.frontend.fus
 
 import com.intellij.openapi.diagnostic.thisLogger
 import org.jetbrains.plugins.terminal.fus.ReworkedTerminalUsageCollector
-import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 import org.jetbrains.plugins.terminal.view.TerminalContentChangeEvent
 import org.jetbrains.plugins.terminal.view.TerminalOutputModel
 import org.jetbrains.plugins.terminal.view.TerminalOutputModelListener
+import kotlin.time.TimeMark
 
-internal class TerminalFusFirstOutputListener(private val startupFusInfo: TerminalStartupFusInfo) : TerminalOutputModelListener {
+internal class TerminalFusFirstOutputListener(
+  private val triggerTime: TimeMark,
+  private val openingWay: TerminalTabOpeningWay,
+) : TerminalOutputModelListener {
   /** Guarded by EDT */
   private var reported = false
 
@@ -24,8 +28,8 @@ internal class TerminalFusFirstOutputListener(private val startupFusInfo: Termin
   }
 
   private fun reportFirstOutputReceived() {
-    val latency = startupFusInfo.triggerTime.elapsedNow()
-    ReworkedTerminalUsageCollector.logStartupFirstOutputLatency(startupFusInfo.way, latency)
+    val latency = triggerTime.elapsedNow()
+    ReworkedTerminalUsageCollector.logStartupFirstOutputLatency(openingWay, latency)
     thisLogger().info("Reworked terminal startup first output latency: ${latency.inWholeMilliseconds} ms")
   }
 }
