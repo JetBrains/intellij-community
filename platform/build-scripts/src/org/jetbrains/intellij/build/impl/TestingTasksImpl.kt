@@ -1336,12 +1336,12 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
 
     val environment: MutableMap<String, String> = HashMap(envVariables)
 
-    val entryPointClass = "com.intellij.tests.JUnit5TeamCityRunner"
+    val mainClass = "com.intellij.tests.JUnit5TeamCityRunner"
     if (devBuildModeSettings == null) {
-      args.add(entryPointClass)
+      args.add(mainClass)
     }
     else {
-      devBuildModeSettings.apply(entryPointClass, mainModule, args, environment)
+      devBuildModeSettings.apply(mainClass, mainModule, args, environment)
     }
 
     args.add(suiteName)
