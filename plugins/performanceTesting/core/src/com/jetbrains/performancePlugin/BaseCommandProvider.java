@@ -10,7 +10,6 @@ import com.jetbrains.performancePlugin.commands.AssertCurrentFileCommand;
 import com.jetbrains.performancePlugin.commands.AssertEncodingFileCommand;
 import com.jetbrains.performancePlugin.commands.AssertModuleJdkVersionCommand;
 import com.jetbrains.performancePlugin.commands.AssertOpenedFileInSpecificRoot;
-import com.jetbrains.performancePlugin.commands.AssertProblemsViewCountCommand;
 import com.jetbrains.performancePlugin.commands.AwaitCompleteProjectConfigurationCommand;
 import com.jetbrains.performancePlugin.commands.CallInlineCompletionCommand;
 import com.jetbrains.performancePlugin.commands.CaptureMemoryMetricsCommand;
@@ -67,7 +66,6 @@ import com.jetbrains.performancePlugin.commands.MoveDirectoryCommand;
 import com.jetbrains.performancePlugin.commands.MoveFilesCommand;
 import com.jetbrains.performancePlugin.commands.OpenFileCommand;
 import com.jetbrains.performancePlugin.commands.OpenFileWithTerminateCommand;
-import com.jetbrains.performancePlugin.commands.OpenProblemViewPanelCommand;
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand;
 import com.jetbrains.performancePlugin.commands.OpenProjectViewCommand;
 import com.jetbrains.performancePlugin.commands.OpenRandomFileCommand;
@@ -243,8 +241,6 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(FindInFilesCommand.PREFIX, FindInFilesCommand::new),
       Map.entry(WaitForVfsRefreshSelectedEditorCommand.PREFIX, WaitForVfsRefreshSelectedEditorCommand::new),
       Map.entry(CloseLookupCommand.PREFIX, CloseLookupCommand::new),
-      Map.entry(OpenProblemViewPanelCommand.PREFIX, OpenProblemViewPanelCommand::new),
-      Map.entry(AssertProblemsViewCountCommand.PREFIX, AssertProblemsViewCountCommand::new),
       Map.entry(DetectProjectLeaksCommand.PREFIX, DetectProjectLeaksCommand::new),
       Map.entry(WaitForReOpenedFileCommand.PREFIX, WaitForReOpenedFileCommand::new),
       Map.entry(WaitForCodeVisionCommand.PREFIX, WaitForCodeVisionCommand::new),

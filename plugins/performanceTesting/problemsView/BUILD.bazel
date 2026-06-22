@@ -1,0 +1,76 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.performanceTesting.problemsView` start
+
+jvm_library(
+    name = "problemsView",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.problemsView",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//plugins/performanceTesting/core:performanceTesting",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/core-impl",
+        "//platform/core-ui",
+        "//platform/editor-ui-ex:editor-ex",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/platform-impl/concurrency",
+        "//platform/platform-impl:ide-impl",
+        "//platform/problemsView/shared",
+        "//platform/problemsView/ui",
+        "//platform/util:util-ui",
+        "//libraries/kotlinx/coroutines/core",
+    ],
+)
+
+jvm_library(
+    name = "problemsView_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.performanceTesting.problemsView",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":problemsView",
+        "//plugins/performanceTesting/core:performanceTesting_test_lib",
+        "//platform/analysis-api:analysis_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-impl:core-impl_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/editor-ui-ex:editor-ex_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/platform-impl/concurrency:concurrency_test_lib",
+        "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/problemsView/shared:shared_test_lib",
+        "//platform/problemsView/ui:ui_test_lib",
+        "//platform/util:util-ui_test_lib",
+        "//libraries/kotlinx/coroutines/core:core_test_lib",
+    ],
+)
+### auto-generated section `build intellij.performanceTesting.problemsView` end
+
+### auto-generated section `iml intellij.performanceTesting.problemsView` start
+exports_files(
+    [
+        "intellij.performanceTesting.problemsView.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.performanceTesting.problemsView` end

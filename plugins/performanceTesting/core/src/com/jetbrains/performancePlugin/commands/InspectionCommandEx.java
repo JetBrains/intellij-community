@@ -2,7 +2,6 @@
 package com.jetbrains.performancePlugin.commands;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
@@ -25,6 +24,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
@@ -137,7 +138,7 @@ public class InspectionCommandEx extends AbstractCommand {
       @Override
       public void addView(@NotNull InspectionResultsView view, @NotNull String title, boolean isOffline) {
         super.addView(view, title, isOffline);
-        ToolWindow resultWindow = ProblemsView.getToolWindow(project);
+        ToolWindow resultWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROBLEMS_VIEW);
         if (resultWindow != null && myOptions.hideResults) {
           resultWindow.hide();
         }

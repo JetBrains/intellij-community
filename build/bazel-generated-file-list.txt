@@ -1513,6 +1513,7 @@ plugins/performanceTesting/core
 plugins/performanceTesting/event-bus
 plugins/performanceTesting/freezes
 plugins/performanceTesting/frontend
+plugins/performanceTesting/problemsView
 plugins/performanceTesting/remote-driver
 plugins/performanceTesting/remote-driver.compose
 plugins/performanceTesting/remote-driver.jcef
