@@ -13,8 +13,8 @@ import org.jetbrains.plugins.terminal.ExperimentalTerminalMigration
 import org.jetbrains.plugins.terminal.TerminalEngine
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.block.feedback.askForFeedbackIfReworkedTerminalDisabled
-import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 
 internal sealed class TerminalChangeEngineAction(private val engine: TerminalEngine) : DumbAwareToggleAction() {
   init {
@@ -36,7 +36,7 @@ internal sealed class TerminalChangeEngineAction(private val engine: TerminalEng
       createTerminalTab(
         project,
         contentManager = e.getData(PlatformDataKeys.TOOL_WINDOW_CONTENT_MANAGER),
-        startupFusInfo = TerminalStartupFusInfo(TerminalOpeningWay.SWITCH_ENGINE),
+        startupFusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.SWITCH_ENGINE),
       )
     }
   }

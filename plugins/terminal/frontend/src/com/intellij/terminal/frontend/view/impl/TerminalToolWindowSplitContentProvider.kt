@@ -12,14 +12,14 @@ import com.intellij.ui.content.Content
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider
 import org.jetbrains.plugins.terminal.TerminalTabState
 import org.jetbrains.plugins.terminal.TerminalToolWindowManager
-import org.jetbrains.plugins.terminal.fus.TerminalOpeningWay
 import org.jetbrains.plugins.terminal.fus.TerminalStartupFusInfo
+import org.jetbrains.plugins.terminal.fus.TerminalTabOpeningWay
 import org.jetbrains.plugins.terminal.util.getNow
 import java.nio.file.Path
 
 internal class TerminalToolWindowSplitContentProvider : ToolWindowSplitContentProvider {
   override fun createContentCopy(project: Project, content: Content): Content {
-    val fusInfo = TerminalStartupFusInfo(TerminalOpeningWay.SPLIT_TOOLWINDOW)
+    val fusInfo = TerminalStartupFusInfo(TerminalTabOpeningWay.SPLIT_TOOLWINDOW)
 
     return if (shouldUseReworkedTerminal()) {
       createReworkedTerminalContent(project, content, fusInfo)
