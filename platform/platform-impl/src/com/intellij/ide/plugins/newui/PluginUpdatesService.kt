@@ -61,6 +61,11 @@ class PluginUpdatesService(val coroutineScope: CoroutineScope) {
     fun isNeedUpdate(pluginId: PluginId): Boolean {
       return runBlockingMaybeCancellable { getInstance().awaitHasUpdate(pluginId) }
     }
+
+    @JvmStatic
+    fun recalculateUpdates() {
+      getInstance().recalculateUpdates()
+    }
   }
 
   init {
