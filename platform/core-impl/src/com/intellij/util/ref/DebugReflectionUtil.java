@@ -213,15 +213,18 @@ public final class DebugReflectionUtil {
     }
     // check for objects leaking via static fields. process loaded classes only
     if (root instanceof Class && isLoaded(((Class<?>)root).getClassLoader(), ((Class<?>)root).getName())) {
-        for (Field field : getAllFields((Class<?>)root)) {
-          if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
-          try {
-            Object value = field.get(null);
-            queue(value, field, -1, backLink, queue, maxQueueSize, shouldExamineValue);
-          }
-          catch (IllegalAccessException ignored) {
-          }
+      for (Field field : getAllFields((Class<?>)root)) {
+        if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
+        try {
+          Object value = field.get(null);
+          queue(value, field, -1, backLink, queue, maxQueueSize, shouldExamineValue);
         }
+        catch (IllegalAccessException ignored) {
+        }
+        catch (ExceptionInInitializerError | NoClassDefFoundError ignored) {
+          // class initilisation (<clinit>) may still not be called, init can fail
+        }
+      }
     }
   }
 
