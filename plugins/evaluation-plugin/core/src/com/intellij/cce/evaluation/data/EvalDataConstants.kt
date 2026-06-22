@@ -11,6 +11,7 @@ import com.intellij.cce.evaluable.AIA_CORRECT_ATTACHMENT
 import com.intellij.cce.evaluable.AIA_DESCRIPTION
 import com.intellij.cce.evaluable.AIA_ERASED_APIS
 import com.intellij.cce.evaluable.AIA_EVAL_ARTIFACT
+import com.intellij.cce.evaluable.AIA_EVAL_ARTIFACT_FILES
 import com.intellij.cce.evaluable.AIA_EVAL_ARTIFACT_NAME
 import com.intellij.cce.evaluable.AIA_EXACT_MATCH
 import com.intellij.cce.evaluable.AIA_EXPECTED_FUNCTION_CALLS
@@ -288,7 +289,18 @@ object Execution {
       ignoreMissingData = true,
     )
   )
+
+  val ARTIFACTS_FILES: EvalDataDescription<List<ArtifactFile>, ArtifactFile> = EvalDataDescription(
+    name = "Artifact files",
+    description = "Files that should be copied to report artifacts. Source is the path to copy, target is the relative report path",
+    placement = DataPlacement.ArtifactFiles(AIA_EVAL_ARTIFACT_FILES),
+  )
 }
+
+data class ArtifactFile(
+  val target: String,
+  val source: String,
+)
 
 object Analysis {
   val HAS_SYNTAX_ERRORS: TrivialEvalData<Boolean> = EvalDataDescription(
