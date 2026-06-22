@@ -4,7 +4,8 @@
 package com.intellij.compose.ide.plugin.resources
 
 import com.intellij.compose.ide.plugin.resources.psi.ComposeResourcesPsiChangesListener
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.components.service
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
@@ -16,35 +17,31 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
-import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 
-class ComposeResourcesPsiChangesTest : ComposeResourcesTestCase() {
+@ComposeResourcesCommonMainOnly
+class ComposeResourcesPsiChangesTest : ComposeResourcesCodeInsightTestCase() {
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
-  fun `test adding new resources inside composeResources inner directories`() = doTest { files, fileManager, values ->
-    val composeResourcesDrawableDir = files.find { it.name.endsWith("compose-multiplatform.xml") }!!.parent
-    val dir = runReadAction { fileManager.findDirectory(composeResourcesDrawableDir)!! }
-    runWriteAction { composeResourcesDrawableDir.createChildData(dir, "test1.png") }
+  fun `test adding new resources inside composeResources inner directories`() = doTest { fileManager, values ->
+    val composeResourcesDrawableDir = getCommonComposeResourcesDrawableDir()
+    val dir = readActionBlocking { fileManager.findDirectory(composeResourcesDrawableDir)!! }
+    snapshotProjectFile("${getCommonComposeResourcesDrawableDirPath()}/test1.png")
+    edtWriteAction { composeResourcesDrawableDir.createChildData(dir, "test1.png") }
 
     assertEquals(1, values.size)
     // TODO: Not ideal assert
-    assertEquals("commonMain", values.first().accessorsQualifier)
+    assertEquals(COMMON_MAIN, values.first().accessorsQualifier)
 
-    runWriteAction {
-      composeResourcesDrawableDir.createChildData(dir, "test2.png")
-      composeResourcesDrawableDir.createChildData(dir, "test3.png")
-      composeResourcesDrawableDir.createChildData(dir, "test4.png")
-      composeResourcesDrawableDir.createChildData(dir, "test5.png")
-      composeResourcesDrawableDir.createChildData(dir, "test6.png")
-      composeResourcesDrawableDir.createChildData(dir, "test7.png")
-      composeResourcesDrawableDir.createChildData(dir, "test8.png")
-      composeResourcesDrawableDir.createChildData(dir, "test9.png")
-      composeResourcesDrawableDir.createChildData(dir, "test10.png")
+    for (index in 2..10) {
+      snapshotProjectFile("${getCommonComposeResourcesDrawableDirPath()}/test$index.png")
+    }
+    edtWriteAction {
+      for (index in 2..10) {
+        composeResourcesDrawableDir.createChildData(dir, "test$index.png")
+      }
     }
 
     assertEquals(10, values.size)
@@ -56,58 +53,73 @@ class ComposeResourcesPsiChangesTest : ComposeResourcesTestCase() {
     val composeResourcesDrawableDir: VirtualFile,
   )
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
   fun `test moving resource files from outside composeResources inner directories`() = doMovingTest { movingContext, values ->
-    val file = runWriteAction { movingContext.root.virtualFile.createChildData(movingContext.root, "root.png") }
+    snapshotProjectFile("${getCommonSourceSetDirPath()}/root.png")
+    val file = edtWriteAction { movingContext.root.virtualFile.createChildData(movingContext.root, "root.png") }
     assertEquals(0, values.size) // outside composeResources dirs, no change
 
-    runWriteAction { file.move(file, movingContext.composeResourcesDrawableDir) }
+    snapshotProjectFile("${getCommonComposeResourcesDrawableDirPath()}/root.png")
+    edtWriteAction { file.move(file, movingContext.composeResourcesDrawableDir) }
     assertEquals(1, values.size)
 
-    runWriteAction { file.move(file, movingContext.composeResourcesDir.parent) }
+    edtWriteAction { file.move(file, movingContext.composeResourcesDir.parent) }
     assertEquals(2, values.size)
   }
 
-  @TargetVersions(TARGET_GRADLE_VERSION)
   @Test
-  @TestMetadata("ComposeResources")
   fun `test moving resource files from composeResources to outer directory`() = doMovingTest { movingContext, values ->
-    val file = runWriteAction { movingContext.composeResourcesDrawableDir.createChildData(movingContext.composeResourcesDrawableDir, "test.png") }
+    snapshotProjectFile("${getCommonComposeResourcesDrawableDirPath()}/test.png")
+    val file = edtWriteAction {
+      movingContext.composeResourcesDrawableDir.createChildData(movingContext.composeResourcesDrawableDir, "test.png")
+    }
     assertEquals(0, values.size)
 
-    runWriteAction { file.move(file, movingContext.root.virtualFile) }
+    snapshotProjectFile("${getCommonSourceSetDirPath()}/test.png")
+    edtWriteAction { file.move(file, movingContext.root.virtualFile) }
     assertEquals(1, values.size)
 
-    runWriteAction { file.move(file, movingContext.composeResourcesDrawableDir) }
+    edtWriteAction { file.move(file, movingContext.composeResourcesDrawableDir) }
     assertEquals(2, values.size)
   }
 
-  private fun doMovingTest(body: TestScope.(MovingContext, List<ComposeResourcesData>) -> Unit) =
-    doTest { files, fileManager, values ->
-      val composeResourcesDrawableDir = files.find { it.name.endsWith("compose-multiplatform.xml") }!!.parent
+  private fun doMovingTest(body: suspend TestScope.(MovingContext, List<ComposeResourcesData>) -> Unit) =
+    doTest { fileManager, values ->
+      val composeResourcesDrawableDir = getCommonComposeResourcesDrawableDir()
       val composeResourcesDir = composeResourcesDrawableDir.parent
-      val root = runReadAction { fileManager.findDirectory(composeResourcesDir.parent)!! }
+      val root = readActionBlocking { fileManager.findDirectory(composeResourcesDir.parent)!! }
 
       val context = MovingContext(root, composeResourcesDir, composeResourcesDrawableDir)
       body(context, values)
     }
 
-  private fun doTest(body: suspend TestScope.(List<VirtualFile>, FileManager, List<ComposeResourcesData>) -> Unit) = runTest {
-    val files = importProjectFromTestData()
-    val psiManager = PsiManagerEx.getInstanceEx(myProject)
-    val fileManager = psiManager.fileManager
+  private fun doTest(body: suspend TestScope.(FileManager, List<ComposeResourcesData>) -> Unit) = testComposeResourcesProject {
+    runTest {
+      val psiManager = PsiManagerEx.getInstanceEx(project)
+      val fileManager = psiManager.fileManager
 
-    psiManager.addPsiTreeChangeListener(ComposeResourcesPsiChangesListener(myProject), getTestRootDisposable())
+      psiManager.addPsiTreeChangeListener(ComposeResourcesPsiChangesListener(project), codeInsightFixture.testRootDisposable)
 
-    val values: MutableList<ComposeResourcesData> = mutableListOf()
-    val service = myProject.service<ComposeResourcesGenerationService>()
-    backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
-      service.composeResourcesPsiChanges.toList(values)
+      val values: MutableList<ComposeResourcesData> = mutableListOf()
+      val service = project.service<ComposeResourcesGenerationService>()
+      backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+        service.composeResourcesPsiChanges.toList(values)
+      }
+      testScheduler.runCurrent()
+      // The Gradle fixture reuses the project, and the service flow keeps the last event in its replay cache.
+      values.clear()
+
+      assertEquals(0, values.size)
+      body(fileManager, values)
     }
-
-    assertEquals(0, values.size)
-    body(files, fileManager, values)
   }
+
+  private fun getCommonComposeResourcesDrawableDir(): VirtualFile =
+    canonicalProjectFile("composeApp/src/$COMMON_MAIN/composeResources/drawable/compose-multiplatform.xml").parent
+
+  private fun getCommonComposeResourcesDrawableDirPath(): String =
+    "composeApp/src/$COMMON_MAIN/composeResources/drawable"
+
+  private fun getCommonSourceSetDirPath(): String =
+    "composeApp/src/$COMMON_MAIN"
 }
