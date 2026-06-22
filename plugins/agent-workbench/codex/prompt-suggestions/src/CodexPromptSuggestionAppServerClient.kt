@@ -19,6 +19,7 @@ import com.intellij.agent.workbench.json.createJsonGenerator
 import com.intellij.agent.workbench.json.createJsonParser
 import com.intellij.agent.workbench.prompt.core.AgentPromptSuggestionAiResult
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.process.OSProcessUtil
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -49,6 +50,7 @@ import tools.jackson.core.JsonToken
 import tools.jackson.core.json.JsonFactory
 import java.io.BufferedReader
 import java.io.BufferedWriter
+import java.io.Closeable
 import java.io.IOException
 import java.io.InputStreamReader
 import java.io.OutputStreamWriter
@@ -516,6 +518,7 @@ internal class CodexPromptSuggestionAppServerClient(
   private fun stopProcess() {
     val current = process ?: return
     clearProcessState()
+    closePromptSuggestionAppServerProcessStreams(current)
     readerJob?.cancel()
     stderrJob?.cancel()
     waitJob?.cancel()
@@ -958,16 +961,55 @@ private fun stopPromptSuggestionAppServerProcess(process: Process, coroutineScop
 
 private fun terminatePromptSuggestionAppServerProcess(process: Process) {
   try {
-    process.destroy()
+    closePromptSuggestionAppServerProcessStream(process.outputStream)
+    if (!waitForPromptSuggestionAppServerProcess(process)) {
+      try {
+        OSProcessUtil.killProcessTree(process)
+      }
+      catch (_: Throwable) {
+      }
+      if (process.isAlive) {
+        process.destroyForcibly()
+      }
+      waitForPromptSuggestionAppServerProcess(process)
+    }
   }
   catch (_: Throwable) {
-  }
-
-  try {
-    if (!process.waitFor(PROCESS_TERMINATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)) {
-      process.destroyForcibly()
-      process.waitFor(PROCESS_TERMINATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+    try {
+      if (process.isAlive) {
+        process.destroyForcibly()
+      }
     }
+    catch (_: Throwable) {
+    }
+  }
+  finally {
+    closePromptSuggestionAppServerProcessStreams(process)
+  }
+}
+
+private fun waitForPromptSuggestionAppServerProcess(process: Process): Boolean {
+  return try {
+    process.waitFor(PROCESS_TERMINATION_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+  }
+  catch (_: InterruptedException) {
+    Thread.currentThread().interrupt()
+    !process.isAlive
+  }
+  catch (_: Throwable) {
+    !process.isAlive
+  }
+}
+
+private fun closePromptSuggestionAppServerProcessStreams(process: Process) {
+  closePromptSuggestionAppServerProcessStream(process.outputStream)
+  closePromptSuggestionAppServerProcessStream(process.inputStream)
+  closePromptSuggestionAppServerProcessStream(process.errorStream)
+}
+
+private fun closePromptSuggestionAppServerProcessStream(stream: Closeable) {
+  try {
+    stream.close()
   }
   catch (_: Throwable) {
   }
