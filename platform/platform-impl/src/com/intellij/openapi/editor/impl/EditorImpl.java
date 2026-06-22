@@ -337,6 +337,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // E.g., it is not a valid replacement for CodeStyle.getSettings(myProject).
   @ApiStatus.Internal
   public static final Key<CodeStyleSettings> CODE_STYLE_SETTINGS = Key.create("editor.code.style.settings");
+  /**
+   * Marks a viewer with a custom {@link com.intellij.openapi.editor.actionSystem.TypedActionHandler}, such as a console.
+   * The editor then makes no document modifications. For example, it shows composed
+   * Input Method text as inlays instead of inserting it. Has no effect on non-viewer editors.
+   */
+  @ApiStatus.Internal
+  public static final Key<Boolean> VIEWER_WITH_TYPED_HANDLER = Key.create("editor.viewer.with.typed.handler");
+
   private final @NotNull DocumentEx myDocument;
   private final @Nullable DocumentEx myElfDocument;
 
@@ -4557,12 +4565,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
 
         // new composed text insertion
-        if (!isViewer() && doc.isWritable()) {
+        boolean viewerWithTypedHandler = isViewer() && getUserData(VIEWER_WITH_TYPED_HANDLER) == Boolean.TRUE;
+        if ((!isViewer() || viewerWithTypedHandler) && doc.isWritable()) {
           int composedTextIndex = text.getIndex();
           if (composedTextIndex < text.getEndIndex()) {
             String composedString = createComposedString(composedTextIndex, text);
-            if (EditorRegistry.current().isInputMethodInlayEnabled()) {
-              runUndoTransparent(() -> EditorModificationUtil.deleteSelectedTextForAllCarets(EditorImpl.this));
+            if (viewerWithTypedHandler || EditorRegistry.current().isInputMethodInlayEnabled()) {
+              if (!viewerWithTypedHandler) {
+                runUndoTransparent(() -> EditorModificationUtil.deleteSelectedTextForAllCarets(EditorImpl.this));
+              }
 
               var offset = getCaretModel().getCurrentCaret().getOffset();
               var caret = e.getCaret();

@@ -79,6 +79,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.ide.CopyPasteManager
@@ -854,6 +855,7 @@ open class ConsoleViewImpl protected constructor(
     editor.putUserData(CONSOLE_VIEW_IN_EDITOR_VIEW, this)
     editor.settings.isAllowSingleLogicalLineFolding = true // We want to fold long soft-wrapped command lines
     editor.scrollPane.border = JBUI.Borders.empty()
+    editor.putUserData(EditorImpl.VIEWER_WITH_TYPED_HANDLER, true)
     return editor
   }
 

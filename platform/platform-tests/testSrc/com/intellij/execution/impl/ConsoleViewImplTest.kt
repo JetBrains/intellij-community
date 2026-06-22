@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager
 import com.intellij.openapi.editor.actionSystem.TypedAction
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.InputMethodInlayRenderer
 import com.intellij.openapi.editor.impl.RangeMarkersImpl
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -52,7 +53,10 @@ import com.intellij.util.LineSeparator
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.ui.UIUtil
+import java.awt.event.InputMethodEvent
+import java.awt.font.TextHitInfo
 import java.io.ByteArrayOutputStream
+import java.text.AttributedString
 import java.util.Arrays
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
@@ -1188,6 +1192,86 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
                        ExpectedHighlighter(2, 3, ConsoleViewContentType.USER_INPUT),
                        ExpectedHighlighter(3, 4, ConsoleViewContentType.USER_INPUT)
     )
+  }
+
+  fun testInputMethodComposedTextIsShownAsInlayUntilCommit() {
+    val initialText = "foo"
+    console.type(consoleEditor, initialText)
+    console.flushDeferredText()
+
+    // Typing 쇼 on a 2-Set Korean layout using QWERTY keyboard:
+    // `t` composes ㅅ, `y` turns it into 쇼, and any other key commits it.
+    dispatchInputMethodEvent("", "ㅅ")
+    assertText(initialText)
+    assertComposedText("ㅅ")
+
+    dispatchInputMethodEvent("", "쇼")
+    assertText(initialText)
+    assertComposedText("쇼")
+
+    dispatchInputMethodEvent("쇼", "")
+    assertText("${initialText}쇼")
+    assertNoComposedText()
+  }
+
+  fun testInputMethodComposingKeepsSelectionUntilCommit() {
+    val initialText = "foo"
+    console.type(consoleEditor, initialText)
+    console.flushDeferredText()
+    consoleEditor.selectionModel.setSelection(1, 3)
+
+    dispatchInputMethodEvent("", "ㅅ")
+    assertText(initialText)
+    assertSelectedText("oo")
+    assertComposedText("ㅅ")
+
+    dispatchInputMethodEvent("", "쇼")
+    assertText(initialText)
+    assertSelectedText("oo")
+    assertComposedText("쇼")
+
+    dispatchInputMethodEvent("쇼", "")
+    assertText("${initialText.take(1)}쇼")
+    assertSelectedText(null)
+    assertNoComposedText()
+  }
+
+  /**
+   * Sends an IME event to the console editor, like the one AWT delivers while the user is
+   * composing text, and waits until the console has processed it.
+   */
+  private fun dispatchInputMethodEvent(committedText: String, composedText: String) {
+    val component = consoleEditor.contentComponent
+    component.dispatchEvent(InputMethodEvent(
+      component,
+      InputMethodEvent.INPUT_METHOD_TEXT_CHANGED,
+      AttributedString(committedText + composedText).iterator,
+      committedText.length,
+      if (composedText.isEmpty()) null else TextHitInfo.leading(composedText.length),
+      null,
+    ))
+    console.waitAllRequests()
+  }
+
+  private fun inputMethodInlays() = consoleEditor.inlayModel.getInlineElementsInRange(0, consoleEditor.document.textLength)
+
+  /** Checks that [expected] is the only composed text on screen and that it is shown at the caret. */
+  private fun assertComposedText(expected: String) {
+    val inlay = assertOneElement(inputMethodInlays())
+    assertEquals(consoleEditor.caretModel.offset, inlay.offset)
+    assertEquals(expected, assertInstanceOf(inlay.renderer, InputMethodInlayRenderer::class.java).text)
+  }
+
+  private fun assertNoComposedText() {
+    assertEmpty(inputMethodInlays())
+  }
+
+  private fun assertText(expected: String) {
+    assertEquals(expected, consoleEditor.document.text)
+  }
+
+  private fun assertSelectedText(expected: String?) {
+    assertEquals(expected, consoleEditor.selectionModel.selectedText)
   }
 
   companion object {
