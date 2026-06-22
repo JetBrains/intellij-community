@@ -102,18 +102,6 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
     return isSelectedImpl(properties, getShowToolbarProperty(property));
   }
 
-  public static boolean isToolbarVisible(@NotNull ToolWindow toolWindow) {
-    return isToolbarVisible(toolWindow, PropertiesComponent.getInstance());
-  }
-
-  public static boolean isToolbarVisible(@NotNull ToolWindow toolWindow, @NotNull Project project) {
-    return isToolbarVisible(toolWindow, PropertiesComponent.getInstance(project));
-  }
-
-  public static boolean isToolbarVisible(@NotNull ToolWindow toolWindow, @NotNull PropertiesComponent properties) {
-    return true;
-  }
-
   private final PropertiesComponent myPropertiesComponent;
   private final String myProperty;
   private final Supplier<? extends Iterable<? extends JComponent>> myProducer;
@@ -163,10 +151,6 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
   static boolean isSelectedImpl(@NotNull PropertiesComponent properties, @NotNull String property) {
     return properties.getBoolean(property, true);
-  }
-
-  static @NotNull String getShowToolbarProperty(@NotNull ToolWindow window) {
-    return getShowToolbarProperty("ToolWindow." + window.getId());
   }
 
   static @NotNull String getShowToolbarProperty(@NotNull @NonNls String s) {
