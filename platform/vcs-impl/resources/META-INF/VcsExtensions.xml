@@ -183,6 +183,10 @@
                  key="vcs.commit.dialog.esc.close"/>
     <registryKey defaultValue="true" description="Always open diff in window in either floating or windowed commit TW"
                  key="vcs.commit.dialog.force.diff.in.window"/>
+    <registryKey defaultValue="true"
+                 description="Scope diff file navigation ('Go to change' popup and file counter) to the current change's group (e.g. changelist or unversioned files). When disabled, navigation spans all changes."
+                 key="vcs.diff.preview.scope.navigation.to.group"
+                 restartRequired="false"/>
 
     <toolWindow id="Version Control" anchor="bottom" canCloseContents="true" icon="AllIcons.Toolwindows.ToolWindowChanges"
                 factoryClass="com.intellij.openapi.vcs.changes.ui.ChangeViewToolWindowFactory"/>

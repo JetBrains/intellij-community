@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.FrameDiffTool
@@ -13,13 +13,16 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.ChangeWra
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.UnversionedFileWrapper
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor.Wrapper
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeListNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.MODIFIED_WITHOUT_EDITING_TAG
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserUnversionedFilesNode
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesTreeDiffPreviewHandler
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerChangesTreeTracker
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.openapi.vcs.changes.ui.findAmendNode
 import com.intellij.openapi.vcs.changes.ui.findChangeListNode
 import com.intellij.openapi.vcs.changes.ui.isUnderTag
@@ -119,6 +122,15 @@ internal object ChangesViewDiffPreviewHandler : ChangesTreeDiffPreviewHandler() 
   override fun iterateSelectedChanges(tree: ChangesTree): JBIterable<Wrapper> {
     val changesView = tree as? ChangesListView ?: return JBIterable.empty()
     return wrap(tree.project, changesView.selectedChangesNodes, changesView.selectedUnversionedFiles)
+  }
+
+  override fun iterateChangesFromSameGroup(tree: ChangesTree, change: Wrapper): JBIterable<Wrapper> {
+    val node = TreeUtil.findNodeWithObject(tree.root, change.userObject) as? ChangesBrowserNode<*>
+    val groupNode = generateSequence(node) { it.parent }
+                      .firstOrNull { it is ChangesBrowserChangeListNode || it is ChangesBrowserUnversionedFilesNode }
+                    ?: return iterateSelectedChanges(tree)
+    val model = VcsTreeModelData.allUnder(groupNode)
+    return wrap(tree.project, model.iterateNodes(), model.iterateUserObjects(FilePath::class.java))
   }
 
   override fun iterateAllChanges(tree: ChangesTree): JBIterable<Wrapper> {
