@@ -296,20 +296,22 @@ public final class ClasspathBootstrap {
       if (relevantJarsRoot != null && mapping != null && instrumentationUtilPath.startsWith(relevantJarsRoot)) {
         return Arrays.asList(instrumentationUtilPath, mapping.get("production/intellij.java.compiler.instrumentationUtil.java8"));
       }
-      // per-module jar layouts (e.g. Bazel/monorepo-devkit) keep the java8 module in a separate jar with an unpredictable name:
-      // resolve JrtLoader's own jar via resource lookup before falling back to the "same jar" assumption
+
+      //running from jars: intellij.java.compiler.instrumentationUtil.java8 is located in the sibling jar named accordingly
+      String jrtLoaderPath = null;
       try {
-        String jrtLoaderPath = getResourcePath(Class.forName("com.intellij.compiler.instrumentation.JrtLoader"));
-        if (jrtLoaderPath != null && !jrtLoaderPath.equals(instrumentationUtilPath)) {
-          LOG.info("instrumentationUtil.java8 (JrtLoader) resolved to a separate jar, adding it to the build process classpath: " + jrtLoaderPath);
-          return Arrays.asList(instrumentationUtilPath, jrtLoaderPath);
-        }
+        jrtLoaderPath = getResourcePath(Class.forName("com.intellij.compiler.instrumentation.JrtLoader"));
       }
       catch (Throwable e) {
-        LOG.debug("Could not resolve JrtLoader jar separately; assuming instrumentationUtil.java8 is co-located in " + instrumentationUtilPath, e);
+        LOG.info("Error resolving JrtLoader path location", e);
       }
-      //running from jars: intellij.java.compiler.instrumentationUtil.java8 is located in the same jar
-      return Collections.singletonList(instrumentationUtilPath);
+
+      if (jrtLoaderPath == null) { // fallback
+        jrtLoaderPath = new File(instrumentationUtil.getParentFile(), "intellij.java.compiler.instrumentationUtil.java8.jar").getAbsolutePath();
+        LOG.info("Could not resolve JrtLoader path location; assuming  " + jrtLoaderPath);
+      }
+      
+      return Arrays.asList(instrumentationUtilPath, jrtLoaderPath);
     }
   }
 }
